@@ -1260,7 +1260,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
      0, so the main region — which draws two cards from `work` and two from `records` — came out
      as 0, 1, 0, 1 and CSS interleaved them: Requests, Assets, Approvals, CIs. An order is only
      meaningful within ONE list, and this region mixes two. */
-  const card = (id: string, body: ReactNode, cols?: number, gap = 16, grow = 1, orderAt?: number, look?: { full?: boolean; tint?: boolean }) => {
+  const card = (id: string, body: ReactNode, cols?: number, gap = 16, grow = 1, orderAt?: number, look?: { full?: boolean }) => {
     if (removed.includes(id)) return null;
     /* ⚠️ Membership comes from `rowOf` — the STATIC map of which row a card belongs to — not from
        searching the live `rowOrder`. Deleting a fixed card takes it out of `rowOrder`, so a search
@@ -1276,7 +1276,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
     return cardInner(id, body, cols, order, gap, grow, look);
   };
 
-  const cardInner = (id: string, body: ReactNode, cols: number | undefined, order: number, gap = 16, grow = 1, look?: { full?: boolean; tint?: boolean }) => (
+  const cardInner = (id: string, body: ReactNode, cols: number | undefined, order: number, gap = 16, grow = 1, look?: { full?: boolean }) => (
     /* ⚠️ No overflow-hidden here. The chip sits at -top-4 and the toolbar at -top-11, both OUTSIDE
        the wrapper — clipping it silently removes the card's hover outline and quick actions. */
     /* ⚠️ `min-w-0` is what makes the row honour its column count. Without it a card's widest
@@ -1290,12 +1290,15 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
     /* ⚠️ `gridColumn: 1 / -1` for a full-width card, NOT a bigger flex share. The region that holds
        these is a GRID — `share()` writes flex properties a grid ignores, which is why a card asking
        for two columns still came out in one cell. The grid needs to be told in its own language.
-       ⚠️ TINT instead of an outline. A hairline around a card sitting on a white page draws the
-       BOX; a pale fill draws the GROUP, and the white tiles inside then read as items on a surface
-       rather than boxes inside a box — two borders describing one thing. */
+       ⚠️ EVERY card is white with a hairline, including these two. Tinting the card and leaving its
+       tiles white was tried and reversed: it made My Assets and My CIs the only two cards on the
+       page built differently from the four around them, so the page had two card languages and the
+       difference read as a state rather than as a kind. The contrast the tiles need comes from
+       filling the TILES instead — see `RecordTiles` — which keeps one card treatment for everything
+       and still separates the items inside these two. */
     <Sel
       id={id}
-      className={`min-w-0 rounded-xl ${look?.tint ? 'bg-[#F5F7FA]' : 'border border-[#E5E7EB] bg-white'}`}
+      className="min-w-0 rounded-xl border border-[#E5E7EB] bg-white"
       style={{ ...(cols ? share(cols, gap, grow) : {}), ...(look?.full ? { gridColumn: '1 / -1' } : {}), order }}
     >
       {/* No overflow-hidden: a card must be free to grow past a dragged height rather than clip
@@ -1772,7 +1775,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                        the grid — fine while all four cards were half-width lists of similar length,
                        and wrong the moment My Assets and My CIs became full-width rows of their own:
                        each inherited the height of the request list two rows up and carried about
-                       200px of empty tint under its tiles.
+                       200px of empty space under its tiles.
                        ⚠️ The two cards that DO share a row are still the same height — a grid
                        stretches items within a row by default, which is the behaviour that was
                        actually wanted here; `1fr` was reaching across rows to get it. */
@@ -1785,8 +1788,8 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                       tiles into 354px, which is where the "resizing one shrinks the other" complaint
                       came from — they were competing for one row. Given the whole width each, the
                       tiles inside get room to spread and the two cards stop fighting. */}
-                  {card('assets', <RecordTiles nodeId="assets" titleFallback={content.assets.title} cfg={wc('assets')} rows={MY_ASSETS} icon={<HardDrive size={17} />} />, undefined, secGap("work"), 1, 2, { full: true, tint: true })}
-                  {card('cis', <RecordTiles nodeId="cis" titleFallback={content.cis.title} cfg={wc('cis')} rows={MY_CIS} icon={<Server size={17} />} />, undefined, secGap("work"), 1, 3, { full: true, tint: true })}
+                  {card('assets', <RecordTiles nodeId="assets" titleFallback={content.assets.title} cfg={wc('assets')} rows={MY_ASSETS} icon={<HardDrive size={17} />} />, undefined, secGap("work"), 1, 2, { full: true })}
+                  {card('cis', <RecordTiles nodeId="cis" titleFallback={content.cis.title} cfg={wc('cis')} rows={MY_CIS} icon={<Server size={17} />} />, undefined, secGap("work"), 1, 3, { full: true })}
                 </Sel>
                 {/* ⚠️ A SECTION too, and for the same reason: the rail owns how its three cards
                     stack, and that is a different question from how the four beside it are laid
@@ -1937,10 +1940,16 @@ function RecordTiles({ nodeId, titleFallback, cfg, rows, icon }: {
             is what lets this card be dragged narrow or dropped into a column and still lay out. */}
         <div className="grid grid-cols-1 gap-2.5 @[290px]:grid-cols-2">
           {shown.map((r) => (
-            /* ⚠️ NO border. The card around these is a pale fill now, so a white tile is already a
-               distinct surface on it — an outline as well would be two lines describing one edge. */
-            <div key={r.id} className="flex min-w-0 items-center gap-2.5 rounded-lg bg-white p-3 transition-shadow hover:shadow-[0_1px_3px_rgba(16,24,40,0.08)]">
-              <span className="flex size-9 flex-shrink-0 items-center justify-center rounded-md bg-[#EFF4F9] text-[#5A6B80]">{icon}</span>
+            /* ⚠️ FILLED, not outlined. The card is white like every other card on the page, so the
+               tiles are what has to separate itself — and a fill does that without adding a second
+               line inside a box that already has one around it. Four hairline rectangles inside a
+               hairline rectangle is the "box inside a box" that made the tinted-card version look
+               wrong from the other direction.
+               ⚠️ The icon badge is WHITE on the filled tile. It was the tint when the tile was white;
+               swapping the two keeps the badge a step away from whatever it sits on, which is the
+               only thing that makes it read as a badge rather than as part of the background. */
+            <div key={r.id} className="flex min-w-0 items-center gap-2.5 rounded-lg bg-[#F5F7FA] p-3 transition-colors hover:bg-[#EEF2F7]">
+              <span className="flex size-9 flex-shrink-0 items-center justify-center rounded-md bg-white text-[#5A6B80]">{icon}</span>
               {/* ⚠️ The NAME leads. It was third — under the ID pill and the type — so the tile
                   opened with a reference number and made you read past it to find out what the thing
                   actually is. What identifies an asset to a person is its name; the id is how the
