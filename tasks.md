@@ -916,6 +916,19 @@ Updated: 2026-09-01
 - **Verified:** a live-data widget's bar is Drag · Move right · Delete — no Copy. A Button dragged 200px wider went 187 → 387 **and so did the button element**, with `cursor: grab` on it. Dragging over an element's right edge sets `padding-right: 411.5px` (half of 823), draws a 399px dashed ghost in the freed half and reads "Insert in new column"; over its top edge, `padding-top: 72px`, a 56px band, "Insert in new row". Both animate over 130ms — an early measurement caught the transition mid-flight, which is why the first read looked like a failure.
 - **Scope note:** the gap opens inside the box you are pointing at, moving ITS content aside. Sibling sections are not narrowed as well — say the word if the surrounding cards should give way too.
 
+## 67. Record List and KPI become one Custom data widget
+- **Status:** done
+- **Where:** `supportPortalData.ts`, `portalWidgetSpec.ts`, `PortalCollectionRender.tsx`
+- **You asked:** rename Record List to Custom data widget, take KPI out of the palette, and give the widget a dropdown offering Record list (default) or KPI — Module, Filter and the Design section untouched.
+- **What I built:** a **Show as** control, first in the Content group, above Module and Filter. The two were always the same question — "which records?" — answered at two lengths, so they share the module and the filter and differ only in how the answer is drawn. As two palette entries an admin had to decide which they wanted BEFORE choosing a module, and changing their mind meant building the whole thing again.
+- **⚠️ It is the FIRST field.** It decides what the two fields under it will produce, and a control that reframes the ones above it is read after the damage is done.
+- **⚠️ The KPI number is the COUNT OF MATCHING RECORDS**, not a figure of its own. It is the only single number a module and a filter can honestly produce, and it is what makes those two fields mean the same thing in both modes — change the filter and the count moves with it. A KPI carrying a separate value would leave a card whose Module and Filter controls did nothing. **Tell me if it should be something else and it is a one-line change.**
+- **⚠️ The TITLE is the caption.** The list uses it as its heading; in KPI mode it is what the number is a number OF — the same sentence in a different position, so there is no second label field to keep in step with the first.
+- **⚠️ It reads the LIVE matching set, not the visible rows**, which have already been cut to the first few. A card reading "3" while the filter matches nine is the sort of wrong that looks right.
+- **⚠️ The old KPI is HIDDEN, not deleted.** Its spec, renderer and panel all stay, so a page already carrying a placed KPI keeps working and editing exactly as it did.
+- **Verified:** the palette lists "Custom data widget" and no KPI — and searching "kpi" now finds the merged widget, because the keyword came with it. The panel reads "Show as · Record list · KPI · Title · Module · Filter". Flipping to KPI drew **3** at 30px with its icon over "My records"; flipping back restored the full row list. Changing the module from Requests to Approvals took the number **3 → 2**, and the list agreed at 2. No console errors.
+- **Note:** narrowing to "My Overdue Requests" left the count at 3 — the sample rows carry no due date, so that condition passes in the builder by the documented rule. On the live portal it queries the module properly.
+
 ## Parked — needs discussion
 - Tour guide
 - AI capabilities

@@ -10,7 +10,7 @@
 
 import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronsRight, ImageOff, ShoppingCart, Star } from 'lucide-react';
+import { ChevronDown, ChevronLeft, LayoutList, ChevronRight, ChevronsRight, ImageOff, ShoppingCart, Star } from 'lucide-react';
 import { Sel, useCanvas } from './PortalCanvas';
 /* The Table is a module of its own — a spreadsheet-grade editor is a different kind of thing from
    the read-only renderers in this file, and it owns its data model, its handles and its menus. */
@@ -1231,10 +1231,36 @@ function RecordListRender({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
      flat list, the older OR-of-ANDs and a real tree to the same shape, so the canvas can never read
      an old filter differently from the builder that wrote it. */
   const tree = activeTree(cfg.filter as RecordFilter | undefined, String(cfg.module ?? 'request'));
-  const rows = mod.rows
-    .filter((x) => matchesTree(x, tree))
-    .slice(0, Number(cfg.show ?? 3));
+  const matching = mod.rows.filter((x) => matchesTree(x, tree));
+  const rows = matching.slice(0, Number(cfg.show ?? 3));
   const dark = typeof document !== 'undefined' && !!document.querySelector('.portal-dark');
+
+  /* ── KPI ────────────────────────────────────────────────────────────────────────────────────
+   *
+   * The same widget, the same module and the same filter — drawn as one number instead of a list.
+   *
+   * ⚠️ The number is the COUNT OF MATCHING RECORDS, not a figure of its own. It is the only single
+   * number a module and a filter can honestly produce, and it is what makes the two fields above it
+   * mean the same thing in both modes: change the filter and the count moves with it. A KPI that
+   * carried a separate value would leave a card whose Module and Filter controls did nothing.
+   * ⚠️ The TITLE is the caption. The list uses it as its heading; here it is what the number is a
+   * number OF, which is the same sentence in a different position — so there is no second label
+   * field to keep in step with the first.
+   * ⚠️ It reads the LIVE list, not `rows`, which has already been cut to the visible few. A card
+   * showing "3" while the filter matches nine is the sort of wrong that looks right. */
+  if (cfg.display === 'kpi') {
+    return (
+      <div className="flex items-center gap-3.5">
+        <span className="flex size-11 flex-shrink-0 items-center justify-center rounded-lg bg-[#F1F5F9] text-[#475467]">
+          <LayoutList size={20} />
+        </span>
+        <span className="min-w-0">
+          <span className="block text-[30px] font-semibold leading-none text-[#364658]">{matching.length}</span>
+          <span className="mt-1.5 block truncate text-[13px] text-[#7B8FA5]">{String(cfg.title ?? mod.label)}</span>
+        </span>
+      </div>
+    );
+  }
   return (
     <LiveCard nodeId={nodeId} cfg={cfg} title={mod.label} count={rows.length} rows={
       rows.length === 0 ? (

@@ -471,7 +471,7 @@ export const PORTAL_ELEMENTS: PortalElement[] = [
      group-gated as predefined: one instance each, greyed with a tick once placed. This one is
      repeatable, which is exactly what it needs — two Record Lists filtered differently is a
      reasonable page, and the whole point is that the admin asks the question. */
-  { id: 'c-records', name: 'Record List', icon: 'records', group: 'Custom', keywords: 'list records requests assets cis filter module query data' },
+  { id: 'c-records', name: 'Custom data widget', icon: 'records', group: 'Custom', keywords: 'list records kpi count metric requests assets cis filter module query data' },
 
   // ── Actions — fixed destinations, the same for every requester ──
   /* ⚠️ The four action cards are BACK in the palette. Hiding them was the wrong answer to a real
@@ -521,7 +521,12 @@ export const PORTAL_ELEMENTS: PortalElement[] = [
      standalone block on the page. The spec, the renderer and the preview all stay, so anything a
      page is already carrying keeps working and restoring it is one word. */
   { id: 'x-action-card', name: 'Action Card', icon: 'actionCard', group: 'Custom', keywords: 'quick action tile', hidden: true }, // hidden 24 Aug 2026
-  { id: 'x-kpi', name: 'KPI', icon: 'kpi', group: 'Custom', keywords: 'metric stat number' },
+  /* ⚠️ HIDDEN, not deleted. The KPI is now a DISPLAY MODE of the Custom data widget rather than a
+     widget of its own — the two asked the same question (which records?) and answered it in two
+     shapes, so an admin had to know which they wanted before they could pick a module. Its spec,
+     its renderer and its panel all stay, so a page already carrying a placed KPI keeps working and
+     editing exactly as it did. */
+  { id: 'x-kpi', name: 'KPI', icon: 'kpi', group: 'Custom', hidden: true, keywords: 'metric stat number' },
 ];
 
 /* ── Helpers ─────────────────────────────────────────────────────────────── */

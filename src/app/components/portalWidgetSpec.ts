@@ -789,8 +789,19 @@ export const WIDGET_SPECS: WidgetSpec[] = [
    * the product's decision. Here the admin owns it, so the panel is the only place the widget can
    * learn what it is for. */
   {
-    id: 'record_list', name: 'Record List', group: 'Content', reuse: 'many', family: 'flat',
+    id: 'record_list', name: 'Custom data widget', group: 'Content', reuse: 'many', family: 'flat',
     fields: [
+      /* ⚠️ ONE widget, two shapes. A list of matching records and a count of them are the same
+         question — "which records?" — answered at two lengths, so they share the module and the
+         filter and differ only in how the answer is drawn. As two palette entries an admin had to
+         decide which they wanted BEFORE choosing a module, and changing their mind meant building
+         the whole thing again.
+         ⚠️ FIRST, above Module and Filter. It decides what the two fields under it will produce,
+         and a control that reframes the ones above it is read after the damage is done. */
+      {
+        key: 'display', label: 'Show as', control: 'segmented', group: 'Content',
+        options: [{ value: 'list', label: 'Record list' }, { value: 'kpi', label: 'KPI' }],
+      },
       /* ⚠️ The title is AUTHORED. Every fixed card's title is the product's word for a fixed query;
          this one lists whatever the admin asked for, so only they can name it. */
       { key: 'title', label: 'Title', control: 'text', group: 'Content' },
@@ -825,7 +836,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
       tone: 'info',
       text: 'Shows sample rows here so you can see the shape, so a condition on a field the samples do not carry — a priority, an assignee, a date — is not applied in the builder. On the live portal it queries the module you chose and applies the whole filter, showing the same “No Data Found” state as My CIs when nothing matches.',
     }],
-    defaults: { title: 'My records', module: 'request', filter: { preset: 'all-open' }, show: 3 },
+    defaults: { title: 'My records', display: 'list', module: 'request', filter: { preset: 'all-open' }, show: 3 },
   },
 
   /* ─────────── Video ───────────
