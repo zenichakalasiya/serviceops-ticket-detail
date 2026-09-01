@@ -1948,7 +1948,7 @@ function RecordTiles({ nodeId, titleFallback, cfg, rows, icon }: {
                ⚠️ The icon badge is WHITE on the filled tile. It was the tint when the tile was white;
                swapping the two keeps the badge a step away from whatever it sits on, which is the
                only thing that makes it read as a badge rather than as part of the background. */
-            <div key={r.id} className="flex min-w-0 items-center gap-2.5 rounded-lg bg-[#F5F7FA] p-3 transition-colors hover:bg-[#EEF2F7]">
+            <div key={r.id} className="flex min-w-0 items-center gap-2.5 rounded-lg bg-[#F9FAFB] p-3 transition-colors hover:bg-[#F3F4F6]">
               <span className="flex size-9 flex-shrink-0 items-center justify-center rounded-md bg-white text-[#5A6B80]">{icon}</span>
               {/* ⚠️ The NAME leads. It was third — under the ID pill and the type — so the tile
                   opened with a reference number and made you read past it to find out what the thing
