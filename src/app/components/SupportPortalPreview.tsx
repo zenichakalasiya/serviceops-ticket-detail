@@ -1927,13 +1927,15 @@ function RecordTiles({ nodeId, titleFallback, cfg, rows, icon }: {
           what lets this row be dragged narrow or dropped into a column and still lay out sensibly.
           Every other grid in this builder that had to survive a resize does the same. */}
       <div className="@container">
-        {/* ⚠️ Up to FOUR now that the card owns the whole width. It was capped at two because these
-            cards were half the main region wide and a four-track grid gave each tile about 90px —
-            narrower than the ID pill inside it. At full width four tracks are ~170px each, which is
-            what the two-up tiles already measured, so nothing is squeezed to get the extra columns.
+        {/* ⚠️ TWO is the ceiling, at every width. A four-track grid was tried once the card went
+            full width — the arithmetic said ~170px a tile, which is what the two-up tiles used to
+            measure — but a tile is not just its box: at that width "Dell UltraSharp U2723QE" and
+            "localhost.localdomain" both truncate to a few characters, and a tile whose NAME is
+            unreadable has lost the one thing it leads with. Wider tiles and two rows beat four
+            columns of ellipsis.
             ⚠️ `@container`, not a viewport breakpoint — the tiles answer to the CARD's width, which
             is what lets this card be dragged narrow or dropped into a column and still lay out. */}
-        <div className="grid grid-cols-1 gap-2.5 @[290px]:grid-cols-2 @[600px]:grid-cols-4">
+        <div className="grid grid-cols-1 gap-2.5 @[290px]:grid-cols-2">
           {shown.map((r) => (
             /* ⚠️ NO border. The card around these is a pale fill now, so a white tile is already a
                distinct surface on it — an outline as well would be two lines describing one edge. */
