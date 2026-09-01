@@ -1,6 +1,6 @@
 {
   "stamp": "2026-09-01",
-  "builtAt": "2026-09-01T17:02:56.051Z",
+  "builtAt": "2026-09-01T17:19:24.395Z",
   "tasks": [
     {
       "n": 1,
@@ -1029,6 +1029,17 @@
         "You asked": "the button stretches sideways but not down — fix it, and check the basic, visual and custom widgets too.",
         "Verified": "button **36px → 186px** with the width unchanged at 187 and `h-full` applied; Text, Image and Custom data widget each measured target 186 / inner 186 / painted 186 — the content fills the box exactly. Typecheck: 6 errors before the change, 6 after, all pre-existing.",
         "Note": "Divider is not in the palette at the moment (search returns \"No elements found\"), so its centring is written but unverified in the browser."
+      }
+    },
+    {
+      "n": 71,
+      "title": "A first-run tour for the builder",
+      "status": "done",
+      "fields": {
+        "Where": "`PortalBuilderTour.tsx` (new) · `SupportPortalBuilder.tsx` · `PortalCanvas.tsx`",
+        "You asked": "the ticket detail page's tour card, and the recommendations from the plan.",
+        "Verified": "card 400px / 16px radius / `rgb(31,41,55)`, overlay `black/60` + `blur(4px)`, mask SVG 1400×1000. All six steps fit inside the viewport (rail flips left, Publish flips below). A real click on the spotlit block took 2/6 → 3/6; on step 3 the overlay is the top element at the same point, so clicks are blocked again. Finishing stores `hasSeenPortalBuilderTour=1`, clears the seam hold and hides the card; `?` restarts at 1/6.",
+        "Note": "`TicketDetailsOnboarding` still carries the same `width: 0, height: 0` on its mask SVG. I did not test that page — V1 is final — but it is the same markup in the same browser."
       }
     }
   ],

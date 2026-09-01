@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
-  ArrowLeft, Check, ChevronDown, ChevronLeft, Eye, RotateCcw,
+  ArrowLeft, Check, ChevronDown, ChevronLeft, Eye, HelpCircle, RotateCcw,
   Palette, PanelRight, Paintbrush, Pencil, Plus, Redo2, Undo2, X,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -26,6 +26,7 @@ import {
   sectionElements, sectionFromRows, sectionIdOfBox, sectionRebuild, sectionRows, setBoxDir, setBoxEl,
   splitBlockedBecause, splitBox,
 } from './portalPageModel';
+import { PortalBuilderTour, TOUR_KEY } from './PortalBuilderTour';
 import { PortalWidgetDrawer } from './PortalWidgetDrawer';
 import { WIDGET_FOR_NODE, WIDGET_FOR_TYPE, specById, structureSpecId } from './portalWidgetSpec';
 import type { Cfg, WidgetSpec } from './portalWidgetSpec';
@@ -1592,11 +1593,26 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     setIconPick({ id, rect: anchor });
   }, []);
 
+  /* ⚠️ Auto-opens ONCE, and Skip is on every step. Offering it instead — a "New here?" chip — is
+     politer to the admin who wants one edit, and is ignored by exactly the people who need it.
+     ⚠️ Read in the initialiser, not an effect: an effect runs after the first paint, so a returning
+     admin would see the overlay flash before it decided not to show. */
+  const [tour, setTour] = useState(() => {
+    try { return localStorage.getItem(TOUR_KEY) !== '1'; } catch { return false; }
+  });
+  const [tourSeam, setTourSeam] = useState<string | null>(null);
+  const endTour = useCallback(() => {
+    setTour(false);
+    setTourSeam(null);
+    try { localStorage.setItem(TOUR_KEY, '1'); } catch { /* private mode — the tour simply runs again */ }
+  }, []);
+
   const canvasCtx = {
     selectedId, hoverId, select, setHover: setHoverId, styles, setStyle, setText, setCfg: patchCfg,
     addSection, addBeside, dropBeside, columnsFull, splitNode, setNodeDir, splitInfo, addLinkCard, dropInColumn, dropAtSeam, dropInRow,
     addSibling: addSiblingElement, cfg: cfgFor,
     moveNode, duplicateNode, deleteNode, canDuplicate, addInside, moveTo, moveToSeam, addChildBlock, areSiblings, replaceElement, pickIcon, applyPreset,
+    tourSeam,
     /* The text toolbar names the theme fonts, so it needs the live theme. */
     theme,
   };
@@ -1800,6 +1816,17 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
               className={`${iconBtn} disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent`}
             ><Redo2 size={17} /></button>
           </TooltipTrigger><TooltipContent>{canRedo ? 'Redo (Ctrl+Shift+Z)' : 'Nothing to redo'}</TooltipContent></Tooltip>
+          {/* ⚠️ The tour is a one-time event and an admin edits this page perhaps twice a year — so
+              if the tour were the only teaching surface, the second visit would be as blind as the
+              first. This is the permanent way back to it.
+              ⚠️ A BUTTON, not a popover. The plan had it opening a small menu with the tour and a
+              keyboard-shortcuts sheet, but the builder has no shortcuts sheet, and a menu with one
+              real item is a second click in front of the only thing it offers. */}
+          <Tooltip><TooltipTrigger asChild>
+            <button onClick={() => setTour(true)} aria-label="Take the tour again" className={iconBtn}>
+              <HelpCircle size={17} />
+            </button>
+          </TooltipTrigger><TooltipContent>Take the tour again</TooltipContent></Tooltip>
 
           {/* ── Light / dark, for the whole canvas ──────────────────────────────────────────────
               ⚠️ It used to sit on the THEME panel's title row, which put it three clicks away from
@@ -1825,9 +1852,13 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
               row of three, so the bar read as two buttons and a word rather than as a set of
               actions — and the least destructive of the three looked the least like something you
               could press. */}
+          {/* ⚠️ ONE anchor around Preview AND Publish. They are the two ends of a single decision —
+              look at it as a requester, then hand it to them — so a spotlight on either alone tells
+              half the story the last step is there to tell. */}
+          <span data-tour="publish" className="ml-1 inline-flex h-8 items-center gap-1">
           <button
             onClick={() => setPreview(true)}
-            className="ml-1 inline-flex h-8 items-center rounded border border-[#DFE5ED] bg-white px-3 text-[13px] font-medium text-[#364658] transition-colors hover:bg-[#F5F7FA]"
+            className="inline-flex h-8 items-center rounded border border-[#DFE5ED] bg-white px-3 text-[13px] font-medium text-[#364658] transition-colors hover:bg-[#F5F7FA]"
           >Preview</button>
           {/* ── The primary action, and the one alternative to it ──────────────────────────────
               ⚠️ A SPLIT button, not two buttons side by side. Publishing and saving a draft are the
@@ -1841,7 +1872,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
               apply in this direction: the default is the LIVE action, so remembering can only ever
               leave the button on the safer of the two. The failure it guards against would need the
               default to be "Save as draft", and it is not. */}
-          <div className="relative ml-1 inline-flex h-8">
+          <div className="relative inline-flex h-8">
             <button
               onClick={() => (pubMode === 'draft' ? onSaveDraft?.() : onPublish())}
               /* The product's primary blue — the same #3D8BD0 every other primary in this app uses.
@@ -1896,6 +1927,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
               </>
             )}
           </div>
+          </span>
 
         </div>
       </div>
@@ -1903,7 +1935,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
       {/* ── Work area ── */}
       <div className="flex min-h-0 flex-1">
         {/* Canvas */}
-        <div className="relative min-w-0 flex-1 overflow-y-auto p-5">
+        <div data-tour="canvas" className="relative min-w-0 flex-1 overflow-y-auto p-5">
           <div
             /* The box a floating toolbar must stay inside — the design panel owns the space to its right. */
             data-portal-canvas
@@ -1948,7 +1980,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
 
         {/* Design panel */}
         {!collapsed && (
-          <aside style={{ width }} className="flex flex-shrink-0 flex-col border-l border-[#e5e7eb] bg-white">
+          <aside data-tour="panel" style={{ width }} className="flex flex-shrink-0 flex-col border-l border-[#e5e7eb] bg-white">
             {/* ⚠️ DERIVED, not a second piece of state. With nothing selected and no rail panel open
                 the panel shows the Widgets library — on arrival and again every time you deselect.
                 Holding it in state would mean every path that clears a selection had to remember to
@@ -2036,7 +2068,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
             AI sits apart at the BOTTOM and carries a standing gradient tint: it is not a fifth
             panel of the same kind, it is the shortcut past all four, so it reads as its own thing
             rather than the last item of a list. */}
-        <div className="flex w-[72px] flex-shrink-0 flex-col items-center gap-3 border-l border-[#e5e7eb] bg-white py-4">
+        <div data-tour="rail" className="flex w-[72px] flex-shrink-0 flex-col items-center gap-3 border-l border-[#e5e7eb] bg-white py-4">
           {RAIL.map((r) => {
             const on = active === r.key && !collapsed;
             const ai = r.key === 'ai';
@@ -2063,6 +2095,19 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
           })}
         </div>
       </div>
+
+      {/* ⚠️ Mounted INSIDE the builder shell and after everything it points at, so its targets are
+          in the DOM by the time it measures them. It is below the preview early-return, so opening
+          Preview takes the tour off screen with the rest of the chrome — a spotlight over a page
+          being viewed as a requester would be pointing at controls that are no longer there. */}
+      {tour && (
+        <PortalBuilderTour
+          selectedId={selectedId}
+          onSelect={select}
+          onSeamHold={setTourSeam}
+          onDone={endTour}
+        />
+      )}
     </div>
   );
 }

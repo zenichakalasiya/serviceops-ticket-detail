@@ -61,6 +61,10 @@ interface CanvasCtx {
   addChildBlock: (id: string, type: string) => void;
   /** The Quick Actions row's one addable card — see `toolbarCaps`. */
   addLinkCard?: () => void;
+  /** ⚠️ The seam the first-run tour is pointing at, held open while its card is on screen. A seam
+   *  is a hover affordance — it is 12px of nothing until the pointer finds it — so the one step
+   *  that exists to say "this is here" would otherwise spotlight an empty gap. */
+  tourSeam?: string | null;
   /** Drops into a built-in row, alongside the cards already there. */
   dropInRow: (rowId: string, elementType: string) => void;
   /* ── toolbar actions ── */
@@ -1554,7 +1558,7 @@ function LayoutTile({ rows }: { rows: number[][] }) {
 /* The seam between two sections: an invisible strip that becomes a blue bar on hover, carrying the
    "+ Add Section" pill and a drag grip for stretching the section above it. */
 export function AddSectionSeam({ afterId }: { afterId: string }) {
-  const { enabled, addSection, setStyle, dropAtSeam, moveToSeam, hoverId } = useCanvas();
+  const { enabled, addSection, setStyle, dropAtSeam, moveToSeam, hoverId, tourSeam } = useCanvas();
   const [hover, setHover] = useState(false);
   const [picking, setPicking] = useState(false);
   const [live, setLive] = useState<number | null>(null);
@@ -1615,11 +1619,15 @@ export function AddSectionSeam({ afterId }: { afterId: string }) {
      flash a thick line on every move, for a grip nobody had reached for. It appears only once you
      are actually at the seam, beside the CTA — where dragging it is the next thing you'd do. */
   const withinSection = hoverId === afterId;
-  const showPill = hover || picking || withinSection || !!live;
-  const showLine = hover || picking || !!live;
+  const held = tourSeam === afterId;
+  const showPill = hover || picking || withinSection || !!live || held;
+  const showLine = hover || picking || !!live || held;
 
   return (
     <div
+      /* The tour picks the first seam on the page and reads which block it follows off this. */
+      data-tour="seam"
+      data-seam-after={afterId}
       onClick={(e) => e.stopPropagation()}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}

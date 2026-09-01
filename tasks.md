@@ -962,6 +962,22 @@ Updated: 2026-09-01
 - **Verified:** button **36px → 186px** with the width unchanged at 187 and `h-full` applied; Text, Image and Custom data widget each measured target 186 / inner 186 / painted 186 — the content fills the box exactly. Typecheck: 6 errors before the change, 6 after, all pre-existing.
 - **Note:** Divider is not in the palette at the moment (search returns "No elements found"), so its centring is written but unverified in the browser.
 
+## 71. A first-run tour for the builder
+- **Status:** done
+- **Where:** `PortalBuilderTour.tsx` (new) · `SupportPortalBuilder.tsx` · `PortalCanvas.tsx`
+- **You asked:** the ticket detail page's tour card, and the recommendations from the plan.
+- **The card is the ticket page's, unchanged** — `#1F2937`, 400px, 16px radius, 16/14px type, the white primary button, the "n/N" counter, the arrow, and the `black/60` + 4px-blur overlay with an SVG-masked spotlight and the blue glow ring. A second tour that looked like a different product's tour would teach the admin this screen is not quite part of ServiceOps.
+- **Six steps that teach the MODEL, not the buttons.** An admin who has only ever used forms arrives believing three things that are wrong here — the right side is a form, settings live in one place, and they might break the live portal — so: permission, then click→panel, then what the panel is, then where new things come from, then the one affordance nobody can see, then how to ship.
+- **Step 2 is interactive** (your rec 1): the overlay stops swallowing clicks and a real selection advances the tour, with a **Show me** fallback. Step 3 then describes a panel that was filled a second ago rather than an abstraction.
+- **⚠️ The positioning could NOT be copied.** The ticket tour hardcodes `-100` / `-200` / `-420` with no flip and no clamp — fine in a wide drawer, broken here where the rail is hard right and the top bar hard top. `place()` measures the real card, flips when a side won't hold it, then clamps; the arrow tracks the TARGET's centre, because a clamped card with a 50%-arrow points at empty space.
+- **⚠️ Two bugs the copy brought with it.** (1) The mask SVG is `width: 0; height: 0`, and its `100%` rect resolves to nothing inside a zero-sized viewport — so the overlay was masked away entirely and the tour ran **with no dim at all**. (2) The root `fixed inset-0` hit-tests across the whole screen even when transparent, so the interactive step swallowed the very click it was asking for; the root passes through now and the overlay does the blocking.
+- **⚠️ Targets resolve at runtime** (your rec 3): a blank page has no card to point at, so step 2 finds the first block big enough to read as one. The seam is a hover affordance, so the tour **holds it open** through a `tourSeam` on the canvas context — spotlighting a 12px invisible gap would point at nothing.
+- **Auto-opens once** (your rec 4), read in the state initialiser rather than an effect so a returning admin never sees it flash. **Skip is on every step.** The listing gets nothing (your rec 5).
+- **A `?` in the top bar is the permanent way back** — the tour is a one-time event and this page is edited twice a year. Made a plain button, not the popover the plan drew: the builder has no keyboard-shortcuts sheet, so a menu with one real item is a click in front of the only thing it offers.
+- **Verified:** card 400px / 16px radius / `rgb(31,41,55)`, overlay `black/60` + `blur(4px)`, mask SVG 1400×1000. All six steps fit inside the viewport (rail flips left, Publish flips below). A real click on the spotlit block took 2/6 → 3/6; on step 3 the overlay is the top element at the same point, so clicks are blocked again. Finishing stores `hasSeenPortalBuilderTour=1`, clears the seam hold and hides the card; `?` restarts at 1/6.
+- **Note:** clicking the middle of the spotlit hero selects its **Heading** — innermost-wins, the same thing that makes a button's label easier to hit than the button. Truthful ("every part of this page can be selected") but worth a look if you'd rather the first click landed on the block.
+- **Note:** `TicketDetailsOnboarding` still carries the same `width: 0, height: 0` on its mask SVG. I did not test that page — V1 is final — but it is the same markup in the same browser.
+
 ## Parked — needs discussion
 - Tour guide
 - AI capabilities
