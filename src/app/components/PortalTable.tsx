@@ -374,6 +374,15 @@ export function PortalTable({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
     { kind: 'row' | 'col' | 'cell'; index: number; avoid: AvoidRect; axis: 'x' | 'y' } | null
   >(null);
   const [sel, setSel] = useState<{ r0: number; c0: number; r1: number; c1: number } | null>(null);
+  /* ⚠️ BELOW `sel`, not beside colLit/colOn. Those are arrow functions and are not evaluated until
+     something calls them, so they can sit above the state they read; this is a plain expression
+     evaluated where it stands, and one line higher it is a temporal-dead-zone crash esbuild does
+     not typecheck for and never reports.
+     The corner selects everything, so its lit weight is "everything IS selected" — the question
+     colOn/rowOn ask about one band, asked about the whole table. */
+  const allSelected = !!sel
+    && Math.min(sel.r0, sel.r1) === 0 && Math.max(sel.r0, sel.r1) === rows - 1
+    && Math.min(sel.c0, sel.c1) === 0 && Math.max(sel.c0, sel.c1) === cols - 1;
   const [editing, setEditing] = useState<string | null>(null);
   const [drag, setDrag] = useState<{ kind: 'row' | 'col'; from: number; to: number } | null>(null);
   const dragRef = useRef<typeof drag>(null);
@@ -774,10 +783,14 @@ export function PortalTable({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
         </table>
 
         {/* ── the selection region: ONE stroke around the outside, not a border per cell ── */}
+        {/* ⚠️ ONE stroke around the outside, not a border per cell — and it is 1px, not 2px. At 2px
+            the selection outweighed the table's own 1px grid, so selecting a column redrew the table
+            with one column apparently built to a different spec; the ring has only to say where the
+            range ENDS, and the wash inside says which cells are in it. */}
         {enabled && selRect && (
           <span
             className="pointer-events-none absolute z-[40] rounded-[2px]"
-            style={{ ...selRect, boxShadow: 'inset 0 0 0 2px var(--tt-table-selected-stroke, #3D8BD0)' }}
+            style={{ ...selRect, boxShadow: 'inset 0 0 0 1px var(--tt-table-selected-stroke, #3D8BD0)' }}
           />
         )}
       </div>
@@ -809,12 +822,21 @@ export function PortalTable({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
               /* ⚠️ A GRIP, not a chevron. The bar is a drag handle first and a menu button second —
                  a chevron says "this opens something" and says nothing at all about picking it up,
                  which is exactly the half of the control people could not find. */
-              /* ⚠️ SIX DOTS, on the hovered cell's column only. Grey pill while it is merely under the
-                 pointer, accent-filled once its column is selected or being dragged — the same grip
-                 in two weights, so "this is the one I have hold of" needs no second control. */
-              className={`absolute z-[50] flex items-center justify-center rounded-full transition-opacity transition-colors ${
+              /* ⚠️ SIX DOTS, on the hovered cell's column only — and the DOTS carry the state, not a
+                 slab behind them. A filled pill was a saturated bar sitting above every column the
+                 pointer crossed: the loudest thing on a canvas whose whole subject is the content
+                 underneath it, and at RAIL height it read as a UI element the table had grown rather
+                 than a handle offered to the pointer.
+                 Three weights, all of them quiet: grey dots on nothing while the column is merely
+                 lit; a pale grey ground the moment the pointer is actually ON the grip, because a
+                 button with no ground at all gives you nothing to aim at; and a pale ACCENT ground
+                 with accent dots once the column is selected or being dragged. The two-weight story
+                 the pill was telling survives — it is just told in tint instead of fill.
+                 ⚠️ `transition`, not `transition-opacity transition-colors`. Both set
+                 `transition-property`, so the second silently won and the grip's fade-in never ran. */
+              className={`absolute z-[50] flex items-center justify-center rounded transition ${
                 colLit(i) ? 'opacity-100' : 'pointer-events-none opacity-0'
-              } ${colOn(i) ? 'bg-[#3D8BD0] text-white' : 'bg-[#B6C2D5] text-white'}`}
+              } ${colOn(i) ? 'bg-[#EBF5FF] text-[#3D8BD0]' : 'bg-transparent text-[#B6C2D5] hover:bg-[#F1F5F9] hover:text-[#7B8FA5]'}`}
             ><GripHorizontal size={12} /></button>
           ))}
           {/* row rail */}
@@ -838,9 +860,9 @@ export function PortalTable({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
                 });
               }}
               style={{ top: y + RAIL + 4, height: geo.h[i] - 2, left: 0, width: RAIL, cursor: drag?.kind === 'row' ? 'grabbing' : 'grab' }}
-              className={`absolute z-[50] flex items-center justify-center rounded-full transition-opacity transition-colors ${
+              className={`absolute z-[50] flex items-center justify-center rounded transition ${
                 rowLit(i) ? 'opacity-100' : 'pointer-events-none opacity-0'
-              } ${rowOn(i) ? 'bg-[#3D8BD0] text-white' : 'bg-[#B6C2D5] text-white'}`}
+              } ${rowOn(i) ? 'bg-[#EBF5FF] text-[#3D8BD0]' : 'bg-transparent text-[#B6C2D5] hover:bg-[#F1F5F9] hover:text-[#7B8FA5]'}`}
             ><GripVertical size={12} /></button>
           ))}
 
@@ -850,9 +872,11 @@ export function PortalTable({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
             aria-label="Select the whole table"
             onClick={(e) => { e.stopPropagation(); setSel({ r0: 0, c0: 0, r1: rows - 1, c1: cols - 1 }); }}
             style={{ width: RAIL, height: RAIL }}
-            className={`absolute left-0 top-0 z-[50] rounded-[3px] bg-[#EEF2F6] transition-opacity transition-colors hover:bg-[#DDE5EC] ${
+            /* Same three weights as the grips, so the corner reads as one of them rather than as a
+               fourth kind of control in the same 14px rail. */
+            className={`absolute left-0 top-0 z-[50] rounded transition ${
               overTable || drag ? 'opacity-100' : 'opacity-0'
-            }`}
+            } ${allSelected ? 'bg-[#EBF5FF]' : 'bg-[#F1F5F9] hover:bg-[#E4EAF1]'}`}
           />
 
           {/* live drop indicator while reordering */}
@@ -956,8 +980,8 @@ export function PortalTable({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
                   avoid: { left: b.left, right: b.right, top: b.top, bottom: b.bottom },
                 });
               }}
-              style={{ left: selRect.left + RAIL + 4 + selRect.width - 5, top: selRect.top + RAIL + 4 + selRect.height / 2 - 5 }}
-              className="absolute z-[60] size-[10px] rounded-full border-2 border-white bg-[#3D8BD0] shadow-[0_1px_3px_rgba(16,24,40,0.3)] transition-transform hover:scale-125"
+              style={{ left: selRect.left + RAIL + 4 + selRect.width - 4.5, top: selRect.top + RAIL + 4 + selRect.height / 2 - 4.5 }}
+              className="absolute z-[60] size-[9px] rounded-full border-2 border-white bg-[#3D8BD0] shadow-[0_1px_2px_rgba(16,24,40,0.16)] transition-transform hover:scale-125"
             />
           )}
         </>
@@ -1032,7 +1056,11 @@ function TableCellView({
            you reached for on top of it, so it has to be the last word. `undefined` leaves `face`
            alone, which is what "Default text" means. */
         ...(cell.color ? { color: cell.color } : {}),
-        ...(selected ? { background: cell.bg ?? 'var(--tt-table-selected-bg, #EBF5FF)' } : {}),
+        /* ⚠️ A WASH, not a fill. This was #EBF5FF — the product's ID-pill blue, which is sized for a
+           chip a few characters wide and becomes a solid blue block the moment it covers a whole
+           table. Selection has to be legible, not loud: the thin ring above draws the boundary and
+           this only has to tell you which side of it a cell is on. */
+        ...(selected ? { background: cell.bg ?? 'var(--tt-table-selected-bg, #F4F8FD)' } : {}),
       }}
     >
       <div

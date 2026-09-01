@@ -1,6 +1,6 @@
 {
   "stamp": "2026-09-01",
-  "builtAt": "2026-09-01T14:28:29.610Z",
+  "builtAt": "2026-09-01T14:41:18.302Z",
   "tasks": [
     {
       "n": 1,
@@ -1008,6 +1008,16 @@
         "Where": "`SupportPortalPreview.tsx`",
         "You asked": "the two cards below each other rather than side by side, their tiles stretching the card's width, and a filled card instead of an outlined one with a clean hierarchy inside.",
         "Verified": "requests and approvals stay side by side at 261px each; **My Assets is 538px at y=1087 and My CIs 538px at y=1323** — full width, stacked. Both are `rgb(245,247,250)` with `border: 0px`; tiles are white with `border: 0px`. Card height went **401 → 221px** and the space under the last tile is 27px of padding rather than 200px of nothing. A tile reads \"Dell Latitude 5440 / AST-3 · Laptop\"."
+      }
+    },
+    {
+      "n": 69,
+      "title": "The table's grips and selection stop shouting",
+      "status": "done",
+      "fields": {
+        "Where": "`PortalTable.tsx`",
+        "You asked": "a clean drag handle instead of the filled pill behind it, same hover behaviour; and a minimal, attractive selection instead of the primary blue.",
+        "Verified": "grip at rest `rgba(0,0,0,0)` — no pill — with `#B6C2D5` dots; on direct hover `#F1F5F9` with `#7B8FA5` dots; selected `#EBF5FF` with `#3D8BD0` dots, radius 4px on all three. Ring reads `inset 0 0 0 1px`; a selected cell is `rgb(244,248,253)` against a transparent unselected one. Select-all corner `#F1F5F9` → `#EBF5FF` when everything is selected. Fill handle 9px. No console errors."
       }
     }
   ],

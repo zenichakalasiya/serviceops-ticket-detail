@@ -940,6 +940,17 @@ Updated: 2026-09-01
 - **Verified:** requests and approvals stay side by side at 261px each; **My Assets is 538px at y=1087 and My CIs 538px at y=1323** — full width, stacked. Both are `rgb(245,247,250)` with `border: 0px`; tiles are white with `border: 0px`. Card height went **401 → 221px** and the space under the last tile is 27px of padding rather than 200px of nothing. A tile reads "Dell Latitude 5440 / AST-3 · Laptop".
 - **Tiles are TWO columns at every width.** Four across was tried once the card went full width — the arithmetic said ~170px a tile, which is what the two-up tiles used to measure — but a tile is not just its box: at that width "Dell UltraSharp U2723QE" and "localhost.localdomain" both truncate to a few characters, and a tile whose NAME is unreadable has lost the one thing it leads with. Wider tiles over two rows beat four columns of ellipsis. Verified at two viewport widths: 2 per row at both, tiles 248px on a 538px card and 381px on an 805px one, with every name rendering in full.
 
+## 69. The table's grips and selection stop shouting
+- **Status:** done
+- **Where:** `PortalTable.tsx`
+- **You asked:** a clean drag handle instead of the filled pill behind it, same hover behaviour; and a minimal, attractive selection instead of the primary blue.
+- **The dots carry the state now, not a slab behind them.** A filled pill put a saturated bar above every column the pointer crossed — the loudest thing on a canvas whose whole subject is the content underneath it. Three weights, all quiet: grey dots on nothing while the column is merely lit, a pale grey ground once the pointer is actually ON the grip (a button with no ground gives you nothing to aim at), and a pale ACCENT ground with accent dots once it is selected or dragged. The two-weight story the pill told survives — told in tint instead of fill.
+- **The selection ring went 2px → 1px.** At 2px it outweighed the table's own 1px grid, so selecting a column redrew the table as though that column were built to a different spec. The ring only has to say where the range ENDS; the wash says which cells are in it.
+- **The wash was the ID-pill blue.** `#EBF5FF` is sized for a chip a few characters wide and becomes a solid blue block the moment it covers a whole table — `#F4F8FD` now.
+- **⚠️ Found on the way — the grips never faded.** `transition-opacity transition-colors` both set `transition-property`, so the second silently won and the fade-in had never run.
+- **⚠️ And a temporal dead zone.** `allSelected` is a plain expression, so unlike `colOn`/`rowOn` beside it (arrow functions, evaluated on call) it had to sit BELOW the state it reads. One line higher it is a crash esbuild does not typecheck for and never reports.
+- **Verified:** grip at rest `rgba(0,0,0,0)` — no pill — with `#B6C2D5` dots; on direct hover `#F1F5F9` with `#7B8FA5` dots; selected `#EBF5FF` with `#3D8BD0` dots, radius 4px on all three. Ring reads `inset 0 0 0 1px`; a selected cell is `rgb(244,248,253)` against a transparent unselected one. Select-all corner `#F1F5F9` → `#EBF5FF` when everything is selected. Fill handle 9px. No console errors.
+
 ## Parked — needs discussion
 - Tour guide
 - AI capabilities
