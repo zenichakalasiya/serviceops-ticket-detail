@@ -1260,7 +1260,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
      0, so the main region — which draws two cards from `work` and two from `records` — came out
      as 0, 1, 0, 1 and CSS interleaved them: Requests, Assets, Approvals, CIs. An order is only
      meaningful within ONE list, and this region mixes two. */
-  const card = (id: string, body: ReactNode, cols?: number, gap = 16, grow = 1, orderAt?: number) => {
+  const card = (id: string, body: ReactNode, cols?: number, gap = 16, grow = 1, orderAt?: number, look?: { full?: boolean; tint?: boolean }) => {
     if (removed.includes(id)) return null;
     /* ⚠️ Membership comes from `rowOf` — the STATIC map of which row a card belongs to — not from
        searching the live `rowOrder`. Deleting a fixed card takes it out of `rowOrder`, so a search
@@ -1273,10 +1273,10 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
     const home = rowOf(id);
     if (home && !(rowOrder[home] ?? []).includes(id)) return null;
     const order = orderAt ?? (home ? (rowOrder[home] ?? []).indexOf(id) : 0);
-    return cardInner(id, body, cols, order, gap, grow);
+    return cardInner(id, body, cols, order, gap, grow, look);
   };
 
-  const cardInner = (id: string, body: ReactNode, cols: number | undefined, order: number, gap = 16, grow = 1) => (
+  const cardInner = (id: string, body: ReactNode, cols: number | undefined, order: number, gap = 16, grow = 1, look?: { full?: boolean; tint?: boolean }) => (
     /* ⚠️ No overflow-hidden here. The chip sits at -top-4 and the toolbar at -top-11, both OUTSIDE
        the wrapper — clipping it silently removes the card's hover outline and quick actions. */
     /* ⚠️ `min-w-0` is what makes the row honour its column count. Without it a card's widest
@@ -1287,10 +1287,20 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
        but this call site spread only the flex share and the order — so padding, margin, width and
        height set on a card were stored and never read, and the controls looked inert while working
        perfectly. Spread before order, which is this row own concern and must win. */
-    <Sel id={id} className="min-w-0 rounded-lg border border-[#E5E7EB] bg-white" style={{ ...(cols ? share(cols, gap, grow) : {}), order }}>
+    /* ⚠️ `gridColumn: 1 / -1` for a full-width card, NOT a bigger flex share. The region that holds
+       these is a GRID — `share()` writes flex properties a grid ignores, which is why a card asking
+       for two columns still came out in one cell. The grid needs to be told in its own language.
+       ⚠️ TINT instead of an outline. A hairline around a card sitting on a white page draws the
+       BOX; a pale fill draws the GROUP, and the white tiles inside then read as items on a surface
+       rather than boxes inside a box — two borders describing one thing. */
+    <Sel
+      id={id}
+      className={`min-w-0 rounded-xl ${look?.tint ? 'bg-[#F5F7FA]' : 'border border-[#E5E7EB] bg-white'}`}
+      style={{ ...(cols ? share(cols, gap, grow) : {}), ...(look?.full ? { gridColumn: '1 / -1' } : {}), order }}
+    >
       {/* No overflow-hidden: a card must be free to grow past a dragged height rather than clip
           its own rows. The radius is on the Sel wrapper, which keeps the corners. */}
-      <div style={st(id)} className="rounded-lg">{body}</div>
+      <div style={st(id)} className="rounded-xl">{body}</div>
     </Sel>
   );
 
@@ -1758,13 +1768,25 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                     flex: '2 1 0%',
                     gap: secGap("work-main"),
                     gridTemplateColumns: `repeat(${secCols("work-main", 2)}, minmax(0, 1fr))`,
-                    gridAutoRows: '1fr',
+                    /* ⚠️ `auto`, not `1fr`. Equal rows made every row as tall as the TALLEST one on
+                       the grid — fine while all four cards were half-width lists of similar length,
+                       and wrong the moment My Assets and My CIs became full-width rows of their own:
+                       each inherited the height of the request list two rows up and carried about
+                       200px of empty tint under its tiles.
+                       ⚠️ The two cards that DO share a row are still the same height — a grid
+                       stretches items within a row by default, which is the behaviour that was
+                       actually wanted here; `1fr` was reaching across rows to get it. */
+                    gridAutoRows: 'auto',
                   }}
                 >
                   {requestsCard}
                   {approvalsCard}
-                  {card('assets', <RecordTiles nodeId="assets" titleFallback={content.assets.title} cfg={wc('assets')} rows={MY_ASSETS} icon={<HardDrive size={17} />} />, 2, secGap("work"), 1, 2)}
-                  {card('cis', <RecordTiles nodeId="cis" titleFallback={content.cis.title} cfg={wc('cis')} rows={MY_CIS} icon={<Server size={17} />} />, 2, secGap("work"), 1, 3)}
+                  {/* ⚠️ FULL WIDTH and stacked, not side by side. Two half-width tile cards put four
+                      tiles into 354px, which is where the "resizing one shrinks the other" complaint
+                      came from — they were competing for one row. Given the whole width each, the
+                      tiles inside get room to spread and the two cards stop fighting. */}
+                  {card('assets', <RecordTiles nodeId="assets" titleFallback={content.assets.title} cfg={wc('assets')} rows={MY_ASSETS} icon={<HardDrive size={17} />} />, undefined, secGap("work"), 1, 2, { full: true, tint: true })}
+                  {card('cis', <RecordTiles nodeId="cis" titleFallback={content.cis.title} cfg={wc('cis')} rows={MY_CIS} icon={<Server size={17} />} />, undefined, secGap("work"), 1, 3, { full: true, tint: true })}
                 </Sel>
                 {/* ⚠️ A SECTION too, and for the same reason: the rail owns how its three cards
                     stack, and that is a different question from how the four beside it are laid
@@ -1905,29 +1927,40 @@ function RecordTiles({ nodeId, titleFallback, cfg, rows, icon }: {
           what lets this row be dragged narrow or dropped into a column and still lay out sensibly.
           Every other grid in this builder that had to survive a resize does the same. */}
       <div className="@container">
-        {/* ⚠️ Two-up is the CEILING now, not four. These cards are half the main region wide on the
-            rail layout, so a four-track grid gave each tile about 90px — narrower than the ID pill
-            and the type beside it, which then wrapped. Two tracks at this width is the widest that
-            still leaves a tile readable. */}
-        <div className="grid grid-cols-1 gap-3 @[290px]:grid-cols-2">
+        {/* ⚠️ Up to FOUR now that the card owns the whole width. It was capped at two because these
+            cards were half the main region wide and a four-track grid gave each tile about 90px —
+            narrower than the ID pill inside it. At full width four tracks are ~170px each, which is
+            what the two-up tiles already measured, so nothing is squeezed to get the extra columns.
+            ⚠️ `@container`, not a viewport breakpoint — the tiles answer to the CARD's width, which
+            is what lets this card be dragged narrow or dropped into a column and still lay out. */}
+        <div className="grid grid-cols-1 gap-2.5 @[290px]:grid-cols-2 @[600px]:grid-cols-4">
           {shown.map((r) => (
-            <div key={r.id} className="flex items-start gap-3 rounded-lg border border-[#E5E7EB] bg-white p-3">
-              <span className="flex size-9 flex-shrink-0 items-center justify-center rounded bg-[#F1F5F9] text-[#475467]">{icon}</span>
-              <span className="min-w-0 flex-1">
-                {/* ⚠️ STACKED, always — never `flex-wrap`. Wrapping means the layout depends on how
-                    long the type happens to be: "Base CI" and "Linux Desktop" pushed to a second
-                    line while "Server" still fitted beside its pill, so CI-3 alone came out with a
-                    different shape from the three tiles next to it. A tile's hierarchy has to be a
-                    property of the TILE, not of the length of one word in it. */}
-                <span className="flex min-w-0 flex-col items-start gap-1">
+            /* ⚠️ NO border. The card around these is a pale fill now, so a white tile is already a
+               distinct surface on it — an outline as well would be two lines describing one edge. */
+            <div key={r.id} className="flex min-w-0 items-center gap-2.5 rounded-lg bg-white p-3 transition-shadow hover:shadow-[0_1px_3px_rgba(16,24,40,0.08)]">
+              <span className="flex size-9 flex-shrink-0 items-center justify-center rounded-md bg-[#EFF4F9] text-[#5A6B80]">{icon}</span>
+              {/* ⚠️ The NAME leads. It was third — under the ID pill and the type — so the tile
+                  opened with a reference number and made you read past it to find out what the thing
+                  actually is. What identifies an asset to a person is its name; the id is how the
+                  system refers to it and the type is a qualifier on the name, so both belong on the
+                  quieter line beneath.
+                  ⚠️ ONE meta line, not two stacked rows. With the name carrying the weight, the id
+                  and the type are the same rank as each other and a dot between them says so in a
+                  line instead of a column — which also holds the tile to two lines whatever the
+                  words are, so four of them stay the same height. */}
+              <span className="flex min-w-0 flex-1 flex-col">
+                <span style={roleStyle(styles, nodeId, 'body')} className="truncate text-[13px] font-medium leading-snug text-[#364658]">{r.name}</span>
+                <span className="mt-1 flex min-w-0 items-center gap-1.5">
                   {cfg.showId !== false && (
-                    <span className="max-w-full truncate whitespace-nowrap rounded-sm bg-[#EBF5FF] px-1.5 py-0.5 text-[12px] font-medium text-[#3D8BD0]">{r.id}</span>
+                    <span className="flex-shrink-0 truncate whitespace-nowrap rounded-sm bg-[#EBF5FF] px-1.5 py-0.5 text-[11px] font-medium text-[#3D8BD0]">{r.id}</span>
+                  )}
+                  {cfg.showId !== false && cfg.showType !== false && (
+                    <span className="flex-shrink-0 text-[11px] text-[#C3CBD6]">·</span>
                   )}
                   {cfg.showType !== false && (
-                    <span style={roleStyle(styles, nodeId, 'meta')} className="max-w-full truncate text-[12px] text-[#7B8FA5]">{r.type}</span>
+                    <span style={roleStyle(styles, nodeId, 'meta')} className="min-w-0 truncate text-[11.5px] text-[#7B8FA5]">{r.type}</span>
                   )}
                 </span>
-                <span style={roleStyle(styles, nodeId, 'body')} className="mt-1.5 block truncate text-[13px] text-[#364658]">{r.name}</span>
               </span>
             </div>
           ))}

@@ -929,6 +929,17 @@ Updated: 2026-09-01
 - **Verified:** the palette lists "Custom data widget" and no KPI — and searching "kpi" now finds the merged widget, because the keyword came with it. The panel reads "Show as · Record list · KPI · Title · Module · Filter". Flipping to KPI drew **3** at 30px with its icon over "My records"; flipping back restored the full row list. Changing the module from Requests to Approvals took the number **3 → 2**, and the list agreed at 2. No console errors.
 - **Note:** narrowing to "My Overdue Requests" left the count at 3 — the sample rows carry no due date, so that condition passes in the builder by the documented rule. On the live portal it queries the module properly.
 
+## 68. My Assets and My CIs — stacked, tinted, and re-ranked
+- **Status:** done
+- **Where:** `SupportPortalPreview.tsx`
+- **You asked:** the two cards below each other rather than side by side, their tiles stretching the card's width, and a filled card instead of an outlined one with a clean hierarchy inside.
+- **⚠️ Full width needed `gridColumn: 1 / -1`, not a bigger share.** The region holding them is a GRID, and `share()` writes FLEX properties a grid ignores — which is why a card already asking for two columns still came out in one cell. The grid had to be told in its own language.
+- **⚠️ TINT instead of an outline.** A hairline around a card on a white page draws the BOX; a pale fill draws the GROUP — and the white tiles inside then read as items ON a surface rather than boxes inside a box, which is two borders describing one thing. The tiles lost their own border for the same reason.
+- **⚠️ The NAME leads now.** It was third, under the ID pill and the type, so a tile opened with a reference number and made you read past it to find out what the thing is. What identifies an asset to a person is its name; the id is how the system refers to it and the type qualifies the name, so both moved to a quieter line beneath — **one line with a dot**, not two stacked rows, which also holds every tile to two lines whatever the words are.
+- **⚠️ Found in the screenshot — 200px of dead tint under the tiles.** `gridAutoRows: '1fr'` made every row as tall as the tallest on the grid: fine while all four cards were half-width lists of similar length, wrong the moment these two became full-width rows and inherited the height of the request list two rows up. `auto` fixes it, and the two cards that DO share a row are still equal height because a grid stretches within a row by default — `1fr` was reaching across rows to get something it already had.
+- **Verified:** requests and approvals stay side by side at 261px each; **My Assets is 538px at y=1087 and My CIs 538px at y=1323** — full width, stacked. Both are `rgb(245,247,250)` with `border: 0px`; tiles are white with `border: 0px`. Card height went **401 → 221px** and the space under the last tile is 27px of padding rather than 200px of nothing. A tile reads "Dell Latitude 5440 / AST-3 · Laptop".
+- **Note on the tiles:** they lay out 2×2 filling the 538px card, at 248px each — 55% wider than the 160px they had before, so they did stretch into the new width. Four across at this width would be ~118px per tile, which truncates "Dell UltraSharp U2723QE" to about six characters; the grid goes to four tracks on its own if the card is ever dragged past 600px. Say the word if you want four across regardless.
+
 ## Parked — needs discussion
 - Tour guide
 - AI capabilities

@@ -1,6 +1,6 @@
 {
   "stamp": "2026-09-01",
-  "builtAt": "2026-09-01T13:12:24.420Z",
+  "builtAt": "2026-09-01T13:51:15.623Z",
   "tasks": [
     {
       "n": 1,
@@ -998,6 +998,17 @@
         "What I built": "a **Show as** control, first in the Content group, above Module and Filter. The two were always the same question — \"which records?\" — answered at two lengths, so they share the module and the filter and differ only in how the answer is drawn. As two palette entries an admin had to decide which they wanted BEFORE choosing a module, and changing their mind meant building the whole thing again.",
         "Verified": "the palette lists \"Custom data widget\" and no KPI — and searching \"kpi\" now finds the merged widget, because the keyword came with it. The panel reads \"Show as · Record list · KPI · Title · Module · Filter\". Flipping to KPI drew **3** at 30px with its icon over \"My records\"; flipping back restored the full row list. Changing the module from Requests to Approvals took the number **3 → 2**, and the list agreed at 2. No console errors.",
         "Note": "narrowing to \"My Overdue Requests\" left the count at 3 — the sample rows carry no due date, so that condition passes in the builder by the documented rule. On the live portal it queries the module properly."
+      }
+    },
+    {
+      "n": 68,
+      "title": "My Assets and My CIs — stacked, tinted, and re-ranked",
+      "status": "done",
+      "fields": {
+        "Where": "`SupportPortalPreview.tsx`",
+        "You asked": "the two cards below each other rather than side by side, their tiles stretching the card's width, and a filled card instead of an outlined one with a clean hierarchy inside.",
+        "Verified": "requests and approvals stay side by side at 261px each; **My Assets is 538px at y=1087 and My CIs 538px at y=1323** — full width, stacked. Both are `rgb(245,247,250)` with `border: 0px`; tiles are white with `border: 0px`. Card height went **401 → 221px** and the space under the last tile is 27px of padding rather than 200px of nothing. A tile reads \"Dell Latitude 5440 / AST-3 · Laptop\".",
+        "Note on the tiles": "they lay out 2×2 filling the 538px card, at 248px each — 55% wider than the 160px they had before, so they did stretch into the new width. Four across at this width would be ~118px per tile, which truncates \"Dell UltraSharp U2723QE\" to about six characters; the grid goes to four tracks on its own if the card is ever dragged past 600px. Say the word if you want four across regardless."
       }
     }
   ],
