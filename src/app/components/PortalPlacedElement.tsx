@@ -29,10 +29,16 @@ const empty = 'text-[13px] text-[#9CA3AF]';
 function StyledBox({ children, id }: { children: React.ReactNode; id: string }) {
   const { styles } = useCanvas();
   const css = containerCss(styles ?? {}, id);
-  /* `h-full` for the same reason `Surface` takes it — when this box exists it is the element's
-     root, so it is what has to grow into a dragged height rather than sit at its natural size
-     inside one. */
-  return Object.keys(css).length ? <div className="h-full" style={css}>{children}</div> : <>{children}</>;
+  /* ⚠️ It renders for a dragged HEIGHT too, not only for container styling. As "styled or nothing"
+     this collapsed to a fragment on every untouched element — which broke the chain a height has to
+     travel down: Sel's fill box stretches its direct child, and with no box here that child was
+     whatever the leaf renderer happened to open with, two levels too deep to hear about it.
+     ⚠️ And it CONDUCTS: `h-full` takes the room, the flex column plus a stretched child passes it
+     to the thing that actually draws the element. Only while a height is set — an always-on
+     `flex-1` would restretch every untouched element on the canvas. */
+  const grow = styles?.[id]?.height !== undefined;
+  const cls = grow ? 'flex h-full flex-col [&>*]:min-h-0 [&>*]:flex-1' : 'h-full';
+  return Object.keys(css).length || grow ? <div className={cls} style={css}>{children}</div> : <>{children}</>;
 }
 
 /** Card-shaped elements get a surface; everything else sits directly on the section.
@@ -118,7 +124,10 @@ function specDrivenBody(type: string, cfg: Record<string, unknown> | undefined, 
     const html = String(cfg.html ?? '');
     if (!html) return null;
     return (
+      /* Words cannot stretch, but the BLOCK can — which is what a fill or a border on it needs in
+         order to reach the height that was dragged. The text stays where it reads from. */
       <div
+        className={ownStyle?.height !== undefined ? 'h-full' : undefined}
         style={{
           textAlign: cfg.textAlign as never,
           columnCount: cfg.textCols === '2' ? 2 : undefined,
@@ -141,10 +150,15 @@ function specDrivenBody(type: string, cfg: Record<string, unknown> | undefined, 
   if (type === 'l-divider') {
     const align = String(cfg.align ?? 'stretch');
     const stretch = align === 'stretch';
+    /* A rule has no height to give, so extra room is space AROUND it: it centres. Pinned to the
+       top it left the line at the very edge of a tall selection, which reads as a mistake. */
+    const tallDiv = ownStyle?.height !== undefined;
     return (
       <span
-        className="block w-full"
-        style={{ textAlign: stretch ? undefined : (align as never) }}
+        className={`w-full ${tallDiv ? 'flex h-full items-center' : 'block'}`}
+        style={tallDiv
+          ? { justifyContent: ({ left: 'flex-start', center: 'center', right: 'flex-end' } as Record<string, string>)[align] }
+          : { textAlign: stretch ? undefined : (align as never) }}
       >
         <span
           className="inline-block align-middle"
@@ -265,7 +279,15 @@ function specDrivenBody(type: string, cfg: Record<string, unknown> | undefined, 
        say the same thing about this button, and having the drag flip the switch would make the panel
        report a decision the admin never made — then leave it set after the width was dragged back. */
     const dragged = ownStyle?.widthPct !== undefined || ownStyle?.width !== undefined;
-    const common = `inline-flex max-w-full items-center justify-center gap-2 break-words text-center font-medium ${BTN_SIZE[String(cfg.size ?? 'md')]} ${cfg.fullWidth || dragged ? 'w-full' : ''}`;
+    /* ⚠️ The SAME argument as the width above, on the other axis — and it had only ever been made
+       for width. Stretching a button down moved its outline and left the button its own text-height
+       at the top of a tall empty selection: "the outline moved and the thing did not", which is the
+       exact complaint the width fix was written to answer.
+       ⚠️ Read from STYLES here rather than stretched by the wrapper, for the same reason: Sel's
+       `[&>*]` reaches ONE level and this button is a grandchild of it. The element that draws the
+       button is the only one that can make the button tall. */
+    const draggedH = ownStyle?.height !== undefined;
+    const common = `inline-flex max-w-full items-center justify-center gap-2 break-words text-center font-medium ${BTN_SIZE[String(cfg.size ?? 'md')]} ${cfg.fullWidth || dragged ? 'w-full' : ''} ${draggedH ? 'h-full' : ''}`;
     /* ⚠️ The fallback is the THEME's variable, not a literal: an untouched button has to follow the
        theme's button style, while one that set its own radius keeps it. A hard 6 made every button
        opt out of the theme by default. */
@@ -289,9 +311,12 @@ function specDrivenBody(type: string, cfg: Record<string, unknown> | undefined, 
     };
     let btn: ReactNode;
     if (style === 'icon') {
-      btn = <span title={String(cfg.label ?? 'Button')} style={{ ...radius, ...face, background: fill, color: text }} className="inline-flex size-9 items-center justify-center">{glyph ?? '★'}</span>;
+      /* `size-9` is a width AND a height, so the height half has to go when one was dragged. */
+      btn = <span title={String(cfg.label ?? 'Button')} style={{ ...radius, ...face, background: fill, color: text }} className={`inline-flex w-9 items-center justify-center ${draggedH ? 'h-full' : 'h-9'}`}>{glyph ?? '★'}</span>;
     } else if (style === 'link') {
-      btn = <span style={{ ...face, color: text }} className="inline-block max-w-full break-words underline">{glyph}{label}</span>;
+      /* A link is words, not a box: it centres in the room rather than stretching, because there is
+         no surface on it for the extra height to show up on. */
+      btn = <span style={{ ...face, color: text }} className={`max-w-full break-words underline ${draggedH ? 'flex h-full items-center' : 'inline-block'}`}>{glyph}{label}</span>;
     } else if (style === 'outline') {
       btn = <span style={{ ...radius, ...face, borderColor: (cfg.borderColor as string) ?? '#3D8BD0', color: text }} className={`${common} border bg-white`}>{glyph}{label}</span>;
     } else {
@@ -299,7 +324,7 @@ function specDrivenBody(type: string, cfg: Record<string, unknown> | undefined, 
     }
     /* A button is inline, so it can only be placed by the block around it — which is why Alignment
        lives on the button rather than being something you reach for on its column. */
-    return <span className="block" style={{ textAlign: (cfg.contentAlign as never) ?? 'left' }}>{btn}</span>;
+    return <span className={`block ${draggedH ? 'h-full' : ''}`} style={{ textAlign: (cfg.contentAlign as never) ?? 'left' }}>{btn}</span>;
   }
 
   if (type === 'v-video') {
@@ -401,7 +426,7 @@ function specDrivenBody(type: string, cfg: Record<string, unknown> | undefined, 
     const noIcon = cfg.layout === 'none';
     const top = cfg.layout === 'top';
     return (
-      <div className={`flex gap-3 ${top ? 'flex-col' : 'items-center'}`}>
+      <div className={`flex gap-3 ${top ? 'flex-col justify-center' : 'items-center'} ${ownStyle?.height !== undefined ? 'h-full' : ''}`}>
         {!noIcon && (
           <Sel id={`${nodeId}-icon`} className="flex-shrink-0">
             <span

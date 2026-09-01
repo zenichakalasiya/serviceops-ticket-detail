@@ -1,6 +1,6 @@
 {
   "stamp": "2026-09-01",
-  "builtAt": "2026-09-01T14:41:18.302Z",
+  "builtAt": "2026-09-01T17:02:56.051Z",
   "tasks": [
     {
       "n": 1,
@@ -1018,6 +1018,17 @@
         "Where": "`PortalTable.tsx`",
         "You asked": "a clean drag handle instead of the filled pill behind it, same hover behaviour; and a minimal, attractive selection instead of the primary blue.",
         "Verified": "grip at rest `rgba(0,0,0,0)` — no pill — with `#B6C2D5` dots; on direct hover `#F1F5F9` with `#7B8FA5` dots; selected `#EBF5FF` with `#3D8BD0` dots, radius 4px on all three. Ring reads `inset 0 0 0 1px`; a selected cell is `rgb(244,248,253)` against a transparent unselected one. Select-all corner `#F1F5F9` → `#EBF5FF` when everything is selected. Fill handle 9px. No console errors."
+      }
+    },
+    {
+      "n": 70,
+      "title": "Elements resize vertically, not only horizontally",
+      "status": "done",
+      "fields": {
+        "Where": "`PortalPlacedElement.tsx`",
+        "You asked": "the button stretches sideways but not down — fix it, and check the basic, visual and custom widgets too.",
+        "Verified": "button **36px → 186px** with the width unchanged at 187 and `h-full` applied; Text, Image and Custom data widget each measured target 186 / inner 186 / painted 186 — the content fills the box exactly. Typecheck: 6 errors before the change, 6 after, all pre-existing.",
+        "Note": "Divider is not in the palette at the moment (search returns \"No elements found\"), so its centring is written but unverified in the browser."
       }
     }
   ],

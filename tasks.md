@@ -951,6 +951,17 @@ Updated: 2026-09-01
 - **⚠️ And a temporal dead zone.** `allSelected` is a plain expression, so unlike `colOn`/`rowOn` beside it (arrow functions, evaluated on call) it had to sit BELOW the state it reads. One line higher it is a crash esbuild does not typecheck for and never reports.
 - **Verified:** grip at rest `rgba(0,0,0,0)` — no pill — with `#B6C2D5` dots; on direct hover `#F1F5F9` with `#7B8FA5` dots; selected `#EBF5FF` with `#3D8BD0` dots, radius 4px on all three. Ring reads `inset 0 0 0 1px`; a selected cell is `rgb(244,248,253)` against a transparent unselected one. Select-all corner `#F1F5F9` → `#EBF5FF` when everything is selected. Fill handle 9px. No console errors.
 
+## 70. Elements resize vertically, not only horizontally
+- **Status:** done
+- **Where:** `PortalPlacedElement.tsx`
+- **You asked:** the button stretches sideways but not down — fix it, and check the basic, visual and custom widgets too.
+- **The argument for width had never been made for height.** A dragged WIDTH is read from the style store by the renderer, with a comment explaining why: Sel's fill box stretches with `[&>*]`, which reaches ONE level, and the button is a grandchild of it. Height went through the same wrapper and hit the same wall — so stretching a button down moved its outline and left the button its own text-height at the top of a tall empty selection. Same fix, other axis.
+- **⚠️ And the chain broke a level earlier.** `StyledBox` rendered its box only when the element had container styling, collapsing to a fragment otherwise — so on an untouched element the height had nowhere to travel through at all. It now renders for a dragged height too, and conducts: `h-full`, a flex column, and a stretched child. Only while a height is set, or an always-on `flex-1` would restretch every untouched element on the canvas.
+- **Filling is not the same answer for every element.** A button, an image and a data card take the room (`h-full`). A LINK button and a divider centre in it — words and a rule have no height to give, so extra space is space around them, and pinned to the top a rule sits at the very edge of a tall selection and reads as a mistake. Text keeps its words at the top but grows its BLOCK, which is what a fill or a border on it needs in order to reach the dragged height.
+- **⚠️ `size-9` on the icon button is a width AND a height** — the height half had to go when one was dragged, or the one button style that was square stayed square.
+- **Verified:** button **36px → 186px** with the width unchanged at 187 and `h-full` applied; Text, Image and Custom data widget each measured target 186 / inner 186 / painted 186 — the content fills the box exactly. Typecheck: 6 errors before the change, 6 after, all pre-existing.
+- **Note:** Divider is not in the palette at the moment (search returns "No elements found"), so its centring is written but unverified in the browser.
+
 ## Parked — needs discussion
 - Tour guide
 - AI capabilities
