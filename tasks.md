@@ -1000,6 +1000,19 @@ Updated: 2026-09-01
 - Prose in the comments was swept in a **second pass**, deliberately separate from the value rename, so a sweep can never silently reword an explanation while it is changing a value.
 - **Verified:** tabs read `Data · Actions · Basic · Visual · Custom` with the section heading `DATA`; **13 rows still render greyed** (9 Data + 4 Actions), which is the predefined group rule still firing after the rename; Custom still holds `FAQ` + `Custom data widget`; the `?` is still on the top bar. Build green, no type errors.
 
+## 74. The tour is asked for, and opens on Quick Actions
+- **Status:** done
+- **Where:** `PortalBuilderTour.tsx` · `SupportPortalBuilder.tsx`
+- **You asked:** start the tour only from the ? beside undo/redo, drop the first popup, and highlight Quick Actions instead of the banner so the floating toolbar is part of what it shows.
+- **⚠️ The localStorage key went with the auto-open.** With nothing opening on arrival there is no "have they seen it" to remember — and a flag nothing reads is state you have to keep correct forever in exchange for nothing. `TOUR_KEY` is gone from both files.
+- **The welcome card is gone and the count is 1–5.** It said what the screen is and that nothing is live until you publish: both true, and both things a person reads past to reach the tour they asked for. The publish half survives as the last step, where it is an instruction rather than a preamble — and now that the tour is chosen rather than sprung, its first line no longer has to introduce itself.
+- **⚠️ Quick Actions earns the step where the banner did not.** Selecting the banner produces a panel and little else; selecting a row you can act on produces the **floating toolbar too**, so one click shows both halves of what selection gets you. The copy names both.
+- **⚠️ The hole had to grow UPWARD.** The toolbar sits 44px above the element it belongs to, so at a uniform padding it appeared outside the spotlight and dimmed — which reads as something that is not part of what you just did. `padTop` is a separate value from `padding` for exactly this.
+- **⚠️ And the step had to slow down.** At 420ms the toolbar and the panel both appeared and the card moved on in the same glance, so the step demonstrated something nobody had time to look at. 1100ms now.
+- **`resolveTarget` falls back to `data-node`** after `data-tour`, so a step can aim at any block the canvas already labels without a second anchor being added for the tour's benefit. An interactive step with no such block falls back to the first real block on the page, so a from-scratch portal still has something to click.
+- **Verified:** nothing opens on entry; the ? opens **1/5** titled "Click a block to edit it" with Show me / Skip / Next and no Back. The hole clears the row by **58px above and 10px on the other three sides**; after a real click the floating toolbar measures **inside** the hole (toolbar top 335, hole 321–483) and the tour moves to 2/5.
+- **Note:** you said the flow gets another pass once the other tasks are done — this is the shape as asked, not settled.
+
 ## Parked — needs discussion
 - Tour guide
 - AI capabilities

@@ -26,7 +26,7 @@ import {
   sectionElements, sectionFromRows, sectionIdOfBox, sectionRebuild, sectionRows, setBoxDir, setBoxEl,
   splitBlockedBecause, splitBox,
 } from './portalPageModel';
-import { PortalBuilderTour, TOUR_KEY } from './PortalBuilderTour';
+import { PortalBuilderTour } from './PortalBuilderTour';
 import { PortalWidgetDrawer } from './PortalWidgetDrawer';
 import { WIDGET_FOR_NODE, WIDGET_FOR_TYPE, specById, structureSpecId } from './portalWidgetSpec';
 import type { Cfg, WidgetSpec } from './portalWidgetSpec';
@@ -1593,19 +1593,14 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     setIconPick({ id, rect: anchor });
   }, []);
 
-  /* ⚠️ Auto-opens ONCE, and Skip is on every step. Offering it instead — a "New here?" chip — is
-     politer to the admin who wants one edit, and is ignored by exactly the people who need it.
-     ⚠️ Read in the initialiser, not an effect: an effect runs after the first paint, so a returning
-     admin would see the overlay flash before it decided not to show. */
-  const [tour, setTour] = useState(() => {
-    try { return localStorage.getItem(TOUR_KEY) !== '1'; } catch { return false; }
-  });
+  /* ⚠️ ASKED FOR, never automatic. It used to open once on a first visit and remember that in
+     localStorage; it now runs only from the ? beside undo/redo. An admin who came here to change one
+     thing gets to change it, and the tour is where somebody who wants it will look.
+     ⚠️ Nothing is stored. With no auto-open there is no "have they seen it" to remember, and a flag
+     nothing reads is state you have to keep correct forever in exchange for nothing. */
+  const [tour, setTour] = useState(false);
   const [tourSeam, setTourSeam] = useState<string | null>(null);
-  const endTour = useCallback(() => {
-    setTour(false);
-    setTourSeam(null);
-    try { localStorage.setItem(TOUR_KEY, '1'); } catch { /* private mode — the tour simply runs again */ }
-  }, []);
+  const endTour = useCallback(() => { setTour(false); setTourSeam(null); }, []);
 
   const canvasCtx = {
     selectedId, hoverId, select, setHover: setHoverId, styles, setStyle, setText, setCfg: patchCfg,
@@ -1816,17 +1811,17 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
               className={`${iconBtn} disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent`}
             ><Redo2 size={17} /></button>
           </TooltipTrigger><TooltipContent>{canRedo ? 'Redo (Ctrl+Shift+Z)' : 'Nothing to redo'}</TooltipContent></Tooltip>
-          {/* ⚠️ The tour is a one-time event and an admin edits this page perhaps twice a year — so
-              if the tour were the only teaching surface, the second visit would be as blind as the
-              first. This is the permanent way back to it.
+          {/* ⚠️ The ONLY way into the tour. Nothing opens it on arrival any more, so this is not a
+              way back to something — it is the entry point, and the reason it sits in the top bar
+              rather than in a menu.
               ⚠️ A BUTTON, not a popover. The plan had it opening a small menu with the tour and a
               keyboard-shortcuts sheet, but the builder has no shortcuts sheet, and a menu with one
               real item is a second click in front of the only thing it offers. */}
           <Tooltip><TooltipTrigger asChild>
-            <button onClick={() => setTour(true)} aria-label="Take the tour again" className={iconBtn}>
+            <button onClick={() => setTour(true)} aria-label="Take the tour" className={iconBtn}>
               <HelpCircle size={17} />
             </button>
-          </TooltipTrigger><TooltipContent>Take the tour again</TooltipContent></Tooltip>
+          </TooltipTrigger><TooltipContent>Take the tour</TooltipContent></Tooltip>
 
           {/* ── Light / dark, for the whole canvas ──────────────────────────────────────────────
               ⚠️ It used to sit on the THEME panel's title row, which put it three clicks away from

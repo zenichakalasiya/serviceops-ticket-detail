@@ -19,11 +19,11 @@ import { useState, useEffect, useRef, useCallback, useLayoutEffect } from 'react
  * a card placed by those numbers lands off-screen. `place()` below measures the real card and
  * flips, then clamps.
  *
- * Reset for testing:
- *   localStorage.removeItem('hasSeenPortalBuilderTour');
+ * ⚠️ It does NOT auto-open, and stores nothing. It ran once per admin on first entry and is now
+ * reached only from the ? in the top bar — so there is no "have they seen it" to remember, and the
+ * localStorage key went with the behaviour that needed it. A flag nothing reads is a state you have
+ * to keep correct forever in exchange for nothing.
  */
-
-export const TOUR_KEY = 'hasSeenPortalBuilderTour';
 
 type Pos = 'top' | 'bottom' | 'left' | 'right' | 'center';
 
@@ -35,6 +35,8 @@ interface Step {
   target?: string;
   position: Pos;
   padding?: number;
+  /** Extra room ABOVE the target — the floating toolbar sits outside the element it belongs to. */
+  padTop?: number;
   /** The one step you DO rather than watch: the overlay stops swallowing clicks. */
   interactive?: boolean;
   /** Holds the first seam open, since it is a hover affordance and would not be there to point at. */
@@ -47,21 +49,25 @@ interface Step {
    permission first, then click→panel, then what the panel is, then where new things come from,
    then the one affordance nobody can see, then how to ship. */
 const STEPS: Step[] = [
-  {
-    id: 'welcome',
-    title: 'You’re editing the portal your requesters see',
-    description:
-      'This is the real page, not a preview. Change anything on it — nothing reaches your requesters until you publish.',
-    position: 'center',
-  },
+  /* ⚠️ There is no welcome card. It said what this screen is and that nothing is live until you
+     publish — true, and both are things a person reads past to reach the tour they asked for. The
+     publish half survives as the last step, where it is an instruction rather than a preamble.
+     ⚠️ And the tour now opens from the ? rather than on arrival, so the first thing it says no
+     longer has to introduce itself: you already chose it. */
   {
     id: 'select',
     title: 'Click a block to edit it',
     description:
-      'Every part of this page can be selected. Try this card — the panel on the right becomes its settings.',
-    target: 'first-block',
+      'Every part of this page can be selected. Try this row — a toolbar appears above it for moving, duplicating and deleting, and the panel on the right becomes its settings.',
+    /* ⚠️ The Quick Actions row, not the banner. Selecting the banner produces a panel and little
+       else; selecting a row you can act on produces the floating toolbar too, so one click shows
+       both halves of what selection gets you. */
+    target: 'quick',
     position: 'right',
     padding: 10,
+    /* Room for the toolbar, which sits 44px ABOVE the element it belongs to — left out of the hole
+       it appears dimmed, which reads as something that is not part of what you just did. */
+    padTop: 58,
     interactive: true,
   },
   {
@@ -111,18 +117,27 @@ const EDGE = 12;
 /** ⚠️ Resolved against the LIVE page, never hardcoded: a page started from scratch has no card to
  *  point at, and a step aimed at nothing is worse than a step that isn't there. Prefers a block
  *  big enough to read as a block. */
+function firstBlock(): HTMLElement | null {
+  const canvas = document.querySelector('[data-portal-canvas]');
+  if (!canvas) return null;
+  const nodes = [...canvas.querySelectorAll<HTMLElement>('[data-node]')];
+  return nodes.find((n) => {
+    const r = n.getBoundingClientRect();
+    return r.height > 56 && r.width > 120;
+  }) ?? nodes[0] ?? null;
+}
+
 function resolveTarget(step: Step): HTMLElement | null {
   if (!step.target) return null;
-  if (step.target === 'first-block') {
-    const canvas = document.querySelector('[data-portal-canvas]');
-    if (!canvas) return null;
-    const nodes = [...canvas.querySelectorAll<HTMLElement>('[data-node]')];
-    return nodes.find((n) => {
-      const r = n.getBoundingClientRect();
-      return r.height > 56 && r.width > 120;
-    }) ?? nodes[0] ?? null;
-  }
-  return document.querySelector<HTMLElement>(`[data-tour="${step.target}"]`);
+  if (step.target === 'first-block') return firstBlock();
+  /* ⚠️ `data-tour` first, then `data-node`. The canvas already labels every block it renders, so a
+     step can aim at one by its own name without a second anchor being added for the tour's benefit —
+     and two anchors on one element is two things to keep in step. */
+  return document.querySelector<HTMLElement>(`[data-tour="${step.target}"]`)
+    ?? document.querySelector<HTMLElement>(`[data-node="${step.target}"]`)
+    /* A page built from scratch may not carry this block at all; a step aimed at nothing is worse
+       than a step that isn't there, so it falls back to whatever the page does have. */
+    ?? (step.interactive ? firstBlock() : null);
 }
 
 /** Preferred placement, flipped when it will not fit, then clamped inside the viewport. */
@@ -239,7 +254,10 @@ export function PortalBuilderTour({
   useEffect(() => {
     if (!step.interactive) return;
     if (selectedId && selectedId !== selAtStart.current) {
-      const t = setTimeout(() => go(1), 420);
+      /* ⚠️ Long enough to SEE what the click produced. At 420ms the toolbar and the panel both
+         appeared and the card moved on in the same glance, so the step demonstrated something
+         nobody had time to look at. */
+      const t = setTimeout(() => go(1), 1100);
       return () => clearTimeout(t);
     }
   }, [selectedId, step.interactive]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -267,8 +285,9 @@ export function PortalBuilderTour({
   }, [onDone, onSeamHold]);
 
   const pad = step.padding ?? 12;
+  const padT = step.padTop ?? pad;
   const hole = rect
-    ? { x: rect.left - pad, y: rect.top - pad, w: rect.width + pad * 2, h: rect.height + pad * 2 }
+    ? { x: rect.left - pad, y: rect.top - padT, w: rect.width + pad * 2, h: rect.height + padT + pad }
     : null;
   const last = i === STEPS.length - 1;
 
@@ -379,7 +398,7 @@ export function PortalBuilderTour({
             <button
               onClick={() => go(1)}
               className="rounded bg-white px-5 py-2 text-[13px] font-semibold text-[#1F2937] transition-colors hover:bg-white/90"
-            >{i === 0 ? 'Take the tour' : last ? 'Start editing' : 'Next'}</button>
+            >{last ? 'Start editing' : 'Next'}</button>
           </div>
         </div>
       </div>
