@@ -737,16 +737,16 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     const types = new Set<string>();
     sections.forEach((s) => sectionElements(s.section).forEach((el) => types.add(el.type)));
     Object.values(rowExtras).forEach((list) => list.forEach((el) => types.add(el.type)));
-    /* ⚠️ PREDEFINED is a GROUP rule, not a fixed-block rule. Live data and Actions are the product's
+    /* ⚠️ PREDEFINED is a GROUP rule, not a fixed-block rule. Data and Actions are the product's
        own single-instance widgets; everything in Basic, Visual and Custom is repeatable by design.
-       Gating on `node` alone was too narrow: **Announcements** is Live data with no fixed page block
+       Gating on `node` alone was too narrow: **Announcements** is Data with no fixed page block
        — it is only ever placed — so it could never be marked however many copies the page carried,
        while its five neighbours in the same group all were. One group, two behaviours, for a reason
        nobody looking at the panel could see.
        The two service rows keep their `node` because they sit in Custom, where the group rule does
        not reach — they are the exception the flag exists for. */
     const predefined = (e: (typeof PORTAL_ELEMENTS)[number]) =>
-      e.group === 'Live data' || e.group === 'Actions' || !!e.node;
+      e.group === 'Data' || e.group === 'Actions' || !!e.node;
     return new Set(PORTAL_ELEMENTS
       .filter((e) => predefined(e) && ((e.node && nodes.has(e.node)) || types.has(e.id)))
       .map((e) => e.id));

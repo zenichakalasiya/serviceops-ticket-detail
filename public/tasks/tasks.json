@@ -1,6 +1,6 @@
 {
   "stamp": "2026-09-01",
-  "builtAt": "2026-09-02T03:37:53.630Z",
+  "builtAt": "2026-09-02T05:10:49.323Z",
   "tasks": [
     {
       "n": 1,
@@ -1471,7 +1471,23 @@
         "Tasks 69–71 were already on it, but adding them turned up something worse: **the board had been publishing about a third of each entry.** The parser only ever matched `- **Key:** value` — a bold label ending in a COLON — so every `- **⚠️ …**` bullet was discarded in silence. Those bullets are where the reasoning for a change lives, so 59 of 94 tasks were showing their Where / You asked / Verified rows and none of the thinking between them. 271 lines had been written into a file that never rendered them, with nothing anywhere saying so.",
         "Non-keyed bullets are captured as **notes** now and render under the field rows, inside the same Detail disclosure. Wrapped continuation lines attach to whichever of the two came last.",
         "**⚠️ And they arrived as cards inside a card.** The task-card style was a BARE `li`, so it painted every list item on the page. `#parked li` had already had to override background, border, radius and padding to escape it — which was the warning that the selector was too broad, a warning nothing acted on until a second nested list hit it. Scoped to `#list > li`, which is the only thing it was ever describing.",
-        "**⚠️ Entry 68 was describing a state that no longer existed.** Its title still said \"tinted\" and its Verified line still read `rgb(245,247,250)` cards with white tiles — the FIRST build, which you reversed twice after it. A record that says the opposite of what shipped is worse than no record. Retitled, and the verified line now measures the white card with `#F9FAFB` tiles that is actually on screen.",
+        "**⚠️ Entry 68 was describing a state that no longer existed.** Its title still said \"tinted\" and its Verified line still read `rgb(245,247,250)` cards with white tiles — the FIRST build, which you reversed twice after it. A record that says the opposite of what shipped is worse than no record. Retitled, and the verified line now measures the white card with `#F9FAFB` tiles that is actually on screen."
+      ]
+    },
+    {
+      "n": 73,
+      "title": "The library's first group is \"Data\"",
+      "status": "done",
+      "fields": {
+        "Where": "`supportPortalData.ts` · `portalWidgetSpec.ts` · `portalCollectionSpecs.ts` · `PortalPlacedElement.tsx` · `SupportPortalAddPanel.tsx` · `SupportPortalBuilder.tsx` · `PortalElementPreview.tsx` · `CLAUDE.md`",
+        "You asked": "take the widget sidebar, tab, menubar and inline-toolbar content from the juligopani build.",
+        "Verified": "tabs read `Data · Actions · Basic · Visual · Custom` with the section heading `DATA`; **13 rows still render greyed** (9 Data + 4 Actions), which is the predefined group rule still firing after the rename; Custom still holds `FAQ` + `Custom data widget`; the `?` is still on the top bar. Build green, no type errors."
+      },
+      "notes": [
+        "**The two builds turned out to be the same build.** Byte-identical across all 22 element names, the Actions / Basic / Visual groups, every widget panel sampled (Hero, action card, live-data card, Top bar, Section), the Theme panel, the Branding panel, and the inline text toolbar down to its option lists. Only three things differed, and all three were ours being AHEAD: this tab label, the Record List + KPI merge, and the tour's `?` button.",
+        "**⚠️ I stopped rather than applying.** Copying that build's content wholesale would have undone two things you had asked for directly — the merge into Custom data widget, and the tour from an hour earlier. You chose the rename and kept both.",
+        "**⚠️ The group string is the LABEL and the IDENTIFIER at once**, so this is not a display-only change. `PortalElementGroup` derives from the array, and two behavioural rules compare against the literal: what counts as **predefined** (Data or Actions → one instance, ticked once placed) and what earns a white card (`group === 'Data' || group === 'Custom'`). Renamed the value in all 25 places rather than adding a label map — a map would leave the code saying one name and the screen another, which is the drift this project keeps getting bitten by. The type derives from the array, so `tsc` would have caught a missed comparison; none were missed.",
+        "Prose in the comments was swept in a **second pass**, deliberately separate from the value rename, so a sweep can never silently reword an explanation while it is changing a value.",
         "Tour guide",
         "AI capabilities",
         "Video / GIF as a widget",

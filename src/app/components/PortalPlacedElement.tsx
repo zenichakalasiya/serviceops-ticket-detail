@@ -477,12 +477,12 @@ function PlacedBody({ item, icon, text, cfg }: {
      Us were rendering flat onto the grey page beside My Requests and Pending Approvals, which sit in
      white cards — so two widgets doing the identical job looked like different kinds of thing, and
      the page had no consistent edge between one block and the next.
-     ⚠️ Group, not type: what earns a card is being a panel of DATA (Live data and Custom), which is
+     ⚠️ Group, not type: what earns a card is being a panel of DATA (Data and Custom), which is
      also the rule the palette now sorts by. A Divider, a Spacer, a Title or an Image is a collection
      renderer too, and a white card around a horizontal rule would be nonsense — those keep the bare
      StyledBox. Action Card and KPI paint their own surface and are excluded for the older reason:
      they would end up as a card inside a card. */
-  const dataWidget = (def?.group === 'Live data' || def?.group === 'Custom') && !renderSpec(item.type).bare;
+  const dataWidget = (def?.group === 'Data' || def?.group === 'Custom') && !renderSpec(item.type).bare;
   if (Collection && cfg) {
     const drawn = <Collection nodeId={item.id} cfg={cfg} glyph={glyph} />;
     return dataWidget ? <Surface id={item.id}>{drawn}</Surface> : <StyledBox id={item.id}>{drawn}</StyledBox>;

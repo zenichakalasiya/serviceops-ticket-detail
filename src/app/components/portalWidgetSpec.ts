@@ -220,7 +220,7 @@ export interface PanelModel {
 export interface WidgetSpec {
   id: string;
   name: string;
-  group: 'Live data' | 'Actions' | 'Content' | 'Structure' | 'Chrome'
+  group: 'Data' | 'Actions' | 'Content' | 'Structure' | 'Chrome'
     | 'Components' | 'Layout' | 'Basic' | 'Visual' | 'Business' | 'Custom';
   /** Present = this element uses the accordion panel model instead of the P1–P8 packs. */
   panel?: PanelModel;
@@ -286,7 +286,7 @@ const listCardDefaults = {
 export const WIDGET_SPECS: WidgetSpec[] = [
   /* ─────────── §7.1 My Open Requests ─────────── */
   {
-    id: 'my_requests', name: 'My Open Requests', group: 'Live data', reuse: 'single', family: 'flat',
+    id: 'my_requests', name: 'My Open Requests', group: 'Data', reuse: 'single', family: 'flat',
     // Gated on the Request MODULE, deliberately not on "allow create incident" — a requester who
     // cannot raise a ticket can still have tickets.
     gate: { kind: 'module', setting: 'Request module' },
@@ -299,7 +299,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
 
   /* ─────────── §7.2 Pending Approvals ─────────── */
   {
-    id: 'pending_approvals', name: 'Pending Approvals', group: 'Live data', reuse: 'single', family: 'flat',
+    id: 'pending_approvals', name: 'Pending Approvals', group: 'Data', reuse: 'single', family: 'flat',
     gate: { kind: 'permission', setting: 'Allow Requester To Access My Approvals', section: 'Organization' },
     fields: [],
     packs: LIVE_CARD_PACKS, roles: LIST_CARD_ROLES,
@@ -308,7 +308,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
 
   /* ─────────── §7.3 My Assets ─────────── */
   {
-    id: 'my_assets', name: 'My Assets', group: 'Live data', reuse: 'single', family: 'flat',
+    id: 'my_assets', name: 'My Assets', group: 'Data', reuse: 'single', family: 'flat',
     gate: { kind: 'permission', setting: 'Allow Requester to Access My Assets', section: 'Organization' },
     fields: [],
     packs: LIVE_CARD_PACKS, roles: LIST_CARD_ROLES,
@@ -317,7 +317,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
 
   /* ─────────── §7.4 My CIs ─────────── */
   {
-    id: 'my_cis', name: 'My CIs', group: 'Live data', reuse: 'single', family: 'flat',
+    id: 'my_cis', name: 'My CIs', group: 'Data', reuse: 'single', family: 'flat',
     gate: { kind: 'permission', setting: 'Allow Requester to Access My CI', section: 'Organization' },
     fields: [],
     packs: LIVE_CARD_PACKS, roles: LIST_CARD_ROLES,
@@ -326,7 +326,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
 
   /* ─────────── §7.5 Announcements ─────────── */
   {
-    id: 'announcements', name: 'Announcements', group: 'Live data', reuse: 'single', family: 'flat',
+    id: 'announcements', name: 'Announcements', group: 'Data', reuse: 'single', family: 'flat',
     // No total count and no "View all" — an announcement feed has no fuller list to go to.
     fields: [],
     packs: LIVE_CARD_PACKS, roles: LIST_CARD_ROLES,
@@ -335,7 +335,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
 
   /* ─────────── §7.6 Most Read Knowledge ─────────── */
   {
-    id: 'most_read', name: 'Most Read', group: 'Live data', reuse: 'single', family: 'flat',
+    id: 'most_read', name: 'Most Read', group: 'Data', reuse: 'single', family: 'flat',
     gate: { kind: 'permission', setting: 'Allow Requester To Access Knowledge', section: 'Organization' },
     fields: [],
     packs: LIVE_CARD_PACKS, roles: LIST_CARD_ROLES,
@@ -344,7 +344,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
 
   /* ─────────── §7.7 Contact Us ─────────── */
   {
-    id: 'contact_us', name: 'Contact Us', group: 'Live data', reuse: 'single', family: 'flat',
+    id: 'contact_us', name: 'Contact Us', group: 'Data', reuse: 'single', family: 'flat',
     /* ⚠️ TWO fields. The labels are the product's words — "Email" and "Phone" are what this card
        calls those lines on every portal, and letting one page rename them is how two portals stop
        describing the same thing the same way. The values stay editable because a portal may
@@ -401,7 +401,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
      which services these are and what they are called; whether the category line prints is the
      page's decision. */
   {
-    id: 'favourite_services', name: 'Favourite Services', group: 'Live data', reuse: 'single', family: 'flat',
+    id: 'favourite_services', name: 'Favourite Services', group: 'Data', reuse: 'single', family: 'flat',
     gate: { kind: 'permission', setting: 'Access Service Catalog', section: 'Organization' },
     fields: [
       { key: 'showDesc', label: 'Show description', control: 'toggle', group: 'Content' },
@@ -426,7 +426,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
 
   /* ─────────── §7.8 Featured Services ─────────── */
   {
-    id: 'featured_services', name: 'Most Used Services', group: 'Live data', reuse: 'single', family: 'flat',
+    id: 'featured_services', name: 'Most Used Services', group: 'Data', reuse: 'single', family: 'flat',
     gate: { kind: 'permission', setting: 'Access Service Catalog', section: 'Organization' },
     /* ⚠️ ONE control. Show description is the only field here that is genuinely the admin's: the
        catalogue decides which services rank, what they are called and which category they sit in,

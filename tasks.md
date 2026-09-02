@@ -990,6 +990,16 @@ Updated: 2026-09-01
 - **Verified:** 94 tasks on the board, 92 done. 59 carry notes, 271 note lines total. `#F9FAFB` reaches the page; a note computes as transparent with a 1.78px left rule and no radius, while a task card stays white with a 10px radius and the parked chips keep their 999px pill.
 - **Note:** `/tasks/` cannot be checked through the Vite dev server — its SPA fallback swallows the path. Served `public/` statically on :5311; a cache-busting query is needed or http-server returns the previous build.
 
+## 73. The library's first group is "Data"
+- **Status:** done
+- **Where:** `supportPortalData.ts` · `portalWidgetSpec.ts` · `portalCollectionSpecs.ts` · `PortalPlacedElement.tsx` · `SupportPortalAddPanel.tsx` · `SupportPortalBuilder.tsx` · `PortalElementPreview.tsx` · `CLAUDE.md`
+- **You asked:** take the widget sidebar, tab, menubar and inline-toolbar content from the juligopani build.
+- **The two builds turned out to be the same build.** Byte-identical across all 22 element names, the Actions / Basic / Visual groups, every widget panel sampled (Hero, action card, live-data card, Top bar, Section), the Theme panel, the Branding panel, and the inline text toolbar down to its option lists. Only three things differed, and all three were ours being AHEAD: this tab label, the Record List + KPI merge, and the tour's `?` button.
+- **⚠️ I stopped rather than applying.** Copying that build's content wholesale would have undone two things you had asked for directly — the merge into Custom data widget, and the tour from an hour earlier. You chose the rename and kept both.
+- **⚠️ The group string is the LABEL and the IDENTIFIER at once**, so this is not a display-only change. `PortalElementGroup` derives from the array, and two behavioural rules compare against the literal: what counts as **predefined** (Data or Actions → one instance, ticked once placed) and what earns a white card (`group === 'Data' || group === 'Custom'`). Renamed the value in all 25 places rather than adding a label map — a map would leave the code saying one name and the screen another, which is the drift this project keeps getting bitten by. The type derives from the array, so `tsc` would have caught a missed comparison; none were missed.
+- Prose in the comments was swept in a **second pass**, deliberately separate from the value rename, so a sweep can never silently reword an explanation while it is changing a value.
+- **Verified:** tabs read `Data · Actions · Basic · Visual · Custom` with the section heading `DATA`; **13 rows still render greyed** (9 Data + 4 Actions), which is the predefined group rule still firing after the rename; Custom still holds `FAQ` + `Custom data widget`; the `?` is still on the top bar. Build green, no type errors.
+
 ## Parked — needs discussion
 - Tour guide
 - AI capabilities

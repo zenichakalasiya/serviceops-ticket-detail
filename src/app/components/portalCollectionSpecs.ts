@@ -393,7 +393,7 @@ export const GALLERY_SPEC: WidgetSpec = {
 /* ── §7.9 Feedback ───────────────────────────────────────────────────────── */
 
 export const FEEDBACK_SPEC: WidgetSpec = {
-  id: 'feedback', name: 'Feedback', group: 'Live data', reuse: 'single', family: 'collection',
+  id: 'feedback', name: 'Feedback', group: 'Data', reuse: 'single', family: 'collection',
   gate: { kind: 'permission', setting: 'Allow Requester To Submit Feedback', section: 'Organization' },
   fields: [
     { key: 'title', label: 'Title', control: 'text', group: 'Content' },

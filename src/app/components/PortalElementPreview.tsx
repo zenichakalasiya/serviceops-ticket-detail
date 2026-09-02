@@ -15,7 +15,7 @@ import type { ReactNode } from 'react';
  * INSIDE the one sketch (a 2×2 grid) rather than down the card.
  *
  * ⚠️ The groups are told apart by SHAPE, and the elements within a group by their ICON:
- *   · Live data  — a full card with a header: icon, title, count, "view all", then its own row shape
+ *   · Data  — a full card with a header: icon, title, count, "view all", then its own row shape
  *   · Actions    — a small icon-and-two-lines card; all four are identical by design, so the icon
  *                  in the badge is the only thing that distinguishes them, exactly as on the page
  *   · Basic      — content sitting DIRECTLY on the page ground, with no card of its own (this is
@@ -78,7 +78,7 @@ const badge = (icon: ReactNode, size: 'sm' | 'lg' = 'sm') => (
    The three repeated layouts live here once, so every card in a group is the same
    card — which is what lets the icon be the thing that tells them apart. */
 
-/** Live data: header (icon · title · count · view all) over rows. */
+/** Data: header (icon · title · count · view all) over rows. */
 const listCard = (icon: ReactNode, rows: ReactNode, opts: { count?: boolean } = {}) => card(
   <>
     <span className="flex w-full items-center gap-2">
@@ -112,7 +112,7 @@ const actionCard = (icon: ReactNode, dashed = false) => card(
 interface Preview { why: string; art: (icon: ReactNode) => ReactNode }
 
 const PREVIEWS: Record<string, Preview> = {
-  /* ── Live data ─────────────────────────────────────────────────────────────
+  /* ── Data ─────────────────────────────────────────────────────────────
      One card shape, six different row shapes — because that IS the difference between them on the
      page. The count and "view all" are on every one of them, so they stay in the shared header. */
   'c-requests': {
@@ -307,7 +307,7 @@ const PREVIEWS: Record<string, Preview> = {
   },
 
   /* ── Custom ────────────────────────────────────────────────────────────────
-     Cards, like Live data — but each one's interior is unlike anything else in the palette, which
+     Cards, like Data — but each one's interior is unlike anything else in the palette, which
      is what stops the group reading as six copies of one sketch. */
   'c-contact': {
     why: 'Where to reach a human when the portal cannot help. Label-over-value rows, so an email and a phone number are never mistaken for each other.',

@@ -277,7 +277,7 @@ export const PORTAL_ARTICLES: PortalArticle[] = [
  * toolkit, in the order Duda uses (layout → basic → visual → business → custom). */
 /* ⚠️ No 'Layout' group. It held two elements — a Divider and Advanced Tabs — which are as basic as
    anything in Basic; a tab of two rows is a category that costs more to scan than it saves. */
-export const PORTAL_ELEMENT_GROUPS = ['Live data', 'Actions', 'Basic', 'Visual', 'Custom'] as const;
+export const PORTAL_ELEMENT_GROUPS = ['Data', 'Actions', 'Basic', 'Visual', 'Custom'] as const;
 export type PortalElementGroup = (typeof PORTAL_ELEMENT_GROUPS)[number];
 
 export interface PortalElement {
@@ -428,22 +428,22 @@ export const PORTAL_ELEMENTS: PortalElement[] = [
    * ⚠️ Search, Categories, My Tasks and FAQ were removed from this section. Search and FAQ still
    * exist as elements elsewhere in the palette; My Tasks and Categories are not portal blocks this
    * product ships. */
-  { id: 'c-requests', name: 'My Open Requests', icon: 'requests', group: 'Live data', onPage: true, node: 'requests', keywords: 'tickets incidents open' },
-  { id: 'c-approvals', name: 'Pending Approvals', icon: 'approvals', group: 'Live data', onPage: true, node: 'approvals', keywords: 'pending approve' },
-  { id: 'c-assets', name: 'My Assets', icon: 'assets', group: 'Live data', onPage: true, node: 'assets', keywords: 'hardware devices' },
-  { id: 'c-cis', name: 'My CIs', icon: 'cis', group: 'Live data', onPage: true, node: 'cis', keywords: 'configuration items cmdb' },
+  { id: 'c-requests', name: 'My Open Requests', icon: 'requests', group: 'Data', onPage: true, node: 'requests', keywords: 'tickets incidents open' },
+  { id: 'c-approvals', name: 'Pending Approvals', icon: 'approvals', group: 'Data', onPage: true, node: 'approvals', keywords: 'pending approve' },
+  { id: 'c-assets', name: 'My Assets', icon: 'assets', group: 'Data', onPage: true, node: 'assets', keywords: 'hardware devices' },
+  { id: 'c-cis', name: 'My CIs', icon: 'cis', group: 'Data', onPage: true, node: 'cis', keywords: 'configuration items cmdb' },
   /* ⚠️ No `node` — Announcements is the one Live-data widget this page has no fixed block for; it
      only ever exists as a placed element. It is still marked as added once one is on the page,
-     because "predefined" is decided by the GROUP (Live data and Actions) rather than by owning a
+     because "predefined" is decided by the GROUP (Data and Actions) rather than by owning a
      fixed block. Reading it the other way round left this one row addable while its five neighbours
      all greyed out. */
-  { id: 'c-announcements', name: 'Announcements', icon: 'announcements', group: 'Live data', keywords: 'news broadcast banner' },
-  { id: 'c-knowledge', name: 'Most Read Knowledge', icon: 'knowledge', group: 'Live data', onPage: true, node: 'knowledge', keywords: 'articles kb most read' },
-  /* ⚠️ LIVE DATA, not Custom. Its own spec has said `group: 'Live data'` all along — only the
+  { id: 'c-announcements', name: 'Announcements', icon: 'announcements', group: 'Data', keywords: 'news broadcast banner' },
+  { id: 'c-knowledge', name: 'Most Read Knowledge', icon: 'knowledge', group: 'Data', onPage: true, node: 'knowledge', keywords: 'articles kb most read' },
+  /* ⚠️ LIVE DATA, not Custom. Its own spec has said `group: 'Data'` all along — only the
      PALETTE entry disagreed, and the palette is the one an admin reads. The group is not decoration
-     either: Live data and Actions are the predefined groups, so moving it is what makes Contact Us
+     either: Data and Actions are the predefined groups, so moving it is what makes Contact Us
      behave like the card it is — one instance, ticked once it is on the page. */
-  { id: 'c-contact', name: 'Contact Us', icon: 'contact', group: 'Live data', node: 'contact', keywords: 'support escalate raise' },
+  { id: 'c-contact', name: 'Contact Us', icon: 'contact', group: 'Data', node: 'contact', keywords: 'support escalate raise' },
   /* ⚠️ NOT onPage. This is spec §7.8 Featured Services — a requester's favourites list. The page
      carries the "Request Service" ACTION CARD, which is a different widget with a fixed
      destination. Flagging this one as placed made Featured Services unreachable. */
@@ -458,16 +458,16 @@ export const PORTAL_ELEMENTS: PortalElement[] = [
      row only meant that once it was deleted there was no way to get it back. Favourite Services
      carries the note saying it stays invisible until a requester has favourites. */
   /* ⚠️ LIVE DATA, not Custom. Both are fed by the backend — one from what this requester pinned, the
-     other from what the organisation asks for most — which is the line Live data draws. They sat in
+     other from what the organisation asks for most — which is the line Data draws. They sat in
      Custom because they were written before that split existed.
      Their `node` stays: it is what lets the palette see them on the page, since both are top-level
      BANDS rather than members of a row. */
-  { id: 'c-favourites', name: 'Favourite Services', icon: 'services', group: 'Live data', node: 'favourites', keywords: 'pinned starred saved shortcuts' },
-  { id: 'c-services', name: 'Most Used Services', icon: 'services', group: 'Live data', node: 'services', keywords: 'catalog request service favourites featured' },
+  { id: 'c-favourites', name: 'Favourite Services', icon: 'services', group: 'Data', node: 'favourites', keywords: 'pinned starred saved shortcuts' },
+  { id: 'c-services', name: 'Most Used Services', icon: 'services', group: 'Data', node: 'services', keywords: 'catalog request service favourites featured' },
   /* Placed: the FAQ block already sits in the banner area of this portal, so the palette shows it
      as added rather than offering a second one. */
   { id: 'c-faq', name: 'FAQ', icon: 'faq', group: 'Custom', onPage: true, keywords: 'questions help answers' },
-  /* ⚠️ CUSTOM, not Live data — and that placement does real work. Live data and Actions are
+  /* ⚠️ CUSTOM, not Data — and that placement does real work. Data and Actions are
      group-gated as predefined: one instance each, greyed with a tick once placed. This one is
      repeatable, which is exactly what it needs — two Record Lists filtered differently is a
      reasonable page, and the whole point is that the admin asks the question. */
