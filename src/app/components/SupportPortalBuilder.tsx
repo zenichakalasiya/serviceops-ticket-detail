@@ -31,7 +31,7 @@ import { PortalWidgetDrawer } from './PortalWidgetDrawer';
 import { WIDGET_FOR_NODE, WIDGET_FOR_TYPE, specById, structureSpecId } from './portalWidgetSpec';
 import type { Cfg, WidgetSpec } from './portalWidgetSpec';
 import type { Box, BoxDir, CustomSection, NodeStyle, PlacedElement, PortalPageContent, PortalStyles } from './portalPageModel';
-import { PORTAL_ELEMENTS, PORTAL_EMPTY_WIDGETS } from './supportPortalData';
+import { PORTAL_ELEMENTS, PORTAL_EMPTY_WIDGETS, PORTAL_TEMPLATES } from './supportPortalData';
 import { IconPopover } from './PortalIconPicker';
 import type { IconChoice } from './PortalIconPicker';
 import type { PortalPage } from './supportPortalData';
@@ -183,6 +183,13 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
   const [layout] = useState<'v1' | 'v2'>(() => (page.layout === 'v2' ? 'v2' : 'v1'));
   const isV2 = layout === 'v2';
 
+  /* ⚠️ The template a page was STARTED from, resolved once, for the same reason `layout` is: these
+     feed `useState` initialisers, and anything that answered the question again per render could
+     disagree with them the moment the page object was replaced.
+     `page.source` holds the template's NAME — it is what the listing already reads to find the
+     accent — so the name is the join and there is no second id to keep in step. */
+  const [seed] = useState(() => PORTAL_TEMPLATES.find((t) => t.name === page.source)?.seed);
+
   const [width, setWidth] = useState(MIN_W);
   const [collapsed, setCollapsed] = useState(false);
   const [active, setActive] = useState<RailKey | null>(openOn ?? null);
@@ -256,7 +263,10 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
    * `cfgFor` composes it — which is what makes Reset to default a one-line delete. */
   const rowOrderRef = useRef<Record<string, string[]>>(DEFAULT_ROW_ORDER);
   const widgetCfgRef = useRef<Record<string, Cfg>>({});
-  const [widgetCfg, setWidgetCfg] = useState<Record<string, Cfg>>({});
+  /* ⚠️ Seeded, so a template's hero and column counts are the page's OWN config rather than a
+     branch in the renderer. Everything here is a value the panel can already edit, which is what
+     makes a template a starting point instead of a mode. */
+  const [widgetCfg, setWidgetCfg] = useState<Record<string, Cfg>>(() => ({ ...(seed?.cfg ?? {}) } as Record<string, Cfg>));
   /* ⚠️ Declared ABOVE their first assignment. Put after it, the assignment ran against an
      undefined binding and took the whole builder down on mount. */
   widgetCfgRef.current = widgetCfg;
@@ -707,8 +717,17 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
      open the identical arrangement, so two portals could differ by name and address and by nothing
      a requester would ever see. The seed is read once, as an initialiser — after that the state is
      the page's own and every edit behaves exactly as it did. */
-  const [blockOrder, setBlockOrder] = useState<string[]>(() => (isV2 ? BLOCK_ORDER_V2 : DEFAULT_BLOCK_ORDER));
-  const [rowOrder, setRowOrder] = useState<Record<string, string[]>>(() => (isV2 ? ROW_ORDER_V2 : DEFAULT_ROW_ORDER));
+  /* ⚠️ The seed wins over the layout default, and the layout default wins over v1. A template that
+     says nothing about the bands falls through to exactly what it would have got. */
+  const [blockOrder, setBlockOrder] = useState<string[]>(() => seed?.blockOrder ?? (isV2 ? BLOCK_ORDER_V2 : DEFAULT_BLOCK_ORDER));
+  /* ⚠️ MERGED over the defaults, not replaced. A seed names only the rows it rearranges; `records`
+     is still consulted by `rowOf` even when the band is not on the page, and a seed that replaced
+     the map wholesale would leave those cards unable to move — with nothing on screen saying why. */
+  const [rowOrder, setRowOrder] = useState<Record<string, string[]>>(() => (
+    seed?.rowOrder
+      ? { ...(isV2 ? ROW_ORDER_V2 : DEFAULT_ROW_ORDER), ...seed.rowOrder }
+      : (isV2 ? ROW_ORDER_V2 : DEFAULT_ROW_ORDER)
+  ));
   rowOrderRef.current = rowOrder;
   const [removed, setRemoved] = useState<string[]>([]);
 

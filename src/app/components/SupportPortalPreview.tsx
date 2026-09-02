@@ -1432,7 +1432,13 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                     subtext are two lines; the wrapper has to say so. */}
                 <Sel id="hero-title" className="block w-full px-1" style={heroLine('hero-title')}>
                   <h2
-                    style={{ color: String(wc('hero').headingColor ?? '#4C7BA8'), ...roleStyle(styles, 'hero', 'title'), ...st('hero-title') }}
+                    /* ⚠️ `headingColor` AFTER `roleStyle`, never before it. `roleStyle` returns an
+                       explicit `color: undefined` whenever the colour is still the theme's — and a
+                       spread `undefined` DELETES the key it lands on, so the banner's own heading
+                       colour was being thrown away and the text fell back to the page's near-black.
+                       On an indigo band that measured 1.72:1, against the 4.5 this product's own
+                       contrast meter demands. Same trap `fillCss` carries a warning about. */
+                    style={{ ...roleStyle(styles, 'hero', 'title'), color: String(wc('hero').headingColor ?? '#FFFFFF'), ...st('hero-title') }}
                     className="text-[30px] font-semibold leading-tight"
                   >
                     {String(wc('hero').heading ?? content.hero.title)}

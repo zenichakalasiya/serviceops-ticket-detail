@@ -229,8 +229,14 @@ export function roleStyle(styles: PortalStyles, nodeId: string, role: TypeRole):
   const lh = g('lineHeight');
   const maxLines = (g('maxLines') as number) ?? 0;
   const align = resolveType(styles, nodeId, role, 'align');
+  /* ⚠️ Emitted ONLY when a human picked it — the same rule `color` and `textAlign` already follow
+     three lines below, and for exactly the same reason. An inline size here overrides the element's
+     OWN class, so every heading in the portal rendered at its role's base px whatever it was
+     designed at: the hero's `text-[30px]` came out 16px, on every page, including the default one.
+     A size the admin actually chose still wins, because then the source is not 'theme'. */
+  const sizeChosen = resolveType(styles, nodeId, role, 'size').source !== 'theme';
   const css: React.CSSProperties = {
-    fontSize: `${Math.round((ROLE_BASE_PX[role] * size) / 100)}px`,
+    ...(sizeChosen ? { fontSize: `${Math.round((ROLE_BASE_PX[role] * size) / 100)}px` } : {}),
     fontWeight: weight === 'bold' ? 700 : weight === 'medium' ? 500 : 400,
     /* ⚠️ Emitted ONLY when a human picked it. The theme's own colour is set on the canvas
        wrapper and inherits down; an inline default here overrode it on every heading and every row,

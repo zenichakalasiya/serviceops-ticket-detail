@@ -1,6 +1,6 @@
 {
   "stamp": "2026-09-01",
-  "builtAt": "2026-09-02T12:47:42.328Z",
+  "builtAt": "2026-09-02T14:38:13.464Z",
   "tasks": [
     {
       "n": 1,
@@ -1690,7 +1690,26 @@
         "**⚠️ Their scope is \"The signed-in requester\", never \"Assigned to me\".** The technician presets already here are read by somebody working a queue, where \"me\" is the assignee. On a support portal the reader RAISED the record. The same two words pointing at two different people is exactly what that string exists to prevent — and it is why the requester sets lead and the technician ones follow rather than being deleted.",
         "**⚠️ Knowledge views carry NO scope.** It is the one module a requester reads rather than owns, so \"Recently Published\" is the same list for everybody and a \"mine\" would mean nothing.",
         "**Field labels took that build's wording** where it is more specific: ID → Request ID / Change ID / Asset ID / CI ID / Task ID / Approval ID, Assignee → Technician, Name → Asset Name / CI Name, plus Subcategory, Closed/Resolved Date, Planned End, Actual Start/End, CI Class, Approval Type, Request / Item ID, Product, Manufacturer, Model.",
-        "**The logo button now names what it holds** — \"Replace logo\", not \"Replace\". `UploadZone` gained a `noun`; a slot already showing a picture does not need telling a picture is there, it needs to say WHICH of the page's images the button is about, since the panel is read out of context. The favicon slot takes it too.",
+        "**The logo button now names what it holds** — \"Replace logo\", not \"Replace\". `UploadZone` gained a `noun`; a slot already showing a picture does not need telling a picture is there, it needs to say WHICH of the page's images the button is about, since the panel is read out of context. The favicon slot takes it too."
+      ]
+    },
+    {
+      "n": 86,
+      "title": "Template 1 — Search Spotlight, and two bugs it exposed in the hero",
+      "status": "done",
+      "fields": {
+        "Where": "`SUPPORT-PORTAL-TEMPLATE-BRIEF.md` (new) · `supportPortalData.ts` · `SupportPortalBuilder.tsx` · `SupportPortalPreview.tsx` · `portalStyleResolver.ts`",
+        "You asked": "prove the design sense — one template, new styling, the same data.",
+        "Search Spotlight": "flat indigo band (not the default gradient, which competes with the field sitting on it), 340px, white 30px question, 52% pill search. **Most Read Knowledge moves to the first card position, ahead of My Open Requests** — that one reorder is the whole thesis. Favourite Services, Most Used Services, My Assets and My CIs come off the page and stay in the palette.",
+        "Verified": "bands render `hero · quick · work` and nothing else; hero paints `rgb(30,58,138)`; heading 30px `rgb(255,255,255)`; the work row's VISUAL order is Most Read (x=105) → My Open Requests (487) → Pending Approvals (869), placed by CSS `order` 0/1/2. Every record on the page is the same ServiceOps data. Build green; 333 type errors before the change, 333 after."
+      },
+      "notes": [
+        "**The reference board is a MOOD BOARD, not a kit.** 45 pasted screenshots (Apple, Zendesk, Discord, Airtable…), every one a raster image: no components, no auto-layout, no variables. There is nothing in it to build from, only to look at.",
+        "**A template is a PRESET, not a renderer.** The page was already config all the way down — band order, row order, column counts, the hero's height, colour, alignment and search width. So `PortalTemplate` gained a `seed`, and the builder starts from it. That is this codebase's own rule, stated on `BLOCK_ORDER_V2`: *\"Seeds, not a second renderer.\"* ⚠️ It also means the other four templates are now data, not code.",
+        "**⚠️ `rowOrder` is MERGED over the defaults, never replaced.** A seed names only the rows it rearranges, and `rowOf` still consults `records` even when that band is off the page — a seed that replaced the map wholesale would leave those cards unable to move, with nothing on screen saying why.",
+        "**⚠️ TWO PRE-EXISTING BUGS, both on the shipping default portal, both found by measuring rather than looking.** (1) `roleStyle` always emitted `fontSize` from `ROLE_BASE_PX`, which overrode the element's own class — **the hero heading has been rendering at 16px on every portal, not the 30px it is designed at**. It now emits a size only when a human chose one, the same rule the file already applies to `color` and `textAlign` two lines below. (2) `roleStyle` returns an explicit `color: undefined` while the colour is still the theme's, and it was spread AFTER the hero's own `headingColor` — **a spread `undefined` DELETES the key it lands on**, so the banner's heading colour was thrown away and the text fell back to near-black. Same trap `fillCss` already carries a warning about.",
+        "**⚠️ Measured contrast was 1.72:1** against the 4.5 this product's own meter demands. Now 30px, `#FFFFFF`, ~9.9:1 on the indigo.",
+        "**⚠️ The brief was WRONG about one thing and says so.** It called for dropping the action cards' 62px overlap into the banner. Built and looked at, the cards anchor the bottom of a band that would otherwise end on nothing. Recorded as a reversal in the brief rather than quietly deleted.",
         "Tour guide",
         "AI capabilities",
         "Video / GIF as a widget",

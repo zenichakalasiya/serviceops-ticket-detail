@@ -65,6 +65,25 @@ export interface PortalTemplate {
   badge?: string;
   /** What the template drops onto the canvas — read on the gallery's detail rail. */
   blocks: string[];
+  /* ⚠️ The page this template actually PRODUCES — and it is DATA, not a renderer.
+     The page is already config all the way down: band order, row order, column counts, the hero's
+     height, colour, alignment and search width, per-node styles and the theme. A template is a
+     bundle of those values, which is the same rule `BLOCK_ORDER_V2` states as "Seeds, not a second
+     renderer": a layout with its own rendering path is a second page to maintain, and the two drift
+     the first time a widget changes.
+     ⚠️ A template with no `seed` still works — the gallery lists it and the page opens on the
+     default arrangement. It just has nothing of its own to say yet. */
+  seed?: TemplateSeed;
+}
+
+export interface TemplateSeed {
+  /** Bands, top to bottom. Anything absent is not on the page — and stays addable from the palette. */
+  blockOrder?: string[];
+  rowOrder?: Record<string, string[]>;
+  /** Per-node config: the hero's own settings, each band's column count. */
+  cfg?: Record<string, Record<string, unknown>>;
+  /** The right-hand rail, where the layout has one. */
+  rail?: string[];
 }
 
 /* ── Templates ───────────────────────────────────────────────────────────── */
@@ -88,6 +107,46 @@ export const PORTAL_TEMPLATES: PortalTemplate[] = [
     layout: 'spotlight',
     accent: '#1E3A8A',
     blocks: ['Full-bleed search', 'Popular articles', 'Quick actions', 'My Open Requests'],
+    /* ── Search Spotlight ──────────────────────────────────────────────────
+       The question this page asks is "what are you trying to do?", and nothing else until it is
+       answered. Every value below serves that one sentence.
+
+       ⚠️ A FLAT field, not the default gradient. The gradient is the nicer picture and it is
+       exactly the problem: it competes with the search bar sitting on top of it. Flat colour makes
+       the input the only bright object in the first viewport, which is the whole point of the
+       template.
+       ⚠️ Taller band, WIDER and fully-rounded field. At 260px with a 70% input the search reads as
+       a control on a banner; at 340 with a pill it reads as the subject of the page.
+       ⚠️ Most Read Knowledge moves to the FIRST card position, ahead of My Open Requests. That one
+       reorder is the thesis: this portal answers before it files.
+       ⚠️ Favourite Services and Most Used Services come OFF the page — not out of the product. Two
+       browse rows above the fold is the opposite of one question, and both stay in the palette.
+       ⚠️ My Open Requests and Pending Approvals STAY. A portal that only searches is a help centre
+       with a logo on it; the requester's own work is the reason they signed in. */
+    seed: {
+      blockOrder: ['quick', 'work'],
+      rowOrder: {
+        quick: ['quick-incident', 'quick-service', 'quick-ad', 'quick-knowledge'],
+        work: ['knowledge', 'requests', 'approvals'],
+      },
+      cfg: {
+        hero: {
+          heading: 'What do you need help with?',
+          sub: 'Search our knowledge base, or start a request below.',
+          searchPlaceholder: 'Describe your issue — “VPN not connecting”',
+          height: 340,
+          bgKind: 'color',
+          bannerColor: '#1E3A8A',
+          headingColor: '#FFFFFF',
+          searchWidth: 52,
+          /* A pill. The one control on the page that should not look like the others. */
+          searchRadius: 999,
+          contentAlign: 'center',
+        },
+        quick: { cols: '4', hasCards: true },
+        work: { cols: '3' },
+      },
+    },
   },
   {
     id: 'tpl-catalog',
