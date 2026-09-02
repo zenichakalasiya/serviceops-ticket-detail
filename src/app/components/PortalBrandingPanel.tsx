@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Eye, Info, Paperclip, Trash2, Upload } from 'lucide-react';
+import { Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { Field, SelectField, Segmented, TextField, ToggleRow } from './PortalControls';
 
@@ -14,7 +14,12 @@ import { Field, SelectField, Segmented, TextField, ToggleRow } from './PortalCon
  *
  * ⚠️ And the LOGO is not here any more. It is edited by selecting the logo on the page, where its
  * upload sits in the element's own Content section — an image you can see is an image you should be
- * able to click. */
+ * able to click.
+ *
+ * ⚠️ NO IMAGE UPLOADS AT ALL now — the help icon was the last one, and it went for the same reason
+ * the logo did. An image is a thing you look at; a panel is where you edit the thing you cannot see.
+ * Everything left here is a word, an address or a switch, which is what makes the panel one kind of
+ * surface rather than a settings list with a file picker halfway down it. */
 
 /* A read-only row: the value is a fact about the tenant, not a setting.
  *
@@ -57,11 +62,9 @@ export function PortalBrandingPanel() {
   /* Help for the requester — its own state rather than another string in `v`, because it is a
      switch, a file, a choice and a URL rather than one more text field. */
   const [help, setHelp] = useState(true);
-  const [helpIcon, setHelpIcon] = useState('');
   const [helpKind, setHelpKind] = useState<'url' | 'file'>('url');
   const [helpUrl, setHelpUrl] = useState('https://docs.motadata.com/serviceops-docs/');
   const [helpDoc, setHelpDoc] = useState('');
-  const iconRef = useRef<HTMLInputElement>(null);
   const docRef = useRef<HTMLInputElement>(null);
 
   return (
@@ -102,82 +105,15 @@ export function PortalBrandingPanel() {
           on={help}
           onChange={setHelp}
         />
-        {/* ⚠️ The rest is REMOVED when help is off, not greyed. A disabled icon uploader under a
-            switch you have just turned off is a control explaining a state you can already see. */}
+        {/* ⚠️ The rest is REMOVED when help is off, not greyed. A disabled field under a switch you
+            have just turned off is a control explaining a state you can already see. */}
         {help && (
           <div className="mt-5">
-            <div className="mb-1 flex items-center gap-2">
-              <span className="flex min-w-0 items-center gap-1 text-[12px] text-[#7B8FA5]">
-                Help Icon
-                {/* ⚠️ The SIZE lives in the ⓘ, not in the label. "(16px X 16px For Better
-                    Resolution)" is a hint you need once, while you are choosing a file — as a
-                    permanent parenthesis it doubled the length of the label every time you read the
-                    row afterwards. */}
-                <Info
-                  size={12}
-                  className="flex-shrink-0 cursor-help text-[#9CA3AF]"
-                  title="16 × 16 px gives the sharpest result. A larger square works — it will be scaled down."
-                />
-              </span>
-              {/* ⚠️ Preview sits with the icon it previews and is DISABLED until there is one, with
-                  the reason on it. Offering to preview nothing is the kind of dead control that
-                  teaches people to stop trusting the row. */}
-              <button
-                onClick={() => toast.success('Showing the help icon as a requester sees it')}
-                disabled={!helpIcon}
-                title={helpIcon ? undefined : 'Upload an icon first — there is nothing to preview yet'}
-                className={`ml-auto text-[12px] font-medium ${
-                  helpIcon ? 'text-[#3D8BD0] hover:underline' : 'cursor-not-allowed text-[#C4CDD8]'
-                }`}
-              >Preview</button>
-            </div>
-
-            <button
-              onClick={() => iconRef.current?.click()}
-              className="inline-flex h-9 w-full items-center justify-center gap-2 rounded bg-[#1E293B] px-3 text-[13px] font-medium text-white transition-colors hover:bg-[#0F172A]"
-            ><Upload size={14} /> Upload Help View Icon For Requester</button>
-            <input
-              ref={iconRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (!f) return;
-                const fr = new FileReader();
-                fr.onload = () => { setHelpIcon(String(fr.result)); toast.success(`${f.name} uploaded`); };
-                fr.readAsDataURL(f);
-              }}
-            />
-
-            {/* The file's own row — what is attached, look at it, remove it. */}
-            <div className="mt-2 inline-flex items-center gap-1 rounded bg-[#F1F5F9] px-1.5 py-1">
-              <span className="flex size-6 items-center justify-center rounded text-[#64748B]" title={helpIcon ? 'Icon attached' : 'No icon attached yet'}>
-                <Paperclip size={13} />
-              </span>
-              <button
-                onClick={() => toast.success('Showing the help icon as a requester sees it')}
-                disabled={!helpIcon}
-                title={helpIcon ? 'View the icon' : 'Nothing attached yet'}
-                className={`flex size-6 items-center justify-center rounded transition-colors ${
-                  helpIcon ? 'text-[#64748B] hover:bg-white hover:text-[#364658]' : 'cursor-not-allowed text-[#C4CDD8]'
-                }`}
-              ><Eye size={13} /></button>
-              <button
-                onClick={() => { setHelpIcon(''); toast.success('Help icon removed'); }}
-                disabled={!helpIcon}
-                title={helpIcon ? 'Remove the icon' : 'Nothing attached yet'}
-                className={`flex size-6 items-center justify-center rounded transition-colors ${
-                  helpIcon ? 'text-[#64748B] hover:bg-[#FEF3F2] hover:text-[#EF4444]' : 'cursor-not-allowed text-[#C4CDD8]'
-                }`}
-              ><Trash2 size={13} /></button>
-            </div>
-
             {/* ⚠️ Where help GOES is a different question from what it looks like, and the two
                 answers are mutually exclusive — a link out to docs, or a file you host. The segment
                 swaps the field rather than showing both, so there is never a filled URL sitting
                 under an attachment that overrides it. */}
-            <div className="mt-4">
+            <div>
               <Segmented
                 value={helpKind}
                 onChange={(x) => setHelpKind(x as 'url' | 'file')}

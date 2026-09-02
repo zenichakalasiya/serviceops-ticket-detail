@@ -1031,6 +1031,34 @@ Updated: 2026-09-01
 - **`items-start`, so the badge sits against the NAME.** Centred, it lined up with the GAP between the name and the meta line beneath it — so the one element that should anchor the tile's top-left corner was the only thing in the tile not aligned to anything.
 - **Verified:** `align-items: flex-start`; the badge's top is **exactly level with the name's** (0px apart) and 12px from the tile's top, which is its padding. Background reads `rgb(249,250,251)` at rest and `rgb(249,250,251)` under the pointer — unchanged across all 8 tiles.
 
+## 77. Theme loses its shifting caption, and its rail line names the job
+- **Status:** done
+- **Where:** `PortalThemePanel.tsx`, `SupportPortalBuilder.tsx`
+- **You asked:** remove the one-liner below Theme's Primary / Secondary / Neutral tabs, and change the Theme rail panel's line to "Style the support portal page."
+- **A caption that rewrites itself is not a caption.** It sat in the one gap the eye crosses on its way from the tab you just pressed to the swatches that answer it, and said something different on each of the three tabs — three sentences of theory in the space where the result should have been. What each group is for is a thing you read once; the swatch names carry the rest.
+- **The rail line now says the JOB, not the inventory.** "Style, type and colour for every page of this portal" listed the panel's contents, which the panel is already showing you.
+- **Verified:** the panel reads `COLOURS → Primary Secondary Neutral → Primary` with nothing between the tabs and the first swatch; measured gap **8px** (`mt-2`) from the tab strip's bottom to the swatch list. The rail panel's subtitle reads **"Style the support portal page."**
+
+## 78. Branding stops asking for an image
+- **Status:** done
+- **Where:** `PortalBrandingPanel.tsx`
+- **You asked:** remove the image fields from the Branding menu.
+- **Gone:** the Help Icon uploader, its Preview link, its 16×16 ⓘ hint, and the paperclip / eye / trash chip row under it. Help is now the switch, then URL-or-Attachment, then the field — three questions instead of six.
+- **It is the same reason the logo left this panel.** An image is a thing you look at, and a panel is where you edit the things you cannot see. With the icon gone every row here is a word, an address or a switch, which is what makes the panel one kind of surface rather than a settings list with a file picker halfway down it.
+- **Verified:** the panel holds **zero** image file inputs; its text runs `Help → Enable Help For Support Portal → URL | Attachment → URL *` with no icon row between them. The Attachment tab still uploads a help document — that is a document, not an image.
+
+## 79. Every widget's preview says what it puts on the page and what it is for
+- **Status:** done
+- **Where:** `PortalElementPreview.tsx`, `SupportPortalAddPanel.tsx`, `theme.css`
+- **You asked:** take the title and one-liner of each widget from the juligopani build.
+- **That build has moved since task 68, and this time it was ahead.** Its preview card carries **two** lines per element — `what` (what this puts on the page) and `helps` (what it is for) — under the element's own name, plus an optional `note` for a condition. Ours carried a single `why`. All 29 entries now hold that build's copy verbatim, and the card renders name → what → helps → note, the note under a rule of its own.
+- **The two lines answer different questions**, which is why they are not merged. `what` is the sentence you need to decide whether this is the row you were looking for; `helps` is the one you need once you have found it and are wondering whether it fits your case. Together on one line they compete, and the half a reader needs is whichever half they are not reading.
+- **⚠️ Only ONE title differed and it is deliberately NOT changed.** That build still calls it "Record List"; ours is **Custom data widget**, which is what you chose in task 68 when the Record List and KPI widgets merged. Every other name across the palette and the widget specs already matched exactly.
+- **⚠️ Eight elements had no preview entry at all** and were falling through to the generic block — three of them visible in the palette (Favourite Services, Custom data widget, Video). All eight now have their own sketch: a starred tile grid, a list under a filter chip, a play ring over a scrub bar, two slides half in frame, a floated image with text wrapping it, a tab strip, a rule between two blocks, and a measured empty band.
+- **⚠️ Thirteen rows could never show their copy.** The predefined rows are greyed once they are on the page, and `disabled` on a `<button>` makes Chromium swallow every mouse event — so the row you are not allowed to add was the one row that could not explain itself. It is `aria-disabled` now: the click is guarded in the handler, the tooltip still carries the reason, and the preview opens.
+- **⚠️ That exposed a CSS bug worth remembering.** `theme.css` restored the button cursor with `button:not(:disabled)` — specificity (0,1,1), which beats a `cursor-not-allowed` utility class (0,1,0). An `aria-disabled` button was being handed a pointer over the top of the class that said otherwise. The rule now excludes both forms.
+- **Verified:** all 18 rows hovered read back their exact reference copy — including AD Self Service's fourth line, "Available when AD Self Service is enabled.", under its rule. Clicking a greyed row still adds nothing (32 page nodes before, 32 after, no toast); its cursor is `not-allowed` while an addable row's is `pointer`. Build green, no type errors.
+
 ## Parked — needs discussion
 - Tour guide
 - AI capabilities

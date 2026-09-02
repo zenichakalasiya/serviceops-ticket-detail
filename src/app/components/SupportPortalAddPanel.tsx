@@ -305,7 +305,12 @@ export function SupportPortalAddPanel({ onAdd, placed }: Props) {
                   <button
                     key={e.id}
                     draggable={!added}
-                    disabled={added}
+                    /* ⚠️ `aria-disabled`, NOT `disabled`. A disabled button swallows every mouse
+                       event in Chromium, so the thirteen predefined rows could never open their
+                       preview card — and the row you are not allowed to add is exactly the one you
+                       most want explained. The click is guarded below instead, the tooltip still
+                       carries the reason, and assistive tech is told the same thing. */
+                    aria-disabled={added || undefined}
                     onDragStart={(ev) => {
                       // The canvas reads this to know what was dropped.
                       ev.dataTransfer.setData('text/portal-element', e.id);
@@ -357,6 +362,7 @@ export function SupportPortalAddPanel({ onAdd, placed }: Props) {
       {peek && (
         <PortalElementPreview
           elementId={peek.id}
+          name={PORTAL_ELEMENTS.find((e) => e.id === peek.id)?.name ?? ''}
           icon={icon(PORTAL_ELEMENTS.find((e) => e.id === peek.id)?.icon ?? '')}
           anchor={peek.rect}
         />

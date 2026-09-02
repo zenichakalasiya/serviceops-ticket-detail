@@ -431,13 +431,12 @@ export function PortalThemePanel({ theme, onChange }: { theme: PortalTheme; onCh
         ))}
       </div>
 
-      <p className="mt-2 text-[11px] leading-[1.5] text-[#9CA3AF]">
-        {tab === 'primary' ? 'Set by the theme style. Change one to depart from it.'
-          : tab === 'secondary' ? 'Status colours — green means healthy, red means broken. Shared by every theme.'
-            : 'The greyscale every surface and border is built from. Shared by every theme.'}
-      </p>
-
-      <div className="mt-1.5">
+      {/* NOTE: no explanatory line under the tabs. It changed with the tab, so a caption sat between
+          a control and the rows it governs and rewrote itself every time you moved — three sentences
+          of theory in the one gap where the eye is travelling from the tab it just pressed to the
+          swatches that answered it. What each group is for is a thing you read once; the swatch
+          names say the rest. */}
+      <div className="mt-2">
         {swatches[tab].map((sw) => (
           /* ⚠️ A name and a circle, no hex. The value is what the picker is for; printing it beside
              every row turns a palette into a spreadsheet, and nobody recognises a colour by its code. */

@@ -92,7 +92,7 @@ const PANEL_COPY: Record<RailKey, { title: string; body: string }> = {
      each time, on a rail whose items are all the same kind of thing. */
   theme: {
     title: 'Theme',
-    body: 'Style, type and colour for every page of this portal.',
+    body: 'Style the support portal page.',
   },
   branding: {
     /* ⚠️ "Branding", not "Brand this page". The brand is org-wide — page-scoped wording promised a

@@ -346,8 +346,13 @@
 }
 
 /* Tailwind v4's preflight sets buttons to `cursor: default` (v3 used `pointer`), so clickable
-   controls stopped reading as interactive. Restore the pointer for every enabled button/role. */
-button:not(:disabled),
+   controls stopped reading as interactive. Restore the pointer for every enabled button/role.
+
+   ⚠️ A button is excluded when it is EITHER `:disabled` or `aria-disabled` — the second is not
+   pedantry. `button:not(:disabled)` is specificity (0,1,1), so it beats a `cursor-not-allowed`
+   utility class (0,1,0): a button turned off by `aria-disabled` was being handed a pointer over
+   the top of the class that said otherwise, and it read as clickable. */
+button:not(:disabled):not([aria-disabled='true']),
 [role='button']:not([aria-disabled='true']) {
   cursor: pointer;
 }

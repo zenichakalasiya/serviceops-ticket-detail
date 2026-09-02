@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { ReactNode } from 'react';
 
-/* Element preview — what this thing looks like on a page, and why you would reach for it.
+/* Element preview — what this thing looks like on a page, what it puts there, and what it is for.
  *
  * ⚠️ Each sketch is the SHAPE THAT ELEMENT ACTUALLY MAKES, not a generic block. The library is a
  * list of names, and a name is the worst possible description of a visual element — "Card" and
@@ -107,16 +107,23 @@ const actionCard = (icon: ReactNode, dashed = false) => card(
 );
 
 /* ── The catalogue ────────────────────────────────────────────────────────────
-   ⚠️ `why` answers "why this one rather than the one above it", not "what is a button". A
-   description that restates the name is the thing people learn to skip. */
-interface Preview { why: string; art: (icon: ReactNode) => ReactNode }
+   ⚠️ TWO lines, not one, and they answer different questions. `what` says what the element PUTS on
+   the page — the sentence you need to decide whether this is the row you were looking for. `helps`
+   says what it is FOR, which is the sentence you need once you have found it and are wondering
+   whether it fits your case. Merged into one line they compete, and the half a reader needs is
+   whichever half they are not reading.
+   ⚠️ `note` is a CONDITION, not more description — "available when AD Self Service is enabled" is
+   the kind of thing that turns a working element into a dead one, so it sits under a rule of its own
+   rather than tucked into the end of a sentence. */
+interface Preview { what: string; helps: string; note?: string; art: (icon: ReactNode) => ReactNode }
 
 const PREVIEWS: Record<string, Preview> = {
   /* ── Data ─────────────────────────────────────────────────────────────
      One card shape, six different row shapes — because that IS the difference between them on the
      page. The count and "view all" are on every one of them, so they stay in the shared header. */
   'c-requests': {
-    why: 'The requester’s own open tickets. The single most common reason anyone opens the portal at all.',
+    what: 'View your currently open requests in one place.',
+    helps: 'Helps requesters quickly track requests that still need attention.',
     art: (icon) => listCard(icon, stack(
       <>
         {stack(<>{row(<>{tag('26px', 'bg-[#5B8DEF]/35')}{bar('48%')}{spacer}{tag('30px', 'bg-[#5C4A2E]')}</>)}{bar('40%', 5, DIM)}</>, 'gap-1')}
@@ -126,7 +133,8 @@ const PREVIEWS: Record<string, Preview> = {
     )),
   },
   'c-approvals': {
-    why: 'Things waiting on this person. It belongs high on the page because it is work only they can unblock.',
+    what: 'View requests and items waiting for your approval.',
+    helps: 'Helps requesters quickly review and take action on pending approvals.',
     art: (icon) => listCard(icon, row(
       <>
         {stack(<>{bar('72%')}{bar('50%', 5, DIM)}{row(<>{dot(9, 'bg-[#5B8DEF]/50')}{bar('30%', 5, DIM)}</>, 'gap-1.5')}</>, 'gap-1.5')}
@@ -141,7 +149,8 @@ const PREVIEWS: Record<string, Preview> = {
     )),
   },
   'c-assets': {
-    why: 'The hardware and software already assigned to this person — so “what am I holding?” never becomes a ticket.',
+    what: 'View the assets assigned or associated with you.',
+    helps: 'Helps requesters quickly find and review their assigned devices and other assets.',
     art: (icon) => listCard(icon, stack(
       <>
         {row(<>{tag('24px', 'bg-[#5B8DEF]/35')}{bar('46%')}{spacer}{bar('16%', 6, DIM)}</>)}
@@ -152,7 +161,8 @@ const PREVIEWS: Record<string, Preview> = {
     )),
   },
   'c-cis': {
-    why: 'The configuration items this person is responsible for. Same shape as My Assets, a different register — services and systems rather than kit.',
+    what: 'View configuration items associated with you.',
+    helps: 'Helps requesters quickly access the systems or CIs related to them.',
     art: (icon) => listCard(icon, stack(
       <>
         {row(<>{dot(6, 'bg-[#4E8A63]')}{bar('50%')}{spacer}{bar('18%', 6, DIM)}</>)}
@@ -163,7 +173,8 @@ const PREVIEWS: Record<string, Preview> = {
     )),
   },
   'c-announcements': {
-    why: 'One message everybody needs before they do anything else — an outage, a maintenance window, a deadline.',
+    what: 'Display important announcements and updates for requesters.',
+    helps: 'Helps keep users informed about company or IT service updates.',
     art: (icon) => listCard(icon, stack(
       <>
         {stack(<>{bar('92%')}{bar('30%', 5, DIM)}</>, 'gap-1')}
@@ -173,7 +184,8 @@ const PREVIEWS: Record<string, Preview> = {
     ), { count: false }),
   },
   'c-knowledge': {
-    why: 'Articles that answer the questions people were about to raise a ticket about. Deflection, without saying no to anyone.',
+    what: 'Show the knowledge articles viewed most frequently by users.',
+    helps: 'Helps requesters quickly find popular solutions and helpful information.',
     art: (icon) => listCard(icon, stack(
       <>
         {row(<>{badge(<span className="block size-2.5 rounded-full bg-[#8FB4F5]" />)}{stack(<>{bar('68%')}{row(<>{bar('34%', 5, DIM)}{tag('40px', 'bg-[#3A3A42]')}</>, 'gap-1.5')}</>, 'gap-1.5')}</>, 'items-start gap-2')}
@@ -189,19 +201,24 @@ const PREVIEWS: Record<string, Preview> = {
      interesting. The badge carries each one's own glyph, which is exactly how a requester tells
      them apart at a glance. */
   'act-incident': {
-    why: 'The way in for “something is broken”. A card rather than a link, because it is the page’s main job.',
+    what: 'Give requesters a quick way to report an issue.',
+    helps: 'Opens the incident creation form directly from the portal.',
     art: (icon) => actionCard(icon),
   },
   'act-service': {
-    why: 'The way in for “I need something”. Same card as New Incident — the icon and the words are what tell a requester which is which.',
+    what: 'Give requesters quick access to the Service Catalog.',
+    helps: 'Helps users browse and request the services available to them.',
     art: (icon) => actionCard(icon),
   },
   'act-ad': {
-    why: 'Password and account self-service, so the single most common call never becomes one.',
+    what: 'Let users reset their password or unlock their Active Directory account.',
+    helps: 'Provides self-service access without requiring a support request.',
+    note: 'Available when AD Self Service is enabled.',
     art: (icon) => actionCard(icon),
   },
   'act-knowledge': {
-    why: 'Straight into the articles. The one action card that answers a question instead of opening a ticket.',
+    what: 'Give requesters quick access to the Knowledge Base.',
+    helps: 'Helps users find solutions and answers before raising a request.',
     art: (icon) => actionCard(icon),
   },
 
@@ -213,7 +230,8 @@ const PREVIEWS: Record<string, Preview> = {
     /* ⚠️ REAL WORDS, not grey bars. Text is the one element whose whole substance is the words, so a
        bar sketch of it says nothing a bar sketch of anything else does not. One sample carries the
        range — heading, body, caption — in the height the four stacked variants used to need. */
-    why: 'Any words that are not a heading — a paragraph, a note, a caption. One element that becomes whichever of those you set it to.',
+    what: 'Add text content anywhere on the portal page.',
+    helps: 'Use it for instructions, descriptions, notices, policies, or other information.',
     art: () => (
       <span className="block">
         <span className="mb-1.5 block text-[13px] font-semibold leading-[1.35] text-white/85">How do I reset my password?</span>
@@ -229,7 +247,8 @@ const PREVIEWS: Record<string, Preview> = {
        tripled the card's height and read as a list of buttons on a page, which is not what this
        element makes — it makes ONE button, in one of four styles, and a grid says "pick a style"
        where a stack said "here are four buttons". */
-    why: 'One clear next step. Use the filled style for the action you want taken, and the quieter ones for everything beside it.',
+    what: 'Add a clickable button to the portal.',
+    helps: 'Use it to provide a prominent entry point to a supported portal action or destination.',
     art: () => (
       <span className="grid grid-cols-2 gap-2">
         <span className="flex h-7 items-center justify-center rounded-md text-[10.5px] font-medium text-white" style={{ background: ACCENT }}>Submit</span>
@@ -240,7 +259,8 @@ const PREVIEWS: Record<string, Preview> = {
     ),
   },
   'b-table': {
-    why: 'Values that are compared across rows. If the reader needs to scan one column, this is the only layout that lets them.',
+    what: 'Display structured information in rows and columns.',
+    helps: 'Useful for presenting information that is easier to compare in a tabular format.',
     art: () => (
       <span className="block overflow-hidden rounded-md border border-white/[0.13]">
         <span className="flex items-center gap-3 bg-white/[0.05] px-2.5 py-2">
@@ -254,7 +274,8 @@ const PREVIEWS: Record<string, Preview> = {
     ),
   },
   'b-accordion': {
-    why: 'Long answers that most people will not read. Collapsed, the page stays short; open, nobody had to leave it.',
+    what: 'Organize expandable content into collapsible sections.',
+    helps: 'Useful for FAQs, instructions, policies, or other content that should remain compact.',
     art: () => stack(
       <>
         {/* One open, so the sketch shows both halves of what this element does at once. */}
@@ -276,7 +297,8 @@ const PREVIEWS: Record<string, Preview> = {
   'b-card': {
     /* The only Basic element that DOES draw a surface — which is the whole reason it exists beside
        Text, and why its sketch is the one with a border round it. */
-    why: 'A bordered surface that holds a heading and a few lines together. Reach for it when a block needs to read as one thing rather than as page content.',
+    what: 'Add a visual content container to the portal.',
+    helps: 'Use it to group related information, text, images, or supported content in a distinct section.',
     art: () => card(
       <>
         {row(<>{badge(<span className="block size-2.5 rounded-sm bg-[#8FB4F5]" />, 'lg')}{bar('54%', 8, LOUD)}</>, 'gap-2.5')}
@@ -285,11 +307,69 @@ const PREVIEWS: Record<string, Preview> = {
     ),
   },
 
+  'b-text-image': {
+    what: 'Add a block of text beside an image.',
+    helps: 'Use it for an introduction, a policy note, or any explanation that reads better with a picture.',
+    art: () => (
+      <span className="block">
+        {/* The picture FLOATS, so the text wraps under it — which is the element, and the one thing
+            a side-by-side flex sketch would get wrong. */}
+        <span className="float-left mr-2.5 block size-[52px] rounded-md border border-white/[0.13] bg-[#33333A]" />
+        {stack(<>{bar('100%', 7, LOUD)}{bar('96%', 6, DIM)}{bar('88%', 6, DIM)}{bar('100%', 6, DIM)}{bar('64%', 6, DIM)}</>, 'gap-1.5')}
+      </span>
+    ),
+  },
+  'l-tabs': {
+    what: 'Group related content into tabs on the portal page.',
+    helps: 'Use it to keep several sections available without making the page longer.',
+    art: () => stack(
+      <>
+        {row(
+          <>
+            <span className="flex flex-col gap-1.5 pb-1.5">{bar('42px', 7, LOUD)}<span className="block h-0.5 w-full rounded-full" style={{ background: ACCENT }} /></span>
+            <span className="pb-1.5">{bar('34px', 7)}</span>
+            <span className="pb-1.5">{bar('38px', 7)}</span>
+          </>,
+          'gap-3 border-b border-white/[0.12]',
+        )}
+        {stack(<>{bar('100%', 6, DIM)}{bar('84%', 6, DIM)}{bar('92%', 6, DIM)}</>, 'gap-1.5')}
+      </>,
+      'gap-2.5',
+    ),
+  },
+  'l-divider': {
+    /* Content either side of it, because a line on its own is not a sketch of anything. */
+    what: 'Add a horizontal line between sections.',
+    helps: 'Use it to separate content visually without adding space or text.',
+    art: () => stack(
+      <>
+        {stack(<>{bar('72%', 7, LOUD)}{bar('92%', 6, DIM)}</>, 'gap-1.5')}
+        <span className="block h-px w-full bg-[#6A6A72]" />
+        {stack(<>{bar('58%', 7, LOUD)}{bar('86%', 6, DIM)}</>, 'gap-1.5')}
+      </>,
+      'gap-3',
+    ),
+  },
+  'b-spacer': {
+    what: 'Add adjustable empty space between blocks.',
+    helps: 'Use it to control the gap between sections without changing their content.',
+    art: () => stack(
+      <>
+        {stack(<>{bar('68%', 7, LOUD)}{bar('90%', 6, DIM)}</>, 'gap-1.5')}
+        {/* The GAP is the element, so it is the only part of this sketch that is drawn. */}
+        <span className="flex h-7 w-full items-center justify-center rounded border border-dashed border-[#5B8DEF]/40 bg-[#5B8DEF]/[0.06]" />
+        {stack(<>{bar('54%', 7, LOUD)}{bar('82%', 6, DIM)}</>, 'gap-1.5')}
+      </>,
+      'gap-2',
+    ),
+  },
+
   /* ── Visual ────────────────────────────────────────────────────────────────
      A frame with a picture in it and a caption under — the two parts of the element, and nothing
      else in the palette makes that shape. */
   'v-image': {
-    why: 'A picture in its own right — a screenshot, a photo, a diagram. Placed as an element so it can be sized, cropped and captioned.',
+    what: 'Add an image to the portal page.',
+    helps: 'Use it for banners, instructions, announcements, promotional content, or other visual information.',
     art: () => stack(
       <>
         <span className="flex h-[74px] w-full items-end justify-center overflow-hidden rounded-md border border-white/[0.13] bg-[#26262B]">
@@ -306,11 +386,53 @@ const PREVIEWS: Record<string, Preview> = {
     ),
   },
 
+  'v-video': {
+    what: 'Add a video to the portal page.',
+    helps: 'Use it to provide visual instructions, tutorials, announcements, or other helpful content.',
+    art: () => stack(
+      <>
+        <span className="relative flex h-[74px] w-full items-center justify-center overflow-hidden rounded-md border border-white/[0.13] bg-[#26262B]">
+          {/* A play triangle in a ring — the one mark that reads as "video" at any size. */}
+          <span className="flex size-8 items-center justify-center rounded-full bg-[#5B8DEF]/20">
+            <span className="ml-0.5 block size-0 border-y-[6px] border-l-[10px] border-y-transparent border-l-[#8FB4F5]" />
+          </span>
+          <span className="absolute bottom-2 left-2.5 right-2.5 block h-1 rounded-full bg-white/[0.14]">
+            <span className="block h-full w-1/3 rounded-full bg-[#8FB4F5]/70" />
+          </span>
+        </span>
+        {bar('52%', 5, DIM)}
+      </>,
+      'gap-2',
+    ),
+  },
+  'v-slider': {
+    what: 'Add a rotating set of images to the portal page.',
+    helps: 'Use it to show several banners or announcements in the space of one.',
+    art: () => stack(
+      <>
+        <span className="relative flex h-[74px] w-full overflow-hidden rounded-md border border-white/[0.13] bg-[#26262B]">
+          {/* Two slides half in frame, which is what says "these rotate" rather than "this is one
+              picture with dots under it". */}
+          <span className="block h-full w-[78%] flex-shrink-0 bg-[#3A3A42]" />
+          <span className="block h-full w-[22%] flex-shrink-0 bg-[#2F2F36]" />
+        </span>
+        {row(
+          <>
+            {dot(5, 'bg-[#8FB4F5]')}{dot(5, 'bg-[#4A4A50]')}{dot(5, 'bg-[#4A4A50]')}
+          </>,
+          'justify-center gap-1.5',
+        )}
+      </>,
+      'gap-2',
+    ),
+  },
+
   /* ── Custom ────────────────────────────────────────────────────────────────
      Cards, like Data — but each one's interior is unlike anything else in the palette, which
      is what stops the group reading as six copies of one sketch. */
   'c-contact': {
-    why: 'Where to reach a human when the portal cannot help. Label-over-value rows, so an email and a phone number are never mistaken for each other.',
+    what: 'Display support contact information directly on the portal.',
+    helps: 'Use it to provide details such as support email, phone number, and working hours.',
     art: (icon) => card(
       <>
         {row(<>{badge(icon)}{bar('40%', 8, LOUD)}</>)}
@@ -321,8 +443,28 @@ const PREVIEWS: Record<string, Preview> = {
       </>,
     ),
   },
+  /* ⚠️ The SAME tile grid as Most Used Services, deliberately. They make the identical shape on the
+     page and differ only in where the tiles come from — so a sketch that invented a difference
+     would be describing something the requester never sees. The star is the whole distinction. */
+  'c-favourites': {
+    what: 'Show the services marked as favorites by the requester.',
+    helps: 'Helps users quickly access the services they use or need most often.',
+    art: (icon) => card(
+      <>
+        {row(<>{badge(icon)}{bar('46%', 8, LOUD)}{spacer}{bar('34px', 6, 'bg-[#5B8DEF]')}</>)}
+        <span className="grid grid-cols-2 gap-1.5">
+          {[58, 46, 52, 40].map((w, i) => (
+            <span key={i} className="flex items-center gap-1.5 rounded border border-white/[0.11] px-1.5 py-1.5">
+              <span className="block size-2 flex-shrink-0 rotate-45 bg-[#5B8DEF]/60" />{bar(`${w}%`, 6)}
+            </span>
+          ))}
+        </span>
+      </>,
+    ),
+  },
   'c-services': {
-    why: 'The catalogue items people actually ask for, as a grid of one-click tiles. Skips the search everybody was going to do anyway.',
+    what: 'Show the services requested most frequently by users.',
+    helps: 'Helps requesters quickly discover commonly requested services.',
     art: (icon) => card(
       <>
         {row(<>{badge(icon)}{bar('44%', 8, LOUD)}{spacer}{bar('34px', 6, 'bg-[#5B8DEF]')}</>)}
@@ -339,7 +481,8 @@ const PREVIEWS: Record<string, Preview> = {
   'c-faq': {
     /* No header and no card of its own — it is a run of full-width question rows, which is exactly
        what it looks like on the page and what tells it apart from every other Custom block. */
-    why: 'The questions people ask before they raise anything. Each row opens in place, so the page never sends anyone away.',
+    what: 'Display frequently asked questions and their answers on the portal.',
+    helps: 'Helps requesters quickly find answers to common questions without raising a request.',
     art: () => stack(
       <>
         {[74, 88, 62].map((w, i) => (
@@ -354,11 +497,13 @@ const PREVIEWS: Record<string, Preview> = {
   'x-action-card': {
     /* ⚠️ The dashed badge is the only difference from the four fixed action cards, and it is the
        right one: this is the same card with the destination still to be chosen. */
-    why: 'The same card as the four above, but pointed wherever you like — a form, a page, an external link. The one to reach for when the destination is yours.',
+    what: 'Add a card that points at any page or link you choose.',
+    helps: 'Use it when a destination you need is not one of the built-in action cards.',
     art: (icon) => actionCard(icon, true),
   },
   'x-kpi': {
-    why: 'One number that matters, big enough to read from across the room. A count, a total, a days-open figure.',
+    what: 'Display an important number or metric prominently on the portal.',
+    helps: 'Use it to show a count such as open requests, pending approvals, or other supported ServiceOps information.',
     art: (icon) => card(
       row(
         <>
@@ -375,13 +520,36 @@ const PREVIEWS: Record<string, Preview> = {
       ),
     ),
   },
+
+  /* ⚠️ The only sketch with a FILTER CHIP in it, because that is the element: the same list shape
+     as the six live-data cards, over a module and a condition you chose. Without the chip it draws
+     My Open Requests, and the row above it would already have said that. */
+  'c-records': {
+    what: 'Create a data-driven widget using ServiceOps information that is not covered by the available OOB widgets.',
+    helps: 'Select the module, define the required filters or conditions, and choose how the information should be displayed.',
+    art: (icon) => card(
+      <>
+        {row(<>{badge(icon)}{bar('40%', 8, LOUD)}{spacer}{bar('26px', 6, 'bg-[#5B8DEF]')}</>)}
+        {row(
+          <>
+            <span className="flex items-center gap-1 rounded-sm border border-dashed border-[#5B8DEF]/50 px-1.5 py-1">{bar('26px', 5, 'bg-[#5B8DEF]/60')}</span>
+            <span className="flex items-center gap-1 rounded-sm border border-dashed border-white/[0.16] px-1.5 py-1">{bar('20px', 5, DIM)}</span>
+          </>,
+          'gap-1.5',
+        )}
+        <span className="block h-px w-full bg-white/[0.08]" />
+        {stack(<>{row(<>{bar('52%')}{spacer}{tag('28px', 'bg-[#2E4257]')}</>)}{row(<>{bar('44%')}{spacer}{tag('24px', 'bg-[#5C4A2E]')}</>)}</>, 'gap-2')}
+      </>,
+    ),
+  },
 };
 
 /* Everything without an entry still gets a card — a generic block sketch and its group's reason.
    ⚠️ Falling back to NOTHING would make the hover feel broken on exactly the rows people are least
    sure about; a plain sketch is honest and still says "this is a block on your page". */
 const FALLBACK: Preview = {
-  why: 'Drops onto the page as its own block. Select it to set its content and style.',
+  what: 'Add this block to the portal page.',
+  helps: 'Select it once added to set its content and style.',
   art: (icon) => card(
     <>
       {row(<>{badge(icon)}{bar('50%', 8, LOUD)}</>)}
@@ -392,8 +560,10 @@ const FALLBACK: Preview = {
 
 const CARD_W = 320;
 
-export function PortalElementPreview({ elementId, icon, anchor }: {
+export function PortalElementPreview({ elementId, name, icon, anchor }: {
   elementId: string;
+  /** The element's own name, so the card names the thing it is sketching. */
+  name: string;
   /** The element's own palette glyph. A prop, not an import — the panel imports this file. */
   icon: ReactNode;
   anchor: DOMRect;
@@ -435,8 +605,17 @@ export function PortalElementPreview({ elementId, icon, anchor }: {
         </div>
       </div>
 
+      {/* ⚠️ The NAME is repeated here even though the row it came from is still on screen. By the
+          time the card has opened the pointer is on the card, and a description with no subject at
+          the top of it reads as a caption for the sketch rather than for the element. */}
       <div className="px-4 pb-3.5 pt-3">
-        <p className="text-[12px] leading-[1.5] text-white/55">{preview.why}</p>
+        <p className="text-[12px] font-semibold leading-[1.5] text-white/90">{name}</p>
+        <p className="mt-1 text-[12px] leading-[1.5] text-white/70">{preview.what}</p>
+        <p className="mt-1 text-[12px] leading-[1.5] text-white/45">{preview.helps}</p>
+        {/* A rule above it, so a condition never reads as a third sentence of description. */}
+        {preview.note && (
+          <p className="mt-2 border-t border-white/[0.10] pt-2 text-[11px] leading-[1.45] text-white/40">{preview.note}</p>
+        )}
       </div>
     </div>,
     document.body,
