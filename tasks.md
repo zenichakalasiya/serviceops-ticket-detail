@@ -1023,6 +1023,14 @@ Updated: 2026-09-01
 - **Kept:** the per-row Settings icon in the action rail, which is a different control about a different scope.
 - **Verified:** no button on the page carries the `Global Setting` label; the CTA's wrapper now holds exactly one child; the CTA is unchanged at 36px with its right edge still at 1384. The row's Settings icon still opens the drawer, now titled **Settings** over the portal's name. Build green, no type errors.
 
+## 76. The asset and CI tiles sit still, and their icon holds the top
+- **Status:** done
+- **Where:** `SupportPortalPreview.tsx`
+- **You asked:** remove the hover effect from these cards, and align the left icon to the top.
+- **The hover was a promise nothing kept.** A row that lights under the pointer says it can be pressed, and these tiles do nothing — the card's **View all** is what opens the list. A tile that responds to the pointer and then ignores the click is worse than one that never moved.
+- **`items-start`, so the badge sits against the NAME.** Centred, it lined up with the GAP between the name and the meta line beneath it — so the one element that should anchor the tile's top-left corner was the only thing in the tile not aligned to anything.
+- **Verified:** `align-items: flex-start`; the badge's top is **exactly level with the name's** (0px apart) and 12px from the tile's top, which is its padding. Background reads `rgb(249,250,251)` at rest and `rgb(249,250,251)` under the pointer — unchanged across all 8 tiles.
+
 ## Parked — needs discussion
 - Tour guide
 - AI capabilities

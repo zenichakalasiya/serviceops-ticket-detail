@@ -1,6 +1,6 @@
 {
   "stamp": "2026-09-01",
-  "builtAt": "2026-09-02T06:12:25.381Z",
+  "builtAt": "2026-09-02T07:31:49.835Z",
   "tasks": [
     {
       "n": 1,
@@ -1522,7 +1522,21 @@
       "notes": [
         "**It was a third door onto one of two rooms.** Everything it opened is the same list the **Settings tab** on this page already holds, and a portal's own settings are on its row — so an unlabelled glyph pressed against the page's primary action was offering a route to something already reachable two ways, in the one position where a bare icon reads as a modifier of the button beside it rather than a place of its own.",
         "**⚠️ The drawer it shared stopped being conditional.** One drawer served both callers, so its title and subtitle were ternaries — Settings vs Global Setting, the portal's name vs \"Applies to every support portal\". With one caller left it is always about one portal, and saying so unconditionally is the honest shape rather than a branch that can only go one way.",
-        "**⚠️ The Tooltip import went with it.** The gear was its only use in this file; the per-row Settings icon uses a native `title`. An import kept alive by nothing is the next reader's false lead.",
+        "**⚠️ The Tooltip import went with it.** The gear was its only use in this file; the per-row Settings icon uses a native `title`. An import kept alive by nothing is the next reader's false lead."
+      ]
+    },
+    {
+      "n": 76,
+      "title": "The asset and CI tiles sit still, and their icon holds the top",
+      "status": "done",
+      "fields": {
+        "Where": "`SupportPortalPreview.tsx`",
+        "You asked": "remove the hover effect from these cards, and align the left icon to the top.",
+        "Verified": "`align-items: flex-start`; the badge's top is **exactly level with the name's** (0px apart) and 12px from the tile's top, which is its padding. Background reads `rgb(249,250,251)` at rest and `rgb(249,250,251)` under the pointer — unchanged across all 8 tiles."
+      },
+      "notes": [
+        "**The hover was a promise nothing kept.** A row that lights under the pointer says it can be pressed, and these tiles do nothing — the card's **View all** is what opens the list. A tile that responds to the pointer and then ignores the click is worse than one that never moved.",
+        "**`items-start`, so the badge sits against the NAME.** Centred, it lined up with the GAP between the name and the meta line beneath it — so the one element that should anchor the tile's top-left corner was the only thing in the tile not aligned to anything.",
         "Tour guide",
         "AI capabilities",
         "Video / GIF as a widget",
