@@ -25,7 +25,7 @@ let cur = null;
 for (const raw of md.split('\n')) {
   const head = /^##\s+(\d+)\.\s+(.+)$/.exec(raw);
   if (head) {
-    cur = { n: Number(head[1]), title: head[2].trim(), status: 'todo', fields: {} };
+    cur = { n: Number(head[1]), title: head[2].trim(), status: 'todo', fields: {}, notes: [] };
     tasks.push(cur);
     continue;
   }
@@ -39,8 +39,18 @@ for (const raw of md.split('\n')) {
     cur._last = key === 'status' ? null : field[1].trim();
     continue;
   }
-  // A wrapped continuation line belongs to the field above it.
-  if (cur._last && /^\s{2,}\S/.test(raw)) cur.fields[cur._last] += ' ' + raw.trim();
+  /* ⚠️ A bullet that is NOT `- **Key:** value` is a NOTE, not something to drop. This parser only
+     ever matched a bold label ending in a colon, so every `- **⚠️ …**` bullet — which is where the
+     reasoning for a change actually lives — was discarded in silence. Ninety-four tasks had been
+     published carrying their Where / You asked / Verified rows and none of the thinking between
+     them, and nothing anywhere said so. */
+  const note = /^-\s+(.+)$/.exec(raw);
+  if (note) { cur.notes.push(note[1].trim()); cur._last = null; continue; }
+  // A wrapped continuation line belongs to the field — or the note — above it.
+  if (/^\s{2,}\S/.test(raw)) {
+    if (cur._last) cur.fields[cur._last] += ' ' + raw.trim();
+    else if (cur.notes.length) cur.notes[cur.notes.length - 1] += ' ' + raw.trim();
+  }
 }
 
 const parked = (() => {
@@ -55,7 +65,7 @@ const stamp = (/^Updated:\s*(.+)$/m.exec(md) ?? [, ''])[1].trim();
 const data = {
   stamp,
   builtAt: new Date().toISOString(),
-  tasks: tasks.map(({ n, title, status, fields }) => ({ n, title, status, fields })),
+  tasks: tasks.map(({ n, title, status, fields, notes }) => ({ n, title, status, fields, notes })),
   parked,
 };
 
@@ -99,7 +109,7 @@ const html = `<!doctype html>
   .fill { height: 100%; background: var(--done); border-radius: 999px; transition: width .4s ease; }
   .count { font-size: 12px; color: var(--mute); white-space: nowrap; font-variant-numeric: tabular-nums; }
   ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
-  li {
+  #list > li {
     background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px;
     transition: border-color .2s ease;
   }
@@ -127,11 +137,16 @@ const html = `<!doctype html>
   .view:hover { color: var(--ink); }
   /* One rule does the whole thing: the cards are already built, summary just stops drawing the
      detail. Nothing re-renders, so switching back is instant and keeps your place on the page. */
-  body.summary dl { display: none; }
-  body.summary li { padding: 10px 16px; }
+  body.summary dl, body.summary .notes { display: none; }
+  body.summary #list > li { padding: 10px 16px; }
   dl { margin: 10px 0 0 32px; display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; }
   dt { color: var(--faint); font-size: 12px; }
   dd { margin: 0; font-size: 12.5px; color: var(--mute); }
+  /* Same indent as the field grid, so a note reads as another line about the same task rather than
+     as a second list of its own. The marker is a hairline rather than a bullet glyph — several of
+     these open with ⚠️, and a disc in front of that is two markers on one line. */
+  .notes { margin: 8px 0 0 32px; padding: 0; list-style: none; display: grid; gap: 6px; }
+  .notes li { font-size: 12.5px; line-height: 1.55; color: var(--mute); padding-left: 10px; border-left: 2px solid var(--line); }
   code {
     font: 500 11.5px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     background: var(--todo-bg); padding: 1px 5px; border-radius: 4px; color: var(--ink);
@@ -245,6 +260,9 @@ function render(data) {
       + '<span class="pill">' + esc(t.status) + '</span>'
       + '</div>'
       + (rows ? '<dl>' + rows + '</dl>' : '')
+      + ((t.notes && t.notes.length)
+          ? '<ul class="notes">' + t.notes.map((x) => '<li>' + rich(x) + '</li>').join('') + '</ul>'
+          : '')
       + '</li>';
   }).join('');
   const box = document.getElementById('parked');

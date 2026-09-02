@@ -1,6 +1,6 @@
 {
   "stamp": "2026-09-01",
-  "builtAt": "2026-09-01T17:19:24.395Z",
+  "builtAt": "2026-09-02T03:37:53.630Z",
   "tasks": [
     {
       "n": 1,
@@ -11,7 +11,8 @@
         "You asked": "remove Card templates from the Quick Action parent section; keep it on each action card.",
         "How I check it": "select the Quick Actions section — no Card templates. Select one card — it has its own. ⚠️ Worth knowing: it lives on the parent today precisely so every card in a row shares a shape. Per-card means a row can hold four different shapes — the point of the change, and its cost.",
         "Verified": "Quick Actions section panel has no Card templates (its Content section drops entirely). Each action card has all four tiles and they WORK per card — setting New Incident to Icon top left its three siblings icon-left."
-      }
+      },
+      "notes": []
     },
     {
       "n": 2,
@@ -22,7 +23,8 @@
         "You asked": "remove the Custom Action Card widget from the widget side drawer.",
         "How I check it": "Widgets → Custom has no \"Action Card\" row, and typing \"action\" into the search does not surface it either.",
         "Verified": "Library is 20 rows (was 21); Custom group reads Contact Us / Most Used Services / FAQ / KPI. Searching \"action\" returns only the four fixed action cards and Button."
-      }
+      },
+      "notes": []
     },
     {
       "n": 3,
@@ -33,7 +35,8 @@
         "You asked": "⚠️ CHANGED — the external-link button is off (\"leave it as it is for now\"; the four cards already redirect anywhere). What you asked for instead: nobody can add any extra widget or element into the action cards' parent section beyond those four.",
         "How I check it": "drag a Text, a Button and an Image onto the Quick Actions row — each is refused and says why, and the same element still drops fine into any other section. Clicking a library row while Quick Actions is selected places it elsewhere rather than inside.",
         "Verified": "Quick Actions row does not accept the dragover (cursor reads no-drop) and a simulated drop leaves it holding exactly its four cards; the My Open Requests and My Assets rows still accept. Clicking Text in the library with Quick Actions selected placed it in a new section instead."
-      }
+      },
+      "notes": []
     },
     {
       "n": 4,
@@ -44,7 +47,8 @@
         "You asked": "remove that data from the predefined section — Title, Statuses, Rows to show, both toggles, the Header group and the Empty state.",
         "How I check it": "select the widget — no Content section, only styling left. The card on the canvas renders exactly as it does now.",
         "Verified": "Panel is DESIGN → Style, Spacing only — no CONTENT heading, no Header group, no Empty state. Canvas card unchanged: title, 5 badge, View all, 5 rows. Pending Approvals still shows its full panel, so the change is scoped to this widget."
-      }
+      },
+      "notes": []
     },
     {
       "n": 5,
@@ -55,7 +59,8 @@
         "You asked": "remove those section fields — Title, Rows to show, Show requester, Show raised date, the Header group and the Empty state.",
         "How I check it": "select the widget — no Content section; the canvas card is unchanged.",
         "Verified": "Panel is DESIGN → Style, Spacing only. Canvas card unchanged: 2 badge, View all, both approval rows with requester names and dates."
-      }
+      },
+      "notes": []
     },
     {
       "n": 6,
@@ -66,7 +71,8 @@
         "You asked": "remove those section fields. ⚠️ Your line 6 carries a stray \", AD Self Service\" — I am reading this as Most Read only; say if it meant something else.",
         "How I check it": "select the widget — no Content section; the canvas card is unchanged.",
         "Verified": "Panel is DESIGN → Style, Spacing only. Canvas card unchanged: View all, 3 KB rows, 3 category chips, dates intact."
-      }
+      },
+      "notes": []
     },
     {
       "n": 7,
@@ -77,7 +83,8 @@
         "You asked": "remove those section fields.",
         "How I check it": "select the widget — no Content section; the canvas card is unchanged.",
         "Verified": "Panel is DESIGN → Style, Spacing only. Canvas card unchanged: 5 asset rows with their type labels."
-      }
+      },
+      "notes": []
     },
     {
       "n": 8,
@@ -88,7 +95,8 @@
         "You asked": "remove those section fields — Title, Rows to show, Show CI type, the Header group and the Empty state.",
         "How I check it": "select the widget — no Content section. ⚠️ My CIs is the one widget that actually renders an empty state on this page, so I check \"No Data Found\" still shows once its control is gone.",
         "Verified": "Panel is DESIGN → Style, Spacing only. ⚠️ The empty state still RENDERS — the canvas card shows No Data Found and its View all link, because the mode and message live in the defaults. The stale note telling admins to set the empty state deliberately was removed with the control it referred to."
-      }
+      },
+      "notes": []
     },
     {
       "n": 9,
@@ -99,7 +107,8 @@
         "You asked": "remove those section fields — Title, Rows to show and the Empty state.",
         "How I check it": "select the widget — no Content section; the canvas card is unchanged.",
         "Verified": "Panel is DESIGN → Style, Spacing only. Scoped to the widget's own node, the canvas card is unchanged: heading plus three announcements with their dates, and still no count badge or View all — which this feed never had."
-      }
+      },
+      "notes": []
     },
     {
       "n": 10,
@@ -110,7 +119,8 @@
         "You asked": "remove Title, the whole Show-hours section, the Show-email and Show-phone toggles, and the Email label / Phone label fields — those are not ours to edit. Leave only the email value and the phone value as editable inputs.",
         "How I check it": "select Contact Us — the panel is two inputs, Email address and Phone number. The canvas card still shows its labels; they come from the product now.",
         "Verified": "Panel is CONTENT → Email address, Phone number (holding the real values), then DESIGN. Title, Show email, Show phone, Show hours, Email label and Phone label are all gone. The canvas card is unchanged and still reads Contact Us / Email / Phone / Hours with all three values."
-      }
+      },
+      "notes": []
     },
     {
       "n": 11,
@@ -121,7 +131,8 @@
         "You asked": "the badge sits far right beside the View-all link on all five live-data widgets; it should sit beside the Title instead.",
         "How I check it": "measure each badge's left edge against its title's right edge — every badge sits immediately after its own title, and View all is alone on the right.",
         "Verified": "All five measured: every badge sits exactly 10px after its own title, while the badge-to-View-all gap varies 51/51/116/290/318px — so the link is pushed to the right edge and the badge tracks the title."
-      }
+      },
+      "notes": []
     },
     {
       "n": 12,
@@ -132,7 +143,8 @@
         "You asked": "no option to select the open-requests list inside the card; remove that selection and its sidebar configuration (Statuses / Scope / Show).",
         "How I check it": "click the rows inside My Open Requests — selection lands on the widget, never on a separate Request List layer, and no Statuses/Scope/Show panel exists.",
         "Verified": "Clicking a row inside the card selects My Requests, not a Request List layer. No Statuses/Scope/Show panel exists anywhere on the page. All five rows still render."
-      }
+      },
+      "notes": []
     },
     {
       "n": 13,
@@ -143,7 +155,8 @@
         "You asked": "an action card belongs only inside the Quick Actions parent section, never as a standalone block. So no duplicate on its floating toolbar, and no way to add one from the widget sidebar.",
         "How I check it": "the Actions rows are gone from the library, and an action card's toolbar has no duplicate. ⚠️ The toolbar is shared, so duplicate has to be disabled for this kind rather than removed from the bar — I check it still works everywhere else.",
         "Verified": "Library is 16 rows with the Actions group gone entirely; searching 'incident' returns only My Open Requests. On an action card the toolbar's copy button is greyed (#CBD5E1, cursor-not-allowed) with the tooltip 'This block is part of the page layout and can't be copied'; on Announcements it is live (#64748B, 'Copy'), so duplicate still works everywhere else."
-      }
+      },
+      "notes": []
     },
     {
       "n": 14,
@@ -155,7 +168,8 @@
         "How I check it": "select each of the four — the panel goes Content → Design with no Action section, so On-click-go-to and Most used services are both gone. Their destinations come from the card's own identity.",
         "You settled it": "the destination is backend-side — a specific action card redirects to a specific page, decided there, not by the admin. So the control was offering an authority this screen does not have. The custom Action Card keeps its Action section, because that one exists to point anywhere.",
         "Verified": "All four cards read CONTENT → DESIGN with no ACTION section: no On-click-go-to, no Most used services. Checked New Incident, Request Service, AD Self Service and Knowledge individually."
-      }
+      },
+      "notes": []
     },
     {
       "n": 15,
@@ -166,7 +180,8 @@
         "You asked": "remove every field except the Show-description toggle — Title, Services to show, Columns, Show \"Browse catalog\" link, Link label and the Empty state.",
         "How I check it": "select the widget — CONTENT holds one switch and nothing else, and the card on the canvas is unchanged.",
         "Verified": "Panel is CONTENT → Show description, then DESIGN → Style, Spacing. Title, Services to show, Columns, Browse link, Link label and Empty state all gone; the canvas grid is unchanged."
-      }
+      },
+      "notes": []
     },
     {
       "n": 16,
@@ -177,7 +192,8 @@
         "You asked": "remove the Design section (Style, Spacing) from the logo's sidebar.",
         "How I check it": "select the logo — CONTENT holds the upload and nothing follows it.",
         "Verified": "Panel is CONTENT → Logo image and nothing after it. ⚠️ Removing the accordions exposed a bare DESIGN heading, so PanelBody now drops that section entirely when it has nothing to draw — the same rule the packs model already had. Top bar and Hero still show their Design sections."
-      }
+      },
+      "notes": []
     },
     {
       "n": 17,
@@ -188,7 +204,8 @@
         "You asked": "remove the Shadow toggle from the navbar's sidebar.",
         "How I check it": "select the top bar — no Shadow row, and the bar renders as it does now.",
         "Verified": "Top bar → DESIGN → Style expanded reads Background colour, Bar height, Divider under the bar. No Shadow row."
-      }
+      },
+      "notes": []
     },
     {
       "n": 18,
@@ -199,7 +216,8 @@
         "You asked": "an inline font-style editor on every text element's floating toolbar. ⚠️ REVISED — first built against the theme's two faces; you changed it to a plain font-family picker over 6–7 families, with the theme section to be reworked separately.",
         "How I check it": "select a text element — the toolbar offers Heading face / Body face, picking one changes the rendered font, and changing the theme moves it with the theme.",
         "Verified": "Toolbar gains a Font select: Default plus the six families, each option rendered in its own face. Selecting Merriweather / Poppins / IBM Plex changed the rendered font-family each time and Default restored it. ⚠️ Only Inter was actually loaded, so the other five would have fallen back to the generic sans and the picker would have offered six identical-looking options — all six are now requested in fonts.css and measure at six distinct widths."
-      }
+      },
+      "notes": []
     },
     {
       "n": 19,
@@ -210,7 +228,8 @@
         "You asked": "remove \"Open in a new tab\", and remove \"A page in this portal\" and \"Call a number\" from the Opens dropdown.",
         "How I check it": "select a Button — Opens lists External link, Download a file, Compose an email, Share this page. No new-tab toggle. ⚠️ Whatever the removed options revealed (URL fields, phone field) has to go with them or it becomes a control nothing can reveal.",
         "Verified": "Button panel ACTION reads Opens → External link / Download a file / Compose an email / Share this page, then URL. No Open-in-a-new-tab, no Page picker, no Number field. The canvas button is unchanged."
-      }
+      },
+      "notes": []
     },
     {
       "n": 20,
@@ -221,7 +240,8 @@
         "You asked": "headings on the four action cards, My Open Requests, Pending Approvals, My Assets, My CIs, Favourite Services, Most Used Services, Announcements and Most Read stop being inline-editable. Only the action card's **description** stays editable.",
         "How I check it": "⚠️ You chose **headings only** — the title node disappears entirely, so clicking the words selects the CARD rather than a layer you can select but not change. Click every heading listed: each selects its widget. Click an action card's description: it still types.",
         "Verified": "Clicked all nine headings — My Open Requests, Pending Approvals, Most Read, My Assets, My CIs, Announcements, Contact Us, Most Used Services and New Incident each select their WIDGET, not a text layer. The action card's description still selects Subtext (editable) and the hero heading still selects Heading, both correctly out of scope."
-      }
+      },
+      "notes": []
     },
     {
       "n": 21,
@@ -232,7 +252,8 @@
         "You asked": "remove everything except Placeholder — Scope, Show suggestions as they type, Show the search bar.",
         "How I check it": "select the search bar — one field. ⚠️ The Hero's own panel keeps its Show-the-search-bar toggle, so the bar can still be hidden; I check that still works.",
         "Verified": "Search panel is CONTENT → Placeholder only. ⚠️ It was HERO_SEARCH_FIELDS that looked like the spec but had no readers anywhere — the real one is SEARCH_SPEC.panel.content. The dead const is deleted rather than left as a second definition of one screen."
-      }
+      },
+      "notes": []
     },
     {
       "n": 22,
@@ -243,7 +264,8 @@
         "You asked": "two sections of up to four cards, styled like the action cards rather than the old list. ⚠️ You chose **restyle the existing Most Used Services and add Favourite Services** — so the page carries each name once, not twice.",
         "How I check it": "both sections render four cards with icon-on-top, name and category (Employee Off-boarding / HR, Microsoft Office 2019 / Software, Payroll Setup / Finance, Flight Booking / Travel), and they match the action cards' shape.",
         "Verified": "⚠️ REVISED — neither section is in the library (15 rows, both absent); they are fixed page blocks sitting directly under Quick Actions (measured: quick 408 → favourites 497 → services 678 → work 830). Both render four tiles, icon-top, name over category, identical 117px height and column direction on load. Card templates is its own group under Content and is SHARED: picking Icon left turned both grids to row, Icon top turned both back to column."
-      }
+      },
+      "notes": []
     },
     {
       "n": 23,
@@ -256,7 +278,8 @@
         "Progress": "the STRUCTURE is built and verified — see [SECTION-TREE-SPEC.md](SECTION-TREE-SPEC.md). Your handwritten note replaced the two-level plan with containers all the way down: one BOX type, a Row/Column behaviour on every one, and a Split that divides along whatever that behaviour is. Settled with you 25 Aug: depth capped at 4 below the section, Split on the floating toolbar, 4 columns to a row, no mobile breakpoints.",
         "Verified": "split sec-3 → two equal 506px columns side by side, the Text preserved in the first; Behaviour → Column restacked the same two boxes full-width with nothing lost; the Split label follows it (\"Split into columns\" / \"Split into rows\"); nesting alternates axis on its own (rows → columns → rows) and stops at depth 5 with the button visible and disabled reading \"Nested as deep as a section goes (4 levels)\"; a 5th column refuses with \"A row holds 4 columns at most\"; the \"+\" adders read \"Add a row above/below\" inside a column and \"Add a column to the left/right\" inside a row; deleting one of two children collapses the branch back to a single cell with its element intact; a Button added into a 3-deep box lands and opens its own panel; Ctrl+Z / Ctrl+Shift+Z restore and re-apply a split.",
         "Still to do": "the drag mechanic from [SECTION-ROW-COLUMN-DRAG-PROMPT.md](SECTION-ROW-COLUMN-DRAG-PROMPT.md) — the blue placement line, its orientation rule and the label chip — plus a column holding a STACK of elements rather than one, and the Divider's return (still yours to confirm)."
-      }
+      },
+      "notes": []
     },
     {
       "n": 24,
@@ -274,7 +297,18 @@
         "Sort": "the header never moves, and blanks go last in BOTH directions. An empty cell is an absence, and an absence has no place in an ordering; putting it at the end is the only answer that reads the same whichever way you sorted. Numbers compare as numbers, so 9 sorts before 10.",
         "Verified with real mouse input": "dragging column 1's grip onto column 3 took \"Tier, Contact, Response\" → \"Contact, Response, Tier\", with the ghost reading \"Tier\" and the drop line shown, and **the menu did not open afterwards**. A plain click on the same grip DID open the menu — thirteen items, \"Move left\" disabled reading \"Already the first column\". Red text applied `rgb(185,28,28)` to all three cells of column 1. Sort Z→A reordered the two body rows with the header untouched. A real row drag moved them back, ghost reading \"L2 · Infrastructure\". A 2-cell drag-selection gave a grip whose menu is Colour · Alignment · Toggle header cells · Clear contents.",
         "Verified with real input": "drag-selecting two cells in one row and choosing Merge gave `L1 · Service Desk servicedesk@acme.com[span2]` — both contents kept. Selecting that cell and pressing Escape leaves it selected (the grip appears), the slot then reads **Split cell**, and splitting returned two cells with the text in the first. A vertical selection shows **Merge cells disabled**, titled \"Merging down is not supported yet — merge cells across one row\"."
-      }
+      },
+      "notes": [
+        "**Pass 2 (25 Aug) — the handles, the drag and the menus.** You sent seven references and reported the drag not working.",
+        "**⚠️ You were right, and my earlier \"verified\" was the reason.** I had only ever tested the drag with SYNTHETIC events, which fire the handler without a real pointer — so it passed while a genuine press-and-drag did not. This pass was verified with **Playwright** (real `mouse.down/move/up`), with your permission.",
+        "**Three faults, not one.** (1) **No threshold** — every press started a drag, so a plain click reordered nothing and opened the menu on release; there is now a 4px threshold, which is what lets one control be both a grip and a menu button. (2) **`geo` came from the closure** — a snapshot taken at mousedown, while the table reflows the moment a row is lifted, so the drop indicator drifted a column off partway across. It reads a REF now. (3) **The floating cell toolbar sat over the column rail** — with any top-row cell selected the rail's handles could not be clicked at all, which is how the drag came to look broken even where it worked. Playwright reported it as \"subtree intercepts pointer events\", which is the clearest evidence of the three.",
+        "**The handles are GRIPS now**, not chevrons: `GripHorizontal` on the columns, `GripVertical` on the rows, in rounded pills, with a `grab`/`grabbing` cursor. A chevron says \"this opens something\" and says nothing about picking it up — which was exactly the half nobody could find.",
+        "**The floating toolbar is REPLACED by a cell menu**, reached from a round grip on the selection's right edge. It duplicated the handle menus — two surfaces offering Colour, Alignment and Clear — and it was physically in the way.",
+        "**Merge / split (25 Aug) — closed, with one boundary stated out loud.** Merging **across a row** works: the selection becomes one cell with a `colspan`, and its ⚠️ **content is JOINED, not discarded** — merging three cells that each say something and keeping only the leftmost is a silent deletion, and the one thing you cannot do about a silent deletion is notice it. Split puts the content back in the first of the new cells; there is no honest way to decide which words belonged to which column, and guessing at a split point would scatter somebody's sentence.",
+        "**⚠️ Merging DOWN is refused, with the reason on the control** — \"Merging down is not supported yet — merge cells across one row\". That is a decision, not an omission: a `rowspan` means the rows beneath no longer tile their own width, so `fixTable`, `cellAt`, `cellStarts`, `columnCount`, insert/delete column and both reorders each need a coverage map before any of them stays correct. The brief calls this the hardest requirement in the document and says to decide the outcome deliberately **or refuse with a reason**; this refuses. `rowspan` stays in the model and the renderer still emits it, so the day that map is written nothing else changes.",
+        "**One slot, two states.** Merge and Split share a menu row, showing whichever applies — they are the same intent aimed at two states, and two permanent items would leave one dead whichever cell you had.",
+        "⚠️ Excel/Sheets paste and keyboard-only operation stay **CUT** — you dropped both on 25 Aug; the brief still asks for them (§5.24, §7) and is superseded on those two points."
+      ]
     },
     {
       "n": 25,
@@ -289,7 +323,10 @@
         "⚠️ Fixed after you spotted it (25 Aug)": "**Announcements was on the page and still addable.** I had gated the mark on `node` — owning a fixed page block — but Announcements is the one Live-data widget with no fixed block; it only ever exists as a placed element, so it could never be marked however many copies the page carried, while its five neighbours in the same group all were. One group, two behaviours, for a reason nobody looking at the panel could see. Your task said \"in live data **and** in action cards\", which is a GROUP rule: predefined now means **Live data or Actions** (or an explicit `node`, which is what keeps the two Custom service rows marked). The panel also had its own narrower copy of the test, and the narrower one won — that gate is gone; the builder decides, the panel reads.",
         "Re-verified": "12 rows marked — all six Live data including Announcements, all four Actions, both service rows. Nine stay addable: Text, Button, Table, Accordion, Card, Image, Contact Us, FAQ, KPI. Deleting the Announcements element made its row addable again; adding it back re-marked it.",
         "⚠️ Note on scope": "this reverses **task 2** (Custom Action Card hidden) and **task 13**'s library half for the four action cards. It does NOT bring back the general \"nothing greys out\" reversal — Divider, Spacer, Advanced Tabs, Media Slider and Text-with-Image stay hidden behind their flags, which is a separate decision."
-      }
+      },
+      "notes": [
+        "**⚠️ Bug found and fixed on the way — deleting a live-data card never removed it.** The palette said \"addable\" while the card was still sitting on the page, which is how I found it. `card()` in the preview searched the LIVE `rowOrder` for the card's row, then tested `!rowOrder[row].includes(id)` — a condition that can never be true, because `row` was found by that very test. Deleting takes the card out of `rowOrder`, so the search found no row, the guard had nothing to test, and the card rendered anyway at order 0. Membership now comes from `rowOf` — the static map of which row a card belongs to — so the guard has something real to compare against. Delete had been reporting \"Removed\" and leaving the card in place."
+      ]
     },
     {
       "n": 26,
@@ -302,7 +339,8 @@
         "What I fixed": "three things. (1) **Hours is gone from the card** — removed, not hidden behind a switch. Its toggle went in task 10, which left a line you could neither edit nor hide: the worst of the three states. (2) **Nothing on the card is inline-editable any more** — both halves of every line used to be their own `<Sel>` text node, so clicking the word \"Email\" opened an inline editor for a label that is the PRODUCT's word. Every portal calls that line Email; letting one page rename it is how two portals stop describing the same thing the same way. The two VALUES stay editable, in the panel, because a portal may legitimately publish its own address. (3) **The empty section is gone from the sidebar** — that was the **Empty state** group (pack P8), which asks what to show when there is nothing to show. Contact Us is two fixed lines now, so there is no state in which it is empty; it kept P8 while the three Show switches existed, because turning all three off did empty it.",
         "Also removed, both halves at once": "the `showEmail`/`showPhone`/`showHours` defaults and the renderer's filter that read them, plus the `cl0`/`cl1`/`cl2`/`cv2` seeds and the \"every line is switched off\" empty branch — config kept alive only by the code that read it, and code kept alive only by the config it read.",
         "Verified": "the card reads exactly \"Contact Us / Email / servicedesk@acme.com / Phone / +91 79 4040 0000\" with **no Hours**, and it contains **0 selectable child nodes**. The panel reads CONTENT (Email address, Phone number) → DESIGN (Style, Spacing) with **no Empty state**. Typing \"help@acme.com\" into the Email address field changed the card immediately."
-      }
+      },
+      "notes": []
     },
     {
       "n": 27,
@@ -314,7 +352,10 @@
         "How I check it": "the admin page head, the sidebar row and the Overview card all read \"Support Portal\", and nothing anywhere still says \"Customization\" as a page name.",
         "What changed": "the `<h1>`, the View-Docs toast, the builder's back-arrow tooltip (\"Back to Support Portal\"), and the internal module key in `AdminPage` — renamed in both of its two places at once, since they only mean anything to each other.",
         "Verified": "the listing `<h1>` reads \"Support Portal\", the back tooltip reads \"Back to Support Portal\", and the string \"Customization\" appears nowhere on either screen."
-      }
+      },
+      "notes": [
+        "**⚠️ My note about keeping the Customization tab was wrong** — there is no tab strip on this page any more. It went when Support Portal became one destination showing the portals you have, so \"Customization\" was naming a mode the page no longer has, and it disagreed with the sidebar row, the Overview card and the route, all of which already said Support Portal."
+      ]
     },
     {
       "n": 28,
@@ -327,7 +368,8 @@
         "What I built": "the seed opens the first Design accordion and shuts the rest. Written twice, as predicted: the packs panel gets the first key ADDED to the open list, and `PanelBody`'s accordions get the first key LEFT OUT of the `shut:` list. ⚠️ The render keys three kinds of accordion three different ways — a field group by its NAME, a pack by its ID, Spacing by the literal `__spacing` — so `firstDesignKey` answers in the same currency the open-state list is written in rather than with an index. `DROP_GROUPS` and `EMPTY_STATE_GROUP` moved to module scope so the seed can use them; they were declared 470 lines below it, which in this file is a blank page rather than an error.",
         "⚠️ Found dead": "`accordion.open` is declared on `SECTION_SPEC`'s Layout accordion and is read by nothing. The `shut:` list is what actually governs.",
         "Verified across both models": "Banner (panel) opens **Banner** with Search and Spacing shut; the Quick Actions section (panel) opens **Layout** with Style and Spacing shut; Contact Us and Announcements (packs) open **Style** with Spacing shut."
-      }
+      },
+      "notes": []
     },
     {
       "n": 29,
@@ -341,7 +383,8 @@
         "(2) Banner": "the Choose-a-banner popup lost its search and its per-tile name and note. You are choosing a PICTURE, and a picture is recognised by looking at it — a search box over a grid you can see all of asks you to name what you are about to point at, and the names had nothing left to match on. The name survives as the tile's tooltip; the artwork grew 58px → 78px to take the whole tile. Height is now **Short · Standard · Tall · Full**: a banner has about four useful heights, and a 120–600px slider invited a precision nobody wants — 347px is not a decision anyone made on purpose. The values are still plain pixels underneath, so the renderer is unchanged.",
         "(3) Whole-page background": "removed from the panel AND the canvas toolbar in the same pass, along with the `onWholePage` plumbing and the now-unused `Globe` import. It put one BLOCK in charge of the page's background — a change you make while looking at the banner and then find everywhere else — and the page has its own background in Theme.",
         "Verified": "Accordion Content = Items only; Design = \"Style | Fill | None | Colour | Border | Corner radius | Spacing\". The Add link CTA sits **12px from the left edge and 12px from the bottom** of the inline editor; adding one, typing \"Reset it yourself\" / \"https://acme.com/ad\" put a working link on the canvas item. The banner popup: **no input element**, 9 image tiles at 78px, names in tooltips, text content is only the header + group labels + \"Upload my own image\". Height \"Tall\" took the banner 260px → 360px. No \"Also use behind the whole page\" anywhere."
-      }
+      },
+      "notes": []
     },
     {
       "n": 30,
@@ -353,7 +396,10 @@
         "How I check it": "both rows are in the library; selecting Favourite Services shows the note. ⚠️ This reverses **task 22**'s hiding — though task 22's reasoning argued for a NOTE rather than an absence: an admin can reasonably decide whether the page carries a favourites row at all, and hiding it only meant that once deleted there was no way back.",
         "What I built": "both are back in the palette, each naming its fixed page block, so task 25's mark applies — they render greyed with a tick while the page carries them. `placedPredefined` had to learn about top-level BANDS as well as row members: these two are their own blocks in `blockOrder`, so counting only `rowOrder` left both addable while the page already had them.",
         "Verified": "the library is 21 rows (was 19); both service rows appear under Custom and both are greyed with a tick. Selecting Favourite Services shows the amber note at the top of Content; Most Used Services shows nothing, so the thirteen info notes stayed dormant."
-      }
+      },
+      "notes": [
+        "**The note is a `warn`, and that required a renderer.** `notesFor` existed and was **called by nothing** — dead since the grey ⓘ note cards were removed from every panel. Turning notes back on wholesale would have restored all **thirteen** `info` notes still declared across the specs, so the renderer takes **warn only**: a warn says something the canvas cannot show you — Favourite Services draws four example tiles in the builder and nothing at all for a requester who has pinned none — and there is exactly one in the catalogue, which is the right number for a caution."
+      ]
     },
     {
       "n": 32,
@@ -363,7 +409,13 @@
         "Where": "`portalWidgetSpec.ts` (`structureSpecId`), `portalStructureSpecs.ts`, `supportPortalData.ts`, `PortalItemList.tsx` + `PortalWidgetDrawer.tsx`",
         "You asked": "(1) an empty section shows the OLD Style component; (2) remove Layout ▸ Behaviour from every sidebar in the module; (3) Most Used Services and Favourite Services belong under Live data; (4) task 29's Add item should open the box inline with empty fields and placeholders instead of replacing the sidebar.",
         "Verified": "a column's Design now reads \"Style | Fill | None | Colour | Border | px | Corner radius | px | %\" — the current component. No \"Behaviour\" anywhere in the module. The Live data group lists all eight rows including both service rows. Clicking Add item keeps you on the Accordion panel and opens \"Item 4\" expanded, both fields empty, showing \"How do I reset my password?\" and \"Answer it in a sentence or two.\" as placeholders, with the Add link CTA below them."
-      }
+      },
+      "notes": [
+        "**(1) was a regression I introduced.** Box ids became `sec-3-b7` when the section became a tree (task 23), and `structureSpecId` was left matching the old positional `sec-3-c0` — so every column and every unsplit section stopped resolving to `COLUMN_SPEC` and fell through to the LEGACY `PortalElementPanel`. That is the old block you photographed: a \"Background colour\" dropdown, a \"Per corner\" radius and a `solid` border row. ⚠️ **A router that matches on id SHAPE has to change in the same commit as the shape.**",
+        "**(2)** The Row/Column Behaviour control is off both the Section and the Column panels. The tree model behind it stays (`Box.dir`, `splitBox`, the axis-aware adders), so nothing on the canvas moved — it simply is not a panel decision while the section work is parked.",
+        "**(3)** Both rows moved from Custom to **Live data**: both are backend-fed — one from what this requester pinned, the other from what the organisation asks for most — which is the line Live data draws. They kept their `node`, which is what lets the palette see them on the page since both are top-level BANDS rather than row members.",
+        "**(4)** Adding an item no longer calls `onSelect`, which used to swap the whole sidebar for that item's drawer — you asked for one more row and the panel you were working in disappeared. The list opens the new row **in place** (the item is always appended, so its index is the length before the add). A new `blankOnAdd` flag empties every declared field, and `placeholder` on the two inline fields says what belongs there. ⚠️ Both are **opt-in**: the seeds exist so an untouched page shows a realistic accordion, and a gallery slide added blank is a broken slide. A collection with no inline editor still opens its drawer, because it has nowhere else to go."
+      ]
     },
     {
       "n": 61,
@@ -372,7 +424,16 @@
       "fields": {
         "Where": "`portalPageModel.ts` (nodes, `HUGS_CONTENT`) · `portalWidgetSpec.ts` (node map) · `SupportPortalBuilder.tsx` (`sectionShape`) · `SupportPortalPreview.tsx`",
         "⚠️ A stale-HMR trap worth remembering": "an intermediate save left mismatched JSX, Vite served a **500** for that module, and the browser went on running the last good copy — so a drag test \"failed\" against code that was never loaded. The build was green the whole time. Hard-reload after any edit that briefly broke a file."
-      }
+      },
+      "notes": [
+        "**The work band's main area and its rail are NODES now**, each resolving to the same section spec the band does — so each carries **its own Layout panel**. They were anonymous divs, which meant the only Layout anywhere near them belonged to the band and described five cards that are really two groups.",
+        "**⚠️ The parent counts REGIONS, not cards.** `rowOrder` lists all five, but four live in the main area and three in the rail, and the band itself only ever arranges the two. Counting cards gave the parent a five-cell preset row for a shape it does not have; two children mean the **two-preset set**, and the outer parent stays side-by-side as it is today (your (a)).",
+        "**⚠️ The main region's tracks come from its OWN config** (`secCols('work-main', 2)`), not a hard-coded `1fr 1fr` — otherwise its new Layout presets would move a control and change nothing.",
+        "**A placed element used to be `w-full`.** A two-word sentence claimed the whole column, and its outline and eight handles came with it: the box said \"this text is 1103px wide\" about something 203px wide. Everything you do to a selected element — resize it, see where it ends, judge its padding — is a lie while the outline describes the column instead of the thing.",
+        "**⚠️ TWO changes, one effect; either alone does nothing.** `w-fit` on the element, and `items-start` on the column — a flex column stretches its children across by default, so `w-fit` on its own would have been overruled and the outline would still have spanned.",
+        "**⚠️ `HUGS_CONTENT` is a LIST, not a rule derived from `bare` or from the palette group**, because the question is not \"does this paint a card\" but \"does this have a width of its own\". A divider is bare and spans by definition; a table is a card and spans too; a button is neither and does not. Everything absent keeps the full width it always had, so adding to the set is a deliberate act rather than a side effect.",
+        "**Verified in the browser.** A Text element: outline **203px** against a **1103px** column — exactly the text. A Button: outline **155px**, the button's own width, inside a 187px column, with the column's padding around it. Both work regions carry a selection outline of their own and the main grid reports **2** tracks from its config. The 2×2 survived the restructure unchanged — 105/475 across, y 89/504 down, all four still **h 398**."
+      ]
     },
     {
       "n": 60,
@@ -381,7 +442,13 @@
       "fields": {
         "Where": "`portalStructureSpecs.ts` (top bar, `HEADER_ACTIONS_SPEC`) · `portalWidgetSpec.ts` (node map) · `PortalWidgetDrawer.tsx` (`addLinkCard`)",
         "Verified in the browser.** Selecting the top bar: **no** \"Divider under the bar\", \"Bar height\" still there. Selecting Quick Actions: the link card measures **h 52** with a single Add button. ⚠️ **Not verified by clicking": "the navbar Actions group — every click in that region resolves to the **Header** instead, so I could not open its panel to confirm. The routing and the spec are in place (`STRUCTURE_FOR_NODE['header-actions'] = 'header_actions'`, `fields: []`, `packs: []`), and the same empty-spec shape is what drops Contact Us's CONTENT section — but whether `header-actions` is selectable at all right now is an open question worth a look."
-      }
+      },
+      "notes": [
+        "**\"Divider under the bar\" is gone.** ⚠️ `barDivider` stays in `defaults` and the renderer still reads it, so every bar keeps the line it already draws. A hairline between the product's own top bar and the page under it is not a decision worth a switch: with it the bar reads as chrome, without it the bar and the banner run into each other, and only one of those is ever the answer.",
+        "**The navbar's Actions get a spec of their own, with NO Design section** — no Style, no Spacing — for the same reason the left rail has none: these are the PRODUCT's actions. Ask AI, the create button, notifications and the avatar appear on every screen of every portal, and an admin who could restyle or re-space them could make the one control that is everywhere look unlike the product it belongs to.",
+        "**⚠️ It needed a spec AT ALL because a node with no spec does not get \"no panel\" — it gets the DEFAULT one.** `header-actions` was falling through to the legacy `PortalElementPanel`, which hands every unrecognised node a generic Style and Spacing block: exactly the two sections that should never have been on offer there.",
+        "**The external-link card is a ROW, not a poster.** It was a centred block — a 36px circular icon over a title over a description over a full-width button — which made the one optional extra on that panel the largest thing on it, and taller than the four cards it offers to join. As an icon, two lines and a button on one line it says the same thing in a third of the height: measured **148px → 52px**."
+      ]
     },
     {
       "n": 59,
@@ -389,7 +456,13 @@
       "status": "done",
       "fields": {
         "Where": "`portalStructureSpecs.ts` (`COLUMN_SPEC`) · `SupportPortalBuilder.tsx` (`boxHasContent`) · `PortalTable.tsx`"
-      }
+      },
+      "notes": [
+        "**Both Column fields are gated on the box holding something, which drops the whole group** — a group with no visible fields is not rendered at all. \"Align the blocks inside\" is the obvious case: there are no blocks. **Width goes with it**, because an empty column has no content to be a width OF — it is a placeholder waiting to be filled, and a panel offering to size a placeholder is asking a question about nothing. Both return the moment anything lands in it, and the drag handles set the width either way.",
+        "**⚠️ `hasContent` was seeded `true` for every non-section node**, so a column could never report itself empty. `boxHasContent` answers for box ids only (`sec-N-bM`) and returns true for everything else — the flag gates controls on several node kinds, and only a box can be empty in the sense this panel cares about.",
+        "**The table's handle rails now hang OUTSIDE its box.** They were plain padding, so the table sat 18px in from the section edge — the one element on the page that did not line up with the cards above it. ⚠️ Worse, the inset existed **only in the builder**: `enabled` is false on the published page, so the canvas and the portal disagreed about where a table started. A negative margin against the same padding fixes the alignment while every handle position below still measures from it.",
+        "**Verified in the browser.** An empty column selected: no **Column** heading, no **Width**, no **Align the blocks inside**. The table's left edge measures **105** — identical to a sibling card's **105**, with the section wrapper at 81 — and the row grip pill sits outside the section edge."
+      ]
     },
     {
       "n": 58,
@@ -398,7 +471,11 @@
       "fields": {
         "Where": "`AdminSupportPortalSettings.tsx`",
         "Verified": "the search input now starts **16px** below the header divider (divider bottom 71, input top 87), where the two were touching before."
-      }
+      },
+      "notes": [
+        "The compact variant carried `pb-6` and **no top padding**, so in the drawer the search field was welded to the header rule with nothing between them.",
+        "**⚠️ Survivable in one container, broken in the next.** It only ever rendered inside the builder rail, and that panel supplied its own space above — so the component had been relying on a container to give it air rather than asking for it. That is exactly the kind of arrangement that looks fine until the component is put somewhere else, which is what the row-action drawer did to it."
+      ]
     },
     {
       "n": 57,
@@ -406,7 +483,14 @@
       "status": "done",
       "fields": {
         "Where": "`SupportPortalPreview.tsx` (main region, `RecordTiles`)"
-      }
+      },
+      "notes": [
+        "**A GRID, not a wrapping flex row — that is what makes all four the same height.** ⚠️ Flex can only equalise WITHIN a line: `items-stretch` gives line 1 the height of the taller of Requests/Approvals and line 2 its own, which is still two different heights. `grid-auto-rows: 1fr` makes both rows equal and stretches every cell into them.",
+        "**⚠️ This is not a reversal of \"fit the card's height to its content\".** That was about the cards not stretching to the RAIL's height, which they still do not — the four-card block is shorter than the rail beside it. Equal to EACH OTHER and equal to the rail are different claims, and only the first was ever wanted.",
+        "**⚠️ The flex basis `card()` writes is inert on a grid item**, which is fine: the two tracks own the width now. CSS `order` still applies, so the explicit `orderAt` sequence still holds.",
+        "**A tile's hierarchy is a property of the TILE, not of the length of one word in it.** The id pill and the type sat in a `flex-wrap` row, so the layout depended on how long the type happened to be: \"Base CI\" and \"Linux Desktop\" pushed to a second line while \"Server\" still fitted beside its pill — which is why **CI-3 alone** came out shaped differently from the three tiles next to it. Always stacked now.",
+        "**Verified in the browser at 1680px.** All four cards measure **h 398** — Requests and Approvals at y 89, Assets and CIs at y 504. All **eight** tiles report **3 lines**, CI-3 included."
+      ]
     },
     {
       "n": 56,
@@ -414,7 +498,14 @@
       "status": "done",
       "fields": {
         "Where": "`AdminSupportPortalModule.tsx` (`RowActions`, the settings drawer) · `SupportPortalPreview.tsx` (`MY_CIS`)"
-      }
+      },
+      "notes": [
+        "**Settings is a ROW action now, opening a side drawer.** ⚠️ Per portal, which is the whole reason it belongs on a row rather than anywhere else: it used to sit on the builder's rail below Branding, and the rail is where you go while *arranging* a page — a nine-accordion permissions screen is not something you reach for mid-layout. But what a requester may DO is a property of ONE portal, and a row is the only place that can say which portal it is about.",
+        "**⚠️ A side drawer, not a route and not a modal.** Leaving the listing would lose the one piece of context that says which portal these settings belong to; a centred modal over a table reads as \"confirm something\", which nine accordions of permissions are not. The portal's NAME sits under the drawer title for the same reason — opened from one row among several, it has to say which row.",
+        "**⚠️ It reuses `compact`**, the variant `AdminSupportPortalSettings` already had for the builder's 340px rail. Only the CHROME differs; the settings are the same rows in the same order, because they are the same settings. A second narrow variant would be two things to keep in step.",
+        "**A fourth CI**, so My CIs fills the same 2×2 My Assets does. Three tiles left the bottom-right cell empty beside a card that had none, and two cards of the same kind side by side reading as two different shapes is the thing this layout pass keeps closing.",
+        "**Verified in the browser.** The row's action rail reads **Edit ▾ · Preview · Settings · Copy · Delete**; the Settings icon opens a 560px right-hand drawer titled \"Settings\" with **Support Portal** beneath it, carrying the search box and all nine accordions (Request open, Service Catalog below it). My CIs measures **4 tiles, badge \"4\", height 272** — identical to My Assets."
+      ]
     },
     {
       "n": 55,
@@ -422,7 +513,17 @@
       "status": "done",
       "fields": {
         "Where": "`SupportPortalBuilder.tsx` (`dropBeside`)"
-      }
+      },
+      "notes": [
+        "**⚠️ `detachElement` SCHEDULES a state update; `sectionsRef` is only reassigned during the next render.** Reading it on the very next line handed back the tree as it was BEFORE the removal — so the element was written into its new box on a copy that still had it in the old one, and both survived. That is the whole of \"it copies instead of moving\".",
+        "**A move is one transition, so it is now one write.** The remove and the add happen inside a single `setSections` updater, computed functionally from `prev` rather than from a ref that has not caught up.",
+        "**⚠️ ADD FIRST, THEN clear the source.** Removing first can collapse a branch and take the target id with it — the box you were about to add beside stops existing mid-operation.",
+        "**And the emptied box GOES, so its neighbours reflow** — that is the \"other widgets rearrange automatically\" half of a move. ⚠️ A root has no parent and cannot be removed: an unsplit section keeps its one empty cell, which is the offer to put something back.",
+        "**A cross-section move keeps the old path**, because `detachElement` owns the built-in-row and other-section stores and the removal lands in a different slice than the add — no ordering hazard there.",
+        "**⚠️ A DROP targets the box you aimed at, on both axes — it no longer goes through `rowTargetOf`.** That helper sends a row to the section's top level, which is right for the four `+` adders: they sit on a section's edge and promise a full-width band. A drag promises something else — *put it HERE* — and routing it to the top level is exactly why \"row inside a column\" did nothing useful: dropping under an element inside a two-column row threw the new row across the whole section instead of stacking it in the column you were pointing at.",
+        "**Two gestures, two meanings, and the line you can see is the one that decides.** The adders still give full-width rows; the drag gives you the box under the pointer. This is also what finally makes the brief's own shape reachable: an image on the left with a title and a description stacked beside it.",
+        "**Verified with real pointer input.** Dropping at a column's right edge → one `row` of two 544px columns. Then dropping in the lower half of the right-hand column → chip reads **\"Insert in new row\"** and a **`column` box 544px wide** appears nested INSIDE that column, rather than a band across the 1103px section. Dragging the video element by its grip onto another edge: **one video before, one after** — the count is the test — toast reads **\"Video moved into a new column\"**, and the tree reflows from `row:2, column:2` to `column:2, row:2` as the emptied box is removed."
+      ]
     },
     {
       "n": 54,
@@ -432,7 +533,16 @@
         "Where": "`portalPageModel.ts` (v2 seed) · `SupportPortalPreview.tsx` (work band, `RecordTiles`, `card`) · `PortalCanvas.tsx` (resize)",
         "⚠️ The rail's padding, which is what you flagged and what measurement caught": "Most Read goes through `CardShell` and brings `p-4` with it; Announcements and Contact Us are element renderers dropped straight into `cardInner`, which paints a border and no inset. Their titles sat **1px** from the card edge against Most Read's **17px**. All three read **17** now.",
         "Known, for your next step": "at half-width the asset/CI tiles truncate their names (\"Dell Latitud…\"). You said the tile UI is the next thing you would spec, so I have left the shape alone rather than guessing at it."
-      }
+      },
+      "notes": [
+        "**Two regions, not five cards in one wrapping row.** The page reads as a MAIN area beside a tall rail, and a flat row could not say that: the rail is long because three cards are stacked in it, so anything sharing its line stretched to its height — and the two emptiest cards on the page came out the tallest. The main region takes **two shares to the rail's one**, which is what makes its cards half its width and the rail a third of the section. My Assets and My CIs moved up into it, so the layout is Requests | Approvals over Assets | CIs, beside the rail.",
+        "**⚠️ `items-start` + `content-start` is what lets a card fit its CONTENT.** A flex row stretches its children by default, and that is exactly where the acres of empty space under My Assets came from. Measured after: 386 / 304 / 391 / 306 — four different heights, none stretched.",
+        "**⚠️ Membership and PLACEMENT are different questions.** Listing assets and CIs under `work` in the v2 seed made `rowOf('assets')` answer \"work\" for **v1 too** — and v1 draws them in the records band, where `card()` then found them absent from `rowOrder.work` and returned null. They stay in `records`; only where they are painted changed.",
+        "**⚠️ An order is only meaningful within ONE list.** The main region draws two cards from `work` and two from `records`, and both lists start at 0 — so CSS `order` came out 0, 1, 0, 1 and interleaved them as Requests, Assets, Approvals, CIs. `card()` takes an `orderAt` override for exactly this.",
+        "**Four tiles, and the badge counts them all.** ⚠️ A HARD four, not a fallback: the widget spec carries a stored `show` of 5, and a stored value beats a fallback every time, so the fifth tile went on wrapping to a second line that was three tile-widths of nothing. The list variant on v1 still honours the setting; the tile variant is a 2×2 block by shape.",
+        "**⚠️ The resize bug: a wrapped flex row is one DOM parent but SEVERAL visual rows.** Every member was treated as a sibling to share width with, so dragging My Assets narrower also shrank My CIs on the line below — a card that has nothing to do with how wide its neighbour is. The row is filtered to the members on the same line now (the tops were already captured for this and never consulted). Measured: dragging Assets 142 → 103 leaves **My Open Requests, on another line, at 142**.",
+        "**Verified in the browser at 1680px.** Requests (105, 90) | Approvals (475, 90) over Assets (105, 492) | CIs (475, 492), rail at x846. Tiles lay out **2 columns**; badges read \"My Assets 5\" and \"My CIs 3\"; the records band is gone from this layout and intact on Support Portal - 2."
+      ]
     },
     {
       "n": 53,
@@ -445,7 +555,14 @@
         "⚠️ A TDZ crash, caught in the browser": "`dropBeside` sat 400 lines above `detachElement` and named it in its dependency array — \"Cannot access 'detachElement' before initialization\", the whole builder blank. esbuild builds that green. Moved below it.",
         "⚠️ A tooltip that had become a lie": "the drag grip still said \"Drag to reorder — stays inside this group\". With edge-drop it can leave its group. Now \"Drag to move — drop at an edge to split\".",
         "Two gaps to close next": "(1) the **move**-drag branch is built, typechecked and shares `dropBeside` with the proven palette path, but I could not drive its grip end-to-end this pass — the grips were scrolled out of the viewport and elements carry no id in the DOM to target; (2) the brief's **layer 1**, a 1px outline on the whole section under the pointer, is not drawn yet."
-      }
+      },
+      "notes": [
+        "**The line is three layers, not one.** A line alone says WHERE and not WHAT IT LANDS INSIDE: with columns side by side a line at a boundary is ambiguous until the box around it is outlined. So: the target box outlined **3px #188DF8**, the line itself **3px, inset to the content box**, and a chip naming the outcome. ⚠️ The inset matters — a line running the full border-box width reads as belonging to the section rather than to the box it is about.",
+        "**⚠️ THREE chip strings, not Duda's one.** Duda says \"Insert to column\" for every target because its drop only ever makes one thing. Ours makes rows *and* columns from the same gesture, so an admin about to split a row needs to know that before they let go: **Insert in new column** / **Insert in new row**.",
+        "**The hit zones**, with the three corrections that decide whether it feels real rather than cheap: `edge = min(W * 0.25, 56px)` for the vertical zones, otherwise the top or bottom half; edge zones **suppressed at the column cap** (a line promising a column the row cannot take is a lie); **8px hysteresis** on every boundary, without which the line strobes whenever the pointer rests on one — the single most common way this reads as broken; and an **empty box takes no line at all**, because a line is a statement about a neighbour and there is no neighbour.",
+        "**⚠️ `addNeighbourAt` returns the minted box's id.** A drop that splits has to put the element into the box it just made, and that id was unknowable from outside: the wrap branch mints twice, so `section.next` read beforehand is right in one branch and off by one in the other.",
+        "**Verified with REAL pointer input** (Playwright `mouse.down/move/up` — synthetic events cannot drive HTML5 drag). Dragging **Text** from the palette to the **right edge** of the video box: mid-drag the chip reads **\"Insert in new column\"** and one element carries `outline-color: rgb(24, 141, 248)`; on release the section is a `row` of **2 children at 226 + 226** — equal share — and the toast says \"Text placed in a new column\". Dragging to the **bottom half**: chip reads **\"Insert in new row\"**, and the root becomes a `column` of **2 full-width children (467 + 467)** with the original row nested inside the first."
+      ]
     },
     {
       "n": 52,
@@ -454,7 +571,13 @@
       "fields": {
         "Where": "`supportPortalData.ts` (palette) · `portalWidgetSpec.ts` (`contact_us` fields, `WIDGET_FOR_NODE`)",
         "⚠️ A gap from task 50, found while testing this": "the `news` and `contact` nodes I added for the v2 rail were never added to `WIDGET_FOR_NODE`, so they resolved to nothing and the drawer fell through to their PARENT's panel — selecting Contact Us opened the work row's editor, which greets you with \"select a card inside it to edit that card\" about the card you had just selected. A node in `PORTAL_NODES` is only half of a block; this map is the other half. Both ids already sat in `WIDGET_FOR_TYPE` for the placed versions, and ⚠️ both routes must reach the SAME spec or one widget edits two ways."
-      }
+      },
+      "notes": [
+        "**Live data, not Custom.** Its own spec has said `group: 'Live data'` all along — only the PALETTE entry disagreed, and the palette is the one an admin reads. The group is not decoration: Live data and Actions are the predefined groups, so moving it is what makes Contact Us behave like the card it is — one instance, ticked once it is on the page.",
+        "**The two value fields are gone, so the panel is DESIGN only.** The labels went in an earlier pass because \"Email\" and \"Phone\" are the product's words; the values follow for the same reason one step further out — what a portal publishes as its support address is an **organisation record**, not a page layout, and a copy of it editable here is a second answer that goes stale the day the real one changes. ⚠️ Every string stays in `defaults` and the renderer still reads them, so the card looks exactly as it did. With no fields left the CONTENT section is dropped whole, which is the same panel the six other live-data widgets already have.",
+        "**Inline editing was already gone** — `ContactRender` wraps nothing in `Sel`, from the pass that removed the labels.",
+        "**Verified in the browser.** Contact Us sits in the palette's **LIVE DATA** group with the green already-placed tick. Selecting the card opens a drawer titled \"Contact Us\" showing **DESIGN only** — Style (Fill · Border · Corner radius) and Spacing. No CONTENT section, no \"Email address\", no \"Phone number\", no \"Show hours\"; the card still renders Email · servicedesk@acme.com · Phone · +91 79 4040 0000, none of it inline editable."
+      ]
     },
     {
       "n": 51,
@@ -464,7 +587,12 @@
         "Where": "`portalPageModel.ts` (`topLevelBoxOf`, `rowTargetOf`) · `SupportPortalBuilder.tsx` (`addBeside`)",
         "The bug you caught": "asking for a row below a column got a row **inside that column** — the width of the column, stacked under its own content, while the column beside it carried on past both. That is a split, not a row, and it is not what an adder on the bottom edge says it will do.",
         "`rowTargetOf` is two cases that are one sentence read twice": "if the section root already STACKS its children they are full-width rows already, so the new one joins them beside whichever branch the click came from; if it does not, the ROOT is what gets wrapped — which is the thing that turns the whole section into a stack in the first place."
-      }
+      },
+      "notes": [
+        "**⚠️ Rows and columns are NOT symmetric, which is the whole of the fix.** A column divides the row it is in, so it belongs beside the box you clicked. A row spans everything, so it belongs at the **top level however deep the click came from**. The horizontal adders still act on the clicked box; the vertical ones now resolve a target first.",
+        "**The new row arrives full width and empty**, so dividing it into columns is the same adders one level in — which is the order you asked for: a row first, columns only if you want them.",
+        "**Verified in the browser, reproducing your screenshot exactly.** A section split into two columns (467px row → 226 + 226), then **Add a row below** on the RIGHT column: the root becomes a `column` of two children, **both 467px — full width** — the first holding the original two-column row. Then **Add a row above** from the video column **nested two levels down**: the root goes to three children, all **467px**, stacked at y 492 / 628 / 777. The row lands at section level from any depth."
+      ]
     },
     {
       "n": 50,
@@ -473,7 +601,18 @@
       "fields": {
         "Where": "`supportPortalData.ts` · `portalPageModel.ts` · `SupportPortalBuilder.tsx` · `SupportPortalPreview.tsx` · `AdminSupportPortalModule.tsx`",
         "Not touched, deliberately": "the banner keeps the current portal's artwork, as asked; the fourth action card (AD Self Service) was already shipping and needed nothing. The asset and CI tiles are a first pass replicating the screenshot — their UI is the next step."
-      }
+      },
+      "notes": [
+        "**⚠️ The finding that shaped this: a portal's arrangement was GLOBAL CONSTANTS.** `blockOrder`, `rowOrder` and `content` were seeded from one set of defaults, so every record in the listing opened the identical page — two portals could differ by name and address and by nothing you could see. The seed lives on the record now (`PortalPage.layout`), which is the smallest thing that makes two portals genuinely two portals. Edits inside a session behave exactly as they did.",
+        "**The listing has two rows.** **Support Portal** (Default, `v2`) carries the layout from the screenshots; **Support Portal - 2** (`v1`) keeps today's arrangement untouched. ⚠️ The default keeps id **SPP-1** — being the default is tested by id in a dozen places (the badge, the locked Enabled toggle, the undeletable row, the portal's own address), so giving the new layout a new id would have moved every one of those onto the old page.",
+        "**v2 is SEEDS, not a second renderer** — the same bands, cards and widgets in a different order with a different column count. A layout with its own rendering path would be a second page to maintain, and the two would drift the first time a widget changed. The differences are all of: no Most Used Services row; the work band is Requests + Approvals beside a stacked **rail** of Announcements, Most Read and Contact Us; My Assets and My CIs are full-width rows of **tiles**.",
+        "**Announcements and Contact Us became page BLOCKS.** They existed only as placeable elements, so a page could carry them but none shipped with them and nothing could address them by name. They render through the very same renderers the placed elements use — one Announcements in this product, not two that drift.",
+        "**My CIs has real rows on v2 only.** It is deliberately empty on v1 (§7.4 — an instance where nobody has been given a CI is the state most requesters see). The v2 page is a copy of an instance that HAS them, where an empty card would misrepresent that one instead. The rows follow the layout, not the widget.",
+        "**A band not in `blockOrder` still rendered.** Bands took only their POSITION from the order, so dropping Most Used Services from the v2 seed drew it at `indexOf === -1` — order −2, i.e. FIRST. `blockOrder` means what it says now.",
+        "**The layout was read twice and could disagree.** `blockOrder`/`rowOrder` are `useState` initialisers, answering once; the rail re-read `page.layout` every render. The bands came out in the v2 order while the rail was undefined, so the rail's two cards silently rendered nowhere. One decision, taken at mount, held in state.",
+        "**`NODE_CFG_SEED.records = { cols: '2' }` beat every fallback.** `secCols` reads the config first, so a column count set in the renderer or in `content.cols` could never win — the records row stayed two columns however the layout was described elsewhere. The count belongs in the seed, and there is now one of it.",
+        "**Verified in the browser, both pages.** **Support Portal**: rail stacked Announcements (y 670) → Most Read (1003) → Contact Us (1341); My Assets **467px, full width** at 1542 with My CIs **467px** below it at 2164; Most Used Services absent as a band; CI-8 / CI-7 / CI-5 rendering as tiles. **Support Portal - 2**: Most Used Services present as a band before the work row, My CIs showing \"No Data Found\", My Assets 226px side by side with My CIs — the original layout, unchanged."
+      ]
     },
     {
       "n": 49,
@@ -482,7 +621,17 @@
       "fields": {
         "Where": "`portalPageModel.ts` (`addNeighbour`, `neighbourBlockedBecause`) · `SupportPortalBuilder.tsx` (`addBeside`, `splitNode`) · `PortalCanvas.tsx` (`ColumnAdders`) · `SupportPortalPreview.tsx` · `PortalPlacedElement.tsx`",
         "Four adders now, and the SIDE decides what you get": "left/right add a **column** beside the box, top/bottom add a **row** above or below it. There were two, chosen by the parent's axis — so the same button added a column here and a row one level down, and on a section laid out as columns there was no way to ask for a row at all."
-      }
+      },
+      "notes": [
+        "**⚠️ The new primitive is `addNeighbour`, not `addSibling`.** A sibling can only ever go in along the parent's existing axis. When the axis you asked for is not the one the box is in — which includes every unsplit section, since a root has no parent — the box is **wrapped** in a new box of that direction and the empty neighbour joins it there. That wrap is what makes one control mean one thing at every level instead of quietly changing meaning with the shape you happen to be standing in.",
+        "**⚠️ The outer box keeps the original id**, so anything selected, styled or configured against it still resolves — the rule `removeBox`'s collapse already follows.",
+        "**A new row arrives full width and empty**, and subdividing it is the same four buttons one level in. You are never asked to choose a layout before you have anything to lay out.",
+        "**A box hides its adders once the selection is that box OR anything inside it.** ⚠️ The PATH, not the id — the same test hover already uses. Selecting an element inside a column leaves `selectedId` on the element, so an id test said the column was not selected and kept its four adders, sitting on exactly the four edges the element's own resize handles were drawn on. Two controls, one point, and the click went to whichever painted last.",
+        "Selection means \"I am sizing this\", hover means \"I am adding beside this\". They were sharing a surface.",
+        "**`min-h` and real vertical padding, not a fixed height**, plus `max-w-full`, `break-words` and `text-center`. A fixed `h-9` cannot reflow: narrow the section and the label ran out through the side of its own column. As a floor the button keeps exactly the size it had for one line — 28 / 36 / 44px, unchanged — and grows a line at a time instead of spilling.",
+        "**`addBeside` and `splitNode` were both reading their block-reason from inside the `setSections` updater and checking it on the next line — which runs first.** So `blocked` was always null: the cap worked (nothing was added) and said nothing, the exact silent no-op every limit in this builder is written to avoid. Split has been refusing at the depth and column caps without ever saying why. Both read from `sectionsRef` before the state update now.",
+        "**Verified in the browser, end to end.** Hover a box → 4 adders, **0** handles; select it → **0** adders, **8** handles (4 corners `nwse`/`nesw` + 4 sides). \"Add a row below\" on the unsplit table section wrapped it into a `column` box of **2 full-width rows** (467px each) with the table intact; \"Add a column to the right\" on the new row split it into **2 equal columns** (226 + 226). A fifth column is refused with **\"A row holds 4 columns at most\"** and the row stays at 4. The button measures **max-width 100%, min-height 36px, break-word, centre** and, with its host squeezed 467 → 120px, goes 187×36 → **120×55** — fitting exactly, no overflow, one line taller."
+      ]
     },
     {
       "n": 48,
@@ -490,7 +639,12 @@
       "status": "done",
       "fields": {
         "Where": "`PortalThemePanel.tsx` (`ThemeModeToggle`)"
-      }
+      },
+      "notes": [
+        "**Icons only — a sun and a moon need no caption.** The words were added when this control was two grey glyphs nobody could find on a busy title row; what actually fixed that was the **accent fill** on the active side, the one weight on this panel that reads as \"this is on\", and it does that job whether or not the word sits beside it.",
+        "**⚠️ The `title` and `aria-label` are now the ONLY things naming the two modes** — the button has no text node left, so dropping either would leave a control a screen reader announces as nothing at all. `aria-pressed` carries the state for the same reason.",
+        "**Verified in the browser.** Two 28×28 buttons, `textContent` empty on both. Active side measures **rgb(61, 139, 208)**, the inactive one transparent; clicking the moon flips `aria-pressed` on both and puts `.portal-dark` on the canvas, so the switch still does what it did."
+      ]
     },
     {
       "n": 47,
@@ -498,7 +652,19 @@
       "status": "done",
       "fields": {
         "Where": "`portalStyleResolver.ts` (`containerCss`) · `PortalRecordFilter.tsx` · `portalRecordFilters.ts`"
-      }
+      },
+      "notes": [
+        "**Reproduced first.** Setting My Open Requests to a 6px border painted 6px on **two** elements: the white card *and* its \"View all\" node. That is the box-inside-a-box in your screenshot.",
+        "**The cause is the inheritance model doing exactly what it says.** `resolve()` walks page → section → column → widget → item per key, so a border set on the card was *inherited* by every node inside it that draws a container. **Padding, width and height were already exempt** — each with a comment describing this same bug — and fill, border, shadow and corners had simply been missed.",
+        "**⚠️ The box keys are OWN-ONLY now.** They are statements about ONE box and are meaningless as a statement about somebody else's: a fill would be worse than the border, painting the card and every child the same colour one over the other. The widget itself still paints because the panel writes to the OWNER node, which IS the node whose `Sel` draws the card — so the value is present exactly where it should appear and absent everywhere it should not.",
+        "**This is fixed for EVERY widget, and it is one code path, not thirty.** `containerCss` is the only reader that resolves border through the chain; every other border in the builder (`fillCss`, the placed-element surfaces, the action cards) reads the node's own `cfg`, which has no chain to inherit down.",
+        "**Verified in the browser, twice, on two different render paths.** My Open Requests (a fixed page block, 6px) → **1** element with a thick border, the white card, where it was 2 before. The Record List (a placed element, through `Surface`, 7px) → **1**, the white card. Screenshot confirms no box around \"View all\" and none around the rows.",
+        "**The pin is gone, and the localStorage behind it.** Reordering a twelve-row list that is already searchable bought very little, and it bought it with an icon that appeared under the pointer on every row — on the surface whose whole job is letting you read the rows. Rows are in catalogue order now, exactly as the product lists them.",
+        "**A \"PREDEFINED FILTERS\" title**, because a bare list of twelve names does not say what kind of thing they are — an admin should not have to infer from the wording that these came with the product rather than from somebody's earlier session.",
+        "**Hover now says what a preset FILTERS BY.** A name is a promise the list cannot keep on its own; two of these differ by a single condition. ⚠️ It needed a new field: `PresetFilter.scope` — the half of a preset that is about WHO is asking (\"Assigned to me\", \"In my technician group\"). It cannot be a Condition, because no field on the record holds it, and it has to be SAID or \"My Overdue Requests\" and an everybody's-overdue filter would list the identical condition and read as the same filter.",
+        "**⚠️ The card is placed against the POPOVER, not the row.** First version flipped off the row's left edge — a row sits ~13px inside the popover's padding, so the card ended 5px INSIDE the list, covering the first characters of every name, which is the one thing it exists not to do. Measured: it now clears the list by exactly 8px.",
+        "**Verified in the browser.** Title renders, **zero** pin buttons in the popover. \"Unassigned Requests in My Group\" → *In my technician group · Status Not In Resolved, Closed · Assignee In Unassigned*, card sitting **left of list, 8px gap**, fully on screen. \"All Requests\" (no conditions, no scope) → \"No conditions — every record in this module.\" \"Requests Watched By Me\" (scope, no conditions) → \"Watched by me\" — the three cases that could each have rendered an empty card."
+      ]
     },
     {
       "n": 46,
@@ -506,7 +672,15 @@
       "status": "done",
       "fields": {
         "Where": "`CreateSupportPortalModal.tsx` (`PortalThumb` + the tile markup)"
-      }
+      },
+      "notes": [
+        "**The first tile is the PORTAL now, not a drawing of it.** Every other tile is a wireframe because every other tile is a template nobody has built yet — there is nothing to photograph. This one is different: the portal it offers EXISTS, so the tile simply shows it, and the one starting point an admin might actually recognise stops being the one they have to take on trust.",
+        "**⚠️ Live, never a screenshot.** A PNG committed today is a picture of the portal *as it was today* — it would go on promising the old layout after the first person edited the page, and nothing would ever tell us it had gone stale. The tile mounts the same `SupportPortalPreview` the builder draws, which IS the page a new portal starts from. The canvas context's default has `enabled: false`, so no outline, hint or handle comes with it.",
+        "**⚠️ Rendered at a full page width and SCALED DOWN**, not rendered narrow. The portal is responsive: at 267px it would reflow to its one-column phone layout and the tile would be a truthful picture of the wrong thing. The scale is measured with a `ResizeObserver`, because the tile's width belongs to the grid and changes with the dialog.",
+        "**⚠️ The accent is read from the THEME** (`swatchesOf(theme)[3]`), exactly as the builder reads it — never left to `SupportPortalPreview`'s own `accent` default, which is a near-black. The tile promising \"the portal your requesters see today\" was painting its banner a colour the page does not use: a picture wrong in the one way a picture is meant to be right.",
+        "**The Default badge was already written — it was being CLIPPED, along with every other tile's name and description.** The art had no box of its own, so it was `height: 100%` of the tile, took the whole button and pushed the caption out through `overflow-hidden`. That is why the grid read as a wall of unlabelled pictures. Each tile now gets the `h-[150px]` art box the template gallery already uses — one art height across both surfaces rather than a new number — and the wireframes, which were being stretched 1.6× tall by the same fault, draw at their real 160 × 96 proportions again.",
+        "**Verified in the browser.** The tile renders the live portal: motadata bar, hero with search, the four action cards, Favourite Services. Hero gradient starts `rgb(61, 139, 208)` = **#3D8BD0**, the portal's own accent, where it was near-black before. Caption reads \"Support Portal\" + a blue **Default** badge, measured `badgeVisible: true` inside the tile's bounds; tile 243px tall over a 150px art box. Every other tile now shows its name and description too. Clicking the tile still creates the portal and opens the builder (`#/admin/support-portal/tile-check`)."
+      ]
     },
     {
       "n": 45,
@@ -514,7 +688,16 @@
       "status": "done",
       "fields": {
         "Where": "`PortalTable.tsx` (`HandleMenu` + the three call sites) · `portalCollectionSpecs.ts` (`TABLE_SPEC`)"
-      }
+      },
+      "notes": [
+        "**The menu sat on top of its own column.** You picked a column, the menu dropped from the rail straight down it, and the data you needed in order to choose \"Sort A → Z\" or \"Colour\" was behind the menu — so you were picking an action for cells you could no longer read. The row menu had the same fault from the row's top edge.",
+        "**The fix is the target's SHAPE, not a nudge.** A column is a vertical strip, so the menu goes to its **side**; a row is a horizontal band, so the menu goes **under** it, or over it when there is no room below. Either way the selection stays fully visible and only its neighbours are covered. ⚠️ Only when NEITHER side fits does it clamp and accept an overlap — a menu pushed off the window is worse than one covering what it is about.",
+        "**⚠️ A call site now hands over an avoid-RECT, not a point.** Where the menu goes is worked out from what is selected, in one place. Three call sites each guessing their own position is how two of them came to guess wrong.",
+        "**⚠️ Measured after mount, in a layout effect.** A flip needs the menu's real height and the row, column and cell menus are three different lengths. It renders hidden-but-laid-out for that one pass — `visibility`, never `display`, or there is nothing to measure.",
+        "**⚠️ Portalled, in viewport coordinates.** The table wrapper scrolls horizontally, and an absolutely-positioned menu inside an `overflow-x-auto` box is clipped at its edge — the trap that has already taken the Colour and Alignment flyouts, the drawer tab strip and the listing kebab. Moving the menu beside a column would have walked straight back into it.",
+        "**\"Horizontal scroll on narrow screens\" is gone.** It made \"does a wide table fit on a phone\" a question every table put to its author, and the only answer anyone wants is yes. ⚠️ Unlike the other panel removals this one took its stored value with it: the renderer scrolls unconditionally now, so there is no key left holding a value nothing can set.",
+        "**Verified in the browser.** Column 2 selected: menu at x 426, the column's cells end at x 422 — zero overlap on any of its three cells, `position: fixed`. Row 2 low in the window: the menu flips **above**, its bottom at 487 against a row top of 493. The same row scrolled up: the menu opens **below** with a 4px gap. No overlap on any cell in either orientation. The panel reads CONTENT (Select row / column cells · Title · First row is a header · First column is a header) → DESIGN (Table: Cell padding · Spacing), and both tables on the page compute `overflow-x: auto` with no setting behind it."
+      ]
     },
     {
       "n": 44,
@@ -522,7 +705,19 @@
       "status": "done",
       "fields": {
         "Where": "`portalRecordFilters.ts` + `PortalRecordFilter.tsx` (new) · `portalWidgetSpec.ts` · `PortalWidgetDrawer.tsx` · `PortalCollectionRender.tsx` · `portalPageModel.ts`"
-      }
+      },
+      "notes": [
+        "**The card has a hard white boundary now.** `c-records` was missing from `CARD_TYPES`, so it drew its rows straight onto the page background while My Open Requests — the card it copies header, count, View-all and rows from — sat in a white bordered box. Two cards of the same kind read as two different kinds of thing. Measured: `#FFFFFF`, 1px `#E5E7EB`, 10px radius, 16px padding, identical to every other live card.",
+        "**No one-line help under any field.** \"Which records this card lists\" under a field labelled Module is the label again in a longer sentence, and a caption under every control turns four rows into a wall of grey text you learn to skip — which is where the one caption that WOULD have earned its place goes unread.",
+        "**\"Rows to show\" is gone.** How many rows a card carries is its own height on the canvas — you drag the bottom edge and the list grows — so a number field was a second control for a value the page already answers by being looked at. The key stays in `defaults` and the renderer still reads it, so no card on any page moved.",
+        "**Status and Scope are replaced by the product's own filter.** Two things, one field: the **named out-of-the-box presets** (image 3 — All Open Requests, My Overdue Requests, Unassigned Requests in My Group … pinnable, searchable) and a **custom condition builder** (images 4–10 — field picker, operator, and the five value editors: text, multi-select, searchable person list with avatars, date presets, tag chips). Scope went with them: \"My requests\" is one of the presets, which is where a requester-scope question belongs rather than a second dropdown that can contradict the first.",
+        "**⚠️ The width was the problem to solve.** The technician list page runs its filter across the top of the PAGE, so conditions sit side by side as chips and each opens a popup beneath itself. This panel is 340px: laid out that way you get three chips wrapping onto four lines with their popups clipped by the panel's own scroll. So the **content is identical** — same presets, same fields, same operators, same editors — and only the **layout** adapts: conditions **stack**, one per row, and the editors are **views inside the one popover** rather than popups on top of a popup. Portalled to `document.body`, because an absolutely-positioned popover inside an `overflow-y-auto` panel is clipped the moment it is taller than the space below its field — the trap that has already caught the colour picker, the icon picker and the table's alignment flyout.",
+        "**⚠️ Both halves are ONE setting.** `activeConditions()` resolves whichever is set, so the renderer never has to know which — and writing a condition CLEARS the preset, because a card claiming \"All Open Requests\" while running three conditions of somebody's own would be the panel lying about what the requester will see. The conditions in force show as chips under the closed field, so a chosen preset is never a name with nothing behind it.",
+        "**⚠️ Presets and fields are PER MODULE**, and changing the module clears the filter and says so — \"All Open Requests\" is not a thing a Change has, and a Change's statuses are not words a Request knows.",
+        "**⚠️ A condition on a field the SAMPLE rows do not carry passes rather than emptying the card.** The builder's rows are samples with an id, a title and a status; evaluating an absent priority or assignee as \"no match\" would black the preview out the moment anybody picked a realistic filter, teaching an admin their filter is broken when it is the preview that is thin. The widget's note says so.",
+        "**⚠️ A pin is keyed `module:id`, not `id`** — caught in the browser. Every module's catalogue ends in an \"All …\" preset and they all carry the id `all`, so pinning \"All Changes\" silently pinned \"All Requests\" and seven others: one gesture quietly changing nine lists the admin was not looking at.",
+        "**Verified in the browser.** Panel reads CONTENT (Title · Module · Filter) → DESIGN (Style · Spacing) — no Statuses, no Scope, no Rows to show, no help lines. Preset **All Archived Requests** (Status In Closed) → card count **0** and the My CIs \"No Data Found\" state; custom **Status In Pending** → count **1**, INC-178 only, and the field relabels to \"Custom · 1 condition\". Switching the module to Changes swaps the card to CHG-2091/CHG-2088 and clears the filter to \"No filter — every record\"; the preset list becomes the five Change presets. Pinning \"All Requests\" floats it to the top and stores `[\"request:all\"]`; switching to Changes leaves \"All Changes\" unpinned."
+      ]
     },
     {
       "n": 43,
@@ -533,7 +728,12 @@
         "The rule now": "nothing at rest → hover a cell and exactly its row grip and its column grip appear, in the **secondary grey pill** (#B6C2D5) → click one and it fills **primary blue** (#3D8BD0) with its row or column selected. A selected grip stays visible when the pointer moves away, because otherwise nothing would show what is selected. ⚠️ A hidden grip is also `pointer-events-none` — `opacity-0` still takes the pointer, so an invisible rail sat between the cursor and the cell and swallowed the very mouseenter that would have lit it.",
         "⚠️ A bug your 3rd screenshot caught": "the `chips` control hardcoded \"No statuses — the list will be empty\", so **every** chips field in the builder said it — which is why a Table's *Font format* was talking about statuses. The empty text is derived from the field's own label now, and a field may still name its own.",
         "Verified with real pointer movement": "at rest **no grips**; hovering cell (0,0) lights exactly `Column 1 options` + `Row 1 options`; hovering cell (1,1) lights exactly `Column 2 options` + `Row 2 options`; leaving the table clears them. Hover measures **rgb(182, 194, 213)**, selected **rgb(61, 139, 208)**. The panel reads CONTENT (Select row / column cells · Title · First row is a header · First column is a header) → DESIGN (Table: Cell padding, Horizontal scroll · Spacing). A fresh table's first body row is `TH TD TD`."
-      }
+      },
+      "notes": [
+        "**⚠️ I got the first one wrong twice.** You asked for the grips of the **hovered cell's** row and column; I gated them on hovering the **table**, so every row and every column lit at once — which says nothing about where you are and buries the grip you were reaching for in a rail of identical bars. `hoverRow`/`hoverCol` were already the hovered cell's coordinates; the visibility test was simply reading the wrong flag.",
+        "**The panel lost three groups and two fields.** **Table content** (the sheet editor) — the canvas is where you type now, and two editors for one grid is how the panel and the page start disagreeing. **\"Optional.\"** under Title — every field here is optional, so saying it on one implies the rest are not. **Text style** — fourteen controls for a look you now set per cell from the cell's own menu, where you can see what you are changing. **Alignment** — the cell menu aligns per cell and per selection, the only scale at which a table's alignment is really decided. **Border** — a frame round a grid whose lines the cells already draw.",
+        "**Both headers ship ON.** ⚠️ `firstColumn` was being seeded `true` beside `headerRow` and then set back to `false` further down the same defaults object, so the later one won and the toggle shipped off."
+      ]
     },
     {
       "n": 42,
@@ -545,7 +745,15 @@
         "You asked": "a custom card like the predefined live-data ones — the admin adds it, it lands with dummy data, they pick a module and filters, and it fetches from the backend. Matching records render; nothing matching shows the same empty state My CIs has.",
         "Modules (your call, all of them)": "Requests · Problems · Changes · Releases · Assets · Configuration Items · Patches · Vulnerabilities · Approvals · Tasks. ⚠️ I had proposed limiting it to what a requester owns, because a Change is technician-side and would come back empty for most people — you chose the full set, so a card pointed at one is the admin's decision to make. Adding another module is one row in `RECORD_MODULES`; nothing else knows the set.",
         "Verified": "the palette went 22 → 23 rows with Record List under Custom. Added, it lands showing three request rows. Switching the module to Configuration Items swapped the rows to CI-104 / CI-121 and fired the clear toast. Filtering to **Down** — a status no CI row carries — gave \"My records | 0 | View all | **No Data Found**\", the same state My CIs shows. Two of them coexist on the page, which is the repeatability the Custom group buys."
-      }
+      },
+      "notes": [
+        "**Named Record List.** In ITSM *record* already covers a request, an asset, a CI and a change, so the name holds whichever module it points at — and it reads right beside the fixed cards: My Open Requests is a record list whose question is answered, this is one that asks you. \"Custom Card\" would have read as **Custom ▸ Custom Card**, and \"custom\" describes where it lives rather than what it does.",
+        "**⚠️ Statuses are per module, and changing the module CLEARS them, out loud.** A request is Open, a change is Draft, a patch is Missing — a status list left holding the previous module's words matches nothing, and the card comes back empty for a reason nobody can see. The toast says \"Statuses cleared — they belong to the module you just left\".",
+        "**⚠️ An empty status list means EVERY status**, not none. \"I have not narrowed this\" and \"I have narrowed it to nothing\" are different intentions, and only one of them should empty the card.",
+        "**⚠️ The filter runs on the canvas too.** Narrow the statuses and rows drop out here exactly as they will on the portal. A card that ignored its own filters while you were configuring it would teach the admin the controls do nothing, which is the one thing a builder must never do.",
+        "**⚠️ It has a Content panel where the six fixed cards have none — not a contradiction.** Those lost theirs because the backend owns the answer: what \"My Open Requests\" means is the product's decision. Here the admin owns it, so the panel is the only place the widget can learn what it is for. Its title is authored for the same reason.",
+        "**⚠️ It sits in Custom, not Live data, and that placement does work.** Live data and Actions are group-gated as predefined — one instance, greyed with a tick once placed. Custom is repeatable, which is what this needs: two Record Lists filtered differently is a reasonable page."
+      ]
     },
     {
       "n": 41,
@@ -556,7 +764,13 @@
         "Where": "`PortalThemePanel.tsx`, `PortalColorPicker.tsx`",
         "You asked": "make the light/dark switcher prominent and primary-coloured; give the colour picker Light/Dark tabs; and have the tab follow the switcher — light selected → every primary/secondary/neutral picker opens on Light, flip to dark → they all open on Dark.",
         "Verified in both directions": "the active switcher side measures **rgb(61, 139, 208)** — #3D8BD0. In light mode the Primary picker opens on the **Light** tab showing `3D8BD0`, and clicking Dark shows `5AA7E5`. Flipping the switcher to Dark and reopening the same picker lands on the **Dark** tab with `5AA7E5` already selected."
-      }
+      },
+      "notes": [
+        "**The switcher** is labelled and accent-filled now, not two grey icon glyphs. It decides which of two palettes every swatch below it shows AND which tab their pickers open on — the most consequential switch on the panel, and it was the quietest thing on its row.",
+        "**⚠️ This needed a model change, and it fixed a real bug.** An override was ONE value per swatch, so a colour edited for the light portal silently became the dark portal's colour too. Every swatch ships with two values precisely because the two modes want different ones; a single override threw that away the first time anybody touched a dot. Overrides are keyed **per mode** now (`light:primary1`), with the bare key still read as a fallback so a theme carrying older overrides keeps them.",
+        "**⚠️ The tab is seeded from the theme's mode on every open, never remembered.** The rule you asked for is that it follows the switcher — a tab that remembered its last position would start disagreeing with the panel the second time you opened it.",
+        "**⚠️ The spectrum had to be re-seeded on tab change.** `useState` only ever reads its initial argument, so switching tabs left the wheel sitting on the other mode's colour while the hex field showed the right one."
+      ]
     },
     {
       "n": 40,
@@ -568,7 +782,13 @@
         "You asked": "show a suggested size in the empty upload container for banner, logo and icon, so the size is known before choosing a file.",
         "The sizes, and why each": "**Banner 1600 × 400** — the band is full-width and about 200px tall, so this is a 2× asset that stays sharp on a retina screen without being a photograph nobody needs. **Logo 240 × 64** — the top bar renders the mark at about 28px tall, and wider than tall because every logo in that bar is. **Icon 128 × 128** — the slot renders at 44px and CROPS to it, so a square is the only shape that survives the crop with nothing lost off its sides.",
         "Verified": "the banner zone reads \"PNG, JPG, SVG or WebP · max 5MB / **Suggested 1600 × 400 px**\"; the logo zone \"**Suggested 240 × 64 px**\"; the action card's Icon ▸ Image tab \"**Suggested 128 × 128 px**\"."
-      }
+      },
+      "notes": [
+        "**⚠️ Its own line, not appended to the format hint.** \"PNG, JPG, SVG or WebP · max 5MB\" is a RULE — break it and the file is rejected — while a suggested size is advice you are free to ignore. Running the two together makes the advice read as a fourth condition of upload.",
+        "**⚠️ Suppressed while an error is showing.** The reason a file was rejected is the only thing worth reading at that moment, and advice underneath it competes for the same glance.",
+        "**⚠️ Per SLOT, never a default.** Declared on the field, because the zone has no way to know which of the page's image slots it is being used for — and one number offered to all three would be wrong for at least two.",
+        "**⚠️ The icon slot has TWO doors** — the panel's Icon field and clicking the icon on the canvas — and both now say 128 × 128. An admin who reached it one way would otherwise have been given a different answer from one who reached it the other."
+      ]
     },
     {
       "n": 39,
@@ -578,7 +798,12 @@
         "Where": "`PortalTable.tsx`, `portalTableModel.ts`, `PortalWidgetDrawer.tsx`, `portalCollectionSpecs.ts`",
         "You asked": "(1) a proper 10×10 row/column picker like your reference, opened from a **\"select row / column cells\"** field; (2) the drag grip as **6 dots, on hover only**, filling when selected; (3) Colour and Alignment must open on hover — they were not opening at all.",
         "Verified with real input": "the grip measures **opacity 0 at rest, 1 on table hover**, and its icon is **6 paths**. Hovering Colour opens a 190px flyout fully on screen; Alignment likewise. The panel field reads **3 × 3**, opens a **100-cell** grid with the \"Choose row and column\" footer, and picking 4 × 5 gave a 4-row × 5-column table with \"L1 · Service Desk\" still in place."
-      }
+      },
+      "notes": [
+        "**(3) was a real bug, and the cause is worth remembering.** The menu had `overflow-y-auto` with `overflow-x-visible` — ⚠️ **CSS forbids one axis being `visible` while the other scrolls**, so the x axis silently computed to `auto` as well and both flyouts were clipped at the menu's edge. They are portalled to the body now, positioned from the trigger's own rect, flipped left when the right would run off the window and clamped so a long colour list stays on screen. Hover opens them, and the rect is measured in the same handler.",
+        "**(1)** The picker is a **contiguous grid** — cells sharing their borders, the way a table's cells do; spaced squares read as a set of buttons, and the thing you are sizing is a grid. It has a footer that reads the live dimensions while you hover and says \"Choose row and column\" when you are not. A **\"Select row / column cells\"** field in the panel shows the current shape and opens it. ⚠️ Picking **RESIZES rather than rebuilds** — choosing a size on a table you have already filled in must not empty it: growing adds blank cells, shrinking drops only what falls outside, and everything inside keeps its text, colour and alignment.",
+        "**(2)** The grips are **six dots** and **hidden until the pointer is over the table** — permanently-visible grips put two grey bars around every table on a canvas whose job is showing what the portal looks like. Hovered they go mid-grey, selected or being dragged they fill with the accent: the same grip in two weights, so \"this is the one I have hold of\" needs no second control to say it."
+      ]
     },
     {
       "n": 38,
@@ -590,7 +815,8 @@
         "What it was": "the tile borrowed `classic` — a generic three-column wireframe shared with an actual template. So the one tile that promises \"the page your requesters see today\" was showing a page nobody has, and it looked like every other tile in the grid.",
         "What it draws now": "a new `portal` layout, taken from what the page actually renders — the banner with its search bar, the **four action cards riding up into its lower edge**, a Favourite Services label with four tiles, and the three work cards with their rows. Anyone who has seen the portal recognises it, which is the whole job of that one tile.",
         "Verified": "the first tile carries **39** rects against **15** for its neighbours, and reads \"Support Portal · Default · The standard ServiceOps portal your requesters see today.\""
-      }
+      },
+      "notes": []
     },
     {
       "n": 37,
@@ -601,7 +827,11 @@
         "You asked": "remove the column from an empty section added with the + Add Section CTA.",
         "What it was": "a section that has never been SPLIT has a root box whose id IS the section's — same node, same bounds — but `ColumnBody` still drew the empty-column treatment around it: a dashed 120px frame inside the section's own outline. Two borders and two sets of padding describing one place.",
         "Verified": "a section added from + Add Section contains **0 dashed boxes**, is 112px tall and shows the \"+\"."
-      }
+      },
+      "notes": [
+        "**The test is `dir`**, which is undefined exactly when a box has no parent — the same thing as \"this IS the section\". A split section's columns keep their dashed frames, because there the frame is telling you where one column ends and the next begins.",
+        "**The \"+\" stays either way** — it is the offer to put something here, and without it an empty section would be a blank gap on the page. The drag-over tint keeps its dashed edge so a drop target still reads as one."
+      ]
     },
     {
       "n": 33,
@@ -614,7 +844,12 @@
         "⚠️ Follow-on the arrow's removal forced": "the inline editor hard-coded its two labels as \"Title\" and \"Description\". That was tolerable while the chevron could open a drawer that named the fields properly; with the chevron gone this editor is the ONLY way into an item, so a FAQ would have had no surface anywhere using its own words. The labels and the hide-tooltip now come from the collection's own fields.",
         "Verified": "FAQ panel = CONTENT (Title, Questions, Add question) → DESIGN (Style, Spacing). Item rows show Move up · Move down · Duplicate · Delete — **no arrow**; the Accordion's show the same plus its hide toggle. On the canvas the new FAQ arrives with **nothing open**; opening Q1 shows only Q1; opening Q2 closes Q1. The FAQ's inline editor is labelled **Question / Answer**, the Accordion's **Title or question / Description**.",
         "⚠️ Flagged": "FAQ and Accordion are now the same widget with different seed copy. You chose to keep both for now — worth revisiting, since an earlier pass split them apart precisely because one widget with two palette names was confusing."
-      }
+      },
+      "notes": [
+        "**(1) + (3)** FAQ's `fields` is now a Title and nothing else. Out went the Behaviour group (show-first-open, allow-multi-open) and the whole Accordion style group — item container, divider, chevron position, chevron rotation, question padding, answer indent, open-item background, expand animation: thirteen controls for a list of questions. The per-item **\"Open by default\"** went with the widget toggle it existed to override — a per-item override of a setting nobody can set is a control answering a question that cannot be asked. Every removed value stays in `defaults` and is still read by the renderer, so the card is unchanged: flat, dividers on, chevron right, rotating.",
+        "**(3) Behaviour** now matches the Accordion exactly: nothing open on arrival, one answer at a time. `openByDefault` is still honoured on an item that already carries it, so a question somebody deliberately opened on an existing page does not close itself because the control moved.",
+        "**(2)** `inlineCoversAll` used to mean \"the inline editor happens to cover every field\"; it now means \"the row HAS an inline editor\". The arrow opened the item's own drawer, which replaced the panel you were working in — the same swap the Add-item fix removed, reached by a different button. What the inline editor does not cover is reachable another way: the \"+ Add link\" CTA at its foot, and the item's own text nodes by clicking them on the canvas. ⚠️ A collection with **no** inline editor keeps its arrow — it is the only way into those items."
+      ]
     },
     {
       "n": 31,
@@ -627,7 +862,13 @@
         "Settled first": "**one** card per row (the CTA then disables with the reason on it), and its destination is **fixed** — a URL field, no dropdown. A dropdown would have spent four of its five options duplicating cards the row already carries.",
         "What I built": "an `act_link` spec from the SAME factory as the four fixed cards, so its Style, Alignment and Spacing are theirs — a lookalike would drift the first time either changed. It differs in exactly one way: the destination is fixed, so its ACTION section is a URL and an Open-in-a-new-tab. Adding appends a REAL fifth card to `content.quick`, not a placed element standing in for one — that is the only way it comes out identical to the four beside it — and widens the row to five, because a fifth card in a four-column row wraps to a full-width row of its own, which is a different block that happens to look like a card.",
         "Verified": "the section panel shows the CTA only on Quick Actions (the work and records rows show no Content section at all). Adding gives five cards at 193px each, the new one carrying a link glyph. Its panel is CONTENT (Title · Subtitle · Icon · Card templates) → ACTION (URL · Open in a new tab) → DESIGN (Style · Spacing). New Incident's panel is CONTENT (**Subtitle · Icon** · Card templates) — no Title. The CTA then reads \"Added\", disabled, titled \"This row already has its external-link card\". No `-title` node exists on any of the five, so no title is inline-editable."
-      }
+      },
+      "notes": [
+        "**⚠️ This resolves the flag I raised against task 3.** Task 3 was \"nobody can add any extra widget or element into the action cards' parent section\", which is why `LOCKED_ROWS` exists. This does not reopen that: the row still refuses everything from the palette — it gains ONE card, offered from the section's own panel, which is a different door with a fixed destination.",
+        "**⚠️ This does not reopen `LOCKED_ROWS`.** The row still refuses everything the palette can offer, by drag and by click. It gains ONE card, from its own panel, with a fixed destination — a locked row and a row with one door are different things.",
+        "**The four fixed cards lose Title from the panel.** They are the product's destinations, and renaming \"New Incident\" is how a card ends up describing something it does not do — the same reason its title is not inline-editable either. ⚠️ **Subtitle and Icon stay on all five**: you asked only for the TITLE to be locked, and the subtitle being editable was a deliberate earlier decision.",
+        "**⚠️ A card that is not a NODE still renders.** `Sel` falls back to a plain div, so the first attempt put a perfectly visible card on the page that could not be selected, could not be named in the breadcrumb and opened a blank panel — \"I added a card and nothing happened\", with the card sitting there in plain sight. `quick-link` is declared in `PORTAL_NODES` for the same reason `quick-ad` is, even though the page does not ship with one."
+      ]
     },
     {
       "n": 32,
@@ -638,7 +879,11 @@
         "You asked": "remove **Share this page** from the Action section's destination dropdown; remove the **Button text** tab from the Design section's Button group; remove **Size of button** from Button style.",
         "How I check it": "the destination dropdown has no Share-this-page option; Design ▸ Button has no Button-text tab and no size control.",
         "Verified": "ACTION ▸ Opens = External link · Download a file · Compose an email. DESIGN ▸ Button = Full width · Corner radius · Fill colour, then Alignment and Spacing."
-      }
+      },
+      "notes": [
+        "**What went with each removal.** \"Share this page\" took the **Share via** chips with it — the spec's own note two lines above already states the rule: a dependent field whose parent option no longer exists is a control nothing can ever reveal, so it survives looking like a feature and behaves like a bug. The **Button text** tab took all nine fields only it could show (font, weight, size, colour, format, alignment and the two hover rows) and the `designTab` segmented that switched them — with nothing writing that key, every `(c.designTab ?? 'style') === 'style'` gate was a condition that could only be true, so the gates went too, along with the stored default. **Size** went because a button already has Full width and Corner radius and takes its type scale from the theme; three ways to change how big a button is was two too many.",
+        "⚠️ Every removed key stays in `defaults` and is still read by the renderer, so every button on every page looks exactly as it did — except `designTab`, which is gone entirely, because a stored value for a control that does not exist is a fact about nothing."
+      ]
     },
     {
       "n": 33,
@@ -650,7 +895,10 @@
         "How I check it": "the banner search shows the placeholder and the magnifier only.",
         "What it was": "the pill sat INSIDE the field, so the search bar came with a grey chip permanently occupying the space just before its own icon — a label for a setting, on the one control a requester is meant to type into without reading anything.",
         "Verified": "the banner reads \"Welcome to Support Portal / Search our support center knowledge base / How can we help you?\" — no Knowledge pill."
-      }
+      },
+      "notes": [
+        "⚠️ **The scope itself is untouched.** It still decides which results come back and is still set in the panel; what went is the badge announcing it on the page."
+      ]
     },
     {
       "n": 34,
@@ -661,7 +909,10 @@
         "You asked": "remove the Settings menu from the right-hand menubar.",
         "How I check it": "the rail reads Widgets · Theme · Branding.",
         "Verified": "the rail reads Widgets · Theme · Branding."
-      }
+      },
+      "notes": [
+        "⚠️ It used to sit below Branding on the reasoning that what a requester may DO on this portal is a property of this portal — the same kind of statement as its theme and its logo. What that missed is that the rail is where you go while you are **arranging a page**, and a nine-accordion permissions screen is not something you reach for mid-layout. The panel, its `PANEL_COPY` entry and the `RailKey` union all stay, so bringing it back is one line."
+      ]
     },
     {
       "n": 35,
@@ -672,7 +923,13 @@
         "You asked": "step 1's details survive going forward to step 2. Step 2 drops the two clickable cards (\"Create from scratch\" / \"Use template\"); instead **Create from scratch is shown by default at the top**, the default template is removed from there, and it becomes the **first square in the templates grid, carrying the Default tag**. You attached a reference for the stepper UI and said to ask if anything.",
         "Settled first (25 Aug)": "from-scratch is an **immediate action**, like a template tile — no selected state, no Create button, so every starting point on the screen is one click. A second Save **updates the draft** rather than creating another portal, and the button relabels. The Default is the grid's **first tile in every category**. The stepper takes your reference's SHAPE with the product's blue.",
         "Verified": "step 1 → Save → step 2 shows \"✓ Support portal details › ② Support portal customization\", a **Start from scratch** row, then TEMPLATES with **Support Portal / Default** as the first tile. Going back to step 1 kept \"HR Portal / support.acme.com/hr / Acme Corporation\", the button read **Save changes**, the toast was \"Details updated\", and the listing behind still held **one** HR Portal row. Under the **HR** chip the tiles are \"Support Portal\" then \"People & HR Desk\" — the Default still first."
-      }
+      },
+      "notes": [
+        "**(1) One screen, not a fork.** Step 2 used to open on two big cards — \"Create from scratch\" and \"Use Template\" — which asked you to choose a KIND of start before you could see any of the starts. From-scratch is one row and the templates are six tiles: they fit together, so the question was costing a click to answer something the screen could simply show. The \"start from a blank page instead\" footer link went with the fork it existed to escape — a second door to a room you are now standing in.",
+        "**(2) The Default is the first tile**, badged, instead of a \"Start from your portal\" band above the grid. The band existed because a tile eighth in a row of eight cannot say \"this is what your requesters see today\"; the badge says it, and being pinned first means the one starting point that always applies is always in the same place. ⚠️ It ignores the category chips, because it HAS no category — it is not an IT or an HR layout, it is the portal that already exists.",
+        "**(3) ⚠️ Saving twice used to create TWO portals.** Step 1 stays reachable from step 2 — the details are editable until you leave — and `saveDetails` called `create` every time. Going back to fix a typo and pressing Save left one portal carrying the typo and one carrying the correction, with nothing on screen saying a second had appeared. The first Save creates the draft; every later one edits it, and the button reads **Save changes** so it never says one thing and does another.",
+        "**(4) The stepper is a grey band with a chevron**, not two blue dots on a rule. The rule read as a progress bar that was always half full — it said the same thing on both steps — while two identically-blue circles gave no way to tell where you WERE from where you had BEEN. Now the finished step is greyed with a tick, the current one is dark with its number, and the chevron points the way. ⚠️ The tick is **#3D8BD0, not the reference's green**: green is this product's healthy/success colour and a completed step is neither — it is simply behind you."
+      ]
     },
     {
       "n": 36,
@@ -685,7 +942,12 @@
         "What I built": "a `video` spec whose Content is ONE control and whose Design is Style + Spacing. ⚠️ **`VideoSource` is one control, not an upload field beside a URL field** — a video comes from a file or from a link and never from both, so two always-visible inputs would ask a question with a wrong answer permanently on screen and leave the widget to decide which wins when both are filled. Empty it offers **Select video** and **Upload link**; filled it shows what is there and offers **Replace video**, which is the only thing you do to a video already in place.",
         "Left out deliberately": "ratio, autoplay, loop, mute and a poster frame. A support portal plays a video when somebody presses play, at the size the column gives it.",
         "Verified": "Visual lists Video. Placed empty it reads \"Choose a video in the panel\"; the panel reads Video → No video yet → Select video · Upload link → \"MP4, WebM or MOV · max 50MB, or a YouTube or Vimeo link\". Pasting `youtube.com/watch?v=dQw4w9WgXcQ` produced an iframe at `youtube.com/embed/dQw4w9WgXcQ`, 1027×578 (16:9), with the panel showing Video link → the URL → **Replace video**. Clicking the frame still selects the widget."
-      }
+      },
+      "notes": [
+        "**⚠️ A pasted watch URL becomes an EMBED URL.** Rendering `youtube.com/watch?v=…` directly puts the whole site in the frame — chrome, sidebar, cookie banner — which is not what anybody who pasted a video link is asking for. YouTube and Vimeo are converted; everything else is treated as a direct file, which is what a .mp4 on a CDN needs.",
+        "**⚠️ The frame is INERT on the canvas.** An iframe eats every event that reaches it, and a click on this element has to mean \"select it\" — so while the builder is live the frame is covered by a shield. In Preview and on the real portal it is a real player.",
+        "**⚠️ The empty state is a SIGN, not a dropzone.** A video has two routes in and neither is a drag onto the canvas, so unlike the image slot it must not look like a target it cannot honour."
+      ]
     },
     {
       "n": 90,
@@ -696,7 +958,8 @@
         "You asked": "from [IMAGE-UPLOAD-ZONE-PROMPT.md](IMAGE-UPLOAD-ZONE-PROMPT.md) — replace every image-upload empty state with ONE shared component. Plus: a filled slot shows only a **Replace** CTA (no Remove link, no second dashed box), and no divider between the tab row and the upload container.",
         "How I check it": "the same lockup at both sizes, drag-over responds, an oversized file errors and stays usable, and no hand-rolled image dropzone survives the §7.7 grep.",
         "Verified": "sm (panel) = 132px min / 24×16 pad / 32px file glyph; md (canvas) = 180px / 40×24 / 40px — same lockup, same copy. Drag-over paints #EBF5FF on #3D8BD0. A 9MB drop gives \"That file is 9.0MB — the limit is 5MB\" in red with the zone still enabled; a .txt gives the type message. A real PNG dropped on the canvas image element lands and replaces the zone. Filled = 92px chequerboard preview + a single Replace. §7.7 grep leaves only the one component plus the out-of-scope placeholders."
-      }
+      },
+      "notes": []
     },
     {
       "n": 42,
@@ -709,7 +972,8 @@
         "What I built": "the painted div takes `height: 100%`. ⚠️ `100%` resolves to auto while the wrapper has no explicit height, so an untouched banner still sizes from its minHeight and nothing moved for anyone who never dragged it.",
         "Also fixed": "three style objects mixed the `background` shorthand with `backgroundImage`, which React warns about and which genuinely misbehaves — a rerender that swaps between two such objects removes the longhand key while the shorthand still claims it. All three now write `backgroundColor` + `backgroundImage`.",
         "Verified": "with a banner image on, dragging the south handle down 120px took the painted band 260 → 380px at `background-size: cover`, wrapper and band both 380 (gap 0); dragging back up returned it to 260 with gap 0 and the artwork re-covering. Before the fix the wrapper grew and the band stayed at 260."
-      }
+      },
+      "notes": []
     },
     {
       "n": 43,
@@ -720,7 +984,8 @@
         "You asked": "a predefined widget's \"View all\" link is still inline-editable — make it uneditable like the rest of the card.",
         "What I built": "the link is gated on the same `hasFixedTitle` predicate that already fixes those widgets' headings, so the two cannot drift: if a widget's heading is the product's, its link is too. A Record List and anything else an admin builds keeps both, because there the words genuinely are theirs.",
         "Verified": "clicking View all on My Open Requests produces no `contenteditable` node anywhere on the canvas and opens the WIDGET's panel (Fill · Border · Corner radius) rather than a text node's."
-      }
+      },
+      "notes": []
     },
     {
       "n": 44,
@@ -732,7 +997,8 @@
         "What I built": "both segmented controls are now None/Colour and the `bgImage` upload row is gone. ⚠️ `bgImage` stays in `defaults` and the renderer still reads it, so anything already carrying one keeps drawing it; there is simply no longer a way to set one here.",
         "Why it is right": "a background photograph behind a card or a band is not a fill, it is artwork — it needs a crop, a focal point and a contrast guard to stay readable, and a segmented control offers none of the three. Where a picture genuinely belongs (the banner, an icon slot) it has its own field that does all three.",
         "Verified": "the Quick Actions section's Style reads `Fill · None · Colour`; `quick-incident`'s reads the same. No Image option on either."
-      }
+      },
+      "notes": []
     },
     {
       "n": 45,
@@ -743,7 +1009,8 @@
         "You asked": "remove the Card widget from the widget section.",
         "What I built": "`hidden: true` — the spec, the renderer and the panel all stay, so a page already carrying a Card keeps working and restoring the row is one word. ⚠️ The hidden filter runs BEFORE the search, so it is not reachable by typing its name either.",
         "Verified": "searching \"card\" in the library returns \"No elements found — Nothing matches 'card'\"."
-      }
+      },
+      "notes": []
     },
     {
       "n": 46,
@@ -755,7 +1022,8 @@
         "What I built": "removed from all three specs that declare that dropdown — it is one control wherever it appears, and leaving it in one spec would mean two lists claiming to be the same one. `mailto` values stay in `defaults`, so a card already configured that way keeps working.",
         "Why it is right": "a card that opens the requester's mail client leaves the portal for an app the portal cannot see — nothing comes back and nothing is logged, and capturing the request is the one thing a support portal exists to do.",
         "Verified": "a placed Button's Opens select holds exactly `[\"External link\", \"Download a file\"]`."
-      }
+      },
+      "notes": []
     },
     {
       "n": 47,
@@ -766,7 +1034,11 @@
         "You asked": "remove the Custom section from the Theme menu and add a **Home page background** section with colour and image tabs applying to the whole page; a full-page image removes the banner image; show the image size.",
         "What I built": "Custom's three loose overrides are gone. Heading text and body text belong to the palette above them — two places answering \"what colour is the heading\" means the one you are not looking at wins — and the page's own backdrop is the one of the three that is genuinely a decision about THIS page, so it is what stays and it gains a picture as well as a colour.",
         "Verified": "the Theme panel ends \"HOME PAGE BACKGROUND · A colour or an image behind the whole page · Colour | Image\"; no Custom heading, no Heading-text or Body-text row. The Image tab reads \"Suggested 1920 × 1080 px\". Uploading took the canvas `background-image` from `none` to the file at `background-size: cover` and raised the warning line; with it set the hero's `background-image` is `none` over `rgb(61,139,208)`, and switching back to Colour restored the gradient."
-      }
+      },
+      "notes": [
+        "**⚠️ The colour is mode-scoped, the image is not.** Every colour in this panel is a light/dark pair, so the colour keeps the mode tabs every other swatch has. A background PHOTOGRAPH is one artwork — asking an admin to upload it twice would be asking them to answer a question that has one answer — so it and the colour/image choice are stored unscoped by a separate writer.",
+        "**⚠️ The banner falls back to its COLOUR, not to nothing.** A transparent band would drop the search field onto the artwork with no contrast guarantee at all, which is the one thing `portalContrast` exists to prevent. And the panel says this will happen before it happens, rather than leaving an invisible upload looking like one that failed."
+      ]
     },
     {
       "n": 48,
@@ -778,7 +1050,12 @@
         "What I found": "the bar's icons already dragged — into a `useState`. So the gesture worked, looked right, and was gone the moment the component remounted, and the panel could not show the order at all because there was nothing stored to read.",
         "What I built": "`HEADER_ACTIONS_SPEC` is now a collection with the rail's exact shape (flat list, `noAdd`, `noOpen`, reorder only), and the order lives in that node's `items` — the SAME value the canvas drag writes. The rail gained the identical drag: same MIME, same grab cursor, same blue ring on the drop target, so it is one gesture to learn rather than two.",
         "Verified": "selecting the action cluster opens \"CONTENT · Text/Font size · Conversations/Messages · Notifications/Alerts · Shortcuts/Keyboard · Home/Portal home · Help/Support\". Dragging the Help icon onto Text moved `lucide-info` to the front of the bar AND put \"Help · Support\" at the top of the panel list. On the rail, clicking an icon selects the rail, and dragging Tasks to the top reordered both the icons and the panel list to \"Tasks · Requests · Changes · …\"."
-      }
+      },
+      "notes": [
+        "**⚠️ Ask AI, Create and the avatar are not in the list.** They flank the cluster and are fixed — a labelled button, the product's one primary action, and an avatar where every app in this suite puts it. A list of all nine would offer three rows that refuse to move, which is the panel describing a freedom the bar does not have.",
+        "**⚠️ The rail's reorder writes the FULL stored list, hidden rows included.** The visible order has already dropped them, so committing that would delete a destination as a side effect of moving another one.",
+        "**⚠️ The rail icons do NOT `stopPropagation` on click, unlike the bar's.** The bar's cluster is its own node inside a bar you can also select, so an icon has to say which you meant. The rail has no inner node — the rail IS the thing — so swallowing the click would leave it reachable only by its few pixels of padding."
+      ]
     },
     {
       "n": 49,
@@ -790,7 +1067,13 @@
         "What I built": "the Theme panel's convention, extended to the two other colour stores. **The bare key is the light value and `dark:<key>` is the dark one**, falling back to the bare key when nobody has set it — so a portal that has never been given a dark variant stores nothing extra and renders exactly as it always did. Only a deliberate dark override adds a key. `ColorField` gained the same `modes` contract `ColorDot` already took, so the popup is literally the same control with the same words.",
         "⚠️ Three separate readers had to learn the pair, and each was found by testing rather than by reading": "`resolve` (the chain), `containerCss`'s **own-only box keys** — which deliberately bypass `resolve`, and are exactly the keys a colour picker writes, so a dark colour stored and displayed correctly and simply never painted — and `cfgFor`, which promotes the dark value onto the base key and stashes the original under `light:<key>` so the light tab has something to show.",
         "⚠️ The bug worth remembering": "inside `renderControl` a **shadowing `set` discards the key it is given** and always writes `f.key`, because every other control only ever writes its own field. Handing it `dark:bg` therefore wrote `bg` — the picker looked right, both tabs edited the light colour, and nothing anywhere said so. The dark half goes through `viewSet` now; the light half keeps `set` so the field's own `consequence` and mirroring still run."
-      }
+      },
+      "notes": [
+        "**⚠️ A colour is the ONE style value with two versions.** Padding, radius and font size are the same number in a light portal and a dark one, so the pair lives in a colour-only helper and every other field is untouched.",
+        "**⚠️ The active mode is MODULE state, set once per render**, not an argument threaded through `resolve`'s forty-odd call sites. There is only ever one portal on screen and every reader runs inside the render that set it — where a mode parameter that missed a single call site would leave one control quietly reading the wrong half of a pair, which is the failure that would be invisible.",
+        "**⚠️ Revert drops BOTH halves.** Clearing only the light one would leave a dark override with nothing under it — a value the admin cannot see in the mode they are working in and cannot reach from a control that reads as inherited.",
+        "**Verified, both stores.** Spec fields (the Quick Actions section's fill): Light #FF0000 painted red, switching to Dark and setting #00FF00 left the light canvas red, flipping the portal to dark painted green, flipping back painted red. The style packs (Pending Approvals, which uses P1/NodeStyle): Light #FF00FF, Dark #0000FF — magenta in light, blue in dark, magenta again on return. Clean load, no console errors."
+      ]
     },
     {
       "n": 50,
@@ -802,7 +1085,11 @@
         "What I built": "one field. Each row is a white card carrying **\"Heading\" over a real sentence, both set in that family**, with the family's NAME outside the card to its right. The name is the label and the card is the evidence, so the sample is never interrupted by a word set in the UI's own font — a list of fonts rendered in one font is a list of words.",
         "⚠️ This reverses an earlier split, and the reason it existed is worth keeping in view": "two fields let you take a serif heading without also taking its body face. The cost was a panel asking twice for what is nearly always one answer, with two identical-looking rows meaning different things. A portal typeset in two families is the exception, not the thing the control should be shaped around.",
         "Verified": "the panel shows a single \"Font family\" label (the two old ones are gone). Six rows; each card is white, 8px radius, bordered, with \"Heading\" at 16px/600 over the sample sentence at 12px, both in that row's own face (Inter, Poppins, Source Sans 3, Merriweather…), and the family name measured to the RIGHT of the card's edge. Choosing Merriweather set the canvas wrapper font AND `--portal-heading` to Merriweather, relabelled the trigger, and toasted \"Merriweather applied\"."
-      }
+      },
+      "notes": [
+        "**⚠️ The trigger names BOTH faces when a theme style has paired two** (`Merriweather · Inter`), and a row is ticked only when its family is doing both jobs. A style may still set a pairing, and a field claiming one family while the page is set in two would be the panel lying about the thing it exists to report.",
+        "**⚠️ One write for both roles**, not two — two writes would render an impossible intermediate state where the heading had changed and the body had not."
+      ]
     },
     {
       "n": 51,
@@ -814,7 +1101,12 @@
         "What I measured": "Title input → Questions row was **0px** — the input's bottom edge sat exactly on the row. `Group` is a full-bleed row carrying only a bottom rule, so nothing separated the two and the field read as part of the row's header. Header → first card was **12px**.",
         "What I built": "16px above the collection and 20px between a group header and its list. **16px is `Field`'s own `mt-4`, deliberately** — a collection is one more thing you author in that section, so it sits off the field above it by the same step one field sits off another.",
         "Verified": "FAQ panel, both states — Title → Questions **0 → 16px** (open and collapsed), header → first card **12 → 20px**. The left rail (flat collection, no content fields) and an action card (content rendered as Group rows) are both unchanged, no console errors."
-      }
+      },
+      "notes": [
+        "**⚠️ The gap is conditional, not global.** It appears only when the fields above rendered BARE (a lone group named \"Content\" renders as a plain field list), because then the collection follows an INPUT. When those fields rendered as `Group` rows instead, the collection is one more full-bleed row in a list of rows, and a gap there would break the run of rules rather than separate two things.",
+        "**⚠️ `collectionBlock` HAS TWO CALL SITES.** I fixed `PanelBody` first, rebuilt, and nothing moved — FAQ and every other spec-with-packs takes the packs path, which renders the collection again 100 lines further down. A change to one is a change to half the panels.",
+        "**⚠️ The header→list gap lives on `PortalItemList`, not on `Group`** — so it is the space between a heading and its items everywhere a collection appears, rather than a rule about one widget. Changing `Group` would have restyled every Design accordion too."
+      ]
     },
     {
       "n": 52,
@@ -828,7 +1120,12 @@
         "⚠️ `[&>*]` rather than a class on each root": "those roots live in a dozen components and half are collection renderers this file cannot see.",
         "Verified, an 80px drag on each": "Button 36→116 **and the button element itself 36→116** · Text 24→104 · Table 110→188 **and the `<table>` 110→188** · Accordion 138→218 · Image 735→815 **and the `<img>` 735→815** · Video 620→700 **and the `<iframe>` 620→700** · KPI 166→246. No regression: predefined widget 398→478, built-in action card 78→158, banner 260→340. Width −121 for a −120 drag, shrink −60 for −60, every box in the chain `overflow: visible`, no console errors.",
         "Accordion panel spacing": "its Items list already matched FAQ (20px header→card, shared component). What was still tight was ABOVE the group — 4px under the CONTENT eyebrow where FAQ now had 16. The gap rule widened to cover \"nothing above it at all\", not just \"bare fields above it\". Verified 4 → 16px."
-      }
+      },
+      "notes": [
+        "**⚠️ The fill box must be INNER, never the wrapper.** The floating toolbar (`-top-11`) and the eight handles (`-3px`) are children of the wrapper, so anything applied there reaches them — which is how clipping used to eat a widget's own toolbar the moment it had a height.",
+        "**⚠️ Image and Video needed their own line.** `[&>*]` reaches the element's root, not the picture inside it — so the figure grew and the `<img>` kept its aspect height. The picture's box now takes `flex-1` and the image `h-full` (with `object-cover` already there, the crop stays centred); the video frame took `h-full` the same way. Both resolve to auto until a height is dragged, so an untouched image is still laid out by its own proportions.",
+        "**⚠️ Found while typechecking — the drag state had TWO `gap` fields**, declared twice in the interface and written twice in the literal, so the row's column-gap silently overwrote the element's own margin. The top grip's gap drag was starting from the wrong number. Removed; only the margin use ever read it."
+      ]
     },
     {
       "n": 53,
@@ -840,7 +1137,11 @@
         "What I built": "exactly those two. `Group`'s body is `px-4 pb-4` and `PortalItemList`'s root carries no margin at all.",
         "Note": "the 16px between the last content FIELD and the collection (task 51) is untouched — that is the gap ABOVE the group, which you asked for and which is a different join.",
         "Verified": "Accordion's Items body is `px-4 pb-4`, its list has no class at all, header→first card **0px** (was 20). FAQ is the same component, so it matches by construction."
-      }
+      },
+      "notes": [
+        "**⚠️ This reverses part of task 51.** That pass ADDED this space (`mt-2` → `mt-4`) on the reading that \"questions and its card\" wanted more air. It wanted less. The header row owns the space beneath itself now, and the list says nothing — one element deciding it is the only way the two cannot disagree.",
+        "**⚠️ It is EVERY group in the panel, Design accordions included.** One gap under a group header, the same everywhere, is what makes it readable as a rule rather than a number chosen per widget."
+      ]
     },
     {
       "n": 54,
@@ -850,7 +1151,14 @@
         "Where": "`SupportPortalBuilder.tsx`, `AdminSupportPortalModule.tsx`",
         "You asked": "Publish and Save as draft as one primary CTA with a dropdown, Publish selected by default.",
         "What I built": "a split button — Publish on the main half, a chevron opening a two-row menu. Both rows are listed, Publish ticked, each with a line saying what it does to the LIVE portal rather than to the record."
-      }
+      },
+      "notes": [
+        "**⚠️ The main half NEVER changes what it does.** A split button whose face swaps to your last choice is the pattern that gets somebody to publish a portal they meant to keep private — the one mistake here that pressing the button again cannot undo. Publish is always Publish.",
+        "**⚠️ Save as draft does NOT unpublish a live portal.** Saving your work and taking the portal away from every requester using it are entirely different acts, and one of them is not something a Save button may do quietly. A published page KEEPS its status and gains `dirty`, which is exactly what the listing's amber \"Unpublished changes\" chip was built to report. A page that was never published stays a Draft.",
+        "**⚠️ And it does not leave the builder, unlike Publish.** Publishing is the end of a piece of work; saving a draft is a pause in the middle of one, and closing the page you are still working on is the wrong answer to \"keep this for later\".",
+        "**⚠️ Publish now clears `dirty`** — a page that has just gone live has no unpublished changes by definition, and leaving it set had the row warning about work already published.",
+        "**Verified, both branches.** Published portal → Save as draft: stays in the builder, chip still \"Published\", toast \"Saved. 'Support Portal' keeps showing the published version until you publish again\", and the listing row gained **Unpublished changes**. Publish → returns to the listing, toast \"is live on the support portal\", chip cleared. Draft portal (made with Copy, which always yields a draft) → Save as draft: stays in the builder, chip still \"Draft\", toast \"saved as a draft\". Split button measured joined: 74px + 28px, 0px between them."
+      ]
     },
     {
       "n": 55,
@@ -861,7 +1169,12 @@
         "You asked": "an outlined settings icon beside the Create CTA, in the ticket-detail page's icon language, with an instant \"Global Setting\" tooltip.",
         "What I built": "the detail page's own header-icon recipe — a bordered white box holding a 16px glyph, the same height as the control beside it. That is what a secondary action looks like everywhere else in this product, and matching it is what stops the admin screens reading as a different application.",
         "Verified": "36×36, 1px #DFE5ED border on white, 8px from the CTA and the same height as it, `lucide-settings`. Tooltip shows \"Global Setting\" within 220ms. It opens \"Global Setting · Applies to every support portal\"; a row's icon still opens \"Settings · Support Portal\"."
-      }
+      },
+      "notes": [
+        "**⚠️ `size-9`, not the drawers' `size-8`.** List-page toolbars are 36px in this product and this one sits against a 36px CTA; a 32px box beside it would read as a different control.",
+        "**⚠️ An INSTANT tooltip (`delayDuration={0}`).** The global default is 700ms, which is right for a dense row of icons you are scanning past — it is wrong for a lone unlabelled glyph, where the wait reads as the tooltip not existing.",
+        "**⚠️ `globalSettings` is its own state, NOT a sentinel in `settingsId`.** A row's settings are about one portal and name it in the subtitle; these are about the channel as a whole. A magic id would make every reader of `settingsId` have to know which strings are not ids. One drawer serves both — the settings are identical, only the subtitle differs, because only one of the two is about a particular portal."
+      ]
     },
     {
       "n": 56,
@@ -872,7 +1185,8 @@
         "You asked": "take the switcher out of the Theme menu and put it globally beside undo/redo, so colours can be checked in either mode while working in any section's picker.",
         "What I built": "the same component and the same state, moved. **Mode is not a theme setting** — it decides what every colour on the page resolves to, so an admin picking a card's background needs to flip it while that card's picker is open, rather than navigating away from the thing they are colouring and back. Beside undo/redo it belongs to the canvas, which is what it actually changes.",
         "Verified": "exactly two mode buttons exist on the page and both are in the top bar (y=66), 10px after Redo, same row. Toggling Dark took the canvas from no `.portal-dark` / `rgb(255,255,255)` to `.portal-dark` / `rgb(15,23,42)`. With it on, opening the Quick Actions section's Background-colour picker lands on the **Dark** tab — which is the workflow you described, working end to end."
-      }
+      },
+      "notes": []
     },
     {
       "n": 57,
@@ -883,7 +1197,8 @@
         "You asked": "drop the one-liners under Publish and Save as draft.",
         "What I built": "two rows, two names, the tick holding its column so the labels line up. The sentences said what each does to the LIVE portal, which is the genuinely useful fact — but this is a two-item menu on a button somebody presses several times an hour, and by the third time they are furniture you read past to reach the words underneath. Menu narrowed 248 → 176px to fit what is left.",
         "Verified": "the menu reads exactly \"Publish | Save as draft\", 176px wide, two rows."
-      }
+      },
+      "notes": []
     },
     {
       "n": 58,
@@ -894,7 +1209,11 @@
         "You asked": "choosing Save as draft leaves the button reading \"Publish\" — it should take the name.",
         "What I built": "a `pubMode` the main half reads for both its LABEL and its ACTION, and the tick in the menu marks whichever is current, so the list always says what the big half is about to do.",
         "Verified": "opens on \"Publish\" with Publish ticked. Choosing Save as draft → the face reads **Save as draft**, the toast fires, and reopening the menu shows the tick moved. Pressing the main half in that state saves a draft again (stays in the builder, same toast) rather than publishing. Choosing Publish from the menu returns to the listing with \"is live on the support portal\". No console errors."
-      }
+      },
+      "notes": [
+        "**⚠️ This reverses task 54, and the reversal is the right call.** That pass deliberately froze the face on \"Publish\", reasoning that a swapping split button is how somebody publishes a portal they meant to keep private. That reasoning does not apply in this direction: the default is the LIVE action, so remembering can only ever leave the button on the SAFER of the two — pressing it expecting to publish costs a click, not a portal that went live before you meant it to. The failure being guarded against would need the default to be \"Save as draft\", and it is not. Worth keeping in view if that default is ever flipped.",
+        "**⚠️ Picking a row does the thing AND becomes the face, in one click.** Selecting an action from a menu and then having to press the button beside it is two gestures for one intention, and the row you just chose gives no sign it is waiting for a second."
+      ]
     },
     {
       "n": 59,
@@ -907,7 +1226,17 @@
         "What I built": "a 560px flyout to the LEFT of the panel. Groups are bordered blocks, AND between rows, a labelled **OR** rule between groups, \"+ Add condition\" per group, \"+ Add OR group\" below. Field and value cells are popovers; text types in place; the value control morphs per field kind (choice, person with avatars, date as single-select, tags with free entry).",
         "Verified": "Custom filter opens a 560px flyout whose right edge is left of the field, with the preset dropdown still open behind it, seeded \"Started from All Open Requests\" carrying its real condition (Status Not In Resolved, Closed). **OR proven by measurement:** `Status In [Pending]` alone rendered `[INC-178]`; adding `OR Status In [In Progress]` rendered `[INC-178, INC-170]` — it widened, which a flat AND cannot do. The field reads \"Custom · 2 conditions in 2 groups\". No console errors.",
         "Still open (see the handover notes)": "the technician-side filter language differs (AND across fields, OR within one field's values); only id / subject / status filter against the sample rows; and the flyout covers the canvas it is filtering."
-      }
+      },
+      "notes": [
+        "**⚠️ I could not open the Figma** — it returns \"you don't have edit access\". Built from your description plus the two decisions you made below; worth a look against the file.",
+        "**⚠️ It is a DRAFT, committed by Apply.** Every other control in this panel writes live, but a filter is read as one statement — an admin part-way through \"status is X **or** priority is Y\" has, for a few seconds, said something they do not mean, and watching the card empty and refill under a half-built rule teaches them the builder is broken. Verified the canvas does not move until Apply.",
+        "**⚠️ `ConditionGroup` is the shape `AdminBomTargeting` already uses.** Two condition builders in one product meaning different things by the same two words is worse than either shape alone.",
+        "**⚠️ The legacy flat `conditions` list is still read** — it is exactly one group, so nothing had to be migrated and an untouched Record List filters as before. `activeGroups` resolves a preset, a flat list and real groups to one shape.",
+        "**⚠️ The renderer had to change too.** It called `activeConditions`, which flattens — so two groups meaning \"open OR mine\" would have been evaluated as \"open AND mine\", reading one way in the builder and behaving another on the canvas that is showing it.",
+        "**⚠️ Applying DROPS the preset.** Keeping the name would leave the field claiming \"All Open Requests\" while the card obeys something since edited. What the preset gave is the starting point, and that is already in the groups.",
+        "**⚠️ Removing a group's last row removes the GROUP.** An empty bracket is a rule matching everything, drawn as though it were a rule — and it would OR that \"everything\" against its neighbours, quietly widening the filter to every record.",
+        "**⚠️ Incomplete rows are dropped on Apply**, and changing a row's field resets its operator and value — an operator belongs to a KIND, so \"Contains\" left on a status field is a comparison that field cannot make."
+      ]
     },
     {
       "n": 60,
@@ -918,7 +1247,15 @@
         "You asked": "seven per-node lists of actions to remove, one to add, and two axis fixes.",
         "What I built": "a `ToolbarCaps` map — a list of EXCEPTIONS, not a registry every new node must join, so an unlisted node still gets everything its kind allows.",
         "⚠️ Testing note": "clicking a container's top-left corner selects its FIRST CHILD, not the container — my first survey read `requests` and `news` while believing it had `work-main` and `work-rail`. The regions have to be selected through their own grid gap."
-      }
+      },
+      "notes": [
+        "**⚠️ A cap REMOVES the button; it does not disable it.** Disabling is for something normally available that is not right now — the leftmost card's Move left — where the reason goes on the control. An action a node can NEVER take has no reason to state, and a permanently greyed button on every selection is noise the eye learns to skip.",
+        "**⚠️ Two of your items were the same bug, so I fixed the CAUSE.** The move axis came from the node's declared KIND, and every box reports 'column' — so the full-width Favourite Services band offered Move left / Move right, and so did Contact Us stacked in the rail. `useSiblingSpan` measures it instead: a sibling overlapping this element vertically IS beside it. That is what horizontal means, and it stays true as the layout changes without a lookup table.",
+        "**⚠️ The first/last edges are MEASURED too, not counted from the model.** Built-in rows are ordered with CSS `order`, so a card's index in `rowOrder` is not where it appears — the first card on screen can be third in the array. Position is the only reading that matches what an admin sees when they press Move left.",
+        "**⚠️ The stretch default is DISPLAY ONLY.** The Quick Actions cards and service tiles are stretched by their row's CSS, so a bar reporting \"left\" described a layout that does not exist. Writing `stretch` into the store would have been a change to every page carrying those rows, made to leave them looking exactly as they already look.",
+        "**⚠️ External link is a LABELLED action, not a \"+\".** The row takes exactly one specific card; a plus would promise the palette, which this row is fenced against, and an icon would have to be guessed at.",
+        "**Verified, node by node.** `hero-search` → Drag · Delete, nothing else. `quick` → Drag · Move down · Move up (disabled, already first) · **External link** · Horizontal alignment — **stretch** · Delete. Action cards → `quick-incident` has Move left disabled (\"Already first\"), `quick-service` has both, `quick-knowledge` has Move right disabled (\"Already last\"); Replace gone from all three. `favourites` → now **Move down / Move up** (was left/right), no replace, no copy, no vertical align, stretch lit. `work` → Drag · Move down · Move up · Delete. `work-main` → Drag · Move left (disabled) · Move right · Delete; `work-rail` → Drag · Move left · Move right (disabled) · Delete. Predefined widgets → `requests` keeps Copy, loses add/replace and both aligns; `contact` now moves **up/down** rather than left/right. External link adds `quick-link` and refuses a second with \"already has its external-link card\". No console errors."
+      ]
     },
     {
       "n": 61,
@@ -926,10 +1263,19 @@
       "status": "done",
       "fields": {
         "Where": "`portalPageModel.ts`, `PortalCanvas.tsx`, `SupportPortalBuilder.tsx`",
-        "You asked": "Record List loses its alignments; the six widgets offer each other; sections stay copyable; Text and Button get copy + a working Replace; Button gets a style dropdown and working moves; Accordion gets an Add and loses both alignments; and a one-column layout hides the move arrows. - **Copy was already enabled and already pasted row-wise.** Measured a clone landing beside its source at the same y. - ⚠️ **Replace was silently dead.** `replaceElement` tested `/^sec-\\d+-c\\d+$/` — the box naming from BEFORE task 23 minted ids — so it had matched nothing since, fell through to the `rowExtras` branch, found no entry and returned having done nothing. Nothing errored; the widget just stayed what it was. Now `isBoxId`, one named predicate, so the next rename touches one line. - ⚠️ **A placed Text had NO element bar at all** — no drag, copy, replace or delete. The rule was \"kind === text → formatting bar\", which is right for a widget's heading but wrong for a dropped Text, which is a widget in its own right. It carries both bars now: formatting on top, element bar underneath and nearest the thing it acts on.",
+        "You asked": "Record List loses its alignments; the six widgets offer each other; sections stay copyable; Text and Button get copy + a working Replace; Button gets a style dropdown and working moves; Accordion gets an Add and loses both alignments; and a one-column layout hides the move arrows.",
         "Verified": "Record List → Drag · Replace · Copy · Delete (no alignments, no moves while alone). Accordion → Drag · Add beside · Replace · Copy · Delete (both alignments gone). Button → the same plus **Button style** reading \"Primary\", switching to \"Outline\" on pick; its \"+\" offered exactly `[Text, Button, Image, Video, Accordion, Table]`; adding an Image beside it made **Move left** appear and **Already last** disable. Replace on that Image turned it into an Accordion (`el-15` → `el-16`, toast \"Replaced with Accordion\"). Text carries both toolbars. No console errors.",
         "Waiting on you": "items 6, 7 and 8 (image, video and table toolbars) were left blank in the message."
-      }
+      },
+      "notes": [
+        "**What I found before building** — three of these were already true, and two were real bugs: - **Copy was already enabled and already pasted row-wise.** Measured a clone landing beside its source at the same y. - ⚠️ **Replace was silently dead.** `replaceElement` tested `/^sec-\\d+-c\\d+$/` — the box naming from BEFORE task 23 minted ids — so it had matched nothing since, fell through to the `rowExtras` branch, found no entry and returned having done nothing. Nothing errored; the widget just stayed what it was. Now `isBoxId`, one named predicate, so the next rename touches one line. - ⚠️ **A placed Text had NO element bar at all** — no drag, copy, replace or delete. The rule was \"kind === text → formatting bar\", which is right for a widget's heading but wrong for a dropped Text, which is a widget in its own right. It carries both bars now: formatting on top, element bar underneath and nearest the thing it acts on.",
+        "**⚠️ \"Move left/right is not working\" was not a broken button** — every placed element sits alone in its own column, so there was nothing to move past. Your one-column rule is the fix: **alone → hidden**, at an edge of a real row → **disabled with the reason**. Absent and disabled mean different things and both are used here on purpose.",
+        "**⚠️ A placed element is measured by its BOX, not itself.** Each dropped widget sits alone inside its own `sec-N-bM`, so at the DOM level it never has a sibling however many widgets are beside it — the neighbours are the boxes. Measuring the element hid the arrows even after a \"+\" had visibly put a widget alongside.",
+        "**⚠️ The span is RE-MEASURED on a MutationObserver + ResizeObserver**, not once on selection. The toolbar re-renders without remounting, so adding a neighbour left the arrows hidden — which reads as the add having failed.",
+        "**⚠️ On the six, \"+\" means BESIDE, not inside.** A Text holds words, not widgets; the only honest thing a plus can do is put the next element in the slot next to it — which is also what gives the arrows something to move past. It routes through `dropBeside`, the drag path, rather than growing a second set of rules to keep in step.",
+        "**⚠️ The picker on the six offers only the six.** It used to open the whole palette, so \"replace this paragraph\" listed Announcements and AD Self Service — product widgets carrying their own data and their own place on the page. Swapping a paragraph for one is not a formatting change, it is a different page.",
+        "**⚠️ The Button style menu reads and writes the panel's own `style` key** and its four options, not a set invented for the toolbar — a shortcut that wrote a different value would be a second control for one setting."
+      ]
     },
     {
       "n": 62,
@@ -940,7 +1286,15 @@
         "You asked": "Accordion and FAQ get the Add icon plus an \"Add item\" CTA opening an inline popup; Image gets an inline \"Add caption\"; Video, Table and KPI lose their alignments; KPI has no Add.",
         "Verified": "Accordion → Drag · Add beside · Replace · **Add item** · Copy · Delete. FAQ → the same, its CTA reading \"Add a question to this list\". Image → keeps both alignments and gains **Add caption**. Video, Table → no alignments. KPI → Drag · Replace · Copy · Delete, no \"+\", no alignments. Add item on an accordion took it from 3 rows to 4 with \"How do I book leave?\" on the canvas and an \"Item added\" toast; the caption saved, rendered under the picture, and the button relabelled to **Edit caption**.",
         "⚠️ Testing note": "the Accordion's PANEL has its own \"Add item\" button, so a `find` by button text picks the wrong one — the toolbar's has to be located by its `data-tip`."
-      }
+      },
+      "notes": [
+        "**⚠️ TWO sets, not one.** The FAQ carries the \"+\" without being in the list it offers — it is a Custom widget that holds questions rather than being one of the building blocks, but an admin composing a section around one still wants the next element beside it. Folding \"can add a neighbour\" into \"is a neighbour worth offering\" would have put FAQ in the Replace list of every Text on the page.",
+        "**⚠️ Alignment goes from everything that FILLS its column** — Record List, Accordion, FAQ, Video, Table, KPI. All six are as wide as the space they are given, so both axes reported a position nothing was in a position to take. Text, Button and Image keep it: those three genuinely can sit left, centre or right of the room they have.",
+        "**⚠️ The KPI needs no cap to have no \"+\".** The plus belongs to `canAddBeside` and the KPI is not in it. A cap would have removed its Replace as well, which is a swap rather than an add and is the one structural thing it should still offer.",
+        "**⚠️ \"Add item\" is a LABELLED CTA, not a glyph.** \"+\" already means \"put a widget beside this one\" two buttons along; a second plus meaning \"put a question inside this one\" would be one symbol for two different structural moves on one bar.",
+        "**⚠️ The two widgets name their item fields differently** — Accordion stores `title`/`body`, FAQ stores `q`/`a` — so the keys are read from the type rather than assumed. Writing the Accordion's names into an FAQ appends an item that renders blank and cannot be told apart from a bug. The popup's labels follow, so an FAQ asks for a Question and an Accordion for a Title.",
+        "**⚠️ The caption button says which of the two it will do.** A caption already written is EDITED, not added again — a button reading \"Add caption\" over a picture that has one describes the wrong action, and you press it expecting a second line and get your own words back. Clearing the field is how a caption is removed, so there is no separate delete for the same state."
+      ]
     },
     {
       "n": 63,
@@ -950,7 +1304,12 @@
         "Where": "`SupportPortalBuilder.tsx`, `PortalCanvas.tsx`",
         "You asked": "the Publish CTA in the product's blue; Copy and Add to place row-wise inside the widget's own section rather than as a new column of the parent; and no disabled action on any toolbar.",
         "Verified": "the Publish half and its chevron both measure `rgb(61, 139, 208)`. A copied Text landed at the same x (105) and width (203) **40px below** its original — it used to land at x=664 beside it — and an Add-beside Button landed below that again. The first of the stack shows only **Move down**, the second only **Move up**, and a scan of both bars found **zero** disabled controls."
-      }
+      },
+      "notes": [
+        "**Publish** takes `#3D8BD0`, the primary every other button in this product uses. It was slate — which made the one irreversible action in the builder the only button that did not look like this product's buttons.",
+        "**⚠️ The clone stacks UNDER the original, inside that element's own box.** Copying a paragraph used to produce a two-column section with the original squeezed into half the width: the section it belonged to was restructured to hold its own copy, so the page moved everywhere except where the copy was wanted. `addNeighbourAt` with an explicit `'column'` rather than `addSibling`, which inherits the parent's direction — and a leaf's parent is a row by default, which is exactly how the columns were appearing. Add-beside does the same, for the same reason.",
+        "**⚠️ NOTHING on the element bar is shown disabled any more.** A move that cannot happen is not rendered, a layout block has no Copy at all, and a blocked Split is absent. This REPLACES the earlier rule — \"disabled with the reason on it, because a control that vanishes reads as a bug\" — which held on a listing row and does not hold here: on a bar of seven small glyphs the greyed arrows were indistinguishable from the live ones at a glance, so the row looked the same whether or not you could act on it, and the reason was a tooltip nobody hovers a dead button to read. One rule now: if it is on the bar, pressing it does something. `btnOff` is gone from the file."
+      ]
     },
     {
       "n": 64,
@@ -962,7 +1321,11 @@
         "What I built": "the stepper is a **breadcrumb** — the step behind you grey and pressable, the one you are on in the product's blue, a chevron between. The numbered circles and the tinted band are gone: the numbers answered a question nobody asks of a two-step dialog, and the band made the steps read as a toolbar belonging to the dialog rather than a position within it. Step 2 gains **section headings** over both halves, a larger from-scratch card, a 3-up grid at 960px, and a **← Back footer**.",
         "⚠️ Caught by measuring": "a blind `replace` on the width widened the **Edit-details** dialog instead of Create — the same class name appears in both and the first match won. Both are now set by line.",
         "Verified": "step 1 shows the crumb blue/600 with step 2 grey; after Save the pair flips. Step 2 renders \"Create your own portal\" and \"Start from a template\", 8 tiles at 150px art, the Default first with its badge, \"Classic Service Desk · IT Support\" as name-over-category, and the Back footer. Dialog measures 960px. No console errors."
-      }
+      },
+      "notes": [
+        "**⚠️ A CATEGORY under each template name, not a sentence.** Eight tiles each carrying two lines of prose is a page you read rather than a grid you scan — and the description is the one thing the picture above it already says.",
+        "**⚠️ Back is a footer of its own, on the left.** Step 2 has no primary action to sit opposite it — every tile IS the action — so a right-aligned pair would leave a button with nothing to be beside."
+      ]
     },
     {
       "n": 65,
@@ -975,7 +1338,13 @@
         "Verified — UI": "the flyout is 620px, seeded \"Started from All Open Requests\"; the second row carries the And⇄Or toggle and flips to **Or**; ⋮ → Turn into a group wraps the row in a tinted block with its own *Where* and its own Add filter; Escape closes the popover and leaves the builder, a second Escape closes the builder.",
         "Verified — semantics, against the real module": "8 cases all passing — AND narrows to `[INC-178]`, the same two rows under OR widen to `[INC-178, INC-170]`, `Open AND (Pending OR Open)` gives `[SR-180]`, `Pending OR (Open AND Open)` gives `[INC-178, SR-180]`, an empty group matches everything and an empty nested group is ignored. All four stored shapes resolve: legacy flat → 1 AND child, older OR-of-ANDs → 2 OR children, a real tree → itself.",
         "Not built": "Saved filters / Save new filter / Update from the reference's header — that is a naming-and-persistence feature rather than UI or AND/OR logic, which is what you scoped this to."
-      }
+      },
+      "notes": [
+        "**The logic changed, not just the skin.** It was a flat OR-of-ANDs — one shape, no brackets. It is a TREE now: a node is a condition or a group, and **a group carries ONE join for all of its children**, set on its second row and repeated as plain text after that. What you read down the left edge is what will be evaluated. Precedence comes from **nesting**, drawn as a tinted block, which is the only unambiguous way to show it.",
+        "**⚠️ One join per GROUP, not per row.** A row-by-row And/Or list has no defined meaning — \"A and B or C\" needs a precedence nobody states — so the join belongs to the bracket. Four controls for one value would also let two rows show different words for a group that can only have one.",
+        "**⚠️ Every older stored shape still reads.** `activeTree` converts a preset, a legacy flat list and the previous OR-of-ANDs into the same tree, so nothing needed migrating and the canvas can never evaluate an old filter differently from the builder that wrote it.",
+        "**⚠️ Found by testing — Escape closed the whole builder.** The value popover and the builder both listen on `document`, so dismissing a value list threw away a half-written filter; propagation cannot separate them because neither is in the other's tree. A COUNT of open popovers (not a boolean — two can overlap for a frame while one replaces another) makes Escape close the innermost thing only."
+      ]
     },
     {
       "n": 66,
@@ -986,7 +1355,15 @@
         "You asked": "no Copy on predefined widgets; the Button to resize itself rather than its box; and the drop target to reserve the space and move what is there aside, with a grab cursor on anything you can pick up.",
         "Verified": "a live-data widget's bar is Drag · Move right · Delete — no Copy. A Button dragged 200px wider went 187 → 387 **and so did the button element**, with `cursor: grab` on it. Dragging over an element's right edge sets `padding-right: 411.5px` (half of 823), draws a 399px dashed ghost in the freed half and reads \"Insert in new column\"; over its top edge, `padding-top: 72px`, a 56px band, \"Insert in new row\". Both animate over 130ms — an early measurement caught the transition mid-flight, which is why the first read looked like a failure.",
         "Scope note": "the gap opens inside the box you are pointing at, moving ITS content aside. Sibling sections are not narrowed as well — say the word if the surrounding cards should give way too."
-      }
+      },
+      "notes": [
+        "**Copy is gone from the live-data widgets.** Each is the product's own widget with a fixed place — a second My Open Requests is not a second card, it is the same query drawn twice, and the palette already refuses to place one. Copy was the last door into the state that rule exists to prevent.",
+        "**⚠️ The Button needed the fix at the RENDERER, not the wrapper.** Width now counts as \"sized\" alongside height, but the wrapper's `[&>*]` reaches ONE level and the button is a grandchild of it — the box between them took the width and the button never heard about it. It reads the dragged width itself and fills, exactly as its own Full-width switch does. It does NOT write `fullWidth`: dragging a width and flipping that switch are two ways to say one thing, and having the drag set it would report a decision nobody made and leave it set after the width was dragged back.",
+        "**⚠️ The RESERVED SPACE is the real change.** A line says WHERE; it does not say WHAT YOU GET. Dropping beside a full-width card turns one column into two, and the only evidence of that was a 3px rule at one edge — so the layout you were about to make was something you had to picture. The box now opens a gap the size of the thing being dropped and the content already there moves into what is left.",
+        "**⚠️ It is PADDING, not a change to the model.** Nothing is inserted, split or reordered until the drop. A preview that mutated the page would have to be undone on every dragleave — and dragleave fires while merely crossing a child, so it would undo itself mid-gesture.",
+        "**⚠️ Half for a column, a fixed band for a row**, because the two are different promises: a new column takes a share of the width, while a new row takes as much height as its content needs and cannot be known before it lands.",
+        "**⚠️ The grab cursor is on the element, and the element is now genuinely draggable from its body** — a cursor that says \"pick me up\" over something only a 14px grip can move would be worse than none. **Except Text**, which is edited in place: a draggable body swallows the selection you need to edit it, so the grip stays its only handle."
+      ]
     },
     {
       "n": 67,
@@ -998,17 +1375,32 @@
         "What I built": "a **Show as** control, first in the Content group, above Module and Filter. The two were always the same question — \"which records?\" — answered at two lengths, so they share the module and the filter and differ only in how the answer is drawn. As two palette entries an admin had to decide which they wanted BEFORE choosing a module, and changing their mind meant building the whole thing again.",
         "Verified": "the palette lists \"Custom data widget\" and no KPI — and searching \"kpi\" now finds the merged widget, because the keyword came with it. The panel reads \"Show as · Record list · KPI · Title · Module · Filter\". Flipping to KPI drew **3** at 30px with its icon over \"My records\"; flipping back restored the full row list. Changing the module from Requests to Approvals took the number **3 → 2**, and the list agreed at 2. No console errors.",
         "Note": "narrowing to \"My Overdue Requests\" left the count at 3 — the sample rows carry no due date, so that condition passes in the builder by the documented rule. On the live portal it queries the module properly."
-      }
+      },
+      "notes": [
+        "**⚠️ It is the FIRST field.** It decides what the two fields under it will produce, and a control that reframes the ones above it is read after the damage is done.",
+        "**⚠️ The KPI number is the COUNT OF MATCHING RECORDS**, not a figure of its own. It is the only single number a module and a filter can honestly produce, and it is what makes those two fields mean the same thing in both modes — change the filter and the count moves with it. A KPI carrying a separate value would leave a card whose Module and Filter controls did nothing. **Tell me if it should be something else and it is a one-line change.**",
+        "**⚠️ The TITLE is the caption.** The list uses it as its heading; in KPI mode it is what the number is a number OF — the same sentence in a different position, so there is no second label field to keep in step with the first.",
+        "**⚠️ It reads the LIVE matching set, not the visible rows**, which have already been cut to the first few. A card reading \"3\" while the filter matches nine is the sort of wrong that looks right.",
+        "**⚠️ The old KPI is HIDDEN, not deleted.** Its spec, renderer and panel all stay, so a page already carrying a placed KPI keeps working and editing exactly as it did."
+      ]
     },
     {
       "n": 68,
-      "title": "My Assets and My CIs — stacked, tinted, and re-ranked",
+      "title": "My Assets and My CIs — stacked, filled, and re-ranked",
       "status": "done",
       "fields": {
         "Where": "`SupportPortalPreview.tsx`",
         "You asked": "the two cards below each other rather than side by side, their tiles stretching the card's width, and a filled card instead of an outlined one with a clean hierarchy inside.",
-        "Verified": "requests and approvals stay side by side at 261px each; **My Assets is 538px at y=1087 and My CIs 538px at y=1323** — full width, stacked. Both are `rgb(245,247,250)` with `border: 0px`; tiles are white with `border: 0px`. Card height went **401 → 221px** and the space under the last tile is 27px of padding rather than 200px of nothing. A tile reads \"Dell Latitude 5440 / AST-3 · Laptop\"."
-      }
+        "Verified": "requests and approvals stay side by side at 261px each; **My Assets is 538px at y=1086 and My CIs 538px at y=1323** — full width, stacked. The cards are `rgb(255,255,255)` with the same `0.888889px #E5E7EB` hairline as My Open Requests; the tiles are `rgb(249,250,251)` with `border: 0px` at 247px, badge white, 2 per row. Card height went **401 → 221px**, so the space under the last tile is 27px of padding rather than 200px of nothing. A tile reads \"Dell Latitude 5440 / AST-3 · Laptop\", with all four names in full."
+      },
+      "notes": [
+        "**⚠️ Full width needed `gridColumn: 1 / -1`, not a bigger share.** The region holding them is a GRID, and `share()` writes FLEX properties a grid ignores — which is why a card already asking for two columns still came out in one cell. The grid had to be told in its own language.",
+        "**⚠️ The FILL is on the TILES, not the card.** Tinting the card and leaving its tiles white was built first and reversed on request: it made these two the only cards on the page constructed differently from the four around them, so the page had two card languages and the difference read as a state rather than a kind. Every card is white with a hairline; the separation the tiles need comes from filling the tiles, which keeps one card treatment for everything. The tiles carry no border of their own — four hairline rectangles inside a hairline rectangle is the box-inside-a-box the tinted card was avoiding, arrived at from the other direction. The icon badge went white as the tile took the fill, so it stays a step away from whatever it sits on.",
+        "**⚠️ The NAME leads now.** It was third, under the ID pill and the type, so a tile opened with a reference number and made you read past it to find out what the thing is. What identifies an asset to a person is its name; the id is how the system refers to it and the type qualifies the name, so both moved to a quieter line beneath — **one line with a dot**, not two stacked rows, which also holds every tile to two lines whatever the words are.",
+        "**⚠️ Found in the screenshot — 200px of dead tint under the tiles.** `gridAutoRows: '1fr'` made every row as tall as the tallest on the grid: fine while all four cards were half-width lists of similar length, wrong the moment these two became full-width rows and inherited the height of the request list two rows up. `auto` fixes it, and the two cards that DO share a row are still equal height because a grid stretches within a row by default — `1fr` was reaching across rows to get something it already had.",
+        "**The tile fill is `#F9FAFB`,** the value you specified. Hover steps to `#F3F4F6` rather than the old `#EEF2F7`: the new fill is a neutral grey where the first one was blue-tinted, so the previous hover would have shifted the tile's HUE rather than just its value — and a colour change reads as a different KIND of state change. `#F3F4F6` is the neutral this product already hovers to, on the close button across all 26 popups.",
+        "**Tiles are TWO columns at every width.** Four across was tried once the card went full width — the arithmetic said ~170px a tile, which is what the two-up tiles used to measure — but a tile is not just its box: at that width \"Dell UltraSharp U2723QE\" and \"localhost.localdomain\" both truncate to a few characters, and a tile whose NAME is unreadable has lost the one thing it leads with. Wider tiles over two rows beat four columns of ellipsis. Verified at two viewport widths: 2 per row at both, tiles 248px on a 538px card and 381px on an 805px one, with every name rendering in full."
+      ]
     },
     {
       "n": 69,
@@ -1018,7 +1410,14 @@
         "Where": "`PortalTable.tsx`",
         "You asked": "a clean drag handle instead of the filled pill behind it, same hover behaviour; and a minimal, attractive selection instead of the primary blue.",
         "Verified": "grip at rest `rgba(0,0,0,0)` — no pill — with `#B6C2D5` dots; on direct hover `#F1F5F9` with `#7B8FA5` dots; selected `#EBF5FF` with `#3D8BD0` dots, radius 4px on all three. Ring reads `inset 0 0 0 1px`; a selected cell is `rgb(244,248,253)` against a transparent unselected one. Select-all corner `#F1F5F9` → `#EBF5FF` when everything is selected. Fill handle 9px. No console errors."
-      }
+      },
+      "notes": [
+        "**The dots carry the state now, not a slab behind them.** A filled pill put a saturated bar above every column the pointer crossed — the loudest thing on a canvas whose whole subject is the content underneath it. Three weights, all quiet: grey dots on nothing while the column is merely lit, a pale grey ground once the pointer is actually ON the grip (a button with no ground gives you nothing to aim at), and a pale ACCENT ground with accent dots once it is selected or dragged. The two-weight story the pill told survives — told in tint instead of fill.",
+        "**The selection ring went 2px → 1px.** At 2px it outweighed the table's own 1px grid, so selecting a column redrew the table as though that column were built to a different spec. The ring only has to say where the range ENDS; the wash says which cells are in it.",
+        "**The wash was the ID-pill blue.** `#EBF5FF` is sized for a chip a few characters wide and becomes a solid blue block the moment it covers a whole table — `#F4F8FD` now.",
+        "**⚠️ Found on the way — the grips never faded.** `transition-opacity transition-colors` both set `transition-property`, so the second silently won and the fade-in had never run.",
+        "**⚠️ And a temporal dead zone.** `allSelected` is a plain expression, so unlike `colOn`/`rowOn` beside it (arrow functions, evaluated on call) it had to sit BELOW the state it reads. One line higher it is a crash esbuild does not typecheck for and never reports."
+      ]
     },
     {
       "n": 70,
@@ -1029,7 +1428,13 @@
         "You asked": "the button stretches sideways but not down — fix it, and check the basic, visual and custom widgets too.",
         "Verified": "button **36px → 186px** with the width unchanged at 187 and `h-full` applied; Text, Image and Custom data widget each measured target 186 / inner 186 / painted 186 — the content fills the box exactly. Typecheck: 6 errors before the change, 6 after, all pre-existing.",
         "Note": "Divider is not in the palette at the moment (search returns \"No elements found\"), so its centring is written but unverified in the browser."
-      }
+      },
+      "notes": [
+        "**The argument for width had never been made for height.** A dragged WIDTH is read from the style store by the renderer, with a comment explaining why: Sel's fill box stretches with `[&>*]`, which reaches ONE level, and the button is a grandchild of it. Height went through the same wrapper and hit the same wall — so stretching a button down moved its outline and left the button its own text-height at the top of a tall empty selection. Same fix, other axis.",
+        "**⚠️ And the chain broke a level earlier.** `StyledBox` rendered its box only when the element had container styling, collapsing to a fragment otherwise — so on an untouched element the height had nowhere to travel through at all. It now renders for a dragged height too, and conducts: `h-full`, a flex column, and a stretched child. Only while a height is set, or an always-on `flex-1` would restretch every untouched element on the canvas.",
+        "**Filling is not the same answer for every element.** A button, an image and a data card take the room (`h-full`). A LINK button and a divider centre in it — words and a rule have no height to give, so extra space is space around them, and pinned to the top a rule sits at the very edge of a tall selection and reads as a mistake. Text keeps its words at the top but grows its BLOCK, which is what a fill or a border on it needs in order to reach the dragged height.",
+        "**⚠️ `size-9` on the icon button is a width AND a height** — the height half had to go when one was dragged, or the one button style that was square stayed square."
+      ]
     },
     {
       "n": 71,
@@ -1040,7 +1445,43 @@
         "You asked": "the ticket detail page's tour card, and the recommendations from the plan.",
         "Verified": "card 400px / 16px radius / `rgb(31,41,55)`, overlay `black/60` + `blur(4px)`, mask SVG 1400×1000. All six steps fit inside the viewport (rail flips left, Publish flips below). A real click on the spotlit block took 2/6 → 3/6; on step 3 the overlay is the top element at the same point, so clicks are blocked again. Finishing stores `hasSeenPortalBuilderTour=1`, clears the seam hold and hides the card; `?` restarts at 1/6.",
         "Note": "`TicketDetailsOnboarding` still carries the same `width: 0, height: 0` on its mask SVG. I did not test that page — V1 is final — but it is the same markup in the same browser."
-      }
+      },
+      "notes": [
+        "**The card is the ticket page's, unchanged** — `#1F2937`, 400px, 16px radius, 16/14px type, the white primary button, the \"n/N\" counter, the arrow, and the `black/60` + 4px-blur overlay with an SVG-masked spotlight and the blue glow ring. A second tour that looked like a different product's tour would teach the admin this screen is not quite part of ServiceOps.",
+        "**Six steps that teach the MODEL, not the buttons.** An admin who has only ever used forms arrives believing three things that are wrong here — the right side is a form, settings live in one place, and they might break the live portal — so: permission, then click→panel, then what the panel is, then where new things come from, then the one affordance nobody can see, then how to ship.",
+        "**Step 2 is interactive** (your rec 1): the overlay stops swallowing clicks and a real selection advances the tour, with a **Show me** fallback. Step 3 then describes a panel that was filled a second ago rather than an abstraction.",
+        "**⚠️ The positioning could NOT be copied.** The ticket tour hardcodes `-100` / `-200` / `-420` with no flip and no clamp — fine in a wide drawer, broken here where the rail is hard right and the top bar hard top. `place()` measures the real card, flips when a side won't hold it, then clamps; the arrow tracks the TARGET's centre, because a clamped card with a 50%-arrow points at empty space.",
+        "**⚠️ Two bugs the copy brought with it.** (1) The mask SVG is `width: 0; height: 0`, and its `100%` rect resolves to nothing inside a zero-sized viewport — so the overlay was masked away entirely and the tour ran **with no dim at all**. (2) The root `fixed inset-0` hit-tests across the whole screen even when transparent, so the interactive step swallowed the very click it was asking for; the root passes through now and the overlay does the blocking.",
+        "**⚠️ Targets resolve at runtime** (your rec 3): a blank page has no card to point at, so step 2 finds the first block big enough to read as one. The seam is a hover affordance, so the tour **holds it open** through a `tourSeam` on the canvas context — spotlighting a 12px invisible gap would point at nothing.",
+        "**Auto-opens once** (your rec 4), read in the state initialiser rather than an effect so a returning admin never sees it flash. **Skip is on every step.** The listing gets nothing (your rec 5).",
+        "**A `?` in the top bar is the permanent way back** — the tour is a one-time event and this page is edited twice a year. Made a plain button, not the popover the plan drew: the builder has no keyboard-shortcuts sheet, so a menu with one real item is a click in front of the only thing it offers."
+      ]
+    },
+    {
+      "n": 72,
+      "title": "The board had been dropping most of what was written on it",
+      "status": "done",
+      "fields": {
+        "Where": "`scripts/build-tasks.mjs` · `tasks.md`",
+        "You asked": "add this session's work to the task board.",
+        "Verified": "94 tasks on the board, 92 done. 59 carry notes, 271 note lines total. `#F9FAFB` reaches the page; a note computes as transparent with a 1.78px left rule and no radius, while a task card stays white with a 10px radius and the parked chips keep their 999px pill.",
+        "Note": "`/tasks/` cannot be checked through the Vite dev server — its SPA fallback swallows the path. Served `public/` statically on :5311; a cache-busting query is needed or http-server returns the previous build."
+      },
+      "notes": [
+        "Tasks 69–71 were already on it, but adding them turned up something worse: **the board had been publishing about a third of each entry.** The parser only ever matched `- **Key:** value` — a bold label ending in a COLON — so every `- **⚠️ …**` bullet was discarded in silence. Those bullets are where the reasoning for a change lives, so 59 of 94 tasks were showing their Where / You asked / Verified rows and none of the thinking between them. 271 lines had been written into a file that never rendered them, with nothing anywhere saying so.",
+        "Non-keyed bullets are captured as **notes** now and render under the field rows, inside the same Detail disclosure. Wrapped continuation lines attach to whichever of the two came last.",
+        "**⚠️ And they arrived as cards inside a card.** The task-card style was a BARE `li`, so it painted every list item on the page. `#parked li` had already had to override background, border, radius and padding to escape it — which was the warning that the selector was too broad, a warning nothing acted on until a second nested list hit it. Scoped to `#list > li`, which is the only thing it was ever describing.",
+        "**⚠️ Entry 68 was describing a state that no longer existed.** Its title still said \"tinted\" and its Verified line still read `rgb(245,247,250)` cards with white tiles — the FIRST build, which you reversed twice after it. A record that says the opposite of what shipped is worse than no record. Retitled, and the verified line now measures the white card with `#F9FAFB` tiles that is actually on screen.",
+        "Tour guide",
+        "AI capabilities",
+        "Video / GIF as a widget",
+        "\"Set as default\" from templates",
+        "Two-stepper for portal details / portal customization",
+        "Theme, Settings, Branding (added to the discuss list 25 Aug)",
+        "KB for FAQs — to discuss with Sahilbhai",
+        "List widget (task 23 — to be written up for later)",
+        "Media slider, Advanced tabs, Text with image, Spacer (task 23 — later)"
+      ]
     }
   ],
   "parked": [
