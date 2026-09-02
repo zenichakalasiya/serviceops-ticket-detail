@@ -1,6 +1,6 @@
 {
   "stamp": "2026-09-01",
-  "builtAt": "2026-09-02T11:55:37.177Z",
+  "builtAt": "2026-09-02T12:08:06.398Z",
   "tasks": [
     {
       "n": 1,
@@ -1634,7 +1634,25 @@
         "**It held ours, and that was hard to tell because the two builds are almost the same build.** 1,943 of 1,965 strings are byte-identical, so on 99% of rows \"ours\" and \"theirs\" are the same words and the column was true of both.",
         "**There is now a fourth column, \"That build says.\"** It repeats the current text wherever the two agree and carries that build's own wording where they do not — so the answer is on every row instead of in a table at the top. **New text stays empty**; nothing is pre-filled, because a pre-filled row is a queued change nobody asked for.",
         "**⚠️ The difference runs BOTH ways, and only one direction was visible.** 22 strings here are not in that build; **23 strings in that build are not here** — the three Theme captions, the whole Help Icon block, the Branding section headings, Company and Portal URL, and the Global Setting gear with its drawer subtitle. Those now appear as their own rows in the area they belong to, marked \"— not in this project —\". Every one was checked against that build's bundle rather than assumed.",
-        "**⚠️ `value` came out of the content-key list.** In this codebase a `value:` is the option's internal key — `home`, `kpi`, `stacked` — while the words on screen are the `label` beside it. Admitting it put 80 identifiers into the file that nobody could usefully rewrite.",
+        "**⚠️ `value` came out of the content-key list.** In this codebase a `value:` is the option's internal key — `home`, `kpi`, `stacked` — while the words on screen are the `label` beside it. Admitting it put 80 identifiers into the file that nobody could usefully rewrite."
+      ]
+    },
+    {
+      "n": 83,
+      "title": "The reference bundle was stale — re-read, and that build has shipped since",
+      "status": "done",
+      "fields": {
+        "Where": "`SUPPORT-PORTAL-CONTENT.md` · `scripts/build-portal-content.mjs`",
+        "You asked": "where the linked build's content actually is.",
+        "Verified": "2,049 rows, every one six columns wide, every ID unique, 41 flagged. Regenerated end to end against `index-DI1p9URm.js`, fetched fresh."
+      },
+      "notes": [
+        "**⚠️ My mistake, and a real one: I compared against a bundle that site no longer serves.** I read `index-CmQOkARj.js`; it is now serving `index-DI1p9URm.js`. A hashed asset name is the one thing that tells you a static site has redeployed, and I never re-checked it before building a comparison on top of it.",
+        "**⚠️ That build has genuinely moved ahead in one place.** Its **Custom Data Widget** now carries a much wider field catalogue than ours — Knowledge, Task, Approval and CI modules with their own fields (Article ID, Knowledge Type, View Count, Task Name, Planned/Actual dates, CI Class, Approval Type…), two number operators (**Greater than**, **Less than**), a scope label (\"The signed-in requester\"), and **12 ready-made views** (All My Requests, My Pending/Resolved/Closed/High Priority Requests, My Active Changes, My Completed Changes, My Active Assets, My Active CIs, Completed Approvals, Recently Published, Recently Updated, My Completed Tasks). **47 strings we do not have**, now listed row by row in §12.",
+        "**It has also adopted your rename.** It said \"Record List\" when the file was first written; it now says **Custom Data Widget** — same decision as task 68, capitalised differently.",
+        "**The differing count went 22 → 41.** The extra 19 are that build's new catalogue plus demo-data drift in the portal page's sample records.",
+        "**⚠️ The two counts in the header are COUNTED now, not typed.** They move every time either build ships, and a hand-written figure inside a file that is regenerated is a claim that quietly stops being true.",
+        "**⚠️ The file now names the bundle it was read from** and says to re-run the scripts if that site has shipped again — the check I should have made myself.",
         "Tour guide",
         "AI capabilities",
         "Video / GIF as a widget",

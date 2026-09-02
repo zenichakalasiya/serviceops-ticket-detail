@@ -101,9 +101,12 @@ const NOT_THERE = '— not in that build —';
 const COUNTERPART = {
   'Style the support portal page.': 'Style, type and colour for every page of this portal.',
   'Helpdesk Name': 'Portal name',
-  'Custom data widget': 'Record List',
+  /* ⚠️ That build has since ADOPTED this rename — it now says "Custom Data Widget", capitalised
+     differently. It said "Record List" when this file was first written. */
+  'Custom data widget': 'Custom Data Widget',
   'list records kpi count metric requests assets cis filter module query data':
     'list records requests assets cis filter module query data',
+  'Record list': 'Record list',
   'Use Template': 'Choose a template',
   'Start from a ready-made layout and change what you need.':
     'Start from a ready-made portal layout. You can change anything after.',
@@ -114,9 +117,12 @@ const refTextFor = (r) => (r.ref === 'ours-only' ? (COUNTERPART[r.value] ?? NOT_
    Without them the file would only ever show what we have, and a word that build
    uses and we do not would be invisible. Each was verified in its bundle. */
 const ONLY_THERE = [
+  // ── Theme panel ──
   ['Right rail 2 — Theme panel', 'caption under the Primary tab', 'Set by the theme style. Change one to depart from it.'],
   ['Right rail 2 — Theme panel', 'caption under the Secondary tab', 'Status colours — green means healthy, red means broken. Shared by every theme.'],
   ['Right rail 2 — Theme panel', 'caption under the Neutral tab', 'The greyscale every surface and border is built from. Shared by every theme.'],
+
+  // ── Branding panel ──
   ['Right rail 3 — Branding panel', 'field label', 'Company'],
   ['Right rail 3 — Branding panel', 'read-only value', 'Acme Corporation'],
   ['Right rail 3 — Branding panel', 'field label', 'Portal URL'],
@@ -135,8 +141,64 @@ const ONLY_THERE = [
   ['Right rail 3 — Branding panel', 'tooltip on the bin', 'Remove the icon'],
   ['Right rail 3 — Branding panel', 'toast', 'Showing the help icon as a requester sees it'],
   ['Right rail 3 — Branding panel', 'toast', 'Help icon removed'],
+
+  // ── Portal listing ──
   ['Portal listing', 'the gear beside the CTA', 'Global Setting'],
   ['Portal listing', 'subtitle of the drawer that gear opened', 'Applies to every support portal'],
+
+  /* ── Custom Data Widget ────────────────────────────────────────────────────
+     ⚠️ This is the real new content on that site, and it arrived AFTER the first
+     read of this file. Its widget carries a wider field catalogue than ours —
+     more modules (knowledge, task, approval, CI) and more fields inside each —
+     plus a set of ready-made views per module and two number operators. Every
+     entry below was read out of that build's current bundle. */
+  ['Widget settings — one row per widget', 'Custom Data Widget · widget name (ours: “Custom data widget”)', 'Custom Data Widget'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · what a “mine” view is scoped to', 'The signed-in requester'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · operator on a number field', 'Greater than'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · operator on a number field', 'Less than'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · Request field', 'Request ID'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · Request field', 'Request / Item ID'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · Request field', 'Subcategory'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · Request field', 'Closed Date'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · Request field', 'Resolved Date'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · Change field', 'Change ID'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · Change field', 'Planned End Date'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · Change field', 'Actual Start Date'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · Change field', 'Actual End Date'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · Change status option', 'Under Review'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · Asset field', 'Asset Name'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · CI field', 'CI Name'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · CI field', 'CI Class'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · Approval field', 'Approval ID'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · Approval field', 'Approval Type'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · Approval Type option', 'Sequential'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · Approval Type option', 'Everyone'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · Knowledge field', 'Article ID'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · Knowledge field', 'Knowledge Type'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · Knowledge field', 'View Count'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · Knowledge category option', 'How-to'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · Knowledge visibility option', 'Logged-in Requesters'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · Task field', 'Task ID'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · Task field', 'Task Name'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · Task field', 'Completed Date'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · Task project option', 'Office 365 Migration'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · Task project option', 'Data Centre Move'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · Task project option', 'Laptop Refresh 2026'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · Task project option', 'On-boarding Automation'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · Software licence option', 'Licence'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · ready-made view · Request', 'All My Requests'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · ready-made view · Request', 'My Pending Requests'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · ready-made view · Request', 'My Resolved Requests'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · ready-made view · Request', 'My Closed Requests'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · ready-made view · Request', 'My High Priority Requests'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · ready-made view · Change', 'My Active Changes'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · ready-made view · Change', 'My Completed Changes'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · ready-made view · Asset', 'My Active Assets'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · ready-made view · CI', 'My Active CIs'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · ready-made view · Approval', 'Completed Approvals'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · ready-made view · Knowledge', 'Recently Published'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · ready-made view · Knowledge', 'Recently Updated'],
+  ['Widget settings — one row per widget', 'Custom Data Widget · ready-made view · Task', 'My Completed Tasks'],
 ];
 
 /* ── group ──────────────────────────────────────────────────────────────────── */
@@ -149,21 +211,21 @@ for (const r of rows) {
 
 const DIFFS = [
   ['Theme panel · the line under the rail title', 'PortalThemePanel / SupportPortalBuilder.tsx:95', 'Style, type and colour for every page of this portal.', 'Style the support portal page.', 'You asked for the new line on 2 Sep (task 77).'],
-  ['Theme panel · caption under the Primary tab', 'PortalThemePanel.tsx', 'Set by the theme style. Change one to depart from it.', '— removed —', 'You asked for it gone on 2 Sep (task 77).'],
-  ['Theme panel · caption under the Secondary tab', 'PortalThemePanel.tsx', 'Status colours — green means healthy, red means broken. Shared by every theme.', '— removed —', 'Same change.'],
-  ['Theme panel · caption under the Neutral tab', 'PortalThemePanel.tsx', 'The greyscale every surface and border is built from. Shared by every theme.', '— removed —', 'Same change.'],
+  ['Theme panel · captions under the three colour tabs', 'PortalThemePanel.tsx', 'Set by the theme style… · Status colours — green means healthy… · The greyscale every surface…', '— removed —', 'You asked for them gone on 2 Sep (task 77).'],
   ['Branding · first field', 'PortalBrandingPanel.tsx', 'Portal name', 'Helpdesk Name', 'From your handwritten note (task 80).'],
   ['Branding · tenant rows', 'PortalBrandingPanel.tsx', 'Company · Portal URL (read-only rows)', '— removed —', 'Not on your note (task 80).'],
   ['Branding · section headings', 'PortalBrandingPanel.tsx', 'Help · Sign-on · Contact shown on the portal', '— removed —', 'You asked for the headings gone (task 80).'],
-  ['Branding · help icon block', 'PortalBrandingPanel.tsx', 'Help Icon · Upload Help View Icon For Requester · Preview · Icon attached · No icon attached yet · View the icon · Nothing attached yet · Showing the help icon as a requester sees it · 16 × 16 px gives the sharpest result…', '— removed —', 'You asked for the image fields gone (task 78).'],
+  ['Branding · help icon block', 'PortalBrandingPanel.tsx', 'Help Icon · Upload Help View Icon For Requester · Preview · and its six tooltips and two toasts', '— removed —', 'You asked for the image fields gone (task 78).'],
   ['Branding · new fields', 'PortalBrandingPanel.tsx', '— not in that build —', 'Linkback URL · Favicon · Upload favicon · Favicon updated', 'From your handwritten note (task 80).'],
-  ['Palette + widget name', 'supportPortalData.ts:474 / portalWidgetSpec.ts:792', 'Record List', 'Custom data widget', 'You chose the rename in task 68 when Record List and KPI merged. NOT changed back.'],
-  ['Widget drawer · Custom data widget', 'portalWidgetSpec.ts:802', '— not in that build —', 'Show as (Record list / KPI)', 'Part of the same merge.'],
-  ['Live-data cards · three fields', 'portalWidgetSpec.ts:254–265', '— not in that build —', 'Show count badge · Show “View all” link · Row layout · Single line', 'Ours has these; that build does not.'],
-  ['Portal listing · the gear beside the CTA', 'AdminSupportPortalModule.tsx', 'Global Setting', '— removed —', 'You asked for it gone (task 75).'],
-  ['Create dialog · step 2', 'AdminSupportPortalModule.tsx:155', 'Use Template / Start from a ready-made layout and change what you need. / New page', 'one-screen step 2', 'We rebuilt the fork into one screen; that build still has the two-card fork.'],
+  ['⭐ Custom Data Widget · the field catalogue', 'portalWidgetSpec.ts / the widget\'s filter', '47 strings this project does not have — see §12, "Only in that build"', 'a narrower catalogue', '**NEW since the first read.** That build now carries more modules (Knowledge, Task, Approval, CI) with more fields in each, two number operators, and 12 ready-made views. This is the one place where it is genuinely ahead.'],
+  ['Widget name', 'supportPortalData.ts:474 / portalWidgetSpec.ts:792', 'Custom Data Widget', 'Custom data widget', 'It said "Record List" when this file was first written — that build has since adopted your task-68 rename, capitalised differently.'],
+  ['Widget drawer · Custom data widget', 'portalWidgetSpec.ts:802', '— not in that build —', 'Show as (Record list / KPI)', 'Part of the same merge (task 68).'],
+  ['Live-data cards · four fields', 'portalWidgetSpec.ts:254–265', '— not in that build —', 'Show count badge · Show “View all” link · Row layout · Single line', 'Ours has these; that build does not.'],
+  ['Portal listing · the gear beside the CTA', 'AdminSupportPortalModule.tsx', 'Global Setting · Applies to every support portal', '— removed —', 'You asked for it gone (task 75).'],
+  ['Create dialog · step 2', 'AdminSupportPortalModule.tsx:149–171', 'Choose a template / Start from a ready-made portal layout. You can change anything after.', 'Use Template / Start from a ready-made layout and change what you need. / New page / Start with a blank page and build it block by block.', 'We rebuilt the fork into one screen; that build still opens a separate template dialog.'],
   ['Top bar · the tour button', 'SupportPortalBuilder.tsx:1425', '— not in that build —', 'Take the tour', 'Ours has the ? button; that build has no tour.'],
-  ['Element hover cards · all 29', 'PortalElementPreview.tsx', 'what + helps + note (two lines and a condition)', 'same — already adopted', 'Taken from that build on 2 Sep (task 79). Already in step.'],
+  ['Portal page · mock records', 'supportPortalData.ts:347–397', 'different sample rows', 'PRB-4390 · REL-118 · PCH-4302 · the two CVEs and their CVSS scores', 'Demo data on both sides, drifted apart. Harmless either way.'],
+  ['Element hover cards · all 29', 'PortalElementPreview.tsx', 'what + helps + note', 'same — already adopted', 'Taken from that build on 2 Sep (task 79). In step.'],
 ];
 
 /* ── write ──────────────────────────────────────────────────────────────────── */
@@ -174,6 +236,7 @@ L.push('Every piece of text in the Support Portal editor, in one place, so copy 
 L.push('changed without reading the code.');
 L.push('');
 L.push('- **Read from:** the build at <https://juligopani.github.io/-serviceops-ticket-detail/#/admin/support-portal>, cross-checked line by line against this repository.');
+L.push('- ⚠️ **That site redeploys.** This file was regenerated against the bundle it was serving on 2 Sep 2026 (\`index-DI1p9URm.js\`). If it has shipped again since, re-run the two scripts named at the foot of this file before trusting the comparison.');
 L.push('- **Coverage:** the listing, the create dialog, the Settings tab, the builder top bar, the whole portal page on the canvas, every canvas toolbar and tooltip, all three right-rail menus, the element hover cards, and every field of every widget settings panel.');
 L.push('');
 L.push('## How to use this file');
@@ -181,7 +244,11 @@ L.push('');
 L.push('| Column | What it holds |');
 L.push('|---|---|');
 L.push('| **Current (this project)** | The words this repository shows today. This is what a change is made *to*. |');
-L.push('| **That build says** | The same string in the build you linked. It repeats the column beside it on the 2,053 rows where the two agree, and differs on 22. |');
+/* ⚠️ COUNTED, never typed. These two numbers move every time either build ships, and a hand-written
+   figure in a file that is regenerated is a claim that quietly stops being true. */
+const AGREE = rows.filter((r) => r.ref === 'same').length;
+const DIFFER = rows.filter((r) => r.ref === 'ours-only').length;
+L.push(`| **That build says** | The same string in the build you linked. It repeats the column beside it on the ${AGREE.toLocaleString()} rows where the two agree, and differs on ${DIFFER}. |`);
 L.push('| **New text** | Empty. What you want it to say. |');
 L.push('');
 L.push('1. Write the wording you want in the **New text** column. Leave it blank to keep what is there.');
@@ -191,10 +258,11 @@ L.push('4. Rows marked **Δ** are the ones where that build and this repository 
 L.push('');
 L.push('## ⚠️ Conflicts — please decide these first');
 L.push('');
-L.push('These are the only places where the build you pointed me at and this repository differ. Every');
-L.push('one of them is something you asked for in the last few days, so taking that build\'s wording');
-L.push('here would undo a decision you have already made. Nothing below has been changed — tell me');
-L.push('which way you want each one and I will apply it.');
+L.push('Every place the build you pointed me at and this repository disagree. Most are changes you');
+L.push('asked for in the last few days, so taking that build\'s wording would undo a decision you have');
+L.push('already made — but **C8 is the opposite**: that site has shipped since this file was first');
+L.push('written, and its Custom Data Widget now carries a wider field catalogue than this one has.');
+L.push('Nothing below has been changed either way. Tell me which you want and I will apply it.');
 L.push('');
 L.push('| # | Where | That build says | This repo says | Why they differ |');
 L.push('|---|---|---|---|---|');
@@ -243,8 +311,9 @@ for (const area of order) {
   if (extras.length) {
     L.push(`### ${sec}.${groups.size + 1} Only in that build — not in this project`);
     L.push('');
-    L.push('Words that build uses which this one no longer has. Nothing to fill in unless you want');
-    L.push('them back — say so in **New text** and I will put the control back with them.');
+    L.push('Words that build has and this one does not — some removed here on purpose, some never');
+    L.push('built here at all. Nothing to fill in unless you want them; say so in **New text** and I');
+    L.push('will build the control that carries them.');
     L.push('');
     L.push('| ID | What it is | File | Current (this project) | That build says | New text |');
     L.push('|---|---|---|---|---|---|');

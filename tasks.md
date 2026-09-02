@@ -1093,6 +1093,18 @@ Updated: 2026-09-01
 - **The two scripts now run anywhere:** paths come from `process.cwd()` and `os.tmpdir()` instead of one machine's drive, and the extractor says so in its header. `node scripts/extract-portal-copy.mjs && node scripts/build-portal-content.mjs` regenerates the file, so it can be refreshed after the code moves on instead of going stale.
 - **Verified:** 2,002 rows, every one six columns wide, every ID unique. Regenerated end to end from a clean run of both scripts.
 
+## 83. The reference bundle was stale — re-read, and that build has shipped since
+- **Status:** done
+- **Where:** `SUPPORT-PORTAL-CONTENT.md` · `scripts/build-portal-content.mjs`
+- **You asked:** where the linked build's content actually is.
+- **⚠️ My mistake, and a real one: I compared against a bundle that site no longer serves.** I read `index-CmQOkARj.js`; it is now serving `index-DI1p9URm.js`. A hashed asset name is the one thing that tells you a static site has redeployed, and I never re-checked it before building a comparison on top of it.
+- **⚠️ That build has genuinely moved ahead in one place.** Its **Custom Data Widget** now carries a much wider field catalogue than ours — Knowledge, Task, Approval and CI modules with their own fields (Article ID, Knowledge Type, View Count, Task Name, Planned/Actual dates, CI Class, Approval Type…), two number operators (**Greater than**, **Less than**), a scope label ("The signed-in requester"), and **12 ready-made views** (All My Requests, My Pending/Resolved/Closed/High Priority Requests, My Active Changes, My Completed Changes, My Active Assets, My Active CIs, Completed Approvals, Recently Published, Recently Updated, My Completed Tasks). **47 strings we do not have**, now listed row by row in §12.
+- **It has also adopted your rename.** It said "Record List" when the file was first written; it now says **Custom Data Widget** — same decision as task 68, capitalised differently.
+- **The differing count went 22 → 41.** The extra 19 are that build's new catalogue plus demo-data drift in the portal page's sample records.
+- **⚠️ The two counts in the header are COUNTED now, not typed.** They move every time either build ships, and a hand-written figure inside a file that is regenerated is a claim that quietly stops being true.
+- **⚠️ The file now names the bundle it was read from** and says to re-run the scripts if that site has shipped again — the check I should have made myself.
+- **Verified:** 2,049 rows, every one six columns wide, every ID unique, 41 flagged. Regenerated end to end against `index-DI1p9URm.js`, fetched fresh.
+
 ## Parked — needs discussion
 - Tour guide
 - AI capabilities

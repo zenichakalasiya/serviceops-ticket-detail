@@ -4,6 +4,7 @@ Every piece of text in the Support Portal editor, in one place, so copy can be r
 changed without reading the code.
 
 - **Read from:** the build at <https://juligopani.github.io/-serviceops-ticket-detail/#/admin/support-portal>, cross-checked line by line against this repository.
+- ⚠️ **That site redeploys.** This file was regenerated against the bundle it was serving on 2 Sep 2026 (`index-DI1p9URm.js`). If it has shipped again since, re-run the two scripts named at the foot of this file before trusting the comparison.
 - **Coverage:** the listing, the create dialog, the Settings tab, the builder top bar, the whole portal page on the canvas, every canvas toolbar and tooltip, all three right-rail menus, the element hover cards, and every field of every widget settings panel.
 
 ## How to use this file
@@ -11,7 +12,7 @@ changed without reading the code.
 | Column | What it holds |
 |---|---|
 | **Current (this project)** | The words this repository shows today. This is what a change is made *to*. |
-| **That build says** | The same string in the build you linked. It repeats the column beside it on the 2,053 rows where the two agree, and differs on 22. |
+| **That build says** | The same string in the build you linked. It repeats the column beside it on the 1,909 rows where the two agree, and differs on 41. |
 | **New text** | Empty. What you want it to say. |
 
 1. Write the wording you want in the **New text** column. Leave it blank to keep what is there.
@@ -21,29 +22,30 @@ changed without reading the code.
 
 ## ⚠️ Conflicts — please decide these first
 
-These are the only places where the build you pointed me at and this repository differ. Every
-one of them is something you asked for in the last few days, so taking that build's wording
-here would undo a decision you have already made. Nothing below has been changed — tell me
-which way you want each one and I will apply it.
+Every place the build you pointed me at and this repository disagree. Most are changes you
+asked for in the last few days, so taking that build's wording would undo a decision you have
+already made — but **C8 is the opposite**: that site has shipped since this file was first
+written, and its Custom Data Widget now carries a wider field catalogue than this one has.
+Nothing below has been changed either way. Tell me which you want and I will apply it.
 
 | # | Where | That build says | This repo says | Why they differ |
 |---|---|---|---|---|
 | C1 | Theme panel · the line under the rail title<br>`PortalThemePanel / SupportPortalBuilder.tsx:95` | Style, type and colour for every page of this portal. | Style the support portal page. | You asked for the new line on 2 Sep (task 77). |
-| C2 | Theme panel · caption under the Primary tab<br>`PortalThemePanel.tsx` | Set by the theme style. Change one to depart from it. | — removed — | You asked for it gone on 2 Sep (task 77). |
-| C3 | Theme panel · caption under the Secondary tab<br>`PortalThemePanel.tsx` | Status colours — green means healthy, red means broken. Shared by every theme. | — removed — | Same change. |
-| C4 | Theme panel · caption under the Neutral tab<br>`PortalThemePanel.tsx` | The greyscale every surface and border is built from. Shared by every theme. | — removed — | Same change. |
-| C5 | Branding · first field<br>`PortalBrandingPanel.tsx` | Portal name | Helpdesk Name | From your handwritten note (task 80). |
-| C6 | Branding · tenant rows<br>`PortalBrandingPanel.tsx` | Company · Portal URL (read-only rows) | — removed — | Not on your note (task 80). |
-| C7 | Branding · section headings<br>`PortalBrandingPanel.tsx` | Help · Sign-on · Contact shown on the portal | — removed — | You asked for the headings gone (task 80). |
-| C8 | Branding · help icon block<br>`PortalBrandingPanel.tsx` | Help Icon · Upload Help View Icon For Requester · Preview · Icon attached · No icon attached yet · View the icon · Nothing attached yet · Showing the help icon as a requester sees it · 16 × 16 px gives the sharpest result… | — removed — | You asked for the image fields gone (task 78). |
-| C9 | Branding · new fields<br>`PortalBrandingPanel.tsx` | — not in that build — | Linkback URL · Favicon · Upload favicon · Favicon updated | From your handwritten note (task 80). |
-| C10 | Palette + widget name<br>`supportPortalData.ts:474 / portalWidgetSpec.ts:792` | Record List | Custom data widget | You chose the rename in task 68 when Record List and KPI merged. NOT changed back. |
-| C11 | Widget drawer · Custom data widget<br>`portalWidgetSpec.ts:802` | — not in that build — | Show as (Record list / KPI) | Part of the same merge. |
-| C12 | Live-data cards · three fields<br>`portalWidgetSpec.ts:254–265` | — not in that build — | Show count badge · Show “View all” link · Row layout · Single line | Ours has these; that build does not. |
-| C13 | Portal listing · the gear beside the CTA<br>`AdminSupportPortalModule.tsx` | Global Setting | — removed — | You asked for it gone (task 75). |
-| C14 | Create dialog · step 2<br>`AdminSupportPortalModule.tsx:155` | Use Template / Start from a ready-made layout and change what you need. / New page | one-screen step 2 | We rebuilt the fork into one screen; that build still has the two-card fork. |
-| C15 | Top bar · the tour button<br>`SupportPortalBuilder.tsx:1425` | — not in that build — | Take the tour | Ours has the ? button; that build has no tour. |
-| C16 | Element hover cards · all 29<br>`PortalElementPreview.tsx` | what + helps + note (two lines and a condition) | same — already adopted | Taken from that build on 2 Sep (task 79). Already in step. |
+| C2 | Theme panel · captions under the three colour tabs<br>`PortalThemePanel.tsx` | Set by the theme style… · Status colours — green means healthy… · The greyscale every surface… | — removed — | You asked for them gone on 2 Sep (task 77). |
+| C3 | Branding · first field<br>`PortalBrandingPanel.tsx` | Portal name | Helpdesk Name | From your handwritten note (task 80). |
+| C4 | Branding · tenant rows<br>`PortalBrandingPanel.tsx` | Company · Portal URL (read-only rows) | — removed — | Not on your note (task 80). |
+| C5 | Branding · section headings<br>`PortalBrandingPanel.tsx` | Help · Sign-on · Contact shown on the portal | — removed — | You asked for the headings gone (task 80). |
+| C6 | Branding · help icon block<br>`PortalBrandingPanel.tsx` | Help Icon · Upload Help View Icon For Requester · Preview · and its six tooltips and two toasts | — removed — | You asked for the image fields gone (task 78). |
+| C7 | Branding · new fields<br>`PortalBrandingPanel.tsx` | — not in that build — | Linkback URL · Favicon · Upload favicon · Favicon updated | From your handwritten note (task 80). |
+| C8 | ⭐ Custom Data Widget · the field catalogue<br>`portalWidgetSpec.ts / the widget's filter` | 47 strings this project does not have — see §12, "Only in that build" | a narrower catalogue | **NEW since the first read.** That build now carries more modules (Knowledge, Task, Approval, CI) with more fields in each, two number operators, and 12 ready-made views. This is the one place where it is genuinely ahead. |
+| C9 | Widget name<br>`supportPortalData.ts:474 / portalWidgetSpec.ts:792` | Custom Data Widget | Custom data widget | It said "Record List" when this file was first written — that build has since adopted your task-68 rename, capitalised differently. |
+| C10 | Widget drawer · Custom data widget<br>`portalWidgetSpec.ts:802` | — not in that build — | Show as (Record list / KPI) | Part of the same merge (task 68). |
+| C11 | Live-data cards · four fields<br>`portalWidgetSpec.ts:254–265` | — not in that build — | Show count badge · Show “View all” link · Row layout · Single line | Ours has these; that build does not. |
+| C12 | Portal listing · the gear beside the CTA<br>`AdminSupportPortalModule.tsx` | Global Setting · Applies to every support portal | — removed — | You asked for it gone (task 75). |
+| C13 | Create dialog · step 2<br>`AdminSupportPortalModule.tsx:149–171` | Choose a template / Start from a ready-made portal layout. You can change anything after. | Use Template / Start from a ready-made layout and change what you need. / New page / Start with a blank page and build it block by block. | We rebuilt the fork into one screen; that build still opens a separate template dialog. |
+| C14 | Top bar · the tour button<br>`SupportPortalBuilder.tsx:1425` | — not in that build — | Take the tour | Ours has the ? button; that build has no tour. |
+| C15 | Portal page · mock records<br>`supportPortalData.ts:347–397` | different sample rows | PRB-4390 · REL-118 · PCH-4302 · the two CVEs and their CVSS scores | Demo data on both sides, drifted apart. Harmless either way. |
+| C16 | Element hover cards · all 29<br>`PortalElementPreview.tsx` | what + helps + note | same — already adopted | Taken from that build on 2 Sep (task 79). In step. |
 
 ---
 
@@ -136,8 +138,9 @@ which way you want each one and I will apply it.
 
 ### 1.7 Only in that build — not in this project
 
-Words that build uses which this one no longer has. Nothing to fill in unless you want
-them back — say so in **New text** and I will put the control back with them.
+Words that build has and this one does not — some removed here on purpose, some never
+built here at all. Nothing to fill in unless you want them; say so in **New text** and I
+will build the control that carries them.
 
 | ID | What it is | File | Current (this project) | That build says | New text |
 |---|---|---|---|---|---|
@@ -871,13 +874,13 @@ them back — say so in **New text** and I will put the control back with them.
 | `page.known-error` | string | `supportPortalData.ts:345` | Known Error | Known Error |  |
 | `page.under-investigation` | string | `supportPortalData.ts:345` | Under Investigation | Under Investigation |  |
 | `page.prb-4412` | id | `supportPortalData.ts:347` | PRB-4412 | PRB-4412 |  |
-| `page.recurring-vpn-drops-on-the-pune-li` | title / tooltip | `supportPortalData.ts:347` | Recurring VPN drops on the Pune link | Recurring VPN drops on the Pune link |  |
+| `page.recurring-vpn-drops-on-the-pune-li` **Δ** | title / tooltip | `supportPortalData.ts:347` | Recurring VPN drops on the Pune link | — not in that build — |  |
 | `page.under-investigation-2` | status | `supportPortalData.ts:347` | Under Investigation | Under Investigation |  |
 | `page.network` | meta | `supportPortalData.ts:347` | Network | Network |  |
-| `page.prb-4390` | id | `supportPortalData.ts:348` | PRB-4390 | PRB-4390 |  |
-| `page.outlook-profile-corruption-after-u` | title / tooltip | `supportPortalData.ts:348` | Outlook profile corruption after update | Outlook profile corruption after update |  |
+| `page.prb-4390` **Δ** | id | `supportPortalData.ts:348` | PRB-4390 | — not in that build — |  |
+| `page.outlook-profile-corruption-after-u` **Δ** | title / tooltip | `supportPortalData.ts:348` | Outlook profile corruption after update | — not in that build — |  |
 | `page.known-error-2` | status | `supportPortalData.ts:348` | Known Error | Known Error |  |
-| `page.end-user-computing` | meta | `supportPortalData.ts:348` | End user computing | End user computing |  |
+| `page.end-user-computing` **Δ** | meta | `supportPortalData.ts:348` | End user computing | — not in that build — |  |
 | `page.changes-2` | field label | `supportPortalData.ts:352` | Changes | Changes |  |
 | `page.submitted` | string | `supportPortalData.ts:353` | Submitted | Submitted |  |
 | `page.approved` | string | `supportPortalData.ts:353` | Approved | Approved |  |
@@ -895,14 +898,14 @@ them back — say so in **New text** and I will put the control back with them.
 | `page.planning` | string | `supportPortalData.ts:361` | Planning | Planning |  |
 | `page.build` | string | `supportPortalData.ts:361` | Build | Build |  |
 | `page.testing` | string | `supportPortalData.ts:361` | Testing | Testing |  |
-| `page.deployed` | string | `supportPortalData.ts:361` | Deployed | Deployed |  |
-| `page.rel-118` | id | `supportPortalData.ts:363` | REL-118 | REL-118 |  |
-| `page.serviceops-8-4-rollout` | title / tooltip | `supportPortalData.ts:363` | ServiceOps 8.4 rollout | ServiceOps 8.4 rollout |  |
+| `page.deployed` **Δ** | string | `supportPortalData.ts:361` | Deployed | — not in that build — |  |
+| `page.rel-118` **Δ** | id | `supportPortalData.ts:363` | REL-118 | — not in that build — |  |
+| `page.serviceops-8-4-rollout` **Δ** | title / tooltip | `supportPortalData.ts:363` | ServiceOps 8.4 rollout | — not in that build — |  |
 | `page.testing-2` | status | `supportPortalData.ts:363` | Testing | Testing |  |
-| `page.go-live-22-aug` | meta | `supportPortalData.ts:363` | Go-live 22 Aug | Go-live 22 Aug |  |
-| `page.rel-114` | id | `supportPortalData.ts:364` | REL-114 | REL-114 |  |
-| `page.payroll-portal-refresh` | title / tooltip | `supportPortalData.ts:364` | Payroll portal refresh | Payroll portal refresh |  |
-| `page.deployed-2` | status | `supportPortalData.ts:364` | Deployed | Deployed |  |
+| `page.go-live-22-aug` **Δ** | meta | `supportPortalData.ts:363` | Go-live 22 Aug | — not in that build — |  |
+| `page.rel-114` **Δ** | id | `supportPortalData.ts:364` | REL-114 | — not in that build — |  |
+| `page.payroll-portal-refresh` **Δ** | title / tooltip | `supportPortalData.ts:364` | Payroll portal refresh | — not in that build — |  |
+| `page.deployed-2` **Δ** | status | `supportPortalData.ts:364` | Deployed | — not in that build — |  |
 | `page.finance` | meta | `supportPortalData.ts:364` | Finance | Finance |  |
 | `page.assets` | field label | `supportPortalData.ts:368` | Assets | Assets |  |
 | `page.in-use` | string | `supportPortalData.ts:369` | In Use | In Use |  |
@@ -938,26 +941,26 @@ them back — say so in **New text** and I will put the control back with them.
 | `page.ignored` | string | `supportPortalData.ts:386` | Ignored | Ignored |  |
 | `page.failed` | string | `supportPortalData.ts:386` | Failed | Failed |  |
 | `page.pch-4345` | id | `supportPortalData.ts:388` | PCH-4345 | PCH-4345 |  |
-| `page.cumulative-update-for-windows-11` | title / tooltip | `supportPortalData.ts:388` | Cumulative update for Windows 11 | Cumulative update for Windows 11 |  |
+| `page.cumulative-update-for-windows-11` **Δ** | title / tooltip | `supportPortalData.ts:388` | Cumulative update for Windows 11 | — not in that build — |  |
 | `page.missing-2` | status | `supportPortalData.ts:388` | Missing | Missing |  |
 | `page.critical` | meta | `supportPortalData.ts:388` | Critical | Critical |  |
-| `page.pch-4302` | id | `supportPortalData.ts:389` | PCH-4302 | PCH-4302 |  |
-| `page.chrome-128-security-update` | title / tooltip | `supportPortalData.ts:389` | Chrome 128 security update | Chrome 128 security update |  |
+| `page.pch-4302` **Δ** | id | `supportPortalData.ts:389` | PCH-4302 | — not in that build — |  |
+| `page.chrome-128-security-update` **Δ** | title / tooltip | `supportPortalData.ts:389` | Chrome 128 security update | — not in that build — |  |
 | `page.installed-2` | status | `supportPortalData.ts:389` | Installed | Installed |  |
 | `page.important` | meta | `supportPortalData.ts:389` | Important | Important |  |
 | `page.vulnerabilities` | field label | `supportPortalData.ts:393` | Vulnerabilities | Vulnerabilities |  |
 | `page.detected` | string | `supportPortalData.ts:394` | Detected | Detected |  |
 | `page.exploited` | string | `supportPortalData.ts:394` | Exploited | Exploited |  |
 | `page.patched` | string | `supportPortalData.ts:394` | Patched | Patched |  |
-| `page.accepted-risk` | string | `supportPortalData.ts:394` | Accepted Risk | Accepted Risk |  |
+| `page.accepted-risk` **Δ** | string | `supportPortalData.ts:394` | Accepted Risk | — not in that build — |  |
 | `page.cve-2024-30080` | id | `supportPortalData.ts:396` | CVE-2024-30080 | CVE-2024-30080 |  |
-| `page.windows-msmq-remote-code-execution` | title / tooltip | `supportPortalData.ts:396` | Windows MSMQ remote code execution | Windows MSMQ remote code execution |  |
+| `page.windows-msmq-remote-code-execution` **Δ** | title / tooltip | `supportPortalData.ts:396` | Windows MSMQ remote code execution | — not in that build — |  |
 | `page.exploited-2` | status | `supportPortalData.ts:396` | Exploited | Exploited |  |
-| `page.cvss-9-8` | meta | `supportPortalData.ts:396` | CVSS 9.8 | CVSS 9.8 |  |
+| `page.cvss-9-8` **Δ** | meta | `supportPortalData.ts:396` | CVSS 9.8 | — not in that build — |  |
 | `page.cve-2024-30078` | id | `supportPortalData.ts:397` | CVE-2024-30078 | CVE-2024-30078 |  |
-| `page.wi-fi-driver-remote-code-execution` | title / tooltip | `supportPortalData.ts:397` | Wi-Fi driver remote code execution | Wi-Fi driver remote code execution |  |
+| `page.wi-fi-driver-remote-code-execution` **Δ** | title / tooltip | `supportPortalData.ts:397` | Wi-Fi driver remote code execution | — not in that build — |  |
 | `page.detected-2` | status | `supportPortalData.ts:397` | Detected | Detected |  |
-| `page.cvss-8-8` | meta | `supportPortalData.ts:397` | CVSS 8.8 | CVSS 8.8 |  |
+| `page.cvss-8-8` **Δ** | meta | `supportPortalData.ts:397` | CVSS 8.8 | — not in that build — |  |
 | `page.approvals-2` | field label | `supportPortalData.ts:401` | Approvals | Approvals |  |
 | `page.rejected` | string | `supportPortalData.ts:402` | Rejected | Rejected |  |
 | `page.approval-required-for-desktop-5jpp` | title / tooltip | `supportPortalData.ts:404` | Approval required for DESKTOP-5JPPI6F | Approval required for DESKTOP-5JPPI6F |  |
@@ -1001,7 +1004,7 @@ them back — say so in **New text** and I will put the control back with them.
 | `page.faq` | name | `supportPortalData.ts:469` | FAQ | FAQ |  |
 | `page.custom-2` | group | `supportPortalData.ts:469` | Custom | Custom |  |
 | `page.questions-help-answers` | search keywords | `supportPortalData.ts:469` | questions help answers | questions help answers |  |
-| `page.custom-data-widget` **Δ** | name | `supportPortalData.ts:474` | Custom data widget | Record List |  |
+| `page.custom-data-widget` **Δ** | name | `supportPortalData.ts:474` | Custom data widget | Custom Data Widget |  |
 | `page.list-records-kpi-count-metric-requ` **Δ** | search keywords | `supportPortalData.ts:474` | list records kpi count metric requests assets cis filter module query data | list records requests assets cis filter module query data |  |
 | `page.new-incident-4` | name | `supportPortalData.ts:484` | New Incident | New Incident |  |
 | `page.actions-3` | group | `supportPortalData.ts:484` | Actions | Actions |  |
@@ -1488,8 +1491,9 @@ them back — say so in **New text** and I will put the control back with them.
 
 ### 9.11 Only in that build — not in this project
 
-Words that build uses which this one no longer has. Nothing to fill in unless you want
-them back — say so in **New text** and I will put the control back with them.
+Words that build has and this one does not — some removed here on purpose, some never
+built here at all. Nothing to fill in unless you want them; say so in **New text** and I
+will build the control that carries them.
 
 | ID | What it is | File | Current (this project) | That build says | New text |
 |---|---|---|---|---|---|
@@ -1540,8 +1544,9 @@ them back — say so in **New text** and I will put the control back with them.
 
 ### 10.2 Only in that build — not in this project
 
-Words that build uses which this one no longer has. Nothing to fill in unless you want
-them back — say so in **New text** and I will put the control back with them.
+Words that build has and this one does not — some removed here on purpose, some never
+built here at all. Nothing to fill in unless you want them; say so in **New text** and I
+will build the control that carries them.
 
 | ID | What it is | File | Current (this project) | That build says | New text |
 |---|---|---|---|---|---|
@@ -1948,9 +1953,9 @@ them back — say so in **New text** and I will put the control back with them.
 
 | ID | What it is | File | Current (this project) | That build says | New text |
 |---|---|---|---|---|---|
-| `w.record-list.custom-data-widget` **Δ** | name | `portalWidgetSpec.ts:792` | Custom data widget | Record List |  |
+| `w.record-list.custom-data-widget` **Δ** | name | `portalWidgetSpec.ts:792` | Custom data widget | Custom Data Widget |  |
 | `w.record-list.show-as` **Δ** | field label | `portalWidgetSpec.ts:802` | Show as | — not in that build — |  |
-| `w.record-list.record-list` **Δ** | field label | `portalWidgetSpec.ts:803` | Record list | — not in that build — |  |
+| `w.record-list.record-list` **Δ** | field label | `portalWidgetSpec.ts:803` | Record list | Record list |  |
 | `w.record-list.kpi` | field label | `portalWidgetSpec.ts:803` | KPI | KPI |  |
 | `w.record-list.module` | field label | `portalWidgetSpec.ts:813` | Module | Module |  |
 | `w.record-list.filter-cleared-it-belonged-to-the-` | say | `portalWidgetSpec.ts:820` | Filter cleared — it belonged to the module you just left | Filter cleared — it belonged to the module you just left |  |
@@ -1982,6 +1987,62 @@ them back — say so in **New text** and I will put the control back with them.
 | `w.image.allow-requester-to-access-my-asset` | string | `portalWidgetSpec.ts:1044` | Allow Requester to Access My Assets | Allow Requester to Access My Assets |  |
 | `w.image.allow-requester-to-access-my-ci` | string | `portalWidgetSpec.ts:1045` | Allow Requester to Access My CI | Allow Requester to Access My CI |  |
 | `w.image.allow-requester-to-access-knowledg` | string | `portalWidgetSpec.ts:1046` | Allow Requester To Access Knowledge | Allow Requester To Access Knowledge |  |
+
+### 12.21 Only in that build — not in this project
+
+Words that build has and this one does not — some removed here on purpose, some never
+built here at all. Nothing to fill in unless you want them; say so in **New text** and I
+will build the control that carries them.
+
+| ID | What it is | File | Current (this project) | That build says | New text |
+|---|---|---|---|---|---|
+| `w.gone.custom-data-widget` **Δ** | Custom Data Widget · widget name (ours: “Custom data widget”) | — | — not in this project — | Custom Data Widget |  |
+| `w.gone.the-signed-in-requester` **Δ** | Custom Data Widget · what a “mine” view is scoped to | — | — not in this project — | The signed-in requester |  |
+| `w.gone.greater-than` **Δ** | Custom Data Widget · operator on a number field | — | — not in this project — | Greater than |  |
+| `w.gone.less-than` **Δ** | Custom Data Widget · operator on a number field | — | — not in this project — | Less than |  |
+| `w.gone.request-id` **Δ** | Custom Data Widget · Request field | — | — not in this project — | Request ID |  |
+| `w.gone.request-item-id` **Δ** | Custom Data Widget · Request field | — | — not in this project — | Request / Item ID |  |
+| `w.gone.subcategory` **Δ** | Custom Data Widget · Request field | — | — not in this project — | Subcategory |  |
+| `w.gone.closed-date` **Δ** | Custom Data Widget · Request field | — | — not in this project — | Closed Date |  |
+| `w.gone.resolved-date` **Δ** | Custom Data Widget · Request field | — | — not in this project — | Resolved Date |  |
+| `w.gone.change-id` **Δ** | Custom Data Widget · Change field | — | — not in this project — | Change ID |  |
+| `w.gone.planned-end-date` **Δ** | Custom Data Widget · Change field | — | — not in this project — | Planned End Date |  |
+| `w.gone.actual-start-date` **Δ** | Custom Data Widget · Change field | — | — not in this project — | Actual Start Date |  |
+| `w.gone.actual-end-date` **Δ** | Custom Data Widget · Change field | — | — not in this project — | Actual End Date |  |
+| `w.gone.under-review` **Δ** | Custom Data Widget · Change status option | — | — not in this project — | Under Review |  |
+| `w.gone.asset-name` **Δ** | Custom Data Widget · Asset field | — | — not in this project — | Asset Name |  |
+| `w.gone.ci-name` **Δ** | Custom Data Widget · CI field | — | — not in this project — | CI Name |  |
+| `w.gone.ci-class` **Δ** | Custom Data Widget · CI field | — | — not in this project — | CI Class |  |
+| `w.gone.approval-id` **Δ** | Custom Data Widget · Approval field | — | — not in this project — | Approval ID |  |
+| `w.gone.approval-type` **Δ** | Custom Data Widget · Approval field | — | — not in this project — | Approval Type |  |
+| `w.gone.sequential` **Δ** | Custom Data Widget · Approval Type option | — | — not in this project — | Sequential |  |
+| `w.gone.everyone` **Δ** | Custom Data Widget · Approval Type option | — | — not in this project — | Everyone |  |
+| `w.gone.article-id` **Δ** | Custom Data Widget · Knowledge field | — | — not in this project — | Article ID |  |
+| `w.gone.knowledge-type` **Δ** | Custom Data Widget · Knowledge field | — | — not in this project — | Knowledge Type |  |
+| `w.gone.view-count` **Δ** | Custom Data Widget · Knowledge field | — | — not in this project — | View Count |  |
+| `w.gone.how-to` **Δ** | Custom Data Widget · Knowledge category option | — | — not in this project — | How-to |  |
+| `w.gone.logged-in-requesters` **Δ** | Custom Data Widget · Knowledge visibility option | — | — not in this project — | Logged-in Requesters |  |
+| `w.gone.task-id` **Δ** | Custom Data Widget · Task field | — | — not in this project — | Task ID |  |
+| `w.gone.task-name` **Δ** | Custom Data Widget · Task field | — | — not in this project — | Task Name |  |
+| `w.gone.completed-date` **Δ** | Custom Data Widget · Task field | — | — not in this project — | Completed Date |  |
+| `w.gone.office-365-migration` **Δ** | Custom Data Widget · Task project option | — | — not in this project — | Office 365 Migration |  |
+| `w.gone.data-centre-move` **Δ** | Custom Data Widget · Task project option | — | — not in this project — | Data Centre Move |  |
+| `w.gone.laptop-refresh-2026` **Δ** | Custom Data Widget · Task project option | — | — not in this project — | Laptop Refresh 2026 |  |
+| `w.gone.on-boarding-automation` **Δ** | Custom Data Widget · Task project option | — | — not in this project — | On-boarding Automation |  |
+| `w.gone.licence` **Δ** | Custom Data Widget · Software licence option | — | — not in this project — | Licence |  |
+| `w.gone.all-my-requests` **Δ** | Custom Data Widget · ready-made view · Request | — | — not in this project — | All My Requests |  |
+| `w.gone.my-pending-requests` **Δ** | Custom Data Widget · ready-made view · Request | — | — not in this project — | My Pending Requests |  |
+| `w.gone.my-resolved-requests` **Δ** | Custom Data Widget · ready-made view · Request | — | — not in this project — | My Resolved Requests |  |
+| `w.gone.my-closed-requests` **Δ** | Custom Data Widget · ready-made view · Request | — | — not in this project — | My Closed Requests |  |
+| `w.gone.my-high-priority-requests` **Δ** | Custom Data Widget · ready-made view · Request | — | — not in this project — | My High Priority Requests |  |
+| `w.gone.my-active-changes` **Δ** | Custom Data Widget · ready-made view · Change | — | — not in this project — | My Active Changes |  |
+| `w.gone.my-completed-changes` **Δ** | Custom Data Widget · ready-made view · Change | — | — not in this project — | My Completed Changes |  |
+| `w.gone.my-active-assets` **Δ** | Custom Data Widget · ready-made view · Asset | — | — not in this project — | My Active Assets |  |
+| `w.gone.my-active-cis` **Δ** | Custom Data Widget · ready-made view · CI | — | — not in this project — | My Active CIs |  |
+| `w.gone.completed-approvals` **Δ** | Custom Data Widget · ready-made view · Approval | — | — not in this project — | Completed Approvals |  |
+| `w.gone.recently-published` **Δ** | Custom Data Widget · ready-made view · Knowledge | — | — not in this project — | Recently Published |  |
+| `w.gone.recently-updated` **Δ** | Custom Data Widget · ready-made view · Knowledge | — | — not in this project — | Recently Updated |  |
+| `w.gone.my-completed-tasks` **Δ** | Custom Data Widget · ready-made view · Task | — | — not in this project — | My Completed Tasks |  |
 
 ## 13. Widget settings — collections
 
@@ -3459,7 +3520,7 @@ them back — say so in **New text** and I will put the control back with them.
 
 ---
 
-**2002 entries** across 21 areas.
+**2049 entries** across 21 areas.
 
 ### What is deliberately not in here
 
