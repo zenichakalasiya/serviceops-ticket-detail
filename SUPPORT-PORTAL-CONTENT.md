@@ -7,26 +7,36 @@ changed without reading the code.
 - ⚠️ **That site redeploys.** This file was regenerated against the bundle it was serving on 2 Sep 2026 (`index-DI1p9URm.js`). If it has shipped again since, re-run the two scripts named at the foot of this file before trusting the comparison.
 - **Coverage:** the listing, the create dialog, the Settings tab, the builder top bar, the whole portal page on the canvas, every canvas toolbar and tooltip, all three right-rail menus, the element hover cards, and every field of every widget settings panel.
 
-## How to use this file
+## What is already the same
+
+**1,909 of 1,950 strings in this project are already word-for-word identical to that build.**
+Their **New text** cell is empty because there is nothing to change — this project already says
+what that build says. That includes the whole element hover-card set, which was taken from that
+build on 2 Sep and is already live here.
+
+What is left is **111 rows**, of which **78** arrive with that
+build’s wording **already written into New text**, so there is nothing to copy across by hand:
+
+- **70** strings that build has and this project does not — most of them its wider **Custom Data Widget** field catalogue. Pre-filled.
+- **8** strings the two word differently. Pre-filled with that build’s wording.
+- **33** strings this project has that that build does not carry at all — New text is **empty because there is nothing to propose**. Keeping or cutting them is a decision about this project alone.
+
+Delete a proposed value to keep what this project has; leave it to take that build's.
+
+## The columns
 
 | Column | What it holds |
 |---|---|
-| **Current (this project)** | The words this repository shows today. This is what a change is made *to*. |
-| **That build says** | The same string in the build you linked. It repeats the column beside it on the 1,909 rows where the two agree, and differs on 41. |
-| **New text** | Empty. What you want it to say. |
+| **Current (this project)** | The words this repository shows today — what a change is made *to*. |
+| **That build says** | The same string in the build you linked. |
+| **New text** | **Pre-filled with that build’s wording wherever the two differ**, empty wherever they already agree. |
 
-1. Write the wording you want in the **New text** column. Leave it blank to keep what is there.
-2. Send the file back. Every filled row is applied to the code mechanically — the **ID** and the **File** column are what makes that possible, so please do not edit those two columns.
-3. `{name}`, `{count}` and the like are values the app fills in at runtime. Keep them in your new wording, spelled exactly the same, or the message loses the value it was reporting.
-4. Rows marked **Δ** are the ones where that build and this repository do not agree — read the conflicts table below before changing them.
+1. An **empty** New text means it already matches — nothing to do.
+2. A **filled** New text is that build’s wording, waiting for your yes. Edit it, or clear it to keep ours.
+3. Send the file back and every filled row is applied to the code mechanically — the **ID** and the **File** column are what make that possible, so please do not edit those two.
+4. `{name}`, `{count}` and the like are values the app fills in at runtime. Keep them spelled exactly the same, or the message loses the value it was reporting.
 
-## ⚠️ Conflicts — please decide these first
-
-Every place the build you pointed me at and this repository disagree. Most are changes you
-asked for in the last few days, so taking that build's wording would undo a decision you have
-already made — but **C8 is the opposite**: that site has shipped since this file was first
-written, and its Custom Data Widget now carries a wider field catalogue than this one has.
-Nothing below has been changed either way. Tell me which you want and I will apply it.
+<details><summary><strong>Where the two differ, and why</strong> — reference only, nothing here needs an answer</summary>
 
 | # | Where | That build says | This repo says | Why they differ |
 |---|---|---|---|---|
@@ -46,6 +56,8 @@ Nothing below has been changed either way. Tell me which you want and I will app
 | C14 | Top bar · the tour button<br>`SupportPortalBuilder.tsx:1425` | — not in that build — | Take the tour | Ours has the ? button; that build has no tour. |
 | C15 | Portal page · mock records<br>`supportPortalData.ts:347–397` | different sample rows | PRB-4390 · REL-118 · PCH-4302 · the two CVEs and their CVSS scores | Demo data on both sides, drifted apart. Harmless either way. |
 | C16 | Element hover cards · all 29<br>`PortalElementPreview.tsx` | what + helps + note | same — already adopted | Taken from that build on 2 Sep (task 79). In step. |
+
+</details>
 
 ---
 
@@ -77,8 +89,8 @@ Nothing below has been changed either way. Tell me which you want and I will app
 |---|---|---|---|---|---|
 | `list.create-support-portal` | title / tooltip | `AdminSupportPortalModule.tsx:148` | Create Support Portal | Create Support Portal |  |
 | `list.start-with-a-blank-page-and-build-` **Δ** | description | `AdminSupportPortalModule.tsx:149` | Start with a blank page and build it block by block. | — not in that build — |  |
-| `list.use-template` **Δ** | title / tooltip | `AdminSupportPortalModule.tsx:155` | Use Template | Choose a template |  |
-| `list.start-from-a-ready-made-layout-and` **Δ** | description | `AdminSupportPortalModule.tsx:156` | Start from a ready-made layout and change what you need. | Start from a ready-made portal layout. You can change anything after. |  |
+| `list.use-template` **Δ** | title / tooltip | `AdminSupportPortalModule.tsx:155` | Use Template | Choose a template | Choose a template |
+| `list.start-from-a-ready-made-layout-and` **Δ** | description | `AdminSupportPortalModule.tsx:156` | Start from a ready-made layout and change what you need. | Start from a ready-made portal layout. You can change anything after. | Start from a ready-made portal layout. You can change anything after. |
 | `list.new-page` **Δ** | on-screen text | `AdminSupportPortalModule.tsx:171` | New page | — not in that build — |  |
 
 ### 1.4 `ConfirmDelete`
@@ -144,8 +156,8 @@ will build the control that carries them.
 
 | ID | What it is | File | Current (this project) | That build says | New text |
 |---|---|---|---|---|---|
-| `list.gone.global-setting` **Δ** | the gear beside the CTA | — | — not in this project — | Global Setting |  |
-| `list.gone.applies-to-every-support-portal` **Δ** | subtitle of the drawer that gear opened | — | — not in this project — | Applies to every support portal |  |
+| `list.gone.global-setting` **Δ** | the gear beside the CTA | — | — not in this project — | Global Setting | Global Setting |
+| `list.gone.applies-to-every-support-portal` **Δ** | subtitle of the drawer that gear opened | — | — not in this project — | Applies to every support portal | Applies to every support portal |
 
 ## 2. Create-a-portal dialog
 
@@ -322,7 +334,7 @@ will build the control that carries them.
 | `topbar.widgets-2` | title / tooltip | `SupportPortalBuilder.tsx:86` | Widgets | Widgets |  |
 | `topbar.everything-you-can-put-on-the-page` | body | `SupportPortalBuilder.tsx:87` | Everything you can put on the page. | Everything you can put on the page. |  |
 | `topbar.theme-2` | title / tooltip | `SupportPortalBuilder.tsx:94` | Theme | Theme |  |
-| `topbar.style-the-support-portal-page` **Δ** | body | `SupportPortalBuilder.tsx:95` | Style the support portal page. | Style, type and colour for every page of this portal. |  |
+| `topbar.style-the-support-portal-page` **Δ** | body | `SupportPortalBuilder.tsx:95` | Style the support portal page. | Style, type and colour for every page of this portal. | Style, type and colour for every page of this portal. |
 | `topbar.branding-2` | title / tooltip | `SupportPortalBuilder.tsx:100` | Branding | Branding |  |
 | `topbar.the-organisation-identity-shared-b` | body | `SupportPortalBuilder.tsx:101` | The organisation identity, shared by every portal. | The organisation identity, shared by every portal. |  |
 | `topbar.settings` | title / tooltip | `SupportPortalBuilder.tsx:104` | Settings | Settings |  |
@@ -1004,8 +1016,8 @@ will build the control that carries them.
 | `page.faq` | name | `supportPortalData.ts:469` | FAQ | FAQ |  |
 | `page.custom-2` | group | `supportPortalData.ts:469` | Custom | Custom |  |
 | `page.questions-help-answers` | search keywords | `supportPortalData.ts:469` | questions help answers | questions help answers |  |
-| `page.custom-data-widget` **Δ** | name | `supportPortalData.ts:474` | Custom data widget | Custom Data Widget |  |
-| `page.list-records-kpi-count-metric-requ` **Δ** | search keywords | `supportPortalData.ts:474` | list records kpi count metric requests assets cis filter module query data | list records requests assets cis filter module query data |  |
+| `page.custom-data-widget` **Δ** | name | `supportPortalData.ts:474` | Custom data widget | Custom Data Widget | Custom Data Widget |
+| `page.list-records-kpi-count-metric-requ` **Δ** | search keywords | `supportPortalData.ts:474` | list records kpi count metric requests assets cis filter module query data | list records requests assets cis filter module query data | list records requests assets cis filter module query data |
 | `page.new-incident-4` | name | `supportPortalData.ts:484` | New Incident | New Incident |  |
 | `page.actions-3` | group | `supportPortalData.ts:484` | Actions | Actions |  |
 | `page.report-issue-raise-ticket` | search keywords | `supportPortalData.ts:484` | report issue raise ticket | report issue raise ticket |  |
@@ -1497,9 +1509,9 @@ will build the control that carries them.
 
 | ID | What it is | File | Current (this project) | That build says | New text |
 |---|---|---|---|---|---|
-| `theme.gone.set-by-the-theme-style-change-one-` **Δ** | caption under the Primary tab | — | — not in this project — | Set by the theme style. Change one to depart from it. |  |
-| `theme.gone.status-colours-green-means-healthy` **Δ** | caption under the Secondary tab | — | — not in this project — | Status colours — green means healthy, red means broken. Shared by every theme. |  |
-| `theme.gone.the-greyscale-every-surface-and-bo` **Δ** | caption under the Neutral tab | — | — not in this project — | The greyscale every surface and border is built from. Shared by every theme. |  |
+| `theme.gone.set-by-the-theme-style-change-one-` **Δ** | caption under the Primary tab | — | — not in this project — | Set by the theme style. Change one to depart from it. | Set by the theme style. Change one to depart from it. |
+| `theme.gone.status-colours-green-means-healthy` **Δ** | caption under the Secondary tab | — | — not in this project — | Status colours — green means healthy, red means broken. Shared by every theme. | Status colours — green means healthy, red means broken. Shared by every theme. |
+| `theme.gone.the-greyscale-every-surface-and-bo` **Δ** | caption under the Neutral tab | — | — not in this project — | The greyscale every surface and border is built from. Shared by every theme. | The greyscale every surface and border is built from. Shared by every theme. |
 
 ## 10. Right rail 3 — Branding panel
 
@@ -1511,7 +1523,7 @@ will build the control that carries them.
 |---|---|---|---|---|---|
 | `brand.acme-support` | name | `PortalBrandingPanel.tsx:37` | Acme Support | Acme Support |  |
 | `brand.none-use-serviceops-login` | idp | `PortalBrandingPanel.tsx:40` | None — use ServiceOps login | None — use ServiceOps login |  |
-| `brand.helpdesk-name` **Δ** | field label | `PortalBrandingPanel.tsx:62` | Helpdesk Name | Portal name |  |
+| `brand.helpdesk-name` **Δ** | field label | `PortalBrandingPanel.tsx:62` | Helpdesk Name | Portal name | Portal name |
 | `brand.support-portal-title` | field label | `PortalBrandingPanel.tsx:69` | Support Portal Title | Support Portal Title |  |
 | `brand.support-portal` | placeholder | `PortalBrandingPanel.tsx:70` | Support Portal | Support Portal |  |
 | `brand.landing-page-for-guest-users` | field label | `PortalBrandingPanel.tsx:74` | Landing Page for Guest Users | Landing Page for Guest Users |  |
@@ -1550,24 +1562,24 @@ will build the control that carries them.
 
 | ID | What it is | File | Current (this project) | That build says | New text |
 |---|---|---|---|---|---|
-| `brand.gone.company` **Δ** | field label | — | — not in this project — | Company |  |
-| `brand.gone.acme-corporation` **Δ** | read-only value | — | — not in this project — | Acme Corporation |  |
-| `brand.gone.portal-url` **Δ** | field label | — | — not in this project — | Portal URL |  |
-| `brand.gone.https-support-acme-com` **Δ** | read-only value | — | — not in this project — | https://support.acme.com |  |
-| `brand.gone.help` **Δ** | section heading | — | — not in this project — | Help |  |
-| `brand.gone.sign-on` **Δ** | section heading | — | — not in this project — | Sign-on |  |
-| `brand.gone.contact-shown-on-the-portal` **Δ** | section heading | — | — not in this project — | Contact shown on the portal |  |
-| `brand.gone.help-icon` **Δ** | field label | — | — not in this project — | Help Icon |  |
-| `brand.gone.upload-help-view-icon-for-requeste` **Δ** | upload button | — | — not in this project — | Upload Help View Icon For Requester |  |
-| `brand.gone.16-16-px-gives-the-sharpest-result` **Δ** | ⓘ on the Help Icon label | — | — not in this project — | 16 × 16 px gives the sharpest result. A larger square works — it will be scaled down. |  |
-| `brand.gone.upload-an-icon-first-there-is-noth` **Δ** | disabled Preview link | — | — not in this project — | Upload an icon first — there is nothing to preview yet |  |
-| `brand.gone.icon-attached` **Δ** | tooltip on the attachment chip | — | — not in this project — | Icon attached |  |
-| `brand.gone.no-icon-attached-yet` **Δ** | tooltip on the attachment chip | — | — not in this project — | No icon attached yet |  |
-| `brand.gone.view-the-icon` **Δ** | tooltip on the eye | — | — not in this project — | View the icon |  |
-| `brand.gone.nothing-attached-yet` **Δ** | tooltip on the eye and bin | — | — not in this project — | Nothing attached yet |  |
-| `brand.gone.remove-the-icon` **Δ** | tooltip on the bin | — | — not in this project — | Remove the icon |  |
-| `brand.gone.showing-the-help-icon-as-a-request` **Δ** | toast | — | — not in this project — | Showing the help icon as a requester sees it |  |
-| `brand.gone.help-icon-removed` **Δ** | toast | — | — not in this project — | Help icon removed |  |
+| `brand.gone.company` **Δ** | field label | — | — not in this project — | Company | Company |
+| `brand.gone.acme-corporation` **Δ** | read-only value | — | — not in this project — | Acme Corporation | Acme Corporation |
+| `brand.gone.portal-url` **Δ** | field label | — | — not in this project — | Portal URL | Portal URL |
+| `brand.gone.https-support-acme-com` **Δ** | read-only value | — | — not in this project — | https://support.acme.com | https://support.acme.com |
+| `brand.gone.help` **Δ** | section heading | — | — not in this project — | Help | Help |
+| `brand.gone.sign-on` **Δ** | section heading | — | — not in this project — | Sign-on | Sign-on |
+| `brand.gone.contact-shown-on-the-portal` **Δ** | section heading | — | — not in this project — | Contact shown on the portal | Contact shown on the portal |
+| `brand.gone.help-icon` **Δ** | field label | — | — not in this project — | Help Icon | Help Icon |
+| `brand.gone.upload-help-view-icon-for-requeste` **Δ** | upload button | — | — not in this project — | Upload Help View Icon For Requester | Upload Help View Icon For Requester |
+| `brand.gone.16-16-px-gives-the-sharpest-result` **Δ** | ⓘ on the Help Icon label | — | — not in this project — | 16 × 16 px gives the sharpest result. A larger square works — it will be scaled down. | 16 × 16 px gives the sharpest result. A larger square works — it will be scaled down. |
+| `brand.gone.upload-an-icon-first-there-is-noth` **Δ** | disabled Preview link | — | — not in this project — | Upload an icon first — there is nothing to preview yet | Upload an icon first — there is nothing to preview yet |
+| `brand.gone.icon-attached` **Δ** | tooltip on the attachment chip | — | — not in this project — | Icon attached | Icon attached |
+| `brand.gone.no-icon-attached-yet` **Δ** | tooltip on the attachment chip | — | — not in this project — | No icon attached yet | No icon attached yet |
+| `brand.gone.view-the-icon` **Δ** | tooltip on the eye | — | — not in this project — | View the icon | View the icon |
+| `brand.gone.nothing-attached-yet` **Δ** | tooltip on the eye and bin | — | — not in this project — | Nothing attached yet | Nothing attached yet |
+| `brand.gone.remove-the-icon` **Δ** | tooltip on the bin | — | — not in this project — | Remove the icon | Remove the icon |
+| `brand.gone.showing-the-help-icon-as-a-request` **Δ** | toast | — | — not in this project — | Showing the help icon as a requester sees it | Showing the help icon as a requester sees it |
+| `brand.gone.help-icon-removed` **Δ** | toast | — | — not in this project — | Help icon removed | Help icon removed |
 
 ## 11. Widget drawer — shell
 
@@ -1953,9 +1965,9 @@ will build the control that carries them.
 
 | ID | What it is | File | Current (this project) | That build says | New text |
 |---|---|---|---|---|---|
-| `w.record-list.custom-data-widget` **Δ** | name | `portalWidgetSpec.ts:792` | Custom data widget | Custom Data Widget |  |
+| `w.record-list.custom-data-widget` **Δ** | name | `portalWidgetSpec.ts:792` | Custom data widget | Custom Data Widget | Custom Data Widget |
 | `w.record-list.show-as` **Δ** | field label | `portalWidgetSpec.ts:802` | Show as | — not in that build — |  |
-| `w.record-list.record-list` **Δ** | field label | `portalWidgetSpec.ts:803` | Record list | Record list |  |
+| `w.record-list.record-list` **Δ** | field label | `portalWidgetSpec.ts:803` | Record list | Record list | Record list |
 | `w.record-list.kpi` | field label | `portalWidgetSpec.ts:803` | KPI | KPI |  |
 | `w.record-list.module` | field label | `portalWidgetSpec.ts:813` | Module | Module |  |
 | `w.record-list.filter-cleared-it-belonged-to-the-` | say | `portalWidgetSpec.ts:820` | Filter cleared — it belonged to the module you just left | Filter cleared — it belonged to the module you just left |  |
@@ -1996,53 +2008,53 @@ will build the control that carries them.
 
 | ID | What it is | File | Current (this project) | That build says | New text |
 |---|---|---|---|---|---|
-| `w.gone.custom-data-widget` **Δ** | Custom Data Widget · widget name (ours: “Custom data widget”) | — | — not in this project — | Custom Data Widget |  |
-| `w.gone.the-signed-in-requester` **Δ** | Custom Data Widget · what a “mine” view is scoped to | — | — not in this project — | The signed-in requester |  |
-| `w.gone.greater-than` **Δ** | Custom Data Widget · operator on a number field | — | — not in this project — | Greater than |  |
-| `w.gone.less-than` **Δ** | Custom Data Widget · operator on a number field | — | — not in this project — | Less than |  |
-| `w.gone.request-id` **Δ** | Custom Data Widget · Request field | — | — not in this project — | Request ID |  |
-| `w.gone.request-item-id` **Δ** | Custom Data Widget · Request field | — | — not in this project — | Request / Item ID |  |
-| `w.gone.subcategory` **Δ** | Custom Data Widget · Request field | — | — not in this project — | Subcategory |  |
-| `w.gone.closed-date` **Δ** | Custom Data Widget · Request field | — | — not in this project — | Closed Date |  |
-| `w.gone.resolved-date` **Δ** | Custom Data Widget · Request field | — | — not in this project — | Resolved Date |  |
-| `w.gone.change-id` **Δ** | Custom Data Widget · Change field | — | — not in this project — | Change ID |  |
-| `w.gone.planned-end-date` **Δ** | Custom Data Widget · Change field | — | — not in this project — | Planned End Date |  |
-| `w.gone.actual-start-date` **Δ** | Custom Data Widget · Change field | — | — not in this project — | Actual Start Date |  |
-| `w.gone.actual-end-date` **Δ** | Custom Data Widget · Change field | — | — not in this project — | Actual End Date |  |
-| `w.gone.under-review` **Δ** | Custom Data Widget · Change status option | — | — not in this project — | Under Review |  |
-| `w.gone.asset-name` **Δ** | Custom Data Widget · Asset field | — | — not in this project — | Asset Name |  |
-| `w.gone.ci-name` **Δ** | Custom Data Widget · CI field | — | — not in this project — | CI Name |  |
-| `w.gone.ci-class` **Δ** | Custom Data Widget · CI field | — | — not in this project — | CI Class |  |
-| `w.gone.approval-id` **Δ** | Custom Data Widget · Approval field | — | — not in this project — | Approval ID |  |
-| `w.gone.approval-type` **Δ** | Custom Data Widget · Approval field | — | — not in this project — | Approval Type |  |
-| `w.gone.sequential` **Δ** | Custom Data Widget · Approval Type option | — | — not in this project — | Sequential |  |
-| `w.gone.everyone` **Δ** | Custom Data Widget · Approval Type option | — | — not in this project — | Everyone |  |
-| `w.gone.article-id` **Δ** | Custom Data Widget · Knowledge field | — | — not in this project — | Article ID |  |
-| `w.gone.knowledge-type` **Δ** | Custom Data Widget · Knowledge field | — | — not in this project — | Knowledge Type |  |
-| `w.gone.view-count` **Δ** | Custom Data Widget · Knowledge field | — | — not in this project — | View Count |  |
-| `w.gone.how-to` **Δ** | Custom Data Widget · Knowledge category option | — | — not in this project — | How-to |  |
-| `w.gone.logged-in-requesters` **Δ** | Custom Data Widget · Knowledge visibility option | — | — not in this project — | Logged-in Requesters |  |
-| `w.gone.task-id` **Δ** | Custom Data Widget · Task field | — | — not in this project — | Task ID |  |
-| `w.gone.task-name` **Δ** | Custom Data Widget · Task field | — | — not in this project — | Task Name |  |
-| `w.gone.completed-date` **Δ** | Custom Data Widget · Task field | — | — not in this project — | Completed Date |  |
-| `w.gone.office-365-migration` **Δ** | Custom Data Widget · Task project option | — | — not in this project — | Office 365 Migration |  |
-| `w.gone.data-centre-move` **Δ** | Custom Data Widget · Task project option | — | — not in this project — | Data Centre Move |  |
-| `w.gone.laptop-refresh-2026` **Δ** | Custom Data Widget · Task project option | — | — not in this project — | Laptop Refresh 2026 |  |
-| `w.gone.on-boarding-automation` **Δ** | Custom Data Widget · Task project option | — | — not in this project — | On-boarding Automation |  |
-| `w.gone.licence` **Δ** | Custom Data Widget · Software licence option | — | — not in this project — | Licence |  |
-| `w.gone.all-my-requests` **Δ** | Custom Data Widget · ready-made view · Request | — | — not in this project — | All My Requests |  |
-| `w.gone.my-pending-requests` **Δ** | Custom Data Widget · ready-made view · Request | — | — not in this project — | My Pending Requests |  |
-| `w.gone.my-resolved-requests` **Δ** | Custom Data Widget · ready-made view · Request | — | — not in this project — | My Resolved Requests |  |
-| `w.gone.my-closed-requests` **Δ** | Custom Data Widget · ready-made view · Request | — | — not in this project — | My Closed Requests |  |
-| `w.gone.my-high-priority-requests` **Δ** | Custom Data Widget · ready-made view · Request | — | — not in this project — | My High Priority Requests |  |
-| `w.gone.my-active-changes` **Δ** | Custom Data Widget · ready-made view · Change | — | — not in this project — | My Active Changes |  |
-| `w.gone.my-completed-changes` **Δ** | Custom Data Widget · ready-made view · Change | — | — not in this project — | My Completed Changes |  |
-| `w.gone.my-active-assets` **Δ** | Custom Data Widget · ready-made view · Asset | — | — not in this project — | My Active Assets |  |
-| `w.gone.my-active-cis` **Δ** | Custom Data Widget · ready-made view · CI | — | — not in this project — | My Active CIs |  |
-| `w.gone.completed-approvals` **Δ** | Custom Data Widget · ready-made view · Approval | — | — not in this project — | Completed Approvals |  |
-| `w.gone.recently-published` **Δ** | Custom Data Widget · ready-made view · Knowledge | — | — not in this project — | Recently Published |  |
-| `w.gone.recently-updated` **Δ** | Custom Data Widget · ready-made view · Knowledge | — | — not in this project — | Recently Updated |  |
-| `w.gone.my-completed-tasks` **Δ** | Custom Data Widget · ready-made view · Task | — | — not in this project — | My Completed Tasks |  |
+| `w.gone.custom-data-widget` **Δ** | Custom Data Widget · widget name (ours: “Custom data widget”) | — | — not in this project — | Custom Data Widget | Custom Data Widget |
+| `w.gone.the-signed-in-requester` **Δ** | Custom Data Widget · what a “mine” view is scoped to | — | — not in this project — | The signed-in requester | The signed-in requester |
+| `w.gone.greater-than` **Δ** | Custom Data Widget · operator on a number field | — | — not in this project — | Greater than | Greater than |
+| `w.gone.less-than` **Δ** | Custom Data Widget · operator on a number field | — | — not in this project — | Less than | Less than |
+| `w.gone.request-id` **Δ** | Custom Data Widget · Request field | — | — not in this project — | Request ID | Request ID |
+| `w.gone.request-item-id` **Δ** | Custom Data Widget · Request field | — | — not in this project — | Request / Item ID | Request / Item ID |
+| `w.gone.subcategory` **Δ** | Custom Data Widget · Request field | — | — not in this project — | Subcategory | Subcategory |
+| `w.gone.closed-date` **Δ** | Custom Data Widget · Request field | — | — not in this project — | Closed Date | Closed Date |
+| `w.gone.resolved-date` **Δ** | Custom Data Widget · Request field | — | — not in this project — | Resolved Date | Resolved Date |
+| `w.gone.change-id` **Δ** | Custom Data Widget · Change field | — | — not in this project — | Change ID | Change ID |
+| `w.gone.planned-end-date` **Δ** | Custom Data Widget · Change field | — | — not in this project — | Planned End Date | Planned End Date |
+| `w.gone.actual-start-date` **Δ** | Custom Data Widget · Change field | — | — not in this project — | Actual Start Date | Actual Start Date |
+| `w.gone.actual-end-date` **Δ** | Custom Data Widget · Change field | — | — not in this project — | Actual End Date | Actual End Date |
+| `w.gone.under-review` **Δ** | Custom Data Widget · Change status option | — | — not in this project — | Under Review | Under Review |
+| `w.gone.asset-name` **Δ** | Custom Data Widget · Asset field | — | — not in this project — | Asset Name | Asset Name |
+| `w.gone.ci-name` **Δ** | Custom Data Widget · CI field | — | — not in this project — | CI Name | CI Name |
+| `w.gone.ci-class` **Δ** | Custom Data Widget · CI field | — | — not in this project — | CI Class | CI Class |
+| `w.gone.approval-id` **Δ** | Custom Data Widget · Approval field | — | — not in this project — | Approval ID | Approval ID |
+| `w.gone.approval-type` **Δ** | Custom Data Widget · Approval field | — | — not in this project — | Approval Type | Approval Type |
+| `w.gone.sequential` **Δ** | Custom Data Widget · Approval Type option | — | — not in this project — | Sequential | Sequential |
+| `w.gone.everyone` **Δ** | Custom Data Widget · Approval Type option | — | — not in this project — | Everyone | Everyone |
+| `w.gone.article-id` **Δ** | Custom Data Widget · Knowledge field | — | — not in this project — | Article ID | Article ID |
+| `w.gone.knowledge-type` **Δ** | Custom Data Widget · Knowledge field | — | — not in this project — | Knowledge Type | Knowledge Type |
+| `w.gone.view-count` **Δ** | Custom Data Widget · Knowledge field | — | — not in this project — | View Count | View Count |
+| `w.gone.how-to` **Δ** | Custom Data Widget · Knowledge category option | — | — not in this project — | How-to | How-to |
+| `w.gone.logged-in-requesters` **Δ** | Custom Data Widget · Knowledge visibility option | — | — not in this project — | Logged-in Requesters | Logged-in Requesters |
+| `w.gone.task-id` **Δ** | Custom Data Widget · Task field | — | — not in this project — | Task ID | Task ID |
+| `w.gone.task-name` **Δ** | Custom Data Widget · Task field | — | — not in this project — | Task Name | Task Name |
+| `w.gone.completed-date` **Δ** | Custom Data Widget · Task field | — | — not in this project — | Completed Date | Completed Date |
+| `w.gone.office-365-migration` **Δ** | Custom Data Widget · Task project option | — | — not in this project — | Office 365 Migration | Office 365 Migration |
+| `w.gone.data-centre-move` **Δ** | Custom Data Widget · Task project option | — | — not in this project — | Data Centre Move | Data Centre Move |
+| `w.gone.laptop-refresh-2026` **Δ** | Custom Data Widget · Task project option | — | — not in this project — | Laptop Refresh 2026 | Laptop Refresh 2026 |
+| `w.gone.on-boarding-automation` **Δ** | Custom Data Widget · Task project option | — | — not in this project — | On-boarding Automation | On-boarding Automation |
+| `w.gone.licence` **Δ** | Custom Data Widget · Software licence option | — | — not in this project — | Licence | Licence |
+| `w.gone.all-my-requests` **Δ** | Custom Data Widget · ready-made view · Request | — | — not in this project — | All My Requests | All My Requests |
+| `w.gone.my-pending-requests` **Δ** | Custom Data Widget · ready-made view · Request | — | — not in this project — | My Pending Requests | My Pending Requests |
+| `w.gone.my-resolved-requests` **Δ** | Custom Data Widget · ready-made view · Request | — | — not in this project — | My Resolved Requests | My Resolved Requests |
+| `w.gone.my-closed-requests` **Δ** | Custom Data Widget · ready-made view · Request | — | — not in this project — | My Closed Requests | My Closed Requests |
+| `w.gone.my-high-priority-requests` **Δ** | Custom Data Widget · ready-made view · Request | — | — not in this project — | My High Priority Requests | My High Priority Requests |
+| `w.gone.my-active-changes` **Δ** | Custom Data Widget · ready-made view · Change | — | — not in this project — | My Active Changes | My Active Changes |
+| `w.gone.my-completed-changes` **Δ** | Custom Data Widget · ready-made view · Change | — | — not in this project — | My Completed Changes | My Completed Changes |
+| `w.gone.my-active-assets` **Δ** | Custom Data Widget · ready-made view · Asset | — | — not in this project — | My Active Assets | My Active Assets |
+| `w.gone.my-active-cis` **Δ** | Custom Data Widget · ready-made view · CI | — | — not in this project — | My Active CIs | My Active CIs |
+| `w.gone.completed-approvals` **Δ** | Custom Data Widget · ready-made view · Approval | — | — not in this project — | Completed Approvals | Completed Approvals |
+| `w.gone.recently-published` **Δ** | Custom Data Widget · ready-made view · Knowledge | — | — not in this project — | Recently Published | Recently Published |
+| `w.gone.recently-updated` **Δ** | Custom Data Widget · ready-made view · Knowledge | — | — not in this project — | Recently Updated | Recently Updated |
+| `w.gone.my-completed-tasks` **Δ** | Custom Data Widget · ready-made view · Task | — | — not in this project — | My Completed Tasks | My Completed Tasks |
 
 ## 13. Widget settings — collections
 

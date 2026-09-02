@@ -1105,6 +1105,17 @@ Updated: 2026-09-01
 - **⚠️ The file now names the bundle it was read from** and says to re-run the scripts if that site has shipped again — the check I should have made myself.
 - **Verified:** 2,049 rows, every one six columns wide, every ID unique, 41 flagged. Regenerated end to end against `index-DI1p9URm.js`, fetched fresh.
 
+## 84. New text now arrives pre-filled with that build's wording
+- **Status:** done
+- **Where:** `SUPPORT-PORTAL-CONTENT.md` · `scripts/build-portal-content.mjs`
+- **You asked:** stop talking about conflicts and put the linked build's content into New text — and say whether it had already been applied.
+- **The answer to the second part is yes, mostly.** **1,909 of 1,950 strings are already word-for-word identical**, including the whole element hover-card set, which was taken from that build on 2 Sep and has been live here since. There was never anything to write into those rows.
+- **78 rows now arrive with that build's wording already in New text** — 70 strings it has that this project does not, and 8 that the two word differently. Nothing to copy across by hand: leave a value to take it, clear it to keep ours.
+- **⚠️ 33 differing rows are deliberately left EMPTY, and that is not an omission.** They are strings this project has that that build does not carry at all — there is no wording to propose, so a filled cell would have been an invention. The header states the three-way split rather than rounding 41 up to "all pre-filled".
+- **The conflicts table is now a collapsed `<details>`** headed "reference only, nothing here needs an answer". It was the first thing on the page and it was answering a question nobody had asked twice.
+- **⚠️ An EMPTY New text is now meaningful**, and the file says so at the top: empty means this project already matches. That is what makes "is it done?" readable off any row instead of needing the summary.
+- **Verified:** 2,049 rows, 78 with a proposed value, every row six columns wide, none malformed.
+
 ## Parked — needs discussion
 - Tour guide
 - AI capabilities

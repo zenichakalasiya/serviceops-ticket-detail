@@ -239,34 +239,54 @@ L.push('- **Read from:** the build at <https://juligopani.github.io/-serviceops-
 L.push('- ⚠️ **That site redeploys.** This file was regenerated against the bundle it was serving on 2 Sep 2026 (\`index-DI1p9URm.js\`). If it has shipped again since, re-run the two scripts named at the foot of this file before trusting the comparison.');
 L.push('- **Coverage:** the listing, the create dialog, the Settings tab, the builder top bar, the whole portal page on the canvas, every canvas toolbar and tooltip, all three right-rail menus, the element hover cards, and every field of every widget settings panel.');
 L.push('');
-L.push('## How to use this file');
-L.push('');
-L.push('| Column | What it holds |');
-L.push('|---|---|');
-L.push('| **Current (this project)** | The words this repository shows today. This is what a change is made *to*. |');
-/* ⚠️ COUNTED, never typed. These two numbers move every time either build ships, and a hand-written
+/* ⚠️ COUNTED, never typed. These numbers move every time either build ships, and a hand-written
    figure in a file that is regenerated is a claim that quietly stops being true. */
 const AGREE = rows.filter((r) => r.ref === 'same').length;
 const DIFFER = rows.filter((r) => r.ref === 'ours-only').length;
-L.push(`| **That build says** | The same string in the build you linked. It repeats the column beside it on the ${AGREE.toLocaleString()} rows where the two agree, and differs on ${DIFFER}. |`);
-L.push('| **New text** | Empty. What you want it to say. |');
+const NEWHERE = ONLY_THERE.length;
+
+L.push('## What is already the same');
 L.push('');
-L.push('1. Write the wording you want in the **New text** column. Leave it blank to keep what is there.');
-L.push('2. Send the file back. Every filled row is applied to the code mechanically — the **ID** and the **File** column are what makes that possible, so please do not edit those two columns.');
-L.push('3. `{name}`, `{count}` and the like are values the app fills in at runtime. Keep them in your new wording, spelled exactly the same, or the message loses the value it was reporting.');
-L.push('4. Rows marked **Δ** are the ones where that build and this repository do not agree — read the conflicts table below before changing them.');
+L.push(`**${AGREE.toLocaleString()} of ${(AGREE + DIFFER).toLocaleString()} strings in this project are already word-for-word identical to that build.**`);
+L.push('Their **New text** cell is empty because there is nothing to change — this project already says');
+L.push('what that build says. That includes the whole element hover-card set, which was taken from that');
+L.push('build on 2 Sep and is already live here.');
 L.push('');
-L.push('## ⚠️ Conflicts — please decide these first');
+/* ⚠️ A differing row does NOT always have something to propose. Most of the 41 are strings this
+   project has and that build simply does not carry at all — there is no wording to copy across, so
+   their New text is empty and the split has to be stated rather than rounded up. */
+const HAS_COUNTERPART = rows.filter((r) => r.ref === 'ours-only' && refTextFor(r) !== NOT_THERE).length;
+const NO_COUNTERPART = DIFFER - HAS_COUNTERPART;
+L.push(`What is left is **${DIFFER + NEWHERE} rows**, of which **${HAS_COUNTERPART + NEWHERE}** arrive with that`);
+L.push('build’s wording **already written into New text**, so there is nothing to copy across by hand:');
 L.push('');
-L.push('Every place the build you pointed me at and this repository disagree. Most are changes you');
-L.push('asked for in the last few days, so taking that build\'s wording would undo a decision you have');
-L.push('already made — but **C8 is the opposite**: that site has shipped since this file was first');
-L.push('written, and its Custom Data Widget now carries a wider field catalogue than this one has.');
-L.push('Nothing below has been changed either way. Tell me which you want and I will apply it.');
+L.push(`- **${NEWHERE}** strings that build has and this project does not — most of them its wider **Custom Data Widget** field catalogue. Pre-filled.`);
+L.push(`- **${HAS_COUNTERPART}** strings the two word differently. Pre-filled with that build’s wording.`);
+L.push(`- **${NO_COUNTERPART}** strings this project has that that build does not carry at all — New text is **empty because there is nothing to propose**. Keeping or cutting them is a decision about this project alone.`);
+L.push('');
+L.push('Delete a proposed value to keep what this project has; leave it to take that build\'s.');
+L.push('');
+L.push('## The columns');
+L.push('');
+L.push('| Column | What it holds |');
+L.push('|---|---|');
+L.push('| **Current (this project)** | The words this repository shows today — what a change is made *to*. |');
+L.push('| **That build says** | The same string in the build you linked. |');
+L.push("| **New text** | **Pre-filled with that build’s wording wherever the two differ**, empty wherever they already agree. |");
+L.push('');
+L.push('1. An **empty** New text means it already matches — nothing to do.');
+L.push("2. A **filled** New text is that build’s wording, waiting for your yes. Edit it, or clear it to keep ours.");
+L.push('3. Send the file back and every filled row is applied to the code mechanically — the **ID** and the **File** column are what make that possible, so please do not edit those two.');
+L.push('4. `{name}`, `{count}` and the like are values the app fills in at runtime. Keep them spelled exactly the same, or the message loses the value it was reporting.');
+L.push('');
+L.push('<details><summary><strong>Where the two differ, and why</strong> — reference only, nothing here needs an answer</summary>');
 L.push('');
 L.push('| # | Where | That build says | This repo says | Why they differ |');
 L.push('|---|---|---|---|---|');
 DIFFS.forEach((d, i) => L.push(`| C${i + 1} | ${esc(d[0])}<br>\`${esc(d[1])}\` | ${esc(d[2])} | ${esc(d[3])} | ${esc(d[4])} |`));
+
+L.push('');
+L.push('</details>');
 L.push('');
 L.push('---');
 L.push('');
@@ -303,7 +323,12 @@ for (const area of order) {
       const flag = r.ref === 'ours-only' ? ' **Δ**' : '';
       const kind = KIND_LABEL[r.kind] ?? r.kind;
       const where = r.note ? `${kind} — ${r.note}` : kind;
-      L.push(`| \`${id}\`${flag} | ${esc(where)} | \`${r.file}:${r.line}\` | ${esc(r.value)} | ${esc(refTextFor(r))} |  |`);
+      /* ⚠️ New text is PRE-FILLED with that build's wording wherever the two differ, and left empty
+         wherever they already agree. An empty cell is therefore the answer to "is this one already
+         done?" — yes, it already says what that build says. Only a filled cell is work. */
+      const theirs = refTextFor(r);
+      const proposed = r.ref === 'ours-only' && theirs !== NOT_THERE ? esc(theirs) : '';
+      L.push(`| \`${id}\`${flag} | ${esc(where)} | \`${r.file}:${r.line}\` | ${esc(r.value)} | ${esc(theirs)} | ${proposed} |`);
       n++;
     }
     L.push('');
@@ -319,7 +344,7 @@ for (const area of order) {
     L.push('|---|---|---|---|---|---|');
     for (const [, where, text] of extras) {
       const id = mkId(area, 'gone', text);
-      L.push(`| \`${id}\` **Δ** | ${esc(where)} | — | — not in this project — | ${esc(text)} |  |`);
+      L.push(`| \`${id}\` **Δ** | ${esc(where)} | — | — not in this project — | ${esc(text)} | ${esc(text)} |`);
       n++;
     }
     L.push('');
