@@ -400,8 +400,21 @@ export function AdminSupportPortalModule({ onBuilder, openPortal, onOpenPortalCh
 
   // ── builder ───────────────────────────────────────────────────────────────
   if (editing) {
+    /* ⚠️ KEYED BY PAGE ID, so opening a different portal REMOUNTS the builder.
+       Every layout decision in there is a `useState` initialiser — the seed, the band order, the
+       row order, the hero config — because, as its own note says, "a seed is a fact about how this
+       session STARTED". React reuses a component in the same tree position when only its props
+       change, so switching portals swapped the page prop while every one of those initialisers
+       kept the PREVIOUS portal’s answer: opening Spotlight and then going back to the default
+       painted the default portal in Spotlight’s layout. The key is what makes "started" mean
+       "started on THIS portal".
+       ⚠️ A JS comment ABOVE the return, not a JSX one inside it: `return (` takes ONE expression,
+       and a JSX comment placed before the element is a second one.
+       ⚠️ And it cannot describe that JSX comment by writing one — the closing marker inside a block
+       comment ENDS the block there, and everything after it becomes code. */
     return (
       <SupportPortalBuilder
+          key={editing.id}
           openOn={openSettings ? 'settings' : undefined}
           onOpenConsumed={() => setOpenSettings(false)}
         page={editing}

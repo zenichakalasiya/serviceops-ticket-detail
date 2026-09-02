@@ -1157,6 +1157,18 @@ Updated: 2026-09-01
 - **Verified:** banner 220px painting the radial+linear gradient; the search straddles at **22px inside the band and 22px hanging out** — an exact half; quick row no longer climbs (overlap 0); spines read `rgb(61,139,208)` / `rgb(245,133,24)` / `rgb(34,160,107)` on Requests / Approvals / Most Read; action card and record card both `0px` border at `14px` radius — one language. Every record is the same ServiceOps data.
 - **Still weak, honestly:** the gradient's dark end fills the right third of the band with nothing in it. Worth either an illustration or pulling the falloff shorter.
 
+## 88. Spotlight carries every card the default portal has
+- **Status:** done
+- **Where:** `supportPortalData.ts` · `SupportPortalBuilder.tsx` · `AdminSupportPortalModule.tsx`
+- **You said:** the placement is wrong for our card structure, and cards are missing.
+- **Both were right, and the second was my mistake to make.** The first seed dropped Favourite Services, Most Used Services, My Assets and My CIs on the argument that "a spotlight page is short". That is a decision about what a customer's portal CONTAINS, and it is not a template's to make — a template arranges and styles what the product ships, and anything hidden should be something the admin turned off.
+- **Read rather than assumed.** The default portal is `layout: 'v2'` — the rail shape — carrying 11 cards: four action cards, Favourite Services, My Open Requests, Pending Approvals, My Assets, My CIs in the main region, and Announcements, Most Read and Contact Us stacked in the rail. Spotlight now uses that exact structure.
+- **⚠️ The rail was reachable only by BEING the v2 page.** `rail={isV2 ? RAIL_V2 : undefined}` — so `TemplateSeed.rail` was declared and never read, and a template naming the rail's cards would have rendered them as three more cards in a flat row: a different page that happens to contain the same widgets. A seed that names a rail now gets the whole shape, the one-column records row included.
+- **⚠️ The rail's ORDER comes from `rowOrder`, not from the rail list.** Promoting Most Read by putting it first in `rail` did nothing — the rail renders its members in row order. The one surviving piece of the deflection idea is that Most Read leads the rail, and it had to be moved where the order actually lives.
+- **⚠️ A REAL LEAK, found on the way and demo-breaking.** Opening Spotlight and then going back to the default painted **the default portal in Spotlight's layout**. Every layout decision in the builder is a `useState` initialiser — as its own note says, *"a seed is a fact about how this session STARTED"* — and React reuses a component in the same tree position when only its props change, so switching portals swapped the page and kept the previous one's answers. The builder is keyed by page id now.
+- **⚠️ Two comment traps in one edit.** A JSX comment cannot sit between `return (` and its element — that is two expressions. And a block comment describing a JSX comment ends itself on the closing marker, so everything after it becomes code.
+- **Verified:** default and Spotlight render the **identical 11-card set and 4 bands** — nothing missing, nothing extra. Most Read now leads the rail. After creating Spotlight and switching back, the default portal shows its own linear gradient, its own "Welcome to Support Portal", its own hairline cards and Favourite Services — no bleed.
+
 ## Parked — needs discussion
 - Tour guide
 - AI capabilities

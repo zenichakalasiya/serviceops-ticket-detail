@@ -1,6 +1,6 @@
 {
   "stamp": "2026-09-01",
-  "builtAt": "2026-09-02T15:48:02.048Z",
+  "builtAt": "2026-09-02T16:03:14.006Z",
   "tasks": [
     {
       "n": 1,
@@ -1728,7 +1728,25 @@
         "**`hero.searchPlacement: 'floating'`** — the search leaves the banner and lands ACROSS its bottom edge, half on the colour and half on the page. In the default portal the field is furniture inside a picture; here it is the page's own control resting on one. ⚠️ **Moved, not duplicated** — same `Sel`, same id, same config, because two search bars in the tree would be two things to keep in step and one would eventually be edited while the other showed.",
         "**`page.cardLook: 'spine'`** — cards drop the hairline box for a borderless panel at 14px with a soft shadow and a **coloured left edge**: blue is your work, amber is waiting on you, green is something to read. ⚠️ Keyed by card ID, never by position, so the colour names a KIND and survives a reorder. ⚠️ The hues are the product's own status colours, not new ones — a fresh palette would have been a second colour language on a page that already has one.",
         "**⚠️ THE BANNER IS SHORTER, NOT TALLER.** The first pass took it to 340px and centred the text, putting a third of the first viewport into empty colour — the banner became the biggest thing on a page whose subject is a text field. 210px, and it is a backdrop.",
-        "**⚠️ A negative margin was NOT enough for the floating search.** In the flow it sat above the band's 86px of reserved bottom padding — measured **96px clear of the edge**, which is not straddling anything, it is a search bar low in a banner. It is absolute against the bottom edge and pulled down by half its own height, so the effect no longer depends on what padding the band happens to carry. That also needs `overflow-visible` on the band, and the decorative artwork therefore got its own clip.",
+        "**⚠️ A negative margin was NOT enough for the floating search.** In the flow it sat above the band's 86px of reserved bottom padding — measured **96px clear of the edge**, which is not straddling anything, it is a search bar low in a banner. It is absolute against the bottom edge and pulled down by half its own height, so the effect no longer depends on what padding the band happens to carry. That also needs `overflow-visible` on the band, and the decorative artwork therefore got its own clip."
+      ]
+    },
+    {
+      "n": 88,
+      "title": "Spotlight carries every card the default portal has",
+      "status": "done",
+      "fields": {
+        "Where": "`supportPortalData.ts` · `SupportPortalBuilder.tsx` · `AdminSupportPortalModule.tsx`",
+        "You said": "the placement is wrong for our card structure, and cards are missing.",
+        "Verified": "default and Spotlight render the **identical 11-card set and 4 bands** — nothing missing, nothing extra. Most Read now leads the rail. After creating Spotlight and switching back, the default portal shows its own linear gradient, its own \"Welcome to Support Portal\", its own hairline cards and Favourite Services — no bleed."
+      },
+      "notes": [
+        "**Both were right, and the second was my mistake to make.** The first seed dropped Favourite Services, Most Used Services, My Assets and My CIs on the argument that \"a spotlight page is short\". That is a decision about what a customer's portal CONTAINS, and it is not a template's to make — a template arranges and styles what the product ships, and anything hidden should be something the admin turned off.",
+        "**Read rather than assumed.** The default portal is `layout: 'v2'` — the rail shape — carrying 11 cards: four action cards, Favourite Services, My Open Requests, Pending Approvals, My Assets, My CIs in the main region, and Announcements, Most Read and Contact Us stacked in the rail. Spotlight now uses that exact structure.",
+        "**⚠️ The rail was reachable only by BEING the v2 page.** `rail={isV2 ? RAIL_V2 : undefined}` — so `TemplateSeed.rail` was declared and never read, and a template naming the rail's cards would have rendered them as three more cards in a flat row: a different page that happens to contain the same widgets. A seed that names a rail now gets the whole shape, the one-column records row included.",
+        "**⚠️ The rail's ORDER comes from `rowOrder`, not from the rail list.** Promoting Most Read by putting it first in `rail` did nothing — the rail renders its members in row order. The one surviving piece of the deflection idea is that Most Read leads the rail, and it had to be moved where the order actually lives.",
+        "**⚠️ A REAL LEAK, found on the way and demo-breaking.** Opening Spotlight and then going back to the default painted **the default portal in Spotlight's layout**. Every layout decision in the builder is a `useState` initialiser — as its own note says, *\"a seed is a fact about how this session STARTED\"* — and React reuses a component in the same tree position when only its props change, so switching portals swapped the page and kept the previous one's answers. The builder is keyed by page id now.",
+        "**⚠️ Two comment traps in one edit.** A JSX comment cannot sit between `return (` and its element — that is two expressions. And a block comment describing a JSX comment ends itself on the closing marker, so everything after it becomes code.",
         "Tour guide",
         "AI capabilities",
         "Video / GIF as a widget",

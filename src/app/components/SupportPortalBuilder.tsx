@@ -189,6 +189,12 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
      `page.source` holds the template's NAME — it is what the listing already reads to find the
      accent — so the name is the join and there is no second id to keep in step. */
   const [seed] = useState(() => PORTAL_TEMPLATES.find((t) => t.name === page.source)?.seed);
+  /* ⚠️ The RAIL SHAPE — a main region beside a tall right-hand rail — was reachable only by being
+     the v2 page. It is a layout, not an identity, so a template can ask for it: a seed that names a
+     rail gets the whole shape, including the one-column records row that goes with it. Without this
+     a template could list the rail's cards and have them render as three more cards in a flat row,
+     which is a different page that happens to contain the same widgets. */
+  const railShape = !!seed?.rail || isV2;
 
   const [width, setWidth] = useState(MIN_W);
   const [collapsed, setCollapsed] = useState(false);
@@ -235,7 +241,10 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
      stacked down the page rather than two narrow cards side by side. It is a column COUNT, not a
      different renderer — the same cards, given the whole width. */
   const [content, setContent] = useState<PortalPageContent>(() => (
-    page.layout === 'v2'
+    /* ⚠️ Reads the SEED as well as the layout: the records row is one column in the rail shape, and
+       a template asking for that shape has to get the column count with it or My Assets and My CIs
+       come out as two narrow cards inside a region built for full-width rows. */
+    page.layout === 'v2' || PORTAL_TEMPLATES.find((t) => t.name === page.source)?.seed?.rail
       ? { ...DEFAULT_CONTENT, cols: { ...DEFAULT_CONTENT.cols, records: 1 } }
       : DEFAULT_CONTENT
   ));
@@ -319,7 +328,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
        the page. The count belongs HERE, not in the renderer's fallback: this seed is what
        `secCols` reads first, so a fallback set anywhere else was a second answer that could never
        win — the records row stayed two columns however the layout was described elsewhere. */
-    records: { cols: isV2 ? '1' : '2' },
+    records: { cols: railShape ? '1' : '2' },
   };
 
   /* ⚠️ `hasContent` is DERIVED, never stored. It gates the Alignment accordion, and a stored flag
@@ -1766,7 +1775,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
         <div className={`min-h-0 flex-1 overflow-y-auto ${themeClass}`} style={themeWrap}>
           {/* Preview must behave like the real portal — selection off. */}
           <CanvasProvider value={{ ...canvasCtx, enabled: false, selectedId: null, hoverId: null, select: () => {}, setHover: () => {} }}>
-            <SupportPortalPreview accent={themeAccent} content={content} sections={sections} icons={icons} placedText={placedText} blockOrder={blockOrder} rowOrder={rowOrder} removed={removed} rowExtras={rowExtras} cfg={cfgFor} blank={page.start === 'blank'} rail={isV2 ? RAIL_V2 : undefined} />
+            <SupportPortalPreview accent={themeAccent} content={content} sections={sections} icons={icons} placedText={placedText} blockOrder={blockOrder} rowOrder={rowOrder} removed={removed} rowExtras={rowExtras} cfg={cfgFor} blank={page.start === 'blank'} rail={seed?.rail ?? (isV2 ? RAIL_V2 : undefined)} />
           </CanvasProvider>
         </div>
       </div>
@@ -1957,7 +1966,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
             style={themeWrap}
           >
             <CanvasProvider value={{ ...canvasCtx, enabled: true }}>
-              <SupportPortalPreview accent={themeAccent} content={content} sections={sections} icons={icons} placedText={placedText} blockOrder={blockOrder} rowOrder={rowOrder} removed={removed} rowExtras={rowExtras} cfg={cfgFor} setCfg={patchCfg} blank={page.start === 'blank'} rail={isV2 ? RAIL_V2 : undefined} pageImage={pageImg} />
+              <SupportPortalPreview accent={themeAccent} content={content} sections={sections} icons={icons} placedText={placedText} blockOrder={blockOrder} rowOrder={rowOrder} removed={removed} rowExtras={rowExtras} cfg={cfgFor} setCfg={patchCfg} blank={page.start === 'blank'} rail={seed?.rail ?? (isV2 ? RAIL_V2 : undefined)} pageImage={pageImg} />
             </CanvasProvider>
           </div>
 

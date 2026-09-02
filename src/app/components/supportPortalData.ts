@@ -124,11 +124,27 @@ export const PORTAL_TEMPLATES: PortalTemplate[] = [
        ⚠️ My Open Requests and Pending Approvals STAY. A portal that only searches is a help centre
        with a logo on it; the requester's own work is the reason they signed in. */
     seed: {
-      blockOrder: ['quick', 'work'],
+      /* ⚠️ EVERY card the default portal carries, in the structure the default portal uses — the
+         main region beside a tall rail, the four action cards, Favourite Services, and My Assets
+         and My CIs as full-width rows. An earlier pass dropped four of them on the argument that a
+         spotlight page should be short. That is a decision about what a customer's portal contains,
+         and it is not a template's to make: a template arranges and styles what the product ships,
+         and anything it hides has to be a thing the admin turned off.
+         ⚠️ What is left of the "deflection first" idea is the one move that costs nothing: Most Read
+         leads the RAIL instead of sitting second in it. The thesis survives; the content does not
+         get edited to fit it. */
+      blockOrder: ['quick', 'favourites', 'work'],
       rowOrder: {
         quick: ['quick-incident', 'quick-service', 'quick-ad', 'quick-knowledge'],
-        work: ['knowledge', 'requests', 'approvals'],
+        /* ⚠️ Most Read leads the RAIL, and it is THIS list that puts it there — not the `rail`
+           array below, which decides membership. The rail renders its members in row order, so a
+           promotion has to happen where the order lives or it silently does nothing. */
+        work: ['requests', 'approvals', 'knowledge', 'news', 'contact'],
+        /* Membership, not placement — the rail shape DRAWS these two inside the work band, and this
+           is still the list that reorders them. See the note on ROW_ORDER_V2. */
+        records: ['assets', 'cis'],
       },
+      rail: ['knowledge', 'news', 'contact'],
       cfg: {
         hero: {
           heading: 'What do you need help with?',
