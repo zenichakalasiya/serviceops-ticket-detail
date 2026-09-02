@@ -1071,6 +1071,17 @@ Updated: 2026-09-01
 - **⚠️ `suggested` must not carry its own unit** — the control already appends "px", so "32 × 32 px" rendered as "32 × 32 px px".
 - **Verified:** the panel reads exactly those nine labels in that order with **no** Company, Portal URL, Help, Sign-on or "Contact shown on the portal" heading anywhere in it. Label-to-label spacing is **74px** across every consecutive pair (161px across the Help block, which holds the segment and the URL field between them). The favicon zone reads "Suggested 32 × 32 px". Build green, no type errors.
 
+## 81. Every word in the Support Portal editor, in one file
+- **Status:** done
+- **Where:** `SUPPORT-PORTAL-CONTENT.md` (new) · `scripts/extract-portal-copy.mjs` · `scripts/build-portal-content.mjs`
+- **You asked:** bring the whole editor's content out of the juligopani build — page, sidebar, hover cards, all three rail menus, nothing left — as a file you can edit and hand to dev.
+- **2,059 entries across 21 areas**, each with an **ID · what it is · file:line · current text · an empty New text column**. Fill the column, send it back, and every filled row is applied mechanically — the ID and the file reference are what make that possible.
+- **⚠️ Driving the live page was NOT enough and I stopped doing it.** Walking the builder in Chrome only ever reaches what happens to be expanded: a widget panel with three collapsed accordions reports three words and hides forty. The extraction reads the SOURCE, which is complete by construction, and the live walk became the CHECK — every string the reference build actually rendered was searched for in the finished file. **Nothing was missing.**
+- **⚠️ The two builds are 99% identical: 2,053 of 2,075 strings match exactly.** Only 22 differ, and every one is something you asked for in the last few days — the Theme captions, the Branding rebuild, the Custom data widget rename, the removed gear, the tour button. They are listed in a **Conflicts table at the top of the file** with both wordings; nothing was changed. Taking that build's copy wholesale would have quietly undone tasks 75, 77, 78, 79 and 80.
+- **⚠️ Four extraction bugs worth remembering.** (1) Prose starting with A, C, H, L, M, Q, S, T, V or Z looks like an **SVG path command** followed by a space — "A colour or an image…" was being discarded as path data; real path data never carries two lowercase letters in a row. (2) A class list cannot be spotted by finding a Tailwind WORD inside a string: *block*, *rounded*, *grid* and *border* all appear in ordinary English, and "every block, style and setting back to the page's default" was thrown away. It is recognised by the shape of the whole string instead. (3) The capital test has to run with `[...]` stripped, or every `bg-[#F1F5F9]` reads as prose. (4) A single token is not a list — `app-prod-01` is a host name on the page and looks exactly like a utility class.
+- **Also in there:** the interpolated messages, written as `{name}` / `{count}` so the placeholder survives a rewrite, and the two strings assembled at render time that no scan can see (`+ Add Section`, `Suggested {size} px`).
+- **Verified:** 2,059 rows, every one well-formed, every ID unique. The live reference build was dumped surface by surface — canvas, top bar, left rail, all three rail menus, the theme dropdowns and colour tabs, the branding panel, the widget panels — and **0 of those strings are absent from the file**.
+
 ## Parked — needs discussion
 - Tour guide
 - AI capabilities
