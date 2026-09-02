@@ -1,6 +1,6 @@
 {
   "stamp": "2026-09-01",
-  "builtAt": "2026-09-02T16:36:46.853Z",
+  "builtAt": "2026-09-02T18:21:02.624Z",
   "tasks": [
     {
       "n": 1,
@@ -1764,7 +1764,25 @@
         "**⚠️ The gallery opened on a tile that was not there.** `useState(PORTAL_TEMPLATES[0].id)` — the first entry is now withheld, so the detail rail described a template nobody could see and the confirm button would have used it.",
         "**⚠️ THE PALETTE BUG WAS A STATE/RENDER DISAGREEMENT.** `blockOrder`, `rowOrder` and `content.quick` are seeded with the standard arrangement whatever the page's start was — the preview just does not render them when `blank`. So the state said \"My Open Requests is on the page\" while the canvas showed an empty portal, and **every predefined row was greyed with a tick on a page carrying nothing**. What a blank page has is whatever has since been dropped into it.",
         "**⚠️ `h-full` could not resolve, and a min-height would have been a guess.** The canvas card had auto height inside a plain block scroller, so the page root's `min-h-full` had nothing to measure against. The scroller is a flex column and the card is `flex-1` — it fills when the page is short and still grows when the page is long, which is one rule instead of a height plus an override.",
-        "**⚠️ The dashed box is gone from the empty state.** A dotted rectangle in the middle of an empty page reads as a drop ZONE — a specific place the widget must land — and the page takes a drop anywhere. The invitation is the words; the border was drawing a target that does not exist.",
+        "**⚠️ The dashed box is gone from the empty state.** A dotted rectangle in the middle of an empty page reads as a drop ZONE — a specific place the widget must land — and the page takes a drop anywhere. The invitation is the words; the border was drawing a target that does not exist."
+      ]
+    },
+    {
+      "n": 90,
+      "title": "Twelve layouts, and a primitives list checked against the code",
+      "status": "done",
+      "fields": {
+        "Where": "`SUPPORT-PORTAL-LAYOUT-EXPLORATION.md` (new)",
+        "You gave me": "the layout-exploration brief — six taxonomy axes, twelve layouts, a domain matrix, a builder-primitives list.",
+        "Twelve layouts, four of them deliberately breaking an assumption": "Answer First (the whole first screen is one field), Inbox (no widgets at all — one ranked stream), Vertical Command Rail (actions as permanent furniture, not a row), Zero-Chrome (no banner, no headings, search is a card).",
+        "⚠️ One primitive to refuse": "L10's ranked feed. It is a product decision about priority disguised as a layout, and building it as a layout bakes a ranking into a template."
+      },
+      "notes": [
+        "**The thing worth having here is §5.** Anyone can answer this brief with twelve plausible layouts; what makes it usable is that the primitives list was **checked against this repository** rather than imagined. Every row says built ✅, wired-to-the-wrong-flag ⚠️, or new ❌ — and the three ⚠️ rows were verified, not asserted: `l-tabs` and `x-kpi` are `hidden: true` in `PORTAL_ELEMENTS`, and `searchPlacement` reads exactly two values.",
+        "**⚠️ The cheapest path is two primitives, not twelve.** A **merged multi-entity card** (Assets + CIs) and a **counter tile row** unlock five of the twelve between them, and neither needs a new rendering path — both are a widget reading two sources instead of one.",
+        "**⚠️ Sparse-tenant resilience is the ship gate, not looks.** L6 (Bento) and L9 (Answer First) score ≤ 2 there — the first tenant to open one with no announcements and no assets concludes the product is broken rather than that their data is empty. Both are excluded from \"ship first\" despite reviewing well.",
+        "**Would ship: L2 Search Spotlight** (built; the only one that changes the page's question rather than its decoration) **and L4 Status Board** (its opposite — the daily user the current portal actively fails). Two layouts that differ prove the template system does something; one layout plus a recolour cannot.",
+        "**Not verified in a browser** — this is a design document, not a build. The eleven unbuilt layouts are drawings.",
         "Tour guide",
         "AI capabilities",
         "Video / GIF as a widget",

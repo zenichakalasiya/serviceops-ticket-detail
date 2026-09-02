@@ -1181,6 +1181,18 @@ Updated: 2026-09-01
 - **⚠️ The dashed box is gone from the empty state.** A dotted rectangle in the middle of an empty page reads as a drop ZONE — a specific place the widget must land — and the page takes a drop anywhere. The invitation is the words; the border was drawing a target that does not exist.
 - **Verified:** the picker lists exactly **Support Portal (Default)** and **Search Spotlight**. On a blank page the palette shows **21 rows, 0 disabled**. The canvas card measures **732px inside a 772px scroller** — filled to the padding exactly — with the empty state centred in it.
 
+## 90. Twelve layouts, and a primitives list checked against the code
+- **Status:** done
+- **Where:** `SUPPORT-PORTAL-LAYOUT-EXPLORATION.md` (new)
+- **You gave me:** the layout-exploration brief — six taxonomy axes, twelve layouts, a domain matrix, a builder-primitives list.
+- **The thing worth having here is §5.** Anyone can answer this brief with twelve plausible layouts; what makes it usable is that the primitives list was **checked against this repository** rather than imagined. Every row says built ✅, wired-to-the-wrong-flag ⚠️, or new ❌ — and the three ⚠️ rows were verified, not asserted: `l-tabs` and `x-kpi` are `hidden: true` in `PORTAL_ELEMENTS`, and `searchPlacement` reads exactly two values.
+- **Twelve layouts, four of them deliberately breaking an assumption:** Answer First (the whole first screen is one field), Inbox (no widgets at all — one ranked stream), Vertical Command Rail (actions as permanent furniture, not a row), Zero-Chrome (no banner, no headings, search is a card).
+- **⚠️ The cheapest path is two primitives, not twelve.** A **merged multi-entity card** (Assets + CIs) and a **counter tile row** unlock five of the twelve between them, and neither needs a new rendering path — both are a widget reading two sources instead of one.
+- **⚠️ One primitive to refuse:** L10's ranked feed. It is a product decision about priority disguised as a layout, and building it as a layout bakes a ranking into a template.
+- **⚠️ Sparse-tenant resilience is the ship gate, not looks.** L6 (Bento) and L9 (Answer First) score ≤ 2 there — the first tenant to open one with no announcements and no assets concludes the product is broken rather than that their data is empty. Both are excluded from "ship first" despite reviewing well.
+- **Would ship: L2 Search Spotlight** (built; the only one that changes the page's question rather than its decoration) **and L4 Status Board** (its opposite — the daily user the current portal actively fails). Two layouts that differ prove the template system does something; one layout plus a recolour cannot.
+- **Not verified in a browser** — this is a design document, not a build. The eleven unbuilt layouts are drawings.
+
 ## Parked — needs discussion
 - Tour guide
 - AI capabilities
