@@ -1013,6 +1013,16 @@ Updated: 2026-09-01
 - **Verified:** nothing opens on entry; the ? opens **1/5** titled "Click a block to edit it" with Show me / Skip / Next and no Back. The hole clears the row by **58px above and 10px on the other three sides**; after a real click the floating toolbar measures **inside** the hole (toolbar top 335, hole 321–483) and the tour moves to 2/5.
 - **Note:** you said the flow gets another pass once the other tasks are done — this is the shape as asked, not settled.
 
+## 75. The Global Setting gear leaves the Support Portal listing
+- **Status:** done
+- **Where:** `AdminSupportPortalModule.tsx`
+- **You asked:** remove the global setting beside the Create support portal CTA.
+- **It was a third door onto one of two rooms.** Everything it opened is the same list the **Settings tab** on this page already holds, and a portal's own settings are on its row — so an unlabelled glyph pressed against the page's primary action was offering a route to something already reachable two ways, in the one position where a bare icon reads as a modifier of the button beside it rather than a place of its own.
+- **⚠️ The drawer it shared stopped being conditional.** One drawer served both callers, so its title and subtitle were ternaries — Settings vs Global Setting, the portal's name vs "Applies to every support portal". With one caller left it is always about one portal, and saying so unconditionally is the honest shape rather than a branch that can only go one way.
+- **⚠️ The Tooltip import went with it.** The gear was its only use in this file; the per-row Settings icon uses a native `title`. An import kept alive by nothing is the next reader's false lead.
+- **Kept:** the per-row Settings icon in the action rail, which is a different control about a different scope.
+- **Verified:** no button on the page carries the `Global Setting` label; the CTA's wrapper now holds exactly one child; the CTA is unchanged at 36px with its right edge still at 1384. The row's Settings icon still opens the drawer, now titled **Settings** over the portal's name. Build green, no type errors.
+
 ## Parked — needs discussion
 - Tour guide
 - AI capabilities
