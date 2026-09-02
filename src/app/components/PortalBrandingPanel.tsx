@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { Upload } from 'lucide-react';
 import { toast } from 'sonner';
-import { Field, SelectField, Segmented, TextField, ToggleRow } from './PortalControls';
+import { Field, SelectField, Segmented, TextField, ToggleRow, UploadZone } from './PortalControls';
 
 /* Branding — what this portal calls itself and who a requester contacts.
  *
@@ -16,37 +16,21 @@ import { Field, SelectField, Segmented, TextField, ToggleRow } from './PortalCon
  * upload sits in the element's own Content section — an image you can see is an image you should be
  * able to click.
  *
- * ⚠️ NO IMAGE UPLOADS AT ALL now — the help icon was the last one, and it went for the same reason
- * the logo did. An image is a thing you look at; a panel is where you edit the thing you cannot see.
- * Everything left here is a word, an address or a switch, which is what makes the panel one kind of
- * surface rather than a settings list with a file picker halfway down it. */
+ * ⚠️ The help ICON upload went for the same reason the logo did — an image is a thing you look at,
+ * and a panel is where you edit what you cannot see.
+ * ⚠️ The FAVICON is the one exception, and it is the exception that proves the rule: it paints the
+ * browser tab, so there is nothing on the canvas to click. An image with no on-page representation
+ * has nowhere else to be edited. */
 
-/* A read-only row: the value is a fact about the tenant, not a setting.
- *
- * ⚠️ It renders inside `Field`, like every other row here. It used to carry its own `mb-4` while
- * `Field` spaces with `mt-4 first:mt-0` — bottom margin against top margin, so the very first pair
- * on the panel (Portal name → Company) had NO gap at all while a Field following a hand-spaced row
- * got a double one. One wrapper owning the rhythm is the only way that cannot come back. */
-function ReadOnly({ label, value }: { label: string; value: string }) {
-  return (
-    <Field label={label}>
-      {/* ⚠️ Shown, not hidden. Which company and which URL this portal answers on is the first thing
-          anyone needs to confirm they are editing the right one — and a disabled field says "this is
-          decided elsewhere" far better than an absence does. */}
-      <div className="flex h-9 w-full items-center rounded border border-[#E5E7EB] bg-[#F7F9FC] px-2.5 text-[13px] text-[#7B8FA5]">
-        {value}
-      </div>
-    </Field>
-  );
-}
-
-/* ⚠️ NO rule under a section head. A heading and the fields beneath it are one block, and a hairline
-   between them cuts the title away from what it is titling — the line lands where the relationship
-   is strongest instead of where the sections actually divide. The space above (`mt-7`) is what
-   separates one section from the last. */
-const Head = ({ children }: { children: React.ReactNode }) => (
-  <p className="mb-1 mt-7 text-[13px] font-semibold text-[#364658]">{children}</p>
-);
+/* ⚠️ NO section headings and NO read-only rows. The panel is ONE list of questions now.
+   · The headings went because the fields under them had been split by a taxonomy the reader does
+     not have — Support Email sat under "Contact shown on the portal" while the Portal name sat
+     under nothing, so the same kind of question was presented two different ways depending on
+     where it happened to fall. Nine labelled fields in a column need no chapters.
+   · Company and Portal URL went because neither is a setting. They were shown as disabled rows to
+     confirm which tenant you were editing, and confirming that is the LISTING's job — you reached
+     this panel by opening one portal by name.
+   · Help and Sign-on kept every control they had; only their headings were removed. */
 
 export function PortalBrandingPanel() {
   const [v, setV] = useState<Record<string, string>>({
@@ -56,7 +40,9 @@ export function PortalBrandingPanel() {
     idp: 'None — use ServiceOps login',
     email: '',
     phone: '',
+    linkback: '',
   });
+  const [favicon, setFavicon] = useState<string | undefined>();
   const set = (k: string, x: string) => setV((p) => ({ ...p, [k]: x }));
 
   /* Help for the requester — its own state rather than another string in `v`, because it is a
@@ -70,18 +56,12 @@ export function PortalBrandingPanel() {
   return (
     <div className="flex h-full flex-col">
       <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 pt-3">
-        <Field label="Portal name">
+        {/* ⚠️ "Helpdesk Name", not "Portal name". It is what the product calls this everywhere else,
+            and a panel that renames a field the rest of the app has already named is a second word
+            for one thing. */}
+        <Field label="Helpdesk Name">
           <TextField value={v.name} onChange={(x) => set('name', x)} />
         </Field>
-
-        <ReadOnly
-          label="Company"
-          value="Acme Corporation"
-        />
-        <ReadOnly
-          label="Portal URL"
-          value="https://support.acme.com"
-        />
 
         {/* ⚠️ No "Inherited" badge. It marked a row whose value still came from the org-wide
             setting, but it appeared and vanished as you typed — a label that moves while you use the
@@ -90,6 +70,7 @@ export function PortalBrandingPanel() {
           <TextField value={v.title} onChange={(x) => set('title', x)} placeholder="Support Portal" />
         </Field>
 
+        {/* Where a guest lands is the login-screen preference — one question, so one control. */}
         <Field label="Landing Page for Guest Users">
           <Segmented
             value={v.landing}
@@ -98,7 +79,6 @@ export function PortalBrandingPanel() {
           />
         </Field>
 
-        <Head>Help</Head>
         {/* Everything below hangs off this switch, so it is the first thing asked. */}
         <ToggleRow
           label="Enable Help For Support Portal"
@@ -160,7 +140,6 @@ export function PortalBrandingPanel() {
           </div>
         )}
 
-        <Head>Sign-on</Head>
         <Field label="Identity Provider">
           <SelectField
             value={v.idp}
@@ -168,12 +147,30 @@ export function PortalBrandingPanel() {
             options={['None — use ServiceOps login', 'Azure AD', 'Okta', 'Google Workspace', 'SAML 2.0']}
           />
         </Field>
-        <Head>Contact shown on the portal</Head>
         <Field label="Support Email">
           <TextField value={v.email} onChange={(x) => set('email', x)} placeholder="servicedesk@acme.com" />
         </Field>
         <Field label="Support Contact No.">
           <TextField value={v.phone} onChange={(x) => set('phone', x)} placeholder="+91 79 4040 0000" />
+        </Field>
+
+        {/* Where the portal's logo sends a requester who clicks it — usually the company site. */}
+        <Field label="Linkback URL">
+          <TextField value={v.linkback} onChange={(x) => set('linkback', x)} placeholder="https://www.acme.com" />
+        </Field>
+
+        {/* ⚠️ The ONE image on this panel, and it earns its place: a favicon is the browser TAB, so
+            unlike the logo there is nothing on the canvas to click. `suggested` carries the size, so
+            the label does not have to. */}
+        <Field label="Favicon">
+          <UploadZone
+            label="Upload favicon"
+            value={favicon}
+            onChange={(d) => { setFavicon(d); if (d) toast.success('Favicon updated'); }}
+            accept="image/png,image/x-icon,image/svg+xml"
+            /* The control appends "px" itself — passing it here reads "32 × 32 px px". */
+            suggested="32 × 32"
+          />
         </Field>
       </div>
 

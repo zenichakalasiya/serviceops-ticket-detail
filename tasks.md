@@ -1059,6 +1059,18 @@ Updated: 2026-09-01
 - **⚠️ That exposed a CSS bug worth remembering.** `theme.css` restored the button cursor with `button:not(:disabled)` — specificity (0,1,1), which beats a `cursor-not-allowed` utility class (0,1,0). An `aria-disabled` button was being handed a pointer over the top of the class that said otherwise. The rule now excludes both forms.
 - **Verified:** all 18 rows hovered read back their exact reference copy — including AD Self Service's fourth line, "Available when AD Self Service is enabled.", under its rule. Clicking a greyed row still adds nothing (32 page nodes before, 32 after, no toast); its cursor is `not-allowed` while an addable row's is `pointer`. Build green, no type errors.
 
+## 80. Branding becomes one list, cut to the fields on the note
+- **Status:** done
+- **Where:** `PortalBrandingPanel.tsx`
+- **You asked:** keep only the fields on the handwritten note, drop the section names, merge the lot — and keep Help and Sign-on as they are, minus their headings.
+- **Nine fields, one column, no chapters:** Helpdesk Name · Support Portal Title · Landing Page for Guest Users · Enable Help For Support Portal (+ URL / Attachment) · Identity Provider · Support Email · Support Contact No. · Linkback URL · Favicon.
+- **The headings had been splitting like questions by a taxonomy the reader does not have.** Support Email sat under "Contact shown on the portal" while Helpdesk Name sat under nothing at all — the same kind of question presented two different ways depending on where it happened to fall. Nine labelled fields in a column need no chapters.
+- **⚠️ Company and Portal URL are GONE, not just unlabelled.** Neither was a setting. They were disabled rows confirming which tenant you were editing, and confirming that is the LISTING's job — you reached this panel by opening one portal by name.
+- **⚠️ "Login Screen preference" and "Landing Page for Guest Users" are the same question**, as you confirmed, so it renders once rather than twice under two names.
+- **⚠️ The Favicon is the one image left, and it is the exception that proves the rule.** Task 78 removed the help icon because an image is a thing you look at and a panel is where you edit what you cannot see — a favicon paints the browser TAB, so there is nothing on the canvas to click and nowhere else it could be edited.
+- **⚠️ `suggested` must not carry its own unit** — the control already appends "px", so "32 × 32 px" rendered as "32 × 32 px px".
+- **Verified:** the panel reads exactly those nine labels in that order with **no** Company, Portal URL, Help, Sign-on or "Contact shown on the portal" heading anywhere in it. Label-to-label spacing is **74px** across every consecutive pair (161px across the Help block, which holds the segment and the URL field between them). The favicon zone reads "Suggested 32 × 32 px". Build green, no type errors.
+
 ## Parked — needs discussion
 - Tour guide
 - AI capabilities
