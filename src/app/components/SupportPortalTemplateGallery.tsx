@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Check, LayoutTemplate, Search, Sparkles, X } from 'lucide-react';
-import { PORTAL_TEMPLATES, TEMPLATE_CATEGORIES } from './supportPortalData';
+import { TEMPLATE_CATEGORIES, VISIBLE_TEMPLATES } from './supportPortalData';
 import type { PortalTemplate, TemplateLayout } from './supportPortalData';
 
 /* "Use Template" — the gallery behind the New page dropdown.
@@ -108,10 +108,13 @@ export function TemplateArt({ layout, accent }: { layout: TemplateLayout; accent
 export function SupportPortalTemplateGallery({ onClose, onUse, onStartBlank }: GalleryProps) {
   const [category, setCategory] = useState<string>('All');
   const [query, setQuery] = useState('');
-  const [selectedId, setSelectedId] = useState(PORTAL_TEMPLATES[0].id);
+  /* ⚠️ The first VISIBLE template, not the first in the file. `PORTAL_TEMPLATES[0]` is withheld,
+     so the gallery opened with a selection nothing on screen was showing — the detail rail
+     described a tile that was not there and the confirm button would have used it. */
+  const [selectedId, setSelectedId] = useState(VISIBLE_TEMPLATES()[0]?.id ?? '');
 
   const q = query.trim().toLowerCase();
-  const templates = PORTAL_TEMPLATES.filter((t) =>
+  const templates = VISIBLE_TEMPLATES().filter((t) =>
     (category === 'All' || t.category === category)
     && (!q || t.name.toLowerCase().includes(q) || t.desc.toLowerCase().includes(q) || t.blocks.some((b) => b.toLowerCase().includes(q))));
 

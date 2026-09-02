@@ -74,6 +74,14 @@ export interface PortalTemplate {
      ⚠️ A template with no `seed` still works — the gallery lists it and the page opens on the
      default arrangement. It just has nothing of its own to say yet. */
   seed?: TemplateSeed;
+  /* ⚠️ Withheld from the gallery, NOT deleted — the same rule `PortalElement.hidden` follows.
+     A template with no `seed` produces the default arrangement under a different name and a
+     recoloured thumbnail, which is a promise the gallery cannot keep: six tiles that all open the
+     same page. They stay in the file with their names, categories, accents and block lists intact,
+     and each one comes back the moment it has a design behind it — one word per template.
+     ⚠️ The DEFAULT tile is not in this list. It is the portal that already exists, rendered from
+     the live page, so nothing here can hide it. */
+  hidden?: boolean;
 }
 
 export interface TemplateSeed {
@@ -88,9 +96,17 @@ export interface TemplateSeed {
 
 /* ── Templates ───────────────────────────────────────────────────────────── */
 
+/** The templates a person may actually pick — everything not withheld by `hidden`.
+ *
+ * ⚠️ Read by the gallery, the create dialog and the "Browse N templates" count. `PORTAL_TEMPLATES`
+ * stays the full list because `accentFor` resolves a page's `source` through it, and a portal
+ * built from a template that has since been withheld must keep its accent rather than losing it. */
+export const VISIBLE_TEMPLATES = (): PortalTemplate[] => PORTAL_TEMPLATES.filter((t) => !t.hidden);
+
 export const PORTAL_TEMPLATES: PortalTemplate[] = [
   {
     id: 'tpl-classic',
+    hidden: true, // no design behind it yet — see the note on `hidden`
     name: 'Classic Service Desk',
     desc: 'The default ServiceOps portal — hero search, three quick actions, and the requester’s own work below.',
     category: 'IT Support',
@@ -181,6 +197,7 @@ export const PORTAL_TEMPLATES: PortalTemplate[] = [
   },
   {
     id: 'tpl-catalog',
+    hidden: true, // no design behind it yet — see the note on `hidden`
     name: 'Service Catalog First',
     desc: 'Leads with browsable service categories for portals where most traffic is a request, not an incident.',
     category: 'General',
@@ -190,6 +207,7 @@ export const PORTAL_TEMPLATES: PortalTemplate[] = [
   },
   {
     id: 'tpl-knowledge',
+    hidden: true, // no design behind it yet — see the note on `hidden`
     name: 'Knowledge Hub',
     desc: 'A self-service reading room — curated collections, most read, and a contact-us fallback at the end.',
     category: 'General',
@@ -199,6 +217,7 @@ export const PORTAL_TEMPLATES: PortalTemplate[] = [
   },
   {
     id: 'tpl-hr',
+    hidden: true, // no design behind it yet — see the note on `hidden`
     name: 'People & HR Desk',
     desc: 'An HR-facing portal — leave, payroll and onboarding requests up front, policy documents beside them.',
     category: 'HR',
@@ -208,6 +227,7 @@ export const PORTAL_TEMPLATES: PortalTemplate[] = [
   },
   {
     id: 'tpl-minimal',
+    hidden: true, // no design behind it yet — see the note on `hidden`
     name: 'Minimal Landing',
     desc: 'One search field and three actions on a light canvas. Nothing else competes for the first click.',
     category: 'General',
@@ -218,6 +238,7 @@ export const PORTAL_TEMPLATES: PortalTemplate[] = [
   },
   {
     id: 'tpl-status',
+    hidden: true, // no design behind it yet — see the note on `hidden`
     name: 'Announcements & Status',
     desc: 'Opens with live announcements and service status, for portals used during major incidents.',
     category: 'Facilities',

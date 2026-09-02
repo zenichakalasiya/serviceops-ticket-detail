@@ -14,7 +14,7 @@ import { Pagination } from './Pagination';
 import { SupportPortalBuilder } from './SupportPortalBuilder';
 import { SupportPortalTemplateGallery } from './SupportPortalTemplateGallery';
 import {
-  DEFAULT_PORTAL_PAGE, SECOND_PORTAL_PAGE, PORTAL_TEMPLATES, formatPortalStamp, nextPageId, relPortalStamp, uniquePageName,
+  DEFAULT_PORTAL_PAGE, SECOND_PORTAL_PAGE, PORTAL_TEMPLATES, VISIBLE_TEMPLATES, formatPortalStamp, nextPageId, relPortalStamp, uniquePageName,
 } from './supportPortalData';
 import type { PortalPage, PortalTemplate } from './supportPortalData';
 
@@ -634,7 +634,7 @@ export function AdminSupportPortalModule({ onBuilder, openPortal, onOpenPortalCh
             <button
               onClick={() => setGallery(true)}
               className="mt-3 text-[13px] font-medium text-[#3D8BD0] hover:underline"
-            >Browse {PORTAL_TEMPLATES.length} templates</button>
+            >Browse {VISIBLE_TEMPLATES().length} templates</button>
           </div>
         </div>)}
         {overlays}

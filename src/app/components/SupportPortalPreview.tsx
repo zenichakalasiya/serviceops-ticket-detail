@@ -1427,16 +1427,24 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
               anchors on the page, each still offering "+ Add Section" on hover — an empty page that
               answers four different places you never put anything. */}
           {blank ? (
-            <div className={sections.length ? 'px-6 py-8' : 'flex min-h-[420px] flex-col justify-center px-6 py-16'}>
+            /* ⚠️ `h-full`, not a `min-h-[420px]` guess. The content area already stretches to the
+                canvas, so a fixed floor left the empty state sitting in a short band with the page
+                colour running on underneath it — the one screen where there is nothing else to look
+                at was the one that did not fill the screen. */
+            <div className={sections.length ? 'px-6 py-8' : 'flex h-full min-h-[520px] flex-col items-center justify-center px-6 py-16'}>
               {sections.length === 0 && (
-              <div className="mx-auto flex w-full max-w-[520px] flex-col items-center rounded-xl border border-dashed border-[#D9E0EA] bg-white/70 px-6 py-12 text-center">
-                <span className="flex size-14 items-center justify-center rounded-full bg-[#EBF5FF] text-[#3D8BD0]">
-                  <LayoutGrid size={26} strokeWidth={1.6} />
+              /* ⚠️ NO dashed box. A dotted rectangle in the middle of an empty page reads as a drop
+                  ZONE — a specific place the widget has to land — and the page will take a drop
+                  anywhere. The invitation is the words; the border was drawing a target that does
+                  not exist. */
+              <div className="flex w-full max-w-[560px] flex-col items-center text-center">
+                <span className="flex size-16 items-center justify-center rounded-2xl bg-white text-[#3D8BD0] shadow-[0_1px_2px_rgba(16,24,40,0.04),0_10px_28px_-12px_rgba(16,24,40,0.18)]">
+                  <LayoutGrid size={28} strokeWidth={1.6} />
                 </span>
-                <p className="mt-4 text-[15px] font-semibold text-[#364658]">Your portal is empty</p>
-                <p className="mt-1.5 max-w-[360px] text-[13px] leading-[1.6] text-[#7B8FA5]">
-                  Add a section, then drop widgets into it — or pick one from the Widgets panel and
-                  drag it straight onto the page.
+                <p className="mt-5 text-[17px] font-semibold text-[#364658]">Your portal is empty</p>
+                <p className="mt-2 max-w-[420px] text-[13.5px] leading-[1.65] text-[#7B8FA5]">
+                  Pick a widget from the panel on the right and drag it onto the page — or add a
+                  section first and drop widgets into it.
                 </p>
               </div>
               )}

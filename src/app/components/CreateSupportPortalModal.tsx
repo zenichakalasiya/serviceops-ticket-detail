@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ArrowLeft, ChevronRight, PenLine, X } from 'lucide-react';
-import { PORTAL_TEMPLATES, TEMPLATE_CATEGORIES } from './supportPortalData';
+import { TEMPLATE_CATEGORIES, VISIBLE_TEMPLATES } from './supportPortalData';
 import type { PortalTemplate } from './supportPortalData';
 import { TemplateArt } from './SupportPortalTemplateGallery';
 import { SupportPortalPreview } from './SupportPortalPreview';
@@ -251,7 +251,7 @@ export function CreateSupportPortalModal({ onClose, onSaveDetails, onScratch, on
     setStep(2);
   };
 
-  const templates = PORTAL_TEMPLATES.filter((t) => category === 'All' || t.category === category);
+  const templates = VISIBLE_TEMPLATES().filter((t) => category === 'All' || t.category === category);
 
   return createPortal(
     <div className="fixed inset-0 z-[10000] flex items-start justify-center bg-[#0F172A]/40 p-6 pt-[6vh]">

@@ -195,6 +195,9 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
      a template could list the rail's cards and have them render as three more cards in a flat row,
      which is a different page that happens to contain the same widgets. */
   const railShape = !!seed?.rail || isV2;
+  /* Started from scratch rather than from a template or the default. Read in one place so the
+     palette, the canvas and the empty state cannot disagree about whether the page has anything. */
+  const isBlank = page.start === 'blank';
 
   const [width, setWidth] = useState(MIN_W);
   const [collapsed, setCollapsed] = useState(false);
@@ -751,12 +754,20 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
    * `rowOrder` (minus anything `removed`), and the action cards are members of `content.quick`. */
   const placedPredefined = useMemo(() => {
     const nodes = new Set<string>();
-    Object.values(rowOrder).forEach((ids) => ids.forEach((id) => { if (!removed.includes(id)) nodes.add(id); }));
-    content.quick.forEach((q) => nodes.add(q.id));
+    /* ⚠️ A BLANK page has none of the fixed blocks, however full `blockOrder` and `rowOrder` look.
+       Those two are seeded with the standard arrangement whatever the page's start was, and the
+       preview simply does not render them when `blank` — so the state said "My Open Requests is on
+       the page" while the canvas showed an empty portal, and every predefined row in the palette was
+       greyed out with a tick on a page carrying nothing. What a blank page HAS is whatever has since
+       been dropped into it, which is the `types` set below. */
+    if (!isBlank) {
+      Object.values(rowOrder).forEach((ids) => ids.forEach((id) => { if (!removed.includes(id)) nodes.add(id); }));
+      content.quick.forEach((q) => nodes.add(q.id));
+    }
     /* ⚠️ Top-level BANDS too, not just cards inside a row. Favourite Services and Most Used Services
        are their own blocks in `blockOrder` rather than members of a row, so counting only row
        members left both of them addable while the page was already carrying them. */
-    blockOrder.forEach((id) => { if (!removed.includes(id)) nodes.add(id); });
+    if (!isBlank) blockOrder.forEach((id) => { if (!removed.includes(id)) nodes.add(id); });
     /* ⚠️ A THIRD home, and it is the one that keeps the mark honest end to end. Delete My Assets and
        the row goes addable; click it and the widget lands as a PLACED element in a new section
        rather than restoring the fixed block. Counting only the fixed block would leave the row
@@ -778,7 +789,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     return new Set(PORTAL_ELEMENTS
       .filter((e) => predefined(e) && ((e.node && nodes.has(e.node)) || types.has(e.id)))
       .map((e) => e.id));
-  }, [rowOrder, removed, content.quick, blockOrder, sections, rowExtras]);
+  }, [rowOrder, removed, content.quick, blockOrder, sections, rowExtras, isBlank]);
 
   /* Reset to default — every store the canvas reads, back to its seed.
      ⚠️ It must clear ALL of them. Missing one leaves the page in a state that is neither the
@@ -1958,11 +1969,19 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
       {/* ── Work area ── */}
       <div className="flex min-h-0 flex-1">
         {/* Canvas */}
-        <div data-tour="canvas" className="relative min-w-0 flex-1 overflow-y-auto p-5">
+        {/* ⚠️ A flex COLUMN, so the page card below can be told to fill. The scroller was a plain
+            block, which left the card at its content height — and on an empty portal that meant the
+            canvas ended a few hundred pixels down with the app's background running on underneath.
+            Flex is what makes "fill the space" expressible without a magic number for the padding. */}
+        <div data-tour="canvas" className="relative flex min-w-0 flex-1 flex-col overflow-y-auto p-5">
           <div
             /* The box a floating toolbar must stay inside — the design panel owns the space to its right. */
             data-portal-canvas
-            className={`mx-auto max-w-[1600px] rounded-lg border border-[#E1E6ED] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04),0_8px_24px_rgba(16,24,40,0.06)] ${themeClass}`}
+            /* ⚠️ `flex-1` with `min-h-0` off: the card fills the scroller when the page is short
+               and still GROWS past it when the page is long, because a flex item's automatic minimum
+               size is its content. One rule for both, rather than a height for one and an override
+               for the other. */
+            className={`mx-auto w-full max-w-[1600px] flex-1 rounded-lg border border-[#E1E6ED] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04),0_8px_24px_rgba(16,24,40,0.06)] ${themeClass}`}
             style={themeWrap}
           >
             <CanvasProvider value={{ ...canvasCtx, enabled: true }}>

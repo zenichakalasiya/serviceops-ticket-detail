@@ -1,6 +1,6 @@
 {
   "stamp": "2026-09-01",
-  "builtAt": "2026-09-02T16:03:14.006Z",
+  "builtAt": "2026-09-02T16:36:46.853Z",
   "tasks": [
     {
       "n": 1,
@@ -1746,7 +1746,25 @@
         "**⚠️ The rail was reachable only by BEING the v2 page.** `rail={isV2 ? RAIL_V2 : undefined}` — so `TemplateSeed.rail` was declared and never read, and a template naming the rail's cards would have rendered them as three more cards in a flat row: a different page that happens to contain the same widgets. A seed that names a rail now gets the whole shape, the one-column records row included.",
         "**⚠️ The rail's ORDER comes from `rowOrder`, not from the rail list.** Promoting Most Read by putting it first in `rail` did nothing — the rail renders its members in row order. The one surviving piece of the deflection idea is that Most Read leads the rail, and it had to be moved where the order actually lives.",
         "**⚠️ A REAL LEAK, found on the way and demo-breaking.** Opening Spotlight and then going back to the default painted **the default portal in Spotlight's layout**. Every layout decision in the builder is a `useState` initialiser — as its own note says, *\"a seed is a fact about how this session STARTED\"* — and React reuses a component in the same tree position when only its props change, so switching portals swapped the page and kept the previous one's answers. The builder is keyed by page id now.",
-        "**⚠️ Two comment traps in one edit.** A JSX comment cannot sit between `return (` and its element — that is two expressions. And a block comment describing a JSX comment ends itself on the closing marker, so everything after it becomes code.",
+        "**⚠️ Two comment traps in one edit.** A JSX comment cannot sit between `return (` and its element — that is two expressions. And a block comment describing a JSX comment ends itself on the closing marker, so everything after it becomes code."
+      ]
+    },
+    {
+      "n": 89,
+      "title": "Only real templates in the gallery, and a blank page that says so",
+      "status": "done",
+      "fields": {
+        "Where": "`supportPortalData.ts` · `SupportPortalTemplateGallery.tsx` · `CreateSupportPortalModal.tsx` · `AdminSupportPortalModule.tsx` · `SupportPortalBuilder.tsx` · `SupportPortalPreview.tsx`",
+        "You asked": "drop the templates that are only a banner colour; make the empty portal fill the screen; and stop the palette greying out widgets a blank page does not have.",
+        "Verified": "the picker lists exactly **Support Portal (Default)** and **Search Spotlight**. On a blank page the palette shows **21 rows, 0 disabled**. The canvas card measures **732px inside a 772px scroller** — filled to the padding exactly — with the empty state centred in it."
+      },
+      "notes": [
+        "**Six templates withheld, not deleted** — Classic Service Desk, Service Catalog First, Knowledge Hub, People & HR Desk, Minimal Landing, Announcements & Status. Each has no `seed`, so it produced the default arrangement under a different name with a recoloured wireframe: **six tiles that all open the same page**, which is a promise the gallery cannot keep. `hidden` follows the same rule `PortalElement.hidden` does — names, categories, accents and block lists all stay, and each comes back on one word once it has a design.",
+        "**⚠️ ONE derived list, `VISIBLE_TEMPLATES()`**, because three surfaces show templates — the gallery, the create dialog and the \"Browse N templates\" count — and filtering at each call site is exactly how a withheld template stays visible in one of them. The create dialog already had its own copy of the filter. ⚠️ `PORTAL_TEMPLATES` stays the FULL list: `accentFor` resolves a page's `source` through it, and a portal built from a template that has since been withheld must keep its accent.",
+        "**⚠️ The gallery opened on a tile that was not there.** `useState(PORTAL_TEMPLATES[0].id)` — the first entry is now withheld, so the detail rail described a template nobody could see and the confirm button would have used it.",
+        "**⚠️ THE PALETTE BUG WAS A STATE/RENDER DISAGREEMENT.** `blockOrder`, `rowOrder` and `content.quick` are seeded with the standard arrangement whatever the page's start was — the preview just does not render them when `blank`. So the state said \"My Open Requests is on the page\" while the canvas showed an empty portal, and **every predefined row was greyed with a tick on a page carrying nothing**. What a blank page has is whatever has since been dropped into it.",
+        "**⚠️ `h-full` could not resolve, and a min-height would have been a guess.** The canvas card had auto height inside a plain block scroller, so the page root's `min-h-full` had nothing to measure against. The scroller is a flex column and the card is `flex-1` — it fills when the page is short and still grows when the page is long, which is one rule instead of a height plus an override.",
+        "**⚠️ The dashed box is gone from the empty state.** A dotted rectangle in the middle of an empty page reads as a drop ZONE — a specific place the widget must land — and the page takes a drop anywhere. The invitation is the words; the border was drawing a target that does not exist.",
         "Tour guide",
         "AI capabilities",
         "Video / GIF as a widget",
