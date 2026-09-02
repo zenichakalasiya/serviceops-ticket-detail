@@ -1,4 +1,6 @@
 import fs from 'fs';
+import os from 'os';
+import path from 'path';
 
 const T = 'C:/Users/ZENICH~1/AppData/Local/Temp/';
 const rows = JSON.parse(fs.readFileSync(T + 'copy-rows.json', 'utf8'));
@@ -91,6 +93,52 @@ const mkId = (area, block, value) => {
 
 const esc = (s) => String(s).replace(/\|/g, '\\|').replace(/\r?\n/g, ' ');
 
+/* ── What the reference build says ───────────────────────────────────────────
+   ⚠️ Filled in ONLY for the rows where the two builds disagree, and every entry
+   was checked against that build's own bundle rather than assumed. A row that is
+   byte-identical in both — which is 2,053 of them — simply repeats itself. */
+const NOT_THERE = '— not in that build —';
+const COUNTERPART = {
+  'Style the support portal page.': 'Style, type and colour for every page of this portal.',
+  'Helpdesk Name': 'Portal name',
+  'Custom data widget': 'Record List',
+  'list records kpi count metric requests assets cis filter module query data':
+    'list records requests assets cis filter module query data',
+  'Use Template': 'Choose a template',
+  'Start from a ready-made layout and change what you need.':
+    'Start from a ready-made portal layout. You can change anything after.',
+};
+const refTextFor = (r) => (r.ref === 'ours-only' ? (COUNTERPART[r.value] ?? NOT_THERE) : r.value);
+
+/* Rows that exist in that build and NOT here — the other half of the difference.
+   Without them the file would only ever show what we have, and a word that build
+   uses and we do not would be invisible. Each was verified in its bundle. */
+const ONLY_THERE = [
+  ['Right rail 2 — Theme panel', 'caption under the Primary tab', 'Set by the theme style. Change one to depart from it.'],
+  ['Right rail 2 — Theme panel', 'caption under the Secondary tab', 'Status colours — green means healthy, red means broken. Shared by every theme.'],
+  ['Right rail 2 — Theme panel', 'caption under the Neutral tab', 'The greyscale every surface and border is built from. Shared by every theme.'],
+  ['Right rail 3 — Branding panel', 'field label', 'Company'],
+  ['Right rail 3 — Branding panel', 'read-only value', 'Acme Corporation'],
+  ['Right rail 3 — Branding panel', 'field label', 'Portal URL'],
+  ['Right rail 3 — Branding panel', 'read-only value', 'https://support.acme.com'],
+  ['Right rail 3 — Branding panel', 'section heading', 'Help'],
+  ['Right rail 3 — Branding panel', 'section heading', 'Sign-on'],
+  ['Right rail 3 — Branding panel', 'section heading', 'Contact shown on the portal'],
+  ['Right rail 3 — Branding panel', 'field label', 'Help Icon'],
+  ['Right rail 3 — Branding panel', 'upload button', 'Upload Help View Icon For Requester'],
+  ['Right rail 3 — Branding panel', 'ⓘ on the Help Icon label', '16 × 16 px gives the sharpest result. A larger square works — it will be scaled down.'],
+  ['Right rail 3 — Branding panel', 'disabled Preview link', 'Upload an icon first — there is nothing to preview yet'],
+  ['Right rail 3 — Branding panel', 'tooltip on the attachment chip', 'Icon attached'],
+  ['Right rail 3 — Branding panel', 'tooltip on the attachment chip', 'No icon attached yet'],
+  ['Right rail 3 — Branding panel', 'tooltip on the eye', 'View the icon'],
+  ['Right rail 3 — Branding panel', 'tooltip on the eye and bin', 'Nothing attached yet'],
+  ['Right rail 3 — Branding panel', 'tooltip on the bin', 'Remove the icon'],
+  ['Right rail 3 — Branding panel', 'toast', 'Showing the help icon as a requester sees it'],
+  ['Right rail 3 — Branding panel', 'toast', 'Help icon removed'],
+  ['Portal listing', 'the gear beside the CTA', 'Global Setting'],
+  ['Portal listing', 'subtitle of the drawer that gear opened', 'Applies to every support portal'],
+];
+
 /* ── group ──────────────────────────────────────────────────────────────────── */
 const byArea = new Map();
 for (const r of rows) {
@@ -129,6 +177,12 @@ L.push('- **Read from:** the build at <https://juligopani.github.io/-serviceops-
 L.push('- **Coverage:** the listing, the create dialog, the Settings tab, the builder top bar, the whole portal page on the canvas, every canvas toolbar and tooltip, all three right-rail menus, the element hover cards, and every field of every widget settings panel.');
 L.push('');
 L.push('## How to use this file');
+L.push('');
+L.push('| Column | What it holds |');
+L.push('|---|---|');
+L.push('| **Current (this project)** | The words this repository shows today. This is what a change is made *to*. |');
+L.push('| **That build says** | The same string in the build you linked. It repeats the column beside it on the 2,053 rows where the two agree, and differs on 22. |');
+L.push('| **New text** | Empty. What you want it to say. |');
 L.push('');
 L.push('1. Write the wording you want in the **New text** column. Leave it blank to keep what is there.');
 L.push('2. Send the file back. Every filled row is applied to the code mechanically — the **ID** and the **File** column are what makes that possible, so please do not edit those two columns.');
@@ -169,18 +223,34 @@ for (const area of order) {
     if (!groups.has(g)) groups.set(g, []);
     groups.get(g).push(r);
   }
+  const extras = ONLY_THERE.filter(([a]) => a === area);
   for (const [g, list] of groups) {
     const friendly = blockName[g] ? `${blockName[g]} — \`${g}\`` : `\`${g}\``;
     L.push(`### ${sec}.${[...groups.keys()].indexOf(g) + 1} ${friendly}`);
     L.push('');
-    L.push('| ID | What it is | File | Current text | New text |');
-    L.push('|---|---|---|---|---|');
+    L.push('| ID | What it is | File | Current (this project) | That build says | New text |');
+    L.push('|---|---|---|---|---|---|');
     for (const r of list) {
       const id = mkId(area, r.block ?? null, r.value);
       const flag = r.ref === 'ours-only' ? ' **Δ**' : '';
       const kind = KIND_LABEL[r.kind] ?? r.kind;
       const where = r.note ? `${kind} — ${r.note}` : kind;
-      L.push(`| \`${id}\`${flag} | ${esc(where)} | \`${r.file}:${r.line}\` | ${esc(r.value)} |  |`);
+      L.push(`| \`${id}\`${flag} | ${esc(where)} | \`${r.file}:${r.line}\` | ${esc(r.value)} | ${esc(refTextFor(r))} |  |`);
+      n++;
+    }
+    L.push('');
+  }
+  if (extras.length) {
+    L.push(`### ${sec}.${groups.size + 1} Only in that build — not in this project`);
+    L.push('');
+    L.push('Words that build uses which this one no longer has. Nothing to fill in unless you want');
+    L.push('them back — say so in **New text** and I will put the control back with them.');
+    L.push('');
+    L.push('| ID | What it is | File | Current (this project) | That build says | New text |');
+    L.push('|---|---|---|---|---|---|');
+    for (const [, where, text] of extras) {
+      const id = mkId(area, 'gone', text);
+      L.push(`| \`${id}\` **Δ** | ${esc(where)} | — | — not in this project — | ${esc(text)} |  |`);
       n++;
     }
     L.push('');
@@ -198,5 +268,5 @@ L.push('- **Class names, colour values and CSS.** Not language, and changing the
 L.push('- **Icon names and config keys** (`showDesc`, `quick-incident`). These are the addresses the app uses internally; the words a requester reads are all listed above.');
 L.push('');
 
-fs.writeFileSync('d:/Motadata/ServiceOps-Ticket-Detail--main/ServiceOps-Ticket-Detail--main/SUPPORT-PORTAL-CONTENT.md', L.join('\n') + '\n');
+fs.writeFileSync(path.join(process.cwd(), 'SUPPORT-PORTAL-CONTENT.md'), L.join('\n') + '\n');
 console.log('entries', n, 'areas', sec);

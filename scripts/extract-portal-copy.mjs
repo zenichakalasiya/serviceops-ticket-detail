@@ -1,7 +1,22 @@
+/* Support Portal — copy extractor.
+ *
+ * Reads every user-visible string out of the Support Portal source and writes them to a temp file
+ * that build-portal-content.mjs turns into SUPPORT-PORTAL-CONTENT.md.
+ *
+ *   node scripts/extract-portal-copy.mjs && node scripts/build-portal-content.mjs
+ *
+ * To fill in the "That build says" column, put the reference bundle at <os.tmpdir()>/ref.js first:
+ *   curl -s -o "$TMPDIR/ref.js" https://juligopani.github.io/-serviceops-ticket-detail/assets/<hash>.js
+ * (the hash is in that site's index.html). Without it every row simply reads as matching.
+ *
+ * ⚠️ Deciding what counts as copy is the whole job here, and the four rules that were hardest to get
+ * right carry their own notes below: SVG path data, class lists, arbitrary values, and single
+ * tokens. Read those before loosening anything. */
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 
-const ROOT = 'd:/Motadata/ServiceOps-Ticket-Detail--main/ServiceOps-Ticket-Detail--main/src/app/components';
+const ROOT = path.join(process.cwd(), 'src/app/components');
 
 const FILES = [
   'SupportPortalBuilder.tsx', 'SupportPortalPreview.tsx', 'SupportPortalAddPanel.tsx',
@@ -32,7 +47,11 @@ const isSvgPath = (t) => SVGY.test(t) && !/[a-z]{2}/.test(t);
 /* Keys whose VALUE is content a requester reads, even when it is one lowercase word. A CI called
    `hostname` and an address like `servicedesk@acme.com` are on the page and are exactly the kind of
    thing somebody wants to change — the general rule below rejects them as identifiers. */
-const CONTENT_KEY = /^(name|title|value|host|meta|label|sub|subtitle|text|email|phone|desc|description)$/i;
+/* ⚠️ `value` is NOT in that list. In this codebase a `value:` is the option's internal key —
+   `home`, `kpi`, `stacked` — while the words on screen live in the `label` beside it. Admitting it
+   put 80 identifiers into the inventory that nobody can usefully rewrite. Addresses and phone
+   numbers stored under `value` are still caught, by their own rules below. */
+const CONTENT_KEY = /^(name|title|host|meta|label|sub|subtitle|text|email|phone|desc|description)$/i;
 
 /* ⚠️ A class string is recognised by the SHAPE OF THE WHOLE STRING, not by spotting a utility word
    inside it. Matching bare words — `block`, `rounded`, `grid`, `border` — threw away real sentences:
@@ -178,8 +197,31 @@ for (const f of FILES) {
   while ((m = TXT.exec(src))) add(m.index, 'jsx-text', m[1]);
 }
 
-fs.writeFileSync('C:/Users/ZENICH~1/AppData/Local/Temp/copy-rows.json', JSON.stringify(rows, null, 1));
+/* ── the last sweep ─────────────────────────────────────────────────────────
+   Fragments the shape tests above cannot judge from the string alone: key NAMES
+   ("Enter"), expression pieces the JSX scan caught between generics, pack ids.
+   Kept here rather than folded into isCopy so the rules that decide what copy IS
+   stay readable. */
+const KEY_NAMES = new Set(['Enter', 'Escape', 'Tab', 'Backspace', 'Delete', 'ArrowUp', 'ArrowDown',
+  'ArrowLeft', 'ArrowRight', 'Shift', 'Control', 'Meta', 'Alt', 'Space', 'KeyZ', 'KeyF']);
+const NOISE = [/\?\?/, /String\(/, /Math\./, /\.replace\(/, /===/, /var\(--/, /^,\s/, /\[key\]/,
+  /getBoundingClientRect/, /\bcfg\[/, /\bp\.styles\b/, /^\(/, /inset 0 0 0/, /hasOwn\(/,
+  /-\[#/, /\bhover:/, /\bgroup-hover/, /^bg-black/, /^P\d$/, /^G\d$/, /^[A-Z]$/];
+const clean = rows.filter((r) => !KEY_NAMES.has(r.value) && !NOISE.some((re) => re.test(r.value)));
+
+/* Which of these the reference build also has, so the inventory can show both. A string it does not
+   contain is one the two builds disagree about — those are the rows the file flags. */
+const REF_BUNDLE = path.join(os.tmpdir(), 'ref.js');
+if (fs.existsSync(REF_BUNDLE)) {
+  const ref = fs.readFileSync(REF_BUNDLE, 'utf8');
+  clean.forEach((r) => { r.ref = ref.includes(r.value) ? 'same' : 'ours-only'; });
+} else {
+  console.error('NOTE: no reference bundle at ' + REF_BUNDLE + ' — every row will read as matching.');
+  clean.forEach((r) => { r.ref = 'same'; });
+}
+
+fs.writeFileSync(path.join(os.tmpdir(), 'copy-rows.json'), JSON.stringify(clean, null, 1));
 const byFile = {};
-rows.forEach(r => { byFile[r.file] = (byFile[r.file] || 0) + 1; });
-console.log('rows', rows.length);
+clean.forEach((r) => { byFile[r.file] = (byFile[r.file] || 0) + 1; });
+console.log('rows', clean.length, '· differ from the reference build:', clean.filter((r) => r.ref === 'ours-only').length);
 console.log(Object.entries(byFile).map(([k, v]) => `${String(v).padStart(5)}  ${k}`).join('\n'));

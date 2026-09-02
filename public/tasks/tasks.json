@@ -1,6 +1,6 @@
 {
   "stamp": "2026-09-01",
-  "builtAt": "2026-09-02T11:12:17.267Z",
+  "builtAt": "2026-09-02T11:55:37.177Z",
   "tasks": [
     {
       "n": 1,
@@ -1617,7 +1617,24 @@
         "**2,059 entries across 21 areas**, each with an **ID · what it is · file:line · current text · an empty New text column**. Fill the column, send it back, and every filled row is applied mechanically — the ID and the file reference are what make that possible.",
         "**⚠️ Driving the live page was NOT enough and I stopped doing it.** Walking the builder in Chrome only ever reaches what happens to be expanded: a widget panel with three collapsed accordions reports three words and hides forty. The extraction reads the SOURCE, which is complete by construction, and the live walk became the CHECK — every string the reference build actually rendered was searched for in the finished file. **Nothing was missing.**",
         "**⚠️ The two builds are 99% identical: 2,053 of 2,075 strings match exactly.** Only 22 differ, and every one is something you asked for in the last few days — the Theme captions, the Branding rebuild, the Custom data widget rename, the removed gear, the tour button. They are listed in a **Conflicts table at the top of the file** with both wordings; nothing was changed. Taking that build's copy wholesale would have quietly undone tasks 75, 77, 78, 79 and 80.",
-        "**⚠️ Four extraction bugs worth remembering.** (1) Prose starting with A, C, H, L, M, Q, S, T, V or Z looks like an **SVG path command** followed by a space — \"A colour or an image…\" was being discarded as path data; real path data never carries two lowercase letters in a row. (2) A class list cannot be spotted by finding a Tailwind WORD inside a string: *block*, *rounded*, *grid* and *border* all appear in ordinary English, and \"every block, style and setting back to the page's default\" was thrown away. It is recognised by the shape of the whole string instead. (3) The capital test has to run with `[...]` stripped, or every `bg-[#F1F5F9]` reads as prose. (4) A single token is not a list — `app-prod-01` is a host name on the page and looks exactly like a utility class.",
+        "**⚠️ Four extraction bugs worth remembering.** (1) Prose starting with A, C, H, L, M, Q, S, T, V or Z looks like an **SVG path command** followed by a space — \"A colour or an image…\" was being discarded as path data; real path data never carries two lowercase letters in a row. (2) A class list cannot be spotted by finding a Tailwind WORD inside a string: *block*, *rounded*, *grid* and *border* all appear in ordinary English, and \"every block, style and setting back to the page's default\" was thrown away. It is recognised by the shape of the whole string instead. (3) The capital test has to run with `[...]` stripped, or every `bg-[#F1F5F9]` reads as prose. (4) A single token is not a list — `app-prod-01` is a host name on the page and looks exactly like a utility class."
+      ]
+    },
+    {
+      "n": 82,
+      "title": "The content file shows both builds side by side",
+      "status": "done",
+      "fields": {
+        "Where": "`SUPPORT-PORTAL-CONTENT.md` · `scripts/extract-portal-copy.mjs` · `scripts/build-portal-content.mjs`",
+        "You asked": "whether the file held this project's content or the linked build's — and for the linked build's wording to be visible rather than only ours.",
+        "The two scripts now run anywhere": "paths come from `process.cwd()` and `os.tmpdir()` instead of one machine's drive, and the extractor says so in its header. `node scripts/extract-portal-copy.mjs && node scripts/build-portal-content.mjs` regenerates the file, so it can be refreshed after the code moves on instead of going stale.",
+        "Verified": "2,002 rows, every one six columns wide, every ID unique. Regenerated end to end from a clean run of both scripts."
+      },
+      "notes": [
+        "**It held ours, and that was hard to tell because the two builds are almost the same build.** 1,943 of 1,965 strings are byte-identical, so on 99% of rows \"ours\" and \"theirs\" are the same words and the column was true of both.",
+        "**There is now a fourth column, \"That build says.\"** It repeats the current text wherever the two agree and carries that build's own wording where they do not — so the answer is on every row instead of in a table at the top. **New text stays empty**; nothing is pre-filled, because a pre-filled row is a queued change nobody asked for.",
+        "**⚠️ The difference runs BOTH ways, and only one direction was visible.** 22 strings here are not in that build; **23 strings in that build are not here** — the three Theme captions, the whole Help Icon block, the Branding section headings, Company and Portal URL, and the Global Setting gear with its drawer subtitle. Those now appear as their own rows in the area they belong to, marked \"— not in this project —\". Every one was checked against that build's bundle rather than assumed.",
+        "**⚠️ `value` came out of the content-key list.** In this codebase a `value:` is the option's internal key — `home`, `kpi`, `stacked` — while the words on screen are the `label` beside it. Admitting it put 80 identifiers into the file that nobody could usefully rewrite.",
         "Tour guide",
         "AI capabilities",
         "Video / GIF as a widget",

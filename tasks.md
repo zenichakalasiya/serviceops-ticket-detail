@@ -1082,6 +1082,17 @@ Updated: 2026-09-01
 - **Also in there:** the interpolated messages, written as `{name}` / `{count}` so the placeholder survives a rewrite, and the two strings assembled at render time that no scan can see (`+ Add Section`, `Suggested {size} px`).
 - **Verified:** 2,059 rows, every one well-formed, every ID unique. The live reference build was dumped surface by surface — canvas, top bar, left rail, all three rail menus, the theme dropdowns and colour tabs, the branding panel, the widget panels — and **0 of those strings are absent from the file**.
 
+## 82. The content file shows both builds side by side
+- **Status:** done
+- **Where:** `SUPPORT-PORTAL-CONTENT.md` · `scripts/extract-portal-copy.mjs` · `scripts/build-portal-content.mjs`
+- **You asked:** whether the file held this project's content or the linked build's — and for the linked build's wording to be visible rather than only ours.
+- **It held ours, and that was hard to tell because the two builds are almost the same build.** 1,943 of 1,965 strings are byte-identical, so on 99% of rows "ours" and "theirs" are the same words and the column was true of both.
+- **There is now a fourth column, "That build says."** It repeats the current text wherever the two agree and carries that build's own wording where they do not — so the answer is on every row instead of in a table at the top. **New text stays empty**; nothing is pre-filled, because a pre-filled row is a queued change nobody asked for.
+- **⚠️ The difference runs BOTH ways, and only one direction was visible.** 22 strings here are not in that build; **23 strings in that build are not here** — the three Theme captions, the whole Help Icon block, the Branding section headings, Company and Portal URL, and the Global Setting gear with its drawer subtitle. Those now appear as their own rows in the area they belong to, marked "— not in this project —". Every one was checked against that build's bundle rather than assumed.
+- **⚠️ `value` came out of the content-key list.** In this codebase a `value:` is the option's internal key — `home`, `kpi`, `stacked` — while the words on screen are the `label` beside it. Admitting it put 80 identifiers into the file that nobody could usefully rewrite.
+- **The two scripts now run anywhere:** paths come from `process.cwd()` and `os.tmpdir()` instead of one machine's drive, and the extractor says so in its header. `node scripts/extract-portal-copy.mjs && node scripts/build-portal-content.mjs` regenerates the file, so it can be refreshed after the code moves on instead of going stale.
+- **Verified:** 2,002 rows, every one six columns wide, every ID unique. Regenerated end to end from a clean run of both scripts.
+
 ## Parked — needs discussion
 - Tour guide
 - AI capabilities
