@@ -928,6 +928,27 @@ function HeroArtwork() {
 
 /* ── Cards ───────────────────────────────────────────────────────────────── */
 
+/* The spine colour per card, for the templates that use the spine treatment.
+ *
+ * ⚠️ Mapped by card ID, not by index or by row position. A colour that moved when the admin
+ * reordered the row would be decoration; keyed to the card it names a KIND — blue is your work,
+ * amber is waiting on you, green is something to read — and it stays that whatever position the
+ * card is dragged to.
+ * ⚠️ These are the product's own status hues, not new ones: the same blue the ID pills use, the
+ * same amber a Pending badge wears, the same green a healthy state gets. A fresh palette here
+ * would have been a second colour language on a page that already has one. */
+const SPINE: Record<string, string> = {
+  requests: '#3D8BD0',
+  approvals: '#F58518',
+  knowledge: '#22A06B',
+  news: '#8B5CF6',
+  assets: '#0EA5E9',
+  cis: '#6366F1',
+  contact: '#64748B',
+  favourites: '#F59E0B',
+  services: '#14B8A6',
+};
+
 /* The list-card header: title, optional count, optional "View all".
  *
  * Every switch here comes from the widget's own config, so unticking "Show total count" in the
@@ -1140,10 +1161,37 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
      The banner falls back to its COLOUR here rather than being blanked: a transparent band would
      drop the search field onto the artwork with no contrast guarantee at all, which is the one thing
      `portalContrast` exists to prevent. The panel says this will happen before it happens. */
+/* ── Template LOOKS ──────────────────────────────────────────────────────────
+   Three keys, and every one of them is a decision a template makes about the whole page rather
+   than a colour. They live in config, so a template stays a preset — see the note on the seed —
+   and the panel can expose them later without any of this moving.
+
+   ⚠️ Deliberately NOT a "theme". A theme changes hue and typeface; these change SHAPE — where the
+   search lives, what a card is made of, what the banner is. That is the difference between a
+   recolour and a template, and the first pass at Spotlight got it wrong by only doing the former. */
+  /* Where the search sits. `floating` lifts it OUT of the banner and lands it across the bottom
+     edge, half on the colour and half on the page — so the field reads as the page's subject
+     rather than as furniture inside a picture, and it is the first thing under the fold too. */
+  const searchFloats = String(wc('hero').searchPlacement ?? 'in-banner') === 'floating';
+  /* What a card is. `spine` drops the hairline box for a tinted panel with a coloured edge — the
+     colour names the KIND of card at a glance, which a page of identical white boxes cannot do. */
+  const cardLook = String(pageCfg.cardLook ?? 'panel');
+  const spineCards = cardLook === 'spine';
+
   const heroBg: React.CSSProperties = pageImage
     ? { backgroundColor: String(heroCfg.bannerColor ?? '#3D8BD0'), backgroundImage: 'none' }
     : heroCfg.bgKind === 'color'
-    ? { backgroundColor: String(heroCfg.bannerColor ?? '#3D8BD0'), backgroundImage: 'none' }
+    /* ⚠️ A flat fill and a GRADIENT fill are the same "Colour" tab, one key apart. A second tab
+       would have made the admin choose a kind before choosing a colour, when the colour is the
+       thing they came to set — so `bannerStyle` sits beside it and deepens the same value.
+       The glow is a radial highlight offset to the upper left, which is what keeps a large flat
+       band from reading as a printed rectangle. */
+    ? (String(heroCfg.bannerStyle ?? 'flat') === 'gradient'
+      ? {
+        backgroundColor: String(heroCfg.bannerColor ?? '#3D8BD0'),
+        backgroundImage: `radial-gradient(120% 140% at 18% 0%, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0) 55%), linear-gradient(135deg, ${String(heroCfg.bannerColor ?? '#3D8BD0')} 0%, #0B1B3F 100%)`,
+      }
+      : { backgroundColor: String(heroCfg.bannerColor ?? '#3D8BD0'), backgroundImage: 'none' })
     : heroImg
       ? {
         backgroundImage: heroShade > 0
@@ -1296,14 +1344,27 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
        difference read as a state rather than as a kind. The contrast the tiles need comes from
        filling the TILES instead — see `RecordTiles` — which keeps one card treatment for everything
        and still separates the items inside these two. */
+    /* ⚠️ ONE card treatment for the whole page, chosen by the template. The alternative — letting
+       each card pick — is the two-card-languages problem the note above already records: a
+       difference between cards reads as a STATE ("this one is selected/urgent") rather than as a
+       kind, and nobody can tell you which. */
     <Sel
       id={id}
-      className="min-w-0 rounded-xl border border-[#E5E7EB] bg-white"
+      className={spineCards
+        ? 'min-w-0 overflow-hidden rounded-[14px] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04),0_8px_24px_-12px_rgba(16,24,40,0.14)]'
+        : 'min-w-0 rounded-xl border border-[#E5E7EB] bg-white'}
       style={{ ...(cols ? share(cols, gap, grow) : {}), ...(look?.full ? { gridColumn: '1 / -1' } : {}), order }}
     >
       {/* No overflow-hidden: a card must be free to grow past a dragged height rather than clip
-          its own rows. The radius is on the Sel wrapper, which keeps the corners. */}
-      <div style={st(id)} className="rounded-xl">{body}</div>
+          its own rows. The radius is on the Sel wrapper, which keeps the corners.
+          ⚠️ The spine is a LEFT BORDER on this inner box, not a pseudo-element or an absolute bar:
+          it has to survive a dragged height and a card that grows past it, and a border is the one
+          thing that always runs the full height of what it is on. Its colour comes from the card's
+          own id, so the kind of card is legible before a word is read. */}
+      <div
+        style={{ ...(spineCards ? { borderLeft: `3px solid ${SPINE[id] ?? '#3D8BD0'}` } : {}), ...st(id) }}
+        className={spineCards ? 'rounded-[14px]' : 'rounded-xl'}
+      >{body}</div>
     </Sel>
   );
 
@@ -1395,7 +1456,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                 pushed its own content further off centre, which is the opposite of what raising the
                 height is for. */}
             <div
-              className="relative flex flex-col justify-center overflow-hidden pb-[86px]"
+              className={`relative flex flex-col justify-center pb-[86px] ${searchFloats ? 'overflow-visible' : 'overflow-hidden'}`}
               style={{
                 /* ⚠️ The tabs decide, in one place. Image wins when one is uploaded; Colour paints
                    flat; and with neither the band keeps its gradient, so a portal nobody has touched
@@ -1416,7 +1477,11 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
             >
               {/* The decorative line-work belongs to the DEFAULT band. Over a chosen colour it reads
                   as dirt on the colour, and over a photograph as a scratch on the photograph. */}
-              {heroCfg.bgKind !== 'color' && !heroImg && <HeroArtwork />}
+              {/* ⚠️ Its own clip. The band drops `overflow-hidden` while the search floats, so the
+                  decorative line-work would otherwise run past the banner and across the page. */}
+              {heroCfg.bgKind !== 'color' && !heroImg && (
+                <span className="pointer-events-none absolute inset-0 overflow-hidden"><HeroArtwork /></span>
+              )}
               {/* ⚠️ FULL WIDTH. The block used to be capped at 70% and centred with auto margins,
                   which meant a heading aligned left landed at the left edge of that centred column —
                   15% in from the banner — and no setting could reach the banner's own edges. The cap
@@ -1449,7 +1514,11 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                     {String(wc('hero').sub ?? content.hero.subtitle)}
                   </p>
                 </Sel>
-                {wc('hero').showSearch !== false && (
+                {/* ⚠️ Rendered here ONLY while it belongs to the banner. When it floats it is the
+                    same `Sel`, the same id and the same config — moved, not duplicated, because two
+                    search bars in the tree would be two things to keep in step and one of them
+                    would eventually be edited while the other showed. */}
+                {wc('hero').showSearch !== false && !searchFloats && (
                   <Sel
                     id="hero-search"
                     className="mt-5 w-full"
@@ -1463,6 +1532,38 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                   </Sel>
                 )}
               </div>
+              {/* ⚠️ INSIDE the band and pinned to its bottom edge with a negative margin, so half
+                  the field sits on the colour and half on the page. Placed after the text block and
+                  outside its padded column, because it is no longer part of the sentence above it —
+                  it is the page's own control, resting on the banner. */}
+              {/* ⚠️ ABSOLUTE against the band's bottom edge and pulled down by half its own height,
+                  rather than a negative margin in the flow. In the flow it sat above the band's
+                  86px of reserved bottom padding — measured 96px clear of the edge, which is not
+                  straddling anything, it is just a search bar low in a banner. Anchoring it to the
+                  edge makes the effect independent of whatever padding the band is carrying.
+                  ⚠️ Needs `overflow-visible` on the band above, or the half hanging out is clipped
+                  off and the whole idea silently becomes an inset field again. */}
+              {wc('hero').showSearch !== false && searchFloats && (
+                <div className="absolute inset-x-0 bottom-0 z-20 w-full translate-y-1/2 px-6">
+                  <Sel
+                    id="hero-search"
+                    className="block w-full"
+                    style={{ maxWidth: `${Number(wc('hero').searchWidth ?? 70)}%`, marginLeft: 'auto', marginRight: 'auto' }}
+                  >
+                    <HeroSearch
+                      cfg={wc('hero')}
+                      fallback={content.hero.placeholder}
+                      style={{
+                        borderRadius: Number(wc('hero').searchRadius ?? 4),
+                        /* The shadow is what makes it read as lifted off the banner rather than cut
+                           into it. Tight and low-opacity — a heavy one would look like a modal. */
+                        boxShadow: '0 12px 28px -8px rgba(11,27,63,0.35), 0 2px 6px rgba(11,27,63,0.12)',
+                        ...st('hero-search'),
+                      }}
+                    />
+                  </Sel>
+                </div>
+              )}
             </div>
           </Sel>
 
@@ -1478,7 +1579,10 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
             {/* ── Quick actions ── */}
             {/* ⚠️ The hero overlap is the ONE margin that survives: it is a relationship with the
                 banner above it, not spacing of its own, and it only applies while the row is first. */}
-            <Sel id="quick" className={`relative z-10 ${SECTION_PAD} ${blockOrder.indexOf("quick") === 0 ? "-mt-[62px]" : ""}`} style={{ order: slot("quick"), ...fillCss(wc('quick')) }}>
+            {/* ⚠️ The 62px climb is dropped when the search floats. Two things cannot occupy the
+                banner's bottom edge — the cards would land on top of the field, and the one control
+                the template is built around would be the thing that got covered. */}
+            <Sel id="quick" className={`relative z-10 ${SECTION_PAD} ${blockOrder.indexOf("quick") === 0 && !searchFloats ? "-mt-[62px]" : ""} ${searchFloats ? "pt-[52px]" : ""}`} style={{ order: slot("quick"), ...fillCss(wc('quick')) }}>
               <RowDrop rowId="quick" resize={secResize("quick")} className={`flex flex-wrap${secPacked("quick", 4) ? " portal-row-packed" : ""}`} style={{ gap: secGap("quick"), ...secBox("quick", 4), ...rowFits(inRow("quick"), "quick"), ...secGrid("quick", 4) }}>
                 {quickCards.map((a) => {
                   const c = wc(a.id);
@@ -1520,7 +1624,18 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                            bottom. An inline side beats the class on its own edge and leaves the
                            other three resting where they were, which is what "set one side" means. */
                         style={{ ...st(a.id), ...fillCss(c), ...padCss(a.id), minHeight: Number(c.minHeight) || undefined }}
-                        className={`flex h-full gap-3 rounded-lg border border-[#E5E7EB] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_4px_12px_rgba(16,24,40,0.06)] @max-[230px]:gap-2 @max-[230px]:p-3 ${
+                        /* ⚠️ The action cards follow the PAGE's card look too. Left on the hairline
+                           treatment while the record cards below had gone borderless, the page ended
+                           up with two card languages one band apart — which is the exact fault the
+                           note in `cardInner` warns about, committed by the template that quoted it.
+                           ⚠️ No SPINE on these, though. A spine names a kind of record; an action
+                           card is a destination, and colouring four of them in four hues would be
+                           inventing a taxonomy the product does not have. Same surface, no stripe. */
+                        className={`flex h-full gap-3 p-4 @max-[230px]:gap-2 @max-[230px]:p-3 ${
+                          spineCards
+                            ? 'rounded-[14px] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04),0_8px_24px_-12px_rgba(16,24,40,0.14)]'
+                            : 'rounded-lg border border-[#E5E7EB] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04),0_4px_12px_rgba(16,24,40,0.06)]'
+                        } ${
                           top ? 'flex-col' : iconRight ? 'flex-row-reverse items-center' : 'items-center'
                         } ${centre ? 'items-center text-center' : ''}`}
                       >

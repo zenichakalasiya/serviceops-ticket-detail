@@ -132,19 +132,34 @@ export const PORTAL_TEMPLATES: PortalTemplate[] = [
       cfg: {
         hero: {
           heading: 'What do you need help with?',
-          sub: 'Search our knowledge base, or start a request below.',
+          sub: 'Search the knowledge base, or start a request below.',
           searchPlaceholder: 'Describe your issue — “VPN not connecting”',
-          height: 340,
+          /* ⚠️ SHORTER than the default 260, not taller. The first pass made it 340 and centred the
+             text in it, which put a third of the first viewport into empty colour — the banner was
+             the biggest thing on a page whose subject is a text field. It is a backdrop now. */
+          height: 210,
           bgKind: 'color',
+          /* Deepened by the gradient into #0B1B3F, with a soft highlight off the top-left. A large
+             flat rectangle of one colour reads as printed; the falloff is what gives it a light
+             source and keeps the white field on top of it looking lit rather than pasted. */
+          bannerStyle: 'gradient',
           bannerColor: '#1E3A8A',
           headingColor: '#FFFFFF',
-          searchWidth: 52,
-          /* A pill. The one control on the page that should not look like the others. */
+          /* ⚠️ The search LEAVES the banner and lands across its bottom edge. This is the template's
+             real idea: in the default portal the field is furniture inside a picture, and here it is
+             the page's own control resting on one. Wider and pill-shaped, because it is now the
+             largest object above the fold and should look like the thing to use. */
+          searchPlacement: 'floating',
+          searchWidth: 64,
           searchRadius: 999,
           contentAlign: 'center',
         },
         quick: { cols: '4', hasCards: true },
         work: { cols: '3' },
+        /* ⚠️ A PAGE-level choice, not a per-card one. One card treatment for everything on the page
+           — see the note in `cardInner`: a difference between two cards reads as a state rather
+           than as a kind. */
+        page: { cardLook: 'spine' },
       },
     },
   },
