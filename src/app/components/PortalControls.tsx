@@ -919,8 +919,13 @@ export function ImageUploadZone({
   );
 }
 
-export function UploadZone({ value, onChange, accept = 'image/*', label, gallery, suggested }: {
+export function UploadZone({ value, onChange, accept = 'image/*', label, gallery, suggested, noun }: {
   value?: string; onChange: (dataUrl?: string) => void; accept?: string;
+  /* ⚠️ What is in the slot, so the filled CTA can NAME it — "Replace logo", not "Replace". A slot
+     that already shows a picture has no need to be told a picture is there; what it has to say is
+     which of the page's images this button is about, because the panel it sits in is scrolled to
+     and read out of context. Left off, the button stays the generic word. */
+  noun?: string;
   /** The size that fits this slot — see the note on `ImageUploadZone`. */
   suggested?: string;
   /* ⚠️ Names the SLOT for screen readers — "Upload logo image", not "Upload". The zone below is a
@@ -966,7 +971,7 @@ export function UploadZone({ value, onChange, accept = 'image/*', label, gallery
           <button
             onClick={() => ref.current?.click()}
             className="inline-flex h-8 flex-1 items-center justify-center gap-1.5 rounded border border-[#DFE5ED] bg-white text-[12px] font-medium text-[#364658] transition-colors hover:border-[#3D8BD0] hover:text-[#3D8BD0]"
-          ><Upload size={13} /> Replace</button>
+          ><Upload size={13} /> {noun ? `Replace ${noun}` : 'Replace'}</button>
           {/* ⚠️ No Remove. Every one of these slots is filled because something has to be there — a
               logo, a banner, an icon — so swapping is the whole job and a destructive button sat
               next to the common action for no one's benefit. Emptying a slot is still reachable
@@ -990,7 +995,7 @@ export function UploadZone({ value, onChange, accept = 'image/*', label, gallery
       {/* ⚠️ The ONE zone. This used to be its own dashed box with its own icon and its own
           sentence; it is now the same component the canvas and the icon picker draw, so the three
           can no longer disagree about what an empty image slot looks like. */}
-      <ImageUploadZone onFile={onChange} accept={accept} label={label ?? 'Upload an image'} suggested={suggested} />
+      <ImageUploadZone onFile={onChange} accept={accept} label={label ?? (noun ? `Upload ${noun}` : 'Upload an image')} suggested={suggested} />
     </>
   );
 }

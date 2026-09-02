@@ -17,7 +17,10 @@
  * date" is meaningless on a Request, so a module carries its own of both and switching module drops
  * a filter that no longer means anything (see the `consequence` on the Module field). */
 
-export type FilterKind = 'text' | 'choice' | 'person' | 'date' | 'tags';
+/* ⚠️ `number` earns its own kind rather than being a text field. A view count compared with
+   "Contains" is nonsense; the operators that make sense on it — greater than, less than — make
+   sense on nothing else here, and operators hang off the kind. */
+export type FilterKind = 'text' | 'choice' | 'person' | 'date' | 'tags' | 'number';
 
 export interface FilterField {
   key: string;
@@ -110,6 +113,7 @@ export const OPERATORS: Record<FilterKind, string[]> = {
   person: ['In', 'Not In'],
   date: ['Equals'],
   tags: ['Match Any', 'Match All'],
+  number: ['Greater than', 'Less than', 'Equals'],
 };
 
 export const DATE_PRESETS = ['Overdue', 'Today', 'Tomorrow', 'This Week', 'This Month', 'Custom'];
@@ -119,6 +123,14 @@ export const DATE_PRESETS = ['Overdue', 'Today', 'Tomorrow', 'This Week', 'This 
  * ⚠️ `Unassigned` is first and is not a person — it is the state of having no person, which is what
  * "Unassigned Requests in My Group" filters on, so it has to be selectable like any other value. */
 export const UNASSIGNED = 'Unassigned';
+
+/* ── who a requester-facing view is about ────────────────────────────────────
+ *
+ * ⚠️ NOT "Assigned to me". The technician presets above this line are read by somebody who works
+ * the queue, so "me" means the person the record is assigned to. On a support portal the reader is
+ * the person who RAISED it, and a view called "My Open Requests" has to mean theirs — the same two
+ * words pointing at two different people is exactly the confusion this string exists to prevent. */
+export const REQUESTER_SCOPE = 'The signed-in requester';
 
 export const PEOPLE: { name: string; email: string }[] = [
   { name: 'Kavit Gohel', email: 'kavit.gohel@motadata.com' },
@@ -153,6 +165,11 @@ export const TAG_SUGGESTIONS = ['vip', 'onboarding', 'hardware', 'network', 'sec
  * that module genuinely has — a Change has a risk and a window, an Asset has neither. */
 
 const PRIORITY = ['Urgent', 'High', 'Medium', 'Low'];
+/* Declared once. Three modules offered the same five categories and the same four groups, and three
+   copies of a list is three chances for one of them to fall behind the other two. */
+const CATEGORY = ['Hardware', 'Software', 'Network', 'Access', 'Other'];
+const TECH_GROUPS = ['Service Desk', 'Network', 'End User Computing', 'Application Support'];
+const VENDORS = ['Dell', 'HP', 'Lenovo', 'Microsoft', 'Cisco'];
 const COMMON_PEOPLE = (): FilterField[] => [
   { key: 'requester', label: 'Requester', kind: 'person' },
   { key: 'createdBy', label: 'Created By', kind: 'person' },
@@ -161,82 +178,109 @@ const COMMON_PEOPLE = (): FilterField[] => [
 
 export const FILTER_FIELDS: Record<string, FilterField[]> = {
   request: [
-    { key: 'id', label: 'ID', kind: 'text' },
+    { key: 'id', label: 'Request ID', kind: 'text' },
     { key: 'subject', label: 'Subject', kind: 'text' },
-    { key: 'template', label: 'Request Template', kind: 'choice', options: ['New Laptop', 'Access Request', 'Password Reset', 'On-boarding'] },
+    { key: 'type', label: 'Request Type', kind: 'choice', options: ['Service Request', 'Incident'] },
     { key: 'status', label: 'Status', kind: 'choice' },
-    { key: 'approvalStatus', label: 'Approval Status', kind: 'choice', options: ['Not Requested', 'Pending', 'Approved', 'Rejected'] },
-    { key: 'vendor', label: 'Vendor', kind: 'choice', options: ['Dell', 'HP', 'Lenovo', 'Microsoft', 'Cisco'] },
-    ...COMMON_PEOPLE(),
     { key: 'priority', label: 'Priority', kind: 'choice', options: PRIORITY },
-    { key: 'impact', label: 'Impact', kind: 'choice', options: ['On Multiple Users', 'On Business', 'On User'] },
-    { key: 'source', label: 'Source', kind: 'choice', options: ['Portal', 'Email', 'Phone', 'Chat', 'Walk-in'] },
     { key: 'urgency', label: 'Urgency', kind: 'choice', options: ['Urgent', 'High', 'Medium', 'Low'] },
+    { key: 'impact', label: 'Impact', kind: 'choice', options: ['On Multiple Users', 'On Business', 'On User'] },
+    { key: 'category', label: 'Category', kind: 'choice', options: CATEGORY },
+    { key: 'subcategory', label: 'Subcategory', kind: 'choice', options: ['Laptop', 'Desktop', 'Printer', 'VPN', 'Email', 'Licence'] },
+    { key: 'requester', label: 'Requester', kind: 'person' },
+    { key: 'assignee', label: 'Technician', kind: 'person' },
+    { key: 'technicianGroup', label: 'Technician Group', kind: 'choice', options: TECH_GROUPS },
+    { key: 'createdBy', label: 'Created By', kind: 'person' },
+    { key: 'lastUpdatedBy', label: 'Last Updated By', kind: 'person' },
+    { key: 'template', label: 'Request Template', kind: 'choice', options: ['New Laptop', 'Access Request', 'Password Reset', 'On-boarding'] },
+    { key: 'approvalStatus', label: 'Approval Status', kind: 'choice', options: ['Not Requested', 'Pending', 'Approved', 'Rejected'] },
+    { key: 'source', label: 'Source', kind: 'choice', options: ['Portal', 'Email', 'Phone', 'Chat', 'Walk-in'] },
+    { key: 'vendor', label: 'Vendor', kind: 'choice', options: VENDORS },
+    { key: 'createdAt', label: 'Created Date', kind: 'date' },
+    { key: 'updatedAt', label: 'Last Updated Date', kind: 'date' },
     { key: 'dueBy', label: 'Due By', kind: 'date' },
     { key: 'firstResponseDueBy', label: 'First Response Due By', kind: 'date' },
-    { key: 'assignee', label: 'Assignee', kind: 'person' },
-    { key: 'technicianGroup', label: 'Technician Group', kind: 'choice', options: ['Service Desk', 'Network', 'End User Computing', 'Application Support'] },
-    { key: 'category', label: 'Category', kind: 'choice', options: ['Hardware', 'Software', 'Network', 'Access', 'Other'] },
-    { key: 'type', label: 'Type', kind: 'choice', options: ['Service Request', 'Incident'] },
+    { key: 'resolvedAt', label: 'Resolved Date', kind: 'date' },
+    { key: 'closedAt', label: 'Closed Date', kind: 'date' },
     { key: 'tags', label: 'Tags', kind: 'tags' },
   ],
   problem: [
-    { key: 'id', label: 'ID', kind: 'text' },
+    { key: 'id', label: 'Problem ID', kind: 'text' },
     { key: 'subject', label: 'Subject', kind: 'text' },
     { key: 'status', label: 'Status', kind: 'choice' },
     { key: 'priority', label: 'Priority', kind: 'choice', options: PRIORITY },
     { key: 'rootCause', label: 'Root Cause', kind: 'choice', options: ['Identified', 'Under Analysis', 'Not Identified'] },
     ...COMMON_PEOPLE(),
-    { key: 'assignee', label: 'Assignee', kind: 'person' },
-    { key: 'category', label: 'Category', kind: 'choice', options: ['Hardware', 'Software', 'Network', 'Access', 'Other'] },
+    { key: 'assignee', label: 'Technician', kind: 'person' },
+    { key: 'category', label: 'Category', kind: 'choice', options: CATEGORY },
+    { key: 'createdAt', label: 'Created Date', kind: 'date' },
     { key: 'dueBy', label: 'Due By', kind: 'date' },
     { key: 'tags', label: 'Tags', kind: 'tags' },
   ],
   change: [
-    { key: 'id', label: 'ID', kind: 'text' },
+    { key: 'id', label: 'Change ID', kind: 'text' },
     { key: 'subject', label: 'Subject', kind: 'text' },
-    { key: 'status', label: 'Status', kind: 'choice' },
     { key: 'changeType', label: 'Change Type', kind: 'choice', options: ['Standard', 'Normal', 'Emergency'] },
+    { key: 'status', label: 'Status', kind: 'choice' },
     { key: 'risk', label: 'Risk', kind: 'choice', options: ['High', 'Medium', 'Low'] },
     { key: 'approvalStatus', label: 'Approval Status', kind: 'choice', options: ['Pending', 'Approved', 'Rejected'] },
-    ...COMMON_PEOPLE(),
-    { key: 'assignee', label: 'Assignee', kind: 'person' },
+    { key: 'requester', label: 'Requester', kind: 'person' },
+    { key: 'assignee', label: 'Technician', kind: 'person' },
+    { key: 'technicianGroup', label: 'Technician Group', kind: 'choice', options: TECH_GROUPS },
+    { key: 'createdBy', label: 'Created By', kind: 'person' },
+    { key: 'lastUpdatedBy', label: 'Last Updated By', kind: 'person' },
+    { key: 'createdAt', label: 'Created Date', kind: 'date' },
+    { key: 'updatedAt', label: 'Last Updated Date', kind: 'date' },
     { key: 'plannedStart', label: 'Planned Start Date', kind: 'date' },
+    { key: 'plannedEnd', label: 'Planned End Date', kind: 'date' },
+    { key: 'actualStart', label: 'Actual Start Date', kind: 'date' },
+    { key: 'actualEnd', label: 'Actual End Date', kind: 'date' },
     { key: 'tags', label: 'Tags', kind: 'tags' },
   ],
   release: [
-    { key: 'id', label: 'ID', kind: 'text' },
+    { key: 'id', label: 'Release ID', kind: 'text' },
     { key: 'subject', label: 'Subject', kind: 'text' },
     { key: 'status', label: 'Status', kind: 'choice' },
     { key: 'releaseType', label: 'Release Type', kind: 'choice', options: ['Major', 'Minor', 'Patch', 'Emergency'] },
     ...COMMON_PEOPLE(),
-    { key: 'assignee', label: 'Assignee', kind: 'person' },
+    { key: 'assignee', label: 'Technician', kind: 'person' },
+    { key: 'createdAt', label: 'Created Date', kind: 'date' },
     { key: 'goLive', label: 'Go-Live Date', kind: 'date' },
     { key: 'tags', label: 'Tags', kind: 'tags' },
   ],
   asset: [
-    { key: 'id', label: 'ID', kind: 'text' },
-    { key: 'name', label: 'Name', kind: 'text' },
-    { key: 'status', label: 'Status', kind: 'choice' },
+    { key: 'name', label: 'Asset Name', kind: 'text' },
+    { key: 'id', label: 'Asset ID', kind: 'text' },
     { key: 'assetType', label: 'Asset Type', kind: 'choice', options: ['Laptop', 'Desktop', 'Mobile', 'Monitor', 'Headset', 'Printer'] },
-    { key: 'usedBy', label: 'Used By', kind: 'person' },
-    { key: 'managedBy', label: 'Managed By', kind: 'person' },
+    { key: 'product', label: 'Product', kind: 'choice', options: ['Latitude 5440', 'UltraSharp U2723QE', 'MX Master 3S', 'Evolve2 65', 'iPhone 14'] },
+    { key: 'status', label: 'Asset Status', kind: 'choice' },
+    { key: 'usedBy', label: 'User', kind: 'person' },
+    ...COMMON_PEOPLE(),
     { key: 'location', label: 'Location', kind: 'choice', options: ['Ahmedabad', 'Pune', 'Bengaluru', 'Remote'] },
+    { key: 'acquisitionDate', label: 'Acquisition Date', kind: 'date' },
     { key: 'warrantyExpiry', label: 'Warranty Expiry', kind: 'date' },
+    { key: 'createdAt', label: 'Created Date', kind: 'date' },
+    { key: 'updatedAt', label: 'Last Updated Date', kind: 'date' },
+    { key: 'manufacturer', label: 'Manufacturer', kind: 'choice', options: ['Dell', 'HP', 'Lenovo', 'Apple', 'Logitech', 'Jabra'] },
+    { key: 'model', label: 'Model', kind: 'text' },
     { key: 'tags', label: 'Tags', kind: 'tags' },
   ],
   ci: [
-    { key: 'id', label: 'ID', kind: 'text' },
-    { key: 'name', label: 'Name', kind: 'text' },
-    { key: 'status', label: 'Status', kind: 'choice' },
+    { key: 'name', label: 'CI Name', kind: 'text' },
+    { key: 'id', label: 'CI ID', kind: 'text' },
     { key: 'ciType', label: 'CI Type', kind: 'choice', options: ['Server', 'Application', 'Switch', 'Windows Laptop', 'Mac Laptop', 'Mobile Device'] },
-    { key: 'usedBy', label: 'Used By', kind: 'person' },
-    { key: 'managedBy', label: 'Managed By', kind: 'person' },
+    { key: 'ciClass', label: 'CI Class', kind: 'choice', options: ['Hardware', 'Software', 'Network', 'Business Service'] },
+    { key: 'status', label: 'Status', kind: 'choice' },
+    { key: 'usedBy', label: 'User', kind: 'person' },
+    ...COMMON_PEOPLE(),
     { key: 'environment', label: 'Environment', kind: 'choice', options: ['Production', 'Staging', 'Development'] },
+    { key: 'asset', label: 'Asset', kind: 'text' },
+    { key: 'createdAt', label: 'Created Date', kind: 'date' },
+    { key: 'updatedAt', label: 'Last Updated Date', kind: 'date' },
     { key: 'tags', label: 'Tags', kind: 'tags' },
   ],
   patch: [
-    { key: 'id', label: 'ID', kind: 'text' },
+    { key: 'id', label: 'Patch ID', kind: 'text' },
     { key: 'name', label: 'Name', kind: 'text' },
     { key: 'status', label: 'Status', kind: 'choice' },
     { key: 'severity', label: 'Severity', kind: 'choice', options: ['Critical', 'Important', 'Moderate', 'Low'] },
@@ -254,20 +298,46 @@ export const FILTER_FIELDS: Record<string, FilterField[]> = {
     { key: 'published', label: 'Published Date', kind: 'date' },
   ],
   approval: [
-    { key: 'id', label: 'ID', kind: 'text' },
+    { key: 'id', label: 'Approval ID', kind: 'text' },
+    { key: 'itemId', label: 'Request / Item ID', kind: 'text' },
     { key: 'subject', label: 'Subject', kind: 'text' },
-    { key: 'status', label: 'Status', kind: 'choice' },
-    { key: 'requester', label: 'Requested By', kind: 'person' },
+    { key: 'status', label: 'Approval Status', kind: 'choice' },
+    { key: 'approvalType', label: 'Approval Type', kind: 'choice', options: ['Everyone', 'Anyone', 'Sequential'] },
     { key: 'approver', label: 'Approver', kind: 'person' },
-    { key: 'requestedOn', label: 'Requested On', kind: 'date' },
+    { key: 'module', label: 'Module', kind: 'choice', options: ['Request', 'Change', 'Purchase', 'Contract'] },
+    { key: 'type', label: 'Request Type', kind: 'choice', options: ['Service Request', 'Incident'] },
+    { key: 'priority', label: 'Priority', kind: 'choice', options: PRIORITY },
+    { key: 'createdAt', label: 'Created Date', kind: 'date' },
+    { key: 'approvalDate', label: 'Approval Date', kind: 'date' },
+    { key: 'updatedAt', label: 'Last Updated Date', kind: 'date' },
+  ],
+  /* ⚠️ Knowledge is the one module here a requester READS rather than owns, which is why it is the
+     only one whose views carry no scope: "Recently Published" is the same list for everybody. */
+  knowledge: [
+    { key: 'id', label: 'Article ID', kind: 'text' },
+    { key: 'name', label: 'Title', kind: 'text' },
+    { key: 'summary', label: 'Summary', kind: 'text' },
+    { key: 'category', label: 'Category', kind: 'choice', options: ['Guideline Documents', 'FAQs', 'How-to', 'Troubleshooting'] },
+    { key: 'subcategory', label: 'Subcategory', kind: 'choice', options: ['Account', 'Network', 'Hardware', 'Software'] },
+    { key: 'knowledgeType', label: 'Knowledge Type', kind: 'choice', options: ['Article', 'FAQ', 'Known Error', 'Solution'] },
+    { key: 'status', label: 'Status', kind: 'choice' },
+    { key: 'visibility', label: 'Visibility', kind: 'choice', options: ['Public', 'Logged-in Requesters', 'Internal'] },
+    { key: 'publishedAt', label: 'Published Date', kind: 'date' },
+    { key: 'createdAt', label: 'Created Date', kind: 'date' },
+    { key: 'updatedAt', label: 'Last Updated Date', kind: 'date' },
+    { key: 'viewCount', label: 'View Count', kind: 'number' },
   ],
   task: [
-    { key: 'id', label: 'ID', kind: 'text' },
-    { key: 'subject', label: 'Subject', kind: 'text' },
+    { key: 'id', label: 'Task ID', kind: 'text' },
+    { key: 'name', label: 'Task Name', kind: 'text' },
+    { key: 'project', label: 'Project', kind: 'choice', options: ['Office 365 Migration', 'Data Centre Move', 'Laptop Refresh 2026', 'On-boarding Automation'] },
     { key: 'status', label: 'Status', kind: 'choice' },
     { key: 'priority', label: 'Priority', kind: 'choice', options: PRIORITY },
     { key: 'assignee', label: 'Assignee', kind: 'person' },
-    { key: 'dueBy', label: 'Due By', kind: 'date' },
+    { key: 'startDate', label: 'Start Date', kind: 'date' },
+    { key: 'dueBy', label: 'Due Date', kind: 'date' },
+    { key: 'createdAt', label: 'Created Date', kind: 'date' },
+    { key: 'completedAt', label: 'Completed Date', kind: 'date' },
     { key: 'tags', label: 'Tags', kind: 'tags' },
   ],
 };
@@ -281,8 +351,20 @@ export const FILTER_FIELDS: Record<string, FilterField[]> = {
  * builder to evaluate and the preview shows the status half. */
 const st = (op: string, ...values: string[]): Condition => ({ field: 'status', op, values });
 
+/* ⚠️ The REQUESTER views come first in every module, and the technician ones follow. This list is
+   read inside a support-portal builder, where the reader is building a page for the person who
+   RAISED the record — "My Open Requests" has to be theirs. The technician sets stay because an
+   admin may genuinely want a queue view on an internal page, but they are no longer what the
+   dropdown opens on.
+   ⚠️ Their scope is `REQUESTER_SCOPE`, never "Assigned to me". Same two words, different person. */
 export const FILTER_PRESETS: Record<string, PresetFilter[]> = {
   request: [
+    { id: 'all-mine', name: 'All My Requests', conditions: [], scope: REQUESTER_SCOPE },
+    { id: 'mine-open', name: 'My Open Requests', conditions: [st('In', 'Open', 'In Progress', 'On Hold')], scope: REQUESTER_SCOPE },
+    { id: 'mine-pending', name: 'My Pending Requests', conditions: [st('In', 'Pending')], scope: REQUESTER_SCOPE },
+    { id: 'mine-resolved', name: 'My Resolved Requests', conditions: [st('In', 'Resolved')], scope: REQUESTER_SCOPE },
+    { id: 'mine-closed', name: 'My Closed Requests', conditions: [st('In', 'Closed')], scope: REQUESTER_SCOPE },
+    { id: 'mine-high-priority', name: 'My High Priority Requests', conditions: [{ field: 'priority', op: 'In', values: ['Urgent', 'High'] }, st('Not In', 'Resolved', 'Closed')], scope: REQUESTER_SCOPE },
     { id: 'all-open', name: 'All Open Requests', conditions: [st('Not In', 'Resolved', 'Closed')] },
     { id: 'my-urgent', name: 'My Urgent or High Priority Requests', conditions: [st('Not In', 'Resolved', 'Closed'), { field: 'priority', op: 'In', values: ['Urgent', 'High'] }], scope: 'Assigned to me' },
     { id: 'my-overdue', name: 'My Overdue Requests', conditions: [st('Not In', 'Resolved', 'Closed'), { field: 'dueBy', op: 'Equals', values: ['Overdue'] }], scope: 'Assigned to me' },
@@ -304,6 +386,9 @@ export const FILTER_PRESETS: Record<string, PresetFilter[]> = {
     { id: 'all', name: 'All Problems', conditions: [] },
   ],
   change: [
+    { id: 'mine', name: 'My Changes', conditions: [], scope: REQUESTER_SCOPE },
+    { id: 'mine-active', name: 'My Active Changes', conditions: [st('Not In', 'Implemented', 'Closed')], scope: REQUESTER_SCOPE },
+    { id: 'mine-completed', name: 'My Completed Changes', conditions: [st('In', 'Implemented', 'Closed')], scope: REQUESTER_SCOPE },
     { id: 'all-open', name: 'All Open Changes', conditions: [st('Not In', 'Implemented', 'Closed')] },
     { id: 'awaiting-approval', name: 'Changes Awaiting My Approval', conditions: [st('In', 'Submitted')] },
     { id: 'scheduled', name: 'Scheduled Changes', conditions: [st('In', 'Scheduled')] },
@@ -318,7 +403,8 @@ export const FILTER_PRESETS: Record<string, PresetFilter[]> = {
     { id: 'all', name: 'All Releases', conditions: [] },
   ],
   asset: [
-    { id: 'my-assets', name: 'My Assets', conditions: [], scope: 'Used by me' },
+    { id: 'my-assets', name: 'My Assets', conditions: [], scope: REQUESTER_SCOPE },
+    { id: 'mine-active', name: 'My Active Assets', conditions: [st('In', 'In Use')], scope: REQUESTER_SCOPE },
     { id: 'in-use', name: 'Assets In Use', conditions: [st('In', 'In Use')] },
     { id: 'in-stock', name: 'Assets In Stock', conditions: [st('In', 'In Stock')] },
     { id: 'in-repair', name: 'Assets In Repair', conditions: [st('In', 'In Repair')] },
@@ -326,7 +412,8 @@ export const FILTER_PRESETS: Record<string, PresetFilter[]> = {
     { id: 'all', name: 'All Assets', conditions: [] },
   ],
   ci: [
-    { id: 'my-cis', name: 'My CIs', conditions: [], scope: 'Managed by me' },
+    { id: 'my-cis', name: 'My CIs', conditions: [], scope: REQUESTER_SCOPE },
+    { id: 'mine-active', name: 'My Active CIs', conditions: [st('In', 'Operational')], scope: REQUESTER_SCOPE },
     { id: 'operational', name: 'Operational CIs', conditions: [st('In', 'Operational')] },
     { id: 'degraded', name: 'Degraded or Down CIs', conditions: [st('In', 'Degraded', 'Down')] },
     { id: 'all', name: 'All CIs', conditions: [] },
@@ -346,12 +433,25 @@ export const FILTER_PRESETS: Record<string, PresetFilter[]> = {
     { id: 'all', name: 'All Vulnerabilities', conditions: [] },
   ],
   approval: [
+    { id: 'mine', name: 'My Approvals', conditions: [], scope: REQUESTER_SCOPE },
+    { id: 'mine-pending', name: 'Pending Approvals', conditions: [st('In', 'Pending')], scope: REQUESTER_SCOPE },
+    { id: 'mine-completed', name: 'Completed Approvals', conditions: [st('In', 'Approved', 'Rejected')], scope: REQUESTER_SCOPE },
     { id: 'pending-me', name: 'Approvals Pending With Me', conditions: [st('In', 'Pending')], scope: 'Awaiting my approval' },
     { id: 'approved-me', name: 'Approved By Me', conditions: [st('In', 'Approved')], scope: 'Actioned by me' },
     { id: 'rejected-me', name: 'Rejected By Me', conditions: [st('In', 'Rejected')], scope: 'Actioned by me' },
     { id: 'all', name: 'All Approvals', conditions: [] },
   ],
+  /* ⚠️ No scope on any of these. Knowledge is the one module a requester READS rather than owns,
+     so "Recently Published" is the same list for everybody and a "mine" would mean nothing. */
+  knowledge: [
+    { id: 'most-read', name: 'Most Read Knowledge', conditions: [st('In', 'Published')] },
+    { id: 'recently-published', name: 'Recently Published', conditions: [st('In', 'Published'), { field: 'publishedAt', op: 'Equals', values: ['This Month'] }] },
+    { id: 'recently-updated', name: 'Recently Updated', conditions: [st('In', 'Published'), { field: 'updatedAt', op: 'Equals', values: ['This Month'] }] },
+    { id: 'all', name: 'All Articles', conditions: [] },
+  ],
   task: [
+    { id: 'mine', name: 'My Tasks', conditions: [], scope: REQUESTER_SCOPE },
+    { id: 'mine-completed', name: 'My Completed Tasks', conditions: [st('In', 'Completed')], scope: REQUESTER_SCOPE },
     { id: 'my-open', name: 'My Open Tasks', conditions: [st('Not In', 'Completed', 'Cancelled')], scope: 'Assigned to me' },
     { id: 'my-overdue', name: 'My Overdue Tasks', conditions: [{ field: 'dueBy', op: 'Equals', values: ['Overdue'] }], scope: 'Assigned to me' },
     { id: 'in-progress', name: 'Tasks In Progress', conditions: [st('In', 'In Progress')] },

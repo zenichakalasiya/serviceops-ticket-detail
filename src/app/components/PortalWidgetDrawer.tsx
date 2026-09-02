@@ -847,7 +847,7 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
         );
       }
       case 'upload':
-        return <UploadZone value={v as string} onChange={(x) => set(f.key, x ?? '')} suggested={f.suggested} />;
+        return <UploadZone value={v as string} onChange={(x) => set(f.key, x ?? '')} suggested={f.suggested} noun={f.noun} />;
       case 'videoSource':
         return <VideoSource value={v as string} onChange={(x) => set(f.key, x)} />;
       /* The Record List's filter — the named presets and a condition builder, in one popover.

@@ -406,6 +406,15 @@ export const RECORD_MODULES: RecordModule[] = [
     ],
   },
   {
+    key: 'knowledge', label: 'Knowledge Articles',
+    statuses: ['Draft', 'In Review', 'Published', 'Retired'],
+    rows: [
+      { id: 'KB-4', title: 'How to reset your password', status: 'Published', meta: 'Guideline Documents' },
+      { id: 'KB-1', title: 'Connecting to company VPN', status: 'Published', meta: 'FAQs' },
+      { id: 'KB-6', title: 'Reporting a hardware fault', status: 'Published', meta: 'Guideline Documents' },
+    ],
+  },
+  {
     key: 'task', label: 'Tasks',
     statuses: ['Open', 'In Progress', 'Completed', 'Cancelled'],
     rows: [

@@ -73,6 +73,10 @@ export interface WidgetField {
    * a logo and an icon want three different shapes, and the zone has no way to know which of them it
    * is being used for. */
   suggested?: string;
+  /* `upload` only — WHAT sits in this slot, so the filled button can read "Replace logo" rather
+     than "Replace". A slot already showing a picture does not need telling a picture is there; what
+     it has to say is which of the page's images this button is about. */
+  noun?: string;
   key: string;
   label: string;
   control: ControlKind;

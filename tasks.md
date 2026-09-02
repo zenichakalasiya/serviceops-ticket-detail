@@ -1116,6 +1116,21 @@ Updated: 2026-09-01
 - **⚠️ An EMPTY New text is now meaningful**, and the file says so at the top: empty means this project already matches. That is what makes "is it done?" readable off any row instead of needing the summary.
 - **Verified:** 2,049 rows, 78 with a proposed value, every row six columns wide, none malformed.
 
+## 85. Juli's Custom Data Widget catalogue, and a logo button that names itself
+- **Status:** done
+- **Where:** `portalRecordFilters.ts` · `supportPortalData.ts` · `PortalConditionBuilder.tsx` · `PortalRecordFilter.tsx` · `PortalControls.tsx` · `portalWidgetSpec.ts` · `portalStructureSpecs.ts` · `PortalBrandingPanel.tsx`
+- **You asked:** implement the linked build's remaining text, leaving the conflicts alone; and once a logo is uploaded, relabel the CTA.
+- **A new `knowledge` module**, the one thing that build's Custom Data Widget had and ours had no equivalent of: 12 fields (Article ID · Title · Summary · Category · Subcategory · Knowledge Type · Status · Visibility · Published/Created/Last Updated dates · View Count), four statuses and three seeded articles.
+- **A `number` field kind** with its own operators — **Greater than · Less than · Equals**. ⚠️ It could not be a text field: "View Count contains 5" is nonsense, and operators hang off the kind rather than the field.
+- **⚠️ `number` needed a control in BOTH value editors, not one.** Left to fall through, it would have drawn the option dropdown over a field that declares no options — a control that opens on nothing, which is worse than either alternative. It shares the text input, typed `number`.
+- **19 requester-scoped views added**, first in every module's list: All My Requests, My Open/Pending/Resolved/Closed/High Priority Requests, My Changes, My Active/Completed Changes, My Active Assets, My Active CIs, My Approvals, Pending/Completed Approvals, Most Read Knowledge, Recently Published, Recently Updated, My Tasks, My Completed Tasks.
+- **⚠️ Their scope is "The signed-in requester", never "Assigned to me".** The technician presets already here are read by somebody working a queue, where "me" is the assignee. On a support portal the reader RAISED the record. The same two words pointing at two different people is exactly what that string exists to prevent — and it is why the requester sets lead and the technician ones follow rather than being deleted.
+- **⚠️ Knowledge views carry NO scope.** It is the one module a requester reads rather than owns, so "Recently Published" is the same list for everybody and a "mine" would mean nothing.
+- **Field labels took that build's wording** where it is more specific: ID → Request ID / Change ID / Asset ID / CI ID / Task ID / Approval ID, Assignee → Technician, Name → Asset Name / CI Name, plus Subcategory, Closed/Resolved Date, Planned End, Actual Start/End, CI Class, Approval Type, Request / Item ID, Product, Manufacturer, Model.
+- **The logo button now names what it holds** — "Replace logo", not "Replace". `UploadZone` gained a `noun`; a slot already showing a picture does not need telling a picture is there, it needs to say WHICH of the page's images the button is about, since the panel is read out of context. The favicon slot takes it too.
+- **Verified in the browser:** Module now lists **Knowledge Articles**; its filter offers Most Read Knowledge · Recently Published · Recently Updated · All Articles; the custom builder's field list reads back all 12 Knowledge fields in order; picking **View Count** renders `Where · View Count · Greater than ▾ · [0]` with the menu showing **Greater than / Less than / Equals** and a real `input[type=number]`. Selecting the logo showed "Click to upload or drag and drop"; after a real file upload the panel reads **"Replace logo"**. Build green; 23 type errors before the change, 23 after — all pre-existing.
+- **Not done:** the Branding fields from your screenshot — the image arrived as a 0-byte file, so there was nothing to read.
+
 ## Parked — needs discussion
 - Tour guide
 - AI capabilities

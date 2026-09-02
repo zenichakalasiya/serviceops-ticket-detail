@@ -131,8 +131,9 @@ function ConditionEditor({ field, draft, onChange, onDone, onBack }: {
         {ops.map((o) => <option key={o} value={o}>{o}</option>)}
       </select>
 
-      {field.kind === 'text' && (
+      {(field.kind === 'text' || field.kind === 'number') && (
         <input
+          type={field.kind === 'number' ? 'number' : 'text'}
           value={draft.values[0] ?? ''}
           onChange={(e) => onChange({ ...draft, values: e.target.value ? [e.target.value] : [] })}
           placeholder={field.label}

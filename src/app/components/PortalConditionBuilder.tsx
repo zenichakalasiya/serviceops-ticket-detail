@@ -107,12 +107,16 @@ function ValueCell({ field, cond, onChange }: {
 
   /* ⚠️ TEXT is typed in place. It is the one kind whose value is not chosen from a list, so a
      popover would be a click and a second surface to reach a plain input. */
-  if (field.kind === 'text') {
+  /* ⚠️ `number` shares the text control rather than the option list. Falling through to the
+     select below would have drawn a dropdown over a field that declares no options — a control
+     that opens on nothing, which is the worst of the three possible answers. */
+  if (field.kind === 'text' || field.kind === 'number') {
     return (
       <input
+        type={field.kind === 'number' ? 'number' : 'text'}
         value={cond.values[0] ?? ''}
         onChange={(e) => onChange({ ...cond, values: e.target.value ? [e.target.value] : [] })}
-        placeholder="Value"
+        placeholder={field.kind === 'number' ? '0' : 'Value'}
         className="h-8 min-w-0 flex-1 rounded-md border border-[#E5E7EB] px-2.5 text-[12.5px] text-[#364658] placeholder:text-[#9CA3AF] focus:border-[#3D8BD0] focus:outline-none focus:ring-1 focus:ring-[#3D8BD0]"
       />
     );

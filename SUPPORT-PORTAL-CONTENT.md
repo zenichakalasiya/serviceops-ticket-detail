@@ -9,17 +9,17 @@ changed without reading the code.
 
 ## What is already the same
 
-**1,909 of 1,950 strings in this project are already word-for-word identical to that build.**
+**1,913 of 1,958 strings in this project are already word-for-word identical to that build.**
 Their **New text** cell is empty because there is nothing to change — this project already says
 what that build says. That includes the whole element hover-card set, which was taken from that
 build on 2 Sep and is already live here.
 
-What is left is **111 rows**, of which **78** arrive with that
+What is left is **115 rows**, of which **78** arrive with that
 build’s wording **already written into New text**, so there is nothing to copy across by hand:
 
 - **70** strings that build has and this project does not — most of them its wider **Custom Data Widget** field catalogue. Pre-filled.
 - **8** strings the two word differently. Pre-filled with that build’s wording.
-- **33** strings this project has that that build does not carry at all — New text is **empty because there is nothing to propose**. Keeping or cutting them is a decision about this project alone.
+- **37** strings this project has that that build does not carry at all — New text is **empty because there is nothing to propose**. Keeping or cutting them is a decision about this project alone.
 
 Delete a proposed value to keep what this project has; leave it to take that build's.
 
@@ -415,7 +415,7 @@ will build the control that carries them.
 
 ## 5. Builder — the portal page
 
-*`SupportPortalPreview.tsx` · `portalPageModel.ts` · `supportPortalData.ts`* — 492 entries
+*`SupportPortalPreview.tsx` · `portalPageModel.ts` · `supportPortalData.ts`* — 500 entries
 
 ### 5.1 `DropLine`
 
@@ -979,115 +979,123 @@ will build the control that carries them.
 | `page.requested-by-keya` | meta | `supportPortalData.ts:404` | Requested by Keya | Requested by Keya |  |
 | `page.adobe-creative-cloud-licence` | title / tooltip | `supportPortalData.ts:405` | Adobe Creative Cloud licence | Adobe Creative Cloud licence |  |
 | `page.software` | meta | `supportPortalData.ts:405` | Software | Software |  |
-| `page.tasks-2` | field label | `supportPortalData.ts:409` | Tasks | Tasks |  |
-| `page.completed` | string | `supportPortalData.ts:410` | Completed | Completed |  |
-| `page.cancelled` | string | `supportPortalData.ts:410` | Cancelled | Cancelled |  |
-| `page.ta-2201` | id | `supportPortalData.ts:412` | TA-2201 | TA-2201 |  |
-| `page.collect-the-returned-laptop` | title / tooltip | `supportPortalData.ts:412` | Collect the returned laptop | Collect the returned laptop |  |
-| `page.due-18-aug` | meta | `supportPortalData.ts:412` | Due 18 Aug | Due 18 Aug |  |
-| `page.ta-2194` | id | `supportPortalData.ts:413` | TA-2194 | TA-2194 |  |
-| `page.revoke-building-access` | title / tooltip | `supportPortalData.ts:413` | Revoke building access | Revoke building access |  |
-| `page.completed-2` | status | `supportPortalData.ts:413` | Completed | Completed |  |
-| `page.facilities-3` | meta | `supportPortalData.ts:413` | Facilities | Facilities |  |
+| `page.knowledge-articles` **Δ** | field label | `supportPortalData.ts:409` | Knowledge Articles | — not in that build — |  |
+| `page.in-review` | string | `supportPortalData.ts:410` | In Review | In Review |  |
+| `page.published-3` | string | `supportPortalData.ts:410` | Published | Published |  |
+| `page.how-to-reset-your-password-3` **Δ** | title / tooltip | `supportPortalData.ts:412` | How to reset your password | — not in that build — |  |
+| `page.guideline-documents-2` | meta | `supportPortalData.ts:412` | Guideline Documents | Guideline Documents |  |
+| `page.connecting-to-company-vpn-3` **Δ** | title / tooltip | `supportPortalData.ts:413` | Connecting to company VPN | — not in that build — |  |
+| `page.faqs-2` | meta | `supportPortalData.ts:413` | FAQs | FAQs |  |
+| `page.reporting-a-hardware-fault-3` **Δ** | title / tooltip | `supportPortalData.ts:414` | Reporting a hardware fault | — not in that build — |  |
+| `page.tasks-2` | field label | `supportPortalData.ts:418` | Tasks | Tasks |  |
+| `page.completed` | string | `supportPortalData.ts:419` | Completed | Completed |  |
+| `page.cancelled` | string | `supportPortalData.ts:419` | Cancelled | Cancelled |  |
+| `page.ta-2201` | id | `supportPortalData.ts:421` | TA-2201 | TA-2201 |  |
+| `page.collect-the-returned-laptop` | title / tooltip | `supportPortalData.ts:421` | Collect the returned laptop | Collect the returned laptop |  |
+| `page.due-18-aug` | meta | `supportPortalData.ts:421` | Due 18 Aug | Due 18 Aug |  |
+| `page.ta-2194` | id | `supportPortalData.ts:422` | TA-2194 | TA-2194 |  |
+| `page.revoke-building-access` | title / tooltip | `supportPortalData.ts:422` | Revoke building access | Revoke building access |  |
+| `page.completed-2` | status | `supportPortalData.ts:422` | Completed | Completed |  |
+| `page.facilities-3` | meta | `supportPortalData.ts:422` | Facilities | Facilities |  |
 
 ### 5.33 `PORTAL_ELEMENTS`
 
 | ID | What it is | File | Current (this project) | That build says | New text |
 |---|---|---|---|---|---|
-| `page.my-open-requests-3` | name | `supportPortalData.ts:431` | My Open Requests | My Open Requests |  |
-| `page.data-2` | group | `supportPortalData.ts:431` | Data | Data |  |
-| `page.tickets-incidents-open` | search keywords | `supportPortalData.ts:431` | tickets incidents open | tickets incidents open |  |
-| `page.pending-approvals-3` | name | `supportPortalData.ts:432` | Pending Approvals | Pending Approvals |  |
-| `page.pending-approve` | search keywords | `supportPortalData.ts:432` | pending approve | pending approve |  |
-| `page.my-assets-5` | name | `supportPortalData.ts:433` | My Assets | My Assets |  |
-| `page.hardware-devices` | search keywords | `supportPortalData.ts:433` | hardware devices | hardware devices |  |
-| `page.my-cis-5` | name | `supportPortalData.ts:434` | My CIs | My CIs |  |
-| `page.configuration-items-cmdb` | search keywords | `supportPortalData.ts:434` | configuration items cmdb | configuration items cmdb |  |
-| `page.announcements-4` | name | `supportPortalData.ts:440` | Announcements | Announcements |  |
-| `page.news-broadcast-banner` | search keywords | `supportPortalData.ts:440` | news broadcast banner | news broadcast banner |  |
-| `page.most-read-knowledge` | name | `supportPortalData.ts:441` | Most Read Knowledge | Most Read Knowledge |  |
-| `page.articles-kb-most-read` | search keywords | `supportPortalData.ts:441` | articles kb most read | articles kb most read |  |
-| `page.contact-us-4` | name | `supportPortalData.ts:446` | Contact Us | Contact Us |  |
-| `page.support-escalate-raise` | search keywords | `supportPortalData.ts:446` | support escalate raise | support escalate raise |  |
-| `page.favourite-services-2` | name | `supportPortalData.ts:465` | Favourite Services | Favourite Services |  |
-| `page.pinned-starred-saved-shortcuts` | search keywords | `supportPortalData.ts:465` | pinned starred saved shortcuts | pinned starred saved shortcuts |  |
-| `page.most-used-services-2` | name | `supportPortalData.ts:466` | Most Used Services | Most Used Services |  |
-| `page.catalog-request-service-favourites` | search keywords | `supportPortalData.ts:466` | catalog request service favourites featured | catalog request service favourites featured |  |
-| `page.faq` | name | `supportPortalData.ts:469` | FAQ | FAQ |  |
-| `page.custom-2` | group | `supportPortalData.ts:469` | Custom | Custom |  |
-| `page.questions-help-answers` | search keywords | `supportPortalData.ts:469` | questions help answers | questions help answers |  |
-| `page.custom-data-widget` **Δ** | name | `supportPortalData.ts:474` | Custom data widget | Custom Data Widget | Custom Data Widget |
-| `page.list-records-kpi-count-metric-requ` **Δ** | search keywords | `supportPortalData.ts:474` | list records kpi count metric requests assets cis filter module query data | list records requests assets cis filter module query data | list records requests assets cis filter module query data |
-| `page.new-incident-4` | name | `supportPortalData.ts:484` | New Incident | New Incident |  |
-| `page.actions-3` | group | `supportPortalData.ts:484` | Actions | Actions |  |
-| `page.report-issue-raise-ticket` | search keywords | `supportPortalData.ts:484` | report issue raise ticket | report issue raise ticket |  |
-| `page.request-service-4` | name | `supportPortalData.ts:485` | Request Service | Request Service |  |
-| `page.catalog-order` | search keywords | `supportPortalData.ts:485` | catalog order | catalog order |  |
-| `page.ad-self-service-3` | name | `supportPortalData.ts:486` | AD Self Service | AD Self Service |  |
-| `page.password-reset-domain-unlock` | search keywords | `supportPortalData.ts:486` | password reset domain unlock | password reset domain unlock |  |
-| `page.knowledge-7` | name | `supportPortalData.ts:487` | Knowledge | Knowledge |  |
-| `page.articles-help-search` | search keywords | `supportPortalData.ts:487` | articles help search | articles help search |  |
-| `page.advanced-tabs` | name | `supportPortalData.ts:489` | Advanced Tabs | Advanced Tabs |  |
-| `page.basic-2` | group | `supportPortalData.ts:489` | Basic | Basic |  |
-| `page.divider` | name | `supportPortalData.ts:490` | Divider | Divider |  |
-| `page.vertical-horizontal-v-h-separator-` | search keywords | `supportPortalData.ts:490` | vertical horizontal v/h separator rule | vertical horizontal v/h separator rule |  |
-| `page.paragraph-body-copy` | search keywords | `supportPortalData.ts:503` | paragraph body copy | paragraph body copy |  |
-| `page.cta-link-action` | search keywords | `supportPortalData.ts:504` | cta link action | cta link action |  |
-| `page.spacer` | name | `supportPortalData.ts:505` | Spacer | Spacer |  |
-| `page.gap-whitespace` | search keywords | `supportPortalData.ts:505` | gap whitespace | gap whitespace |  |
-| `page.table` | name | `supportPortalData.ts:506` | Table | Table |  |
-| `page.grid-rows-columns-data` | search keywords | `supportPortalData.ts:506` | grid rows columns data | grid rows columns data |  |
-| `page.accordion` | name | `supportPortalData.ts:507` | Accordion | Accordion |  |
-| `page.collapse-faq-expand` | search keywords | `supportPortalData.ts:507` | collapse faq expand | collapse faq expand |  |
-| `page.text-with-image` | name | `supportPortalData.ts:508` | Text with Image | Text with Image |  |
-| `page.media-split` | search keywords | `supportPortalData.ts:508` | media split | media split |  |
-| `page.card` | name | `supportPortalData.ts:511` | Card | Card |  |
-| `page.tile-panel` | search keywords | `supportPortalData.ts:511` | tile panel | tile panel |  |
-| `page.image` | name | `supportPortalData.ts:514` | Image | Image |  |
-| `page.visual-2` | group | `supportPortalData.ts:514` | Visual | Visual |  |
-| `page.picture-photo` | search keywords | `supportPortalData.ts:514` | picture photo | picture photo |  |
-| `page.video` | name | `supportPortalData.ts:515` | Video | Video |  |
-| `page.youtube-vimeo-mp4-embed-player-cli` | search keywords | `supportPortalData.ts:515` | youtube vimeo mp4 embed player clip | youtube vimeo mp4 embed player clip |  |
-| `page.media-slider` | name | `supportPortalData.ts:516` | Media Slider | Media Slider |  |
-| `page.carousel-gallery` | search keywords | `supportPortalData.ts:516` | carousel gallery | carousel gallery |  |
-| `page.action-card` | name | `supportPortalData.ts:523` | Action Card | Action Card |  |
-| `page.quick-action-tile` | search keywords | `supportPortalData.ts:523` | quick action tile | quick action tile |  |
-| `page.kpi` | name | `supportPortalData.ts:529` | KPI | KPI |  |
-| `page.metric-stat-number` | search keywords | `supportPortalData.ts:529` | metric stat number | metric stat number |  |
+| `page.my-open-requests-3` | name | `supportPortalData.ts:440` | My Open Requests | My Open Requests |  |
+| `page.data-2` | group | `supportPortalData.ts:440` | Data | Data |  |
+| `page.tickets-incidents-open` | search keywords | `supportPortalData.ts:440` | tickets incidents open | tickets incidents open |  |
+| `page.pending-approvals-3` | name | `supportPortalData.ts:441` | Pending Approvals | Pending Approvals |  |
+| `page.pending-approve` | search keywords | `supportPortalData.ts:441` | pending approve | pending approve |  |
+| `page.my-assets-5` | name | `supportPortalData.ts:442` | My Assets | My Assets |  |
+| `page.hardware-devices` | search keywords | `supportPortalData.ts:442` | hardware devices | hardware devices |  |
+| `page.my-cis-5` | name | `supportPortalData.ts:443` | My CIs | My CIs |  |
+| `page.configuration-items-cmdb` | search keywords | `supportPortalData.ts:443` | configuration items cmdb | configuration items cmdb |  |
+| `page.announcements-4` | name | `supportPortalData.ts:449` | Announcements | Announcements |  |
+| `page.news-broadcast-banner` | search keywords | `supportPortalData.ts:449` | news broadcast banner | news broadcast banner |  |
+| `page.most-read-knowledge` | name | `supportPortalData.ts:450` | Most Read Knowledge | Most Read Knowledge |  |
+| `page.articles-kb-most-read` | search keywords | `supportPortalData.ts:450` | articles kb most read | articles kb most read |  |
+| `page.contact-us-4` | name | `supportPortalData.ts:455` | Contact Us | Contact Us |  |
+| `page.support-escalate-raise` | search keywords | `supportPortalData.ts:455` | support escalate raise | support escalate raise |  |
+| `page.favourite-services-2` | name | `supportPortalData.ts:474` | Favourite Services | Favourite Services |  |
+| `page.pinned-starred-saved-shortcuts` | search keywords | `supportPortalData.ts:474` | pinned starred saved shortcuts | pinned starred saved shortcuts |  |
+| `page.most-used-services-2` | name | `supportPortalData.ts:475` | Most Used Services | Most Used Services |  |
+| `page.catalog-request-service-favourites` | search keywords | `supportPortalData.ts:475` | catalog request service favourites featured | catalog request service favourites featured |  |
+| `page.faq` | name | `supportPortalData.ts:478` | FAQ | FAQ |  |
+| `page.custom-2` | group | `supportPortalData.ts:478` | Custom | Custom |  |
+| `page.questions-help-answers` | search keywords | `supportPortalData.ts:478` | questions help answers | questions help answers |  |
+| `page.custom-data-widget` **Δ** | name | `supportPortalData.ts:483` | Custom data widget | Custom Data Widget | Custom Data Widget |
+| `page.list-records-kpi-count-metric-requ` **Δ** | search keywords | `supportPortalData.ts:483` | list records kpi count metric requests assets cis filter module query data | list records requests assets cis filter module query data | list records requests assets cis filter module query data |
+| `page.new-incident-4` | name | `supportPortalData.ts:493` | New Incident | New Incident |  |
+| `page.actions-3` | group | `supportPortalData.ts:493` | Actions | Actions |  |
+| `page.report-issue-raise-ticket` | search keywords | `supportPortalData.ts:493` | report issue raise ticket | report issue raise ticket |  |
+| `page.request-service-4` | name | `supportPortalData.ts:494` | Request Service | Request Service |  |
+| `page.catalog-order` | search keywords | `supportPortalData.ts:494` | catalog order | catalog order |  |
+| `page.ad-self-service-3` | name | `supportPortalData.ts:495` | AD Self Service | AD Self Service |  |
+| `page.password-reset-domain-unlock` | search keywords | `supportPortalData.ts:495` | password reset domain unlock | password reset domain unlock |  |
+| `page.knowledge-7` | name | `supportPortalData.ts:496` | Knowledge | Knowledge |  |
+| `page.articles-help-search` | search keywords | `supportPortalData.ts:496` | articles help search | articles help search |  |
+| `page.advanced-tabs` | name | `supportPortalData.ts:498` | Advanced Tabs | Advanced Tabs |  |
+| `page.basic-2` | group | `supportPortalData.ts:498` | Basic | Basic |  |
+| `page.divider` | name | `supportPortalData.ts:499` | Divider | Divider |  |
+| `page.vertical-horizontal-v-h-separator-` | search keywords | `supportPortalData.ts:499` | vertical horizontal v/h separator rule | vertical horizontal v/h separator rule |  |
+| `page.paragraph-body-copy` | search keywords | `supportPortalData.ts:512` | paragraph body copy | paragraph body copy |  |
+| `page.cta-link-action` | search keywords | `supportPortalData.ts:513` | cta link action | cta link action |  |
+| `page.spacer` | name | `supportPortalData.ts:514` | Spacer | Spacer |  |
+| `page.gap-whitespace` | search keywords | `supportPortalData.ts:514` | gap whitespace | gap whitespace |  |
+| `page.table` | name | `supportPortalData.ts:515` | Table | Table |  |
+| `page.grid-rows-columns-data` | search keywords | `supportPortalData.ts:515` | grid rows columns data | grid rows columns data |  |
+| `page.accordion` | name | `supportPortalData.ts:516` | Accordion | Accordion |  |
+| `page.collapse-faq-expand` | search keywords | `supportPortalData.ts:516` | collapse faq expand | collapse faq expand |  |
+| `page.text-with-image` | name | `supportPortalData.ts:517` | Text with Image | Text with Image |  |
+| `page.media-split` | search keywords | `supportPortalData.ts:517` | media split | media split |  |
+| `page.card` | name | `supportPortalData.ts:520` | Card | Card |  |
+| `page.tile-panel` | search keywords | `supportPortalData.ts:520` | tile panel | tile panel |  |
+| `page.image` | name | `supportPortalData.ts:523` | Image | Image |  |
+| `page.visual-2` | group | `supportPortalData.ts:523` | Visual | Visual |  |
+| `page.picture-photo` | search keywords | `supportPortalData.ts:523` | picture photo | picture photo |  |
+| `page.video` | name | `supportPortalData.ts:524` | Video | Video |  |
+| `page.youtube-vimeo-mp4-embed-player-cli` | search keywords | `supportPortalData.ts:524` | youtube vimeo mp4 embed player clip | youtube vimeo mp4 embed player clip |  |
+| `page.media-slider` | name | `supportPortalData.ts:525` | Media Slider | Media Slider |  |
+| `page.carousel-gallery` | search keywords | `supportPortalData.ts:525` | carousel gallery | carousel gallery |  |
+| `page.action-card` | name | `supportPortalData.ts:532` | Action Card | Action Card |  |
+| `page.quick-action-tile` | search keywords | `supportPortalData.ts:532` | quick action tile | quick action tile |  |
+| `page.kpi` | name | `supportPortalData.ts:538` | KPI | KPI |  |
+| `page.metric-stat-number` | search keywords | `supportPortalData.ts:538` | metric stat number | metric stat number |  |
 
 ### 5.34 `MONTHS`
 
 | ID | What it is | File | Current (this project) | That build says | New text |
 |---|---|---|---|---|---|
-| `page.jan` | string | `supportPortalData.ts:534` | Jan | Jan |  |
-| `page.mar` | string | `supportPortalData.ts:534` | Mar | Mar |  |
-| `page.apr` | string | `supportPortalData.ts:534` | Apr | Apr |  |
-| `page.may` | string | `supportPortalData.ts:534` | May | May |  |
-| `page.jun` | string | `supportPortalData.ts:534` | Jun | Jun |  |
-| `page.jul` | string | `supportPortalData.ts:534` | Jul | Jul |  |
-| `page.aug` | string | `supportPortalData.ts:534` | Aug | Aug |  |
-| `page.sep` | string | `supportPortalData.ts:534` | Sep | Sep |  |
-| `page.oct` | string | `supportPortalData.ts:534` | Oct | Oct |  |
-| `page.nov` | string | `supportPortalData.ts:534` | Nov | Nov |  |
+| `page.jan` | string | `supportPortalData.ts:543` | Jan | Jan |  |
+| `page.mar` | string | `supportPortalData.ts:543` | Mar | Mar |  |
+| `page.apr` | string | `supportPortalData.ts:543` | Apr | Apr |  |
+| `page.may` | string | `supportPortalData.ts:543` | May | May |  |
+| `page.jun` | string | `supportPortalData.ts:543` | Jun | Jun |  |
+| `page.jul` | string | `supportPortalData.ts:543` | Jul | Jul |  |
+| `page.aug` | string | `supportPortalData.ts:543` | Aug | Aug |  |
+| `page.sep` | string | `supportPortalData.ts:543` | Sep | Sep |  |
+| `page.oct` | string | `supportPortalData.ts:543` | Oct | Oct |  |
+| `page.nov` | string | `supportPortalData.ts:543` | Nov | Nov |  |
 
 ### 5.35 `DAYS`
 
 | ID | What it is | File | Current (this project) | That build says | New text |
 |---|---|---|---|---|---|
-| `page.sun` | string | `supportPortalData.ts:535` | Sun | Sun |  |
-| `page.mon` | string | `supportPortalData.ts:535` | Mon | Mon |  |
-| `page.tue` | string | `supportPortalData.ts:535` | Tue | Tue |  |
-| `page.wed` | string | `supportPortalData.ts:535` | Wed | Wed |  |
-| `page.thu` | string | `supportPortalData.ts:535` | Thu | Thu |  |
-| `page.fri` | string | `supportPortalData.ts:535` | Fri | Fri |  |
-| `page.sat` | string | `supportPortalData.ts:535` | Sat | Sat |  |
+| `page.sun` | string | `supportPortalData.ts:544` | Sun | Sun |  |
+| `page.mon` | string | `supportPortalData.ts:544` | Mon | Mon |  |
+| `page.tue` | string | `supportPortalData.ts:544` | Tue | Tue |  |
+| `page.wed` | string | `supportPortalData.ts:544` | Wed | Wed |  |
+| `page.thu` | string | `supportPortalData.ts:544` | Thu | Thu |  |
+| `page.fri` | string | `supportPortalData.ts:544` | Fri | Fri |  |
+| `page.sat` | string | `supportPortalData.ts:544` | Sat | Sat |  |
 
 ### 5.36 `formatPortalStamp`
 
 | ID | What it is | File | Current (this project) | That build says | New text |
 |---|---|---|---|---|---|
-| `page.am` | string | `supportPortalData.ts:542` | AM | AM |  |
-| `page.pm` | string | `supportPortalData.ts:542` | PM | PM |  |
+| `page.am` | string | `supportPortalData.ts:551` | AM | AM |  |
+| `page.pm` | string | `supportPortalData.ts:551` | PM | PM |  |
 
 ## 6. Builder — canvas chrome
 
@@ -1545,14 +1553,14 @@ will build the control that carries them.
 | `brand.91-79-4040-0000` | placeholder | `PortalBrandingPanel.tsx:154` | +91 79 4040 0000 | +91 79 4040 0000 |  |
 | `brand.linkback-url` **Δ** | field label | `PortalBrandingPanel.tsx:158` | Linkback URL | — not in that build — |  |
 | `brand.favicon` **Δ** | field label | `PortalBrandingPanel.tsx:165` | Favicon | — not in that build — |  |
-| `brand.upload-favicon` **Δ** | field label | `PortalBrandingPanel.tsx:167` | Upload favicon | — not in that build — |  |
-| `brand.favicon-updated` **Δ** | string | `PortalBrandingPanel.tsx:169` | Favicon updated | — not in that build — |  |
-| `brand.branding-saved` | string | `PortalBrandingPanel.tsx:183` | Branding saved | Branding saved |  |
+| `brand.upload-favicon` **Δ** | field label | `PortalBrandingPanel.tsx:168` | Upload favicon | — not in that build — |  |
+| `brand.favicon-updated` **Δ** | string | `PortalBrandingPanel.tsx:170` | Favicon updated | — not in that build — |  |
+| `brand.branding-saved` | string | `PortalBrandingPanel.tsx:184` | Branding saved | Branding saved |  |
 | `brand.url-2` | on-screen text | `PortalBrandingPanel.tsx:106` | URL | URL |  |
 | `brand.help-is-on-but-has-nowhere-to-go-r` | on-screen text | `PortalBrandingPanel.tsx:114` | Help is on but has nowhere to go — requesters will see the icon and nothing will happen. | Help is on but has nowhere to go — requesters will see the icon and nothing will happen. |  |
 | `brand.attachment-2` | on-screen text | `PortalBrandingPanel.tsx:121` | Attachment | Attachment |  |
-| `brand.cancel` | on-screen text | `PortalBrandingPanel.tsx:181` | Cancel | Cancel |  |
-| `brand.save` | on-screen text | `PortalBrandingPanel.tsx:185` | Save | Save |  |
+| `brand.cancel` | on-screen text | `PortalBrandingPanel.tsx:182` | Cancel | Cancel |  |
+| `brand.save` | on-screen text | `PortalBrandingPanel.tsx:186` | Save | Save |  |
 
 ### 10.2 Only in that build — not in this project
 
@@ -1720,17 +1728,17 @@ will build the control that carries them.
 
 | ID | What it is | File | Current (this project) | That build says | New text |
 |---|---|---|---|---|---|
-| `w.data` | group | `portalWidgetSpec.ts:223` | Data | Data |  |
-| `w.actions` | string | `portalWidgetSpec.ts:223` | Actions | Actions |  |
-| `w.content` | string | `portalWidgetSpec.ts:223` | Content | Content |  |
-| `w.structure` | string | `portalWidgetSpec.ts:223` | Structure | Structure |  |
-| `w.chrome` | string | `portalWidgetSpec.ts:223` | Chrome | Chrome |  |
-| `w.components` | string | `portalWidgetSpec.ts:224` | Components | Components |  |
-| `w.layout` | string | `portalWidgetSpec.ts:224` | Layout | Layout |  |
-| `w.basic` | string | `portalWidgetSpec.ts:224` | Basic | Basic |  |
-| `w.visual` | string | `portalWidgetSpec.ts:224` | Visual | Visual |  |
-| `w.business` | string | `portalWidgetSpec.ts:224` | Business | Business |  |
-| `w.custom` | string | `portalWidgetSpec.ts:224` | Custom | Custom |  |
+| `w.data` | group | `portalWidgetSpec.ts:227` | Data | Data |  |
+| `w.actions` | string | `portalWidgetSpec.ts:227` | Actions | Actions |  |
+| `w.content` | string | `portalWidgetSpec.ts:227` | Content | Content |  |
+| `w.structure` | string | `portalWidgetSpec.ts:227` | Structure | Structure |  |
+| `w.chrome` | string | `portalWidgetSpec.ts:227` | Chrome | Chrome |  |
+| `w.components` | string | `portalWidgetSpec.ts:228` | Components | Components |  |
+| `w.layout` | string | `portalWidgetSpec.ts:228` | Layout | Layout |  |
+| `w.basic` | string | `portalWidgetSpec.ts:228` | Basic | Basic |  |
+| `w.visual` | string | `portalWidgetSpec.ts:228` | Visual | Visual |  |
+| `w.business` | string | `portalWidgetSpec.ts:228` | Business | Business |  |
+| `w.custom` | string | `portalWidgetSpec.ts:228` | Custom | Custom |  |
 | `w.requesters-can-only-see-this-while` | message with a value in it | `portalWidgetSpec.ts:1055` | Requesters can only see this while “{s}” is on. It is off right now, so this widget is hidden from them. | Requesters can only see this while “{s}” is on. It is off right now, so this widget is hidden from them. |  |
 | `w.this-needs-the-s-which-is-part-of-` | message with a value in it | `portalWidgetSpec.ts:1056` | This needs the {s}, which is part of your licence rather than a switch — there is nothing to turn on here. | This needs the {s}, which is part of your licence rather than a switch — there is nothing to turn on here. |  |
 | `w.s-is-not-included-in-your-plan-you` | message with a value in it | `portalWidgetSpec.ts:1057` | “{s}” is not included in your plan. Your account team can add it. | “{s}” is not included in your plan. Your account team can add it. |  |
@@ -1739,266 +1747,266 @@ will build the control that carries them.
 
 | ID | What it is | File | Current (this project) | That build says | New text |
 |---|---|---|---|---|---|
-| `w.show-count-badge` **Δ** | field label | `portalWidgetSpec.ts:254` | Show count badge | — not in that build — |  |
-| `w.header` | group | `portalWidgetSpec.ts:254` | Header | Header |  |
-| `w.show-view-all-link` **Δ** | field label | `portalWidgetSpec.ts:257` | Show “View all” link | — not in that build — |  |
-| `w.link-label` | field label | `portalWidgetSpec.ts:259` | Link label | Link label |  |
-| `w.row-layout` **Δ** | field label | `portalWidgetSpec.ts:264` | Row layout | — not in that build — |  |
-| `w.layout-2` | group | `portalWidgetSpec.ts:264` | Layout | Layout |  |
-| `w.single-line` **Δ** | field label | `portalWidgetSpec.ts:265` | Single line | — not in that build — |  |
-| `w.stacked` | field label | `portalWidgetSpec.ts:265` | Stacked | Stacked |  |
+| `w.show-count-badge` **Δ** | field label | `portalWidgetSpec.ts:258` | Show count badge | — not in that build — |  |
+| `w.header` | group | `portalWidgetSpec.ts:258` | Header | Header |  |
+| `w.show-view-all-link` **Δ** | field label | `portalWidgetSpec.ts:261` | Show “View all” link | — not in that build — |  |
+| `w.link-label` | field label | `portalWidgetSpec.ts:263` | Link label | Link label |  |
+| `w.row-layout` **Δ** | field label | `portalWidgetSpec.ts:268` | Row layout | — not in that build — |  |
+| `w.layout-2` | group | `portalWidgetSpec.ts:268` | Layout | Layout |  |
+| `w.single-line` **Δ** | field label | `portalWidgetSpec.ts:269` | Single line | — not in that build — |  |
+| `w.stacked` | field label | `portalWidgetSpec.ts:269` | Stacked | Stacked |  |
 
 ### 12.3 `LIVE_CARD_PACKS`
 
 | ID | What it is | File | Current (this project) | That build says | New text |
 |---|---|---|---|---|---|
-| `w.live-card-packs.view-all` | viewAllLabel | `portalWidgetSpec.ts:280` | View all | View all |  |
+| `w.live-card-packs.view-all` | viewAllLabel | `portalWidgetSpec.ts:284` | View all | View all |  |
 
 ### 12.4 My Open Requests — `my_requests`
 
 | ID | What it is | File | Current (this project) | That build says | New text |
 |---|---|---|---|---|---|
-| `w.my-requests.my-open-requests` | name | `portalWidgetSpec.ts:289` | My Open Requests | My Open Requests |  |
-| `w.my-requests.request-module` | setting | `portalWidgetSpec.ts:292` | Request module | Request module |  |
-| `w.my-requests.my-open-requests-2` | title / tooltip | `portalWidgetSpec.ts:297` | My Open Requests | My Open Requests |  |
-| `w.my-requests.open` | string | `portalWidgetSpec.ts:297` | Open | Open |  |
-| `w.my-requests.in-progress` | string | `portalWidgetSpec.ts:297` | In Progress | In Progress |  |
-| `w.my-requests.pending` | string | `portalWidgetSpec.ts:297` | Pending | Pending |  |
+| `w.my-requests.my-open-requests` | name | `portalWidgetSpec.ts:293` | My Open Requests | My Open Requests |  |
+| `w.my-requests.request-module` | setting | `portalWidgetSpec.ts:296` | Request module | Request module |  |
+| `w.my-requests.my-open-requests-2` | title / tooltip | `portalWidgetSpec.ts:301` | My Open Requests | My Open Requests |  |
+| `w.my-requests.open` | string | `portalWidgetSpec.ts:301` | Open | Open |  |
+| `w.my-requests.in-progress` | string | `portalWidgetSpec.ts:301` | In Progress | In Progress |  |
+| `w.my-requests.pending` | string | `portalWidgetSpec.ts:301` | Pending | Pending |  |
 
 ### 12.5 Pending Approvals — `pending_approvals`
 
 | ID | What it is | File | Current (this project) | That build says | New text |
 |---|---|---|---|---|---|
-| `w.pending-approvals.pending-approvals` | name | `portalWidgetSpec.ts:302` | Pending Approvals | Pending Approvals |  |
-| `w.pending-approvals.allow-requester-to-access-my-appro` | setting | `portalWidgetSpec.ts:303` | Allow Requester To Access My Approvals | Allow Requester To Access My Approvals |  |
-| `w.pending-approvals.organization` | section | `portalWidgetSpec.ts:303` | Organization | Organization |  |
-| `w.pending-approvals.pending-approvals-2` | title / tooltip | `portalWidgetSpec.ts:306` | Pending Approvals | Pending Approvals |  |
+| `w.pending-approvals.pending-approvals` | name | `portalWidgetSpec.ts:306` | Pending Approvals | Pending Approvals |  |
+| `w.pending-approvals.allow-requester-to-access-my-appro` | setting | `portalWidgetSpec.ts:307` | Allow Requester To Access My Approvals | Allow Requester To Access My Approvals |  |
+| `w.pending-approvals.organization` | section | `portalWidgetSpec.ts:307` | Organization | Organization |  |
+| `w.pending-approvals.pending-approvals-2` | title / tooltip | `portalWidgetSpec.ts:310` | Pending Approvals | Pending Approvals |  |
 
 ### 12.6 My Assets — `my_assets`
 
 | ID | What it is | File | Current (this project) | That build says | New text |
 |---|---|---|---|---|---|
-| `w.my-assets.my-assets` | name | `portalWidgetSpec.ts:311` | My Assets | My Assets |  |
-| `w.my-assets.allow-requester-to-access-my-asset` | setting | `portalWidgetSpec.ts:312` | Allow Requester to Access My Assets | Allow Requester to Access My Assets |  |
-| `w.my-assets.my-assets-2` | title / tooltip | `portalWidgetSpec.ts:315` | My Assets | My Assets |  |
+| `w.my-assets.my-assets` | name | `portalWidgetSpec.ts:315` | My Assets | My Assets |  |
+| `w.my-assets.allow-requester-to-access-my-asset` | setting | `portalWidgetSpec.ts:316` | Allow Requester to Access My Assets | Allow Requester to Access My Assets |  |
+| `w.my-assets.my-assets-2` | title / tooltip | `portalWidgetSpec.ts:319` | My Assets | My Assets |  |
 
 ### 12.7 My CIs — `my_cis`
 
 | ID | What it is | File | Current (this project) | That build says | New text |
 |---|---|---|---|---|---|
-| `w.my-cis.my-cis` | name | `portalWidgetSpec.ts:320` | My CIs | My CIs |  |
-| `w.my-cis.allow-requester-to-access-my-ci` | setting | `portalWidgetSpec.ts:321` | Allow Requester to Access My CI | Allow Requester to Access My CI |  |
-| `w.my-cis.my-cis-2` | title / tooltip | `portalWidgetSpec.ts:324` | My CIs | My CIs |  |
+| `w.my-cis.my-cis` | name | `portalWidgetSpec.ts:324` | My CIs | My CIs |  |
+| `w.my-cis.allow-requester-to-access-my-ci` | setting | `portalWidgetSpec.ts:325` | Allow Requester to Access My CI | Allow Requester to Access My CI |  |
+| `w.my-cis.my-cis-2` | title / tooltip | `portalWidgetSpec.ts:328` | My CIs | My CIs |  |
 
 ### 12.8 Announcements — `announcements`
 
 | ID | What it is | File | Current (this project) | That build says | New text |
 |---|---|---|---|---|---|
-| `w.announcements.announcements` | name | `portalWidgetSpec.ts:329` | Announcements | Announcements |  |
-| `w.announcements.announcements-2` | title / tooltip | `portalWidgetSpec.ts:333` | Announcements | Announcements |  |
+| `w.announcements.announcements` | name | `portalWidgetSpec.ts:333` | Announcements | Announcements |  |
+| `w.announcements.announcements-2` | title / tooltip | `portalWidgetSpec.ts:337` | Announcements | Announcements |  |
 
 ### 12.9 Most Read — `most_read`
 
 | ID | What it is | File | Current (this project) | That build says | New text |
 |---|---|---|---|---|---|
-| `w.most-read.most-read` | name | `portalWidgetSpec.ts:338` | Most Read | Most Read |  |
-| `w.most-read.allow-requester-to-access-knowledg` | setting | `portalWidgetSpec.ts:339` | Allow Requester To Access Knowledge | Allow Requester To Access Knowledge |  |
-| `w.most-read.most-read-2` | title / tooltip | `portalWidgetSpec.ts:342` | Most Read | Most Read |  |
+| `w.most-read.most-read` | name | `portalWidgetSpec.ts:342` | Most Read | Most Read |  |
+| `w.most-read.allow-requester-to-access-knowledg` | setting | `portalWidgetSpec.ts:343` | Allow Requester To Access Knowledge | Allow Requester To Access Knowledge |  |
+| `w.most-read.most-read-2` | title / tooltip | `portalWidgetSpec.ts:346` | Most Read | Most Read |  |
 
 ### 12.10 Contact Us — `contact_us`
 
 | ID | What it is | File | Current (this project) | That build says | New text |
 |---|---|---|---|---|---|
-| `w.contact-us.contact-us` | name | `portalWidgetSpec.ts:347` | Contact Us | Contact Us |  |
-| `w.contact-us.these-override-what-this-portal-pu` | text | `portalWidgetSpec.ts:380` | These override what this portal publishes. The organisation record is where they are seeded from and what every other portal reads. | These override what this portal publishes. The organisation record is where they are seeded from and what every other portal reads. |  |
-| `w.contact-us.edit-contact-details` | field label | `portalWidgetSpec.ts:381` | Edit contact details | Edit contact details |  |
-| `w.contact-us.company-details` | card | `portalWidgetSpec.ts:381` | Company Details | Company Details |  |
-| `w.contact-us.contact-us-2` | title / tooltip | `portalWidgetSpec.ts:391` | Contact Us | Contact Us |  |
-| `w.contact-us.servicedesk-acme-com` | string | `portalWidgetSpec.ts:394` | servicedesk@acme.com | servicedesk@acme.com |  |
-| `w.contact-us.91-79-4040-0000` | string | `portalWidgetSpec.ts:395` | +91 79 4040 0000 | +91 79 4040 0000 |  |
+| `w.contact-us.contact-us` | name | `portalWidgetSpec.ts:351` | Contact Us | Contact Us |  |
+| `w.contact-us.these-override-what-this-portal-pu` | text | `portalWidgetSpec.ts:384` | These override what this portal publishes. The organisation record is where they are seeded from and what every other portal reads. | These override what this portal publishes. The organisation record is where they are seeded from and what every other portal reads. |  |
+| `w.contact-us.edit-contact-details` | field label | `portalWidgetSpec.ts:385` | Edit contact details | Edit contact details |  |
+| `w.contact-us.company-details` | card | `portalWidgetSpec.ts:385` | Company Details | Company Details |  |
+| `w.contact-us.contact-us-2` | title / tooltip | `portalWidgetSpec.ts:395` | Contact Us | Contact Us |  |
+| `w.contact-us.servicedesk-acme-com` | string | `portalWidgetSpec.ts:398` | servicedesk@acme.com | servicedesk@acme.com |  |
+| `w.contact-us.91-79-4040-0000` | string | `portalWidgetSpec.ts:399` | +91 79 4040 0000 | +91 79 4040 0000 |  |
 
 ### 12.11 Favourite Services — `favourite_services`
 
 | ID | What it is | File | Current (this project) | That build says | New text |
 |---|---|---|---|---|---|
-| `w.favourite-services.favourite-services` | name | `portalWidgetSpec.ts:404` | Favourite Services | Favourite Services |  |
-| `w.favourite-services.access-service-catalog` | setting | `portalWidgetSpec.ts:405` | Access Service Catalog | Access Service Catalog |  |
-| `w.favourite-services.show-description` | field label | `portalWidgetSpec.ts:407` | Show description | Show description |  |
-| `w.favourite-services.content` | group | `portalWidgetSpec.ts:407` | Content | Content |  |
-| `w.favourite-services.card-templates` | group | `portalWidgetSpec.ts:413` | Card templates | Card templates |  |
-| `w.favourite-services.this-section-only-appears-once-a-r` | text | `portalWidgetSpec.ts:421` | This section only appears once a requester has added favourites. Anyone with none sees nothing here — the tiles below are examples. | This section only appears once a requester has added favourites. Anyone with none sees nothing here — the tiles below are examples. |  |
-| `w.favourite-services.the-services-this-requester-has-pi` | text | `portalWidgetSpec.ts:422` | The services this requester has pinned. Shows up to four — a shortcut that runs longer than that is a catalogue. | The services this requester has pinned. Shows up to four — a shortcut that runs longer than that is a catalogue. |  |
-| `w.favourite-services.favourite-services-2` | title / tooltip | `portalWidgetSpec.ts:424` | Favourite Services | Favourite Services |  |
+| `w.favourite-services.favourite-services` | name | `portalWidgetSpec.ts:408` | Favourite Services | Favourite Services |  |
+| `w.favourite-services.access-service-catalog` | setting | `portalWidgetSpec.ts:409` | Access Service Catalog | Access Service Catalog |  |
+| `w.favourite-services.show-description` | field label | `portalWidgetSpec.ts:411` | Show description | Show description |  |
+| `w.favourite-services.content` | group | `portalWidgetSpec.ts:411` | Content | Content |  |
+| `w.favourite-services.card-templates` | group | `portalWidgetSpec.ts:417` | Card templates | Card templates |  |
+| `w.favourite-services.this-section-only-appears-once-a-r` | text | `portalWidgetSpec.ts:425` | This section only appears once a requester has added favourites. Anyone with none sees nothing here — the tiles below are examples. | This section only appears once a requester has added favourites. Anyone with none sees nothing here — the tiles below are examples. |  |
+| `w.favourite-services.the-services-this-requester-has-pi` | text | `portalWidgetSpec.ts:426` | The services this requester has pinned. Shows up to four — a shortcut that runs longer than that is a catalogue. | The services this requester has pinned. Shows up to four — a shortcut that runs longer than that is a catalogue. |  |
+| `w.favourite-services.favourite-services-2` | title / tooltip | `portalWidgetSpec.ts:428` | Favourite Services | Favourite Services |  |
 
 ### 12.12 Most Used Services — `featured_services`
 
 | ID | What it is | File | Current (this project) | That build says | New text |
 |---|---|---|---|---|---|
-| `w.featured-services.most-used-services` | name | `portalWidgetSpec.ts:429` | Most Used Services | Most Used Services |  |
-| `w.featured-services.a-requester-s-favourites-not-a-bro` | text | `portalWidgetSpec.ts:455` | A requester’s favourites, not a browse-all grid — the catalogue itself is a page, not a widget. | A requester’s favourites, not a browse-all grid — the catalogue itself is a page, not a widget. |  |
-| `w.featured-services.most-used-services-2` | title / tooltip | `portalWidgetSpec.ts:460` | Most Used Services | Most Used Services |  |
-| `w.featured-services.browse-catalog` | browseLabel | `portalWidgetSpec.ts:460` | Browse catalog | Browse catalog |  |
-| `w.featured-services.ad-self-service` | string | `portalWidgetSpec.ts:468` | AD Self Service | AD Self Service |  |
-| `w.featured-services.reset-your-domain-password` | string | `portalWidgetSpec.ts:468` | Reset your domain password | Reset your domain password |  |
-| `w.featured-services.allow-ad-self-service` | string | `portalWidgetSpec.ts:468` | Allow AD Self Service | Allow AD Self Service |  |
-| `w.featured-services.new-incident` | string | `portalWidgetSpec.ts:469` | New Incident | New Incident |  |
-| `w.featured-services.report-an-issue-you-are-facing` | string | `portalWidgetSpec.ts:469` | Report an issue you are facing | Report an issue you are facing |  |
-| `w.featured-services.allow-requester-to-create-incident` | string | `portalWidgetSpec.ts:469` | Allow Requester to create Incident | Allow Requester to create Incident |  |
-| `w.featured-services.request-service` | string | `portalWidgetSpec.ts:470` | Request Service | Request Service |  |
-| `w.featured-services.browse-the-service-catalog` | string | `portalWidgetSpec.ts:470` | Browse the service catalog | Browse the service catalog |  |
-| `w.featured-services.access-service-catalog` | string | `portalWidgetSpec.ts:470` | Access Service Catalog | Access Service Catalog |  |
-| `w.featured-services.knowledge` | string | `portalWidgetSpec.ts:471` | Knowledge | Knowledge |  |
-| `w.featured-services.search-help-articles` | string | `portalWidgetSpec.ts:471` | Search help articles | Search help articles |  |
-| `w.featured-services.access-knowledge` | string | `portalWidgetSpec.ts:471` | Access Knowledge | Access Knowledge |  |
-| `w.featured-services.action-card` | string | `portalWidgetSpec.ts:476` | Action Card | Action Card |  |
-| `w.featured-services.describe-what-this-card-does` | string | `portalWidgetSpec.ts:476` | Describe what this card does | Describe what this card does |  |
-| `w.featured-services.external-link` | string | `portalWidgetSpec.ts:482` | External link | External link |  |
-| `w.featured-services.where-this-link-goes` | string | `portalWidgetSpec.ts:482` | Where this link goes | Where this link goes |  |
-| `w.featured-services.actions` | group | `portalWidgetSpec.ts:484` | Actions | Actions |  |
-| `w.featured-services.title` | field label | `portalWidgetSpec.ts:487` | Title | Title |  |
-| `w.featured-services.subtitle` | field label | `portalWidgetSpec.ts:488` | Subtitle | Subtitle |  |
-| `w.featured-services.icon` | field label | `portalWidgetSpec.ts:489` | Icon | Icon |  |
-| `w.featured-services.icon-position` | field label | `portalWidgetSpec.ts:491` | Icon position | Icon position |  |
-| `w.featured-services.content-alignment` | field label | `portalWidgetSpec.ts:495` | Content alignment | Content alignment |  |
-| `w.featured-services.card-templates` | field label | `portalWidgetSpec.ts:516` | Card templates | Card templates |  |
-| `w.featured-services.url` | field label | `portalWidgetSpec.ts:529` | URL | URL |  |
-| `w.featured-services.where-a-requester-lands-when-they-` | help | `portalWidgetSpec.ts:529` | Where a requester lands when they click this card. | Where a requester lands when they click this card. |  |
-| `w.featured-services.open-in-a-new-tab` | field label | `portalWidgetSpec.ts:530` | Open in a new tab | Open in a new tab |  |
-| `w.featured-services.on-click-go-to` | field label | `portalWidgetSpec.ts:536` | On click, go to | On click, go to |  |
-| `w.featured-services.report-an-incident` | field label | `portalWidgetSpec.ts:538` | Report an incident | Report an incident |  |
-| `w.featured-services.request-a-service` | field label | `portalWidgetSpec.ts:539` | Request a service | Request a service |  |
-| `w.featured-services.ad-self-service-2` | field label | `portalWidgetSpec.ts:540` | AD self service | AD self service |  |
-| `w.featured-services.knowledge-2` | field label | `portalWidgetSpec.ts:541` | Knowledge | Knowledge |  |
-| `w.featured-services.external-link-2` | field label | `portalWidgetSpec.ts:542` | External link | External link |  |
-| `w.featured-services.most-used-services-3` | field label | `portalWidgetSpec.ts:556` | Most used services | Most used services |  |
-| `w.featured-services.when-a-requester-clicks-this-card-` | help | `portalWidgetSpec.ts:558` | When a requester clicks this card, the services people request most are shown first. | When a requester clicks this card, the services people request most are shown first. |  |
+| `w.featured-services.most-used-services` | name | `portalWidgetSpec.ts:433` | Most Used Services | Most Used Services |  |
+| `w.featured-services.a-requester-s-favourites-not-a-bro` | text | `portalWidgetSpec.ts:459` | A requester’s favourites, not a browse-all grid — the catalogue itself is a page, not a widget. | A requester’s favourites, not a browse-all grid — the catalogue itself is a page, not a widget. |  |
+| `w.featured-services.most-used-services-2` | title / tooltip | `portalWidgetSpec.ts:464` | Most Used Services | Most Used Services |  |
+| `w.featured-services.browse-catalog` | browseLabel | `portalWidgetSpec.ts:464` | Browse catalog | Browse catalog |  |
+| `w.featured-services.ad-self-service` | string | `portalWidgetSpec.ts:472` | AD Self Service | AD Self Service |  |
+| `w.featured-services.reset-your-domain-password` | string | `portalWidgetSpec.ts:472` | Reset your domain password | Reset your domain password |  |
+| `w.featured-services.allow-ad-self-service` | string | `portalWidgetSpec.ts:472` | Allow AD Self Service | Allow AD Self Service |  |
+| `w.featured-services.new-incident` | string | `portalWidgetSpec.ts:473` | New Incident | New Incident |  |
+| `w.featured-services.report-an-issue-you-are-facing` | string | `portalWidgetSpec.ts:473` | Report an issue you are facing | Report an issue you are facing |  |
+| `w.featured-services.allow-requester-to-create-incident` | string | `portalWidgetSpec.ts:473` | Allow Requester to create Incident | Allow Requester to create Incident |  |
+| `w.featured-services.request-service` | string | `portalWidgetSpec.ts:474` | Request Service | Request Service |  |
+| `w.featured-services.browse-the-service-catalog` | string | `portalWidgetSpec.ts:474` | Browse the service catalog | Browse the service catalog |  |
+| `w.featured-services.access-service-catalog` | string | `portalWidgetSpec.ts:474` | Access Service Catalog | Access Service Catalog |  |
+| `w.featured-services.knowledge` | string | `portalWidgetSpec.ts:475` | Knowledge | Knowledge |  |
+| `w.featured-services.search-help-articles` | string | `portalWidgetSpec.ts:475` | Search help articles | Search help articles |  |
+| `w.featured-services.access-knowledge` | string | `portalWidgetSpec.ts:475` | Access Knowledge | Access Knowledge |  |
+| `w.featured-services.action-card` | string | `portalWidgetSpec.ts:480` | Action Card | Action Card |  |
+| `w.featured-services.describe-what-this-card-does` | string | `portalWidgetSpec.ts:480` | Describe what this card does | Describe what this card does |  |
+| `w.featured-services.external-link` | string | `portalWidgetSpec.ts:486` | External link | External link |  |
+| `w.featured-services.where-this-link-goes` | string | `portalWidgetSpec.ts:486` | Where this link goes | Where this link goes |  |
+| `w.featured-services.actions` | group | `portalWidgetSpec.ts:488` | Actions | Actions |  |
+| `w.featured-services.title` | field label | `portalWidgetSpec.ts:491` | Title | Title |  |
+| `w.featured-services.subtitle` | field label | `portalWidgetSpec.ts:492` | Subtitle | Subtitle |  |
+| `w.featured-services.icon` | field label | `portalWidgetSpec.ts:493` | Icon | Icon |  |
+| `w.featured-services.icon-position` | field label | `portalWidgetSpec.ts:495` | Icon position | Icon position |  |
+| `w.featured-services.content-alignment` | field label | `portalWidgetSpec.ts:499` | Content alignment | Content alignment |  |
+| `w.featured-services.card-templates` | field label | `portalWidgetSpec.ts:520` | Card templates | Card templates |  |
+| `w.featured-services.url` | field label | `portalWidgetSpec.ts:533` | URL | URL |  |
+| `w.featured-services.where-a-requester-lands-when-they-` | help | `portalWidgetSpec.ts:533` | Where a requester lands when they click this card. | Where a requester lands when they click this card. |  |
+| `w.featured-services.open-in-a-new-tab` | field label | `portalWidgetSpec.ts:534` | Open in a new tab | Open in a new tab |  |
+| `w.featured-services.on-click-go-to` | field label | `portalWidgetSpec.ts:540` | On click, go to | On click, go to |  |
+| `w.featured-services.report-an-incident` | field label | `portalWidgetSpec.ts:542` | Report an incident | Report an incident |  |
+| `w.featured-services.request-a-service` | field label | `portalWidgetSpec.ts:543` | Request a service | Request a service |  |
+| `w.featured-services.ad-self-service-2` | field label | `portalWidgetSpec.ts:544` | AD self service | AD self service |  |
+| `w.featured-services.knowledge-2` | field label | `portalWidgetSpec.ts:545` | Knowledge | Knowledge |  |
+| `w.featured-services.external-link-2` | field label | `portalWidgetSpec.ts:546` | External link | External link |  |
+| `w.featured-services.most-used-services-3` | field label | `portalWidgetSpec.ts:560` | Most used services | Most used services |  |
+| `w.featured-services.when-a-requester-clicks-this-card-` | help | `portalWidgetSpec.ts:562` | When a requester clicks this card, the services people request most are shown first. | When a requester clicks this card, the services people request most are shown first. |  |
 
 ### 12.13 `style`
 
 | ID | What it is | File | Current (this project) | That build says | New text |
 |---|---|---|---|---|---|
-| `w.style.fill` | field label | `portalWidgetSpec.ts:573` | Fill | Fill |  |
-| `w.style.colour` | field label | `portalWidgetSpec.ts:574` | Colour | Colour |  |
-| `w.style.background-colour` | field label | `portalWidgetSpec.ts:575` | Background colour | Background colour |  |
-| `w.style.border` | field label | `portalWidgetSpec.ts:576` | Border | Border |  |
-| `w.style.corner-radius` | field label | `portalWidgetSpec.ts:577` | Corner radius | Corner radius |  |
+| `w.style.fill` | field label | `portalWidgetSpec.ts:577` | Fill | Fill |  |
+| `w.style.colour` | field label | `portalWidgetSpec.ts:578` | Colour | Colour |  |
+| `w.style.background-colour` | field label | `portalWidgetSpec.ts:579` | Background colour | Background colour |  |
+| `w.style.border` | field label | `portalWidgetSpec.ts:580` | Border | Border |  |
+| `w.style.corner-radius` | field label | `portalWidgetSpec.ts:581` | Corner radius | Corner radius |  |
 
 ### 12.14 `size`
 
 | ID | What it is | File | Current (this project) | That build says | New text |
 |---|---|---|---|---|---|
-| `w.size.height` | field label | `portalWidgetSpec.ts:586` | Height | Height |  |
+| `w.size.height` | field label | `portalWidgetSpec.ts:590` | Height | Height |  |
 
 ### 12.15 Button / Link — `button`
 
 | ID | What it is | File | Current (this project) | That build says | New text |
 |---|---|---|---|---|---|
-| `w.button.button-link` | name | `portalWidgetSpec.ts:612` | Button / Link | Button / Link |  |
-| `w.button.label` | field label | `portalWidgetSpec.ts:615` | Label | Label |  |
-| `w.button.when-the-style-is-icon-this-become` | help | `portalWidgetSpec.ts:616` | When the style is Icon this becomes the tooltip and the screen-reader name. | When the style is Icon this becomes the tooltip and the screen-reader name. |  |
-| `w.button.style` | field label | `portalWidgetSpec.ts:619` | Style | Style |  |
-| `w.button.opens` | field label | `portalWidgetSpec.ts:624` | Opens | Opens |  |
-| `w.button.action` | group | `portalWidgetSpec.ts:624` | Action | Action |  |
-| `w.button.download-a-file` | field label | `portalWidgetSpec.ts:640` | Download a file | Download a file |  |
-| `w.button.shown-as` | field label | `portalWidgetSpec.ts:653` | Shown as | Shown as |  |
-| `w.button.leave-blank-to-use-the-uploaded-fi` | help | `portalWidgetSpec.ts:654` | Leave blank to use the uploaded file’s own name. | Leave blank to use the uploaded file’s own name. |  |
-| `w.button.send-to` | field label | `portalWidgetSpec.ts:656` | Send to | Send to |  |
-| `w.button.full-width` | field label | `portalWidgetSpec.ts:670` | Full width | Full width |  |
-| `w.button.fill-colour` | field label | `portalWidgetSpec.ts:672` | Fill colour | Fill colour |  |
-| `w.button.border-colour` | field label | `portalWidgetSpec.ts:673` | Border colour | Border colour |  |
-| `w.button.alignment` | field label | `portalWidgetSpec.ts:676` | Alignment | Alignment |  |
-| `w.button.alignment-2` | group | `portalWidgetSpec.ts:676` | Alignment | Alignment |  |
-| `w.button.new-incident-form-and-service-cata` | text | `portalWidgetSpec.ts:685` | “New incident form” and “Service catalog” are deliberately not in this list — those are the New Incident and Request Service action cards, and two ways to make the same link is one way too many. | “New incident form” and “Service catalog” are deliberately not in this list — those are the New Incident and Request Service action cards, and two ways to make the same link is one way too many. |  |
-| `w.button.contact-the-service-desk` | field label | `portalWidgetSpec.ts:692` | Contact the service desk | Contact the service desk |  |
-| `w.button.my-requests` | page | `portalWidgetSpec.ts:693` | My Requests | My Requests |  |
-| `w.button.inherit-from-theme` | font | `portalWidgetSpec.ts:698` | Inherit from theme | Inherit from theme |  |
+| `w.button.button-link` | name | `portalWidgetSpec.ts:616` | Button / Link | Button / Link |  |
+| `w.button.label` | field label | `portalWidgetSpec.ts:619` | Label | Label |  |
+| `w.button.when-the-style-is-icon-this-become` | help | `portalWidgetSpec.ts:620` | When the style is Icon this becomes the tooltip and the screen-reader name. | When the style is Icon this becomes the tooltip and the screen-reader name. |  |
+| `w.button.style` | field label | `portalWidgetSpec.ts:623` | Style | Style |  |
+| `w.button.opens` | field label | `portalWidgetSpec.ts:628` | Opens | Opens |  |
+| `w.button.action` | group | `portalWidgetSpec.ts:628` | Action | Action |  |
+| `w.button.download-a-file` | field label | `portalWidgetSpec.ts:644` | Download a file | Download a file |  |
+| `w.button.shown-as` | field label | `portalWidgetSpec.ts:657` | Shown as | Shown as |  |
+| `w.button.leave-blank-to-use-the-uploaded-fi` | help | `portalWidgetSpec.ts:658` | Leave blank to use the uploaded file’s own name. | Leave blank to use the uploaded file’s own name. |  |
+| `w.button.send-to` | field label | `portalWidgetSpec.ts:660` | Send to | Send to |  |
+| `w.button.full-width` | field label | `portalWidgetSpec.ts:674` | Full width | Full width |  |
+| `w.button.fill-colour` | field label | `portalWidgetSpec.ts:676` | Fill colour | Fill colour |  |
+| `w.button.border-colour` | field label | `portalWidgetSpec.ts:677` | Border colour | Border colour |  |
+| `w.button.alignment` | field label | `portalWidgetSpec.ts:680` | Alignment | Alignment |  |
+| `w.button.alignment-2` | group | `portalWidgetSpec.ts:680` | Alignment | Alignment |  |
+| `w.button.new-incident-form-and-service-cata` | text | `portalWidgetSpec.ts:689` | “New incident form” and “Service catalog” are deliberately not in this list — those are the New Incident and Request Service action cards, and two ways to make the same link is one way too many. | “New incident form” and “Service catalog” are deliberately not in this list — those are the New Incident and Request Service action cards, and two ways to make the same link is one way too many. |  |
+| `w.button.contact-the-service-desk` | field label | `portalWidgetSpec.ts:696` | Contact the service desk | Contact the service desk |  |
+| `w.button.my-requests` | page | `portalWidgetSpec.ts:697` | My Requests | My Requests |  |
+| `w.button.inherit-from-theme` | font | `portalWidgetSpec.ts:702` | Inherit from theme | Inherit from theme |  |
 
 ### 12.16 Count tile — `count_tile`
 
 | ID | What it is | File | Current (this project) | That build says | New text |
 |---|---|---|---|---|---|
-| `w.count-tile.count-tile` | name | `portalWidgetSpec.ts:704` | Count tile | Count tile |  |
-| `w.count-tile.counts` | field label | `portalWidgetSpec.ts:708` | Counts | Counts |  |
-| `w.count-tile.my-requests` | string | `portalWidgetSpec.ts:709` | My requests | My requests |  |
-| `w.count-tile.my-changes` | string | `portalWidgetSpec.ts:709` | My changes | My changes |  |
-| `w.count-tile.approvals-waiting-on-me` | string | `portalWidgetSpec.ts:709` | Approvals waiting on me | Approvals waiting on me |  |
-| `w.count-tile.my-assets` | string | `portalWidgetSpec.ts:709` | My assets | My assets |  |
-| `w.count-tile.my-cis` | string | `portalWidgetSpec.ts:709` | My CIs | My CIs |  |
-| `w.count-tile.statuses-to-count` | field label | `portalWidgetSpec.ts:714` | Statuses to count | Statuses to count |  |
-| `w.count-tile.leaving-every-chip-clear-counts-al` | help | `portalWidgetSpec.ts:716` | Leaving every chip clear counts all of them. | Leaving every chip clear counts all of them. |  |
-| `w.count-tile.layout` | field label | `portalWidgetSpec.ts:720` | Layout | Layout |  |
-| `w.count-tile.tile` | group | `portalWidgetSpec.ts:720` | Tile | Tile |  |
-| `w.count-tile.icon-left` | field label | `portalWidgetSpec.ts:721` | Icon left | Icon left |  |
-| `w.count-tile.icon-top` | field label | `portalWidgetSpec.ts:721` | Icon top | Icon top |  |
-| `w.count-tile.no-icon` | field label | `portalWidgetSpec.ts:721` | No icon | No icon |  |
-| `w.count-tile.number-size` | field label | `portalWidgetSpec.ts:723` | Number size | Number size |  |
-| `w.count-tile.number-colour` | field label | `portalWidgetSpec.ts:724` | Number colour | Number colour |  |
-| `w.count-tile.label-colour` | field label | `portalWidgetSpec.ts:725` | Label colour | Label colour |  |
-| `w.count-tile.this-source-returns-a-single-total` | text | `portalWidgetSpec.ts:737` | This source returns a single total — there is no status filter to apply to it, so the status chips are not shown. | This source returns a single total — there is no status filter to apply to it, so the status chips are not shown. |  |
-| `w.count-tile.open-requests` | field label | `portalWidgetSpec.ts:740` | Open requests | Open requests |  |
-| `w.count-tile.my-requests-2` | source | `portalWidgetSpec.ts:740` | My requests | My requests |  |
+| `w.count-tile.count-tile` | name | `portalWidgetSpec.ts:708` | Count tile | Count tile |  |
+| `w.count-tile.counts` | field label | `portalWidgetSpec.ts:712` | Counts | Counts |  |
+| `w.count-tile.my-requests` | string | `portalWidgetSpec.ts:713` | My requests | My requests |  |
+| `w.count-tile.my-changes` | string | `portalWidgetSpec.ts:713` | My changes | My changes |  |
+| `w.count-tile.approvals-waiting-on-me` | string | `portalWidgetSpec.ts:713` | Approvals waiting on me | Approvals waiting on me |  |
+| `w.count-tile.my-assets` | string | `portalWidgetSpec.ts:713` | My assets | My assets |  |
+| `w.count-tile.my-cis` | string | `portalWidgetSpec.ts:713` | My CIs | My CIs |  |
+| `w.count-tile.statuses-to-count` | field label | `portalWidgetSpec.ts:718` | Statuses to count | Statuses to count |  |
+| `w.count-tile.leaving-every-chip-clear-counts-al` | help | `portalWidgetSpec.ts:720` | Leaving every chip clear counts all of them. | Leaving every chip clear counts all of them. |  |
+| `w.count-tile.layout` | field label | `portalWidgetSpec.ts:724` | Layout | Layout |  |
+| `w.count-tile.tile` | group | `portalWidgetSpec.ts:724` | Tile | Tile |  |
+| `w.count-tile.icon-left` | field label | `portalWidgetSpec.ts:725` | Icon left | Icon left |  |
+| `w.count-tile.icon-top` | field label | `portalWidgetSpec.ts:725` | Icon top | Icon top |  |
+| `w.count-tile.no-icon` | field label | `portalWidgetSpec.ts:725` | No icon | No icon |  |
+| `w.count-tile.number-size` | field label | `portalWidgetSpec.ts:727` | Number size | Number size |  |
+| `w.count-tile.number-colour` | field label | `portalWidgetSpec.ts:728` | Number colour | Number colour |  |
+| `w.count-tile.label-colour` | field label | `portalWidgetSpec.ts:729` | Label colour | Label colour |  |
+| `w.count-tile.this-source-returns-a-single-total` | text | `portalWidgetSpec.ts:741` | This source returns a single total — there is no status filter to apply to it, so the status chips are not shown. | This source returns a single total — there is no status filter to apply to it, so the status chips are not shown. |  |
+| `w.count-tile.open-requests` | field label | `portalWidgetSpec.ts:744` | Open requests | Open requests |  |
+| `w.count-tile.my-requests-2` | source | `portalWidgetSpec.ts:744` | My requests | My requests |  |
 
 ### 12.17 `text`
 
 | ID | What it is | File | Current (this project) | That build says | New text |
 |---|---|---|---|---|---|
-| `w.text.font` | field label | `portalWidgetSpec.ts:757` | Font | Font |  |
-| `w.text.text-style` | group | `portalWidgetSpec.ts:757` | Text style | Text style |  |
-| `w.text.inherit-from-theme` | string | `portalWidgetSpec.ts:758` | Inherit from theme | Inherit from theme |  |
-| `w.text.inter` | string | `portalWidgetSpec.ts:758` | Inter | Inter |  |
-| `w.text.poppins` | string | `portalWidgetSpec.ts:758` | Poppins | Poppins |  |
-| `w.text.roboto` | string | `portalWidgetSpec.ts:758` | Roboto | Roboto |  |
-| `w.text.source-sans-3` | string | `portalWidgetSpec.ts:758` | Source Sans 3 | Source Sans 3 |  |
-| `w.text.merriweather` | string | `portalWidgetSpec.ts:758` | Merriweather | Merriweather |  |
-| `w.text.ibm-plex-mono` | string | `portalWidgetSpec.ts:758` | IBM Plex Mono | IBM Plex Mono |  |
-| `w.text.font-weight` | field label | `portalWidgetSpec.ts:759` | Font weight | Font weight |  |
-| `w.text.semibold` | string | `portalWidgetSpec.ts:760` | Semibold | Semibold |  |
-| `w.text.font-size` | field label | `portalWidgetSpec.ts:761` | Font size | Font size |  |
-| `w.text.font-colour` | field label | `portalWidgetSpec.ts:762` | Font colour | Font colour |  |
-| `w.text.line-height` | field label | `portalWidgetSpec.ts:763` | Line height | Line height |  |
-| `w.text.letter-spacing` | field label | `portalWidgetSpec.ts:764` | Letter spacing | Letter spacing |  |
-| `w.text.column-count` | field label | `portalWidgetSpec.ts:766` | Column count | Column count |  |
-| `w.text.justify` | field label | `portalWidgetSpec.ts:771` | Justify | Justify |  |
-| `w.text.double-click-to-edit-this-text` | html | `portalWidgetSpec.ts:776` | Double-click to edit this text. | Double-click to edit this text. |  |
+| `w.text.font` | field label | `portalWidgetSpec.ts:761` | Font | Font |  |
+| `w.text.text-style` | group | `portalWidgetSpec.ts:761` | Text style | Text style |  |
+| `w.text.inherit-from-theme` | string | `portalWidgetSpec.ts:762` | Inherit from theme | Inherit from theme |  |
+| `w.text.inter` | string | `portalWidgetSpec.ts:762` | Inter | Inter |  |
+| `w.text.poppins` | string | `portalWidgetSpec.ts:762` | Poppins | Poppins |  |
+| `w.text.roboto` | string | `portalWidgetSpec.ts:762` | Roboto | Roboto |  |
+| `w.text.source-sans-3` | string | `portalWidgetSpec.ts:762` | Source Sans 3 | Source Sans 3 |  |
+| `w.text.merriweather` | string | `portalWidgetSpec.ts:762` | Merriweather | Merriweather |  |
+| `w.text.ibm-plex-mono` | string | `portalWidgetSpec.ts:762` | IBM Plex Mono | IBM Plex Mono |  |
+| `w.text.font-weight` | field label | `portalWidgetSpec.ts:763` | Font weight | Font weight |  |
+| `w.text.semibold` | string | `portalWidgetSpec.ts:764` | Semibold | Semibold |  |
+| `w.text.font-size` | field label | `portalWidgetSpec.ts:765` | Font size | Font size |  |
+| `w.text.font-colour` | field label | `portalWidgetSpec.ts:766` | Font colour | Font colour |  |
+| `w.text.line-height` | field label | `portalWidgetSpec.ts:767` | Line height | Line height |  |
+| `w.text.letter-spacing` | field label | `portalWidgetSpec.ts:768` | Letter spacing | Letter spacing |  |
+| `w.text.column-count` | field label | `portalWidgetSpec.ts:770` | Column count | Column count |  |
+| `w.text.justify` | field label | `portalWidgetSpec.ts:775` | Justify | Justify |  |
+| `w.text.double-click-to-edit-this-text` | html | `portalWidgetSpec.ts:780` | Double-click to edit this text. | Double-click to edit this text. |  |
 
 ### 12.18 Custom data widget — `record_list`
 
 | ID | What it is | File | Current (this project) | That build says | New text |
 |---|---|---|---|---|---|
-| `w.record-list.custom-data-widget` **Δ** | name | `portalWidgetSpec.ts:792` | Custom data widget | Custom Data Widget | Custom Data Widget |
-| `w.record-list.show-as` **Δ** | field label | `portalWidgetSpec.ts:802` | Show as | — not in that build — |  |
-| `w.record-list.record-list` **Δ** | field label | `portalWidgetSpec.ts:803` | Record list | Record list | Record list |
-| `w.record-list.kpi` | field label | `portalWidgetSpec.ts:803` | KPI | KPI |  |
-| `w.record-list.module` | field label | `portalWidgetSpec.ts:813` | Module | Module |  |
-| `w.record-list.filter-cleared-it-belonged-to-the-` | say | `portalWidgetSpec.ts:820` | Filter cleared — it belonged to the module you just left | Filter cleared — it belonged to the module you just left |  |
-| `w.record-list.filter` | field label | `portalWidgetSpec.ts:830` | Filter | Filter |  |
-| `w.record-list.shows-sample-rows-here-so-you-can-` | text | `portalWidgetSpec.ts:837` | Shows sample rows here so you can see the shape, so a condition on a field the samples do not carry — a priority, an assignee, a date — is not applied in the builder. On the live portal it queries the module you chose and applies the whole filter, showing the same “No Data Found” state as My CIs when nothing matches. | Shows sample rows here so you can see the shape, so a condition on a field the samples do not carry — a priority, an assignee, a date — is not applied in the builder. On the live portal it queries the module you chose and applies the whole filter, showing the same “No Data Found” state as My CIs when nothing matches. |  |
-| `w.record-list.my-records` | title / tooltip | `portalWidgetSpec.ts:839` | My records | My records |  |
+| `w.record-list.custom-data-widget` **Δ** | name | `portalWidgetSpec.ts:796` | Custom data widget | Custom Data Widget | Custom Data Widget |
+| `w.record-list.show-as` **Δ** | field label | `portalWidgetSpec.ts:806` | Show as | — not in that build — |  |
+| `w.record-list.record-list` **Δ** | field label | `portalWidgetSpec.ts:807` | Record list | Record list | Record list |
+| `w.record-list.kpi` | field label | `portalWidgetSpec.ts:807` | KPI | KPI |  |
+| `w.record-list.module` | field label | `portalWidgetSpec.ts:817` | Module | Module |  |
+| `w.record-list.filter-cleared-it-belonged-to-the-` | say | `portalWidgetSpec.ts:824` | Filter cleared — it belonged to the module you just left | Filter cleared — it belonged to the module you just left |  |
+| `w.record-list.filter` | field label | `portalWidgetSpec.ts:834` | Filter | Filter |  |
+| `w.record-list.shows-sample-rows-here-so-you-can-` | text | `portalWidgetSpec.ts:841` | Shows sample rows here so you can see the shape, so a condition on a field the samples do not carry — a priority, an assignee, a date — is not applied in the builder. On the live portal it queries the module you chose and applies the whole filter, showing the same “No Data Found” state as My CIs when nothing matches. | Shows sample rows here so you can see the shape, so a condition on a field the samples do not carry — a priority, an assignee, a date — is not applied in the builder. On the live portal it queries the module you chose and applies the whole filter, showing the same “No Data Found” state as My CIs when nothing matches. |  |
+| `w.record-list.my-records` | title / tooltip | `portalWidgetSpec.ts:843` | My records | My records |  |
 
 ### 12.19 Video — `video`
 
 | ID | What it is | File | Current (this project) | That build says | New text |
 |---|---|---|---|---|---|
-| `w.video.video` | name | `portalWidgetSpec.ts:849` | Video | Video |  |
-| `w.video.video-2` | field label | `portalWidgetSpec.ts:851` | Video | Video |  |
+| `w.video.video` | name | `portalWidgetSpec.ts:853` | Video | Video |  |
+| `w.video.video-2` | field label | `portalWidgetSpec.ts:855` | Video | Video |  |
 
 ### 12.20 Image — `image`
 
 | ID | What it is | File | Current (this project) | That build says | New text |
 |---|---|---|---|---|---|
-| `w.image.image` | name | `portalWidgetSpec.ts:860` | Image | Image |  |
-| `w.image.image-2` | field label | `portalWidgetSpec.ts:865` | Image | Image |  |
-| `w.image.alt-text` | field label | `portalWidgetSpec.ts:870` | Alt text | Alt text |  |
-| `w.image.shown-if-the-image-does-not-load-a` | help | `portalWidgetSpec.ts:871` | Shown if the image does not load, and read aloud by screen readers. | Shown if the image does not load, and read aloud by screen readers. |  |
-| `w.image.no-alt-text-yet-screen-reader-user` | warnWhenBlank | `portalWidgetSpec.ts:872` | No alt text yet — screen-reader users will hear nothing where this image is. | No alt text yet — screen-reader users will hear nothing where this image is. |  |
-| `w.image.caption` | field label | `portalWidgetSpec.ts:879` | Caption | Caption |  |
-| `w.image.leave-blank-to-make-the-image-deco` | help | `portalWidgetSpec.ts:890` | Leave blank to make the image decorative. | Leave blank to make the image decorative. |  |
-| `w.image.style` | group | `portalWidgetSpec.ts:894` | Style | Style |  |
-| `w.image.request-module` | string | `portalWidgetSpec.ts:1042` | Request module | Request module |  |
-| `w.image.allow-requester-to-access-my-appro` | string | `portalWidgetSpec.ts:1043` | Allow Requester To Access My Approvals | Allow Requester To Access My Approvals |  |
-| `w.image.allow-requester-to-access-my-asset` | string | `portalWidgetSpec.ts:1044` | Allow Requester to Access My Assets | Allow Requester to Access My Assets |  |
-| `w.image.allow-requester-to-access-my-ci` | string | `portalWidgetSpec.ts:1045` | Allow Requester to Access My CI | Allow Requester to Access My CI |  |
-| `w.image.allow-requester-to-access-knowledg` | string | `portalWidgetSpec.ts:1046` | Allow Requester To Access Knowledge | Allow Requester To Access Knowledge |  |
+| `w.image.image` | name | `portalWidgetSpec.ts:864` | Image | Image |  |
+| `w.image.image-2` | field label | `portalWidgetSpec.ts:869` | Image | Image |  |
+| `w.image.alt-text` | field label | `portalWidgetSpec.ts:874` | Alt text | Alt text |  |
+| `w.image.shown-if-the-image-does-not-load-a` | help | `portalWidgetSpec.ts:875` | Shown if the image does not load, and read aloud by screen readers. | Shown if the image does not load, and read aloud by screen readers. |  |
+| `w.image.no-alt-text-yet-screen-reader-user` | warnWhenBlank | `portalWidgetSpec.ts:876` | No alt text yet — screen-reader users will hear nothing where this image is. | No alt text yet — screen-reader users will hear nothing where this image is. |  |
+| `w.image.caption` | field label | `portalWidgetSpec.ts:883` | Caption | Caption |  |
+| `w.image.leave-blank-to-make-the-image-deco` | help | `portalWidgetSpec.ts:894` | Leave blank to make the image decorative. | Leave blank to make the image decorative. |  |
+| `w.image.style` | group | `portalWidgetSpec.ts:898` | Style | Style |  |
+| `w.image.request-module` | string | `portalWidgetSpec.ts:1046` | Request module | Request module |  |
+| `w.image.allow-requester-to-access-my-appro` | string | `portalWidgetSpec.ts:1047` | Allow Requester To Access My Approvals | Allow Requester To Access My Approvals |  |
+| `w.image.allow-requester-to-access-my-asset` | string | `portalWidgetSpec.ts:1048` | Allow Requester to Access My Assets | Allow Requester to Access My Assets |  |
+| `w.image.allow-requester-to-access-my-ci` | string | `portalWidgetSpec.ts:1049` | Allow Requester to Access My CI | Allow Requester to Access My CI |  |
+| `w.image.allow-requester-to-access-knowledg` | string | `portalWidgetSpec.ts:1050` | Allow Requester To Access Knowledge | Allow Requester To Access Knowledge |  |
 
 ### 12.21 Only in that build — not in this project
 
@@ -3022,9 +3030,9 @@ will build the control that carries them.
 | ID | What it is | File | Current (this project) | That build says | New text |
 |---|---|---|---|---|---|
 | `ctl.contain-10px-10px` | backgroundSize | `PortalControls.tsx:929` | contain, 10px 10px | contain, 10px 10px |  |
+| `ctl.replace` | string | `PortalControls.tsx:943` | Replace | Replace |  |
 | `ctl.upload-an-image` | string | `PortalControls.tsx:967` | Upload an image | Upload an image |  |
 | `ctl.choose` | on-screen text | `PortalControls.tsx:938` | Choose | Choose |  |
-| `ctl.replace` | on-screen text | `PortalControls.tsx:943` | Replace | Replace |  |
 | `ctl.choose-a-ready-made-banner` | on-screen text | `PortalControls.tsx:962` | Choose a ready-made banner | Choose a ready-made banner |  |
 | `ctl.suggested-size-px` | assembled at render time — the unit is appended by the control | `PortalControls.tsx:907` | Suggested {size} px | Suggested {size} px |  |
 
@@ -3532,7 +3540,7 @@ will build the control that carries them.
 
 ---
 
-**2049 entries** across 21 areas.
+**2057 entries** across 21 areas.
 
 ### What is deliberately not in here
 

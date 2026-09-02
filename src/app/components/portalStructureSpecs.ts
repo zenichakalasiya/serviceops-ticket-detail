@@ -425,7 +425,7 @@ export const LOGO_SPEC: WidgetSpec = {
   panel: {
     /* ⚠️ 240 × 64 — the top bar renders the mark at about 28px tall, so this is the 2× of a
        comfortable wordmark. Wider than tall, because every logo in that bar is. */
-    content: [{ key: 'logoSrc', label: 'Logo image', control: 'upload', suggested: '240 × 64' }],
+    content: [{ key: 'logoSrc', label: 'Logo image', control: 'upload', suggested: '240 × 64', noun: 'logo' }],
     /* ⚠️ NO Design section. A logo is one supplied image sitting in the product's own bar: filling
        it, bordering it or rounding it styles a mark somebody else's brand guidelines own, and its
        spacing belongs to the bar — which is already why `logoPos` lives there. The panel is the

@@ -164,6 +164,7 @@ export function PortalBrandingPanel() {
             the label does not have to. */}
         <Field label="Favicon">
           <UploadZone
+            noun="favicon"
             label="Upload favicon"
             value={favicon}
             onChange={(d) => { setFavicon(d); if (d) toast.success('Favicon updated'); }}
