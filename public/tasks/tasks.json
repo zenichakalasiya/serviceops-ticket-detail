@@ -1,6 +1,6 @@
 {
   "stamp": "2026-09-01",
-  "builtAt": "2026-09-02T18:21:02.624Z",
+  "builtAt": "2026-09-03T04:40:55.844Z",
   "tasks": [
     {
       "n": 1,
@@ -1782,7 +1782,29 @@
         "**⚠️ The cheapest path is two primitives, not twelve.** A **merged multi-entity card** (Assets + CIs) and a **counter tile row** unlock five of the twelve between them, and neither needs a new rendering path — both are a widget reading two sources instead of one.",
         "**⚠️ Sparse-tenant resilience is the ship gate, not looks.** L6 (Bento) and L9 (Answer First) score ≤ 2 there — the first tenant to open one with no announcements and no assets concludes the product is broken rather than that their data is empty. Both are excluded from \"ship first\" despite reviewing well.",
         "**Would ship: L2 Search Spotlight** (built; the only one that changes the page's question rather than its decoration) **and L4 Status Board** (its opposite — the daily user the current portal actively fails). Two layouts that differ prove the template system does something; one layout plus a recolour cannot.",
-        "**Not verified in a browser** — this is a design document, not a build. The eleven unbuilt layouts are drawings.",
+        "**Not verified in a browser** — this is a design document, not a build. The eleven unbuilt layouts are drawings."
+      ]
+    },
+    {
+      "n": 91,
+      "title": "Twelve portal directions, designed rather than wireframed",
+      "status": "done",
+      "fields": {
+        "Where": "[docs/portal-directions.html](docs/portal-directions.html) · [docs/combination-grid.md](docs/combination-grid.md)",
+        "You gave me": "\"can we have UI design instead of wireframe, so that i can compare the UI and layouts?\" — with per-domain variety in the banner and the card treatment.",
+        "These are UI, not wireframes": "one component vocabulary and twelve token blocks, so a direction is judged on its own palette, radius, density, card anatomy and banner. **Every banner treatment is pure CSS** — no image assets, so the sheet is one file.",
+        "Coverage": "A 12/18 · C 10/10 · D 9/9 · E 8/8 · F 9/9; every B sub-variable 100%. Exactly one pair reaches the two-shared-axis ceiling (Threshold ~ Service Counter, on `C3` and `D1`).",
+        "Verified in the browser": "12 direction sections + 2 reference sections render; **0 cards with excess slack** (was 19); **0px horizontal overflow** at 1500px; the dock measures 490×99 straddling its banner by exactly 28px; dark mode resolves (`body` #0E131A, ink #C4D0DD) with the twelve miniatures deliberately holding their own light identity — a portal design does not change because the reviewer’s OS is dark.",
+        "Unexplored, and what a second round would cover": "A2 linear gradient · A6 isometric · A8 3D logo forms · A11 photo + shape mask · A13 glassmorphic · **A17 live data motif** — the notable omission being a banner whose artwork IS the tenant’s live open-ticket count."
+      },
+      "notes": [
+        "**The method is what makes these twelve different from twelve.** Layouts 1–6 in one context condition layout 7, and the set converges on a hero + an action row + a card grid however hard you push. So: a combination grid FIRST (six axes, one row per layout, no two rows sharing more than two values), then **twelve isolated agents**, each given only its own row and blind to the other eleven.",
+        "**⚠️ Four agents, in total isolation, independently named their layout \"Front Desk.\"** The layouts diverge; the naming space converges. They are disambiguated here as Front Desk · Reception · Console · Lobby.",
+        "**Four rows were built from a BAN, not a choice** — no banner (Switchboard) · no grid of equal cards (Thread) · inverted order, data before the door (Desk Before Door) · half the vertical space, ~378px (Service Counter). A ban is the only reliable way to find out whether an element was ever load-bearing.",
+        "**⚠️ Five defects were found by MEASURING the page, not by looking at it.** A DOM sweep for cards whose content ends more than 45px above their own bottom edge found **19 across 11 directions** — a card that stretches to fill a column while carrying three rows reads as an empty state, which is the one thing every direction has to be able to disprove. Fixed at each card’s own row pitch; re-measured to zero.",
+        "**⚠️ The first sweep missed every card carrying an extra class** (`<div class=\"c sp\">`, Front Desk’s accent stripe) because the matcher tested `class=\"c\"` with the closing quote. And Thread’s feed rows are `.fd`, not `.l` — topping it up with `.l` spans at `gap:0` produced a solid pink slab. Two passes, not one.",
+        "**⚠️ Threshold’s search and action row were two objects straddling one edge.** They are now ONE dock whose internal seam IS the banner’s bottom edge — the edge is crossed exactly once, by one object.",
+        "Atrium’s largest bento tile held only a search field, so the treatment that states priority by SIZE was stating it with an empty box. Focus Desk’s illustration circles sat under the headline and through the search (an `::after` with no `z-index` paints over static content). The Command Rail’s rail was 34px of unlabelled squares — an icon strip, not the labelled rail the whole direction rests on.",
         "Tour guide",
         "AI capabilities",
         "Video / GIF as a widget",
