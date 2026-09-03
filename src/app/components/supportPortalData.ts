@@ -525,9 +525,21 @@ export interface PortalElement {
 export interface RecordModule {
   key: string;
   label: string;
+  /* ⚠️ WITHHELD from the Module dropdown, NOT deleted — the same rule `PortalElement.hidden` and
+     the template gallery both follow. `recordModule()` still resolves a hidden key, so a card
+     already pointed at one keeps its rows, its statuses and its filter; only the picker stops
+     offering it. Deleting the entry would have silently re-pointed every such card at Requests. */
+  hidden?: boolean;
   statuses: string[];
   rows: { id: string; title: string; status: string; meta: string }[];
 }
+
+/** The modules the picker actually offers — everything not withheld by `hidden`.
+ *
+ * ⚠️ `RECORD_MODULES` stays the FULL list because `recordModule()` resolves a saved key through
+ * it, and a card built on a module that has since been withheld must keep working rather than
+ * quietly becoming a Requests card. Same split `VISIBLE_TEMPLATES` makes, for the same reason. */
+export const VISIBLE_RECORD_MODULES = (): RecordModule[] => RECORD_MODULES.filter((m) => !m.hidden);
 
 export const RECORD_MODULES: RecordModule[] = [
   {
@@ -540,7 +552,7 @@ export const RECORD_MODULES: RecordModule[] = [
     ],
   },
   {
-    key: 'problem', label: 'Problems',
+    key: 'problem', label: 'Problems', hidden: true,
     statuses: ['Open', 'Known Error', 'Under Investigation', 'Resolved', 'Closed'],
     rows: [
       { id: 'PRB-4412', title: 'Recurring VPN drops on the Pune link', status: 'Under Investigation', meta: 'Network' },
@@ -556,7 +568,7 @@ export const RECORD_MODULES: RecordModule[] = [
     ],
   },
   {
-    key: 'release', label: 'Releases',
+    key: 'release', label: 'Releases', hidden: true,
     statuses: ['Planning', 'Build', 'Testing', 'Deployed', 'Closed'],
     rows: [
       { id: 'REL-118', title: 'ServiceOps 8.4 rollout', status: 'Testing', meta: 'Go-live 22 Aug' },
@@ -581,7 +593,7 @@ export const RECORD_MODULES: RecordModule[] = [
     ],
   },
   {
-    key: 'patch', label: 'Patches',
+    key: 'patch', label: 'Patches', hidden: true,
     statuses: ['Missing', 'Installed', 'Ignored', 'Failed'],
     rows: [
       { id: 'PCH-4345', title: 'Cumulative update for Windows 11', status: 'Missing', meta: 'Critical' },
@@ -589,7 +601,7 @@ export const RECORD_MODULES: RecordModule[] = [
     ],
   },
   {
-    key: 'vulnerability', label: 'Vulnerabilities',
+    key: 'vulnerability', label: 'Vulnerabilities', hidden: true,
     statuses: ['Detected', 'Exploited', 'Patched', 'Accepted Risk'],
     rows: [
       { id: 'CVE-2024-30080', title: 'Windows MSMQ remote code execution', status: 'Exploited', meta: 'CVSS 9.8' },
@@ -605,7 +617,7 @@ export const RECORD_MODULES: RecordModule[] = [
     ],
   },
   {
-    key: 'knowledge', label: 'Knowledge Articles',
+    key: 'knowledge', label: 'Knowledge',
     statuses: ['Draft', 'In Review', 'Published', 'Retired'],
     rows: [
       { id: 'KB-4', title: 'How to reset your password', status: 'Published', meta: 'Guideline Documents' },
@@ -614,7 +626,7 @@ export const RECORD_MODULES: RecordModule[] = [
     ],
   },
   {
-    key: 'task', label: 'Tasks',
+    key: 'task', label: 'Tasks', hidden: true,
     statuses: ['Open', 'In Progress', 'Completed', 'Cancelled'],
     rows: [
       { id: 'TA-2201', title: 'Collect the returned laptop', status: 'Open', meta: 'Due 18 Aug' },
@@ -679,7 +691,7 @@ export const PORTAL_ELEMENTS: PortalElement[] = [
      group-gated as predefined: one instance each, greyed with a tick once placed. This one is
      repeatable, which is exactly what it needs — two Record Lists filtered differently is a
      reasonable page, and the whole point is that the admin asks the question. */
-  { id: 'c-records', name: 'Custom data widget', icon: 'records', group: 'Custom', keywords: 'list records kpi count metric requests assets cis filter module query data' },
+  { id: 'c-records', name: 'Custom Data Widget', icon: 'records', group: 'Custom', keywords: 'list records kpi count metric requests assets cis filter module query data' },
 
   // ── Actions — fixed destinations, the same for every requester ──
   /* ⚠️ The four action cards are BACK in the palette. Hiding them was the wrong answer to a real

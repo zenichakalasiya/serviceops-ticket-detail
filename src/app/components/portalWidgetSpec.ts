@@ -11,7 +11,7 @@
  */
 
 import type { TypeRole } from './portalPageModel';
-import { RECORD_MODULES } from './supportPortalData';
+import { RECORD_MODULES, VISIBLE_RECORD_MODULES } from './supportPortalData';
 import { COLLECTION_SPECS } from './portalCollectionSpecs';
 import { STRUCTURE_SPECS } from './portalStructureSpecs';
 import { PANEL_FOR_TYPE, PANEL_SPECS } from './portalPanelSpecs';
@@ -793,7 +793,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
    * the product's decision. Here the admin owns it, so the panel is the only place the widget can
    * learn what it is for. */
   {
-    id: 'record_list', name: 'Custom data widget', group: 'Content', reuse: 'many', family: 'flat',
+    id: 'record_list', name: 'Custom Data Widget', group: 'Content', reuse: 'many', family: 'flat',
     fields: [
       /* ⚠️ ONE widget, two shapes. A list of matching records and a count of them are the same
          question — "which records?" — answered at two lengths, so they share the module and the
@@ -815,7 +815,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
          caption that WOULD have earned its place goes unread. */
       {
         key: 'module', label: 'Module', control: 'select', group: 'Content',
-        options: RECORD_MODULES.map((m) => ({ value: m.key, label: m.label })),
+        options: VISIBLE_RECORD_MODULES().map((m) => ({ value: m.key, label: m.label })),
         /* ⚠️ Changing the module CLEARS the filter, and says so. Both halves of a filter are per
            module — "All Open Requests" is not a thing a Change has, and a Change's statuses are not
            words a Request knows — so a filter left behind matches nothing and the card comes back
@@ -840,7 +840,12 @@ export const WIDGET_SPECS: WidgetSpec[] = [
       tone: 'info',
       text: 'Shows sample rows here so you can see the shape, so a condition on a field the samples do not carry — a priority, an assignee, a date — is not applied in the builder. On the live portal it queries the module you chose and applies the whole filter, showing the same “No Data Found” state as My CIs when nothing matches.',
     }],
-    defaults: { title: 'My records', display: 'list', module: 'request', filter: { preset: 'all-open' }, show: 3 },
+    /* ⚠️ `all-mine`, not `all-open`. The seeded default has to be a preset the dropdown still
+       OFFERS — `all-open` ("All Open Requests") is technician-scoped and now withheld, so a new
+       card was landing on a preset it could not show and resolving to "No filter — every record".
+       A default that points at a hidden option is a card whose filter nobody chose and nobody can
+       find. This is also what the reference build opens on. */
+    defaults: { title: 'My records', display: 'list', module: 'request', filter: { preset: 'all-mine' }, show: 3 },
   },
 
   /* ─────────── Video ───────────

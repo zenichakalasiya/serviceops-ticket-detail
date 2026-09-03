@@ -24,7 +24,7 @@ import { createPortal } from 'react-dom';
 import { Check, ChevronLeft, ChevronRight, ListFilter, Plus, Search, SlidersHorizontal, X } from 'lucide-react';
 import {
   DATE_PRESETS, OPERATORS, PEOPLE, TAG_SUGGESTIONS, UNASSIGNED,
-  activeConditions, activeTree, describeCondition, fieldByKey, fieldsFor, personAvatar, presetById, presetsFor, summarise,
+  activeConditions, activeTree, describeCondition, fieldByKey, fieldsFor, personAvatar, presetById, visiblePresetsFor, summarise,
 } from './portalRecordFilters';
 import type { Condition, FilterField, GroupNode, RecordFilter } from './portalRecordFilters';
 import { PortalConditionBuilder } from './PortalConditionBuilder';
@@ -236,7 +236,7 @@ export function RecordFilterField({ value, moduleKey, statuses, onChange }: {
   const [building, setBuilding] = useState<DOMRect | null>(null);
 
   const fields = fieldsFor(moduleKey, statuses);
-  const presets = presetsFor(moduleKey);
+  const presets = visiblePresetsFor(moduleKey);
   const conds = value?.conditions ?? [];
   const chosen = presetById(moduleKey, value?.preset);
 

@@ -42,6 +42,10 @@ export interface PresetFilter {
   id: string;
   name: string;
   conditions: Condition[];
+  /* ⚠️ Withheld from the DROPDOWN, still resolvable by id. `presetById` reads the full list, so a
+     card already saved against a hidden preset keeps its filter and its summary line — hiding a
+     preset must never be able to silently change what a card is showing. */
+  hidden?: boolean;
   /* The half of a preset that is about WHO is asking rather than about the record — "Assigned to
      me", "In my technician group". It cannot be a Condition: no field on the record holds it, and
      it resolves against the signed-in requester at request time.
@@ -364,19 +368,23 @@ export const FILTER_PRESETS: Record<string, PresetFilter[]> = {
     { id: 'mine-pending', name: 'My Pending Requests', conditions: [st('In', 'Pending')], scope: REQUESTER_SCOPE },
     { id: 'mine-resolved', name: 'My Resolved Requests', conditions: [st('In', 'Resolved')], scope: REQUESTER_SCOPE },
     { id: 'mine-closed', name: 'My Closed Requests', conditions: [st('In', 'Closed')], scope: REQUESTER_SCOPE },
+    /* ⚠️ REQUESTER-scoped, and it has to be its own entry: the overdue preset below it is scoped
+       "Assigned to me", which is the technician reading of the same two words. A requester portal
+       offering that one would answer "my overdue" with somebody else's queue. */
+    { id: 'mine-overdue', name: 'My Overdue Requests', conditions: [st('Not In', 'Resolved', 'Closed'), { field: 'dueBy', op: 'Equals', values: ['Overdue'] }], scope: REQUESTER_SCOPE },
     { id: 'mine-high-priority', name: 'My High Priority Requests', conditions: [{ field: 'priority', op: 'In', values: ['Urgent', 'High'] }, st('Not In', 'Resolved', 'Closed')], scope: REQUESTER_SCOPE },
-    { id: 'all-open', name: 'All Open Requests', conditions: [st('Not In', 'Resolved', 'Closed')] },
-    { id: 'my-urgent', name: 'My Urgent or High Priority Requests', conditions: [st('Not In', 'Resolved', 'Closed'), { field: 'priority', op: 'In', values: ['Urgent', 'High'] }], scope: 'Assigned to me' },
-    { id: 'my-overdue', name: 'My Overdue Requests', conditions: [st('Not In', 'Resolved', 'Closed'), { field: 'dueBy', op: 'Equals', values: ['Overdue'] }], scope: 'Assigned to me' },
-    { id: 'unassigned-group', name: 'Unassigned Requests in My Group', conditions: [st('Not In', 'Resolved', 'Closed'), { field: 'assignee', op: 'In', values: [UNASSIGNED] }], scope: 'In my technician group' },
-    { id: 'my-unresolved', name: 'My Unresolved Requests', conditions: [st('Not In', 'Resolved', 'Closed')], scope: 'Assigned to me' },
-    { id: 'group-urgent', name: 'Urgent or High Priority Requests in my Group', conditions: [{ field: 'priority', op: 'In', values: ['Urgent', 'High'] }], scope: 'In my technician group' },
-    { id: 'all', name: 'All Requests', conditions: [] },
-    { id: 'all-incidents', name: 'All Incidents', conditions: [{ field: 'type', op: 'In', values: ['Incident'] }] },
-    { id: 'all-sr', name: 'All Service Requests', conditions: [{ field: 'type', op: 'In', values: ['Service Request'] }] },
-    { id: 'all-spam', name: 'All Spam Requests', conditions: [{ field: 'source', op: 'In', values: ['Email'] }] },
-    { id: 'watched', name: 'Requests Watched By Me', conditions: [], scope: 'Watched by me' },
-    { id: 'archived', name: 'All Archived Requests', conditions: [st('In', 'Closed')] },
+    { hidden: true, id: 'all-open', name: 'All Open Requests', conditions: [st('Not In', 'Resolved', 'Closed')] },
+    { hidden: true, id: 'my-urgent', name: 'My Urgent or High Priority Requests', conditions: [st('Not In', 'Resolved', 'Closed'), { field: 'priority', op: 'In', values: ['Urgent', 'High'] }], scope: 'Assigned to me' },
+    { hidden: true, id: 'my-overdue', name: 'My Overdue Requests', conditions: [st('Not In', 'Resolved', 'Closed'), { field: 'dueBy', op: 'Equals', values: ['Overdue'] }], scope: 'Assigned to me' },
+    { hidden: true, id: 'unassigned-group', name: 'Unassigned Requests in My Group', conditions: [st('Not In', 'Resolved', 'Closed'), { field: 'assignee', op: 'In', values: [UNASSIGNED] }], scope: 'In my technician group' },
+    { hidden: true, id: 'my-unresolved', name: 'My Unresolved Requests', conditions: [st('Not In', 'Resolved', 'Closed')], scope: 'Assigned to me' },
+    { hidden: true, id: 'group-urgent', name: 'Urgent or High Priority Requests in my Group', conditions: [{ field: 'priority', op: 'In', values: ['Urgent', 'High'] }], scope: 'In my technician group' },
+    { hidden: true, id: 'all', name: 'All Requests', conditions: [] },
+    { hidden: true, id: 'all-incidents', name: 'All Incidents', conditions: [{ field: 'type', op: 'In', values: ['Incident'] }] },
+    { hidden: true, id: 'all-sr', name: 'All Service Requests', conditions: [{ field: 'type', op: 'In', values: ['Service Request'] }] },
+    { hidden: true, id: 'all-spam', name: 'All Spam Requests', conditions: [{ field: 'source', op: 'In', values: ['Email'] }] },
+    { hidden: true, id: 'watched', name: 'Requests Watched By Me', conditions: [], scope: 'Watched by me' },
+    { hidden: true, id: 'archived', name: 'All Archived Requests', conditions: [st('In', 'Closed')] },
   ],
   problem: [
     { id: 'all-open', name: 'All Open Problems', conditions: [st('Not In', 'Resolved', 'Closed')] },
@@ -389,11 +397,11 @@ export const FILTER_PRESETS: Record<string, PresetFilter[]> = {
     { id: 'mine', name: 'My Changes', conditions: [], scope: REQUESTER_SCOPE },
     { id: 'mine-active', name: 'My Active Changes', conditions: [st('Not In', 'Implemented', 'Closed')], scope: REQUESTER_SCOPE },
     { id: 'mine-completed', name: 'My Completed Changes', conditions: [st('In', 'Implemented', 'Closed')], scope: REQUESTER_SCOPE },
-    { id: 'all-open', name: 'All Open Changes', conditions: [st('Not In', 'Implemented', 'Closed')] },
-    { id: 'awaiting-approval', name: 'Changes Awaiting My Approval', conditions: [st('In', 'Submitted')] },
-    { id: 'scheduled', name: 'Scheduled Changes', conditions: [st('In', 'Scheduled')] },
-    { id: 'my-changes', name: 'My Changes', conditions: [], scope: 'Raised or assigned to me' },
-    { id: 'all', name: 'All Changes', conditions: [] },
+    { hidden: true, id: 'all-open', name: 'All Open Changes', conditions: [st('Not In', 'Implemented', 'Closed')] },
+    { hidden: true, id: 'awaiting-approval', name: 'Changes Awaiting My Approval', conditions: [st('In', 'Submitted')] },
+    { hidden: true, id: 'scheduled', name: 'Scheduled Changes', conditions: [st('In', 'Scheduled')] },
+    { hidden: true, id: 'my-changes', name: 'My Changes', conditions: [], scope: 'Raised or assigned to me' },
+    { hidden: true, id: 'all', name: 'All Changes', conditions: [] },
   ],
   release: [
     { id: 'all-open', name: 'All Open Releases', conditions: [st('Not In', 'Closed')] },
@@ -405,18 +413,18 @@ export const FILTER_PRESETS: Record<string, PresetFilter[]> = {
   asset: [
     { id: 'my-assets', name: 'My Assets', conditions: [], scope: REQUESTER_SCOPE },
     { id: 'mine-active', name: 'My Active Assets', conditions: [st('In', 'In Use')], scope: REQUESTER_SCOPE },
-    { id: 'in-use', name: 'Assets In Use', conditions: [st('In', 'In Use')] },
-    { id: 'in-stock', name: 'Assets In Stock', conditions: [st('In', 'In Stock')] },
-    { id: 'in-repair', name: 'Assets In Repair', conditions: [st('In', 'In Repair')] },
-    { id: 'expiring-warranty', name: 'Assets With Expiring Warranty', conditions: [{ field: 'warrantyExpiry', op: 'Equals', values: ['This Month'] }] },
-    { id: 'all', name: 'All Assets', conditions: [] },
+    { hidden: true, id: 'in-use', name: 'Assets In Use', conditions: [st('In', 'In Use')] },
+    { hidden: true, id: 'in-stock', name: 'Assets In Stock', conditions: [st('In', 'In Stock')] },
+    { hidden: true, id: 'in-repair', name: 'Assets In Repair', conditions: [st('In', 'In Repair')] },
+    { hidden: true, id: 'expiring-warranty', name: 'Assets With Expiring Warranty', conditions: [{ field: 'warrantyExpiry', op: 'Equals', values: ['This Month'] }] },
+    { hidden: true, id: 'all', name: 'All Assets', conditions: [] },
   ],
   ci: [
     { id: 'my-cis', name: 'My CIs', conditions: [], scope: REQUESTER_SCOPE },
     { id: 'mine-active', name: 'My Active CIs', conditions: [st('In', 'Operational')], scope: REQUESTER_SCOPE },
-    { id: 'operational', name: 'Operational CIs', conditions: [st('In', 'Operational')] },
-    { id: 'degraded', name: 'Degraded or Down CIs', conditions: [st('In', 'Degraded', 'Down')] },
-    { id: 'all', name: 'All CIs', conditions: [] },
+    { hidden: true, id: 'operational', name: 'Operational CIs', conditions: [st('In', 'Operational')] },
+    { hidden: true, id: 'degraded', name: 'Degraded or Down CIs', conditions: [st('In', 'Degraded', 'Down')] },
+    { hidden: true, id: 'all', name: 'All CIs', conditions: [] },
   ],
   patch: [
     { id: 'missing', name: 'All Missing Patches', conditions: [st('In', 'Missing')] },
@@ -436,10 +444,10 @@ export const FILTER_PRESETS: Record<string, PresetFilter[]> = {
     { id: 'mine', name: 'My Approvals', conditions: [], scope: REQUESTER_SCOPE },
     { id: 'mine-pending', name: 'Pending Approvals', conditions: [st('In', 'Pending')], scope: REQUESTER_SCOPE },
     { id: 'mine-completed', name: 'Completed Approvals', conditions: [st('In', 'Approved', 'Rejected')], scope: REQUESTER_SCOPE },
-    { id: 'pending-me', name: 'Approvals Pending With Me', conditions: [st('In', 'Pending')], scope: 'Awaiting my approval' },
-    { id: 'approved-me', name: 'Approved By Me', conditions: [st('In', 'Approved')], scope: 'Actioned by me' },
-    { id: 'rejected-me', name: 'Rejected By Me', conditions: [st('In', 'Rejected')], scope: 'Actioned by me' },
-    { id: 'all', name: 'All Approvals', conditions: [] },
+    { hidden: true, id: 'pending-me', name: 'Approvals Pending With Me', conditions: [st('In', 'Pending')], scope: 'Awaiting my approval' },
+    { hidden: true, id: 'approved-me', name: 'Approved By Me', conditions: [st('In', 'Approved')], scope: 'Actioned by me' },
+    { hidden: true, id: 'rejected-me', name: 'Rejected By Me', conditions: [st('In', 'Rejected')], scope: 'Actioned by me' },
+    { hidden: true, id: 'all', name: 'All Approvals', conditions: [] },
   ],
   /* ⚠️ No scope on any of these. Knowledge is the one module a requester READS rather than owns,
      so "Recently Published" is the same list for everybody and a "mine" would mean nothing. */
@@ -447,7 +455,7 @@ export const FILTER_PRESETS: Record<string, PresetFilter[]> = {
     { id: 'most-read', name: 'Most Read Knowledge', conditions: [st('In', 'Published')] },
     { id: 'recently-published', name: 'Recently Published', conditions: [st('In', 'Published'), { field: 'publishedAt', op: 'Equals', values: ['This Month'] }] },
     { id: 'recently-updated', name: 'Recently Updated', conditions: [st('In', 'Published'), { field: 'updatedAt', op: 'Equals', values: ['This Month'] }] },
-    { id: 'all', name: 'All Articles', conditions: [] },
+    { hidden: true, id: 'all', name: 'All Articles', conditions: [] },
   ],
   task: [
     { id: 'mine', name: 'My Tasks', conditions: [], scope: REQUESTER_SCOPE },
@@ -469,8 +477,17 @@ export const fieldsFor = (moduleKey: string, statuses: string[]): FilterField[] 
   (FILTER_FIELDS[moduleKey] ?? FILTER_FIELDS.request).map((f) =>
     (f.key === 'status' ? { ...f, options: statuses } : f));
 
+/** Every preset the module has — including withheld ones, because `presetById` resolves through
+ *  this and a saved filter must keep working after its preset leaves the dropdown. */
 export const presetsFor = (moduleKey: string): PresetFilter[] =>
   FILTER_PRESETS[moduleKey] ?? FILTER_PRESETS.request;
+
+/** What the dropdown OFFERS. ⚠️ A separate function rather than a filter inside `presetsFor`:
+ *  that one is the resolution path, and narrowing it would turn a card saved against a withheld
+ *  preset into a card with no filter at all — the summary line would change without anybody
+ *  touching the card. */
+export const visiblePresetsFor = (moduleKey: string): PresetFilter[] =>
+  presetsFor(moduleKey).filter((x) => !x.hidden);
 
 export const fieldByKey = (moduleKey: string, key: string, statuses: string[]) =>
   fieldsFor(moduleKey, statuses).find((f) => f.key === key);
