@@ -1,0 +1,777 @@
+<title>Twelve Portal Directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Archivo:wght@400;500;600;700&display=swap">
+
+<style>
+/* ══ Page chrome tokens — the frame the twelve sit in, not the twelve themselves ══ */
+:root{
+  --pg:#EDF0F5; --pg-2:#FFFFFF; --pg-line:#DFE4EC; --pg-ink:#1B242F; --pg-ink2:#3A4757;
+  --pg-mute:#78889B; --pg-mute2:#98A6B6; --pg-acc:#3D8BD0;
+  --pg-sh:0 1px 2px rgba(16,24,40,.05),0 14px 34px -18px rgba(16,24,40,.28);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --pg:#0E131A; --pg-2:#161D26; --pg-line:#28313D; --pg-ink:#E9EEF4; --pg-ink2:#C4D0DD;
+  --pg-mute:#8593A5; --pg-mute2:#6B7889; --pg-acc:#6BA9DF;
+  --pg-sh:0 1px 2px rgba(0,0,0,.35),0 16px 38px -18px rgba(0,0,0,.7);
+}}
+:root[data-theme="dark"]{
+  --pg:#0E131A; --pg-2:#161D26; --pg-line:#28313D; --pg-ink:#E9EEF4; --pg-ink2:#C4D0DD;
+  --pg-mute:#8593A5; --pg-mute2:#6B7889; --pg-acc:#6BA9DF;
+  --pg-sh:0 1px 2px rgba(0,0,0,.35),0 16px 38px -18px rgba(0,0,0,.7);
+}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--pg);color:var(--pg-ink2);
+  font-family:"IBM Plex Sans",ui-sans-serif,system-ui,-apple-system,sans-serif;font-size:15px;line-height:1.6;
+  -webkit-font-smoothing:antialiased}
+h1,h2,h3{color:var(--pg-ink);text-wrap:balance;margin:0}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace}
+.shell{max-width:1360px;margin:0 auto;padding:0 24px 96px}
+
+/* ══ Masthead ══ */
+.mast{padding:60px 0 28px;border-bottom:1px solid var(--pg-line)}
+.eyebrow{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:500;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--pg-acc);margin:0 0 14px}
+.mast h1{font-size:42px;font-weight:600;letter-spacing:-.022em;line-height:1.1}
+.mast p{max-width:64ch;margin:14px 0 0;color:var(--pg-mute);font-size:16px}
+.key{display:flex;flex-wrap:wrap;gap:8px;margin-top:24px}
+.key span{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--pg-ink2);
+  background:var(--pg-2);border:1px solid var(--pg-line);border-radius:4px;padding:5px 10px}
+
+/* ══ Grid of directions ══ */
+.set{display:grid;grid-template-columns:repeat(2,1fr);gap:36px;padding-top:36px}
+@media(max-width:1080px){.set{grid-template-columns:1fr}}
+
+.dir{min-width:0}
+.dir-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:3px}
+.dir-n{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:600;color:var(--pg-acc)}
+.dir h2{font-size:20px;font-weight:600;letter-spacing:-.01em}
+.dir .dom{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  padding:3px 7px;border-radius:3px;background:var(--pg-2);border:1px solid var(--pg-line);color:var(--pg-mute)}
+.dir .say{font-size:13.5px;color:var(--pg-mute);margin:0 0 14px;max-width:56ch}
+.specs{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.specs b{font-family:"IBM Plex Mono",monospace;font-size:10.5px;font-weight:500;color:var(--pg-mute);
+  background:var(--pg-2);border:1px solid var(--pg-line);border-radius:3px;padding:3px 7px}
+.specs b.hot{color:var(--pg-acc);border-color:color-mix(in srgb,var(--pg-acc) 40%,var(--pg-line))}
+
+/* ══ THE PORTAL MINIATURE ══
+   One component vocabulary; each direction overrides its own tokens. That is the whole
+   point — if every template needed its own markup they would not be one system. */
+.p{--r:8px;--gap:10px;--pad:12px;
+  background:var(--sf2);border:1px solid var(--ln);border-radius:10px;overflow:hidden;
+  box-shadow:var(--pg-sh);display:flex;flex-direction:column;height:400px;
+  font-family:var(--face,"IBM Plex Sans",sans-serif)}
+.p-top{height:26px;background:var(--sf);border-bottom:1px solid var(--ln);display:flex;align-items:center;
+  gap:5px;padding:0 10px;flex:none}
+.p-top .lg{width:26px;height:7px;border-radius:2px;background:var(--brand)}
+.p-top .sp{flex:1}
+.p-top .dt{width:6px;height:6px;border-radius:50%;background:var(--ln2)}
+.p-bd{display:flex;flex:1;min-height:0}
+.p-rl{width:24px;background:var(--sf);border-right:1px solid var(--ln);display:flex;flex-direction:column;
+  align-items:center;gap:7px;padding-top:9px;flex:none}
+.p-rl i{width:9px;height:9px;border-radius:2px;background:var(--ln2);display:block}
+.p-mn{flex:1;display:flex;flex-direction:column;min-width:0}
+.pd{padding:var(--pad);display:flex;flex-direction:column;gap:var(--gap);flex:1;min-height:0}
+
+/* banner treatments — every one is CSS, no image assets */
+.bn{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;position:relative;overflow:hidden}
+.bn.l{align-items:flex-start;padding-left:16px}
+.bn.sp{flex-direction:row;align-items:stretch;gap:0}
+.bn .t{height:9px;border-radius:3px;background:var(--onBrand,rgba(255,255,255,.94));width:120px}
+.bn .s{height:5px;border-radius:3px;background:var(--onBrand2,rgba(255,255,255,.5));width:86px}
+.h-hero{height:120px}.h-mid{height:82px}.h-cmp{height:56px}.h-bar{height:30px}
+
+.sr{background:var(--sf);border:1px solid var(--ln);height:22px;display:flex;align-items:center;
+  padding:0 10px;gap:7px;flex:none;border-radius:var(--srr,999px)}
+.sr .q{height:5px;border-radius:3px;background:var(--ln2);flex:1;max-width:150px}
+.sr .m{width:8px;height:8px;border-radius:50%;border:1.5px solid var(--brand);flex:none}
+.sr.in{width:62%}
+.sr.fl{width:68%;margin:-11px auto 0;position:relative;z-index:3;height:26px;
+  box-shadow:0 10px 22px -8px rgba(0,0,0,.35)}
+/* THE DOCK. Two objects cannot both straddle one edge, so the search and the action row become
+   ONE card and the banner bottom edge passes through its internal divider. Search sits on the
+   colour, actions hang onto the page. The edge is crossed exactly once, by one object. */
+.dock{width:80%;margin:-28px auto 0;position:relative;z-index:3;background:var(--sf);
+  border:1px solid var(--ln);border-radius:10px;padding:9px;display:flex;flex-direction:column;gap:8px;
+  box-shadow:0 14px 30px -10px rgba(11,27,63,.42)}
+.dock .seam{height:1px;background:var(--ln);margin:0 -9px}
+.sr.wd{width:100%}
+
+.row{display:flex;gap:8px}.row>*{flex:1;min-width:0}
+.col{display:flex;flex-direction:column;gap:8px}
+
+/* card — the treatment is what changes per direction */
+.c{background:var(--card);border:var(--cbd);border-radius:var(--r);padding:8px 9px;
+  display:flex;flex-direction:column;gap:5px;min-width:0;box-shadow:var(--csh,none)}
+.c.sp{border:none;border-left:3px solid var(--acc)}
+.c.sp.w{border-left-color:var(--warn)}.c.sp.g{border-left-color:var(--good)}
+.c .nm{font-family:"IBM Plex Mono",monospace;font-size:8px;letter-spacing:.05em;color:var(--mute);
+  text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c .l{height:4px;border-radius:2px;background:var(--ln2)}
+.c .l.s{width:58%}.c .l.m{width:80%}
+.c .hd{display:flex;align-items:center;gap:5px}
+.c .bg{font-family:"IBM Plex Mono",monospace;font-size:8px;font-weight:600;color:var(--brand);
+  background:var(--tint);border-radius:99px;padding:1px 5px;margin-left:auto}
+
+/* action card — anatomy varies */
+.a{background:var(--acard,var(--card));border:var(--abd,var(--cbd));border-radius:var(--ar,var(--r));
+  padding:8px;display:flex;align-items:center;gap:7px;min-width:0;box-shadow:var(--ash,none)}
+.a.tp{flex-direction:column;align-items:center;text-align:center;gap:6px}
+.a.tp.l{align-items:flex-start;text-align:left}
+.a .i{width:16px;height:16px;border-radius:var(--ir,5px);background:var(--tint);flex:none}
+.a .i.big{width:22px;height:22px}
+.a .x{flex:1;display:flex;flex-direction:column;gap:3px;min-width:0}
+.a.tp .x{width:100%;align-items:center}.a.tp.l .x{align-items:flex-start}
+.a .x b{display:block;height:4px;width:70%;border-radius:2px;background:var(--ln3)}
+.a .x s{display:block;height:3px;width:92%;border-radius:2px;background:var(--ln2)}
+.a.ov{margin-top:-20px;position:relative;z-index:3}
+.pl{background:var(--acard,var(--card));border:var(--abd,var(--cbd));border-radius:99px;height:22px;
+  display:flex;align-items:center;justify-content:center;gap:5px}
+.pl i{width:9px;height:9px;border-radius:3px;background:var(--tint)}
+.pl b{height:4px;width:24px;border-radius:2px;background:var(--ln3)}
+
+.st{background:var(--card);border:var(--cbd);border-radius:var(--r);padding:8px 9px;display:flex;
+  flex-direction:column;gap:4px;box-shadow:var(--csh,none)}
+.st u{font-family:var(--numface,"IBM Plex Mono",monospace);font-size:17px;font-weight:600;color:var(--brand);
+  text-decoration:none;line-height:1}
+.st u.z{color:var(--mute)}
+.st s{height:3px;width:58%;border-radius:2px;background:var(--ln2)}
+
+.tb{display:flex;gap:10px;padding-bottom:5px;border-bottom:1px solid var(--ln)}
+.tb b{height:4px;width:28px;border-radius:2px;background:var(--ln2)}
+.tb b.on{background:var(--brand)}
+.fd{display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid var(--ln)}
+.fd .d{width:5px;height:5px;border-radius:50%;background:var(--brand);flex:none}
+.fd .d.w{background:var(--warn)}.fd .d.g{background:var(--good)}
+.fd .t{flex:1;height:4px;border-radius:2px;background:var(--ln2)}
+.fd .b{width:13px;height:8px;border-radius:2px;background:var(--tint);flex:none}
+.chip{display:flex;gap:5px;flex-wrap:wrap}
+.chip b{height:15px;border-radius:99px;background:var(--card);border:var(--cbd)}
+/* A rail of unlabelled squares is an icon strip. This direction stakes everything on the rail
+   NAMING its verbs, so each slot carries the label under the glyph. */
+.vr{width:66px;flex:none;background:var(--card);border:var(--cbd);border-radius:var(--r);
+  display:flex;flex-direction:column;gap:9px;padding:9px 7px;align-items:stretch}
+.vr u{display:flex;flex-direction:column;align-items:center;gap:4px;padding:5px 0;border-radius:4px}
+.vr u.on{background:var(--tint)}
+.vr i{width:15px;height:15px;border-radius:var(--ir,5px);background:var(--brand);opacity:.85}
+.vr u.on i{opacity:1}
+.vr b{display:block;height:4px;width:78%;border-radius:2px;background:var(--ln2)}
+.strip{display:flex;gap:8px;overflow:hidden}
+.strip>*{flex:0 0 27%}
+
+/* ══ Notes ══ */
+.notes{margin-top:14px;display:grid;gap:9px}
+.nt{display:grid;grid-template-columns:74px 1fr;gap:10px;align-items:baseline}
+.nt dt{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--pg-mute2)}
+.nt dd{margin:0;font-size:13px;color:var(--pg-ink2)}
+.nt.w dt{color:#C77B23}
+
+.sec{padding-top:60px}
+.sec h2{font-size:26px;font-weight:600;letter-spacing:-.01em;margin-bottom:6px}
+.sec .ld{color:var(--pg-mute);max-width:66ch;margin:0 0 22px}
+.tw{overflow-x:auto;border:1px solid var(--pg-line);border-radius:8px;background:var(--pg-2)}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--pg-line);vertical-align:top}
+th{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--pg-mute2);font-weight:500;white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+.sw{display:inline-flex;gap:3px;vertical-align:middle}
+.sw i{width:13px;height:13px;border-radius:3px;display:block;border:1px solid rgba(0,0,0,.12)}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ══════════ THE TWELVE DIRECTIONS ══════════
+   Each is a token block. Same components, twelve identities. */
+
+/* 01 IT — Network. Cool navy, technical, hairline cards. */
+.t01{--brand:#3D8BD0;--acc:#3D8BD0;--warn:#F58518;--good:#22A06B;--sf:#fff;--sf2:#F4F6FA;
+  --ln:#E1E6ED;--ln2:#D5DDE8;--ln3:#B9C5D4;--card:#fff;--cbd:1px solid #E1E6ED;--mute:#7B8FA5;
+  --tint:#E8F2FB;--csh:0 1px 2px rgba(16,24,40,.04)}
+.t01 .bn{background:radial-gradient(120% 150% at 20% 0%,rgba(109,168,224,.55),transparent 60%),
+  linear-gradient(135deg,#1E3A8A,#0A1633)}
+
+/* 02 Healthcare — Calm. Teal, split banner, spine cards, generous. */
+.t02{--brand:#0F766E;--acc:#0F766E;--warn:#D97706;--good:#15803D;--sf:#fff;--sf2:#F2F8F7;
+  --ln:#DCE9E7;--ln2:#CBDEDB;--ln3:#A9C6C2;--card:#fff;--cbd:1px solid #DCE9E7;--mute:#6C8A86;
+  --tint:#DCF0EC;--r:6px;--csh:0 1px 2px rgba(15,118,110,.06)}
+.t02 .bn.sp .art{flex:1;background:
+  radial-gradient(circle at 30% 60%,#5EC6B8 0 18px,transparent 19px),
+  radial-gradient(circle at 65% 35%,#2F9E8F 0 24px,transparent 25px),#0B5A54}
+.t02 .bn.sp .txt{flex:1;background:#0F766E;display:flex;flex-direction:column;align-items:flex-start;
+  justify-content:center;gap:6px;padding-left:16px}
+
+/* 03 Retail — Storefront. Magenta, pattern banner, rounded tinted cards. */
+.t03{--brand:#C2185B;--acc:#C2185B;--warn:#E8871E;--good:#2E9E5B;--sf:#fff;--sf2:#FDF5F8;
+  --ln:#F2DCE5;--ln2:#EBCBD8;--ln3:#D9A2B8;--card:#fff;--cbd:none;--mute:#9B6C7E;
+  --tint:#FBE3EC;--r:12px;--ar:12px;--ir:8px;--csh:0 2px 10px -4px rgba(194,24,91,.22)}
+.t03 .bn{background:
+  repeating-linear-gradient(45deg,#C2185B 0 9px,#A4144D 9px 18px)}
+
+/* 04 Startup — Product. Violet, line-art, ghost outlines, tabbed. */
+.t04{--brand:#6D28D9;--acc:#6D28D9;--warn:#D97706;--good:#059669;--sf:#fff;--sf2:#F7F5FD;
+  --ln:#E7E1F7;--ln2:#DAD1F1;--ln3:#B7A8E4;--card:#fff;--cbd:1px solid #E7E1F7;--mute:#7C6BA6;
+  --tint:#EDE7FC;--r:8px;--acard:transparent;--abd:1px solid #C9BCEF;
+  --face:"Archivo",sans-serif}
+.t04 .bn{background:#1A1230;position:relative}
+.t04 .bn::after{content:"";position:absolute;inset:0;
+  background:repeating-linear-gradient(0deg,transparent 0 13px,rgba(167,139,250,.20) 13px 14px),
+  repeating-linear-gradient(90deg,transparent 0 13px,rgba(167,139,250,.20) 13px 14px)}
+.t04 .bn>*{position:relative;z-index:1}
+
+/* 05 University — Campus. Burgundy + cream + gold, duotone photo, soft bento. */
+.t05{--brand:#6B2233;--acc:#6B2233;--warn:#C9A227;--good:#4B7B4A;--sf:#fff;--sf2:#FAF6F0;
+  --ln:#EBE0D2;--ln2:#E0D2C0;--ln3:#C4AE93;--card:#fff;--cbd:none;--mute:#93796B;
+  --tint:#F3E7E9;--r:16px;--ar:16px;--csh:0 2px 14px -6px rgba(107,34,51,.24);
+  --face:"Fraunces",Georgia,serif}
+.t05 .bn{background:
+  linear-gradient(120deg,rgba(107,34,51,.92),rgba(201,162,39,.75)),
+  repeating-linear-gradient(70deg,#3A1220 0 16px,#5B1E2C 16px 32px)}
+
+/* 06 Finance — Ledger. Graphite + restrained green, geometric, dense tabular. */
+.t06{--brand:#1F6F5C;--acc:#1F6F5C;--warn:#B4762A;--good:#1F6F5C;--sf:#fff;--sf2:#F3F5F4;
+  --ln:#DDE3E1;--ln2:#CFD7D4;--ln3:#A9B5B1;--card:#fff;--cbd:1px solid #DDE3E1;--mute:#6E7B77;
+  --tint:#E1EFEA;--r:4px;--ar:4px;--ir:3px;--gap:8px;--pad:10px;
+  --numface:"IBM Plex Mono",monospace}
+.t06 .bn{background:#14211E;position:relative;overflow:hidden}
+.t06 .bn::after{content:"";position:absolute;inset:0;
+  background:linear-gradient(135deg,#1F6F5C 0 30%,transparent 30%),
+  linear-gradient(-135deg,#2E8B72 0 22%,transparent 22%);opacity:.85}
+.t06 .bn>*{position:relative;z-index:1}
+
+/* 07 HR — People. Plum + blush, flat illustration, soft fills, accordion. */
+.t07{--brand:#8B3A62;--acc:#8B3A62;--warn:#C4761F;--good:#3F8A5F;--sf:#fff;--sf2:#FBF5F8;
+  --ln:#F0E1E9;--ln2:#E7D2DE;--ln3:#CFA9BE;--card:#FDF9FB;--cbd:none;--mute:#9C7288;
+  --tint:#F6E6EE;--r:14px;--ar:14px;--csh:0 1px 3px rgba(139,58,98,.08)}
+.t07 .bn{background:#F3E3EB;position:relative;overflow:hidden}
+/* The illustration is scenery, so it stays out of the type column: shapes hug the two ends and
+   the text layer is lifted above them. Circles under a headline is what makes flat illustration
+   look cheap, and it is entirely a placement problem. */
+.t07 .bn::after{content:"";position:absolute;inset:0;z-index:0;
+  background:radial-gradient(circle at 7% 82%,#E2A9C3 0 30px,transparent 31px),
+  radial-gradient(circle at 17% 24%,#B96A92 0 16px,transparent 17px),
+  radial-gradient(circle at 93% 30%,#8B3A62 0 34px,transparent 35px),
+  radial-gradient(circle at 84% 86%,#E2A9C3 0 18px,transparent 19px)}
+.t07 .bn > *{position:relative;z-index:1}
+.t07 .bn .t{background:#5E2342}.t07 .bn .s{background:rgba(94,35,66,.55)}
+.t07 .bn>*{position:relative;z-index:1}
+
+/* 08 Energy — Grid. Near-black + cyan, live data motif, counters. */
+.t08{--brand:#0E9BB0;--acc:#0E9BB0;--warn:#E0891C;--good:#25A56A;--sf:#fff;--sf2:#F1F5F6;
+  --ln:#D9E3E5;--ln2:#C8D5D8;--ln3:#9FB2B6;--card:#fff;--cbd:1px solid #D9E3E5;--mute:#6C8085;
+  --tint:#DDF1F4;--r:6px}
+.t08 .bn{background:#08161A;position:relative;overflow:hidden}
+.t08 .bn::after{content:"";position:absolute;left:0;right:0;bottom:0;height:60%;
+  background:linear-gradient(180deg,transparent,rgba(14,155,176,.35));
+  clip-path:polygon(0 78%,9% 52%,18% 66%,27% 30%,36% 48%,45% 22%,55% 44%,64% 18%,73% 40%,82% 26%,91% 46%,100% 20%,100% 100%,0 100%)}
+.t08 .bn>*{position:relative;z-index:1}
+
+/* 09 Facilities — Signage. Charcoal + safety amber, photo mask, bold spines. */
+.t09{--brand:#D97706;--acc:#D97706;--warn:#D97706;--good:#3F8A4E;--sf:#fff;--sf2:#F5F5F3;
+  --ln:#E3E1DC;--ln2:#D4D1CA;--ln3:#ABA69B;--card:#fff;--cbd:1px solid #E3E1DC;--mute:#7C7669;
+  --tint:#FBEBD6;--r:6px;--ar:6px}
+.t09 .bn{background:
+  linear-gradient(90deg,rgba(35,39,46,.92) 0 52%,rgba(35,39,46,.35) 100%),
+  repeating-linear-gradient(115deg,#5A5347 0 22px,#3E3931 22px 44px)}
+
+/* 10 Legal — Chambers. Deep green + parchment, 3D shapes, serif. */
+.t10{--brand:#14532D;--acc:#14532D;--warn:#A16207;--good:#14532D;--sf:#fff;--sf2:#F7F6F1;
+  --ln:#E5E3D9;--ln2:#D8D5C8;--ln3:#B0AC9A;--card:#fff;--cbd:1px solid #E5E3D9;--mute:#77796B;
+  --tint:#DFEBE2;--r:3px;--ar:3px;--face:"Fraunces",Georgia,serif}
+.t10 .bn{background:#0B2E1A;position:relative;overflow:hidden}
+.t10 .bn::after{content:"";position:absolute;inset:0;
+  background:radial-gradient(circle at 78% 30%,#2E7D4F 0 22px,transparent 23px),
+  radial-gradient(circle at 88% 62%,#7FB98F 0 14px,transparent 15px),
+  linear-gradient(45deg,transparent 62%,rgba(127,185,143,.28) 62%)}
+.t10 .bn>*{position:relative;z-index:1}
+
+/* 11 Government — Register. Navy on white, solid bar, square hairlines, plainest. */
+.t11{--brand:#1B365D;--acc:#1B365D;--warn:#8A5A00;--good:#0F5132;--sf:#fff;--sf2:#F3F4F6;
+  --ln:#D4D8DE;--ln2:#C3C9D1;--ln3:#98A1AD;--card:#fff;--cbd:1px solid #C3C9D1;--mute:#5F6874;
+  --tint:#E3E8F0;--r:2px;--ar:2px;--ir:2px;--srr:2px}
+.t11 .bn{background:#1B365D}
+
+/* 12 Manufacturing — Floor. Slate + hi-vis, NO banner, dense. */
+.t12{--brand:#B45309;--acc:#B45309;--warn:#B45309;--good:#3F7A3F;--sf:#fff;--sf2:#EFF1F3;
+  --ln:#D8DCE1;--ln2:#C6CCD3;--ln3:#9AA3AD;--card:#fff;--cbd:1px solid #D8DCE1;--mute:#6B747E;
+  --tint:#FCEBD6;--r:3px;--ar:3px;--ir:3px;--gap:8px;--pad:10px;--srr:3px}
+</style>
+
+<div class="shell">
+
+<header class="mast">
+  <p class="eyebrow">Motadata ServiceOps · Support Portal</p>
+  <h1>Twelve Portal Directions</h1>
+  <p>
+    Not twelve arrangements of the same page — twelve <em>identities</em>. Each pairs a structure
+    with the banner treatment, palette, card anatomy and density that its tenant's domain actually
+    calls for. Same components throughout: if any of these needed its own markup, they would not be
+    one system.
+  </p>
+  <div class="key">
+    <span>1440 proportions</span><span>Same component vocabulary</span>
+    <span>Twelve token blocks</span><span>Every banner is CSS — no image assets</span>
+  </div>
+</header>
+
+<div class="set">
+
+  <!-- ─────────── 01 IT ─────────── -->
+  <section class="dir">
+    <div class="dir-head"><span class="dir-n">01</span><h2>Threshold</h2><span class="dom">IT</span></div>
+    <p class="say">One elevated <b>dock</b> straddles the banner edge — search above the seam, actions below — so the two things you can do first are a single object.</p>
+    <div class="p t01">
+      <div class="p-top"><span class="lg"></span><span class="sp"></span><span class="dt"></span><span class="dt"></span></div>
+      <div class="p-bd"><div class="p-rl"><i></i><i></i><i></i><i></i><i></i></div><div class="p-mn">
+        <div class="bn" style="height:104px"><span class="t"></span><span class="s"></span></div>
+        <div class="dock">
+          <div class="sr" style="width:100%"><span class="q" style="max-width:none"></span><span class="m"></span></div>
+          <div class="seam"></div>
+          <div class="row">
+            <div class="a tp" style="padding:6px"><span class="i"></span><span class="x"><b></b></span></div>
+            <div class="a tp" style="padding:6px"><span class="i"></span><span class="x"><b></b></span></div>
+            <div class="a tp" style="padding:6px"><span class="i"></span><span class="x"><b></b></span></div>
+            <div class="a tp" style="padding:6px"><span class="i"></span><span class="x"><b></b></span></div>
+          </div>
+        </div>
+        <div class="pd" style="padding-top:12px">
+          <div class="row" style="flex:1">
+            <div class="c"><span class="hd"><span class="nm">My Open Requests</span><span class="bg">5</span></span><span class="l m"></span><span class="l s"></span><span class="l m"></span><span class="l m"></span><span class="l"></span><span class="l s"></span><span class="l m"></span><span class="l s"></span><span class="l"></span></div>
+            <div class="c"><span class="hd"><span class="nm">Pending Approvals</span><span class="bg">2</span></span><span class="l m"></span><span class="l s"></span><span class="l m"></span><span class="l"></span><span class="l s"></span><span class="l m"></span><span class="l s"></span><span class="l"></span><span class="l m"></span></div>
+            <div class="c"><span class="hd"><span class="nm">Most Read</span><span class="bg">3</span></span><span class="l m"></span><span class="l s"></span><span class="l m"></span><span class="l"></span><span class="l s"></span><span class="l m"></span><span class="l s"></span><span class="l"></span><span class="l m"></span></div>
+          </div>
+          <div class="row"><div class="c" style="flex:2"><span class="nm">My Assets · My CIs</span><span class="l m"></span></div>
+            <div class="c"><span class="nm">Announcements</span><span class="l s"></span></div></div>
+        </div>
+      </div></div>
+    </div>
+    <div class="specs"><b class="hot">A3 mesh gradient</b><b>hero · one dock across the edge</b><b>search + 4 actions</b><b>one card per widget</b><b>classic top-down</b></div>
+    <dl class="notes">
+      <div class="nt"><dt>Palette</dt><dd><span class="sw"><i style="background:#1E3A8A"></i><i style="background:#3D8BD0"></i><i style="background:#E8F2FB"></i><i style="background:#F4F6FA"></i></span> — the product's own</dd></div>
+      <div class="nt w"><dt>Trade-off</dt><dd>The dock is the widest object on the page and it sits on the fold, so every widget below starts 60px lower than in any other direction here.</dd></div>
+    </dl>
+  </section>
+
+  <!-- ─────────── 02 Healthcare ─────────── -->
+  <section class="dir">
+    <div class="dir-head"><span class="dir-n">02</span><h2>Front Desk</h2><span class="dom">Healthcare</span></div>
+    <p class="say">The page divides exactly once: everything on the left is something you <em>do</em>, everything in the rail is something the desk wants you to <em>know</em>.</p>
+    <div class="p t02">
+      <div class="p-top"><span class="lg"></span><span class="sp"></span><span class="dt"></span><span class="dt"></span></div>
+      <div class="p-bd"><div class="p-rl"><i></i><i></i><i></i><i></i><i></i></div><div class="p-mn">
+        <div class="bn sp h-mid"><span class="art"></span><span class="txt"><span class="t" style="width:96px"></span><span class="s" style="width:70px"></span></span></div>
+        <div class="pd">
+          <div class="sr wd"><span class="q" style="max-width:none"></span><span class="m"></span></div>
+          <div class="row" style="flex:1;align-items:stretch">
+            <div class="col" style="flex:2">
+              <div class="row">
+                <div class="a"><span class="i"></span><span class="x"><b></b><s></s></span></div>
+                <div class="a"><span class="i"></span><span class="x"><b></b><s></s></span></div>
+                <div class="a"><span class="i"></span><span class="x"><b></b><s></s></span></div>
+              </div>
+              <div class="c sp" style="flex:1"><span class="hd"><span class="nm">My Open Requests</span><span class="bg">5</span></span><span class="l m"></span><span class="l s"></span><span class="l m"></span><span class="l"></span><span class="l s"></span><span class="l m"></span><span class="l s"></span><span class="l"></span><span class="l m"></span><span class="l"></span><span class="l s"></span><span class="l m"></span></div>
+              <div class="c sp w"><span class="nm">Pending Approvals</span><span class="l s"></span></div>
+            </div>
+            <div class="col" style="flex:1">
+              <div class="c sp g" style="flex:1"><span class="nm">Announcements</span><span class="l m"></span><span class="l s"></span><span class="l m"></span><span class="l m"></span><span class="l"></span><span class="l s"></span><span class="l m"></span><span class="l s"></span><span class="l"></span><span class="l m"></span><span class="l"></span><span class="l s"></span><span class="l m"></span><span class="l s"></span><span class="l"></span><span class="l m"></span><span class="l"></span></div>
+              <div class="c sp"><span class="nm">Contact Us</span><span class="l s"></span></div>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+    <div class="specs"><b class="hot">A15 split image ÷ colour</b><b>mid · search below</b><b>3 actions</b><b>announce + contact merged</b><b>act ÷ know</b></div>
+    <dl class="notes">
+      <div class="nt"><dt>Palette</dt><dd><span class="sw"><i style="background:#0F766E"></i><i style="background:#5EC6B8"></i><i style="background:#DCF0EC"></i><i style="background:#F2F8F7"></i></span> — teal, low saturation, nothing alarming</dd></div>
+      <div class="nt"><dt>Why split</dt><dd>The colour half carries the text, so contrast never depends on the artwork a tenant uploads.</dd></div>
+      <div class="nt w"><dt>Trade-off</dt><dd>The rail costs a third of the width on every screen, including the ones with nothing in it.</dd></div>
+    </dl>
+  </section>
+
+  <!-- ─────────── 03 Retail ─────────── -->
+  <section class="dir">
+    <div class="dir-head"><span class="dir-n">03</span><h2>Thread</h2><span class="dom">Retail</span></div>
+    <p class="say">Everything you own arrives as one time-ordered thread, so the eye learns one row shape instead of seven card layouts.</p>
+    <div class="p t03">
+      <div class="p-top"><span class="lg"></span><span class="sp"></span><span class="dt"></span><span class="dt"></span></div>
+      <div class="p-bd"><div class="p-rl"><i></i><i></i><i></i><i></i><i></i></div><div class="p-mn">
+        <div class="pd">
+          <div class="bn h-cmp l" style="border-radius:12px"><span class="t" style="width:96px"></span><div class="sr in" style="margin-top:4px;width:70%"><span class="q"></span><span class="m"></span></div></div>
+          <div class="strip">
+            <div class="a tp"><span class="i big"></span><span class="x"><b></b></span></div>
+            <div class="a tp"><span class="i big"></span><span class="x"><b></b></span></div>
+            <div class="a tp"><span class="i big"></span><span class="x"><b></b></span></div>
+            <div class="a tp"><span class="i big"></span><span class="x"><b></b></span></div>
+          </div>
+          <div class="c" style="flex:1;gap:0">
+            <div class="fd"><span class="d w"></span><span class="t" style="max-width:58%"></span><span class="b"></span></div>
+            <div class="fd"><span class="d"></span><span class="t" style="max-width:74%"></span></div>
+            <div class="fd"><span class="d g"></span><span class="t" style="max-width:50%"></span></div>
+            <div class="fd"><span class="d"></span><span class="t" style="max-width:66%"></span></div>
+            <div class="fd" style="border:none"><span class="d g"></span><span class="t" style="max-width:56%"></span></div>
+          
+            <div class="fd"><span class="d w"></span><span class="t" style="max-width:58%"></span></div>
+            <div class="fd"><span class="d"></span><span class="t" style="max-width:72%"></span><span class="b"></span></div>
+            <div class="fd"><span class="d g"></span><span class="t" style="max-width:46%"></span></div>
+            <div class="fd"><span class="d"></span><span class="t" style="max-width:64%"></span></div>
+            <div class="fd"><span class="d g"></span><span class="t" style="max-width:52%"></span></div>
+            <div class="fd"><span class="d w"></span><span class="t" style="max-width:70%"></span></div>
+            <div class="fd" style="border:none"><span class="d"></span><span class="t" style="max-width:60%"></span></div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+    <div class="specs"><b class="hot">A12 seamless pattern</b><b>inset · compact · search inside</b><b>scroll strip</b><b class="hot">⛔ no grid of equal cards</b><b>ranked feed</b></div>
+    <dl class="notes">
+      <div class="nt"><dt>Palette</dt><dd><span class="sw"><i style="background:#C2185B"></i><i style="background:#E8871E"></i><i style="background:#FBE3EC"></i><i style="background:#FDF5F8"></i></span> — magenta, confident, retail-warm</dd></div>
+      <div class="nt"><dt>The ban</dt><dd>No equal-card grid anywhere. Seven widgets become one chronological feed, which is what a shop app does.</dd></div>
+      <div class="nt w"><dt>Trade-off</dt><dd>A feed needs a ranking rule. Get the order wrong and it is worse than a grid.</dd></div>
+    </dl>
+  </section>
+
+  <!-- ─────────── 04 Startup ─────────── -->
+  <section class="dir">
+    <div class="dir-head"><span class="dir-n">04</span><h2>Reception</h2><span class="dom">Startup · Tech</span></div>
+    <p class="say">A band that only <em>speaks</em>, one toolbar that owns every <em>verb</em>, and one four-tab workspace that owns every <em>noun</em>.</p>
+    <div class="p t04">
+      <div class="p-top"><span class="lg"></span><span class="sp"></span><span class="dt"></span><span class="dt"></span></div>
+      <div class="p-bd"><div class="p-rl"><i></i><i></i><i></i><i></i><i></i></div><div class="p-mn">
+        <div class="bn h-bar l" style="flex-direction:row;gap:10px;padding-right:14px;align-items:center">
+          <span class="t" style="width:70px;height:7px"></span>
+          <span class="s" style="width:40px;margin-left:auto;height:14px;border-radius:4px;background:rgba(167,139,250,.35)"></span>
+        </div>
+        <div class="pd">
+          <div class="row" style="flex:none"><div class="a" style="flex:0 0 34%"><span class="i"></span><span class="x"><b></b></span></div><span style="flex:1"></span></div>
+          <div class="c" style="flex:1">
+            <div class="tb"><b class="on"></b><b></b><b></b><b></b></div>
+            <span class="l m"></span><span class="l"></span><span class="l s"></span><span class="l m"></span><span class="l"></span><span class="l s"></span>
+          <span class="l m"></span><span class="l"></span><span class="l s"></span><span class="l m"></span><span class="l s"></span><span class="l"></span><span class="l m"></span><span class="l"></span><span class="l s"></span><span class="l m"></span><span class="l s"></span><span class="l"></span><span class="l m"></span><span class="l"></span><span class="l s"></span><span class="l m"></span><span class="l s"></span><span class="l"></span><span class="l m"></span><span class="l"></span></div>
+        </div>
+      </div></div>
+    </div>
+    <div class="specs"><b class="hot">A7 line-art</b><b>bar · command-palette search</b><b class="hot">actions behind one New menu</b><b>full merge, 4 tabs</b><b>tabbed workspace</b></div>
+    <dl class="notes">
+      <div class="nt"><dt>Palette</dt><dd><span class="sw"><i style="background:#1A1230"></i><i style="background:#6D28D9"></i><i style="background:#EDE7FC"></i><i style="background:#F7F5FD"></i></span> — violet, Archivo, developer-tool</dd></div>
+      <div class="nt w"><dt>Trade-off</dt><dd>A command palette a first-time requester will never find. The one visible New button is the whole discovery story.</dd></div>
+    </dl>
+  </section>
+
+  <!-- ─────────── 05 University ─────────── -->
+  <section class="dir">
+    <div class="dir-head"><span class="dir-n">05</span><h2>Atrium</h2><span class="dom">Higher Education</span></div>
+    <p class="say">A photographic hall opening onto a mosaic floor that re-tiles around whatever the tenant has — a sparse portal is a <em>smaller</em> mosaic, never one with a hole in it.</p>
+    <div class="p t05">
+      <div class="p-top"><span class="lg"></span><span class="sp"></span><span class="dt"></span><span class="dt"></span></div>
+      <div class="p-bd"><div class="p-rl"><i></i><i></i><i></i><i></i><i></i></div><div class="p-mn">
+        <div class="pd">
+          <div class="bn h-mid" style="border-radius:16px;justify-content:center;gap:5px">
+            <span class="t"></span><span class="s"></span>
+            <div class="sr" style="width:64%;margin-top:8px"><span class="q"></span><span class="m"></span></div>
+          </div>
+          <div class="row" style="flex:1;align-items:stretch">
+            <div class="col" style="flex:2">
+              <div class="c" style="flex:1">
+                <span class="hd"><span class="nm">My Open Requests</span><span class="bg">5</span></span>
+                <span class="l m"></span><span class="l s"></span><span class="l m"></span><span class="l s"></span><span class="l m"></span>
+                <span class="l"></span><span class="l s"></span><span class="l m"></span>
+              <span class="l m"></span><span class="l"></span><span class="l s"></span><span class="l m"></span><span class="l s"></span><span class="l"></span><span class="l m"></span><span class="l"></span><span class="l s"></span><span class="l m"></span></div>
+              <div class="row">
+                <div class="c" style="flex:1"><span class="hd"><span class="nm">Pending Approvals</span><span class="bg">2</span></span><span class="l s"></span><span class="l m"></span></div>
+                <div class="c" style="flex:1"><span class="hd"><span class="nm">My Assets · My CIs</span><span class="bg">9</span></span><span class="l m"></span><span class="l s"></span></div>
+              </div>
+            </div>
+            <div class="col" style="flex:1">
+              <div class="row"><div class="a tp" style="padding:6px"><span class="i"></span><span class="x"><b></b></span></div><div class="a tp" style="padding:6px"><span class="i"></span><span class="x"><b></b></span></div></div>
+              <div class="c" style="flex:1"><span class="hd"><span class="nm">Most Read</span><span class="bg">3</span></span><span class="l m"></span><span class="l s"></span><span class="l m"></span><span class="l m"></span><span class="l"></span><span class="l s"></span><span class="l m"></span><span class="l s"></span><span class="l"></span><span class="l m"></span><span class="l"></span><span class="l s"></span><span class="l m"></span><span class="l s"></span></div>
+              <div class="c"><span class="nm">Announcements</span><span class="l s"></span></div>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+    <div class="specs"><b class="hot">A14 duotone photo</b><b>inset · mid · search inside</b><b>bento 1 large + 3 small</b><b>assets + CIs merged</b><b>bento mosaic</b></div>
+    <dl class="notes">
+      <div class="nt"><dt>Palette</dt><dd><span class="sw"><i style="background:#6B2233"></i><i style="background:#C9A227"></i><i style="background:#F3E7E9"></i><i style="background:#FAF6F0"></i></span> — burgundy + gold on cream, Fraunces</dd></div>
+      <div class="nt"><dt>Duotone</dt><dd>The one treatment that makes a tenant's mediocre stock photo usable — it forces every image into the brand.</dd></div>
+      <div class="nt w"><dt>Trade-off</dt><dd>Every tile needs a span, so deleting one leaves a hole the grid must reflow. The most expensive to keep tidy.</dd></div>
+    </dl>
+  </section>
+
+  <!-- ─────────── 06 Finance ─────────── -->
+  <section class="dir">
+    <div class="dir-head"><span class="dir-n">06</span><h2>Command Rail</h2><span class="dom">Finance</span></div>
+    <p class="say">Verbs live in a persistent labelled rail, so the main column is only ever about your own records.</p>
+    <div class="p t06">
+      <div class="p-top"><span class="lg"></span><span class="sp"></span><span class="dt"></span><span class="dt"></span></div>
+      <div class="p-bd"><div class="p-rl"><i></i><i></i><i></i><i></i><i></i></div><div class="p-mn">
+        <div class="bn h-cmp l"><span class="t" style="width:88px"></span><span class="s" style="width:60px"></span></div>
+        <div class="pd">
+          <div class="sr wd"><span class="q" style="max-width:none"></span><span class="m"></span></div>
+          <div class="row" style="flex:1;align-items:stretch;gap:9px">
+            <div class="vr"><u class="on"><i></i><b></b></u><u><i></i><b style="width:64%"></b></u><u><i></i><b></b></u><u><i></i><b style="width:64%"></b></u><u><i></i><b></b></u></div>
+            <div class="col" style="flex:1">
+              <div class="c" style="flex:1">
+                <div class="tb"><b class="on"></b><b></b><b></b></div>
+                <span class="l m"></span><span class="l"></span><span class="l s"></span><span class="l m"></span>
+              <span class="l m"></span><span class="l"></span><span class="l s"></span><span class="l m"></span><span class="l s"></span><span class="l"></span><span class="l m"></span><span class="l"></span><span class="l s"></span><span class="l m"></span><span class="l s"></span><span class="l"></span><span class="l m"></span><span class="l"></span><span class="l s"></span><span class="l m"></span></div>
+              <div class="row">
+                <div class="c"><span class="nm">Assets + CIs</span><span class="l s"></span></div>
+                <div class="c"><span class="nm">Announcements</span><span class="l s"></span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+    <div class="specs"><b class="hot">A10 flat geometric</b><b>full-bleed · compact · search below</b><b class="hot">vertical action rail</b><b>requests + approvals tabbed</b><b>left sub-rail</b></div>
+    <dl class="notes">
+      <div class="nt"><dt>Palette</dt><dd><span class="sw"><i style="background:#14211E"></i><i style="background:#1F6F5C"></i><i style="background:#E1EFEA"></i><i style="background:#F3F5F4"></i></span> — graphite + one restrained green</dd></div>
+      <div class="nt w"><dt>Trade-off</dt><dd>A second vertical rail beside the product's own icon rail — two columns of icons, different jobs, one pixel apart.</dd></div>
+    </dl>
+  </section>
+
+  <!-- ─────────── 07 HR ─────────── -->
+  <section class="dir">
+    <div class="dir-head"><span class="dir-n">07</span><h2>Focus Desk</h2><span class="dom">HR</span></div>
+    <p class="say">One list open at a time — and every closed section still reports its own count, so nothing is hidden without a number on it.</p>
+    <div class="p t07">
+      <div class="p-top"><span class="lg"></span><span class="sp"></span><span class="dt"></span><span class="dt"></span></div>
+      <div class="p-bd"><div class="p-rl"><i></i><i></i><i></i><i></i><i></i></div><div class="p-mn">
+        <div class="bn h-mid" style="margin:12px 12px 0;border-radius:14px"><span class="t"></span><span class="s"></span>
+          <div class="sr in" style="margin-top:4px"><span class="q"></span><span class="m"></span></div></div>
+        <div class="pd">
+          <div class="row">
+            <div class="a tp"><span class="i big"></span><span class="x"><b></b></span></div>
+            <div class="a tp"><span class="i big"></span><span class="x"><b></b></span></div>
+            <div class="a tp"><span class="i big"></span><span class="x"><b></b></span></div>
+            <div class="a tp"><span class="i big"></span><span class="x"><b></b></span></div>
+          </div>
+          <div class="row" style="flex:1;align-items:stretch">
+            <div class="col" style="flex:2">
+              <div class="c" style="flex:1"><span class="hd"><span class="nm">▾ My Open Requests</span><span class="bg">5</span></span><span class="l m"></span><span class="l s"></span><span class="l m"></span><span class="l m"></span><span class="l"></span><span class="l s"></span><span class="l m"></span><span class="l s"></span><span class="l"></span><span class="l m"></span></div>
+              <div class="c" style="padding:6px 9px"><span class="nm">▸ Pending Approvals</span></div>
+              <div class="c" style="padding:6px 9px"><span class="nm">▸ My Assets · My CIs</span></div>
+            </div>
+            <div class="col" style="flex:1">
+              <div class="c" style="flex:1"><span class="nm">Announcements</span><span class="l m"></span><span class="l s"></span><span class="l m"></span><span class="l"></span><span class="l s"></span><span class="l m"></span><span class="l s"></span><span class="l"></span><span class="l m"></span><span class="l"></span><span class="l s"></span><span class="l m"></span><span class="l s"></span><span class="l"></span><span class="l m"></span><span class="l"></span><span class="l s"></span></div>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+    <div class="specs"><b class="hot">A5 flat illustration</b><b>contained · mid · search inside</b><b>4 actions icon-top</b><b class="hot">accordion, one open</b><b class="hot">no services section</b></div>
+    <dl class="notes">
+      <div class="nt"><dt>Palette</dt><dd><span class="sw"><i style="background:#8B3A62"></i><i style="background:#E2A9C3"></i><i style="background:#F6E6EE"></i><i style="background:#FBF5F8"></i></span> — plum on blush, warm without being cute</dd></div>
+      <div class="nt"><dt>Open on arrival</dt><dd>My Open Requests. It is the only section whose contents change without the requester doing anything.</dd></div>
+      <div class="nt w"><dt>Trade-off</dt><dd>An accordion hides six things to show one. Scent depends entirely on the labels.</dd></div>
+    </dl>
+  </section>
+
+  <!-- ─────────── 08 Energy ─────────── -->
+  <section class="dir">
+    <div class="dir-head"><span class="dir-n">08</span><h2>Desk Before Door</h2><span class="dom">Energy · Utilities</span></div>
+    <p class="say">Opens on your work and <em>closes</em> on the front door, so the returning requester never scrolls past a welcome mat they did not need.</p>
+    <div class="p t08">
+      <div class="p-top"><span class="lg"></span><span class="sp"></span><span class="dt"></span><span class="dt"></span></div>
+      <div class="p-bd"><div class="p-rl"><i></i><i></i><i></i><i></i><i></i></div><div class="p-mn">
+        <div class="pd">
+          <div class="row">
+            <div class="st"><u>5</u><s></s></div><div class="st"><u>2</u><s></s></div>
+            <div class="st"><u class="z">0</u><s></s></div><div class="st"><u>12</u><s></s></div>
+          </div>
+          <div class="c" style="flex:1">
+            <div class="tb"><b class="on"></b><b></b><b></b></div>
+            <span class="l m"></span><span class="l"></span><span class="l s"></span><span class="l m"></span>
+          <span class="l m"></span><span class="l"></span><span class="l s"></span><span class="l m"></span><span class="l s"></span><span class="l"></span><span class="l m"></span><span class="l"></span><span class="l s"></span><span class="l m"></span><span class="l s"></span><span class="l"></span><span class="l m"></span></div>
+          <div class="row">
+            <div class="a"><span class="i"></span><span class="x"><b></b></span></div>
+            <div class="a"><span class="i"></span><span class="x"><b></b></span></div>
+            <div class="a"><span class="i"></span><span class="x"><b></b></span></div>
+            <div class="a"><span class="i"></span><span class="x"><b></b></span></div>
+          </div>
+          <div class="bn h-cmp" style="border-radius:6px"><span class="t" style="width:100px"></span>
+            <div class="sr in" style="margin-top:2px"><span class="q"></span><span class="m"></span></div></div>
+        </div>
+      </div></div>
+    </div>
+    <div class="specs"><b class="hot">A16 live data motif</b><b class="hot">⛔ inverted — banner LAST</b><b>2-row action grid</b><b>knowledge cluster</b><b>dashboard-first</b></div>
+    <dl class="notes">
+      <div class="nt"><dt>Palette</dt><dd><span class="sw"><i style="background:#08161A"></i><i style="background:#0E9BB0"></i><i style="background:#DDF1F4"></i><i style="background:#F1F5F6"></i></span> — near-black + cyan, instrument-panel</dd></div>
+      <div class="nt"><dt>The ban</dt><dd>Order inverted. Data opens the page, actions follow, and the banner is a <em>footer</em> — it carries the search and the outage line, which is the only job left for it down there.</dd></div>
+      <div class="nt w"><dt>Trade-off</dt><dd>A first-time requester meets four numbers before a single door.</dd></div>
+    </dl>
+  </section>
+
+  <!-- ─────────── 09 Facilities ─────────── -->
+  <section class="dir">
+    <div class="dir-head"><span class="dir-n">09</span><h2>Console</h2><span class="dom">Facilities</span></div>
+    <p class="say">A photographic lobby with the service desk pinned to its edge: everything you can <em>start</em> in one console, everything you already started beneath it.</p>
+    <div class="p t09">
+      <div class="p-top"><span class="lg"></span><span class="sp"></span><span class="dt"></span><span class="dt"></span></div>
+      <div class="p-bd"><div class="p-rl"><i></i><i></i><i></i><i></i><i></i></div><div class="p-mn">
+        <div class="bn h-hero l"><span class="t" style="width:130px"></span><span class="s" style="width:96px"></span>
+          <div class="sr in" style="margin-top:6px;width:56%"><span class="q"></span><span class="m"></span></div>
+          <div class="row" style="width:56%;margin-top:6px;gap:6px"><div class="a" style="padding:6px"><span class="i"></span><span class="x"><b></b></span></div><div class="a" style="padding:6px"><span class="i"></span><span class="x"><b></b></span></div></div>
+          <div class="row" style="width:56%;margin-top:6px;gap:6px"><div class="a" style="padding:6px"><span class="i"></span><span class="x"><b></b></span></div><div class="a" style="padding:6px"><span class="i"></span><span class="x"><b></b></span></div></div>
+        </div>
+        <div class="pd">
+          <div class="row" style="flex:1;align-items:stretch">
+            <div class="col" style="flex:2">
+              <div class="c" style="flex:1"><span class="hd"><span class="nm">My Assets · My CIs</span><span class="bg">9</span></span><span class="l m"></span><span class="l s"></span><span class="l m"></span><span class="l"></span><span class="l s"></span><span class="l m"></span><span class="l s"></span><span class="l"></span><span class="l m"></span><span class="l"></span><span class="l s"></span><span class="l m"></span><span class="l s"></span><span class="l"></span><span class="l m"></span><span class="l"></span><span class="l s"></span><span class="l m"></span><span class="l s"></span><span class="l"></span><span class="l m"></span></div>
+            </div>
+            <div class="col" style="flex:1">
+              <div class="c" style="flex:1"><span class="nm">Announcements</span><span class="l m"></span><span class="l m"></span><span class="l"></span><span class="l s"></span><span class="l m"></span><span class="l s"></span><span class="l"></span><span class="l m"></span><span class="l"></span><span class="l s"></span><span class="l m"></span><span class="l s"></span><span class="l"></span><span class="l m"></span><span class="l"></span><span class="l s"></span></div>
+              <div class="c"><span class="nm">Contact</span><span class="l s"></span></div>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+    <div class="specs"><b class="hot">A4 photographic</b><b>hero · left · straddling</b><b class="hot">actions INSIDE the banner</b><b>assets + CIs merged</b><b>content + rail</b></div>
+    <dl class="notes">
+      <div class="nt"><dt>Palette</dt><dd><span class="sw"><i style="background:#23272E"></i><i style="background:#D97706"></i><i style="background:#FBEBD6"></i><i style="background:#F5F5F3"></i></span> — charcoal + safety amber</dd></div>
+      <div class="nt"><dt>Bright photo?</dt><dd>The mask is opaque on the text side, not a wash — so contrast holds whatever the tenant uploads. No photo at all falls back to flat charcoal, which still reads as designed.</dd></div>
+      <div class="nt w"><dt>Trade-off</dt><dd>A 400px hero on a 900px screen leaves one card row above the fold.</dd></div>
+    </dl>
+  </section>
+
+  <!-- ─────────── 10 Legal ─────────── -->
+  <section class="dir">
+    <div class="dir-head"><span class="dir-n">10</span><h2>Lobby</h2><span class="dom">Legal · Professional</span></div>
+    <p class="say">Minimal at rest, a working surface on demand — seven widgets compressed into one counter row that opens a shared panel only when asked.</p>
+    <div class="p t10">
+      <div class="p-top"><span class="lg"></span><span class="sp"></span><span class="dt"></span><span class="dt"></span></div>
+      <div class="p-bd"><div class="p-rl"><i></i><i></i><i></i><i></i><i></i></div><div class="p-mn">
+        <div class="pd">
+          <div class="bn h-cmp l" style="border-radius:3px"><span class="t" style="width:110px"></span><span class="s" style="width:76px"></span></div>
+          <div class="sr wd" style="height:28px"><span class="q" style="max-width:none"></span><span class="m"></span></div>
+          <div class="row">
+            <div class="st"><u>5</u><s></s></div><div class="st"><u>2</u><s></s></div><div class="st"><u class="z">0</u><s></s></div>
+          </div>
+          <div class="row"><div class="a"><span class="i"></span><span class="x"><b></b><s></s></span></div><div class="a"><span class="i"></span><span class="x"><b></b><s></s></span></div><div class="a"><span class="i"></span><span class="x"><b></b><s></s></span></div></div>
+          <div class="c" style="flex:1">
+            <div class="tb"><b class="on"></b><b></b><b></b><b></b></div>
+            <span class="l m"></span><span class="l"></span><span class="l s"></span><span class="l m"></span><span class="l s"></span><span class="l"></span><span class="l m"></span><span class="l"></span><span class="l s"></span><span class="l m"></span><span class="l s"></span><span class="l"></span><span class="l m"></span><span class="l"></span>
+          </div>
+        </div>
+      </div></div>
+    </div>
+    <div class="specs"><b class="hot">A9 abstract 3D shapes</b><b>inset · compact · search below</b><b>3 actions single row</b><b>counter tiles → detail</b><b>search-first minimal</b></div>
+    <dl class="notes">
+      <div class="nt"><dt>Palette</dt><dd><span class="sw"><i style="background:#0B2E1A"></i><i style="background:#14532D"></i><i style="background:#DFEBE2"></i><i style="background:#F7F6F1"></i></span> — deep green on parchment, Fraunces</dd></div>
+      <div class="nt"><dt>The tension</dt><dd>Search-first wants an empty page; counters want a working surface. Resolved by making the counters <em>three</em>, not seven — enough to answer "anything waiting?", too few to become a dashboard.</dd></div>
+      <div class="nt w"><dt>Trade-off</dt><dd>The lists themselves are one click away. Nothing is readable on arrival except a number.</dd></div>
+    </dl>
+  </section>
+
+  <!-- ─────────── 11 Government ─────────── -->
+  <section class="dir">
+    <div class="dir-head"><span class="dir-n">11</span><h2>Service Counter</h2><span class="dom">Government</span></div>
+    <p class="say">A counter is a shelf, not a room — three fixed bands totalling 378px, and nothing grows when a tenant has more data.</p>
+    <div class="p t11" style="height:300px">
+      <div class="p-top"><span class="lg"></span><span class="sp"></span><span class="dt"></span><span class="dt"></span></div>
+      <div class="p-bd"><div class="p-rl"><i></i><i></i><i></i><i></i></div><div class="p-mn">
+        <div class="bn h-bar" style="margin:10px 10px 0"><span class="t" style="width:96px;height:7px"></span></div>
+        <div class="pd">
+          <div class="row" style="margin-top:-14px;position:relative;z-index:2">
+            <div class="a"><span class="i"></span><span class="x"><b></b></span></div>
+            <div class="a"><span class="i"></span><span class="x"><b></b></span></div>
+            <div class="a"><span class="i"></span><span class="x"><b></b></span></div>
+          </div>
+          <div class="row" style="flex:1">
+            <div class="c"><span class="hd"><span class="nm">My Open Requests</span><span class="bg">5</span></span><span class="l m"></span><span class="l s"></span><span class="l m"></span><span class="l"></span><span class="l s"></span><span class="l m"></span><span class="l s"></span><span class="l"></span><span class="l m"></span><span class="l"></span><span class="l s"></span><span class="l m"></span></div>
+            <div class="c"><span class="hd"><span class="nm">Pending Approvals</span><span class="bg">2</span></span><span class="l m"></span><span class="l m"></span><span class="l"></span><span class="l s"></span><span class="l m"></span><span class="l s"></span><span class="l"></span><span class="l m"></span><span class="l"></span><span class="l s"></span><span class="l m"></span><span class="l s"></span></div>
+            <div class="c"><span class="nm">Announcements</span><span class="l m"></span><span class="l m"></span><span class="l"></span><span class="l s"></span><span class="l m"></span><span class="l s"></span><span class="l"></span><span class="l m"></span><span class="l"></span><span class="l s"></span><span class="l m"></span><span class="l s"></span><span class="l"></span></div>
+          </div>
+          <div class="chip"><b style="width:44px"></b><b style="width:58px"></b><b style="width:50px"></b><b style="width:64px"></b></div>
+        </div>
+      </div></div>
+    </div>
+    <div class="specs"><b class="hot">A1 solid colour</b><b class="hot">⛔ half height · no search</b><b>3 actions straddling</b><b>one card per widget</b><b>chip cloud services</b></div>
+    <dl class="notes">
+      <div class="nt"><dt>Palette</dt><dd><span class="sw"><i style="background:#1B365D"></i><i style="background:#E3E8F0"></i><i style="background:#C3C9D1"></i><i style="background:#FFFFFF"></i></span> — navy on white, nothing else</dd></div>
+      <div class="nt"><dt>The ban</dt><dd>≈450px total and no search anywhere. Everything a requester can reach is <em>on screen</em> — the chip cloud is the whole navigation, which is why it earns its place here and nowhere else.</dd></div>
+      <div class="nt w"><dt>Trade-off</dt><dd>Nothing beyond the chips is findable. Fine for eight services; broken at eighty.</dd></div>
+    </dl>
+  </section>
+
+  <!-- ─────────── 12 Manufacturing ─────────── -->
+  <section class="dir">
+    <div class="dir-head"><span class="dir-n">12</span><h2>Switchboard</h2><span class="dom">Manufacturing</span></div>
+    <p class="say">The page opens on a row of counts, and every count is a switch that swaps the one panel beneath it.</p>
+    <div class="p t12">
+      <div class="p-top"><span class="lg"></span>
+        <div class="sr" style="height:15px;flex:1;max-width:210px;margin-left:8px"><span class="q"></span><span class="m"></span></div>
+        <span class="sp"></span><span class="dt"></span><span class="dt"></span></div>
+      <div class="p-bd"><div class="p-rl"><i></i><i></i><i></i><i></i><i></i></div><div class="p-mn">
+        <div class="pd">
+          <div class="row">
+            <div class="st"><u>5</u><s></s></div><div class="st"><u>2</u><s></s></div>
+            <div class="st"><u class="z">0</u><s></s></div><div class="st"><u>12</u><s></s></div>
+          </div>
+          <div class="c" style="flex:1">
+            <div class="tb"><b class="on"></b><b></b><b></b></div>
+            <span class="l m"></span><span class="l"></span><span class="l s"></span><span class="l m"></span><span class="l"></span>
+            <span class="l s"></span><span class="l m"></span><span class="l"></span><span class="l s"></span><span class="l m"></span>
+            <span class="l"></span><span class="l s"></span>
+          <span class="l m"></span><span class="l"></span><span class="l s"></span><span class="l m"></span><span class="l s"></span><span class="l"></span><span class="l m"></span><span class="l"></span><span class="l s"></span><span class="l m"></span><span class="l s"></span><span class="l"></span><span class="l m"></span><span class="l"></span></div>
+          <div class="row">
+            <div class="pl"><i></i><b></b></div><div class="pl"><i></i><b></b></div>
+            <div class="pl"><i></i><b></b></div><div class="pl"><i></i><b></b></div><div class="pl"><i></i><b></b></div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+    <div class="specs"><b class="hot">A18 NO banner</b><b class="hot">search promoted to top chrome</b><b>5 actions as a pill bar</b><b>counters → one detail panel</b><b>dashboard-first</b></div>
+    <dl class="notes">
+      <div class="nt"><dt>Palette</dt><dd><span class="sw"><i style="background:#2B3138"></i><i style="background:#B45309"></i><i style="background:#FCEBD6"></i><i style="background:#EFF1F3"></i></span> — slate + hi-vis</dd></div>
+      <div class="nt"><dt>The ban</dt><dd>No banner of any kind, and not smuggled back as a header strip. It answers whether the banner was ever load-bearing — here it plainly was not.</dd></div>
+      <div class="nt w"><dt>Trade-off</dt><dd>Zero brand expression. A tenant who bought the portal to look like their brand gets nothing.</dd></div>
+    </dl>
+  </section>
+
+</div>
+
+<!-- ══ How they differ ══ -->
+<section class="sec">
+  <h2>What actually varies</h2>
+  <p class="ld">
+    Twelve directions, and no two share more than two of the six axes. The banner treatment is unique
+    on every row, which is what makes them comparable rather than repetitive.
+  </p>
+  <div class="tw">
+    <table>
+      <thead><tr><th>#</th><th>Direction</th><th>Banner</th><th>Cards</th><th>Radius</th><th>Actions</th><th>Widgets</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">01</td><td>Threshold · IT</td><td>Mesh gradient + topology</td><td>White, hairline</td><td class="mono">8</td><td>Dock: search + 4</td><td>One per widget</td></tr>
+        <tr><td class="mono">02</td><td>Front Desk · Healthcare</td><td>Split image ÷ colour</td><td>Spine, status-coloured</td><td class="mono">6</td><td>3 · icon-left</td><td>Announce + contact merged</td></tr>
+        <tr><td class="mono">03</td><td>Thread · Retail</td><td>Seamless pattern</td><td>Borderless, shadowed</td><td class="mono">12</td><td>Scroll strip</td><td>One ranked feed</td></tr>
+        <tr><td class="mono">04</td><td>Reception · Startup</td><td>Line-art grid</td><td>Ghost outline</td><td class="mono">8</td><td>One New menu</td><td>Full merge, 4 tabs</td></tr>
+        <tr><td class="mono">05</td><td>Atrium · University</td><td>Duotone photo</td><td>Borderless, soft</td><td class="mono">16</td><td>Bento 1 + 3</td><td>Assets + CIs merged</td></tr>
+        <tr><td class="mono">06</td><td>Command Rail · Finance</td><td>Flat geometric</td><td>Dense, hairline</td><td class="mono">4</td><td>Vertical rail</td><td>Requests + approvals tabbed</td></tr>
+        <tr><td class="mono">07</td><td>Focus Desk · HR</td><td>Flat illustration</td><td>Tinted, borderless</td><td class="mono">14</td><td>4 · icon-top</td><td>Accordion, one open</td></tr>
+        <tr><td class="mono">08</td><td>Desk Before Door · Energy</td><td>Live data motif</td><td>White, hairline</td><td class="mono">6</td><td>2-row grid</td><td>Counters + help cluster</td></tr>
+        <tr><td class="mono">09</td><td>Console · Facilities</td><td>Photo + shape mask</td><td>White, hairline</td><td class="mono">6</td><td>Inside the banner</td><td>Assets + CIs merged</td></tr>
+        <tr><td class="mono">10</td><td>Lobby · Legal</td><td>Abstract 3D shapes</td><td>Sharp, hairline</td><td class="mono">3</td><td>3 · single row</td><td>Counters → detail</td></tr>
+        <tr><td class="mono">11</td><td>Service Counter · Government</td><td>Solid colour bar</td><td>Square, hairline</td><td class="mono">2</td><td>3 · straddling</td><td>One per widget</td></tr>
+        <tr><td class="mono">12</td><td>Switchboard · Manufacturing</td><td><b>None</b></td><td>Dense, hairline</td><td class="mono">3</td><td>5 · pill bar</td><td>Counters → detail</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="sec">
+  <h2>Reading these</h2>
+  <p class="ld">
+    Three things are worth knowing before you pick.
+  </p>
+  <div class="tw"><table>
+    <tbody>
+      <tr><td style="width:180px"><b>Radius is a dialect</b></td><td>2px reads as a form, 16px reads as an app. It is the cheapest signal of what kind of place this is, and it is one token.</td></tr>
+      <tr><td><b>Density is domain</b></td><td>Finance and Manufacturing get 8px gaps and 4px radii; Healthcare and University get room. Nobody reads a shift-handover page the way they read a course catalogue.</td></tr>
+      <tr><td><b>Four carry a hard ban</b></td><td><b>03</b> no equal-card grid · <b>08</b> inverted order, banner last · <b>11</b> half height and no search · <b>12</b> no banner at all. A ban is the only reliable way to find out whether an element was ever load-bearing.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+</div>
