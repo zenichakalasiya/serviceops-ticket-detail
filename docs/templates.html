@@ -157,13 +157,19 @@ svg{display:block}
 /* ── closing table ── */
 .tbl-wrap{overflow-x:auto;margin-top:26px;border:1px solid var(--pg-line);border-radius:10px;
   background:var(--pg-2)}
-table{border-collapse:collapse;width:100%;min-width:960px;font-size:13.5px}
-th,td{text-align:left;padding:11px 15px;border-bottom:1px solid var(--pg-line2);vertical-align:top}
-th{font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:500;letter-spacing:.12em;
+/* ⚠️ SCOPED to .tbl-wrap. As bare element selectors these styled every portal table too, and
+   the min-width:960px pushed a work table past its own card — the timestamps in the last column
+   were being clipped by the card. Second leak of this shape after .top; page chrome never gets an
+   unscoped selector. */
+.tbl-wrap table{border-collapse:collapse;width:100%;min-width:960px;font-size:13.5px}
+.tbl-wrap th,.tbl-wrap td{text-align:left;padding:11px 15px;border-bottom:1px solid var(--pg-line2);
+  vertical-align:top}
+.tbl-wrap th{font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:500;letter-spacing:.12em;
   text-transform:uppercase;color:var(--pg-mute2);background:var(--pg-3);white-space:nowrap}
-tbody tr:last-child td{border-bottom:none}
-td.mono{font-family:"IBM Plex Mono",monospace;color:var(--pg-mute2);font-variant-numeric:tabular-nums}
-td b{color:var(--pg-ink);font-weight:600}
+.tbl-wrap tbody tr:last-child td{border-bottom:none}
+.tbl-wrap td.mono{font-family:"IBM Plex Mono",monospace;color:var(--pg-mute2);
+  font-variant-numeric:tabular-nums}
+.tbl-wrap td b{color:var(--pg-ink);font-weight:600}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    PORTAL COMPONENT VOCABULARY
@@ -188,7 +194,7 @@ td b{color:var(--pg-ink);font-weight:600}
 .bn .fx{position:absolute;inset:0;z-index:0}
 
 /* search ------------------------------------------------------------------ */
-.sr{display:flex;align-items:center;gap:10px;background:#fff;border-radius:var(--r);
+.sr{display:flex;align-items:center;gap:10px;background:var(--srBg,#fff);border-radius:var(--r);
   border:1px solid rgba(255,255,255,.28);padding:0 14px;height:44px;
   box-shadow:0 6px 20px -8px rgba(0,0,0,.28)}
 .sr .ic{width:17px;height:17px;color:#98A6B8;flex:none}
@@ -345,7 +351,8 @@ td b{color:var(--pg-ink);font-weight:600}
   background:var(--tint);color:var(--brand);border-radius:999px;padding:1px 5px}
 
 /* table ------------------------------------------------------------------- */
-.tb{width:100%;border-collapse:collapse;font-size:13px}
+.tb{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed}
+.tb td.sub{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tb th{font-family:var(--font);font-size:10.5px;font-weight:600;letter-spacing:.09em;
   text-transform:uppercase;color:var(--mute);text-align:left;padding:8px 10px;
   border-bottom:1px solid var(--line);background:transparent}
@@ -419,6 +426,88 @@ td b{color:var(--pg-ink);font-weight:600}
 .pal kbd{margin-left:auto;font-family:"IBM Plex Mono",monospace;font-size:10.5px;
   border:1px solid var(--line);border-radius:4px;padding:2px 6px;flex:none}
 .emptyish{padding:26px 14px;text-align:center;color:var(--mute);font-size:12.5px}
+
+/* ── joined readout board ──
+   Four counts as ONE instrument divided by hairlines, not four cards with gaps between them.
+   A control room reads a board; four separate tiles read as four separate questions. */
+.board{display:grid;background:var(--sf);border:var(--cardBd);border-radius:var(--r);
+  box-shadow:var(--cardSh);overflow:hidden}
+.board.c3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.board.c4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.board > div{padding:15px 18px 14px;border-left:1px solid var(--line);cursor:pointer;
+  transition:background .14s;min-width:0}
+.board > div:first-child{border-left:none}
+.board > div:hover{background:var(--sf2)}
+.board > div.on{background:var(--tint)}
+.board u{display:block;text-decoration:none;font-family:var(--disp);font-size:33px;font-weight:700;
+  line-height:1;letter-spacing:-.03em;color:var(--brand);font-variant-numeric:tabular-nums}
+.board u.z{color:var(--mute)}
+.board s{display:block;text-decoration:none;font-size:12.5px;color:var(--ink2);margin-top:9px;
+  font-weight:500}
+.board em{display:block;font-style:normal;font-size:11px;color:var(--mute);margin-top:2px}
+.board svg{width:100%;height:22px;margin-top:10px;overflow:visible}
+.board svg polyline{stroke:var(--brand)}
+.board svg.z polyline{stroke:var(--mute)}
+
+/* ── the quiet stat strip ── same joined idea at a whisper, for a minimal page. */
+.inline-stats{display:flex;background:var(--sf);border:var(--cardBd);border-radius:var(--r);
+  box-shadow:var(--cardSh);overflow:hidden}
+.inline-stats > div{flex:1;padding:14px 18px;border-left:1px solid var(--line);display:flex;
+  align-items:baseline;gap:10px;cursor:pointer;min-width:0}
+.inline-stats > div:first-child{border-left:none}
+.inline-stats > div:hover{background:var(--sf2)}
+.inline-stats u{text-decoration:none;font-family:var(--disp);font-size:25px;font-weight:700;
+  color:var(--brand);line-height:1;font-variant-numeric:tabular-nums;flex:none}
+.inline-stats u.z{color:var(--mute)}
+.inline-stats s{text-decoration:none;font-size:12.5px;color:var(--mute);min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ── the desk panel ──
+   A colour panel running the FULL height beside the content, rather than a band across the top.
+   You walk up to a counter; you do not walk under it. */
+.deskpanel{flex:none;width:328px;background:var(--brand);color:#fff;padding:26px 24px;
+  display:flex;flex-direction:column;gap:16px;position:relative;overflow:hidden}
+.deskpanel h2{font-family:var(--disp);font-size:23px;font-weight:600;color:#fff;
+  letter-spacing:-.02em;line-height:1.2}
+.deskpanel p{font-size:13px;color:rgba(255,255,255,.7);line-height:1.55;margin-top:9px}
+.deskpanel .emblem{position:absolute;right:-58px;top:132px;width:196px;height:196px;opacity:.13}
+.deskpanel .hrs{display:flex;align-items:center;gap:7px;font-size:11.5px;
+  color:rgba(255,255,255,.62);position:relative;z-index:2}
+.deskpanel .hrs .ic{width:13px;height:13px}
+.deskpanel .lst{display:flex;flex-direction:column;gap:8px;margin-top:auto;position:relative;z-index:2}
+.deskpanel .lst a{display:flex;align-items:center;gap:11px;padding:12px 13px;border-radius:var(--rs);
+  background:rgba(255,255,255,.11);border:1px solid rgba(255,255,255,.18);color:#fff;
+  font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;transition:background .14s}
+.deskpanel .lst a:hover{background:rgba(255,255,255,.19)}
+.deskpanel .lst a .ic{width:16px;height:16px;flex:none}
+.deskpanel .lst a .ar{margin-left:auto;opacity:.55;display:flex}
+.deskpanel .lst a .ar .ic{width:14px;height:14px}
+
+/* ── centred measure ── a search-first page has no business spanning 1300px. */
+.centre{width:100%;max-width:920px;margin:0 auto;display:flex;flex-direction:column;gap:var(--gap)}
+
+/* ── ground treatments for the template that has no banner ──
+   Absence of a band is not absence of identity: the whole page ground carries it instead. */
+.hazard{height:4px;flex:none;
+  background:repeating-linear-gradient(115deg,#F59E0B 0 14px,transparent 14px 28px)}
+.headband{position:relative;min-height:80px;display:flex;align-items:center}
+.headband .hrow{position:relative;z-index:1;display:flex;align-items:baseline;gap:13px;
+  flex-wrap:wrap;width:100%}
+.groundmark{position:absolute;right:2px;top:50%;transform:translateY(-50%);display:flex;gap:20px;
+  opacity:.09;pointer-events:none;color:#fff;z-index:0}
+.groundmark .ic{width:74px;height:74px}
+.notice{display:flex;align-items:center;gap:11px;background:var(--tint);border:1px solid var(--line);
+  border-left:3px solid var(--brand);border-radius:var(--rs);padding:12px 15px;font-size:13px;
+  color:var(--ink2)}
+.notice .ic{width:15px;height:15px;color:var(--brand);flex:none}
+.notice b{font-weight:600;color:var(--ink)}
+.notice .more{margin-left:auto;font-size:11.5px;color:var(--mute);flex:none;cursor:pointer}
+.stamp{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--mute);
+  border:1px solid var(--line);border-radius:999px;padding:4px 11px;background:var(--sf);flex:none}
+.stamp .ic{width:12px;height:12px}
+.stamp i{width:6px;height:6px;border-radius:50%;background:#22C55E;flex:none;font-style:normal}
+.greet{font-family:var(--disp);font-size:24px;font-weight:600;color:var(--ink);letter-spacing:-.022em}
+.greet + p{margin-top:5px;font-size:13.5px;color:var(--mute)}
 
 /* grid helpers */
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap)}
@@ -526,7 +615,7 @@ td b{color:var(--pg-ink);font-weight:600}
     radial-gradient(circle at 94% 34%,#8B3A62 0 88px,transparent 89px),
     radial-gradient(circle at 84% 92%,#E2A9C3 0 44px,transparent 45px)}
 
-/* 08 Desk Before Door · Energy — the banner is a live load curve, and it is last */
+/* 08 Desk Before Door · Energy — the banner is a live load curve, and it arrives last */
 .t08{--brand:#0E7490;--tint:#DEF1F6;--bg:#F4F8F9;--sf:#fff;--sf2:#F7FAFB;
   --ink:#0D1D22;--ink2:#3A4B51;--mute:#76888F;--line:#E2EAEC;--r:6px;--rs:5px;
   --font:"IBM Plex Sans",sans-serif}
@@ -544,31 +633,50 @@ td b{color:var(--pg-ink);font-weight:600}
 .t09 .bn .fx::after{content:"";position:absolute;inset:0;
   background:linear-gradient(122deg,transparent 43.4%,rgba(194,101,11,.95) 43.4% 44.4%,transparent 44.4%)}
 
-/* 10 Lobby · Legal — abstract 3D forms, sharp corners, serif, minimal */
-.t10{--brand:#14532D;--tint:#E3EEE7;--bg:#F7F8F6;--sf:#fff;--sf2:#F8FAF8;
+/* 10 Lobby · Legal — abstract 3D forms with a real specular point, sharp corners, serif, minimal */
+.t10{--brand:#14532D;--tint:#E3EEE7;--bg:#F6F8F6;--sf:#fff;--sf2:#F8FAF8;
   --ink:#101A13;--ink2:#3B473F;--mute:#79867D;--line:#E4E9E5;--r:3px;--rs:2px;
   --font:"IBM Plex Sans",sans-serif;--disp:"Fraunces",serif}
-.t10 .bn .fx{background:linear-gradient(120deg,#0B2E19,#14532D 58%,#1B6B3C)}
+.t10 .bn .fx{background:linear-gradient(118deg,#0A2A17,#14532D 56%,#1C6E3E)}
+/* ⚠️ Soft radial blobs read as blur, not as form. A sphere needs a bright specular point, a body
+   and a hard terminator — three stops, not two. */
+/* A sphere is TWO layers, not one. An off-centre radial is clipped by its own background box on
+   the side its centre is pushed toward, which is why an off-centre highlight rendered a rounded
+   RECTANGLE rather than a ball. The body is centred so it fits its tile exactly, and the specular
+   point rides over it as a second layer at the same size and position. */
 .t10 .bn .fx::after{content:"";position:absolute;inset:0;
   background:
-    radial-gradient(circle at 78% 32%,#4ADE80 0 4px,#22A05A 26%,rgba(20,83,45,0) 58%),
-    radial-gradient(circle at 90% 74%,#A7F3D0 0 3px,#5FBF89 30%,rgba(20,83,45,0) 56%),
-    radial-gradient(circle at 66% 88%,#86EFAC 0 2px,#3E9A67 28%,rgba(20,83,45,0) 52%);
-  background-size:230px 230px,150px 150px,110px 110px;
-  background-position:right -20px top -30px, right 40px bottom -30px, right 200px bottom 0;
+    radial-gradient(circle at 37% 33%,rgba(255,255,255,.90) 0 5%,rgba(255,255,255,0) 24%),
+    radial-gradient(circle at 50% 50%,#7DEBB3 0 26%,#23A25E 58%,#10643A 69%,rgba(0,0,0,0) 70%),
+    radial-gradient(circle at 36% 32%,rgba(255,255,255,.82) 0 6%,rgba(255,255,255,0) 26%),
+    radial-gradient(circle at 50% 50%,#A7F3D0 0 24%,#3FA772 56%,#1B7A48 69%,rgba(0,0,0,0) 70%);
+  background-size:216px 216px,216px 216px,128px 128px,128px 128px;
+  background-position:
+    right -54px top -60px, right -54px top -60px,
+    right 40px bottom -44px, right 40px bottom -44px;
   background-repeat:no-repeat}
 .t10 .bn h2{font-weight:600}
 
-/* 11 Service Counter · Government — solid navy, square, no search, half height */
+/* 11 Service Counter · Government — the colour is a full-height panel, not a band */
 .t11{--brand:#1B3A6B;--tint:#E6ECF5;--bg:#F5F6F8;--sf:#fff;--sf2:#F7F8FA;
   --ink:#111823;--ink2:#3B4453;--mute:#78818F;--line:#E2E5EB;--r:2px;--rs:2px;
-  --font:"IBM Plex Sans",sans-serif;--pad:20px;--gap:14px}
-.t11 .bn .fx{background:#1B3A6B}
-
-/* 12 Switchboard · Manufacturing — no banner, slate and hi-vis, dense */
-.t12{--brand:#B45309;--tint:#FBEBD8;--bg:#F2F3F5;--sf:#fff;--sf2:#F7F8F9;
-  --ink:#141A20;--ink2:#3D464F;--mute:#7A838D;--line:#E3E6EA;--r:3px;--rs:3px;
   --font:"IBM Plex Sans",sans-serif;--pad:18px;--gap:12px}
+.t11 .deskpanel{background:linear-gradient(168deg,#1B3A6B,#12294D)}
+
+/* 12 Switchboard · Manufacturing — the ONLY dark portal here, and the reason it needs no banner.
+   A shop-floor terminal is read under glare, and the product's theme panel ships a light/dark pair,
+   so this is a mode the builder actually has rather than a liberty taken for variety. */
+.t12{--brand:#F59E0B;--brandInk:#1A1200;--tint:#332405;--bg:#12161C;--sf:#1A2029;--sf2:#212A34;
+  --ink:#EDF1F6;--ink2:#BFC9D6;--mute:#8894A3;--line:#2A323D;--srBg:#1A2029;
+  --r:4px;--rs:3px;--font:"IBM Plex Sans",sans-serif;--pad:20px;--gap:14px;
+  --cardSh:0 1px 2px rgba(0,0,0,.44);--cardBd:1px solid #2A323D}
+/* The ground does what a banner would have done: a blueprint grid across the whole page. */
+.t12::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:0;opacity:.55;
+  background-image:linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px);
+  background-size:46px 46px}
+.t12 .board u{font-size:38px}
+.t12 .notice{background:rgba(245,158,11,.10)}
 
 /* ── narrow viewport: the windows stay honest, the page stops fighting ── */
 @media (max-width:1100px){
@@ -702,6 +810,16 @@ const TONE = {
   'Reopened':    { fg:'#DC2626', bg:'#FEF3F2' },
 };
 
+const TONE_DARK = {
+  'Open':        { fg:'#FBBF24', bg:'#3A2A0A' },
+  'In Progress': { fg:'#93C5FD', bg:'#12325A' },
+  'Pending':     { fg:'#C4B5FD', bg:'#2B2350' },
+  'On Hold':     { fg:'#9FB3C8', bg:'#22334F' },
+  'Resolved':    { fg:'#4ADE80', bg:'#12351F' },
+  'Closed':      { fg:'#9FB3C8', bg:'#22334F' },
+  'Reopened':    { fg:'#F87171', bg:'#3A1717' },
+};
+
 const APPROVALS = [
   { id:'INC-192', s:'Wrong configuration details', r:'Peer review requested',
     at:'Tue, Aug 11, 2026 02:14 PM', by:'Rosy', ini:'RO', c:'#3D8BD0' },
@@ -749,8 +867,9 @@ const ic  = (n, cls) => `<svg class="ic ${cls||''}" aria-hidden="true"><use href
 const shortAt = at => at.replace(/^\w+, /, '').replace(/, \d{4}.*$/, '');
 const timeOf  = at => (at.match(/\d{1,2}:\d{2} [AP]M/) || [''])[0];
 
-const pill = st => {
-  const t = TONE[st] || TONE['On Hold'];
+const pill = (st, dark) => {
+  const set = dark ? TONE_DARK : TONE;
+  const t = set[st] || set['On Hold'];
   return `<span class="pill" style="color:${t.fg};background:${t.bg}">${esc(st)}</span>`;
 };
 const dotPill = st => {
@@ -834,6 +953,23 @@ const search = (cls, withBtn) => `
 
 const heroCopy = () => `<h2>${esc(HERO.title)}</h2><p>${esc(HERO.sub)}</p>`;
 
+/* A twenty-day trend under a count. `non-scaling-stroke` keeps the line even weight while the
+   viewBox is stretched to the cell's width. */
+const sparkline = pts => {
+  const w = 100, h = 22, mx = Math.max(...pts), mn = Math.min(...pts), span = (mx - mn) || 1;
+  const d = pts.map((v, i) =>
+    `${(i / (pts.length - 1) * w).toFixed(1)},${(h - (v - mn) / span * h).toFixed(1)}`).join(' ');
+  return `<polyline fill="none" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"
+    vector-effect="non-scaling-stroke" points="${d}"/>`;
+};
+
+const boardCell = (v, label, meta, trend, on) => `
+  <div class="${on ? 'on' : ''}">
+    <u class="${v === 0 ? 'z' : ''}">${v}</u><s>${esc(label)}</s>${meta ? `<em>${esc(meta)}</em>` : ''}
+    ${trend ? `<svg class="${v === 0 ? 'z' : ''}" viewBox="0 0 100 22" preserveAspectRatio="none"
+      aria-hidden="true">${sparkline(trend)}</svg>` : ''}
+  </div>`;
+
 const counter = (v, label, meta, on) => `
   <div class="ct-tile ${on ? 'on' : ''}">
     <u class="${v === 0 ? 'z' : ''}">${v}</u><s>${esc(label)}</s>${meta ? `<em>${esc(meta)}</em>` : ''}
@@ -844,14 +980,14 @@ const tabs = list => `<div class="tabs">${
 
 /* One dense table of the requester's work — the same records the cards show, in the shape a
    workspace shows them. */
-const workTable = n => `
+const workTable = (n, dark) => `
   <table class="tb">
     <thead><tr><th style="width:74px">ID</th><th>Subject</th><th style="width:112px">Status</th><th style="width:150px">Raised</th></tr></thead>
     <tbody>${REQUESTS.slice(0, n).map(r => `
       <tr>
         <td class="id">${r.id}</td>
         <td class="sub">${esc(r.s)}</td>
-        <td>${pill(r.st)}</td>
+        <td>${pill(r.st, dark)}</td>
         <td class="mt">${shortAt(r.at)} · ${timeOf(r.at)}</td>
       </tr>`).join('')}
     </tbody>
@@ -1207,33 +1343,47 @@ T.push({
 /* ── 08 ─────────────────────────────────────────────────────────────────── */
 T.push({
   n:'08', key:'t08', name:'Desk Before Door', dom:'Energy',
-  thesis:`Opens on your work and <em>closes</em> on the front door, so the returning requester never
-    scrolls past a welcome mat they did not need.`,
-  axes:['A17 live data motif','full-bleed · mid · banner LAST','C2 two-row grid','D5 counters + help cluster','⛔ inverted order — data first'],
+  thesis:`Opens on your work and <em>closes</em> on the front door — and the greeting is a
+    <em>sentence</em>, not a band, so the inversion costs the page no warmth.`,
+  axes:['A17 live data motif','full-bleed · mid · banner LAST','C2 two-row grid','D6 readout board → work panel','⛔ inverted order — data first'],
   pal:['#062A34','#0E7490','#DEF1F6','#F4F8F9'],
   notes:{
-    'The ban':`The page order is inverted — counters, then work, then actions, and the banner arrives
-      last. It answers whether a returning requester needs the door before the desk.`,
-    'The artwork':`The only banner here whose treatment is data: the curve is the tenant's own ticket
-      volume over twenty days, so the decoration is also a reading.`,
-    'Trade-off':`A first-time requester meets four numbers before they meet a sentence.`
+    'The ban':`The page order is inverted — a greeting, a readout, your work, then the actions, and
+      the banner last. It answers whether a returning requester needs the door before the desk.`,
+    'The readout':`The four counts are one board divided by hairlines, each carrying its own twenty-day
+      trend. This is the live-data motif spent on the DATA rather than on a decorative band — the
+      only template here where the number tells you which way it is going.`,
+    'Trade-off':`A first-time requester meets four numbers before they meet a sentence, and the door
+      they came for is 900px down.`
   },
   render:() => `<div class="pt t08">
     <div class="wrap">
-      <div class="cts g4">
-        ${counter(REQ_TOTAL, 'Open requests', 'Raised by me', true)}
-        ${counter(2, 'Awaiting your approval', 'Oldest 2 days')}
-        ${counter(0, 'Overdue', 'Nothing breaching')}
-        ${counter(9, 'Assets & CIs', 'Assigned to you')}
+      <div style="display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap">
+        <div style="flex:1;min-width:0">
+          <h2 class="greet">Good afternoon, Jaydeep</h2>
+          <p>Tuesday, 12 August 2026 · ${REQ_TOTAL} requests open across your sites</p>
+        </div>
+        <span class="stamp"><i></i>Live · synced 4 min ago</span>
       </div>
-      ${card({body:`
-        ${tabs([['My Requests', REQ_TOTAL],['Approvals', 2],['Assets', 5]])}
-        <div style="padding:2px 4px 4px">${workTable(5)}</div>`})}
+      <div class="board c4">
+        ${boardCell(REQ_TOTAL, 'Open requests', 'Raised by me', [9,11,10,13,12,15,17], true)}
+        ${boardCell(2, 'Awaiting your approval', 'Oldest 2 days', [1,3,2,4,3,3,2])}
+        ${boardCell(0, 'Overdue', 'Nothing breaching', [2,1,2,1,1,0,0])}
+        ${boardCell(9, 'Assets & CIs', 'Assigned to you', [7,7,8,8,9,9,9])}
+      </div>
       <div class="row">
-        <div style="flex:2;min-width:0"><div class="acts g2">${ACTIONS.map(a => actCard(a, '', true)).join('')}</div></div>
-        <div style="flex:1;min-width:0">${card({title:'Most Read', icon:'i-bulb', count:3, body:kbRows()})}</div>
+        <div style="flex:2;min-width:0;display:flex">
+          ${card({cls:'', style:'flex:1;min-width:0', body:`
+            ${tabs([['My Requests', REQ_TOTAL],['Approvals', 2],['Assets', 5]])}
+            <div style="padding:2px 4px 4px">${workTable(7)}</div>`})}
+        </div>
+        <div class="col" style="flex:1">
+          ${card({title:'Pending Approvals', icon:'i-check', count:2, body:apprRows()})}
+          ${card({title:'Most Read', icon:'i-bulb', count:3, body:kbRows()})}
+        </div>
       </div>
-      <div class="bn ctr" style="height:150px;border-radius:var(--r);margin-top:4px">
+      ${actRow('', 4, true)}
+      <div class="bn ctr" style="height:158px;border-radius:var(--r);margin-top:4px">
         <span class="fx"></span>
         ${loadCurve()}
         <h2 style="font-size:23px">${esc(HERO.title)}</h2>
@@ -1288,31 +1438,40 @@ T.push({
 /* ── 10 ─────────────────────────────────────────────────────────────────── */
 T.push({
   n:'10', key:'t10', name:'Lobby', dom:'Legal',
-  thesis:`Minimal at rest, a working surface on demand — seven widgets compressed into one counter
-    row that opens a shared panel only when asked.`,
-  axes:['A9 abstract 3D shapes','inset · compact · search below','C1 single equal row','D6 counter tiles → one detail panel','search-first minimal'],
-  pal:['#0B2E19','#14532D','#E3EEE7','#F7F8F6'],
+  thesis:`A search-first page has no business spanning 1300px — so it doesn't. Everything sits in one
+    920px measure, and the counts are a strip rather than three more cards.`,
+  axes:['A9 abstract 3D shapes','inset plate · centred 920px measure','C1 single equal row','D6 counter strip → one detail panel','search-first minimal'],
+  pal:['#0A2A17','#14532D','#E3EEE7','#F6F8F6'],
   notes:{
-    'Sharp corners':`3px, a serif for headings, and a page that is mostly one field. The restraint is
-      the brand expression — there is nothing else doing that job.`,
+    'The measure':`The only template here that is not full-bleed. A minimal page proves it is minimal
+      by what it declines to fill, and a 1300px row of three counters is not restraint.`,
+    'The forms':`Soft radial blobs read as blur, not as form. Each sphere is three stops — a bright
+      specular point, a body, a hard terminator — which is the difference between "3D" and "gradient".`,
     'Trade-off':`Only one list is visible at a time, so a requester comparing approvals against
-      requests is switching rather than looking.`
+      requests is switching rather than looking. And 380px of page width goes unused by design.`
   },
   render:() => `<div class="pt t10">
-    <div class="wrap">
-      <div class="bn" style="height:104px;border-radius:var(--r);padding:0 30px">
-        <span class="fx"></span>${heroCopy()}
+    <div class="wrap" style="padding-top:30px">
+      <div class="centre">
+        <div class="bn ctr" style="border-radius:var(--r);padding:36px 34px 34px">
+          <span class="fx"></span>
+          <h2 style="font-size:29px">${esc(HERO.title)}</h2>
+          <p style="margin-top:8px">${esc(HERO.sub)}</p>
+          <div style="width:100%;margin-top:20px">${search('lg', true)}</div>
+        </div>
+        <div class="inline-stats">
+          <div><u>${REQ_TOTAL}</u><s>Open requests</s></div>
+          <div><u>2</u><s>Pending approvals</s></div>
+          <div><u class="z">0</u><s>Overdue</s></div>
+        </div>
+        ${actRow('', 3, true)}
+        ${card({body:`
+          ${tabs([['My Requests', REQ_TOTAL],['Approvals', 2],['Assets', 5],['Knowledge', 3]])}
+          <div style="padding:2px 4px 4px">${workTable(6)}</div>`})}
+        <div class="cd" style="flex-direction:row;align-items:center;gap:0;padding:4px 6px">
+          ${contactRows()}
+        </div>
       </div>
-      ${search('flat lg', true)}
-      <div class="cts g3">
-        ${counter(REQ_TOTAL, 'Open requests', 'Raised by me', true)}
-        ${counter(2, 'Pending approvals', 'Assigned to you')}
-        ${counter(0, 'Overdue', 'Nothing breaching')}
-      </div>
-      ${actRow('', 3, true)}
-      ${card({body:`
-        ${tabs([['My Requests', REQ_TOTAL],['Approvals', 2],['Assets', 5],['Knowledge', 3]])}
-        <div style="padding:2px 4px 4px">${workTable(6)}</div>`})}
     </div>
   </div>`
 });
@@ -1320,33 +1479,48 @@ T.push({
 /* ── 11 ─────────────────────────────────────────────────────────────────── */
 T.push({
   n:'11', key:'t11', name:'Service Counter', dom:'Government',
-  thesis:`A counter is a shelf, not a room — three fixed bands, no search, and nothing grows when a
-    tenant has more data.`,
-  axes:['A1 solid brand colour','contained · bar · no search','C3 straddling the banner edge','D1 one card per widget','⛔ half the vertical space'],
-  pal:['#1B3A6B','#E6ECF5','#F5F6F8','#FFFFFF'],
+  thesis:`You walk <em>up to</em> a counter, you do not walk <em>under</em> it — so the colour is a
+    full-height panel beside your records, never a band across the top of them.`,
+  axes:['A1 solid colour, full-height panel','no banner band · no search','C7 three actions inside the panel','D1 one card per widget','⛔ half the vertical space'],
+  pal:['#12294D','#1B3A6B','#E6ECF5','#F5F6F8'],
   notes:{
-    'The ban':`Half the vertical space. What survived: three actions, three lists capped at three rows,
-      and the service chips. What went: the search, the hero copy, the asset tiles, every second row.`,
-    'No search':`Deliberate. A counter tells you which queue to join; it does not invite a question.`,
-    'Trade-off':`Zero headroom. A tenant with an eighth widget has nowhere to put it.`
+    'The ban, and how it was met':`Half the vertical space. Turning the band on its side is what paid
+      for it: two columns are shorter than three stacked bands by exactly the height of the band. The
+      panel is now the tallest, most confident block on the page while the page got shorter.`,
+    'No search':`Deliberate. A counter tells you which queue to join; it does not invite a question.
+      The three doors and the opening hours are the whole of what it offers.`,
+    'Trade-off':`328px of permanent colour. A tenant whose brand colour is pale has a panel that
+      cannot hold white text, and no fallback but to darken it.`
   },
   render:() => `<div class="pt t11">
-    <div class="bn ctr" style="height:94px;justify-content:flex-start;padding-top:15px">
-      <span class="fx"></span>
-      <h2 style="font-size:20px">${esc(HERO.title)}</h2>
-    </div>
-    <div style="padding:0 var(--pad)">
-      <div class="acts g3" style="margin-top:-24px;position:relative;z-index:3">
-        ${ACTIONS.slice(0,3).map(a => actCard(a, '', true)).join('')}
+    <div style="display:flex;align-items:stretch;min-height:414px">
+      <div class="deskpanel">
+        <svg class="emblem" viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="2.4"
+          aria-hidden="true">
+          <rect x="7" y="7" width="86" height="86" rx="11"/>
+          <rect x="20" y="20" width="60" height="60" rx="9"/>
+          <rect x="33" y="33" width="34" height="34" rx="7"/>
+          <circle cx="50" cy="50" r="7" fill="#fff" stroke="none"/>
+        </svg>
+        <div style="position:relative;z-index:2">
+          <h2>${esc(HERO.title)}</h2>
+          <p>Report a fault, request a service, or reset your account. No appointment needed.</p>
+        </div>
+        <div class="hrs">${ic('i-clock')}Counter staffed Mon–Fri, 09:00–17:00</div>
+        <div class="lst">
+          ${ACTIONS.slice(0,3).map(a =>
+            `<a>${ic(a.i)}${esc(a.t)}<span class="ar">${ic('i-chev')}</span></a>`).join('')}
+        </div>
       </div>
-    </div>
-    <div class="wrap" style="padding-top:14px">
-      <div class="g3">
-        ${card({title:'My Open Requests', icon:'i-ticket', count:REQ_TOTAL, body:reqRows(3, {dot:true})})}
-        ${card({title:'Pending Approvals', icon:'i-check', count:2, body:apprRows()})}
+      <div class="wrap" style="flex:1;min-width:0">
+        <div class="g2">
+          ${card({title:'My Open Requests', icon:'i-ticket', count:REQ_TOTAL, va:'View all',
+                  body:reqRows(3, {dot:true})})}
+          ${card({title:'Pending Approvals', icon:'i-check', count:2, body:apprRows()})}
+        </div>
         ${card({title:'Announcements', icon:'i-bell', count:2, body:newsRows()})}
+        ${svcChips()}
       </div>
-      ${svcChips()}
     </div>
   </div>`
 });
@@ -1354,32 +1528,50 @@ T.push({
 /* ── 12 ─────────────────────────────────────────────────────────────────── */
 T.push({
   n:'12', key:'t12', name:'Switchboard', dom:'Manufacturing', topSearch:true,
-  thesis:`The page opens on a row of counts, and every count is a switch that swaps the one panel
-    beneath it.`,
-  axes:['A18 NO banner','search promoted to top chrome','C6 segmented pill bar','D6 counters → one detail panel','dashboard-first'],
-  pal:['#141A20','#B45309','#FBEBD8','#F2F3F5'],
+  thesis:`No banner, because the <em>ground</em> is the identity — a dark shop-floor terminal where
+    the board is the page and every count is a switch that swaps the one panel beneath it.`,
+  axes:['A18 NO banner — the page ground carries it','search promoted to top chrome','C6 segmented pill bar','D6 readout board → one panel','dashboard-first · dark'],
+  pal:['#12161C','#F59E0B','#332405','#1A2029'],
   notes:{
-    'The ban':`No banner of any kind, and not smuggled back as a header strip. It answers whether the
-      banner was ever load-bearing — here it plainly was not.`,
-    'Where search went':`Into the product's own top bar, beside the logo. It is available on every
-      page instead of only this one, which is arguably where it always belonged.`,
-    'Trade-off':`Zero brand expression. A tenant who bought the portal to look like their brand gets
-      a logo mark and nothing else.`
+    'The ban, answered properly':`No banner of any kind, and not smuggled back as a header strip.
+      But absence of a band is not absence of identity: the blueprint grid runs edge to edge, a
+      hazard rule marks the top of the page, and the support motif sits large and quiet behind the
+      board. Every one of those is the ground, and none of them is a banner.`,
+    'Why dark':`The one dark portal here, and the domain earns it — a shop-floor terminal is read
+      under glare, in hi-vis. It is a mode the builder already has: the theme panel ships a light and
+      a dark value for every swatch, and the product restates each status colour for a dark surface
+      rather than filtering the light set, so an amber "Open" still reads amber without becoming the
+      loudest thing on the page.`,
+    'Trade-off':`A tenant who bought the portal to look like their own brand gets a logo mark and a
+      ground they did not choose. Dark is a strong opinion to ship as a default.`
   },
   render:() => `<div class="pt t12">
-    <div class="wrap" style="padding-top:var(--pad)">
-      <div class="cts g4">
-        ${counter(REQ_TOTAL, 'Open requests', 'Raised by me', true)}
-        ${counter(2, 'Awaiting approval', 'Oldest 2 days')}
-        ${counter(0, 'Overdue', 'Nothing breaching')}
-        ${counter(9, 'Assets & CIs', 'Assigned to you')}
+    <div class="hazard"></div>
+    <div class="wrap" style="position:relative;z-index:1">
+      <div class="headband">
+        <div class="groundmark">${ic('i-headset')}${ic('i-bulb')}${ic('i-shield')}</div>
+        <div class="hrow">
+          <h2 class="greet">Shift board</h2>
+          <p style="margin:0;font-size:13.5px;color:var(--mute)">Plant 2 · Lines A–D</p>
+          <span class="stamp"><i></i>Live · updated 40s ago</span>
+        </div>
       </div>
-      ${card({body:`
-        ${tabs([['Requests', REQ_TOTAL],['Approvals', 2],['Assets', 5],['CIs', 4],['Knowledge', 3]])}
-        <div style="padding:2px 4px 4px">${workTable(7)}</div>`})}
+      <div class="board c4">
+        ${boardCell(REQ_TOTAL, 'Open requests', 'Raised by me', null, true)}
+        ${boardCell(2, 'Awaiting approval', 'Oldest 2 days')}
+        ${boardCell(0, 'Overdue', 'Nothing breaching')}
+        ${boardCell(9, 'Assets & CIs', 'Assigned to you')}
+      </div>
       <div style="display:flex;flex-wrap:wrap;gap:9px">
         ${ACTIONS.map(a => actCard(a, 'cap')).join('')}
         <div class="act cap"><i>${ic('i-file')}</i><span><b>My Reports</b></span></div>
+      </div>
+      ${card({body:`
+        ${tabs([['Requests', REQ_TOTAL],['Approvals', 2],['Assets', 5],['CIs', 4],['Knowledge', 3]])}
+        <div style="padding:2px 4px 4px">${workTable(7, true)}</div>`})}
+      <div class="notice">${ic('i-bell')}
+        <span><b>Planned network maintenance</b> — Sat 16 Aug, 02:00–05:00</span>
+        <span class="more">2 notices ›</span>
       </div>
     </div>
   </div>`
@@ -1397,11 +1589,11 @@ const CMP = [
   ['Duotone photo','Inside banner','Bento 1 + 3','Assets + CIs merged','16px','Fraunces + Plex'],
   ['Flat geometric','Below banner','Vertical labelled rail','Requests + approvals tabbed','4px','Archivo'],
   ['Flat illustration','Inside banner','4 · icon-top','Accordion, one open','14px','DM Sans'],
-  ['Live data motif','Inside banner (last)','2-row grid','Counters + help cluster','6px','IBM Plex Sans'],
+  ['Live data motif','Inside banner (last)','2-row grid','Readout board → panel','6px','IBM Plex Sans'],
   ['Photo + hard shape mask','Inside banner','4 · inside the banner','Assets + CIs merged','6px','Archivo'],
-  ['Abstract 3D shapes','Below banner','3 · single row','Counters → one panel','3px','Fraunces + Plex'],
-  ['Solid brand colour','None','3 · straddling','One card per widget','2px','IBM Plex Sans'],
-  ['None','Product top bar','5 · pill bar','Counters → one panel','3px','IBM Plex Sans'],
+  ['Abstract 3D shapes','In the plate','3 · single row','Stat strip → one panel','3px','Fraunces + Plex'],
+  ['Solid, full-height panel','None','3 · in the panel','One card per widget','2px','IBM Plex Sans'],
+  ['None — dark ground','Product top bar','5 · pill bar','Readout board → panel','4px','IBM Plex Sans'],
 ];
 
 const out = document.getElementById('out');
