@@ -1,0 +1,1751 @@
+<title>Portal Variations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+
+<style>
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE SHEET — deliberately quiet. Every specimen below uses ONE palette, so
+   what varies between two tiles is the thing being compared and nothing else.
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root{
+  --pg:#EEF1F6; --pg-2:#FFFFFF; --pg-3:#F7F9FC; --pg-line:#DDE3EC; --pg-line2:#EAEEF4;
+  --pg-ink:#141C26; --pg-ink2:#3B4757; --pg-mute:#75849A; --pg-mute2:#9AA7B8;
+  --pg-acc:#2F6FB5; --pg-warn:#B45309;
+  --pg-sh:0 1px 2px rgba(16,24,40,.04), 0 18px 44px -24px rgba(16,24,40,.26);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --pg:#0C1119; --pg-2:#141B24; --pg-3:#1A222D; --pg-line:#242E3A; --pg-line2:#1E262F;
+  --pg-ink:#EAEFF5; --pg-ink2:#C2CEDB; --pg-mute:#8291A4; --pg-mute2:#657283;
+  --pg-acc:#6FADE4; --pg-warn:#E0A356;
+  --pg-sh:0 1px 2px rgba(0,0,0,.4), 0 20px 48px -24px rgba(0,0,0,.7);
+}}
+:root[data-theme="dark"]{
+  --pg:#0C1119; --pg-2:#141B24; --pg-3:#1A222D; --pg-line:#242E3A; --pg-line2:#1E262F;
+  --pg-ink:#EAEFF5; --pg-ink2:#C2CEDB; --pg-mute:#8291A4; --pg-mute2:#657283;
+  --pg-acc:#6FADE4; --pg-warn:#E0A356;
+  --pg-sh:0 1px 2px rgba(0,0,0,.4), 0 20px 48px -24px rgba(0,0,0,.7);
+}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--pg);color:var(--pg-ink2);
+  font-family:"IBM Plex Sans",ui-sans-serif,system-ui,-apple-system,sans-serif;
+  font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{margin:0;color:var(--pg-ink);text-wrap:balance}
+p{margin:0}
+svg{display:block}
+:focus-visible{outline:2px solid var(--pg-acc);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.shell{max-width:1560px;margin:0 auto;padding:0 28px 120px}
+
+/* masthead */
+.mast{padding:70px 0 30px}
+.eyebrow{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:500;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--pg-acc);margin-bottom:15px}
+.mast h1{font-family:"Archivo",sans-serif;font-size:clamp(32px,3.6vw,46px);font-weight:700;
+  letter-spacing:-.03em;line-height:1.05;max-width:20ch}
+.mast .lede{max-width:70ch;margin-top:17px;font-size:16.5px;color:var(--pg-mute);line-height:1.62}
+.mast .lede em{color:var(--pg-ink2);font-style:normal;font-weight:600}
+.facts{display:flex;flex-wrap:wrap;gap:24px 40px;margin-top:28px;padding-top:24px;
+  border-top:1px solid var(--pg-line)}
+.fact dt{font-family:"IBM Plex Mono",monospace;font-size:10.5px;font-weight:500;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--pg-mute2);margin-bottom:5px}
+.fact dd{margin:0;font-family:"Archivo",sans-serif;font-size:21px;font-weight:600;color:var(--pg-ink);
+  letter-spacing:-.01em}
+.fact dd small{font-size:13px;font-weight:400;color:var(--pg-mute);letter-spacing:0}
+
+/* sticky index */
+.idx{position:sticky;top:0;z-index:60;margin:0 -28px 40px;padding:10px 28px;
+  background:color-mix(in srgb, var(--pg) 88%, transparent);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--pg-line);display:flex;align-items:center;gap:7px;
+  overflow-x:auto;scrollbar-width:none}
+.idx::-webkit-scrollbar{display:none}
+.idx b{font-family:"IBM Plex Mono",monospace;font-size:10.5px;font-weight:500;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--pg-mute2);padding-right:8px;flex:none}
+.idx a{flex:none;text-decoration:none;font-size:12.5px;color:var(--pg-ink2);background:var(--pg-2);
+  border:1px solid var(--pg-line);border-radius:5px;padding:5px 10px;transition:border-color .14s,color .14s}
+.idx a:hover{border-color:var(--pg-acc);color:var(--pg-acc)}
+
+/* a group of specimens */
+.grp{padding-top:22px;scroll-margin-top:62px}
+.grp + .grp{margin-top:64px;padding-top:46px;border-top:1px solid var(--pg-line)}
+.grp-head{display:flex;align-items:baseline;gap:13px;flex-wrap:wrap;margin-bottom:7px}
+.grp-head .ax{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:600;
+  color:var(--pg-mute2);flex:none}
+.grp-head h2{font-family:"Archivo",sans-serif;font-size:25px;font-weight:700;letter-spacing:-.022em}
+.grp-head .cnt{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--pg-mute);
+  border:1px solid var(--pg-line);border-radius:999px;padding:3px 9px}
+.grp > p.blurb{max-width:80ch;font-size:14.5px;color:var(--pg-mute);margin-bottom:22px;line-height:1.6}
+.grp > p.blurb b{color:var(--pg-ink2);font-weight:600}
+.sub-head{font-family:"IBM Plex Mono",monospace;font-size:10.5px;font-weight:500;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--pg-mute2);margin:34px 0 14px;padding-top:14px;
+  border-top:1px solid var(--pg-line2)}
+.grp .sub-head:first-of-type{margin-top:0;padding-top:0;border-top:none}
+
+/* the specimen shell */
+.wallrow{display:grid;gap:20px;align-items:start}
+.w1{grid-template-columns:1fr}
+.w2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.w3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.w4{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width:1240px){.w3,.w4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:820px){.w2,.w3,.w4{grid-template-columns:1fr}}
+
+.spec{display:flex;flex-direction:column;min-width:0}
+.spec-lbl{display:flex;align-items:baseline;gap:8px;margin-bottom:3px}
+.spec-lbl .k{font-family:"IBM Plex Mono",monospace;font-size:10.5px;font-weight:600;
+  color:var(--pg-acc);flex:none}
+.spec-lbl h3{font-size:14px;font-weight:600;letter-spacing:-.005em}
+.spec-lbl .tag{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--pg-mute2);
+  border:1px solid var(--pg-line);border-radius:3px;padding:1px 5px;margin-left:auto;flex:none}
+.spec-note{font-size:12.5px;color:var(--pg-mute);line-height:1.5;margin-bottom:11px;min-height:38px}
+/* The stage is the PORTAL's ground, so a specimen is seen on the surface it will really sit on. */
+.stage{background:var(--sf2,#F4F6FA);border:1px solid var(--pg-line);border-radius:10px;
+  overflow:hidden;box-shadow:var(--pg-sh);display:flex;flex-direction:column;
+  container-type:inline-size}
+.stage.pad{padding:18px}
+.stage.tight{padding:12px}
+.stage.plain{background:var(--pg-2)}
+.stage.dark{background:#12161C}
+
+/* the pinned advice line under a group */
+.aside{display:grid;grid-template-columns:120px 1fr;gap:10px 18px;margin-top:26px;padding-top:18px;
+  border-top:1px solid var(--pg-line2);align-items:baseline}
+.aside dt{font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:500;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--pg-mute2)}
+.aside dd{margin:0;font-size:13.5px;color:var(--pg-mute);max-width:88ch;line-height:1.6}
+.aside dd b{color:var(--pg-ink2);font-weight:600}
+.aside dd code{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--pg-ink2);
+  background:var(--pg-3);border:1px solid var(--pg-line2);border-radius:3px;padding:1px 5px}
+
+@media (max-width:1100px){
+  .shell{padding:0 16px 90px}
+  .idx{margin:0 -16px 32px;padding:10px 16px}
+  .aside{grid-template-columns:1fr;gap:2px 0}
+  .aside dt{margin-top:10px}
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   A · THE EIGHTEEN BANNER TREATMENTS
+   All pure CSS — no image assets, so a tenant's banner is a token change rather
+   than an upload. Each is painted on `.bn .fx`, which sits under the type.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.bt .fx{background:#1E3A8A}
+
+/* A1 · solid */
+.bt1 .fx{background:#1B3A6B}
+
+/* A2 · linear gradient */
+.bt2 .fx{background:linear-gradient(112deg,#123B7A,#2F6FB5 58%,#4E93D6)}
+
+/* A3 · mesh / radial */
+.bt3 .fx{background:
+  radial-gradient(720px 300px at 10% -20%,#3B6FD4 0,transparent 62%),
+  radial-gradient(620px 280px at 92% 10%,#1E40AF 0,transparent 60%),
+  radial-gradient(520px 360px at 46% 130%,#3B82F6 0,transparent 66%),
+  linear-gradient(150deg,#0A1B3D,#122E63 54%,#0D2350)}
+
+/* A4 · photographic. Layered gradients standing in for a real upload, plus the scrim the
+   treatment is only ever safe with. */
+.bt4 .fx{background:
+  linear-gradient(180deg,rgba(8,14,26,.72),rgba(8,14,26,.46) 52%,rgba(8,14,26,.78)),
+  radial-gradient(560px 300px at 78% 22%,#F3C98A 0,transparent 58%),
+  radial-gradient(700px 420px at 18% 78%,#2C5A78 0,transparent 62%),
+  linear-gradient(168deg,#5C86A8 0,#2E4C67 44%,#16232F 100%)}
+
+/* A5 · flat 2D illustration */
+.bt5 .fx{background:#E7F0FA}
+.bt5 .fx::after{content:"";position:absolute;inset:0;
+  background:
+    radial-gradient(circle at 96% 26%,#2F6FB5 0 74px,transparent 75px),
+    radial-gradient(circle at 84% 92%,#9DC5E8 0 44px,transparent 45px),
+    radial-gradient(circle at 74% 34%,#5C93C9 0 22px,transparent 23px)}
+.bt5 h2{color:#0F2846!important}.bt5 p{color:rgba(15,40,70,.66)!important}
+
+/* A6 · isometric. The classic three-gradient cube lattice — a real isometric grid rather than
+   a picture of one, so it tiles at any banner height. */
+.bt6 .fx{background-color:#123B6E;
+  background-image:
+    linear-gradient(30deg,#1B4F8C 12%,transparent 12.5%,transparent 87%,#1B4F8C 87.5%,#1B4F8C),
+    linear-gradient(150deg,#1B4F8C 12%,transparent 12.5%,transparent 87%,#1B4F8C 87.5%,#1B4F8C),
+    linear-gradient(30deg,#1B4F8C 12%,transparent 12.5%,transparent 87%,#1B4F8C 87.5%,#1B4F8C),
+    linear-gradient(150deg,#1B4F8C 12%,transparent 12.5%,transparent 87%,#1B4F8C 87.5%,#1B4F8C),
+    linear-gradient(60deg,#2A6AAE 25%,transparent 25.5%,transparent 75%,#2A6AAE 75%,#2A6AAE),
+    linear-gradient(60deg,#2A6AAE 25%,transparent 25.5%,transparent 75%,#2A6AAE 75%,#2A6AAE);
+  background-size:64px 112px;
+  background-position:0 0,0 0,32px 56px,32px 56px,0 0,32px 56px;
+  opacity:1}
+.bt6 .fx::after{content:"";position:absolute;inset:0;
+  background:linear-gradient(100deg,rgba(8,22,46,.92) 0,rgba(8,22,46,.55) 46%,rgba(8,22,46,.15) 78%)}
+
+/* A7 · line-art / technical */
+.bt7 .fx{background:linear-gradient(150deg,#0A1B3D,#122E63 52%,#0D2350)}
+.bt7 .fx::after{content:"";position:absolute;inset:0;opacity:.36;
+  background-image:
+    linear-gradient(rgba(255,255,255,.2) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.2) 1px,transparent 1px),
+    radial-gradient(circle at 24% 30%,rgba(255,255,255,.55) 0 3px,transparent 4px),
+    radial-gradient(circle at 62% 68%,rgba(255,255,255,.55) 0 3px,transparent 4px),
+    radial-gradient(circle at 84% 24%,rgba(255,255,255,.55) 0 3px,transparent 4px);
+  background-size:54px 54px,54px 54px,100% 100%,100% 100%,100% 100%}
+
+/* A8 · 3D-rendered logo form. An extruded letterform, built from text-shadow rather than an asset —
+   which is exactly the caveat: it only works when the tenant HAS a mark worth extruding. */
+.bt8 .fx{background:linear-gradient(126deg,#0E1F42,#1D3E7C 62%,#12294F)}
+.bt8 .mark{position:absolute;right:34px;top:50%;transform:translateY(-50%);
+  font-family:"Archivo",sans-serif;font-weight:700;font-size:118px;line-height:1;color:#4E93D6;
+  text-shadow:1px 1px 0 #3B7ABB,2px 2px 0 #3576B6,3px 3px 0 #2F6FB5,4px 4px 0 #2A66A8,
+    5px 5px 0 #245C9B,6px 6px 0 #1F528D,7px 7px 0 #1A4880,8px 8px 0 #153E72,
+    9px 9px 0 #113565,10px 10px 22px rgba(0,0,0,.45);
+  letter-spacing:-.05em;z-index:1}
+
+/* A9 · abstract 3D shapes — body centred in its tile, specular point as a second layer */
+.bt9 .fx{background:linear-gradient(120deg,#0B1E3F,#16346B 58%,#1E4488)}
+.bt9 .fx::after{content:"";position:absolute;inset:0;
+  background:
+    radial-gradient(circle at 37% 33%,rgba(255,255,255,.9) 0 5%,rgba(255,255,255,0) 24%),
+    radial-gradient(circle at 50% 50%,#8FC0F0 0 26%,#3D7FCB 58%,#1D4A85 69%,rgba(0,0,0,0) 70%),
+    radial-gradient(circle at 36% 32%,rgba(255,255,255,.82) 0 6%,rgba(255,255,255,0) 26%),
+    radial-gradient(circle at 50% 50%,#BBD9F5 0 24%,#5B95D8 56%,#2A5F9F 69%,rgba(0,0,0,0) 70%);
+  background-size:212px 212px,212px 212px,124px 124px,124px 124px;
+  background-position:right -46px top -54px,right -46px top -54px,
+    right 44px bottom -40px,right 44px bottom -40px;
+  background-repeat:no-repeat}
+
+/* A10 · geometric composition, built from brand hexes only — which is why it white-labels */
+.bt10 .fx{background:#0F2E5C}
+.bt10 .fx::after{content:"";position:absolute;inset:0;
+  background:
+    linear-gradient(135deg,transparent 44%,#2F6FB5 44% 60%,transparent 60%),
+    linear-gradient(-135deg,transparent 52%,#4E93D6 52% 66%,transparent 66%),
+    linear-gradient(90deg,transparent 80%,rgba(190,220,250,.12) 80%)}
+
+/* A11 · photo + overlaid shape — the shape IS the contrast zone */
+.bt11 .fx{background:
+  radial-gradient(560px 320px at 76% 26%,#8A7F6B 0,transparent 60%),
+  radial-gradient(460px 380px at 96% 94%,#3B372E 0,transparent 62%),
+  linear-gradient(140deg,#2B2820,#4A443A 58%,#221F19)}
+.bt11 .fx::after{content:"";position:absolute;inset:0;
+  background:linear-gradient(120deg,#0D1F3C 0,#0D1F3C 46%,transparent 46%)}
+
+/* A12 · pattern / texture */
+.bt12 .fx{background:#153A6E}
+.bt12 .fx::after{content:"";position:absolute;inset:0;opacity:.5;
+  background:repeating-linear-gradient(115deg,rgba(255,255,255,.1) 0 12px,transparent 12px 30px)}
+
+/* A13 · glassmorphic. Needs something behind it worth blurring, which is the whole caveat —
+   so the panel is over a real composition, not over flat colour. */
+.bt13 .fx{background:
+  radial-gradient(420px 260px at 22% 24%,#F0A85C 0,transparent 62%),
+  radial-gradient(460px 300px at 78% 76%,#5B8FE0 0,transparent 62%),
+  linear-gradient(140deg,#1B2E5A,#3A2F6B 52%,#12325A)}
+.bt13 .glass{position:absolute;inset:18px;border-radius:14px;z-index:1;
+  background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.26);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+
+/* A14 · duotone — forces any upload into two brand values */
+.bt14 .fx{background:
+  linear-gradient(180deg,rgba(10,27,61,.55),rgba(10,27,61,.55)),
+  radial-gradient(600px 320px at 74% 24%,#8FB8DD 0,transparent 60%),
+  radial-gradient(680px 400px at 16% 82%,#123B7A 0,transparent 64%),
+  linear-gradient(104deg,#0B2450 0,#2F6FB5 62%,#7FB4E4 100%)}
+
+/* A15 · split — colour half carries the text, so contrast never depends on the artwork */
+.bt15{padding:0!important;flex-direction:row!important;align-items:stretch!important}
+.bt15 .half{flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 32px;
+  position:relative;z-index:2;background:#0F2E5C}
+.bt15 .art{flex:1;position:relative;
+  background:radial-gradient(420px 300px at 66% 30%,#7FB4E4 0,transparent 62%),
+    linear-gradient(140deg,#2F6FB5,#123B7A 66%,#0B2450)}
+.bt15 .art::after{content:"";position:absolute;inset:0;
+  background:radial-gradient(circle at 26% 68%,rgba(255,255,255,.2) 0 54px,transparent 55px),
+    radial-gradient(circle at 66% 26%,rgba(255,255,255,.13) 0 74px,transparent 75px)}
+
+/* A16 · animated loop. A 14s drift, and it stops entirely for prefers-reduced-motion — a banner
+   that moves on every page load has to have an off switch that is not a setting. */
+.bt16 .fx{background:linear-gradient(114deg,#0A1B3D,#1E40AF,#2F6FB5,#123B7A,#0A1B3D);
+  background-size:320% 320%;animation:drift 14s ease-in-out infinite}
+@keyframes drift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+
+/* A17 · data motif — the artwork IS the tenant's number */
+.bt17 .fx{background:linear-gradient(180deg,#062A34,#0B3F4D)}
+
+/* A18 · none. Not a white void: the PAGE ground carries the identity instead. */
+.bt18{background:#12161C}
+.bt18 .fx{background:none}
+
+/* shared banner extras used by the specimens */
+.bn .mark,.bn .glass{pointer-events:none}
+.bn.on-light h2{color:#0F2846}
+.bn.on-light p{color:rgba(15,40,70,.66)}
+/* ═══════════════════════════════════════════════════════════════════════════
+   PORTAL COMPONENT VOCABULARY
+   One set of components. Every colour, radius, font and density below reads a
+   token, so a template is a token block plus a composition — never new markup.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.pt{--r:8px; --rs:6px; --font:"IBM Plex Sans",sans-serif; --disp:var(--font);
+    --bg:#F4F6FA; --sf:#fff; --sf2:#F8FAFC; --ink:#1D2A38; --ink2:#4A5A6B; --mute:#7C8A9C;
+    --line:#E6EAF1; --brand:#2F6FB5; --brandInk:#fff; --tint:#EDF3FA; --pad:24px; --gap:16px;
+    --cardSh:0 1px 2px rgba(16,24,40,.05); --cardBd:1px solid var(--line)}
+.pt *{box-sizing:border-box}
+.pt .ic{width:16px;height:16px;flex:none}
+/* the overdue counter is the one tile that changes colour with its own value */
+.ct-tile.warn u{color:#DC2626}
+.ct-tile.warn.on{border-color:#DC2626;box-shadow:0 0 0 3px #FEF3F2}
+.pt .wrap{padding:var(--pad);display:flex;flex-direction:column;gap:var(--gap)}
+
+/* banner ------------------------------------------------------------------ */
+.bn{position:relative;overflow:hidden;display:flex;flex-direction:column;
+  justify-content:center;padding:0 40px;color:#fff;isolation:isolate}
+.bn > *{position:relative;z-index:2}
+.bn.ctr{align-items:center;text-align:center}
+.bn h2{font-family:var(--disp);font-size:29px;font-weight:600;letter-spacing:-.02em;color:#fff;
+  line-height:1.2}
+.bn p{margin-top:7px;font-size:14.5px;color:rgba(255,255,255,.76);max-width:52ch}
+.bn .fx{position:absolute;inset:0;z-index:0}
+
+/* search ------------------------------------------------------------------ */
+.sr{display:flex;align-items:center;gap:10px;background:var(--srBg,#fff);border-radius:var(--r);
+  border:1px solid rgba(255,255,255,.28);padding:0 14px;height:44px;
+  box-shadow:0 6px 20px -8px rgba(0,0,0,.28)}
+.sr .ic{width:17px;height:17px;color:#98A6B8;flex:none}
+.sr span{font-size:14px;color:#8C9AAC;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap}
+.sr kbd{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:#8C9AAC;border:1px solid #E2E8F0;
+  border-radius:4px;padding:2px 5px;background:#F8FAFC}
+.sr.flat{border-color:var(--line);box-shadow:none}
+.sr.lg{height:56px;font-size:16px}
+.sr.lg span{font-size:16px}
+.sr.sm{height:36px}
+.sr.sm span{font-size:13px}
+.sr .go{flex:none;height:30px;padding:0 13px;border-radius:calc(var(--r) - 2px);background:var(--brand);
+  color:var(--brandInk);font-size:12.5px;font-weight:600;display:grid;place-items:center;
+  font-family:var(--font)}
+
+/* action card ------------------------------------------------------------- */
+.acts{display:grid;gap:12px}
+.act{background:var(--sf);border:var(--cardBd);border-radius:var(--r);padding:14px 16px;
+  display:flex;align-items:center;gap:12px;box-shadow:var(--cardSh);cursor:pointer;
+  transition:border-color .15s, transform .15s, box-shadow .15s}
+.act:hover{border-color:var(--brand);transform:translateY(-1px);
+  box-shadow:0 8px 22px -12px rgba(16,24,40,.30)}
+.act i{width:38px;height:38px;border-radius:calc(var(--r) - 1px);display:grid;place-items:center;
+  flex:none;background:var(--tint);color:var(--brand)}
+.act i .ic{width:19px;height:19px}
+.act b{display:block;font-size:14px;font-weight:600;color:var(--ink);line-height:1.3;
+  font-family:var(--disp)}
+.act s{display:block;text-decoration:none;font-size:12.5px;color:var(--mute);margin-top:2px;
+  line-height:1.35}
+.act .arw{margin-left:auto;color:var(--mute);flex:none}
+.act .arw .ic{width:15px;height:15px}
+/* variants */
+.act.top{flex-direction:column;align-items:flex-start;gap:11px;padding:18px 16px}
+.act.top i{width:42px;height:42px}
+.act.ctr{flex-direction:column;align-items:center;text-align:center;gap:10px;padding:20px 14px}
+.act.ghost{background:transparent;border:1px solid rgba(255,255,255,.22);box-shadow:none}
+.act.ghost b{color:#fff}.act.ghost s{color:rgba(255,255,255,.6)}
+.act.ghost i{background:rgba(255,255,255,.10);color:#fff}
+.act.ghost:hover{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.4)}
+.act.solid{background:var(--brand);border-color:transparent}
+.act.solid b{color:var(--brandInk)}.act.solid s{color:rgba(255,255,255,.66)}
+.act.solid i{background:rgba(255,255,255,.16);color:var(--brandInk)}
+.act.tint{background:var(--tint);border-color:transparent;box-shadow:none}
+.act.tint i{background:var(--sf)}
+.act.wide{padding:16px 18px}
+.act.cap{border-radius:999px;padding:9px 16px 9px 9px;box-shadow:none}
+.act.cap i{width:28px;height:28px;border-radius:999px}
+.act.cap i .ic{width:14px;height:14px}
+.act.cap b{font-size:13px}
+
+/* card -------------------------------------------------------------------- */
+.cd{background:var(--sf);border:var(--cardBd);border-radius:var(--r);box-shadow:var(--cardSh);
+  display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.cd > header{display:flex;align-items:center;gap:9px;padding:14px 16px 11px}
+.cd > header .hi{width:26px;height:26px;border-radius:calc(var(--rs) - 1px);display:grid;
+  place-items:center;flex:none;background:var(--tint);color:var(--brand)}
+.cd > header .hi .ic{width:14px;height:14px}
+.cd > header h3{font-family:var(--disp);font-size:14px;font-weight:600;color:var(--ink);
+  letter-spacing:-.005em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cd > header .ct{font-family:"IBM Plex Mono",monospace;font-size:10.5px;font-weight:600;
+  color:var(--brand);background:var(--tint);border-radius:999px;padding:2px 7px;flex:none;
+  font-variant-numeric:tabular-nums}
+.cd > header .va{margin-left:auto;font-size:12px;color:var(--brand);font-weight:500;flex:none;
+  display:inline-flex;align-items:center;gap:3px;cursor:pointer;white-space:nowrap}
+.cd > header .va .ic{width:12px;height:12px}
+.cd .bd{flex:1;min-height:0;padding:0 6px 8px}
+.cd.plain{border:none;box-shadow:none;background:transparent}
+
+/* rows -------------------------------------------------------------------- */
+.rw{display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:var(--rs);
+  cursor:pointer;transition:background .12s;min-width:0}
+.rw:hover{background:var(--sf2)}
+.rw .id{font-family:"IBM Plex Mono",monospace;font-size:10.5px;font-weight:600;color:var(--brand);
+  background:var(--tint);border-radius:4px;padding:2.5px 6px;flex:none;letter-spacing:-.01em}
+.rw .tx{flex:1;min-width:0}
+.rw .tx b{display:block;font-size:13px;font-weight:500;color:var(--ink);line-height:1.35;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rw .tx s{display:block;text-decoration:none;font-size:11.5px;color:var(--mute);margin-top:2px;
+  font-variant-numeric:tabular-nums}
+.pill{font-size:11px;font-weight:600;border-radius:999px;padding:3px 9px;flex:none;
+  white-space:nowrap;letter-spacing:.005em}
+.dotrow{display:inline-flex;align-items:center;gap:6px}
+.dotrow i{width:6px;height:6px;border-radius:50%;flex:none}
+
+/* avatar row */
+.rw .avq{width:28px;height:28px;border-radius:50%;flex:none;display:grid;place-items:center;
+  color:#fff;font-size:10.5px;font-weight:600;letter-spacing:.02em}
+
+/* tiles ------------------------------------------------------------------- */
+.tiles{display:grid;gap:10px;padding:2px 10px 10px}
+.tile{display:flex;align-items:center;gap:10px;background:var(--sf2);border-radius:var(--rs);
+  padding:10px 11px;min-width:0;cursor:pointer;transition:background .12s}
+.tile:hover{background:var(--tint)}
+.tile i{width:30px;height:30px;border-radius:calc(var(--rs) - 1px);background:var(--sf);
+  display:grid;place-items:center;color:var(--brand);flex:none;
+  box-shadow:0 1px 2px rgba(16,24,40,.06)}
+.tile i .ic{width:15px;height:15px}
+.tile .tx{min-width:0;flex:1}
+.tile .tx b{display:block;font-size:12.5px;font-weight:600;color:var(--ink);line-height:1.3;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tile .tx s{display:block;text-decoration:none;font-size:11px;color:var(--mute);margin-top:1px}
+
+/* service tile ------------------------------------------------------------ */
+.svc{background:var(--sf);border:var(--cardBd);border-radius:var(--r);padding:16px 14px;
+  display:flex;flex-direction:column;align-items:center;text-align:center;gap:9px;
+  box-shadow:var(--cardSh);cursor:pointer;transition:border-color .15s,transform .15s}
+.svc:hover{border-color:var(--brand);transform:translateY(-1px)}
+.svc i{width:36px;height:36px;border-radius:999px;background:var(--tint);color:var(--brand);
+  display:grid;place-items:center}
+.svc i .ic{width:18px;height:18px}
+.svc .tx{display:block;min-width:0}
+.svc b{display:block;font-size:13px;font-weight:600;color:var(--ink);line-height:1.3;
+  font-family:var(--disp)}
+.svc s{display:block;text-decoration:none;font-size:11px;color:var(--mute);letter-spacing:.04em;
+  text-transform:uppercase;font-weight:500;margin-top:3px}
+.svc.chip .tx{display:flex;align-items:center}
+.svc.lr{flex-direction:row;text-align:left;align-items:center;padding:12px 14px}
+.svc.lr .tx{min-width:0}
+.svc.chip{flex-direction:row;border-radius:999px;padding:7px 15px 7px 8px;gap:8px}
+.svc.chip i{width:26px;height:26px}
+.svc.chip i .ic{width:13px;height:13px}
+.svc.chip s{display:none}
+
+/* section heading --------------------------------------------------------- */
+.sh{display:flex;align-items:baseline;gap:10px;margin-bottom:-4px}
+.sh h3{font-family:var(--disp);font-size:15px;font-weight:600;color:var(--ink);
+  letter-spacing:-.01em}
+.sh span{font-size:12px;color:var(--mute)}
+.sh .va{margin-left:auto;font-size:12px;color:var(--brand);font-weight:500;cursor:pointer}
+
+/* counters ---------------------------------------------------------------- */
+.cts{display:grid;gap:12px}
+.ct-tile{background:var(--sf);border:var(--cardBd);border-radius:var(--r);padding:14px 16px;
+  box-shadow:var(--cardSh);cursor:pointer;transition:border-color .15s}
+.ct-tile:hover{border-color:var(--brand)}
+.ct-tile.on{border-color:var(--brand);box-shadow:0 0 0 3px var(--tint)}
+.ct-tile u{display:block;text-decoration:none;font-family:var(--disp);font-size:30px;
+  font-weight:700;line-height:1;color:var(--brand);letter-spacing:-.03em;
+  font-variant-numeric:tabular-nums}
+.ct-tile u.z{color:var(--mute)}
+.ct-tile s{display:block;text-decoration:none;font-size:12px;color:var(--mute);margin-top:7px;
+  font-weight:500}
+.ct-tile em{display:block;font-style:normal;font-size:11px;color:var(--mute);margin-top:3px}
+
+/* tabs -------------------------------------------------------------------- */
+.tabs{display:flex;gap:4px;padding:0 6px;border-bottom:1px solid var(--line);margin-bottom:4px}
+.tabs button{appearance:none;background:none;border:none;cursor:pointer;font-family:var(--font);
+  font-size:13px;font-weight:500;color:var(--mute);padding:10px 11px;border-bottom:2px solid transparent;
+  margin-bottom:-1px;display:inline-flex;align-items:center;gap:6px}
+.tabs button:hover{color:var(--ink2)}
+.tabs button.on{color:var(--brand);border-bottom-color:var(--brand);font-weight:600}
+.tabs button i{font-style:normal;font-family:"IBM Plex Mono",monospace;font-size:10px;
+  background:var(--tint);color:var(--brand);border-radius:999px;padding:1px 5px}
+
+/* table ------------------------------------------------------------------- */
+.tb{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed}
+.tb td.sub{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tb th{font-family:var(--font);font-size:10.5px;font-weight:600;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--mute);text-align:left;padding:8px 10px;
+  border-bottom:1px solid var(--line);background:transparent}
+.tb td{padding:10px;border-bottom:1px solid var(--line);color:var(--ink2);vertical-align:middle}
+.tb tbody tr:last-child td{border-bottom:none}
+.tb tbody tr:hover td{background:var(--sf2)}
+.tb .id{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;color:var(--brand)}
+.tb .sub{font-weight:500;color:var(--ink)}
+.tb .mt{font-size:11.5px;color:var(--mute);font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* accordion --------------------------------------------------------------- */
+.acc{background:var(--sf);border:var(--cardBd);border-radius:var(--r);overflow:hidden;
+  box-shadow:var(--cardSh)}
+.acc > div + div{border-top:1px solid var(--line)}
+.acc .ah{display:flex;align-items:center;gap:10px;padding:13px 16px;cursor:pointer}
+.acc .ah .ic{width:14px;height:14px;color:var(--mute);transition:transform .18s}
+.acc .ah.open .ic{transform:rotate(90deg);color:var(--brand)}
+.acc .ah b{font-family:var(--disp);font-size:14px;font-weight:600;color:var(--ink)}
+.acc .ah .ct{margin-left:auto;font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;
+  color:var(--brand);background:var(--tint);border-radius:999px;padding:2px 8px}
+.acc .ab{padding:0 8px 10px}
+
+/* rail (vertical actions) ------------------------------------------------- */
+.vrail{background:var(--sf);border:var(--cardBd);border-radius:var(--r);padding:8px;
+  display:flex;flex-direction:column;gap:4px;box-shadow:var(--cardSh);width:186px;flex:none}
+.vrail a{display:flex;align-items:center;gap:10px;padding:10px 11px;border-radius:var(--rs);
+  text-decoration:none;color:var(--ink2);font-size:13px;font-weight:500;cursor:pointer;
+  transition:background .12s}
+.vrail a:hover{background:var(--sf2);color:var(--ink)}
+.vrail a.on{background:var(--tint);color:var(--brand);font-weight:600}
+.vrail a i{width:26px;height:26px;border-radius:calc(var(--rs) - 2px);display:grid;place-items:center;
+  background:var(--sf2);color:var(--brand);flex:none}
+.vrail a.on i{background:var(--sf)}
+.vrail a i .ic{width:14px;height:14px}
+.vrail .lbl{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--mute);padding:8px 11px 5px}
+
+/* misc -------------------------------------------------------------------- */
+.strip{display:flex;gap:11px;overflow:hidden;padding-bottom:2px;
+  -webkit-mask-image:linear-gradient(90deg,#000 0,#000 84%,transparent 100%);
+  mask-image:linear-gradient(90deg,#000 0,#000 84%,transparent 100%)}
+.strip > *{flex:none;width:214px}
+.feed .fr{display:flex;align-items:center;gap:11px;padding:11px 12px;border-bottom:1px solid var(--line);
+  cursor:pointer;min-width:0}
+.feed .fr:last-child{border-bottom:none}
+.feed .fr:hover{background:var(--sf2)}
+.feed .fr > i{width:8px;height:8px;border-radius:50%;flex:none}
+.feed .fr .tx{flex:1;min-width:0}
+.feed .fr .tx b{display:block;font-size:13px;font-weight:500;color:var(--ink);line-height:1.35;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.feed .fr .tx s{display:block;text-decoration:none;font-size:11.5px;color:var(--mute);margin-top:2px}
+.feed .fr .tm{font-size:11px;color:var(--mute);flex:none;font-variant-numeric:tabular-nums}
+.news{display:flex;gap:10px;padding:10px;border-radius:var(--rs);cursor:pointer;align-items:flex-start}
+.news:hover{background:var(--sf2)}
+.news i{width:7px;height:7px;border-radius:50%;background:var(--brand);flex:none;margin-top:5px}
+.news .tx b{display:block;font-size:12.5px;font-weight:500;color:var(--ink);line-height:1.4}
+.news .tx s{display:block;text-decoration:none;font-size:11px;color:var(--mute);margin-top:3px}
+.cu{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--rs)}
+.cu i{width:28px;height:28px;border-radius:var(--rs);background:var(--tint);color:var(--brand);
+  display:grid;place-items:center;flex:none}
+.cu i .ic{width:14px;height:14px}
+.cu .tx s{display:block;text-decoration:none;font-size:10.5px;color:var(--mute);
+  letter-spacing:.05em;text-transform:uppercase;font-weight:500}
+.cu .tx b{display:block;font-size:12.5px;font-weight:500;color:var(--ink);margin-top:1px}
+.newbtn{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 14px;
+  border-radius:var(--rs);background:var(--brand);color:var(--brandInk);font-size:13px;
+  font-weight:600;cursor:pointer;font-family:var(--font);border:none}
+.newbtn .ic{width:14px;height:14px}
+.pal{display:inline-flex;align-items:center;gap:9px;background:var(--sf);border:var(--cardBd);
+  border-radius:var(--r);height:40px;padding:0 12px;color:var(--mute);font-size:13px;
+  box-shadow:var(--cardSh);cursor:pointer;min-width:0}
+.pal .ic{width:15px;height:15px;flex:none}
+.pal kbd{margin-left:auto;font-family:"IBM Plex Mono",monospace;font-size:10.5px;
+  border:1px solid var(--line);border-radius:4px;padding:2px 6px;flex:none}
+.emptyish{padding:26px 14px;text-align:center;color:var(--mute);font-size:12.5px}
+
+/* ── joined readout board ──
+   Four counts as ONE instrument divided by hairlines, not four cards with gaps between them.
+   A control room reads a board; four separate tiles read as four separate questions. */
+.board{display:grid;background:var(--sf);border:var(--cardBd);border-radius:var(--r);
+  box-shadow:var(--cardSh);overflow:hidden}
+.board.c3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.board.c4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.board > div{padding:15px 18px 14px;border-left:1px solid var(--line);cursor:pointer;
+  transition:background .14s;min-width:0}
+.board > div:first-child{border-left:none}
+.board > div:hover{background:var(--sf2)}
+.board > div.on{background:var(--tint)}
+.board u{display:block;text-decoration:none;font-family:var(--disp);font-size:33px;font-weight:700;
+  line-height:1;letter-spacing:-.03em;color:var(--brand);font-variant-numeric:tabular-nums}
+.board u.z{color:var(--mute)}
+.board s{display:block;text-decoration:none;font-size:12.5px;color:var(--ink2);margin-top:9px;
+  font-weight:500}
+.board em{display:block;font-style:normal;font-size:11px;color:var(--mute);margin-top:2px}
+.board svg{width:100%;height:22px;margin-top:10px;overflow:visible}
+.board svg polyline{stroke:var(--brand)}
+.board svg.z polyline{stroke:var(--mute)}
+
+/* ── the quiet stat strip ── same joined idea at a whisper, for a minimal page. */
+.inline-stats{display:flex;background:var(--sf);border:var(--cardBd);border-radius:var(--r);
+  box-shadow:var(--cardSh);overflow:hidden}
+.inline-stats > div{flex:1;padding:14px 18px;border-left:1px solid var(--line);display:flex;
+  align-items:baseline;gap:10px;cursor:pointer;min-width:0}
+.inline-stats > div:first-child{border-left:none}
+.inline-stats > div:hover{background:var(--sf2)}
+.inline-stats u{text-decoration:none;font-family:var(--disp);font-size:25px;font-weight:700;
+  color:var(--brand);line-height:1;font-variant-numeric:tabular-nums;flex:none}
+.inline-stats u.z{color:var(--mute)}
+.inline-stats s{text-decoration:none;font-size:12.5px;color:var(--mute);min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ── the desk panel ──
+   A colour panel running the FULL height beside the content, rather than a band across the top.
+   You walk up to a counter; you do not walk under it. */
+.deskpanel{flex:none;width:328px;background:var(--brand);color:#fff;padding:26px 24px;
+  display:flex;flex-direction:column;gap:16px;position:relative;overflow:hidden}
+.deskpanel h2{font-family:var(--disp);font-size:23px;font-weight:600;color:#fff;
+  letter-spacing:-.02em;line-height:1.2}
+.deskpanel p{font-size:13px;color:rgba(255,255,255,.7);line-height:1.55;margin-top:9px}
+.deskpanel .emblem{position:absolute;right:-58px;top:132px;width:196px;height:196px;opacity:.13}
+.deskpanel .hrs{display:flex;align-items:center;gap:7px;font-size:11.5px;
+  color:rgba(255,255,255,.62);position:relative;z-index:2}
+.deskpanel .hrs .ic{width:13px;height:13px}
+.deskpanel .lst{display:flex;flex-direction:column;gap:8px;margin-top:auto;position:relative;z-index:2}
+.deskpanel .lst a{display:flex;align-items:center;gap:11px;padding:12px 13px;border-radius:var(--rs);
+  background:rgba(255,255,255,.11);border:1px solid rgba(255,255,255,.18);color:#fff;
+  font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;transition:background .14s}
+.deskpanel .lst a:hover{background:rgba(255,255,255,.19)}
+.deskpanel .lst a .ic{width:16px;height:16px;flex:none}
+.deskpanel .lst a .ar{margin-left:auto;opacity:.55;display:flex}
+.deskpanel .lst a .ar .ic{width:14px;height:14px}
+
+/* ── centred measure ── a search-first page has no business spanning 1300px. */
+.centre{width:100%;max-width:920px;margin:0 auto;display:flex;flex-direction:column;gap:var(--gap)}
+
+/* ── ground treatments for the template that has no banner ──
+   Absence of a band is not absence of identity: the whole page ground carries it instead. */
+.hazard{height:4px;flex:none;
+  background:repeating-linear-gradient(115deg,#F59E0B 0 14px,transparent 14px 28px)}
+.headband{position:relative;min-height:80px;display:flex;align-items:center}
+.headband .hrow{position:relative;z-index:1;display:flex;align-items:baseline;gap:13px;
+  flex-wrap:wrap;width:100%}
+.groundmark{position:absolute;right:2px;top:50%;transform:translateY(-50%);display:flex;gap:20px;
+  opacity:.09;pointer-events:none;color:#fff;z-index:0}
+.groundmark .ic{width:74px;height:74px}
+.notice{display:flex;align-items:center;gap:11px;background:var(--tint);border:1px solid var(--line);
+  border-left:3px solid var(--brand);border-radius:var(--rs);padding:12px 15px;font-size:13px;
+  color:var(--ink2)}
+.notice .ic{width:15px;height:15px;color:var(--brand);flex:none}
+.notice b{font-weight:600;color:var(--ink)}
+.notice .more{margin-left:auto;font-size:11.5px;color:var(--mute);flex:none;cursor:pointer}
+.stamp{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--mute);
+  border:1px solid var(--line);border-radius:999px;padding:4px 11px;background:var(--sf);flex:none}
+.stamp .ic{width:12px;height:12px}
+.stamp i{width:6px;height:6px;border-radius:50%;background:#22C55E;flex:none;font-style:normal}
+.greet{font-family:var(--disp);font-size:24px;font-weight:600;color:var(--ink);letter-spacing:-.022em}
+.greet + p{margin-top:5px;font-size:13.5px;color:var(--mute)}
+
+/* grid helpers */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap)}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--gap)}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--gap)}
+.g5{display:grid;grid-template-columns:repeat(5,1fr);gap:var(--gap)}
+.row{display:flex;gap:var(--gap);min-width:0}
+.col{display:flex;flex-direction:column;gap:var(--gap);min-width:0}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   EXTRA COMPONENTS the catalogue needs beyond the twelve-template vocabulary
+   ═══════════════════════════════════════════════════════════════════════════ */
+/* alert / overdue bar — the one widget whose whole job is to be impossible to miss */
+.alert{display:flex;align-items:center;gap:12px;border-radius:var(--r);padding:13px 16px;
+  background:#FEF3F2;border:1px solid #FBD5D2;border-left:3px solid #DC2626}
+.alert .ai{width:30px;height:30px;border-radius:999px;background:#FEE4E2;color:#DC2626;
+  display:grid;place-items:center;flex:none}
+.alert .ai .ic{width:16px;height:16px}
+.alert .tx{min-width:0;flex:1}
+.alert .tx b{display:block;font-size:13.5px;font-weight:600;color:#7A271A;line-height:1.35}
+.alert .tx s{display:block;text-decoration:none;font-size:12px;color:#B42318;margin-top:2px}
+.alert .cta{flex:none;font-size:12.5px;font-weight:600;color:#fff;background:#DC2626;
+  border-radius:var(--rs);padding:7px 13px;cursor:pointer}
+.alert.soft{background:#FFF8F1;border-color:#FCE3C4;border-left-color:#D97706}
+.alert.soft .ai{background:#FEF0DC;color:#B45309}
+.alert.soft .tx b{color:#7C2D12}.alert.soft .tx s{color:#B45309}
+.alert.soft .cta{background:#B45309}
+.alert.edge{border-radius:0;border-left:none;border-right:none;padding:10px 16px}
+
+/* inline overdue strip, for living INSIDE a card rather than above it */
+.ovstrip{display:flex;align-items:center;gap:9px;margin:0 4px 6px;padding:8px 11px;
+  border-radius:var(--rs);background:#FEF3F2;color:#B42318;font-size:12.5px;font-weight:500}
+.ovstrip .ic{width:14px;height:14px;flex:none}
+.ovstrip .lk{margin-left:auto;font-weight:600;cursor:pointer}
+
+/* timeline row rendering */
+.tl{padding:4px 10px 8px;position:relative}
+.tl::before{content:"";position:absolute;left:24px;top:12px;bottom:16px;width:1px;background:var(--line)}
+.tl .ev{display:flex;gap:13px;padding:8px 0;position:relative;cursor:pointer}
+.tl .ev > i{width:9px;height:9px;border-radius:50%;flex:none;margin:5px 0 0 5px;
+  box-shadow:0 0 0 3px var(--sf);z-index:1}
+.tl .ev .tx{min-width:0;flex:1}
+.tl .ev .tx b{display:block;font-size:13px;font-weight:500;color:var(--ink);line-height:1.35}
+.tl .ev .tx s{display:block;text-decoration:none;font-size:11.5px;color:var(--mute);margin-top:2px}
+
+/* status-grouped columns */
+.cols{display:grid;gap:10px;padding:4px 10px 10px}
+.cols .lane{min-width:0}
+.cols .lane h4{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--mute);margin-bottom:7px;display:flex;align-items:center;gap:6px}
+.cols .lane h4 i{width:6px;height:6px;border-radius:50%;flex:none}
+.cols .lane h4 em{font-style:normal;margin-left:auto;font-family:"IBM Plex Mono",monospace}
+.mini{background:var(--sf2);border-radius:var(--rs);padding:9px 10px;margin-bottom:7px;cursor:pointer}
+.mini b{display:block;font-size:12.5px;font-weight:500;color:var(--ink);line-height:1.3;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mini s{display:block;text-decoration:none;font-family:"IBM Plex Mono",monospace;font-size:10.5px;
+  color:var(--mute);margin-top:3px}
+
+/* approval rows with the decision inline */
+.dec{display:flex;gap:6px;flex:none}
+.dec span{font-size:11.5px;font-weight:600;border-radius:var(--rs);padding:5px 10px;cursor:pointer}
+.dec .ok{background:#ECFDF3;color:#22A06B}
+.dec .no{background:#FEF3F2;color:#DC2626}
+
+/* FAQ */
+.faq{padding:2px 6px 6px}
+.faq .q{border-bottom:1px solid var(--line)}
+.faq .q:last-child{border-bottom:none}
+.faq .qh{display:flex;align-items:center;gap:10px;padding:11px 10px;cursor:pointer}
+.faq .qh .ic{width:13px;height:13px;color:var(--mute);transition:transform .18s;flex:none}
+.faq .qh.open .ic{transform:rotate(90deg);color:var(--brand)}
+.faq .qh b{font-size:13px;font-weight:500;color:var(--ink);line-height:1.4}
+.faq .qb{padding:0 10px 12px 33px;font-size:12.5px;color:var(--mute);line-height:1.6}
+.faqcols{display:grid;grid-template-columns:1fr 1fr;gap:4px 20px;padding:4px 10px 10px}
+.faqrow{padding:9px 0;border-bottom:1px solid var(--line)}
+.faqrow b{display:block;font-size:12.5px;font-weight:500;color:var(--ink);line-height:1.4}
+.faqrow s{display:block;text-decoration:none;font-size:11.5px;color:var(--mute);margin-top:3px;
+  line-height:1.5}
+.faqnum{counter-reset:q;padding:4px 10px 10px}
+.faqnum .n{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.faqnum .n:last-child{border-bottom:none}
+.faqnum .n::before{counter-increment:q;content:counter(q,decimal-leading-zero);
+  font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;color:var(--brand);
+  flex:none;padding-top:2px}
+.faqnum .n b{font-size:13px;font-weight:500;color:var(--ink);line-height:1.4}
+
+/* carousel */
+.car{padding:4px 0 10px;position:relative}
+.car .track{display:flex;gap:12px;padding:0 10px;overflow:hidden}
+.car .slide{flex:none;width:58%;border-radius:var(--r);padding:16px 18px;color:#fff;
+  background:linear-gradient(122deg,#123B7A,#2F6FB5);min-height:104px;display:flex;
+  flex-direction:column;justify-content:center;cursor:pointer}
+.car .slide.b{background:linear-gradient(122deg,#0E5E4F,#14866F)}
+.car .slide.c{background:linear-gradient(122deg,#7C2D12,#B45309)}
+.car .slide .kick{font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:600;
+  letter-spacing:.12em;text-transform:uppercase;opacity:.72;margin-bottom:7px}
+.car .slide b{font-size:15px;font-weight:600;line-height:1.34;display:block}
+.car .slide s{display:block;text-decoration:none;font-size:12.5px;opacity:.76;margin-top:5px}
+.car .slide .go{align-self:flex-start;margin-top:11px;font-size:12px;font-weight:600;
+  background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.28);border-radius:var(--rs);
+  padding:6px 12px}
+.car .dots{display:flex;gap:6px;justify-content:center;margin-top:12px}
+.car .dots i{width:6px;height:6px;border-radius:999px;background:var(--line)}
+.car .dots i.on{width:18px;background:var(--brand)}
+.car .arrows{display:flex;gap:7px;justify-content:flex-end;padding:10px 10px 0}
+.car .arrows span{width:28px;height:28px;border-radius:999px;border:1px solid var(--line);
+  display:grid;place-items:center;color:var(--mute);cursor:pointer;background:var(--sf)}
+.car .arrows span .ic{width:14px;height:14px}
+.car .bar{height:3px;border-radius:999px;background:var(--line);margin:12px 10px 0;overflow:hidden}
+.car .bar i{display:block;height:100%;width:38%;background:var(--brand);border-radius:999px}
+
+/* contact variants */
+.cline{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px}
+.cline a{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--ink2);
+  text-decoration:none;cursor:pointer}
+.cline a .ic{width:14px;height:14px;color:var(--brand)}
+.cbtns{display:flex;gap:9px;padding:8px 10px 10px}
+.cbtns span{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;
+  border:1px solid var(--line);border-radius:var(--rs);padding:11px;font-size:12.5px;
+  font-weight:600;color:var(--ink2);cursor:pointer;background:var(--sf)}
+.cbtns span .ic{width:15px;height:15px;color:var(--brand)}
+.agent{display:flex;align-items:center;gap:13px;padding:12px 10px}
+.agent .pic{width:46px;height:46px;border-radius:999px;background:#2F6FB5;color:#fff;flex:none;
+  display:grid;place-items:center;font-size:15px;font-weight:600}
+.agent .tx b{display:block;font-size:13.5px;font-weight:600;color:var(--ink)}
+.agent .tx s{display:block;text-decoration:none;font-size:12px;color:var(--mute);margin-top:2px}
+.agent .cta{margin-left:auto;flex:none;font-size:12.5px;font-weight:600;color:#fff;
+  background:var(--brand);border-radius:var(--rs);padding:8px 14px;cursor:pointer}
+
+/* page-archetype skeletons */
+.sk{background:var(--sf);border:1px solid var(--line);border-radius:var(--r);padding:9px;
+  display:flex;flex-direction:column;gap:6px;height:210px}
+.sk .b{border-radius:3px;background:var(--tint);flex:none}
+.sk .b.brand{background:#2F6FB5}
+.sk .b.line{background:var(--line)}
+.sk .r{display:flex;gap:6px;flex:none}
+.sk .r > *{flex:1}
+.sk .grow{flex:1;min-height:0}
+.sk .fold{border-top:1px dashed #DC2626;position:relative;margin:1px 0}
+.sk .fold::after{content:"fold";position:absolute;right:0;top:-13px;font-family:"IBM Plex Mono",monospace;
+  font-size:8px;color:#DC2626;letter-spacing:.08em}
+
+/* the catalogue paints on ONE palette so the variant is the only variable */
+.pt{--brand:#2F6FB5;--tint:#E7EFFD;--bg:#F4F6FA;--sf:#fff;--sf2:#F6F9FD;--ink:#101A2C;
+  --ink2:#3C4A5E;--mute:#7A8698;--line:#E4E9F2;--r:9px;--rs:7px;--pad:0;--gap:14px}
+.stage .pt{background:transparent}
+</style>
+
+<!-- ═══ icon set — one sprite, referenced by <use>, tinted by currentColor ═══ -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <g id="_s" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></g>
+  </defs>
+  <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5M12 16.2h.01"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="14" r="4"/><path d="M11 11.5 20 3M17.5 5.5l2 2M15 8l2 2"/></symbol>
+  <symbol id="i-bulb" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.5.4.8 1 .8 1.6V16h5.4v-.5c0-.6.3-1.2.8-1.6A6 6 0 0 0 12 3Z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></symbol>
+  <symbol id="i-laptop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="10" rx="1.6"/><path d="M2.5 19h19"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5v11M8 11l4 4 4-4M4.5 19.5h15"/></symbol>
+  <symbol id="i-wifi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 9a15 15 0 0 1 19 0M5.5 12.5a10.5 10.5 0 0 1 13 0M8.8 16a5.5 5.5 0 0 1 6.4 0"/><path d="M12 19.5h.01"/></symbol>
+  <symbol id="i-userplus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9.5" cy="8" r="3.5"/><path d="M3.5 19.5a6 6 0 0 1 12 0M18 8.5v5M20.5 11h-5"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3.5H7.5A1.5 1.5 0 0 0 6 5v14a1.5 1.5 0 0 0 1.5 1.5h9A1.5 1.5 0 0 0 18 19V7.5Z"/><path d="M14 3.5V7a.5.5 0 0 0 .5.5H18M9 12.5h6M9 16h4"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.4 2.4L15.8 9.5"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 16V10.5a6 6 0 1 0-12 0V16l-1.5 2.5h15Z"/><path d="M10 21h4"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5.5" width="18" height="13" rx="1.8"/><path d="m3.6 7 8.4 6 8.4-6"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3.5h3l1.5 4-2 1.4a12 12 0 0 0 6.1 6.1l1.4-2 4 1.5v3a2 2 0 0 1-2.2 2A17.5 17.5 0 0 1 4.5 5.7a2 2 0 0 1 2-2.2Z"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></symbol>
+  <symbol id="i-monitor" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="1.6"/><path d="M9 20h6M12 16v4"/></symbol>
+  <symbol id="i-mouse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="5"/><path d="M12 6.5v3.5"/></symbol>
+  <symbol id="i-headset" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="2.5" y="13.5" width="4" height="6" rx="1.6"/><rect x="17.5" y="13.5" width="4" height="6" rx="1.6"/></symbol>
+  <symbol id="i-phone2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="6.5" y="2.5" width="11" height="19" rx="2"/><path d="M10.5 18.5h3"/></symbol>
+  <symbol id="i-server" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M6.5 7h.01M6.5 17h.01"/></symbol>
+  <symbol id="i-term" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="1.8"/><path d="m7.5 10 2.5 2-2.5 2M13 14h3.5"/></symbol>
+  <symbol id="i-box" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 8.2v7.6a1.6 1.6 0 0 1-.85 1.4l-6.9 3.6a1.6 1.6 0 0 1-1.5 0l-6.9-3.6a1.6 1.6 0 0 1-.85-1.4V8.2"/><path d="m3.9 7.4 7.35-3.8a1.6 1.6 0 0 1 1.5 0l7.35 3.8-8.1 4.2Z"/><path d="M12 11.6V20"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5.5v13M5.5 12h13"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 13.7 9l5.5 1.7-5.5 1.7L12 18l-1.7-5.6L4.8 10.7 10.3 9Z"/><path d="M18.5 3.5v3M20 5h-3"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5 12 4l8 6.5V19a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 19Z"/></symbol>
+  <symbol id="i-ticket" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5V6.5A1.5 1.5 0 0 1 5.5 5h13A1.5 1.5 0 0 1 20 6.5v2a2.5 2.5 0 0 0 0 7v2a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5v-2a2.5 2.5 0 0 0 0-7Z"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3.5 8.5 4.5L12 12.5 3.5 8Z"/><path d="m3.5 12.5 8.5 4.5 8.5-4.5"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 5 6v5.5c0 4.2 2.9 7.6 7 9 4.1-1.4 7-4.8 7-9V6Z"/></symbol>
+  <symbol id="i-cog" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v2.2M12 19.3v2.2M21.5 12h-2.2M4.7 12H2.5M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6M18.7 18.7l-1.6-1.6M6.9 6.9 5.3 5.3"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5.2l3.2 2"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+</svg>
+
+<div class="shell">
+  <header class="mast">
+    <p class="eyebrow">Motadata ServiceOps · Support Portal</p>
+    <h1>Every part, every way it can be drawn</h1>
+    <p class="lede">Not twelve finished pages — the <em>parts</em> those pages are assembled from, with
+      each option on each axis rendered as real UI. One palette throughout, on purpose: when two tiles
+      sit side by side the only thing that differs is <em>the thing being compared</em>. Every note under
+      a specimen is the reason to reach for it, or the reason not to.</p>
+    <dl class="facts">
+      <div class="fact"><dt>Banner treatments</dt><dd>18</dd></div>
+      <div class="fact"><dt>Banner structures</dt><dd>15</dd></div>
+      <div class="fact"><dt>Quick-action variants</dt><dd>26</dd></div>
+      <div class="fact"><dt>Widget renderings</dt><dd>44 <small>across 10 widgets</small></dd></div>
+      <div class="fact"><dt>Page archetypes</dt><dd>8</dd></div>
+      <div class="fact"><dt>Image assets</dt><dd>0</dd></div>
+    </dl>
+  </header>
+
+  <nav class="idx" id="idx" aria-label="Sections"><b>Jump to</b></nav>
+  <main id="out"></main>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════════
+   CONTENT — the product's own mock records, so every specimen is populated with
+   the thing it will really hold.
+   ═══════════════════════════════════════════════════════════════════════════ */
+const HERO = { title:'Welcome to Support Portal', sub:'Search our support center knowledge base',
+  ph:'How can we help you?' };
+
+const ACTIONS = [
+  { k:'incident',  t:'New Incident',    d:'Report an incident',          i:'i-alert' },
+  { k:'service',   t:'Request Service', d:'Browse the services offered', i:'i-grid'  },
+  { k:'ad',        t:'AD Self Service', d:'Reset your domain password',  i:'i-key'   },
+  { k:'knowledge', t:'Knowledge',       d:'Browse knowledge',            i:'i-bulb'  },
+  { k:'reports',   t:'My Reports',      d:'Usage and spend',             i:'i-file'  },
+  { k:'assets',    t:'My Assets',       d:'What you have been issued',   i:'i-box'   },
+  { k:'status',    t:'Service Status',  d:'What is degraded right now',  i:'i-shield'},
+  { k:'contact',   t:'Contact Us',      d:'Reach the service desk',      i:'i-phone' },
+];
+
+const SERVICES = [
+  { n:'New Laptop Request',      c:'Hardware', i:'i-laptop'   },
+  { n:'Software Installation',   c:'Software', i:'i-download' },
+  { n:'VPN Access',              c:'Network',  i:'i-wifi'     },
+  { n:'New Employee Onboarding', c:'HR',       i:'i-userplus' },
+];
+
+const REQ_TOTAL = 17;
+const REQUESTS = [
+  { id:'SR-201',  s:'Request for New Laptop',    at:'Wed, Aug 12, 2026 10:09 AM', st:'Open' },
+  { id:'INC-187', s:'Cannot Create KB Article',   at:'Mon, Aug 10, 2026 11:43 AM', st:'In Progress' },
+  { id:'SR-180',  s:'Employee On-boarding',       at:'Wed, Aug 05, 2026 03:22 PM', st:'Open' },
+  { id:'INC-178', s:'Password Reset Required',    at:'Wed, Aug 05, 2026 12:03 PM', st:'Pending' },
+  { id:'INC-170', s:'Laptop Slow and Lagging',    at:'Tue, Aug 04, 2026 03:51 PM', st:'In Progress' },
+  { id:'SR-166',  s:'Access to Finance Drive',    at:'Mon, Aug 03, 2026 09:14 AM', st:'On Hold' },
+  { id:'INC-159', s:'VPN Disconnects Frequently', at:'Fri, Jul 31, 2026 04:02 PM', st:'Open' },
+];
+const TONE = {
+  'Open':{fg:'#B45309',bg:'#FEF3C7'}, 'In Progress':{fg:'#1D4ED8',bg:'#DBEAFE'},
+  'Pending':{fg:'#7C3AED',bg:'#EDE9FE'}, 'On Hold':{fg:'#64748B',bg:'#F1F5F9'},
+  'Resolved':{fg:'#22A06B',bg:'#ECFDF3'}, 'Closed':{fg:'#64748B',bg:'#F1F5F9'},
+  'Reopened':{fg:'#DC2626',bg:'#FEF3F2'},
+};
+const APPROVALS = [
+  { id:'INC-192', s:'Wrong configuration details', r:'Peer review requested',
+    at:'Tue, Aug 11, 2026 02:14 PM', by:'Rosy', ini:'RO', c:'#3D8BD0' },
+  { id:'AST-13',  s:'DESKTOP-5JPPI6F', r:'Approval Required for - AST-13',
+    at:'Mon, Aug 10, 2026 12:57 PM', by:'Keya', ini:'KE', c:'#7C3AED' },
+];
+const ARTICLES = [
+  { id:'KB-4', t:'How to Reset Your Password', at:'Thu, Jul 30, 2026 11:34 AM', tag:'Guideline Documents' },
+  { id:'KB-1', t:'Connecting to Company VPN',   at:'Sun, Jul 19, 2026 10:58 PM', tag:'FAQs' },
+  { id:'KB-6', t:'Reporting a Hardware Fault',  at:'Tue, Aug 11, 2026 04:38 PM', tag:'Guideline Documents' },
+];
+const ASSETS = [
+  { id:'AST-3',  n:'Dell Latitude 5440',      t:'Laptop',  i:'i-laptop'  },
+  { id:'AST-1',  n:'Dell UltraSharp U2723QE', t:'Monitor', i:'i-monitor' },
+  { id:'AST-7',  n:'Logitech MX Master 3S',   t:'Mouse',   i:'i-mouse'   },
+  { id:'AST-12', n:'Jabra Evolve2 65',        t:'Headset', i:'i-headset' },
+];
+const CIS = [
+  { id:'CI-3', n:'app-prod-01',           t:'Server',        i:'i-server' },
+  { id:'CI-8', n:'hostname',              t:'Base CI',       i:'i-box'    },
+  { id:'CI-5', n:'localhost.localdomain', t:'Linux Desktop', i:'i-term'   },
+  { id:'CI-7', n:'P1',                    t:'Base CI',       i:'i-box'    },
+];
+const NEWS = [
+  { t:'Planned network maintenance — Sat 16 Aug, 02:00–05:00', at:'Posted Mon, Aug 11' },
+  { t:'New VPN client rollout begins next week',               at:'Posted Fri, Aug 08' },
+];
+const CONTACT = [
+  { l:'Support Email',       v:'servicedesk@acme.com', i:'i-mail'  },
+  { l:'Support Contact No.', v:'+91 79 4040 0000',     i:'i-phone' },
+];
+/* Two of these are the product's own seeded FAQ questions; the rest are the same register. */
+const FAQS = [
+  { q:'Who do I contact out of hours?',
+    a:'The on-call desk is reachable on +91 79 4040 0000. Anything raised as P1 pages the duty engineer automatically.' },
+  { q:'How do I get access to a shared mailbox?',
+    a:'Raise a Service Request under Email &amp; Collaboration. Your manager approves it, then access is granted within one working day.' },
+  { q:'How long does a new laptop request take?',
+    a:'Five working days once approved, or two if a spare of that model is in stock at your site.' },
+  { q:'Why is my request still Pending?',
+    a:'Pending means it is waiting on someone other than the service desk — usually an approver or you.' },
+];
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   HELPERS — the same component vocabulary the twelve templates are built from.
+   ═══════════════════════════════════════════════════════════════════════════ */
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ic  = (n, cls) => `<svg class="ic ${cls||''}" aria-hidden="true"><use href="#${n}"/></svg>`;
+const shortAt = at => at.replace(/^\w+, /,'').replace(/, \d{4}.*$/,'');
+const timeOf  = at => (at.match(/\d{1,2}:\d{2} [AP]M/)||[''])[0];
+const pill = st => { const t = TONE[st]||TONE['On Hold'];
+  return `<span class="pill" style="color:${t.fg};background:${t.bg}">${esc(st)}</span>`; };
+const dotPill = st => { const t = TONE[st]||TONE['On Hold'];
+  return `<span class="dotrow" style="font-size:11.5px;color:var(--mute)"><i style="background:${t.fg}"></i>${esc(st)}</span>`; };
+
+function card(o){
+  const head = o.title === undefined ? '' : `<header>
+    ${o.icon ? `<span class="hi">${ic(o.icon)}</span>` : ''}
+    <h3>${esc(o.title)}</h3>
+    ${o.count !== undefined ? `<span class="ct">${o.count}</span>` : ''}
+    ${o.va ? `<span class="va">${esc(o.va)} ${ic('i-chev')}</span>` : ''}
+  </header>`;
+  return `<div class="cd ${o.cls||''}" ${o.style?`style="${o.style}"`:''}>${head}<div class="bd">${o.body}</div></div>`;
+}
+const reqRows = (n, o) => REQUESTS.slice(0,n).map(r => `
+  <div class="rw"><span class="id">${r.id}</span>
+    <span class="tx"><b>${esc(r.s)}</b><s>${shortAt(r.at)} · ${timeOf(r.at)}</s></span>
+    ${o && o.dot ? dotPill(r.st) : pill(r.st)}</div>`).join('');
+const apprRows = () => APPROVALS.map(a => `
+  <div class="rw"><span class="avq" style="background:${a.c}">${a.ini}</span>
+    <span class="tx"><b>${esc(a.s)}</b><s>${esc(a.r)} · ${a.by}</s></span>
+    <span class="id">${a.id}</span></div>`).join('');
+const kbRows = () => ARTICLES.map(a => `
+  <div class="rw"><span class="id">${a.id}</span>
+    <span class="tx"><b>${esc(a.t)}</b><s>${esc(a.tag)}</s></span></div>`).join('');
+const tileGrid = (items, cols) => `<div class="tiles" style="grid-template-columns:repeat(${cols||2},minmax(0,1fr))">${
+  items.map(a => `<div class="tile"><i>${ic(a.i)}</i>
+    <span class="tx"><b>${esc(a.n)}</b><s>${a.id} · ${esc(a.t)}</s></span></div>`).join('')}</div>`;
+const newsRows = () => NEWS.map(n => `
+  <div class="news"><i></i><span class="tx"><b>${esc(n.t)}</b><s>${esc(n.at)}</s></span></div>`).join('');
+const contactRows = () => CONTACT.map(c => `
+  <div class="cu"><i>${ic(c.i)}</i><span class="tx"><s>${esc(c.l)}</s><b>${esc(c.v)}</b></span></div>`).join('');
+const actCard = (a, v, arrow) => `<div class="act ${v||''}">
+  <i>${ic(a.i)}</i><span><b>${esc(a.t)}</b>${v==='cap'||v==='nodesc'?'':`<s>${esc(a.d)}</s>`}</span>
+  ${arrow?`<span class="arw">${ic('i-chev')}</span>`:''}</div>`;
+const actRow = (v, n, arrow, cols) => `<div class="acts" style="grid-template-columns:repeat(${cols||n||4},minmax(0,1fr))">${
+  ACTIONS.slice(0,n||4).map(a => actCard(a, v, arrow)).join('')}</div>`;
+const svcRow = (v, cols, n) => `<div style="display:grid;gap:12px;grid-template-columns:repeat(${cols||4},minmax(0,1fr))">${
+  SERVICES.slice(0,n||4).map(s => `<div class="svc ${v||''}"><i>${ic(s.i)}</i>
+    <span class="tx"><b>${esc(s.n)}</b><s>${esc(s.c)}</s></span></div>`).join('')}</div>`;
+const svcChips = () => `<div style="display:flex;flex-wrap:wrap;gap:9px">${
+  SERVICES.map(s => `<div class="svc chip"><i>${ic(s.i)}</i><span class="tx"><b>${esc(s.n)}</b></span></div>`).join('')}</div>`;
+const search = (cls, btn) => `<div class="sr ${cls||''}">${ic('i-search')}
+  <span>${esc(HERO.ph)}</span>${btn?`<span class="go">Search</span>`:''}</div>`;
+const counter = (v, label, meta, on) => `<div class="ct-tile ${on?'on':''}">
+  <u class="${v===0?'z':''}">${v}</u><s>${esc(label)}</s>${meta?`<em>${esc(meta)}</em>`:''}</div>`;
+const tabs = list => `<div class="tabs">${list.map((t,i) =>
+  `<button class="${i===0?'on':''}">${esc(t[0])}${t[1]!==undefined?`<i>${t[1]}</i>`:''}</button>`).join('')}</div>`;
+const workTable = n => `<table class="tb">
+  <thead><tr><th style="width:74px">ID</th><th>Subject</th><th style="width:112px">Status</th><th style="width:148px">Raised</th></tr></thead>
+  <tbody>${REQUESTS.slice(0,n).map(r => `<tr><td class="id">${r.id}</td><td class="sub">${esc(r.s)}</td>
+    <td>${pill(r.st)}</td><td class="mt">${shortAt(r.at)} · ${timeOf(r.at)}</td></tr>`).join('')}</tbody></table>`;
+
+/* the banner body, so every A and B specimen is the same object with one thing changed */
+const bannerBody = (o = {}) => `
+  ${o.mark ? `<span class="mark">A</span>` : ''}
+  ${o.glass ? `<span class="glass"></span>` : ''}
+  ${o.curve ? loadCurve() : ''}
+  <h2 ${o.h2 ? `style="${o.h2}"` : ''}>${esc(HERO.title)}</h2>
+  ${o.nosub ? '' : `<p>${esc(HERO.sub)}</p>`}
+  ${o.search ? `<div style="width:${o.searchW||'min(500px,80%)'};margin-top:14px">${search(o.searchCls)}</div>` : ''}
+  ${o.acts ? `<div class="acts g2" style="width:min(440px,56%);margin-top:12px">${
+    ACTIONS.slice(0,2).map(a => actCard(a,'ghost')).join('')}</div>` : ''}`;
+
+const banner = (cls, o = {}) => `<div class="bn ${cls} ${o.extra||''}" style="height:${o.h||168}px;${o.style||''}">
+  <span class="fx"></span>${o.raw || bannerBody(o)}</div>`;
+
+const loadCurve = () => {
+  const pts = [7,9,12,10,16,21,18,24,20,27,23,31,26,22,29,25,33,28,24,30];
+  const w = 1000, h = 220, top = 96, max = 36;
+  const d = pts.map((v,i)=>`${(i/(pts.length-1)*w).toFixed(1)},${(h - v/max*(h-top)).toFixed(1)}`).join(' ');
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"
+    style="position:absolute;inset:0;width:100%;height:100%;z-index:1">
+    <defs><linearGradient id="lcv" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#22D3EE" stop-opacity=".38"/><stop offset="1" stop-color="#22D3EE" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="lcs" cx=".5" cy=".46" r=".62">
+      <stop offset="0" stop-color="#062A34" stop-opacity=".82"/><stop offset="1" stop-color="#062A34" stop-opacity="0"/>
+    </radialGradient></defs>
+    <polygon fill="url(#lcv)" points="0,${h} ${d} ${w},${h}"/>
+    <polyline fill="none" stroke="#67E8F9" stroke-width="2.4" stroke-linejoin="round" stroke-opacity=".9" points="${d}"/>
+    <rect width="${w}" height="${h}" fill="url(#lcs)"/></svg>`;
+};
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE CATALOGUE
+   Each entry: key · name · the note (why you would reach for it) · the render.
+   ═══════════════════════════════════════════════════════════════════════════ */
+const S = [];
+/* `bleed` = the specimen paints to the stage edge (a banner, or a band that is meant to be page
+   chrome). Everything else sits on padded ground. Stated, never inferred from the markup. */
+const spec = (k, name, note, html, tag, bleed) => ({ k, name, note, html, tag, bleed });
+const bleedSpec = (k, name, note, html, tag) => ({ k, name, note, html, tag, bleed:true });
+
+/* ── A · banner visual treatment ─────────────────────────────────────────── */
+S.push({
+  id:'a', ax:'A', title:'Banner visual treatment', blurb:
+    `Eighteen options. The constraint that eliminates most of them: text contrast must survive a
+     white-labelled logo, an unknown tenant photo and a dark theme. Every one below is <b>pure CSS</b>,
+     so a treatment is a token change rather than an upload — which is also what makes contrast
+     something the system can guarantee instead of something an admin has to remember.`,
+  cols:2,
+  items:[
+    bleedSpec('A1','Solid colour','Safest for white-label. Use when the tenant supplies one brand hex and nothing else.', banner('bt bt1',{search:1})),
+    bleedSpec('A2','Linear gradient','Today’s default. Cheap and always legible, but reads as generic enterprise and dates fast.', banner('bt bt2',{search:1})),
+    bleedSpec('A3','Mesh / radial gradient','Same safety as linear with more depth. Best when the tenant has two brand colours.', banner('bt bt3',{search:1})),
+    bleedSpec('A4','Photographic','Only with a mandatory scrim and a 4.5:1 check at upload. High risk of a bad tenant photo.', banner('bt bt4',{search:1}),'scrim'),
+    bleedSpec('A5','Flat illustration','Warm; suits HR and Higher Education. Needs an illustration library you commit to maintaining.', banner('bt bt5',{search:1,searchCls:'flat'})),
+    bleedSpec('A6','Isometric illustration','Reads technical and product-y. Fits IT and Manufacturing, feels cold in Healthcare.', banner('bt bt6',{search:1})),
+    bleedSpec('A7','Line-art / technical','Low contrast, sits behind text safely. Today’s network motif is this.', banner('bt bt7',{search:1})),
+    bleedSpec('A8','3D-rendered logo form','Only viable when the tenant owns a real 3D brand asset. Otherwise a one-off.', banner('bt bt8',{search:1,mark:1})),
+    bleedSpec('A9','Abstract 3D shapes','Vendor-neutral and modern; risks looking like a stock template if it is the gallery default.', banner('bt bt9',{search:1})),
+    bleedSpec('A10','Geometric composition','Built from brand hexes, so it white-labels perfectly. Strongest default for a multi-tenant gallery.', banner('bt bt10',{search:1})),
+    bleedSpec('A11','Photo + overlaid shape','The shape creates a guaranteed contrast zone for the text. Use when photos are unavoidable.', banner('bt bt11',{search:1,searchW:'min(400px,44%)'})),
+    bleedSpec('A12','Pattern / texture','Good for Government and Higher Education, where crests and seals already exist.', banner('bt bt12',{search:1})),
+    bleedSpec('A13','Glassmorphic / blurred','Requires something behind it worth blurring. Usually decoration for decoration’s sake.', banner('bt bt13',{search:1,glass:1})),
+    bleedSpec('A14','Duotone','Forces any tenant photo into brand colours and fixes contrast at the same time. Underrated.', banner('bt bt14',{search:1})),
+    bleedSpec('A15','Split — image / colour','Text lives on the solid half, so contrast is never at risk. Best photographic option.',
+      `<div class="bn bt bt15" style="height:168px"><div class="half"><h2>${esc(HERO.title)}</h2><p>${esc(HERO.sub)}</p></div><div class="art"></div></div>`),
+    bleedSpec('A16','Animated / looping','Motion above the fold on every load. Needs prefers-reduced-motion and a hard cap.', banner('bt bt16',{search:1}),'14s loop'),
+    bleedSpec('A17','Data motif','Banner made from the tenant’s own numbers. Distinctive, but an empty tenant gets an empty banner.', banner('bt bt17',{search:1,curve:1})),
+    bleedSpec('A18','None','Not a white void — the PAGE ground carries the identity instead: a tinted or dark surface, a rule, a quiet motif.',
+      `<div class="bn bt bt18" style="height:168px;padding:0 32px;align-items:flex-start;justify-content:center">
+        <div style="position:absolute;inset:0;opacity:.06;background-image:linear-gradient(rgba(255,255,255,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.5) 1px,transparent 1px);background-size:34px 34px"></div>
+        <div style="position:absolute;top:0;left:0;right:0;height:4px;background:repeating-linear-gradient(115deg,#F59E0B 0 12px,transparent 12px 24px)"></div>
+        <div style="position:absolute;right:26px;top:50%;transform:translateY(-50%);display:flex;gap:20px;opacity:.09;color:#fff">
+          <svg class="ic" style="width:66px;height:66px"><use href="#i-headset"/></svg>
+          <svg class="ic" style="width:66px;height:66px"><use href="#i-bulb"/></svg></div>
+        <h2 style="font-size:21px;position:relative;z-index:2">Shift board</h2>
+        <p style="position:relative;z-index:2">Plant 2 · Lines A–D · 17 open</p>
+      </div>`,'ground'),
+  ],
+  aside:{
+    'Pick by risk':`The three that <b>cannot</b> go wrong on an unknown tenant are <b>A1 solid</b>,
+      <b>A10 geometric</b> and <b>A14 duotone</b> — each is built from the brand hexes or forces the
+      artwork into them. Everything photographic needs an upload-time contrast gate.`,
+    'The gallery default':`<b>A10</b>. It is the only treatment that is expressive, white-labels from
+      two hexes, and never depends on an asset the tenant has to supply.`,
+  },
+});
+
+/* ── B · banner structure ────────────────────────────────────────────────── */
+const B_TREAT = 'bt bt3';
+S.push({
+  id:'b', ax:'B', title:'Banner structure', blurb:
+    `Four sub-axes that combine freely — containment × height × alignment × search placement. Held at
+     one treatment throughout so the <b>structure</b> is the only variable.`,
+  cols:2,
+  items:[
+    bleedSpec('B·c1','Full-bleed','Maximum brand presence. Fights the left rail visually at 1440.', banner(B_TREAT,{search:1})),
+    bleedSpec('B·c2','Inset rounded card','Reads as a component rather than page chrome, which is what it actually is in a builder.',
+      `<div style="padding:16px">${banner(B_TREAT,{search:1,style:'border-radius:12px'})}</div>`),
+    bleedSpec('B·c3','Contained with margin','Aligns the banner to the same grid as everything below. Calmest option.',
+      `<div style="padding:0 16px">${banner(B_TREAT,{search:1})}</div>`),
+    bleedSpec('B·h1','Hero · 420px+','Marketing posture. Only for guest-accessible portals.', banner(B_TREAT,{h:250,search:1,acts:1}),'250 shown'),
+    bleedSpec('B·h2','Mid · 200–300px','Fits banner plus quick actions above 900px. The workhorse.', banner(B_TREAT,{h:186,search:1})),
+    bleedSpec('B·h3','Compact · 120–160px','Greeting and search only. For returning users.', banner(B_TREAT,{h:130,search:1,nosub:1,h2:'font-size:22px'})),
+    bleedSpec('B·h4','Bar · 56–72px','A tinted strip with a headline. Effectively ‘no banner’ with a colour.',
+      banner(B_TREAT,{h:66,nosub:1,h2:'font-size:17px',style:'align-items:flex-start;padding:0 26px'})),
+    bleedSpec('B·a1','Align · centre','Balanced, but wastes the horizontal room a long tenant name needs.',
+      banner(B_TREAT,{search:1,extra:'ctr'})),
+    bleedSpec('B·a2','Align · left','Survives a 60-character tenant name without re-centring awkwardly. Default.',
+      banner(B_TREAT,{search:1,style:'align-items:flex-start;padding:0 32px'})),
+    bleedSpec('B·a3','Align · split','Text left, art or a stat block right. Gives illustration somewhere legitimate to live.',
+      `<div class="bn ${B_TREAT}" style="height:168px;flex-direction:row;align-items:center;padding:0 32px">
+        <span class="fx"></span>
+        <div style="position:relative;z-index:2;flex:1;min-width:0">
+          <h2>${esc(HERO.title)}</h2><p>${esc(HERO.sub)}</p>
+          <div style="width:min(420px,88%);margin-top:14px">${search()}</div></div>
+        <div style="position:relative;z-index:2;flex:none;display:flex;gap:10px">
+          ${[[REQ_TOTAL,'Open'],[2,'Approvals'],[0,'Overdue']].map(([v,l])=>`
+            <div style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:12px 16px;text-align:center;min-width:78px">
+              <div style="font-family:Archivo,sans-serif;font-size:24px;font-weight:700;color:#fff;line-height:1">${v}</div>
+              <div style="font-size:11px;color:rgba(255,255,255,.66);margin-top:5px">${l}</div></div>`).join('')}
+        </div></div>`),
+    bleedSpec('B·s1','Search · inside banner','Highest prominence; contrast of the field against art must be checked.',
+      banner(B_TREAT,{search:1,extra:'ctr'})),
+    bleedSpec('B·s2','Search · straddling the edge','Ties banner and content together and signals scrollability. Fragile on mobile — it must unstack.',
+      `<div>${banner(B_TREAT,{h:150,extra:'ctr'})}
+       <div style="padding:0 20px"><div style="max-width:560px;margin:-22px auto 0;position:relative;z-index:3">${search('',true)}</div></div>
+       <div style="height:18px"></div></div>`),
+    bleedSpec('B·s3','Search · below banner','Simplest responsive behaviour, weakest hierarchy.',
+      `<div>${banner(B_TREAT,{h:150,extra:'ctr'})}<div style="padding:16px">${search('flat',true)}</div></div>`),
+    bleedSpec('B·s4','Search · promoted into the top bar','Persistent and always reachable. Correct for daily users; frees the whole banner slot.',
+      `<div><div style="height:46px;background:#fff;border-bottom:1px solid #E9EDF3;display:flex;align-items:center;gap:11px;padding:0 14px">
+        <span style="display:flex;align-items:center;gap:8px;font-family:Archivo,sans-serif;font-size:13.5px;font-weight:600;color:#20303F">
+          <i style="width:21px;height:21px;border-radius:5px;background:#2F6FB5;color:#fff;display:grid;place-items:center;font-style:normal;font-size:10px;font-weight:700">A</i>Acme Corp</span>
+        <span style="display:inline-flex;align-items:center;gap:8px;height:28px;padding:0 10px;border-radius:6px;border:1px solid #DDE4EE;background:#F8FAFC;color:#8C9AAC;font-size:12px;flex:1;max-width:300px">
+          ${ic('i-search')}${esc(HERO.ph)}</span>
+        <span style="margin-left:auto;width:26px;height:26px;border-radius:999px;background:#20303F;color:#fff;display:grid;place-items:center;font-size:10px;font-weight:600">JD</span>
+      </div>${banner(B_TREAT,{h:120,nosub:1,h2:'font-size:19px',style:'align-items:flex-start;padding:0 26px'})}</div>`),
+    bleedSpec('B·s5','Search · omitted','Only defensible when the catalog is small and browsable, under about 30 services.',
+      banner(B_TREAT,{h:130,h2:'font-size:22px',extra:'ctr'})),
+  ],
+  aside:{
+    'The combination that fails':`<b>Hero height + centred + straddling search</b> on a portal whose
+      requesters visit daily. It is three decisions that all optimise for a first-time visitor, on a
+      page most people have already seen.`,
+    'Mobile':`<b>Straddling</b> is the only placement with a genuine responsive cost — it must unstack
+      below ~600px or the field ends up half on the artwork and half on the page.`,
+  },
+});
+
+/* ── C · quick actions ───────────────────────────────────────────────────── */
+S.push({
+  id:'c', ax:'C', title:'Quick actions', blurb:
+    `Arrangement, count, anatomy, fill and density are five <b>independent</b> axes — any arrangement
+     can take any anatomy. The rule that binds them: the count runs 1–8 and must degrade without
+     leaving a hole in the grid.`,
+  cols:2,
+  items:[
+    spec('C1','Single row','Clean at 3–5. At 6+ the cards get too narrow to carry a description.',
+      `<div class="stage-in">${actRow('',4)}</div>`),
+    spec('C2','Two-row grid','For 6–8. Requires equal card weight, so no hero.',
+      actRow('',8,false,4)),
+    bleedSpec('C3','Overlapping the banner edge','Today’s pattern. Costs 40px of banner and complicates every breakpoint.',
+      `<div>${banner('bt bt3',{h:120,extra:'ctr',nosub:1,h2:'font-size:20px'})}
+        <div style="padding:0 18px"><div style="margin-top:-26px;position:relative;z-index:3">${actRow('',4)}</div></div>
+        <div style="height:18px"></div></div>`),
+    bleedSpec('C4','Embedded inside the banner','Actions inherit the banner’s contrast problem. Only over solid colour.',
+      banner('bt bt1',{h:210,search:1,searchW:'min(430px,52%)',acts:1,style:'align-items:flex-start;padding:0 26px'})),
+    spec('C5','Vertical rail','Actions pinned in a column, always visible while scrolling. Good for power users.',
+      `<div style="display:flex;gap:14px;align-items:flex-start">
+        <div class="vrail"><span class="lbl">Create</span>
+          ${ACTIONS.slice(0,4).map((a,i)=>`<a class="${i===0?'on':''}"><i>${ic(a.i)}</i>${esc(a.t)}</a>`).join('')}</div>
+        <div style="flex:1;min-width:0">${card({title:'My Open Requests',icon:'i-ticket',count:REQ_TOTAL,body:reqRows(3)})}</div>
+      </div>`),
+    spec('C6','Segmented pill bar','Lowest visual weight. Right when data should outrank actions but actions stay one click away.',
+      `<div style="display:flex;flex-wrap:wrap;gap:9px">${ACTIONS.slice(0,5).map(a=>actCard(a,'cap')).join('')}</div>`),
+    spec('C7','One hero + secondary','When analytics show one action is 60%+ of clicks. Makes the priority explicit.',
+      `<div style="display:flex;gap:12px;align-items:stretch">
+        <div class="act solid" style="flex:1.6;padding:20px 22px"><i>${ic('i-alert')}</i>
+          <span><b style="font-size:16px">New Incident</b><s>Report something that is broken or degraded</s></span>
+          <span class="arw">${ic('i-chev')}</span></div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:8px;justify-content:center">
+          ${ACTIONS.slice(1,4).map(a=>`<a style="display:flex;align-items:center;gap:9px;font-size:13px;
+            font-weight:500;color:var(--ink2);text-decoration:none;padding:7px 2px;cursor:pointer">
+            <span style="color:var(--brand);display:flex">${ic(a.i)}</span>${esc(a.t)}
+            <span style="margin-left:auto;color:var(--mute);display:flex"><svg class="ic" style="width:13px;height:13px"><use href="#i-chev"/></svg></span></a>`).join('')}
+        </div></div>`),
+    spec('C8','Bento of unequal sizes','Expresses priority across 5–6 actions without demoting the rest to text.',
+      `<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:1fr;gap:12px">
+        <div class="act top" style="grid-column:span 2;grid-row:span 2;justify-content:center"><i>${ic('i-alert')}</i>
+          <span><b style="font-size:16px">New Incident</b><s>Report an incident</s></span></div>
+        ${ACTIONS.slice(1,5).map(a=>`<div class="act" style="padding:11px 13px"><i style="width:30px;height:30px">${ic(a.i)}</i>
+          <span><b style="font-size:13px">${esc(a.t)}</b></span></div>`).join('')}
+      </div>`),
+    spec('C9','Horizontal scroll strip','For 6+. Everything past the third card is a scroll away, which is a real discovery cost.',
+      `<div class="strip">${ACTIONS.map(a=>actCard(a,'top')).join('')}</div>`),
+    spec('C·n1','Count · 1','A lone card must NOT stretch full width — cap it and left-align, or it reads as a banner.',
+      `<div style="max-width:300px">${actCard(ACTIONS[0],'',true)}</div>`),
+    spec('C·n2','Count · 2','Two cards at half width each. Still fine; three is where a row starts to feel deliberate.',
+      actRow('',2,true)),
+    spec('C·n3','Count · 3','The product’s own default before AD Self Service was added. Comfortable at any width.',
+      actRow('',3,true)),
+    spec('C·n6','Count · 6','Six in one row leaves ~190px a card — description drops, icon goes on top.',
+      actRow('top',6,false,6)),
+    spec('C·n8','Count · 8','Eight is two rows of four. Any other split leaves a hole when a tenant removes one.',
+      actRow('top',8,false,4)),
+    spec('C·y1','Anatomy · icon-left','Most scannable with a description. Widest card.', actRow('',3)),
+    spec('C·y2','Anatomy · icon-top','Most compact; works down to 160px wide.', actRow('top',4)),
+    spec('C·y3','Anatomy · icon-top centred','Reads as a tile rather than a row. Good when the label is one word.', actRow('ctr',4)),
+    spec('C·y4','Anatomy · icon-only','Needs a visible label elsewhere. Fails accessibility on its own.',
+      `<div style="display:flex;gap:12px">${ACTIONS.slice(0,5).map(a=>`
+        <div class="act" style="width:56px;height:56px;justify-content:center;padding:0"><i>${ic(a.i)}</i></div>`).join('')}</div>`),
+    spec('C·y5','Anatomy · no icon','Honest when a tenant has 8 actions and no distinct iconography for them.',
+      `<div class="acts" style="grid-template-columns:repeat(4,minmax(0,1fr))">${ACTIONS.slice(0,4).map(a=>`
+        <div class="act" style="padding:14px 16px"><span><b>${esc(a.t)}</b><s>${esc(a.d)}</s></span>
+        <span class="arw">${ic('i-chev')}</span></div>`).join('')}</div>`),
+    spec('C·y6','Anatomy · icon as watermark','Decorative only. Fails if the icon is the only differentiator.',
+      `<div class="acts" style="grid-template-columns:repeat(3,minmax(0,1fr))">${ACTIONS.slice(0,3).map(a=>`
+        <div class="act" style="padding:16px 18px;position:relative;overflow:hidden">
+          <span style="position:absolute;right:-10px;bottom:-14px;opacity:.09;color:var(--brand)">
+            <svg class="ic" style="width:76px;height:76px"><use href="#${a.i}"/></svg></span>
+          <span style="position:relative;z-index:1"><b>${esc(a.t)}</b><s>${esc(a.d)}</s></span></div>`).join('')}</div>`),
+    spec('C·f1','Fill · white + border','The default. Reads as a control, not as a surface.', actRow('',3)),
+    spec('C·f2','Fill · tinted at 8%','Softer; good on a white page ground where a border would be the only edge.', actRow('tint',3)),
+    spec('C·f3','Fill · fully saturated','One card only. On all of them the row shouts and nothing leads.',
+      `<div class="acts" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+        ${actCard(ACTIONS[0],'solid')}${actCard(ACTIONS[1],'')}${actCard(ACTIONS[2],'')}</div>`),
+    bleedSpec('C·f4','Fill · ghost outline','For actions sitting ON the banner, where a white card would punch a hole in it.',
+      `<div>${banner('bt bt1',{h:170,raw:`
+        <h2 style="font-size:22px">${esc(HERO.title)}</h2>
+        <div class="acts g2" style="width:min(480px,74%);margin-top:14px">${ACTIONS.slice(0,4).map(a=>actCard(a,'ghost')).join('')}</div>`,
+        style:'align-items:flex-start;padding:0 26px'})}</div>`),
+    spec('C·d1','Density · comfortable ≈88px','Description on two lines if needed. First-time requesters.', actRow('',3,true)),
+    spec('C·d2','Density · dense ≈48px','No description, small icon. Daily users who already know what each one does.',
+      `<div class="acts" style="grid-template-columns:repeat(4,minmax(0,1fr));gap:9px">${ACTIONS.slice(0,4).map(a=>`
+        <div class="act" style="padding:8px 11px"><i style="width:26px;height:26px">${ic(a.i)}</i>
+        <span><b style="font-size:12.5px">${esc(a.t)}</b></span></div>`).join('')}</div>`),
+  ],
+  aside:{
+    'The one rule':`<b>Count degrades without a hole.</b> Any arrangement that only looks right at
+      exactly four is not a template, it is a picture of one tenant. C1, C6 and C9 survive 1–8; C8
+      needs exactly 5 or 6; C3 needs 3 or 4.`,
+    'Descriptions':`They are what let a first-time requester pick correctly. Drop them only for a
+      portal whose users visit daily — and then drop the icon size with them, or the card is mostly air.`,
+  },
+});
+
+/* ── E · service shortcuts ───────────────────────────────────────────────── */
+S.push({
+  id:'e', ax:'E', title:'Favourite & Most Used Services', blurb:
+    `Favourite and Most Used are <b>the same object with two sort orders</b>. Treating that as a filter
+     rather than two sections halves the section count and removes the case where a tenant has four
+     favourites, four most-used, and they are the same four services listed twice.`,
+  cols:2,
+  items:[
+    spec('E·1','Count · 1','A lone card in a 4-column grid looks like an error. At 1–2 use a list row, not a grid cell.',
+      svcRow('lr',1,1)),
+    spec('E·2','Count · 2','Two rows, capped width. Still reads as a list rather than a broken grid.',
+      svcRow('lr',2,2)),
+    spec('E·4','Count · 4 · grid','Best for 3–6 with short names. Breaks with long service names.', svcRow('',4)),
+    spec('E·g','Grid · icon-top','The product’s current shape. Category as an uppercase caption under the name.', svcRow('',4)),
+    spec('E·l','List rows','Handles long names and categories. Most accessible, least visual.',
+      `<div class="cd plain">${SERVICES.map(s=>`<div class="rw"><span class="hi" style="width:28px;height:28px;border-radius:6px;background:var(--tint);color:var(--brand);display:grid;place-items:center;flex:none">${ic(s.i)}</span>
+        <span class="tx"><b>${esc(s.n)}</b><s>${esc(s.c)}</s></span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--mute)">${['48','31','27','19'][SERVICES.indexOf(s)]} uses</span></div>`).join('')}</div>`),
+    spec('E·c','Chip cloud','Count-agnostic — the only arrangement that never leaves a hole, from 1 to 20.', svcChips()),
+    spec('E·r','Carousel','For 8+ favourites. Needs a visible affordance and keyboard support; costs discoverability.',
+      `<div class="car"><div class="arrows"><span>${ic('i-chev')}</span><span>${ic('i-chev')}</span></div>
+        <div class="track" style="gap:12px">${SERVICES.concat(SERVICES.slice(0,2)).map(s=>`
+          <div class="svc" style="width:31%;flex:none"><i>${ic(s.i)}</i><span class="tx"><b>${esc(s.n)}</b><s>${esc(s.c)}</s></span></div>`).join('')}</div>
+        <div class="dots"><i class="on"></i><i></i><i></i></div></div>`),
+    spec('E·m','Merged with a filter','Favourite and Most Used as ONE list with two sorts. Halves the section count.',
+      `<div class="cd"><header><span class="hi">${ic('i-grid')}</span><h3>Services</h3>
+        <span class="va">Browse catalog ${ic('i-chev')}</span></header>
+        <div style="display:flex;gap:7px;padding:0 12px 10px">
+          <span class="pill" style="background:var(--tint);color:var(--brand)">Favourites</span>
+          <span class="pill" style="background:var(--sf2);color:var(--mute)">Most used</span>
+          <span class="pill" style="background:var(--sf2);color:var(--mute)">All</span></div>
+        <div class="bd" style="padding:0 12px 12px">${svcRow('',4)}</div></div>`),
+    spec('E·s','Kept separate','Only when a tenant curates favourites editorially and needs them visually privileged.',
+      `<div style="display:flex;flex-direction:column;gap:16px">
+        <div><div class="sh" style="margin-bottom:10px"><h3>Favourite Services</h3></div>${svcRow('',4)}</div>
+        <div><div class="sh" style="margin-bottom:10px"><h3>Most Used Services</h3></div>${svcRow('lr',2)}</div></div>`),
+    spec('E·o','Omitted entirely','Large catalog plus infrequent users: shortcuts are noise and search covers it.',
+      `<div style="padding:26px 10px;text-align:center">
+        <div style="max-width:420px;margin:0 auto">${search('flat',true)}</div>
+        <p style="margin-top:12px;font-size:12.5px;color:var(--mute)">312 services in the catalog · search or browse by category</p></div>`),
+  ],
+  aside:{
+    'The merge is the win':`<b>E·m</b> removes an entire section from the page and a whole class of
+      duplicate-looking content, at the cost of one filter row. On a portal that also carries seven data
+      widgets, that is the cheapest section you will ever delete.`,
+    'Never a grid at 1–2':`A single card in a four-column grid is indistinguishable from three cards
+      that failed to load.`,
+  },
+});
+
+/* ── D1 · My Open Requests ───────────────────────────────────────────────── */
+S.push({
+  id:'w-req', ax:'1', title:'My Open Requests', blurb:
+    `The one widget every portal carries. Its rendering decides whether the page is a
+     <b>dashboard</b> or a <b>list</b> — every other widget then has to follow.`,
+  cols:2,
+  items:[
+    spec('R1','Card list','The default. Two lines per row: subject over timestamp, status right.',
+      card({title:'My Open Requests',icon:'i-ticket',count:REQ_TOTAL,va:'View all',body:reqRows(5)})),
+    spec('R2','Compact table','Five or more attributes per row. Desktop-first; needs horizontal room.',
+      card({body:`<div style="padding:2px 4px 4px">${workTable(5)}</div>`})),
+    spec('R3','Timeline','When recency is the point. Reads as activity rather than as inventory.',
+      card({title:'Recent activity',icon:'i-clock',count:REQ_TOTAL,va:'View all',body:
+        `<div class="tl">${REQUESTS.slice(0,5).map(r=>`<div class="ev"><i style="background:${TONE[r.st].fg}"></i>
+          <span class="tx"><b>${esc(r.s)}</b><s>${r.id} · ${r.st} · ${shortAt(r.at)}</s></span></div>`).join('')}</div>`})),
+    spec('R4','Summary counters + drill-in','When the number is the answer and the list is the drill-down.',
+      card({title:'My Requests',icon:'i-ticket',va:'View all',body:
+        `<div class="cts g3" style="padding:4px 10px 12px">${counter(REQ_TOTAL,'Open','Raised by me',true)}${counter(2,'Pending you')}${counter(0,'Overdue')}</div>`})),
+    spec('R5','Status-grouped columns','Answers “what is stuck?” at a glance. Costs the most horizontal room.',
+      card({title:'My Open Requests',icon:'i-ticket',count:REQ_TOTAL,body:
+        `<div class="cols" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+          ${[['Open','#B45309'],['In Progress','#1D4ED8'],['Pending','#7C3AED']].map(([st,c])=>{
+            const rows = REQUESTS.filter(r=>r.st===st);
+            return `<div class="lane"><h4><i style="background:${c}"></i>${st}<em>${rows.length}</em></h4>
+              ${rows.map(r=>`<div class="mini"><b>${esc(r.s)}</b><s>${r.id}</s></div>`).join('')||
+                `<div class="mini" style="opacity:.5"><b style="font-weight:400;color:var(--mute)">None</b></div>`}</div>`;
+          }).join('')}</div>`})),
+    spec('R6','Rows with an inline progress hint','A thin bar under each row when the tenant runs SLAs and breach risk matters.',
+      card({title:'My Open Requests',icon:'i-ticket',count:REQ_TOTAL,va:'View all',body:
+        REQUESTS.slice(0,4).map((r,i)=>{const p=[82,48,25,94][i];const c=p>90?'#DC2626':p>70?'#D97706':'#22A06B';
+        return `<div class="rw" style="flex-wrap:wrap"><span class="id">${r.id}</span>
+          <span class="tx"><b>${esc(r.s)}</b></span>${pill(r.st)}
+          <span style="flex-basis:100%;display:flex;align-items:center;gap:9px;padding:6px 0 0 0">
+            <span style="flex:1;height:3px;border-radius:999px;background:var(--line);overflow:hidden">
+              <span style="display:block;height:100%;width:${p}%;background:${c};border-radius:999px"></span></span>
+            <span style="font-size:11px;color:var(--mute);flex:none">SLA ${p}%</span></span></div>`}).join('')})),
+    spec('R7','Empty state','Seven widgets means seven of these. Say what the requester CAN do, not that there is nothing.',
+      card({title:'My Open Requests',icon:'i-ticket',count:0,body:
+        `<div class="emptyish"><div style="width:38px;height:38px;border-radius:999px;background:var(--tint);
+          color:var(--brand);display:grid;place-items:center;margin:0 auto 11px">${ic('i-check')}</div>
+          <b style="display:block;font-size:13px;color:var(--ink);font-weight:600">Nothing open</b>
+          <p style="margin-top:4px">Everything you have raised is resolved.</p>
+          <span class="newbtn" style="margin-top:13px;display:inline-flex">${ic('i-plus')}New request</span></div>`})),
+    spec('R8','With the overdue strip inside it','Puts the exception where the records are, instead of adding a band to the page.',
+      card({title:'My Open Requests',icon:'i-ticket',count:REQ_TOTAL,va:'View all',body:
+        `<div class="ovstrip">${ic('i-alert')}2 requests are past their promised date
+          <span class="lk">Show them</span></div>${reqRows(4)}`})),
+  ],
+  aside:{
+    'Pick by question':`“What do I have?” → <b>R1</b>. “What is stuck?” → <b>R5</b>. “How many?” →
+      <b>R4</b>. “What just happened?” → <b>R3</b>. Choosing the rendering IS choosing the question the
+      page answers.`,
+    'The empty state matters most':`A thin tenant sees <b>R7</b> seven times over. Every one has to
+      offer the next action; “No data found” seven times reads as a broken product, not an empty one.`,
+  },
+});
+
+/* ── D2 · Pending Approvals ──────────────────────────────────────────────── */
+S.push({
+  id:'w-appr', ax:'2', title:'Pending Approvals', blurb:
+    `The only widget on the page where the requester is <b>blocking someone else</b>. That is the whole
+     design brief: it should be the thing they can act on without opening a record.`,
+  cols:2,
+  items:[
+    spec('P1','Avatar rows','Who is waiting is the identifying detail, so the avatar leads.',
+      card({title:'Pending Approvals',icon:'i-check',count:2,va:'View all',body:apprRows()})),
+    spec('P2','Rows with the decision inline','Approve and reject on the card. Removes a whole navigation for the common case.',
+      card({title:'Pending Approvals',icon:'i-check',count:2,body:
+        APPROVALS.map(a=>`<div class="rw"><span class="avq" style="background:${a.c}">${a.ini}</span>
+          <span class="tx"><b>${esc(a.s)}</b><s>${a.id} · ${esc(a.r)}</s></span>
+          <span class="dec"><span class="ok">Approve</span><span class="no">Reject</span></span></div>`).join('')})),
+    spec('P3','Counter tile','When approvals are rare. A number and a drill-in beats an empty card most days.',
+      `<div class="cts" style="grid-template-columns:1fr">${counter(2,'Awaiting your approval','Oldest raised 2 days ago',true)}</div>`),
+    spec('P4','Stacked mini-cards','Each approval as its own surface. Best when an approver has many and skims.',
+      `<div style="display:flex;flex-direction:column;gap:10px">${APPROVALS.map(a=>`
+        <div class="cd" style="padding:13px 15px">
+          <div style="display:flex;align-items:center;gap:11px">
+            <span class="avq" style="background:${a.c};width:32px;height:32px">${a.ini}</span>
+            <span style="flex:1;min-width:0"><b style="display:block;font-size:13.5px;font-weight:600;color:var(--ink)">${esc(a.s)}</b>
+              <s style="display:block;text-decoration:none;font-size:11.5px;color:var(--mute);margin-top:2px">${a.by} · ${shortAt(a.at)}</s></span>
+            <span class="id">${a.id}</span></div>
+          <div style="display:flex;gap:8px;margin-top:11px">
+            <span class="dec" style="flex:1"><span class="ok" style="flex:1;text-align:center">Approve</span></span>
+            <span class="dec" style="flex:1"><span class="no" style="flex:1;text-align:center">Reject</span></span></div>
+        </div>`).join('')}</div>`),
+    spec('P5','Merged into the requests card as a tab','Removes a section. Only safe if the count rides in the tab label.',
+      card({body:`${tabs([['My Requests',REQ_TOTAL],['Approvals',2],['Drafts',0]])}
+        <div style="padding:2px 0 4px">${reqRows(4)}</div>`})),
+    spec('P6','Empty state','The good state. Say so plainly rather than showing an empty list.',
+      card({title:'Pending Approvals',icon:'i-check',count:0,body:
+        `<div class="emptyish"><div style="width:38px;height:38px;border-radius:999px;background:#ECFDF3;
+          color:#22A06B;display:grid;place-items:center;margin:0 auto 11px">${ic('i-check')}</div>
+          <b style="display:block;font-size:13px;color:var(--ink);font-weight:600">All clear</b>
+          <p style="margin-top:4px">Nothing is waiting on you.</p></div>`})),
+  ],
+  aside:{
+    'Inline decisions':`<b>P2</b> and <b>P4</b> are the only two renderings where the widget does the
+      job rather than pointing at it. They need a confirm-and-undo, not a confirm dialog — an approval
+      is reversible and a dialog on every one trains people to click through it.`,
+  },
+});
+
+/* ── D3 · Announcements ──────────────────────────────────────────────────── */
+S.push({
+  id:'w-news', ax:'3', title:'Announcements', blurb:
+    `Broadcast, not personal — the only widget on the page that is the same for every requester. That is
+     why it is also the one most often ignored, and why the loudest renderings exist.`,
+  cols:2,
+  items:[
+    spec('N1','List','The default. Dot, headline, posted date.',
+      card({title:'Announcements',icon:'i-bell',count:2,va:'View all',body:newsRows()})),
+    spec('N2','Timeline','When there are many and recency ranks them.',
+      card({title:'Announcements',icon:'i-bell',count:4,body:
+        `<div class="tl">${[...NEWS,{t:'Service desk hours change from 1 September',at:'Posted Wed, Aug 06'},
+          {t:'Windows 11 upgrade waves published',at:'Posted Mon, Aug 04'}].map(n=>`
+          <div class="ev"><i style="background:var(--brand)"></i>
+            <span class="tx"><b>${esc(n.t)}</b><s>${esc(n.at)}</s></span></div>`).join('')}</div>`})),
+    spec('N3','Single-line notice bar','One line, full width, no card. The cheapest way to be seen.',
+      `<div class="notice">${ic('i-bell')}<span><b>Planned network maintenance</b> — Sat 16 Aug, 02:00–05:00</span>
+        <span class="more">2 notices ›</span></div>`),
+    spec('N4','Alert band','For an announcement that is actually an incident. Reserve it, or it stops working.',
+      `<div class="alert soft"><span class="ai">${ic('i-alert')}</span>
+        <span class="tx"><b>Email delivery is delayed for some users</b><s>Investigating · updated 12 minutes ago</s></span>
+        <span class="cta">Status page</span></div>`),
+    spec('N5','Carousel','Rotates several notices through one slot. Costs discoverability for the ones not showing.',
+      `<div class="car"><div class="track">
+        <div class="slide"><span class="kick">Maintenance</span><b>Planned network maintenance</b>
+          <s>Saturday 16 August, 02:00–05:00</s><span class="go">What is affected</span></div>
+        <div class="slide b"><span class="kick">Rollout</span><b>New VPN client next week</b>
+          <s>Automatic for managed laptops</s><span class="go">Read more</span></div>
+      </div><div class="dots"><i class="on"></i><i></i><i></i></div></div>`),
+    spec('N6','Merged with Contact Us','Announcements and Contact are both “what the desk wants you to know”.',
+      card({title:'From the service desk',icon:'i-bell',body:
+        `${newsRows()}<div style="height:1px;background:var(--line);margin:8px 10px"></div>${contactRows()}`})),
+  ],
+  aside:{
+    'Escalation ladder':`<b>N1</b> is ambient, <b>N3</b> is unmissable-but-calm, <b>N4</b> is an
+      interruption. A tenant that uses N4 for routine notices has spent the loudest thing on the page and
+      has nothing left for a real outage.`,
+    'Empty':`Announcements is the widget most likely to be empty forever. If a tenant never posts, the
+      section should hide itself rather than show “No announcements”.`,
+  },
+});
+
+/* ── D4 · My Assets & My CIs ─────────────────────────────────────────────── */
+S.push({
+  id:'w-assets', ax:'4', title:'My Assets & My CIs', blurb:
+    `The clearest merge candidate on the page: two widgets, identical row shape, and most requesters
+     would name both “my stuff”. The rule for merging is exactly that — <b>merge only what a user would
+     name with one word.</b>`,
+  cols:2,
+  items:[
+    spec('S1','Two separate cards','Honest, and correct when a tenant’s CIs are meaningfully different from their assets.',
+      `<div class="g2">${card({title:'My Assets',icon:'i-box',count:4,va:'View all',body:tileGrid(ASSETS,1)})}
+        ${card({title:'My CIs',icon:'i-server',count:4,va:'View all',body:tileGrid(CIS,1)})}</div>`),
+    spec('S2','One card, two tabs','Halves the section count and keeps both counts visible in the labels.',
+      card({title:'My Records',icon:'i-box',va:'View all',body:
+        `${tabs([['Assets',4],['CIs',4]])}<div style="padding:2px 0 4px">${tileGrid(ASSETS,2)}</div>`})),
+    spec('S3','One merged tile grid','When the distinction genuinely does not matter to the requester.',
+      card({title:'My Assets · My CIs',icon:'i-box',count:8,va:'View all',
+        body:tileGrid(ASSETS.slice(0,2).concat(CIS.slice(0,2)),2)})),
+    spec('S4','Compact table','For requesters with 20+ items, where a tile grid becomes a wall.',
+      card({title:'My Assets',icon:'i-box',count:12,va:'View all',body:
+        `<div style="padding:2px 4px 4px"><table class="tb">
+          <thead><tr><th style="width:76px">ID</th><th>Name</th><th style="width:100px">Type</th><th style="width:96px">Status</th></tr></thead>
+          <tbody>${ASSETS.map(a=>`<tr><td class="id">${a.id}</td><td class="sub">${esc(a.n)}</td>
+            <td class="mt">${esc(a.t)}</td><td>${pill('Resolved').replace('Resolved','In Use')}</td></tr>`).join('')}</tbody>
+        </table></div>`})),
+    spec('S5','Counter + drill-in','When almost nobody opens it but the count reassures.',
+      `<div class="cts g2">${counter(4,'Assets','Assigned to you',true)}${counter(4,'Configuration items','You are listed as user')}</div>`),
+    spec('S6','Empty — and honest about why','Most requesters have no CIs. Say what a CI is rather than “No data found”.',
+      card({title:'My CIs',icon:'i-server',count:0,body:
+        `<div class="emptyish"><div style="width:38px;height:38px;border-radius:999px;background:var(--tint);
+          color:var(--brand);display:grid;place-items:center;margin:0 auto 11px">${ic('i-server')}</div>
+          <b style="display:block;font-size:13px;color:var(--ink);font-weight:600">No configuration items</b>
+          <p style="margin-top:4px;max-width:34ch;margin-left:auto;margin-right:auto">CIs are the servers and
+            services you are listed against. Most people have none.</p></div>`})),
+  ],
+  aside:{
+    'The merge test':`Would a requester say “my assets and my CIs” or just “my stuff”? If the second,
+      <b>S2</b> or <b>S3</b>. If a tenant’s CIs are genuinely production systems the requester owns,
+      <b>S1</b> — merging then hides a distinction that matters.`,
+  },
+});
+
+/* ── D5 · Contact Us ─────────────────────────────────────────────────────── */
+S.push({
+  id:'w-contact', ax:'5', title:'Contact Us', blurb:
+    `Two fixed values that never change, given a full card by default. Almost every rendering below is
+     smaller than the current one, and that is the point — <b>a card is the most expensive shape on the
+     page</b> and this content does not need one.`,
+  cols:2,
+  items:[
+    spec('K1','Label over value','The current shape. Correct when contact is genuinely a section.',
+      card({title:'Contact Us',icon:'i-phone',body:contactRows()})),
+    spec('K2','One line','Same information, one row, no card. Sits under any section as a footer.',
+      `<div class="cline">${CONTACT.map(c=>`<a>${ic(c.i)}${esc(c.v)}</a>`).join('')}
+        <a style="color:var(--brand);font-weight:600">Open a chat ${ic('i-chev')}</a></div>`),
+    spec('K3','Action buttons','Contact as two things you DO, not two facts you read.',
+      card({title:'Contact Us',icon:'i-phone',body:
+        `<div class="cbtns"><span>${ic('i-mail')}Email the desk</span><span>${ic('i-phone')}Call</span></div>`})),
+    spec('K4','Named agent','When the tenant has assigned support staff. Turns a channel into a person.',
+      card({title:'Your service desk',icon:'i-phone',body:
+        `<div class="agent"><span class="pic">MK</span>
+          <span class="tx"><b>Meera Kulkarni</b><s>Service desk lead · replies within 2h</s></span>
+          <span class="cta">Message</span></div>
+        <div style="height:1px;background:var(--line);margin:2px 10px 6px"></div>${contactRows()}`})),
+    spec('K5','Page footer strip','Off the card grid entirely. Available everywhere, competing with nothing.',
+      `<div style="padding:14px 16px;border-top:1px solid var(--line);display:flex;align-items:center;
+        gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--mute)">
+        <span>Need help with something else?</span>
+        ${CONTACT.map(c=>`<a style="display:inline-flex;align-items:center;gap:7px;color:var(--ink2);text-decoration:none">
+          ${ic(c.i)}${esc(c.v)}</a>`).join('')}
+        <span style="margin-left:auto;color:var(--brand);font-weight:600;cursor:pointer">Service status ›</span></div>`),
+  ],
+  aside:{
+    'Default should change':`<b>K2</b> or <b>K5</b> for most tenants. Contact Us as a full card next to
+      My Open Requests gives two unchanging strings the same visual weight as seventeen live records.`,
+  },
+});
+
+/* ── D6 · FAQ ────────────────────────────────────────────────────────────── */
+S.push({
+  id:'w-faq', ax:'6', title:'FAQ', blurb:
+    `New. Distinct from Knowledge: an <b>authored</b> short list the desk maintains, not a search result.
+     It deflects the four questions the desk is tired of answering, which is the only reason to carry it.`,
+  cols:2,
+  items:[
+    spec('F1','Accordion','One open at a time. The densest way to show four questions and one answer.',
+      card({title:'Frequently asked',icon:'i-bulb',count:4,body:
+        `<div class="faq">${FAQS.map((f,i)=>`<div class="q">
+          <div class="qh ${i===0?'open':''}">${ic('i-chev')}<b>${f.q}</b></div>
+          ${i===0?`<div class="qb">${f.a}</div>`:''}</div>`).join('')}</div>`})),
+    spec('F2','Two-column list','Question and a one-line answer, both visible. No interaction at all.',
+      card({title:'Frequently asked',icon:'i-bulb',count:4,body:
+        `<div class="faqcols">${FAQS.map(f=>`<div class="faqrow"><b>${f.q}</b><s>${f.a}</s></div>`).join('')}</div>`})),
+    spec('F3','Numbered list','Reads as a curated top four rather than an arbitrary set. Links out to the article.',
+      card({title:'Top questions',icon:'i-bulb',va:'All FAQs',body:
+        `<div class="faqnum">${FAQS.map(f=>`<div class="n"><b>${f.q}</b></div>`).join('')}</div>`})),
+    spec('F4','Search-led','A field over the list, so a question not in the four still goes somewhere.',
+      card({title:'Frequently asked',icon:'i-bulb',body:
+        `<div style="padding:2px 10px 10px">${search('flat sm')}</div>
+         <div class="faqnum" style="padding-top:0">${FAQS.slice(0,3).map(f=>`<div class="n"><b>${f.q}</b></div>`).join('')}</div>`})),
+    spec('F5','Card grid','Each question as a tile. Good in a wide slot, wasteful in a narrow one.',
+      `<div class="g2">${FAQS.slice(0,4).map(f=>`<div class="cd" style="padding:14px 16px">
+        <b style="display:block;font-size:13px;font-weight:600;color:var(--ink);line-height:1.4">${f.q}</b>
+        <p style="margin-top:6px;font-size:12px;color:var(--mute);line-height:1.5">${f.a}</p></div>`).join('')}</div>`),
+  ],
+  aside:{
+    'Not Knowledge':`Knowledge is a searchable corpus; FAQ is four authored answers. If the tenant is
+      populating FAQ from KB articles they have two names for one thing — carry <b>one</b>.`,
+    'Same widget as the accordion':`<b>F1</b> is the Accordion element with FAQ content. Shipping both
+      as separate palette entries gives one widget two names and two ways to edit it.`,
+  },
+});
+
+/* ── D7 · Overdue ────────────────────────────────────────────────────────── */
+S.push({
+  id:'w-overdue', ax:'7', title:'Overdue banner', blurb:
+    `New. The one thing on the page that must survive being ignored. Its whole design question is
+     <b>how loud</b>, and the honest answer depends on whether it is ever empty — a band that is
+     usually absent can be loud; one that is always there cannot.`,
+  cols:2,
+  items:[
+    spec('O1','Full-width alert band','Top of the page, above everything. Loudest, and correct when a breach costs money.',
+      `<div class="alert"><span class="ai">${ic('i-alert')}</span>
+        <span class="tx"><b>2 of your requests are past their promised date</b>
+          <s>INC-178 · 3 days over · INC-159 · 1 day over</s></span>
+        <span class="cta">Review them</span></div>`),
+    spec('O2','Soft band','Amber rather than red. For “needs attention” rather than “something is broken”.',
+      `<div class="alert soft"><span class="ai">${ic('i-clock')}</span>
+        <span class="tx"><b>1 request is due today</b><s>SR-201 · Request for New Laptop</s></span>
+        <span class="cta">Open</span></div>`),
+    bleedSpec('O3','Edge-to-edge strip','No radius, no margin — sits between the banner and the content like page chrome.',
+      `<div><div class="alert edge"><span class="ai">${ic('i-alert')}</span>
+        <span class="tx"><b>2 requests are past their promised date</b></span>
+        <span class="cta">Review</span></div>
+        <div style="padding:18px">${card({title:'My Open Requests',icon:'i-ticket',count:REQ_TOTAL,body:reqRows(2)})}</div></div>`),
+    spec('O4','Inside the requests card','Puts the exception where the records are. Adds no band to the page.',
+      card({title:'My Open Requests',icon:'i-ticket',count:REQ_TOTAL,va:'View all',body:
+        `<div class="ovstrip">${ic('i-alert')}2 requests are past their promised date
+          <span class="lk">Show them</span></div>${reqRows(3)}`})),
+    spec('O5','Counter tile','Part of the readout row. Loud only when the number is non-zero.',
+      `<div class="cts g3">${counter(REQ_TOTAL,'Open requests','Raised by me')}
+        ${counter(2,'Overdue','Past promised date',true).replace('ct-tile ','ct-tile warn ')}${counter(2,'Awaiting approval')}</div>
+        <p style="margin-top:9px;font-size:12px;color:var(--mute)">The same tile at zero is grey and says
+          “Nothing breaching” — which is why this rendering can live on the page permanently.</p>`),
+    spec('O6','Per-row flag','No band at all: the affected rows carry the flag themselves.',
+      card({title:'My Open Requests',icon:'i-ticket',count:REQ_TOTAL,body:
+        REQUESTS.slice(0,4).map((r,i)=>`<div class="rw" style="${i<2?'background:#FEF6F5':''}">
+          <span class="id" ${i<2?'style="background:#FEE4E2;color:#B42318"':''}>${r.id}</span>
+          <span class="tx"><b>${esc(r.s)}</b><s>${i<2?`<span style="color:#B42318;font-weight:600">${[3,1][i]} days over</span> · `:''}${shortAt(r.at)}</s></span>
+          ${pill(r.st)}</div>`).join('')})),
+  ],
+  aside:{
+    'The rule':`A band that is <b>usually absent</b> may be red (<b>O1</b>). A band that is
+      <b>always present</b> must be a counter (<b>O5</b>) or a row flag (<b>O6</b>) — a permanent red
+      strip becomes furniture within a week and then stops working when it matters.`,
+    'Never both':`O1 plus O4 plus O6 on one page says the same thing three times and makes the page
+      look broken rather than urgent. Pick one.`,
+  },
+});
+
+/* ── D8 · Carousel ───────────────────────────────────────────────────────── */
+S.push({
+  id:'w-carousel', ax:'8', title:'Carousel', blurb:
+    `New, and the widget most likely to be regretted. Everything past the first slide is a click away,
+     so it trades <b>discoverability for space</b> — worth it for editorial content nobody was looking
+     for, never worth it for something the requester came to do.`,
+  cols:2,
+  items:[
+    spec('C·a','Information slides · dots','Announcements, campaigns, policy. Dots say how many there are.',
+      `<div class="car"><div class="track">
+        <div class="slide"><span class="kick">Maintenance</span><b>Planned network maintenance</b>
+          <s>Saturday 16 August, 02:00–05:00 · all sites</s><span class="go">What is affected</span></div>
+        <div class="slide b"><span class="kick">Rollout</span><b>New VPN client next week</b>
+          <s>Automatic for managed laptops</s><span class="go">Read more</span></div>
+      </div><div class="dots"><i class="on"></i><i></i><i></i></div></div>`),
+    spec('C·b','Action slides','Each slide is a destination. A hero action that can rotate by audience or season.',
+      `<div class="car"><div class="track">
+        <div class="slide c"><span class="kick">Onboarding</span><b>Starting someone new?</b>
+          <s>One form covers accounts, laptop and access</s><span class="go">Start onboarding</span></div>
+        <div class="slide"><span class="kick">Hardware</span><b>Laptop refresh is open</b>
+          <s>You are eligible from 1 September</s><span class="go">See options</span></div>
+      </div><div class="dots"><i class="on"></i><i></i></div></div>`),
+    spec('C·c','Arrows instead of dots','Better when slides are equal peers and the count does not matter.',
+      `<div class="car"><div class="arrows"><span>${ic('i-chev')}</span><span>${ic('i-chev')}</span></div>
+        <div class="track">
+        <div class="slide b"><span class="kick">Knowledge</span><b>How to reset your password</b>
+          <s>KB-4 · read 2,140 times this month</s><span class="go">Open article</span></div>
+        <div class="slide"><span class="kick">Knowledge</span><b>Connecting to company VPN</b>
+          <s>KB-1 · updated last week</s><span class="go">Open article</span></div>
+      </div></div>`),
+    spec('C·d','Progress bar','For an auto-advancing carousel. The bar is the only honest way to show it will move.',
+      `<div class="car"><div class="track">
+        <div class="slide"><span class="kick">Service status</span><b>All services operational</b>
+          <s>Last incident 14 days ago</s><span class="go">Status page</span></div>
+        <div class="slide b"><span class="kick">Survey</span><b>Rate your last request</b>
+          <s>INC-151 · Monitor Flickering · resolved</s><span class="go">Give feedback</span></div>
+      </div><div class="bar"><i></i></div></div>`),
+    spec('C·e','Mixed information + action','One rail carrying whatever the desk needs to push this week.',
+      `<div class="car"><div class="track" style="gap:10px">
+        <div class="slide" style="width:44%"><span class="kick">Notice</span><b>Network maintenance Sat</b>
+          <s>02:00–05:00</s></div>
+        <div class="slide c" style="width:44%"><span class="kick">Do</span><b>Laptop refresh open</b>
+          <s>You are eligible</s><span class="go">See options</span></div>
+        <div class="slide b" style="width:44%"><span class="kick">Read</span><b>VPN setup guide</b>
+          <s>KB-1</s></div>
+      </div><div class="dots"><i class="on"></i><i></i></div></div>`),
+    spec('C·f','Static row instead','The honest alternative. Three slides that all fit are not a carousel, they are a row.',
+      `<div class="g3">${[['Maintenance','Network maintenance Sat','02:00–05:00'],
+        ['Rollout','New VPN client','Next week'],['Knowledge','Password reset','KB-4']].map(([k,t,s])=>`
+        <div class="cd" style="padding:14px 16px">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;letter-spacing:.12em;
+            text-transform:uppercase;color:var(--brand);margin-bottom:7px">${k}</div>
+          <b style="display:block;font-size:13.5px;font-weight:600;color:var(--ink);line-height:1.35">${t}</b>
+          <s style="display:block;text-decoration:none;font-size:12px;color:var(--mute);margin-top:4px">${s}</s>
+        </div>`).join('')}</div>`),
+  ],
+  aside:{
+    'Before you ship one':`If the slides fit side by side at 1440, <b>C·f</b> is strictly better — same
+      content, no hidden state, no keyboard trap, no auto-advance to fight. A carousel earns its place
+      only when the content genuinely does not fit.`,
+    'Accessibility':`Any auto-advance needs a pause control and must stop on focus. Dots must be real
+      buttons with labels, not decoration.`,
+  },
+});
+
+/* ── F · page composition archetype ──────────────────────────────────────── */
+const skRow = n => `<div class="r">${Array.from({length:n},()=>`<div class="b" style="height:26px"></div>`).join('')}</div>`;
+S.push({
+  id:'f', ax:'F', title:'Page composition archetype', blurb:
+    `Where the fold falls, and therefore which job the page is for. The dashed line is roughly 900px on
+     a 1440 screen — everything above it is what a requester sees before scrolling.`,
+  cols:4,
+  items:[
+    spec('F1','Classic top-down','Banner, actions, services, data. Familiar, and the safest gallery default.',
+      `<div class="sk"><div class="b brand" style="height:52px"></div>${skRow(4)}${skRow(4)}
+        <div class="fold"></div><div class="r grow"><div class="b"></div><div class="b"></div><div class="b"></div></div></div>`),
+    spec('F2','Content + persistent rail','Approvals and reference stay visible while the main column scrolls.',
+      `<div class="sk"><div class="b brand" style="height:44px"></div>
+        <div class="r grow"><div style="flex:2;display:flex;flex-direction:column;gap:6px">
+          ${skRow(3)}<div class="b" style="flex:1"></div></div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+            <div class="b" style="height:52px"></div><div class="b" style="flex:1"></div></div></div>
+        <div class="fold"></div></div>`),
+    spec('F3','Two-column split · do ÷ know','Do and See side by side. Strong for approvers.',
+      `<div class="sk"><div class="b brand" style="height:44px"></div>
+        <div class="r grow"><div style="flex:1;display:flex;flex-direction:column;gap:6px">
+          <div class="b" style="height:26px"></div><div class="b" style="height:26px"></div><div class="b" style="flex:1"></div></div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+            <div class="b line" style="flex:1"></div><div class="b line" style="height:40px"></div></div></div>
+        <div class="fold"></div></div>`),
+    spec('F4','Bento / mosaic','Expressive; hardest to keep stable when admins toggle sections off.',
+      `<div class="sk"><div class="b brand" style="height:40px"></div>
+        <div class="r grow"><div style="flex:2;display:flex;flex-direction:column;gap:6px">
+          <div class="b" style="flex:2"></div>${skRow(2)}</div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+            <div class="r"><div class="b" style="height:30px"></div><div class="b" style="height:30px"></div></div>
+            <div class="b" style="flex:1"></div><div class="b" style="height:34px"></div></div></div>
+        <div class="fold"></div></div>`),
+    spec('F5','Dashboard-first','Data above actions. For users who visit daily and already know what to do.',
+      `<div class="sk">${skRow(4)}<div class="b" style="height:74px"></div>
+        <div class="fold"></div>${skRow(4)}<div class="b brand grow"></div></div>`),
+    spec('F6','Search-first minimal','For large catalogs and infrequent users. Lives or dies on search quality.',
+      `<div class="sk"><div class="b brand" style="height:60px"></div>
+        <div class="b" style="height:30px"></div>${skRow(3)}
+        <div class="fold"></div><div class="b grow"></div></div>`),
+    spec('F7','Card feed','One chronological column of mixed items. Good on mobile, unusual at 1440.',
+      `<div class="sk"><div class="b brand" style="height:40px"></div>${skRow(4)}
+        <div class="b grow"></div><div class="fold"></div></div>`),
+    spec('F8','Tabbed workspace','The whole page is one container. Maximum density, minimum discovery.',
+      `<div class="sk"><div class="b brand" style="height:26px"></div><div class="b" style="height:22px"></div>
+        <div class="b grow"></div><div class="fold"></div></div>`),
+  ],
+  aside:{
+    'The fold decides':`<b>F1</b> puts the door above the fold and your work below it. <b>F5</b> does the
+      opposite. That single choice matters more than every visual decision on this page combined, because
+      it decides who the portal is for.`,
+    'Sparse tenants':`<b>F4</b> is the least resilient — every tile needs a span, so a tenant with no
+      announcements and no assets gets a mosaic with holes. <b>F1</b> and <b>F2</b> degrade to a shorter
+      page and nothing else.`,
+  },
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BOOT — everything renders synchronously; nothing waits on an observer.
+   ═══════════════════════════════════════════════════════════════════════════ */
+const out = document.getElementById('out'), idx = document.getElementById('idx');
+
+out.innerHTML = S.map(g => `
+  <section class="grp" id="${g.id}">
+    <div class="grp-head"><span class="ax">${esc(g.ax)}</span><h2>${esc(g.title)}</h2>
+      <span class="cnt">${g.items.length} option${g.items.length === 1 ? '' : 's'}</span></div>
+    <p class="blurb">${g.blurb}</p>
+    <div class="wallrow w${g.cols}">
+      ${g.items.map(it => `
+        <div class="spec">
+          <div class="spec-lbl"><span class="k">${esc(it.k)}</span><h3>${esc(it.name)}</h3>
+            ${it.tag ? `<span class="tag">${esc(it.tag)}</span>` : ''}</div>
+          <p class="spec-note">${esc(it.note)}</p>
+          <div class="stage ${it.bleed ? '' : 'pad'}">
+            <div class="pt">${it.html}</div>
+          </div>
+        </div>`).join('')}
+    </div>
+    ${g.aside ? `<dl class="aside">${Object.entries(g.aside).map(([k,v]) =>
+      `<dt>${esc(k)}</dt><dd>${v}</dd>`).join('')}</dl>` : ''}
+  </section>`).join('');
+
+idx.insertAdjacentHTML('beforeend', S.map(g =>
+  `<a href="#${g.id}">${esc(g.title)}</a>`).join(''));
+
+/* The interactive bits are real — a control that looks live and does nothing is the one thing a
+   parts catalogue must not teach. */
+document.addEventListener('click', e => {
+  const tab = e.target.closest('.tabs button');
+  if (tab) { tab.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('on'));
+    tab.classList.add('on'); return; }
+  const qh = e.target.closest('.faq .qh');
+  if (qh) {
+    const wrap = qh.closest('.faq');
+    wrap.querySelectorAll('.qh.open').forEach(o => { if (o !== qh) { o.classList.remove('open');
+      const b = o.nextElementSibling; if (b && b.classList.contains('qb')) b.remove(); } });
+    const open = qh.classList.toggle('open');
+    const body = qh.nextElementSibling;
+    if (open && !(body && body.classList.contains('qb'))) {
+      const i = [...wrap.querySelectorAll('.qh')].indexOf(qh);
+      qh.insertAdjacentHTML('afterend', `<div class="qb">${FAQS[i] ? FAQS[i].a : ''}</div>`);
+    } else if (!open && body && body.classList.contains('qb')) body.remove();
+    return;
+  }
+  const ct = e.target.closest('.ct-tile');
+  if (ct) { ct.parentElement.querySelectorAll('.ct-tile').forEach(c => c.classList.remove('on'));
+    ct.classList.add('on'); }
+});
+</script>
