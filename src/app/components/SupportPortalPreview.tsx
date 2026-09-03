@@ -954,9 +954,9 @@ const SPINE: Record<string, string> = {
  * Every switch here comes from the widget's own config, so unticking "Show total count" in the
  * drawer removes the badge on the canvas immediately. `nodeId` drives the typography roles, which
  * resolve up the chain — a colour set on the Cards Row lands on all three of its cards. */
-function CardShell({ nodeId, titleNodeId, title, count, cfg = EMPTY_CFG, children }: {
+function CardShell({ nodeId, titleNodeId, title, count, cfg = EMPTY_CFG, hideHead, children }: {
   nodeId?: string; titleNodeId?: string; title: string; count: number;
-  cfg?: Record<string, unknown>; children: ReactNode;
+  cfg?: Record<string, unknown>; hideHead?: boolean; children: ReactNode;
 }) {
   const { styles } = useCanvas();
   const rid = nodeId ?? titleNodeId ?? '';
@@ -980,6 +980,11 @@ function CardShell({ nodeId, titleNodeId, title, count, cfg = EMPTY_CFG, childre
      The header is one line at any width: the title truncates, the count and the link never shrink,
      and the "View all" WORD drops below 240px so the chevron alone carries the affordance rather
      than the whole row wrapping to two lines. */
+  /* ⚠️ A PROP, not a config key. Whether this card shows its own heading is a decision the
+     LAYOUT makes — inside a tabbed container the tab label already says which list this is, and
+     printing it twice one line apart is the same words competing with themselves. An admin never
+     asked for it, so it does not belong in their config. */
+  if (hideHead) return <div className="@container flex min-w-0 flex-col pt-1">{children}</div>;
   return (
     <div className="@container flex min-w-0 flex-col">
       <div className="flex items-center gap-2 px-4 pb-2.5 pt-3.5">
@@ -1177,6 +1182,31 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
      colour names the KIND of card at a glance, which a page of identical white boxes cannot do. */
   const cardLook = String(pageCfg.cardLook ?? 'panel');
   const spineCards = cardLook === 'spine';
+  /* ⚠️ Five more, and each is independently useful — a light banner needs dark ink whatever else
+     the page does, and a tabbed work band is a decision on its own. Behind one `skin` key they
+     could only ever move together, which is a TEMPLATE's job (it bundles them in its seed), not a
+     config's. Same rule the three above already follow: these change SHAPE, not hue. */
+  /* Ink ON the banner. A pale band with the default white heading is an invisible heading, so
+     this travels with any light `bannerColor` — it is not tied to one template. */
+  const darkHeroInk = String(pageCfg.heroInk ?? 'light') === 'dark';
+  /* Action cards as centred TILES — icon above the words — and the arrow moves to the top-right
+     corner on hover. A permanent link at the foot of every card is four links competing; a hover
+     affordance in the corner is one, and only while you are pointing at it. */
+  const tileActions = String(pageCfg.quickLook ?? 'row') === 'tile';
+  /* Services on a tinted PANEL rather than loose on the page ground. */
+  const servicesPanel = String(pageCfg.servicesLook ?? 'plain') === 'panel';
+  /* ⚠️ Where the rail LIVES, not what is in it — membership is still the `rail` array. Beside the
+     services panel the rail reads as "what the desk wants you to know"; beside the work cards it
+     reads as more of your own records, which is not what Announcements and Contact are. */
+  const railInServices = String(pageCfg.railHome ?? 'work') === 'services';
+  /* Requests, Approvals and Most Read in ONE container. See the branch — each panel still mounts
+     the real card node, so all three keep their selection and their widget drawer. */
+  const workTabs = String(pageCfg.workLook ?? 'cards') === 'tabs';
+  /* Contact Us as the page's one dark surface, so it reads as the last resort. */
+  const darkHelp = String(pageCfg.helpLook ?? 'plain') === 'dark';
+  /* Which of the three work tabs is open. Local, because it is a reading position rather than a
+     property of the page — nothing an admin sets and nothing to persist. */
+  const [workTab, setWorkTab] = useState('requests');
 
   const heroBg: React.CSSProperties = pageImage
     ? { backgroundColor: String(heroCfg.bannerColor ?? '#3D8BD0'), backgroundImage: 'none' }
@@ -1186,7 +1216,15 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
        thing they came to set — so `bannerStyle` sits beside it and deepens the same value.
        The glow is a radial highlight offset to the upper left, which is what keeps a large flat
        band from reading as a printed rectangle. */
-    ? (String(heroCfg.bannerStyle ?? 'flat') === 'gradient'
+    /* ⚠️ A THIRD value on the same key, not a new one. `gradient` deepens toward navy, which is
+       correct for a dark band and wrong for a pale one — it would drag light green to near-black.
+       `light` runs the falloff the other way: the same one hex, lifted toward white. */
+    ? (String(heroCfg.bannerStyle ?? 'flat') === 'light'
+      ? {
+        backgroundColor: String(heroCfg.bannerColor ?? '#D5E9DE'),
+        backgroundImage: `radial-gradient(120% 150% at 82% 8%, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0) 58%), linear-gradient(158deg, ${String(heroCfg.bannerColor ?? '#D5E9DE')} 0%, #EEF7F2 54%, #E2F0E9 100%)`,
+      }
+      : String(heroCfg.bannerStyle ?? 'flat') === 'gradient'
       ? {
         backgroundColor: String(heroCfg.bannerColor ?? '#3D8BD0'),
         backgroundImage: `radial-gradient(120% 140% at 18% 0%, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0) 55%), linear-gradient(135deg, ${String(heroCfg.bannerColor ?? '#3D8BD0')} 0%, #0B1B3F 100%)`,
@@ -1308,7 +1346,23 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
      0, so the main region — which draws two cards from `work` and two from `records` — came out
      as 0, 1, 0, 1 and CSS interleaved them: Requests, Assets, Approvals, CIs. An order is only
      meaningful within ONE list, and this region mixes two. */
-  const card = (id: string, body: ReactNode, cols?: number, gap = 16, grow = 1, orderAt?: number, look?: { full?: boolean }) => {
+  /* ⚠️ The rail's two cards, built in ONE place because they now have TWO possible homes — beside
+     the services panel or inside the work band. Authoring them at each call site is two places for
+     a fix to land in one, which is the same reason the work band builds its cards as consts.
+     (It calls `card` below; a const arrow is only read at call time, and every call happens
+     during render, long after both are initialised.) */
+  const railCard = (id: string) => {
+    if (id === 'news') return card('news', <div className="p-4"><AnnouncementsRender nodeId="news" cfg={{ title: 'Announcements', ...wc('news') }} /></div>, 1, secGap('work'), 1);
+    if (id !== 'contact') return null;
+    const body = <ContactRender nodeId="contact" cfg={{ title: 'Contact Us', ...wc('contact') }} />;
+    /* ⚠️ `bare` on the dark one, or the card paints a white surface and the dark panel sits
+       inside it with a white ring showing at every corner. The panel IS the card here. */
+    return darkHelp
+      ? card('contact', <div className="portal-help-dark rounded-xl bg-[linear-gradient(152deg,#1E3050_0%,#16233A_62%,#101B2E_100%)] p-4">{body}</div>, 1, secGap('work'), 1, undefined, { bare: true })
+      : card('contact', <div className="p-4">{body}</div>, 1, secGap('work'), 1);
+  };
+
+  const card = (id: string, body: ReactNode, cols?: number, gap = 16, grow = 1, orderAt?: number, look?: { full?: boolean; bare?: boolean }) => {
     if (removed.includes(id)) return null;
     /* ⚠️ Membership comes from `rowOf` — the STATIC map of which row a card belongs to — not from
        searching the live `rowOrder`. Deleting a fixed card takes it out of `rowOrder`, so a search
@@ -1324,7 +1378,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
     return cardInner(id, body, cols, order, gap, grow, look);
   };
 
-  const cardInner = (id: string, body: ReactNode, cols: number | undefined, order: number, gap = 16, grow = 1, look?: { full?: boolean }) => (
+  const cardInner = (id: string, body: ReactNode, cols: number | undefined, order: number, gap = 16, grow = 1, look?: { full?: boolean; bare?: boolean }) => (
     /* ⚠️ No overflow-hidden here. The chip sits at -top-4 and the toolbar at -top-11, both OUTSIDE
        the wrapper — clipping it silently removes the card's hover outline and quick actions. */
     /* ⚠️ `min-w-0` is what makes the row honour its column count. Without it a card's widest
@@ -1350,7 +1404,12 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
        kind, and nobody can tell you which. */
     <Sel
       id={id}
-      className={spineCards
+      /* ⚠️ `bare` paints NO surface. A card mounted inside a container that already draws a
+         border and a background would otherwise draw a second one 1px inside the first — which is
+         what a tabbed work band looked like before this existed. */
+      className={look?.bare
+        ? 'min-w-0'
+        : spineCards
         ? 'min-w-0 overflow-hidden rounded-[14px] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04),0_8px_24px_-12px_rgba(16,24,40,0.14)]'
         : 'min-w-0 rounded-xl border border-[#E5E7EB] bg-white'}
       style={{ ...(cols ? share(cols, gap, grow) : {}), ...(look?.full ? { gridColumn: '1 / -1' } : {}), order }}
@@ -1464,7 +1523,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                 pushed its own content further off centre, which is the opposite of what raising the
                 height is for. */}
             <div
-              className={`relative flex flex-col justify-center pb-[86px] ${searchFloats ? 'overflow-visible' : 'overflow-hidden'}`}
+              className={`relative flex flex-col justify-center ${tileActions && !searchFloats ? 'pb-10' : 'pb-[86px]'} ${searchFloats ? 'overflow-visible' : 'overflow-hidden'}`}
               style={{
                 /* ⚠️ The tabs decide, in one place. Image wins when one is uploaded; Colour paints
                    flat; and with neither the band keeps its gradient, so a portal nobody has touched
@@ -1518,7 +1577,10 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                   </h2>
                 </Sel>
                 <Sel id="hero-subtitle" className="mt-2 block w-full px-1" style={heroLine('hero-subtitle')}>
-                  <p style={{ ...roleStyle(styles, 'hero', 'subtitle'), ...st('hero-subtitle') }} className="text-[15px] text-white/85">
+                  {/* ⚠️ The heading has `headingColor`; the line under it had a hard-coded
+                      white/85 and no control at all — so a light banner printed a legible title
+                      over an invisible subtitle. It follows the same ink decision. */}
+                  <p style={{ ...roleStyle(styles, 'hero', 'subtitle'), ...(darkHeroInk ? { color: 'rgba(15,51,39,0.72)' } : null), ...st('hero-subtitle') }} className={`text-[15px] ${darkHeroInk ? '' : 'text-white/85'}`}>
                     {String(wc('hero').sub ?? content.hero.subtitle)}
                   </p>
                 </Sel>
@@ -1530,7 +1592,15 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                   <Sel
                     id="hero-search"
                     className="mt-5 w-full"
-                    style={{ maxWidth: `${Number(wc('hero').searchWidth ?? 70)}%`, marginLeft: 'auto', marginRight: 'auto' }}
+                    /* ⚠️ The field follows the BAND's alignment. It was hard-centred, so a hero set
+                       to left-align printed its heading and subtitle on the left and then dropped
+                       the search in the middle — one band with two alignments, and the control was
+                       the odd one out. `heroLine` already answers this question for the two lines
+                       above it; this is the same answer applied to the third. */
+                    style={{ maxWidth: `${Number(wc('hero').searchWidth ?? 70)}%`, ...(() => {
+                      const a = String(styles['hero-search']?.align ?? heroAlignX(String(wc('hero').contentAlign ?? 'center')));
+                      return { marginLeft: a === 'left' ? 0 : 'auto', marginRight: a === 'right' ? 0 : 'auto' };
+                    })() }}
                   >
                     <HeroSearch
                       cfg={wc('hero')}
@@ -1556,7 +1626,15 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                   <Sel
                     id="hero-search"
                     className="block w-full"
-                    style={{ maxWidth: `${Number(wc('hero').searchWidth ?? 70)}%`, marginLeft: 'auto', marginRight: 'auto' }}
+                    /* ⚠️ The field follows the BAND's alignment. It was hard-centred, so a hero set
+                       to left-align printed its heading and subtitle on the left and then dropped
+                       the search in the middle — one band with two alignments, and the control was
+                       the odd one out. `heroLine` already answers this question for the two lines
+                       above it; this is the same answer applied to the third. */
+                    style={{ maxWidth: `${Number(wc('hero').searchWidth ?? 70)}%`, ...(() => {
+                      const a = String(styles['hero-search']?.align ?? heroAlignX(String(wc('hero').contentAlign ?? 'center')));
+                      return { marginLeft: a === 'left' ? 0 : 'auto', marginRight: a === 'right' ? 0 : 'auto' };
+                    })() }}
                   >
                     <HeroSearch
                       cfg={wc('hero')}
@@ -1590,13 +1668,18 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
             {/* ⚠️ The 62px climb is dropped when the search floats. Two things cannot occupy the
                 banner's bottom edge — the cards would land on top of the field, and the one control
                 the template is built around would be the thing that got covered. */}
-            <Sel id="quick" className={`relative z-10 ${SECTION_PAD} ${blockOrder.indexOf("quick") === 0 && !searchFloats ? "-mt-[62px]" : ""} ${searchFloats ? "pt-[52px]" : ""}`} style={{ order: slot("quick"), ...fillCss(wc('quick')) }}>
+            {/* ⚠️ `tileActions` also drops the 62px climb. Two objects cannot straddle one edge,
+                and a template that keeps its banner intact wants the cards clear of it — the hero
+                then has one job and every breakpoint has one less thing to solve. */}
+            <Sel id="quick" className={`relative z-10 ${SECTION_PAD} ${blockOrder.indexOf("quick") === 0 && !searchFloats && !tileActions ? "-mt-[62px]" : ""} ${searchFloats ? "pt-[52px]" : ""} ${tileActions ? "pt-6" : ""}`} style={{ order: slot("quick"), ...fillCss(wc('quick')) }}>
               <RowDrop rowId="quick" resize={secResize("quick")} className={`flex flex-wrap${secPacked("quick", 4) ? " portal-row-packed" : ""}`} style={{ gap: secGap("quick"), ...secBox("quick", 4), ...rowFits(inRow("quick"), "quick"), ...secGrid("quick", 4) }}>
                 {quickCards.map((a) => {
                   const c = wc(a.id);
                   /* ⚠️ The CARD's own template wins; the row's is the default it starts from.
                      Read the other way round the card's picker was dead — see the note in fixB. */
-                  const tpl = String(c.cardTemplate ?? wc('quick').cardTemplate ?? c.iconPos ?? 'left');
+                  /* ⚠️ The tile look changes the DEFAULT, never the card's own choice — a card that
+                     has picked a template still wins, which is the rule the line already followed. */
+                  const tpl = String(c.cardTemplate ?? wc('quick').cardTemplate ?? c.iconPos ?? (tileActions ? 'top' : 'left'));
                   const cardImage = isImageChoice(icons?.[a.id]) ? icons![a.id]!.src : null;
                   const top = tpl === 'top';
                   const iconRight = tpl === 'right';
@@ -1612,7 +1695,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                      chose" from "chose start", so any card carrying a left-ish value quietly
                      out-voted the template it was told to follow — and the result looked like the
                      icon had fallen out of the row rather than like an arrangement anyone picked. */
-                  const centre = top || c.contentAlign === 'center';
+                  const centre = top || tileActions || c.contentAlign === 'center';
                   // P6: the icon's size, colour and container are style; WHICH icon is content.
                   const iconSize = chosen(styles, a.id, 'iconSize') ?? 22;
                   const iconColor = chosen(styles, a.id, 'iconColor');
@@ -1639,7 +1722,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                            ⚠️ No SPINE on these, though. A spine names a kind of record; an action
                            card is a destination, and colouring four of them in four hues would be
                            inventing a taxonomy the product does not have. Same surface, no stripe. */
-                        className={`flex h-full gap-3 p-4 @max-[230px]:gap-2 @max-[230px]:p-3 ${
+                        className={`group/act relative flex h-full gap-3 p-4 @max-[230px]:gap-2 @max-[230px]:p-3 ${tileActions ? 'items-center justify-center px-5 py-6 text-center transition-[transform,box-shadow] hover:-translate-y-0.5' : ''} ${
                           spineCards
                             ? 'rounded-[14px] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04),0_8px_24px_-12px_rgba(16,24,40,0.14)]'
                             : 'rounded-lg border border-[#E5E7EB] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04),0_4px_12px_rgba(16,24,40,0.06)]'
@@ -1657,6 +1740,19 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                             because an icon has exactly one thing to change. */}
                         {/* The whole slot goes, not just the glyph — a hidden icon that still holds
                             its 44px of width is an indent nobody asked for. */}
+                        {/* ⚠️ TOP-RIGHT and on HOVER, not a permanent link at the foot of the card.
+                            Four cards each carrying a visible "Go to …" is four links competing for
+                            the same glance; one arrow, in the corner, only while you are pointing at
+                            the card, says the same thing and costs the card no height.
+                            `aria-hidden` because the whole card is the target — the arrow is a
+                            drawing of the affordance, not a second control to tab to. */}
+                        {tileActions && (
+                          <span aria-hidden className="pointer-events-none absolute right-3 top-3 flex size-8 items-center justify-center rounded-[9px] bg-[#1E7A5A] text-white opacity-0 transition-opacity duration-150 group-hover/act:opacity-100">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-[15px]">
+                              <path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5" />
+                            </svg>
+                          </span>
+                        )}
                         {!noIcon && <Sel id={`${a.id}-icon`} className="flex-shrink-0 @max-[230px]:scale-90 @max-[160px]:hidden">
                         <span
                           role={enabled ? 'button' : undefined}
@@ -1743,7 +1839,26 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
 
             {band('services', (
               <Sel id="services" className={SECTION_PAD} style={{ order: slot("services"), ...fillCss(wc('services')) }}>
-                <FeaturedServicesRender nodeId="services" cfg={wc('services')} />
+                {(() => {
+                  const list = <FeaturedServicesRender nodeId="services" cfg={wc('services')} />;
+                  /* A tinted panel HOLDING white tiles, rather than tiles loose on the page ground
+                     — which is what lets the row read as one section instead of four cards that
+                     happen to be adjacent. */
+                  const panel = servicesPanel
+                    ? <div className="flex h-full flex-col rounded-xl border border-[#E4EAF0] bg-[#EFF4F8] p-5">{list}</div>
+                    : list;
+                  if (!railInServices) return panel;
+                  /* ⚠️ 1.85 : 1, the same share the work band gives its main region — so the rail is
+                     the same width wherever it lands and the page has one rail measure, not two. */
+                  return (
+                    <div className="flex flex-wrap items-stretch" style={{ gap: secGap('services') }}>
+                      <div className="min-w-[320px] flex-[1.85_1_0%]">{panel}</div>
+                      <div className="flex min-w-[240px] flex-1 flex-col" style={{ gap: secGap('services') }}>
+                        {(rail ?? []).map((id) => <Fragment key={id}>{railCard(id)}</Fragment>)}
+                      </div>
+                    </div>
+                  );
+                })()}
               </Sel>
             ))}
             {band('services', after('services'))}
@@ -1757,7 +1872,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                  layout puts them in two regions and the flat one puts them in a row — same cards,
                  two arrangements. Authoring each twice is two places for a fix to land in one. */
               const requestsCard = card('requests', (
-                <CardShell nodeId="requests" titleNodeId="requests-title" title={String(wc('requests').title ?? content.requests.title)} count={visibleRequests.length} cfg={wc('requests')}>
+                <CardShell nodeId="requests" titleNodeId="requests-title" title={String(wc('requests').title ?? content.requests.title)} count={visibleRequests.length} cfg={wc('requests')} hideHead={workTabs}>
                   <ListBody nodeId="requests">
                       {visibleRequests.map((r) => {
                         const c = wc('requests');
@@ -1792,7 +1907,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                 </CardShell>
               ), rail ? 2 : secCols("work", content.cols.work), secGap("work"), secGrow("work"));
               const approvalsCard = card('approvals', (
-                <CardShell nodeId="approvals" titleNodeId="approvals-title" title={String(wc('approvals').title ?? content.approvals.title)} count={visibleApprovals.length} cfg={wc('approvals')}>
+                <CardShell nodeId="approvals" titleNodeId="approvals-title" title={String(wc('approvals').title ?? content.approvals.title)} count={visibleApprovals.length} cfg={wc('approvals')} hideHead={workTabs}>
                   <ListBody nodeId="approvals">
                     {visibleApprovals.map((a) => (
                       <Row key={a.id} nodeId="approvals">
@@ -1820,7 +1935,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                 </CardShell>
               ), rail ? 2 : secCols("work", content.cols.work), secGap("work"), secGrow("work"));
               const knowledgeCard = card('knowledge', (
-                <CardShell nodeId="knowledge" titleNodeId="knowledge-title" title={String(wc('knowledge').title ?? content.knowledge.title)} count={visibleArticles.length} cfg={wc('knowledge')}>
+                <CardShell nodeId="knowledge" titleNodeId="knowledge-title" title={String(wc('knowledge').title ?? content.knowledge.title)} count={visibleArticles.length} cfg={wc('knowledge')} hideHead={workTabs}>
                   <ListBody nodeId="knowledge">
                     {visibleArticles.map((k) => {
                       const c = wc('knowledge');
@@ -1864,7 +1979,50 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                     })}
                   </ListBody>
                 </CardShell>
-              ), rail ? 1 : secCols("work", content.cols.work), secGap("work"), secGrow("work"));
+              ), rail ? 1 : secCols("work", content.cols.work), secGap("work"), secGrow("work"), undefined, workTabs ? { bare: true } : undefined);
+              /* ⚠️ ONE container, three tabs — and each panel MOUNTS THE REAL CARD. The strip
+                 decides which of the three is in the tree; it does not redraw any of them. So each
+                 keeps its node id, its selection, its widget drawer and its removal, and "tabs" is
+                 a LOOK rather than the second renderer the seed note forbids.
+                 ⚠️ The tab list is filtered by the LIVE row order, so deleting Most Read removes
+                 its tab too — a strip offering a tab that opens nothing is worse than no tab. */
+              if (workTabs) {
+                const order = rowOrder['work'] ?? [];
+                const tabs = [
+                  { id: 'requests', label: String(wc('requests').title ?? content.requests.title), n: visibleRequests.length, node: requestsCard },
+                  { id: 'approvals', label: String(wc('approvals').title ?? content.approvals.title), n: visibleApprovals.length, node: approvalsCard },
+                  { id: 'knowledge', label: String(wc('knowledge').title ?? content.knowledge.title), n: visibleArticles.length, node: knowledgeCard },
+                ].filter((t) => order.includes(t.id) && t.node);
+                if (!tabs.length) return null;
+                const active = tabs.find((t) => t.id === workTab) ?? tabs[0];
+                return (
+                  <div className="w-full min-w-0 rounded-xl border border-[#E5E7EB] bg-white">
+                    <div className="flex gap-1 overflow-x-auto border-b border-[#E5E7EB] px-2" role="tablist">
+                      {tabs.map((t) => {
+                        const on = t.id === active.id;
+                        return (
+                          <button
+                            key={t.id}
+                            type="button"
+                            role="tab"
+                            aria-selected={on}
+                            /* ⚠️ stopPropagation, or clicking a tab selects the band behind it and
+                               the panel you were reading swaps for a Layout editor. */
+                            onClick={(e) => { e.stopPropagation(); setWorkTab(t.id); }}
+                            className={`-mb-px inline-flex flex-none items-center gap-2 border-b-2 px-3.5 py-3 text-[14px] font-semibold transition-colors ${on ? 'border-[#1E7A5A] text-[#166049]' : 'border-transparent text-[#7B8FA5] hover:text-[#364658]'}`}
+                          >
+                            {t.label}
+                            {/* ⚠️ The count rides IN the label. A tabbed container that hides its
+                                counts hides the reason to open the other two tabs. */}
+                            <span className={`rounded-full px-1.5 py-px text-[11px] font-semibold ${on ? 'bg-[#DFEEE6] text-[#166049]' : 'bg-[#F1F5F9] text-[#7B8FA5]'}`}>{t.n}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="px-1 pb-2">{active.node}</div>
+                  </div>
+                );
+              }
               if (!rail) return <>{requestsCard}{approvalsCard}{knowledgeCard}</>;
               /* ⚠️ TWO REGIONS, not five cards in one wrapping row. The page reads as a MAIN area of
                  work cards beside a tall rail, and a flat row cannot say that: the rail is long
@@ -1941,8 +2099,11 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                          and three cards stacked in one rail had two different insets. Measured
                          before and after, which is the only way that kind of difference gets
                          noticed at all. */
-                      : id === 'news' ? <Fragment key={id}>{card('news', <div className="p-4"><AnnouncementsRender nodeId="news" cfg={{ title: 'Announcements', ...wc('news') }} /></div>, 1, secGap("work"), 1)}</Fragment>
-                        : id === 'contact' ? <Fragment key={id}>{card('contact', <div className="p-4"><ContactRender nodeId="contact" cfg={{ title: 'Contact Us', ...wc('contact') }} /></div>, 1, secGap("work"), 1)}</Fragment>
+                      /* ⚠️ Built by `railCard`, and SKIPPED entirely once the rail has moved beside
+                         the services panel — without which the page would carry Announcements and
+                         Contact twice, once in each home. */
+                      : (id === 'news' || id === 'contact')
+                        ? (railInServices ? null : <Fragment key={id}>{railCard(id)}</Fragment>)
                           : null
                   ))}
                 </Sel>

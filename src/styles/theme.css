@@ -492,3 +492,26 @@ button:not(:disabled):not([aria-disabled='true']),
 .portal-caption p { margin: 0; }
 .portal-caption p + p { margin-top: 0.35rem; }
 
+
+/* ── The support portal's ONE dark surface ─────────────────────────────────────
+   Contact Us, when a template sets `helpLook: 'dark'`. Same technique `.portal-dark`
+   above uses and for the same reason: a class selector beats a Tailwind utility on
+   specificity, so the card recolours without `!important` and without the renderer
+   needing a second set of colour props threaded into it.
+   ⚠️ Scoped to ONE card on purpose. A page with two dark surfaces has no last
+   resort — it just has two loud cards, and the reason this one is dark is that it
+   is the thing you reach for when nothing else on the page worked. */
+.portal-help-dark .text-\[\#364658\] { color: #FFFFFF; }
+.portal-help-dark .text-\[\#7B8FA5\],
+.portal-help-dark .text-\[\#64748B\],
+.portal-help-dark .text-\[\#94A3BE\] { color: rgba(255, 255, 255, 0.68); }
+/* The icon badges beside each line — a pale tint on white is invisible on navy. */
+.portal-help-dark .bg-\[\#F1F5F9\],
+.portal-help-dark .bg-\[\#F7F9FC\],
+.portal-help-dark .bg-\[\#EEF2F6\],
+.portal-help-dark .bg-\[\#F5F7FA\] { background-color: rgba(255, 255, 255, 0.10); }
+.portal-help-dark .bg-\[\#EBF5FF\],
+.portal-help-dark .bg-\[\#E8F1FB\] { background-color: rgba(95, 169, 138, 0.24); }
+.portal-help-dark .border-\[\#E5E7EB\],
+.portal-help-dark .border-\[\#EEF2F6\],
+.portal-help-dark .border-\[\#DFE5ED\] { border-color: rgba(255, 255, 255, 0.14); }

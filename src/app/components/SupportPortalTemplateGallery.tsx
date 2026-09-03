@@ -52,6 +52,28 @@ export function TemplateArt({ layout, accent }: { layout: TemplateLayout; accent
         {[0, 1, 2].map((i) => <R key={`wr${i}`} x={17 + i * 47} y={82} w={35} h={2} fill={g2} />)}
         {[0, 1, 2].map((i) => <R key={`wr2${i}`} x={17 + i * 47} y={86} w={28} h={2} fill={g2} />)}
       </>)}
+      {/* ── Verdant ── the one tile whose banner is PALE, so its bars are dark. Every other layout
+          draws white text on `accent`; doing that here would have drawn white on light green and
+          shown an empty band, which is the opposite of what the template is recognised by. */}
+      {layout === 'verdant' && (<>
+        <R x={9} y={7} w={151} h={30} fill="#D5E9DE" r={0} />
+        <R x={16} y={12} w={54} h={4} fill="#0F3327" o={0.8} />
+        <R x={16} y={19} w={38} h={2.5} fill="#0F3327" o={0.4} />
+        <R x={16} y={25} w={52} h={7} fill="#FFFFFF" />
+        {/* a hint of the artwork on the right */}
+        <R x={104} y={13} w={34} h={20} fill="#FFFFFF" />
+        <R x={142} y={11} w={9} h={9} fill="#1B3A2E" r={1} />
+        <R x={98} y={26} w={8} h={8} fill="#3D8BD0" r={1} />
+        {/* actions in their OWN band — no overlap, which is half the template */}
+        {[0, 1, 2, 3].map((i) => <R key={`vq${i}`} x={13 + i * 35} y={41} w={31} h={15} fill="#FFFFFF" />)}
+        {[0, 1, 2, 3].map((i) => <R key={`vqi${i}`} x={25 + i * 35} y={44} w={7} h={7} fill="#DFEEE6" r={1.5} />)}
+        {[0, 1, 2, 3].map((i) => <R key={`vqt${i}`} x={22 + i * 35} y={53} w={13} h={2} fill={g} />)}
+        {/* services panel, with the rail beside it rather than beside the work cards */}
+        <R x={13} y={60} w={92} h={31} fill="#EFF4F8" />
+        {[0, 1].map((i) => [0, 1].map((j) => <R key={`vs${i}${j}`} x={17 + j * 45} y={64 + i * 14} w={41} h={12} fill="#FFFFFF" />))}
+        <R x={109} y={60} w={38} h={14} fill="#FFFFFF" />
+        <R x={109} y={77} w={38} h={14} fill="#16233A" />
+      </>)}
       {layout === 'classic' && (<>
         <R x={9} y={7} w={151} h={34} fill={accent} r={0} />
         <R x={52} y={16} w={64} h={4} fill="#FFFFFF" o={0.5} />

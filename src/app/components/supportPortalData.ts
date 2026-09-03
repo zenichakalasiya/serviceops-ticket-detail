@@ -52,7 +52,7 @@ export interface PortalPage {
    promises "the page your requesters see today" was showing a page nobody has. It draws the real
    thing: banner and search, the four action cards straddling its lower edge, the two service rows,
    and the work cards below them. */
-export type TemplateLayout = 'portal' | 'classic' | 'spotlight' | 'catalog' | 'knowledge' | 'minimal' | 'status';
+export type TemplateLayout = 'portal' | 'classic' | 'spotlight' | 'catalog' | 'knowledge' | 'minimal' | 'status' | 'verdant';
 
 export interface PortalTemplate {
   id: string;
@@ -192,6 +192,77 @@ export const PORTAL_TEMPLATES: PortalTemplate[] = [
            — see the note in `cardInner`: a difference between two cards reads as a state rather
            than as a kind. */
         page: { cardLook: 'spine' },
+      },
+    },
+  },
+  {
+    id: 'tpl-verdant',
+    name: 'Verdant Service Desk',
+    desc: 'A light banner instead of a dark one, actions that stay off it, and the requester’s work in one tabbed panel rather than three cards.',
+    category: 'IT Support',
+    layout: 'verdant',
+    /* The tile and the page both read green, but the BANNER is the pale end of it — see
+       `bannerStyle: 'light'`. This value tints the gallery chrome, not the band. */
+    accent: '#1E7A5A',
+    badge: 'New',
+    blocks: ['Light hero', 'Quick actions', 'Most Used Services', 'Announcements', 'Contact us', 'Work tabs', 'My Assets', 'My CIs'],
+    /* ── Verdant Service Desk ──────────────────────────────────────────────
+       Five decisions, and every one of them is about SHAPE rather than hue — which is the line the
+       "Template LOOKS" note in the preview draws between a template and a recolour.
+
+       ⚠️ The banner is LIGHT, so the ink inverts. `bannerStyle: 'light'` is a third value beside
+       flat and gradient rather than a new key: it is still the Colour tab, still one hex, and the
+       falloff simply runs pale instead of deepening to navy. A light band with the default white
+       heading is an invisible heading, so `heroInk: 'dark'` travels with it.
+       ⚠️ The quick actions come OFF the banner's edge. Two objects cannot straddle one edge, and
+       here the hero already owns its own bottom — so the cards get their own band and every
+       breakpoint has one less thing to solve.
+       ⚠️ Announcements and Contact leave the work band and sit beside SERVICES. That is what
+       `railHome` says; the rail's MEMBERSHIP is still the `rail` array, exactly as before.
+       ⚠️ Requests, Approvals and Most Read become one TABBED container. Each panel still mounts the
+       real card node, so all three stay selectable and keep their own widget drawer — the tab strip
+       decides which one is mounted, nothing else changes.
+       ⚠️ Favourite Services is OFF the page, and this is the one content decision here: the service
+       tiles carry a STAR, and a star is the favourites mechanism. Two rows listing the same four
+       services is what it removes. It stays in the palette, like everything else a template drops. */
+    seed: {
+      blockOrder: ['quick', 'services', 'work', 'records'],
+      rowOrder: {
+        quick: ['quick-incident', 'quick-service', 'quick-ad', 'quick-knowledge'],
+        work: ['requests', 'approvals', 'knowledge', 'news', 'contact'],
+        records: ['assets', 'cis'],
+      },
+      rail: ['news', 'contact'],
+      cfg: {
+        hero: {
+          height: 300,
+          bgKind: 'color',
+          bannerStyle: 'light',
+          bannerColor: '#D5E9DE',
+          headingColor: '#0F3327',
+          contentAlign: 'left',
+          contentMaxWidth: 54,
+          searchWidth: 46,
+          searchRadius: 14,
+        },
+        quick: { cols: '4', cardTemplate: 'top' },
+        /* ⚠️ Per CARD, not just on the row. `iconPos: 'left'` is a spec DEFAULT on every action
+           card and it is read before the row's template — so setting this on the row alone left
+           the tile look switched on and invisible. The card's own key is first in that chain. */
+        'quick-incident': { cardTemplate: 'top', contentAlign: 'center' },
+        'quick-service': { cardTemplate: 'top', contentAlign: 'center' },
+        'quick-ad': { cardTemplate: 'top', contentAlign: 'center' },
+        'quick-knowledge': { cardTemplate: 'top', contentAlign: 'center' },
+        services: { cols: '2' },
+        records: { cols: '2' },
+        page: {
+          heroInk: 'dark',
+          quickLook: 'tile',
+          servicesLook: 'panel',
+          railHome: 'services',
+          workLook: 'tabs',
+          helpLook: 'dark',
+        },
       },
     },
   },
