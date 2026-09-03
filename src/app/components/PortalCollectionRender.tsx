@@ -587,8 +587,11 @@ const FEATURED_SERVICES = [
  * catalogue — at which point the requester is better served by the catalogue page itself. */
 const MAX_SERVICE_TILES = 4;
 
-function ServiceTiles({ nodeId, items, showDesc, tpl = 'top' }: {
+function ServiceTiles({ nodeId, items, showDesc, tpl = 'top', cols }: {
   nodeId: string; items: { id: string; name: string; desc: string }[]; showDesc: boolean;
+  /* The resolved column count. Undefined means "one per service", which is what this grid always
+     did and stays the right default — four services in four columns is the reference row. */
+  cols?: number;
   /* The shared card template. ⚠️ Defaults to 'top' — the reference arrangement — rather than to the
      'left' every other card family starts from, because a four-across grid of icon-left tiles puts
      the icon and the words in a 36px-wide column each and the names wrap on every one. */
@@ -600,7 +603,7 @@ function ServiceTiles({ nodeId, items, showDesc, tpl = 'top' }: {
   return (
     <div
       className="grid min-w-0 gap-3"
-      style={{ gridTemplateColumns: `repeat(${Math.min(items.length, MAX_SERVICE_TILES)}, minmax(0,1fr))` }}
+      style={{ gridTemplateColumns: `repeat(${Math.max(1, cols ?? Math.min(items.length, MAX_SERVICE_TILES))}, minmax(0,1fr))` }}
     >
       {items.slice(0, MAX_SERVICE_TILES).map((s) => (
         <div
@@ -631,10 +634,11 @@ function ServiceTiles({ nodeId, items, showDesc, tpl = 'top' }: {
 
 /** §7.8's sibling — the requester's own pinned services. Same tile, different list. */
 export function FavouriteServicesRender({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
+  const { styles } = useCanvas();
   return (
     <div className="@container min-w-0">
       <WidgetTitle nodeId={nodeId} text={cfg.title ?? 'Favourite Services'} />
-      <ServiceTiles nodeId={nodeId} items={FAVOURITE_SERVICES} showDesc={cfg.showDesc !== false} tpl={String(cfg.cardTemplate ?? 'top')} />
+      <ServiceTiles nodeId={nodeId} items={FAVOURITE_SERVICES} showDesc={cfg.showDesc !== false} tpl={String(cfg.cardTemplate ?? 'top')} cols={Number(chosen(styles, nodeId, 'columns') ?? cfg.columns) || undefined} />
     </div>
   );
 }
@@ -680,7 +684,7 @@ export function FeaturedServicesRender({ nodeId, cfg }: { nodeId: string; cfg: C
       </div>
       {/* ⚠️ The SAME tiles as Favourite Services. These two sit on one page and list the same kind
           of thing, so two grid languages would be a difference that means nothing. */}
-      <ServiceTiles nodeId={nodeId} items={FEATURED_SERVICES} showDesc={cfg.showDesc !== false} tpl={String(cfg.cardTemplate ?? 'top')} />
+      <ServiceTiles nodeId={nodeId} items={FEATURED_SERVICES} showDesc={cfg.showDesc !== false} tpl={String(cfg.cardTemplate ?? 'top')} cols={cols} />
     </div>
   );
 }

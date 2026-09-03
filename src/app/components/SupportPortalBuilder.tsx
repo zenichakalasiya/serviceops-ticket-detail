@@ -256,7 +256,10 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
      empty — the same trap `detachElement` records. */
   const contentRef = useRef(content);
   contentRef.current = content;
-  const [styles, setStyles] = useState<PortalStyles>({});
+  /* ⚠️ Seeded from the template, exactly as `widgetCfg` is. Some of what a template arranges —
+     a widget's column count, chiefly — lives in the style store rather than in config, and a
+     template that could only reach one of the two could not describe its own layout. */
+  const [styles, setStyles] = useState<PortalStyles>(() => ({ ...(seed?.styles ?? {}) } as PortalStyles));
 
   const setStyle = useCallback((id: string, p: Partial<NodeStyle>) => {
     setStyles((prev) => ({ ...prev, [id]: { ...prev[id], ...p } }));

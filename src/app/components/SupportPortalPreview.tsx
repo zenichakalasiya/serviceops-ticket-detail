@@ -926,6 +926,47 @@ function HeroArtwork() {
   );
 }
 
+/* ⚠️ A SECOND artwork, not a replacement for the one above. The line-work belongs to the DEFAULT
+   band — faint grey nodes read as texture on a deep colour and vanish entirely on a pale one, so a
+   light banner needs a composition with its own weight. This is that composition: a tilted guide
+   card with geometric solids around it.
+   ⚠️ Pure CSS. No asset to ship, nothing to 404, and it re-tints by editing this one function —
+   which is also what makes it the SLOT a real render drops into later: replace the contents and
+   keep the wrapper, and the hero's layout does not move.
+   ⚠️ Hidden below md. At 640px the copy already fills the band, and a composition squeezed into
+   the last 90px of it is clutter rather than artwork. */
+function HeroShapes() {
+  const shadow = (b: number) => `drop-shadow(0 ${b}px ${b + 6}px rgba(15,51,39,.26))`;
+  return (
+    <span aria-hidden className="pointer-events-none absolute inset-y-0 right-0 hidden w-[46%] min-w-[320px] overflow-hidden md:block">
+      {/* mint pill */}
+      <span className="absolute" style={{ left: '8%', top: '13%', width: 50, height: 25, borderRadius: 999, background: '#C4E1D3', transform: 'rotate(-16deg)' }} />
+      {/* dark triangle */}
+      <span className="absolute" style={{ right: '5%', top: '4%', width: 0, height: 0, borderLeft: '38px solid transparent', borderRight: '38px solid transparent', borderBottom: '54px solid #1B3A2E', transform: 'rotate(14deg)', filter: shadow(12) }} />
+      {/* peach half-circle */}
+      <span className="absolute" style={{ right: '2%', bottom: '8%', width: 56, height: 56, borderRadius: '0 0 56px 56px', background: 'linear-gradient(180deg,#F0C6A8,#E0A783)', transform: 'rotate(12deg)', filter: shadow(9) }} />
+      {/* terracotta dome */}
+      <span className="absolute" style={{ right: '7%', top: '42%', width: 84, height: 42, borderRadius: '84px 84px 0 0', background: 'linear-gradient(160deg,#D98C6A,#B4593A)', transform: 'rotate(-8deg)', filter: shadow(11) }} />
+      {/* the guide card, tilted — the object the solids are arranged around */}
+      <span
+        className="absolute flex flex-col rounded-md bg-white"
+        style={{ left: '14%', top: '19%', width: '58%', padding: '20px 18px', transform: 'rotate(-9deg)', boxShadow: '0 16px 36px -12px rgba(15,51,39,.34), 0 2px 6px rgba(15,51,39,.10)' }}
+      >
+        <span className="text-[12px] font-bold tracking-tight text-[#0F3327]">Motadata</span>
+        <svg viewBox="0 0 130 84" fill="none" stroke="#A6BEB2" strokeWidth={1.7} strokeLinejoin="round" strokeLinecap="round" className="mx-auto my-3 block h-auto w-full max-w-[130px]">
+          <path d="M36 70 58 26 80 70Z" />
+          <path d="M80 26h18a15 15 0 0 1 0 30H80z" />
+          <circle cx="24" cy="32" r="11" />
+          <path d="M92 70h22" />
+        </svg>
+        <span className="self-end text-[8px] font-semibold tracking-[0.16em] text-[#A9BCB2]">SERVICEOPS</span>
+      </span>
+      {/* blue prism, in front of the card's lower-left corner */}
+      <span className="absolute" style={{ left: '2%', bottom: '10%', width: 72, height: 82, background: 'linear-gradient(118deg,#4E93C9 0 48%,#2E6FA8 48%)', clipPath: 'polygon(50% 0,100% 100%,0 100%)', transform: 'rotate(-6deg)', filter: shadow(12) }} />
+    </span>
+  );
+}
+
 /* ── Cards ───────────────────────────────────────────────────────────────── */
 
 /* The spine colour per card, for the templates that use the spine treatment.
@@ -1204,6 +1245,15 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
   const workTabs = String(pageCfg.workLook ?? 'cards') === 'tabs';
   /* Contact Us as the page's one dark surface, so it reads as the last resort. */
   const darkHelp = String(pageCfg.helpLook ?? 'plain') === 'dark';
+  /* Which artwork the banner carries. `shapes` is the geometric composition — see `HeroShapes`;
+     the default line-work only ever showed on an untouched band, so a template that sets a colour
+     had no way to ask for artwork at all. */
+  const heroShapes = String(pageCfg.heroArt ?? 'auto') === 'shapes';
+  /* ⚠️ Whether the WORK band draws a rail — which is not the same question as whether the page has
+     one. Once the rail has moved beside the services panel this band has no rail to draw, and
+     testing `rail` alone left it rendering an empty second column and squeezing its three cards
+     into a third of the width. */
+  const workRail = rail && !railInServices;
   /* Which of the three work tabs is open. Local, because it is a reading position rather than a
      property of the page — nothing an admin sets and nothing to persist. */
   const [workTab, setWorkTab] = useState('requests');
@@ -1546,9 +1596,12 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                   as dirt on the colour, and over a photograph as a scratch on the photograph. */}
               {/* ⚠️ Its own clip. The band drops `overflow-hidden` while the search floats, so the
                   decorative line-work would otherwise run past the banner and across the page. */}
-              {heroCfg.bgKind !== 'color' && !heroImg && (
+              {heroCfg.bgKind !== 'color' && !heroImg && !heroShapes && (
                 <span className="pointer-events-none absolute inset-0 overflow-hidden"><HeroArtwork /></span>
               )}
+              {/* ⚠️ Its own clip too, for the same reason — and it sits BEHIND the copy, which is
+                  why the hero's `contentMaxWidth` is what keeps the two from meeting. */}
+              {heroShapes && <span className="pointer-events-none absolute inset-0 overflow-hidden"><HeroShapes /></span>}
               {/* ⚠️ FULL WIDTH. The block used to be capped at 70% and centred with auto margins,
                   which meant a heading aligned left landed at the left edge of that centred column —
                   15% in from the banner — and no setting could reach the banner's own edges. The cap
@@ -1979,7 +2032,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                     })}
                   </ListBody>
                 </CardShell>
-              ), rail ? 1 : secCols("work", content.cols.work), secGap("work"), secGrow("work"), undefined, workTabs ? { bare: true } : undefined);
+              ), workRail ? 1 : secCols("work", content.cols.work), secGap("work"), secGrow("work"), undefined, workTabs ? { bare: true } : undefined);
               /* ⚠️ ONE container, three tabs — and each panel MOUNTS THE REAL CARD. The strip
                  decides which of the three is in the tree; it does not redraw any of them. So each
                  keeps its node id, its selection, its widget drawer and its removal, and "tabs" is
@@ -2023,7 +2076,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                   </div>
                 );
               }
-              if (!rail) return <>{requestsCard}{approvalsCard}{knowledgeCard}</>;
+              if (!workRail) return <>{requestsCard}{approvalsCard}{knowledgeCard}</>;
               /* ⚠️ TWO REGIONS, not five cards in one wrapping row. The page reads as a MAIN area of
                  work cards beside a tall rail, and a flat row cannot say that: the rail is long
                  because three cards are stacked in it, so anything sharing its line stretched to its

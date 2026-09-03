@@ -92,6 +92,15 @@ export interface TemplateSeed {
   cfg?: Record<string, Record<string, unknown>>;
   /** The right-hand rail, where the layout has one. */
   rail?: string[];
+  /* ⚠️ Per-node STYLE, for the handful of values that do not live in config. Columns is the one
+     that forced this: §7.8 puts it in the style store on purpose, because the Content tab and the
+     Arrangement pack are two controls for one value and both write there — so a template setting
+     `columns` in cfg was writing to a key the renderer does not read, and the control looked
+     inert while working perfectly. A template arranges the page; it has to be able to reach every
+     value the page is arranged by.
+     ⚠️ Typed loosely on purpose — `NodeStyle` lives in portalPageModel and importing it here
+     would point the data file at the renderer it is supposed to know nothing about. */
+  styles?: Record<string, Record<string, unknown>>;
 }
 
 /* ── Templates ───────────────────────────────────────────────────────────── */
@@ -233,6 +242,10 @@ export const PORTAL_TEMPLATES: PortalTemplate[] = [
         records: ['assets', 'cis'],
       },
       rail: ['news', 'contact'],
+      /* ⚠️ Two columns, and it has to be said HERE rather than in `cfg` — see the note on the
+         field. Four service tiles in one row is the default; at two they are wide enough for a
+         long name like "New Employee Onboarding" to stay on one line. */
+      styles: { services: { columns: 2 } },
       cfg: {
         hero: {
           height: 300,
@@ -253,15 +266,19 @@ export const PORTAL_TEMPLATES: PortalTemplate[] = [
         'quick-service': { cardTemplate: 'top', contentAlign: 'center' },
         'quick-ad': { cardTemplate: 'top', contentAlign: 'center' },
         'quick-knowledge': { cardTemplate: 'top', contentAlign: 'center' },
-        services: { cols: '2' },
+        services: { cols: '1' },
         records: { cols: '2' },
         page: {
           heroInk: 'dark',
           quickLook: 'tile',
           servicesLook: 'panel',
           railHome: 'services',
-          workLook: 'tabs',
+          /* ⚠️ NO `workLook: 'tabs'` here, deliberately. The option exists and works, but three
+             lists behind one strip means two of them are never seen — a requester who has an
+             approval waiting has no reason to look for it. They are three cards.
+             Any template that wants the tabbed container sets the key; this one does not. */
           helpLook: 'dark',
+          heroArt: 'shapes',
         },
       },
     },
