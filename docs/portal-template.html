@@ -1,0 +1,715 @@
+<title>Motadata Support Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap">
+
+<style>
+/* ══════════════════════════════════════════════════════════════════════════════
+   MOTADATA SERVICEOPS · SUPPORT PORTAL — production template
+   ------------------------------------------------------------------------------
+   HANDOFF NOTES FOR THE DEVELOPER
+   • Everything is driven by the token block below. Re-theming is that block only.
+   • No image assets. The hero artwork is CSS (see §2) and is a SWAPPABLE SLOT —
+     drop a real render into `.hero__art` and delete the shapes; nothing else moves.
+   • Type: Plus Jakarta Sans = display, IBM Plex Sans = UI/body, IBM Plex Mono = ids.
+   • Sections are numbered in source order and match the page order 1:1.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── §0 · TOKENS ───────────────────────────────────────────────────────────── */
+:root{
+  /* Green frames the page — hero, badges, success. */
+  --g-50:#F2F8F5;  --g-100:#DFEEE6; --g-200:#C4E1D3; --g-400:#5FA98A;
+  --g-600:#1E7A5A; --g-700:#166049; --g-900:#0F3327;
+  --hero-a:#D5E9DE; --hero-b:#EEF7F2;
+
+  /* Blue does the work — links, ids, widget icons. The product's own accent. */
+  --b-50:#EAF3FB;  --b-100:#D4E6F6; --b-500:#3D8BD0; --b-600:#2F6FB5; --b-700:#245A96;
+
+  /* Ink + surfaces */
+  --navy:#16233A;  --navy-2:#1E3050;
+  --ink:#132030;   --ink-2:#3E4C5E; --mute:#71808F;  --mute-2:#95A2B0;
+  --sf:#FFFFFF;    --sf-2:#F7F9FB;  --page:#F4F7F9;
+  --line:#E4EAF0;  --line-2:#EEF2F6;
+
+  /* Status */
+  --amber:#B45309; --amber-bg:#FEF3C7;
+  --blue-st:#1D4ED8; --blue-st-bg:#DBEAFE;
+  --violet:#6D28D9; --violet-bg:#EDE9FE;
+  --slate:#5B6878;  --slate-bg:#EEF1F5;
+  --star:#E8A33D;
+
+  /* Shape */
+  --r-sm:6px; --r:10px; --r-lg:14px; --r-xl:20px;
+  --sh-1:0 1px 2px rgba(19,32,48,.05);
+  --sh-2:0 1px 3px rgba(19,32,48,.06), 0 8px 20px -12px rgba(19,32,48,.22);
+  --sh-3:0 2px 6px rgba(19,32,48,.07), 0 18px 36px -18px rgba(19,32,48,.30);
+
+  /* Layout */
+  --max:1180px; --gap:20px;
+
+  --f-display:"Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --f-body:"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, monospace;
+}
+
+*{box-sizing:border-box}
+body{margin:0;background:#E9EDF1;font-family:var(--f-body);color:var(--ink-2);
+  font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{margin:0;font-family:var(--f-display);color:var(--ink);letter-spacing:-.02em}
+p{margin:0}
+svg{display:block}
+button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+:focus-visible{outline:2px solid var(--b-500);outline-offset:2px;border-radius:4px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.icon{width:18px;height:18px;flex:none}
+
+/* the sheet this template is previewed on — DELETE when embedding in the product */
+.preview-shell{max-width:1560px;margin:0 auto;padding:26px 22px 70px}
+.preview-note{font-family:var(--f-mono);font-size:11px;letter-spacing:.13em;text-transform:uppercase;
+  color:#7C8A99;margin:0 0 12px 4px}
+
+/* ── §1 · PRODUCT CHROME (fixed — not part of the template) ────────────────── */
+.win{border-radius:14px;overflow:hidden;border:1px solid #DDE3EA;background:#fff;display:flex;
+  box-shadow:0 2px 6px rgba(19,32,48,.05), 0 30px 70px -34px rgba(19,32,48,.35)}
+.rail{width:54px;flex:none;background:#F7F9FB;border-right:1px solid var(--line-2);
+  display:flex;flex-direction:column;align-items:center;gap:3px;padding:11px 0}
+.rail span{width:34px;height:34px;border-radius:8px;display:grid;place-items:center;color:#8B98A6}
+.rail span.is-on{background:var(--g-100);color:var(--g-700)}
+.rail .icon{width:17px;height:17px}
+.wcol{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{height:56px;flex:none;background:#fff;border-bottom:1px solid var(--line-2);
+  display:flex;align-items:center;gap:12px;padding:0 20px}
+.brand{display:flex;align-items:center;gap:9px;font-family:var(--f-display);font-size:15px;
+  font-weight:700;color:var(--ink);letter-spacing:-.02em}
+.brand i{width:26px;height:26px;border-radius:7px;background:var(--g-600);display:grid;
+  place-items:center;color:#fff;font-style:normal;font-size:12px;font-weight:800}
+.topbar .spacer{flex:1}
+.topbar .tbtn{width:34px;height:34px;border-radius:8px;display:grid;place-items:center;
+  color:#7C8A99;position:relative}
+.topbar .tbtn:hover{background:var(--sf-2)}
+.topbar .tbtn[data-dot]::after{content:"";position:absolute;top:7px;right:8px;width:7px;height:7px;
+  border-radius:50%;background:#E5484D;border:2px solid #fff}
+.ask-ai{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 13px;border-radius:8px;
+  border:1px solid var(--line);font-size:13px;font-weight:500;color:var(--ink-2);background:#fff}
+.ask-ai .icon{width:15px;height:15px;color:#8B5CF6}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--navy);color:#fff;display:grid;
+  place-items:center;font-size:12px;font-weight:600}
+
+.portal{flex:1;min-width:0;background:var(--page)}
+
+/* ── §2 · HERO ─────────────────────────────────────────────────────────────────
+   Full-bleed light-green band. Copy + search left, artwork right.
+   ⚠️ Quick actions do NOT overlap this band — they sit in their own section below,
+   so the hero has one job and every breakpoint has one less thing to solve. */
+.hero{position:relative;overflow:hidden;
+  background:linear-gradient(158deg,var(--hero-a) 0%,var(--hero-b) 52%,#E2F0E9 100%)}
+.hero__inner{max-width:var(--max);margin:0 auto;padding:64px 24px 68px;
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:32px;align-items:center}
+.hero__copy{min-width:0}
+.hero h1{font-size:clamp(34px,4.4vw,54px);font-weight:800;line-height:1.06;color:var(--g-900);
+  letter-spacing:-.035em;max-width:13ch}
+.hero__sub{margin-top:14px;font-size:16.5px;color:#3D5B4E;max-width:44ch;line-height:1.55}
+
+/* search — white, generous, the single most important control on the page */
+.hero__search{margin-top:26px;max-width:520px;display:flex;align-items:center;gap:12px;
+  background:#fff;border-radius:var(--r-lg);border:1px solid rgba(15,51,39,.09);padding:0 8px 0 18px;
+  height:60px;box-shadow:0 2px 6px rgba(15,51,39,.05), 0 16px 34px -18px rgba(15,51,39,.28);
+  transition:box-shadow .18s, border-color .18s}
+.hero__search:focus-within{border-color:var(--g-400);
+  box-shadow:0 0 0 4px rgba(95,169,138,.18), 0 16px 34px -18px rgba(15,51,39,.3)}
+.hero__search .icon{width:20px;height:20px;color:#8FA79B}
+.hero__search input{flex:1;min-width:0;border:none;outline:none;font:inherit;font-size:16px;
+  color:var(--ink);background:none}
+.hero__search input::placeholder{color:#8FA79B}
+.hero__search button{flex:none;height:44px;padding:0 22px;border-radius:10px;background:var(--g-600);
+  color:#fff;font-family:var(--f-display);font-size:14.5px;font-weight:700;letter-spacing:-.01em;
+  transition:background .16s}
+.hero__search button:hover{background:var(--g-700)}
+
+/* ⚠️ SWAPPABLE SLOT — replace the whole contents with an <img>/<picture> and delete §2a. */
+.hero__art{position:relative;height:290px;min-width:0}
+
+/* §2a · CSS artwork: a tilted guide card with 3D geometric shapes around it. */
+.shape{position:absolute;will-change:transform}
+.doc{width:63%;left:12%;top:20%;padding:24px 22px;border-radius:6px;background:#fff;
+  transform:rotate(-9deg);box-shadow:0 18px 40px -14px rgba(15,51,39,.34), 0 3px 8px rgba(15,51,39,.10)}
+.doc__brand{font-family:var(--f-display);font-size:13px;font-weight:800;color:var(--g-900);
+  letter-spacing:-.02em}
+.doc__mark{display:block;width:100%;max-width:150px;height:auto;margin:18px auto 14px}
+.doc__foot{display:flex;justify-content:flex-end}
+.doc__foot span{font-family:var(--f-mono);font-size:9px;font-weight:600;color:#A9BCB2;
+  letter-spacing:.16em}
+
+.sh-tri-dark{right:4%;top:2%;width:0;height:0;border-left:44px solid transparent;
+  border-right:44px solid transparent;border-bottom:62px solid #1B3A2E;transform:rotate(14deg);
+  filter:drop-shadow(0 14px 20px rgba(15,51,39,.3))}
+.sh-prism{left:0;bottom:6%;width:78px;height:88px;transform:rotate(-6deg);
+  background:linear-gradient(118deg,#4E93C9 0 48%,#2E6FA8 48%);
+  clip-path:polygon(50% 0,100% 100%,0 100%);
+  filter:drop-shadow(0 14px 22px rgba(15,51,39,.26))}
+.sh-dome{right:6%;top:40%;width:92px;height:46px;border-radius:92px 92px 0 0;
+  background:linear-gradient(160deg,#D98C6A,#B4593A);transform:rotate(-8deg);
+  filter:drop-shadow(0 12px 20px rgba(15,51,39,.24))}
+.sh-half{right:1%;bottom:4%;width:62px;height:62px;border-radius:0 0 62px 62px;
+  background:linear-gradient(180deg,#F0C6A8,#E0A783);transform:rotate(12deg);
+  filter:drop-shadow(0 10px 18px rgba(15,51,39,.2))}
+.sh-pill{left:6%;top:6%;width:52px;height:26px;border-radius:999px;background:#C4E1D3;
+  transform:rotate(-16deg)}
+
+/* ── §3 · PAGE BAND — every section below the hero sits in this measure ────── */
+.band{max-width:var(--max);margin:0 auto;padding:0 24px 64px}
+.section{margin-top:38px}
+.section__head{display:flex;align-items:baseline;gap:12px;margin-bottom:16px}
+.section__head h2{font-size:21px;font-weight:700}
+.section__head .count{font-family:var(--f-mono);font-size:11px;font-weight:600;color:var(--g-700);
+  background:var(--g-100);border-radius:999px;padding:3px 9px}
+.portal a{text-decoration:none}
+.section__head .link{margin-left:auto;font-size:13.5px;font-weight:600;color:var(--b-600);
+  display:inline-flex;align-items:center;gap:5px}
+.section__head .link .icon{width:14px;height:14px}
+.section__head .link:hover{color:var(--b-700)}
+
+/* ── §4 · QUICK ACTIONS ────────────────────────────────────────────────────────
+   Four cards, own band, NOT overlapping the hero. Illustration + title +
+   description, centred. ⚠️ The arrow lives TOP-RIGHT and appears on hover only —
+   it is a hover affordance, not a permanent link at the foot of the card. */
+.actions{margin-top:-4px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--gap)}
+.acard{position:relative;background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);
+  padding:28px 22px 26px;text-align:center;cursor:pointer;box-shadow:var(--sh-1);
+  transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+  display:flex;flex-direction:column;align-items:center}
+.acard:hover{transform:translateY(-3px);border-color:var(--g-200);box-shadow:var(--sh-3)}
+.acard__art{width:74px;height:74px;border-radius:18px;display:grid;place-items:center;
+  background:linear-gradient(155deg,var(--g-50),var(--g-100));margin-bottom:18px;
+  transition:background .18s}
+.acard:hover .acard__art{background:linear-gradient(155deg,var(--g-100),var(--g-200))}
+.acard__art .icon{width:32px;height:32px;color:var(--g-700)}
+.acard h3{font-size:17px;font-weight:700;color:var(--ink);letter-spacing:-.025em}
+.acard p{margin-top:9px;font-size:13.5px;color:var(--mute);line-height:1.55;max-width:24ch}
+.acard__go{position:absolute;top:13px;right:13px;width:32px;height:32px;border-radius:9px;
+  background:var(--g-600);color:#fff;display:grid;place-items:center;
+  opacity:0;transform:translate(-5px,5px) scale(.9);
+  transition:opacity .17s ease, transform .17s ease}
+.acard:hover .acard__go,.acard:focus-visible .acard__go{opacity:1;transform:none}
+.acard__go .icon{width:15px;height:15px}
+
+/* ── §5 · SERVICES + RIGHT RAIL ────────────────────────────────────────────────
+   Services take two thirds; announcements and contact stack beside them. Both
+   columns are the same height by construction, not by a magic number. */
+.split{display:grid;grid-template-columns:minmax(0,1.85fr) minmax(0,1fr);gap:var(--gap);
+  align-items:stretch}
+.rail-col{display:flex;flex-direction:column;gap:var(--gap);min-width:0}
+
+/* §5a · Service offerings — tinted panel holding white tiles */
+.services{background:#EFF4F8;border:1px solid var(--line);border-radius:var(--r-lg);padding:20px;
+  display:flex;flex-direction:column}
+.services__head{display:flex;align-items:center;gap:10px;margin-bottom:15px}
+.services__head h3{font-size:15.5px;font-weight:700;letter-spacing:-.02em}
+.services__head .icon{width:17px;height:17px;color:var(--b-600)}
+.services__head .pin{margin-left:auto;font-family:var(--f-mono);font-size:10.5px;font-weight:600;
+  color:var(--g-700);background:var(--g-100);border-radius:999px;padding:3px 9px}
+.services__grid{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+/* ⚠️ margin-top:auto is what matches this column's height to the rail — the tiles stay compact and
+   the CTA absorbs the difference. Do not put a fixed height on .services. */
+.services__more{margin-top:12px;display:flex;align-items:center;gap:11px;padding:14px 16px;
+  border-radius:var(--r);background:#fff;border:1px dashed #CBD8E4;color:var(--ink-2);
+  font-size:13px;font-weight:600;transition:border-color .15s, background .15s, color .15s}
+.services__more:hover{border-color:var(--b-500);background:var(--b-50);color:var(--b-700)}
+.services__more em{font-style:normal;font-family:var(--f-mono);font-size:11px;color:var(--mute-2)}
+.services__more .icon{margin-left:auto;width:14px;height:14px}
+.stile{position:relative;display:flex;flex-direction:column;justify-content:center;
+  background:#fff;border:1px solid var(--line-2);border-radius:var(--r);
+  padding:15px 40px 15px 15px;cursor:pointer;box-shadow:var(--sh-1);
+  transition:border-color .16s, box-shadow .16s, transform .16s;min-width:0}
+.stile:hover{border-color:var(--b-100);box-shadow:var(--sh-2);transform:translateY(-1px)}
+.stile__ic{width:32px;height:32px;border-radius:9px;background:var(--b-50);color:var(--b-600);
+  display:grid;place-items:center;margin-bottom:12px;flex:none}
+.stile__ic .icon{width:16px;height:16px}
+.stile b{display:block;font-family:var(--f-display);font-size:13.5px;font-weight:700;
+  color:var(--ink);letter-spacing:-.015em;line-height:1.35;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stile span{display:block;font-size:11.5px;color:var(--mute-2);margin-top:3px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* ⚠️ The star IS the favourites mechanism — which is why this template carries ONE
+   services section instead of "Favourite" and "Most used" listing the same four. */
+.stile__star{position:absolute;top:12px;right:12px;width:24px;height:24px;border-radius:6px;
+  display:grid;place-items:center;color:#C3CCD6;transition:color .15s, background .15s}
+.stile__star:hover{background:var(--sf-2);color:var(--star)}
+.stile__star.is-on{color:var(--star)}
+.stile__star .icon{width:15px;height:15px}
+.stile__star.is-on .icon{fill:var(--star)}
+
+/* §5b · Announcements */
+.news{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);padding:18px 20px 8px;
+  box-shadow:var(--sh-1)}
+.news__head{display:flex;align-items:center;gap:9px;margin-bottom:6px}
+.news__head h3{font-size:15px;font-weight:700;letter-spacing:-.02em}
+.news__head .badge{width:22px;height:22px;border-radius:7px;background:var(--g-100);color:var(--g-700);
+  display:grid;place-items:center}
+.news__head .badge .icon{width:13px;height:13px}
+.news__head .count{margin-left:auto;font-family:var(--f-mono);font-size:10.5px;font-weight:600;
+  color:var(--g-700);background:var(--g-100);border-radius:999px;padding:2px 8px}
+.nitem{padding:12px 0;border-bottom:1px solid var(--line-2);cursor:pointer}
+.nitem:last-child{border-bottom:none}
+.nitem b{display:block;font-size:13.5px;font-weight:600;color:var(--b-600);line-height:1.4}
+.nitem:hover b{color:var(--b-700);text-decoration:underline;text-underline-offset:2px}
+.nitem p{margin-top:4px;font-size:12.5px;color:var(--mute);line-height:1.5}
+.nitem .when{display:inline-flex;align-items:center;gap:5px;margin-top:6px;font-family:var(--f-mono);
+  font-size:10px;letter-spacing:.06em;color:var(--mute-2)}
+.nitem .when .icon{width:11px;height:11px}
+
+/* §5c · Contact — the one dark surface on the page, so it reads as the last resort */
+.help{position:relative;overflow:hidden;border-radius:var(--r-lg);padding:20px;
+  background:linear-gradient(152deg,var(--navy-2) 0%,var(--navy) 62%,#101B2E 100%);color:#fff;
+  box-shadow:var(--sh-2);flex:1;display:flex;flex-direction:column;justify-content:center}
+.help::after{content:"";position:absolute;right:-46px;top:-46px;width:150px;height:150px;
+  border-radius:50%;background:radial-gradient(circle at 34% 32%,rgba(95,169,138,.42),transparent 66%)}
+.help > *{position:relative;z-index:1}
+.help h3{font-size:16px;font-weight:700;color:#fff;letter-spacing:-.005em}
+.help p{margin-top:7px;font-size:12.5px;color:rgba(255,255,255,.66);line-height:1.55;max-width:34ch}
+.help__btns{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:16px}
+.hbtn{display:flex;align-items:center;justify-content:center;gap:8px;height:40px;border-radius:9px;
+  font-size:12.5px;font-weight:600;transition:background .16s, border-color .16s}
+.hbtn .icon{width:15px;height:15px}
+.hbtn--solid{background:var(--g-600);color:#fff}
+.hbtn--solid:hover{background:#1B6D50}
+.hbtn--ghost{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.2);color:#fff}
+.hbtn--ghost:hover{background:rgba(255,255,255,.16)}
+.help__meta{margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.13);
+  display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:rgba(255,255,255,.72)}
+
+/* ── §6 · WORK TABS ───────────────────────────────────────────────────────────
+   One container, three tabs. ⚠️ The counts ride IN the tab labels — a tabbed
+   container that hides its counts hides the reason to open the other tabs. */
+.work{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;
+  box-shadow:var(--sh-1)}
+.work__tabs{display:flex;gap:2px;padding:0 8px;border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg,#FBFCFD,#fff)}
+.tab{display:inline-flex;align-items:center;gap:8px;padding:15px 14px;font-size:14px;font-weight:600;
+  color:var(--mute);border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s}
+.tab:hover{color:var(--ink-2)}
+.tab.is-on{color:var(--g-700);border-bottom-color:var(--g-600)}
+.tab .n{font-family:var(--f-mono);font-size:10.5px;font-weight:600;border-radius:999px;padding:2px 7px;
+  background:var(--sf-2);color:var(--mute)}
+.tab.is-on .n{background:var(--g-100);color:var(--g-700)}
+.work__body{padding:14px}
+.work__foot{padding:0 14px 14px;display:flex}
+.work__foot .more{font-size:13px;font-weight:600;color:var(--b-600);display:inline-flex;
+  align-items:center;gap:6px}
+.work__foot .more .icon{width:14px;height:14px}
+
+/* row — navy id pill · subject over created-date · status pill right */
+.wrow{display:flex;align-items:center;gap:14px;padding:13px 14px;border-radius:var(--r);
+  border:1px solid var(--line-2);background:#fff;cursor:pointer;min-width:0;
+  transition:border-color .15s, box-shadow .15s, background .15s}
+.wrow + .wrow{margin-top:9px}
+.wrow:hover{border-color:var(--b-100);background:#FCFDFE;box-shadow:var(--sh-2)}
+.wid{flex:none;font-family:var(--f-mono);font-size:11px;font-weight:600;color:#fff;
+  background:var(--navy);border-radius:var(--r-sm);padding:5px 9px;letter-spacing:-.01em}
+.wrow__tx{flex:1;min-width:0}
+.wrow__tx b{display:block;font-size:14px;font-weight:600;color:var(--ink);line-height:1.35;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wrow__tx span{display:block;font-size:12px;color:var(--mute-2);margin-top:3px}
+.st{flex:none;font-size:11.5px;font-weight:600;border-radius:999px;padding:4px 11px;white-space:nowrap}
+.st--open{color:var(--amber);background:var(--amber-bg)}
+.st--prog{color:var(--blue-st);background:var(--blue-st-bg)}
+.st--pend{color:var(--violet);background:var(--violet-bg)}
+.st--hold{color:var(--slate);background:var(--slate-bg)}
+/* approval + article rows reuse .wrow so the three tabs share one row rhythm */
+.wav{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:#fff;
+  font-size:12px;font-weight:600}
+.wdec{display:flex;gap:7px;flex:none}
+.wdec button{font-size:11.5px;font-weight:600;border-radius:var(--r-sm);padding:6px 12px}
+.wdec .ok{background:#E9F7F0;color:var(--g-700)}
+.wdec .ok:hover{background:#DCF0E5}
+.wdec .no{background:#FDF0EF;color:#C0392B}
+.wdec .no:hover{background:#FAE3E1}
+.wkb{flex:none;width:34px;height:34px;border-radius:9px;background:var(--b-50);color:var(--b-600);
+  display:grid;place-items:center}
+.wkb .icon{width:16px;height:16px}
+.wtag{flex:none;font-size:11.5px;color:var(--mute);background:var(--sf-2);border-radius:999px;
+  padding:4px 11px;white-space:nowrap}
+
+/* ── §7 · INFO CARDS — My Assets · My CIs ─────────────────────────────────── */
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap)}
+.info{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);padding:18px;
+  box-shadow:var(--sh-1);display:flex;flex-direction:column}
+.info__head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.info__head .ic{width:28px;height:28px;border-radius:8px;background:var(--g-100);color:var(--g-700);
+  display:grid;place-items:center}
+.info__head .ic .icon{width:15px;height:15px}
+.info__head h3{font-size:16px;font-weight:700;letter-spacing:-.02em}
+.info__head .count{font-family:var(--f-mono);font-size:11px;font-weight:600;color:var(--g-700);
+  background:var(--g-100);border-radius:999px;padding:3px 9px}
+.info__head .link{margin-left:auto;font-size:12.5px;font-weight:600;color:var(--b-600)}
+.info__list{flex:1;display:flex;flex-direction:column;gap:9px}
+.irow{display:flex;align-items:center;gap:13px;padding:11px 13px;border-radius:var(--r);
+  background:var(--sf-2);cursor:pointer;min-width:0;transition:background .15s}
+.irow:hover{background:#F0F4F8}
+.irow__ic{width:38px;height:38px;border-radius:9px;background:#fff;color:var(--g-700);flex:none;
+  display:grid;place-items:center;box-shadow:var(--sh-1)}
+.irow__ic .icon{width:18px;height:18px}
+.irow__tx{min-width:0}
+.irow__tx b{display:block;font-family:var(--f-display);font-size:14px;font-weight:700;color:var(--ink);
+  letter-spacing:-.015em;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.irow__tx span{display:block;font-size:12px;color:var(--mute-2);margin-top:2px}
+.irow__tx span em{font-style:normal;font-family:var(--f-mono);font-size:11px}
+
+/* ── §8 · RESPONSIVE ──────────────────────────────────────────────────────── */
+@media (max-width:1160px){
+  .hero__inner{grid-template-columns:1fr;gap:24px;padding:52px 22px 56px}
+  .hero__art{height:220px;order:-1}
+  .hero h1{max-width:none}
+  .actions{grid-template-columns:1fr 1fr}
+  .split{grid-template-columns:1fr}
+}
+@media (max-width:760px){
+  .preview-shell{padding:0}
+  .win{border-radius:0;border:none;box-shadow:none}
+  .rail{display:none}
+  .actions{grid-template-columns:1fr}
+  .services__grid,.info-grid,.help__btns{grid-template-columns:1fr}
+  .hero__search{height:54px;flex-wrap:wrap}
+  .work__tabs{overflow-x:auto;scrollbar-width:none}
+  .work__tabs::-webkit-scrollbar{display:none}
+}
+</style>
+
+<!-- ══ icon sprite — swap for your own icon component; ids are referenced by <use> ══ -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5M12 16.2h.01"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="14" r="4"/><path d="M11 11.5 20 3M17.5 5.5l2 2M15 8l2 2"/></symbol>
+  <symbol id="i-bulb" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.5.4.8 1 .8 1.6V16h5.4v-.5c0-.6.3-1.2.8-1.6A6 6 0 0 0 12 3Z"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3.6 2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.8l5.9-.9Z"/></symbol>
+  <symbol id="i-laptop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="10" rx="1.6"/><path d="M2.5 19h19"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5v11M8 11l4 4 4-4M4.5 19.5h15"/></symbol>
+  <symbol id="i-wifi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 9a15 15 0 0 1 19 0M5.5 12.5a10.5 10.5 0 0 1 13 0M8.8 16a5.5 5.5 0 0 1 6.4 0"/><path d="M12 19.5h.01"/></symbol>
+  <symbol id="i-userplus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9.5" cy="8" r="3.5"/><path d="M3.5 19.5a6 6 0 0 1 12 0M18 8.5v5M20.5 11h-5"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 16V10.5a6 6 0 1 0-12 0V16l-1.5 2.5h15Z"/><path d="M10 21h4"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5.5" width="18" height="13" rx="1.8"/><path d="m3.6 7 8.4 6 8.4-6"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3.5h3l1.5 4-2 1.4a12 12 0 0 0 6.1 6.1l1.4-2 4 1.5v3a2 2 0 0 1-2.2 2A17.5 17.5 0 0 1 4.5 5.7a2 2 0 0 1 2-2.2Z"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5.2l3.2 2"/></symbol>
+  <symbol id="i-box" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 8.2v7.6a1.6 1.6 0 0 1-.85 1.4l-6.9 3.6a1.6 1.6 0 0 1-1.5 0l-6.9-3.6a1.6 1.6 0 0 1-.85-1.4V8.2"/><path d="m3.9 7.4 7.35-3.8a1.6 1.6 0 0 1 1.5 0l7.35 3.8-8.1 4.2Z"/><path d="M12 11.6V20"/></symbol>
+  <symbol id="i-server" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M6.5 7h.01M6.5 17h.01"/></symbol>
+  <symbol id="i-monitor" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="1.6"/><path d="M9 20h6M12 16v4"/></symbol>
+  <symbol id="i-mouse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="5"/><path d="M12 6.5v3.5"/></symbol>
+  <symbol id="i-headset" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="2.5" y="13.5" width="4" height="6" rx="1.6"/><rect x="17.5" y="13.5" width="4" height="6" rx="1.6"/></symbol>
+  <symbol id="i-term" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="1.8"/><path d="m7.5 10 2.5 2-2.5 2M13 14h3.5"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3.5H7.5A1.5 1.5 0 0 0 6 5v14a1.5 1.5 0 0 0 1.5 1.5h9A1.5 1.5 0 0 0 18 19V7.5Z"/><path d="M14 3.5V7a.5.5 0 0 0 .5.5H18M9 12.5h6M9 16h4"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 13.7 9l5.5 1.7-5.5 1.7L12 18l-1.7-5.6L4.8 10.7 10.3 9Z"/><path d="M18.5 3.5v3M20 5h-3"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5 12 4l8 6.5V19a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 19Z"/></symbol>
+  <symbol id="i-ticket" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5V6.5A1.5 1.5 0 0 1 5.5 5h13A1.5 1.5 0 0 1 20 6.5v2a2.5 2.5 0 0 0 0 7v2a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5v-2a2.5 2.5 0 0 0 0-7Z"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3.5 8.5 4.5L12 12.5 3.5 8Z"/><path d="m3.5 12.5 8.5 4.5 8.5-4.5"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 5 6v5.5c0 4.2 2.9 7.6 7 9 4.1-1.4 7-4.8 7-9V6Z"/></symbol>
+  <symbol id="i-cog" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v2.2M12 19.3v2.2M21.5 12h-2.2M4.7 12H2.5M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6M18.7 18.7l-1.6-1.6M6.9 6.9 5.3 5.3"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.4 2.4L15.8 9.5"/></symbol>
+</svg>
+
+<div class="preview-shell">
+  <p class="preview-note">Motadata ServiceOps · Support Portal template · 1180px measure</p>
+
+<div class="win">
+  <!-- §1 · fixed product chrome — NOT part of the template -->
+  <nav class="rail" aria-label="Product navigation">
+    <span class="is-on"><svg class="icon"><use href="#i-home"/></svg></span>
+    <span><svg class="icon"><use href="#i-ticket"/></svg></span>
+    <span><svg class="icon"><use href="#i-layers"/></svg></span>
+    <span><svg class="icon"><use href="#i-box"/></svg></span>
+    <span><svg class="icon"><use href="#i-shield"/></svg></span>
+    <span><svg class="icon"><use href="#i-file"/></svg></span>
+    <span><svg class="icon"><use href="#i-cog"/></svg></span>
+  </nav>
+
+  <div class="wcol">
+    <header class="topbar">
+      <span class="brand"><i>A</i>Acme Corp</span>
+      <span class="spacer"></span>
+      <button class="ask-ai"><svg class="icon"><use href="#i-spark"/></svg>Ask AI</button>
+      <button class="tbtn" data-dot aria-label="Notifications"><svg class="icon"><use href="#i-bell"/></svg></button>
+      <span class="avatar">JD</span>
+    </header>
+
+    <main class="portal">
+
+      <!-- ══ §2 · HERO ══════════════════════════════════════════════════════ -->
+      <section class="hero">
+        <div class="hero__inner">
+          <div class="hero__copy">
+            <h1>Welcome to Support Portal</h1>
+            <p class="hero__sub">Search our support center knowledge base</p>
+            <form class="hero__search" role="search" onsubmit="return false">
+              <svg class="icon"><use href="#i-search"/></svg>
+              <input type="search" placeholder="How can we help you?" aria-label="Search the support portal">
+              <button type="submit">Search</button>
+            </form>
+          </div>
+
+          <!-- ⚠️ SWAPPABLE SLOT — replace everything inside with a real render -->
+          <div class="hero__art" aria-hidden="true">
+            <span class="shape sh-pill"></span>
+            <span class="shape sh-tri-dark"></span>
+            <span class="shape sh-half"></span>
+            <div class="shape doc">
+              <div class="doc__brand">Motadata</div>
+              <svg class="doc__mark" viewBox="0 0 130 84" fill="none" stroke="#A6BEB2"
+                stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round">
+                <path d="M36 70 58 26 80 70Z"/>
+                <path d="M80 26h18a15 15 0 0 1 0 30H80z"/>
+                <circle cx="24" cy="32" r="11"/>
+                <path d="M92 70h22"/>
+              </svg>
+              <div class="doc__foot"><span>SERVICEOPS</span></div>
+            </div>
+            <span class="shape sh-prism"></span>
+            <span class="shape sh-dome"></span>
+          </div>
+        </div>
+      </section>
+
+      <div class="band">
+
+        <!-- ══ §4 · QUICK ACTIONS — own band, no overlap ═══════════════════ -->
+        <section class="section actions" aria-label="Quick actions">
+          <article class="acard" tabindex="0">
+            <span class="acard__go"><svg class="icon"><use href="#i-arrow"/></svg></span>
+            <span class="acard__art"><svg class="icon"><use href="#i-alert"/></svg></span>
+            <h3>New Incident</h3>
+            <p>Report something that is broken or not working as expected.</p>
+          </article>
+          <article class="acard" tabindex="0">
+            <span class="acard__go"><svg class="icon"><use href="#i-arrow"/></svg></span>
+            <span class="acard__art"><svg class="icon"><use href="#i-grid"/></svg></span>
+            <h3>Request Service</h3>
+            <p>Browse the services offered and raise a new request.</p>
+          </article>
+          <article class="acard" tabindex="0">
+            <span class="acard__go"><svg class="icon"><use href="#i-arrow"/></svg></span>
+            <span class="acard__art"><svg class="icon"><use href="#i-key"/></svg></span>
+            <h3>AD Self Service</h3>
+            <p>Reset your domain password or unlock your account.</p>
+          </article>
+          <article class="acard" tabindex="0">
+            <span class="acard__go"><svg class="icon"><use href="#i-arrow"/></svg></span>
+            <span class="acard__art"><svg class="icon"><use href="#i-bulb"/></svg></span>
+            <h3>Knowledge</h3>
+            <p>Browse guides and how-tos before you raise a ticket.</p>
+          </article>
+        </section>
+
+        <!-- ══ §5 · SERVICES + RIGHT RAIL ══════════════════════════════════ -->
+        <section class="section split" aria-label="Services and service desk">
+
+          <!-- §5a -->
+          <div class="services">
+            <div class="services__head">
+              <svg class="icon"><use href="#i-grid"/></svg>
+              <h3>Most Used Services</h3>
+              <span class="pin">2 PINNED</span>
+            </div>
+            <div class="services__grid">
+              <article class="stile" tabindex="0">
+                <button class="stile__star is-on" aria-label="Remove from favourites" aria-pressed="true">
+                  <svg class="icon"><use href="#i-star"/></svg></button>
+                <span class="stile__ic"><svg class="icon"><use href="#i-laptop"/></svg></span>
+                <b>New Laptop Request</b><span>Hardware</span>
+              </article>
+              <article class="stile" tabindex="0">
+                <button class="stile__star" aria-label="Add to favourites" aria-pressed="false">
+                  <svg class="icon"><use href="#i-star"/></svg></button>
+                <span class="stile__ic"><svg class="icon"><use href="#i-download"/></svg></span>
+                <b>Software Installation</b><span>Software</span>
+              </article>
+              <article class="stile" tabindex="0">
+                <button class="stile__star is-on" aria-label="Remove from favourites" aria-pressed="true">
+                  <svg class="icon"><use href="#i-star"/></svg></button>
+                <span class="stile__ic"><svg class="icon"><use href="#i-wifi"/></svg></span>
+                <b>VPN Access</b><span>Network</span>
+              </article>
+              <article class="stile" tabindex="0">
+                <button class="stile__star" aria-label="Add to favourites" aria-pressed="false">
+                  <svg class="icon"><use href="#i-star"/></svg></button>
+                <span class="stile__ic"><svg class="icon"><use href="#i-userplus"/></svg></span>
+                <b>New Employee Onboarding</b><span>HR</span>
+              </article>
+            </div>
+            <a class="services__more" href="#">
+              <span>Browse the full catalog</span><em>312 services</em>
+              <svg class="icon"><use href="#i-chev"/></svg>
+            </a>
+          </div>
+
+          <!-- §5b + §5c -->
+          <div class="rail-col">
+            <div class="news">
+              <div class="news__head">
+                <span class="badge"><svg class="icon"><use href="#i-bell"/></svg></span>
+                <h3>Announcements</h3>
+                <span class="count">2</span>
+              </div>
+              <article class="nitem" tabindex="0">
+                <b>Planned network maintenance</b>
+                <p>All sites will be unavailable Saturday 16 August, 02:00–05:00.</p>
+                <span class="when"><svg class="icon"><use href="#i-clock"/></svg>MON, AUG 11</span>
+              </article>
+              <article class="nitem" tabindex="0">
+                <b>New VPN client rollout begins next week</b>
+                <p>Managed laptops update automatically. No action needed.</p>
+                <span class="when"><svg class="icon"><use href="#i-clock"/></svg>FRI, AUG 08</span>
+              </article>
+            </div>
+
+            <div class="help">
+              <h3>Still need help?</h3>
+              <p>Talk to the service desk directly. We answer 24/7.</p>
+              <div class="help__btns">
+                <button class="hbtn hbtn--solid"><svg class="icon"><use href="#i-phone"/></svg>Call support</button>
+                <button class="hbtn hbtn--ghost"><svg class="icon"><use href="#i-mail"/></svg>Email help</button>
+              </div>
+              <div class="help__meta">
+                <span>servicedesk@acme.com</span><span>+91 79 4040 0000</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ══ §6 · WORK TABS ══════════════════════════════════════════════ -->
+        <section class="section" aria-label="Your work">
+          <div class="work">
+            <div class="work__tabs" role="tablist">
+              <button class="tab is-on" role="tab" aria-selected="true" data-panel="requests">
+                My Open Requests <span class="n">17</span></button>
+              <button class="tab" role="tab" aria-selected="false" data-panel="approvals">
+                Pending Approvals <span class="n">2</span></button>
+              <button class="tab" role="tab" aria-selected="false" data-panel="knowledge">
+                Most Read <span class="n">3</span></button>
+            </div>
+
+            <div class="work__body" id="panel-requests" role="tabpanel">
+              <div class="wrow" tabindex="0"><span class="wid">SR-201</span>
+                <span class="wrow__tx"><b>Request for New Laptop</b><span>Created on Aug 12, 2026</span></span>
+                <span class="st st--open">Open</span></div>
+              <div class="wrow" tabindex="0"><span class="wid">INC-187</span>
+                <span class="wrow__tx"><b>Cannot Create KB Article</b><span>Created on Aug 10, 2026</span></span>
+                <span class="st st--prog">In Progress</span></div>
+              <div class="wrow" tabindex="0"><span class="wid">SR-180</span>
+                <span class="wrow__tx"><b>Employee On-boarding</b><span>Created on Aug 05, 2026</span></span>
+                <span class="st st--open">Open</span></div>
+              <div class="wrow" tabindex="0"><span class="wid">INC-178</span>
+                <span class="wrow__tx"><b>Password Reset Required</b><span>Created on Aug 05, 2026</span></span>
+                <span class="st st--pend">Pending</span></div>
+              <div class="wrow" tabindex="0"><span class="wid">INC-170</span>
+                <span class="wrow__tx"><b>Laptop Slow and Lagging</b><span>Created on Aug 04, 2026</span></span>
+                <span class="st st--prog">In Progress</span></div>
+            </div>
+
+            <div class="work__body" id="panel-approvals" role="tabpanel" hidden>
+              <div class="wrow" tabindex="0"><span class="wav" style="background:#3D8BD0">RO</span>
+                <span class="wrow__tx"><b>Wrong configuration details</b>
+                  <span>INC-192 · Peer review requested by Rosy · Aug 11, 2026</span></span>
+                <span class="wdec"><button class="ok">Approve</button><button class="no">Reject</button></span></div>
+              <div class="wrow" tabindex="0"><span class="wav" style="background:#7C3AED">KE</span>
+                <span class="wrow__tx"><b>DESKTOP-5JPPI6F</b>
+                  <span>AST-13 · Approval required, raised by Keya · Aug 10, 2026</span></span>
+                <span class="wdec"><button class="ok">Approve</button><button class="no">Reject</button></span></div>
+            </div>
+
+            <div class="work__body" id="panel-knowledge" role="tabpanel" hidden>
+              <div class="wrow" tabindex="0"><span class="wkb"><svg class="icon"><use href="#i-bulb"/></svg></span>
+                <span class="wrow__tx"><b>How to Reset Your Password</b><span>KB-4 · Updated Jul 30, 2026</span></span>
+                <span class="wtag">Guideline Documents</span></div>
+              <div class="wrow" tabindex="0"><span class="wkb"><svg class="icon"><use href="#i-bulb"/></svg></span>
+                <span class="wrow__tx"><b>Connecting to Company VPN</b><span>KB-1 · Updated Jul 19, 2026</span></span>
+                <span class="wtag">FAQs</span></div>
+              <div class="wrow" tabindex="0"><span class="wkb"><svg class="icon"><use href="#i-bulb"/></svg></span>
+                <span class="wrow__tx"><b>Reporting a Hardware Fault</b><span>KB-6 · Updated Aug 11, 2026</span></span>
+                <span class="wtag">Guideline Documents</span></div>
+            </div>
+
+            <div class="work__foot">
+              <a class="more" href="#">View all <svg class="icon"><use href="#i-chev"/></svg></a>
+            </div>
+          </div>
+        </section>
+
+        <!-- ══ §7 · INFO CARDS ═════════════════════════════════════════════ -->
+        <section class="section info-grid" aria-label="Your records">
+          <div class="info">
+            <div class="info__head">
+              <span class="ic"><svg class="icon"><use href="#i-box"/></svg></span>
+              <h3>My Assets</h3><span class="count">4</span>
+              <a class="link" href="#">View all</a>
+            </div>
+            <div class="info__list">
+              <div class="irow" tabindex="0"><span class="irow__ic"><svg class="icon"><use href="#i-laptop"/></svg></span>
+                <span class="irow__tx"><b>Dell Latitude 5440</b><span><em>AST-3</em> · Laptop</span></span></div>
+              <div class="irow" tabindex="0"><span class="irow__ic"><svg class="icon"><use href="#i-monitor"/></svg></span>
+                <span class="irow__tx"><b>Dell UltraSharp U2723QE</b><span><em>AST-1</em> · Monitor</span></span></div>
+              <div class="irow" tabindex="0"><span class="irow__ic"><svg class="icon"><use href="#i-mouse"/></svg></span>
+                <span class="irow__tx"><b>Logitech MX Master 3S</b><span><em>AST-7</em> · Mouse</span></span></div>
+              <div class="irow" tabindex="0"><span class="irow__ic"><svg class="icon"><use href="#i-headset"/></svg></span>
+                <span class="irow__tx"><b>Jabra Evolve2 65</b><span><em>AST-12</em> · Headset</span></span></div>
+            </div>
+          </div>
+
+          <div class="info">
+            <div class="info__head">
+              <span class="ic"><svg class="icon"><use href="#i-server"/></svg></span>
+              <h3>My CIs</h3><span class="count">4</span>
+              <a class="link" href="#">View all</a>
+            </div>
+            <div class="info__list">
+              <div class="irow" tabindex="0"><span class="irow__ic"><svg class="icon"><use href="#i-server"/></svg></span>
+                <span class="irow__tx"><b>app-prod-01</b><span><em>CI-3</em> · Server</span></span></div>
+              <div class="irow" tabindex="0"><span class="irow__ic"><svg class="icon"><use href="#i-box"/></svg></span>
+                <span class="irow__tx"><b>hostname</b><span><em>CI-8</em> · Base CI</span></span></div>
+              <div class="irow" tabindex="0"><span class="irow__ic"><svg class="icon"><use href="#i-term"/></svg></span>
+                <span class="irow__tx"><b>localhost.localdomain</b><span><em>CI-5</em> · Linux Desktop</span></span></div>
+              <div class="irow" tabindex="0"><span class="irow__ic"><svg class="icon"><use href="#i-box"/></svg></span>
+                <span class="irow__tx"><b>P1</b><span><em>CI-7</em> · Base CI</span></span></div>
+            </div>
+          </div>
+        </section>
+
+      </div><!-- /.band -->
+    </main>
+  </div>
+</div>
+</div>
+
+<script>
+/* ── §9 · BEHAVIOUR ────────────────────────────────────────────────────────────
+   Two interactions, both real. Swap for your framework's equivalents; the class
+   names and aria attributes are the contract.
+   ────────────────────────────────────────────────────────────────────────────── */
+
+/* Tabs. One panel visible; `hidden` toggles it so nothing is in the a11y tree twice. */
+document.querySelectorAll('.work__tabs .tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    const strip = tab.parentElement;
+    strip.querySelectorAll('.tab').forEach(t => {
+      t.classList.remove('is-on');
+      t.setAttribute('aria-selected', 'false');
+      document.getElementById('panel-' + t.dataset.panel).hidden = true;
+    });
+    tab.classList.add('is-on');
+    tab.setAttribute('aria-selected', 'true');
+    document.getElementById('panel-' + tab.dataset.panel).hidden = false;
+  });
+});
+
+/* Favourites. ⚠️ The star is the ONLY favourites mechanism in this template — it is
+   why there is one services section rather than "Favourite" and "Most used" both
+   listing the same four services. Persist `aria-pressed` server-side. */
+document.querySelectorAll('.stile__star').forEach(star => {
+  star.addEventListener('click', e => {
+    e.stopPropagation();
+    const on = star.classList.toggle('is-on');
+    star.setAttribute('aria-pressed', String(on));
+    star.setAttribute('aria-label', on ? 'Remove from favourites' : 'Add to favourites');
+  });
+});
+</script>
