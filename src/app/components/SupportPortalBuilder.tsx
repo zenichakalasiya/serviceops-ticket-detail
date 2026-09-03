@@ -546,7 +546,15 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     /* ⚠️ A BLANK portal seeds NOTHING. The example sections exist so an untouched page shows what
        the palette can do; on a page somebody asked to be empty they are the opposite of that — the
        first thing you would have to do is delete fifteen sections you did not add. */
-    if (page.start === 'blank') return [];
+    /* ⚠️ …and NEITHER does a page started from a TEMPLATE. A seed is a description of the page the
+       template produces; appending fifteen example sections under it contradicts that description
+       line by line — the admin picked a layout and got the layout plus a catalogue of everything
+       they did not pick, sitting below the last band. Exactly the argument the line above already
+       makes for a blank page: the examples exist so an UNTOUCHED page shows what the palette can
+       do, and a page built from a template is not untouched.
+       ⚠️ Keyed on the SEED, not on this one template — every seeded template has the same claim to
+       describing its own page, and Search Spotlight was carrying the gallery for the same reason. */
+    if (page.start === 'blank' || seed) return [];
     const pool = PORTAL_ELEMENTS.filter((e) => !e.onPage && !e.hidden);
     return pool.map((def, i) => {
       const id = `sec-${i + 1}`;
