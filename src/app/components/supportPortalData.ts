@@ -488,12 +488,20 @@ export const PORTAL_TEMPLATES: PortalTemplate[] = [
         records: { cols: '2' },
         favourites: { show: 4 },
         services: { show: 4 },
+        /* ⚠️ The row treatment from the reference: subject over a short timestamp in one text
+           column, and the status as a coloured DOT rather than a filled pill. Five filled pills in
+           a column are five of the loudest objects on the page, competing with the subjects they
+           exist to qualify. */
+        requests: { rowLayout: 'meta', statusTone: 'dot', dateFormat: 'short' },
         page: {
           heroPlacement: 'left',
           quickLook: 'rail',
           servicesLook: 'chips',
           railHome: 'below',
           contactHome: 'hero',
+          /* Tighter corners on every card — the reference's squared treatment. A PAGE decision, so
+             no card can end up rounder than the one beside it. */
+          cardLook: 'square',
         },
       },
       styles: {

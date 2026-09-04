@@ -1246,6 +1246,10 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
      colour names the KIND of card at a glance, which a page of identical white boxes cannot do. */
   const cardLook = String(pageCfg.cardLook ?? 'panel');
   const spineCards = cardLook === 'spine';
+  /* ⚠️ A tighter corner on every card, and it has to be a PAGE decision like the other card looks:
+     one card at 6px beside three at 12px reads as a state, not as a kind — the exact fault the note
+     on `cardInner` already records. */
+  const squareCards = cardLook === 'square';
   /* ⚠️ Five more, and each is independently useful — a light banner needs dark ink whatever else
      the page does, and a tabbed work band is a decision on its own. Behind one `skin` key they
      could only ever move together, which is a TEMPLATE's job (it bundles them in its seed), not a
@@ -1529,6 +1533,8 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
          what a tabbed work band looked like before this existed. */
       className={look?.bare
         ? 'min-w-0'
+        : squareCards
+        ? 'min-w-0 rounded-md border border-[#E5E7EB] bg-white'
         : spineCards
         ? 'min-w-0 overflow-hidden rounded-[14px] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04),0_8px_24px_-12px_rgba(16,24,40,0.14)]'
         : 'min-w-0 rounded-xl border border-[#E5E7EB] bg-white'}
@@ -1627,6 +1633,8 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                   top ? 'flex-col' : stackedLeft ? 'flex-col justify-between' : iconRight ? 'flex-row-reverse items-center' : 'items-center'
                 } ${centre ? 'items-center text-center' : ''}`}
               >
+                {/* ⚠️ TOP-RIGHT and on HOVER — the tile look only. A row-shaped action gets a
+                    chevron on its trailing edge instead; see the quickRail block below the label. */}
                 {tileActions && (
                   <span aria-hidden className="pointer-events-none absolute right-3 top-3 flex size-8 items-center justify-center rounded-[9px] bg-[#1E7A5A] text-white opacity-0 transition-opacity duration-150 group-hover/act:opacity-100">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-[15px]">
@@ -1670,6 +1678,14 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                     </Sel>
                   )}
                 </span>
+                {/* ⚠️ AFTER the words, not before them. Placed above the icon in the tree it came out
+                    on the LEFT of the row — a chevron on the leading edge points back the way you
+                    came. `ml-auto` only reaches the right edge if it is the last child. */}
+                {quickRail && (
+                  <span aria-hidden className="ml-auto flex flex-shrink-0 items-center text-white/50">
+                    <ChevronsRight size={15} strokeWidth={2} />
+                  </span>
+                )}
               </div>
             </Sel>
           );
@@ -2078,8 +2094,44 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                         const neutral = c.statusTone === 'neutral';
                         const below = c.idPlacement === 'below';
                         const stacked = c.rowLayout === 'stacked';
+                        /* ⚠️ A THIRD row shape. `stacked` puts the status under the subject and the
+                           date under that — three lines. `meta` keeps the row to two: the subject
+                           and its timestamp share the text column, and the status holds the right
+                           edge. It is what lets a list of five fit a card without scrolling. */
+                        const metaRow = c.rowLayout === 'meta';
+                        /* A DOT and the word, not a filled pill. Five filled pills in a column are
+                           five of the loudest objects on the page competing with the subjects they
+                           are meant to qualify; a dot carries the same colour at a tenth the area. */
+                        const dotStatus = c.statusTone === 'dot';
+                        /* `Wed, Aug 12, 2026 10:09 AM` -> `Aug 12 - 10:09 AM`. The weekday and the
+                           year are the two parts of a timestamp nobody reads in a list. */
+                        const when = c.dateFormat === 'short'
+                          ? r.at.replace(/^\w+,\s*/, '').replace(/,\s*\d{4}/, ' ·')
+                          : r.at;
                         return (
                           <Row key={r.id} nodeId="requests">
+                            {metaRow ? (
+                              <div className="flex min-w-0 items-center gap-2.5">
+                                {c.showId !== false && <IdPill>{r.id}</IdPill>}
+                                <span className="min-w-0 flex-1">
+                                  <span style={roleStyle(styles, 'requests', 'body')} className="block truncate text-[13px] font-medium text-[#364658]">{r.subject}</span>
+                                  {c.showDate !== false && (
+                                    <span style={roleStyle(styles, 'requests', 'meta')} className="mt-0.5 block truncate text-[12px] text-[#98A6B6]">{when}</span>
+                                  )}
+                                </span>
+                                {statusOn && (dotStatus ? (
+                                  <span className="flex flex-shrink-0 items-center gap-1.5 whitespace-nowrap text-[12px] text-[#64748B]">
+                                    <span className="size-1.5 rounded-full" style={{ background: neutral ? '#94A3B8' : tone.fg }} />
+                                    {r.status}
+                                  </span>
+                                ) : (
+                                  <span
+                                    className="flex-shrink-0 whitespace-nowrap rounded-sm px-2 py-0.5 text-[12px] font-medium"
+                                    style={neutral ? { color: '#64748B', background: '#F1F5F9' } : { color: tone.fg, background: tone.bg }}
+                                  >{r.status}</span>
+                                ))}
+                              </div>
+                            ) : (<>
                             <div className={stacked ? '' : 'flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1'}>
                               {c.showId !== false && !below && <IdPill>{r.id}</IdPill>}
                               <span style={roleStyle(styles, 'requests', 'body')} className={`min-w-0 ${stacked ? 'block' : 'flex-1 truncate'} text-[13px] text-[#364658]`}>{r.subject}</span>
@@ -2092,6 +2144,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                             </div>
                             {(c.showId !== false && below) && <div className="mt-1"><IdPill>{r.id}</IdPill></div>}
                             {c.showDate !== false && <div style={roleStyle(styles, 'requests', 'meta')} className="mt-1 text-[12px] text-[#7B8FA5]">{r.at}</div>}
+                            </>)}
                           </Row>
                         );
                       })}
