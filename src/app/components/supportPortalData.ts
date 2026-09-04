@@ -502,8 +502,14 @@ export const PORTAL_TEMPLATES: PortalTemplate[] = [
         'quick-knowledge': { fill: 'color', bg: 'rgba(255,255,255,0.10)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)', radius: 10, sub: '' },
         work: { cols: '2' },
         records: { cols: '2' },
-        favourites: { show: 4 },
-        services: { show: 4 },
+        /* ⚠️ The ACTION-CARD treatment: icon left in an accent badge, name, and the category as an
+           uppercase label under it. At two columns a service tile is the same object as one of the
+           four cards in the rail — same width, same two lines, same job — so painting it any other
+           way would put two card languages on one page.
+           ⚠️ `cardTemplate` (where the icon sits) and `tileLook` (how the card is painted) stay
+           SEPARATE keys, so the widget's own Icon-position picker still does something. */
+        favourites: { show: 4, cardTemplate: 'left', tileLook: 'action' },
+        services: { show: 4, cardTemplate: 'left', tileLook: 'action' },
         /* ⚠️ The row treatment from the reference: subject over a short timestamp in one text
            column, and the status as a coloured DOT rather than a filled pill. Five filled pills in
            a column are five of the loudest objects on the page, competing with the subjects they

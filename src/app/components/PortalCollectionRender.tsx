@@ -17,7 +17,7 @@ import { Sel, useCanvas } from './PortalCanvas';
 import { PortalTable } from './PortalTable';
 import { hasFixedTitle, itemNodeId, subNodeId } from './portalPageModel';
 import type { PortalStyles } from './portalPageModel';
-import { chosen, roleStyle } from './portalStyleResolver';
+import { chosen, resolveType, roleStyle } from './portalStyleResolver';
 import { IconFrameBox } from './PortalIconFrame';
 import type { IconFrame } from './PortalIconFrame';
 import type { Cfg } from './portalWidgetSpec';
@@ -609,7 +609,7 @@ const FEATURED_SERVICES = [
  * catalogue — at which point the requester is better served by the catalogue page itself. */
 const MAX_SERVICE_TILES = 4;
 
-function ServiceTiles({ nodeId, items, showDesc, tpl = 'top', cols, chips }: {
+function ServiceTiles({ nodeId, items, showDesc, tpl = 'top', cols, chips, look }: {
   nodeId: string; items: { id: string; name: string; desc: string }[]; showDesc: boolean;
   /* The resolved column count. Undefined means "one per service", which is what this grid always
      did and stays the right default — four services in four columns is the reference row. */
@@ -622,10 +622,28 @@ function ServiceTiles({ nodeId, items, showDesc, tpl = 'top', cols, chips }: {
      'left' every other card family starts from, because a four-across grid of icon-left tiles puts
      the icon and the words in a 36px-wide column each and the names wrap on every one. */
   tpl?: string;
+  /* ⚠️ The card's TREATMENT, kept separate from `tpl`, which is its ARRANGEMENT. 'action' paints
+     the tile the way this product's four action cards are painted — accent badge, and the category
+     as an uppercase label rather than a sentence — because at two columns a service tile is the
+     same object as an action card and a second treatment for it would make one row look like two.
+     Opt-in: the grey badge stays the default, so no other template's tiles move. */
+  look?: string;
 }) {
   const { styles } = useCanvas();
   const top = tpl === 'top';
   const noIcon = tpl === 'none';
+  const action = look === 'action';
+  /* ⚠️ `roleStyle` emits `fontWeight` UNCONDITIONALLY — unlike `fontSize`, `color` and
+     `textAlign` beside it, each of which is gated on a human having chosen it. So an inline
+     `fontWeight: 400` (the body role's theme value) lands on the element and beats its own
+     `font-semibold` class, and the name rendered regular however it was written. Measured: 400.
+     ⚠️ Repaired HERE rather than in `roleStyle`, deliberately. The general fix is right and the
+     resolver's own comments argue for it three times — but the title role's theme weight is
+     `bold`, so gating it would drop every heading in every portal from 700 to the 600 its class
+     asks for. That is a page-wide change nobody asked for, on every template.
+     ⚠️ Only while the weight is still the THEME's: the moment an admin picks one, theirs wins. */
+  const themeWeight = resolveType(styles, nodeId, 'body', 'weight').source === 'theme';
+  const nameWeight = action && themeWeight ? { fontWeight: 600 } : null;
   if (chips) {
     return (
       <div className="flex min-w-0 flex-wrap gap-2.5">
@@ -653,7 +671,9 @@ function ServiceTiles({ nodeId, items, showDesc, tpl = 'top', cols, chips }: {
       {items.slice(0, MAX_SERVICE_TILES).map((s) => (
         <div
           key={s.id}
-          className={`flex min-w-0 gap-2 rounded-lg border border-[#E5E7EB] bg-white px-3 py-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)] ${
+          className={`flex min-w-0 rounded-lg border border-[#E5E7EB] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)] ${
+            action ? 'gap-3 px-3.5 py-3' : 'gap-2 px-3 py-4'
+          } ${
             top ? 'flex-col items-center text-center' : tpl === 'right' ? 'flex-row-reverse items-center' : 'items-center'
           }`}
         >
@@ -661,14 +681,25 @@ function ServiceTiles({ nodeId, items, showDesc, tpl = 'top', cols, chips }: {
               sits and whether there IS one are one question with four answers, which is why they
               share a control rather than needing a separate switch. */}
           {!noIcon && (
-            <span className="flex size-9 flex-shrink-0 items-center justify-center rounded-lg bg-[#F1F5F9] text-[#475467]">
+            <span className={`flex size-9 flex-shrink-0 items-center justify-center rounded-lg ${
+              action ? 'bg-[#EAF3FB] text-[#2F6FB5]' : 'bg-[#F1F5F9] text-[#475467]'
+            }`}>
               <ShoppingCart size={18} strokeWidth={1.7} />
             </span>
           )}
           <span className={`min-w-0 ${top ? '' : 'flex-1'}`}>
-            <span style={roleStyle(styles, nodeId, 'body')} className="block truncate text-[13px] font-medium text-[#364658]">{s.name}</span>
+            <span style={{ ...roleStyle(styles, nodeId, 'body'), ...nameWeight }} className={`block truncate ${
+              action ? 'text-[13.5px] text-[#1E293B]' : 'text-[13px] font-medium text-[#364658]'
+            }`}>{s.name}</span>
             {showDesc && (
-              <span style={roleStyle(styles, nodeId, 'meta')} className="mt-0.5 block truncate text-[12px] text-[#7B8FA5]">{s.desc}</span>
+              /* ⚠️ UPPERCASE and tracked in the action look — the second line stops being a
+                 description of the service and becomes a LABEL for which catalogue it came from,
+                 which is what a one-word value like "Hardware" or "Software" actually is. */
+              <span style={roleStyle(styles, nodeId, 'meta')} className={`block truncate ${
+                action
+                  ? 'mt-1 text-[11px] font-medium uppercase tracking-[0.06em] text-[#98A6B6]'
+                  : 'mt-0.5 text-[12px] text-[#7B8FA5]'
+              }`}>{s.desc}</span>
             )}
           </span>
         </div>
@@ -683,7 +714,7 @@ export function FavouriteServicesRender({ nodeId, cfg }: { nodeId: string; cfg: 
   return (
     <div className="@container min-w-0">
       <WidgetTitle nodeId={nodeId} text={cfg.title ?? 'Favourite Services'} />
-      <ServiceTiles nodeId={nodeId} items={FAVOURITE_SERVICES} showDesc={cfg.showDesc !== false} tpl={String(cfg.cardTemplate ?? 'top')} cols={Number(chosen(styles, nodeId, 'columns') ?? cfg.columns) || undefined} chips={cfg.tileLook === 'chips'} />
+      <ServiceTiles nodeId={nodeId} items={FAVOURITE_SERVICES} showDesc={cfg.showDesc !== false} tpl={String(cfg.cardTemplate ?? 'top')} cols={Number(chosen(styles, nodeId, 'columns') ?? cfg.columns) || undefined} chips={cfg.tileLook === 'chips'} look={String(cfg.tileLook ?? '')} />
     </div>
   );
 }
@@ -729,7 +760,7 @@ export function FeaturedServicesRender({ nodeId, cfg }: { nodeId: string; cfg: C
       </div>
       {/* ⚠️ The SAME tiles as Favourite Services. These two sit on one page and list the same kind
           of thing, so two grid languages would be a difference that means nothing. */}
-      <ServiceTiles nodeId={nodeId} items={FEATURED_SERVICES} showDesc={cfg.showDesc !== false} tpl={String(cfg.cardTemplate ?? 'top')} cols={cols} chips={cfg.tileLook === 'chips'} />
+      <ServiceTiles nodeId={nodeId} items={FEATURED_SERVICES} showDesc={cfg.showDesc !== false} tpl={String(cfg.cardTemplate ?? 'top')} cols={cols} chips={cfg.tileLook === 'chips'} look={String(cfg.tileLook ?? '')} />
     </div>
   );
 }
