@@ -99,6 +99,23 @@ export function TemplateArt({ layout, accent }: { layout: TemplateLayout; accent
         <R x={105} y={83} w={42} h={8} fill="#FFFFFF" />
         <R x={108} y={86} w={22} h={2} fill={g2} />
       </>)}
+      {/* ── Service Counter ── the only tile whose colour is a COLUMN. Drawing it as a top band
+          would show the one thing this template is not. */}
+      {layout === 'deskrail' && (<>
+        <R x={9} y={7} w={52} h={89} fill="#1E3050" r={0} />
+        <R x={15} y={14} w={38} h={4} fill="#FFFFFF" o={0.9} />
+        <R x={15} y={21} w={30} h={2.5} fill="#FFFFFF" o={0.45} />
+        <R x={15} y={28} w={40} h={6} fill="#FFFFFF" o={0.92} />
+        {[0,1,2,3].map((i) => <R key={'dr' + i} x={15} y={48 + i * 11} w={40} h={8} fill="#FFFFFF" o={0.14} />)}
+        {/* right column: work pair, read pair, chips, records pair */}
+        <R x={66} y={12} w={44} h={22} fill="#FFFFFF" />
+        <R x={114} y={12} w={40} h={22} fill="#FFFFFF" />
+        <R x={66} y={38} w={58} h={18} fill="#FFFFFF" />
+        <R x={128} y={38} w={26} h={18} fill="#FFFFFF" />
+        {[0,1,2].map((i) => <R key={'dc' + i} x={66 + i * 30} y={60} w={26} h={7} fill="#FFFFFF" r={3.5} />)}
+        <R x={66} y={72} w={44} h={20} fill="#FFFFFF" />
+        <R x={114} y={72} w={40} h={20} fill="#FFFFFF" />
+      </>)}
       {layout === 'classic' && (<>
         <R x={9} y={7} w={151} h={34} fill={accent} r={0} />
         <R x={52} y={16} w={64} h={4} fill="#FFFFFF" o={0.5} />

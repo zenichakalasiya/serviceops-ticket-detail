@@ -1263,7 +1263,9 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
      climb toward), no forced centring and no hover arrow (both are `tile`'s, and a card here picks
      its own layout via `cardTemplate` instead — see `stackedLeft`). Independent of the hero's own
      `searchSide` layout: a template could want one without the other. */
-  const quickOnBanner = String(pageCfg.quickLook ?? 'row') === 'glass';
+  /* ⚠️ Both looks put the cards INSIDE the banner, which is what this flag actually gates — the
+     two differ only in the shape of the card, and that is decided per-card by the seed. */
+  const quickOnBanner = String(pageCfg.quickLook ?? 'row') === 'glass' || String(pageCfg.quickLook ?? 'row') === 'rail';
   /* Services on a tinted PANEL rather than loose on the page ground. */
   const servicesPanel = String(pageCfg.servicesLook ?? 'plain') === 'panel';
   /* ⚠️ Where the rail LIVES, not what is in it — membership is still the `rail` array. Beside the
@@ -1288,6 +1290,24 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
      render-in-one-place rule `railHome` follows, and the only way to guarantee the page cannot
      carry either section twice. */
   const browseSplit = String(pageCfg.browseLook ?? 'stacked') === 'split';
+  /* ⚠️ A new page ARCHETYPE, not a banner variant: the hero stops being a band across the top and
+     becomes a full-height column beside everything else. The page then divides once — the rail is
+     what you DO (identity, search, the actions), the right column is what you HAVE.
+     ⚠️ Implemented as `contents` when off, so the default layout renders the identical tree it
+     always did — an extra wrapper div around every page would have changed spacing on all of them
+     to buy one template a row. */
+  const heroSide = String(pageCfg.heroPlacement ?? 'top') === 'left';
+  /* Action cards as full-width ROWS inside the rail — icon, label, chevron. A rail is a column, so
+     a card that is wider than it is tall is the only shape that fits it. */
+  const quickRail = String(pageCfg.quickLook ?? 'row') === 'rail';
+  /* Service tiles as rounded PILLS on the page ground rather than cards in a grid. A service is a
+     link, and a row of links does not need four boxes to say so. */
+  const servicesChips = String(pageCfg.servicesLook ?? 'plain') === 'chips';
+  /* ⚠️ Contact Us into the HERO. It is the one card on the page that is not a record — it is the
+     fallback for when nothing else worked — so on a rail layout it belongs with the greeting and
+     the opening hours rather than among the requester's own things. Keeping it in the right column
+     would also leave that column ending on a one-third-width oddity. */
+  const contactInHero = String(pageCfg.contactHome ?? 'work') === 'hero';
   /* The rail's members as a ROW BENEATH the work cards instead of a column beside them. Same
      membership question the `rail` array already answers; only the placement differs — which is
      exactly what `railHome` was added for. */
@@ -1743,17 +1763,25 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
             </div>
           ) : (
           <>
+          {/* ⚠️ `contents` when the hero is a top band — the wrapper leaves the layout entirely, so
+              every existing page renders the tree it always did. Only the rail archetype turns it
+              into a real flex row, and `items-stretch` is what gives the rail the page's height
+              rather than its own content's. */}
+          <div className={heroSide ? 'flex min-h-full items-stretch' : 'contents'}>
           {/* ── Hero ── */}
           {/* Full bleed ignores the page's side inset (§7.20); the 9-point picker places the
               content block, and the heading colour is the one the contrast guard measures. */}
-          <Sel id="hero" toolbarBelow className={wc('hero').fullBleed === true ? '-mx-0' : ''}>
+          <Sel id="hero" toolbarBelow className={`${wc('hero').fullBleed === true ? '-mx-0' : ''} ${heroSide ? 'w-[380px] flex-none self-stretch' : ''}`}>
             {/* ⚠️ The band is a flex COLUMN centred on its cross axis, so the heading and subtext sit
                 in the middle of the banner however tall it is made. Fixed `pt-14` pinned them near
                 the top and left the growing half of the band empty underneath — a taller banner
                 pushed its own content further off centre, which is the opposite of what raising the
                 height is for. */}
             <div
-              className={`relative flex flex-col justify-center ${(tileActions || quickOnBanner) && !searchFloats ? 'pb-10' : 'pb-[86px]'} ${searchFloats ? 'overflow-visible' : 'overflow-hidden'}`}
+              /* ⚠️ A RAIL reads top-down. Centring is right for a band — the copy sits in the middle
+                 of the colour however tall it is made — and wrong for a column, where it pushes the
+                 greeting to the vertical middle of the page and the action rows off the bottom. */
+              className={`relative flex flex-col ${heroSide ? 'justify-start pt-10 pb-10' : `justify-center ${(tileActions || quickOnBanner) && !searchFloats ? 'pb-10' : 'pb-[86px]'}`} ${searchFloats ? 'overflow-visible' : 'overflow-hidden'}`}
               style={{
                 /* ⚠️ The tabs decide, in one place. Image wins when one is uploaded; Colour paints
                    flat; and with neither the band keeps its gradient, so a portal nobody has touched
@@ -1927,12 +1955,21 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                   match it. See the note beside where `quickSection` is built, right before this
                   component's `return`. */}
               {quickOnBanner && quickSection}
+              {/* ⚠️ `mt-auto` pins it to the FOOT of the rail — a last resort belongs at the end of
+                  the column, not in the middle of it. `bare` because the rail is already a dark
+                  surface: a card would paint a second one inside it. `portal-help-dark` is the
+                  same class the dark Contact card uses, so the recolour rules are shared. */}
+              {contactInHero && (
+                <div className="portal-help-dark mt-auto w-full border-t border-white/15 px-7 pt-5">
+                  {card('contact', <ContactRender nodeId="contact" cfg={{ title: 'Contact Us', ...wc('contact') }} />, 1, 16, 1, undefined, { bare: true })}
+                </div>
+              )}
             </div>
           </Sel>
 
           {/* No horizontal padding here: a SECTION runs from the page's left edge to its right
               edge, so each one carries its own inset instead of sitting inside a padded column. */}
-          <div className="flex flex-col pb-8">
+          <div className={`flex flex-col pb-8 ${heroSide ? 'min-w-0 flex-1' : ''}`}>
             {/* ⚠️ NO seam under the hero. The action cards ride up into the banner by 62px, so a
                 section inserted between them would land inside an overlap and split a join that is
                 deliberately one unit — visually the banner and its cards are a single band, and the
@@ -1972,17 +2009,17 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                   style={{ order: slot("favourites"), gap: secGap('favourites') }}
                 >
                   <Sel id="favourites" className="min-w-[300px] flex-1" style={fillCss(wc('favourites'))}>
-                    <FavouriteServicesRender nodeId="favourites" cfg={wc('favourites')} />
+                    <FavouriteServicesRender nodeId="favourites" cfg={servicesChips ? { tileLook: 'chips', ...wc('favourites') } : wc('favourites')} />
                   </Sel>
                   {blockOrder.includes('services') && !removed.includes('services') && (
                     <Sel id="services" className="min-w-[300px] flex-1" style={fillCss(wc('services'))}>
-                      <FeaturedServicesRender nodeId="services" cfg={wc('services')} />
+                      <FeaturedServicesRender nodeId="services" cfg={servicesChips ? { tileLook: 'chips', ...wc('services') } : wc('services')} />
                     </Sel>
                   )}
                 </div>
               ) : (
               <Sel id="favourites" className={SECTION_PAD} style={{ order: slot("favourites"), ...fillCss(wc('favourites')) }}>
-                <FavouriteServicesRender nodeId="favourites" cfg={wc('favourites')} />
+                <FavouriteServicesRender nodeId="favourites" cfg={servicesChips ? { tileLook: 'chips', ...wc('favourites') } : wc('favourites')} />
               </Sel>
               )
             ))}
@@ -1995,7 +2032,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
             {!browseSplit && band('services', (
               <Sel id="services" className={SECTION_PAD} style={{ order: slot("services"), ...fillCss(wc('services')) }}>
                 {(() => {
-                  const list = <FeaturedServicesRender nodeId="services" cfg={wc('services')} />;
+                  const list = <FeaturedServicesRender nodeId="services" cfg={servicesChips ? { tileLook: 'chips', ...wc('services') } : wc('services')} />;
                   /* A tinted panel HOLDING white tiles, rather than tiles loose on the page ground
                      — which is what lets the row read as one section instead of four cards that
                      happen to be adjacent. */
@@ -2193,8 +2230,11 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
               if (railBelow) {
                 const order = rowOrder['work'] ?? [];
                 const inRail = new Set(rail ?? []);
-                const main = order.filter((id) => !inRail.has(id));
-                const below = (rail ?? []).filter((id) => order.includes(id));
+                /* ⚠️ Excluded from BOTH rows when the hero has it — a card rendered twice is the
+                   fault every placement key in this file guards against. */
+                const skip = (id: string) => contactInHero && id === 'contact';
+                const main = order.filter((id) => !inRail.has(id) && !skip(id));
+                const below = (rail ?? []).filter((id) => order.includes(id) && !skip(id));
                 return (
                   <div className="flex w-full min-w-0 flex-col" style={{ gap: secGap('work'), gridColumn: '1 / -1' }}>
                     <div
@@ -2362,6 +2402,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
             </Sel>
             ))}
             {band('records', after('records'))}
+          </div>
           </div>
           </>
           )}

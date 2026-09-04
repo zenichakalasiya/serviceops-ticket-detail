@@ -587,11 +587,15 @@ const FEATURED_SERVICES = [
  * catalogue — at which point the requester is better served by the catalogue page itself. */
 const MAX_SERVICE_TILES = 4;
 
-function ServiceTiles({ nodeId, items, showDesc, tpl = 'top', cols }: {
+function ServiceTiles({ nodeId, items, showDesc, tpl = 'top', cols, chips }: {
   nodeId: string; items: { id: string; name: string; desc: string }[]; showDesc: boolean;
   /* The resolved column count. Undefined means "one per service", which is what this grid always
      did and stays the right default — four services in four columns is the reference row. */
   cols?: number;
+  /* ⚠️ PILLS instead of a grid of cards. A service is a link, and a row of links does not need
+     four boxes to say so. Pills also wrap on their own, so this is the one arrangement that never
+     leaves a hole at 1, 2 or 7 items — the count problem every grid variant of this has. */
+  chips?: boolean;
   /* The shared card template. ⚠️ Defaults to 'top' — the reference arrangement — rather than to the
      'left' every other card family starts from, because a four-across grid of icon-left tiles puts
      the icon and the words in a 36px-wide column each and the names wrap on every one. */
@@ -600,6 +604,25 @@ function ServiceTiles({ nodeId, items, showDesc, tpl = 'top', cols }: {
   const { styles } = useCanvas();
   const top = tpl === 'top';
   const noIcon = tpl === 'none';
+  if (chips) {
+    return (
+      <div className="flex min-w-0 flex-wrap gap-2.5">
+        {items.slice(0, MAX_SERVICE_TILES).map((s) => (
+          <span
+            key={s.id}
+            className="inline-flex min-w-0 max-w-full items-center gap-2.5 rounded-full border border-[#E5E7EB] bg-white py-1.5 pl-1.5 pr-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
+          >
+            {!noIcon && (
+              <span className="flex size-7 flex-shrink-0 items-center justify-center rounded-full bg-[#F1F5F9] text-[#475467]">
+                <ShoppingCart size={15} strokeWidth={1.7} />
+              </span>
+            )}
+            <span style={roleStyle(styles, nodeId, 'body')} className="truncate text-[13px] font-medium text-[#364658]">{s.name}</span>
+          </span>
+        ))}
+      </div>
+    );
+  }
   return (
     <div
       className="grid min-w-0 gap-3"
@@ -638,7 +661,7 @@ export function FavouriteServicesRender({ nodeId, cfg }: { nodeId: string; cfg: 
   return (
     <div className="@container min-w-0">
       <WidgetTitle nodeId={nodeId} text={cfg.title ?? 'Favourite Services'} />
-      <ServiceTiles nodeId={nodeId} items={FAVOURITE_SERVICES} showDesc={cfg.showDesc !== false} tpl={String(cfg.cardTemplate ?? 'top')} cols={Number(chosen(styles, nodeId, 'columns') ?? cfg.columns) || undefined} />
+      <ServiceTiles nodeId={nodeId} items={FAVOURITE_SERVICES} showDesc={cfg.showDesc !== false} tpl={String(cfg.cardTemplate ?? 'top')} cols={Number(chosen(styles, nodeId, 'columns') ?? cfg.columns) || undefined} chips={cfg.tileLook === 'chips'} />
     </div>
   );
 }
@@ -684,7 +707,7 @@ export function FeaturedServicesRender({ nodeId, cfg }: { nodeId: string; cfg: C
       </div>
       {/* ⚠️ The SAME tiles as Favourite Services. These two sit on one page and list the same kind
           of thing, so two grid languages would be a difference that means nothing. */}
-      <ServiceTiles nodeId={nodeId} items={FEATURED_SERVICES} showDesc={cfg.showDesc !== false} tpl={String(cfg.cardTemplate ?? 'top')} cols={cols} />
+      <ServiceTiles nodeId={nodeId} items={FEATURED_SERVICES} showDesc={cfg.showDesc !== false} tpl={String(cfg.cardTemplate ?? 'top')} cols={cols} chips={cfg.tileLook === 'chips'} />
     </div>
   );
 }

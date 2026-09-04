@@ -52,7 +52,7 @@ export interface PortalPage {
    promises "the page your requesters see today" was showing a page nobody has. It draws the real
    thing: banner and search, the four action cards straddling its lower edge, the two service rows,
    and the work cards below them. */
-export type TemplateLayout = 'portal' | 'classic' | 'spotlight' | 'catalog' | 'knowledge' | 'minimal' | 'status' | 'verdant' | 'counter';
+export type TemplateLayout = 'portal' | 'classic' | 'spotlight' | 'catalog' | 'knowledge' | 'minimal' | 'status' | 'verdant' | 'counter' | 'deskrail';
 
 export interface PortalTemplate {
   id: string;
@@ -409,6 +409,106 @@ export const PORTAL_TEMPLATES: PortalTemplate[] = [
         'quick-service': { iconColor: '#FFFFFF', iconFill: 'transparent' },
         'quick-ad': { iconColor: '#FFFFFF', iconFill: 'transparent' },
         'quick-knowledge': { iconColor: '#FFFFFF', iconFill: 'transparent' },
+      },
+    },
+  },
+  {
+    id: 'tpl-deskrail',
+    name: 'Service Counter',
+    desc: 'The banner turns on its side — a full-height navy rail carrying the greeting, the search and the three doors, with everything the requester owns in the column beside it.',
+    category: 'IT Support',
+    layout: 'deskrail',
+    accent: '#16233A',
+    badge: 'New',
+    blocks: ['Side rail hero', 'Search', 'Quick actions (rows)', 'My Open Requests', 'Pending Approvals', 'Announcements', 'Most Read', 'Favourite Services', 'Most Used Services', 'My Assets', 'My CIs'],
+    /* ── Service Counter ───────────────────────────────────────────────────
+       ⚠️ A new page ARCHETYPE, not a banner variant — `heroPlacement: 'left'`. The hero stops
+       being a band across the top and becomes a column beside everything else, so the page divides
+       exactly once: the rail is what you DO, the right column is what you HAVE. Every other
+       template here is top-down; this is the only one that is not.
+       ⚠️ The reference image carries no search at all. It is added back into the rail, under the
+       subtitle — a portal whose catalogue is 300 services and whose only affordance is three doors
+       makes the fourth thing you might want unreachable.
+       ⚠️ FOUR action rows, not the image's three. Knowledge is one of this product's four fixed
+       quick actions; dropping it because a mock showed three would be letting the picture decide
+       what the product ships.
+
+       WHERE THE MISSING CARDS WENT — the image shows Requests, Approvals, Announcements and one
+       services row, and stops. The rest are placed by what they ARE, not by what fits:
+       • Most Read sits BESIDE Announcements (2:1). Both are reading material and both are lists of
+         links, so the page gets one "what to read" band instead of two — and it stops Announcements
+         being a full-width card holding two lines.
+       • Favourite and Most Used are two labelled CHIP rows, stacked. Chips wrap, so neither leaves
+         a hole at any count, and two rows of pills read as one browse area rather than as two grids.
+       • My Assets and My CIs pair on their own row, which is the shape they were designed as.
+       The result reads work → read → browse → own, and nothing is orphaned or full-width-and-sparse.
+       ⚠️ Contact Us is the one card NOT in the right column. It is not a record — it is the
+       fallback when nothing else on the page worked — and the rail is already the dark surface
+       carrying the opening hours, which is the same kind of information. Putting it there keeps the
+       right column purely about the requester's own records. It rides in the rail via `rail` +
+       `railHome: 'hero'`. */
+    seed: {
+      blockOrder: ['quick', 'work', 'favourites', 'services', 'records'],
+      rowOrder: {
+        quick: ['quick-incident', 'quick-service', 'quick-ad', 'quick-knowledge'],
+        /* Row 1 is Requests | Approvals; row 2 is the `rail` pair, Announcements leading at two
+           shares to Most Read's one. */
+        /* ⚠️ `contact` is a MEMBER here even though the hero draws it — `card()` gates on row
+           membership, so a card missing from this list renders nowhere at all. */
+        work: ['requests', 'approvals', 'news', 'knowledge', 'contact'],
+        records: ['assets', 'cis'],
+      },
+      rail: ['news', 'knowledge'],
+      cfg: {
+        hero: {
+          /* Copy from the reference. The hours line is the product's own `sub`; the greeting and
+             the sentence under it are what the image says, because they are the words that make a
+             counter read as a counter. */
+          heading: 'Welcome to Support Portal',
+          sub: 'Report a fault, request a service, or reset your account. No appointment needed.',
+          bgKind: 'color',
+          bannerStyle: 'gradient',
+          bannerColor: '#1E3050',
+          headingColor: '#FFFFFF',
+          contentAlign: 'left',
+          contentMaxWidth: 100,
+          searchWidth: 100,
+          searchRadius: 10,
+          /* The rail is a column, so it fills the page's height rather than setting one. */
+          height: 560,
+        },
+        /* ONE per row — a rail is a column, so a card wider than it is tall is the only shape that
+           fits it. The glass treatment is per-card below. */
+        quick: { cols: '1' },
+        'quick-incident': { fill: 'color', bg: 'rgba(255,255,255,0.10)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)', radius: 10, sub: '' },
+        'quick-service': { fill: 'color', bg: 'rgba(255,255,255,0.10)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)', radius: 10, sub: '' },
+        'quick-ad': { fill: 'color', bg: 'rgba(255,255,255,0.10)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)', radius: 10, sub: '' },
+        'quick-knowledge': { fill: 'color', bg: 'rgba(255,255,255,0.10)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)', radius: 10, sub: '' },
+        work: { cols: '2' },
+        records: { cols: '2' },
+        favourites: { show: 4 },
+        services: { show: 4 },
+        page: {
+          heroPlacement: 'left',
+          quickLook: 'rail',
+          servicesLook: 'chips',
+          railHome: 'below',
+          contactHome: 'hero',
+        },
+      },
+      styles: {
+        /* White on navy, for every word in the rail. */
+        'quick-incident-title': { type: { title: { color: '#FFFFFF' } } },
+        'quick-service-title': { type: { title: { color: '#FFFFFF' } } },
+        'quick-ad-title': { type: { title: { color: '#FFFFFF' } } },
+        'quick-knowledge-title': { type: { title: { color: '#FFFFFF' } } },
+        'quick-incident': { iconColor: '#FFFFFF', iconFill: 'transparent' },
+        'quick-service': { iconColor: '#FFFFFF', iconFill: 'transparent' },
+        'quick-ad': { iconColor: '#FFFFFF', iconFill: 'transparent' },
+        'quick-knowledge': { iconColor: '#FFFFFF', iconFill: 'transparent' },
+        /* One column each — a list of records, not a 2x2 of tiles. */
+        assets: { columns: 1 },
+        cis: { columns: 1 },
       },
     },
   },
