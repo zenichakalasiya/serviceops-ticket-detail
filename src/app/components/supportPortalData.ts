@@ -474,6 +474,9 @@ export const PORTAL_TEMPLATES: PortalTemplate[] = [
           contentMaxWidth: 100,
           searchWidth: 100,
           searchRadius: 10,
+          /* The counter's opening hours — its own field rather than more words in `sub`, because
+             it is a fact with a clock beside it. */
+          note: 'Counter staffed Mon–Fri, 09:00–17:00',
           /* The rail is a column, so it fills the page's height rather than setting one. */
           height: 560,
         },
@@ -493,6 +496,14 @@ export const PORTAL_TEMPLATES: PortalTemplate[] = [
            a column are five of the loudest objects on the page, competing with the subjects they
            exist to qualify. */
         requests: { rowLayout: 'meta', statusTone: 'dot', dateFormat: 'short' },
+        /* ⚠️ THE SAME row shape as Requests. Two cards side by side that arrange their rows
+           differently read as two different kinds of thing, which is the one thing this page is
+           trying not to say. */
+        approvals: { rowLayout: 'meta' },
+        knowledge: { dateFormat: 'short' },
+        /* A bullet as the leading token, so this list opens the way every other list on the page
+           does, and "Posted" to turn a bare date into a fact about the announcement. */
+        news: { bullets: true, datePrefix: 'Posted', show: 2 },
         page: {
           heroPlacement: 'left',
           quickLook: 'rail',
@@ -502,6 +513,9 @@ export const PORTAL_TEMPLATES: PortalTemplate[] = [
           /* Tighter corners on every card — the reference's squared treatment. A PAGE decision, so
              no card can end up rounder than the one beside it. */
           cardLook: 'square',
+          /* Every data card leads with a tinted badge, or none does. */
+          cardHead: 'icon',
+          heroArt: 'rings',
         },
       },
       styles: {

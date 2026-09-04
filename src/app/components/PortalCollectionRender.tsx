@@ -540,13 +540,23 @@ export function AnnouncementsRender({ nodeId, cfg }: { nodeId: string; cfg: Cfg 
       <WidgetTitle nodeId={nodeId} text={cfg.title} />
       <div {...stackProps(gap, dividers)}>
         {rows.map((a) => (
-          <div key={a.id} className="py-2.5">
-            {/* Stacked by default (§7.5): an announcement's headline is the thing, the date is a
-                footnote — putting them on one line would truncate the headline to fit the date. */}
-            <div style={roleStyle(styles, nodeId, 'body')} className="text-[13px] leading-[1.5] text-[#364658]">{a.title}</div>
-            {cfg.showDate !== false && (
-              <div style={roleStyle(styles, nodeId, 'meta')} className="mt-1 text-[12px] text-[#7B8FA5]">{a.at}</div>
-            )}
+          <div key={a.id} className={cfg.bullets === true ? 'flex gap-2.5 py-2.5' : 'py-2.5'}>
+            {/* ⚠️ A BULLET, and it is the leading token this card was missing — every other card on
+                the page opens its rows with one (an id pill, an avatar, an icon), so without it
+                Announcements was the only list whose rows started at the card's edge. */}
+            {cfg.bullets === true && <span className="mt-[7px] size-1.5 flex-shrink-0 rounded-full bg-[#2F6FB5]" />}
+            <div className="min-w-0 flex-1">
+              {/* Stacked by default (§7.5): an announcement's headline is the thing, the date is a
+                  footnote — putting them on one line would truncate the headline to fit the date. */}
+              <div style={roleStyle(styles, nodeId, 'body')} className="text-[13px] leading-[1.5] text-[#364658]">{a.title}</div>
+              {cfg.showDate !== false && (
+                <div style={roleStyle(styles, nodeId, 'meta')} className="mt-1 text-[12px] text-[#98A6B6]">
+                  {/* "Posted" turns a bare date into a fact about the announcement. Opt-in, because
+                      on a card that is already headed Announcements it can also read as noise. */}
+                  {cfg.datePrefix ? `${String(cfg.datePrefix)} ${a.at}` : a.at}
+                </div>
+              )}
+            </div>
           </div>
         ))}
       </div>

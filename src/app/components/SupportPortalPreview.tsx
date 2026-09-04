@@ -3,7 +3,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import {
   Bell, Check, Info, Keyboard, KeyRound, House, MessageSquare, MessagesSquare, Plus, PanelLeft,
   Link2, RotateCcw, Search, ShoppingCart, Type, X, ChevronsRight, LayoutGrid,
-  HardDrive, Server,
+  HardDrive, Server, Ticket, Lightbulb, Clock,
 } from 'lucide-react';
 import { AnnouncementsRender, ContactRender, FavouriteServicesRender, FeaturedServicesRender } from './PortalCollectionRender';
 import { MotadataLogo } from './Header';
@@ -1014,9 +1014,14 @@ const SPINE: Record<string, string> = {
  * Every switch here comes from the widget's own config, so unticking "Show total count" in the
  * drawer removes the badge on the canvas immediately. `nodeId` drives the typography roles, which
  * resolve up the chain — a colour set on the Cards Row lands on all three of its cards. */
-function CardShell({ nodeId, titleNodeId, title, count, cfg = EMPTY_CFG, hideHead, children }: {
+function CardShell({ nodeId, titleNodeId, title, count, cfg = EMPTY_CFG, hideHead, headIcon, children }: {
   nodeId?: string; titleNodeId?: string; title: string; count: number;
-  cfg?: Record<string, unknown>; hideHead?: boolean; children: ReactNode;
+  cfg?: Record<string, unknown>; hideHead?: boolean;
+  /* ⚠️ A tinted badge before the title, and it is the LAYOUT's decision rather than the widget's —
+     a card with a badge beside three without one reads as the odd one out, so the page turns them
+     all on together or none of them. Each card still supplies its own glyph. */
+  headIcon?: ReactNode;
+  children: ReactNode;
 }) {
   const { styles } = useCanvas();
   const rid = nodeId ?? titleNodeId ?? '';
@@ -1048,6 +1053,11 @@ function CardShell({ nodeId, titleNodeId, title, count, cfg = EMPTY_CFG, hideHea
   return (
     <div className="@container flex min-w-0 flex-col">
       <div className="flex items-center gap-2 px-4 pb-2.5 pt-3.5">
+        {headIcon && (
+          <span className="flex size-7 flex-shrink-0 items-center justify-center rounded-md bg-[#EAF3FB] text-[#2F6FB5]">
+            {headIcon}
+          </span>
+        )}
         <span className="flex min-w-0 flex-1 items-center gap-2">
           {titleId ? (
             <Sel id={titleId} className="min-w-0 px-0.5">
@@ -1250,6 +1260,9 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
      one card at 6px beside three at 12px reads as a state, not as a kind — the exact fault the note
      on `cardInner` already records. */
   const squareCards = cardLook === 'square';
+  /* One card language across the page: either every data card leads with a badge or none does. */
+  const headIcons = String(pageCfg.cardHead ?? 'plain') === 'icon';
+  const hIcon = (node: ReactNode) => (headIcons ? node : undefined);
   /* ⚠️ Five more, and each is independently useful — a light banner needs dark ink whatever else
      the page does, and a tabbed work band is a decision on its own. Behind one `skin` key they
      could only ever move together, which is a TEMPLATE's job (it bundles them in its seed), not a
@@ -1285,6 +1298,8 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
      the default line-work only ever showed on an untouched band, so a template that sets a colour
      had no way to ask for artwork at all. */
   const heroShapes = String(pageCfg.heroArt ?? 'auto') === 'shapes';
+  /* Concentric rounded squares — a counter's own marker, quiet enough to sit behind type. */
+  const heroRings = String(pageCfg.heroArt ?? 'auto') === 'rings';
   /* A third `heroArt` value, not a new key — same rule `bannerStyle`'s `light` follows. */
   const heroCounterShapes = String(pageCfg.heroArt ?? 'auto') === 'counter';
   /* Favourite Services and Most Used Services SIDE BY SIDE rather than stacked as two full-width
@@ -1826,6 +1841,17 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
               {/* ⚠️ Its own clip too, for the same reason — and it sits BEHIND the copy, which is
                   why the hero's `contentMaxWidth` is what keeps the two from meeting. */}
               {heroShapes && <span className="pointer-events-none absolute inset-0 overflow-hidden"><HeroShapes /></span>}
+              {heroRings && (
+                <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+                  <svg viewBox="0 0 200 200" className="absolute right-[-38px] top-1/2 h-[300px] w-[300px] -translate-y-1/2"
+                    fill="none" stroke="#FFFFFF" strokeOpacity="0.10" strokeWidth="2">
+                    <rect x="14" y="14" width="172" height="172" rx="26" />
+                    <rect x="42" y="42" width="116" height="116" rx="20" />
+                    <rect x="70" y="70" width="60" height="60" rx="14" />
+                    <circle cx="100" cy="100" r="13" fill="#FFFFFF" fillOpacity="0.10" stroke="none" />
+                  </svg>
+                </span>
+              )}
               {heroCounterShapes && <HeroCounterShapes />}
               {/* ⚠️ SIDE-BY-SIDE, a wholly separate branch from the stacked layout below — never
                   taken unless a hero explicitly asks for it (`searchPlacement: 'side'`), so no
@@ -1890,6 +1916,10 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                     {String(wc('hero').heading ?? content.hero.title)}
                   </h2>
                 </Sel>
+                {/* ⚠️ A THIRD line under the subtitle, and its own config key rather than more
+                    words in `sub`: opening hours are a FACT with a clock beside it, and folding
+                    them into the sentence above would lose both the icon and the ability to leave
+                    them out. Absent unless a template asks for it. */}
                 <Sel id="hero-subtitle" className="mt-2 block w-full px-1" style={heroLine('hero-subtitle')}>
                   {/* ⚠️ The heading has `headingColor`; the line under it had a hard-coded
                       white/85 and no control at all — so a light banner printed a legible title
@@ -1902,6 +1932,12 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                     same `Sel`, the same id and the same config — moved, not duplicated, because two
                     search bars in the tree would be two things to keep in step and one of them
                     would eventually be edited while the other showed. */}
+                {wc('hero').note !== undefined && String(wc('hero').note) !== '' && (
+                  <div className="mt-3 flex w-full items-center gap-2 px-1" style={heroLine('hero-subtitle')}>
+                    <Clock size={14} strokeWidth={1.8} style={{ color: darkHeroInk ? 'rgba(15,51,39,.55)' : 'rgba(255,255,255,.6)' }} />
+                    <span className="text-[12.5px]" style={{ color: darkHeroInk ? 'rgba(15,51,39,.62)' : 'rgba(255,255,255,.66)' }}>{String(wc('hero').note)}</span>
+                  </div>
+                )}
                 {wc('hero').showSearch !== false && !searchFloats && (
                   <Sel
                     id="hero-search"
@@ -2080,7 +2116,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                  layout puts them in two regions and the flat one puts them in a row — same cards,
                  two arrangements. Authoring each twice is two places for a fix to land in one. */
               const requestsCard = card('requests', (
-                <CardShell nodeId="requests" titleNodeId="requests-title" title={String(wc('requests').title ?? content.requests.title)} count={visibleRequests.length} cfg={wc('requests')} hideHead={workTabs}>
+                <CardShell nodeId="requests" titleNodeId="requests-title" title={String(wc('requests').title ?? content.requests.title)} count={visibleRequests.length} cfg={wc('requests')} hideHead={workTabs} headIcon={hIcon(<Ticket size={15} strokeWidth={1.8} />)}>
                   <ListBody nodeId="requests">
                       {visibleRequests.map((r) => {
                         const c = wc('requests');
@@ -2152,10 +2188,29 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                 </CardShell>
               ), rail ? 2 : secCols("work", content.cols.work), secGap("work"), secGrow("work"));
               const approvalsCard = card('approvals', (
-                <CardShell nodeId="approvals" titleNodeId="approvals-title" title={String(wc('approvals').title ?? content.approvals.title)} count={visibleApprovals.length} cfg={wc('approvals')} hideHead={workTabs}>
+                <CardShell nodeId="approvals" titleNodeId="approvals-title" title={String(wc('approvals').title ?? content.approvals.title)} count={visibleApprovals.length} cfg={wc('approvals')} hideHead={workTabs} headIcon={hIcon(<Check size={15} strokeWidth={2} />)}>
                   <ListBody nodeId="approvals">
                     {visibleApprovals.map((a) => (
                       <Row key={a.id} nodeId="approvals">
+                        {/* ⚠️ THE SAME ROW as My Open Requests — a leading token, a text column of
+                            subject over meta, and one trailing token. Two cards side by side that
+                            arrange their rows differently read as two different kinds of thing,
+                            which is exactly what the page is trying not to say.
+                            ⚠️ No Approve/Reject/Refer buttons in this shape. Three buttons per row
+                            is the loudest object in the card, on the card the requester glances at
+                            rather than works in — the decision belongs on the record. */}
+                        {wc('approvals').rowLayout === 'meta' ? (
+                          <div className="flex min-w-0 items-center gap-2.5">
+                            {wc('approvals').showRequester !== false && (
+                              <span className="flex size-8 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-white" style={{ backgroundColor: a.color }}>{a.initials}</span>
+                            )}
+                            <span className="min-w-0 flex-1">
+                              <span style={roleStyle(styles, 'approvals', 'body')} className="block truncate text-[13px] font-medium text-[#364658]">{a.subject}</span>
+                              <span style={roleStyle(styles, 'approvals', 'meta')} className="mt-0.5 block truncate text-[12px] text-[#98A6B6]">{a.reason} · {a.by}</span>
+                            </span>
+                            {wc('approvals').showId !== false && <IdPill>{a.id}</IdPill>}
+                          </div>
+                        ) : (<>
                         <div className="flex flex-wrap items-center gap-2">
                           {wc('approvals').showId !== false && <IdPill>{a.id}: {a.subject}</IdPill>}
                           <span className="min-w-0 text-[12px] text-[#64748B]">{a.reason}</span>
@@ -2174,13 +2229,14 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                           <span className="flex size-7 flex-shrink-0 items-center justify-center rounded bg-[#FEF3F2] text-[#DC2626]"><X size={15} /></span>
                           <span className="flex size-7 flex-shrink-0 items-center justify-center rounded bg-[#FEF3C7] text-[#B45309]"><RotateCcw size={14} /></span>
                         </div>
+                        </>)}
                       </Row>
                     ))}
                   </ListBody>
                 </CardShell>
               ), rail ? 2 : secCols("work", content.cols.work), secGap("work"), secGrow("work"));
               const knowledgeCard = card('knowledge', (
-                <CardShell nodeId="knowledge" titleNodeId="knowledge-title" title={String(wc('knowledge').title ?? content.knowledge.title)} count={visibleArticles.length} cfg={wc('knowledge')} hideHead={workTabs}>
+                <CardShell nodeId="knowledge" titleNodeId="knowledge-title" title={String(wc('knowledge').title ?? content.knowledge.title)} count={visibleArticles.length} cfg={wc('knowledge')} hideHead={workTabs} headIcon={hIcon(<Lightbulb size={15} strokeWidth={1.8} />)}>
                   <ListBody nodeId="knowledge">
                     {visibleArticles.map((k) => {
                       const c = wc('knowledge');
@@ -2213,7 +2269,11 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                                 </span>
                                 <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
                                   {c.showId !== false && below && <IdPill>{k.id}</IdPill>}
-                                  {c.showDate !== false && <span style={roleStyle(styles, 'knowledge', 'meta')} className="truncate text-[12px] text-[#7B8FA5]">{k.at}</span>}
+                                  {/* ⚠️ The SAME short stamp Requests uses. A page where one card
+                                      writes "Thu, Jul 30, 2026 11:34 AM" and the card beside it
+                                      writes "Aug 12 · 10:09 AM" is a page with two date formats,
+                                      and the reader has to notice that before they can compare. */}
+                                  {c.showDate !== false && <span style={roleStyle(styles, 'knowledge', 'meta')} className="truncate text-[12px] text-[#7B8FA5]">{c.dateFormat === 'short' ? k.at.replace(/^\w+,\s*/, '').replace(/,\s*\d{4}/, ' ·') : k.at}</span>}
                                   {c.showCategory !== false && <span className="max-w-full truncate rounded-sm bg-[#F1F5F9] px-1.5 py-0.5 text-[11px] text-[#64748B]">{k.tag}</span>}
                                 </span>
                               </span>
