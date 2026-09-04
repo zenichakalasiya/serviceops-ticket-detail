@@ -74,6 +74,31 @@ export function TemplateArt({ layout, accent }: { layout: TemplateLayout; accent
         <R x={109} y={60} w={38} h={14} fill="#FFFFFF" />
         <R x={109} y={77} w={38} h={14} fill="#16233A" />
       </>)}
+      {/* ── Counter ── the one tile whose banner keeps going: the action row sits INSIDE it rather
+          than riding its lower edge, one tile solid and the rest translucent on the same colour —
+          and the work row splits wide-plus-narrow instead of three even cards. */}
+      {layout === 'counter' && (<>
+        <R x={9} y={7} w={151} h={40} fill={accent} r={0} />
+        <R x={20} y={14} w={62} h={6} fill="#FFFFFF" />
+        <R x={20} y={22} w={40} h={2.5} fill="#FFFFFF" o={0.55} />
+        {/* five action tiles, riding INSIDE the banner rather than on its edge */}
+        {[0, 1, 2, 3, 4].map((i) => <R key={`cq${i}`} x={13 + i * 28} y={29} w={25} h={14} fill="#FFFFFF" o={i === 0 ? 1 : 0.18} />)}
+        {[0, 1, 2, 3, 4].map((i) => <R key={`cqi${i}`} x={16 + i * 28} y={32} w={5} h={5} fill={i === 0 ? '#0B2545' : '#FFFFFF'} o={i === 0 ? 1 : 0.6} r={1.5} />)}
+        {[0, 1, 2, 3, 4].map((i) => <R key={`cqt${i}`} x={16 + i * 28} y={39} w={17} h={2} fill={i === 0 ? g : '#FFFFFF'} o={i === 0 ? 1 : 0.5} />)}
+        {/* services row */}
+        <R x={13} y={51} w={26} h={2.5} fill={g} />
+        {[0, 1, 2, 3].map((i) => <R key={`cs${i}`} x={13 + i * 35} y={56} w={31} h={13} fill="#FFFFFF" />)}
+        {[0, 1, 2, 3].map((i) => <R key={`csi${i}`} x={25 + i * 35} y={59} w={6} h={6} fill={g2} r={1.5} />)}
+        {/* work row — wide main card beside a narrow stacked rail, not three even cards */}
+        <R x={13} y={73} w={88} h={18} fill="#FFFFFF" />
+        <R x={17} y={77} w={30} h={2.5} fill={g} />
+        <R x={17} y={83} w={70} h={2} fill={g2} />
+        <R x={17} y={87} w={60} h={2} fill={g2} />
+        <R x={105} y={73} w={42} h={8} fill="#FFFFFF" />
+        <R x={108} y={76} w={22} h={2} fill={g} />
+        <R x={105} y={83} w={42} h={8} fill="#FFFFFF" />
+        <R x={108} y={86} w={22} h={2} fill={g2} />
+      </>)}
       {layout === 'classic' && (<>
         <R x={9} y={7} w={151} h={34} fill={accent} r={0} />
         <R x={52} y={16} w={64} h={4} fill="#FFFFFF" o={0.5} />

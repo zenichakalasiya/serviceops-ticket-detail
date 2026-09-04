@@ -243,14 +243,25 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
   /* ⚠️ v2's records row is ONE column, which is what makes My Assets and My CIs full-width bands
      stacked down the page rather than two narrow cards side by side. It is a column COUNT, not a
      different renderer — the same cards, given the whole width. */
-  const [content, setContent] = useState<PortalPageContent>(() => (
+  const [content, setContent] = useState<PortalPageContent>(() => {
     /* ⚠️ Reads the SEED as well as the layout: the records row is one column in the rail shape, and
        a template asking for that shape has to get the column count with it or My Assets and My CIs
        come out as two narrow cards inside a region built for full-width rows. */
-    page.layout === 'v2' || PORTAL_TEMPLATES.find((t) => t.name === page.source)?.seed?.rail
+    const base: PortalPageContent = page.layout === 'v2' || seed?.rail
       ? { ...DEFAULT_CONTENT, cols: { ...DEFAULT_CONTENT.cols, records: 1 } }
-      : DEFAULT_CONTENT
-  ));
+      : DEFAULT_CONTENT;
+    /* ⚠️ `quick-link` is deliberately absent from `DEFAULT_CONTENT` (see `LINK_CARD_ID`) — a template
+       that wants the row's fifth, admin-owned tile has to say so itself. Without this, a seed that
+       lists it in `rowOrder.quick` would still lose the card: `quickCards` in the preview drops any
+       id with no matching `content.quick` entry, so the row would silently render one tile short of
+       what the template promised. The placeholder text matches `addLinkCard`'s own default — the
+       seed's own `cfg` overrides it with real copy, the same way it overrides any other card's title.
+       ⚠️ This also makes `__hasLink` true for a page seeded this way, which is CORRECT: the page
+       already carries its one external-link card, exactly as if an admin had pressed "Add" themselves. */
+    return seed?.rowOrder?.quick?.includes(LINK_CARD_ID) && !base.quick.some((q) => q.id === LINK_CARD_ID)
+      ? { ...base, quick: [...base.quick, { id: LINK_CARD_ID, title: 'External link', desc: 'Where this link goes' }] }
+      : base;
+  });
   /* ⚠️ Read by `addLinkCard`, which must know whether the row already HAS its one link card before
      the state settles. Reading `content` inside the updater only works while that hook's queue is
      empty — the same trap `detachElement` records. */

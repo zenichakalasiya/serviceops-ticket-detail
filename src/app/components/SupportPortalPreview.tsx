@@ -967,6 +967,25 @@ function HeroShapes() {
   );
 }
 
+/* ⚠️ A THIRD artwork, ported shape-for-shape from the Counter reference (`Support Portal Layout
+   System.dc.html`, artboard #3c): a large faint RING bleeding in from the left — drawn oversized and
+   mostly off-canvas so only its arc shows behind the heading, never a full circle — a solid accent
+   circle clipped at the top edge, and a barely-visible rotated square tucked into the bottom-right
+   corner. `inset-0` (not a right-half slot like `HeroShapes`), because the reference's shapes are
+   spread across the FULL band rather than confined to one side.
+   ⚠️ Sizes are the reference's own, scaled to roughly 70% — this hero is a shorter band than the
+   reference's (which had the action tiles built into the same div), so the untouched reference
+   pixel sizes read as oversized here; `overflow-hidden` on the wrapper still does the real cropping. */
+function HeroCounterShapes() {
+  return (
+    <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+      <span className="absolute rounded-full" style={{ width: 480, height: 480, left: -160, top: -200, border: '60px solid rgba(255,255,255,0.06)' }} />
+      <span className="absolute" style={{ width: 200, height: 200, right: -50, bottom: -90, borderRadius: 32, background: 'rgba(255,255,255,0.05)', transform: 'rotate(18deg)' }} />
+      <span className="absolute rounded-full" style={{ width: 90, height: 90, right: 140, top: -30, background: '#D9A84C', opacity: 0.9 }} />
+    </span>
+  );
+}
+
 /* ── Cards ───────────────────────────────────────────────────────────────── */
 
 /* The spine colour per card, for the templates that use the spine treatment.
@@ -1219,6 +1238,10 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
      edge, half on the colour and half on the page — so the field reads as the page's subject
      rather than as furniture inside a picture, and it is the first thing under the fold too. */
   const searchFloats = String(wc('hero').searchPlacement ?? 'in-banner') === 'floating';
+  /* A third value on the same key, not a new one — see the note on `searchPlacement` above.
+     `side` pairs the heading block with the search box on one row (`align-items:flex-end`, mirroring
+     the reference this was built from) instead of stacking the search below the subtitle. */
+  const searchSide = String(wc('hero').searchPlacement ?? 'in-banner') === 'side';
   /* What a card is. `spine` drops the hairline box for a tinted panel with a coloured edge — the
      colour names the KIND of card at a glance, which a page of identical white boxes cannot do. */
   const cardLook = String(pageCfg.cardLook ?? 'panel');
@@ -1234,6 +1257,13 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
      corner on hover. A permanent link at the foot of every card is four links competing; a hover
      affordance in the corner is one, and only while you are pointing at it. */
   const tileActions = String(pageCfg.quickLook ?? 'row') === 'tile';
+  /* A third `quickLook` value, not a new key — same rule `bannerStyle`'s `light` follows. `glass`
+     is the band CONTINUING past the heading rather than a card treatment: no climb (the row already
+     sits flush against the hero, painted the same colour by its own `cfg.bg`, so there is nothing to
+     climb toward), no forced centring and no hover arrow (both are `tile`'s, and a card here picks
+     its own layout via `cardTemplate` instead — see `stackedLeft`). Independent of the hero's own
+     `searchSide` layout: a template could want one without the other. */
+  const quickOnBanner = String(pageCfg.quickLook ?? 'row') === 'glass';
   /* Services on a tinted PANEL rather than loose on the page ground. */
   const servicesPanel = String(pageCfg.servicesLook ?? 'plain') === 'panel';
   /* ⚠️ Where the rail LIVES, not what is in it — membership is still the `rail` array. Beside the
@@ -1249,11 +1279,27 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
      the default line-work only ever showed on an untouched band, so a template that sets a colour
      had no way to ask for artwork at all. */
   const heroShapes = String(pageCfg.heroArt ?? 'auto') === 'shapes';
+  /* A third `heroArt` value, not a new key — same rule `bannerStyle`'s `light` follows. */
+  const heroCounterShapes = String(pageCfg.heroArt ?? 'auto') === 'counter';
+  /* Favourite Services and Most Used Services SIDE BY SIDE rather than stacked as two full-width
+     bands. They are the same object with two sort orders, so two full-width rows of four is the
+     same content read twice down the page; at half width each they read as one browse area.
+     ⚠️ Drawn from the FAVOURITES band and the services band then renders nothing — the same
+     render-in-one-place rule `railHome` follows, and the only way to guarantee the page cannot
+     carry either section twice. */
+  const browseSplit = String(pageCfg.browseLook ?? 'stacked') === 'split';
+  /* The rail's members as a ROW BENEATH the work cards instead of a column beside them. Same
+     membership question the `rail` array already answers; only the placement differs — which is
+     exactly what `railHome` was added for. */
+  const railBelow = String(pageCfg.railHome ?? 'work') === 'below';
   /* ⚠️ Whether the WORK band draws a rail — which is not the same question as whether the page has
      one. Once the rail has moved beside the services panel this band has no rail to draw, and
      testing `rail` alone left it rendering an empty second column and squeezing its three cards
      into a third of the width. */
-  const workRail = rail && !railInServices;
+  /* ⚠️ Three placements now, so the work band's own question is the narrow one: does IT draw a
+     rail? Not "does the page have one" — the rail may have moved beside services or below the
+     cards, and in both cases this band must lay out as a flat row or it renders an empty column. */
+  const workRail = rail && !railInServices && !railBelow;
   /* Which of the three work tabs is open. Local, because it is a reading position rather than a
      property of the page — nothing an admin sets and nothing to persist. */
   const [workTab, setWorkTab] = useState('requests');
@@ -1403,6 +1449,10 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
      during render, long after both are initialised.) */
   const railCard = (id: string) => {
     if (id === 'news') return card('news', <div className="p-4"><AnnouncementsRender nodeId="news" cfg={{ title: 'Announcements', ...wc('news') }} /></div>, 1, secGap('work'), 1);
+    /* ⚠️ Counter's right-hand rail — Assets stacked under Approvals. RecordsCard, not RecordTiles:
+       the tile grid is built for a WIDE row, and a narrow rail column wants the same compact list
+       treatment `records` already uses when there is no rail at all. */
+    if (id === 'assets') return card('assets', <RecordsCard nodeId="assets" titleFallback={content.assets.title} cfg={wc('assets')} rows={MY_ASSETS} />, 1, secGap('work'), 1);
     if (id !== 'contact') return null;
     const body = <ContactRender nodeId="contact" cfg={{ title: 'Contact Us', ...wc('contact') }} />;
     /* ⚠️ `bare` on the dark one, or the card paints a white surface and the dark panel sits
@@ -1483,6 +1533,136 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
   const quickCards = inRow("quick")
     .map((cid) => content.quick.find((q) => q.id === cid))
     .filter((q): q is typeof content.quick[number] => !!q);
+
+  /* ⚠️ Built ONCE and placed in ONE of two spots — literally INSIDE the hero band's own colored div
+     when `quickOnBanner`, or in its normal position below the hero otherwise — the same "one card,
+     two possible homes" pattern the work-band's `requestsCard`/`approvalsCard` consts already use.
+     Counter's whole point is that the tiles are not merely colour-matched to LOOK like part of the
+     banner while remaining a separate sibling section underneath it — they have to actually BE inside
+     the hero's own DOM node, or a canvas that lets you hover/select "Hero" as its own bounded region
+     keeps reading as two bands however well the colours line up. */
+  const quickSection = (
+    <Sel id="quick" className={`relative z-10 ${SECTION_PAD} ${blockOrder.indexOf("quick") === 0 && !searchFloats && !tileActions && !quickOnBanner ? "-mt-[62px]" : ""} ${searchFloats ? "pt-[52px]" : ""} ${tileActions || quickOnBanner ? "pt-6" : ""}`} style={{ order: slot("quick"), ...fillCss(wc('quick')), ...(quickOnBanner ? { marginTop: -1 } : {}) }}>
+      <RowDrop rowId="quick" resize={secResize("quick")} className={`flex flex-wrap${secPacked("quick", 4) ? " portal-row-packed" : ""}`} style={{ gap: secGap("quick"), ...secBox("quick", 4), ...rowFits(inRow("quick"), "quick"), ...secGrid("quick", 4) }}>
+        {quickCards.map((a) => {
+          const c = wc(a.id);
+          /* ⚠️ The CARD's own template wins; the row's is the default it starts from.
+             Read the other way round the card's picker was dead — see the note in fixB. */
+          /* ⚠️ The tile look changes the DEFAULT, never the card's own choice — a card that
+             has picked a template still wins, which is the rule the line already followed. */
+          const tpl = String(c.cardTemplate ?? wc('quick').cardTemplate ?? c.iconPos ?? (tileActions ? 'top' : 'left'));
+          const cardImage = isImageChoice(icons?.[a.id]) ? icons![a.id]!.src : null;
+          const top = tpl === 'top';
+          /* ⚠️ A SEPARATE value from `top`, not a variant of it — `top` deliberately always
+             centres (see the note on `centre` below), so a card that wants the icon stacked
+             ABOVE the words while both stay LEFT-aligned (the reference's glass tiles) needs
+             its own branch rather than a flag that would also loosen every existing `top`
+             card's forced centring. */
+          const stackedLeft = tpl === 'stackedLeft';
+          const iconRight = tpl === 'right';
+          /* ⚠️ "Text only" is a real template, and the picker has always offered it — the
+             card just never read it, so choosing the fourth tile changed the highlight and
+             nothing else. Where the icon sits and whether there IS one are one question with
+             four answers, which is exactly why they share a control. */
+          const noIcon = tpl === 'none';
+          /* ⚠️ Icon top ALWAYS centres — the words as well as the icon. Picking the stacked
+             tile IS the decision to centre; there is no reading of it where the icon sits in
+             the middle and the text hugs the left edge, which is what you got when this
+             deferred to the card's own `contentAlign`. That check could not tell "nobody
+             chose" from "chose start", so any card carrying a left-ish value quietly
+             out-voted the template it was told to follow — and the result looked like the
+             icon had fallen out of the row rather than like an arrangement anyone picked. */
+          const centre = top || tileActions || c.contentAlign === 'center';
+          // P6: the icon's size, colour and container are style; WHICH icon is content.
+          const iconSize = chosen(styles, a.id, 'iconSize') ?? 22;
+          const iconColor = chosen(styles, a.id, 'iconColor');
+          const iconShape = chosen(styles, a.id, 'iconShape');
+          const iconFill = chosen(styles, a.id, 'iconFill');
+          return (
+            <Sel key={a.id} id={a.id} className="@container min-w-0 rounded-lg" style={{ ...share(secCols("quick", content.cols.quick), secGap("quick"), secGrow("quick")) }}>
+              <div
+                /* ⚠️ fillCss AFTER st(): the card's Style accordion writes fill / colour /
+                   image / border / radius into its CONFIG, and this div was reading only the
+                   style store — so every one of those controls saved a value the canvas never
+                   looked at. Config last, because it is the more specific decision. */
+                /* ⚠️ padCss LAST, and `p-4` KEPT. Sel withholds padding for this node
+                   (paintsOwnSurface) so it has to land here — but dropping the class the
+                   moment any side was set collapsed the sides the slider had NOT touched to
+                   zero: setting a left inset silently removed the card's 16px top and
+                   bottom. An inline side beats the class on its own edge and leaves the
+                   other three resting where they were, which is what "set one side" means. */
+                style={{ ...st(a.id), ...fillCss(c), ...padCss(a.id), minHeight: Number(c.minHeight) || undefined }}
+                /* ⚠️ The action cards follow the PAGE's card look too. Left on the hairline
+                   treatment while the record cards below had gone borderless, the page ended
+                   up with two card languages one band apart — which is the exact fault the
+                   note in `cardInner` warns about, committed by the template that quoted it.
+                   ⚠️ No SPINE on these, though. A spine names a kind of record; an action
+                   card is a destination, and colouring four of them in four hues would be
+                   inventing a taxonomy the product does not have. Same surface, no stripe. */
+                className={`group/act relative flex h-full gap-3 p-4 @max-[230px]:gap-2 @max-[230px]:p-3 ${tileActions ? 'items-center justify-center px-5 py-6 text-center transition-[transform,box-shadow] hover:-translate-y-0.5' : ''} ${
+                  spineCards
+                    ? 'rounded-[14px] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04),0_8px_24px_-12px_rgba(16,24,40,0.14)]'
+                    : 'rounded-lg border border-[#E5E7EB] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04),0_4px_12px_rgba(16,24,40,0.06)]'
+                } ${
+                  top ? 'flex-col' : stackedLeft ? 'flex-col justify-between' : iconRight ? 'flex-row-reverse items-center' : 'items-center'
+                } ${centre ? 'items-center text-center' : ''}`}
+              >
+                {tileActions && (
+                  <span aria-hidden className="pointer-events-none absolute right-3 top-3 flex size-8 items-center justify-center rounded-[9px] bg-[#1E7A5A] text-white opacity-0 transition-opacity duration-150 group-hover/act:opacity-100">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-[15px]">
+                      <path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5" />
+                    </svg>
+                  </span>
+                )}
+                {!noIcon && <Sel id={`${a.id}-icon`} className="flex-shrink-0 @max-[230px]:scale-90 @max-[160px]:hidden">
+                <span
+                  role={enabled ? 'button' : undefined}
+                  onClick={enabled ? (ev) => { ev.stopPropagation(); select(`${a.id}-icon`); pickIcon(a.id, (ev.currentTarget as HTMLElement).getBoundingClientRect()); } : undefined}
+                  title={enabled ? 'Click to change this icon' : undefined}
+                  style={{
+                    color: iconColor as string | undefined,
+                    background: cardImage
+                      ? undefined
+                      : iconShape === 'none' ? 'transparent' : (iconFill as string | undefined),
+                    backgroundImage: cardImage ? `url(${cardImage})` : undefined,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    borderRadius: iconShape === 'circle' ? 999 : undefined,
+                    width: Number(iconSize) + 22, height: Number(iconSize) + 22,
+                  }}
+                  className={`flex flex-shrink-0 items-center justify-center overflow-hidden rounded text-[#475467] ${
+                    cardImage ? '' : 'bg-[#F1F5F9]'
+                  } ${enabled ? 'cursor-pointer outline outline-1 outline-transparent transition-[outline-color] hover:outline-[#3D8BD0]' : ''}`}
+                >
+                  {cardImage || noIcon ? null : iconNode(icons?.[a.id], Number(iconSize))
+                    ?? (a.id === 'quick-incident' ? <IconRequest size={Number(iconSize)} />
+                      : a.id === 'quick-service' ? <ShoppingCart size={Number(iconSize) - 1} strokeWidth={1.7} />
+                      : a.id === 'quick-ad' ? <KeyRound size={Number(iconSize)} strokeWidth={1.7} />
+                      : a.id === 'quick-link' ? <Link2 size={Number(iconSize)} strokeWidth={1.7} />
+                      : <IconKnowledge size={Number(iconSize)} />)}
+                </span>
+                </Sel>}
+                <span className={`min-w-0 flex-1 ${centre ? 'w-full' : ''}`}>
+                  <span style={{ ...roleStyle(styles, `${a.id}-title`, 'title'), ...(centre && !styles[`${a.id}-title`]?.align ? { textAlign: 'center' as const } : {}) }} className="block truncate text-[16px] font-semibold text-[#364658]">{String(c.title ?? a.title)}</span>
+                  {String(c.sub ?? a.desc) !== '' && (
+                    <Sel id={`${a.id}-sub`}>
+                      <span style={{ ...roleStyle(styles, `${a.id}-sub`, 'body'), ...(centre && !styles[`${a.id}-sub`]?.align ? { textAlign: 'center' as const } : {}) }} className="block truncate text-[13px] text-[#7B8FA5]">{String(c.sub ?? a.desc)}</span>
+                    </Sel>
+                  )}
+                </span>
+              </div>
+            </Sel>
+          );
+        })}
+
+        {(rowExtras?.['quick'] ?? []).map((el) => (
+          <Sel key={el.id} id={el.id} style={share(secCols("quick", content.cols.quick), secGap("quick"), secGrow("quick"))}>
+            <PortalPlacedElement item={el} icon={icons?.[el.id]} text={placedText?.[el.id]} cfg={wc(el.id)} />
+          </Sel>
+        ))}
+      </RowDrop>
+    </Sel>
+  );
 
   return (
     <div
@@ -1573,7 +1753,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                 pushed its own content further off centre, which is the opposite of what raising the
                 height is for. */}
             <div
-              className={`relative flex flex-col justify-center ${tileActions && !searchFloats ? 'pb-10' : 'pb-[86px]'} ${searchFloats ? 'overflow-visible' : 'overflow-hidden'}`}
+              className={`relative flex flex-col justify-center ${(tileActions || quickOnBanner) && !searchFloats ? 'pb-10' : 'pb-[86px]'} ${searchFloats ? 'overflow-visible' : 'overflow-hidden'}`}
               style={{
                 /* ⚠️ The tabs decide, in one place. Image wins when one is uploaded; Colour paints
                    flat; and with neither the band keeps its gradient, so a portal nobody has touched
@@ -1602,6 +1782,43 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
               {/* ⚠️ Its own clip too, for the same reason — and it sits BEHIND the copy, which is
                   why the hero's `contentMaxWidth` is what keeps the two from meeting. */}
               {heroShapes && <span className="pointer-events-none absolute inset-0 overflow-hidden"><HeroShapes /></span>}
+              {heroCounterShapes && <HeroCounterShapes />}
+              {/* ⚠️ SIDE-BY-SIDE, a wholly separate branch from the stacked layout below — never
+                  taken unless a hero explicitly asks for it (`searchPlacement: 'side'`), so no
+                  existing template's hero is touched by this existing. Mirrors the reference's own
+                  `align-items:flex-end` pairing: the heading block and the search box share a
+                  bottom edge rather than the search sitting BELOW the subtitle. */}
+              {searchSide ? (
+                <div className="relative flex w-full items-end gap-10 px-6 py-6">
+                  <div className="min-w-0 flex-1">
+                    <Sel id="hero-title" className="block w-full px-1">
+                      <h2
+                        style={{ ...roleStyle(styles, 'hero', 'title'), color: String(wc('hero').headingColor ?? '#FFFFFF'), ...st('hero-title') }}
+                        className="text-[30px] font-semibold leading-tight"
+                      >
+                        {String(wc('hero').heading ?? content.hero.title)}
+                      </h2>
+                    </Sel>
+                    <Sel id="hero-subtitle" className="mt-2 block w-full px-1">
+                      <p style={{ ...roleStyle(styles, 'hero', 'subtitle'), ...(darkHeroInk ? { color: 'rgba(15,51,39,0.72)' } : null), ...st('hero-subtitle') }} className={`text-[15px] ${darkHeroInk ? '' : 'text-white/85'}`}>
+                        {String(wc('hero').sub ?? content.hero.subtitle)}
+                      </p>
+                    </Sel>
+                  </div>
+                  {wc('hero').showSearch !== false && (
+                    <div className="w-full flex-shrink-0" style={{ maxWidth: `${Number(wc('hero').searchWidth ?? 32)}%` }}>
+                      <Sel id="hero-search" className="block w-full">
+                        <HeroSearch
+                          cfg={wc('hero')}
+                          fallback={content.hero.placeholder}
+                          style={{ borderRadius: Number(wc('hero').searchRadius ?? 4), ...st('hero-search') }}
+                        />
+                      </Sel>
+                    </div>
+                  )}
+                </div>
+              ) : (
+              <>
               {/* ⚠️ FULL WIDTH. The block used to be capped at 70% and centred with auto margins,
                   which meant a heading aligned left landed at the left edge of that centred column —
                   15% in from the banner — and no setting could reach the banner's own edges. The cap
@@ -1703,6 +1920,13 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                   </Sel>
                 </div>
               )}
+              </>
+              )}
+              {/* ⚠️ INSIDE the hero's own colored div, not below it — this is what makes Counter's
+                  tiles genuinely PART of the banner rather than a separate section merely painted to
+                  match it. See the note beside where `quickSection` is built, right before this
+                  component's `return`. */}
+              {quickOnBanner && quickSection}
             </div>
           </Sel>
 
@@ -1715,7 +1939,12 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                 CTA offered to break it in the one place it cannot be broken. Every other join keeps
                 its seam. */}
 
-            {/* ── Quick actions ── */}
+            {/* ── Quick actions ──
+                ⚠️ Rendered here ONLY while `quickOnBanner` is false — Counter mounts the SAME
+                `quickSection` element inside the hero band's own div instead (see the note where it
+                is built, right before this component's `return`). Never both: a card in two places
+                in the tree is two things to keep in step, which is exactly what building it once and
+                choosing its home was meant to prevent. */}
             {/* ⚠️ The hero overlap is the ONE margin that survives: it is a relationship with the
                 banner above it, not spacing of its own, and it only applies while the row is first. */}
             {/* ⚠️ The 62px climb is dropped when the search floats. Two things cannot occupy the
@@ -1724,157 +1953,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
             {/* ⚠️ `tileActions` also drops the 62px climb. Two objects cannot straddle one edge,
                 and a template that keeps its banner intact wants the cards clear of it — the hero
                 then has one job and every breakpoint has one less thing to solve. */}
-            <Sel id="quick" className={`relative z-10 ${SECTION_PAD} ${blockOrder.indexOf("quick") === 0 && !searchFloats && !tileActions ? "-mt-[62px]" : ""} ${searchFloats ? "pt-[52px]" : ""} ${tileActions ? "pt-6" : ""}`} style={{ order: slot("quick"), ...fillCss(wc('quick')) }}>
-              <RowDrop rowId="quick" resize={secResize("quick")} className={`flex flex-wrap${secPacked("quick", 4) ? " portal-row-packed" : ""}`} style={{ gap: secGap("quick"), ...secBox("quick", 4), ...rowFits(inRow("quick"), "quick"), ...secGrid("quick", 4) }}>
-                {quickCards.map((a) => {
-                  const c = wc(a.id);
-                  /* ⚠️ The CARD's own template wins; the row's is the default it starts from.
-                     Read the other way round the card's picker was dead — see the note in fixB. */
-                  /* ⚠️ The tile look changes the DEFAULT, never the card's own choice — a card that
-                     has picked a template still wins, which is the rule the line already followed. */
-                  const tpl = String(c.cardTemplate ?? wc('quick').cardTemplate ?? c.iconPos ?? (tileActions ? 'top' : 'left'));
-                  const cardImage = isImageChoice(icons?.[a.id]) ? icons![a.id]!.src : null;
-                  const top = tpl === 'top';
-                  const iconRight = tpl === 'right';
-                  /* ⚠️ "Text only" is a real template, and the picker has always offered it — the
-                     card just never read it, so choosing the fourth tile changed the highlight and
-                     nothing else. Where the icon sits and whether there IS one are one question with
-                     four answers, which is exactly why they share a control. */
-                  const noIcon = tpl === 'none';
-                  /* ⚠️ Icon top ALWAYS centres — the words as well as the icon. Picking the stacked
-                     tile IS the decision to centre; there is no reading of it where the icon sits in
-                     the middle and the text hugs the left edge, which is what you got when this
-                     deferred to the card's own `contentAlign`. That check could not tell "nobody
-                     chose" from "chose start", so any card carrying a left-ish value quietly
-                     out-voted the template it was told to follow — and the result looked like the
-                     icon had fallen out of the row rather than like an arrangement anyone picked. */
-                  const centre = top || tileActions || c.contentAlign === 'center';
-                  // P6: the icon's size, colour and container are style; WHICH icon is content.
-                  const iconSize = chosen(styles, a.id, 'iconSize') ?? 22;
-                  const iconColor = chosen(styles, a.id, 'iconColor');
-                  const iconShape = chosen(styles, a.id, 'iconShape');
-                  const iconFill = chosen(styles, a.id, 'iconFill');
-                  return (
-                    <Sel key={a.id} id={a.id} className="@container min-w-0 rounded-lg" style={{ ...share(secCols("quick", content.cols.quick), secGap("quick"), secGrow("quick")) }}>
-                      <div
-                        /* ⚠️ fillCss AFTER st(): the card's Style accordion writes fill / colour /
-                           image / border / radius into its CONFIG, and this div was reading only the
-                           style store — so every one of those controls saved a value the canvas never
-                           looked at. Config last, because it is the more specific decision. */
-                        /* ⚠️ padCss LAST, and `p-4` KEPT. Sel withholds padding for this node
-                           (paintsOwnSurface) so it has to land here — but dropping the class the
-                           moment any side was set collapsed the sides the slider had NOT touched to
-                           zero: setting a left inset silently removed the card's 16px top and
-                           bottom. An inline side beats the class on its own edge and leaves the
-                           other three resting where they were, which is what "set one side" means. */
-                        style={{ ...st(a.id), ...fillCss(c), ...padCss(a.id), minHeight: Number(c.minHeight) || undefined }}
-                        /* ⚠️ The action cards follow the PAGE's card look too. Left on the hairline
-                           treatment while the record cards below had gone borderless, the page ended
-                           up with two card languages one band apart — which is the exact fault the
-                           note in `cardInner` warns about, committed by the template that quoted it.
-                           ⚠️ No SPINE on these, though. A spine names a kind of record; an action
-                           card is a destination, and colouring four of them in four hues would be
-                           inventing a taxonomy the product does not have. Same surface, no stripe. */
-                        className={`group/act relative flex h-full gap-3 p-4 @max-[230px]:gap-2 @max-[230px]:p-3 ${tileActions ? 'items-center justify-center px-5 py-6 text-center transition-[transform,box-shadow] hover:-translate-y-0.5' : ''} ${
-                          spineCards
-                            ? 'rounded-[14px] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04),0_8px_24px_-12px_rgba(16,24,40,0.14)]'
-                            : 'rounded-lg border border-[#E5E7EB] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04),0_4px_12px_rgba(16,24,40,0.06)]'
-                        } ${
-                          top ? 'flex-col' : iconRight ? 'flex-row-reverse items-center' : 'items-center'
-                        } ${centre ? 'items-center text-center' : ''}`}
-                      >
-                        {/* ⚠️ The icon is EDITABLE IN PLACE, like the title beside it. It was the one
-                            part of a card you could see but not touch — you had to know it lived in
-                            the panel, which is exactly the knowledge a canvas is supposed to make
-                            unnecessary. Clicking it opens the same grid the panel field opens. */}
-                        {/* ⚠️ Wrapped in `Sel`, so the icon is a LAYER — selecting it opens its own
-                            editor (with the Icon/Image tabs) instead of the whole card's. The click
-                            still opens the grid inline: selection and editing are one gesture here,
-                            because an icon has exactly one thing to change. */}
-                        {/* The whole slot goes, not just the glyph — a hidden icon that still holds
-                            its 44px of width is an indent nobody asked for. */}
-                        {/* ⚠️ TOP-RIGHT and on HOVER, not a permanent link at the foot of the card.
-                            Four cards each carrying a visible "Go to …" is four links competing for
-                            the same glance; one arrow, in the corner, only while you are pointing at
-                            the card, says the same thing and costs the card no height.
-                            `aria-hidden` because the whole card is the target — the arrow is a
-                            drawing of the affordance, not a second control to tab to. */}
-                        {tileActions && (
-                          <span aria-hidden className="pointer-events-none absolute right-3 top-3 flex size-8 items-center justify-center rounded-[9px] bg-[#1E7A5A] text-white opacity-0 transition-opacity duration-150 group-hover/act:opacity-100">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-[15px]">
-                              <path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5" />
-                            </svg>
-                          </span>
-                        )}
-                        {!noIcon && <Sel id={`${a.id}-icon`} className="flex-shrink-0 @max-[230px]:scale-90 @max-[160px]:hidden">
-                        <span
-                          role={enabled ? 'button' : undefined}
-                          onClick={enabled ? (ev) => { ev.stopPropagation(); select(`${a.id}-icon`); pickIcon(a.id, (ev.currentTarget as HTMLElement).getBoundingClientRect()); } : undefined}
-                          title={enabled ? 'Click to change this icon' : undefined}
-                          style={{
-                            color: iconColor as string | undefined,
-                            /* ⚠️ An IMAGE replaces the badge rather than sitting in it: no fill, no
-                               icon colour, cropped to the slot. A picture rendered at glyph size
-                               inside a tinted square is a thumbnail, which is not what "use an image
-                               instead of an icon" means. */
-                            background: cardImage
-                              ? undefined
-                              : iconShape === 'none' ? 'transparent' : (iconFill as string | undefined),
-                            backgroundImage: cardImage ? `url(${cardImage})` : undefined,
-                            backgroundSize: 'cover',
-                            backgroundPosition: 'center',
-                            borderRadius: iconShape === 'circle' ? 999 : undefined,
-                            width: Number(iconSize) + 22, height: Number(iconSize) + 22,
-                          }}
-                          className={`flex flex-shrink-0 items-center justify-center overflow-hidden rounded text-[#475467] ${
-                            cardImage ? '' : 'bg-[#F1F5F9]'
-                          } ${enabled ? 'cursor-pointer outline outline-1 outline-transparent transition-[outline-color] hover:outline-[#3D8BD0]' : ''}`}
-                        >
-                          {/* A picked icon wins; otherwise the card keeps the one it shipped with. */}
-                          {cardImage || noIcon ? null : iconNode(icons?.[a.id], Number(iconSize))
-                            ?? (a.id === 'quick-incident' ? <IconRequest size={Number(iconSize)} />
-                              : a.id === 'quick-service' ? <ShoppingCart size={Number(iconSize) - 1} strokeWidth={1.7} />
-                              : a.id === 'quick-ad' ? <KeyRound size={Number(iconSize)} strokeWidth={1.7} />
-                              /* The row's one addable card. It ships with a link glyph and can be
-                                 changed like any other — the icon is the one thing about a card
-                                 nobody argues over. */
-                              : a.id === 'quick-link' ? <Link2 size={Number(iconSize)} strokeWidth={1.7} />
-                              : <IconKnowledge size={Number(iconSize)} />)}
-                        </span>
-                        </Sel>}
-                        {/* The words are their own nodes, so clicking the title edits the title —
-                            not the card it happens to sit in. */}
-                        {/* ⚠️ `flex-1`, so the text column fills the card. It shrink-wrapped to the words
-                            before, which made it a meaningless box to size against: the title was already
-                            100% of it, so dragging the title wider had nothing left to grow into. A % is
-                            only responsive if the box it is a % OF is the real available space. */}
-                        {/* ⚠️ `w-full` when centred. `items-center` on a column makes every child
-                            shrink to its own content, so the text box hugged its longest line and
-                            `text-center` had nothing to centre WITHIN — the title came out flush
-                            against the subtitle's left edge while the subtitle looked centred,
-                            because it was the thing setting the width. */}
-                        <span className={`min-w-0 flex-1 ${centre ? 'w-full' : ''}`}>
-                          {/* ⚠️ The TITLE is the product's — these four are fixed destinations, and
-                              renaming one on the canvas is how a card ends up describing something
-                              it does not do. The SUBTITLE below stays editable, which is the one
-                              thing you asked to keep. */}
-                          <span style={{ ...roleStyle(styles, `${a.id}-title`, 'title'), ...(centre && !styles[`${a.id}-title`]?.align ? { textAlign: 'center' as const } : {}) }} className="block truncate text-[16px] font-semibold text-[#364658]">{String(c.title ?? a.title)}</span>
-                          <Sel id={`${a.id}-sub`}>
-                            <span style={{ ...roleStyle(styles, `${a.id}-sub`, 'body'), ...(centre && !styles[`${a.id}-sub`]?.align ? { textAlign: 'center' as const } : {}) }} className="block truncate text-[13px] text-[#7B8FA5]">{String(c.sub ?? a.desc)}</span>
-                          </Sel>
-                        </span>
-                      </div>
-                    </Sel>
-                  );
-                })}
-
-                {(rowExtras?.['quick'] ?? []).map((el) => (
-                  <Sel key={el.id} id={el.id} style={share(secCols("quick", content.cols.quick), secGap("quick"), secGrow("quick"))}>
-                    <PortalPlacedElement item={el} icon={icons?.[el.id]} text={placedText?.[el.id]} cfg={wc(el.id)} />
-                  </Sel>
-                ))}
-              </RowDrop>
-            </Sel>
+            {!quickOnBanner && quickSection}
 
             {after('quick')}
 
@@ -1884,13 +1963,36 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                 take `card()` rather than `RowDrop` — nothing else can be dropped beside them, the
                 same rule Quick Actions follows. */}
             {band('favourites', (
+              browseSplit ? (
+                /* ⚠️ BOTH sections, drawn here. Each keeps its own `Sel`, so Favourite Services and
+                   Most Used Services are still two separate selectable blocks with their own
+                   panels — only the row they sit in is shared. */
+                <div
+                  className={`flex flex-wrap items-stretch ${SECTION_PAD}`}
+                  style={{ order: slot("favourites"), gap: secGap('favourites') }}
+                >
+                  <Sel id="favourites" className="min-w-[300px] flex-1" style={fillCss(wc('favourites'))}>
+                    <FavouriteServicesRender nodeId="favourites" cfg={wc('favourites')} />
+                  </Sel>
+                  {blockOrder.includes('services') && !removed.includes('services') && (
+                    <Sel id="services" className="min-w-[300px] flex-1" style={fillCss(wc('services'))}>
+                      <FeaturedServicesRender nodeId="services" cfg={wc('services')} />
+                    </Sel>
+                  )}
+                </div>
+              ) : (
               <Sel id="favourites" className={SECTION_PAD} style={{ order: slot("favourites"), ...fillCss(wc('favourites')) }}>
                 <FavouriteServicesRender nodeId="favourites" cfg={wc('favourites')} />
               </Sel>
+              )
             ))}
             {band('favourites', after('favourites'))}
 
-            {band('services', (
+            {/* ⚠️ Renders NOTHING while the browse row is split — the favourites band above draws
+                both. Returning null here rather than dropping the band from `blockOrder` keeps
+                Most Used Services a real member of the page, so deleting it, reordering it and its
+                widget panel all behave exactly as they do on every other layout. */}
+            {!browseSplit && band('services', (
               <Sel id="services" className={SECTION_PAD} style={{ order: slot("services"), ...fillCss(wc('services')) }}>
                 {(() => {
                   const list = <FeaturedServicesRender nodeId="services" cfg={wc('services')} />;
@@ -1914,7 +2016,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                 })()}
               </Sel>
             ))}
-            {band('services', after('services'))}
+            {!browseSplit && band('services', after('services'))}
 
             {/* ── Work row ── */}
             {/* ── Work row ── one section, three cards, full width. */}
@@ -2076,6 +2178,43 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                   </div>
                 );
               }
+              /* One resolver, because the work band's members come from two builders — three cards
+                 built as consts above, and Announcements/Contact through `railCard`. Without it
+                 every arrangement below would need to know which is which. */
+              const workCard = (id: string) =>
+                id === 'requests' ? requestsCard
+                  : id === 'approvals' ? approvalsCard
+                    : id === 'knowledge' ? knowledgeCard
+                      : railCard(id);
+              /* ⚠️ TWO ROWS, and the split is the `rail` array — membership, exactly as it means
+                 everywhere else. The first row is everything else at the band's own column count;
+                 the second gives its first member two shares to the rest's one, which is the same
+                 1.85:1-ish measure the side rail uses, turned on its side. */
+              if (railBelow) {
+                const order = rowOrder['work'] ?? [];
+                const inRail = new Set(rail ?? []);
+                const main = order.filter((id) => !inRail.has(id));
+                const below = (rail ?? []).filter((id) => order.includes(id));
+                return (
+                  <div className="flex w-full min-w-0 flex-col" style={{ gap: secGap('work'), gridColumn: '1 / -1' }}>
+                    <div
+                      className="grid min-w-0"
+                      style={{ gap: secGap('work'), gridTemplateColumns: `repeat(${secCols('work', 3)}, minmax(0, 1fr))` }}
+                    >
+                      {main.map((id) => <Fragment key={id}>{workCard(id)}</Fragment>)}
+                    </div>
+                    {below.length > 0 && (
+                      <div className="flex min-w-0 flex-wrap items-stretch" style={{ gap: secGap('work') }}>
+                        {below.map((id, i) => (
+                          <div key={id} className="flex min-w-[260px] flex-col" style={{ flex: i === 0 ? '2 1 0%' : '1 1 0%' }}>
+                            {workCard(id)}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
               if (!workRail) return <>{requestsCard}{approvalsCard}{knowledgeCard}</>;
               /* ⚠️ TWO REGIONS, not five cards in one wrapping row. The page reads as a MAIN area of
                  work cards beside a tall rail, and a flat row cannot say that: the rail is long
@@ -2123,12 +2262,16 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                   }}
                 >
                   {requestsCard}
-                  {approvalsCard}
+                  {/* ⚠️ Counter moves Approvals into the side rail instead — see `rail.includes` below.
+                     Both regions read the SAME `rail` array so a card can never render twice. */}
+                  {!rail.includes('approvals') && approvalsCard}
                   {/* ⚠️ FULL WIDTH and stacked, not side by side. Two half-width tile cards put four
                       tiles into 354px, which is where the "resizing one shrinks the other" complaint
                       came from — they were competing for one row. Given the whole width each, the
-                      tiles inside get room to spread and the two cards stop fighting. */}
-                  {card('assets', <RecordTiles nodeId="assets" titleFallback={content.assets.title} cfg={wc('assets')} rows={MY_ASSETS} icon={<HardDrive size={17} />} />, undefined, secGap("work"), 1, 2, { full: true })}
+                      tiles inside get room to spread and the two cards stop fighting.
+                      ⚠️ Counter moves Assets into the side rail (as a compact list, not this tile
+                      grid) — skipped here for the same reason Approvals is. */}
+                  {!rail.includes('assets') && card('assets', <RecordTiles nodeId="assets" titleFallback={content.assets.title} cfg={wc('assets')} rows={MY_ASSETS} icon={<HardDrive size={17} />} />, undefined, secGap("work"), 1, 2, { full: true })}
                   {card('cis', <RecordTiles nodeId="cis" titleFallback={content.cis.title} cfg={wc('cis')} rows={MY_CIS} icon={<Server size={17} />} />, undefined, secGap("work"), 1, 3, { full: true })}
                 </Sel>
                 {/* ⚠️ A SECTION too, and for the same reason: the rail owns how its three cards
@@ -2141,6 +2284,20 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                 >
                   {rail.map((id) => (
                     id === 'knowledge' ? <Fragment key={id}>{knowledgeCard}</Fragment>
+                      /* ⚠️ Counter's two rail members. Approvals reuses the pre-built const, exactly
+                         like Knowledge above; Assets has no such const to reuse (it is normally a
+                         `records`-row tile grid, not a rail card) so it goes through `railCard`,
+                         which renders it as the compact list instead.
+                         ⚠️ Both are wrapped in a DIV carrying an explicit `order`, not just a
+                         `Fragment` — `card()` sets each card's CSS order from ITS OWN row list
+                         (`approvals` from `work`, `assets` from `records`), and comparing those
+                         indices as one shared order was what stacked Assets above Approvals however
+                         `rail` was written, the same "an order is only meaningful within ONE list"
+                         trap the work-main region's own comment already names. Overriding it here
+                         with the position in the RAIL array itself is what makes `rail: [id, id]`
+                         the actual top-to-bottom order, for whichever ids end up in it. */
+                      : id === 'approvals' ? <div key={id} style={{ order: rail.indexOf(id) }}>{approvalsCard}</div>
+                      : id === 'assets' ? <div key={id} style={{ order: rail.indexOf(id) }}>{railCard('assets')}</div>
                       /* ⚠️ A title is SPREAD IN FIRST, so a title the admin sets still wins. These
                          two have no widget spec behind the node — they were only ever placeable
                          elements — so without a seeded title they render an untitled card, and the
@@ -2266,6 +2423,15 @@ function RecordTiles({ nodeId, titleFallback, cfg, rows, icon }: {
      a second line that was three tile-widths of nothing. The LIST variant on the other layout still
      honours the setting; the tile variant is a 2x2 block by shape, which is a different promise. */
   const shown = rows.slice(0, 4);
+  /* ⚠️ The track count is READABLE now. It was `grid-cols-1 @[290px]:grid-cols-2` and nothing else,
+     so the Columns control wrote a value this widget never looked at — the same defect `ServiceTiles`
+     had. An explicit value wins; with none set the responsive pair below is still the default, so no
+     existing page moves. ONE column turns the 2x2 block into a list of records, which is the shape a
+     full-width records row wants — the note above about two being the ceiling is about how narrow a
+     tile may get, and one column only ever makes them wider.
+     ⚠️ `chosen` first, cfg second — §7.8 puts columns in the STYLE store because the Content tab and
+     the Arrangement pack both write there. */
+  const tileCols = Number(chosen(styles, nodeId, 'columns') ?? cfg.columns) || 0;
   if (!shown.length) return <EmptyCard nodeId={nodeId} title={String(cfg.title ?? titleFallback)} cfg={cfg} />;
   return (
     <CardShell nodeId={nodeId} title={String(cfg.title ?? titleFallback)} count={rows.length} cfg={cfg}>
@@ -2281,7 +2447,10 @@ function RecordTiles({ nodeId, titleFallback, cfg, rows, icon }: {
             columns of ellipsis.
             ⚠️ `@container`, not a viewport breakpoint — the tiles answer to the CARD's width, which
             is what lets this card be dragged narrow or dropped into a column and still lay out. */}
-        <div className="grid grid-cols-1 gap-2.5 @[290px]:grid-cols-2">
+        <div
+          className={tileCols ? 'grid gap-2.5' : 'grid grid-cols-1 gap-2.5 @[290px]:grid-cols-2'}
+          style={tileCols ? { gridTemplateColumns: `repeat(${tileCols}, minmax(0, 1fr))` } : undefined}
+        >
           {shown.map((r) => (
             /* ⚠️ FILLED, not outlined. The card is white like every other card on the page, so the
                tiles are what has to separate itself — and a fill does that without adding a second

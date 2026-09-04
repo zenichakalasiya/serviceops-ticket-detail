@@ -52,7 +52,7 @@ export interface PortalPage {
    promises "the page your requesters see today" was showing a page nobody has. It draws the real
    thing: banner and search, the four action cards straddling its lower edge, the two service rows,
    and the work cards below them. */
-export type TemplateLayout = 'portal' | 'classic' | 'spotlight' | 'catalog' | 'knowledge' | 'minimal' | 'status' | 'verdant';
+export type TemplateLayout = 'portal' | 'classic' | 'spotlight' | 'catalog' | 'knowledge' | 'minimal' | 'status' | 'verdant' | 'counter';
 
 export interface PortalTemplate {
   id: string;
@@ -280,6 +280,135 @@ export const PORTAL_TEMPLATES: PortalTemplate[] = [
           helpLook: 'dark',
           heroArt: 'shapes',
         },
+      },
+    },
+  },
+  {
+    id: 'tpl-counter',
+    name: 'Action Counter',
+    desc: 'Every action lives inside the banner itself as a glass tile, with Report an Incident inverted to solid white — the heading pairs with the search on one line, and the requester’s own work sits beside a stacked side rail below.',
+    category: 'IT Support',
+    layout: 'counter',
+    accent: '#3D8BD0',
+    badge: 'New',
+    blocks: ['Hero search', 'Quick actions (glass tiles)', 'Favourite Services', 'Most Used Services', 'My Open Requests', 'Pending Approvals', 'Announcements', 'Most Read', 'Contact Us', 'My Assets', 'My CIs'],
+    /* ── Action Counter ────────────────────────────────────────────────────
+       Two ideas, matched to the reference this was built from (`Support Portal Layout System.dc.html`,
+       artboard #3c "Counter") card-treatment and banner shape by shape, not by borrowing an existing
+       template LOOK and recolouring it — see `quickLook: 'glass'` and `searchPlacement: 'side'` below,
+       both NEW page-level flags added for this template and left off every other one.
+
+       ⚠️ FLAT banner, not the usual gradient. A flat fill is a colour Quick Actions can borrow
+       exactly (`bg: '#3D8BD0'` on the section below matches `bannerColor` character for character);
+       a gradient reads differently a few hundred pixels down, and the seam this template exists to
+       remove would come back as a visible colour step where the two bands actually meet.
+       ⚠️ Copy is the product's OWN default hero text ("Welcome to Support Portal" + its subtitle) —
+       no `heading`/`sub`/`searchPlaceholder` override here at all, so it falls through to
+       `content.hero.title`/`.subtitle`/`.placeholder` like an untouched page. The reference's own
+       words ("Kestrel Manufacturing · Plant Services", "Shop floor support desk", "Search or scan an
+       asset tag") are a manufacturing mock persona and a barcode-scan flow this product does not have;
+       reusing our own real copy in the reference's POSITION is the whole instruction.
+       ⚠️ Four tiles, not five. The reference shows a fifth ("Track a Request"), but this product's
+       fixed Quick Actions are exactly Incident/Service/AD/Knowledge — there is no real destination
+       to put in a fifth slot, and the generic addable "external link" card was tried and explicitly
+       REMOVED (invented copy, "IT Status Page", that named nothing real).
+       ⚠️ Report an Incident is the only quick-action card left WHITE and the only one on the default
+       `cardTemplate` ('left' — icon-left row, unchanged from every other template): a solid, opaque
+       ROW tile amid three translucent COLUMN ones is what "primary action" looks like without a label
+       saying so. The other three get `cardTemplate: 'stackedLeft'` (icon top, text below, BOTH left-
+       aligned — see the note on `stackedLeft` in SupportPortalPreview.tsx; `'top'` was not reused
+       because it deliberately always centres) plus `fill: 'color'` at 14% white with a 22% white
+       hairline, `sub: ''` (the reference's secondary tiles carry no description line at all — an
+       empty string, not omitting the key, is what skips the line; see the note where it's read) and
+       `styles[id].iconFill: 'transparent'` (removes the icon's badge square, leaving a bare glyph —
+       glass tiles have no icon container, only the icon floating on the colour). NO hover arrow
+       anywhere on this template, primary tile included — `quickLook: 'glass'` never sets the `tile`
+       hover-arrow affordance, which is `tileActions`-only and untouched by this template.
+       ⚠️ Approvals and Assets move into the WORK-RAIL, not the work band's own two-up grid — a
+       genuinely new placement (`rail: ['approvals', 'assets']`), not just a recolour. Requests keeps
+       the whole main region to itself (`'work-main': { cols: 1 }`), so the band reads as one wide
+       card of the requester's own work beside a narrow stack of what else needs them. */
+    seed: {
+      /* ── The page below the banner, in four rows ──
+         browse · work · help · records. Every data card the product ships has a place, which is
+         what the reference artboard could not show: #3c draws four cards and stops, so the other
+         five had to be given a home that reads as part of the same page rather than appended to it. */
+      blockOrder: ['quick', 'favourites', 'services', 'work', 'records'],
+      rowOrder: {
+        quick: ['quick-incident', 'quick-service', 'quick-ad', 'quick-knowledge'],
+        /* Row 2 is the first three at three columns; row 3 is the `rail` pair below them. The
+           ORDER here is what puts Requests first and Announcements third — `rail` only decides
+           which two drop to the second row. */
+        work: ['requests', 'approvals', 'news', 'knowledge', 'contact'],
+        /* ⚠️ BOTH now. My CIs was dropped while Assets lived in the side rail — a single record card
+           in a column has no partner to sit beside, and a rail is not where an inventory belongs.
+           Given their own row they are a pair again, which is the shape they were designed as. */
+        records: ['assets', 'cis'],
+      },
+      /* ⚠️ Membership, and the placement is `railHome: 'below'`. These two are the help row: Most
+         Read takes two shares and Contact Us one, so the reading material leads and the last resort
+         sits beside it rather than under it. */
+      rail: ['knowledge', 'contact'],
+      cfg: {
+        hero: {
+          /* `side` pairs the heading block with the search box on one row instead of stacking the
+             search below the subtitle — see the note on `searchSide` in SupportPortalPreview.tsx. */
+          searchPlacement: 'side',
+          height: 190,
+          bgKind: 'color',
+          bannerStyle: 'flat',
+          bannerColor: '#3D8BD0',
+          headingColor: '#FFFFFF',
+        },
+        /* Same flat colour as the hero (see the note above) plus the new `glass` look, which is what
+           removes the climb, tightens the padding and leaves each card free to pick its own
+           `cardTemplate` — none of which `tile` would have allowed. */
+        quick: { cols: '4', fill: 'color', bg: '#3D8BD0' },
+        'quick-incident': { fill: 'color', bg: '#FFFFFF', radius: 14 },
+        'quick-service': { fill: 'color', bg: 'rgba(255,255,255,0.14)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.22)', radius: 14, cardTemplate: 'stackedLeft', sub: '', minHeight: 100 },
+        'quick-ad': { fill: 'color', bg: 'rgba(255,255,255,0.14)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.22)', radius: 14, cardTemplate: 'stackedLeft', sub: '', minHeight: 100 },
+        'quick-knowledge': { fill: 'color', bg: 'rgba(255,255,255,0.14)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.22)', radius: 14, cardTemplate: 'stackedLeft', sub: '', minHeight: 100 },
+        /* Four tiles each, two across — so both sections are the same object at the same size and
+           the row reads as one browse area rather than as two lists of different lengths. */
+        favourites: { show: 4 },
+        services: { show: 4 },
+        work: { cols: '3' },
+        records: { cols: '2' },
+        page: { quickLook: 'glass', heroArt: 'counter', browseLook: 'split', railHome: 'below' },
+      },
+      /* Per-card text/icon colour — the CONFIG keys above paint the tile itself, these paint what
+         sits on top of it. Kept apart because `fillCss` reads config while `roleStyle`/`chosen` read
+         style, exactly the split every other template in this file already respects.
+         ⚠️ A title/subtitle colour is NOT a flat `color` key — `roleStyle` resolves it through
+         `NodeStyle.type[role].color` (P3's per-role type system), keyed by the TEXT node's own id
+         (`${cardId}-title` / `${cardId}-sub`) and role ('title' / 'body'). A flat `{ color }` here
+         would sit at a key `resolveType` never reads and stay silently inert.
+         ⚠️ `iconColor`/`iconFill` are flat, by contrast — `chosen(styles, cardId, key)` reads them
+         straight off the CARD's own id, not through the type-role system, and off the STYLE store
+         rather than `cfg` (setting them in the config entries above would be exactly as inert, the
+         same trap `fillCss`'s own note warns about one level up). `iconFill: 'transparent'` on the
+         three glass tiles is what removes their icon's badge square, leaving a bare glyph on the
+         colour — Report an Incident keeps its badge, so it is left unset there. */
+      styles: {
+        /* ⚠️ `columns` lives in the STYLE store, not in cfg — §7.8 puts it there because the
+           Content tab and the Arrangement pack are two controls for one value. Set in cfg it is
+           written to a key the renderer does not read. */
+        favourites: { columns: 2 },
+        services: { columns: 2 },
+        /* ONE column each, so My Assets and My CIs read as a list of records rather than a 2×2 of
+           tiles — the anatomy stays the tile's (icon box · name · id · kind), only the track count
+           changes. */
+        assets: { columns: 1 },
+        cis: { columns: 1 },
+        'quick-incident-title': { type: { title: { color: '#0B2545' } } },
+        'quick-incident-sub': { type: { body: { color: '#5A6B81' } } },
+        'quick-service-title': { type: { title: { color: '#FFFFFF' } } },
+        'quick-ad-title': { type: { title: { color: '#FFFFFF' } } },
+        'quick-knowledge-title': { type: { title: { color: '#FFFFFF' } } },
+        'quick-incident': { iconColor: '#FFFFFF', iconFill: '#0B2545' },
+        'quick-service': { iconColor: '#FFFFFF', iconFill: 'transparent' },
+        'quick-ad': { iconColor: '#FFFFFF', iconFill: 'transparent' },
+        'quick-knowledge': { iconColor: '#FFFFFF', iconFill: 'transparent' },
       },
     },
   },
