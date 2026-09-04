@@ -3,7 +3,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import {
   Bell, Check, Info, Keyboard, KeyRound, House, MessageSquare, MessagesSquare, Plus, PanelLeft,
   Link2, RotateCcw, Search, ShoppingCart, Type, X, ChevronsRight, LayoutGrid,
-  HardDrive, Server, Ticket, Lightbulb, Clock,
+  HardDrive, Server, Ticket, Lightbulb, Clock, Megaphone,
 } from 'lucide-react';
 import { AnnouncementsRender, ContactRender, FavouriteServicesRender, FeaturedServicesRender } from './PortalCollectionRender';
 import { MotadataLogo } from './Header';
@@ -1316,6 +1316,57 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
      always did — an extra wrapper div around every page would have changed spacing on all of them
      to buy one template a row. */
   const heroSide = String(pageCfg.heroPlacement ?? 'top') === 'left';
+  /* ⚠️ Only meaningful with `heroPlacement: 'left'`. A rail is the page's FIXED half — what you
+     can do here — and it has no reason to travel while you read the half that changes; the right
+     column keeps the page's only scrollbar.
+     ⚠️ `self-start` is what makes this work AT ALL: the row is `items-stretch`, so the rail was
+     already as tall as everything beside it, and a sticky element with nowhere to travel never
+     moves. It has to size to the viewport first, then stick. */
+  const heroSticky = heroSide && pageCfg.heroSticky === true;
+  /* ⚠️ The rail's height is MEASURED, not `100vh`, and this is the whole difficulty of a sticky
+     rail. In the published portal the page scrolls in the WINDOW and 100vh is exactly right. In
+     the builder the page is a card inside a scrolling pane that starts ~100px down, so a
+     viewport-tall rail hangs its last ~100px — Contact Us — below the fold, which is precisely
+     what pinning it to the rail's foot was for. Measured: 1000px tall in an 896px port.
+     So: find the nearest scrolling ancestor and take its client height less its own padding —
+     which fills the pane's CONTENT box exactly, in either host.
+     ⚠️ `top: 0` is right and needs no measuring: Chrome anchors a sticky element to the
+     scrollport's CONTENT box, not its padding box, so a top equal to the pane's padding lands the
+     rail one padding further down than the page card beside it and leaves a strip of canvas above
+     it. Measured: with top:20 in a p-5 pane it stuck at 144 where the card's edge is at 124. */
+  const [railH, setRailH] = useState<number | null>(null);
+  /* ⚠️ A REF on the rail's own row, not `querySelector('[data-node="hero"]')`. `Sel` renders
+     `data-node` only while the canvas is editable, so the lookup found nothing in Preview and on
+     the published portal — the two places the layout most has to be right — and the rail silently
+     fell back to its content height, ending 60px short of the fold. */
+  const railRowRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!heroSticky) { setRailH(null); return; }
+    let raf = 0;
+    const measure = () => {
+      const el = railRowRef.current;
+      if (!el) return;
+      let port: HTMLElement | null = el.parentElement;
+      while (port) {
+        const o = getComputedStyle(port).overflowY;
+        if (o === 'auto' || o === 'scroll') break;
+        port = port.parentElement;
+      }
+      /* No scrolling ancestor means the WINDOW is the scroll port — the published portal. */
+      if (!port) { setRailH(window.innerHeight); return; }
+      const cs = getComputedStyle(port);
+      const padT = parseFloat(cs.paddingTop) || 0;
+      const padB = parseFloat(cs.paddingBottom) || 0;
+      setRailH(Math.max(360, port.clientHeight - padT - padB));
+    };
+    measure();
+    /* ⚠️ Coalesced to one frame. A ResizeObserver on the body fires on every canvas reflow, and
+       setting state per observation is how a resize turns into a loop. */
+    const ro = new ResizeObserver(() => { cancelAnimationFrame(raf); raf = requestAnimationFrame(measure); });
+    ro.observe(document.body);
+    window.addEventListener('resize', measure);
+    return () => { ro.disconnect(); cancelAnimationFrame(raf); window.removeEventListener('resize', measure); };
+  }, [heroSticky]);
   /* Action cards as full-width ROWS inside the rail — icon, label, chevron. A rail is a column, so
      a card that is wider than it is tall is the only shape that fits it. */
   const quickRail = String(pageCfg.quickLook ?? 'row') === 'rail';
@@ -1331,6 +1382,12 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
      membership question the `rail` array already answers; only the placement differs — which is
      exactly what `railHome` was added for. */
   const railBelow = String(pageCfg.railHome ?? 'work') === 'below';
+  /* The same two-row split as `below`, turned the other way up: the rail pair takes the TOP row
+     and the band's own members fall underneath. A page whose first row is what to READ and whose
+     second is what you OWE reads as a noticeboard over a worklist; the reverse reads as a
+     worklist with a footnote. Which of those a template wants is a decision, so it is a key.
+     ⚠️ A NEW value rather than a flag on `below` — Counter ships `below` and must not move. */
+  const railAbove = String(pageCfg.railHome ?? 'work') === 'above';
   /* ⚠️ Whether the WORK band draws a rail — which is not the same question as whether the page has
      one. Once the rail has moved beside the services panel this band has no rail to draw, and
      testing `rail` alone left it rendering an empty second column and squeezing its three cards
@@ -1338,7 +1395,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
   /* ⚠️ Three placements now, so the work band's own question is the narrow one: does IT draw a
      rail? Not "does the page have one" — the rail may have moved beside services or below the
      cards, and in both cases this band must lay out as a flat row or it renders an empty column. */
-  const workRail = rail && !railInServices && !railBelow;
+  const workRail = rail && !railInServices && !railBelow && !railAbove;
   /* Which of the three work tabs is open. Local, because it is a reading position rather than a
      property of the page — nothing an admin sets and nothing to persist. */
   const [workTab, setWorkTab] = useState('requests');
@@ -1487,11 +1544,11 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
      (It calls `card` below; a const arrow is only read at call time, and every call happens
      during render, long after both are initialised.) */
   const railCard = (id: string) => {
-    if (id === 'news') return card('news', <div className="p-4"><AnnouncementsRender nodeId="news" cfg={{ title: 'Announcements', ...wc('news') }} /></div>, 1, secGap('work'), 1);
+    if (id === 'news') return card('news', <div className="p-4"><AnnouncementsRender nodeId="news" cfg={{ title: 'Announcements', ...wc('news') }} headIcon={hIcon(<Megaphone size={15} strokeWidth={1.8} />)} /></div>, 1, secGap('work'), 1);
     /* ⚠️ Counter's right-hand rail — Assets stacked under Approvals. RecordsCard, not RecordTiles:
        the tile grid is built for a WIDE row, and a narrow rail column wants the same compact list
        treatment `records` already uses when there is no rail at all. */
-    if (id === 'assets') return card('assets', <RecordsCard nodeId="assets" titleFallback={content.assets.title} cfg={wc('assets')} rows={MY_ASSETS} />, 1, secGap('work'), 1);
+    if (id === 'assets') return card('assets', <RecordsCard nodeId="assets" titleFallback={content.assets.title} cfg={wc('assets')} rows={MY_ASSETS} headIcon={hIcon(<HardDrive size={15} strokeWidth={1.8} />)} />, 1, secGap('work'), 1);
     if (id !== 'contact') return null;
     const body = <ContactRender nodeId="contact" cfg={{ title: 'Contact Us', ...wc('contact') }} />;
     /* ⚠️ `bare` on the dark one, or the card paints a white surface and the dark panel sits
@@ -1798,11 +1855,16 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
               every existing page renders the tree it always did. Only the rail archetype turns it
               into a real flex row, and `items-stretch` is what gives the rail the page's height
               rather than its own content's. */}
-          <div className={heroSide ? 'flex min-h-full items-stretch' : 'contents'}>
+          <div ref={railRowRef} className={heroSide ? 'flex min-h-full items-stretch' : 'contents'}>
           {/* ── Hero ── */}
           {/* Full bleed ignores the page's side inset (§7.20); the 9-point picker places the
               content block, and the heading colour is the one the contrast guard measures. */}
-          <Sel id="hero" toolbarBelow className={`${wc('hero').fullBleed === true ? '-mx-0' : ''} ${heroSide ? 'w-[380px] flex-none self-stretch' : ''}`}>
+          <Sel
+            id="hero"
+            toolbarBelow
+            /* The measured height, and nothing at all on every other layout. */
+            style={heroSticky && railH ? { height: railH } : undefined}
+            className={`${wc('hero').fullBleed === true ? '-mx-0' : ''} ${heroSide ? (heroSticky ? 'w-[380px] flex-none self-start sticky top-0' : 'w-[380px] flex-none self-stretch') : ''}`}>
             {/* ⚠️ The band is a flex COLUMN centred on its cross axis, so the heading and subtext sit
                 in the middle of the banner however tall it is made. Fixed `pt-14` pinned them near
                 the top and left the growing half of the band empty underneath — a taller banner
@@ -1812,7 +1874,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
               /* ⚠️ A RAIL reads top-down. Centring is right for a band — the copy sits in the middle
                  of the colour however tall it is made — and wrong for a column, where it pushes the
                  greeting to the vertical middle of the page and the action rows off the bottom. */
-              className={`relative flex flex-col ${heroSide ? 'justify-start pt-10 pb-10' : `justify-center ${(tileActions || quickOnBanner) && !searchFloats ? 'pb-10' : 'pb-[86px]'}`} ${searchFloats ? 'overflow-visible' : 'overflow-hidden'}`}
+              className={`relative flex flex-col ${heroSide ? 'justify-start pt-10 pb-10' : `justify-center ${(tileActions || quickOnBanner) && !searchFloats ? 'pb-10' : 'pb-[86px]'}`} ${searchFloats ? 'overflow-visible' : heroSticky ? 'overflow-x-hidden overflow-y-auto scrollbar-hide' : 'overflow-hidden'}`}
               style={{
                 /* ⚠️ The tabs decide, in one place. Image wins when one is uploaded; Colour paints
                    flat; and with neither the band keeps its gradient, so a portal nobody has touched
@@ -1895,7 +1957,12 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                   now limits the LINE (see `heroLine`), not the column, so alignment moves text
                   across the whole band and the 9-point picker still places the group. */}
               <div
-                className="relative w-full px-6 py-6"
+                /* ⚠️ `px-5` in a RAIL, and it is not a smaller margin — it is the SAME one. Every
+                   line in this block sits inside a `Sel` carrying `px-1`, so `px-6` prints text at
+                   28px while the action cards and Contact Us below it sit at the section's own
+                   24px. Four pixels is invisible across a full-width banner and plainly wrong down
+                   the side of a 380px column, where every left edge is on one line. */
+                className={`relative w-full ${heroSide ? 'px-5 pt-8 pb-5' : 'px-6 py-6'}`}
                 style={{ textAlign: heroAlignX(String(wc('hero').contentAlign ?? 'center')) }}
               >
                 {/* ⚠️ BLOCK, not inline-block. Both were inline-block, so the subtitle sat on the
@@ -2012,7 +2079,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                   surface: a card would paint a second one inside it. `portal-help-dark` is the
                   same class the dark Contact card uses, so the recolour rules are shared. */}
               {contactInHero && (
-                <div className="portal-help-dark mt-auto w-full border-t border-white/15 px-7 pt-5">
+                <div className="portal-help-dark mt-auto w-full border-t border-white/15 px-6 pb-1 pt-5">
                   {card('contact', <ContactRender nodeId="contact" cfg={{ title: 'Contact Us', ...wc('contact') }} />, 1, 16, 1, undefined, { bare: true })}
                 </div>
               )}
@@ -2340,31 +2407,41 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                  everywhere else. The first row is everything else at the band's own column count;
                  the second gives its first member two shares to the rest's one, which is the same
                  1.85:1-ish measure the side rail uses, turned on its side. */
-              if (railBelow) {
+              if (railBelow || railAbove) {
                 const order = rowOrder['work'] ?? [];
                 const inRail = new Set(rail ?? []);
                 /* ⚠️ Excluded from BOTH rows when the hero has it — a card rendered twice is the
                    fault every placement key in this file guards against. */
                 const skip = (id: string) => contactInHero && id === 'contact';
                 const main = order.filter((id) => !inRail.has(id) && !skip(id));
-                const below = (rail ?? []).filter((id) => order.includes(id) && !skip(id));
+                const paired = (rail ?? []).filter((id) => order.includes(id) && !skip(id));
+                /* ⚠️ Both rows are built as CONSTS and ordered afterwards. Authoring the pair twice
+                   — once for above, once for below — is two places for one fix to land in, the same
+                   rule the work band's own cards already follow. */
+                const mainRow = (
+                  <div
+                    className="grid min-w-0"
+                    style={{ gap: secGap('work'), gridTemplateColumns: `repeat(${secCols('work', 3)}, minmax(0, 1fr))` }}
+                  >
+                    {main.map((id) => <Fragment key={id}>{workCard(id)}</Fragment>)}
+                  </div>
+                );
+                const pairRow = paired.length > 0 ? (
+                  <div className="flex min-w-0 flex-wrap items-stretch" style={{ gap: secGap('work') }}>
+                    {paired.map((id, i) => (
+                      /* ⚠️ EQUAL shares when the pair LEADS, 2:1 when it trails. A trailing row is a
+                         footer and can be lopsided; a leading row sets the page's column rhythm, and
+                         every row beneath it here is two halves — so a 2:1 top row would be the one
+                         line on the page that does not agree with the rest. */
+                      <div key={id} className="flex min-w-[260px] flex-col" style={{ flex: railAbove ? '1 1 0%' : i === 0 ? '2 1 0%' : '1 1 0%' }}>
+                        {workCard(id)}
+                      </div>
+                    ))}
+                  </div>
+                ) : null;
                 return (
                   <div className="flex w-full min-w-0 flex-col" style={{ gap: secGap('work'), gridColumn: '1 / -1' }}>
-                    <div
-                      className="grid min-w-0"
-                      style={{ gap: secGap('work'), gridTemplateColumns: `repeat(${secCols('work', 3)}, minmax(0, 1fr))` }}
-                    >
-                      {main.map((id) => <Fragment key={id}>{workCard(id)}</Fragment>)}
-                    </div>
-                    {below.length > 0 && (
-                      <div className="flex min-w-0 flex-wrap items-stretch" style={{ gap: secGap('work') }}>
-                        {below.map((id, i) => (
-                          <div key={id} className="flex min-w-[260px] flex-col" style={{ flex: i === 0 ? '2 1 0%' : '1 1 0%' }}>
-                            {workCard(id)}
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    {railAbove ? <>{pairRow}{mainRow}</> : <>{mainRow}{pairRow}</>}
                   </div>
                 );
               }
@@ -2424,8 +2501,8 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                       tiles inside get room to spread and the two cards stop fighting.
                       ⚠️ Counter moves Assets into the side rail (as a compact list, not this tile
                       grid) — skipped here for the same reason Approvals is. */}
-                  {!rail.includes('assets') && card('assets', <RecordTiles nodeId="assets" titleFallback={content.assets.title} cfg={wc('assets')} rows={MY_ASSETS} icon={<HardDrive size={17} />} />, undefined, secGap("work"), 1, 2, { full: true })}
-                  {card('cis', <RecordTiles nodeId="cis" titleFallback={content.cis.title} cfg={wc('cis')} rows={MY_CIS} icon={<Server size={17} />} />, undefined, secGap("work"), 1, 3, { full: true })}
+                  {!rail.includes('assets') && card('assets', <RecordTiles nodeId="assets" titleFallback={content.assets.title} cfg={wc('assets')} rows={MY_ASSETS} icon={<HardDrive size={17} />} headIcon={hIcon(<HardDrive size={15} strokeWidth={1.8} />)} />, undefined, secGap("work"), 1, 2, { full: true })}
+                  {card('cis', <RecordTiles nodeId="cis" titleFallback={content.cis.title} cfg={wc('cis')} rows={MY_CIS} icon={<Server size={17} />} headIcon={hIcon(<Server size={15} strokeWidth={1.8} />)} />, undefined, secGap("work"), 1, 3, { full: true })}
                 </Sel>
                 {/* ⚠️ A SECTION too, and for the same reason: the rail owns how its three cards
                     stack, and that is a different question from how the four beside it are laid
@@ -2494,15 +2571,15 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                 {/* ⚠️ TILES on the rail layout, list rows otherwise — one `rows` shape, two
                     presentations, chosen by the page rather than by either widget. */}
                 {card('assets', rail
-                  ? <RecordTiles nodeId="assets" titleFallback={content.assets.title} cfg={wc('assets')} rows={MY_ASSETS} icon={<HardDrive size={17} />} />
-                  : <RecordsCard nodeId="assets" titleFallback={content.assets.title} cfg={wc('assets')} rows={MY_ASSETS} />,
+                  ? <RecordTiles nodeId="assets" titleFallback={content.assets.title} cfg={wc('assets')} rows={MY_ASSETS} icon={<HardDrive size={17} />} headIcon={hIcon(<HardDrive size={15} strokeWidth={1.8} />)} />
+                  : <RecordsCard nodeId="assets" titleFallback={content.assets.title} cfg={wc('assets')} rows={MY_ASSETS} headIcon={hIcon(<HardDrive size={15} strokeWidth={1.8} />)} />,
                   secCols("records", content.cols.records), secGap("records"), secGrow("records"))}
                 {/* ⚠️ My CIs stays EMPTY on the original layout, on purpose (§7.4): it is empty on
                     most real instances, so its empty state is the state most requesters will see.
                     The v2 page is a copy of an instance that HAS them, where an empty card would
                     misrepresent that one instead — so the rows follow the layout, not the widget. */}
                 {card('cis', rail
-                  ? <RecordTiles nodeId="cis" titleFallback={content.cis.title} cfg={wc('cis')} rows={MY_CIS} icon={<Server size={17} />} />
+                  ? <RecordTiles nodeId="cis" titleFallback={content.cis.title} cfg={wc('cis')} rows={MY_CIS} icon={<Server size={17} />} headIcon={hIcon(<Server size={15} strokeWidth={1.8} />)} />
                   : <EmptyCard nodeId="cis" title={String(wc('cis').title ?? content.cis.title)} cfg={wc('cis')} />,
                   secCols("records", content.cols.records), secGap("records"), secGrow("records"))}
 
@@ -2561,10 +2638,15 @@ const MY_CIS = [
  * ⚠️ A tile, not a list row — the same records, laid out the way the live portal lays them out. It
  * takes the SAME `rows` shape `RecordsCard` takes, so the two are two presentations of one thing
  * and a page can choose between them without the data knowing which was chosen. */
-function RecordTiles({ nodeId, titleFallback, cfg, rows, icon }: {
+function RecordTiles({ nodeId, titleFallback, cfg, rows, icon, headIcon }: {
   nodeId: string; titleFallback: string; cfg: Record<string, unknown>;
   rows: { id: string; name: string; type: string }[];
+  /* ⚠️ TWO icons, and they are not the same one. `icon` is the glyph on every ROW — what kind of
+     thing this is — and `headIcon` is the card's head badge, which the PAGE turns on for every
+     card at once. They happen to be the same glyph here; conflating them would mean a page that
+     wanted head badges could not have rows without them, or the reverse. */
   icon: ReactNode;
+  headIcon?: ReactNode;
 }) {
   const { styles } = useCanvas();
   /* ⚠️ FOUR tiles, and the badge counts them ALL. Five wrapped to a second line that was almost
@@ -2588,7 +2670,7 @@ function RecordTiles({ nodeId, titleFallback, cfg, rows, icon }: {
   const tileCols = Number(chosen(styles, nodeId, 'columns') ?? cfg.columns) || 0;
   if (!shown.length) return <EmptyCard nodeId={nodeId} title={String(cfg.title ?? titleFallback)} cfg={cfg} />;
   return (
-    <CardShell nodeId={nodeId} title={String(cfg.title ?? titleFallback)} count={rows.length} cfg={cfg}>
+    <CardShell nodeId={nodeId} title={String(cfg.title ?? titleFallback)} count={rows.length} cfg={cfg} headIcon={headIcon}>
       {/* ⚠️ `@container`, not a viewport breakpoint — the tiles answer to the CARD's width, which is
           what lets this row be dragged narrow or dropped into a column and still lay out sensibly.
           Every other grid in this builder that had to survive a resize does the same. */}
@@ -2655,15 +2737,15 @@ function RecordTiles({ nodeId, titleFallback, cfg, rows, icon }: {
 }
 
 /** A records row: blue ID pill · name · the type, right-aligned and muted. */
-function RecordsCard({ nodeId, titleFallback, cfg, rows }: {
-  nodeId: string; titleFallback: string; cfg: Record<string, unknown>;
+function RecordsCard({ nodeId, titleFallback, cfg, rows, headIcon }: {
+  nodeId: string; titleFallback: string; cfg: Record<string, unknown>; headIcon?: ReactNode;
   rows: { id: string; name: string; type: string }[];
 }) {
   const { styles } = useCanvas();
   const shown = rows.slice(0, Number(cfg.show ?? 5));
   if (!shown.length) return <EmptyCard nodeId={nodeId} title={String(cfg.title ?? titleFallback)} cfg={cfg} />;
   return (
-    <CardShell nodeId={nodeId} title={String(cfg.title ?? titleFallback)} count={shown.length} cfg={cfg}>
+    <CardShell nodeId={nodeId} title={String(cfg.title ?? titleFallback)} count={shown.length} cfg={cfg} headIcon={headIcon}>
       <ListBody nodeId={nodeId}>
         {shown.map((r) => (
           <Row key={r.id} nodeId={nodeId}>

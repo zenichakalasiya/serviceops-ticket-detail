@@ -295,6 +295,44 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   second function would turn a card saved against a hidden preset into a card with no filter at all.
   ⚠️ And a hidden option must not stay as a DEFAULT — `record_list` seeded `filter: 'all-open'`, which
   the trim withheld, so a new card landed on a preset it could not show and fell back to "No filter".
+- **Service Counter (`tpl-deskrail`) — the STICKY rail, and three more Template LOOKs.** The right
+  column is four rows of two EQUAL halves — Most Read | Announcements · Requests | Approvals ·
+  Favourite | Most Used · Assets | CIs — read as: what there is to read, what is on you, what you
+  can ask for, what you own. Reading leads because an announcement is the one thing on the page
+  addressed to everybody and time-bound; a P1 outage notice under two rows of personal worklists is
+  a notice nobody reads. New keys, all read next to `cardLook`:
+  `railHome: 'above'` (the rail pair takes the TOP row instead of the bottom — a new VALUE, since
+  Counter ships `'below'` and must not move; equal shares when it leads, 2:1 when it trails, because
+  a leading row sets the page's column rhythm and a trailing one is a footer) and
+  `heroSticky: true` (rail only).
+  ⚠️ **The sticky rail's height is MEASURED, not `100vh`.** In the published portal the page scrolls
+  in the window and 100vh is right; in the builder the page is a card inside a scrolling pane ~100px
+  down, so a viewport-tall rail hangs its last ~100px — Contact Us — below the fold, which is exactly
+  what pinning it to the rail's foot was for. It walks up to the nearest scrolling ancestor and takes
+  `clientHeight` less that pane's own padding. ⚠️ `self-start` is what makes sticky work AT ALL here:
+  the row is `items-stretch`, so the rail was already as tall as everything beside it and a sticky
+  element with nowhere to travel never moves. ⚠️ `top: 0` needs no measuring — Chrome anchors sticky
+  to the scrollport's CONTENT box, so a `top` equal to the pane's padding lands the rail one padding
+  lower than the page card beside it (measured: stuck at 144 where the card's edge is at 124).
+  ⚠️ **The measurement must NOT start from `querySelector('[data-node="hero"]')`.** `Sel` renders
+  `data-node` only while the canvas is EDITABLE — it is absent in Preview and on the published
+  portal, the two places the layout most has to be right — so the lookup found nothing there and the
+  rail silently fell back to its content height, ending 60px short of the fold while looking correct
+  in the builder. It uses a `ref` on the rail's own row, a plain div this file owns.
+  ⚠️ In a 380px RAIL the hero's text block takes `px-5`, and that is the SAME inset as everything
+  else, not a smaller one: every line in it sits inside a `Sel` carrying `px-1`, so `px-6` prints
+  text at 28px while the action cards and Contact Us sit at the section's 24px. Four pixels is
+  invisible across a full-width banner and plainly wrong down the side of a column.
+  ⚠️ **`cardHead: 'icon'` is all-or-none, so it had to reach the two cards that do not use**
+  **`CardShell`.** Announcements paints its own heading through `WidgetTitle` (which gained an
+  `icon` prop) and My Assets/My CIs pass `headIcon` alongside their existing `icon` — the latter is
+  the glyph on every ROW, a different question from the card's head badge, so conflating them would
+  mean a page wanting head badges could not have rows without them.
+  ⚠️ Services are CARDS here, not chips (`servicesLook: 'plain'` + `browseLook: 'split'` +
+  `styles.favourites/services = { columns: 2 }`): chips do wrap and never leave a hole, but they
+  read as filters, and at four services in two columns a card has room for its icon and its category
+  again — which is what a chip had to drop to stay a chip. ⚠️ `columns` lives in the STYLE store per
+  §7.8, so a seed writing it into `cfg` sets a key nothing reads.
 - **Custom Data Widget (`record_list`)** — Title · Module · Filter, matched to the reference build:
   six modules (Requests · Changes · Assets · Configuration Items · Approvals · Knowledge) and the
   requester-scoped presets only, each list bookended by `No filter — every record` and `Custom filter`.

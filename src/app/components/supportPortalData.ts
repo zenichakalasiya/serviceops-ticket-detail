@@ -433,15 +433,25 @@ export const PORTAL_TEMPLATES: PortalTemplate[] = [
        quick actions; dropping it because a mock showed three would be letting the picture decide
        what the product ships.
 
-       WHERE THE MISSING CARDS WENT — the image shows Requests, Approvals, Announcements and one
-       services row, and stops. The rest are placed by what they ARE, not by what fits:
-       • Most Read sits BESIDE Announcements (2:1). Both are reading material and both are lists of
-         links, so the page gets one "what to read" band instead of two — and it stops Announcements
-         being a full-width card holding two lines.
-       • Favourite and Most Used are two labelled CHIP rows, stacked. Chips wrap, so neither leaves
-         a hole at any count, and two rows of pills read as one browse area rather than as two grids.
-       • My Assets and My CIs pair on their own row, which is the shape they were designed as.
-       The result reads work → read → browse → own, and nothing is orphaned or full-width-and-sparse.
+       THE RIGHT COLUMN IS FOUR ROWS OF TWO, and every one of them is two equal halves — which is
+       what makes the column read as a column rather than as a pile of cards of assorted widths:
+         1  Most Read        | Announcements    what there is to read
+         2  My Open Requests | Pending Approvals    what is on you
+         3  Favourite Svcs   | Most Used Svcs   what you can ask for
+         4  My Assets        | My CIs           what you already have
+       ⚠️ Reading comes FIRST, above the fold. An announcement is the one thing on this page that
+       is addressed to everybody and is time-bound — a P1 outage notice under two rows of personal
+       worklists is a notice nobody reads. The requester's own records keep the rest of the column,
+       in the order they are asked about: what is open, what could be asked for, what is owned.
+       ⚠️ Each services section is FOUR CARDS IN TWO COLUMNS, so both fit a half-width column with
+       the icon and the category still on the card. Four across would have made them 80px wide.
+       ⚠️ THE RAIL DOES NOT SCROLL. It is sticky and viewport-tall, so the greeting, the search,
+       the four doors and Contact Us are on screen at every scroll position while the right column
+       moves under them. That is the argument for a rail in the first place: a banner that scrolls
+       away is a decoration, and one that stays is navigation. It also settles where Contact Us
+       goes — pinned to the rail's foot, it is permanently reachable rather than being the reward
+       for scrolling to the bottom of the page, which is the one place a person who cannot find
+       what they need has already given up before reaching.
        ⚠️ Contact Us is the one card NOT in the right column. It is not a record — it is the
        fallback when nothing else on the page worked — and the rail is already the dark surface
        carrying the opening hours, which is the same kind of information. Putting it there keeps the
@@ -451,14 +461,17 @@ export const PORTAL_TEMPLATES: PortalTemplate[] = [
       blockOrder: ['quick', 'work', 'favourites', 'services', 'records'],
       rowOrder: {
         quick: ['quick-incident', 'quick-service', 'quick-ad', 'quick-knowledge'],
-        /* Row 1 is Requests | Approvals; row 2 is the `rail` pair, Announcements leading at two
-           shares to Most Read's one. */
+        /* ⚠️ The band is TWO rows and `rail` is the split, so this array's job is only to say who
+           is a member — the ORDER of the rows is `railHome`, and the order WITHIN the rail row is
+           the `rail` array below. */
         /* ⚠️ `contact` is a MEMBER here even though the hero draws it — `card()` gates on row
            membership, so a card missing from this list renders nowhere at all. */
         work: ['requests', 'approvals', 'news', 'knowledge', 'contact'],
         records: ['assets', 'cis'],
       },
-      rail: ['news', 'knowledge'],
+      /* ⚠️ Most Read FIRST, so it takes the left half. Reading order in a two-column row is the
+         array's order, which is the whole reason this is a list and not a set. */
+      rail: ['knowledge', 'news'],
       cfg: {
         hero: {
           /* Copy from the reference. The hours line is the product's own `sub`; the greeting and
@@ -502,14 +515,25 @@ export const PORTAL_TEMPLATES: PortalTemplate[] = [
         approvals: { rowLayout: 'meta' },
         knowledge: { dateFormat: 'short' },
         /* A bullet as the leading token, so this list opens the way every other list on the page
-           does, and "Posted" to turn a bare date into a fact about the announcement. */
-        news: { bullets: true, datePrefix: 'Posted', show: 2 },
+           does, and "Posted" to turn a bare date into a fact about the announcement.
+           ⚠️ THREE, matching Most Read beside it. The row equalises its two cards' heights, so at
+           two notices Announcements was a card two-thirds empty next to a full one — and the
+           emptiness read as "nothing else is happening" rather than as a display setting. */
+        news: { bullets: true, datePrefix: 'Posted', show: 3 },
         page: {
           heroPlacement: 'left',
           quickLook: 'rail',
-          servicesLook: 'chips',
-          railHome: 'below',
+          /* ⚠️ CARDS, not chips. Chips were chosen because they wrap and never leave a hole, and
+         they do — but they read as filters, and a portal's catalogue is a set of destinations
+             rather than a set of tags. At four services in two columns a card has room for its
+             icon and its category again, which is what a chip had to drop to stay a chip. */
+          servicesLook: 'plain',
+          /* Favourite Services and Most Used Services share ONE row, half each. */
+          browseLook: 'split',
+          railHome: 'above',
           contactHome: 'hero',
+          /* The rail holds still; the right column carries the page's only scrollbar. */
+          heroSticky: true,
           /* Tighter corners on every card — the reference's squared treatment. A PAGE decision, so
              no card can end up rounder than the one beside it. */
           cardLook: 'square',
@@ -531,6 +555,11 @@ export const PORTAL_TEMPLATES: PortalTemplate[] = [
         /* One column each — a list of records, not a 2x2 of tiles. */
         assets: { columns: 1 },
         cis: { columns: 1 },
+        /* ⚠️ TWO columns, four cards — and `columns` lives in the STYLE store, not in cfg, because
+           §7.8 puts it there so the Content tab and the Arrangement pack cannot become two
+           controls for one value. A seed writing it into `cfg` sets a key nothing reads. */
+        favourites: { columns: 2 },
+        services: { columns: 2 },
       },
     },
   },

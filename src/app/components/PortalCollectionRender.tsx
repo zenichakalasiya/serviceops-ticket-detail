@@ -39,13 +39,25 @@ const visible = (items: Item[] | undefined, live: boolean) =>
    ⚠️ Nothing else was needed: nodeById already describes any `<id>-title` as a text node and
    ownerOf already strips the suffix so the value reads and writes on the WIDGET's config. One
    wrapper turns that latent machinery on for every widget that has a heading. */
-function WidgetTitle({ nodeId, text }: { nodeId: string; text?: unknown }) {
+function WidgetTitle({ nodeId, text, icon }: {
+  nodeId: string; text?: unknown;
+  /* ⚠️ The SAME tinted badge `CardShell` draws, because a page turns these on for every card at
+     once or for none — and a widget that paints its own heading instead of going through the
+     shell must not become the one card on the row without one. Absent unless a caller passes it,
+     so no existing page moves. */
+  icon?: ReactNode;
+}) {
   const { styles } = useCanvas();
   if (!text) return null;
   const head = (
-    <h3 style={roleStyle(styles, nodeId, 'title')} className="mb-3 text-[16px] font-semibold text-[#364658]">
-      {String(text)}
-    </h3>
+    <div className="mb-3 flex items-center gap-2">
+      {icon && (
+        <span className="flex size-7 flex-shrink-0 items-center justify-center rounded-md bg-[#EAF3FB] text-[#2F6FB5]">{icon}</span>
+      )}
+      <h3 style={roleStyle(styles, nodeId, 'title')} className="text-[16px] font-semibold text-[#364658]">
+        {String(text)}
+      </h3>
+    </div>
   );
   /* ⚠️ A product-owned heading renders BARE — no Sel, so it is not selectable and not typeable.
      Every widget that draws its heading through here inherits the rule at once; the two that draw
@@ -531,13 +543,13 @@ const ANNOUNCEMENTS = [
   { id: 'a5', title: 'Phishing awareness training is now mandatory', at: '28 Jul 2026' },
 ];
 
-export function AnnouncementsRender({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
+export function AnnouncementsRender({ nodeId, cfg, headIcon }: { nodeId: string; cfg: Cfg; headIcon?: ReactNode }) {
   const { styles } = useCanvas();
   const rows = ANNOUNCEMENTS.slice(0, Number(cfg.show ?? 3));
   const { gap, dividers } = arrange(styles, nodeId);
   return (
     <div className="@container min-w-0">
-      <WidgetTitle nodeId={nodeId} text={cfg.title} />
+      <WidgetTitle nodeId={nodeId} text={cfg.title} icon={headIcon} />
       <div {...stackProps(gap, dividers)}>
         {rows.map((a) => (
           <div key={a.id} className={cfg.bullets === true ? 'flex gap-2.5 py-2.5' : 'py-2.5'}>
