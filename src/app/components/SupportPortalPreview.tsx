@@ -1779,6 +1779,8 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
      same "one card, two possible homes" move `quickSection` already makes; authoring it twice is
      two places for every future banner fix to land in.
      ⚠️ Declared AFTER `quickSection`, because the rail archetype mounts that inside this. */
+  /* Whether this page is carrying a banner at all. A blank portal starts without one. */
+  const hasHero = !removed.includes('hero');
   const heroBand = (
     <>
     {/* Full bleed ignores the page's side inset (§7.20); the 9-point picker places the
@@ -2063,12 +2065,19 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
               anchors on the page, each still offering "+ Add Section" on hover — an empty page that
               answers four different places you never put anything. */}
           {blank ? (
-            /* ⚠️ `h-full`, not a `min-h-[420px]` guess. The content area already stretches to the
+            <>
+            {/* ⚠️ ABOVE the padded container, not inside it: a banner is a full-bleed band and the
+                blank page's wrapper carries the content inset every section sits in. */}
+            {hasHero && heroBand}
+            {/* ⚠️ `h-full`, not a `min-h-[420px]` guess. The content area already stretches to the
                 canvas, so a fixed floor left the empty state sitting in a short band with the page
                 colour running on underneath it — the one screen where there is nothing else to look
-                at was the one that did not fill the screen. */
-            <div className={sections.length ? 'px-6 py-8' : 'flex h-full min-h-[520px] flex-col items-center justify-center px-6 py-16'}>
-              {sections.length === 0 && (
+                at was the one that did not fill the screen.
+                ⚠️ A page carrying a BANNER is no longer empty, so it takes the padded layout and
+                loses the centring — the tall empty state under a banner is a page that says it has
+                nothing on it directly beneath the thing it has. */}
+            <div className={sections.length || hasHero ? 'px-6 py-8' : 'flex h-full min-h-[520px] flex-col items-center justify-center px-6 py-16'}>
+              {sections.length === 0 && !hasHero && (
               /* ⚠️ NO dashed box. A dotted rectangle in the middle of an empty page reads as a drop
                   ZONE — a specific place the widget has to land — and the page will take a drop
                   anywhere. The invitation is the words; the border was drawing a target that does
@@ -2088,6 +2097,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                   section then carries a seam of its own. */}
               <div className={sections.length ? '' : 'mt-6'}>{after('hero')}</div>
             </div>
+            </>
           ) : (
           <>
           {/* ⚠️ `contents` when the hero is a top band — the wrapper leaves the layout entirely, so
@@ -2096,7 +2106,9 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
               rather than its own content's. */}
           <div ref={railRowRef} className={heroSide ? 'flex min-h-full items-stretch' : 'contents'}>
           {/* ── Hero ── */}
-          {heroBand}
+          {/* ⚠️ Gated, because the banner is deletable now that the palette can put one back —
+              which is exactly the reason its `noDelete` existed. */}
+          {hasHero && heroBand}
 
           {/* No horizontal padding here: a SECTION runs from the page's left edge to its right
               edge, so each one carries its own inset instead of sitting inside a padded column. */}

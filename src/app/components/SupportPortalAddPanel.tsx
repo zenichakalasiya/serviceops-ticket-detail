@@ -37,6 +37,7 @@ import type { PortalElement, PortalElementGroup } from './supportPortalData';
    use the product's own sidebar glyphs, so a portal component looks like the module it surfaces. */
 const ICONS: Record<string, ReactNode> = {
   // Components
+  banner: <PanelTop size={16} />,
   search: <Search size={16} />,
   services: <ShoppingCart size={16} />,
   requests: <IconRequest size={16} />,

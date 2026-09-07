@@ -43,6 +43,8 @@ export type ControlKind =
   | 'pills'
   /** Card-template thumbnails — the shape is recognised by looking, not by reading a word. */
   | 'templates'
+  /** The banner's shape — Regular / With card / With image, drawn rather than named. */
+  | 'bannerType'
   /** Horizontal content distribution, icon-only (5). */
   | 'distribute'
   /** Vertical content alignment, icon-only (4). */

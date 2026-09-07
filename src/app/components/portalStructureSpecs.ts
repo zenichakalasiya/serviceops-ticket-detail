@@ -60,6 +60,13 @@ export const HERO_SPEC: WidgetSpec = {
        underneath, so the renderer is unchanged and an existing custom height keeps rendering; it
        simply is not typed by hand any more. */
     {
+      /* ⚠️ FIRST in the group, above Height. It decides what the band CONTAINS — whether there is
+         a card or a picture beside the heading at all — and every control under it describes the
+         shape it chose. A control that reframes the ones above it is read after the damage.
+         ⚠️ A drawn picker, not a dropdown: which banner you want is recognised by looking. */
+      key: 'bannerType', label: 'Banner type', control: 'bannerType', tab: 'style', group: 'Banner',
+    } as WidgetField,
+    {
       key: 'height', label: 'Height', control: 'segmented', tab: 'style', group: 'Banner',
       options: [
         { value: '180', label: 'Short' },

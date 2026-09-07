@@ -37,7 +37,7 @@ import { PortalItemList } from './PortalItemList';
 import { RecordFilterField } from './PortalRecordFilter';
 import type { RecordFilter } from './portalRecordFilters';
 import { recordModule } from './supportPortalData';
-import { TemplatePicker } from './PortalSectionControls';
+import { BannerTypePicker, TemplatePicker } from './PortalSectionControls';
 import { ACROSS_ROW, ACROSS_STACK, DOWN_ROW, DOWN_STACK, SectionPresets } from './PortalSectionLayout';
 import type { PresetId } from './PortalSectionLayout';
 import { BorderRow, RadiusRow, ShadowBlock, SizeRow } from './PortalBoxControls';
@@ -1050,6 +1050,8 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
             })}
           />
         );
+      case 'bannerType':
+        return <BannerTypePicker value={String(v ?? 'regular')} onChange={(x) => set(f.key, x)} />;
       case 'templates':
         /* A `templates` field may declare `options` to narrow the row — see TemplatePicker. */
         return (

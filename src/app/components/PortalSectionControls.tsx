@@ -64,6 +64,59 @@ export function TemplatePicker({ value, onChange, only }: {
   );
 }
 
+/* ── Banner types ────────────────────────────────────────────────────────────
+ *
+ * ⚠️ A picker of DRAWN shapes, not a dropdown, for the reason at the top of this file: which
+ * banner you want is recognised by looking. Each tile is the arrangement the band actually
+ * produces — a heading block, and what sits beside it.
+ * ⚠️ "With image" is a picture BESIDE the text, which is a different question from the existing
+ * Background → Image that paints behind everything. Both can be on at once, and they do not
+ * compete: one is the backdrop, one is a column. */
+const BANNER_TYPES: { value: string; title: string; note: string }[] = [
+  { value: 'regular', title: 'Regular', note: 'Heading and search, full width' },
+  { value: 'card', title: 'With card', note: 'A card beside the heading' },
+  { value: 'image', title: 'With image', note: 'A picture beside the heading' },
+];
+
+export function BannerTypePicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="flex gap-2">
+      {BANNER_TYPES.map((t) => {
+        const on = value === t.value;
+        const bar = (w: string, faint?: boolean) => (
+          <span className={`h-[3px] ${w} rounded-full ${faint ? 'bg-[#EEF2F6]' : on ? 'bg-[#3D8BD0]/30' : 'bg-[#DFE5ED]'}`} />
+        );
+        return (
+          <button
+            key={t.value}
+            onClick={() => onChange(t.value)}
+            title={t.note}
+            className={`flex h-[64px] flex-1 flex-col items-center justify-center gap-1 rounded-lg border-2 bg-white px-2 transition-colors ${
+              on ? 'border-[#3D8BD0]' : 'border-[#E5E7EB] hover:border-[#C3CBD6]'
+            }`}
+          >
+            {/* Drawn from the shape the band produces, so a tile can never promise a layout you
+                do not get — the same rule the card templates above follow. */}
+            <span className="flex w-full items-center justify-center gap-1.5">
+              <span className="flex flex-col gap-[3px]">
+                {bar(t.value === 'regular' ? 'w-12' : 'w-7')}
+                {bar(t.value === 'regular' ? 'w-9' : 'w-5', true)}
+              </span>
+              {t.value === 'card' && (
+                <span className={`h-6 w-6 flex-shrink-0 rounded border ${on ? 'border-[#3D8BD0]/40 bg-[#3D8BD0]/10' : 'border-[#DFE5ED] bg-[#F7F9FC]'}`} />
+              )}
+              {t.value === 'image' && (
+                <span className={`h-6 w-6 flex-shrink-0 rounded ${on ? 'bg-[#3D8BD0]/30' : 'bg-[#DFE5ED]'}`} />
+              )}
+            </span>
+            <span className={`text-[10.5px] leading-none ${on ? 'text-[#3D8BD0]' : 'text-[#7B8FA5]'}`}>{t.title}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 /* ── Icon-only alignment rows ───────────────────────────────────────────────
  *
  * The glyph IS the meaning — three bars showing where content sits inside its box — so these carry

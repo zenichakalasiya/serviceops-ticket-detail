@@ -768,7 +768,11 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
       : (isV2 ? ROW_ORDER_V2 : DEFAULT_ROW_ORDER)
   ));
   rowOrderRef.current = rowOrder;
-  const [removed, setRemoved] = useState<string[]>([]);
+  /* ⚠️ A blank page starts with its banner REMOVED, which is what makes "add a Banner" a real
+     action rather than a no-op. The preview already declined to draw any band on a blank page;
+     routing that through `removed` instead means one flag answers "is the banner on this page",
+     the palette tick and the canvas read the same value, and adding one is just un-removing it. */
+  const [removed, setRemoved] = useState<string[]>(() => (page.start === 'blank' ? ['hero'] : []));
 
   /* Which PREDEFINED elements this page currently carries.
    *
@@ -800,6 +804,17 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
        rather than restoring the fixed block. Counting only the fixed block would leave the row
        saying "addable" with the widget sitting on the page — so a second click gives you two, a
        third gives you three, and the mark means nothing. */
+    /* ⚠️ The BANNER and its SEARCH, counted the same way every other predefined block is — and
+       with NO `isBlank` branch, because `removed` already answers the question on both kinds of
+       page: a blank one starts with the banner removed, a normal one starts with it present.
+       ⚠️ The search is the BANNER'S OWN field, so it is only "on the page" when there is a banner
+       to hold it. That is the whole single-instance rule: one search, and the banner owns it, so
+       turning the banner's toggle off puts the palette row back rather than leaving a Search
+       element ticked against a band that is not showing one. */
+    if (!removed.includes('hero')) {
+      nodes.add('hero');
+      if (widgetCfg.hero?.showSearch !== false) nodes.add('hero-search');
+    }
     const types = new Set<string>();
     sections.forEach((s) => sectionElements(s.section).forEach((el) => types.add(el.type)));
     Object.values(rowExtras).forEach((list) => list.forEach((el) => types.add(el.type)));
@@ -816,7 +831,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     return new Set(PORTAL_ELEMENTS
       .filter((e) => predefined(e) && ((e.node && nodes.has(e.node)) || types.has(e.id)))
       .map((e) => e.id));
-  }, [rowOrder, removed, content.quick, blockOrder, sections, rowExtras, isBlank]);
+  }, [rowOrder, removed, content.quick, blockOrder, sections, rowExtras, isBlank, widgetCfg]);
 
   /* Reset to default — every store the canvas reads, back to its seed.
      ⚠️ It must clear ALL of them. Missing one leaves the page in a state that is neither the
@@ -965,6 +980,28 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     const def = PORTAL_ELEMENTS.find((e) => e.id === type);
     if (def && placedPredefined.has(def.id)) {
       toast.error(`${def.name} is already on this page`);
+      return;
+    }
+    /* ⚠️ The BANNER is not a placed element — it is the page's own band, turned back on. Dropping
+       a stand-in into a column would give you a second banner inside the page rather than the
+       band every reference portal opens with, and none of its controls would reach it. */
+    if (type === 'x-banner') {
+      setRemoved((r) => r.filter((x) => x !== 'hero'));
+      setSelectedId('hero');
+      toast.success('Banner added — pick its type under Design');
+      return;
+    }
+    /* ⚠️ The SEARCH is the banner's own field, so it needs a banner. Refusing WITH THE REASON at
+       the moment you try is the rule this builder follows everywhere a limit has one instance —
+       a silent no-op reads as a broken palette row. */
+    if (type === 'x-search') {
+      if (removed.includes('hero')) {
+        toast.error('Add a Banner first — the search bar lives in it');
+        return;
+      }
+      patchCfg('hero', { showSearch: true });
+      setSelectedId('hero-search');
+      toast.success('Search added to the banner');
       return;
     }
 

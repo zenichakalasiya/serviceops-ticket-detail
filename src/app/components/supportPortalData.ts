@@ -943,6 +943,16 @@ export const PORTAL_ELEMENTS: PortalElement[] = [
      because "predefined" is decided by the GROUP (Data and Actions) rather than by owning a
      fixed block. Reading it the other way round left this one row addable while its five neighbours
      all greyed out. */
+  /* ⚠️ The BANNER and the SEARCH are in the palette because a from-scratch portal renders neither:
+     a blank page replaces every band with one empty state, so without these two rows the one
+     thing every reference portal opens with was the one thing you could not add.
+     ⚠️ Both carry a `node`, which is what makes them PREDEFINED — one to a page, ticked once
+     placed. Two banners is not a page anybody wants, and the search rule is the whole point.
+     ⚠️ `search` is the BANNER's search bar, not a free-standing widget. Every reference portal
+     puts it in the band, and a search floating in a section is a different product's pattern —
+     so placing it turns the banner's own field on, and it needs a banner to live in. */
+  { id: 'x-banner', name: 'Banner', icon: 'banner', group: 'Data', node: 'hero', keywords: 'hero header masthead top band' },
+  { id: 'x-search', name: 'Search', icon: 'search', group: 'Data', node: 'hero-search', keywords: 'find lookup search bar' },
   { id: 'c-announcements', name: 'Announcements', icon: 'announcements', group: 'Data', keywords: 'news broadcast banner' },
   { id: 'c-knowledge', name: 'Most Read Knowledge', icon: 'knowledge', group: 'Data', onPage: true, node: 'knowledge', keywords: 'articles kb most read' },
   /* ⚠️ LIVE DATA, not Custom. Its own spec has said `group: 'Data'` all along — only the
