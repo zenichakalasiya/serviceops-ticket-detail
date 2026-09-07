@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { Upload } from 'lucide-react';
 import { toast } from 'sonner';
-import { Field, SelectField, Segmented, TextField, ToggleRow, UploadZone } from './PortalControls';
+import { Field, Segmented, TextField, ToggleRow, UploadZone } from './PortalControls';
 
 /* Branding — what this portal calls itself and who a requester contacts.
  *
@@ -30,14 +30,14 @@ import { Field, SelectField, Segmented, TextField, ToggleRow, UploadZone } from 
    · Company and Portal URL went because neither is a setting. They were shown as disabled rows to
      confirm which tenant you were editing, and confirming that is the LISTING's job — you reached
      this panel by opening one portal by name.
-   · Help and Sign-on kept every control they had; only their headings were removed. */
+   · Help kept every control it had; only its heading was removed.
+   · Sign-on has since gone entirely — see the note beside Support Email. */
 
 export function PortalBrandingPanel() {
   const [v, setV] = useState<Record<string, string>>({
     name: 'Acme Support',
     title: '',
     landing: 'home',
-    idp: 'None — use ServiceOps login',
     email: '',
     phone: '',
     linkback: '',
@@ -140,13 +140,11 @@ export function PortalBrandingPanel() {
           </div>
         )}
 
-        <Field label="Identity Provider">
-          <SelectField
-            value={v.idp}
-            onChange={(x) => set('idp', x)}
-            options={['None — use ServiceOps login', 'Azure AD', 'Okta', 'Google Workspace', 'SAML 2.0']}
-          />
-        </Field>
+        {/* ⚠️ No Identity Provider here. Sign-on is a property of ONE portal — which directory its
+            requesters authenticate against — and Edit details already asks it, on the record that
+            owns it. This panel is the org's shared identity, so the field was both in the wrong
+            scope and the second place to set one value. It lives on `PortalPage.idp`; nothing
+            about the record changed. */}
         <Field label="Support Email">
           <TextField value={v.email} onChange={(x) => set('email', x)} placeholder="servicedesk@acme.com" />
         </Field>
