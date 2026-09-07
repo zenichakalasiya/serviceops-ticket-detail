@@ -1,0 +1,115 @@
+<!doctype html>
+<!--
+  The directory in front of the Claude Design canvas.
+
+  ⚠️ The two .dc.html files beside this one are COPIES of "ServiceOps portal layout system (2)/",
+  kept byte-identical on purpose. The dc-runtime resolves a sibling component as
+  COMPONENT_DIR + "/" + encodeURIComponent(name) + ".dc.html", so BOTH the filename and the
+  .dc.html extension are load-bearing — renaming either file to something URL-friendly breaks
+  component loading with a console 404 and a canvas that renders half its artboards. The spaces
+  in the names are why every href here is percent-encoded.
+
+  ⚠️ This lives in public/, which Vite copies into dist/ VERBATIM (no transform, no hashing), and
+  GitHub Pages serves statically with no SPA rewrite — which is what makes these URLs work on a
+  cold load. The Vite DEV server is the odd one out: its HTML middleware treats a .html request
+  as an app entry and falls through to index.html, so a layout opened on :5200 shows the Requests
+  page instead. Test this directory against `npm run build` + a plain static server, never dev.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Portal Layout System · Motadata ServiceOps</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #F7F9FC;
+    color: #364658;
+    font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 40px 24px 64px; }
+
+  header { border-bottom: 1px solid #e5e7eb; padding-bottom: 20px; margin-bottom: 28px; }
+  h1 { margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -0.01em; }
+  .sub { margin: 6px 0 0; font-size: 14px; color: #64748B; max-width: 70ch; }
+  .meta { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px;
+    border-radius: 4px; border: 1px solid #DFE5ED; background: #fff;
+    font-size: 12px; font-weight: 500; color: #364658; text-decoration: none;
+    transition: background-color .12s, border-color .12s;
+  }
+  .pill:hover { background: #F5F7FA; border-color: #CBD5E1; }
+  .pill.accent { background: #e8f4fd; border-color: #cfe6f8; color: #3D8BD0; }
+
+  h2 { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+       color: #64748B; margin: 32px 0 12px; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+  .card {
+    display: block; padding: 16px; border: 1px solid #e5e7eb; border-radius: 8px;
+    background: #fff; text-decoration: none; color: inherit;
+    transition: border-color .12s, box-shadow .12s, transform .12s;
+  }
+  .card:hover { border-color: #3D8BD0; box-shadow: 0 2px 10px rgba(61,139,208,.10); transform: translateY(-1px); }
+  .card-head { display: flex; align-items: center; gap: 8px; }
+  .id {
+    flex: none; min-width: 26px; height: 20px; padding: 0 6px; border-radius: 4px;
+    background: #e8f4fd; color: #3D8BD0; font-size: 11px; font-weight: 600;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .name { font-size: 15px; font-weight: 600; }
+  .desc { margin: 8px 0 0; font-size: 12.5px; line-height: 1.55; color: #64748B; }
+
+  footer { margin-top: 40px; padding-top: 18px; border-top: 1px solid #e5e7eb;
+           font-size: 12px; color: #64748B; }
+  footer a { color: #3D8BD0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Support Portal — Layout System</h1>
+    <p class="sub">
+      Fourteen layout directions for the requester's landing page, drawn as full 1440px artboards.
+      Every card below opens the canvas scrolled to that layout.
+    </p>
+    <div class="meta">
+      <a class="pill accent" href="Support%20Portal%20Layout%20System.dc.html">Open the full canvas</a>
+      <a class="pill" href="Support%20Portal%20Layout%20Spec.dc.html">Layout spec</a>
+      <a class="pill" href="../#/portal-templates">Templates built in the product</a>
+    </div>
+  </header>
+
+  <h2>14 layouts</h2>
+  <div class="grid">
+    <!-- Sorted 2a → 4b: the canvas holds them in reverse, and an ascending list reads as a
+         progression rather than as the order they happened to be authored in. -->
+    <a class="card" href="Support%20Portal%20Layout%20System.dc.html#2a"><div class="card-head"><span class="id">2a</span><span class="name">Prism</span></div><p class="desc">Split banner — brand colour and geometry on the right, all the words and the search on the left, so contrast is never at risk.</p></a>
+    <a class="card" href="Support%20Portal%20Layout%20System.dc.html#2b"><div class="card-head"><span class="id">2b</span><span class="name">Ledger</span></div><p class="desc">No banner — the colour block at the top is made of the tenant's own numbers, and every widget below it lives in one table.</p></a>
+    <a class="card" href="Support%20Portal%20Layout%20System.dc.html#2c"><div class="card-head"><span class="id">2c</span><span class="name">Front Door</span></div><p class="desc">Search is the page — quick actions become typed intents on a patterned ground, and everything you own is one bento below the fold.</p></a>
+    <a class="card" href="Support%20Portal%20Layout%20System.dc.html#3a"><div class="card-head"><span class="id">3a</span><span class="name">Marquee</span></div><p class="desc">Duotone banner, and three wide action slabs straddling its edge — the incident slab is twice the width of the other two.</p></a>
+    <a class="card" href="Support%20Portal%20Layout%20System.dc.html#3b"><div class="card-head"><span class="id">3b</span><span class="name">Sidecar</span></div><p class="desc">Actions live in a sticky vertical rail that never scrolls away — the incident card sits at the top of it, filled.</p></a>
+    <a class="card" href="Support%20Portal%20Layout%20System.dc.html#3c"><div class="card-head"><span class="id">3c</span><span class="name">Counter</span></div><p class="desc">Actions sit inside the banner as glass tiles on solid brand colour, with the incident tile inverted to white.</p></a>
+    <a class="card" href="Support%20Portal%20Layout%20System.dc.html#3d"><div class="card-head"><span class="id">3d</span><span class="name">Switchboard</span></div><p class="desc">A numbered keypad of oversized action tiles — built for gloved hands, shared terminals and a shift worker who has 20 seconds.</p></a>
+    <a class="card" href="Support%20Portal%20Layout%20System.dc.html#3e"><div class="card-head"><span class="id">3e</span><span class="name">Ribbon</span></div><p class="desc">A media slider replaces the banner, and the actions move into a ribbon pinned under the top bar so they survive the scroll.</p></a>
+    <a class="card" href="Support%20Portal%20Layout%20System.dc.html#3f"><div class="card-head"><span class="id">3f</span><span class="name">Stack</span></div><p class="desc">One 820px column, no grid at all — actions are a single grouped card and everything else is a dated feed, so a thin tenant simply has a shorter page.</p></a>
+    <a class="card" href="Support%20Portal%20Layout%20System.dc.html#3g"><div class="card-head"><span class="id">3g</span><span class="name">Foyer</span></div><p class="desc">A compact banner with the four actions tucked into its right side, then a hard split: what's mine on the left, what's published on the right.</p></a>
+    <a class="card" href="Support%20Portal%20Layout%20System.dc.html#3h"><div class="card-head"><span class="id">3h</span><span class="name">Concierge</span></div><p class="desc">A greeting strip with inline counters, service cards you favourite like products, and a master–detail panel where a request opens beside its own timeline.</p></a>
+    <a class="card" href="Support%20Portal%20Layout%20System.dc.html#3i"><div class="card-head"><span class="id">3i</span><span class="name">Wayfinder</span></div><p class="desc">Minimal and airy — a sub-nav strip, a left-aligned hero with a segmented search bar, and flat bordered cards with no shadows anywhere.</p></a>
+    <a class="card" href="Support%20Portal%20Layout%20System.dc.html#4a"><div class="card-head"><span class="id">4a</span><span class="name">Service Center</span></div><p class="desc">A promo slider beside a welcome panel, a mosaic of feature tiles, then a two-column service directory with a tasks-and-links rail.</p></a>
+    <a class="card" href="Support%20Portal%20Layout%20System.dc.html#4b"><div class="card-head"><span class="id">4b</span><span class="name">Broadsheet</span></div><p class="desc">A photographic banner with the announcement carousel floating over its right edge, a topic strip, then a filterable catalog beside a countdown and quick-links rail.</p></a>
+  </div>
+
+  <footer>
+    Design exploration — not shipped product. What is actually built lives in
+    <a href="../#/portal-templates">the product's template gallery</a>.
+  </footer>
+
+</div>
+</body>
+</html>
