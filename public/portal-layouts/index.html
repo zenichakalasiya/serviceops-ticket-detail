@@ -2,13 +2,13 @@
 <!--
   The directory in front of the Claude Design canvas.
 
-  ⚠️ The two .dc.html files beside this one are COPIES of "ServiceOps portal layout system (2)/".
-  They differ from the source in EXACTLY ONE way: the Layout System doc carries an appended
-  `data-dc-deeplink` script at the end of its body. dc-runtime builds the artboards after parse,
-  so on a COLD load the browser resolves #3c before that element exists and silently stays at the
-  top — every card below would open the canvas and appear to do nothing. That script re-applies
-  the fragment once its target has rendered. Re-copy from the source folder and it goes; the
-  `data-dc-deeplink` marker is what makes the patch idempotent and greppable.
+  ⚠️ The two .dc.html files beside this one are COPIES of "ServiceOps portal layout system (2)/",
+  byte-identical, with NOTHING injected into them — verified with a buffer compare, and worth
+  keeping that way. Two attempts to patch a deep-link retry INTO the canvas (before </body>, then
+  in <head>) both failed on Pages: dc-runtime rebuilds the document twice, head included, so an
+  injected script is discarded. The 14 cards below therefore point at `layout.html?id=`, which
+  drives the scroll from a parent document the runtime cannot rewrite. See that file for the
+  full reasoning.
 
   The dc-runtime resolves a sibling component as
   COMPONENT_DIR + "/" + encodeURIComponent(name) + ".dc.html", so BOTH the filename and the
@@ -96,20 +96,20 @@
   <div class="grid">
     <!-- Sorted 2a → 4b: the canvas holds them in reverse, and an ascending list reads as a
          progression rather than as the order they happened to be authored in. -->
-    <a class="card" href="Support%20Portal%20Layout%20System.dc.html#2a"><div class="card-head"><span class="id">2a</span><span class="name">Prism</span></div><p class="desc">Split banner — brand colour and geometry on the right, all the words and the search on the left, so contrast is never at risk.</p></a>
-    <a class="card" href="Support%20Portal%20Layout%20System.dc.html#2b"><div class="card-head"><span class="id">2b</span><span class="name">Ledger</span></div><p class="desc">No banner — the colour block at the top is made of the tenant's own numbers, and every widget below it lives in one table.</p></a>
-    <a class="card" href="Support%20Portal%20Layout%20System.dc.html#2c"><div class="card-head"><span class="id">2c</span><span class="name">Front Door</span></div><p class="desc">Search is the page — quick actions become typed intents on a patterned ground, and everything you own is one bento below the fold.</p></a>
-    <a class="card" href="Support%20Portal%20Layout%20System.dc.html#3a"><div class="card-head"><span class="id">3a</span><span class="name">Marquee</span></div><p class="desc">Duotone banner, and three wide action slabs straddling its edge — the incident slab is twice the width of the other two.</p></a>
-    <a class="card" href="Support%20Portal%20Layout%20System.dc.html#3b"><div class="card-head"><span class="id">3b</span><span class="name">Sidecar</span></div><p class="desc">Actions live in a sticky vertical rail that never scrolls away — the incident card sits at the top of it, filled.</p></a>
-    <a class="card" href="Support%20Portal%20Layout%20System.dc.html#3c"><div class="card-head"><span class="id">3c</span><span class="name">Counter</span></div><p class="desc">Actions sit inside the banner as glass tiles on solid brand colour, with the incident tile inverted to white.</p></a>
-    <a class="card" href="Support%20Portal%20Layout%20System.dc.html#3d"><div class="card-head"><span class="id">3d</span><span class="name">Switchboard</span></div><p class="desc">A numbered keypad of oversized action tiles — built for gloved hands, shared terminals and a shift worker who has 20 seconds.</p></a>
-    <a class="card" href="Support%20Portal%20Layout%20System.dc.html#3e"><div class="card-head"><span class="id">3e</span><span class="name">Ribbon</span></div><p class="desc">A media slider replaces the banner, and the actions move into a ribbon pinned under the top bar so they survive the scroll.</p></a>
-    <a class="card" href="Support%20Portal%20Layout%20System.dc.html#3f"><div class="card-head"><span class="id">3f</span><span class="name">Stack</span></div><p class="desc">One 820px column, no grid at all — actions are a single grouped card and everything else is a dated feed, so a thin tenant simply has a shorter page.</p></a>
-    <a class="card" href="Support%20Portal%20Layout%20System.dc.html#3g"><div class="card-head"><span class="id">3g</span><span class="name">Foyer</span></div><p class="desc">A compact banner with the four actions tucked into its right side, then a hard split: what's mine on the left, what's published on the right.</p></a>
-    <a class="card" href="Support%20Portal%20Layout%20System.dc.html#3h"><div class="card-head"><span class="id">3h</span><span class="name">Concierge</span></div><p class="desc">A greeting strip with inline counters, service cards you favourite like products, and a master–detail panel where a request opens beside its own timeline.</p></a>
-    <a class="card" href="Support%20Portal%20Layout%20System.dc.html#3i"><div class="card-head"><span class="id">3i</span><span class="name">Wayfinder</span></div><p class="desc">Minimal and airy — a sub-nav strip, a left-aligned hero with a segmented search bar, and flat bordered cards with no shadows anywhere.</p></a>
-    <a class="card" href="Support%20Portal%20Layout%20System.dc.html#4a"><div class="card-head"><span class="id">4a</span><span class="name">Service Center</span></div><p class="desc">A promo slider beside a welcome panel, a mosaic of feature tiles, then a two-column service directory with a tasks-and-links rail.</p></a>
-    <a class="card" href="Support%20Portal%20Layout%20System.dc.html#4b"><div class="card-head"><span class="id">4b</span><span class="name">Broadsheet</span></div><p class="desc">A photographic banner with the announcement carousel floating over its right edge, a topic strip, then a filterable catalog beside a countdown and quick-links rail.</p></a>
+    <a class="card" href="layout.html?id=2a"><div class="card-head"><span class="id">2a</span><span class="name">Prism</span></div><p class="desc">Split banner — brand colour and geometry on the right, all the words and the search on the left, so contrast is never at risk.</p></a>
+    <a class="card" href="layout.html?id=2b"><div class="card-head"><span class="id">2b</span><span class="name">Ledger</span></div><p class="desc">No banner — the colour block at the top is made of the tenant's own numbers, and every widget below it lives in one table.</p></a>
+    <a class="card" href="layout.html?id=2c"><div class="card-head"><span class="id">2c</span><span class="name">Front Door</span></div><p class="desc">Search is the page — quick actions become typed intents on a patterned ground, and everything you own is one bento below the fold.</p></a>
+    <a class="card" href="layout.html?id=3a"><div class="card-head"><span class="id">3a</span><span class="name">Marquee</span></div><p class="desc">Duotone banner, and three wide action slabs straddling its edge — the incident slab is twice the width of the other two.</p></a>
+    <a class="card" href="layout.html?id=3b"><div class="card-head"><span class="id">3b</span><span class="name">Sidecar</span></div><p class="desc">Actions live in a sticky vertical rail that never scrolls away — the incident card sits at the top of it, filled.</p></a>
+    <a class="card" href="layout.html?id=3c"><div class="card-head"><span class="id">3c</span><span class="name">Counter</span></div><p class="desc">Actions sit inside the banner as glass tiles on solid brand colour, with the incident tile inverted to white.</p></a>
+    <a class="card" href="layout.html?id=3d"><div class="card-head"><span class="id">3d</span><span class="name">Switchboard</span></div><p class="desc">A numbered keypad of oversized action tiles — built for gloved hands, shared terminals and a shift worker who has 20 seconds.</p></a>
+    <a class="card" href="layout.html?id=3e"><div class="card-head"><span class="id">3e</span><span class="name">Ribbon</span></div><p class="desc">A media slider replaces the banner, and the actions move into a ribbon pinned under the top bar so they survive the scroll.</p></a>
+    <a class="card" href="layout.html?id=3f"><div class="card-head"><span class="id">3f</span><span class="name">Stack</span></div><p class="desc">One 820px column, no grid at all — actions are a single grouped card and everything else is a dated feed, so a thin tenant simply has a shorter page.</p></a>
+    <a class="card" href="layout.html?id=3g"><div class="card-head"><span class="id">3g</span><span class="name">Foyer</span></div><p class="desc">A compact banner with the four actions tucked into its right side, then a hard split: what's mine on the left, what's published on the right.</p></a>
+    <a class="card" href="layout.html?id=3h"><div class="card-head"><span class="id">3h</span><span class="name">Concierge</span></div><p class="desc">A greeting strip with inline counters, service cards you favourite like products, and a master–detail panel where a request opens beside its own timeline.</p></a>
+    <a class="card" href="layout.html?id=3i"><div class="card-head"><span class="id">3i</span><span class="name">Wayfinder</span></div><p class="desc">Minimal and airy — a sub-nav strip, a left-aligned hero with a segmented search bar, and flat bordered cards with no shadows anywhere.</p></a>
+    <a class="card" href="layout.html?id=4a"><div class="card-head"><span class="id">4a</span><span class="name">Service Center</span></div><p class="desc">A promo slider beside a welcome panel, a mosaic of feature tiles, then a two-column service directory with a tasks-and-links rail.</p></a>
+    <a class="card" href="layout.html?id=4b"><div class="card-head"><span class="id">4b</span><span class="name">Broadsheet</span></div><p class="desc">A photographic banner with the announcement carousel floating over its right edge, a topic strip, then a filterable catalog beside a countdown and quick-links rail.</p></a>
   </div>
 
   <footer>

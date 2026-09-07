@@ -4,39 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="./support.js"></script>
-<script data-dc-deeplink>
-/* Deep-link retry. The ONLY divergence from "ServiceOps portal layout system (2)/".
-
-   Two things had to be true and each one cost a live failure to learn:
-
-   ⚠️ It MUST live in <head>, after support.js. dc-runtime rebuilds the body from its parsed
-   template, discarding anything before </body> before that script ever runs.
-
-   ⚠️ It must KEEP re-asserting, not scroll once. The runtime also does an async
-   fetch(location.href) -> updateHtml that rebuilds the DOM a second time and resets scroll to 0.
-   On localhost that resolves before the first tick and a one-shot scroll looked correct; on Pages
-   it lands after, so the page snapped back to the top and every card in the directory appeared
-   to do nothing. So: re-scroll on every tick until the target is settled at the top, and stop the
-   moment the reader takes over, or this would fight anyone who scrolls away. */
-(function () {
-  var id = decodeURIComponent((location.hash || "").slice(1));
-  if (!id) return;
-  var ticks = 0, settled = 0, done = false;
-  function stop() { done = true; }
-  ["wheel", "touchstart", "keydown", "mousedown"].forEach(function (e) {
-    addEventListener(e, stop, { passive: true, once: true });
-  });
-  var timer = setInterval(function () {
-    if (done || ++ticks > 120) return clearInterval(timer); /* ~12s ceiling */
-    var el = document.getElementById(id);
-    if (!el) return;
-    var top = el.getBoundingClientRect().top;
-    if (Math.abs(top) > 4) { el.scrollIntoView(); settled = 0; }
-    else if (++settled >= 8) clearInterval(timer); /* held for ~800ms: the rebuild is over */
-  }, 100);
-})();
-</script>
-
 </head>
 <body>
 <x-dc>
@@ -3396,6 +3363,5 @@ class Component extends DCLogic {
   }
 }
 </script>
-
 </body>
 </html>
