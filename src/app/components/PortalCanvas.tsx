@@ -259,77 +259,144 @@ function childTypesOf(id: string): { type: string; label: string }[] | undefined
   return specId ? specById(specId)?.collection?.childTypes : undefined;
 }
 
-function ElementPicker({ mode, onPick, onClose, only }: {
+function ElementPicker({ mode, onPick, onClose, only, anchorRef, targetId, avoidParent }: {
   mode: 'add' | 'replace'; onPick: (type: string) => void; onClose: () => void;
   /** A container's own block types. When present this IS the list — see the note below. */
   only?: { type: string; label: string }[];
+  /** The "+" button's wrapper — where the list is anchored FROM. */
+  anchorRef: React.RefObject<HTMLDivElement | null>;
+  /** The node the toolbar belongs to — what the list must not COVER.
+      ⚠️ Passed as an id and looked up, NOT found with `closest` from the button: the toolbar is
+      not rendered inside the element's own `[data-node]` wrapper, so the walk finds nothing and
+      the list silently anchors to the 28px button instead — which lands it back on top of the
+      section, exactly the fault this placement exists to fix. */
+  targetId: string;
+  /** A COLUMN is part of a section, and the section is what you are looking at while filling it —
+      so clearing the column alone would still drop the list on the empty half beside it. */
+  avoidParent?: boolean;
 }) {
   const [q, setQ] = useState('');
-  if (only?.length) {
-    return (
-      <>
-        <span className="fixed inset-0 z-[60]" onClick={onClose} />
-        <div
-          onClick={(e) => e.stopPropagation()}
-          className="absolute left-1/2 top-[calc(100%+8px)] z-[61] w-[200px] -translate-x-1/2 rounded-lg border border-[#E5E7EB] bg-white p-1.5 shadow-[0_12px_16px_-4px_rgba(16,24,40,0.10),0_4px_6px_-2px_rgba(16,24,40,0.06)]"
-        >
-          {/* ⚠️ No search. Three options do not need one, and a search box over three rows is a
-              control that costs a line to say nothing. */}
-          {only.map((ct) => (
-            <button
-              key={ct.type}
-              onClick={() => onPick(ct.type)}
-              className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-[13px] text-[#364658] transition-colors hover:bg-[#F5F7FA]"
-            ><Plus size={13} className="text-[#9CA3AF]" /> {ct.label}</button>
-          ))}
-        </div>
-      </>
-    );
-  }
+  const boxRef = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
+  const width = only?.length ? 200 : 260;
+  const maxH = 340;
+
+  /* ⚠️ Placed against the VIEWPORT and portalled to the body. As an absolutely-positioned child of
+     the toolbar it was trapped inside the canvas's own scroll box, so opening one near the foot of
+     the page cut the list off at the bottom edge with no way to reach the rest of it — the same
+     clipping trap the listing kebab and the table's column menus already carry notes about. */
+  useLayoutEffect(() => {
+    const place = () => {
+      const anchor = anchorRef.current;
+      const box = boxRef.current;
+      if (!anchor || !box) return;
+      const GAP = 8;
+      const EDGE = 8;
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const btn = anchor.getBoundingClientRect();
+      /* The thing the new widget is going INTO, and therefore the thing to stay clear of. */
+      let node = document.querySelector(`[data-node="${targetId}"]`) as HTMLElement | null;
+      if (avoidParent && node) node = (node.parentElement?.closest('[data-node]') as HTMLElement | null) ?? node;
+      const el = node?.getBoundingClientRect() ?? btn;
+      const w = box.offsetWidth || width;
+      const h = Math.min(box.offsetHeight || maxH, Math.min(maxH, vh - EDGE * 2));
+      /* Level with the toolbar, then clamped — which is what stops the bottom being cut off. */
+      const top = Math.max(EDGE, Math.min(btn.top, vh - h - EDGE));
+      /* ⚠️ A SIDE first, always. It used to open straight down from the "+", which put it on top of
+         the empty section you were filling — so the one thing you needed to see while choosing was
+         the one thing it covered. */
+      if (vw - el.right - GAP - EDGE >= w) { setPos({ left: el.right + GAP, top }); return; }
+      if (el.left - GAP - EDGE >= w) { setPos({ left: el.left - GAP - w, top }); return; }
+      /* A full-width section has no side to sit beside, so go above or below IT — never over it. */
+      const left = Math.max(EDGE, Math.min(btn.left + btn.width / 2 - w / 2, vw - w - EDGE));
+      if (vh - el.bottom - GAP - EDGE >= h) { setPos({ left, top: el.bottom + GAP }); return; }
+      if (el.top - GAP - EDGE >= h) { setPos({ left, top: el.top - GAP - h }); return; }
+      /* Taller than every gap around it. Nothing can avoid the element now, so only the clamp
+         matters — being readable beats being polite. */
+      setPos({ left, top: Math.max(EDGE, Math.min(btn.bottom + GAP, vh - h - EDGE)) });
+    };
+    place();
+    /* The canvas scrolls under it, and the design panel resizes beside it. */
+    window.addEventListener('resize', place);
+    window.addEventListener('scroll', place, true);
+    return () => {
+      window.removeEventListener('resize', place);
+      window.removeEventListener('scroll', place, true);
+    };
+  }, [q, only, anchorRef, width, targetId, avoidParent]);
+
   const groups = PORTAL_ELEMENT_GROUPS.map((g) => ({
     group: g,
     items: PORTAL_ELEMENTS.filter((e) => e.group === g && !e.onPage
       && (!q || `${e.name} ${e.keywords ?? ''}`.toLowerCase().includes(q.toLowerCase()))),
   })).filter((g) => g.items.length);
 
-  return (
+  return createPortal(
     <>
       {/* Clicking anywhere else closes it — a popover that only closes from its own ✕ is a modal
           pretending not to be one. */}
-      <span className="fixed inset-0 z-[60]" onClick={onClose} />
+      <span className="fixed inset-0 z-[9998]" onClick={onClose} />
       <div
+        ref={boxRef}
         onClick={(e) => e.stopPropagation()}
-        className="absolute left-1/2 top-[calc(100%+8px)] z-[61] max-h-[340px] w-[260px] -translate-x-1/2 overflow-y-auto rounded-lg border border-[#E5E7EB] bg-white py-1 shadow-[0_12px_16px_-4px_rgba(16,24,40,0.10),0_4px_6px_-2px_rgba(16,24,40,0.06)]"
+        style={{
+          left: pos?.left ?? 0,
+          top: pos?.top ?? 0,
+          width,
+          maxHeight: maxH,
+          /* ⚠️ Hidden rather than unmounted for the first paint: the placement needs the box's real
+             height, and a list rendered at 0,0 for one frame is a flash in the corner. */
+          visibility: pos ? 'visible' : 'hidden',
+        }}
+        className={`fixed z-[9999] overflow-y-auto rounded-lg border border-[#E5E7EB] bg-white shadow-[0_12px_16px_-4px_rgba(16,24,40,0.10),0_4px_6px_-2px_rgba(16,24,40,0.06)] ${only?.length ? 'p-1.5' : 'py-1'}`}
       >
-        <div className="sticky top-0 z-10 bg-white px-2 pb-1.5 pt-1">
-          <input
-            autoFocus
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder={mode === 'replace' ? 'Replace with…' : 'Search elements'}
-            className="h-8 w-full rounded border border-[#DFE5ED] px-2.5 text-[12px] outline-none focus:border-[#3D8BD0]"
-          />
-        </div>
-        {groups.map(({ group, items }) => (
-          <div key={group}>
-            <p className="px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wider text-[#9CA3AF]">{group}</p>
-            {items.map((el) => (
+        {only?.length ? (
+          <>
+            {/* ⚠️ No search. Three options do not need one, and a search box over three rows is a
+                control that costs a line to say nothing. */}
+            {only.map((ct) => (
               <button
-                key={el.id}
-                onClick={() => onPick(el.id)}
-                className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12px] text-[#364658] transition-colors hover:bg-[#F5F9FD]"
-              >
-                <span className="flex size-6 flex-shrink-0 items-center justify-center rounded bg-[#F1F5F9] text-[#64748B]">
-                  {elementIcon(el.icon)}
-                </span>
-                <span className="truncate">{el.name}</span>
-              </button>
+                key={ct.type}
+                onClick={() => onPick(ct.type)}
+                className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-[13px] text-[#364658] transition-colors hover:bg-[#F5F7FA]"
+              ><Plus size={13} className="text-[#9CA3AF]" /> {ct.label}</button>
             ))}
-          </div>
-        ))}
-        {!groups.length && <p className="px-3 py-4 text-center text-[12px] text-[#9CA3AF]">Nothing matches “{q}”.</p>}
+          </>
+        ) : (
+          <>
+            <div className="sticky top-0 z-10 bg-white px-2 pb-1.5 pt-1">
+              <input
+                autoFocus
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder={mode === 'replace' ? 'Replace with…' : 'Search elements'}
+                className="h-8 w-full rounded border border-[#DFE5ED] px-2.5 text-[12px] outline-none focus:border-[#3D8BD0]"
+              />
+            </div>
+            {groups.map(({ group, items }) => (
+              <div key={group}>
+                <p className="px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wider text-[#9CA3AF]">{group}</p>
+                {items.map((el) => (
+                  <button
+                    key={el.id}
+                    onClick={() => onPick(el.id)}
+                    className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12px] text-[#364658] transition-colors hover:bg-[#F5F9FD]"
+                  >
+                    <span className="flex size-6 flex-shrink-0 items-center justify-center rounded bg-[#F1F5F9] text-[#64748B]">
+                      {elementIcon(el.icon)}
+                    </span>
+                    <span className="truncate">{el.name}</span>
+                  </button>
+                ))}
+              </div>
+            ))}
+            {!groups.length && <p className="px-3 py-4 text-center text-[12px] text-[#9CA3AF]">Nothing matches “{q}”.</p>}
+          </>
+        )}
       </div>
-    </>
+    </>,
+    document.body,
   );
 }
 
@@ -601,6 +668,10 @@ function CaptionMenu({ id }: { id: string }) {
 }
 
 function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: string }) {
+  /* The two "+" buttons. The picker is portalled to the body now, so it needs a real element to
+     measure itself against — the wrapper it used to be positioned inside. */
+  const besideRef = useRef<HTMLDivElement>(null);
+  const insideRef = useRef<HTMLDivElement>(null);
   const { styles, setStyle, moveNode, duplicateNode, deleteNode, canDuplicate, addInside, replaceElement, addChildBlock, splitNode, splitInfo, addLinkCard, addSibling } = useCanvas();
   const [picking, setPicking] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -753,7 +824,7 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
           honest thing a "+" on one can do is put the next element in the slot next to it, which is
           also what gives the move arrows something to move past. */}
       {composable && (
-        <div className="relative">
+        <div ref={besideRef} className="relative">
           <button className={btn} data-tip="Add a widget beside this one" onClick={() => setAdding((v) => !v)}>
             <Plus size={15} />
           </button>
@@ -763,12 +834,15 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
               mode="add"
               onPick={(type) => { setAdding(false); addSibling?.(id, type); }}
               onClose={() => setAdding(false)}
+              anchorRef={besideRef}
+              targetId={id}
+              avoidParent={kind === 'column'}
             />
           )}
         </div>
       )}
       {caps.add !== false && (canAdd || placed || kind === 'card') && (
-        <div className="relative">
+        <div ref={insideRef} className="relative">
           <button
             className={btn}
             data-tip={childTypes?.length && !sixOnly ? 'Add a block inside' : swaps ? 'Replace widget' : 'Add widget'}
@@ -786,6 +860,9 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
                 else addInside(id, type);
               }}
               onClose={() => setPicking(false)}
+              anchorRef={insideRef}
+              targetId={id}
+              avoidParent={kind === 'column'}
             />
           )}
         </div>
