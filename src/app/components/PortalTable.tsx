@@ -26,7 +26,7 @@ import {
   deleteColumn, deleteColumnBlocked, deleteRow, deleteRowBlocked, duplicateColumn, duplicateRow,
   fitTableToWidth, insertTable, isMerged, mergeBlockedBecause, mergeCells, moveColumn, moveRow,
   reorderColumn, reorderRow, resizeColumn, setCellAttribute, setCellContent, sortByColumn, splitCell,
-  tableFrom, toggleHeaderCell,
+  tableFrom,
 } from './portalTableModel';
 import type { CellAlign, TableModel, VertAlign } from './portalTableModel';
 
@@ -656,8 +656,12 @@ export function PortalTable({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
       : { label: 'Merge cells', icon: <Group size={14} />, blocked: why, run: () => write(mergeCells(model, r0, r1, c0, c1)) },
     { label: 'Colour', icon: <Palette size={14} />, divider: true, children: colorItems(selIds) },
     { label: 'Alignment', icon: <AlignLeft size={14} />, children: alignItems(selIds) },
-    { label: selIds.length > 1 ? 'Toggle header cells' : 'Toggle header cell', icon: <Heading size={14} />, divider: true, run: () => { let m = model; selIds.forEach((id) => { m = toggleHeaderCell(m, id); }); write(m); } },
-    { label: 'Clear contents', icon: <Eraser size={14} />, run: () => write(clearCells(model, selIds, { resetAttrs: true })) },
+    /* ⚠️ No per-cell header toggle. A header is a property of the first ROW or the first COLUMN —
+       the panel switches and the two handle menus already say so, and all three write the same
+       `headerRow`/`firstColumn` config. A fourth writer flipping ONE cell could put a `th` in the
+       middle of a body row: a table that reads as having two header rows and exports as neither.
+       ⚠️ The `divider` moves onto Clear contents, which was relying on this row to carry it. */
+    { label: 'Clear contents', icon: <Eraser size={14} />, divider: true, run: () => write(clearCells(model, selIds, { resetAttrs: true })) },
     ];
   };
 
