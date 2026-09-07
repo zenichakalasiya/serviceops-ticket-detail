@@ -2,13 +2,16 @@
 
 > The brief for `zeni_tasks.md` task 23. Hand this whole file over.
 >
-> Sources: **Duda's own behaviour** as recorded in `DUDA-ADD-AND-THEME-RESEARCH.md` §1.3 and
-> `LAYOUT-ALIGNMENT-SPEC.md` (both measured out of Duda's live DOM, 19 Aug 2026), plus four
-> decisions taken by the product owner on 25 Aug 2026, marked **[DECIDED]** below.
+> Sources: **Duda's live editor, driven and measured on 25 Aug 2026** (site `7ae48214`, the
+> Sunberry Preschool template) — every value in §2 was read out of the running DOM mid-drag with
+> `getComputedStyle`, not estimated from a screenshot. Plus `LAYOUT-ALIGNMENT-SPEC.md` (Duda's
+> section panel, measured 19 Aug 2026) and four decisions taken by the product owner, marked
+> **[DECIDED]**. Anything still unverified is marked **[INFERRED]**.
 >
-> ⚠️ Live Duda re-verification was blocked — the account login returns `401 Incorrect Email or
-> Password`. Anything below that is *inference* rather than *measurement* is marked **[INFERRED]**
-> so it can be checked against the real editor later.
+> Evidence: [docs/duda/duda-insert-line-horizontal.png](docs/duda/duda-insert-line-horizontal.png)
+> (line in a vertical stack) and
+> [docs/duda/duda-insert-line-vertical-with-label.png](docs/duda/duda-insert-line-vertical-with-label.png)
+> (line in a horizontal row, with the "Insert to column" chip).
 
 ---
 
@@ -59,7 +62,6 @@ Section
   └ Row            (top → bottom, reorderable)
       └ Column     (left → right, reorderable, equal share by default)
           └ Element  (vertical stack — this is what makes "merged rows" free)
-```
 
 **[INFERRED] Two levels of nesting only.** A column holds a stack of elements; it cannot itself be
 split into further rows-of-columns. A support portal section does not need infinite nesting, and
@@ -69,7 +71,25 @@ the product owner if a three-level layout is ever asked for.
 **Caps.** Max **4 columns per row** (a fifth column in a 340–600px panel preview is unreadable).
 Rows are uncapped. **[INFERRED]** — confirm.
 
-### 1.1 Node ids
+### 1.1 Duda's own DOM, for reference (measured)
+
+Useful because it confirms the three-level model is what a mature builder actually ships:
+
+```
+.grid-row                                  a SECTION
+  └ .flex-element.group                    a COLUMN / group  (nests)
+      └ .flex-element.widget-wrapper       a widget's box
+          └ [data-element-type="paragraph"]  the widget itself
+```
+
+Plus the drag-time classes: `hovered-grid-when-dragging` (on both the section and the target
+column), `parent-of-hovered` (on an ancestor group when a nested one is hovered),
+`flex-drag-widget-placeholder` (the line), `empty-card-placeholder` (an empty cell).
+
+Duda's palette rows are native HTML5 `draggable="true"` and carry `data-auto="add-widget-box-<type>"`
+— the same approach as our `text/portal-element` MIME type, so nothing needs to change there.
+
+### 1.2 Node ids
 
 Today `nodeById()` in [portalPageModel.ts](src/app/components/portalPageModel.ts) synthesises a node
 from its id by shape — `sec-3`, `sec-3-c0`. That scheme has no room for a row, so it grows one
@@ -90,20 +110,71 @@ typecheck.
 
 ## 2. The blue line — the heart of the task
 
-### 2.1 What it looks like
+### 2.1 What Duda actually draws — MEASURED, copy these values
 
-| | |
-|---|---|
-| Line | **2px solid `#3D8BD0`**, with a **6px round cap at each end** so a 2px rule is findable |
-| Span | The full width of the target row (horizontal) or the full height of the target row (vertical) |
-| Label | A `#3D8BD0` chip, white 11px text, at the line's start — see §2.3 |
-| Layer | Above all content, `pointer-events: none`, never inside an `overflow: hidden` box |
-| Timing | **No transition, no delay.** It must track the pointer at frame rate; a fade makes it feel late |
-| Exit | Vanishes the instant the pointer leaves a valid target — no lingering |
+Duda shows **three layers at once**, not one line. All three are the same blue: **`#188DF8`**
+(`rgb(24, 141, 248)`). Values below are the true CSS values (the live canvas renders at a 0.889
+scale, so the raw readings were 0.889px / 2.667px).
 
-The dragged element follows the cursor as a **semi-transparent ghost**; if the drag is a *move*
-rather than an *add*, the source element also drops to 40% opacity so it is obvious what is moving.
-Over an invalid target: **no line at all**, and the cursor reads `no-drop`.
+| Layer | What | Measured |
+|---|---|---|
+| **1. Section** | Outline on the whole section under the pointer | `outline: 1px solid #188DF8`, `z-index: 11` — class `grid-row hovered-grid-when-dragging` |
+| **2. Target column** | Outline on the exact column that will receive the drop | `outline: 3px solid #188DF8` — class `flex-element group hovered-grid-when-dragging` |
+| **3. Insertion line** | The line itself, at the gap the drop will land in | `background: #188DF8`, **3px** thick, inset to the column's *content box* (not its border box) — class `flex-drag-widget-placeholder` |
+| **4. Label chip** | Names the target — see §2.3 | `::after` on layer 2 |
+
+⚠️ **Layer 2 is what makes it legible.** A line alone tells you *where*, but not *what it lands
+inside*. With three columns side by side, the line at a boundary is ambiguous until the column
+around it is outlined. Do not ship the line without the column outline.
+
+⚠️ **The line is inset to the content box.** Measured: a column at `x=59 w=194` drew its line at
+`x=85 w=142` — inset by exactly the column's own padding (26px each side). A line running the full
+border-box width reads as belonging to the section, not to the column.
+
+Other measured behaviour:
+- **The palette row empties while dragging.** The source row in the Elements list becomes a plain
+  grey block for the duration — visible in the evidence screenshot. It is not hidden and the list
+  does not reflow, so nothing below it moves under the cursor.
+- The dragged item follows the cursor as a ghost.
+- Over an invalid target: **no line at all**.
+
+**[INFERRED]** Duda uses the **Moveable** library for its selection/resize box
+(`moveable-control-box`, `moveable-draggable` in the DOM) — worth knowing if we ever want parity on
+the resize handles, but not needed for this task.
+
+### 2.1b How Duda decides the line's ORIENTATION — MEASURED, and it is not what we assumed
+
+**The line is always perpendicular to the hovered container's flex direction.** That is the whole
+rule, and it was measured both ways on the live editor:
+
+| Container | Line drawn | Measured rect |
+|---|---|---|
+| A **vertical stack** (column of widgets) | **Horizontal**, full content width | `[288, 329, 427, 3]` — 427 wide × 3 tall |
+| A **horizontal row** (the site header, 5 columns) | **Vertical**, full content height | `[654, 88, 3, 196]` — 3 wide × 196 tall |
+
+Sweeping the pointer across the horizontal header at x = 600 → 1400 moved the vertical line to each
+successive column boundary in turn (258 → 313 → 414 → 505 → 654 → 876), always snapping to the gap
+nearest the pointer. So **in a horizontal container, dropping genuinely does create a new column** —
+it is just an ordinary flex-sibling insert.
+
+⚠️ **BUT: Duda does NOT create a column by dropping at the edge of a vertical stack.** This was
+probed directly — four pointer positions spanning the boundary between two columns
+(`right-edge-of-column`, `the gap`, `left-edge-of-next`, `mid-next-column`) **all returned the same
+horizontal line**; the vertical line never appeared. Duda instead re-targets the *parent* group
+(it adds a `parent-of-hovered` class) and offers a new row. To get "image left, text right" in Duda
+you change the section's **Layout preset** to horizontal — the preset control documented in
+`LAYOUT-ALIGNMENT-SPEC.md` §1.1 — you do not do it by aiming a drop.
+
+**What this means for us — read before building.** The product owner has already decided
+**[DECIDED]** that dropping on an element's left/right edge splits the row into columns (§0). That
+decision stands and §2.2 specifies it. It is Elementor/Webflow behaviour rather than Duda's, and for
+this product it is the better of the two: a support-portal admin should not have to learn what a
+"flex direction" is, or find a preset control, to put a picture beside a paragraph.
+
+So: **take Duda's visual language exactly** (the three layers, the colour, the thicknesses, the
+inset, the chip) and **keep our own edge-drop mechanic**. The one rule inherited unchanged from Duda
+is the orientation rule above — a line across a stack is horizontal, a line within a row is
+vertical — because that part is not a preference, it is what the geometry means.
 
 ### 2.2 Where it appears — the hit-zone rule
 
@@ -136,19 +207,41 @@ about a neighbour and there is no neighbour.
 **Section seams** keep today's `AddSectionSeam` behaviour. A drop on a seam creates a **new
 one-column section** there — already how `dropInRow` handles the auto-built section case.
 
-### 2.3 The label
+### 2.3 The label chip — MEASURED
 
-Duda labels the indicator, and it should be copied: **`Insert here`** · **`Insert in new row`** ·
-**`Insert in new column`** *(measured — `DUDA-ADD-AND-THEME-RESEARCH.md` §1.3)*.
+Duda names the drop target with a chip. Read straight off the live DOM, it is an `::after` on the
+hovered column:
 
-Use exactly:
-- Vertical line → **`Insert in new column`**
-- Horizontal line spanning the row → **`Insert in new row`**
+```css
+.column.is-drop-target::after {
+  content: "Insert to column";
+  background: #188DF8;
+  color: #FFFFFF;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 3px 15px;
+  border-radius: 2px;
+  position: absolute;
+  top: -24px;                    /* sits just above the column's top edge */
+  left: 50%; transform: translateX(-50%);   /* centred on the column */
+}
+```
+
+⚠️ **One string, not three.** Duda's current editor says **"Insert to column"** for *every* target,
+horizontal or vertical — verified at both orientations. The three-label set recorded in
+`DUDA-ADD-AND-THEME-RESEARCH.md` §1.3 (`Insert here` / `Insert in new row` / `Insert in new column`)
+is the OLDER editor and is superseded by this measurement.
+
+**What we should say instead.** Our mechanic creates rows *and* columns from the same gesture, so
+one string cannot cover it — an admin who is about to split a row needs to know that before they let
+go. Use three, matched to what will actually happen:
+
+- Vertical line at an element's edge → **`Insert in new column`**
+- Horizontal line spanning the section → **`Insert in new row`**
 - Horizontal line inset inside a column → **`Insert here`**
 
-⚠️ Duda's Editor 2.0 restricts drops to *existing* columns and creates none. **We are deliberately
-NOT taking that restriction** — creating a column by dropping at an edge is the entire mechanic task
-23 asks for.
+Chip styling: take Duda's exactly, except **13px** rather than 14px and `#3D8BD0` rather than
+`#188DF8`, to sit in our type and colour scale.
 
 ---
 
@@ -316,8 +409,12 @@ Reproduce, in the browser, on a newly added empty section:
 Answer these before building anything marked **[INFERRED]**:
 
 1. **Nesting depth** — is "a column cannot itself be split into rows" acceptable, or is a
-   three-level layout expected?
-2. **Column cap** — is 4 per row right?
+   three-level layout expected? (Duda nests groups freely; we are proposing to stop at two.)
+2. **Column cap** — is 4 per row right? Duda's measured header runs 5.
 3. **Section scope** — added sections only, or should the built-in bands accept this too?
 4. **Responsive** — what happens to a 3-column row on a phone? Stack all columns, or keep 2 up?
    Nothing in task 23 says, and it changes the data model (a per-breakpoint width or a single one).
+   This is the one that most affects the shape of the code, so it is worth settling first.
+
+Settled on 25 Aug 2026 and **not** open: the edge-drop mechanic (§2.1b), the three-label wording
+(§2.3), equal-share-until-stretched widths (§4.1), the Divider's return (§6).

@@ -102,14 +102,24 @@ interface CanvasCtx {
   theme: PortalTheme;
 }
 
-const Ctx = createContext<CanvasCtx>({
+/* The canvas with everything switched off — selection, drag, every mutation a no-op.
+ *
+ * ⚠️ EXPORTED, and it is the whole read-only rendering mode. `SupportPortalPreview` reads per-node
+ * STYLE off this context rather than from a prop, so anything that renders the portal outside the
+ * builder — Preview, the template showcase — has to supply a context or every seeded `columns`,
+ * fill and radius silently resolves to nothing. Spread it and override `styles` + `theme`:
+ * the no-ops are what make "read-only" mean read-only rather than thirty hand-written stubs that
+ * drift the next time `CanvasCtx` grows a member. */
+export const READONLY_CANVAS: CanvasCtx = {
   enabled: false, selectedId: null, hoverId: null,
   select: () => {}, setHover: () => {}, styles: {}, setStyle: () => {}, setText: () => {}, setCfg: () => {},
   addSection: () => {}, addBeside: () => {}, dropBeside: () => {}, columnsFull: () => false, dropInColumn: () => {}, dropAtSeam: () => {}, dropInRow: () => {}, moveToSeam: () => {}, addChildBlock: () => {},
   moveNode: () => {}, duplicateNode: () => {}, deleteNode: () => {}, canDuplicate: () => false, addInside: () => {},
   moveTo: () => {}, areSiblings: () => false, replaceElement: () => {}, pickIcon: () => {},
   theme: DEFAULT_THEME,
-});
+};
+
+const Ctx = createContext<CanvasCtx>(READONLY_CANVAS);
 
 /** Reads a dragged catalogue element off a drop event, or null when it isn't one of ours. */
 export const draggedElement = (e: React.DragEvent) => e.dataTransfer.getData('text/portal-element') || null;

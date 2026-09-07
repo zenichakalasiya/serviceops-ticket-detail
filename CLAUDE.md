@@ -343,6 +343,26 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   Columns control wrote a value nothing read — both the Content tab and the Arrangement pack moved,
   stored, and changed nothing on the canvas. It takes `cols` as a prop now.
 
+- **Portal template showcase (`PortalTemplateShowcase.tsx`, route `#/portal-templates`)** — every
+  template rendered as the page it actually PRODUCES, stacked on one scrolling URL with a sticky
+  jump row (scroll-spy, `IncidentDetailsTabV2` pattern). ⚠️ It exists because the builder's gallery
+  shows **wireframes** (`TemplateArt`), which is right for a picker and wrong for review: a sketch
+  cannot be wrong, so it can't show you a wrapped subtitle, two bands disagreeing about padding, or
+  a white heading on a white fill. ⚠️ **Seeds, not a second renderer** — the same rule
+  `TemplateSeed` states. The file owns no layout: `templatePage()` reproduces
+  `SupportPortalBuilder`'s `useState` INITIALISERS (the seed → page mapping, which is self-contained
+  and touches no live edit state) and hands the result to the one `SupportPortalPreview`. The three
+  rules that would produce a wrong-but-plausible page if dropped are carried over verbatim: a
+  **rail is a SHAPE** (`railShape` also sets the one-column records row), `rowOrder` is **MERGED**
+  over the defaults rather than replaced, and `quick-link` must be **backfilled into `content.quick`**
+  or a seed naming it in `rowOrder.quick` silently renders one tile short. ⚠️ It renders inside a
+  **`CanvasProvider`, not just props** — `SupportPortalPreview` reads per-node STYLE off the canvas
+  context, so a template's seeded `columns`, fills and radii resolve to nothing without one; that is
+  what `READONLY_CANVAS` (exported from `PortalCanvas`, and now the `createContext` default) is for.
+  ⚠️ The **Default tile is not in `PORTAL_TEMPLATES`** — it is the portal that already exists, so it
+  is declared in this file with no `seed`, which is exactly what makes it render the default
+  arrangement. Only `VISIBLE_TEMPLATES()` is listed, so the 6 `hidden` templates stay off it.
+
 ## Parked features
 Four Support Portal features are BUILT-OR-PART-BUILT AND SWITCHED OFF, with their full context in
 [future-tasks.md](future-tasks.md): **AI** (rail item commented out in `SupportPortalBuilder`; the

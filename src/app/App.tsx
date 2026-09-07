@@ -17,6 +17,7 @@ import { EndpointsListPage } from './components/EndpointsListPage';
 import { VulnerabilitiesListPage } from './components/VulnerabilitiesListPage';
 import { DetectedCvesListPage } from './components/DetectedCvesListPage';
 import { BomInventoryListPage } from './components/BomInventoryListPage';
+import { PortalTemplateShowcase } from './components/PortalTemplateShowcase';
 import { AdminPage } from './components/AdminPage';
 import { DrawerStackProvider } from './components/DrawerStack';
 import { GlobalSearch } from './components/GlobalSearch';
@@ -88,6 +89,7 @@ export default function App() {
       {activePage === 'vulnerabilities' && <VulnerabilitiesListPage onNavigate={navigate} />}
       {activePage === 'detected-cves' && <DetectedCvesListPage onNavigate={navigate} />}
       {activePage === 'bom' && <BomInventoryListPage onNavigate={navigate} />}
+      {activePage === 'portal-templates' && <PortalTemplateShowcase onNavigate={navigate} />}
       {activePage === 'admin' && (
         <AdminPage
           onNavigate={navigate}

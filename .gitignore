@@ -54,3 +54,9 @@ credentials.txt
 
 # Screenshots pasted into zeni_tasks.md — kept so the task notes stay checkable.
 !image-*.png
+.ds-sync/
+ds-bundle/
+.design-sync/.cache/
+.design-sync/learnings/
+.design-sync/node_modules
+ds-types/
