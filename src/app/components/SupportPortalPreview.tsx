@@ -1772,6 +1772,245 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
     </Sel>
   );
 
+
+  /* ⚠️ The banner as a VALUE, not a branch of the tree. A blank page renders one empty state in
+     place of every band, so the banner lived only in the non-blank half — and a from-scratch
+     portal had no way to get one at all. Built once here and PLACED in both halves, which is the
+     same "one card, two possible homes" move `quickSection` already makes; authoring it twice is
+     two places for every future banner fix to land in.
+     ⚠️ Declared AFTER `quickSection`, because the rail archetype mounts that inside this. */
+  const heroBand = (
+    <>
+    {/* Full bleed ignores the page's side inset (§7.20); the 9-point picker places the
+        content block, and the heading colour is the one the contrast guard measures. */}
+    <Sel
+      id="hero"
+      toolbarBelow
+      /* The measured height, and nothing at all on every other layout. */
+      style={heroSticky && railH ? { height: railH } : undefined}
+      className={`${wc('hero').fullBleed === true ? '-mx-0' : ''} ${heroSide ? (heroSticky ? 'w-[380px] flex-none self-start sticky top-0' : 'w-[380px] flex-none self-stretch') : ''}`}>
+      {/* ⚠️ The band is a flex COLUMN centred on its cross axis, so the heading and subtext sit
+          in the middle of the banner however tall it is made. Fixed `pt-14` pinned them near
+          the top and left the growing half of the band empty underneath — a taller banner
+          pushed its own content further off centre, which is the opposite of what raising the
+          height is for. */}
+      <div
+        /* ⚠️ A RAIL reads top-down. Centring is right for a band — the copy sits in the middle
+           of the colour however tall it is made — and wrong for a column, where it pushes the
+           greeting to the vertical middle of the page and the action rows off the bottom. */
+        className={`relative flex flex-col ${heroSide ? 'justify-start pt-10 pb-10' : `justify-center ${(tileActions || quickOnBanner) && !searchFloats ? 'pb-10' : 'pb-[86px]'}`} ${searchFloats ? 'overflow-visible' : heroSticky ? 'overflow-x-hidden overflow-y-auto scrollbar-hide' : 'overflow-hidden'}`}
+        style={{
+          /* ⚠️ The tabs decide, in one place. Image wins when one is uploaded; Colour paints
+             flat; and with neither the band keeps its gradient, so a portal nobody has touched
+             still looks designed rather than blank. */
+          ...heroBg,
+          minHeight: Number(wc('hero').height ?? 260),
+          /* ⚠️ FILL THE WRAPPER. A dragged height is written into `styles.hero` and applied by
+             `sizeOf` on the Sel WRAPPER — this inner div is what actually paints the banner,
+             and it was still sizing itself from `minHeight` alone. So stretching the banner
+             grew the outline and the eight handles while the artwork stayed exactly where it
+             was, leaving a band of page showing underneath: the selection said one thing and
+             the picture said another.
+             ⚠️ `100%` resolves to auto while the wrapper has no explicit height, so an
+             untouched banner still sizes from its minHeight and nothing moved. */
+          height: '100%',
+          ...st('hero'),
+        }}
+      >
+        {/* The decorative line-work belongs to the DEFAULT band. Over a chosen colour it reads
+            as dirt on the colour, and over a photograph as a scratch on the photograph. */}
+        {/* ⚠️ Its own clip. The band drops `overflow-hidden` while the search floats, so the
+            decorative line-work would otherwise run past the banner and across the page. */}
+        {heroCfg.bgKind !== 'color' && !heroImg && !heroShapes && (
+          <span className="pointer-events-none absolute inset-0 overflow-hidden"><HeroArtwork /></span>
+        )}
+        {/* ⚠️ Its own clip too, for the same reason — and it sits BEHIND the copy, which is
+            why the hero's `contentMaxWidth` is what keeps the two from meeting. */}
+        {heroShapes && <span className="pointer-events-none absolute inset-0 overflow-hidden"><HeroShapes /></span>}
+        {heroRings && (
+          <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+            <svg viewBox="0 0 200 200" className="absolute right-[-38px] top-1/2 h-[300px] w-[300px] -translate-y-1/2"
+              fill="none" stroke="#FFFFFF" strokeOpacity="0.10" strokeWidth="2">
+              <rect x="14" y="14" width="172" height="172" rx="26" />
+              <rect x="42" y="42" width="116" height="116" rx="20" />
+              <rect x="70" y="70" width="60" height="60" rx="14" />
+              <circle cx="100" cy="100" r="13" fill="#FFFFFF" fillOpacity="0.10" stroke="none" />
+            </svg>
+          </span>
+        )}
+        {heroCounterShapes && <HeroCounterShapes />}
+        {/* ⚠️ SIDE-BY-SIDE, a wholly separate branch from the stacked layout below — never
+            taken unless a hero explicitly asks for it (`searchPlacement: 'side'`), so no
+            existing template's hero is touched by this existing. Mirrors the reference's own
+            `align-items:flex-end` pairing: the heading block and the search box share a
+            bottom edge rather than the search sitting BELOW the subtitle. */}
+        {searchSide ? (
+          <div className="relative flex w-full items-end gap-10 px-6 py-6">
+            <div className="min-w-0 flex-1">
+              <Sel id="hero-title" className="block w-full px-1">
+                <h2
+                  style={{ ...roleStyle(styles, 'hero', 'title'), color: String(wc('hero').headingColor ?? '#FFFFFF'), ...st('hero-title') }}
+                  className="text-[30px] font-semibold leading-tight"
+                >
+                  {String(wc('hero').heading ?? content.hero.title)}
+                </h2>
+              </Sel>
+              <Sel id="hero-subtitle" className="mt-2 block w-full px-1">
+                <p style={{ ...roleStyle(styles, 'hero', 'subtitle'), ...(darkHeroInk ? { color: 'rgba(15,51,39,0.72)' } : null), ...st('hero-subtitle') }} className={`text-[15px] ${darkHeroInk ? '' : 'text-white/85'}`}>
+                  {String(wc('hero').sub ?? content.hero.subtitle)}
+                </p>
+              </Sel>
+            </div>
+            {wc('hero').showSearch !== false && (
+              <div className="w-full flex-shrink-0" style={{ maxWidth: `${Number(wc('hero').searchWidth ?? 32)}%` }}>
+                <Sel id="hero-search" className="block w-full">
+                  <HeroSearch
+                    cfg={wc('hero')}
+                    fallback={content.hero.placeholder}
+                    style={{ borderRadius: Number(wc('hero').searchRadius ?? 4), ...st('hero-search') }}
+                  />
+                </Sel>
+              </div>
+            )}
+          </div>
+        ) : (
+        <>
+        {/* ⚠️ FULL WIDTH. The block used to be capped at 70% and centred with auto margins,
+            which meant a heading aligned left landed at the left edge of that centred column —
+            15% in from the banner — and no setting could reach the banner's own edges. The cap
+            now limits the LINE (see `heroLine`), not the column, so alignment moves text
+            across the whole band and the 9-point picker still places the group. */}
+        <div
+          /* ⚠️ `px-5` in a RAIL, and it is not a smaller margin — it is the SAME one. Every
+             line in this block sits inside a `Sel` carrying `px-1`, so `px-6` prints text at
+             28px while the action cards and Contact Us below it sit at the section's own
+             24px. Four pixels is invisible across a full-width banner and plainly wrong down
+             the side of a 380px column, where every left edge is on one line. */
+          className={`relative w-full ${heroSide ? 'px-5 pt-8 pb-5' : 'px-6 py-6'}`}
+          style={{ textAlign: heroAlignX(String(wc('hero').contentAlign ?? 'center')) }}
+        >
+          {/* ⚠️ BLOCK, not inline-block. Both were inline-block, so the subtitle sat on the
+              same line as the heading and the band read as one run-on sentence — "Welcome to
+              Support Portal Search our support center knowledge base". A heading and its
+              subtext are two lines; the wrapper has to say so. */}
+          <Sel id="hero-title" className="block w-full px-1" style={heroLine('hero-title')}>
+            <h2
+              /* ⚠️ `headingColor` AFTER `roleStyle`, never before it. `roleStyle` returns an
+                 explicit `color: undefined` whenever the colour is still the theme's — and a
+                 spread `undefined` DELETES the key it lands on, so the banner's own heading
+                 colour was being thrown away and the text fell back to the page's near-black.
+                 On an indigo band that measured 1.72:1, against the 4.5 this product's own
+                 contrast meter demands. Same trap `fillCss` carries a warning about. */
+              style={{ ...roleStyle(styles, 'hero', 'title'), color: String(wc('hero').headingColor ?? '#FFFFFF'), ...st('hero-title') }}
+              className="text-[30px] font-semibold leading-tight"
+            >
+              {String(wc('hero').heading ?? content.hero.title)}
+            </h2>
+          </Sel>
+          {/* ⚠️ A THIRD line under the subtitle, and its own config key rather than more
+              words in `sub`: opening hours are a FACT with a clock beside it, and folding
+              them into the sentence above would lose both the icon and the ability to leave
+              them out. Absent unless a template asks for it. */}
+          <Sel id="hero-subtitle" className="mt-2 block w-full px-1" style={heroLine('hero-subtitle')}>
+            {/* ⚠️ The heading has `headingColor`; the line under it had a hard-coded
+                white/85 and no control at all — so a light banner printed a legible title
+                over an invisible subtitle. It follows the same ink decision. */}
+            <p style={{ ...roleStyle(styles, 'hero', 'subtitle'), ...(darkHeroInk ? { color: 'rgba(15,51,39,0.72)' } : null), ...st('hero-subtitle') }} className={`text-[15px] ${darkHeroInk ? '' : 'text-white/85'}`}>
+              {String(wc('hero').sub ?? content.hero.subtitle)}
+            </p>
+          </Sel>
+          {/* ⚠️ Rendered here ONLY while it belongs to the banner. When it floats it is the
+              same `Sel`, the same id and the same config — moved, not duplicated, because two
+              search bars in the tree would be two things to keep in step and one of them
+              would eventually be edited while the other showed. */}
+          {wc('hero').note !== undefined && String(wc('hero').note) !== '' && (
+            <div className="mt-3 flex w-full items-center gap-2 px-1" style={heroLine('hero-subtitle')}>
+              <Clock size={14} strokeWidth={1.8} style={{ color: darkHeroInk ? 'rgba(15,51,39,.55)' : 'rgba(255,255,255,.6)' }} />
+              <span className="text-[12.5px]" style={{ color: darkHeroInk ? 'rgba(15,51,39,.62)' : 'rgba(255,255,255,.66)' }}>{String(wc('hero').note)}</span>
+            </div>
+          )}
+          {wc('hero').showSearch !== false && !searchFloats && (
+            <Sel
+              id="hero-search"
+              className="mt-5 w-full"
+              /* ⚠️ The field follows the BAND's alignment. It was hard-centred, so a hero set
+                 to left-align printed its heading and subtitle on the left and then dropped
+                 the search in the middle — one band with two alignments, and the control was
+                 the odd one out. `heroLine` already answers this question for the two lines
+                 above it; this is the same answer applied to the third. */
+              style={{ maxWidth: `${Number(wc('hero').searchWidth ?? 70)}%`, ...(() => {
+                const a = String(styles['hero-search']?.align ?? heroAlignX(String(wc('hero').contentAlign ?? 'center')));
+                return { marginLeft: a === 'left' ? 0 : 'auto', marginRight: a === 'right' ? 0 : 'auto' };
+              })() }}
+            >
+              <HeroSearch
+                cfg={wc('hero')}
+                fallback={content.hero.placeholder}
+                style={{ borderRadius: Number(wc('hero').searchRadius ?? 4), ...st('hero-search') }}
+              />
+            </Sel>
+          )}
+        </div>
+        {/* ⚠️ INSIDE the band and pinned to its bottom edge with a negative margin, so half
+            the field sits on the colour and half on the page. Placed after the text block and
+            outside its padded column, because it is no longer part of the sentence above it —
+            it is the page's own control, resting on the banner. */}
+        {/* ⚠️ ABSOLUTE against the band's bottom edge and pulled down by half its own height,
+            rather than a negative margin in the flow. In the flow it sat above the band's
+            86px of reserved bottom padding — measured 96px clear of the edge, which is not
+            straddling anything, it is just a search bar low in a banner. Anchoring it to the
+            edge makes the effect independent of whatever padding the band is carrying.
+            ⚠️ Needs `overflow-visible` on the band above, or the half hanging out is clipped
+            off and the whole idea silently becomes an inset field again. */}
+        {wc('hero').showSearch !== false && searchFloats && (
+          <div className="absolute inset-x-0 bottom-0 z-20 w-full translate-y-1/2 px-6">
+            <Sel
+              id="hero-search"
+              className="block w-full"
+              /* ⚠️ The field follows the BAND's alignment. It was hard-centred, so a hero set
+                 to left-align printed its heading and subtitle on the left and then dropped
+                 the search in the middle — one band with two alignments, and the control was
+                 the odd one out. `heroLine` already answers this question for the two lines
+                 above it; this is the same answer applied to the third. */
+              style={{ maxWidth: `${Number(wc('hero').searchWidth ?? 70)}%`, ...(() => {
+                const a = String(styles['hero-search']?.align ?? heroAlignX(String(wc('hero').contentAlign ?? 'center')));
+                return { marginLeft: a === 'left' ? 0 : 'auto', marginRight: a === 'right' ? 0 : 'auto' };
+              })() }}
+            >
+              <HeroSearch
+                cfg={wc('hero')}
+                fallback={content.hero.placeholder}
+                style={{
+                  borderRadius: Number(wc('hero').searchRadius ?? 4),
+                  /* The shadow is what makes it read as lifted off the banner rather than cut
+                     into it. Tight and low-opacity — a heavy one would look like a modal. */
+                  boxShadow: '0 12px 28px -8px rgba(11,27,63,0.35), 0 2px 6px rgba(11,27,63,0.12)',
+                  ...st('hero-search'),
+                }}
+              />
+            </Sel>
+          </div>
+        )}
+        </>
+        )}
+        {/* ⚠️ INSIDE the hero's own colored div, not below it — this is what makes Counter's
+            tiles genuinely PART of the banner rather than a separate section merely painted to
+            match it. See the note beside where `quickSection` is built, right before this
+            component's `return`. */}
+        {quickOnBanner && quickSection}
+        {/* ⚠️ `mt-auto` pins it to the FOOT of the rail — a last resort belongs at the end of
+            the column, not in the middle of it. `bare` because the rail is already a dark
+            surface: a card would paint a second one inside it. `portal-help-dark` is the
+            same class the dark Contact card uses, so the recolour rules are shared. */}
+        {contactInHero && (
+          <div className="portal-help-dark mt-auto w-full border-t border-white/15 px-6 pb-1 pt-5">
+            {card('contact', <ContactRender nodeId="contact" cfg={{ title: 'Contact Us', ...wc('contact') }} />, 1, 16, 1, undefined, { bare: true })}
+          </div>
+        )}
+      </div>
+    </Sel>
+    </>
+  );
   return (
     <div
       className="flex min-h-full flex-col bg-white"
@@ -1857,234 +2096,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
               rather than its own content's. */}
           <div ref={railRowRef} className={heroSide ? 'flex min-h-full items-stretch' : 'contents'}>
           {/* ── Hero ── */}
-          {/* Full bleed ignores the page's side inset (§7.20); the 9-point picker places the
-              content block, and the heading colour is the one the contrast guard measures. */}
-          <Sel
-            id="hero"
-            toolbarBelow
-            /* The measured height, and nothing at all on every other layout. */
-            style={heroSticky && railH ? { height: railH } : undefined}
-            className={`${wc('hero').fullBleed === true ? '-mx-0' : ''} ${heroSide ? (heroSticky ? 'w-[380px] flex-none self-start sticky top-0' : 'w-[380px] flex-none self-stretch') : ''}`}>
-            {/* ⚠️ The band is a flex COLUMN centred on its cross axis, so the heading and subtext sit
-                in the middle of the banner however tall it is made. Fixed `pt-14` pinned them near
-                the top and left the growing half of the band empty underneath — a taller banner
-                pushed its own content further off centre, which is the opposite of what raising the
-                height is for. */}
-            <div
-              /* ⚠️ A RAIL reads top-down. Centring is right for a band — the copy sits in the middle
-                 of the colour however tall it is made — and wrong for a column, where it pushes the
-                 greeting to the vertical middle of the page and the action rows off the bottom. */
-              className={`relative flex flex-col ${heroSide ? 'justify-start pt-10 pb-10' : `justify-center ${(tileActions || quickOnBanner) && !searchFloats ? 'pb-10' : 'pb-[86px]'}`} ${searchFloats ? 'overflow-visible' : heroSticky ? 'overflow-x-hidden overflow-y-auto scrollbar-hide' : 'overflow-hidden'}`}
-              style={{
-                /* ⚠️ The tabs decide, in one place. Image wins when one is uploaded; Colour paints
-                   flat; and with neither the band keeps its gradient, so a portal nobody has touched
-                   still looks designed rather than blank. */
-                ...heroBg,
-                minHeight: Number(wc('hero').height ?? 260),
-                /* ⚠️ FILL THE WRAPPER. A dragged height is written into `styles.hero` and applied by
-                   `sizeOf` on the Sel WRAPPER — this inner div is what actually paints the banner,
-                   and it was still sizing itself from `minHeight` alone. So stretching the banner
-                   grew the outline and the eight handles while the artwork stayed exactly where it
-                   was, leaving a band of page showing underneath: the selection said one thing and
-                   the picture said another.
-                   ⚠️ `100%` resolves to auto while the wrapper has no explicit height, so an
-                   untouched banner still sizes from its minHeight and nothing moved. */
-                height: '100%',
-                ...st('hero'),
-              }}
-            >
-              {/* The decorative line-work belongs to the DEFAULT band. Over a chosen colour it reads
-                  as dirt on the colour, and over a photograph as a scratch on the photograph. */}
-              {/* ⚠️ Its own clip. The band drops `overflow-hidden` while the search floats, so the
-                  decorative line-work would otherwise run past the banner and across the page. */}
-              {heroCfg.bgKind !== 'color' && !heroImg && !heroShapes && (
-                <span className="pointer-events-none absolute inset-0 overflow-hidden"><HeroArtwork /></span>
-              )}
-              {/* ⚠️ Its own clip too, for the same reason — and it sits BEHIND the copy, which is
-                  why the hero's `contentMaxWidth` is what keeps the two from meeting. */}
-              {heroShapes && <span className="pointer-events-none absolute inset-0 overflow-hidden"><HeroShapes /></span>}
-              {heroRings && (
-                <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-                  <svg viewBox="0 0 200 200" className="absolute right-[-38px] top-1/2 h-[300px] w-[300px] -translate-y-1/2"
-                    fill="none" stroke="#FFFFFF" strokeOpacity="0.10" strokeWidth="2">
-                    <rect x="14" y="14" width="172" height="172" rx="26" />
-                    <rect x="42" y="42" width="116" height="116" rx="20" />
-                    <rect x="70" y="70" width="60" height="60" rx="14" />
-                    <circle cx="100" cy="100" r="13" fill="#FFFFFF" fillOpacity="0.10" stroke="none" />
-                  </svg>
-                </span>
-              )}
-              {heroCounterShapes && <HeroCounterShapes />}
-              {/* ⚠️ SIDE-BY-SIDE, a wholly separate branch from the stacked layout below — never
-                  taken unless a hero explicitly asks for it (`searchPlacement: 'side'`), so no
-                  existing template's hero is touched by this existing. Mirrors the reference's own
-                  `align-items:flex-end` pairing: the heading block and the search box share a
-                  bottom edge rather than the search sitting BELOW the subtitle. */}
-              {searchSide ? (
-                <div className="relative flex w-full items-end gap-10 px-6 py-6">
-                  <div className="min-w-0 flex-1">
-                    <Sel id="hero-title" className="block w-full px-1">
-                      <h2
-                        style={{ ...roleStyle(styles, 'hero', 'title'), color: String(wc('hero').headingColor ?? '#FFFFFF'), ...st('hero-title') }}
-                        className="text-[30px] font-semibold leading-tight"
-                      >
-                        {String(wc('hero').heading ?? content.hero.title)}
-                      </h2>
-                    </Sel>
-                    <Sel id="hero-subtitle" className="mt-2 block w-full px-1">
-                      <p style={{ ...roleStyle(styles, 'hero', 'subtitle'), ...(darkHeroInk ? { color: 'rgba(15,51,39,0.72)' } : null), ...st('hero-subtitle') }} className={`text-[15px] ${darkHeroInk ? '' : 'text-white/85'}`}>
-                        {String(wc('hero').sub ?? content.hero.subtitle)}
-                      </p>
-                    </Sel>
-                  </div>
-                  {wc('hero').showSearch !== false && (
-                    <div className="w-full flex-shrink-0" style={{ maxWidth: `${Number(wc('hero').searchWidth ?? 32)}%` }}>
-                      <Sel id="hero-search" className="block w-full">
-                        <HeroSearch
-                          cfg={wc('hero')}
-                          fallback={content.hero.placeholder}
-                          style={{ borderRadius: Number(wc('hero').searchRadius ?? 4), ...st('hero-search') }}
-                        />
-                      </Sel>
-                    </div>
-                  )}
-                </div>
-              ) : (
-              <>
-              {/* ⚠️ FULL WIDTH. The block used to be capped at 70% and centred with auto margins,
-                  which meant a heading aligned left landed at the left edge of that centred column —
-                  15% in from the banner — and no setting could reach the banner's own edges. The cap
-                  now limits the LINE (see `heroLine`), not the column, so alignment moves text
-                  across the whole band and the 9-point picker still places the group. */}
-              <div
-                /* ⚠️ `px-5` in a RAIL, and it is not a smaller margin — it is the SAME one. Every
-                   line in this block sits inside a `Sel` carrying `px-1`, so `px-6` prints text at
-                   28px while the action cards and Contact Us below it sit at the section's own
-                   24px. Four pixels is invisible across a full-width banner and plainly wrong down
-                   the side of a 380px column, where every left edge is on one line. */
-                className={`relative w-full ${heroSide ? 'px-5 pt-8 pb-5' : 'px-6 py-6'}`}
-                style={{ textAlign: heroAlignX(String(wc('hero').contentAlign ?? 'center')) }}
-              >
-                {/* ⚠️ BLOCK, not inline-block. Both were inline-block, so the subtitle sat on the
-                    same line as the heading and the band read as one run-on sentence — "Welcome to
-                    Support Portal Search our support center knowledge base". A heading and its
-                    subtext are two lines; the wrapper has to say so. */}
-                <Sel id="hero-title" className="block w-full px-1" style={heroLine('hero-title')}>
-                  <h2
-                    /* ⚠️ `headingColor` AFTER `roleStyle`, never before it. `roleStyle` returns an
-                       explicit `color: undefined` whenever the colour is still the theme's — and a
-                       spread `undefined` DELETES the key it lands on, so the banner's own heading
-                       colour was being thrown away and the text fell back to the page's near-black.
-                       On an indigo band that measured 1.72:1, against the 4.5 this product's own
-                       contrast meter demands. Same trap `fillCss` carries a warning about. */
-                    style={{ ...roleStyle(styles, 'hero', 'title'), color: String(wc('hero').headingColor ?? '#FFFFFF'), ...st('hero-title') }}
-                    className="text-[30px] font-semibold leading-tight"
-                  >
-                    {String(wc('hero').heading ?? content.hero.title)}
-                  </h2>
-                </Sel>
-                {/* ⚠️ A THIRD line under the subtitle, and its own config key rather than more
-                    words in `sub`: opening hours are a FACT with a clock beside it, and folding
-                    them into the sentence above would lose both the icon and the ability to leave
-                    them out. Absent unless a template asks for it. */}
-                <Sel id="hero-subtitle" className="mt-2 block w-full px-1" style={heroLine('hero-subtitle')}>
-                  {/* ⚠️ The heading has `headingColor`; the line under it had a hard-coded
-                      white/85 and no control at all — so a light banner printed a legible title
-                      over an invisible subtitle. It follows the same ink decision. */}
-                  <p style={{ ...roleStyle(styles, 'hero', 'subtitle'), ...(darkHeroInk ? { color: 'rgba(15,51,39,0.72)' } : null), ...st('hero-subtitle') }} className={`text-[15px] ${darkHeroInk ? '' : 'text-white/85'}`}>
-                    {String(wc('hero').sub ?? content.hero.subtitle)}
-                  </p>
-                </Sel>
-                {/* ⚠️ Rendered here ONLY while it belongs to the banner. When it floats it is the
-                    same `Sel`, the same id and the same config — moved, not duplicated, because two
-                    search bars in the tree would be two things to keep in step and one of them
-                    would eventually be edited while the other showed. */}
-                {wc('hero').note !== undefined && String(wc('hero').note) !== '' && (
-                  <div className="mt-3 flex w-full items-center gap-2 px-1" style={heroLine('hero-subtitle')}>
-                    <Clock size={14} strokeWidth={1.8} style={{ color: darkHeroInk ? 'rgba(15,51,39,.55)' : 'rgba(255,255,255,.6)' }} />
-                    <span className="text-[12.5px]" style={{ color: darkHeroInk ? 'rgba(15,51,39,.62)' : 'rgba(255,255,255,.66)' }}>{String(wc('hero').note)}</span>
-                  </div>
-                )}
-                {wc('hero').showSearch !== false && !searchFloats && (
-                  <Sel
-                    id="hero-search"
-                    className="mt-5 w-full"
-                    /* ⚠️ The field follows the BAND's alignment. It was hard-centred, so a hero set
-                       to left-align printed its heading and subtitle on the left and then dropped
-                       the search in the middle — one band with two alignments, and the control was
-                       the odd one out. `heroLine` already answers this question for the two lines
-                       above it; this is the same answer applied to the third. */
-                    style={{ maxWidth: `${Number(wc('hero').searchWidth ?? 70)}%`, ...(() => {
-                      const a = String(styles['hero-search']?.align ?? heroAlignX(String(wc('hero').contentAlign ?? 'center')));
-                      return { marginLeft: a === 'left' ? 0 : 'auto', marginRight: a === 'right' ? 0 : 'auto' };
-                    })() }}
-                  >
-                    <HeroSearch
-                      cfg={wc('hero')}
-                      fallback={content.hero.placeholder}
-                      style={{ borderRadius: Number(wc('hero').searchRadius ?? 4), ...st('hero-search') }}
-                    />
-                  </Sel>
-                )}
-              </div>
-              {/* ⚠️ INSIDE the band and pinned to its bottom edge with a negative margin, so half
-                  the field sits on the colour and half on the page. Placed after the text block and
-                  outside its padded column, because it is no longer part of the sentence above it —
-                  it is the page's own control, resting on the banner. */}
-              {/* ⚠️ ABSOLUTE against the band's bottom edge and pulled down by half its own height,
-                  rather than a negative margin in the flow. In the flow it sat above the band's
-                  86px of reserved bottom padding — measured 96px clear of the edge, which is not
-                  straddling anything, it is just a search bar low in a banner. Anchoring it to the
-                  edge makes the effect independent of whatever padding the band is carrying.
-                  ⚠️ Needs `overflow-visible` on the band above, or the half hanging out is clipped
-                  off and the whole idea silently becomes an inset field again. */}
-              {wc('hero').showSearch !== false && searchFloats && (
-                <div className="absolute inset-x-0 bottom-0 z-20 w-full translate-y-1/2 px-6">
-                  <Sel
-                    id="hero-search"
-                    className="block w-full"
-                    /* ⚠️ The field follows the BAND's alignment. It was hard-centred, so a hero set
-                       to left-align printed its heading and subtitle on the left and then dropped
-                       the search in the middle — one band with two alignments, and the control was
-                       the odd one out. `heroLine` already answers this question for the two lines
-                       above it; this is the same answer applied to the third. */
-                    style={{ maxWidth: `${Number(wc('hero').searchWidth ?? 70)}%`, ...(() => {
-                      const a = String(styles['hero-search']?.align ?? heroAlignX(String(wc('hero').contentAlign ?? 'center')));
-                      return { marginLeft: a === 'left' ? 0 : 'auto', marginRight: a === 'right' ? 0 : 'auto' };
-                    })() }}
-                  >
-                    <HeroSearch
-                      cfg={wc('hero')}
-                      fallback={content.hero.placeholder}
-                      style={{
-                        borderRadius: Number(wc('hero').searchRadius ?? 4),
-                        /* The shadow is what makes it read as lifted off the banner rather than cut
-                           into it. Tight and low-opacity — a heavy one would look like a modal. */
-                        boxShadow: '0 12px 28px -8px rgba(11,27,63,0.35), 0 2px 6px rgba(11,27,63,0.12)',
-                        ...st('hero-search'),
-                      }}
-                    />
-                  </Sel>
-                </div>
-              )}
-              </>
-              )}
-              {/* ⚠️ INSIDE the hero's own colored div, not below it — this is what makes Counter's
-                  tiles genuinely PART of the banner rather than a separate section merely painted to
-                  match it. See the note beside where `quickSection` is built, right before this
-                  component's `return`. */}
-              {quickOnBanner && quickSection}
-              {/* ⚠️ `mt-auto` pins it to the FOOT of the rail — a last resort belongs at the end of
-                  the column, not in the middle of it. `bare` because the rail is already a dark
-                  surface: a card would paint a second one inside it. `portal-help-dark` is the
-                  same class the dark Contact card uses, so the recolour rules are shared. */}
-              {contactInHero && (
-                <div className="portal-help-dark mt-auto w-full border-t border-white/15 px-6 pb-1 pt-5">
-                  {card('contact', <ContactRender nodeId="contact" cfg={{ title: 'Contact Us', ...wc('contact') }} />, 1, 16, 1, undefined, { bare: true })}
-                </div>
-              )}
-            </div>
-          </Sel>
+          {heroBand}
 
           {/* No horizontal padding here: a SECTION runs from the page's left edge to its right
               edge, so each one carries its own inset instead of sitting inside a padded column. */}
