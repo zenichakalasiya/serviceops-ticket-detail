@@ -84,7 +84,7 @@ const PANEL_COPY: Record<RailKey, { title: string; body: string }> = {
   add: {
     // Add is a real panel now — this entry only supplies the header title.
     title: 'Widgets',
-    body: 'Everything you can put on the page.',
+    body: 'Add, configure, and arrange portal components.',
   },
   /* ⚠️ Every rail panel is titled with the NAME OF ITS RAIL ITEM, and carries one line under it.
      They had drifted into three different shapes — an imperative ("Brand this page"), a noun phrase
