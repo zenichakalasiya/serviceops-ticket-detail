@@ -259,7 +259,7 @@ function childTypesOf(id: string): { type: string; label: string }[] | undefined
   return specId ? specById(specId)?.collection?.childTypes : undefined;
 }
 
-function ElementPicker({ mode, onPick, onClose, only, anchorRef, targetId, avoidParent }: {
+function ElementPicker({ mode, onPick, onClose, only, anchorRef, targetId }: {
   mode: 'add' | 'replace'; onPick: (type: string) => void; onClose: () => void;
   /** A container's own block types. When present this IS the list — see the note below. */
   only?: { type: string; label: string }[];
@@ -271,9 +271,6 @@ function ElementPicker({ mode, onPick, onClose, only, anchorRef, targetId, avoid
       the list silently anchors to the 28px button instead — which lands it back on top of the
       section, exactly the fault this placement exists to fix. */
   targetId: string;
-  /** A COLUMN is part of a section, and the section is what you are looking at while filling it —
-      so clearing the column alone would still drop the list on the empty half beside it. */
-  avoidParent?: boolean;
 }) {
   const [q, setQ] = useState('');
   const boxRef = useRef<HTMLDivElement>(null);
@@ -295,23 +292,31 @@ function ElementPicker({ mode, onPick, onClose, only, anchorRef, targetId, avoid
       const vw = window.innerWidth;
       const vh = window.innerHeight;
       const btn = anchor.getBoundingClientRect();
-      /* The thing the new widget is going INTO, and therefore the thing to stay clear of. */
-      let node = document.querySelector(`[data-node="${targetId}"]`) as HTMLElement | null;
-      if (avoidParent && node) node = (node.parentElement?.closest('[data-node]') as HTMLElement | null) ?? node;
+      /* The thing the new widget is going INTO, and therefore the thing to stay clear of.
+         ⚠️ The SELECTED node, not its parent section. Clearing the whole section pushed the list
+         out past the canvas and onto the design panel — technically clear of the target and so
+         far from it that it read as belonging to something else. Beside the sibling column is
+         near, and the sibling is not what you are filling. */
+      const node = document.querySelector(`[data-node="${targetId}"]`) as HTMLElement | null;
       const el = node?.getBoundingClientRect() ?? btn;
       const w = box.offsetWidth || width;
       const h = Math.min(box.offsetHeight || maxH, Math.min(maxH, vh - EDGE * 2));
-      /* Level with the toolbar, then clamped — which is what stops the bottom being cut off. */
+      /* Under the "+" and clamped, which is what stops the bottom being cut off. */
+      const left = Math.max(EDGE, Math.min(btn.left + btn.width / 2 - w / 2, vw - w - EDGE));
+      /* ⚠️ ABOVE FIRST. The toolbar sits above the element, so the space over it is the closest
+         place the list can go that is still clear of what you are filling — it opens right beside
+         the "+" that was pressed. Preferring a side instead was correct and felt wrong: on a wide
+         section the only side with room is past the canvas edge, so the list appeared over the
+         design panel, a long way from the thing it was adding to.
+         ⚠️ Cleared of the TOOLBAR, not just the element — `btn.top` is above `el.top`, and landing
+         on the bar you just clicked hides the control that opened it. */
+      const overhead = Math.min(el.top, btn.top);
+      if (overhead - GAP - EDGE >= h) { setPos({ left, top: overhead - GAP - h }); return; }
+      if (vh - el.bottom - GAP - EDGE >= h) { setPos({ left, top: el.bottom + GAP }); return; }
+      /* No room over or under it — a tall element. Now a side, level with the toolbar. */
       const top = Math.max(EDGE, Math.min(btn.top, vh - h - EDGE));
-      /* ⚠️ A SIDE first, always. It used to open straight down from the "+", which put it on top of
-         the empty section you were filling — so the one thing you needed to see while choosing was
-         the one thing it covered. */
       if (vw - el.right - GAP - EDGE >= w) { setPos({ left: el.right + GAP, top }); return; }
       if (el.left - GAP - EDGE >= w) { setPos({ left: el.left - GAP - w, top }); return; }
-      /* A full-width section has no side to sit beside, so go above or below IT — never over it. */
-      const left = Math.max(EDGE, Math.min(btn.left + btn.width / 2 - w / 2, vw - w - EDGE));
-      if (vh - el.bottom - GAP - EDGE >= h) { setPos({ left, top: el.bottom + GAP }); return; }
-      if (el.top - GAP - EDGE >= h) { setPos({ left, top: el.top - GAP - h }); return; }
       /* Taller than every gap around it. Nothing can avoid the element now, so only the clamp
          matters — being readable beats being polite. */
       setPos({ left, top: Math.max(EDGE, Math.min(btn.bottom + GAP, vh - h - EDGE)) });
@@ -324,7 +329,7 @@ function ElementPicker({ mode, onPick, onClose, only, anchorRef, targetId, avoid
       window.removeEventListener('resize', place);
       window.removeEventListener('scroll', place, true);
     };
-  }, [q, only, anchorRef, width, targetId, avoidParent]);
+  }, [q, only, anchorRef, width, targetId]);
 
   const groups = PORTAL_ELEMENT_GROUPS.map((g) => ({
     group: g,
@@ -836,7 +841,6 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
               onClose={() => setAdding(false)}
               anchorRef={besideRef}
               targetId={id}
-              avoidParent={kind === 'column'}
             />
           )}
         </div>
@@ -862,7 +866,6 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
               onClose={() => setPicking(false)}
               anchorRef={insideRef}
               targetId={id}
-              avoidParent={kind === 'column'}
             />
           )}
         </div>
