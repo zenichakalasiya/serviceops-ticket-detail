@@ -4,6 +4,25 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="./support.js"></script>
+<script data-dc-deeplink>
+/* Deep-link retry. The ONLY divergence from "ServiceOps portal layout system (2)/".
+   ⚠️ It MUST live in <head>, after support.js. dc-runtime rewrites the body from its parsed
+   template, which discards anything sitting before </body> BEFORE that script ever runs — an
+   earlier attempt was placed there, worked on localhost by timing luck and did nothing on Pages.
+   A head script executes at parse time and registers its interval on window, which survives the
+   rewrite. Without it the browser resolves #3c before dc-runtime has built that artboard, finds
+   nothing, and silently stays at the top: every card in the directory would appear to do nothing. */
+(function () {
+  var id = decodeURIComponent((location.hash || "").slice(1));
+  if (!id) return;
+  var tries = 0;
+  var timer = setInterval(function () {
+    var el = document.getElementById(id);
+    if (el) { clearInterval(timer); el.scrollIntoView(); }
+    else if (++tries > 200) clearInterval(timer); /* ~10s, then give up quietly */
+  }, 50);
+})();
+</script>
 </head>
 <body>
 <x-dc>
@@ -3363,22 +3382,6 @@ class Component extends DCLogic {
   }
 }
 </script>
-<script data-dc-deeplink>
-/* Deep-link retry. The ONLY divergence from "ServiceOps portal layout system (2)/" — see
-   portal-layouts/index.html. dc-runtime builds the artboards after parse, so on a COLD load the
-   browser resolves #3c before the element exists, finds nothing, and silently stays at the top:
-   every card in the directory would open the canvas and appear to do nothing. Re-applies the
-   fragment once its target has been rendered. No hash, no work. */
-(function () {
-  var id = decodeURIComponent(location.hash.slice(1));
-  if (!id) return;
-  var tries = 0;
-  var timer = setInterval(function () {
-    var el = document.getElementById(id);
-    if (el) { clearInterval(timer); el.scrollIntoView(); }
-    else if (++tries > 120) clearInterval(timer); /* ~6s, then give up quietly */
-  }, 50);
-})();
-</script>
+
 </body>
 </html>
