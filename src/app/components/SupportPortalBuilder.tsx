@@ -98,7 +98,7 @@ const PANEL_COPY: Record<RailKey, { title: string; body: string }> = {
     /* ⚠️ "Branding", not "Brand this page". The brand is org-wide — page-scoped wording promised a
        per-page override that has never existed. */
     title: 'Branding',
-    body: 'The organisation identity, shared by every portal.',
+    body: 'Manage your organization’s branding across the Support Portal.',
   },
   settings: {
     title: 'Settings',
