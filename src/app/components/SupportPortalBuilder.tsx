@@ -307,7 +307,12 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
   /* ⚠️ `-viewall` strips too. The link's label is a key on the WIDGET's config, so its own node has
      to resolve to the widget for reading and writing — the panel it opens is separate (see
      `specForNode`), which is the whole point: same value, different editor. */
-  const ownerOf = (id: string) => parseItemId(id)?.widget ?? id.replace(/-(title|sub|label|viewall|icon|search|caption|cl\d+|cv\d+)$/, '');
+  /* ⚠️ `logo` belongs here for the same reason `title` does: `header-logo` is a CHILD of the top
+     bar with its own panel, so its VALUE lives on the bar's config while its PANEL is its own.
+     It was missing, so the Logo panel's upload stored under `widgetCfg['header-logo']` and
+     `PortalHeader` read `wc('header')` — a control that saved a value nothing rendered, which is
+     why uploading a logo appeared to do nothing at all. */
+  const ownerOf = (id: string) => parseItemId(id)?.widget ?? id.replace(/-(title|sub|label|viewall|icon|search|caption|logo|cl\d+|cv\d+)$/, '');
 
   const specForNode = useCallback((id: string | null): WidgetSpec | undefined => {
     if (!id) return undefined;
@@ -316,7 +321,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
        the one thing you aimed at is the one thing you cannot edit. Config and panel resolve
        differently here on purpose. */
     const own = structureSpecId(id);
-    if (['card_title', 'card_sub', 'card_icon', 'list_title', 'list_label', 'list_link', 'search', 'image_caption'].includes(own ?? '')) return specById(own);
+    if (['card_title', 'card_sub', 'card_icon', 'list_title', 'list_label', 'list_link', 'search', 'image_caption', 'logo'].includes(own ?? '')) return specById(own);
 
     const owner = ownerOf(id);
     const direct = WIDGET_FOR_NODE[owner];

@@ -29,7 +29,7 @@ import { ContrastMeter, useBackdrop } from './PortalContrastMeter';
 import type { BackdropSpec } from './PortalContrastMeter';
 import { ALL_PACKS, packBadge } from './PortalStylePacks';
 import {
-  ALIGN_OPTIONS, Badge, ChipEditor, Chips, Field, GridPicker, Group, Note, NumberField, RichText,
+  ALIGN_OPTIONS, Badge, ChipEditor, Chips, Field, GridPicker, Group, LogoPair, Note, NumberField, RichText,
   SelectField, Segmented, SliderRow, TextField, ToggleRow, UploadZone, VideoSource,
   MultiSelect,
 } from './PortalControls';
@@ -848,6 +848,29 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
       }
       case 'upload':
         return <UploadZone value={v as string} onChange={(x) => set(f.key, x ?? '')} suggested={f.suggested} noun={f.noun} />;
+      /* ⚠️ ONE field, TWO config keys — and they are the SAME PAIR the colour control above uses:
+         light is the bare key, dark is `dark:<key>`. Reusing that convention is what makes the
+         renderer need no change at all: `cfgFor` already promotes the dark value onto the base key
+         while the portal is dark, and the header reads the base key like everything else. A
+         `logoSrcDark` of my own would have been a second per-theme mechanism doing the same job,
+         and every renderer would have had to learn it.
+         ⚠️ Light reads `light:<key>` FIRST for the reason spelled out on the colour case — in
+         dark mode the base key has already been overwritten by the promotion, so falling back to
+         it would show the dark logo on both tabs.
+         ⚠️ And the DARK half goes through `viewSet`, never `set`: the `set` in scope discards the
+         key it is handed and always writes `f.key`, so a dark upload would silently replace the
+         light logo. */
+      case 'logoPair':
+        return (
+          <LogoPair
+            light={(viewCfg[`light:${f.key}`] as string) ?? (v as string)}
+            dark={viewCfg[`dark:${f.key}`] as string | undefined}
+            onChange={(which, x) => (which === 'dark'
+              ? viewSet({ [`dark:${f.key}`]: x ?? '' })
+              : set(f.key, x ?? ''))}
+            suggested={f.suggested}
+          />
+        );
       case 'videoSource':
         return <VideoSource value={v as string} onChange={(x) => set(f.key, x)} />;
       /* The Record List's filter — the named presets and a condition builder, in one popover.

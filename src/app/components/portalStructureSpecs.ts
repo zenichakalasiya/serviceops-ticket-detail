@@ -424,8 +424,14 @@ export const LOGO_SPEC: WidgetSpec = {
   id: 'logo', name: 'Logo', group: 'Chrome', reuse: 'single', family: 'flat',
   panel: {
     /* ⚠️ 240 × 64 — the top bar renders the mark at about 28px tall, so this is the 2× of a
-       comfortable wordmark. Wider than tall, because every logo in that bar is. */
-    content: [{ key: 'logoSrc', label: 'Logo image', control: 'upload', suggested: '240 × 64', noun: 'logo' }],
+       comfortable wordmark. Wider than tall, because every logo in that bar is.
+       ⚠️ TWO slots behind a Light/Dark switch, stored as `logoSrc` and `dark:logoSrc` — the same
+       per-mode pair the colour fields use, so `cfgFor` promotes it and no renderer has to know.
+       A mark drawn for a white bar can disappear on a dark one and this portal ships both themes,
+       so one upload could only ever be right half the time. The dark slot is OPTIONAL and falls
+       back to the light one: most portals have a single logo, and a bar that empties itself the
+       moment somebody tries the dark theme reads as a broken page. */
+    content: [{ key: 'logoSrc', label: 'Logo image', control: 'logoPair', suggested: '240 × 64', noun: 'logo' }],
     /* ⚠️ NO Design section. A logo is one supplied image sitting in the product's own bar: filling
        it, bordering it or rounding it styles a mark somebody else's brand guidelines own, and its
        spacing belongs to the bar — which is already why `logoPos` lives there. The panel is the

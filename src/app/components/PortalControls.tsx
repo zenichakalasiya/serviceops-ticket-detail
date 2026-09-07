@@ -430,6 +430,54 @@ export function SliderRow({ value, onChange, min = 0, max = 100, step = 1, unit 
 
 /* ── Segmented — 2–4 options, never more (spec §3) ────────────────────────── */
 
+/* ── Two logos, one slot ─────────────────────────────────────────────────────
+ *
+ * A mark that reads on a white bar can be invisible on a dark one, and this product's portal has
+ * both themes — so the logo is TWO images, not one, and the panel has to be able to hold the
+ * second without becoming a list of two upload boxes stacked up.
+ * ⚠️ A `Segmented`, not a new tab treatment. It is what every other two-way choice inside these
+ * panels already uses (Landing Page, Show as), and a bespoke strip here would be a third tab
+ * language in a builder that already has two.
+ * ⚠️ The DARK slot is optional and falls back to the light one — a portal with one logo must not
+ * show an empty bar the moment somebody previews the dark theme. The empty state SAYS so, because
+ * an upload zone that looks unfilled and behaves as filled is the kind of thing an admin
+ * re-uploads three times before believing. */
+export function LogoPair({ light, dark, onChange, suggested }: {
+  light?: string; dark?: string;
+  onChange: (which: 'light' | 'dark', v?: string) => void;
+  suggested?: string;
+}) {
+  const [tab, setTab] = useState<'light' | 'dark'>('light');
+  const on = tab === 'light';
+  return (
+    <>
+      <Segmented
+        value={tab}
+        options={[{ value: 'light' as const, label: 'Light' }, { value: 'dark' as const, label: 'Dark' }]}
+        onChange={setTab}
+      />
+      {/* ⚠️ KEYED by the tab, so switching remounts the zone. Without it the input keeps the
+          previous slot's file handle and a "Replace" on Dark could re-offer the light file. */}
+      <div className="mt-2.5">
+        <UploadZone
+          key={tab}
+          value={on ? light : dark}
+          onChange={(x) => onChange(tab, x)}
+          suggested={suggested}
+          noun={on ? 'light logo' : 'dark logo'}
+          label={on ? 'Upload the light-theme logo' : 'Upload the dark-theme logo'}
+        />
+      </div>
+      {!on && !dark && (
+        <p className="mt-1.5 text-[11px] leading-[1.55] text-[#7B8FA5]">
+          Empty — the light logo is used on the dark theme too. Add one here if it does not read
+          against a dark bar.
+        </p>
+      )}
+    </>
+  );
+}
+
 export function Segmented<T extends string | number | boolean>({ value, options, onChange }: {
   value: T;
   options: { value: T; label?: string; icon?: ReactNode; title?: string }[];

@@ -21,6 +21,8 @@ import { PANEL_FOR_TYPE, PANEL_SPECS } from './portalPanelSpecs';
 export type ControlKind =
   | 'text' | 'textarea' | 'rich' | 'number' | 'toggle' | 'chips' | 'select'
   | 'segmented' | 'icon' | 'upload' | 'color' | 'slider'
+  /** Two upload slots behind a Light/Dark switch — one mark per theme (the logo). */
+  | 'logoPair'
   /** Locked on, shown with a reason — the §8.5 accessibility floor. */
   | 'lockedToggle'
   /** Sweep an R × C grid (§7.17 Table size). */
