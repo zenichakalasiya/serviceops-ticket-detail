@@ -2,8 +2,15 @@
 <!--
   The directory in front of the Claude Design canvas.
 
-  ⚠️ The two .dc.html files beside this one are COPIES of "ServiceOps portal layout system (2)/",
-  kept byte-identical on purpose. The dc-runtime resolves a sibling component as
+  ⚠️ The two .dc.html files beside this one are COPIES of "ServiceOps portal layout system (2)/".
+  They differ from the source in EXACTLY ONE way: the Layout System doc carries an appended
+  `data-dc-deeplink` script at the end of its body. dc-runtime builds the artboards after parse,
+  so on a COLD load the browser resolves #3c before that element exists and silently stays at the
+  top — every card below would open the canvas and appear to do nothing. That script re-applies
+  the fragment once its target has rendered. Re-copy from the source folder and it goes; the
+  `data-dc-deeplink` marker is what makes the patch idempotent and greppable.
+
+  The dc-runtime resolves a sibling component as
   COMPONENT_DIR + "/" + encodeURIComponent(name) + ".dc.html", so BOTH the filename and the
   .dc.html extension are load-bearing — renaming either file to something URL-friendly breaks
   component loading with a console 404 and a canvas that renders half its artboards. The spaces
@@ -43,7 +50,7 @@
     transition: background-color .12s, border-color .12s;
   }
   .pill:hover { background: #F5F7FA; border-color: #CBD5E1; }
-  .pill.accent { background: #e8f4fd; border-color: #cfe6f8; color: #3D8BD0; }
+  .pill.accent { background: #e8f4fd; border-color: #cfe6f8; color: #2A6FAF; }
 
   h2 { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
        color: #64748B; margin: 32px 0 12px; }
@@ -54,11 +61,11 @@
     background: #fff; text-decoration: none; color: inherit;
     transition: border-color .12s, box-shadow .12s, transform .12s;
   }
-  .card:hover { border-color: #3D8BD0; box-shadow: 0 2px 10px rgba(61,139,208,.10); transform: translateY(-1px); }
+  .card:hover { border-color: #2A6FAF; box-shadow: 0 2px 10px rgba(61,139,208,.10); transform: translateY(-1px); }
   .card-head { display: flex; align-items: center; gap: 8px; }
   .id {
     flex: none; min-width: 26px; height: 20px; padding: 0 6px; border-radius: 4px;
-    background: #e8f4fd; color: #3D8BD0; font-size: 11px; font-weight: 600;
+    background: #e8f4fd; color: #2A6FAF; font-size: 11px; font-weight: 600;
     display: inline-flex; align-items: center; justify-content: center;
   }
   .name { font-size: 15px; font-weight: 600; }
@@ -66,7 +73,7 @@
 
   footer { margin-top: 40px; padding-top: 18px; border-top: 1px solid #e5e7eb;
            font-size: 12px; color: #64748B; }
-  footer a { color: #3D8BD0; }
+  footer a { color: #2A6FAF; }
 </style>
 </head>
 <body>

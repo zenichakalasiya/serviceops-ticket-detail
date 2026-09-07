@@ -3363,5 +3363,22 @@ class Component extends DCLogic {
   }
 }
 </script>
+<script data-dc-deeplink>
+/* Deep-link retry. The ONLY divergence from "ServiceOps portal layout system (2)/" — see
+   portal-layouts/index.html. dc-runtime builds the artboards after parse, so on a COLD load the
+   browser resolves #3c before the element exists, finds nothing, and silently stays at the top:
+   every card in the directory would open the canvas and appear to do nothing. Re-applies the
+   fragment once its target has been rendered. No hash, no work. */
+(function () {
+  var id = decodeURIComponent(location.hash.slice(1));
+  if (!id) return;
+  var tries = 0;
+  var timer = setInterval(function () {
+    var el = document.getElementById(id);
+    if (el) { clearInterval(timer); el.scrollIntoView(); }
+    else if (++tries > 120) clearInterval(timer); /* ~6s, then give up quietly */
+  }, 50);
+})();
+</script>
 </body>
 </html>
