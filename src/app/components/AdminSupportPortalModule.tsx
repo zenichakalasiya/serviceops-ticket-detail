@@ -576,7 +576,7 @@ export function AdminSupportPortalModule({ onBuilder, openPortal, onOpenPortalCh
           sidebar row, the Overview card and the route all say Support Portal. */}
       <h1 className="text-[20px] font-semibold text-[#364658]">Support Portal</h1>
       <p className="mt-1 text-[13px] leading-[1.6] text-[#7B8FA5]">
-        Design the pages your requesters land on — build one from scratch or start from a template.{' '}
+        Customize the layout and experience of your Support Portal.{' '}
         <button
           onClick={() => toast.success('Opening the Support Portal documentation')}
           className="inline-flex items-center gap-1 text-[13px] font-medium text-[#3D8BD0] hover:underline"
