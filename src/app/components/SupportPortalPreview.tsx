@@ -1135,7 +1135,7 @@ function Row({ nodeId, children }: { nodeId: string; children: ReactNode }) {
 /* ── The page ────────────────────────────────────────────────────────────── */
 
 export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CONTENT, sections = [], icons, placedText, blockOrder = DEFAULT_BLOCK_ORDER, rowOrder = DEFAULT_ROW_ORDER, removed = [], rowExtras, cfg, setCfg, blank = false, rail, pageImage }: SupportPortalPreviewProps) {
-  const { styles, enabled, select, pickIcon } = useCanvas();
+  const { styles, enabled, select, pickIcon, addSection } = useCanvas();
   /* Which mode the surrounding theme wrapper is in. Inline styles cannot be answered by the dark
      stylesheet, so the few values that are data rather than utilities read it here. */
   const [darkMode, setDarkMode] = useState(false);
@@ -2167,10 +2167,29 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                   <LayoutGrid size={28} strokeWidth={1.6} />
                 </span>
                 <p className="mt-5 text-[17px] font-semibold text-[#364658]">Your portal is empty</p>
-                <p className="mt-2 max-w-[420px] text-[13.5px] leading-[1.65] text-[#7B8FA5]">
-                  Pick a widget from the panel on the right and drag it onto the page — or add a
-                  section first and drop widgets into it.
+                <p className="mt-2 max-w-[440px] text-[13.5px] leading-[1.65] text-[#7B8FA5]">
+                  Start with a section. It spans the whole page, and the + handles on its edges split
+                  it into as many rows and columns as you need — then drop widgets in from the panel
+                  on the right.
                 </p>
+                {/* A REAL button, not the seam's hover pill. The pill shows on `hover ||
+                    withinSection`, and `withinSection` tests `hoverId === afterId` — on a blank
+                    page the anchor is `hero`, a band that is REMOVED and therefore never hovered.
+                    So the only way to reach it was to find the 12px seam strip under the copy that
+                    told you to add a section: an instruction on screen with nothing on screen that
+                    carries it out. The seam stays, and is still how you add the SECOND section. */}
+                {/* It adds `[[1]]` — one full-width box — with NO layout picker. The seam's picker
+                    offers ten shapes, which asks you to commit to a layout before there is anything
+                    to lay out; splitting from the box's own + handles is the same set of shapes
+                    reached once you can see what you are dividing. */}
+                {enabled && (
+                  <button
+                    onClick={() => addSection('hero', [[1]])}
+                    className="mt-6 inline-flex h-9 items-center gap-1.5 rounded bg-[#3D8BD0] px-4 text-[13px] font-medium text-white shadow-sm transition-colors hover:bg-[#2d6ca0]"
+                  >
+                    <Plus size={15} strokeWidth={2.4} />Add section
+                  </button>
+                )}
               </div>
               )}
               {/* The one anchor a blank page has. Everything added lands after it, and every added
