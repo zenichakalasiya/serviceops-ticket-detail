@@ -560,6 +560,14 @@ export function hasFixedTitle(nodeId?: string): boolean {
   return !!t && FIXED_TITLE_TYPES.has(t);
 }
 
+/** The built-in bands that can be split into rows and columns like an added section.
+ *
+ * ⚠️ Listed EXPLICITLY rather than inferred. The hero is deliberately absent: it is a full-bleed
+ * band that the page's own archetypes already move, size and place (`heroPlacement`, `heroWidth`,
+ * `heroSticky`), and a second way to put something beside it would be two answers to one question.
+ * The top bar and the left rail are the product's chrome, not page content. */
+export const SPLITTABLE_BANDS = new Set(['quick', 'favourites', 'services', 'work', 'records']);
+
 export type PortalStyles = Record<string, NodeStyle>;
 
 export const TEXT_STYLES = ['PAR', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6'];
@@ -626,6 +634,15 @@ export interface Box {
   children?: Box[];
   /** A LEAF holding one widget. An empty leaf has neither. */
   el?: PlacedElement;
+  /** A LEAF that HOSTS a built-in band (`quick`, `work`, …) rather than a placed element.
+   *
+   * ⚠️ This is what lets a predefined band be split into rows and columns with the SAME machinery
+   * an added section uses. The alternative was a parallel "band aside" model, which would have
+   * meant a second implementation of split, weights, adders and delete that had to be kept in step
+   * with this one — and the first divergence would be invisible until someone split a band twice.
+   * The band keeps its own node id, its own `Sel`, its own panel and its own place in
+   * `blockOrder`; only its POSITION on the page moves inside this box. */
+  band?: string;
 }
 
 export interface CustomSection {
@@ -634,6 +651,13 @@ export interface CustomSection {
   root: Box;
   /** Monotonic counter behind `mintBox`. Only ever increases, including across deletes. */
   next: number;
+  /** Set when this section exists only to HOST a built-in band — see `Box.band`.
+   *
+   * ⚠️ A hosting section is NOT drawn by the normal "sections anchored after block X" loop. It is
+   * drawn where the band itself would have been, taking the band's own `order`, so splitting a
+   * band never moves it down the page. Filtering it out of that loop is what stops it rendering
+   * twice — once in place and once as a free section underneath. */
+  band?: string;
 }
 
 /* ⚠️ Ids are MINTED, never derived from position.
@@ -739,7 +763,10 @@ export function splitBox(section: CustomSection, id: string): CustomSection {
     /* The leaf's own content moves down a level. Its `dir` stays on the box being split — that is
        what the split is along — and the two new children take the opposite direction, so the next
        split one level down goes the other way without anyone choosing it. */
-    const kept = { ...mintBox(next, flip(b.dir)), el: b.el };
+    /* ⚠️ `band` travels with `el`. A hosted band is this leaf's CONTENT — miss it here and
+       splitting a band silently empties it: the box divides, the band is gone from both halves,
+       and nothing errors because an empty leaf is a legal box. */
+    const kept = { ...mintBox(next, flip(b.dir)), el: b.el, band: b.band };
     return { id: b.id, dir: b.dir, weight: b.weight, children: [kept, mintBox(next, flip(b.dir))] };
   });
   return { ...next, root };
@@ -861,7 +888,7 @@ export function addNeighbour(section: CustomSection, id: string, dir: BoxDir, be
   const root = mapBox(section.root, id, (b) => {
     /* The box's own content moves down a level, keeping its direction and children so nothing
        inside it is rearranged; only a level is added above it. */
-    const kept: Box = { ...mintBox(next, b.dir), el: b.el, children: b.children };
+    const kept: Box = { ...mintBox(next, b.dir), el: b.el, band: b.band, children: b.children };
     const fresh = mintBox(next, flip(dir));
     return {
       id: b.id,
@@ -909,6 +936,19 @@ export const filledLeaves = (root: Box): Box[] => boxList(root).filter((b) => !i
  *  row. Otherwise the commonest shape on the page — two columns — would arrive a level deeper than
  *  it needs, and its breadcrumb would read `Section > Row > Column > Text` for the simplest thing
  *  anyone builds. */
+/** A section built to HOST a band, with one empty box beside or under it.
+ *
+ * The band takes one leaf and the new neighbour takes the other, so the very first click on a
+ * band's + handle produces exactly the shape an added section would have after one split — which
+ * is what makes every click AFTER it ordinary `addBeside` on an ordinary box. */
+export function bandSection(id: string, band: string, dir: BoxDir, before: boolean): CustomSection {
+  const section: CustomSection = { id, root: { id, dir, weight: 1 }, next: 0, band };
+  const host: Box = { ...mintBox(section, flip(dir)), band };
+  const fresh = mintBox(section, flip(dir));
+  section.root.children = before ? [fresh, host] : [host, fresh];
+  return section;
+}
+
 export function sectionFromRows(id: string, rows: number[][], startAt = 0): CustomSection {
   /* ⚠️ `startAt` is not decoration. Rebuilding a section (a Layout preset) must not restart the
      counter, or the new cells take ids the old cells already own and every id-keyed store —
@@ -1172,7 +1212,11 @@ export function toolbarCaps(id: string): ToolbarCaps {
   /* Quick Actions. Fenced against the palette (LOCKED_ROWS), so Add can only mislead; a full-width
      band, so there is no vertical alignment to make; and the one thing it CAN take is the
      external-link card, which is a named action rather than a "+". */
-  if (id === 'quick') return { add: false, copy: false, alignV: false, extLink: true };
+  /* ⚠️ `extLink` is now FALSE. The panel's "External link card" CTA was withheld, and the floating
+     toolbar carried the very same action — so removing one and keeping the other would have left
+     the row with a second door onto the card that is no longer offered. The `extLink` capability,
+     its toolbar button and `addLinkCard` all stay, so restoring the pair is two flags. */
+  if (id === 'quick') return { add: false, copy: false, alignV: false, extLink: false };
   /* An action card. Its content belongs to the product, so Replace cannot be honoured; moving it
      along the row is the whole of what an admin decides here. */
   if (/^quick-/.test(id)) return { add: false };

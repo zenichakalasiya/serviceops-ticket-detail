@@ -23,7 +23,7 @@ import {
   DEFAULT_BLOCK_ORDER, DEFAULT_CONTENT, DEFAULT_ROW_ORDER, moveIn, nodeById, parseItemId,
   placedType, registerPlaced, isLockedRow,
   MAX_COLUMNS, addNeighbour, addNeighbourAt, addSibling, neighbourBlockedBecause, rowTargetOf, boxOfElement, findBox, isBoxId, freeLeaves, isBranch, mapBox, parentOfBox, registerTree, removeBox,
-  sectionElements, sectionFromRows, sectionIdOfBox, sectionRebuild, sectionRows, setBoxDir, setBoxEl,
+  bandSection, sectionElements, sectionFromRows, sectionIdOfBox, sectionRebuild, sectionRows, setBoxDir, setBoxEl,
   splitBlockedBecause, splitBox,
 } from './portalPageModel';
 import { PortalBuilderTour } from './PortalBuilderTour';
@@ -742,6 +742,30 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     setSections((prev) => prev.map((s) => (
       s.section.id === sectionId ? { ...s, section: addNeighbour(s.section, target, dir, before) } : s
     )));
+  }, []);
+
+  /** Is this band already living inside a hosting section? Read by the canvas to decide whether a
+   *  band shows its OWN adders or its box's — showing both would put two controls on one point. */
+  const bandHosted = useCallback((bandId: string) => sectionsRef.current.some((s) => s.section.band === bandId), []);
+
+  /** The FIRST + click on a built-in band — the one case that is not already an ordinary box.
+   *
+   * ⚠️ It builds a section that HOSTS the band rather than moving anything: the band keeps its node
+   * id, its panel, its place in `blockOrder` and its `order`, and simply starts being drawn inside
+   * a box. That is what makes every LATER click plain `addBeside` on a plain box — there is exactly
+   * one special case, at the boundary, instead of a parallel set of band-shaped operations.
+   * ⚠️ Guarded on "already hosted" and silent about it, because the guard can only be hit by a race:
+   * once a band is hosted its handles are the box's, so this is not reachable from the UI twice. */
+  const splitBand = useCallback((bandId: string, side: 'left' | 'right' | 'top' | 'bottom') => {
+    if (sectionsRef.current.some((s) => s.section.band === bandId)) return;
+    const dir: BoxDir = side === 'left' || side === 'right' ? 'row' : 'column';
+    const before = side === 'left' || side === 'top';
+    const section = bandSection(`sec-${nextSectionId.current++}`, bandId, dir, before);
+    /* `afterId` is bookkeeping only — a hosting section is filtered OUT of the anchored-sections
+       loop and drawn in the band's own slot instead. It names the band so the row still reads
+       correctly to anything walking `sections`. */
+    setSections((prev) => [...prev, { afterId: bandId, section }]);
+    toast.success(dir === 'row' ? 'Column added' : 'Row added');
   }, []);
 
   /* Split — the ONE structural operation, identical at every level. A leaf becomes two, a branch
@@ -1796,7 +1820,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
 
   const canvasCtx = {
     selectedId, hoverId, select, setHover: setHoverId, styles, setStyle, setText, setCfg: patchCfg,
-    addSection, addBeside, dropBeside, columnsFull, splitNode, setNodeDir, splitInfo, addLinkCard, dropInColumn, dropAtSeam, dropInRow,
+    addSection, addBeside, splitBand, bandHosted, dropBeside, columnsFull, splitNode, setNodeDir, splitInfo, addLinkCard, dropInColumn, dropAtSeam, dropInRow,
     addSibling: addSiblingElement, cfg: cfgFor,
     moveNode, duplicateNode, deleteNode, canDuplicate, addInside, moveTo, moveToSeam, addChildBlock, areSiblings, replaceElement, pickIcon, applyPreset,
     tourSeam,

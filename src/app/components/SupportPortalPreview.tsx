@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, useState } from 'react';
+import { Fragment, createContext, useContext, useEffect, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import {
   Bell, Check, Info, Keyboard, KeyRound, House, MessageSquare, MessagesSquare, Plus, PanelLeft,
@@ -192,7 +192,13 @@ function DropLine({ zone, inset }: { zone: Zone; inset: number }) {
 
 /* A column: empty and dashed until something is dropped in, then just the element on the section's
    own surface. No wrapper card — the element brings whatever chrome it actually needs. */
-function ColumnBody({ id, item, live, dir, icons, placedText, cfg }: { id: string; item?: PlacedElement; live: boolean; dir?: BoxDir; icons?: Record<string, IconChoice | undefined>; placedText?: Record<string, { title?: string; desc?: string }>; cfg?: (id: string) => Record<string, unknown> }) {
+function ColumnBody({ id, item, band, live, dir, icons, placedText, cfg }: { id: string; item?: PlacedElement; band?: string; live: boolean; dir?: BoxDir; icons?: Record<string, IconChoice | undefined>; placedText?: Record<string, { title?: string; desc?: string }>; cfg?: (id: string) => Record<string, unknown> }) {
+  /* A hosted BAND is this box's content, exactly as a placed element is — see `Box.band`. */
+  const bandNode = useContext(BandSlots)[band ?? ''];
+  /* ⚠️ ONE test for "this box has something in it", used by every class below. Testing `item`
+     alone left a hosted band sitting inside the dashed empty-column treatment, with the "+ add an
+     element here" button painted over the band it already contains. */
+  const full = !!item || !!bandNode;
   const { styles, dropInColumn, dropBeside, addInside, columnsFull } = useCanvas();
   const [over, setOver] = useState(false);
   /* Which zone the pointer is in, held across renders so the hysteresis has a previous answer. */
@@ -294,11 +300,11 @@ function ColumnBody({ id, item, live, dir, icons, placedText, cfg }: { id: strin
       className={`relative flex h-full flex-col ${
         item && HUGS_CONTENT.has(item.type) ? 'items-start ' : ''
       }${
-        !item ? 'justify-center'
+        !full ? 'justify-center'
           : ({ start: 'justify-start', center: 'justify-center', end: 'justify-end' } as Record<string, string>)[String(cfg?.(id)?.blockAlign ?? 'center')] ?? 'justify-center'
       } rounded transition-colors ${
-        item ? '' : dir ? 'min-h-[120px] items-center border border-dashed' : 'min-h-[88px] items-center'
-      } ${over ? 'border border-dashed border-[#3D8BD0] bg-[#EBF5FF]' : item || !dir ? '' : 'border-[#C3CBD6]'} ${
+        full ? '' : dir ? 'min-h-[120px] items-center border border-dashed' : 'min-h-[88px] items-center'
+      } ${over ? 'border border-dashed border-[#3D8BD0] bg-[#EBF5FF]' : full || !dir ? '' : 'border-[#C3CBD6]'} ${
         /* ⚠️ GRAB, so the affordance matches what the box can do. Duda shows a hand over anything
            you may pick up, and the only thing that carried one here was the toolbar's 14px grip —
            an element you can move looked exactly like one you cannot.
@@ -319,7 +325,17 @@ function ColumnBody({ id, item, live, dir, icons, placedText, cfg }: { id: strin
       {/* ⚠️ The element gets its OWN Sel. Without one the column was the innermost selectable thing,
           so clicking a collection widget selected the column — and with items now selectable inside
           it, the widget itself became reachable only through the breadcrumb. */}
-      {item ? (
+      {/* ⚠️ A hosted BAND renders AS IT IS — its own `Sel`, its own node id, its own panel. It is
+          not re-wrapped: the band already carries everything the canvas needs to select and edit
+          it, and a second `Sel` around it would put a box between the pointer and the band. */}
+      {bandNode ? (
+        <>
+          {bandNode}
+          {/* The band's box keeps its adders, so the second column is added the same way the
+             first one was. */}
+          {live && <ColumnAdders columnId={id} filled />}
+        </>
+      ) : item ? (
         <>
           {/* ⚠️ `w-fit` for anything that sizes to its own content, `w-full` otherwise — and the
               COLUMN has to stop stretching it too, which is what `items-start` below does: a flex
@@ -380,6 +396,14 @@ function ColumnBody({ id, item, live, dir, icons, placedText, cfg }: { id: strin
    the vertical to it makes the page one rhythm rather than two. */
 export const SECTION_PAD = 'px-6 py-3';
 
+/* The rendered node for each built-in band this page is HOSTING inside a section tree.
+ *
+ * ⚠️ A CONTEXT, not a prop threaded through AddedSection → BoxChildren → BoxView → ColumnBody.
+ * Only the leaf that carries `band` ever wants it, and four components passing a value none of
+ * them reads is four chances to drop it — which would render the box empty and lose the band with
+ * no error, since an empty leaf is a legal box. */
+const BandSlots = createContext<Record<string, ReactNode>>({});
+
 /* The Style accordion's four keys, as CSS. Shared by the built-in bands and added sections so a
    section painted one way in one place cannot come out another way in the other. */
 /* ⚠️ Applied to the SECTION WRAPPER, not to the content row inside it. On the inner box the colour
@@ -425,7 +449,16 @@ function BoxView({
      ⚠️ Hover is matched against the whole PATH, not the id: with an element selected inside a box
      the pointer is over the element, not the box, and an exact match silently took the affordance
      away. Same rule "+ Add Section" already follows on section hover. */
-  const live = !nodeSelectedWithin(selectedId, box.id) && !!hoverId && nodePath(hoverId).some((n) => n.id === box.id);
+  /* ⚠️ A box HOSTING a band answers to the band as well as to itself. `nodePath` walks the static
+     node registry, where a built-in band's parent is the page — it has no idea the band is
+     currently living inside this box — so hovering the band put `hoverId` on a path that does not
+     pass through here, and the box's adders never lit. The band's own adders had already stepped
+     aside by then (`bandHosted`), so the effect was a band you could split exactly once. */
+  const within = (nid: string | null) => !!nid && (
+    nodePath(nid).some((n) => n.id === box.id)
+    || (!!box.band && nodePath(nid).some((n) => n.id === box.band))
+  );
+  const live = !within(selectedId) && !!hoverId && within(hoverId);
 
   const total = siblings.reduce((a, b) => a + b, 0) || 1;
   /* ⚠️ Fixed columns need a real BASIS, not `flex: weight`. That shorthand is "grow by weight from a
@@ -441,7 +474,7 @@ function BoxView({
       {branch ? (
         <BoxChildren box={box} resize={resize} icons={icons} placedText={placedText} cfg={cfg} />
       ) : (
-        <ColumnBody id={box.id} item={box.el} live={live} dir={parentDir} icons={icons} placedText={placedText} cfg={cfg} />
+        <ColumnBody id={box.id} item={box.el} band={box.band} live={live} dir={parentDir} icons={icons} placedText={placedText} cfg={cfg} />
       )}
     </Sel>
   );
@@ -493,7 +526,7 @@ function BoxChildren({ box, resize, icons, placedText, cfg }: {
 const nodeSelectedWithin = (selectedId: string | null, boxId: string) =>
   !!selectedId && nodePath(selectedId).some((n) => n.id === boxId);
 
-function AddedSection({ section, icons, placedText, cfg }: { section: CustomSection; icons?: Record<string, IconChoice | undefined>; placedText?: Record<string, { title?: string; desc?: string }>; cfg?: (id: string) => Record<string, unknown> }) {
+function AddedSection({ section, icons, placedText, cfg, bandNode }: { section: CustomSection; icons?: Record<string, IconChoice | undefined>; placedText?: Record<string, { title?: string; desc?: string }>; cfg?: (id: string) => Record<string, unknown>; bandNode?: ReactNode }) {
   const { selectedId, hoverId } = useCanvas();
   /* An added section answers Responsive behaviour exactly as a built-in band does — it is the same
      Section spec, so an empty section you just dropped in has the control from its first column. */
@@ -502,7 +535,7 @@ function AddedSection({ section, icons, placedText, cfg }: { section: CustomSect
   /* Hover only — see the note on BoxView. A selected section is being sized, not added to. */
   const live = !nodeSelectedWithin(selectedId, root.id) && !!hoverId && nodePath(hoverId).some((n) => n.id === root.id);
 
-  return (
+  const body = (
     /* ⚠️ A section paints NOTHING by default — no white card, no border, no radius. A divider, a
        line of text or a button dropped on the page should sit on the page, the way it does in every
        website editor. A surface is something you ADD: Style → Fill paints one.
@@ -510,17 +543,29 @@ function AddedSection({ section, icons, placedText, cfg }: { section: CustomSect
        gutter is not the section's to borrow.
        ⚠️ No style on an inner box — `Sel` applies the node style ONCE, here. It used to be spread
        again inside, so every padding value was applied around the section and again within it. */
-    <Sel id={section.id} className={SECTION_PAD} style={fillCss(cfg?.(section.id) ?? {})}>
+    /* ⚠️ A HOSTING section drops the horizontal gutter. The band inside carries its own `px-6`, so
+       keeping both printed the band 48px in from the page edge while the empty column beside it
+       sat at 24px — one row with two left edges. The vertical padding stays: that is the gap to
+       the block above, which the band does not provide. */
+    <Sel id={section.id} className={section.band ? 'py-3' : SECTION_PAD} style={fillCss(cfg?.(section.id) ?? {})}>
       {isBranch(root) ? (
         <BoxChildren box={root} resize={resize} icons={icons} placedText={placedText} cfg={cfg} />
       ) : (
         /* A section nobody has split yet IS a single cell — it just has nothing beside it. It gets
            the same body a leaf gets anywhere else; the way to give it a neighbour is Split, since
            the root has no parent for a sibling to go into. */
-        <ColumnBody id={root.id} item={root.el} live={live} icons={icons} placedText={placedText} cfg={cfg} />
+        <ColumnBody id={root.id} item={root.el} band={root.band} live={live} icons={icons} placedText={placedText} cfg={cfg} />
       )}
     </Sel>
   );
+
+  /* ⚠️ The provider goes OUTSIDE the section's own `Sel`, so the band reaches whichever box holds
+     it however deep the tree gets — the band starts one level down and ends up further in with
+     every split. Keyed by band id rather than by box id for the same reason: the box that carries
+     it changes on every split, the band does not. */
+  return section.band ? (
+    <BandSlots.Provider value={{ [section.band]: bandNode }}>{body}</BandSlots.Provider>
+  ) : body;
 }
 
 /* The banner search — a real control, not a picture of one.
@@ -1514,14 +1559,37 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
      moved it to the top of the page instead of removing it.
      ⚠️ `hero` is deliberately not gated: it is in no layout's `blockOrder`, because the banner is
      not a block you reorder. */
+  /* The section HOSTING this band, if the admin has split it. */
+  const hostOf = (id: string) => sections.find((x) => x.section.band === id)?.section;
+
   const band = (id: string, node: ReactNode) =>
     (blockOrder.includes(id) && !removed.includes(id) ? node : null);
+
+  /* Draw a built-in band inside the section that HOSTS it, once the admin has split it.
+   *
+   * ⚠️ NOT folded into `band()`, which looks like the obvious funnel and is not: `band()` is called
+   * twice per block — once for the band and once for the band's SEAM — so hosting there drew the
+   * "+ Add Section" strip inside the very tree it is supposed to sit beneath.
+   * ⚠️ The ORDER moves to this wrapper. A hosted band is no longer a direct child of the page
+   * column — its host is — so the `order` the band still carries would be read against its own
+   * box's siblings inside the tree, and the page would lose that band's place entirely. */
+  const hostBand = (id: string, node: ReactNode) => {
+    const h = hostOf(id);
+    if (!h) return node;
+    return (
+      <div style={{ order: slot(id) }}>
+        <AddedSection section={h} icons={icons} placedText={placedText} cfg={cfg} bandNode={node} />
+        <div className="px-6"><AddSectionSeam afterId={h.id} /></div>
+      </div>
+    );
+  };
   /* ⚠️ The gutter belongs to the SEAM, not to this wrapper. With `px-6` here, every added section
      rendered inside it inherited a second 24px inset on top of its own — so a new section sat 24px
      right of every built-in band and looked unaligned, because it was. The seam keeps the gutter so
      its rule still lines up with the sections above and below it.
      ⚠️ A JSX comment cannot be the first thing inside a parenthesised return — it is an expression
      slot, not a child slot yet. */
+
   const after = (id: string) => (
     <div style={{ order: slot(id) + 1 }}>
       <div className="px-6"><AddSectionSeam afterId={id} /></div>
@@ -1530,7 +1598,10 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
           under the hero but never under the section you had just added, and the CTA a section
           offers on hover had nowhere to appear. The seam's `afterId` is the section itself, which
           is also what makes `addSection` splice the next one in directly below it. */}
-      {sections.filter((s) => (blank ? BUILT_IN_ANCHORS.has(s.afterId) : s.afterId === id)).map((s) => (
+      {/* ⚠️ `!s.section.band` — a section that HOSTS a band is drawn in that band's own slot
+          instead (see `host` below). Without this it renders here as well, so the page carries the
+          band twice: once in place and once again underneath. */}
+      {sections.filter((s) => !s.section.band && (blank ? BUILT_IN_ANCHORS.has(s.afterId) : s.afterId === id)).map((s) => (
         <Fragment key={s.section.id}>
           <AddedSection section={s.section} icons={icons} placedText={placedText} cfg={cfg} />
           <div className="px-6"><AddSectionSeam afterId={s.section.id} /></div>
@@ -1648,7 +1719,8 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
      the hero's own DOM node, or a canvas that lets you hover/select "Hero" as its own bounded region
      keeps reading as two bands however well the colours line up. */
   const quickSection = (
-    <Sel id="quick" className={`relative z-10 ${SECTION_PAD} ${blockOrder.indexOf("quick") === 0 && !searchFloats && !tileActions && !quickOnBanner ? "-mt-[62px]" : ""} ${searchFloats ? "pt-[52px]" : ""} ${tileActions || quickOnBanner ? "pt-6" : ""}`} style={{ order: slot("quick"), ...fillCss(wc('quick')), ...(quickOnBanner ? { marginTop: -1 } : {}) }}>
+    hostBand("quick",
+    <Sel id="quick" className={`relative z-10 ${SECTION_PAD} ${blockOrder.indexOf("quick") === 0 && !searchFloats && !tileActions && !quickOnBanner && !hostOf("quick") ? "-mt-[62px]" : ""} ${searchFloats ? "pt-[52px]" : ""} ${tileActions || quickOnBanner ? "pt-6" : ""}`} style={{ order: slot("quick"), ...fillCss(wc('quick')), ...(quickOnBanner ? { marginTop: -1 } : {}) }}>
       <RowDrop rowId="quick" resize={secResize("quick")} className={`flex flex-wrap${secPacked("quick", 4) ? " portal-row-packed" : ""}`} style={{ gap: secGap("quick"), ...secBox("quick", 4), ...rowFits(inRow("quick"), "quick"), ...secGrid("quick", 4) }}>
         {quickCards.map((a) => {
           const c = wc(a.id);
@@ -1785,6 +1857,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
         ))}
       </RowDrop>
     </Sel>
+    )
   );
 
 
@@ -2267,9 +2340,11 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                   )}
                 </div>
               ) : (
+              hostBand("favourites",
               <Sel id="favourites" className={SECTION_PAD} style={{ order: slot("favourites"), ...fillCss(wc('favourites')) }}>
                 <FavouriteServicesRender nodeId="favourites" cfg={servicesChips ? { tileLook: 'chips', ...wc('favourites') } : wc('favourites')} />
               </Sel>
+              )
               )
             ))}
             {band('favourites', after('favourites'))}
@@ -2279,6 +2354,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                 Most Used Services a real member of the page, so deleting it, reordering it and its
                 widget panel all behave exactly as they do on every other layout. */}
             {!browseSplit && band('services', (
+              hostBand("services",
               <Sel id="services" className={SECTION_PAD} style={{ order: slot("services"), ...fillCss(wc('services')) }}>
                 {(() => {
                   const list = <FeaturedServicesRender nodeId="services" cfg={servicesChips ? { tileLook: 'chips', ...wc('services') } : wc('services')} />;
@@ -2301,11 +2377,13 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                   );
                 })()}
               </Sel>
+              )
             ))}
             {!browseSplit && band('services', after('services'))}
 
             {/* ── Work row ── */}
             {/* ── Work row ── one section, three cards, full width. */}
+            {hostBand("work",
             <Sel id="work" className={SECTION_PAD} style={{ order: slot("work"), ...fillCss(wc('work')) }}>
               <RowDrop rowId="work" resize={secResize("work")} className={`flex flex-wrap${secPacked("work", 3) ? " portal-row-packed" : ""}`} style={{ gap: secGap("work"), ...secBox("work", 3), ...rowFits(inRow("work"), "work"), ...secGrid("work", 3) }}>
               {(() => {
@@ -2688,6 +2766,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                 ))}
               </RowDrop>
             </Sel>
+            )}
 
             {after('work')}
 
@@ -2696,6 +2775,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                 `records` is absent from its `blockOrder` and `band()` drops the whole thing —
                 without which the page would carry each card twice, once in each place. */}
             {band('records', (
+            hostBand("records",
             <Sel id="records" className={SECTION_PAD} style={{ order: slot("records"), ...fillCss(wc('records')) }}>
               <RowDrop rowId="records" resize={secResize("records")} className={`flex flex-wrap${secPacked("records", 2) ? " portal-row-packed" : ""}`} style={{ gap: secGap("records"), ...secBox("records", 2), ...rowFits(inRow("records"), "records"), ...secGrid("records", 2) }}>
                 {/* ⚠️ TILES on the rail layout, list rows otherwise — one `rows` shape, two
@@ -2720,6 +2800,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                 ))}
               </RowDrop>
             </Sel>
+            )
             ))}
             {band('records', after('records'))}
           </div>

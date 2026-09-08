@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 // ArrowLeft stays in use by the card toolbar's "Move left".
 import { toast } from 'sonner';
-import { HEADING_SIZE, PORTAL_FONTS, SECTION_LAYOUTS, TEXT_STYLES, ZERO_BOX, COMPOSABLE, boxInfo, canAddBeside, defaultAlignH, nodeById, paintsOwnSurface, toolbarCaps, nodePath, placedIn, placedType } from './portalPageModel';
+import { HEADING_SIZE, PORTAL_FONTS, SECTION_LAYOUTS, SPLITTABLE_BANDS, TEXT_STYLES, ZERO_BOX, COMPOSABLE, boxInfo, canAddBeside, defaultAlignH, nodeById, paintsOwnSurface, toolbarCaps, nodePath, placedIn, placedType } from './portalPageModel';
 import { DEFAULT_THEME } from './PortalThemePanel';
 import type { PortalTheme } from './PortalThemePanel';
 import { boxCss, containerCss } from './portalStyleResolver';
@@ -61,6 +61,10 @@ interface CanvasCtx {
   addChildBlock: (id: string, type: string) => void;
   /** The Quick Actions row's one addable card — see `toolbarCaps`. */
   addLinkCard?: () => void;
+  /** The first split of a BUILT-IN band — see `splitBand` in the builder. */
+  splitBand?: (bandId: string, side: 'left' | 'right' | 'top' | 'bottom') => void;
+  /** True once a band lives inside a hosting section, so its box owns the adders instead. */
+  bandHosted?: (bandId: string) => boolean;
   /** ⚠️ The seam the first-run tour is pointing at, held open while its card is on screen. A seam
    *  is a hover affordance — it is 12px of nothing until the pointer finds it — so the one step
    *  that exists to say "this is here" would otherwise spotlight an empty gap. */
@@ -1825,8 +1829,13 @@ function ColumnAddIcon({ size = 16 }: { size?: number }) {
   );
 }
 
-export function ColumnAdders({ columnId, filled }: { columnId: string; filled?: boolean }) {
+export function ColumnAdders({ columnId, filled, onSide }: { columnId: string; filled?: boolean; onSide?: (side: 'left' | 'right' | 'top' | 'bottom') => void }) {
   const { addBeside, addInside } = useCanvas();
+  /* ⚠️ ONE component for both callers. A built-in band that has never been split is not a box yet,
+     so its four handles run `splitBand` instead of `addBeside` — but they have to be the same
+     four handles, in the same places, with the same words, or "add a column to the right" would
+     mean one thing on a band and another one box down. */
+  const act = onSide ?? ((side: 'left' | 'right' | 'top' | 'bottom') => addBeside(columnId, side));
   /* ⚠️ SECONDARY buttons — white, bordered, dark icon — not blue dots. Adding a column is a
      structural move made while you are looking at content, and three blue dots on a live column
      competed with the page for attention every time the cursor passed over it. A secondary control
@@ -1853,7 +1862,7 @@ export function ColumnAdders({ columnId, filled }: { columnId: string; filled?: 
       {sides.slice(0, 2).map((s) => (
         <button
           key={s.side}
-          onClick={(e) => { e.stopPropagation(); addBeside(columnId, s.side); }}
+          onClick={(e) => { e.stopPropagation(); act(s.side); }}
           title={s.title}
           className={s.cls}
         ><span className={s.spin}><ColumnAddIcon size={15} /></span></button>
@@ -1875,7 +1884,7 @@ export function ColumnAdders({ columnId, filled }: { columnId: string; filled?: 
       {sides.slice(2).map((s) => (
         <button
           key={s.side}
-          onClick={(e) => { e.stopPropagation(); addBeside(columnId, s.side); }}
+          onClick={(e) => { e.stopPropagation(); act(s.side); }}
           title={s.title}
           className={s.cls}
         ><span className={s.spin}><ColumnAddIcon size={15} /></span></button>
@@ -1902,7 +1911,7 @@ export function Sel({ id, children, className = '', toolbarBelow = false, style:
      ReferenceError on the very first mousedown — swallowed into the console, so the handler looked
      attached, the cursor looked right, and nothing moved. Three attempts at fixing the drag failed
      because I was reading the rendered output instead of the console. */
-  const { enabled, selectedId, hoverId, select, setHover, styles, setStyle, moveTo, setText } = useCanvas();
+  const { enabled, selectedId, hoverId, select, setHover, styles, setStyle, moveTo, setText, splitBand, bandHosted } = useCanvas();
   const ref = useRef<HTMLDivElement>(null);
   const [moveOver, setMoveOver] = useState(false);
   const node = nodeById(id);
@@ -2102,6 +2111,20 @@ export function Sel({ id, children, className = '', toolbarBelow = false, style:
         ><Move size={13} /></span>
       )}
       {on && <SelectionHandles id={id} elRef={ref} />}
+
+      {/* ⚠️ A built-in band gets the SAME four handles an empty box does — that is the whole point
+          of hosting it in a section tree. This branch covers only the FIRST split, while the band
+          is still a plain block; once it is hosted, the box holding it draws its own adders and
+          this one steps aside (`bandHosted`), or both would paint on the same four edges.
+          ⚠️ HOVER, not selection — the rule a box's adders already follow, and for the same reason:
+          a selected node carries eight resize handles on these very edges, and two controls on one
+          point go to whichever painted last. Matched against the PATH so hovering something inside
+          the band still counts as hovering the band. */}
+      {enabled && SPLITTABLE_BANDS.has(id) && !bandHosted?.(id)
+        && !(selectedId && nodePath(selectedId).some((n) => n.id === id))
+        && !!hoverId && nodePath(hoverId).some((n) => n.id === id) && (
+        <ColumnAdders columnId={id} filled onSide={(side) => splitBand?.(id, side)} />
+      )}
 
       {/* ⚠️ The BANNER gets no floating toolbar. It is the full-width block behind everything else,
           so its bar had nowhere to sit that was not on top of its own heading — and every action it
