@@ -363,6 +363,68 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   is declared in this file with no `seed`, which is exactly what makes it render the default
   arrangement. Only `VISIBLE_TEMPLATES()` is listed, so the 6 `hidden` templates stay off it.
 
+- **Support Portal — the BANNER is a palette element (`x-banner` / `x-search`, Data group).**
+  A blank portal replaces every band with one empty state, so a from-scratch page had no way to get
+  a banner at all — the one thing every reference portal opens with was the one thing you could not
+  add. Both rows carry a `node`, which is what makes them PREDEFINED (one to a page, ticked once
+  placed) under the group rule in the palette bullet above.
+  ⚠️ **`removed` is the ONE flag for "does this page have a banner".** A blank page seeds
+  `removed: ['hero']` and placing the Banner un-removes it, so the palette tick, the canvas and the
+  delete path all read one value. It is also why `HERO_SPEC` could drop `noDelete`: that flag existed
+  because nothing in the palette could put a Banner back, and now something can.
+  ⚠️ **`heroBand` is a CONST placed in BOTH halves of the blank/non-blank ternary** — the same "one
+  card, two possible homes" move `quickSection` makes. Authoring the band twice would be two places
+  for every future banner fix to land in.
+  ⚠️ **Search is the banner's own `showSearch`, not a free-standing widget.** `addElement('x-search')`
+  turns that field on and REFUSES with a reason when there is no banner to hold it; `placedPredefined`
+  counts `hero-search` only while a banner exists and its toggle is on. That IS the single-instance
+  rule — turn the banner's search off and the palette row comes back.
+  **`bannerType`** (`regular` | `card` | `image`, in DESIGN → Banner, drawn by `BannerTypePicker`)
+  turns the hero's content block into two columns via `bannerSide`. ⚠️ `regular` renders `contents` on
+  the wrapper, so the tree every existing page draws is untouched. The card slot is a REAL
+  `RowDrop rowId="hero"` reading `rowExtras['hero']` — the same placement mechanism every built-in row
+  uses, so a widget dropped there is stored, selectable and removable like any other. `slotCols`
+  (1 or 2) and `sideImage` are `when`-gated to their own type.
+  **Height is a `stepRail`** — four stops labelled S · M · L · XL. Height is an ORDERED axis, so a rail
+  says "pick how far along" where four tabs said "four unrelated choices", and it holds one line at any
+  panel width. ⚠️ The VALUES are unchanged (180/260/360/480), so every template and every page already
+  carrying a height renders exactly as before.
+
+- **⚠️ Support Portal — the logo's config lives on the BAR, and that was broken until now.**
+  `header-logo` is a CHILD node of the top bar with its own panel — the `-title`/`-icon` shape — but it
+  was in NEITHER half of that pattern: `ownerOf` did not strip `logo`, so the panel stored under
+  `widgetCfg['header-logo']` while `PortalHeader` reads `wc('header')`. **Uploading a logo had never
+  done anything**, on `main` either. The fix is the documented recipe, both halves at once — `logo`
+  added to the `ownerOf` suffix list AND to `specForNode`'s early-return list, so config resolves to
+  the owner and the panel resolves to the child. The logo also gained **Light/Dark tabs** (`LogoPair`),
+  stored as `logoSrc` + `dark:logoSrc` — the SAME per-mode pair the colour fields use, so `cfgFor`
+  promotes it in dark mode and NO renderer changed. ⚠️ The dark half writes through `viewSet`, never
+  `set` — `set` discards the key it is handed and always writes `f.key`, so a dark upload would
+  silently replace the light logo. ⚠️ The dark slot is OPTIONAL and falls back to the light mark, and
+  the empty state says so: most portals have one logo, and a bar that empties itself the moment
+  somebody tries the dark theme reads as a broken page rather than an unfilled slot.
+
+- **⚠️ Support Portal — the canvas element picker is placed against the VIEWPORT, not the toolbar.**
+  As an absolutely-positioned child of the floating toolbar it was trapped in the canvas's scroll box,
+  so opening one near the foot of the page cut the list off at the bottom edge — the THIRD time this
+  clipping trap has been recorded (the listing kebab and the table's column flyouts carry the same
+  note). It is portalled to the body, `fixed`, and clamped. ⚠️ It opens **ABOVE the toolbar** first,
+  then below, then to a side: the toolbar sits above the element, so the space over it is the closest
+  place the list can go that is still clear of what you are filling. Preferring a SIDE was correct and
+  felt wrong — on a wide section the only side with room is past the canvas edge, so the list appeared
+  over the design panel, a long way from the thing it was adding to. ⚠️ The target is passed as an ID
+  and looked up, NOT found with `closest` from the button: the toolbar is not rendered inside the
+  element's own `[data-node]` wrapper, so the walk returns null and the list silently anchors to the
+  28px button instead — which put it straight back on top of the section.
+
+- **Support Portal — the table cell menu has NO per-cell header toggle.** A header is a property of the
+  first ROW or the first COLUMN, and three surfaces already say so (the two panel switches and the row
+  and column handle menus), all writing the same `headerRow`/`firstColumn` config. The cell toggle was
+  a fourth writer with a different unit: it flipped ONE cell, which could put a `th` in the middle of a
+  body row — a table reading as though it has two header rows and exporting as neither, with nothing
+  able to tell you it had happened. `toggleHeaderCell` stays exported from the model, unreferenced, as
+  the correct primitive if a header-cell feature ever arrives with a coverage map behind it.
+
 ## Parked features
 Four Support Portal features are BUILT-OR-PART-BUILT AND SWITCHED OFF, with their full context in
 [future-tasks.md](future-tasks.md): **AI** (rail item commented out in `SupportPortalBuilder`; the
