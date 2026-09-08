@@ -306,7 +306,17 @@ export const SLIDER_SPEC: WidgetSpec = {
       options: [{ value: 'dots', label: 'Dots' }, { value: 'bars', label: 'Bars' }, { value: 'numbers', label: 'Numbers' }],
     },
   ],
-  packs: ['P1', 'P2', 'P5'],
+  /* ⚠️ NO P5 Media. Its seven keys — ratio, fit, focal, shape, mediaRadius, mediaOverlay and
+     captionPos — are ALL inert on a slider: `SliderRender` hard-codes 16:9, `object-cover` and
+     `rounded-lg`, and takes its overlay from `slideOverlay` under Slide, which is a live control.
+     So the pack put an Aspect ratio, a Fit, a Focal point, a Shape, a Corner radius, a SECOND
+     Overlay and a Caption position on the panel, and moving any of them changed nothing.
+     ⚠️ This is the same defect that got the slider HIDDEN in the first place — 22 of 33 controls
+     doing nothing — and it survived the un-hiding because that pass fixed the Content and track
+     fields and never audited the style PACK. A pack is a list of controls too.
+     ⚠️ Gallery KEEPS P5: `GalleryRender` genuinely reads `captionPos`. Same pack, different
+     renderer, so the answer is per-widget rather than a blanket removal. */
+  packs: ['P1', 'P2'],
   collection: {
     key: 'slides', group: 'Slides', addLabel: 'Add slide', max: 10, hideable: true,
     emptyHint: 'No slides yet. A slider with nothing in it renders as an empty band.',
@@ -340,7 +350,10 @@ export const SLIDER_SPEC: WidgetSpec = {
       },
       { key: 'ctaUrl', label: 'URL', control: 'text', group: 'Action', when: (c) => c.ctaEnabled === true && c.ctaAction === 'url' },
     ],
-    packs: ['P5'],
+    /* ⚠️ EMPTY, for the reason on the widget's own packs above — every P5 field is inert here too,
+       and a slide's Design section listing seven dead controls is worse on the ITEM than on the
+       widget, because this is the layer an admin opens to style one picture. */
+    packs: [],
     subElements: [
       { key: 'heading', name: 'Heading', role: 'title' },
       { key: 'caption', name: 'Caption', role: 'body' },
