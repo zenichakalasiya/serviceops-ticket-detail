@@ -844,8 +844,12 @@ export const VISIBLE_RECORD_MODULES = (): RecordModule[] => RECORD_MODULES.filte
  * renderer" rule. A layout that drew itself would be a second banner to keep in step with the
  * first, and the two would drift the moment a control changed.
  *
- * Drawn from the reference canvas at `public/portal-layouts/` — the artboard each one comes from
- * is named on its `from` field so the original is one click away. */
+ * Drawn from the reference canvas at `ServiceOps portal layout system/Support Portal Layout
+ * System.dc.html` — all 21 of its artboards, plus `classic`, which is this product's own resting
+ * banner and the way back out of any of them. The artboard each layout came from is named on its
+ * `from` field so the original is one click away.
+ * ⚠️ There is a SECOND, older copy of that file at `public/portal-layouts/`. It is not the same
+ * file — the md5s differ — so read the one named above. */
 export interface BannerLayout {
   id: string;
   name: string;
@@ -884,6 +888,20 @@ export const BANNER_LAYOUTS: BannerLayout[] = [
        key it does not mention keeps the previous layout's value and "Classic" is not classic. */
     hero: {},
   },
+
+  /* ── Short bands: a greeting, and what is waiting on you ─────────────────────────────── */
+  {
+    id: 'mosaic', name: 'Mosaic', orientation: 'horizontal', from: '4c',
+    note: 'A compact white bar — the welcome on the left, the search on the right of the same line.',
+    hero: {
+      heading: 'Welcome to the IT Service Desk',
+      sub: 'Raise a ticket, request a service or find the answer yourself.',
+      bgKind: 'color', bannerStyle: 'flat', bannerColor: '#FFFFFF',
+      headingColor: '#0B2545', contentAlign: 'left', contentMaxWidth: 100,
+      showSearch: true, searchWidth: 45, searchRadius: 4, height: 180,
+    },
+    page: { heroInk: 'dark' },
+  },
   {
     id: 'rails', name: 'Rails', orientation: 'horizontal', from: '4i', slot: 'side',
     note: 'A quiet greeting on the page ground, with what you own counted beside it.',
@@ -902,25 +920,126 @@ export const BANNER_LAYOUTS: BannerLayout[] = [
     ],
   },
   {
-    id: 'broadside', name: 'Broadside', orientation: 'horizontal', from: '4h', slot: 'below',
-    note: 'Centred and editorial, on a warm ground, with the counts under the search.',
+    id: 'concierge2', name: 'Concierge II', orientation: 'horizontal', from: '3h2', slot: 'side',
+    note: 'The same greeting on a pale ground, with the counts joined into one outlined strip.',
     hero: {
-      heading: 'How can we help you today?',
-      sub: 'Report a fault, request a service, or read your way to the answer.',
-      bgKind: 'color', bannerStyle: 'flat', bannerColor: '#F5F1E8',
-      headingColor: '#3B2A1A', contentAlign: 'center', contentMaxWidth: 70,
-      showSearch: true, searchWidth: 60, searchRadius: 0, height: 360,
+      heading: 'Welcome back, Yash',
+      sub: 'Acme Corporation IT Service Desk',
+      bgKind: 'color', bannerStyle: 'flat', bannerColor: '#F4F7FB',
+      headingColor: '#0B2545', contentAlign: 'left', contentMaxWidth: 100,
+      showSearch: false, height: 180,
     },
     page: { heroInk: 'dark' },
     widgets: [
       countTile('Open requests', 'My requests', 'ticket'),
       countTile('Approvals', 'Approvals waiting on me', 'shieldcheck'),
-      countTile('Assets & CIs', 'My assets', 'laptop'),
+      countTile('My assets', 'My assets', 'laptop'),
     ],
   },
   {
+    id: 'dispatch', name: 'Dispatch', orientation: 'horizontal', from: '3d', slot: 'side',
+    note: 'A dark strip that holds the greeting, the search and the counts on one line.',
+    hero: {
+      heading: 'Good morning, Yash',
+      sub: 'Two approvals need you today · everything else is moving',
+      bgKind: 'color', bannerStyle: 'gradient', bannerColor: '#0F2847',
+      headingColor: '#FFFFFF', contentAlign: 'left', contentMaxWidth: 100,
+      showSearch: true, searchWidth: 60, searchRadius: 9, height: 180,
+    },
+    widgets: [
+      countTile('Open requests', 'My requests', 'ticket'),
+      countTile('Approvals', 'Approvals waiting on me', 'shieldcheck'),
+      countTile('My CIs', 'My CIs', 'server'),
+    ],
+  },
+  {
+    id: 'concierge', name: 'Concierge', orientation: 'horizontal', from: '3h', slot: 'side',
+    note: 'A dark welcome bar with three glass counters — who you are, and what is waiting.',
+    hero: {
+      heading: 'Welcome back, Yash',
+      sub: "Acme Corporation IT Service Desk · we're here to help. Tell us what you need.",
+      bgKind: 'color', bannerStyle: 'gradient', bannerColor: '#16325B',
+      headingColor: '#FFFFFF', contentAlign: 'left', contentMaxWidth: 100,
+      showSearch: false, height: 180,
+    },
+    widgets: [
+      countTile('Open requests', 'My requests', 'ticket'),
+      countTile('Approvals', 'Approvals waiting on me', 'shieldcheck'),
+      countTile('My changes', 'My changes', 'refreshcw'),
+    ],
+  },
+  {
+    id: 'sidecar', name: 'Sidecar', orientation: 'horizontal', from: '3b',
+    note: 'A slim dark masthead: who this desk is on the left, the search on the right.',
+    hero: {
+      heading: 'Acme Corporation · IT Service Desk',
+      sub: 'Hardware, software, access and connectivity in one place',
+      bgKind: 'color', bannerStyle: 'flat', bannerColor: '#12233F',
+      headingColor: '#FFFFFF', contentAlign: 'left', contentMaxWidth: 100,
+      showSearch: true, searchWidth: 45, searchRadius: 10, height: 180,
+    },
+  },
+
+  /* ── Mid bands: a greeting that carries numbers or a route in ───────────────────────── */
+  {
+    id: 'ledger', name: 'Ledger', orientation: 'horizontal', from: '2b', slot: 'side',
+    note: 'Today\u2019s date and a personal greeting, with four counters squared up beside them.',
+    hero: {
+      heading: 'Good afternoon, Yash',
+      sub: 'Two approvals are waiting on you, and one request needs more information.',
+      bgKind: 'color', bannerStyle: 'flat', bannerColor: '#EAF1FA',
+      headingColor: '#0B2545', contentAlign: 'left', contentMaxWidth: 100,
+      showSearch: false, height: 260,
+    },
+    page: { heroInk: 'dark' },
+    widgets: [
+      countTile('Open requests', 'My requests', 'ticket'),
+      countTile('Approvals', 'Approvals waiting on me', 'shieldcheck'),
+      countTile('My changes', 'My changes', 'refreshcw'),
+      countTile('My assets', 'My assets', 'laptop'),
+    ],
+  },
+  {
+    id: 'broadsheet', name: 'Broadsheet', orientation: 'horizontal', from: '4b',
+    note: 'A department masthead — a big title over a pale ground, no search to compete with it.',
+    hero: {
+      heading: 'Information Technology',
+      sub: 'Hardware, software, access and connectivity — raise a ticket or find the answer yourself.',
+      bgKind: 'color', bannerStyle: 'flat', bannerColor: '#EEF3FA',
+      headingColor: '#0B2545', contentAlign: 'left', contentMaxWidth: 100,
+      showSearch: false, height: 260,
+    },
+    page: { heroInk: 'dark' },
+  },
+  {
+    id: 'atlas', name: 'Atlas', orientation: 'horizontal', from: '3g',
+    note: 'A dark rounded band lit from behind — the search sits inside it, on the brand colour.',
+    hero: {
+      heading: 'Welcome back, Yash',
+      sub: 'Two approvals need you today. Everything else is moving.',
+      bgKind: 'color', bannerStyle: 'gradient', bannerColor: '#0B2545',
+      headingColor: '#FFFFFF', contentAlign: 'left', contentMaxWidth: 100,
+      showSearch: true, searchWidth: 55, searchRadius: 10, height: 260,
+    },
+    page: { heroArt: 'shapes' },
+  },
+
+  /* ── Tall bands: the banner is the top half of the page ─────────────────────────────── */
+  {
+    id: 'prism', name: 'Prism', orientation: 'horizontal', from: '2a',
+    note: 'A soft tinted panel with concentric rings behind the words — warm, and not corporate.',
+    hero: {
+      heading: 'How can we help you today?',
+      sub: 'Search the knowledge base, or raise a request and we will route it.',
+      bgKind: 'color', bannerStyle: 'light', bannerColor: '#E6F4EC',
+      headingColor: '#0C2F24', contentAlign: 'left', contentMaxWidth: 100,
+      showSearch: true, searchWidth: 70, searchRadius: 12, height: 360,
+    },
+    page: { heroInk: 'dark', heroArt: 'rings' },
+  },
+  {
     id: 'portico', name: 'Portico', orientation: 'horizontal', from: '4d', hasImage: true,
-    note: 'Your own artwork beside the words — the one layout that carries a picture.',
+    note: 'Your own artwork beside the words — the one layout that carries a picture in the band.',
     hero: {
       heading: 'Welcome to Acme IT',
       sub: 'Raise a ticket, request a service or search the knowledge base.',
@@ -930,6 +1049,109 @@ export const BANNER_LAYOUTS: BannerLayout[] = [
     },
     page: { heroInk: 'dark' },
   },
+  {
+    id: 'atrium', name: 'Atrium', orientation: 'horizontal', from: '4e',
+    /* ⚠️ `bgKind: 'image'` with nothing uploaded falls back to a dark gradient, which is a
+       usable band AND an invitation to add the photograph — not an empty frame. */
+    note: 'A photograph across the whole band, with the welcome reading over the dark end of it.',
+    hero: {
+      heading: 'IT Service Desk & Support Centre',
+      sub: 'Hardware, software, access and connectivity — raise a ticket or find the answer yourself.',
+      bgKind: 'image', headingColor: '#FFFFFF', contentAlign: 'left', contentMaxWidth: 100,
+      showSearch: false, height: 360,
+    },
+  },
+  {
+    id: 'wayfinder', name: 'Wayfinder', orientation: 'horizontal', from: '3i', slot: 'side',
+    note: 'A search-led welcome on a pale ground, with the numbers held to one side of it.',
+    hero: {
+      heading: 'Find the help you need, in one search.',
+      sub: 'Search the knowledge base and the service catalog, or raise a ticket and we will route it.',
+      bgKind: 'color', bannerStyle: 'flat', bannerColor: '#F7F9FB',
+      headingColor: '#0B2545', contentAlign: 'left', contentMaxWidth: 100,
+      showSearch: true, searchWidth: 90, searchRadius: 8, height: 360,
+    },
+    page: { heroInk: 'dark' },
+    widgets: [
+      countTile('Open requests', 'My requests', 'ticket'),
+      countTile('Approvals', 'Approvals waiting on me', 'shieldcheck'),
+    ],
+  },
+  {
+    id: 'employeecenter', name: 'Employee Center', orientation: 'horizontal', from: '4p',
+    note: 'A wide photographic welcome sized to sit above a row of category shortcuts.',
+    hero: {
+      heading: 'Welcome back, Yash',
+      sub: 'Report a fault, request a service, or find the answer yourself.',
+      bgKind: 'image', headingColor: '#FFFFFF', contentAlign: 'left', contentMaxWidth: 100,
+      showSearch: false, height: 360,
+    },
+  },
+  {
+    id: 'servicecenter', name: 'Service Center', orientation: 'horizontal', from: '4a', hasImage: true,
+    note: 'A dark announcement panel with the picture beside it — the band leads with the news.',
+    hero: {
+      heading: 'Hi Yash, welcome to the Support Center',
+      sub: 'Raise a ticket, request a service, or read what is going on this week.',
+      bgKind: 'color', bannerStyle: 'gradient', bannerColor: '#0B2545',
+      headingColor: '#FFFFFF', contentAlign: 'left', contentMaxWidth: 100,
+      showSearch: true, searchWidth: 100, searchRadius: 6, height: 480,
+    },
+  },
+  {
+    id: 'bulletin', name: 'Bulletin', orientation: 'horizontal', from: '3j',
+    note: 'The tallest search-first band — one question, one field, and room to breathe.',
+    hero: {
+      heading: 'Find the help you need, in one search.',
+      sub: 'Search the knowledge base and the service catalog, or raise a ticket and we will route it.',
+      bgKind: 'color', bannerStyle: 'flat', bannerColor: '#F7F9FB',
+      headingColor: '#0B2545', contentAlign: 'left', contentMaxWidth: 70,
+      showSearch: true, searchWidth: 75, searchRadius: 8, height: 480,
+    },
+    page: { heroInk: 'dark' },
+  },
+  {
+    id: 'counter', name: 'Counter', orientation: 'horizontal', from: '3c',
+    note: 'A full brand-colour band with the title set large on the left and the search opposite.',
+    hero: {
+      heading: 'Welcome to Support Portal',
+      sub: 'Priority incidents are routed to second line automatically.',
+      bgKind: 'color', bannerStyle: 'flat', bannerColor: '#1F6FD0',
+      headingColor: '#FFFFFF', contentAlign: 'left', contentMaxWidth: 100,
+      showSearch: true, searchWidth: 45, searchRadius: 12, height: 480,
+    },
+    page: { heroArt: 'counter' },
+  },
+  {
+    id: 'broadside', name: 'Broadside', orientation: 'horizontal', from: '4h', slot: 'below',
+    note: 'Centred and editorial, on a warm ground, with the counts under the search.',
+    hero: {
+      heading: 'How can we help you today?',
+      sub: 'Report a fault, request a service, or read your way to the answer.',
+      bgKind: 'color', bannerStyle: 'flat', bannerColor: '#F5F1E8',
+      headingColor: '#3B2A1A', contentAlign: 'center', contentMaxWidth: 70,
+      showSearch: true, searchWidth: 60, searchRadius: 0, height: 480,
+    },
+    page: { heroInk: 'dark' },
+    widgets: [
+      countTile('Open requests', 'My requests', 'ticket'),
+      countTile('Approvals', 'Approvals waiting on me', 'shieldcheck'),
+      countTile('Assets & CIs', 'My assets', 'laptop'),
+    ],
+  },
+  {
+    id: 'helpdesk', name: 'Help Desk', orientation: 'horizontal', from: '4a2',
+    note: 'The classic service-desk front door: one centred question over a deep solid ground.',
+    hero: {
+      heading: 'How can we help you?',
+      sub: 'Search solutions, services, announcements and requests.',
+      bgKind: 'color', bannerStyle: 'flat', bannerColor: '#274472',
+      headingColor: '#FFFFFF', contentAlign: 'center', contentMaxWidth: 70,
+      showSearch: true, searchWidth: 75, searchRadius: 4, height: 480,
+    },
+  },
+
+  /* ── Vertical: the band stops being a strip across the top and becomes a column ─────── */
   {
     id: 'frontdesk', name: 'Front Desk', orientation: 'vertical', from: '4f',
     note: 'A full-height counter down the side, with everything you own beside it.',

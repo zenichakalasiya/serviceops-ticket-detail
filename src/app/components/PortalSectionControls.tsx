@@ -6,6 +6,10 @@
  */
 
 import type { ReactNode } from 'react';
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { Check, X } from 'lucide-react';
+import type { BannerLayout } from './supportPortalData';
 
 /* ── Card templates ──────────────────────────────────────────────────────────
  *
@@ -75,79 +79,216 @@ export function TemplatePicker({ value, onChange, only }: {
  * ⚠️ VERTICAL tiles are only in the list on a from-scratch page. Choosing one restructures the
  * whole page into two columns, which is not something a control sitting under "Height" should do
  * to a portal that already has content on it. */
-export function BannerLayoutPicker({ value, options, onChange }: {
-  value: string;
-  options: { id: string; name: string; note: string; orientation: 'horizontal' | 'vertical' }[];
-  onChange: (v: string) => void;
-}) {
+/* ── Banner layout ──────────────────────────────────────────────────────────
+ *
+ * A POPUP, not a grid in the panel. There are twenty-two of these — the reference canvas's
+ * twenty-one artboards plus `classic` — and each needs a sketch and a line saying what it is FOR.
+ * Three-up in a 340px sidebar that is already a long scroll, choosing one means losing your place
+ * in everything else. So the panel carries ONE row saying what the banner is now, and the choosing
+ * happens on a surface big enough to compare them side by side.
+ *
+ * ⚠️ Portalled to `document.body` with fixed positioning. The design panel is `overflow-y-auto`,
+ * and CSS forbids one axis being `visible` while the other scrolls, so a popup rendered inside it
+ * is clipped the moment it is taller than the space below its field. Same trap already recorded
+ * for the drawer tab strip, the listing kebab and the table column menu — this is the fourth. */
+
+/** ⚠️ The sketch is DERIVED from the layout's own record, never written per id. Twenty-two
+ *  hand-drawn branches is twenty-two chances for a tile to promise a shape the layout does not
+ *  make, and a layout added later would silently fall through to a generic block. Everything the
+ *  drawing needs is already on the record: the ground colour, the ink, the height, the alignment,
+ *  whether there is a search, how many counters and which side they sit, whether there is a
+ *  picture, and — for a vertical one — how wide the column is.
+ *  ⚠️ Colours are INLINE styles, not interpolated Tailwind classes. A class built by
+ *  interpolation never appears in the source Tailwind scans, so the utility is never generated
+ *  and the tile renders unstyled — the trap the element-preview file already carries a note on. */
+function LayoutArt({ l }: { l: BannerLayout }) {
+  const h = l.hero as Record<string, unknown>;
+  const page = (l.page ?? {}) as Record<string, unknown>;
+  /* An image band has no colour yet, so it draws as the dark gradient the renderer actually falls
+     back to when nothing has been uploaded — not as an empty frame. */
+  const img = h.bgKind === 'image';
+  const ground = img ? '#25344B' : String(h.bannerColor ?? '#3D8BD0');
+  const ink = String(h.headingColor ?? '#FFFFFF');
+  const align = String(h.contentAlign ?? 'center');
+  const search = h.showSearch !== false;
+  const counts = l.widgets?.length ?? 0;
+
+  const line = (w: string, strong?: boolean) => (
+    <span className={`block h-[3px] ${w} rounded-full`} style={{ background: ink, opacity: strong ? 0.9 : 0.42 }} />
+  );
+  const field = () => (
+    <span className="block h-[7px] w-3/4 rounded-[2px]" style={{ background: ink, opacity: 0.22 }} />
+  );
+  const cell = (k: number) => (
+    <span key={k} className="block h-[11px] w-[11px] flex-none rounded-[2px]" style={{ background: ink, opacity: 0.3 }} />
+  );
+  const cells = () => <>{Array.from({ length: counts }, (_, k) => cell(k))}</>;
+
+  /* The page BELOW the band, so a tall banner reads as tall — a band drawn at a constant height
+     would make Bulletin and Dispatch look like the same layout with different words. */
+  const rest = (
+    <span className="flex flex-1 flex-col gap-[3px] bg-white px-1.5 pt-1.5">
+      <span className="block h-[3px] w-full rounded-full bg-[#E5E9EF]" />
+      <span className="block h-[3px] w-2/3 rounded-full bg-[#E5E9EF]" />
+    </span>
+  );
+
+  if (l.orientation === 'vertical') {
+    /* A column, and its real share of the width — Front Desk is a rail, Half Deck is half. */
+    const w = Math.round((Number(page.heroWidth ?? 380) / 1280) * 100);
+    return (
+      <span className="flex h-full w-full overflow-hidden rounded-[4px] border border-[#E5E9EF] bg-white">
+        <span className="flex flex-none flex-col justify-center gap-[4px] px-1.5" style={{ width: `${w}%`, background: ground }}>
+          {line('w-full', true)}{line('w-2/3')}
+          {search && <span className="mt-0.5 block w-full">{field()}</span>}
+        </span>
+        <span className="flex flex-1 flex-col justify-center gap-[3px] px-1.5">
+          <span className="block h-[3px] w-full rounded-full bg-[#E5E9EF]" />
+          <span className="block h-[3px] w-3/4 rounded-full bg-[#E5E9EF]" />
+          <span className="block h-[3px] w-full rounded-full bg-[#E5E9EF]" />
+        </span>
+      </span>
+    );
+  }
+
+  /* 180 / 260 / 360 / 480 mapped across the tile, so the four steps of the Height rail are four
+     visibly different tiles rather than a spread nobody can read. */
+  const band = Math.max(38, Math.min(84, Math.round((Number(h.height ?? 260) / 600) * 100)));
+  const items = align === 'center' ? 'items-center' : align === 'right' ? 'items-end' : 'items-start';
+
   return (
-    <div className="grid grid-cols-3 gap-2">
-      {options.map((t) => {
-        const on = value === t.id;
-        const bar = (w: string, faint?: boolean) => (
-          <span className={`block h-[3px] ${w} rounded-full ${faint ? 'bg-[#EEF2F6]' : on ? 'bg-[#3D8BD0]/35' : 'bg-[#DFE5ED]'}`} />
-        );
-        const cell = () => (
-          <span className={`h-3 w-3 flex-none rounded-[2px] border ${on ? 'border-[#3D8BD0]/40 bg-[#3D8BD0]/10' : 'border-[#DFE5ED] bg-[#F7F9FC]'}`} />
-        );
-        /* Each sketch is the shape THAT layout makes — a tile can never promise an arrangement
-           you do not get, the same rule the card templates above follow. */
-        const art = () => {
-          if (t.orientation === 'vertical') {
-            const wide = t.id === 'halfdeck';
-            return (
-              <span className="flex h-[38px] w-full gap-1">
-                <span className={`flex ${wide ? 'w-1/2' : 'w-1/3'} flex-col justify-center gap-[3px] rounded-[3px] px-1.5 ${on ? 'bg-[#3D8BD0]/20' : 'bg-[#DFE5ED]'}`}>
-                  <span className="block h-[3px] w-full rounded-full bg-white/70" />
-                  <span className="block h-[3px] w-2/3 rounded-full bg-white/50" />
-                </span>
-                <span className="flex flex-1 flex-col justify-center gap-1">
-                  {bar('w-full', true)}{bar('w-full', true)}
-                </span>
-              </span>
-            );
-          }
-          if (t.id === 'rails') return (
-            <span className="flex h-[38px] w-full items-center gap-2">
-              <span className="flex flex-1 flex-col gap-[3px]">{bar('w-full')}{bar('w-2/3', true)}</span>
-              <span className="flex gap-1">{cell()}{cell()}{cell()}</span>
-            </span>
-          );
-          if (t.id === 'broadside') return (
-            <span className="flex h-[38px] w-full flex-col items-center justify-center gap-[3px]">
-              {bar('w-2/3')}{bar('w-1/2', true)}
-              <span className="mt-0.5 flex gap-1">{cell()}{cell()}{cell()}</span>
-            </span>
-          );
-          if (t.id === 'portico') return (
-            <span className="flex h-[38px] w-full items-center gap-2">
-              <span className={`h-full w-2/5 flex-none rounded-[3px] ${on ? 'bg-[#3D8BD0]/25' : 'bg-[#DFE5ED]'}`} />
-              <span className="flex flex-1 flex-col gap-[3px]">{bar('w-full')}{bar('w-3/4', true)}{bar('w-full', true)}</span>
-            </span>
-          );
-          return (
-            <span className={`flex h-[38px] w-full flex-col items-center justify-center gap-[3px] rounded-[3px] ${on ? 'bg-[#3D8BD0]/12' : 'bg-[#F7F9FC]'}`}>
-              {bar('w-1/2')}{bar('w-2/3', true)}
-            </span>
-          );
-        };
-        return (
-          <button
-            key={t.id}
-            onClick={() => onChange(t.id)}
-            title={t.note}
-            className={`flex flex-col items-center gap-1.5 rounded-lg border-2 bg-white p-2 transition-colors ${
-              on ? 'border-[#3D8BD0]' : 'border-[#E5E7EB] hover:border-[#C3CBD6]'
-            }`}
-          >
-            {art()}
-            <span className={`w-full truncate text-center text-[10.5px] leading-none ${on ? 'text-[#3D8BD0]' : 'text-[#7B8FA5]'}`}>{t.name}</span>
-          </button>
-        );
-      })}
-    </div>
+    <span className="flex h-full w-full flex-col overflow-hidden rounded-[4px] border border-[#E5E9EF] bg-white">
+      <span className="flex flex-none items-center gap-1.5 px-1.5" style={{ height: `${band}%`, background: ground }}>
+        {l.hasImage && (
+          <span className="h-[70%] w-[34%] flex-none rounded-[2px]" style={{ background: ink, opacity: 0.22 }} />
+        )}
+        <span className={`flex min-w-0 flex-1 flex-col justify-center gap-[3px] ${items}`}>
+          {line('w-full', true)}
+          {line('w-2/3')}
+          {search && <span className={`mt-0.5 flex w-full ${items}`}>{field()}</span>}
+          {l.slot === 'below' && counts > 0 && (
+            <span className={`mt-0.5 flex w-full gap-1 ${items}`}>{cells()}</span>
+          )}
+        </span>
+        {l.slot === 'side' && counts > 0 && <span className="flex flex-none gap-1">{cells()}</span>}
+      </span>
+      {rest}
+    </span>
   );
 }
+
+export function BannerLayoutPicker({ value, options, onChange }: {
+  value: string;
+  options: BannerLayout[];
+  onChange: (v: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const cur = options.find((o) => o.id === value) ?? options[0];
+
+  /* Escape closes. A modal that can only be dismissed by aiming at a 28px ✕ is a modal people
+     learn to avoid opening. */
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open]);
+
+  if (!cur) return null;
+
+  const across = options.filter((o) => o.orientation === 'horizontal');
+  const down = options.filter((o) => o.orientation === 'vertical');
+
+  const tile = (l: BannerLayout) => {
+    const on = l.id === value;
+    return (
+      <button
+        key={l.id}
+        onClick={() => { onChange(l.id); setOpen(false); }}
+        className={`group flex flex-col gap-2 rounded-lg border-2 bg-white p-2 text-left transition-colors ${
+          on ? 'border-[#3D8BD0]' : 'border-[#E5E7EB] hover:border-[#C3CBD6]'
+        }`}
+      >
+        <span className="relative block h-[74px] w-full">
+          <LayoutArt l={l} />
+          {on && (
+            <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#3D8BD0] text-white">
+              <Check size={11} strokeWidth={3} />
+            </span>
+          )}
+        </span>
+        <span className="block min-w-0">
+          <span className={`block truncate text-[12.5px] font-medium ${on ? 'text-[#3D8BD0]' : 'text-[#364658]'}`}>{l.name}</span>
+          <span className="mt-0.5 block text-[11px] leading-[1.45] text-[#7B8FA5]">{l.note}</span>
+        </span>
+      </button>
+    );
+  };
+
+  const group = (title: string, sub: string, list: BannerLayout[]) => (
+    <div>
+      <div className="mb-0.5 text-[11px] font-semibold uppercase tracking-[0.09em] text-[#7B8FA5]">{title}</div>
+      <div className="mb-3 text-[11.5px] text-[#94A3B8]">{sub}</div>
+      <div className="grid grid-cols-3 gap-3">{list.map(tile)}</div>
+    </div>
+  );
+
+  return (
+    <>
+      {/* The panel row: which banner this IS, and the way to change it. A button that only ever
+          read "Choose banner layout" would hide the answer to the question it is next to. */}
+      <button
+        onClick={() => setOpen(true)}
+        className="flex w-full items-center gap-2.5 rounded border border-[#DFE5ED] bg-white p-1.5 text-left transition-colors hover:border-[#C3CBD6]"
+      >
+        <span className="block h-9 w-[52px] flex-none"><LayoutArt l={cur} /></span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-[12.5px] font-medium text-[#364658]">{cur.name}</span>
+          <span className="block truncate text-[11px] text-[#7B8FA5]">{cur.note}</span>
+        </span>
+        <span className="flex-none pr-1 text-[12px] font-medium text-[#3D8BD0]">Choose</span>
+      </button>
+
+      {open && createPortal(
+        <div
+          className="fixed inset-0 z-[10050] flex items-center justify-center bg-black/40 p-6"
+          onClick={() => setOpen(false)}
+        >
+          <div
+            className="flex max-h-[82vh] w-[860px] max-w-full flex-col overflow-hidden rounded-xl bg-white shadow-[0_24px_60px_rgba(11,27,63,0.28)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex flex-none items-center gap-3 border-b border-[#E5E7EB] px-5 py-3.5">
+              <div className="min-w-0">
+                <div className="text-[15px] font-semibold text-[#1E293B]">Choose banner layout</div>
+                <div className="mt-0.5 text-[12px] text-[#7B8FA5]">
+                  {options.length} layouts. Picking one restyles the banner and places what it carries — your
+                  {' '}heading, sub-heading and search are kept.
+                </div>
+              </div>
+              <div className="flex-1" />
+              <button
+                onClick={() => setOpen(false)}
+                className="flex size-8 flex-none items-center justify-center rounded text-[#6B7280] transition-colors hover:bg-[#F3F4F6]"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="flex-1 space-y-7 overflow-y-auto px-5 py-5">
+              {group('Across the top', 'The banner is a band over the page, and the page below it is unchanged.', across)}
+              {/* ⚠️ Only a from-scratch page is offered these — `bannerLayoutsFor` has already
+                  filtered them out otherwise, so the heading cannot appear over an empty grid. */}
+              {down.length > 0 && group('Down the side', 'The banner becomes a full-height column and the page divides in two.', down)}
+            </div>
+          </div>
+        </div>,
+        document.body,
+      )}
+    </>
+  );
+}
+
 
 /* ── Icon-only alignment rows ───────────────────────────────────────────────
  *
