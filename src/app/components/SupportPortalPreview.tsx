@@ -1751,7 +1751,14 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                 </span>
                 </Sel>}
                 <span className={`min-w-0 flex-1 ${centre ? 'w-full' : ''}`}>
-                  <span style={{ ...roleStyle(styles, `${a.id}-title`, 'title'), ...(centre && !styles[`${a.id}-title`]?.align ? { textAlign: 'center' as const } : {}) }} className="block truncate text-[16px] font-semibold text-[#364658]">{String(c.title ?? a.title)}</span>
+                  {/* ⚠️ Wrapped, exactly as the subtitle below it already was. This span carried the
+                      title's roleStyle but no `Sel`, so the four fixed action cards had no title
+                      NODE at all — which is what made their headings unselectable and uneditable on
+                      the canvas, independently of `hasFixedTitle`. Emptying that set alone would
+                      have fixed the six live-data cards and left these four exactly as they were. */}
+                  <Sel id={`${a.id}-title`}>
+                    <span style={{ ...roleStyle(styles, `${a.id}-title`, 'title'), ...(centre && !styles[`${a.id}-title`]?.align ? { textAlign: 'center' as const } : {}) }} className="block truncate text-[16px] font-semibold text-[#364658]">{String(c.title ?? a.title)}</span>
+                  </Sel>
                   {String(c.sub ?? a.desc) !== '' && (
                     <Sel id={`${a.id}-sub`}>
                       <span style={{ ...roleStyle(styles, `${a.id}-sub`, 'body'), ...(centre && !styles[`${a.id}-sub`]?.align ? { textAlign: 'center' as const } : {}) }} className="block truncate text-[13px] text-[#7B8FA5]">{String(c.sub ?? a.desc)}</span>

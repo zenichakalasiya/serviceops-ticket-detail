@@ -537,15 +537,20 @@ export const fontCss = (id?: string) => PORTAL_FONTS.find((f) => f.id === id)?.c
 /* ⚠️ `quick-link` is deliberately ABSENT. Every other card in this row is a product destination
    whose name the product owns; that one exists to say where an admin's link goes, so its title is
    theirs to write — which is the whole difference between it and the four beside it. */
-const FIXED_TITLE_NODES = new Set([
-  'requests', 'approvals', 'knowledge', 'assets', 'cis', 'news', 'services', 'favourites', 'contact',
-  'quick-incident', 'quick-service', 'quick-ad', 'quick-knowledge',
-]);
-const FIXED_TITLE_TYPES = new Set([
-  'c-requests', 'c-approvals', 'c-assets', 'c-cis', 'c-announcements', 'c-knowledge',
-  'c-services', 'c-favourites', 'c-contact',
-  'act-incident', 'act-service', 'act-ad', 'act-knowledge', 'x-action-card',
-]);
+/* ⚠️ BOTH SETS ARE NOW EMPTY — every predefined widget's heading is editable again, on the canvas
+   and in its panel, which is what the two halves of this decision have to agree on.
+   The argument above was that a heading you could retype was the last way to make a card lie about
+   what it lists. What it produced instead was a card nobody could label in their own words: a
+   portal that calls a request a "ticket", or runs in a language this product does not ship, had no
+   way to say so — and the rename it was guarding against is visible on the canvas the moment it is
+   made, by the person making it, on their own portal.
+   ⚠️ Only the WORDS moved. What each card LISTS is still the backend's: the live-data cards keep
+   their empty `fields` for statuses, scope and row counts, and the four action cards still have no
+   destination control. Renaming "My Open Requests" changes the heading, never the query.
+   ⚠️ Kept as a mechanism rather than deleted, with its five call sites intact — putting any widget
+   back to a fixed heading is adding its id to one of these sets. */
+const FIXED_TITLE_NODES = new Set<string>([]);
+const FIXED_TITLE_TYPES = new Set<string>([]);
 
 /** True when this widget's heading is fixed — render the words, do not wrap them in a Sel. */
 export function hasFixedTitle(nodeId?: string): boolean {

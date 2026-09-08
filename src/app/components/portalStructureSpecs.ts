@@ -168,13 +168,18 @@ export const SECTION_SPEC: WidgetSpec = {
      with border + radius only. Fields that do not apply are removed, never greyed. */
   panel: {
     content: [
-      /* ⚠️ ONLY on the Quick Actions row. `__quickRow` is seeded by `cfgFor` for that one node, so
-         every other section's Content section stays empty and drops out entirely — the same
-         `hasContentSection` rule that hides a heading introducing nothing.
-         ⚠️ This does NOT reopen `LOCKED_ROWS`. The row still refuses everything the palette can
-         offer, by drag or by click; it gains ONE card, from its own panel, with a fixed destination.
-         A locked row and a row with one door are different things. */
-      { key: '__addLink', label: '', control: 'addLinkCard', when: (c) => c.__quickRow === true },
+      /* ⚠️ The "External link card" CTA is WITHHELD, not deleted — the pattern this file already
+         follows for `PORTAL_TEMPLATES`/`VISIBLE_TEMPLATES` and `RECORD_MODULES`. Quick Actions is
+         the product's four destinations, and a fifth card an admin points anywhere is a different
+         kind of thing sitting in a row that reads as one set.
+         ⚠️ Everything BEHIND it stays and still works: the `act_link` spec, the `quick-link` node,
+         `addLinkCard` in the builder and `__hasLink`/`LINK_CARD_ID`. A page that already carries a
+         link card — or a future template seeding one into `rowOrder.quick` — renders, selects and
+         edits it exactly as before; there is simply no longer a control that mints a new one.
+         Putting it back is restoring the one line below, not a rebuild.
+         The generic Action Card element in the palette is still the way to add a card that points
+         wherever you like — it lands in its own section rather than inside the locked row. */
+      // { key: '__addLink', label: '', control: 'addLinkCard', when: (c) => c.__quickRow === true },
       /* ⚠️ NO Name field. It was editor-only — "Only you see this" — and NOTHING read it: the hover
          chip, the breadcrumb and the drawer title all take their words from `nodeById`, which
          hard-codes them, which is why the panel says "Cards Row / Section" whatever you typed. A

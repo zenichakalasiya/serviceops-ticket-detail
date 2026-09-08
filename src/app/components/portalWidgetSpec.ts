@@ -303,6 +303,15 @@ const listCardDefaults = {
 
 /* ── the registry ────────────────────────────────────────────────────────── */
 
+/* The one Title row every predefined card now carries.
+ *
+ * ⚠️ Declared ONCE and shared. These nine specs are the widgets whose CONTENT is the backend's —
+ * their `fields` are otherwise empty on purpose — so the single row they do carry has to be
+ * identical across all of them, or one card's heading control drifts from its neighbour's.
+ * ⚠️ It edits the HEADING and nothing else. Statuses, scope, row counts and destinations stay out
+ * of these panels for the reasons recorded on each spec. */
+const TITLE_FIELD: WidgetField = { key: 'title', label: 'Title', control: 'text', group: 'Content' };
+
 export const WIDGET_SPECS: WidgetSpec[] = [
   /* ─────────── §7.1 My Open Requests ─────────── */
   {
@@ -312,7 +321,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
     gate: { kind: 'module', setting: 'Request module' },
     /* No fields at all — see the note above the registry. Title, Statuses, Rows to show and the two
        toggles are gone, and with them the Header group that `listCardStyleFields` contributed. */
-    fields: [],
+    fields: [TITLE_FIELD],
     packs: LIVE_CARD_PACKS, roles: LIST_CARD_ROLES,
     defaults: { ...listCardDefaults, title: 'My Open Requests', statuses: ['Open', 'In Progress', 'Pending'], show: 5, showStatus: true, showDate: true },
   },
@@ -321,7 +330,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
   {
     id: 'pending_approvals', name: 'Pending Approvals', group: 'Data', reuse: 'single', family: 'flat',
     gate: { kind: 'permission', setting: 'Allow Requester To Access My Approvals', section: 'Organization' },
-    fields: [],
+    fields: [TITLE_FIELD],
     packs: LIVE_CARD_PACKS, roles: LIST_CARD_ROLES,
     defaults: { ...listCardDefaults, title: 'Pending Approvals', show: 3, showRequester: true, showDate: true },
   },
@@ -330,7 +339,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
   {
     id: 'my_assets', name: 'My Assets', group: 'Data', reuse: 'single', family: 'flat',
     gate: { kind: 'permission', setting: 'Allow Requester to Access My Assets', section: 'Organization' },
-    fields: [],
+    fields: [TITLE_FIELD],
     packs: LIVE_CARD_PACKS, roles: LIST_CARD_ROLES,
     defaults: { ...listCardDefaults, title: 'My Assets', show: 5, showType: true },
   },
@@ -339,7 +348,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
   {
     id: 'my_cis', name: 'My CIs', group: 'Data', reuse: 'single', family: 'flat',
     gate: { kind: 'permission', setting: 'Allow Requester to Access My CI', section: 'Organization' },
-    fields: [],
+    fields: [TITLE_FIELD],
     packs: LIVE_CARD_PACKS, roles: LIST_CARD_ROLES,
     defaults: { ...listCardDefaults, title: 'My CIs', show: 5, showType: true },
   },
@@ -348,7 +357,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
   {
     id: 'announcements', name: 'Announcements', group: 'Data', reuse: 'single', family: 'flat',
     // No total count and no "View all" — an announcement feed has no fuller list to go to.
-    fields: [],
+    fields: [TITLE_FIELD],
     packs: LIVE_CARD_PACKS, roles: LIST_CARD_ROLES,
     defaults: { ...listCardDefaults, title: 'Announcements', show: 3, showDate: true, rowLayout: 'stacked' },
   },
@@ -357,7 +366,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
   {
     id: 'most_read', name: 'Most Read', group: 'Data', reuse: 'single', family: 'flat',
     gate: { kind: 'permission', setting: 'Allow Requester To Access Knowledge', section: 'Organization' },
-    fields: [],
+    fields: [TITLE_FIELD],
     packs: LIVE_CARD_PACKS, roles: LIST_CARD_ROLES,
     defaults: { ...listCardDefaults, title: 'Most Read', show: 3, showCategory: true, showDate: true, rowLayout: 'stacked' },
   },
@@ -383,7 +392,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
        exactly as it did — the values simply stopped being editable. Restoring one is a line in
        `fields`. With nothing left, the CONTENT section is dropped whole, which is the same panel
        the six other live-data widgets already have. */
-    fields: [],
+    fields: [TITLE_FIELD],
     /* ⚠️ No P6. Contact Us has no icon of its own — the group was styling a glyph that is not on
        the widget, which is a control with nothing to act on. P4 goes with the global removal. */
     /* ⚠️ No P8 either. An Empty-state group asks what to show when there is nothing to show —
@@ -424,6 +433,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
     id: 'favourite_services', name: 'Favourite Services', group: 'Data', reuse: 'single', family: 'flat',
     gate: { kind: 'permission', setting: 'Access Service Catalog', section: 'Organization' },
     fields: [
+      TITLE_FIELD,
       { key: 'showDesc', label: 'Show description', control: 'toggle', group: 'Content' },
       /* ⚠️ Its own GROUP, so it reads as a section under Content rather than as one more switch
          inside it — the tile's SHAPE is a different question from what the tile says.
@@ -457,6 +467,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
        rows became a pair that should be shaped together. Every removed value stays in `defaults`,
        so nothing on the canvas moved. */
     fields: [
+      TITLE_FIELD,
       { key: 'showDesc', label: 'Show description', control: 'toggle', group: 'Content' },
       /* ⚠️ Its own GROUP, so it reads as a section under Content rather than as one more switch
          inside it — the tile's SHAPE is a different question from what the tile says.
@@ -521,15 +532,13 @@ export const WIDGET_SPECS: WidgetSpec[] = [
        loser would be whichever was touched last. */
     panel: {
       content: [
-        /* ⚠️ TITLE is withheld from the four FIXED cards. They are the product's destinations, and
-           renaming "New Incident" is how a card ends up describing something it does not do — the
-           same reason its title is not inline-editable on the canvas either. The custom card and the
-           external-link card keep it, because what they say is the whole of what they are.
-           ⚠️ Subtitle and Icon stay on all five: you asked only for the TITLE to be locked, and the
-           subtitle being editable was a deliberate earlier decision. */
-        ...(id === 'act_custom' || id === 'act_link'
-          ? [{ key: 'title', label: 'Title', control: 'text' as const }]
-          : []),
+        /* ⚠️ TITLE is on ALL FIVE now, the four fixed destinations included, and it is editable
+           inline on the canvas as well — see the note on the emptied `FIXED_TITLE_*` sets in
+           portalPageModel. It used to be withheld here on the grounds that renaming "New Incident"
+           makes a card describe something it does not do; the cost was that a portal could not
+           label its own front door in its own words, and the destination is still not editable, so
+           the card cannot be pointed anywhere its name would be wrong. */
+        { key: 'title', label: 'Title', control: 'text' as const },
         { key: 'sub', label: 'Subtitle', control: 'text' },
         { key: 'icon', label: 'Icon', control: 'icon' },
         /* The only place this is chosen now (see SECTION_SPEC). */
