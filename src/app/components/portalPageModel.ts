@@ -568,6 +568,33 @@ export function hasFixedTitle(nodeId?: string): boolean {
  * The top bar and the left rail are the product's chrome, not page content. */
 export const SPLITTABLE_BANDS = new Set(['quick', 'favourites', 'services', 'work', 'records']);
 
+/* The predefined data cards whose "View all" / "Browse catalog" LINK is the product's words.
+ *
+ * ⚠️ A SEPARATE set from `FIXED_TITLE_*`, not the same one read twice. The link used to be gated on
+ * `hasFixedTitle`, on the reasoning that a widget with a fixed heading has a fixed link — which
+ * held only while the two were always decided together. They are not: a card's TITLE is now the
+ * admin's, so they can name the card in their own words, while the link stays the product's,
+ * because it names a DESTINATION the admin cannot change. Sharing one predicate meant opening the
+ * title opened the link with it.
+ * ⚠️ These are the nine cards whose backing query the backend owns. Anything an admin builds — the
+ * Record List above all — is absent by construction and keeps both, because there the words and
+ * the destination genuinely are theirs. */
+const FIXED_VIEWALL_NODES = new Set([
+  'requests', 'approvals', 'knowledge', 'assets', 'cis', 'news', 'services', 'favourites', 'contact',
+]);
+const FIXED_VIEWALL_TYPES = new Set([
+  'c-requests', 'c-approvals', 'c-assets', 'c-cis', 'c-announcements', 'c-knowledge',
+  'c-services', 'c-favourites', 'c-contact',
+]);
+
+/** True when this widget's "View all" link is fixed — render the words, do not wrap them in a Sel. */
+export function hasFixedViewAll(nodeId?: string): boolean {
+  if (!nodeId) return false;
+  if (FIXED_VIEWALL_NODES.has(nodeId)) return true;
+  const t = placedType(nodeId);
+  return !!t && FIXED_VIEWALL_TYPES.has(t);
+}
+
 export type PortalStyles = Record<string, NodeStyle>;
 
 export const TEXT_STYLES = ['PAR', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6'];

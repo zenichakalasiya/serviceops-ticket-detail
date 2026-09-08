@@ -15,7 +15,7 @@ import { Sel, useCanvas } from './PortalCanvas';
 /* The Table is a module of its own — a spreadsheet-grade editor is a different kind of thing from
    the read-only renderers in this file, and it owns its data model, its handles and its menus. */
 import { PortalTable } from './PortalTable';
-import { hasFixedTitle, itemNodeId, subNodeId } from './portalPageModel';
+import { hasFixedTitle, hasFixedViewAll, itemNodeId, subNodeId } from './portalPageModel';
 import type { PortalStyles } from './portalPageModel';
 import { chosen, resolveType, roleStyle } from './portalStyleResolver';
 import { IconFrameBox } from './PortalIconFrame';
@@ -750,12 +750,20 @@ export function FeaturedServicesRender({ nodeId, cfg }: { nodeId: string; cfg: C
             </h3>
           </Sel>
         )}
+        {/* ⚠️ Ungated until now — the browse link was typeable on both service rows while the
+            heading beside it was not, so one row had two rules for its two pieces of text. */}
         {cfg.showBrowse !== false && (
-          <Sel id={`${nodeId}-viewall`} className="flex-shrink-0">
-            <span style={roleStyle(styles, nodeId, 'link')} className="text-[12px] font-medium text-[#3D8BD0]">
+          hasFixedViewAll(nodeId) ? (
+            <span style={roleStyle(styles, nodeId, 'link')} className="flex-shrink-0 text-[12px] font-medium text-[#3D8BD0]">
               {String(cfg.browseLabel ?? 'Browse catalog')}
             </span>
-          </Sel>
+          ) : (
+            <Sel id={`${nodeId}-viewall`} className="flex-shrink-0">
+              <span style={roleStyle(styles, nodeId, 'link')} className="text-[12px] font-medium text-[#3D8BD0]">
+                {String(cfg.browseLabel ?? 'Browse catalog')}
+              </span>
+            </Sel>
+          )
         )}
       </div>
       {/* ⚠️ The SAME tiles as Favourite Services. These two sit on one page and list the same kind
@@ -1176,9 +1184,14 @@ function LiveCard({ nodeId, cfg, title, count, rows }: {
           ))}
         {cfg.showViewAll !== false && (
           <span style={roleStyle(styles, nodeId, 'link')} className="flex flex-shrink-0 items-center gap-1 text-[#7B8FA5]">
-            <Sel id={`${nodeId}-viewall`} className="hidden px-0.5 @min-[240px]:inline-block">
-              <span className="text-[12px] font-medium">{String(cfg.viewAllLabel ?? 'View all')}</span>
-            </Sel>
+            {/* Same rule as CardShell's copy of this link — see `hasFixedViewAll`. */}
+            {hasFixedViewAll(nodeId) ? (
+              <span className="hidden px-0.5 text-[12px] font-medium @min-[240px]:inline-block">{String(cfg.viewAllLabel ?? 'View all')}</span>
+            ) : (
+              <Sel id={`${nodeId}-viewall`} className="hidden px-0.5 @min-[240px]:inline-block">
+                <span className="text-[12px] font-medium">{String(cfg.viewAllLabel ?? 'View all')}</span>
+              </Sel>
+            )}
             <ChevronsRight size={16} />
           </span>
         )}

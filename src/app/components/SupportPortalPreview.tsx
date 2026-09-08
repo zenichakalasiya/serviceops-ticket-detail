@@ -20,7 +20,7 @@ import { PAGE_ID, chosen, roleStyle } from './portalStyleResolver';
 import { bannerLayout } from './supportPortalData';
 import { shadowCss } from './PortalBoxControls';
 import { PortalPlacedElement } from './PortalPlacedElement';
-import { DEFAULT_BLOCK_ORDER, DEFAULT_CONTENT, DEFAULT_ROW_ORDER, fillCss, isBranch, nodePath, isLockedRow, hasFixedTitle, rowOf } from './portalPageModel';
+import { DEFAULT_BLOCK_ORDER, DEFAULT_CONTENT, DEFAULT_ROW_ORDER, fillCss, isBranch, nodePath, isLockedRow, hasFixedTitle, hasFixedViewAll, rowOf } from './portalPageModel';
 import type { Box, BoxDir, CustomSection, PlacedElement, PortalPageContent } from './portalPageModel';
 import { iconNode, isImageChoice } from './PortalIconPicker';
 import type { IconChoice } from './PortalIconPicker';
@@ -1129,14 +1129,12 @@ function CardShell({ nodeId, titleNodeId, title, count, cfg = EMPTY_CFG, hideHea
             {/* ⚠️ The LABEL is its own node, the chevron is not. The words are the admin's to rewrite;
                 the chevron is the affordance that says "this goes somewhere" and belongs to the
                 product. Wrapping both would offer to edit an arrow. */}
-            {/* ⚠️ `hasFixedTitle` gates the LINK as well as the heading. A predefined widget's
-                words are the product's — that rule was applied to the title and missed here, so the
-                one thing still editable on My Open Requests was "View all", which is the last text
-                on the card anybody should be renaming. Same predicate, so the two cannot drift: if a
-                widget's heading is fixed, its link is too.
-                A Record List and anything else an admin builds keeps both, because there the words
-                genuinely are theirs. */}
-            {cfg.viewAllLabel && rid && !hasFixedTitle(rid) ? (
+            {/* ⚠️ `hasFixedViewAll`, NOT `hasFixedTitle`. These were one predicate on the reasoning
+                that a widget with a fixed heading has a fixed link — true only while the two were
+                always decided together, which they no longer are. The card's TITLE is the admin's
+                now; the link names a DESTINATION they cannot change, so it stays the product's.
+                A Record List and anything else an admin builds keeps both. */}
+            {cfg.viewAllLabel && rid && !hasFixedViewAll(rid) ? (
               <Sel id={`${rid}-viewall`} className="hidden px-0.5 @min-[240px]:inline-block">
                 <span className="text-[12px] font-medium">{String(cfg.viewAllLabel)}</span>
               </Sel>
