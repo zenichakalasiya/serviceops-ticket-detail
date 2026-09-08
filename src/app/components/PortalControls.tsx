@@ -399,6 +399,54 @@ export function NumberField({ value, onChange, min = 0, max = 999, unit }: {
 
 /* ── Slider — always paired with an editable numeric readout (spec §3) ───── */
 
+/* ── A rail with named stops ─────────────────────────────────────────────────
+ *
+ * ⚠️ A RAIL, not a row of tabs, for a value whose options are ORDERED. Four tabs say "four
+ * unrelated choices"; a rail says "one axis, pick how far along" — and Short/Standard/Tall/Full
+ * is an axis. It also costs one line instead of a wrapping row of four buttons.
+ * ⚠️ The labels are INITIALS under the stops, so the rail stays one line at any panel width. The
+ * full word is the `title`, for anyone who wants it. */
+export function StepRail({ value, options, onChange }: {
+  value: string;
+  options: { value: string; label: string; title: string }[];
+  onChange: (v: string) => void;
+}) {
+  const n = options.length;
+  /* ⚠️ An unknown stored value lands on 0, never -1 — a rail with its thumb off the left end is
+     how a template carrying an older height would render. */
+  const i = Math.max(0, options.findIndex((o) => o.value === value));
+  return (
+    <div className="pb-1">
+      <input
+        type="range"
+        min={0}
+        max={n - 1}
+        step={1}
+        value={i}
+        onChange={(e) => onChange(options[Number(e.target.value)].value)}
+        className="w-full accent-[#3D8BD0]"
+      />
+      {/* ⚠️ The ends are pulled INSIDE the track. A range thumb's centre travels from half a
+          thumb-width in to half a thumb-width from the end, so labels spread edge to edge sit
+          wider than the stops they name and the first one never lines up. */}
+      <div className="relative mt-0.5 h-4 px-[7px]">
+        {options.map((o, k) => (
+          <button
+            key={o.value}
+            type="button"
+            title={o.title}
+            onClick={() => onChange(o.value)}
+            style={{ left: `calc(${(k / (n - 1)) * 100}% - 12px)` }}
+            className={`absolute top-0 w-6 text-center text-[11px] leading-4 transition-colors ${
+              k === i ? 'font-semibold text-[#3D8BD0]' : 'text-[#9CA3AF] hover:text-[#64748B]'
+            }`}
+          >{o.label}</button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function SliderRow({ value, onChange, min = 0, max = 100, step = 1, unit = 'px' }: {
   value: number; onChange: (v: number) => void; min?: number; max?: number; step?: number; unit?: string;
 }) {

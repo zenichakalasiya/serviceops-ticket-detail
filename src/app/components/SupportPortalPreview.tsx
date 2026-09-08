@@ -1300,6 +1300,12 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
   const heroShapes = String(pageCfg.heroArt ?? 'auto') === 'shapes';
   /* Concentric rounded squares — a counter's own marker, quiet enough to sit behind type. */
   const heroRings = String(pageCfg.heroArt ?? 'auto') === 'rings';
+  /* ⚠️ The banner's SHAPE — what sits beside the heading. Read off the hero's own config rather
+     than `pageCfg`, because it describes this band and not the page: two portals can differ here
+     while sharing everything else.
+     ⚠️ `regular` renders the tree it always did, so no existing page moves. */
+  const bannerType = String(wc('hero').bannerType ?? 'regular');
+  const bannerSide = bannerType === 'card' || bannerType === 'image';
   /* A third `heroArt` value, not a new key — same rule `bannerStyle`'s `light` follows. */
   const heroCounterShapes = String(pageCfg.heroArt ?? 'auto') === 'counter';
   /* Favourite Services and Most Used Services SIDE BY SIDE rather than stacked as two full-width
@@ -1779,6 +1785,46 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
      same "one card, two possible homes" move `quickSection` already makes; authoring it twice is
      two places for every future banner fix to land in.
      ⚠️ Declared AFTER `quickSection`, because the rail archetype mounts that inside this. */
+  /* What sits beside the heading on a "With card" / "With image" banner.
+ *
+ * ⚠️ The card slot is a REAL drop target on the `hero` row, reusing `RowDrop` — the same
+ * mechanism every built-in row uses, so a widget dropped here is stored, selectable, editable and
+ * removable exactly like one dropped anywhere else. A bespoke slot would have been a second
+ * placement path with its own bugs.
+ * ⚠️ The empty state is DASHED and says what it takes. An empty area with no invitation reads as
+ * a banner that has gone wrong rather than one waiting for a card.
+ * ⚠️ ONE or TWO columns, from the banner's own key, so the same row can hold a single tall card
+ * or a pair side by side. */
+  const heroExtras = rowExtras?.['hero'] ?? [];
+  const bannerSlot = bannerType === 'image' ? (
+    <Sel id="hero-side-image" className="block w-full">
+      {wc('hero').sideImage ? (
+        <img src={String(wc('hero').sideImage)} alt="" className="max-h-[220px] w-full rounded-xl object-cover" />
+      ) : (
+        <span className="flex h-[180px] w-full items-center justify-center rounded-xl border border-dashed border-white/40 bg-white/10 text-[12px] text-white/70">
+          Add a picture in the panel
+        </span>
+      )}
+    </Sel>
+  ) : (
+    <RowDrop
+      rowId="hero"
+      className="grid gap-3"
+      style={{ gridTemplateColumns: `repeat(${Math.max(1, Math.min(2, Number(wc('hero').slotCols ?? 1)))}, minmax(0, 1fr))` }}
+    >
+      {heroExtras.map((el) => (
+        <Sel key={el.id} id={el.id} className="min-w-0">
+          <PortalPlacedElement item={el} icon={icons?.[el.id]} text={placedText?.[el.id]} cfg={wc(el.id)} />
+        </Sel>
+      ))}
+      {heroExtras.length === 0 && (
+        <span className="flex h-[150px] items-center justify-center rounded-xl border border-dashed border-white/40 bg-white/10 px-4 text-center text-[12px] leading-[1.5] text-white/70">
+          Drop a card here — Announcements, Contact Us or an action card
+        </span>
+      )}
+    </RowDrop>
+  );
+
   /* Whether this page is carrying a banner at all. A blank portal starts without one. */
   const hasHero = !removed.includes('hero');
   const heroBand = (
@@ -1891,6 +1937,14 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
           className={`relative w-full ${heroSide ? 'px-5 pt-8 pb-5' : 'px-6 py-6'}`}
           style={{ textAlign: heroAlignX(String(wc('hero').contentAlign ?? 'center')) }}
         >
+        {/* ⚠️ `contents` on the REGULAR banner, so the wrapper leaves the layout entirely and the
+            tree every existing page renders is untouched — the same move the rail archetype makes
+            one level up. Only "With card" and "With image" turn it into a real row.
+            ⚠️ `items-center`, not `items-end`: the thing beside the heading is a card or a
+            picture of its own height, and aligning their bottoms leaves the taller one hanging
+            off the top of the band. */}
+        <div className={bannerSide ? 'flex w-full items-center gap-8' : 'contents'}>
+        <div className={bannerSide ? 'min-w-0 flex-1' : 'contents'}>
           {/* ⚠️ BLOCK, not inline-block. Both were inline-block, so the subtitle sat on the
               same line as the heading and the band read as one run-on sentence — "Welcome to
               Support Portal Search our support center knowledge base". A heading and its
@@ -1952,6 +2006,14 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
               />
             </Sel>
           )}
+        </div>
+        {bannerSide && (
+          /* ⚠️ A FIXED 340px column, not a share of the row. The heading is the thing that should
+             reflow as the banner narrows; a card that shrank with it would pass through every
+             width its own contents were never designed for. */
+          <div className="w-[340px] flex-none text-left">{bannerSlot}</div>
+        )}
+        </div>
         </div>
         {/* ⚠️ INSIDE the band and pinned to its bottom edge with a negative margin, so half
             the field sits on the colour and half on the page. Placed after the text block and

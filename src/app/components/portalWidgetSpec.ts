@@ -45,6 +45,15 @@ export type ControlKind =
   | 'templates'
   /** The banner's shape — Regular / With card / With image, drawn rather than named. */
   | 'bannerType'
+  /** An ordered choice on a rail with initials under the stops (banner height). */
+  | 'stepRail'
+  /* ⚠️ Both were in USE and missing from this union, and the casts that would have caught it
+     (`as WidgetField` in portalStructureSpecs) were themselves erroring because the type was never
+     imported there — one silent failure hiding two others. */
+  /** The banner's image slot, with a gallery of ready-made bands behind it. */
+  | 'bannerUpload'
+  /** A section's layout preset row. */
+  | 'sectionPreset'
   /** Horizontal content distribution, icon-only (5). */
   | 'distribute'
   /** Vertical content alignment, icon-only (4). */
@@ -97,8 +106,11 @@ export interface WidgetField {
   unit?: string;
   /* A function when the option SET depends on state — §7.15 only offers the Banner shape while the
      layout is Icon top, because a stretched bar has nowhere to go beside text. */
-  options?: readonly string[] | { value: string; label: string }[]
-    | ((c: Cfg) => readonly string[] | { value: string; label: string }[]);
+  /* ⚠️ `short` is the STEP-RAIL label, and it has to be GIVEN rather than derived. Taking the
+     first letter of Short/Standard/Tall/Full produces "S S T F" — two identical stops on a
+     control whose whole job is telling four positions apart. */
+  options?: readonly string[] | { value: string; label: string; short?: string }[]
+    | ((c: Cfg) => readonly string[] | { value: string; label: string; short?: string }[]);
   /** §2.2 — a field that does not apply is REMOVED, not disabled. */
   when?: (c: Cfg) => boolean;
   /* §2.2 — "changing a parent field that invalidates children clears them and SAYS SO". Returns the

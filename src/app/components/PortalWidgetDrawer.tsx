@@ -30,7 +30,7 @@ import type { BackdropSpec } from './PortalContrastMeter';
 import { ALL_PACKS, packBadge } from './PortalStylePacks';
 import {
   ALIGN_OPTIONS, Badge, ChipEditor, Chips, Field, GridPicker, Group, LogoPair, Note, NumberField, RichText,
-  SelectField, Segmented, SliderRow, TextField, ToggleRow, UploadZone, VideoSource,
+  SelectField, Segmented, SliderRow, StepRail, TextField, ToggleRow, UploadZone, VideoSource,
   MultiSelect,
 } from './PortalControls';
 import { PortalItemList } from './PortalItemList';
@@ -1048,6 +1048,19 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
               ...(x.height !== undefined ? { boxHeight: x.height } : {}),
               ...(x.keep !== undefined ? { keepRatio: x.keep } : {}),
             })}
+          />
+        );
+      case 'stepRail':
+        return (
+          <StepRail
+            value={String(v ?? '')}
+            options={(optionsOf(f) ?? []).map((o) => ({
+              value: String(o.value),
+              /* The spec's own letter, falling back to an initial only when it did not give one. */
+              label: String((o as { short?: string }).short ?? String(o.label ?? o.value).charAt(0).toUpperCase()),
+              title: String(o.label ?? o.value),
+            }))}
+            onChange={(x) => set(f.key, x)}
           />
         );
       case 'bannerType':

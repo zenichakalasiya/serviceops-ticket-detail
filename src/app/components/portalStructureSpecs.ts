@@ -6,7 +6,7 @@
  * the rail and the bar — hold destinations the product owns rather than content the admin writes.
  */
 
-import type { WidgetSpec } from './portalWidgetSpec';
+import type { WidgetField, WidgetSpec } from './portalWidgetSpec';
 
 /* ── §7.20 Banner ────────────────────────────────────────────────────────── */
 
@@ -51,6 +51,18 @@ export const HERO_SPEC: WidgetSpec = {
   fields: [
     { key: 'heading', label: 'Heading', control: 'text', group: 'Content' },
     { key: 'sub', label: 'Sub-heading', control: 'text', group: 'Content' },
+    /* ⚠️ Both gated on the TYPE, because a control for a slot that is not on the band is a
+       control with no referent — §2.2's rule. Picking "Regular" removes them rather than
+       disabling them: absent and disabled mean different things. */
+    {
+      key: 'slotCols', label: 'Cards beside the heading', control: 'segmented', group: 'Content',
+      options: [{ value: '1', label: 'One column' }, { value: '2', label: 'Two columns' }],
+      when: (c) => c.bannerType === 'card',
+    } as WidgetField,
+    {
+      key: 'sideImage', label: 'Picture beside the heading', control: 'upload', suggested: '680 × 440',
+      noun: 'picture', group: 'Content', when: (c) => c.bannerType === 'image',
+    } as WidgetField,
     { key: 'showSearch', label: 'Show the search bar', control: 'toggle', group: 'Content' },
     { key: 'searchPlaceholder', label: 'Search placeholder', control: 'text', group: 'Content', when: (c) => c.showSearch !== false },
     /* ⚠️ FOUR named sizes, not a 120–600px slider. A banner has about four useful heights — enough
@@ -67,12 +79,15 @@ export const HERO_SPEC: WidgetSpec = {
       key: 'bannerType', label: 'Banner type', control: 'bannerType', tab: 'style', group: 'Banner',
     } as WidgetField,
     {
-      key: 'height', label: 'Height', control: 'segmented', tab: 'style', group: 'Banner',
+      /* ⚠️ A RAIL, not four tabs. Height is an ordered axis, and four buttons said four unrelated
+         things — the initials keep it to one line at any panel width. The VALUES are unchanged, so
+         every template and every page already carrying a height renders exactly as before. */
+      key: 'height', label: 'Height', control: 'stepRail', tab: 'style', group: 'Banner',
       options: [
-        { value: '180', label: 'Short' },
-        { value: '260', label: 'Standard' },
-        { value: '360', label: 'Tall' },
-        { value: '480', label: 'Full' },
+        { value: '180', label: 'Short', short: 'S' },
+        { value: '260', label: 'Standard', short: 'M' },
+        { value: '360', label: 'Tall', short: 'L' },
+        { value: '480', label: 'Full', short: 'XL' },
       ],
     },
     /* ⚠️ Background is TWO TABS — Image or Colour — with image the default, because a banner is a
