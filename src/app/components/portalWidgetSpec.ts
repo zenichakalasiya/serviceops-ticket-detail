@@ -357,9 +357,32 @@ export const WIDGET_SPECS: WidgetSpec[] = [
   {
     id: 'announcements', name: 'Announcements', group: 'Data', reuse: 'single', family: 'flat',
     // No total count and no "View all" — an announcement feed has no fuller list to go to.
-    fields: [TITLE_FIELD],
+    /* ⚠️ The one live-data card with a DISPLAY choice, and it is a choice about SHAPE, not about
+       content — which is why it does not reopen the rule that these cards' content is the
+       backend's. WHAT the card lists is still the product's; how many of them you see at once is
+       the page's business, because it is a decision about the space the card is sitting in.
+       ⚠️ Defaults to `regular`, so every portal already carrying this card is untouched. */
+    fields: [
+      TITLE_FIELD,
+      {
+        key: 'display', label: 'Display', control: 'segmented', group: 'Content',
+        options: [{ value: 'regular', label: 'Regular card' }, { value: 'carousel', label: 'Carousel' }],
+        help: 'A regular card lists the latest announcements. A carousel shows one at a time.',
+      },
+      /* ⚠️ The SAME two words the Media Slider uses, deliberately: one carousel mechanism means one
+         pair of names for its two treatments, or identical behaviour reads as two different
+         features depending on which panel you happened to open. */
+      {
+        key: 'sliderType', label: 'Type', control: 'segmented', group: 'Content',
+        when: (c) => c.display === 'carousel',
+        options: [{ value: 'auto', label: 'Automatic' }, { value: 'manual', label: 'Manual' }],
+        help: 'Automatic advances on a timer. Manual is arrows — either way, cards can be dragged.',
+      },
+      { key: 'interval', label: 'Interval', control: 'number', group: 'Content', min: 2, max: 20, when: (c) => c.display === 'carousel' && c.sliderType !== 'manual' },
+      { key: 'dots', label: 'Show dots', control: 'toggle', group: 'Content', when: (c) => c.display === 'carousel' },
+    ],
     packs: LIVE_CARD_PACKS, roles: LIST_CARD_ROLES,
-    defaults: { ...listCardDefaults, title: 'Announcements', show: 3, showDate: true, rowLayout: 'stacked' },
+    defaults: { ...listCardDefaults, title: 'Announcements', show: 3, showDate: true, rowLayout: 'stacked', display: 'regular', sliderType: 'manual', interval: 5, dots: true },
   },
 
   /* ─────────── §7.6 Most Read Knowledge ─────────── */

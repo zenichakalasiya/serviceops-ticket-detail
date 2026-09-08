@@ -347,7 +347,10 @@ function ElementPicker({ mode, onPick, onClose, only, anchorRef, targetId }: {
 
   const groups = PORTAL_ELEMENT_GROUPS.map((g) => ({
     group: g,
-    items: PORTAL_ELEMENTS.filter((e) => e.group === g && !e.onPage
+    /* ⚠️ `!e.hidden` was MISSING here, so every withheld element — Spacer, Advanced Tabs, Action
+       Card, KPI — was reachable from the canvas toolbar while the Widgets panel refused it. Two
+       pickers over one catalogue disagreeing about what exists is worse than either answer. */
+    items: PORTAL_ELEMENTS.filter((e) => e.group === g && !e.onPage && !e.hidden
       && (!q || `${e.name} ${e.keywords ?? ''}`.toLowerCase().includes(q.toLowerCase()))),
   })).filter((g) => g.items.length);
 

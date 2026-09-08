@@ -257,14 +257,23 @@ export const SLIDER_SPEC: WidgetSpec = {
   id: 'media_slider', name: 'Media Slider', group: 'Content', reuse: 'many', family: 'collection',
   fields: [
     { key: 'title', label: 'Title', control: 'text', group: 'Content', help: 'Optional — hidden when blank.' },
-    { key: 'autoplay', label: 'Autoplay', control: 'toggle', group: 'Playback' },
-    { key: 'interval', label: 'Interval', control: 'number', group: 'Playback', min: 2, max: 20, when: (c) => c.autoplay === true },
-    { key: 'pauseOnHover', label: 'Pause on hover', control: 'toggle', group: 'Playback', when: (c) => c.autoplay === true },
+    /* ⚠️ ONE control with TWO named treatments, not four independent switches. `autoplay`,
+       `arrows` and `swipe` were separate toggles, so an admin could turn all three off and reach a
+       slider that cannot be moved at all — and nothing on the panel named the two things the
+       product actually offers. The retired keys stay in `defaults`, so nothing already on a page
+       moved; the renderer reads `sliderType` and treats the rest as floors. */
+    {
+      key: 'sliderType', label: 'Type', control: 'segmented', group: 'Playback',
+      options: [{ value: 'auto', label: 'Automatic' }, { value: 'manual', label: 'Manual' }],
+      help: 'Automatic advances on a timer. Manual is arrows — either way, slides can be dragged.',
+    },
+    { key: 'interval', label: 'Interval', control: 'number', group: 'Playback', min: 2, max: 20, when: (c) => c.sliderType !== 'manual' },
+    { key: 'pauseOnHover', label: 'Pause on hover', control: 'toggle', group: 'Playback', when: (c) => c.sliderType !== 'manual' },
     { key: 'loop', label: 'Loop', control: 'toggle', group: 'Playback' },
-    { key: 'arrows', label: 'Show arrows', control: 'toggle', group: 'Navigation' },
     { key: 'dots', label: 'Show dots', control: 'toggle', group: 'Navigation' },
-    { key: 'swipe', label: 'Allow swipe / drag', control: 'toggle', group: 'Navigation' },
-    // Accessibility floor, not an option (§8.5).
+    /* ⚠️ Drag and keyboard are FLOORS, stated and not offered — the rule the spec already applied
+       to keyboard alone. A carousel nobody can operate is not a variant of a carousel. */
+    { key: 'swipe', label: 'Drag to swipe', control: 'lockedToggle', group: 'Navigation', help: 'Always on. Slides drag left and right under both types.' },
     { key: 'keyboard', label: 'Keyboard navigation', control: 'lockedToggle', group: 'Navigation', help: 'Always on. A slider nobody can tab through is a slider some people cannot use.' },
     { key: 'perView', label: 'Slides per view', control: 'number', tab: 'style', group: 'Track', min: 1, max: 4 },
     { key: 'trackGap', label: 'Gap between slides', control: 'slider', tab: 'style', group: 'Track', min: 0, max: 32 },
@@ -280,6 +289,8 @@ export const SLIDER_SPEC: WidgetSpec = {
     { key: 'slideOverlay', label: 'Text-over-media overlay', control: 'slider', tab: 'style', group: 'Slide', min: 0, max: 80, unit: '%' },
     {
       key: 'arrowPlacement', label: 'Arrow placement', control: 'segmented', tab: 'style', group: 'Arrows',
+      /* Removed, not greyed, on the Automatic type — there are no arrows to place. */
+      when: (c) => c.sliderType === 'manual',
       options: [{ value: 'inside', label: 'Inside' }, { value: 'outside', label: 'Outside' }, { value: 'over', label: 'Over media' }],
     },
     {
@@ -332,11 +343,22 @@ export const SLIDER_SPEC: WidgetSpec = {
     ],
   },
   defaults: {
-    title: '', autoplay: false, interval: 5, pauseOnHover: true, loop: true,
-    arrows: true, dots: true, swipe: true,
+    /* ⚠️ THREE slides on arrival, not one. A slider that lands with a single slide has no arrows,
+       no dots and nothing to drag — it renders as a plain image, so the one thing the admin needs
+       to see to know what they just added is the one thing it cannot show. Three is the smallest
+       number where the dots read as a position rather than as decoration. */
+    title: '', sliderType: 'manual', interval: 5, pauseOnHover: true, loop: true,
+    dots: true,
+    /* Retired keys, kept so a page built before the Type control still resolves every value it
+       stored. Nothing reads `autoplay` or `arrows` any more — `sliderType` answers for both. */
+    autoplay: false, arrows: true, swipe: true,
     perView: 1, trackGap: 0, transition: 'slide', speed: 'normal',
     slideMaxWidth: 60, slideOverlay: 30, arrowPlacement: 'over', dotPlacement: 'over', dotStyle: 'dots',
-    slides: [{ id: 's0', kind: 'image', heading: 'Tell people what matters this week', caption: 'A short line under the heading.', ctaEnabled: false }],
+    slides: [
+      { id: 's0', kind: 'image', heading: 'Tell people what matters this week', caption: 'A short line under the heading.', ctaEnabled: false },
+      { id: 's1', kind: 'image', heading: 'Windows 11 rollout starts 22 September', caption: 'Check whether your laptop is on the first wave.', ctaEnabled: false },
+      { id: 's2', kind: 'image', heading: 'Service desk hours now run to 20:00 IST', caption: 'Later cover for the evening shift, from Monday.', ctaEnabled: false },
+    ],
   },
 };
 

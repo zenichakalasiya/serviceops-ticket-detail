@@ -16,6 +16,8 @@ import { Sel, useCanvas } from './PortalCanvas';
    the read-only renderers in this file, and it owns its data model, its handles and its menus. */
 import { PortalTable } from './PortalTable';
 import { hasFixedTitle, hasFixedViewAll, itemNodeId, subNodeId } from './portalPageModel';
+import { CarouselArrows, CarouselDots, CarouselTrack, useCarousel } from './PortalCarousel';
+import type { CarouselType } from './PortalCarousel';
 import type { PortalStyles } from './portalPageModel';
 import { chosen, resolveType, roleStyle } from './portalStyleResolver';
 import { IconFrameBox } from './PortalIconFrame';
@@ -239,36 +241,44 @@ export function TableRender({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
 export function SliderRender({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
   const { styles, enabled } = useCanvas();
   const slides = visible(cfg.slides as Item[], enabled);
-  const [at, setAt] = useState(0);
-  const i = Math.min(at, Math.max(0, slides.length - 1));
-  const s = slides[i];
+  const type = (cfg.sliderType === 'auto' ? 'auto' : 'manual') as CarouselType;
+  /* ⚠️ `live: !enabled` — autoplay runs in Preview and on the published portal, never on the
+     canvas. A band that advances under the pointer while you are selecting a slide, styling it or
+     dragging its handles cannot be worked on, and one slide at a time is exactly what the admin is
+     looking at it to judge. */
+  const car = useCarousel({
+    count: slides.length,
+    type,
+    interval: Number(cfg.interval ?? 5),
+    pauseOnHover: cfg.pauseOnHover !== false,
+    loop: cfg.loop !== false,
+    live: !enabled,
+  });
   const overlay = Number(cfg.slideOverlay ?? 30) / 100;
 
   if (!slides.length) {
     return <p className="py-10 text-center text-[13px] text-[#9CA3AF]">No slides yet — add one in the panel.</p>;
   }
 
-  const inode = itemNodeId(nodeId, s.id);
-  const step = (d: number) => setAt((n) => {
-    const next = n + d;
-    if (cfg.loop === false) return Math.max(0, Math.min(slides.length - 1, next));
-    return (next + slides.length) % slides.length;
-  });
+  const perView = Math.max(1, Math.min(4, Number(cfg.perView ?? 1)));
+  const gap = Number(cfg.trackGap ?? 0);
+  const arrowsOn = type === 'manual' && slides.length > 1;
+  const place = String(cfg.arrowPlacement ?? 'inside');
+  const dotsOn = cfg.dots !== false && slides.length > 1;
+  const dotsOver = String(cfg.dotPlacement ?? 'over') !== 'below';
 
-  return (
-    <div>
-      <WidgetTitle nodeId={nodeId} text={cfg.title} />
-      <Sel id={inode}>
+  /* One slide. ⚠️ Every slide is wrapped in its own `Sel` INSIDE the track, so §4.3 still holds —
+     you reach a slide's heading by clicking the heading, at whatever position the track is in. */
+  const slide = (s: Item) => {
+    const inode = itemNodeId(nodeId, s.id);
+    return (
+      <Sel key={s.id} id={inode} className="block">
         <div className="relative overflow-hidden rounded-lg bg-[#1E293B]" style={{ aspectRatio: '16 / 9' }}>
           {s.src
-            ? <img src={String(s.src)} alt={String(s.alt ?? '')} className="size-full object-cover" />
+            ? <img src={String(s.src)} alt={String(s.alt ?? '')} draggable={false} className="size-full select-none object-cover" />
             : <span className="flex size-full items-center justify-center text-[#64748B]"><ImageOff size={26} /></span>}
           <span className="absolute inset-0" style={{ background: `rgba(0,0,0,${overlay})` }} />
-
-          <div
-            className="absolute inset-x-0 bottom-0 p-5"
-            style={{ maxWidth: `${Number(cfg.slideMaxWidth ?? 60)}%` }}
-          >
+          <div className="absolute inset-x-0 bottom-0 p-5" style={{ maxWidth: `${Number(cfg.slideMaxWidth ?? 60)}%` }}>
             <Sel id={subNodeId(inode, 'heading')}>
               <div style={roleStyle(styles, subNodeId(inode, 'heading'), 'title')} className="text-[20px] font-semibold text-white">
                 {String(s.heading ?? '')}
@@ -285,47 +295,41 @@ export function SliderRender({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
               </span>
             )}
           </div>
-
-          {cfg.arrows !== false && (
-            <>
-              <button onClick={(e) => { e.stopPropagation(); step(-1); }} className="absolute left-2 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white"><ChevronLeft size={16} /></button>
-              <button onClick={(e) => { e.stopPropagation(); step(1); }} className="absolute right-2 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white"><ChevronRight size={16} /></button>
-            </>
-          )}
-
-          {cfg.dots !== false && cfg.dotPlacement !== 'below' && (
-            <Dots count={slides.length} at={i} style={String(cfg.dotStyle ?? 'dots')} onPick={setAt} over />
-          )}
         </div>
       </Sel>
-      {cfg.dots !== false && cfg.dotPlacement === 'below' && (
-        <Dots count={slides.length} at={i} style={String(cfg.dotStyle ?? 'dots')} onPick={setAt} />
+    );
+  };
+
+  return (
+    <div>
+      <WidgetTitle nodeId={nodeId} text={cfg.title} />
+      {/* ⚠️ The drag surface is the WRAPPER, not each slide. Bound to a slide it would be torn off
+          the moment the track moved under the pointer, which is exactly when a drag is in flight. */}
+      <div className="relative" {...car.bind}>
+        <CarouselTrack
+          car={car}
+          perView={perView}
+          gap={gap}
+          speed={String(cfg.speed ?? 'normal')}
+          fade={String(cfg.transition ?? 'slide') === 'fade'}
+        >{slides.map(slide)}</CarouselTrack>
+        {arrowsOn && place === 'over' && <CarouselArrows car={car} placement="over" over />}
+        {dotsOn && dotsOver && <CarouselDots car={car} count={slides.length} style={String(cfg.dotStyle ?? 'dots')} over />}
+      </div>
+      {/* Anything sitting UNDER the media shares one row, so arrows and dots cannot collide. */}
+      {((arrowsOn && place !== 'over') || (dotsOn && !dotsOver)) && (
+        <div className="mt-2 flex items-center gap-3">
+          {arrowsOn && place !== 'over' && <CarouselArrows car={car} placement={place} />}
+          {dotsOn && !dotsOver && <CarouselDots car={car} count={slides.length} style={String(cfg.dotStyle ?? 'dots')} />}
+        </div>
       )}
     </div>
   );
 }
 
-function Dots({ count, at, style, onPick, over }: {
-  count: number; at: number; style: string; onPick: (i: number) => void; over?: boolean;
-}) {
-  return (
-    <div className={`flex items-center justify-center gap-1.5 ${over ? 'absolute inset-x-0 bottom-2' : 'mt-2'}`}>
-      {Array.from({ length: count }).map((_, i) => (
-        <button
-          key={i}
-          onClick={(e) => { e.stopPropagation(); onPick(i); }}
-          className={
-            style === 'numbers'
-              ? `flex size-5 items-center justify-center rounded-full text-[10px] font-semibold ${i === at ? 'bg-white text-[#364658]' : over ? 'bg-black/40 text-white' : 'bg-[#F1F5F9] text-[#64748B]'}`
-              : style === 'bars'
-                ? `h-1 w-5 rounded-full ${i === at ? 'bg-white' : over ? 'bg-white/40' : 'bg-[#CBD5E1]'}`
-                : `size-2 rounded-full ${i === at ? 'bg-white' : over ? 'bg-white/40' : 'bg-[#CBD5E1]'}`
-          }
-        >{style === 'numbers' ? i + 1 : null}</button>
-      ))}
-    </div>
-  );
-}
+/* ⚠️ The private `Dots` that used to live here is GONE — `CarouselDots` in PortalCarousel.tsx is
+   the one readout, shared with the Announcements carousel. Two dot rows over one mechanism is two
+   places for the active-dot colour to drift. */
 
 /* ── §7.19 Photo Gallery ─────────────────────────────────────────────────── */
 
@@ -544,9 +548,65 @@ const ANNOUNCEMENTS = [
 ];
 
 export function AnnouncementsRender({ nodeId, cfg, headIcon }: { nodeId: string; cfg: Cfg; headIcon?: ReactNode }) {
-  const { styles } = useCanvas();
+  const { styles, enabled } = useCanvas();
   const rows = ANNOUNCEMENTS.slice(0, Number(cfg.show ?? 3));
   const { gap, dividers } = arrange(styles, nodeId);
+
+  /* ⚠️ CAROUSEL is a DISPLAY of the same card, never a second widget. The rows, their words, their
+     dates and their styling all come from exactly where they already came from — the only thing
+     that changes is how many are on screen at once. As its own palette element there would be two
+     Announcements to keep in step, and they would drift the first time either was touched. */
+  const carousel = cfg.display === 'carousel' && rows.length > 0;
+  const type = (cfg.sliderType === 'auto' ? 'auto' : 'manual') as CarouselType;
+  /* ⚠️ Called UNCONDITIONALLY. A hook behind an `if` changes the hook count between renders the
+     moment the admin switches Display, which React refuses outright — and this is exactly the
+     switch an admin will flip while looking at the card. It costs nothing when unused. */
+  const car = useCarousel({
+    count: rows.length,
+    type,
+    interval: Number(cfg.interval ?? 5),
+    pauseOnHover: true,
+    loop: true,
+    live: !enabled && carousel,
+  });
+
+  /* ONE announcement, in the words and the styling the list already uses — shared by both displays
+     so a row cannot look like two different things depending on the mode. */
+  const one = (a: (typeof ANNOUNCEMENTS)[number]) => (
+    <div className={cfg.bullets === true ? 'flex gap-2.5 py-2.5' : 'py-2.5'}>
+      {cfg.bullets === true && <span className="mt-[7px] size-1.5 flex-shrink-0 rounded-full bg-[#2F6FB5]" />}
+      <div className="min-w-0 flex-1">
+        <div style={roleStyle(styles, nodeId, 'body')} className="text-[13px] leading-[1.5] text-[#364658]">{a.title}</div>
+        {cfg.showDate !== false && (
+          <div style={roleStyle(styles, nodeId, 'meta')} className="mt-1 text-[12px] text-[#98A6B6]">
+            {cfg.datePrefix ? `${String(cfg.datePrefix)} ${a.at}` : a.at}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  if (carousel) {
+    const arrowsOn = type === 'manual' && rows.length > 1;
+    const dotsOn = cfg.dots !== false && rows.length > 1;
+    return (
+      <div className="@container min-w-0">
+        <WidgetTitle nodeId={nodeId} text={cfg.title} icon={headIcon} />
+        <div {...car.bind}>
+          <CarouselTrack car={car}>{rows.map((a) => <div key={a.id}>{one(a)}</div>)}</CarouselTrack>
+        </div>
+        {/* ⚠️ Arrows and dots share ONE row, and the row renders only when it has something in it —
+            an empty 32px strip under a three-line card reads as a rendering fault. */}
+        {(arrowsOn || dotsOn) && (
+          <div className="mt-1 flex items-center gap-3">
+            {arrowsOn && <CarouselArrows car={car} />}
+            {dotsOn && <CarouselDots car={car} count={rows.length} />}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="@container min-w-0">
       <WidgetTitle nodeId={nodeId} text={cfg.title} icon={headIcon} />
