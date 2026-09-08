@@ -271,10 +271,14 @@ export const SLIDER_SPEC: WidgetSpec = {
     { key: 'pauseOnHover', label: 'Pause on hover', control: 'toggle', group: 'Playback', when: (c) => c.sliderType !== 'manual' },
     { key: 'loop', label: 'Loop', control: 'toggle', group: 'Playback' },
     { key: 'dots', label: 'Show dots', control: 'toggle', group: 'Navigation' },
-    /* ⚠️ Drag and keyboard are FLOORS, stated and not offered — the rule the spec already applied
-       to keyboard alone. A carousel nobody can operate is not a variant of a carousel. */
-    { key: 'swipe', label: 'Drag to swipe', control: 'lockedToggle', group: 'Navigation', help: 'Always on. Slides drag left and right under both types.' },
-    { key: 'keyboard', label: 'Keyboard navigation', control: 'lockedToggle', group: 'Navigation', help: 'Always on. A slider nobody can tab through is a slider some people cannot use.' },
+    /* ⚠️ Drag and keyboard are FLOORS, and a floor is not a row. They used to sit here as two
+       locked toggles reading "Always on" — a control you cannot operate, describing a state, in a
+       list of controls that all do something. That is a caption wearing a switch: it costs two
+       rows of panel, invites a click that does nothing, and teaches that some switches on this
+       surface are decorative.
+       Both behaviours are UNCONDITIONAL in `useCarousel` and unchanged — every slider drags left
+       and right and answers the arrow keys. The `swipe` and `keyboard` keys stay in `defaults` so
+       a page that stored them still resolves. */
     { key: 'perView', label: 'Slides per view', control: 'number', tab: 'style', group: 'Track', min: 1, max: 4 },
     { key: 'trackGap', label: 'Gap between slides', control: 'slider', tab: 'style', group: 'Track', min: 0, max: 32 },
     {
