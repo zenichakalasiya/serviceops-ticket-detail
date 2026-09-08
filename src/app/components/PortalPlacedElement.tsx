@@ -1,11 +1,28 @@
 import type { ReactNode } from 'react';
 import { Image as ImageIcon, PlayCircle, Search, Star } from 'lucide-react';
-import { PORTAL_ELEMENTS } from './supportPortalData';
+import { PORTAL_APPROVALS, PORTAL_ARTICLES, PORTAL_ELEMENTS, PORTAL_OPEN_REQUESTS } from './supportPortalData';
 import { ACTION_TYPES, fillCss, renderSpec } from './portalPageModel';
 import type { PlacedElement } from './portalPageModel';
 import { COLLECTION_RENDERERS } from './PortalCollectionRender';
 import { ImageUploadZone } from './PortalControls';
 import { useCanvas } from './PortalCanvas';
+
+/* What a Count tile counts, per source.
+ *
+ * ⚠️ Off the SAME arrays the cards on the page list, so a counter in the banner and the card
+ * beneath it can never disagree about how many open requests there are. Assets and CIs have no
+ * exported array — their rows are module consts inside the preview — so those two are stated
+ * here and are the only numbers in this map that a reader has to take on trust.
+ * ⚠️ An UNKNOWN source counts 0 rather than falling back to something plausible: a tile wired to
+ * a source that does not exist should look broken, because it is. */
+const COUNTS: Record<string, number> = {
+  'My requests': PORTAL_OPEN_REQUESTS.length,
+  'My changes': 3,
+  'Approvals waiting on me': PORTAL_APPROVALS.length,
+  'My assets': 5,
+  'My CIs': 4,
+  'Knowledge': PORTAL_ARTICLES.length,
+};
 import { containerCss } from './portalStyleResolver';
 
 import { LineMark } from './PortalLineStyles';
@@ -423,6 +440,12 @@ function specDrivenBody(type: string, cfg: Record<string, unknown> | undefined, 
   }
 
   if (type === 'x-kpi') {
+    /* ⚠️ The number FOLLOWS THE SOURCE. It was a hard-coded 12 on every tile, so a row of three
+       counters all read 12 — which reads as a broken query rather than as mock data, and made a
+       three-tile banner layout look wrong the moment it was applied. These are still mock counts,
+       but they come off the same arrays the cards on the page list, so the banner and the card
+       below it cannot disagree about how many open requests there are. */
+    const count = COUNTS[String(cfg.source ?? 'My requests')] ?? 0;
     const noIcon = cfg.layout === 'none';
     const top = cfg.layout === 'top';
     return (
@@ -434,11 +457,14 @@ function specDrivenBody(type: string, cfg: Record<string, unknown> | undefined, 
               onClick={enabled ? (ev) => { ev.stopPropagation(); select(`${nodeId}-icon`); pickIcon(nodeId, (ev.currentTarget as HTMLElement).getBoundingClientRect()); } : undefined}
               title={enabled ? 'Click to change this icon' : undefined}
               className="flex size-11 items-center justify-center rounded bg-[#F1F5F9] text-[#475467]"
-            >{glyph ?? '#'}</span>
+              /* ⚠️ `cfg.icon` is the FALLBACK. The icons store wins because that is what the
+                 picker writes, but a widget placed by a banner layout has never been through the
+                 picker — without this every counter a layout brought showed the '#' placeholder. */
+            >{glyph ?? iconNode({ key: String(cfg.icon ?? 'ticket') }, 20) ?? '#'}</span>
           </Sel>
         )}
         <span className="min-w-0">
-          <span style={{ fontSize: `${Math.round((16 * Number(cfg.numberSize ?? 180)) / 100)}px`, color: String(cfg.numberColor ?? '#364658') }} className="block font-semibold leading-none">12</span>
+          <span style={{ fontSize: `${Math.round((16 * Number(cfg.numberSize ?? 180)) / 100)}px`, color: String(cfg.numberColor ?? '#364658') }} className="block font-semibold leading-none">{count}</span>
           <T part="label" className="mt-1 block">
             <span style={{ color: String(cfg.labelColor ?? '#7B8FA5') }} className="block truncate text-[13px]">{String(cfg.label ?? 'Open requests')}</span>
           </T>

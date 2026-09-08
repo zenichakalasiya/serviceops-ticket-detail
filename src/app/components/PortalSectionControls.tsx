@@ -64,52 +64,84 @@ export function TemplatePicker({ value, onChange, only }: {
   );
 }
 
-/* ── Banner types ────────────────────────────────────────────────────────────
+/* ── Banner layouts ──────────────────────────────────────────────────────────
  *
  * ⚠️ A picker of DRAWN shapes, not a dropdown, for the reason at the top of this file: which
  * banner you want is recognised by looking. Each tile is the arrangement the band actually
- * produces — a heading block, and what sits beside it.
- * ⚠️ "With image" is a picture BESIDE the text, which is a different question from the existing
- * Background → Image that paints behind everything. Both can be on at once, and they do not
- * compete: one is the backdrop, one is a column. */
-const BANNER_TYPES: { value: string; title: string; note: string }[] = [
-  { value: 'regular', title: 'Regular', note: 'Heading and search, full width' },
-  { value: 'card', title: 'With card', note: 'A card beside the heading' },
-  { value: 'image', title: 'With image', note: 'A picture beside the heading' },
-];
-
-export function BannerTypePicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+ * produces — where the words sit, whether anything sits beside them, and which way the band runs.
+ * ⚠️ It replaced a three-option "banner type" picker. That one drew abstract SHAPES; these draw
+ * named layouts, so the tile has to say which is which — hence a caption under every one, where
+ * the old row could get away with three self-evident sketches.
+ * ⚠️ VERTICAL tiles are only in the list on a from-scratch page. Choosing one restructures the
+ * whole page into two columns, which is not something a control sitting under "Height" should do
+ * to a portal that already has content on it. */
+export function BannerLayoutPicker({ value, options, onChange }: {
+  value: string;
+  options: { id: string; name: string; note: string; orientation: 'horizontal' | 'vertical' }[];
+  onChange: (v: string) => void;
+}) {
   return (
-    <div className="flex gap-2">
-      {BANNER_TYPES.map((t) => {
-        const on = value === t.value;
+    <div className="grid grid-cols-3 gap-2">
+      {options.map((t) => {
+        const on = value === t.id;
         const bar = (w: string, faint?: boolean) => (
-          <span className={`h-[3px] ${w} rounded-full ${faint ? 'bg-[#EEF2F6]' : on ? 'bg-[#3D8BD0]/30' : 'bg-[#DFE5ED]'}`} />
+          <span className={`block h-[3px] ${w} rounded-full ${faint ? 'bg-[#EEF2F6]' : on ? 'bg-[#3D8BD0]/35' : 'bg-[#DFE5ED]'}`} />
         );
+        const cell = () => (
+          <span className={`h-3 w-3 flex-none rounded-[2px] border ${on ? 'border-[#3D8BD0]/40 bg-[#3D8BD0]/10' : 'border-[#DFE5ED] bg-[#F7F9FC]'}`} />
+        );
+        /* Each sketch is the shape THAT layout makes — a tile can never promise an arrangement
+           you do not get, the same rule the card templates above follow. */
+        const art = () => {
+          if (t.orientation === 'vertical') {
+            const wide = t.id === 'halfdeck';
+            return (
+              <span className="flex h-[38px] w-full gap-1">
+                <span className={`flex ${wide ? 'w-1/2' : 'w-1/3'} flex-col justify-center gap-[3px] rounded-[3px] px-1.5 ${on ? 'bg-[#3D8BD0]/20' : 'bg-[#DFE5ED]'}`}>
+                  <span className="block h-[3px] w-full rounded-full bg-white/70" />
+                  <span className="block h-[3px] w-2/3 rounded-full bg-white/50" />
+                </span>
+                <span className="flex flex-1 flex-col justify-center gap-1">
+                  {bar('w-full', true)}{bar('w-full', true)}
+                </span>
+              </span>
+            );
+          }
+          if (t.id === 'rails') return (
+            <span className="flex h-[38px] w-full items-center gap-2">
+              <span className="flex flex-1 flex-col gap-[3px]">{bar('w-full')}{bar('w-2/3', true)}</span>
+              <span className="flex gap-1">{cell()}{cell()}{cell()}</span>
+            </span>
+          );
+          if (t.id === 'broadside') return (
+            <span className="flex h-[38px] w-full flex-col items-center justify-center gap-[3px]">
+              {bar('w-2/3')}{bar('w-1/2', true)}
+              <span className="mt-0.5 flex gap-1">{cell()}{cell()}{cell()}</span>
+            </span>
+          );
+          if (t.id === 'portico') return (
+            <span className="flex h-[38px] w-full items-center gap-2">
+              <span className={`h-full w-2/5 flex-none rounded-[3px] ${on ? 'bg-[#3D8BD0]/25' : 'bg-[#DFE5ED]'}`} />
+              <span className="flex flex-1 flex-col gap-[3px]">{bar('w-full')}{bar('w-3/4', true)}{bar('w-full', true)}</span>
+            </span>
+          );
+          return (
+            <span className={`flex h-[38px] w-full flex-col items-center justify-center gap-[3px] rounded-[3px] ${on ? 'bg-[#3D8BD0]/12' : 'bg-[#F7F9FC]'}`}>
+              {bar('w-1/2')}{bar('w-2/3', true)}
+            </span>
+          );
+        };
         return (
           <button
-            key={t.value}
-            onClick={() => onChange(t.value)}
+            key={t.id}
+            onClick={() => onChange(t.id)}
             title={t.note}
-            className={`flex h-[64px] flex-1 flex-col items-center justify-center gap-1 rounded-lg border-2 bg-white px-2 transition-colors ${
+            className={`flex flex-col items-center gap-1.5 rounded-lg border-2 bg-white p-2 transition-colors ${
               on ? 'border-[#3D8BD0]' : 'border-[#E5E7EB] hover:border-[#C3CBD6]'
             }`}
           >
-            {/* Drawn from the shape the band produces, so a tile can never promise a layout you
-                do not get — the same rule the card templates above follow. */}
-            <span className="flex w-full items-center justify-center gap-1.5">
-              <span className="flex flex-col gap-[3px]">
-                {bar(t.value === 'regular' ? 'w-12' : 'w-7')}
-                {bar(t.value === 'regular' ? 'w-9' : 'w-5', true)}
-              </span>
-              {t.value === 'card' && (
-                <span className={`h-6 w-6 flex-shrink-0 rounded border ${on ? 'border-[#3D8BD0]/40 bg-[#3D8BD0]/10' : 'border-[#DFE5ED] bg-[#F7F9FC]'}`} />
-              )}
-              {t.value === 'image' && (
-                <span className={`h-6 w-6 flex-shrink-0 rounded ${on ? 'bg-[#3D8BD0]/30' : 'bg-[#DFE5ED]'}`} />
-              )}
-            </span>
-            <span className={`text-[10.5px] leading-none ${on ? 'text-[#3D8BD0]' : 'text-[#7B8FA5]'}`}>{t.title}</span>
+            {art()}
+            <span className={`w-full truncate text-center text-[10.5px] leading-none ${on ? 'text-[#3D8BD0]' : 'text-[#7B8FA5]'}`}>{t.name}</span>
           </button>
         );
       })}

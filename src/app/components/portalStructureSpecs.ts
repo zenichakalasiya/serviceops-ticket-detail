@@ -51,17 +51,15 @@ export const HERO_SPEC: WidgetSpec = {
   fields: [
     { key: 'heading', label: 'Heading', control: 'text', group: 'Content' },
     { key: 'sub', label: 'Sub-heading', control: 'text', group: 'Content' },
-    /* ⚠️ Both gated on the TYPE, because a control for a slot that is not on the band is a
-       control with no referent — §2.2's rule. Picking "Regular" removes them rather than
-       disabling them: absent and disabled mean different things. */
-    {
-      key: 'slotCols', label: 'Cards beside the heading', control: 'segmented', group: 'Content',
-      options: [{ value: '1', label: 'One column' }, { value: '2', label: 'Two columns' }],
-      when: (c) => c.bannerType === 'card',
-    } as WidgetField,
+    /* ⚠️ The picture belongs to the LAYOUT that has a picture slot, not to the banner in general.
+       `slotCols` and the free-standing "picture beside the heading" both went with `bannerType`:
+       what sits beside the words is the layout's decision now, so two more controls answering the
+       same question would be two ways to disagree. This one survives because a layout can only
+       decide that there IS artwork — it cannot know which artwork, and shipping somebody else's
+       stock placeholder forever is not a design decision. */
     {
       key: 'sideImage', label: 'Picture beside the heading', control: 'upload', suggested: '680 × 440',
-      noun: 'picture', group: 'Content', when: (c) => c.bannerType === 'image',
+      noun: 'picture', group: 'Content', when: (c) => c.__layoutHasImage === true,
     } as WidgetField,
     { key: 'showSearch', label: 'Show the search bar', control: 'toggle', group: 'Content' },
     { key: 'searchPlaceholder', label: 'Search placeholder', control: 'text', group: 'Content', when: (c) => c.showSearch !== false },
@@ -72,11 +70,14 @@ export const HERO_SPEC: WidgetSpec = {
        underneath, so the renderer is unchanged and an existing custom height keeps rendering; it
        simply is not typed by hand any more. */
     {
-      /* ⚠️ FIRST in the group, above Height. It decides what the band CONTAINS — whether there is
-         a card or a picture beside the heading at all — and every control under it describes the
-         shape it chose. A control that reframes the ones above it is read after the damage.
+      /* ⚠️ FIRST in the group, above Height, because it decides everything under it — the band's
+         shape, its treatment and the widgets in it. A control that reframes the ones above it is
+         read after the damage is done.
+         ⚠️ It replaced `bannerType`, which offered three abstract SHAPES and left the rest to be
+         built by hand: the shape was the least interesting part of the decision and the only part
+         it answered. A layout brings a finished banner you then edit.
          ⚠️ A drawn picker, not a dropdown: which banner you want is recognised by looking. */
-      key: 'bannerType', label: 'Banner type', control: 'bannerType', tab: 'style', group: 'Banner',
+      key: 'bannerLayout', label: 'Banner layout', control: 'bannerLayout', tab: 'style', group: 'Banner',
     } as WidgetField,
     {
       /* ⚠️ A RAIL, not four tabs. Height is an ordered axis, and four buttons said four unrelated

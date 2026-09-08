@@ -31,7 +31,7 @@ import { PortalWidgetDrawer } from './PortalWidgetDrawer';
 import { WIDGET_FOR_NODE, WIDGET_FOR_TYPE, specById, structureSpecId } from './portalWidgetSpec';
 import type { Cfg, WidgetSpec } from './portalWidgetSpec';
 import type { Box, BoxDir, CustomSection, NodeStyle, PlacedElement, PortalPageContent, PortalStyles } from './portalPageModel';
-import { PORTAL_ELEMENTS, PORTAL_EMPTY_WIDGETS, PORTAL_TEMPLATES } from './supportPortalData';
+import { PORTAL_ELEMENTS, PORTAL_EMPTY_WIDGETS, PORTAL_TEMPLATES, bannerLayout } from './supportPortalData';
 import { IconPopover } from './PortalIconPicker';
 import type { IconChoice } from './PortalIconPicker';
 import type { PortalPage } from './supportPortalData';
@@ -166,6 +166,12 @@ function PanelEmptyState({ active }: { active: RailKey | null }) {
  * testing for exactly this id, and `WIDGET_FOR_NODE` maps it to the spec — three places that have
  * to agree, so the name is written once. */
 export const LINK_CARD_ID = 'quick-link';
+
+const HERO_LAYOUT_KEYS = [
+  'heading', 'sub', 'note', 'bgKind', 'bannerStyle', 'bannerColor', 'bannerImage',
+  'headingColor', 'heroInk', 'contentAlign', 'contentMaxWidth', 'searchWidth', 'searchRadius',
+  'height', 'heroArt', 'searchPlacement', 'fullBleed', 'bgWholePage',
+];
 
 export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSaveDraft, onExit, openOn, onOpenConsumed }: SupportPortalBuilderProps & {
   /* Which rail panel to land on. The listing's "Portal settings" action opens the portal AT its
@@ -460,6 +466,18 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
          land in a row sized for one. */
       ...(owner === 'quick'
         ? { __quickRow: true, __hasLink: content.quick.some((q) => q.id === LINK_CARD_ID) }
+        : {}),
+      /* ⚠️ Two facts the banner's panel cannot work out for itself, seeded the same way
+         `__quickRow` is: a spec is DATA and has no way to look at the page.
+         `__blankPage` is what lets the layout picker offer VERTICAL layouts — choosing one turns
+         the page into two columns, so it is a from-scratch decision rather than a style tweak on
+         a portal that already has content. `__layoutHasImage` is what puts the picture field on
+         the one layout that has somewhere to put a picture. */
+      ...(owner === 'hero'
+        ? {
+            __blankPage: page.start === 'blank',
+            __layoutHasImage: bannerLayout(String(widgetCfg.hero?.bannerLayout ?? 'classic'))?.hasImage === true,
+          }
         : {}),
       ...(widgetCfg[owner] ?? {}),
       /* ⚠️ LAST, and read from the TREE — the behaviour control's value is the box's own `dir`, and
@@ -1054,6 +1072,77 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
    * templates, same share of the row. It also widens the row to five, because a fifth card in a
    * four-column row wraps to a full-width row of its own, which is a different block that happens
    * to look like a card. */
+  /* ⚠️ Every hero key a layout can set, so applying one can CLEAR the outgoing layout's values
+     before writing its own. A merge would leave Broadside's cream ground under Front Desk's navy
+     and Portico's left alignment under Broadside's centred copy — a banner nobody picked.
+     ⚠️ `showSearch`, `searchPlaceholder` and `sideImage` are deliberately NOT here: whether the
+     search shows, what it says and which picture is yours are the admin's, not the layout's. */
+
+  /* Applying a banner layout — the one action that writes three stores at once.
+ *
+ * ⚠️ It REPLACES rather than merges. A layout is a finished banner, so every key it does not
+ * mention has to go back to its default — otherwise "Classic" would keep the last layout's
+ * colour and height and would not be classic. `KEEP` is the short list of things that are the
+ * admin's rather than the layout's: whether the search shows at all, and the words in it.
+ * ⚠️ It CONFIRMS only when there is something to lose — copy the admin actually typed, or widgets
+ * in the band. Switching between layouts on an untouched banner is a thing people do repeatedly
+ * while looking, and a dialog on every click of a picker teaches them to dismiss dialogs. */
+  const [pendingLayout, setPendingLayout] = useState<string | null>(null);
+
+
+  const runBannerLayout = useCallback((id: string) => {
+    const l = bannerLayout(id);
+    const stamp = Date.now();
+    if (!l) return;
+    /* ⚠️ The hero's config is REBUILT, not patched — see above. `patchCfg` merges, so the reset
+       has to be an explicit undefined for every key the outgoing layout could have set. */
+    const wipe: Record<string, unknown> = {};
+    for (const k of HERO_LAYOUT_KEYS) wipe[k] = undefined;
+    patchCfg('hero', { ...wipe, ...l.hero, bannerLayout: id });
+    /* Placement is the PAGE's, not the band's — a vertical banner turns the whole page into two
+       columns, which is a fact about the page. Horizontal layouts clear those keys. */
+    patchCfg('page', {
+      heroPlacement: undefined, heroWidth: undefined, heroSticky: undefined, quickLook: undefined,
+      heroInk: undefined, heroArt: undefined,
+      ...(l.page ?? {}),
+    });
+    /* ⚠️ The band's widgets are REPLACED wholesale. Merging would leave the previous layout's
+       counters sitting beside the new one's, which is a banner nobody chose. */
+    /* ⚠️ The ids are minted ONCE, here, and used by both writes. Building them inside each
+       `set…` call meant two `Date.now()` readings — a millisecond apart is enough for the config
+       to land on keys no element has, so every tile would render its defaults and the layout's
+       labels and sources would be silently dropped. */
+    const placed = (l.widgets ?? []).map((w, i) => ({
+      id: `hero-w${stamp}-${i}`,
+      type: w.type,
+      name: PORTAL_ELEMENTS.find((e) => e.id === w.type)?.name ?? w.type,
+      cfg: w.cfg ?? {},
+    }));
+    /* ⚠️ REGISTER them, exactly as `dropInRow` does. Writing `rowExtras` straight is not enough:
+       `nodeById` reads a registry, so an element that never registered has no node — its `Sel`
+       renders without a `data-node`, and the widget is on the page, visible, and impossible to
+       click. Every counter a layout placed was unselectable for exactly this reason. */
+    placed.forEach((w) => registerPlaced(w.id, w.name, w.type, 'hero'));
+    setRowExtras((prev) => ({ ...prev, hero: placed.map(({ id, type, name }) => ({ id, type, name })) }));
+    setWidgetCfg((prev) => {
+      const next = { ...prev };
+      placed.forEach((w) => { next[w.id] = { ...w.cfg }; });
+      return next;
+    });
+    toast.success(`${l.name} applied`);
+  }, [patchCfg]);
+
+  const applyBannerLayout = useCallback((id: string) => {
+    const current = bannerLayout(String(widgetCfgRef.current.hero?.bannerLayout ?? 'classic'));
+    const hero = widgetCfgRef.current.hero ?? {};
+    /* Authored = the copy differs from what the CURRENT layout seeded. That is the only test that
+       distinguishes "they wrote this" from "the last layout wrote this". */
+    const authored = (k: string) => hero[k] !== undefined && hero[k] !== (current?.hero as Record<string, unknown> | undefined)?.[k];
+    const lose = authored('heading') || authored('sub') || (rowExtras.hero?.length ?? 0) > 0;
+    if (lose) { setPendingLayout(id); return; }
+    runBannerLayout(id);
+  }, [rowExtras, runBannerLayout]);
+
   const addLinkCard = useCallback(() => {
     if (contentRef.current.quick.some((q) => q.id === LINK_CARD_ID)) {
       toast.error('This row already has its external-link card');
@@ -1828,6 +1917,40 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     '--portal-accent': themeAccent,
     '--portal-btn-radius': `${buttonOf(theme).radius}px`,
   } as React.CSSProperties;
+  /* ⚠️ A confirm, not a toast-with-undo. Applying a layout rewrites the copy, the treatment and
+     the widgets in the band at once — too much to describe in a toast and too much to expect
+     somebody to notice in time to undo. It only appears when there is authored copy or a widget
+     to lose; see `applyBannerLayout`. */
+  const layoutConfirm = pendingLayout && (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 p-6">
+      <div className="w-[440px] max-w-full rounded-lg bg-white shadow-2xl">
+        <div className="flex items-start justify-between gap-4 px-5 pb-2 pt-4">
+          <h2 className="text-[16px] font-semibold text-[#364658]">
+            Replace the banner with “{bannerLayout(pendingLayout)?.name}”?
+          </h2>
+          <button
+            onClick={() => setPendingLayout(null)}
+            className="flex size-8 flex-shrink-0 items-center justify-center rounded text-[#64748B] transition-colors hover:bg-[#F3F4F6]"
+          ><X size={18} /></button>
+        </div>
+        <p className="px-5 pb-5 text-[13px] leading-[1.6] text-[#64748B]">
+          A layout brings its own heading, sub-heading, colours and the cards that sit in the band.
+          The words you have written here will be replaced. Everything else on the page is untouched.
+        </p>
+        <div className="flex justify-end gap-2 border-t border-[#e5e7eb] px-5 py-3">
+          <button
+            onClick={() => setPendingLayout(null)}
+            className="inline-flex h-8 items-center rounded border border-[#DFE5ED] bg-white px-3.5 text-[13px] font-medium text-[#364658] transition-colors hover:bg-[#F5F7FA]"
+          >Cancel</button>
+          <button
+            onClick={() => { runBannerLayout(pendingLayout); setPendingLayout(null); }}
+            className="inline-flex h-8 items-center rounded bg-[#3D8BD0] px-3.5 text-[13px] font-medium text-white transition-colors hover:bg-[#3178B8]"
+          >Replace banner</button>
+        </div>
+      </div>
+    </div>
+  );
+
   const themeClass = `portal-themed ${theme.mode === 'dark' ? 'portal-dark' : ''}`;
 
   const iconBtn = 'flex size-8 items-center justify-center rounded text-[#64748B] transition-colors hover:bg-[#F3F4F6] hover:text-[#364658]';
@@ -2131,6 +2254,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
                   spec={specForNode(selectedId)!}
                   cfg={cfgFor(selectedId)}
                   onAddLinkCard={addLinkCard}
+                  onApplyBannerLayout={applyBannerLayout}
                   setCfg={(patch) => patchCfg(ownerOf(selectedId), patch)}
                   styles={styles}
                   setStyle={setStyle}
@@ -2214,6 +2338,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
           onDone={endTour}
         />
       )}
+      {layoutConfirm}
     </div>
   );
 }

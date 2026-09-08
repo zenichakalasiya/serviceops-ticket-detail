@@ -827,6 +827,146 @@ export interface RecordModule {
  * quietly becoming a Requests card. Same split `VISIBLE_TEMPLATES` makes, for the same reason. */
 export const VISIBLE_RECORD_MODULES = (): RecordModule[] => RECORD_MODULES.filter((m) => !m.hidden);
 
+/* ── Banner layouts ──────────────────────────────────────────────────────────
+ *
+ * A whole banner — its shape, its treatment and whatever widgets belong in it — chosen as one
+ * thing. It replaces `bannerType`, which offered three abstract SHAPES (regular / with card /
+ * with image) and left the admin to build the rest by hand: the shape was the least interesting
+ * part of the decision and the only part it answered.
+ *
+ * ⚠️ ORIENTATION is the one hard split. A HORIZONTAL banner is a band across the top and every
+ * section runs full width beneath it. A VERTICAL banner is a column, so the page becomes two
+ * columns — the same `heroPlacement: 'left'` archetype the Service Counter template ships. That
+ * restructures the whole page, which is why a portal that already has a page full of content is
+ * offered horizontal layouts only, and a from-scratch one is offered both.
+ *
+ * ⚠️ Each layout is SEED DATA over the shared renderer — the subsystem's "seeds, not a second
+ * renderer" rule. A layout that drew itself would be a second banner to keep in step with the
+ * first, and the two would drift the moment a control changed.
+ *
+ * Drawn from the reference canvas at `public/portal-layouts/` — the artboard each one comes from
+ * is named on its `from` field so the original is one click away. */
+export interface BannerLayout {
+  id: string;
+  name: string;
+  /** One line on what this banner is FOR — the picker's tooltip, not a description of its parts. */
+  note: string;
+  /** The artboard in the reference canvas, so a future change can go back to the source. */
+  from?: string;
+  orientation: 'horizontal' | 'vertical';
+  /** Written onto the hero's own config. */
+  hero: Record<string, unknown>;
+  /** Written onto the PAGE's config — how the band sits in the page, not how it looks. */
+  page?: Record<string, unknown>;
+  /** Widgets the layout puts IN the banner, in order. */
+  widgets?: { type: string; cfg?: Record<string, unknown> }[];
+  /** Where those widgets go: beside the heading, or under it. */
+  slot?: 'side' | 'below';
+  /** This layout has a picture beside the words, so the picture field is worth offering. */
+  hasImage?: boolean;
+}
+
+/* ⚠️ A count tile is the ONE widget these layouts place, and it is placed with its query already
+   set. The admin restyles it and cannot re-point it — a tile whose label and number can be made
+   to disagree is worse than no tile. `__fromLayout` is what withholds its Content section. */
+/* ⚠️ `source` must be one of `count_tile`'s OWN options — 'Approvals waiting on me', not the
+   'My approvals' it reads like. A source the spec does not list falls through to a count of zero
+   with nothing on screen saying why. */
+const countTile = (label: string, source: string, icon: string) =>
+  ({ type: 'x-kpi', cfg: { label, source, icon, __fromLayout: true } });
+
+export const BANNER_LAYOUTS: BannerLayout[] = [
+  {
+    id: 'classic', name: 'Classic', orientation: 'horizontal',
+    note: 'The band this product ships with — heading, sub-heading and the search in the middle.',
+    /* ⚠️ NO overrides at all. This is the resting banner, so applying it must UNSET whatever the
+       last layout wrote rather than paint a copy of the default over the top — otherwise every
+       key it does not mention keeps the previous layout's value and "Classic" is not classic. */
+    hero: {},
+  },
+  {
+    id: 'rails', name: 'Rails', orientation: 'horizontal', from: '4i', slot: 'side',
+    note: 'A quiet greeting on the page ground, with what you own counted beside it.',
+    hero: {
+      heading: 'Good morning, Yash',
+      sub: 'Two approvals need you today. Everything else is moving.',
+      bgKind: 'color', bannerStyle: 'flat', bannerColor: '#FFFFFF',
+      headingColor: '#0B2545', contentAlign: 'left', contentMaxWidth: 100,
+      showSearch: false, height: 180,
+    },
+    page: { heroInk: 'dark' },
+    widgets: [
+      countTile('Open requests', 'My requests', 'ticket'),
+      countTile('Approvals', 'Approvals waiting on me', 'shieldcheck'),
+      countTile('Assets & CIs', 'My assets', 'laptop'),
+    ],
+  },
+  {
+    id: 'broadside', name: 'Broadside', orientation: 'horizontal', from: '4h', slot: 'below',
+    note: 'Centred and editorial, on a warm ground, with the counts under the search.',
+    hero: {
+      heading: 'How can we help you today?',
+      sub: 'Report a fault, request a service, or read your way to the answer.',
+      bgKind: 'color', bannerStyle: 'flat', bannerColor: '#F5F1E8',
+      headingColor: '#3B2A1A', contentAlign: 'center', contentMaxWidth: 70,
+      showSearch: true, searchWidth: 60, searchRadius: 0, height: 360,
+    },
+    page: { heroInk: 'dark' },
+    widgets: [
+      countTile('Open requests', 'My requests', 'ticket'),
+      countTile('Approvals', 'Approvals waiting on me', 'shieldcheck'),
+      countTile('Assets & CIs', 'My assets', 'laptop'),
+    ],
+  },
+  {
+    id: 'portico', name: 'Portico', orientation: 'horizontal', from: '4d', hasImage: true,
+    note: 'Your own artwork beside the words — the one layout that carries a picture.',
+    hero: {
+      heading: 'Welcome to Acme IT',
+      sub: 'Raise a ticket, request a service or search the knowledge base.',
+      bgKind: 'color', bannerStyle: 'flat', bannerColor: '#FFFFFF',
+      headingColor: '#0B2545', contentAlign: 'left', contentMaxWidth: 100,
+      showSearch: true, searchWidth: 100, height: 360,
+    },
+    page: { heroInk: 'dark' },
+  },
+  {
+    id: 'frontdesk', name: 'Front Desk', orientation: 'vertical', from: '4f',
+    note: 'A full-height counter down the side, with everything you own beside it.',
+    hero: {
+      heading: 'Welcome to Support Portal',
+      sub: 'Report a fault, request a service, or reset your account. No appointment needed.',
+      note: 'Counter staffed Mon–Fri, 09:00–17:00',
+      bgKind: 'color', bannerStyle: 'gradient', bannerColor: '#1E3050',
+      headingColor: '#FFFFFF', contentAlign: 'left', contentMaxWidth: 100,
+      searchWidth: 100, searchRadius: 10, height: 560,
+    },
+    page: { heroPlacement: 'left', heroWidth: 380, quickLook: 'rail', heroSticky: true, heroArt: 'rings' },
+  },
+  {
+    id: 'halfdeck', name: 'Half Deck', orientation: 'vertical', from: '4g',
+    note: 'The band takes half the page — a full-bleed welcome with your work beside it.',
+    hero: {
+      heading: 'Welcome to the Support Portal',
+      sub: 'Report a fault, request a service or reset your account.',
+      bgKind: 'color', bannerStyle: 'gradient', bannerColor: '#152A4A',
+      headingColor: '#FFFFFF', contentAlign: 'left', contentMaxWidth: 100,
+      showSearch: true, searchWidth: 92, searchRadius: 6, height: 560,
+    },
+    /* ⚠️ Half the page, not a rail — same archetype, a different measure. `heroWidth` is what
+       makes that one number rather than a second layout branch. */
+    page: { heroPlacement: 'left', heroWidth: 640, quickLook: 'rail', heroArt: 'shapes' },
+  },
+];
+
+export const bannerLayout = (id: string | undefined) =>
+  BANNER_LAYOUTS.find((l) => l.id === id);
+
+/** What the picker OFFERS. A page that already has content is not restructured into two columns
+ *  by a control that looks like a style choice, so vertical is a from-scratch option only. */
+export const bannerLayoutsFor = (blankPage: boolean) =>
+  BANNER_LAYOUTS.filter((l) => blankPage || l.orientation === 'horizontal');
+
 export const RECORD_MODULES: RecordModule[] = [
   {
     key: 'request', label: 'Requests',

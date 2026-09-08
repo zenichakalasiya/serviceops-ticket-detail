@@ -36,8 +36,8 @@ import {
 import { PortalItemList } from './PortalItemList';
 import { RecordFilterField } from './PortalRecordFilter';
 import type { RecordFilter } from './portalRecordFilters';
-import { recordModule } from './supportPortalData';
-import { BannerTypePicker, TemplatePicker } from './PortalSectionControls';
+import { bannerLayoutsFor, recordModule } from './supportPortalData';
+import { BannerLayoutPicker, TemplatePicker } from './PortalSectionControls';
 import { ACROSS_ROW, ACROSS_STACK, DOWN_ROW, DOWN_STACK, SectionPresets } from './PortalSectionLayout';
 import type { PresetId } from './PortalSectionLayout';
 import { BorderRow, RadiusRow, ShadowBlock, SizeRow } from './PortalBoxControls';
@@ -389,8 +389,17 @@ function PanelBody({ spec, nodeId, cfg, renderField, openGroups, toggleGroup, st
   const packProps = { styles, id: nodeId, setStyle, replaceStyle };
   const visible = (fs?: WidgetField[]) => (fs ?? []).filter((f) => !f.when || f.when(cfg));
 
+  /* ⚠️ A widget a BANNER LAYOUT placed is styling-only: the admin restyles it and cannot re-point
+     it. A counter whose label and number can be made to disagree is worse than no counter, and
+     the layout wired it to the right query on the way in. Same rule the six live-data cards
+     already follow — DESIGN only, no CONTENT section — reached by a flag on the instance rather
+     than by a second spec, because it is the same widget either way.
+     ⚠️ It does NOT lock placement: the element keeps its toolbar, so it can still be moved,
+     duplicated or deleted like anything else on the page. Only its content is the layout's. */
+  const fromLayout = cfg.__fromLayout === true;
+
   /** Everything that can appear under the CONTENT eyebrow, in one test. */
-  const hasContentSection = visible(panel.content).length > 0 || !!panel.contentNote || !!hasCollection;
+  const hasContentSection = !fromLayout && (visible(panel.content).length > 0 || !!panel.contentNote || !!hasCollection);
 
   /* ⚠️ The same rule for DESIGN, and this is the THIRD time one of these has had to be written
      twice: two panel models means every "hide the heading when it introduces nothing" rule needs
@@ -631,10 +640,14 @@ export interface WidgetDrawerProps {
   onOpenSetting?: (section: string, card?: string) => void;
   /** Appends the Quick Actions row's one external-link card. */
   onAddLinkCard?: () => void;
+  /** Applies a whole banner layout — its treatment, its placement and the widgets in the band.
+      A PROP rather than a canvas-context member, matching `onAddLinkCard`: both are builder
+      actions the drawer triggers, and one route is enough. */
+  onApplyBannerLayout?: (id: string) => void;
 }
 
 export function PortalWidgetDrawer(props: WidgetDrawerProps) {
-  const { nodeId, spec, cfg, setCfg, styles, setStyle, replaceStyle, onSelect, onReset, applyPreset, icon, setIcon, onAddLinkCard } = props;
+  const { nodeId, spec, cfg, setCfg, styles, setStyle, replaceStyle, onSelect, onReset, applyPreset, icon, setIcon, onAddLinkCard, onApplyBannerLayout } = props;
   const node = nodeById(nodeId);
   const path = nodePath(nodeId);
   /* What arrives OPEN. ⚠️ CONTENT only — every DESIGN accordion starts collapsed.
@@ -1063,8 +1076,18 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
             onChange={(x) => set(f.key, x)}
           />
         );
-      case 'bannerType':
-        return <BannerTypePicker value={String(v ?? 'regular')} onChange={(x) => set(f.key, x)} />;
+      case 'bannerLayout':
+        /* ⚠️ It does NOT go through `set`. Picking a layout writes the hero's whole config, the
+           page's placement AND the widgets in the band — three stores — so it is a builder action,
+           and `set` would write only the one key and leave the banner unchanged. The key itself is
+           written by the action, so the tile lights up from the same value the canvas reads. */
+        return (
+          <BannerLayoutPicker
+            value={String(v ?? 'classic')}
+            options={bannerLayoutsFor(viewCfg.__blankPage === true)}
+            onChange={(x) => onApplyBannerLayout?.(x)}
+          />
+        );
       case 'templates':
         /* A `templates` field may declare `options` to narrow the row — see TemplatePicker. */
         return (
@@ -1437,9 +1460,9 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
      spec's own content groups, a table row's Cells block, and the §4 collection.
      ⚠️ NOT `!!collectionBlock`: that const is a JSX fragment and is therefore always truthy,
      empty or not. The real test is the same condition the fragment wraps its own contents in. */
-  const hasPacksContent = groupsFor('content').length > 0
+  const hasPacksContent = cfg.__fromLayout !== true && (groupsFor('content').length > 0
     || !!(col && (!col.when || col.when(cfg)))
-    || !!(selItem && collection?.isTableRow);
+    || !!(selItem && collection?.isTableRow));
 
   return (
     <div className="flex h-full flex-col">

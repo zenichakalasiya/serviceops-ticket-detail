@@ -17,6 +17,7 @@ import {
 import { AddSectionSeam, ColumnAdders, MOVE_MIME, Sel, draggedElement, draggedNode, styleOf, useCanvas } from './PortalCanvas';
 import { HUGS_CONTENT } from './portalPageModel';
 import { PAGE_ID, chosen, roleStyle } from './portalStyleResolver';
+import { bannerLayout } from './supportPortalData';
 import { shadowCss } from './PortalBoxControls';
 import { PortalPlacedElement } from './PortalPlacedElement';
 import { DEFAULT_BLOCK_ORDER, DEFAULT_CONTENT, DEFAULT_ROW_ORDER, fillCss, isBranch, nodePath, isLockedRow, hasFixedTitle, rowOf } from './portalPageModel';
@@ -1300,12 +1301,13 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
   const heroShapes = String(pageCfg.heroArt ?? 'auto') === 'shapes';
   /* Concentric rounded squares — a counter's own marker, quiet enough to sit behind type. */
   const heroRings = String(pageCfg.heroArt ?? 'auto') === 'rings';
-  /* ⚠️ The banner's SHAPE — what sits beside the heading. Read off the hero's own config rather
-     than `pageCfg`, because it describes this band and not the page: two portals can differ here
-     while sharing everything else.
-     ⚠️ `regular` renders the tree it always did, so no existing page moves. */
-  const bannerType = String(wc('hero').bannerType ?? 'regular');
-  const bannerSide = bannerType === 'card' || bannerType === 'image';
+  /* The chosen banner LAYOUT, and where it puts the widgets it brought. Read off the hero's own
+   * config rather than `pageCfg`, because it describes this band and not the page.
+   * ⚠️ `classic` renders the tree it always did, so no existing page moves. */
+  const heroLayout = bannerLayout(String(wc('hero').bannerLayout ?? 'classic'));
+  const heroSlot = heroLayout?.slot;
+  /* Beside the heading, so the content block becomes two columns. */
+  const bannerSide = heroSlot === 'side' || heroLayout?.hasImage === true;
   /* A third `heroArt` value, not a new key — same rule `bannerStyle`'s `light` follows. */
   const heroCounterShapes = String(pageCfg.heroArt ?? 'auto') === 'counter';
   /* Favourite Services and Most Used Services SIDE BY SIDE rather than stacked as two full-width
@@ -1796,33 +1798,38 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
  * ⚠️ ONE or TWO columns, from the banner's own key, so the same row can hold a single tall card
  * or a pair side by side. */
   const heroExtras = rowExtras?.['hero'] ?? [];
-  const bannerSlot = bannerType === 'image' ? (
+  const bannerSlot = heroLayout?.hasImage ? (
     <Sel id="hero-side-image" className="block w-full">
       {wc('hero').sideImage ? (
         <img src={String(wc('hero').sideImage)} alt="" className="max-h-[220px] w-full rounded-xl object-cover" />
       ) : (
-        <span className="flex h-[180px] w-full items-center justify-center rounded-xl border border-dashed border-white/40 bg-white/10 text-[12px] text-white/70">
+        <span className={`flex h-[180px] w-full items-center justify-center rounded-xl border border-dashed text-[12px] ${
+          darkHeroInk
+            ? 'border-[#C3CBD6] bg-black/[0.03] text-[#7B8FA5]'
+            : 'border-white/40 bg-white/10 text-white/70'
+        }`}>
           Add a picture in the panel
         </span>
       )}
     </Sel>
   ) : (
-    <RowDrop
-      rowId="hero"
+    /* ⚠️ NO drop target and no dashed "drop a card here". What sits in the band is the LAYOUT's
+       decision — a second way to put a card here would be a second answer to "why does my banner
+       look like this". The widgets it placed are ordinary placed elements once they are here, so
+       each keeps its own toolbar, its own panel and its own delete.
+       ⚠️ One track per widget, from the COUNT rather than a stored column setting: these arrive
+       as a set from the layout, so a track count that could disagree with how many there are is
+       a control with nothing to control. */
+    <div
       className="grid gap-3"
-      style={{ gridTemplateColumns: `repeat(${Math.max(1, Math.min(2, Number(wc('hero').slotCols ?? 1)))}, minmax(0, 1fr))` }}
+      style={{ gridTemplateColumns: `repeat(${Math.max(1, heroExtras.length || 1)}, minmax(0, 1fr))` }}
     >
       {heroExtras.map((el) => (
         <Sel key={el.id} id={el.id} className="min-w-0">
           <PortalPlacedElement item={el} icon={icons?.[el.id]} text={placedText?.[el.id]} cfg={wc(el.id)} />
         </Sel>
       ))}
-      {heroExtras.length === 0 && (
-        <span className="flex h-[150px] items-center justify-center rounded-xl border border-dashed border-white/40 bg-white/10 px-4 text-center text-[12px] leading-[1.5] text-white/70">
-          Drop a card here — Announcements, Contact Us or an action card
-        </span>
-      )}
-    </RowDrop>
+    </div>
   );
 
   /* Whether this page is carrying a banner at all. A blank portal starts without one. */
@@ -1834,9 +1841,14 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
     <Sel
       id="hero"
       toolbarBelow
-      /* The measured height, and nothing at all on every other layout. */
-      style={heroSticky && railH ? { height: railH } : undefined}
-      className={`${wc('hero').fullBleed === true ? '-mx-0' : ''} ${heroSide ? (heroSticky ? 'w-[380px] flex-none self-start sticky top-0' : 'w-[380px] flex-none self-stretch') : ''}`}>
+      /* Width and the measured height both land in the style below. */
+      className={`${wc('hero').fullBleed === true ? '-mx-0' : ''} ${heroSide ? (heroSticky ? 'flex-none self-start sticky top-0' : 'flex-none self-stretch') : ''}`}
+      /* ⚠️ Merged with the measured sticky height rather than replacing it — a rail can be both a
+         set width and a measured height, and an object literal here would drop one of them. */
+      style={{
+        ...(heroSticky && railH ? { height: railH } : null),
+        ...(heroSide ? { width: Number(pageCfg.heroWidth ?? 380) } : null),
+      }}>
       {/* ⚠️ The band is a flex COLUMN centred on its cross axis, so the heading and subtext sit
           in the middle of the banner however tall it is made. Fixed `pt-14` pinned them near
           the top and left the growing half of the band empty underneath — a taller banner
@@ -2006,12 +2018,18 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
               />
             </Sel>
           )}
+          {/* ⚠️ UNDER the search and INSIDE the words column, not hung off the band. A layout that
+              puts its counters below the search wants them under the SEARCH, centred with the copy;
+              placed beside the column instead they would sit against the band's right edge while
+              the heading they belong to is centred. */}
+          {heroSlot === 'below' && <div className="mt-6 w-full">{bannerSlot}</div>}
         </div>
         {bannerSide && (
-          /* ⚠️ A FIXED 340px column, not a share of the row. The heading is the thing that should
-             reflow as the banner narrows; a card that shrank with it would pass through every
-             width its own contents were never designed for. */
-          <div className="w-[340px] flex-none text-left">{bannerSlot}</div>
+          /* ⚠️ 340px for ONE card, content-width for a ROW of them. A single card wants a stable
+             measure — the heading is the thing that should reflow as the banner narrows. Three
+             counters in 340px is three cramped tiles with their labels clipped to "O..", which is
+             what a fixed width does the moment the slot holds more than one thing. */
+          <div className={`flex-none text-left ${heroExtras.length > 1 ? '' : 'w-[340px]'}`}>{bannerSlot}</div>
         )}
         </div>
         </div>

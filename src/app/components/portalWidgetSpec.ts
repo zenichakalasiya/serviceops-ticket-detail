@@ -43,8 +43,8 @@ export type ControlKind =
   | 'pills'
   /** Card-template thumbnails — the shape is recognised by looking, not by reading a word. */
   | 'templates'
-  /** The banner's shape — Regular / With card / With image, drawn rather than named. */
-  | 'bannerType'
+  /** A whole banner — shape, treatment and the widgets in it — picked as one drawn tile. */
+  | 'bannerLayout'
   /** An ordered choice on a rail with initials under the stops (banner height). */
   | 'stepRail'
   /* ⚠️ Both were in USE and missing from this union, and the casts that would have caught it
