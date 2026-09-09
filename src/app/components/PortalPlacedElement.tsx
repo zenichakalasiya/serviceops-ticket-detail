@@ -162,34 +162,13 @@ function specDrivenBody(type: string, cfg: Record<string, unknown> | undefined, 
     );
   }
 
-  /* A divider IS its configuration — there is no meaningful empty state for a line, so it renders
-     from cfg the moment it lands. Stretch is an alignment value, not a separate width control. */
-  if (type === 'l-divider') {
-    const align = String(cfg.align ?? 'stretch');
-    const stretch = align === 'stretch';
-    /* A rule has no height to give, so extra room is space AROUND it: it centres. Pinned to the
-       top it left the line at the very edge of a tall selection, which reads as a mistake. */
-    const tallDiv = ownStyle?.height !== undefined;
-    return (
-      <span
-        className={`w-full ${tallDiv ? 'flex h-full items-center' : 'block'}`}
-        style={tallDiv
-          ? { justifyContent: ({ left: 'flex-start', center: 'center', right: 'flex-end' } as Record<string, string>)[align] }
-          : { textAlign: stretch ? undefined : (align as never) }}
-      >
-        <span
-          className="inline-block align-middle"
-          style={{ width: stretch ? '100%' : `${Number(cfg.width ?? 100)}%` }}
-        >
-          <LineMark
-            style={(cfg.lineStyle as LineStyle) ?? 'solid'}
-            color={String(cfg.lineColor ?? '#94A3B8')}
-            thickness={Number(cfg.thickness ?? 2)}
-          />
-        </span>
-      </span>
-    );
-  }
+  /* ⚠️ The `l-divider` branch that used to sit here is GONE. It was DEAD CODE and had been since
+     the divider joined COLLECTION_RENDERERS: the component checks `COLLECTION_RENDERERS[item.type]`
+     BEFORE it calls this function, so a placed divider always drew through `DividerRender` and
+     never through here. Two renderers for one element, disagreeing about which config keys exist —
+     this one ignored `label` and `labelPos` entirely — is the drift the one-implementation rule is
+     there to prevent, and it cost five files of reading to work out which of the two was real.
+     `DividerRender` now draws with `LineMark`, which is the one thing this branch did better. */
 
   /* ⚠️ A spacer is blank by design, so on the live portal it is nothing at all. In the EDITOR it
      still has to be selectable, which is why it keeps its box here rather than carrying a

@@ -17,6 +17,8 @@ import { Sel, useCanvas } from './PortalCanvas';
 import { PortalTable } from './PortalTable';
 import { hasFixedTitle, hasFixedViewAll, itemNodeId, subNodeId } from './portalPageModel';
 import { CarouselArrows, CarouselDots, CarouselTrack, useCarousel } from './PortalCarousel';
+import { LineMark } from './PortalLineStyles';
+import type { LineStyle } from './PortalLineStyles';
 import type { CarouselType } from './PortalCarousel';
 import type { PortalStyles } from './portalPageModel';
 import { chosen, resolveType, roleStyle } from './portalStyleResolver';
@@ -838,23 +840,38 @@ export function FeaturedServicesRender({ nodeId, cfg }: { nodeId: string; cfg: C
 /** §3.6 — a rule, optionally with a label sitting on it. */
 export function DividerRender({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
   const { styles } = useCanvas();
-  const line = {
-    borderTopWidth: Number(cfg.thickness ?? 1),
-    borderTopStyle: String(cfg.lineStyle ?? 'solid') as 'solid',
-    borderTopColor: String(cfg.lineColor ?? '#E5E7EB'),
-  };
+  /* ⚠️ Drawn with `LineMark`, NOT with `borderTopStyle`. The panel's picker offers six styles —
+     solid, dashed, dotted, zigzag, wavy, gradient — and the last three are not CSS border keywords,
+     so assigning them to `borderTopStyle` made the browser drop the declaration and the divider
+     rendered as nothing at all. Three of the six swatches were a promise the canvas could not keep.
+     `LineMark` is the same component the picker draws its swatches with, so what you pick and what
+     you get are now one implementation rather than two that agree on half their values. */
+  const rule = (
+    <LineMark
+      style={(cfg.lineStyle as LineStyle) ?? 'solid'}
+      color={String(cfg.lineColor ?? '#E5E7EB')}
+      thickness={Number(cfg.thickness ?? 1)}
+    />
+  );
   const label = String(cfg.label ?? '');
   const width = `${Number(cfg.width ?? 100)}%`;
   const justify = cfg.align === 'center' ? 'center' : cfg.align === 'right' ? 'flex-end' : 'flex-start';
+  const box = {
+    width,
+    marginLeft: justify === 'flex-start' ? 0 : 'auto',
+    marginRight: justify === 'flex-end' ? 0 : 'auto',
+  };
 
-  if (!label) return <div style={{ width, marginLeft: justify === 'center' ? 'auto' : justify === 'flex-end' ? 'auto' : 0, marginRight: justify === 'center' ? 'auto' : 0, ...line }} />;
+  if (!label) return <div style={box}>{rule}</div>;
 
+  /* A label splits the rule into two segments — each one a LineMark of its own, so a zigzag with a
+     label is a zigzag either side of the words rather than a zigzag and a plain rule. */
   const pos = String(cfg.labelPos ?? 'center');
   return (
-    <div style={{ width, marginLeft: justify === 'flex-start' ? 0 : 'auto', marginRight: justify === 'flex-end' ? 0 : 'auto' }} className="flex items-center gap-3">
-      {pos !== 'left' && <span className="flex-1" style={line} />}
+    <div style={box} className="flex items-center gap-3">
+      {pos !== 'left' && <span className="min-w-0 flex-1">{rule}</span>}
       <span style={roleStyle(styles, nodeId, 'meta')} className="flex-shrink-0 text-[12px] text-[#7B8FA5]">{label}</span>
-      {pos !== 'right' && <span className="flex-1" style={line} />}
+      {pos !== 'right' && <span className="min-w-0 flex-1">{rule}</span>}
     </div>
   );
 }

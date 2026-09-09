@@ -1365,7 +1365,11 @@ export const PORTAL_ELEMENTS: PortalElement[] = [
   { id: 'act-knowledge', name: 'Knowledge', icon: 'knowledge', group: 'Actions', onPage: true, node: 'quick-knowledge', keywords: 'articles help search' },
 
   { id: 'l-tabs', name: 'Advanced Tabs', icon: 'tabs', group: 'Basic', hidden: true }, // hidden 20 Aug 2026
-  { id: 'l-divider', name: 'Divider', icon: 'divider', group: 'Basic', keywords: 'vertical horizontal v/h separator rule', hidden: true }, // hidden 21 Aug 2026
+  /* Back in the palette. It was withheld on 21 Aug with no reason recorded — and unlike Spacer and
+     Advanced Tabs it has a complete spec, a renderer and a preview card, so there was nothing to
+     finish. What it DID have was a lie in its panel: three of the six line styles could not render.
+     Fixed in `DividerRender` (see the note there) rather than by trimming the picker. */
+  { id: 'l-divider', name: 'Divider', icon: 'divider', group: 'Basic', keywords: 'vertical horizontal v/h separator rule line' },
 
   /* ⚠️ File Download, Click to Call, Click to Mail and Share are NOT here. They are Button
      ACTIONS (§7.11's 'Opens' list), not elements — one button with a different destination. A
