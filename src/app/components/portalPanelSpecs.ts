@@ -31,9 +31,20 @@ export const DIVIDER_SPEC: WidgetSpec = {
   id: 'divider', name: 'Divider', group: 'Layout', reuse: 'many', family: 'flat',
   panel: {
     content: [
-      { key: 'label', label: 'Label', control: 'text', help: 'Optional text sitting on the line.' },
+      /* ⚠️ FIRST, because it decides what the widget is before anything else describes how it
+         looks. A vertical divider is not a styled horizontal one — it separates columns rather
+         than stacked blocks, and the two are chosen at different moments. */
       {
-        key: 'labelPos', label: 'Label position', control: 'segmented', when: (c) => !!c.label,
+        key: 'orientation', label: 'Direction', control: 'segmented',
+        options: [{ value: 'horizontal', label: 'Horizontal' }, { value: 'vertical', label: 'Vertical' }],
+      },
+      /* ⚠️ Both label fields are REMOVED on a vertical rule, not disabled. Text across a vertical
+         line has to be rotated to sit on it, and rotated running text is a worse label than none —
+         so rather than ship a control whose result is unreadable, the question is not asked. */
+      { key: 'label', label: 'Label', control: 'text', help: 'Optional text sitting on the line.', when: (c) => c.orientation !== 'vertical' },
+      {
+        key: 'labelPos', label: 'Label position', control: 'segmented',
+        when: (c) => c.orientation !== 'vertical' && !!c.label,
         options: [{ value: 'center', label: 'Centre' }, { value: 'left', label: 'Left' }, { value: 'right', label: 'Right' }],
       },
     ],
@@ -49,20 +60,17 @@ export const DIVIDER_SPEC: WidgetSpec = {
           { key: 'thickness', label: 'Line width', control: 'sliderUnit', min: 1, max: 8, unit: 'px' },
         ],
       },
-      /* Stretch is the fourth option, not a separate Size row: a divider either sits at a width you
-         gave it or fills its column, and two controls for one decision let them contradict. */
-      {
-        id: 'alignment',
-        fields: [{
-          key: 'align', label: 'Alignment', control: 'segmented',
-          options: [{ value: 'left', label: 'Left' }, { value: 'center', label: 'Centre' }, { value: 'right', label: 'Right' }, { value: 'stretch', label: 'Stretch' }],
-        }],
-      },
+      /* ⚠️ The Alignment accordion is GONE, and it was inert for the whole of its life: `width`
+         defaults to 100 and no control ever wrote it, so with a full-width rule the auto margins
+         resolved to zero and left / centre / right / stretch could not differ by a pixel. Four
+         options describing one outcome. Direction, above, is the question this control was reaching
+         for — a rule's only real choice is which way it runs. `align` stays in `defaults` so a page
+         that stored it still resolves. */
       { id: 'spacing', spacing: 'both' },
     ],
   },
   fields: [], packs: [],
-  defaults: { label: '', labelPos: 'center', lineStyle: 'solid', thickness: 2, lineColor: '#94A3B8', width: 100, align: 'stretch' },
+  defaults: { orientation: 'horizontal', label: '', labelPos: 'center', lineStyle: 'solid', thickness: 2, lineColor: '#94A3B8', width: 100, align: 'stretch' },
 };
 
 /* ── §3.7 Spacer ─────────────────────────────────────────────────────────── */

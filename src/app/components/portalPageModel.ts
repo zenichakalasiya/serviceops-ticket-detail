@@ -1274,7 +1274,11 @@ export function toolbarCaps(id: string): ToolbarCaps {
      and the KPI is not in it. A cap here would have removed its Replace as well, which is a swap
      rather than an add and is the one structural thing it should still offer. */
   const t = placedType(id);
-  if (t && ['c-records', 'b-accordion', 'c-faq', 'v-video', 'b-table', 'x-kpi'].includes(t)) {
+  /* ⚠️ `l-divider` joins them for the same reason and one of its own: a rule fills the column it is
+     dropped into, so neither axis had a position to report — and its sidebar Alignment accordion
+     was removed for exactly that, so leaving the toolbar pair would have kept a second copy of a
+     control that never worked. Direction replaces both. */
+  if (t && ['c-records', 'b-accordion', 'c-faq', 'v-video', 'b-table', 'x-kpi', 'l-divider'].includes(t)) {
     return { alignH: false, alignV: false };
   }
   return {};

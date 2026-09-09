@@ -14,28 +14,48 @@ export const LINE_LABEL: Record<LineStyle, string> = {
 };
 
 /** One line, at any width/colour/thickness. Used by the canvas AND by every picker swatch. */
-export function LineMark({ style, color, thickness }: { style: LineStyle; color: string; thickness: number }) {
+/* ⚠️ ONE mark, both directions. The vertical case is the SAME six styles with x and y swapped —
+   written as a second component it would be six drawings to keep in step with six others, and the
+   picker's swatches (which stay horizontal, because they show the STYLE and not the direction)
+   would be a third. Everything below reads `vertical` and swaps the axis it works on. */
+export function LineMark({ style, color, thickness, vertical }: {
+  style: LineStyle; color: string; thickness: number; vertical?: boolean;
+}) {
   if (style === 'gradient') {
     return (
       <span
-        className="block w-full"
-        style={{ height: thickness, background: `linear-gradient(90deg, ${color}, transparent)` }}
+        className={vertical ? 'block h-full' : 'block w-full'}
+        style={vertical
+          ? { width: thickness, background: `linear-gradient(180deg, ${color}, transparent)` }
+          : { height: thickness, background: `linear-gradient(90deg, ${color}, transparent)` }}
       />
     );
   }
   if (style === 'zigzag' || style === 'wavy') {
     /* An SVG so the shape scales with the line width instead of being a fixed picture of one. */
     const amp = Math.max(3, thickness * 2);
-    const d = style === 'zigzag'
-      ? `M0 ${amp} L5 0 L10 ${amp} L15 0 L20 ${amp}`
-      : `M0 ${amp} Q2.5 0 5 ${amp} T10 ${amp} T15 ${amp} T20 ${amp}`;
-    return (
+    /* The vertical path is the horizontal one with its coordinates transposed — same shape, turned
+       a quarter turn, rather than a CSS rotation that would leave the layout box the wrong way up. */
+    const d = vertical
+      ? (style === 'zigzag'
+        ? `M${amp} 0 L0 5 L${amp} 10 L0 15 L${amp} 20`
+        : `M${amp} 0 Q0 2.5 ${amp} 5 T${amp} 10 T${amp} 15 T${amp} 20`)
+      : (style === 'zigzag'
+        ? `M0 ${amp} L5 0 L10 ${amp} L15 0 L20 ${amp}`
+        : `M0 ${amp} Q2.5 0 5 ${amp} T10 ${amp} T15 ${amp} T20 ${amp}`);
+    return vertical ? (
+      <svg className="block h-full" width={amp * 2} viewBox={`0 0 ${amp * 2} 20`} preserveAspectRatio="none" aria-hidden>
+        <path d={d} fill="none" stroke={color} strokeWidth={thickness} vectorEffect="non-scaling-stroke" />
+      </svg>
+    ) : (
       <svg className="block w-full" height={amp * 2} viewBox={`0 0 20 ${amp * 2}`} preserveAspectRatio="none" aria-hidden>
         <path d={d} fill="none" stroke={color} strokeWidth={thickness} vectorEffect="non-scaling-stroke" />
       </svg>
     );
   }
-  return <span className="block w-full" style={{ borderTopWidth: thickness, borderTopStyle: style, borderTopColor: color }} />;
+  return vertical
+    ? <span className="block h-full" style={{ borderLeftWidth: thickness, borderLeftStyle: style, borderLeftColor: color }} />
+    : <span className="block w-full" style={{ borderTopWidth: thickness, borderTopStyle: style, borderTopColor: color }} />;
 }
 
 /** "Select Layout" — a dropdown that opens the six shapes as drawn rows. */

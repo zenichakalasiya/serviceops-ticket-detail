@@ -846,13 +846,26 @@ export function DividerRender({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
      rendered as nothing at all. Three of the six swatches were a promise the canvas could not keep.
      `LineMark` is the same component the picker draws its swatches with, so what you pick and what
      you get are now one implementation rather than two that agree on half their values. */
+  const vertical = cfg.orientation === 'vertical';
   const rule = (
     <LineMark
       style={(cfg.lineStyle as LineStyle) ?? 'solid'}
       color={String(cfg.lineColor ?? '#E5E7EB')}
       thickness={Number(cfg.thickness ?? 1)}
+      vertical={vertical}
     />
   );
+
+  /* ⚠️ A vertical rule needs a height from somewhere, and a column that has not been given one is
+     zero tall — so `100%` alone renders nothing at all on arrival. `minHeight` is the floor that
+     makes it visible the moment it lands; where it sits beside real content the `100%` takes over
+     and it matches its neighbour. Centred horizontally because a rule between two columns belongs
+     in the gap, not against one edge. */
+  if (vertical) {
+    return (
+      <div className="flex h-full justify-center" style={{ minHeight: 120 }}>{rule}</div>
+    );
+  }
   const label = String(cfg.label ?? '');
   const width = `${Number(cfg.width ?? 100)}%`;
   const justify = cfg.align === 'center' ? 'center' : cfg.align === 'right' ? 'flex-end' : 'flex-start';
