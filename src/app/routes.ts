@@ -20,7 +20,6 @@ export type Page =
   | 'patches' | 'patch-deployments' | 'endpoints'
   | 'vulnerabilities' | 'detected-cves'
   | 'bom'
-  | 'portal-templates'
   | 'admin';
 
 /** The page a bare URL lands on. */
@@ -36,7 +35,6 @@ const PAGES: readonly Page[] = [
   'patches', 'patch-deployments', 'endpoints',
   'vulnerabilities', 'detected-cves',
   'bom',
-  'portal-templates',
   'admin',
 ];
 
@@ -130,7 +128,6 @@ const PAGE_TITLES: Record<Page, string> = {
   vulnerabilities: 'Vulnerabilities',
   'detected-cves': 'Detected CVEs',
   bom: 'BOM Inventory',
-  'portal-templates': 'Portal Templates',
   admin: 'Admin',
 };
 

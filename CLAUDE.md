@@ -343,25 +343,44 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   Columns control wrote a value nothing read — both the Content tab and the Arrangement pack moved,
   stored, and changed nothing on the canvas. It takes `cols` as a prop now.
 
-- **Portal template showcase (`PortalTemplateShowcase.tsx`, route `#/portal-templates`)** — every
-  template rendered as the page it actually PRODUCES, stacked on one scrolling URL with a sticky
-  jump row (scroll-spy, `IncidentDetailsTabV2` pattern). ⚠️ It exists because the builder's gallery
-  shows **wireframes** (`TemplateArt`), which is right for a picker and wrong for review: a sketch
-  cannot be wrong, so it can't show you a wrapped subtitle, two bands disagreeing about padding, or
-  a white heading on a white fill. ⚠️ **Seeds, not a second renderer** — the same rule
-  `TemplateSeed` states. The file owns no layout: `templatePage()` reproduces
-  `SupportPortalBuilder`'s `useState` INITIALISERS (the seed → page mapping, which is self-contained
-  and touches no live edit state) and hands the result to the one `SupportPortalPreview`. The three
-  rules that would produce a wrong-but-plausible page if dropped are carried over verbatim: a
-  **rail is a SHAPE** (`railShape` also sets the one-column records row), `rowOrder` is **MERGED**
-  over the defaults rather than replaced, and `quick-link` must be **backfilled into `content.quick`**
-  or a seed naming it in `rowOrder.quick` silently renders one tile short. ⚠️ It renders inside a
-  **`CanvasProvider`, not just props** — `SupportPortalPreview` reads per-node STYLE off the canvas
-  context, so a template's seeded `columns`, fills and radii resolve to nothing without one; that is
-  what `READONLY_CANVAS` (exported from `PortalCanvas`, and now the `createContext` default) is for.
-  ⚠️ The **Default tile is not in `PORTAL_TEMPLATES`** — it is the portal that already exists, so it
-  is declared in this file with no `seed`, which is exactly what makes it render the default
-  arrangement. Only `VISIBLE_TEMPLATES()` is listed, so the 6 `hidden` templates stay off it.
+- **The portal template showcase (`PortalTemplateShowcase.tsx`, route `#/portal-templates`) was
+  REMOVED on 8 Sep 2026** — the file, its `Page` union member, its `PAGES` slug and its
+  `PAGE_TITLES` label are all gone, and a cold load of `#/portal-templates` now canonicalises to
+  `#/request`. Don't recreate it from an old link. The Use-Template gallery
+  (`SupportPortalTemplateGallery`) and the `PORTAL_TEMPLATES` data were deliberately KEPT. Two
+  lessons from it still apply to anything that renders a template OUTSIDE the builder: reproduce the
+  builder's `useState` initialisers rather than inventing a mapping (a **rail is a SHAPE**,
+  `rowOrder` is **MERGED** over the defaults, `quick-link` must be **backfilled into
+  `content.quick`**), and render inside a **`CanvasProvider`** — `SupportPortalPreview` reads
+  per-node style off the canvas context, which is what `READONLY_CANVAS` (still exported from
+  `PortalCanvas`) is for.
+- **Industry templates — the plan the next templates are built from (Sep 2026).** The reference is
+  a published doc, *Industry Support Portals*:
+  https://claude.ai/code/artifact/e0392ec4-8e36-4de8-83c9-72732dd00054 — personas, use cases and
+  a tiered widget list per vertical, with an ITSM justification for every widget. The design source
+  is the Claude Design canvas `ServiceOps portal layout system/Support Portal Layout System.dc.html`
+  (21 artboards, ids like `3b`/`4i`; **untracked by git**, backup beside it as `.dc.html.bak`).
+  **Programme** (primary · themed · third): IT & ITES `3B` Sidecar (reworked) · 2A Navy;
+  Healthcare **`5A` Ward Desk** (new, to be generated in Claude Design) · 2A Coral; Manufacturing
+  `4I` Rails only; Government `3I` Wayfinder · 2A Navy · `4B` Broadsheet; Education `4E` Atrium ·
+  2A Coral · `4P` Employee Center; BFSI `4A` Service Center · 2A Navy · `3G` Atlas (held).
+  **PMG rejected** `4H` `4D` `4A2` `3H2` `3D` `3C` outright — ⚠️ `3C` IS the shipped `tpl-counter`
+  and `2A` is the reference behind `tpl-verdant`, so those rejections land on product code.
+  ⚠️ **Industry is a SECOND gallery axis beside `category`**, not a replacement (`category` is
+  department scope) — and each industry gets its **own seed/tile** reusing a layout renderer, or two
+  industries sharing a tile have nowhere to put their own widgets.
+  ⚠️ **Industry-only widgets use the existing `PortalElement.hidden` mechanism** (spec + renderer
+  stay live, palette withholds it) plus a proposed `templates: string[]` so an "In this template"
+  palette group can restore a deleted one. Four of the five Tier 2 widgets are ONE build — a dated,
+  authored list whose items carry a status.
+  ⚠️ **Theme: coral `#F27564` cannot carry text or a white label** — measured 2.80:1 both ways;
+  `#07101F` on coral is 6.80:1. So `#07101F` carries every action and coral is identity only
+  (wash, eyebrow, underline, icon tints); `#C2452F` (5.02:1) is the only coral allowed on text.
+  Ward Desk ships with NO coral — red-adjacent colour already means an emergency on a ward.
+  ⚠️ **The canvas chrome is the PRODUCT's**: all 21 artboards now share one top bar (lucide) and one
+  8-destination rail whose glyphs are extracted from `SidebarIcons.tsx`, drawn as CSS
+  `mask-image` classes (`.ico-*`) defined once in the canvas stylesheet. Service Catalog is
+  deliberately absent from the rail. The in-page icons are still Material Symbols by agreement.
 
 - **Support Portal — the BANNER is a palette element (`x-banner` / `x-search`, Data group).**
   A blank portal replaces every band with one empty state, so a from-scratch page had no way to get
