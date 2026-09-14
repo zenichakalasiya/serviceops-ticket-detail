@@ -877,6 +877,9 @@ export const WIDGET_SPECS: WidgetSpec[] = [
       },
       /* ⚠️ The title is AUTHORED. Every fixed card's title is the product's word for a fixed query;
          this one lists whatever the admin asked for, so only they can name it. */
+      /* The ICON that leads the title — a badge before the heading on a list, the glyph beside the
+         number on a KPI. Above Title because it is read before it. "None" in the picker removes it. */
+      { key: 'icon', label: 'Icon', control: 'icon', group: 'Content' },
       { key: 'title', label: 'Title', control: 'text', group: 'Content' },
       /* ⚠️ NO one-line help under any field on this panel. "Which records this card lists" under a
          field labelled Module is the label again in a longer sentence, and a caption under every

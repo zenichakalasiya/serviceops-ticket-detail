@@ -1378,14 +1378,19 @@ function TextImageRender({ cfg }: { nodeId: string; cfg: Cfg }) {
  *
  * The heading and the View-all label are their own nodes, so a copy is editable exactly where the
  * original is — clicking the words edits the words. */
-function LiveCard({ nodeId, cfg, title, count, rows }: {
+function LiveCard({ nodeId, cfg, title, count, rows, icon }: {
   nodeId: string; cfg: Cfg; title: string; count: number; rows: ReactNode;
+  /* A badge before the title — the same tinted badge every card head uses. Absent unless passed. */
+  icon?: ReactNode;
 }) {
   const { styles } = useCanvas();
   const plain = cfg.countStyle === 'plain';
   return (
     <div className="@container flex min-w-0 flex-col">
       <div className="flex items-center gap-2 pb-2.5">
+        {icon && (
+          <span className="flex size-7 flex-shrink-0 items-center justify-center rounded-md bg-[#EAF3FB] text-[#2F6FB5] [&_svg]:size-4">{icon}</span>
+        )}
         {hasFixedTitle(nodeId) ? (
           <span style={roleStyle(styles, nodeId, 'title')} className="block min-w-0 flex-1 truncate px-0.5 text-[15px] font-semibold text-[#364658]">
             {String(cfg.title ?? title)}
@@ -1529,7 +1534,7 @@ function CisRender({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
  * the controls do nothing, which is the one thing a builder must never do.
  * ⚠️ The empty state is the SAME one My CIs draws, not a copy — asked for by name, and the state a
  * requester genuinely lands on when their filter matches nothing. */
-function RecordListRender({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
+function RecordListRender({ nodeId, cfg, glyph }: { nodeId: string; cfg: Cfg; glyph?: ReactNode }) {
   const mod = recordModule(cfg.module as string);
   /* ⚠️ ONE reader for both halves of the control. A preset and a hand-built condition list are the
      same setting shown two ways, so `activeConditions` resolves whichever is set and the renderer
@@ -1567,7 +1572,7 @@ function RecordListRender({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
     return (
       <div className="flex items-center gap-3.5">
         <span className="flex size-11 flex-shrink-0 items-center justify-center rounded-lg bg-[#F1F5F9] text-[#475467]">
-          <LayoutList size={20} />
+          {glyph ?? <LayoutList size={20} />}
         </span>
         <span className="min-w-0">
           <span className="block text-[30px] font-semibold leading-none text-[#364658]">{matching.length}</span>
@@ -1577,7 +1582,7 @@ function RecordListRender({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
     );
   }
   return (
-    <LiveCard nodeId={nodeId} cfg={cfg} title={mod.label} count={rows.length} rows={
+    <LiveCard nodeId={nodeId} cfg={cfg} title={mod.label} count={rows.length} icon={glyph} rows={
       rows.length === 0 ? (
         <div className="flex items-center justify-center rounded border border-dashed border-[#E5E7EB] py-7 text-[13px] text-[#9CA3AF]">
           No Data Found
@@ -1602,7 +1607,7 @@ function RecordListRender({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
   );
 }
 
-export const COLLECTION_RENDERERS: Record<string, (p: { nodeId: string; cfg: Cfg }) => ReactNode> = {
+export const COLLECTION_RENDERERS: Record<string, (p: { nodeId: string; cfg: Cfg; glyph?: ReactNode }) => ReactNode> = {
   'c-records': RecordListRender,
   'c-requests': RequestsRender,
   'c-approvals': ApprovalsRender,
