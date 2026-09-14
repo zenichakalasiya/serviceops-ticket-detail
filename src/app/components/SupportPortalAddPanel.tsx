@@ -38,6 +38,7 @@ import type { PortalElement, PortalElementGroup } from './supportPortalData';
 const ICONS: Record<string, ReactNode> = {
   // Components
   banner: <PanelTop size={16} />,
+  actionPanel: <Rows3 size={16} />,
   search: <Search size={16} />,
   services: <ShoppingCart size={16} />,
   requests: <IconRequest size={16} />,

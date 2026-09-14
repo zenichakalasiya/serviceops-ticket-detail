@@ -1347,6 +1347,8 @@ export const PORTAL_ELEMENTS: PortalElement[] = [
   /* Placed: the FAQ block already sits in the banner area of this portal, so the palette shows it
      as added rather than offering a second one. */
   { id: 'c-faq', name: 'FAQ', icon: 'faq', group: 'Custom', onPage: true, keywords: 'questions help answers' },
+  /* onPage: true so the builder does not seed an example section of it — it is a new widget an admin places. */
+  { id: 'x-action-panel', name: 'Action Panel', icon: 'actionPanel', group: 'Custom', onPage: true, keywords: 'raise ticket quick links buttons panel shortcuts' },
   /* ⚠️ CUSTOM, not Data — and that placement does real work. Data and Actions are
      group-gated as predefined: one instance each, greyed with a tick once placed. This one is
      repeatable, which is exactly what it needs — two Record Lists filtered differently is a

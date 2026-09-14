@@ -1110,7 +1110,7 @@ const CARD_TYPES = new Set([
      canvas with no boundary at all. */
   'c-records',
   'c-services', 'c-favourites', 'c-categories', 'c-requests', 'c-approvals', 'c-assets', 'c-tasks',
-  'c-announcements', 'c-knowledge', 'c-faq', 'c-contact',
+  'c-announcements', 'c-knowledge', 'c-faq', 'c-contact', 'x-action-panel',
   'b-card', 'b-table', 'b-accordion', 'b-text-image',
   /* ⚠️ Listed, or removing it from SELF_SURFACED changes nothing: renderSpec falls through to a
      bare default, so the KPI stayed flat by a different route than the one that was fixed. */
