@@ -988,7 +988,11 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
           />
         );
       case 'icon':
-        return <IconField value={icon} onChange={setIcon} />;
+        /* ⚠️ A child BLOCK keeps its icon in its own item config. The icons store is keyed by the
+           owning widget, so two Icon blocks in one Contact Us card would have shared one glyph. */
+        return selItem
+          ? <IconField value={viewCfg.icon as IconChoice | undefined} onChange={(c) => set(f.key, c)} />
+          : <IconField value={icon} onChange={setIcon} />;
       case 'chipEditor':
         return <ChipEditor value={(v as string[]) ?? []} onChange={(x) => set(f.key, x)} />;
       case 'nine':

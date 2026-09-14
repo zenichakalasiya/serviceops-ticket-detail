@@ -24,6 +24,8 @@ import type { CarouselType } from './PortalCarousel';
 import type { PortalStyles } from './portalPageModel';
 import { chosen, iconBoxCss, resolveType, roleStyle } from './portalStyleResolver';
 import { IconFrameBox } from './PortalIconFrame';
+import { iconNode } from './PortalIconPicker';
+import type { IconChoice } from './PortalIconPicker';
 import type { IconFrame } from './PortalIconFrame';
 import type { Cfg } from './portalWidgetSpec';
 import { PORTAL_APPROVALS, PORTAL_ARTICLES, PORTAL_OPEN_REQUESTS, recordModule, statusTone } from './supportPortalData';
@@ -243,8 +245,17 @@ export function CardRender({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
 function ChildBlock({ item }: { item: Item }) {
   if (item.type === 'button') {
     return (
-      <span className="inline-flex h-9 items-center justify-center rounded bg-[#3D8BD0] px-4 text-[13px] font-medium text-white">
+      <span className="inline-flex h-9 items-center justify-center gap-2 rounded bg-[#3D8BD0] px-4 text-[13px] font-medium text-white">
+        {iconNode(item.icon as IconChoice | undefined, 16)}
         {String(item.label ?? 'Button')}
+      </span>
+    );
+  }
+  if (item.type === 'icon_child') {
+    const size = Number(item.iconSize ?? 22);
+    return (
+      <span style={{ color: String(item.iconColor ?? '#475467') }} className="inline-flex">
+        {iconNode(item.icon as IconChoice | undefined, size) ?? <Star size={size} strokeWidth={1.7} />}
       </span>
     );
   }
@@ -548,8 +559,10 @@ const stackProps = (gap: number, dividers: boolean) => ({
 });
 
 export function ContactRender({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
-  const { styles } = useCanvas();
+  const { styles, enabled } = useCanvas();
   const { gap, dividers } = arrange(styles, nodeId);
+  /* Blocks the admin added with the toolbar's + — Button, Text or Icon. */
+  const blocks = visible(cfg.children as Item[], enabled);
   return (
     <div className="@container min-w-0">
       <WidgetTitle nodeId={nodeId} text={cfg.title} />
@@ -572,6 +585,15 @@ export function ContactRender({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
           </div>
         ))}
       </div>
+      {blocks.length > 0 && (
+        <div className="mt-3 flex flex-col gap-2.5">
+          {blocks.map((b) => (
+            <Sel key={b.id} id={itemNodeId(nodeId, b.id)}>
+              <ChildBlock item={b} />
+            </Sel>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

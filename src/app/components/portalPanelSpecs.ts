@@ -356,6 +356,19 @@ export const DATA_TILE_SPEC: WidgetSpec = {
   defaults: {},
 };
 
+/* An Icon added INSIDE a container (Contact Us). A flat spec, not the panel-model `icon_el`: a
+   child's drawer reads `fields`, so the picker, colour and size have to live there to be reachable. */
+export const ICON_CHILD_SPEC: WidgetSpec = {
+  id: 'icon_child', name: 'Icon', group: 'Visual', reuse: 'many', family: 'flat',
+  fields: [
+    { key: 'icon', label: 'Icon', control: 'icon', group: 'Content' },
+    { key: 'iconColor', label: 'Icon colour', control: 'color', tab: 'style', group: 'Icon' },
+    { key: 'iconSize', label: 'Size', control: 'sliderUnit', tab: 'style', group: 'Icon', min: 12, max: 64, unit: 'px' },
+  ],
+  packs: [],
+  defaults: { iconColor: '#475467', iconSize: 22 },
+};
+
 export const LIST_TITLE_SPEC = textSpec('list_title', 'Heading', 'title');
 export const LIST_LABEL_SPEC = textSpec('list_label', 'Label', 'label');
 export const LIST_LINK_SPEC = textSpec('list_link', 'Link label', 'viewAllLabel');
@@ -363,7 +376,7 @@ export const LIST_LINK_SPEC = textSpec('list_link', 'Link label', 'viewAllLabel'
 export const PANEL_SPECS: WidgetSpec[] = [
   DIVIDER_SPEC, SPACER_SPEC, TITLE_LG_SPEC, TITLE_SM_SPEC, ICON_SPEC, SHAPE_SPEC,
   CARD_TITLE_SPEC, CARD_SUB_SPEC, CARD_ICON_SPEC, LIST_TITLE_SPEC, LIST_LABEL_SPEC, LIST_LINK_SPEC,
-  IMAGE_CAPTION_SPEC, DATA_TILE_SPEC,
+  IMAGE_CAPTION_SPEC, DATA_TILE_SPEC, ICON_CHILD_SPEC,
 ];
 
 /** Palette element → panel spec. Separate from WIDGET_FOR_TYPE only for readability. */

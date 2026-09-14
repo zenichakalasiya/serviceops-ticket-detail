@@ -440,6 +440,24 @@ export const WIDGET_SPECS: WidgetSpec[] = [
          so a seeded ` + String.fromCharCode(96) + `cl0` + String.fromCharCode(96) + ` would be a value nothing reads — and the Hours pair went with the line. */
       cv0: 'servicedesk@acme.com',
       cv1: '+91 79 4040 0000',
+      children: [],
+    },
+    /* ⚠️ Contact Us takes BLOCKS the admin adds — a Button, a line of Text or an Icon — through the
+       toolbar's +, the same container mechanism the Card widget uses (`addChildBlock`). The two
+       contact lines stay the product's; what an admin adds sits below them and is theirs to style,
+       move and delete. Three types only: this is a contact card, not a second section. */
+    collection: {
+      key: 'children', group: 'Extra content', addLabel: 'Add a block',
+      emptyHint: 'Add a Button, a line of Text or an Icon below the contact details.',
+      childTypes: [
+        { type: 'button', label: 'Button' },
+        { type: 'text', label: 'Text' },
+        { type: 'icon_child', label: 'Icon' },
+      ],
+      label: (it) => (it.type === 'icon_child' ? 'Icon' : String(it.label ?? it.html ?? 'Block').replace(/<[^>]+>/g, '').slice(0, 44)),
+      meta: (it) => (it.type === 'icon_child' ? 'icon' : String(it.type ?? '')),
+      seed: () => ({ type: 'text', html: 'A line of supporting copy.' }),
+      fields: [],
     },
   },
 
