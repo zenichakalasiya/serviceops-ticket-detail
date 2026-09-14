@@ -320,7 +320,7 @@ export function iconBoxCss(styles: PortalStyles, id: string): React.CSSPropertie
   if (/-icon$/.test(id) && b('shadowOn') === true) {
     css.boxShadow = shadowString(
       String(b('shadowColor') ?? DEFAULT_SHADOW_COLOR),
-      (b('shadowType') as string) === 'inner' ? 'inner' : 'outer',
+      'outer',
       String(b('shadowPos') ?? 'bottom'),
     );
   }
@@ -393,7 +393,7 @@ export function containerCss(styles: PortalStyles, id: string): React.CSSPropert
   if (b('shadowOn') === true) {
     css.boxShadow = shadowString(
       String(b('shadowColor') ?? DEFAULT_SHADOW_COLOR),
-      (b('shadowType') as string) === 'inner' ? 'inner' : 'outer',
+      'outer',
       String(b('shadowPos') ?? 'bottom'),
     );
   }

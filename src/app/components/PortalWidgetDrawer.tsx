@@ -64,10 +64,11 @@ function ShadowGroup({ nodeId, styles, setStyle, open, onToggle }: {
         value={{
           on: own.shadowOn === true,
           color: String(own.shadowColor ?? DEFAULT_SHADOW_COLOR),
-          type: own.shadowType === 'inner' ? 'inner' : 'outer',
+          type: 'outer',
           pos: String(own.shadowPos ?? 'bottom'),
         }}
-        onChange={(x) => setStyle(nodeId, { shadowOn: x.on, shadowColor: x.color, shadowType: x.type, shadowPos: x.pos })}
+        /* Always OUTER — the Shadow type control is gone, so any change writes outer. */
+        onChange={(x) => setStyle(nodeId, { shadowOn: x.on, shadowColor: x.color, shadowType: 'outer', shadowPos: x.pos })}
       />
     </Group>
   );

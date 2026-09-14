@@ -462,6 +462,10 @@ export const WIDGET_SPECS: WidgetSpec[] = [
        move and delete. Three types only: this is a contact card, not a second section. */
     collection: {
       key: 'children', group: 'Extra content', addLabel: 'Add a block',
+      /* ⚠️ Not listed in the sidebar — blocks are added from the canvas toolbar's + only, and each is
+         selected and edited on the canvas. `when` gates only the panel list; the toolbar reads
+         `childTypes` directly, so adding still works. */
+      when: () => false,
       emptyHint: 'Add a Button, a line of Text or an Icon below the contact details.',
       childTypes: [
         { type: 'button', label: 'Button' },

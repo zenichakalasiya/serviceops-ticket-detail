@@ -235,23 +235,8 @@ export function ShadowBlock({ value, onChange, label = 'Shadow' }: { value: Shad
             <span className="w-[176px]"><ColorField value={value.color} onChange={(v) => set({ color: v })} /></span>
           </div>
 
-          <div className="mt-3 flex items-center justify-between gap-3">
-            <span className="flex items-center gap-1 text-[12px] font-normal text-[#7B8FA5]">
-              Shadow type
-              <span title="Outer casts the shadow behind the block. Inner sinks it into the surface." className="cursor-help text-[#9CA3AF]"><Info size={12} /></span>
-            </span>
-            <span className="flex rounded border border-[#DFE5ED] bg-white p-0.5">
-              {(['outer', 'inner'] as const).map((t) => (
-                <button
-                  key={t}
-                  onClick={() => set({ type: t })}
-                  className={`rounded px-2.5 py-1 text-[12px] font-medium capitalize transition-colors ${
-                    value.type === t ? 'bg-[#EBF5FF] text-[#3D8BD0]' : 'text-[#64748B] hover:bg-[#F5F7FA]'
-                  }`}
-                >{t}</button>
-              ))}
-            </span>
-          </div>
+          {/* ⚠️ No Shadow type row. A shadow is an OUTER shadow — switching it on is the whole
+             decision; an inset option was a second question almost nobody means to answer. */}
 
           {/* Direction as a 3×3, never two number fields — you are picking where light comes from. */}
           <div className="mt-3 flex items-center justify-between gap-3">

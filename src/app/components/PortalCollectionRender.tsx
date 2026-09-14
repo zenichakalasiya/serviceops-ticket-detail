@@ -11,7 +11,7 @@
 import { useRef, useState } from 'react';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import type { ReactNode } from 'react';
-import { ChevronDown, ChevronLeft, LayoutList, ChevronRight, ChevronsRight, ImageOff, ShoppingCart, Star } from 'lucide-react';
+import { ChevronDown, ChevronLeft, LayoutList, ChevronRight, ChevronsRight, ImageOff, Mail, Phone, ShoppingCart, Star } from 'lucide-react';
 import { Sel, useCanvas } from './PortalCanvas';
 /* The Table is a module of its own — a spreadsheet-grade editor is a different kind of thing from
    the read-only renderers in this file, and it owns its data model, its handles and its menus. */
@@ -524,6 +524,8 @@ export function FeedbackRender({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
    was trimmed, which left a line you could neither edit nor hide: the worst of the three states.
    ⚠️ No `key` any more either. The three `show*` flags were only ever read by a filter that existed
    to serve toggles that no longer exist — dead config feeding a dead filter. */
+/* ⚠️ `cv0` is the EMAIL value and `cv1` the PHONE value — the stored keys — whatever order the lines
+   are drawn in, so a portal that already set them keeps its numbers against the right icon. */
 const CONTACT_LINES = [
   { label: 'Email', value: 'servicedesk@acme.com' },
   { label: 'Phone', value: '+91 79 4040 0000' },
@@ -560,28 +562,25 @@ const stackProps = (gap: number, dividers: boolean) => ({
 
 export function ContactRender({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
   const { styles, enabled } = useCanvas();
-  const { gap, dividers } = arrange(styles, nodeId);
   /* Blocks the admin added with the toolbar's + — Button, Text or Icon. */
   const blocks = visible(cfg.children as Item[], enabled);
+  /* ⚠️ Phone first, then email — an ICON and the value. The icon says what each line is, so the
+     words "Phone" and "Email" were a label restating the glyph. Nothing here is a `Sel`: the lines
+     are the product's, and their two values are edited in the panel (`cv1` phone, `cv0` email). */
+  const lines = [
+    { key: 'cv1', label: 'Phone', icon: <Phone size={17} strokeWidth={1.6} />, value: CONTACT_LINES[1].value },
+    { key: 'cv0', label: 'Email', icon: <Mail size={17} strokeWidth={1.6} />, value: CONTACT_LINES[0].value },
+  ];
   return (
     <div className="@container min-w-0">
       <WidgetTitle nodeId={nodeId} text={cfg.title} />
-      <div {...stackProps(gap, dividers)}>
-        {CONTACT_LINES.map((l, i) => (
-          <div key={l.label} className="py-2.5">
-            {/* ⚠️ NOTHING here is wrapped in <Sel>, and that is the point of this pass. Both halves
-                of a line used to be their own selectable text node, so clicking the word "Email" put
-                you in an inline editor for a label that is the PRODUCT's word — every portal calls
-                that line Email, and letting one page rename it is how two portals stop describing
-                the same thing the same way. The two VALUES are still editable, in the panel, where a
-                portal publishing its own address belongs.
-                ⚠️ There is no empty state below either: two fixed lines cannot all be switched off,
-                so the "every line is switched off" branch was describing a state the card can no
-                longer reach. */}
-            <div style={roleStyle(styles, nodeId, 'meta')} className="text-[12px] text-[#7B8FA5]">{l.label}</div>
-            <div style={roleStyle(styles, nodeId, 'body')} className="mt-0.5 truncate text-[13px] text-[#364658]">
-              {String(cfg[`cv${i}`] ?? l.value)}
-            </div>
+      <div className="flex flex-col gap-3.5 border-t border-[#F0F2F5] pt-3.5">
+        {lines.map((l) => (
+          <div key={l.key} className="flex min-w-0 items-center gap-3">
+            <span title={l.label} className="flex flex-shrink-0 text-[#475467]">{l.icon}</span>
+            <span style={roleStyle(styles, nodeId, 'body')} className="min-w-0 truncate text-[14px] text-[#1E293B]">
+              {String(cfg[l.key] ?? l.value)}
+            </span>
           </div>
         ))}
       </div>
