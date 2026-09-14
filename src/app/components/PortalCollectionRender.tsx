@@ -92,6 +92,11 @@ function WidgetTitle({ nodeId, text, icon, action, count }: {
       <h3 style={roleStyle(styles, nodeId, 'title')} className="truncate text-[16px] font-semibold text-[#364658]">
         {String(text)}
       </h3>
+      {count !== undefined && (
+        <span className="inline-flex h-[18px] min-w-[18px] flex-shrink-0 items-center justify-center rounded bg-[#EEF2F6] px-1.5 text-[11px] font-semibold text-[#64748B]">
+          {count}
+        </span>
+      )}
     </div>
   );
   return (
@@ -604,7 +609,7 @@ function OneLine({ text, className = '', style }: { text: string; className?: st
   );
 }
 
-/** `11 Aug 2026` → `Tue,` + `Aug 11` — the two lines under "Posted" in the regular card's date block. */
+/** `11 Aug 2026` → `Tue,` + `Aug 11` — the two lines of an announcement's date tile. */
 function postedParts(at: string): { day: string; date: string } {
   const d = new Date(at);
   if (Number.isNaN(d.getTime())) return { day: '', date: at };
@@ -621,16 +626,18 @@ export function AnnouncementsRender({ nodeId, cfg, headIcon }: { nodeId: string;
 
   /* ⚠️ CAROUSEL is a DISPLAY of the same card, never a second widget. The rows, their words, their
      dates and their styling all come from exactly where they already came from — the only thing
-     that changes is how many are on screen at once. As its own palette element there would be two
-     Announcements to keep in step, and they would drift the first time either was touched. */
+     that changes is how many are on screen at once. */
   const carousel = cfg.display === 'carousel' && rows.length > 0;
-  /* ⚠️ Called UNCONDITIONALLY. A hook behind an `if` changes the hook count between renders the
-     moment the admin switches Display, which React refuses outright — and this is exactly the
-     switch an admin will flip while looking at the card. It costs nothing when unused.
-     ⚠️ Always MANUAL. The Type control is gone from the panel, and a stored `sliderType: 'auto'`
-     from before that must not keep a card moving on its own with nothing left to turn it off. */
+  /* ⚠️ The carousel moves through EVERY announcement, two to a page. The count badge beside the
+     heading says how many there are, so the carousel is the way to reach all of them — capping it at
+     the regular card's `show` would leave the badge promising rows nothing could get to. */
+  const PER_PAGE = 2;
+  const pages: (typeof ANNOUNCEMENTS)[] = [];
+  for (let i = 0; i < ANNOUNCEMENTS.length; i += PER_PAGE) pages.push(ANNOUNCEMENTS.slice(i, i + PER_PAGE));
+  /* ⚠️ Called UNCONDITIONALLY — a hook behind an `if` changes the hook count the moment Display is
+     switched. ⚠️ Always MANUAL: nothing left in the panel could turn an automatic one off. */
   const car = useCarousel({
-    count: rows.length,
+    count: pages.length,
     type: 'manual',
     loop: true,
     live: !enabled && carousel,
@@ -638,113 +645,73 @@ export function AnnouncementsRender({ nodeId, cfg, headIcon }: { nodeId: string;
 
   /* ⚠️ `roleStyle` hands back `fontWeight` and `lineHeight` UNCONDITIONALLY, and `undefined` for
      every value nobody chose. Spread as it comes, the `undefined` colour DELETES the colour a line
-     set and the hard 400 flattens its semibold. So only the values a human actually set are kept —
-     shared by both displays. */
+     set and the hard 400 flattens its semibold. So only the values a human actually set are kept. */
   const chosenRole = (role: 'body' | 'meta') => {
     const { fontWeight: _w, lineHeight: _lh, ...rest } = roleStyle(styles, nodeId, role) as Record<string, unknown>;
     return Object.fromEntries(Object.entries(rest).filter(([, val]) => val !== undefined)) as React.CSSProperties;
   };
 
-  /* ONE announcement, in the words and the styling the list already uses — shared by both displays
-     so a row cannot look like two different things depending on the mode. */
-  const one = (a: (typeof ANNOUNCEMENTS)[number]) => (
-    <div className={cfg.bullets === true ? 'flex gap-2.5 py-2.5' : 'py-2.5'}>
-      {cfg.bullets === true && <span className="mt-[7px] size-1.5 flex-shrink-0 rounded-full bg-[#2F6FB5]" />}
-      <div className="min-w-0 flex-1">
-        <div style={roleStyle(styles, nodeId, 'body')} className="text-[13px] leading-[1.5] text-[#364658]">{a.title}</div>
+  /* ONE announcement row, shared by BOTH displays so a notice cannot look like two different things
+     depending on the mode: date tile · headline · detail.
+     ⚠️ Headline and detail are ONE line each, cut with an ellipsis and read in full on hover — equal
+     row heights are what let the list be scanned.
+     ⚠️ The tile is the weekday and the date, no "Posted": the card is headed Announcements, so the
+     word restated what the whole card already says. */
+  const row = (a: (typeof ANNOUNCEMENTS)[number]) => {
+    const p = postedParts(a.at);
+    return (
+      <div key={a.id} className="flex items-stretch gap-3.5 py-3">
         {cfg.showDate !== false && (
-          <div style={roleStyle(styles, nodeId, 'meta')} className="mt-1 text-[12px] text-[#98A6B6]">
-            {cfg.datePrefix ? `${String(cfg.datePrefix)} ${a.at}` : a.at}
+          <div style={{ lineHeight: 1.35, ...chosenRole('meta') }} className="flex w-[62px] flex-shrink-0 flex-col items-center justify-center rounded-lg bg-[#F1F4F8] px-1.5 py-2 text-center text-[12px] text-[#7B8FA5]">
+            {p.day && <span className="whitespace-nowrap">{p.day}</span>}
+            <span className="whitespace-nowrap">{p.date}</span>
           </div>
         )}
+        <div className="flex min-w-0 flex-1 flex-col justify-center">
+          <OneLine text={a.title} style={{ fontWeight: 600, lineHeight: 1.4, ...chosenRole('body') }} className="text-[14px] text-[#1E293B]" />
+          <OneLine text={a.desc} style={{ lineHeight: 1.5, ...chosenRole('meta') }} className="mt-1 text-[13px] text-[#7B8FA5]" />
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   if (carousel) {
-    /* The card-level link. ⚠️ Plain words, never a `Sel`: Announcements is a predefined card, and
-       its links are the product's (`hasFixedViewAll`) — the same rule every other data card's
-       View all already follows. */
+    /* The card-level link. ⚠️ Plain words, never a `Sel`: the links on a predefined card are the
+       product's (`hasFixedViewAll`). */
     const allLink = (
       <span style={roleStyle(styles, nodeId, 'link')} className="flex items-center gap-1 whitespace-nowrap text-[12px] font-medium text-[#7B8FA5]">
         All announcements<ChevronsRight size={16} />
       </span>
     );
-    /* ONE notice. ⚠️ The date is a BLOCK, not a line: `items-stretch` makes it exactly as tall as the
-       title and description beside it, so the eye reads date → what → detail in one sweep and the
-       three never drift out of line when a headline wraps. Split on the LAST space, so the year sits
-       on its own line whatever form the day and month take. */
-    const slide = (a: (typeof ANNOUNCEMENTS)[number]) => {
-      const cut = a.at.lastIndexOf(' ');
-      const dayMonth = cut > 0 ? a.at.slice(0, cut) : a.at;
-      const year = cut > 0 ? a.at.slice(cut + 1) : '';
-      return (
-        <div className="flex items-stretch gap-3.5">
-          <div style={{ fontWeight: 600, lineHeight: 1.3, ...chosenRole('meta') }} className="flex w-[76px] flex-shrink-0 flex-col items-center justify-center rounded-lg bg-[#F1F4F8] px-2 py-2 text-center text-[13px] text-[#475467]">
-            <span className="whitespace-nowrap">{dayMonth}</span>
-            {year && <span>{year}</span>}
-          </div>
-          <div className="min-w-0 flex-1 py-0.5">
-            {/* ONE line each — a headline that does not fit is cut and read in full on hover. */}
-            <OneLine
-              text={a.title}
-              style={{ color: 'var(--portal-accent, #3D8BD0)', fontWeight: 600, lineHeight: 1.35, ...chosenRole('body') }}
-              className="text-[15px]"
-            />
-            <OneLine text={a.desc} style={{ lineHeight: 1.5, ...chosenRole('meta') }} className="mt-1 text-[13px] text-[#7B8FA5]" />
-          </div>
-        </div>
-      );
-    };
-    /* ⚠️ A flex COLUMN that fills its card, so the controls can take `mt-auto` and sit on the card's
-       bottom edge rather than directly under the notice — the card is often taller than one slide
-       (it stretches to its row), and controls floating mid-card read as part of the notice. */
+    /* ⚠️ A flex COLUMN that fills its card, so the controls take `mt-auto` and sit on the card's
+       bottom edge — the card is often taller than a page (it stretches to its row). */
     return (
       <div className="@container flex min-h-0 min-w-0 flex-1 flex-col">
-        <WidgetTitle nodeId={nodeId} text={cfg.title} icon={headIcon} action={allLink} />
+        {/* The SAME heading as the regular card — title and count — so switching Display never
+            changes what the card is called or how many notices it says it holds. */}
+        <WidgetTitle nodeId={nodeId} text={cfg.title} icon={headIcon} count={ANNOUNCEMENTS.length} action={allLink} />
         <div {...car.bind}>
-          <CarouselTrack car={car}>{rows.map((a) => <div key={a.id}>{slide(a)}</div>)}</CarouselTrack>
+          <CarouselTrack car={car}>
+            {pages.map((pg, i) => (
+              /* Each page is the regular card's stack — the same rows, the same rules between them. */
+              <div key={i} {...stackProps(gap, dividers)}>{pg.map(row)}</div>
+            ))}
+          </CarouselTrack>
         </div>
-        {/* ⚠️ Bottom LEFT of the CARD, and only when there is somewhere to go. The link to every
-            announcement owns the top right; `mt-auto` pushes the controls to the card's foot. */}
-        {rows.length > 1 && (
+        {/* Bottom LEFT of the CARD, and only when there is a second page to go to. */}
+        {pages.length > 1 && (
           <div className="mt-auto flex justify-start pt-3">
-            <CarouselNav car={car} count={rows.length} />
+            <CarouselNav car={car} count={pages.length} />
           </div>
         )}
       </div>
     );
   }
 
-  /* The REGULAR card: date block · headline · detail, one notice per row.
-     ⚠️ Headline and detail are ONE line each, cut with an ellipsis and read in full on hover. Rows of
-     equal height are what let the list be scanned; a headline wrapping to three lines turned one
-     notice into the whole card. ⚠️ The date is a BLOCK on the left, stretched to the row, the same
-     reading order the carousel uses — when, then what, then the detail. */
-  const prefix = cfg.datePrefix === '' ? '' : String(cfg.datePrefix ?? 'Posted');
   return (
     <div className="@container min-w-0">
       <WidgetTitle nodeId={nodeId} text={cfg.title} icon={headIcon} count={ANNOUNCEMENTS.length} />
-      <div {...stackProps(gap, dividers)}>
-        {rows.map((a) => {
-          const p = postedParts(a.at);
-          return (
-          <div key={a.id} className="flex items-stretch gap-3.5 py-3">
-            {cfg.showDate !== false && (
-              <div style={{ lineHeight: 1.35, ...chosenRole('meta') }} className="flex w-[62px] flex-shrink-0 flex-col items-center justify-center rounded-lg bg-[#F1F4F8] px-1.5 py-2 text-center text-[12px] text-[#7B8FA5]">
-                {prefix && <span>{prefix}</span>}
-                {p.day && <span className="whitespace-nowrap">{p.day}</span>}
-                <span className="whitespace-nowrap">{p.date}</span>
-              </div>
-            )}
-            <div className="flex min-w-0 flex-1 flex-col justify-center">
-              <OneLine text={a.title} style={{ fontWeight: 600, lineHeight: 1.4, ...chosenRole('body') }} className="text-[14px] text-[#1E293B]" />
-              <OneLine text={a.desc} style={{ lineHeight: 1.5, ...chosenRole('meta') }} className="mt-1 text-[13px] text-[#7B8FA5]" />
-            </div>
-          </div>
-          );
-        })}
-      </div>
+      <div {...stackProps(gap, dividers)}>{rows.map(row)}</div>
     </div>
   );
 }
