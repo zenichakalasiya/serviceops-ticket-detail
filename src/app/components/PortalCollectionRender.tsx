@@ -8,7 +8,8 @@
  * Heading by clicking the heading, not by hunting through a list.
  */
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import type { ReactNode } from 'react';
 import { ChevronDown, ChevronLeft, LayoutList, ChevronRight, ChevronsRight, ImageOff, ShoppingCart, Star } from 'lucide-react';
 import { Sel, useCanvas } from './PortalCanvas';
@@ -43,8 +44,10 @@ const visible = (items: Item[] | undefined, live: boolean) =>
    ⚠️ Nothing else was needed: nodeById already describes any `<id>-title` as a text node and
    ownerOf already strips the suffix so the value reads and writes on the WIDGET's config. One
    wrapper turns that latent machinery on for every widget that has a heading. */
-function WidgetTitle({ nodeId, text, icon, action }: {
+function WidgetTitle({ nodeId, text, icon, action, count }: {
   nodeId: string; text?: unknown;
+  /* The count badge `CardShell` puts beside every other data card's title. Absent unless passed. */
+  count?: number;
   /* Something the heading row carries on its RIGHT — a card-level link. Absent unless a caller
      passes it, so every widget drawing its heading through here renders exactly as before. */
   action?: ReactNode;
@@ -64,6 +67,11 @@ function WidgetTitle({ nodeId, text, icon, action }: {
       <h3 style={roleStyle(styles, nodeId, 'title')} className="text-[16px] font-semibold text-[#364658]">
         {String(text)}
       </h3>
+      {count !== undefined && (
+        <span className="inline-flex h-[18px] min-w-[18px] flex-shrink-0 items-center justify-center rounded bg-[#EEF2F6] px-1.5 text-[11px] font-semibold text-[#64748B]">
+          {count}
+        </span>
+      )}
     </div>
   );
   /* ⚠️ A product-owned heading renders BARE — no Sel, so it is not selectable and not typeable.
@@ -576,6 +584,36 @@ const ANNOUNCEMENTS = [
   { id: 'a5', title: 'Phishing awareness training is now mandatory', at: '28 Jul 2026', desc: 'The 20-minute module is assigned to everyone and is due by the end of the month.' },
 ];
 
+/** One line of text that truncates, and shows the whole of itself on hover — but ONLY when it was
+ *  actually cut. A tooltip repeating words already fully on screen is noise, so whether it opens is
+ *  decided at the moment of hover by measuring the rendered line, not by guessing from its length. */
+function OneLine({ text, className = '', style }: { text: string; className?: string; style?: React.CSSProperties }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const [open, setOpen] = useState(false);
+  return (
+    <Tooltip
+      delayDuration={300}
+      open={open}
+      onOpenChange={(o) => setOpen(o && !!ref.current && ref.current.scrollWidth > ref.current.clientWidth)}
+    >
+      <TooltipTrigger asChild>
+        <span ref={ref} style={style} className={`block min-w-0 truncate ${className}`}>{text}</span>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="max-w-[320px] text-wrap">{text}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+/** `11 Aug 2026` → `Tue,` + `Aug 11` — the two lines under "Posted" in the regular card's date block. */
+function postedParts(at: string): { day: string; date: string } {
+  const d = new Date(at);
+  if (Number.isNaN(d.getTime())) return { day: '', date: at };
+  return {
+    day: `${d.toLocaleDateString('en-US', { weekday: 'short' })},`,
+    date: `${d.toLocaleDateString('en-US', { month: 'short' })} ${String(d.getDate()).padStart(2, '0')}`,
+  };
+}
+
 export function AnnouncementsRender({ nodeId, cfg, headIcon }: { nodeId: string; cfg: Cfg; headIcon?: ReactNode }) {
   const { styles, enabled } = useCanvas();
   const rows = ANNOUNCEMENTS.slice(0, Number(cfg.show ?? 3));
@@ -597,6 +635,15 @@ export function AnnouncementsRender({ nodeId, cfg, headIcon }: { nodeId: string;
     loop: true,
     live: !enabled && carousel,
   });
+
+  /* ⚠️ `roleStyle` hands back `fontWeight` and `lineHeight` UNCONDITIONALLY, and `undefined` for
+     every value nobody chose. Spread as it comes, the `undefined` colour DELETES the colour a line
+     set and the hard 400 flattens its semibold. So only the values a human actually set are kept —
+     shared by both displays. */
+  const chosenRole = (role: 'body' | 'meta') => {
+    const { fontWeight: _w, lineHeight: _lh, ...rest } = roleStyle(styles, nodeId, role) as Record<string, unknown>;
+    return Object.fromEntries(Object.entries(rest).filter(([, val]) => val !== undefined)) as React.CSSProperties;
+  };
 
   /* ONE announcement, in the words and the styling the list already uses — shared by both displays
      so a row cannot look like two different things depending on the mode. */
@@ -627,15 +674,6 @@ export function AnnouncementsRender({ nodeId, cfg, headIcon }: { nodeId: string;
        title and description beside it, so the eye reads date → what → detail in one sweep and the
        three never drift out of line when a headline wraps. Split on the LAST space, so the year sits
        on its own line whatever form the day and month take. */
-    /* ⚠️ `roleStyle` hands back `fontWeight` and `lineHeight` UNCONDITIONALLY, and `undefined` for
-       every value nobody chose. Spread as it comes, the `undefined` colour DELETES the accent the
-       headline set and the hard 400 flattens `font-semibold` — measured: the headline rendered
-       #0F172A at weight 400, in the reference's place for a blue semibold title. So only the values
-       a human actually set are kept; the carousel's own weight and leading stay its own. */
-    const chosenRole = (role: 'body' | 'meta') => {
-      const { fontWeight: _w, lineHeight: _lh, ...rest } = roleStyle(styles, nodeId, role) as Record<string, unknown>;
-      return Object.fromEntries(Object.entries(rest).filter(([, val]) => val !== undefined)) as React.CSSProperties;
-    };
     const slide = (a: (typeof ANNOUNCEMENTS)[number]) => {
       const cut = a.at.lastIndexOf(' ');
       const dayMonth = cut > 0 ? a.at.slice(0, cut) : a.at;
@@ -647,26 +685,30 @@ export function AnnouncementsRender({ nodeId, cfg, headIcon }: { nodeId: string;
             {year && <span>{year}</span>}
           </div>
           <div className="min-w-0 flex-1 py-0.5">
-            <div
+            {/* ONE line each — a headline that does not fit is cut and read in full on hover. */}
+            <OneLine
+              text={a.title}
               style={{ color: 'var(--portal-accent, #3D8BD0)', fontWeight: 600, lineHeight: 1.35, ...chosenRole('body') }}
-              className="line-clamp-2 text-[15px]"
-            >{a.title}</div>
-            <div style={{ lineHeight: 1.5, ...chosenRole('meta') }} className="mt-1 line-clamp-2 text-[13px] text-[#7B8FA5]">{a.desc}</div>
+              className="text-[15px]"
+            />
+            <OneLine text={a.desc} style={{ lineHeight: 1.5, ...chosenRole('meta') }} className="mt-1 text-[13px] text-[#7B8FA5]" />
           </div>
         </div>
       );
     };
+    /* ⚠️ A flex COLUMN that fills its card, so the controls can take `mt-auto` and sit on the card's
+       bottom edge rather than directly under the notice — the card is often taller than one slide
+       (it stretches to its row), and controls floating mid-card read as part of the notice. */
     return (
-      <div className="@container min-w-0">
+      <div className="@container flex min-h-0 min-w-0 flex-1 flex-col">
         <WidgetTitle nodeId={nodeId} text={cfg.title} icon={headIcon} action={allLink} />
         <div {...car.bind}>
           <CarouselTrack car={car}>{rows.map((a) => <div key={a.id}>{slide(a)}</div>)}</CarouselTrack>
         </div>
-        {/* ⚠️ Bottom RIGHT, and only when there is somewhere to go. The link to every announcement
-            owns the top right; the controls that move between the few shown here sit under the
-            notice they move, at the edge the eye finishes reading on. */}
+        {/* ⚠️ Bottom LEFT of the CARD, and only when there is somewhere to go. The link to every
+            announcement owns the top right; `mt-auto` pushes the controls to the card's foot. */}
         {rows.length > 1 && (
-          <div className="mt-3 flex justify-start">
+          <div className="mt-auto flex justify-start pt-3">
             <CarouselNav car={car} count={rows.length} />
           </div>
         )}
@@ -674,30 +716,34 @@ export function AnnouncementsRender({ nodeId, cfg, headIcon }: { nodeId: string;
     );
   }
 
+  /* The REGULAR card: date block · headline · detail, one notice per row.
+     ⚠️ Headline and detail are ONE line each, cut with an ellipsis and read in full on hover. Rows of
+     equal height are what let the list be scanned; a headline wrapping to three lines turned one
+     notice into the whole card. ⚠️ The date is a BLOCK on the left, stretched to the row, the same
+     reading order the carousel uses — when, then what, then the detail. */
+  const prefix = cfg.datePrefix === '' ? '' : String(cfg.datePrefix ?? 'Posted');
   return (
     <div className="@container min-w-0">
-      <WidgetTitle nodeId={nodeId} text={cfg.title} icon={headIcon} />
+      <WidgetTitle nodeId={nodeId} text={cfg.title} icon={headIcon} count={ANNOUNCEMENTS.length} />
       <div {...stackProps(gap, dividers)}>
-        {rows.map((a) => (
-          <div key={a.id} className={cfg.bullets === true ? 'flex gap-2.5 py-2.5' : 'py-2.5'}>
-            {/* ⚠️ A BULLET, and it is the leading token this card was missing — every other card on
-                the page opens its rows with one (an id pill, an avatar, an icon), so without it
-                Announcements was the only list whose rows started at the card's edge. */}
-            {cfg.bullets === true && <span className="mt-[7px] size-1.5 flex-shrink-0 rounded-full bg-[#2F6FB5]" />}
-            <div className="min-w-0 flex-1">
-              {/* Stacked by default (§7.5): an announcement's headline is the thing, the date is a
-                  footnote — putting them on one line would truncate the headline to fit the date. */}
-              <div style={roleStyle(styles, nodeId, 'body')} className="text-[13px] leading-[1.5] text-[#364658]">{a.title}</div>
-              {cfg.showDate !== false && (
-                <div style={roleStyle(styles, nodeId, 'meta')} className="mt-1 text-[12px] text-[#98A6B6]">
-                  {/* "Posted" turns a bare date into a fact about the announcement. Opt-in, because
-                      on a card that is already headed Announcements it can also read as noise. */}
-                  {cfg.datePrefix ? `${String(cfg.datePrefix)} ${a.at}` : a.at}
-                </div>
-              )}
+        {rows.map((a) => {
+          const p = postedParts(a.at);
+          return (
+          <div key={a.id} className="flex items-stretch gap-3.5 py-3">
+            {cfg.showDate !== false && (
+              <div style={{ lineHeight: 1.35, ...chosenRole('meta') }} className="flex w-[62px] flex-shrink-0 flex-col items-center justify-center rounded-lg bg-[#F1F4F8] px-1.5 py-2 text-center text-[12px] text-[#7B8FA5]">
+                {prefix && <span>{prefix}</span>}
+                {p.day && <span className="whitespace-nowrap">{p.day}</span>}
+                <span className="whitespace-nowrap">{p.date}</span>
+              </div>
+            )}
+            <div className="flex min-w-0 flex-1 flex-col justify-center">
+              <OneLine text={a.title} style={{ fontWeight: 600, lineHeight: 1.4, ...chosenRole('body') }} className="text-[14px] text-[#1E293B]" />
+              <OneLine text={a.desc} style={{ lineHeight: 1.5, ...chosenRole('meta') }} className="mt-1 text-[13px] text-[#7B8FA5]" />
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

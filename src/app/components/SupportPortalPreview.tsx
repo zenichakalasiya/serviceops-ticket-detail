@@ -1624,7 +1624,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
      (It calls `card` below; a const arrow is only read at call time, and every call happens
      during render, long after both are initialised.) */
   const railCard = (id: string) => {
-    if (id === 'news') return card('news', <div className="p-4"><AnnouncementsRender nodeId="news" cfg={{ title: 'Announcements', ...wc('news') }} headIcon={hIcon(<Megaphone size={15} strokeWidth={1.8} />)} /></div>, 1, secGap('work'), 1);
+    if (id === 'news') return card('news', <div className="flex flex-1 flex-col p-4"><AnnouncementsRender nodeId="news" cfg={{ title: 'Announcements', ...wc('news') }} headIcon={hIcon(<Megaphone size={15} strokeWidth={1.8} />)} /></div>, 1, secGap('work'), 1, undefined, { fill: true });
     /* ⚠️ Counter's right-hand rail — Assets stacked under Approvals. RecordsCard, not RecordTiles:
        the tile grid is built for a WIDE row, and a narrow rail column wants the same compact list
        treatment `records` already uses when there is no rail at all. */
@@ -1638,7 +1638,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
       : card('contact', <div className="p-4">{body}</div>, 1, secGap('work'), 1);
   };
 
-  const card = (id: string, body: ReactNode, cols?: number, gap = 16, grow = 1, orderAt?: number, look?: { full?: boolean; bare?: boolean }) => {
+  const card = (id: string, body: ReactNode, cols?: number, gap = 16, grow = 1, orderAt?: number, look?: { full?: boolean; bare?: boolean; fill?: boolean }) => {
     if (removed.includes(id)) return null;
     /* ⚠️ Membership comes from `rowOf` — the STATIC map of which row a card belongs to — not from
        searching the live `rowOrder`. Deleting a fixed card takes it out of `rowOrder`, so a search
@@ -1654,7 +1654,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
     return cardInner(id, body, cols, order, gap, grow, look);
   };
 
-  const cardInner = (id: string, body: ReactNode, cols: number | undefined, order: number, gap = 16, grow = 1, look?: { full?: boolean; bare?: boolean }) => (
+  const cardInner = (id: string, body: ReactNode, cols: number | undefined, order: number, gap = 16, grow = 1, look?: { full?: boolean; bare?: boolean; fill?: boolean }) => (
     /* ⚠️ No overflow-hidden here. The chip sits at -top-4 and the toolbar at -top-11, both OUTSIDE
        the wrapper — clipping it silently removes the card's hover outline and quick actions. */
     /* ⚠️ `min-w-0` is what makes the row honour its column count. Without it a card's widest
@@ -1683,13 +1683,13 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
       /* ⚠️ `bare` paints NO surface. A card mounted inside a container that already draws a
          border and a background would otherwise draw a second one 1px inside the first — which is
          what a tabbed work band looked like before this existed. */
-      className={look?.bare
+      className={(look?.fill ? 'flex flex-col ' : '') + (look?.bare
         ? 'min-w-0'
         : squareCards
         ? 'min-w-0 rounded-md border border-[#E5E7EB] bg-white'
         : spineCards
         ? 'min-w-0 overflow-hidden rounded-[14px] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04),0_8px_24px_-12px_rgba(16,24,40,0.14)]'
-        : 'min-w-0 rounded-xl border border-[#E5E7EB] bg-white'}
+        : 'min-w-0 rounded-xl border border-[#E5E7EB] bg-white')}
       style={{ ...(cols ? share(cols, gap, grow) : {}), ...(look?.full ? { gridColumn: '1 / -1' } : {}), order }}
     >
       {/* No overflow-hidden: a card must be free to grow past a dragged height rather than clip
@@ -1700,7 +1700,9 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
           own id, so the kind of card is legible before a word is read. */}
       <div
         style={{ ...(spineCards ? { borderLeft: `3px solid ${SPINE[id] ?? '#3D8BD0'}` } : {}), ...stInner(id) }}
-        className={spineCards ? 'rounded-[14px]' : 'rounded-xl'}
+        /* `fill`: a flex chain down to the body, so a card taller than its content (stretched to its
+           row) can pin something to its foot — the Announcements carousel controls. */
+        className={`${spineCards ? 'rounded-[14px]' : 'rounded-xl'}${look?.fill ? ' flex flex-1 flex-col' : ''}`}
       >{body}</div>
     </Sel>
   );
