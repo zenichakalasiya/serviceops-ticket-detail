@@ -655,7 +655,8 @@ export function AnnouncementsRender({ nodeId, cfg, headIcon }: { nodeId: string;
      the regular card's `show` would leave the badge promising rows nothing could get to. */
   /* With the header on, a page is two rows under it. With it OFF the card is a one-line STRIP, so a
      page is one notice with its controls beside it (see the strip branch below). */
-  const headerOn = cfg.showHeader !== false;
+  /* The header is the REGULAR card's — the two carousel types never carry one (Card type decides). */
+  const headerOn = (cfg.display ?? 'regular') !== 'carousel' && cfg.display !== 'image';
   const imageDisplay = cfg.display === 'image' && rows.length > 0;
   /* The image carousel shows ONE notice in its band, header or not. */
   const PER_PAGE = headerOn && !imageDisplay ? 2 : 1;

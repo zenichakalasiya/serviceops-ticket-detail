@@ -68,6 +68,73 @@ export function TemplatePicker({ value, onChange, only }: {
   );
 }
 
+/* ── Announcement card type ──────────────────────────────────────────────────
+ *
+ * The Card templates tile language, with a caption under each tile — these name three different
+ * cards rather than three arrangements of one, so the sketch alone is not enough. Each sketch is the
+ * card's own skeleton: a header over two rows, one row with its controls, a photo over a band. */
+const ANNOUNCEMENT_TYPES = [
+  { value: 'regular', title: 'Regular' },
+  { value: 'carousel', title: 'No image' },
+  { value: 'image', title: 'With image' },
+] as const;
+
+export function AnnouncementTypePicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="flex gap-2">
+      {ANNOUNCEMENT_TYPES.map((t) => {
+        const on = value === t.value;
+        const ink = on ? 'bg-[#3D8BD0]/30' : 'bg-[#DFE5ED]';
+        const faint = 'bg-[#EEF2F6]';
+        const row = (
+          <span className="flex items-center gap-1">
+            <span className={`size-2.5 flex-shrink-0 rounded-[2px] ${ink}`} />
+            <span className="flex flex-col gap-[2px]">
+              <span className={`h-[2px] w-6 rounded-full ${ink}`} />
+              <span className={`h-[2px] w-4 rounded-full ${faint}`} />
+            </span>
+          </span>
+        );
+        return (
+          <button key={t.value} onClick={() => onChange(t.value)} className="flex flex-1 flex-col items-center gap-1.5">
+            <span className={`flex h-[64px] w-full items-center justify-center rounded-lg border-2 bg-white transition-colors ${
+              on ? 'border-[#3D8BD0]' : 'border-[#E5E7EB] hover:border-[#C3CBD6]'
+            }`}>
+              {t.value === 'regular' && (
+                <span className="flex flex-col gap-[4px]">
+                  <span className={`h-[3px] w-5 rounded-full ${ink}`} />
+                  {row}
+                  {row}
+                </span>
+              )}
+              {t.value === 'carousel' && (
+                <span className="flex items-center gap-2">
+                  {row}
+                  <span className="flex items-center gap-[2px]">
+                    <span className={`h-[3px] w-2 rounded-full ${ink}`} />
+                    <span className={`size-[3px] rounded-full ${faint}`} />
+                    <span className={`size-[3px] rounded-full ${faint}`} />
+                  </span>
+                </span>
+              )}
+              {t.value === 'image' && (
+                <span className="flex w-[46px] flex-col overflow-hidden rounded-[3px]">
+                  <span className={`h-[18px] w-full ${faint}`} />
+                  <span className={`flex items-center gap-1 px-1 py-[3px] ${on ? 'bg-[#3D8BD0]/45' : 'bg-[#C3CBD6]'}`}>
+                    <span className="size-2 flex-shrink-0 rounded-[2px] bg-white/70" />
+                    <span className="h-[2px] w-5 rounded-full bg-white/70" />
+                  </span>
+                </span>
+              )}
+            </span>
+            <span className={`text-[12px] ${on ? 'font-medium text-[#3D8BD0]' : 'text-[#475467]'}`}>{t.title}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 /* ── Banner layouts ──────────────────────────────────────────────────────────
  *
  * ⚠️ A picker of DRAWN shapes, not a dropdown, for the reason at the top of this file: which

@@ -55,6 +55,8 @@ export type ControlKind =
   /** A section's layout preset row. */
   | 'sectionPreset'
   | 'tilePreset'
+  /** Announcements' Card type tiles — Regular / No image / With image. */
+  | 'announcementType'
   /** Horizontal content distribution, icon-only (5). */
   | 'distribute'
   /** Vertical content alignment, icon-only (4). */
@@ -365,16 +367,13 @@ export const WIDGET_SPECS: WidgetSpec[] = [
        the page's business, because it is a decision about the space the card is sitting in.
        ⚠️ Defaults to `regular`, so every portal already carrying this card is untouched. */
     fields: [
-      /* ⚠️ The header can go. A template's announcement STRIP — one notice, its controls and the
-         link on the same line — has no title and no badge, and the editor has to be able to build
-         the section a template ships with. Title only asks its question while there IS a header. */
-      { key: 'showHeader', label: 'Show header', control: 'toggle', group: 'Content' },
-      { ...TITLE_FIELD, when: (c) => c.showHeader !== false },
-      {
-        key: 'display', label: 'Display', control: 'segmented', group: 'Content',
-        options: [{ value: 'regular', label: 'Regular card' }, { value: 'carousel', label: 'Carousel' }, { value: 'image', label: 'Image carousel' }],
-        help: 'A regular card lists the latest announcements. A carousel pages through them with arrows. An image carousel puts one notice in a band under a photo.',
-      },
+      /* ⚠️ CARD TYPE first, as three drawn tiles — Regular, No image, With image. It replaced a
+         Display segmented control AND the Show header switch: the header belongs to the Regular card
+         only, so it is a property of the type rather than a second switch that could contradict it.
+         Still the `display` key (regular / carousel / image), so every stored card keeps its shape. */
+      { key: 'display', label: '', control: 'announcementType', group: 'Card type' },
+      /* Only the Regular card has a header, so only it asks for a title. */
+      { ...TITLE_FIELD, when: (c) => (c.display ?? 'regular') === 'regular' },
       /* ── Image carousel only ── ⚠️ All three are REMOVED for the other two displays, not disabled:
          a photo and a band colour mean nothing on a card that has neither. One photo for the whole
          card, uploaded here — it stays put while the notices page underneath it. */
