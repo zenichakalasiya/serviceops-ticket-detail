@@ -273,8 +273,11 @@ export function CarouselArrows({ car, placement = 'inside', over }: {
  * ⚠️ The active dot is a PILL, not a bigger circle: length reads at a glance where a size change
  * of two pixels does not, and it is the one mark on the row that should be found without looking.
  * The colour is the portal's own accent, so a themed portal's carousel follows its theme. */
-export function CarouselNav({ car, count, onDark }: {
+export function CarouselNav({ car, count, onDark, endLabel }: {
   car: Carousel; count: number;
+  /* On the LAST slide the Next arrow becomes this label with a chevron ("View all ›") — the end of the
+     few shown here is where the full list starts. Absent: the arrow stays an arrow. */
+  endLabel?: string;
   /* On a dark band (the Announcements image carousel): outlined white arrows and white dots, so the
      controls read on the band rather than as white chips pasted onto it. Off by default. */
   onDark?: boolean;
@@ -300,9 +303,20 @@ export function CarouselNav({ car, count, onDark }: {
           />
         ))}
       </div>
-      <button type="button" aria-label="Next" disabled={car.atEnd} onClick={(e) => { e.stopPropagation(); car.step(1); }} className={arrow}>
-        <ChevronRight size={15} />
-      </button>
+      {endLabel && car.i === count - 1 ? (
+        <button
+          type="button"
+          aria-label={endLabel}
+          onClick={(e) => e.stopPropagation()}
+          className={`flex h-7 flex-shrink-0 items-center gap-0.5 whitespace-nowrap pl-1.5 text-[13px] font-medium transition-colors ${
+            onDark ? 'text-white hover:text-white/80' : 'text-[#475467] hover:text-[#3D8BD0]'
+          }`}
+        >{endLabel}<ChevronRight size={15} /></button>
+      ) : (
+        <button type="button" aria-label="Next" disabled={car.atEnd} onClick={(e) => { e.stopPropagation(); car.step(1); }} className={arrow}>
+          <ChevronRight size={15} />
+        </button>
+      )}
     </div>
   );
 }

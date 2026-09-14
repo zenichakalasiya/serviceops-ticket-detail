@@ -661,14 +661,17 @@ export function AnnouncementsRender({ nodeId, cfg, headIcon }: { nodeId: string;
   const PER_PAGE = headerOn && !imageDisplay ? 2 : 1;
   const pages: (typeof ANNOUNCEMENTS)[] = [];
   /* ⚠️ The carousels show the latest THREE — three dots, three notices. A carousel is for what is
-     current; the rest are one click away through All announcements. */
+     current; the last dot offers View all. */
   const CAROUSEL_ITEMS = ANNOUNCEMENTS.slice(0, 3);
   for (let i = 0; i < CAROUSEL_ITEMS.length; i += PER_PAGE) pages.push(CAROUSEL_ITEMS.slice(i, i + PER_PAGE));
   /* ⚠️ Called UNCONDITIONALLY — a hook behind an `if` changes the hook count the moment Display is
      switched. ⚠️ Always MANUAL: nothing left in the panel could turn an automatic one off. */
+  /* ⚠️ AUTO-ADVANCES every 5s and loops: on the last notice Next reads "View all ›", then it returns to
+     the first. Paused while the pointer is over it, and still on the editing canvas (`live`). */
   const car = useCarousel({
     count: pages.length,
-    type: 'manual',
+    type: 'auto',
+    interval: 5,
     loop: true,
     live: !enabled && (carousel || imageDisplay),
   });
@@ -705,17 +708,11 @@ export function AnnouncementsRender({ nodeId, cfg, headIcon }: { nodeId: string;
     );
   };
 
-  /* The card-level link, on BOTH displays — the regular card lists a few and the carousel pages
-     through them, and either way the full list is one click from the header. ⚠️ Plain words, never a
-     `Sel`: the links on a predefined card are the product's (`hasFixedViewAll`). */
-  const allLink = (
-    <span style={roleStyle(styles, nodeId, 'link')} className="flex items-center gap-1 whitespace-nowrap text-[12px] font-medium text-[#7B8FA5]">
-      All announcements<ChevronsRight size={16} />
-    </span>
-  );
+  /* ⚠️ No "All announcements" link on any card type — the carousel's last dot turns Next into
+     "View all ›" instead (see the endLabel prop on CarouselNav). */
 
   /* ── IMAGE CAROUSEL ── one photo the admin uploads, a colour band beneath it, and the notices
-     paging inside the band: date tile · headline · detail, controls top right, the link bottom right.
+     paging inside the band: date tile · headline · detail, controls top right.
      ⚠️ `-m-4` lets the photo reach the card's edges — the card gives every widget 16px of padding,
      and a photo inset inside a white frame is a picture ON a card rather than the card's face.
      ⚠️ The band's text colour is a CHOICE (Light / Dark), never guessed from the band colour: a
@@ -758,7 +755,7 @@ export function AnnouncementsRender({ nodeId, cfg, headIcon }: { nodeId: string;
       <div className="@container -m-4 flex min-w-0 flex-col overflow-hidden rounded-xl">
         {headerOn && (
           <div className="px-4 pt-4">
-            <WidgetTitle nodeId={nodeId} text={cfg.title} icon={headIcon} count={ANNOUNCEMENTS.length} action={allLink} />
+            <WidgetTitle nodeId={nodeId} text={cfg.title} icon={headIcon} count={ANNOUNCEMENTS.length} />
           </div>
         )}
         <div className="relative h-[200px] w-full bg-[#E5E7EB]">
@@ -770,21 +767,17 @@ export function AnnouncementsRender({ nodeId, cfg, headIcon }: { nodeId: string;
               </span>
             )}
         </div>
-        <div style={{ background: String(cfg.bandColor ?? '#2F3033') }} className="px-5 py-4">
-          <div className="flex items-start gap-4">
+        {/* ⚠️ `@container` on the band: wide, the controls sit beside the notice at the top right; narrow,
+            they drop UNDER it at the left edge with a 12px gap, lined up with the date tile. */}
+        <div style={{ background: String(cfg.bandColor ?? '#2F3033') }} className="@container px-5 py-4">
+          <div className="flex flex-col gap-3 @[520px]:flex-row @[520px]:items-start @[520px]:gap-4">
             <div {...car.bind} className="min-w-0 flex-1">
               <CarouselTrack car={car}>{pages.map((pg, i) => <div key={i}>{pg.map(bandRow)}</div>)}</CarouselTrack>
             </div>
-            {pages.length > 1 && <CarouselNav car={car} count={pages.length} onDark={light} />}
+            {pages.length > 1 && (
+              <div className="flex-shrink-0"><CarouselNav car={car} count={pages.length} onDark={light} endLabel="View all" /></div>
+            )}
           </div>
-          {/* With the header off the link has nowhere else to live, so it closes the band. */}
-          {!headerOn && (
-            <div className="mt-2 flex justify-end">
-              <span style={{ color: ink }} className="flex items-center gap-1 whitespace-nowrap text-[13px] font-semibold">
-                All announcements<ChevronRight size={15} />
-              </span>
-            </div>
-          )}
         </div>
       </div>
     );
@@ -794,16 +787,24 @@ export function AnnouncementsRender({ nodeId, cfg, headIcon }: { nodeId: string;
     /* The STRIP: one announcement, then the controls and the link on the same line, at the right.
        ⚠️ `flex-wrap` so a narrow column drops the controls under the notice instead of squeezing the
        headline to nothing. */
+    /* ⚠️ A CONTAINER query, not flex-wrap. Wrapping pushed the controls onto a second line wherever
+       they happened to fall — indented, with `ml-auto` still pulling them right — so a narrow card
+       showed them floating mid-card. Wide: one line, controls at the right. Narrow: a column, controls
+       at the BOTTOM LEFT (`mt-auto`), lined up with the date tile; the row's own 12px bottom padding is
+       the gap between the notice and the controls. */
     return (
-      <div className="@container flex min-w-0 flex-wrap items-center gap-x-6 gap-y-2">
-        <div {...car.bind} className="min-w-[240px] flex-1">
-          <CarouselTrack car={car}>
-            {pages.map((pg, i) => <div key={i}>{pg.map(row)}</div>)}
-          </CarouselTrack>
-        </div>
-        <div className="ml-auto flex flex-shrink-0 items-center gap-4">
-          {pages.length > 1 && <CarouselNav car={car} count={pages.length} />}
-          {allLink}
+      <div className="@container flex min-h-0 min-w-0 flex-1 flex-col">
+        <div className="flex min-h-0 flex-1 flex-col @[520px]:flex-row @[520px]:items-center @[520px]:gap-6">
+          <div {...car.bind} className="min-w-0 @[520px]:flex-1">
+            <CarouselTrack car={car}>
+              {pages.map((pg, i) => <div key={i}>{pg.map(row)}</div>)}
+            </CarouselTrack>
+          </div>
+          {pages.length > 1 && (
+            <div className="mt-auto flex-shrink-0 @[520px]:mt-0">
+              <CarouselNav car={car} count={pages.length} endLabel="View all" />
+            </div>
+          )}
         </div>
       </div>
     );
@@ -816,7 +817,7 @@ export function AnnouncementsRender({ nodeId, cfg, headIcon }: { nodeId: string;
       <div className="@container flex min-h-0 min-w-0 flex-1 flex-col">
         {/* The SAME heading as the regular card — title and count — so switching Display never
             changes what the card is called or how many notices it says it holds. */}
-        <WidgetTitle nodeId={nodeId} text={cfg.title} icon={headIcon} count={ANNOUNCEMENTS.length} action={allLink} />
+        <WidgetTitle nodeId={nodeId} text={cfg.title} icon={headIcon} count={ANNOUNCEMENTS.length} />
         <div {...car.bind}>
           <CarouselTrack car={car}>
             {pages.map((pg, i) => (
@@ -837,7 +838,7 @@ export function AnnouncementsRender({ nodeId, cfg, headIcon }: { nodeId: string;
 
   return (
     <div className="@container min-w-0">
-      {headerOn && <WidgetTitle nodeId={nodeId} text={cfg.title} icon={headIcon} count={ANNOUNCEMENTS.length} action={allLink} />}
+      {headerOn && <WidgetTitle nodeId={nodeId} text={cfg.title} icon={headIcon} count={ANNOUNCEMENTS.length} />}
       {/* No header, no rule above the first row either — it would be a line under nothing. */}
       <div {...stackProps(gap, dividers)} className={headerOn ? stackProps(gap, dividers).className : (dividers ? '[&>*+*]:border-t [&>*+*]:border-t-[#F0F2F5]' : '')}>{rows.map(row)}</div>
     </div>
