@@ -348,6 +348,7 @@ export function AdminSupportPortalModule({ onBuilder, openPortal, onOpenPortalCh
     setCreating(false);
     setEditingId(draftId);
     setDraftId(null);
+    setTemplateCategory('All');
   };
 
   const patch = (id: string, changes: Partial<PortalPage>) =>
@@ -361,6 +362,22 @@ export function AdminSupportPortalModule({ onBuilder, openPortal, onOpenPortalCh
      a page came from even while they share one starting layout. */
   const startBlank = () => startWith('blank', 'Blank layout');
   const useTemplate = (t: PortalTemplate | null) => startWith('template', t ? t.name : 'Default portal');
+
+  /* ── Template PREVIEW ──
+     ⚠️ The preview IS the builder, opened in its full-page preview. "Use template" then only flips that
+     same instance out of preview — no remount, no second render of a different page — so the page you
+     looked at is exactly the page you start editing. Back unmounts it and the popup comes back on
+     step 2 with the category you had, because the draft portal still exists. */
+  const [previewing, setPreviewing] = useState(false);
+  const [templateCategory, setTemplateCategory] = useState('All');
+  const previewTemplate = (t: PortalTemplate | null) => {
+    if (!draftId) return;
+    setPages((prev) => prev.map((p) => (p.id === draftId ? { ...p, start: 'template', source: t ? t.name : 'Default portal' } : p)));
+    setPreviewing(true);
+    setEditingId(draftId);
+  };
+  const backToTemplates = () => { setEditingId(null); setPreviewing(false); };
+  const useFromPreview = () => { setPreviewing(false); setCreating(false); setDraftId(null); setTemplateCategory('All'); };
 
   const duplicate = (src: PortalPage) => {
     const now = formatPortalStamp(new Date());
@@ -415,6 +432,7 @@ export function AdminSupportPortalModule({ onBuilder, openPortal, onOpenPortalCh
     return (
       <SupportPortalBuilder
           key={editing.id}
+          templatePreview={previewing ? { name: editing.source ?? '', onBack: backToTemplates, onUse: useFromPreview } : undefined}
           openOn={openSettings ? 'settings' : undefined}
           onOpenConsumed={() => setOpenSettings(false)}
         page={editing}
@@ -468,10 +486,14 @@ export function AdminSupportPortalModule({ onBuilder, openPortal, onOpenPortalCh
     <>
       {creating && (
         <CreateSupportPortalModal
-          onClose={() => { setCreating(false); setDraftId(null); }}
+          onClose={() => { setCreating(false); setDraftId(null); setTemplateCategory('All'); }}
           onSaveDetails={saveDetails}
           onScratch={startBlank}
           onTemplate={useTemplate}
+          onPreview={previewTemplate}
+          initialStep={draftId ? 2 : 1}
+          category={templateCategory}
+          onCategory={setTemplateCategory}
         />
       )}
       {gallery && (

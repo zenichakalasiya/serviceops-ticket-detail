@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowLeft, ChevronRight, PenLine, X } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Eye, PenLine, X } from 'lucide-react';
 import { TEMPLATE_CATEGORIES, VISIBLE_TEMPLATES } from './supportPortalData';
 import type { PortalTemplate } from './supportPortalData';
 import { TemplateArt } from './SupportPortalTemplateGallery';
@@ -223,8 +224,51 @@ function Steps({ step, canGoBack, onBack }: { step: 1 | 2; canGoBack: boolean; o
   );
 }
 
-export function CreateSupportPortalModal({ onClose, onSaveDetails, onScratch, onTemplate }: {
+/* One template card: the drawn thumbnail, name and category — and on hover (or keyboard focus) a
+   dimmed scrim over the thumbnail carrying the two things you can do with it. ⚠️ No click-anywhere
+   action on the card: "look first" and "use it" are different intentions, and a whole-card click
+   would have to pick one of them for you. */
+function TemplateCard({ art, name, meta, badge, onPreview, onUse }: {
+  art: ReactNode; name: string; meta: string; badge?: string;
+  onPreview: () => void; onUse: () => void;
+}) {
+  return (
+    <div className="group/tpl flex flex-col overflow-hidden rounded-xl border border-[#E5E7EB] bg-white transition-all duration-200 hover:-translate-y-0.5 hover:border-[#C9D8EA] hover:shadow-[0_12px_28px_-10px_rgba(16,24,40,0.18)] focus-within:border-[#C9D8EA]">
+      <div className="relative h-[210px] w-full flex-shrink-0 overflow-hidden bg-[linear-gradient(180deg,#F7F9FC_0%,#EEF2F7_100%)] p-4">
+        <div className="size-full transition-transform duration-300 group-hover/tpl:scale-[1.02]">{art}</div>
+        {badge && (
+          <span className="absolute left-3 top-3 rounded-md bg-white/95 px-2 py-0.5 text-[10.5px] font-semibold tracking-wide text-[#3D8BD0] shadow-[0_1px_2px_rgba(16,24,40,0.08)]">{badge}</span>
+        )}
+        <div className="absolute inset-0 flex items-center justify-center gap-2.5 bg-[#0F172A]/45 opacity-0 backdrop-blur-[1.5px] transition-opacity duration-200 group-hover/tpl:opacity-100 group-focus-within/tpl:opacity-100">
+          <button
+            onClick={onPreview}
+            className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-white px-3.5 text-[13px] font-semibold text-[#1E293B] shadow-[0_2px_6px_rgba(16,24,40,0.18)] transition-colors hover:bg-[#F5F7FA]"
+          ><Eye size={15} /> Preview</button>
+          <button
+            onClick={onUse}
+            className="inline-flex h-9 items-center rounded-lg bg-[#3D8BD0] px-3.5 text-[13px] font-semibold text-white shadow-[0_2px_6px_rgba(16,24,40,0.18)] transition-colors hover:bg-[#2F77B8]"
+          >Use template</button>
+        </div>
+      </div>
+      <div className="flex items-center gap-2 border-t border-[#F0F2F5] px-4 py-3">
+        <span className="min-w-0 flex-1 truncate text-[14px] font-semibold text-[#1E293B]">{name}</span>
+        <span className="flex-shrink-0 rounded-md bg-[#F1F5F9] px-2 py-0.5 text-[11.5px] font-medium text-[#64748B]">{meta}</span>
+      </div>
+    </div>
+  );
+}
+
+export function CreateSupportPortalModal({ onClose, onSaveDetails, onScratch, onTemplate, onPreview, initialStep = 1, hidden, category: categoryProp, onCategory }: {
   onClose: () => void;
+  /** Step 2 → look at this template full-page before choosing it. `null` = the Default portal. */
+  onPreview?: (t: PortalTemplate | null) => void;
+  /** Reopen on step 2 — coming BACK from a template preview, the portal already exists. */
+  initialStep?: 1 | 2;
+  /** Kept mounted but out of sight while a preview covers the screen. */
+  hidden?: boolean;
+  /** The chosen category, owned by the caller so Back from a preview lands on the same filter. */
+  category?: string;
+  onCategory?: (c: string) => void;
   /** Step 1 → creates the portal as a Draft and unlocks step 2. */
   onSaveDetails: (d: PortalDetails) => void;
   /** Step 2 → a blank canvas. */
@@ -232,12 +276,14 @@ export function CreateSupportPortalModal({ onClose, onSaveDetails, onScratch, on
   /** Step 2 → this template. `null` means the Default, which IS the standard portal page. */
   onTemplate: (t: PortalTemplate | null) => void;
 }) {
-  const [step, setStep] = useState<1 | 2>(1);
-  const [saved, setSaved] = useState(false);
+  const [step, setStep] = useState<1 | 2>(initialStep);
+  const [saved, setSaved] = useState(initialStep === 2);
   const [d, setD] = useState<PortalDetails>({
     name: '', company: '', url: '', idp: IDPS[0], ssoOnly: false,
   });
-  const [category, setCategory] = useState<string>('All');
+  const [categoryLocal, setCategoryLocal] = useState<string>('All');
+  const category = categoryProp ?? categoryLocal;
+  const setCategory = (c: string) => (onCategory ? onCategory(c) : setCategoryLocal(c));
 
   /* ⚠️ Save is DISABLED until the three required fields are filled, rather than validating after
      the click. A button that can only tell you what is wrong once you press it makes you press it
@@ -254,8 +300,10 @@ export function CreateSupportPortalModal({ onClose, onSaveDetails, onScratch, on
   const templates = VISIBLE_TEMPLATES().filter((t) => category === 'All' || t.category === category);
 
   return createPortal(
-    <div className="fixed inset-0 z-[10000] flex items-start justify-center bg-[#0F172A]/40 p-6 pt-[6vh]">
-      <div className="flex max-h-[88vh] w-full max-w-[960px] flex-col overflow-hidden rounded-lg bg-white shadow-[0_24px_48px_-12px_rgba(16,24,40,0.25)]">
+    <div hidden={hidden} className="fixed inset-0 z-[10000] flex items-start justify-center bg-[#0F172A]/40 p-6 pt-[4vh]">
+      {/* ⚠️ WIDER once templates are on screen — at 960px three cards were thumbnails you squinted at.
+          Step 1 stays at the form's width; a 1200px dialog around five fields is mostly empty. */}
+      <div className={`flex max-h-[92vh] w-full flex-col overflow-hidden rounded-xl bg-white shadow-[0_24px_48px_-12px_rgba(16,24,40,0.25)] transition-[max-width] duration-200 ${step === 2 ? 'max-w-[1200px]' : 'max-w-[960px]'}`}>
         <div className="flex flex-shrink-0 items-center gap-3 border-b border-[#E5E7EB] px-5 py-3.5">
           <h2 className="flex-1 text-[16px] font-semibold text-[#364658]">Create Support Portal</h2>
           <button onClick={onClose} className="flex size-8 items-center justify-center rounded text-[#64748B] transition-colors hover:bg-[#F3F4F6]"><X size={18} /></button>
@@ -327,7 +375,7 @@ export function CreateSupportPortalModal({ onClose, onSaveDetails, onScratch, on
                 </span>
               </div>
 
-              <div className="mt-3.5 grid grid-cols-3 gap-4">
+              <div className="mt-4 grid grid-cols-2 gap-5 min-[1100px]:grid-cols-3">
                 {/* ⚠️ The DEFAULT is the grid's FIRST TILE, in every category. It used to sit in a
                     band of its own above the templates, on the reasoning that a tile eighth in a row
                     of eight cannot say "this is the one your requesters see today". The badge says
@@ -337,36 +385,23 @@ export function CreateSupportPortalModal({ onClose, onSaveDetails, onScratch, on
                     an HR layout, it is the portal that already exists.
                     ⚠️ The art needs a BOX of its own — without one it was `height: 100%` of the tile,
                     took the whole button, and pushed the caption out through `overflow-hidden`. */}
-                <button
-                  onClick={() => onTemplate(null)}
-                  className="flex flex-col overflow-hidden rounded-lg border border-[#E5E7EB] bg-white text-left transition-all hover:border-[#3D8BD0] hover:shadow-[0_4px_12px_rgba(16,24,40,0.06)]"
-                >
-                  <span className="relative block h-[150px] w-full flex-shrink-0 overflow-hidden bg-[#F7F9FC] p-3">
-                    <PortalThumb />
-                    <span className="absolute right-2.5 top-2.5 rounded bg-[#E8F1FB] px-1.5 py-0.5 text-[10px] font-semibold text-[#3D8BD0]">DEFAULT</span>
-                  </span>
-                  {/* ⚠️ A CATEGORY under the name, not a sentence. Eight tiles each carrying two
-                      lines of prose is a page you read rather than a grid you scan, and the
-                      description is the one thing the picture above it is already saying. */}
-                  <span className="block px-3.5 py-3">
-                    <span className="block truncate text-[14px] font-semibold text-[#364658]">Support Portal</span>
-                    <span className="mt-1 block truncate text-[12.5px] text-[#7B8FA5]">The portal your requesters see today</span>
-                  </span>
-                </button>
+                <TemplateCard
+                  art={<PortalThumb />}
+                  badge="DEFAULT"
+                  name="Support Portal"
+                  meta="Default"
+                  onPreview={() => (onPreview ? onPreview(null) : onTemplate(null))}
+                  onUse={() => onTemplate(null)}
+                />
                 {templates.map((t) => (
-                  <button
+                  <TemplateCard
                     key={t.id}
-                    onClick={() => onTemplate(t)}
-                    className="flex flex-col overflow-hidden rounded-lg border border-[#E5E7EB] bg-white text-left transition-all hover:border-[#3D8BD0] hover:shadow-[0_4px_12px_rgba(16,24,40,0.06)]"
-                  >
-                    <span className="relative block h-[150px] w-full flex-shrink-0 overflow-hidden bg-[#F7F9FC] p-3">
-                      <TemplateArt layout={t.layout} accent={t.accent} />
-                    </span>
-                    <span className="block px-3.5 py-3">
-                      <span className="block truncate text-[14px] font-semibold text-[#364658]">{t.name}</span>
-                      <span className="mt-1 block truncate text-[12.5px] text-[#7B8FA5]">{t.category}</span>
-                    </span>
-                  </button>
+                    art={<TemplateArt layout={t.layout} accent={t.accent} />}
+                    name={t.name}
+                    meta={t.category}
+                    onPreview={() => (onPreview ? onPreview(t) : onTemplate(t))}
+                    onUse={() => onTemplate(t)}
+                  />
                 ))}
               </div>
             </div>

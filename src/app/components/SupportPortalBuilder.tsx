@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
-  ArrowLeft, Check, ChevronDown, ChevronLeft, Eye, HelpCircle, RotateCcw,
+  ArrowLeft, ArrowRight, Check, ChevronDown, ChevronLeft, Eye, HelpCircle, RotateCcw,
   Palette, PanelRight, Paintbrush, Pencil, Plus, Redo2, Undo2, X,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -173,7 +173,10 @@ const HERO_LAYOUT_KEYS = [
   'height', 'heroArt', 'searchPlacement', 'fullBleed', 'bgWholePage',
 ];
 
-export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSaveDraft, onExit, openOn, onOpenConsumed }: SupportPortalBuilderProps & {
+export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSaveDraft, onExit, openOn, onOpenConsumed, templatePreview }: SupportPortalBuilderProps & {
+  /* Opened from the create popup's Preview: land in full-page preview with Back + Use template.
+     "Use template" leaves preview in THIS instance, so the editor opens on exactly what was shown. */
+  templatePreview?: { name: string; onBack: () => void; onUse: () => void };
   /* Which rail panel to land on. The listing's "Portal settings" action opens the portal AT its
      settings rather than at the canvas — asking for settings and being given a blank widget library
      is the builder answering a different question from the one you pressed. */
@@ -211,7 +214,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
   /* ⚠️ Consumed ONCE, on mount. Left standing, every later close of the panel would be undone by the
      next render and the rail item could never be switched off. */
   useEffect(() => { if (openOn) onOpenConsumed?.(); }, []);
-  const [preview, setPreview] = useState(false);
+  const [preview, setPreview] = useState(() => !!templatePreview);
   /* The split CTA's menu. Closed by default — the chevron is an admission that a second option
      exists, not an invitation to read it every time. */
   const [pubMenu, setPubMenu] = useState(false);
@@ -1998,6 +2001,24 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
   if (preview) {
     return (
       <div className="fixed inset-0 z-[9500] flex flex-col bg-[#EEF1F5]">
+        {templatePreview ? (
+          /* The TEMPLATE preview bar: back to the gallery on the left, the one decision on the right. */
+          <div className="flex h-14 flex-shrink-0 items-center gap-3 border-b border-[#e5e7eb] bg-white px-4">
+            <button
+              onClick={templatePreview.onBack}
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-[13px] font-medium text-[#364658] transition-colors hover:bg-[#F3F4F6]"
+            ><ArrowLeft size={17} /> Templates</button>
+            <span className="h-5 w-px bg-[#E5E7EB]" />
+            <div className="flex min-w-0 items-center gap-2">
+              <span className="truncate text-[14px] font-semibold text-[#1E293B]">{templatePreview.name === 'Default portal' ? 'Support Portal' : templatePreview.name}</span>
+              <span className="flex-shrink-0 rounded-md bg-[#EBF5FF] px-2 py-0.5 text-[11.5px] font-medium text-[#3D8BD0]">Template preview</span>
+            </div>
+            <button
+              onClick={() => { setPreview(false); templatePreview.onUse(); }}
+              className="ml-auto inline-flex h-9 items-center gap-1.5 rounded-lg bg-[#3D8BD0] px-4 text-[13px] font-semibold text-white shadow-[0_1px_2px_rgba(16,24,40,0.12)] transition-colors hover:bg-[#2F77B8]"
+            >Use template <ArrowRight size={15} /></button>
+          </div>
+        ) : (
         <div className="flex h-12 flex-shrink-0 items-center justify-between border-b border-[#e5e7eb] bg-white px-4">
           <div className="flex items-center gap-2 text-[13px] text-[#7B8FA5]">
             <Eye size={16} className="text-[#3D8BD0]" />
@@ -2008,6 +2029,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
             className="inline-flex h-8 items-center gap-1.5 rounded border border-[#DFE5ED] bg-white px-3.5 text-[13px] font-medium text-[#364658] transition-colors hover:bg-[#F5F7FA]"
           ><X size={14} /> Exit preview</button>
         </div>
+        )}
         <div className={`min-h-0 flex-1 overflow-y-auto ${themeClass}`} style={themeWrap}>
           {/* Preview must behave like the real portal — selection off. */}
           <CanvasProvider value={{ ...canvasCtx, enabled: false, selectedId: null, hoverId: null, select: () => {}, setHover: () => {} }}>
