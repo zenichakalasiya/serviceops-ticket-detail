@@ -367,19 +367,14 @@ export const WIDGET_SPECS: WidgetSpec[] = [
       {
         key: 'display', label: 'Display', control: 'segmented', group: 'Content',
         options: [{ value: 'regular', label: 'Regular card' }, { value: 'carousel', label: 'Carousel' }],
-        help: 'A regular card lists the latest announcements. A carousel shows one at a time.',
+        help: 'A regular card lists the latest announcements. A carousel shows one at a time, with arrows to move between them.',
       },
-      /* ⚠️ The SAME two words the Media Slider uses, deliberately: one carousel mechanism means one
-         pair of names for its two treatments, or identical behaviour reads as two different
-         features depending on which panel you happened to open. */
-      {
-        key: 'sliderType', label: 'Type', control: 'segmented', group: 'Content',
-        when: (c) => c.display === 'carousel',
-        options: [{ value: 'auto', label: 'Automatic' }, { value: 'manual', label: 'Manual' }],
-        help: 'Automatic advances on a timer. Manual is arrows — either way, cards can be dragged.',
-      },
-      { key: 'interval', label: 'Interval', control: 'number', group: 'Content', min: 2, max: 20, when: (c) => c.display === 'carousel' && c.sliderType !== 'manual' },
-      { key: 'dots', label: 'Show dots', control: 'toggle', group: 'Content', when: (c) => c.display === 'carousel' },
+      /* ⚠️ NOTHING follows Display. The carousel used to bring Type (Automatic / Manual), Interval and
+         Show dots with it — three settings for one small card, where the card has one right answer:
+         arrows either side of the dots, always there. An announcement that moves on by itself is an
+         announcement somebody was halfway through reading, and a carousel with its dots switched off
+         gives no sign there is a second notice behind the first. The keys stay in `defaults` so a
+         page that stored them still resolves; the renderer no longer reads them. */
     ],
     packs: LIVE_CARD_PACKS, roles: LIST_CARD_ROLES,
     defaults: { ...listCardDefaults, title: 'Announcements', show: 3, showDate: true, rowLayout: 'stacked', display: 'regular', sliderType: 'manual', interval: 5, dots: true },

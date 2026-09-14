@@ -265,6 +265,41 @@ export function CarouselArrows({ car, placement = 'inside', over }: {
   return <span className={`flex items-center gap-1.5 ${placement === 'outside' ? 'justify-between' : ''}`}>{btns}</span>;
 }
 
+/** Previous · position · next, as ONE control.
+ *
+ * ⚠️ The dots sit BETWEEN the arrows, never beside them. With arrows on one side and dots on the
+ * other the reader has two things to look at to answer one question — where am I, and how do I move —
+ * and a row of dots on its own reads as decoration rather than as a position.
+ * ⚠️ The active dot is a PILL, not a bigger circle: length reads at a glance where a size change
+ * of two pixels does not, and it is the one mark on the row that should be found without looking.
+ * The colour is the portal's own accent, so a themed portal's carousel follows its theme. */
+export function CarouselNav({ car, count }: { car: Carousel; count: number }) {
+  const arrow = 'flex size-7 flex-shrink-0 items-center justify-center rounded-full border border-[#DFE5ED] bg-white text-[#475467] transition-colors hover:border-[#3D8BD0] hover:text-[#3D8BD0] disabled:cursor-default disabled:opacity-35';
+  return (
+    <div className="flex items-center gap-2">
+      <button type="button" aria-label="Previous" disabled={car.atStart} onClick={(e) => { e.stopPropagation(); car.step(-1); }} className={arrow}>
+        <ChevronLeft size={15} />
+      </button>
+      <div className="flex items-center gap-1.5">
+        {Array.from({ length: count }).map((_, k) => (
+          <button
+            key={k}
+            type="button"
+            aria-label={`Go to ${k + 1}`}
+            aria-current={k === car.i}
+            onClick={(e) => { e.stopPropagation(); car.go(k); }}
+            className={`h-1.5 rounded-full transition-all ${k === car.i ? 'w-5' : 'w-1.5 bg-[#CBD5E1] hover:bg-[#94A3B8]'}`}
+            style={k === car.i ? { backgroundColor: 'var(--portal-accent, #3D8BD0)' } : undefined}
+          />
+        ))}
+      </div>
+      <button type="button" aria-label="Next" disabled={car.atEnd} onClick={(e) => { e.stopPropagation(); car.step(1); }} className={arrow}>
+        <ChevronRight size={15} />
+      </button>
+    </div>
+  );
+}
+
 /** The position readout. Present under BOTH types — it is how you know where you are. */
 export function CarouselDots({ car, count, style = 'dots', over }: {
   car: Carousel; count: number; style?: string; over?: boolean;

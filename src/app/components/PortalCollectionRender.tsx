@@ -16,7 +16,7 @@ import { Sel, useCanvas } from './PortalCanvas';
    the read-only renderers in this file, and it owns its data model, its handles and its menus. */
 import { PortalTable } from './PortalTable';
 import { hasFixedTitle, hasFixedViewAll, itemNodeId, subNodeId } from './portalPageModel';
-import { CarouselArrows, CarouselDots, CarouselTrack, useCarousel } from './PortalCarousel';
+import { CarouselArrows, CarouselDots, CarouselNav, CarouselTrack, useCarousel } from './PortalCarousel';
 import { LineMark } from './PortalLineStyles';
 import type { LineStyle } from './PortalLineStyles';
 import type { CarouselType } from './PortalCarousel';
@@ -43,8 +43,11 @@ const visible = (items: Item[] | undefined, live: boolean) =>
    ⚠️ Nothing else was needed: nodeById already describes any `<id>-title` as a text node and
    ownerOf already strips the suffix so the value reads and writes on the WIDGET's config. One
    wrapper turns that latent machinery on for every widget that has a heading. */
-function WidgetTitle({ nodeId, text, icon }: {
+function WidgetTitle({ nodeId, text, icon, action }: {
   nodeId: string; text?: unknown;
+  /* Something the heading row carries on its RIGHT — a card-level link. Absent unless a caller
+     passes it, so every widget drawing its heading through here renders exactly as before. */
+  action?: ReactNode;
   /* ⚠️ The SAME tinted badge `CardShell` draws, because a page turns these on for every card at
      once or for none — and a widget that paints its own heading instead of going through the
      shell must not become the one card on the row without one. Absent unless a caller passes it,
@@ -66,8 +69,29 @@ function WidgetTitle({ nodeId, text, icon }: {
   /* ⚠️ A product-owned heading renders BARE — no Sel, so it is not selectable and not typeable.
      Every widget that draws its heading through here inherits the rule at once; the two that draw
      their own are handled at their own call sites below. */
-  if (hasFixedTitle(nodeId)) return head;
-  return <Sel id={`${nodeId}-title`}>{head}</Sel>;
+  if (!action) {
+    if (hasFixedTitle(nodeId)) return head;
+    return <Sel id={`${nodeId}-title`}>{head}</Sel>;
+  }
+  /* ⚠️ With an action the row is split, and the action sits OUTSIDE the heading's `Sel`. Inside it,
+     clicking the link would select the title and put a caret in it — the link would be a second
+     way into the heading rather than a link. */
+  const words = (
+    <div className="flex min-w-0 items-center gap-2">
+      {icon && (
+        <span className="flex size-7 flex-shrink-0 items-center justify-center rounded-md bg-[#EAF3FB] text-[#2F6FB5]">{icon}</span>
+      )}
+      <h3 style={roleStyle(styles, nodeId, 'title')} className="truncate text-[16px] font-semibold text-[#364658]">
+        {String(text)}
+      </h3>
+    </div>
+  );
+  return (
+    <div className="mb-3 flex items-center gap-3">
+      <div className="min-w-0 flex-1">{hasFixedTitle(nodeId) ? words : <Sel id={`${nodeId}-title`}>{words}</Sel>}</div>
+      <div className="flex-shrink-0">{action}</div>
+    </div>
+  );
 }
 
 /* ── §7.16 FAQ ───────────────────────────────────────────────────────────── */
@@ -541,12 +565,15 @@ export function ContactRender({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
 
 /* ── §7.5 Announcements ──────────────────────────────────────────────────── */
 
+/* ⚠️ `desc` is read by the CAROUSEL only. A regular card lists headlines — a paragraph under each of
+   three rows would turn a glanceable list into a page of reading — while a carousel shows ONE
+   notice at a time and has the room to say what it actually means for the reader. */
 const ANNOUNCEMENTS = [
-  { id: 'a1', title: 'Planned network maintenance — Sat 16 Aug, 02:00–05:00', at: '11 Aug 2026' },
-  { id: 'a2', title: 'New VPN client rollout begins next week', at: '08 Aug 2026' },
-  { id: 'a3', title: 'Service desk hours extended to 20:00 IST', at: '04 Aug 2026' },
-  { id: 'a4', title: 'Office 365 licence renewal — action needed by 30 Aug', at: '01 Aug 2026' },
-  { id: 'a5', title: 'Phishing awareness training is now mandatory', at: '28 Jul 2026' },
+  { id: 'a1', title: 'Planned network maintenance — Sat 16 Aug, 02:00–05:00', at: '11 Aug 2026', desc: 'VPN, the intranet and payroll submission will be unavailable for the whole window.' },
+  { id: 'a2', title: 'New VPN client rollout begins next week', at: '08 Aug 2026', desc: 'Check whether your laptop is in the first wave, and restart when you are prompted.' },
+  { id: 'a3', title: 'Service desk hours extended to 20:00 IST', at: '04 Aug 2026', desc: 'Live chat and phone support now cover the evening shift, Monday to Friday.' },
+  { id: 'a4', title: 'Office 365 licence renewal — action needed by 30 Aug', at: '01 Aug 2026', desc: 'Confirm your licence in the self-service portal, or it will be reassigned.' },
+  { id: 'a5', title: 'Phishing awareness training is now mandatory', at: '28 Jul 2026', desc: 'The 20-minute module is assigned to everyone and is due by the end of the month.' },
 ];
 
 export function AnnouncementsRender({ nodeId, cfg, headIcon }: { nodeId: string; cfg: Cfg; headIcon?: ReactNode }) {
@@ -559,15 +586,14 @@ export function AnnouncementsRender({ nodeId, cfg, headIcon }: { nodeId: string;
      that changes is how many are on screen at once. As its own palette element there would be two
      Announcements to keep in step, and they would drift the first time either was touched. */
   const carousel = cfg.display === 'carousel' && rows.length > 0;
-  const type = (cfg.sliderType === 'auto' ? 'auto' : 'manual') as CarouselType;
   /* ⚠️ Called UNCONDITIONALLY. A hook behind an `if` changes the hook count between renders the
      moment the admin switches Display, which React refuses outright — and this is exactly the
-     switch an admin will flip while looking at the card. It costs nothing when unused. */
+     switch an admin will flip while looking at the card. It costs nothing when unused.
+     ⚠️ Always MANUAL. The Type control is gone from the panel, and a stored `sliderType: 'auto'`
+     from before that must not keep a card moving on its own with nothing left to turn it off. */
   const car = useCarousel({
     count: rows.length,
-    type,
-    interval: Number(cfg.interval ?? 5),
-    pauseOnHover: true,
+    type: 'manual',
     loop: true,
     live: !enabled && carousel,
   });
@@ -589,20 +615,59 @@ export function AnnouncementsRender({ nodeId, cfg, headIcon }: { nodeId: string;
   );
 
   if (carousel) {
-    const arrowsOn = type === 'manual' && rows.length > 1;
-    const dotsOn = cfg.dots !== false && rows.length > 1;
+    /* The card-level link. ⚠️ Plain words, never a `Sel`: Announcements is a predefined card, and
+       its links are the product's (`hasFixedViewAll`) — the same rule every other data card's
+       View all already follows. */
+    const allLink = (
+      <span style={roleStyle(styles, nodeId, 'link')} className="flex items-center gap-1 whitespace-nowrap text-[12px] font-medium text-[#7B8FA5]">
+        All announcements<ChevronsRight size={16} />
+      </span>
+    );
+    /* ONE notice. ⚠️ The date is a BLOCK, not a line: `items-stretch` makes it exactly as tall as the
+       title and description beside it, so the eye reads date → what → detail in one sweep and the
+       three never drift out of line when a headline wraps. Split on the LAST space, so the year sits
+       on its own line whatever form the day and month take. */
+    /* ⚠️ `roleStyle` hands back `fontWeight` and `lineHeight` UNCONDITIONALLY, and `undefined` for
+       every value nobody chose. Spread as it comes, the `undefined` colour DELETES the accent the
+       headline set and the hard 400 flattens `font-semibold` — measured: the headline rendered
+       #0F172A at weight 400, in the reference's place for a blue semibold title. So only the values
+       a human actually set are kept; the carousel's own weight and leading stay its own. */
+    const chosenRole = (role: 'body' | 'meta') => {
+      const { fontWeight: _w, lineHeight: _lh, ...rest } = roleStyle(styles, nodeId, role) as Record<string, unknown>;
+      return Object.fromEntries(Object.entries(rest).filter(([, val]) => val !== undefined)) as React.CSSProperties;
+    };
+    const slide = (a: (typeof ANNOUNCEMENTS)[number]) => {
+      const cut = a.at.lastIndexOf(' ');
+      const dayMonth = cut > 0 ? a.at.slice(0, cut) : a.at;
+      const year = cut > 0 ? a.at.slice(cut + 1) : '';
+      return (
+        <div className="flex items-stretch gap-3.5">
+          <div style={{ fontWeight: 600, lineHeight: 1.3, ...chosenRole('meta') }} className="flex w-[76px] flex-shrink-0 flex-col items-center justify-center rounded-lg bg-[#F1F4F8] px-2 py-2 text-center text-[13px] text-[#475467]">
+            <span className="whitespace-nowrap">{dayMonth}</span>
+            {year && <span>{year}</span>}
+          </div>
+          <div className="min-w-0 flex-1 py-0.5">
+            <div
+              style={{ color: 'var(--portal-accent, #3D8BD0)', fontWeight: 600, lineHeight: 1.35, ...chosenRole('body') }}
+              className="line-clamp-2 text-[15px]"
+            >{a.title}</div>
+            <div style={{ lineHeight: 1.5, ...chosenRole('meta') }} className="mt-1 line-clamp-2 text-[13px] text-[#7B8FA5]">{a.desc}</div>
+          </div>
+        </div>
+      );
+    };
     return (
       <div className="@container min-w-0">
-        <WidgetTitle nodeId={nodeId} text={cfg.title} icon={headIcon} />
+        <WidgetTitle nodeId={nodeId} text={cfg.title} icon={headIcon} action={allLink} />
         <div {...car.bind}>
-          <CarouselTrack car={car}>{rows.map((a) => <div key={a.id}>{one(a)}</div>)}</CarouselTrack>
+          <CarouselTrack car={car}>{rows.map((a) => <div key={a.id}>{slide(a)}</div>)}</CarouselTrack>
         </div>
-        {/* ⚠️ Arrows and dots share ONE row, and the row renders only when it has something in it —
-            an empty 32px strip under a three-line card reads as a rendering fault. */}
-        {(arrowsOn || dotsOn) && (
-          <div className="mt-1 flex items-center gap-3">
-            {arrowsOn && <CarouselArrows car={car} />}
-            {dotsOn && <CarouselDots car={car} count={rows.length} />}
+        {/* ⚠️ Bottom RIGHT, and only when there is somewhere to go. The link to every announcement
+            owns the top right; the controls that move between the few shown here sit under the
+            notice they move, at the edge the eye finishes reading on. */}
+        {rows.length > 1 && (
+          <div className="mt-3 flex justify-end">
+            <CarouselNav car={car} count={rows.length} />
           </div>
         )}
       </div>
