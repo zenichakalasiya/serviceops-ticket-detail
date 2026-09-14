@@ -855,11 +855,13 @@ function ServiceTiles({ nodeId, items, showDesc, tpl = 'top', cols, chips, look 
       className="grid min-w-0 gap-3"
       style={{ gridTemplateColumns: `repeat(${Math.max(1, cols ?? Math.min(items.length, MAX_SERVICE_TILES))}, minmax(0,1fr))` }}
     >
-      {items.slice(0, MAX_SERVICE_TILES).map((s) => (
+      {items.slice(0, MAX_SERVICE_TILES).map((s, i, arr) => (
         /* One node for every tile in the row — selecting a service card styles all of them. */
         <Sel
           key={s.id}
           id={`${nodeId}-tile`}
+          /* A lone last tile spans the row — what the Three-across preset tile draws. */
+          style={(cols ?? 0) > 1 && i === arr.length - 1 && arr.length % (cols ?? 1) === 1 ? { gridColumn: '1 / -1' } : undefined}
           className={`flex min-w-0 rounded-lg border border-[#E5E7EB] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)] ${
             action ? 'gap-3 px-3.5 py-3' : 'gap-2 px-3 py-4'
           } ${

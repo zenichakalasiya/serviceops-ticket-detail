@@ -606,7 +606,8 @@ function firstDesignKey(spec: WidgetSpec, cfg: Cfg): string | null {
   (spec.fields ?? []).forEach((f) => {
     if ((f.tab ?? 'content') !== 'style') return;
     const g = f.group ?? 'Content';
-    if (g === 'Action' || g === EMPTY_STATE_GROUP || DROP_GROUPS.has(g)) return;
+    /* ⚠️ The data cards' Layout → Presets is the one Layout field that is kept — see `tilePreset`. */
+    if (g === 'Action' || g === EMPTY_STATE_GROUP || (DROP_GROUPS.has(g) && f.control !== 'tilePreset')) return;
     if (f.when && !f.when(cfg)) return;
     if (!groups.includes(g)) groups.push(g);
   });
@@ -1146,6 +1147,25 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
          different one in an action card — and the difference carried no meaning, since both answer
          "where does this sit". Distribute keeps its five options and valign its four; only the
          chrome is shared. */
+      /* The DATA CARDS inside My Assets / My CIs / the two service rows, arranged with the same preset
+         tiles a section uses. It writes the widget's `columns` — the value the card grids already read
+         — so a pick reflows the canvas at once: Columns = all four across, Grid = two, Three across,
+         Stacked = one. ⚠️ Nothing set means each grid's OWN default: records tiles are a 2-up grid,
+         service tiles one per service, so the lit tile states what the canvas is actually showing. */
+      case 'tilePreset': {
+        const TILE_COUNT = 4;
+        const own = Number(styles[nodeId]?.columns ?? viewCfg.columns) || 0;
+        const recordTiles = nodeId === 'assets' || nodeId === 'cis';
+        const current: PresetId = own === 1 ? 'stack' : own === 2 ? 'grid' : own === 3 ? 'three'
+          : own >= 4 ? 'cols' : recordTiles ? 'grid' : 'cols';
+        return (
+          <SectionPresets
+            count={TILE_COUNT}
+            current={current}
+            onPick={(p) => setStyle(nodeId, { columns: p === 'stack' ? 1 : p === 'grid' ? 2 : p === 'three' ? 3 : TILE_COUNT })}
+          />
+        );
+      }
       case 'sectionPreset':
         return (
           <SectionPresets
@@ -1345,7 +1365,7 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
     const wantAction = which === 'action';
     const visible = viewFields.filter((f) => (f.tab ?? 'content') === (wantAction ? 'content' : which)
       && ((f.group === 'Action') === wantAction)
-      && !DROP_GROUPS.has(f.group ?? '')
+      && (!DROP_GROUPS.has(f.group ?? '') || f.control === 'tilePreset')
       && !(cfg.__noData === true && f.group === 'Arrangement')
       && (!f.when || f.when(viewCfg)));
     const order: string[] = [];

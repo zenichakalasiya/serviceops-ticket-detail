@@ -339,7 +339,8 @@ export const WIDGET_SPECS: WidgetSpec[] = [
   {
     id: 'my_assets', name: 'My Assets', group: 'Data', reuse: 'single', family: 'flat',
     gate: { kind: 'permission', setting: 'Allow Requester to Access My Assets', section: 'Organization' },
-    fields: [TITLE_FIELD],
+    /* Layout → Presets arranges the data cards — the same tile row the Quick Actions section uses. */
+    fields: [TITLE_FIELD, { key: '__tilePreset', label: 'Presets', control: 'tilePreset', tab: 'style', group: 'Layout' }],
     packs: LIVE_CARD_PACKS, roles: LIST_CARD_ROLES,
     defaults: { ...listCardDefaults, title: 'My Assets', show: 5, showType: true },
   },
@@ -348,7 +349,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
   {
     id: 'my_cis', name: 'My CIs', group: 'Data', reuse: 'single', family: 'flat',
     gate: { kind: 'permission', setting: 'Allow Requester to Access My CI', section: 'Organization' },
-    fields: [TITLE_FIELD],
+    fields: [TITLE_FIELD, { key: '__tilePreset', label: 'Presets', control: 'tilePreset', tab: 'style', group: 'Layout' }],
     packs: LIVE_CARD_PACKS, roles: LIST_CARD_ROLES,
     defaults: { ...listCardDefaults, title: 'My CIs', show: 5, showType: true },
   },
@@ -481,6 +482,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
          on either sets it on both. Two grids of the same kind of thing, stacked one above the
          other, disagreeing about their own shape is a difference that means nothing. */
       { key: 'cardTemplate', label: '', control: 'templates', group: 'Card templates' },
+      { key: '__tilePreset', label: 'Presets', control: 'tilePreset', tab: 'style', group: 'Layout' },
     ],
     packs: ['P1', 'P2'], roles: ['title', 'body', 'meta'],
     /* ⚠️ A WARN, not an info. This section can be on the page and invisible to most of the people
@@ -515,6 +517,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
          on either sets it on both. Two grids of the same kind of thing, stacked one above the
          other, disagreeing about their own shape is a difference that means nothing. */
       { key: 'cardTemplate', label: '', control: 'templates', group: 'Card templates' },
+      { key: '__tilePreset', label: 'Presets', control: 'tilePreset', tab: 'style', group: 'Layout' },
     ],
     /* ⚠️ P4 and P6 are gone. P4 brought "Divider between items", which cannot mean anything here —
        these services are a GRID, and there is no gap between rows to rule. P6 brought an Icon group

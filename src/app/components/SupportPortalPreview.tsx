@@ -2907,7 +2907,7 @@ function RecordTiles({ nodeId, titleFallback, cfg, rows, icon, headIcon }: {
           className={tileCols ? 'grid gap-2.5' : 'grid grid-cols-1 gap-2.5 @[290px]:grid-cols-2'}
           style={tileCols ? { gridTemplateColumns: `repeat(${tileCols}, minmax(0, 1fr))` } : undefined}
         >
-          {shown.map((r) => (
+          {shown.map((r, i) => (
             /* ⚠️ FILLED, not outlined. The card is white like every other card on the page, so the
                tiles are what has to separate itself — and a fill does that without adding a second
                line inside a box that already has one around it. Four hairline rectangles inside a
@@ -2926,7 +2926,8 @@ function RecordTiles({ nodeId, titleFallback, cfg, rows, icon, headIcon }: {
             /* ⚠️ Every tile is the SAME node (`<widget>-tile`), so selecting one outlines all four and
                the panel's Icon · Style · Spacing restyle them together — see the note in `nodeById`.
                The tile's resting classes stay; `Sel` lays the chosen values over them. */
-            <Sel key={r.id} id={`${nodeId}-tile`} className="flex min-w-0 items-start gap-2.5 rounded-lg bg-[#F9FAFB] p-3">
+            /* A lone last tile spans the row — what the Three-across preset tile draws. */
+            <Sel key={r.id} id={`${nodeId}-tile`} style={tileCols > 1 && i === shown.length - 1 && shown.length % tileCols === 1 ? { gridColumn: '1 / -1' } : undefined} className="flex min-w-0 items-start gap-2.5 rounded-lg bg-[#F9FAFB] p-3">
               <span style={iconBoxCss(styles, `${nodeId}-tile`)} className="flex size-9 flex-shrink-0 items-center justify-center rounded-md bg-white text-[#5A6B80]">{icon}</span>
               {/* ⚠️ The NAME leads. It was third — under the ID pill and the type — so the tile
                   opened with a reference number and made you read past it to find out what the thing
