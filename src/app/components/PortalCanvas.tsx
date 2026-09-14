@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 // ArrowLeft stays in use by the card toolbar's "Move left".
 import { toast } from 'sonner';
-import { HEADING_SIZE, PORTAL_FONTS, SECTION_LAYOUTS, SPLITTABLE_BANDS, TEXT_STYLES, ZERO_BOX, COMPOSABLE, boxInfo, canAddBeside, defaultAlignH, nodeById, paintsOwnSurface, toolbarCaps, nodePath, placedIn, placedType } from './portalPageModel';
+import { HEADING_SIZE, PORTAL_FONTS, SECTION_LAYOUTS, SPLITTABLE_BANDS, TEXT_STYLES, ZERO_BOX, COMPOSABLE, boxInfo, canAddBeside, defaultAlignH, nodeById, paintsOwnShadow, paintsOwnSurface, toolbarCaps, nodePath, placedIn, placedType } from './portalPageModel';
 import { DEFAULT_THEME } from './PortalThemePanel';
 import type { PortalTheme } from './PortalThemePanel';
 import { boxCss, containerCss } from './portalStyleResolver';
@@ -1936,6 +1936,7 @@ export function Sel({ id, children, className = '', toolbarBelow = false, style:
      rather than cropping it. Margin and width stay here: those are about where the element sits and
      how much room it takes, which is the wrapper's business either way. */
   const ownSurface = paintsOwnSurface(id);
+  const ownShadow = paintsOwnShadow(id);
   /* ⚠️ PADDING only. Height used to be withheld here too, and that is what made a dragged handle
      resize the wrong thing on most of the catalogue: the wrapper kept its natural size while the
      card inside was left to honour the number itself, which only `Surface` ever did — a Table, an
@@ -1944,8 +1945,11 @@ export function Sel({ id, children, className = '', toolbarBelow = false, style:
      content fills it, which is the same rule the banner follows.
      Padding stays withheld, and for the original reason: padding on a wrapper is grey space AROUND
      a card, not breathing room inside it. */
+  /* ⚠️ The SHADOW is withheld from the wrapper for the same reason as padding: the wrapper is a
+     square box around a rounded card, so a shadow here showed square corners behind round ones —
+     and the card paints the same shadow itself, so leaving it here drew it twice as dark. */
   const drop = (x: React.CSSProperties): React.CSSProperties =>
-    (ownSurface ? Object.fromEntries(Object.entries(x).filter(([k]) => !k.startsWith('padding'))) : x);
+    Object.fromEntries(Object.entries(x).filter(([k]) => !(ownSurface && k.startsWith('padding')) && !(ownShadow && k === 'boxShadow')));
   const size = {
     ...baseStyle,
     ...drop(sizeOf(styles, id)),

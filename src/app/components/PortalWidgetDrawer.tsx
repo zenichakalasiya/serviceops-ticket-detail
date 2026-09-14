@@ -24,7 +24,7 @@ import {
   REQUEST_STATUSES, itemNodeId, nodeById, nodePath, parseItemId, registerItemName, subNodeId,
 } from './portalPageModel';
 import type { NodeStyle, PortalStyles } from './portalPageModel';
-import { PAGE_ID, hasOwn, portalColorMode, resolve } from './portalStyleResolver';
+import { DEFAULT_SHADOW_COLOR, PAGE_ID, hasOwn, portalColorMode, resolve } from './portalStyleResolver';
 import { ContrastMeter, useBackdrop } from './PortalContrastMeter';
 import type { BackdropSpec } from './PortalContrastMeter';
 import { ALL_PACKS, packBadge } from './PortalStylePacks';
@@ -41,6 +41,35 @@ import { BannerLayoutPicker, TemplatePicker } from './PortalSectionControls';
 import { ACROSS_ROW, ACROSS_STACK, DOWN_ROW, DOWN_STACK, SectionPresets } from './PortalSectionLayout';
 import type { PresetId } from './PortalSectionLayout';
 import { BorderRow, RadiusRow, ShadowBlock, SizeRow } from './PortalBoxControls';
+
+/* ⚠️ The Shadow group, shared by BOTH panel models so it is one control everywhere. It writes the
+   STYLE store — the store `containerCss` paints on every widget's real card, placed or built-in —
+   never widget config, which only some renderers read. A text child gets none: a shadow on a run
+   of words is a box drawn round nothing the reader can see. */
+function ShadowGroup({ nodeId, styles, setStyle, open, onToggle }: {
+  nodeId: string; styles: PortalStyles; setStyle: (id: string, p: Partial<NodeStyle>) => void;
+  open: boolean; onToggle: () => void;
+}) {
+  /* ⚠️ Only a text CHILD — a heading, subtitle, link or label inside a widget. A placed Text element
+     is a widget of its own and gets the group like any other. */
+  if (/-(title|sub|subtitle|label|viewall|caption)$|-c[lv]\d+$|~/.test(nodeId)) return null;
+  const own = styles[nodeId] ?? {};
+  return (
+    <Group title="Shadow" open={open} onToggle={onToggle}>
+      {/* The group is already titled Shadow, so the switch says what it does rather than repeating it. */}
+      <ShadowBlock
+        label="Add shadow"
+        value={{
+          on: own.shadowOn === true,
+          color: String(own.shadowColor ?? DEFAULT_SHADOW_COLOR),
+          type: own.shadowType === 'inner' ? 'inner' : 'outer',
+          pos: String(own.shadowPos ?? 'bottom'),
+        }}
+        onChange={(x) => setStyle(nodeId, { shadowOn: x.on, shadowColor: x.color, shadowType: x.type, shadowPos: x.pos })}
+      />
+    </Group>
+  );
+}
 import { PortalTableContent } from './PortalTableContent';
 import { LineStylePicker } from './PortalLineStyles';
 import { IconFramePicker } from './PortalIconFrame';
@@ -472,6 +501,13 @@ function PanelBody({ spec, nodeId, cfg, renderField, openGroups, toggleGroup, st
           const key = `acc:${a.id}`;
           const open = !openGroups.includes(`shut:${a.id}`);
           return (
+            <Fragment key={a.id}>
+            {a.spacing && (
+              <ShadowGroup
+                nodeId={nodeId} styles={styles} setStyle={setStyle}
+                open={!openGroups.includes('shut:__shadow')} onToggle={() => toggleGroup('shut:__shadow')}
+              />
+            )}
             <Group
               key={a.id}
               title={ACCORDION_TITLE[a.id]}
@@ -497,6 +533,7 @@ function PanelBody({ spec, nodeId, cfg, renderField, openGroups, toggleGroup, st
                 />
               )}
             </Group>
+            </Fragment>
           );
         })}
       </div>
@@ -1681,6 +1718,12 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
                 packs-model widgets had padding buried inside the Style pack as a lone slider, so
                 "spacing" meant two different controls depending on which element you had selected.
                 One nested-box matrix, one place, everywhere. */}
+            {!selItem && (
+              <ShadowGroup
+                nodeId={nodeId} styles={styles} setStyle={setStyle}
+                open={openGroups.includes('__shadow')} onToggle={() => toggleGroup('__shadow')}
+              />
+            )}
             <Group
               title="Spacing"
               open={openGroups.includes('__spacing')}

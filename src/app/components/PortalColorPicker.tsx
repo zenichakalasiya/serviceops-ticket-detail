@@ -69,6 +69,17 @@ function hsvToHex(h: number, s: number, v: number) {
   return rgbToHex((r + m) * 255, (g + m) * 255, (b + m) * 255);
 }
 
+/** Splits a stored colour into the hex the spectrum edits and the opacity the alpha rail edits.
+ *  ⚠️ The picker EMITS rgba() below full opacity but never read one back: reopened, a 20% shadow
+ *  showed `RGBA(15, 23, 42, 0.20)` in the Hex field, 0/0/0 in RGB and a full alpha rail — so the
+ *  first touch of anything reset the colour to opaque black. */
+function parseColor(value: string | undefined): { hex: string; opacity: number } {
+  const m = /^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([\d.]+)\s*)?\)$/i.exec(value ?? '');
+  if (m) return { hex: rgbToHex(+m[1], +m[2], +m[3]), opacity: Math.round(clamp(m[4] === undefined ? 1 : +m[4]) * 100) };
+  if (/^#[0-9A-Fa-f]{8}$/.test(value ?? '')) return { hex: value!.slice(0, 7).toUpperCase(), opacity: Math.round(parseInt(value!.slice(7), 16) / 2.55) };
+  return { hex: (value || '#000000').toUpperCase(), opacity: 100 };
+}
+
 /* ── swatch ──────────────────────────────────────────────────────────────── */
 
 function Swatch({ color, on, onPick, none }: { color: string; on?: boolean; onPick: () => void; none?: boolean }) {
@@ -101,19 +112,21 @@ export function PortalColorPicker({ value, onChange, onClose, anchor, modeTab }:
      swatches is a second palette that nobody else on the team can see — it quietly competes with
      the one place colour is supposed to be defined. Recent stays because it is a shortcut back to
      what you just used, not an alternative source of truth. */
-  const [hsv, setHsv] = useState(() => hexToHsv(value || '#000000'));
+  const [hsv, setHsv] = useState(() => hexToHsv(parseColor(value).hex));
   /* ⚠️ RE-SEEDED when the incoming value changes, which is what happens the moment the Light/Dark
      tab is switched. `useState` only ever reads its initial argument, so without this the spectrum
      and the hex field disagreed the instant you changed tab — the field said the dark value and the
      wheel was still sitting on the light one. */
   const modeKey = modeTab?.value;
   useEffect(() => {
-    setHsv(hexToHsv(value || '#000000'));
-    setHex((value || '#000000').toUpperCase());
+    const p = parseColor(value);
+    setHsv(hexToHsv(p.hex));
+    setHex(p.hex);
+    setOpacity(p.opacity);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modeKey]);
-  const [hex, setHex] = useState((value || '#000000').toUpperCase());
-  const [opacity, setOpacity] = useState(100);
+  const [hex, setHex] = useState(() => parseColor(value).hex);
+  const [opacity, setOpacity] = useState(() => parseColor(value).opacity);
   const ref = useRef<HTMLDivElement>(null);
   const svRef = useRef<HTMLDivElement>(null);
   const hueRef = useRef<HTMLDivElement>(null);
@@ -151,7 +164,8 @@ export function PortalColorPicker({ value, onChange, onClose, anchor, modeTab }:
     setHex(next.toUpperCase());
     setHsv(hexToHsv(next));
     remember(next);
-    onChange(next);
+    /* Keeps the opacity already chosen — picking a new hue must not quietly make it opaque again. */
+    emit(next, opacity);
   };
 
   /* Both the spectrum and the hue rail are pointer-dragged, so they share one handler shape. */
@@ -296,13 +310,15 @@ export function PortalColorPicker({ value, onChange, onClose, anchor, modeTab }:
           ['Hex', hex.replace('#', ''), (v: string) => {
             const next = '#' + v.replace(/[^0-9a-fA-F]/g, '').slice(0, 6);
             setHex(next.toUpperCase());
-            if (/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(next)) { setHsv(hexToHsv(next)); onChange(next); }
+            if (/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(next)) { setHsv(hexToHsv(next)); emit(next, opacity); }
           }, 'flex-[1.6]'],
           ['R', String(rgb.r), (v: string) => setChannel('r', v), 'flex-1'],
           ['G', String(rgb.g), (v: string) => setChannel('g', v), 'flex-1'],
           ['B', String(rgb.b), (v: string) => setChannel('b', v), 'flex-1'],
-          ['A', (opacity / 100).toFixed(2).replace(/0+$/, '').replace(/.$/, '') || '0', (v: string) => {
-            const o = Math.round(Math.max(0, Math.min(1, Number(v) || 0)) * 100);
+          /* ⚠️ A percentage, the same unit the rail reads in. The old 0–1 display trimmed zeros and
+             then always cut the last character, so 0.2 read as `0.` and 0.5 as `0.`. */
+          ['A', `${opacity}%`, (v: string) => {
+            const o = Math.round(Math.max(0, Math.min(100, Number(v.replace(/[^0-9.]/g, '')) || 0)));
             setOpacity(o);
             emit(hex, o);
           }, 'flex-1'],
@@ -442,7 +458,8 @@ export function ColorField({ value, onChange, modes }: {
         className="flex h-9 w-full items-center gap-2 rounded border border-[#d1d5db] bg-white px-2 text-left transition-colors hover:border-[#3D8BD0]"
       >
         <span className="size-5 flex-shrink-0 rounded border border-black/10" style={{ background: value }} />
-        <span className="min-w-0 flex-1 truncate text-[13px] text-[#364658]">{value.toUpperCase()}</span>
+        {/* A colour with opacity reads as its hex and a percentage, the two things the picker edits — not as a raw rgba() string. */}
+        <span className="min-w-0 flex-1 truncate text-[13px] text-[#364658]">{(() => { const p = parseColor(value); return p.opacity < 100 ? `${p.hex} · ${p.opacity}%` : (value || '').toUpperCase(); })()}</span>
         <ChevronDown size={14} className="flex-shrink-0 text-[#9CA3AF]" />
       </button>
       {anchor && (

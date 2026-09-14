@@ -1292,6 +1292,13 @@ export function toolbarCaps(id: string): ToolbarCaps {
 export const defaultAlignH = (id: string): string =>
   (id === 'quick' || id === 'favourites' || id === 'services' ? 'stretch' : 'left');
 
+/** Whether the node draws its OWN shadow on an inner element, so its selection wrapper must not.
+ *  Everything that paints its own surface, plus the Button: it hugs its label, so a shadow on its
+ *  wrapper fell on the whole column the button sits in rather than on the button. */
+export function paintsOwnShadow(id: string): boolean {
+  return paintsOwnSurface(id) || placedType(id) === 'b-button';
+}
+
 export function paintsOwnSurface(id: string): boolean {
   /* ⚠️ The built-in quick-action cards too. Their Sel is a bare wrapper and the white card is a div
      INSIDE it, so padding applied to the wrapper landed between the selection outline and the card

@@ -10,7 +10,8 @@
 
 import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { Settings2 } from 'lucide-react';
+import { Info, Settings2 } from 'lucide-react';
+import { shadowString } from './portalStyleResolver';
 import { ColorField } from './PortalColorPicker';
 
 const num = 'h-8 w-[54px] rounded-l border border-[#d1d5db] px-2 text-center text-[12px] text-[#364658] focus:border-[#3D8BD0] focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none';
@@ -183,14 +184,14 @@ const POS = ['top left', 'top', 'top right', 'left', 'center', 'right', 'bottom 
 
 export interface ShadowValue { on: boolean; color: string; type: 'outer' | 'inner'; pos: string }
 
-export function ShadowBlock({ value, onChange }: { value: ShadowValue; onChange: (v: ShadowValue) => void }) {
+export function ShadowBlock({ value, onChange, label = 'Shadow' }: { value: ShadowValue; onChange: (v: ShadowValue) => void; label?: string }) {
   const set = (p: Partial<ShadowValue>) => onChange({ ...value, ...p });
   /* Same air above as any other switch row (ToggleRow's mt-5) — this block's first line IS a switch,
      and it commonly sits directly under one. `first:mt-0` still applies inside its Field wrapper. */
   return (
     <div className="mt-5 first:mt-0">
       <label className="flex cursor-pointer items-center justify-between gap-3">
-        <span className="text-[13px] text-[#364658]">Shadow</span>
+        <span className="text-[13px] text-[#364658]">{label}</span>
         <button
           role="switch"
           aria-checked={value.on}
@@ -207,12 +208,13 @@ export function ShadowBlock({ value, onChange }: { value: ShadowValue; onChange:
         <>
           <div className="mt-3 flex items-center justify-between gap-3">
             <span className="text-[12px] font-normal text-[#7B8FA5]">Shadow colour</span>
-            <span className="w-[38px]"><ColorField value={value.color} onChange={(v) => set({ color: v })} /></span>
+            <span className="w-[176px]"><ColorField value={value.color} onChange={(v) => set({ color: v })} /></span>
           </div>
 
           <div className="mt-3 flex items-center justify-between gap-3">
-            <span className="text-[12px] font-normal text-[#7B8FA5]" title="Outer casts the shadow behind the block; Inner sinks it into the surface.">
+            <span className="flex items-center gap-1 text-[12px] font-normal text-[#7B8FA5]">
               Shadow type
+              <span title="Outer casts the shadow behind the block. Inner sinks it into the surface." className="cursor-help text-[#9CA3AF]"><Info size={12} /></span>
             </span>
             <span className="flex rounded border border-[#DFE5ED] bg-white p-0.5">
               {(['outer', 'inner'] as const).map((t) => (
@@ -252,9 +254,8 @@ export function ShadowBlock({ value, onChange }: { value: ShadowValue; onChange:
 /** Turns the value into a real CSS shadow, so the control is never decorative. */
 export function shadowCss(v: ShadowValue | undefined): string | undefined {
   if (!v?.on) return undefined;
-  const x = v.pos.includes('left') ? -4 : v.pos.includes('right') ? 4 : 0;
-  const y = v.pos.includes('top') ? -4 : v.pos.includes('bottom') ? 4 : 0;
-  return `${v.type === 'inner' ? 'inset ' : ''}${x}px ${y}px 12px ${v.color}33`;
+  /* ONE builder for both stores — see `shadowString`, which is also what `containerCss` paints. */
+  return shadowString(v.color, v.type, v.pos);
 }
 
 /* ── Size ────────────────────────────────────────────────────────────────── */

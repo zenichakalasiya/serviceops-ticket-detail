@@ -279,6 +279,25 @@ export function chosen<K extends keyof NodeStyle>(styles: PortalStyles, id: stri
 }
 
 /** The container CSS for a node: everything P1/P5 own, resolved through the chain. */
+/** The colour a new shadow starts on — the page's ink at 20%, which reads as depth on white and
+ *  on a tinted fill alike. Carrying its own alpha is what lets the picker's Opacity rail own it. */
+export const DEFAULT_SHADOW_COLOR = 'rgba(15, 23, 42, 0.20)';
+
+/** One shadow, from the four values the Shadow group edits.
+ *
+ * ⚠️ The colour is used EXACTLY as picked. The old builder appended a fixed `33` alpha to it, which
+ * made the Opacity rail decorative — and once the picker emitted `rgba(...)` for a moved alpha, the
+ * suffix turned it into `rgba(...)33`, an invalid value the browser dropped, so lowering opacity
+ * made the shadow disappear outright. The picker already returns hex at 100% and rgba below it.
+ * ⚠️ Position is where the shadow FALLS, the Figma/Webflow reading: bottom-right casts down and
+ * right. Centre is an even glow on every side. */
+export function shadowString(color: string, type: 'outer' | 'inner', pos: string): string {
+  const x = pos.includes('left') ? -6 : pos.includes('right') ? 6 : 0;
+  const y = pos.includes('top') ? -6 : pos.includes('bottom') ? 6 : 0;
+  const blur = pos === 'center' ? 18 : 16;
+  return `${type === 'inner' ? 'inset ' : ''}${x}px ${y}px ${blur}px 0 ${color}`;
+}
+
 export function containerCss(styles: PortalStyles, id: string): React.CSSProperties {
   const css: React.CSSProperties = {};
   const g = <K extends keyof NodeStyle>(k: K) => chosen(styles, id, k);
@@ -338,6 +357,17 @@ export function containerCss(styles: PortalStyles, id: string): React.CSSPropert
   const elevation = b('elevation');
   if (elevation === 'subtle') css.boxShadow = '0 1px 2px rgba(16,24,40,0.05)';
   else if (elevation === 'raised') css.boxShadow = '0 4px 6px -2px rgba(16,24,40,0.06), 0 12px 20px -4px rgba(16,24,40,0.12)';
+
+  /* The Shadow group (every widget's Design section). LAST, so a shadow somebody switched on wins
+     over the older border-mode and elevation shadows rather than being silently out-voted by them.
+     Own-only and mode-aware like every other box key above. */
+  if (b('shadowOn') === true) {
+    css.boxShadow = shadowString(
+      String(b('shadowColor') ?? DEFAULT_SHADOW_COLOR),
+      (b('shadowType') as string) === 'inner' ? 'inner' : 'outer',
+      String(b('shadowPos') ?? 'bottom'),
+    );
+  }
 
   const corners = b('corners');
   if (corners) {

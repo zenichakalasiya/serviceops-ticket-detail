@@ -1190,6 +1190,9 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
     return () => mo.disconnect();
   }, []);
   const st = (id: string) => styleOf(styles, id);
+  /* ⚠️ For an inner box whose Sel ALREADY paints this node's style. Background and border drawn twice
+     are invisible; a shadow drawn twice is twice as dark — so the inner copy leaves it to the Sel. */
+  const stInner = (id: string) => { const { boxShadow: _s, ...rest } = styleOf(styles, id); return rest; };
   /* A node's OWN padding and dragged height, for the elements that paint their own card and
      therefore have to apply both themselves. Vertical is px, horizontal is %, as everywhere else. */
   const padCss = (id: string): React.CSSProperties => {
@@ -1696,7 +1699,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
           thing that always runs the full height of what it is on. Its colour comes from the card's
           own id, so the kind of card is legible before a word is read. */}
       <div
-        style={{ ...(spineCards ? { borderLeft: `3px solid ${SPINE[id] ?? '#3D8BD0'}` } : {}), ...st(id) }}
+        style={{ ...(spineCards ? { borderLeft: `3px solid ${SPINE[id] ?? '#3D8BD0'}` } : {}), ...stInner(id) }}
         className={spineCards ? 'rounded-[14px]' : 'rounded-xl'}
       >{body}</div>
     </Sel>
@@ -1952,7 +1955,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
              ⚠️ `100%` resolves to auto while the wrapper has no explicit height, so an
              untouched banner still sizes from its minHeight and nothing moved. */
           height: '100%',
-          ...st('hero'),
+          ...stInner('hero'),
         }}
       >
         {/* The decorative line-work belongs to the DEFAULT band. Over a chosen colour it reads

@@ -666,7 +666,7 @@ export function AnnouncementsRender({ nodeId, cfg, headIcon }: { nodeId: string;
             owns the top right; the controls that move between the few shown here sit under the
             notice they move, at the edge the eye finishes reading on. */}
         {rows.length > 1 && (
-          <div className="mt-3 flex justify-end">
+          <div className="mt-3 flex justify-start">
             <CarouselNav car={car} count={rows.length} />
           </div>
         )}

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Image as ImageIcon, PlayCircle, Search, Star } from 'lucide-react';
 import { PORTAL_APPROVALS, PORTAL_ARTICLES, PORTAL_ELEMENTS, PORTAL_OPEN_REQUESTS } from './supportPortalData';
-import { ACTION_TYPES, fillCss, renderSpec } from './portalPageModel';
+import { ACTION_TYPES, fillCss, paintsOwnSurface, renderSpec } from './portalPageModel';
 import type { PlacedElement } from './portalPageModel';
 import { COLLECTION_RENDERERS } from './PortalCollectionRender';
 import { ImageUploadZone } from './PortalControls';
@@ -45,7 +45,10 @@ const empty = 'text-[13px] text-[#9CA3AF]';
  *  block-level Fill / Border / Radius laid over the top. */
 function StyledBox({ children, id }: { children: React.ReactNode; id: string }) {
   const { styles } = useCanvas();
-  const css = containerCss(styles ?? {}, id);
+  /* ⚠️ No shadow here unless this box IS the element's surface — otherwise Sel has already painted
+     it on the wrapper directly outside this one, and two copies read twice as dark. */
+  const { boxShadow, ...rest } = containerCss(styles ?? {}, id);
+  const css: React.CSSProperties = paintsOwnSurface(id) && boxShadow ? { ...rest, boxShadow } : rest;
   /* ⚠️ It renders for a dragged HEIGHT too, not only for container styling. As "styled or nothing"
      this collapsed to a fragment on every untouched element — which broke the chain a height has to
      travel down: Sel's fill box stretches its direct child, and with no box here that child was
@@ -221,6 +224,8 @@ function specDrivenBody(type: string, cfg: Record<string, unknown> | undefined, 
              moment a fill is chosen, which is the only time the panel offers the control. */
           ...fillCss(cfg),
           ...(bw > 0 ? { borderWidth: bw, borderStyle: 'solid', borderColor: String(cfg.borderColor ?? '#E5E7EB') } : {}),
+          /* The Shadow group writes the STYLE store; Sel withholds it from the wrapper for this node. */
+          ...(() => { const s = containerCss(styles ?? {}, nodeId).boxShadow; return s ? { boxShadow: s } : {}; })(),
           minHeight: Number(cfg.minHeight) || undefined,
         }}
         className={`flex h-full gap-3 rounded-lg p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_4px_12px_rgba(16,24,40,0.06)] ${
@@ -305,6 +310,9 @@ function specDrivenBody(type: string, cfg: Record<string, unknown> | undefined, 
       fontStyle: on.includes('Italic') ? 'italic' : undefined,
       justifyContent: ({ left: 'flex-start', center: 'center', right: 'flex-end' } as Record<string, string>)[String(cfg.textAlign ?? 'center')],
     };
+    /* The Shadow group lands on the BUTTON — see `paintsOwnShadow`, which keeps it off the wrapper. */
+    const btnShadow = containerCss(styles ?? {}, nodeId).boxShadow;
+    if (btnShadow) face.boxShadow = btnShadow;
     let btn: ReactNode;
     if (style === 'icon') {
       /* `size-9` is a width AND a height, so the height half has to go when one was dragged. */
