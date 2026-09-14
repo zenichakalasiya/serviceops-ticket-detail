@@ -372,8 +372,17 @@ export const WIDGET_SPECS: WidgetSpec[] = [
       { ...TITLE_FIELD, when: (c) => c.showHeader !== false },
       {
         key: 'display', label: 'Display', control: 'segmented', group: 'Content',
-        options: [{ value: 'regular', label: 'Regular card' }, { value: 'carousel', label: 'Carousel' }],
-        help: 'A regular card lists the latest announcements. A carousel shows one at a time, with arrows to move between them.',
+        options: [{ value: 'regular', label: 'Regular card' }, { value: 'carousel', label: 'Carousel' }, { value: 'image', label: 'Image carousel' }],
+        help: 'A regular card lists the latest announcements. A carousel pages through them with arrows. An image carousel puts one notice in a band under a photo.',
+      },
+      /* ── Image carousel only ── ⚠️ All three are REMOVED for the other two displays, not disabled:
+         a photo and a band colour mean nothing on a card that has neither. One photo for the whole
+         card, uploaded here — it stays put while the notices page underneath it. */
+      { key: 'coverImage', label: 'Image', control: 'upload', group: 'Content', when: (c) => c.display === 'image' },
+      { key: 'bandColor', label: 'Band colour', control: 'color', tab: 'style', group: 'Band', when: (c) => c.display === 'image' },
+      {
+        key: 'bandText', label: 'Band text', control: 'segmented', tab: 'style', group: 'Band', when: (c) => c.display === 'image',
+        options: [{ value: 'light', label: 'Light' }, { value: 'dark', label: 'Dark' }],
       },
       /* ⚠️ NOTHING follows Display. The carousel used to bring Type (Automatic / Manual), Interval and
          Show dots with it — three settings for one small card, where the card has one right answer:
@@ -383,7 +392,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
          page that stored them still resolves; the renderer no longer reads them. */
     ],
     packs: LIVE_CARD_PACKS, roles: LIST_CARD_ROLES,
-    defaults: { ...listCardDefaults, title: 'Announcements', show: 3, showDate: true, rowLayout: 'stacked', display: 'regular', showHeader: true, sliderType: 'manual', interval: 5, dots: true },
+    defaults: { ...listCardDefaults, title: 'Announcements', show: 3, showDate: true, rowLayout: 'stacked', display: 'regular', showHeader: true, coverImage: '', bandColor: '#2F3033', bandText: 'light', sliderType: 'manual', interval: 5, dots: true },
   },
 
   /* ─────────── §7.6 Most Read Knowledge ─────────── */

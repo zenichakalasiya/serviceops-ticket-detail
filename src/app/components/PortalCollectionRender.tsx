@@ -656,7 +656,9 @@ export function AnnouncementsRender({ nodeId, cfg, headIcon }: { nodeId: string;
   /* With the header on, a page is two rows under it. With it OFF the card is a one-line STRIP, so a
      page is one notice with its controls beside it (see the strip branch below). */
   const headerOn = cfg.showHeader !== false;
-  const PER_PAGE = headerOn ? 2 : 1;
+  const imageDisplay = cfg.display === 'image' && rows.length > 0;
+  /* The image carousel shows ONE notice in its band, header or not. */
+  const PER_PAGE = headerOn && !imageDisplay ? 2 : 1;
   const pages: (typeof ANNOUNCEMENTS)[] = [];
   for (let i = 0; i < ANNOUNCEMENTS.length; i += PER_PAGE) pages.push(ANNOUNCEMENTS.slice(i, i + PER_PAGE));
   /* ⚠️ Called UNCONDITIONALLY — a hook behind an `if` changes the hook count the moment Display is
@@ -665,7 +667,7 @@ export function AnnouncementsRender({ nodeId, cfg, headIcon }: { nodeId: string;
     count: pages.length,
     type: 'manual',
     loop: true,
-    live: !enabled && carousel,
+    live: !enabled && (carousel || imageDisplay),
   });
 
   /* ⚠️ `roleStyle` hands back `fontWeight` and `lineHeight` UNCONDITIONALLY, and `undefined` for
@@ -708,6 +710,73 @@ export function AnnouncementsRender({ nodeId, cfg, headIcon }: { nodeId: string;
       All announcements<ChevronsRight size={16} />
     </span>
   );
+
+  /* ── IMAGE CAROUSEL ── one photo the admin uploads, a colour band beneath it, and the notices
+     paging inside the band: date tile · headline · detail, controls top right, the link bottom right.
+     ⚠️ `-m-4` lets the photo reach the card's edges — the card gives every widget 16px of padding,
+     and a photo inset inside a white frame is a picture ON a card rather than the card's face.
+     ⚠️ The band's text colour is a CHOICE (Light / Dark), never guessed from the band colour: a
+     light band with white text is the unreadable card this setting exists to prevent. */
+  if (imageDisplay) {
+    const light = cfg.bandText !== 'dark';
+    const ink = light ? '#FFFFFF' : '#1E293B';
+    const sub = light ? 'rgba(255,255,255,0.72)' : '#475467';
+    const src = String(cfg.coverImage ?? '');
+    const bandRow = (a: (typeof ANNOUNCEMENTS)[number]) => {
+      const p = postedParts(a.at);
+      return (
+        <div key={a.id} className="flex items-stretch gap-3.5">
+          {cfg.showDate !== false && (
+            <div
+              style={{ lineHeight: 1.35, background: light ? 'rgba(255,255,255,0.12)' : 'rgba(15,23,42,0.06)', color: light ? 'rgba(255,255,255,0.85)' : '#475467' }}
+              className="flex w-[62px] flex-shrink-0 flex-col items-center justify-center rounded-lg px-1.5 py-2 text-center text-[12px]"
+            >
+              {p.day && <span className="whitespace-nowrap">{p.day}</span>}
+              <span className="whitespace-nowrap">{p.date}</span>
+            </div>
+          )}
+          <div className="flex min-w-0 flex-1 flex-col justify-center">
+            <OneLine text={a.title} style={{ color: ink, fontWeight: 600, lineHeight: 1.4 }} className="text-[16px]" />
+            <OneLine text={a.desc} style={{ color: sub, lineHeight: 1.5 }} className="mt-1 text-[13px]" />
+          </div>
+        </div>
+      );
+    };
+    return (
+      <div className="@container -m-4 flex min-w-0 flex-col overflow-hidden rounded-xl">
+        {headerOn && (
+          <div className="px-4 pt-4">
+            <WidgetTitle nodeId={nodeId} text={cfg.title} icon={headIcon} count={ANNOUNCEMENTS.length} action={allLink} />
+          </div>
+        )}
+        <div className="relative h-[200px] w-full bg-[#E5E7EB]">
+          {src
+            ? <img src={src} alt="" className="size-full object-cover" />
+            : (
+              <span className="flex size-full flex-col items-center justify-center gap-1.5 text-[12px] text-[#7B8FA5]">
+                <ImageOff size={20} />Upload an image in the panel
+              </span>
+            )}
+        </div>
+        <div style={{ background: String(cfg.bandColor ?? '#2F3033') }} className="px-5 py-4">
+          <div className="flex items-start gap-4">
+            <div {...car.bind} className="min-w-0 flex-1">
+              <CarouselTrack car={car}>{pages.map((pg, i) => <div key={i}>{pg.map(bandRow)}</div>)}</CarouselTrack>
+            </div>
+            {pages.length > 1 && <CarouselNav car={car} count={pages.length} onDark={light} />}
+          </div>
+          {/* With the header off the link has nowhere else to live, so it closes the band. */}
+          {!headerOn && (
+            <div className="mt-2 flex justify-end">
+              <span style={{ color: ink }} className="flex items-center gap-1 whitespace-nowrap text-[13px] font-semibold">
+                All announcements<ChevronRight size={15} />
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   if (carousel && !headerOn) {
     /* The STRIP: one announcement, then the controls and the link on the same line, at the right.

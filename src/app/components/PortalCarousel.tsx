@@ -273,8 +273,15 @@ export function CarouselArrows({ car, placement = 'inside', over }: {
  * ⚠️ The active dot is a PILL, not a bigger circle: length reads at a glance where a size change
  * of two pixels does not, and it is the one mark on the row that should be found without looking.
  * The colour is the portal's own accent, so a themed portal's carousel follows its theme. */
-export function CarouselNav({ car, count }: { car: Carousel; count: number }) {
-  const arrow = 'flex size-7 flex-shrink-0 items-center justify-center rounded-full border border-[#DFE5ED] bg-white text-[#475467] transition-colors hover:border-[#3D8BD0] hover:text-[#3D8BD0] disabled:cursor-default disabled:opacity-35';
+export function CarouselNav({ car, count, onDark }: {
+  car: Carousel; count: number;
+  /* On a dark band (the Announcements image carousel): outlined white arrows and white dots, so the
+     controls read on the band rather than as white chips pasted onto it. Off by default. */
+  onDark?: boolean;
+}) {
+  const arrow = onDark
+    ? 'flex size-7 flex-shrink-0 items-center justify-center rounded-full border border-white/40 bg-transparent text-white transition-colors hover:border-white disabled:cursor-default disabled:opacity-35'
+    : 'flex size-7 flex-shrink-0 items-center justify-center rounded-full border border-[#DFE5ED] bg-white text-[#475467] transition-colors hover:border-[#3D8BD0] hover:text-[#3D8BD0] disabled:cursor-default disabled:opacity-35';
   return (
     <div className="flex items-center gap-2">
       <button type="button" aria-label="Previous" disabled={car.atStart} onClick={(e) => { e.stopPropagation(); car.step(-1); }} className={arrow}>
@@ -288,8 +295,8 @@ export function CarouselNav({ car, count }: { car: Carousel; count: number }) {
             aria-label={`Go to ${k + 1}`}
             aria-current={k === car.i}
             onClick={(e) => { e.stopPropagation(); car.go(k); }}
-            className={`h-1.5 rounded-full transition-all ${k === car.i ? 'w-5' : 'w-1.5 bg-[#CBD5E1] hover:bg-[#94A3B8]'}`}
-            style={k === car.i ? { backgroundColor: 'var(--portal-accent, #3D8BD0)' } : undefined}
+            className={`h-1.5 rounded-full transition-all ${k === car.i ? 'w-5' : onDark ? 'w-1.5 bg-white/35 hover:bg-white/60' : 'w-1.5 bg-[#CBD5E1] hover:bg-[#94A3B8]'}`}
+            style={k === car.i ? { backgroundColor: onDark ? '#FFFFFF' : 'var(--portal-accent, #3D8BD0)' } : undefined}
           />
         ))}
       </div>
