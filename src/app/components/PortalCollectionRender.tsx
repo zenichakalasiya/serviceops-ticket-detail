@@ -697,14 +697,16 @@ export function AnnouncementsRender({ nodeId, cfg, headIcon }: { nodeId: string;
     );
   };
 
+  /* The card-level link, on BOTH displays — the regular card lists a few and the carousel pages
+     through them, and either way the full list is one click from the header. ⚠️ Plain words, never a
+     `Sel`: the links on a predefined card are the product's (`hasFixedViewAll`). */
+  const allLink = (
+    <span style={roleStyle(styles, nodeId, 'link')} className="flex items-center gap-1 whitespace-nowrap text-[12px] font-medium text-[#7B8FA5]">
+      All announcements<ChevronsRight size={16} />
+    </span>
+  );
+
   if (carousel) {
-    /* The card-level link. ⚠️ Plain words, never a `Sel`: the links on a predefined card are the
-       product's (`hasFixedViewAll`). */
-    const allLink = (
-      <span style={roleStyle(styles, nodeId, 'link')} className="flex items-center gap-1 whitespace-nowrap text-[12px] font-medium text-[#7B8FA5]">
-        All announcements<ChevronsRight size={16} />
-      </span>
-    );
     /* ⚠️ A flex COLUMN that fills its card, so the controls take `mt-auto` and sit on the card's
        bottom edge — the card is often taller than a page (it stretches to its row). */
     return (
@@ -732,7 +734,7 @@ export function AnnouncementsRender({ nodeId, cfg, headIcon }: { nodeId: string;
 
   return (
     <div className="@container min-w-0">
-      <WidgetTitle nodeId={nodeId} text={cfg.title} icon={headIcon} count={ANNOUNCEMENTS.length} />
+      <WidgetTitle nodeId={nodeId} text={cfg.title} icon={headIcon} count={ANNOUNCEMENTS.length} action={allLink} />
       <div {...stackProps(gap, dividers)}>{rows.map(row)}</div>
     </div>
   );
