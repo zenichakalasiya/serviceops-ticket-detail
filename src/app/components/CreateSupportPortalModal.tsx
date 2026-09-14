@@ -235,7 +235,7 @@ function TemplateCard({ art, name, meta, badge, onPreview, onUse }: {
   /* Hover is QUIET: the border darkens one step and a light scrim carries the two actions — no lift, no shadow, no zoom. */
   return (
     <div className="group/tpl flex flex-col overflow-hidden rounded-xl border border-[#E5E7EB] bg-white transition-colors duration-150 hover:border-[#CBD5E1] focus-within:border-[#CBD5E1]">
-      <div className="relative h-[170px] w-full flex-shrink-0 overflow-hidden bg-[linear-gradient(180deg,#F7F9FC_0%,#EEF2F7_100%)] p-4">
+      <div className="relative h-[220px] w-full flex-shrink-0 overflow-hidden bg-[linear-gradient(180deg,#F7F9FC_0%,#EEF2F7_100%)] p-4">
         <div className="size-full">{art}</div>
         {badge && (
           <span className="absolute left-3 top-3 rounded-md bg-white/95 px-2 py-0.5 text-[10.5px] font-semibold tracking-wide text-[#3D8BD0] shadow-[0_1px_2px_rgba(16,24,40,0.08)]">{badge}</span>
@@ -301,11 +301,10 @@ export function CreateSupportPortalModal({ onClose, onSaveDetails, onScratch, on
   const templates = VISIBLE_TEMPLATES().filter((t) => category === 'All' || t.category === category);
 
   return createPortal(
-    <div hidden={hidden} className="fixed inset-0 z-[10000] flex items-start justify-center bg-[#0F172A]/40 px-6 pb-6 pt-[max(24px,calc((100vh-680px)/2))]">
-      {/* ⚠️ ONE width (880) and ONE top edge for both steps. Step 2 is 680 tall and centred; step 1 is only as
-          tall as its four fields, hanging from the same top, so moving on just extends the bottom. Filling the
-          whole screen made step 1 a wide, short strip; a 680-tall step 1 was mostly empty space. */}
-      <div className={`flex ${step === 2 ? "h-[min(680px,calc(100vh-48px))]" : "max-h-[calc(100vh-48px)]"} w-[min(880px,calc(100vw-48px))] flex-col overflow-hidden rounded-xl bg-white shadow-[0_24px_48px_-12px_rgba(16,24,40,0.25)]`}>
+    <div hidden={hidden} className="fixed inset-0 z-[10000] flex items-center justify-center bg-[#0F172A]/40 p-6">
+      {/* ⚠️ ONE size for both steps: 1240×1040, shrinking only to leave a 24px margin on a smaller screen,
+          so the dialog never changes size between step 1 and step 2. */}
+      <div className={`flex h-[min(1040px,calc(100vh-48px))] w-[min(1240px,calc(100vw-48px))] flex-col overflow-hidden rounded-xl bg-white shadow-[0_24px_48px_-12px_rgba(16,24,40,0.25)]`}>
         <div className="flex flex-shrink-0 items-center gap-3 border-b border-[#E5E7EB] px-5 py-3.5">
           <h2 className="flex-1 text-[16px] font-semibold text-[#364658]">Create Support Portal</h2>
           <button onClick={onClose} className="flex size-8 items-center justify-center rounded text-[#64748B] transition-colors hover:bg-[#F3F4F6]"><X size={18} /></button>
