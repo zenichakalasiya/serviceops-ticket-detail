@@ -379,10 +379,8 @@ export const WIDGET_SPECS: WidgetSpec[] = [
          card, uploaded here — it stays put while the notices page underneath it. */
       { key: 'coverImage', label: 'Image', control: 'upload', group: 'Content', when: (c) => c.display === 'image' },
       { key: 'bandColor', label: 'Band colour', control: 'color', tab: 'style', group: 'Band', when: (c) => c.display === 'image' },
-      {
-        key: 'bandText', label: 'Band text', control: 'segmented', tab: 'style', group: 'Band', when: (c) => c.display === 'image',
-        options: [{ value: 'light', label: 'Light' }, { value: 'dark', label: 'Dark' }],
-      },
+      /* Any colour, not Light / Dark — the band can be any colour, so its text has to be free to match. */
+      { key: 'bandTextColor', label: 'Band text colour', control: 'color', tab: 'style', group: 'Band', when: (c) => c.display === 'image' },
       /* ⚠️ NOTHING follows Display. The carousel used to bring Type (Automatic / Manual), Interval and
          Show dots with it — three settings for one small card, where the card has one right answer:
          arrows either side of the dots, always there. An announcement that moves on by itself is an
@@ -391,7 +389,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
          page that stored them still resolves; the renderer no longer reads them. */
     ],
     packs: LIVE_CARD_PACKS, roles: LIST_CARD_ROLES,
-    defaults: { ...listCardDefaults, title: 'Announcements', show: 3, showDate: true, rowLayout: 'stacked', display: 'regular', showHeader: true, coverImage: '', bandColor: '#2F3033', bandText: 'light', sliderType: 'manual', interval: 5, dots: true },
+    defaults: { ...listCardDefaults, title: 'Announcements', show: 3, showDate: true, rowLayout: 'stacked', display: 'regular', showHeader: true, coverImage: '', bandColor: '#2F3033', bandTextColor: '#FFFFFF', sliderType: 'manual', interval: 5, dots: true },
   },
 
   /* ─────────── §7.6 Most Read Knowledge ─────────── */

@@ -721,9 +721,18 @@ export function AnnouncementsRender({ nodeId, cfg, headIcon }: { nodeId: string;
      ⚠️ The band's text colour is a CHOICE (Light / Dark), never guessed from the band colour: a
      light band with white text is the unreadable card this setting exists to prevent. */
   if (imageDisplay) {
-    const light = cfg.bandText !== 'dark';
-    const ink = light ? '#FFFFFF' : '#1E293B';
-    const sub = light ? 'rgba(255,255,255,0.72)' : '#475467';
+    /* The band text colour is the admin's pick. The description, the date tile and the tile's wash are
+       all DERIVED from it (a softer share of the same colour), so one pick keeps the band consistent.
+       ⚠️ An older card stored `bandText: 'dark'` — honoured as the fallback so it does not turn white. */
+    const ink = String(cfg.bandTextColor ?? (cfg.bandText === 'dark' ? '#1E293B' : '#FFFFFF'));
+    const sub = `color-mix(in srgb, ${ink} 72%, transparent)`;
+    /* Whether the text is LIGHT, for the arrows and dots — white controls on a band whose text is light. */
+    const light = (() => {
+      const m = /^#([0-9a-f]{6})/i.exec(ink) ?? null;
+      const rgb = m ? [0, 2, 4].map((k) => parseInt(m[1].slice(k, k + 2), 16))
+        : (/rgba?\((\d+),\s*(\d+),\s*(\d+)/i.exec(ink)?.slice(1, 4).map(Number) ?? [255, 255, 255]);
+      return (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]) > 150;
+    })();
     const src = String(cfg.coverImage ?? '');
     const bandRow = (a: (typeof ANNOUNCEMENTS)[number]) => {
       const p = postedParts(a.at);
@@ -731,7 +740,7 @@ export function AnnouncementsRender({ nodeId, cfg, headIcon }: { nodeId: string;
         <div key={a.id} className="flex items-stretch gap-3.5">
           {cfg.showDate !== false && (
             <div
-              style={{ lineHeight: 1.35, background: light ? 'rgba(255,255,255,0.12)' : 'rgba(15,23,42,0.06)', color: light ? 'rgba(255,255,255,0.85)' : '#475467' }}
+              style={{ lineHeight: 1.35, background: `color-mix(in srgb, ${ink} 12%, transparent)`, color: `color-mix(in srgb, ${ink} 85%, transparent)` }}
               className="flex w-[62px] flex-shrink-0 flex-col items-center justify-center rounded-lg px-1.5 py-2 text-center text-[12px]"
             >
               {p.day && <span className="whitespace-nowrap">{p.day}</span>}
