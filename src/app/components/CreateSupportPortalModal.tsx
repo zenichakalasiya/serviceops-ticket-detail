@@ -302,9 +302,9 @@ export function CreateSupportPortalModal({ onClose, onSaveDetails, onScratch, on
 
   return createPortal(
     <div hidden={hidden} className="fixed inset-0 z-[10000] flex items-center justify-center bg-[#0F172A]/40 p-6">
-      {/* ⚠️ ONE size for both steps: 1240×1020 (height reduced 20px), shrinking to fit a smaller screen,
+      {/* ⚠️ ONE size for both steps: 1240×980 (height reduced 60px), shrinking to fit a smaller screen,
           so the dialog never changes size between step 1 and step 2. */}
-      <div className={`flex h-[min(1020px,calc(100vh-68px))] w-[min(1240px,calc(100vw-48px))] flex-col overflow-hidden rounded-xl bg-white shadow-[0_24px_48px_-12px_rgba(16,24,40,0.25)]`}>
+      <div className={`flex h-[min(980px,calc(100vh-108px))] w-[min(1240px,calc(100vw-48px))] flex-col overflow-hidden rounded-xl bg-white shadow-[0_24px_48px_-12px_rgba(16,24,40,0.25)]`}>
         <div className="flex flex-shrink-0 items-center gap-3 border-b border-[#E5E7EB] px-5 py-3.5">
           <h2 className="flex-1 text-[16px] font-semibold text-[#364658]">Create Support Portal</h2>
           <button onClick={onClose} className="flex size-8 items-center justify-center rounded text-[#64748B] transition-colors hover:bg-[#F3F4F6]"><X size={18} /></button>
