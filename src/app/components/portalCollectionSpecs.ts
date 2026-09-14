@@ -692,72 +692,7 @@ export const TEXT_IMAGE_SPEC: WidgetSpec = {
   },
 };
 
-/* ── Action Panel ─────────────────────────────────────────────────────────────
- *
- * A "Raise a ticket" panel: header (icon + title), a line of description, a primary and a secondary
- * button, then a list of links — each with its own icon and a chevron. ONE widget rather than nine
- * blocks stacked in a column, so it always holds together however the page around it moves.
- * ⚠️ The two BUTTONS are fields; the LINKS are a collection. A panel always has one primary action
- * (and usually a secondary), while the links are the part that grows and shrinks per portal. */
-const PANEL_ICON_OPTIONS = [
-  { value: 'ticket', label: 'Ticket' }, { value: 'cart', label: 'Cart' }, { value: 'key', label: 'Key' },
-  { value: 'book', label: 'Book' }, { value: 'search', label: 'Search' }, { value: 'headset', label: 'Headset' },
-  { value: 'mail', label: 'Mail' }, { value: 'phone', label: 'Phone' }, { value: 'clipboard', label: 'Clipboard' },
-  { value: 'laptop', label: 'Laptop' }, { value: 'users', label: 'Users' }, { value: 'calendar', label: 'Calendar' },
-  { value: 'wrench', label: 'Wrench' }, { value: 'shieldcheck', label: 'Shield' }, { value: 'globe', label: 'Globe' },
-  { value: 'none', label: 'No icon' },
-];
-
-export const ACTION_PANEL_SPEC: WidgetSpec = {
-  id: 'action_panel', name: 'Action Panel', group: 'Content', reuse: 'many', family: 'collection',
-  fields: [
-    { key: 'icon', label: 'Icon', control: 'icon', group: 'Content' },
-    { key: 'title', label: 'Title', control: 'text', group: 'Content' },
-    /* Keyed `sub` so the words on the canvas are the same node the panel edits (`-sub`). */
-    { key: 'sub', label: 'Description', control: 'textarea', group: 'Content' },
-
-    { key: 'primaryLabel', label: 'Label', control: 'text', group: 'Primary button' },
-    { key: 'primaryIcon', label: 'Icon', control: 'select', group: 'Primary button', options: PANEL_ICON_OPTIONS },
-    { key: 'primaryUrl', label: 'Link', control: 'text', group: 'Primary button', placeholder: 'https://' },
-
-    { key: 'showSecondary', label: 'Show secondary button', control: 'toggle', group: 'Secondary button' },
-    { key: 'secondaryLabel', label: 'Label', control: 'text', group: 'Secondary button', when: (c) => c.showSecondary !== false },
-    { key: 'secondaryIcon', label: 'Icon', control: 'select', group: 'Secondary button', options: PANEL_ICON_OPTIONS, when: (c) => c.showSecondary !== false },
-    { key: 'secondaryUrl', label: 'Link', control: 'text', group: 'Secondary button', placeholder: 'https://', when: (c) => c.showSecondary !== false },
-
-    { key: 'primaryColor', label: 'Primary button colour', control: 'color', tab: 'style', group: 'Buttons' },
-  ],
-  packs: ['P1'],
-  collection: {
-    key: 'links', group: 'Links', addLabel: 'Add link',
-    emptyHint: 'No links yet. Add the places a requester most often needs to reach from here.',
-    label: (it) => String(it.label ?? 'Link'),
-    meta: (it) => String(it.url ?? ''),
-    seed: () => ({ label: 'New link', url: '', icon: { key: 'globe' } }),
-    /* Label and Link are edited inline in the list; a link's icon is on its own panel — click the
-       link on the canvas. */
-    fields: [
-      { key: 'label', label: 'Label', control: 'text', group: 'Content' },
-      { key: 'url', label: 'Link', control: 'text', group: 'Content', placeholder: 'https://' },
-      { key: 'icon', label: 'Icon', control: 'icon', group: 'Content' },
-    ],
-    packs: [],
-  },
-  defaults: {
-    title: 'Raise a ticket',
-    sub: 'Something not working at your office? Report it and we’ll pick it up.',
-    primaryLabel: 'Report an Incident', primaryIcon: 'ticket', primaryUrl: '',
-    showSecondary: true, secondaryLabel: 'Request a Service', secondaryIcon: 'cart', secondaryUrl: '',
-    primaryColor: '#0F2744',
-    links: [
-      { id: 'apl0', label: 'AD Self Service', url: '', icon: { key: 'key' } },
-      { id: 'apl1', label: 'Knowledge', url: '', icon: { key: 'book' } },
-      { id: 'apl2', label: 'Track a Request', url: '', icon: { key: 'search' } },
-    ],
-  },
-};
-
 export const COLLECTION_SPECS: WidgetSpec[] = [
   FAQ_SPEC, CARD_SPEC, TABLE_SPEC, SLIDER_SPEC, GALLERY_SPEC, FEEDBACK_SPEC, LIST_SPEC, ACCORDION_SPEC,
-  TEXT_IMAGE_SPEC, ACTION_PANEL_SPEC,
+  TEXT_IMAGE_SPEC,
 ];

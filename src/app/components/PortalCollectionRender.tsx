@@ -11,7 +11,7 @@
 import { useRef, useState } from 'react';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import type { ReactNode } from 'react';
-import { ChevronDown, ChevronLeft, CircleAlert, LayoutList, ChevronRight, ChevronsRight, ImageOff, ShoppingCart, Star } from 'lucide-react';
+import { ChevronDown, ChevronLeft, LayoutList, ChevronRight, ChevronsRight, ImageOff, ShoppingCart, Star } from 'lucide-react';
 import { Sel, useCanvas } from './PortalCanvas';
 /* The Table is a module of its own — a spreadsheet-grade editor is a different kind of thing from
    the read-only renderers in this file, and it owns its data model, its handles and its menus. */
@@ -1676,60 +1676,7 @@ function RecordListRender({ nodeId, cfg, glyph }: { nodeId: string; cfg: Cfg; gl
   );
 }
 
-/* ── Action Panel ─────────────────────────────────────────────────────────── */
-
-/** Header · description · primary + secondary button · links with a chevron. The rules run to the
- *  card's edges (`-mx-4`) — the card gives its content 16px, and a rule inset from the border reads
- *  as a line drawn inside the text rather than a division of the card. */
-function ActionPanelRender({ nodeId, cfg, glyph }: { nodeId: string; cfg: Cfg; glyph?: ReactNode }) {
-  const { styles, enabled } = useCanvas();
-  const links = visible(cfg.links as Item[], enabled);
-  const btnIcon = (key: unknown, size = 17) => (key && key !== 'none' ? iconNode({ key: String(key) } as IconChoice, size) : null);
-  const primary = String(cfg.primaryColor ?? '#0F2744');
-  return (
-    <div className="@container flex min-w-0 flex-col">
-      <div className="-mx-4 -mt-1 flex items-center gap-2.5 border-b border-[#EEF1F5] px-4 pb-3.5">
-        <span className="flex flex-shrink-0 text-[#B45309] [&_svg]:size-[18px]">{glyph ?? <CircleAlert size={18} strokeWidth={1.8} />}</span>
-        <Sel id={`${nodeId}-title`} className="min-w-0 flex-1">
-          <span style={roleStyle(styles, nodeId, 'title')} className="block truncate text-[16px] font-semibold text-[#1E293B]">{String(cfg.title ?? '')}</span>
-        </Sel>
-      </div>
-      {String(cfg.sub ?? '') && (
-        <Sel id={`${nodeId}-sub`} className="mt-3.5">
-          <span style={roleStyle(styles, nodeId, 'body')} className="block text-[14px] leading-[1.55] text-[#475467]">{String(cfg.sub)}</span>
-        </Sel>
-      )}
-      <div className="mt-4 flex flex-col gap-2.5">
-        <span style={{ background: primary }} className="flex h-11 items-center justify-center gap-2 rounded-lg px-4 text-[14px] font-semibold text-white [&_svg]:size-[17px]">
-          {btnIcon(cfg.primaryIcon)}{String(cfg.primaryLabel ?? '')}
-        </span>
-        {cfg.showSecondary !== false && (
-          <span className="flex h-11 items-center justify-center gap-2 rounded-lg border border-[#DFE5ED] bg-white px-4 text-[14px] font-semibold text-[#1E293B]">
-            <span className="flex text-[#5B3FD6] [&_svg]:size-[17px]">{btnIcon(cfg.secondaryIcon)}</span>{String(cfg.secondaryLabel ?? '')}
-          </span>
-        )}
-      </div>
-      {links.length > 0 && (
-        <div className="mt-4 border-t border-[#EEF1F5] pt-2">
-          {links.map((l) => (
-            <Sel key={l.id} id={itemNodeId(nodeId, l.id)}>
-              <span className="flex items-center gap-2.5 py-2">
-                <span className="flex flex-shrink-0 [&_svg]:size-4" style={{ color: 'var(--portal-accent, #3D8BD0)' }}>
-                  {iconNode(l.icon as IconChoice | undefined, 16) ?? <ChevronsRight size={16} />}
-                </span>
-                <span className="min-w-0 flex-1 truncate text-[14px] text-[#1E293B]">{String(l.label ?? '')}</span>
-                <ChevronRight size={16} className="flex-shrink-0 text-[#94A3B8]" />
-              </span>
-            </Sel>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 export const COLLECTION_RENDERERS: Record<string, (p: { nodeId: string; cfg: Cfg; glyph?: ReactNode }) => ReactNode> = {
-  'x-action-panel': ActionPanelRender,
   'c-records': RecordListRender,
   'c-requests': RequestsRender,
   'c-approvals': ApprovalsRender,

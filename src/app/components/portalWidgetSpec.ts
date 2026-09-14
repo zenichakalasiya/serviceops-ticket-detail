@@ -1108,7 +1108,6 @@ export const WIDGET_FOR_TYPE: Record<string, string> = {
   'c-records': 'record_list',
   'b-button': 'button',
   'x-kpi': 'count_tile',
-  'x-action-panel': 'action_panel',
   // Collection widgets. `b-accordion` and `c-faq` are the same widget reached two ways.
   'c-faq': 'faq',
   /* ⚠️ No longer an alias of FAQ. They look alike but style differently — an accordion owns a
