@@ -1421,7 +1421,7 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
        select and delete. The seeds still fill the DEFAULT items, which is what they are for. */
     const seeded = col.blankOnAdd
       ? Object.fromEntries(col.fields.map((f) => [f.key, '']))
-      : col.seed(items.length);
+      : col.seed(items.length, cfg);
     const item = { id, ...seeded, ...extra };
     setCfg({ [col.key]: [...items, item] });
     /* ⚠️ No redirect when the row has an inline editor. Selecting the item swapped the whole sidebar

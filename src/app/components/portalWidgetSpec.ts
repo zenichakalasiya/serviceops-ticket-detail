@@ -180,7 +180,9 @@ export interface CollectionSpec {
   label: (item: Cfg, i: number) => string;
   meta?: (item: Cfg, i: number) => string | undefined;
   /** Realistic placeholder content, never `Untitled` (§8.4 rule 4). */
-  seed: (i: number) => Cfg;
+  /* The widget's config is passed too, so a new item can inherit a widget-level choice it has to
+     know about in its own panel (a Media Slider slide inherits Data only / Data + image). */
+  seed: (i: number, cfg?: Cfg) => Cfg;
   /** The ITEM's own content fields (L5). */
   fields: WidgetField[];
   /** The item's per-item style packs — only what is legitimately per-item (§4.2). */

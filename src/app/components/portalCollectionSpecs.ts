@@ -255,56 +255,25 @@ export const TABLE_SPEC: WidgetSpec = {
 
 export const SLIDER_SPEC: WidgetSpec = {
   id: 'media_slider', name: 'Media Slider', group: 'Content', reuse: 'many', family: 'collection',
+  /* ⚠️ Title, then ONE choice — what slides. Playback, dots, arrows and the whole Track group are gone:
+     the slider always plays on its own and can always be swiped, dots always sit centred under the
+     media, and the gap between slides is the standard carousel gap. Every retired key stays in
+     `defaults`, so a page that stored one still resolves. */
   fields: [
     { key: 'title', label: 'Title', control: 'text', group: 'Content', help: 'Optional — hidden when blank.' },
-    /* ⚠️ ONE control with TWO named treatments, not four independent switches. `autoplay`,
-       `arrows` and `swipe` were separate toggles, so an admin could turn all three off and reach a
-       slider that cannot be moved at all — and nothing on the panel named the two things the
-       product actually offers. The retired keys stay in `defaults`, so nothing already on a page
-       moved; the renderer reads `sliderType` and treats the rest as floors. */
     {
-      key: 'sliderType', label: 'Type', control: 'segmented', group: 'Playback',
-      options: [{ value: 'auto', label: 'Automatic' }, { value: 'manual', label: 'Manual' }],
-      help: 'Automatic advances on a timer. Manual is arrows — either way, slides can be dragged.',
+      key: 'slideMode', label: '', control: 'segmented', group: 'Navigation',
+      options: [{ value: 'data', label: 'Data only' }, { value: 'both', label: 'Data + image' }],
+      /* The mode is COPIED onto every slide, because a slide's own panel cannot see the widget's config
+         — it is how a slide knows to hide its image fields in Data only. */
+      consequence: (value, c) => ({
+        patch: { slides: ((c.slides as Cfg[]) ?? []).map((sl) => ({ ...sl, __mode: value })) },
+        say: value === 'data' ? 'Data only — one background image, the text slides over it' : 'Data + image — every slide carries its own image',
+      }),
     },
-    { key: 'interval', label: 'Interval', control: 'number', group: 'Playback', min: 2, max: 20, when: (c) => c.sliderType !== 'manual' },
-    { key: 'pauseOnHover', label: 'Pause on hover', control: 'toggle', group: 'Playback', when: (c) => c.sliderType !== 'manual' },
-    { key: 'loop', label: 'Loop', control: 'toggle', group: 'Playback' },
-    { key: 'dots', label: 'Show dots', control: 'toggle', group: 'Navigation' },
-    /* ⚠️ Drag and keyboard are FLOORS, and a floor is not a row. They used to sit here as two
-       locked toggles reading "Always on" — a control you cannot operate, describing a state, in a
-       list of controls that all do something. That is a caption wearing a switch: it costs two
-       rows of panel, invites a click that does nothing, and teaches that some switches on this
-       surface are decorative.
-       Both behaviours are UNCONDITIONAL in `useCarousel` and unchanged — every slider drags left
-       and right and answers the arrow keys. The `swipe` and `keyboard` keys stay in `defaults` so
-       a page that stored them still resolves. */
-    { key: 'perView', label: 'Slides per view', control: 'number', tab: 'style', group: 'Track', min: 1, max: 4 },
-    { key: 'trackGap', label: 'Gap between slides', control: 'slider', tab: 'style', group: 'Track', min: 0, max: 32 },
-    {
-      key: 'transition', label: 'Transition', control: 'segmented', tab: 'style', group: 'Track',
-      options: [{ value: 'slide', label: 'Slide' }, { value: 'fade', label: 'Fade' }],
-    },
-    {
-      key: 'speed', label: 'Transition speed', control: 'segmented', tab: 'style', group: 'Track',
-      options: [{ value: 'fast', label: 'Fast' }, { value: 'normal', label: 'Normal' }, { value: 'slow', label: 'Slow' }],
-    },
+    { key: 'bgImage', label: 'Background image', control: 'upload', group: 'Navigation', when: (c) => c.slideMode === 'data' },
     { key: 'slideMaxWidth', label: 'Content max width', control: 'slider', tab: 'style', group: 'Slide', min: 30, max: 100, unit: '%' },
     { key: 'slideOverlay', label: 'Text-over-media overlay', control: 'slider', tab: 'style', group: 'Slide', min: 0, max: 80, unit: '%' },
-    {
-      key: 'arrowPlacement', label: 'Arrow placement', control: 'segmented', tab: 'style', group: 'Arrows',
-      /* Removed, not greyed, on the Automatic type — there are no arrows to place. */
-      when: (c) => c.sliderType === 'manual',
-      options: [{ value: 'inside', label: 'Inside' }, { value: 'outside', label: 'Outside' }, { value: 'over', label: 'Over media' }],
-    },
-    {
-      key: 'dotPlacement', label: 'Dot placement', control: 'segmented', tab: 'style', group: 'Dots',
-      options: [{ value: 'over', label: 'Over media' }, { value: 'below', label: 'Below' }],
-    },
-    {
-      key: 'dotStyle', label: 'Dot style', control: 'segmented', tab: 'style', group: 'Dots',
-      options: [{ value: 'dots', label: 'Dots' }, { value: 'bars', label: 'Bars' }, { value: 'numbers', label: 'Numbers' }],
-    },
   ],
   /* ⚠️ NO P5 Media. Its seven keys — ratio, fit, focal, shape, mediaRadius, mediaOverlay and
      captionPos — are ALL inert on a slider: `SliderRender` hard-codes 16:9, `object-cover` and
@@ -321,19 +290,20 @@ export const SLIDER_SPEC: WidgetSpec = {
     key: 'slides', group: 'Slides', addLabel: 'Add slide', max: 10, hideable: true,
     emptyHint: 'No slides yet. A slider with nothing in it renders as an empty band.',
     label: (it, i) => String(it.heading ?? '') || `Slide ${i + 1}`,
-    meta: (it) => (it.src ? 'Image set' : 'No media yet'),
-    seed: (i) => ({ kind: 'image', heading: `Slide ${i + 2}`, caption: 'A line about what this slide is for.', ctaEnabled: false }),
+    meta: (it) => (it.__mode === 'data' ? String(it.caption ?? '') : it.src ? 'Image set' : 'No media yet'),
+    seed: (i, c) => ({ kind: 'image', heading: `Slide ${i + 2}`, caption: 'A line about what this slide is for.', ctaEnabled: false, __mode: c?.slideMode ?? 'both' }),
     fields: [
+      /* ⚠️ No media fields in Data only — the image is the widget's single background there. */
       {
-        key: 'kind', label: 'Media type', control: 'segmented', group: 'Media',
+        key: 'kind', label: 'Media type', control: 'segmented', group: 'Media', when: (c) => c.__mode !== 'data',
         options: [{ value: 'image', label: 'Image' }, { value: 'video', label: 'Video' }],
       },
-      { key: 'src', label: 'Source', control: 'upload', group: 'Media' },
+      { key: 'src', label: 'Source', control: 'upload', group: 'Media', when: (c) => c.__mode !== 'data' },
       {
-        key: 'alt', label: 'Alt text', control: 'text', group: 'Media', when: (c) => c.kind !== 'video',
+        key: 'alt', label: 'Alt text', control: 'text', group: 'Media', when: (c) => c.__mode !== 'data' && c.kind !== 'video',
         warnWhenBlank: 'No alt text yet — screen-reader users will hear nothing where this slide’s image is.',
       },
-      { key: 'poster', label: 'Poster image', control: 'upload', group: 'Media', when: (c) => c.kind === 'video' },
+      { key: 'poster', label: 'Poster image', control: 'upload', group: 'Media', when: (c) => c.__mode !== 'data' && c.kind === 'video' },
       { key: 'heading', label: 'Heading', control: 'text', group: 'Text style' },
       { key: 'caption', label: 'Caption', control: 'textarea', group: 'Text style' },
       { key: 'ctaEnabled', label: 'Call to action', control: 'toggle', group: 'Action' },
@@ -364,7 +334,7 @@ export const SLIDER_SPEC: WidgetSpec = {
        no dots and nothing to drag — it renders as a plain image, so the one thing the admin needs
        to see to know what they just added is the one thing it cannot show. Three is the smallest
        number where the dots read as a position rather than as decoration. */
-    title: '', sliderType: 'manual', interval: 5, pauseOnHover: true, loop: true,
+    title: '', slideMode: 'both', bgImage: '', sliderType: 'auto', interval: 5, pauseOnHover: true, loop: true,
     dots: true,
     /* Retired keys, kept so a page built before the Type control still resolves every value it
        stored. Nothing reads `autoplay` or `arrows` any more — `sliderType` answers for both. */

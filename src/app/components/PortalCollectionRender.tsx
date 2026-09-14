@@ -291,92 +291,95 @@ export function TableRender({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
 export function SliderRender({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
   const { styles, enabled } = useCanvas();
   const slides = visible(cfg.slides as Item[], enabled);
-  const type = (cfg.sliderType === 'auto' ? 'auto' : 'manual') as CarouselType;
-  /* ⚠️ `live: !enabled` — autoplay runs in Preview and on the published portal, never on the
-     canvas. A band that advances under the pointer while you are selecting a slide, styling it or
-     dragging its handles cannot be worked on, and one slide at a time is exactly what the admin is
-     looking at it to judge. */
-  const car = useCarousel({
-    count: slides.length,
-    type,
-    interval: Number(cfg.interval ?? 5),
-    pauseOnHover: cfg.pauseOnHover !== false,
-    loop: cfg.loop !== false,
-    live: !enabled,
-  });
+  /* ⚠️ ALWAYS automatic, always swipeable, always looping. Auto-advance runs in Preview and on the
+     published portal only (`live: !enabled`) — a band moving under the pointer while you select a
+     slide cannot be worked on. */
+  const car = useCarousel({ count: slides.length, type: 'auto', interval: 5, pauseOnHover: true, loop: true, live: !enabled });
   const overlay = Number(cfg.slideOverlay ?? 30) / 100;
+  /* Data only: ONE background image and only the text slides. Data + image: every slide its own image. */
+  const dataOnly = cfg.slideMode === 'data';
+  /* The standard carousel gap — not a setting. */
+  const GAP = 16;
 
   if (!slides.length) {
     return <p className="py-10 text-center text-[13px] text-[#9CA3AF]">No slides yet — add one in the panel.</p>;
   }
 
-  const perView = Math.max(1, Math.min(4, Number(cfg.perView ?? 1)));
-  const gap = Number(cfg.trackGap ?? 0);
-  const arrowsOn = type === 'manual' && slides.length > 1;
-  const place = String(cfg.arrowPlacement ?? 'inside');
-  const dotsOn = cfg.dots !== false && slides.length > 1;
-  const dotsOver = String(cfg.dotPlacement ?? 'over') !== 'below';
-
-  /* One slide. ⚠️ Every slide is wrapped in its own `Sel` INSIDE the track, so §4.3 still holds —
-     you reach a slide's heading by clicking the heading, at whatever position the track is in. */
-  const slide = (s: Item) => {
-    const inode = itemNodeId(nodeId, s.id);
-    return (
-      <Sel key={s.id} id={inode} className="block">
-        <div className="relative overflow-hidden rounded-lg bg-[#1E293B]" style={{ aspectRatio: '16 / 9' }}>
-          {s.src
-            ? <img src={String(s.src)} alt={String(s.alt ?? '')} draggable={false} className="size-full select-none object-cover" />
-            : <span className="flex size-full items-center justify-center text-[#64748B]"><ImageOff size={26} /></span>}
-          <span className="absolute inset-0" style={{ background: `rgba(0,0,0,${overlay})` }} />
-          <div className="absolute inset-x-0 bottom-0 p-5" style={{ maxWidth: `${Number(cfg.slideMaxWidth ?? 60)}%` }}>
-            <Sel id={subNodeId(inode, 'heading')}>
-              <div style={roleStyle(styles, subNodeId(inode, 'heading'), 'title')} className="text-[20px] font-semibold text-white">
-                {String(s.heading ?? '')}
-              </div>
-            </Sel>
-            <Sel id={subNodeId(inode, 'caption')}>
-              <div style={roleStyle(styles, subNodeId(inode, 'caption'), 'body')} className="mt-1 text-[13px] leading-[1.55] text-white/80">
-                {String(s.caption ?? '')}
-              </div>
-            </Sel>
-            {s.ctaEnabled === true && (
-              <span className="mt-3 inline-flex h-8 items-center rounded bg-white px-3.5 text-[13px] font-medium text-[#364658]">
-                {String(s.ctaLabel ?? 'Learn more')}
-              </span>
-            )}
-          </div>
+  /* The words of one slide. ⚠️ Heading and caption stay their own `Sel`s so §4.3 holds — you reach a
+     slide's heading by clicking the heading, in either mode. */
+  const words = (s: Item, inode: string) => (
+    <div className="p-5" style={{ maxWidth: `${Number(cfg.slideMaxWidth ?? 60)}%` }}>
+      <Sel id={subNodeId(inode, 'heading')}>
+        <div style={roleStyle(styles, subNodeId(inode, 'heading'), 'title')} className="text-[20px] font-semibold text-white">
+          {String(s.heading ?? '')}
         </div>
       </Sel>
+      <Sel id={subNodeId(inode, 'caption')}>
+        <div style={roleStyle(styles, subNodeId(inode, 'caption'), 'body')} className="mt-1 text-[13px] leading-[1.55] text-white/80">
+          {String(s.caption ?? '')}
+        </div>
+      </Sel>
+      {s.ctaEnabled === true && (
+        <span className="mt-3 inline-flex h-8 items-center rounded bg-white px-3.5 text-[13px] font-medium text-[#364658]">
+          {String(s.ctaLabel ?? 'Learn more')}
+        </span>
+      )}
+    </div>
+  );
+
+  const media = (src: unknown, alt: unknown) => (src
+    ? <img src={String(src)} alt={String(alt ?? '')} draggable={false} className="size-full select-none object-cover" />
+    : <span className="flex size-full items-center justify-center text-[#64748B]"><ImageOff size={26} /></span>);
+
+  const dots = slides.length > 1 && <CarouselDots car={car} count={slides.length} over />;
+
+  if (dataOnly) {
+    return (
+      <div>
+        <WidgetTitle nodeId={nodeId} text={cfg.title} />
+        {/* The image is FIXED; only the text band slides across it. */}
+        <div className="relative overflow-hidden rounded-lg bg-[#1E293B]" style={{ aspectRatio: '16 / 9' }} {...car.bind}>
+          {media(cfg.bgImage, '')}
+          <span className="absolute inset-0" style={{ background: `rgba(0,0,0,${overlay})` }} />
+          <div className="absolute inset-x-0 bottom-6">
+            <CarouselTrack car={car} gap={GAP}>
+              {slides.map((s) => {
+                const inode = itemNodeId(nodeId, s.id);
+                return <Sel key={s.id} id={inode} className="block">{words(s, inode)}</Sel>;
+              })}
+            </CarouselTrack>
+          </div>
+          {dots}
+        </div>
+      </div>
     );
-  };
+  }
 
   return (
     <div>
       <WidgetTitle nodeId={nodeId} text={cfg.title} />
-      {/* ⚠️ The drag surface is the WRAPPER, not each slide. Bound to a slide it would be torn off
-          the moment the track moved under the pointer, which is exactly when a drag is in flight. */}
+      {/* ⚠️ The drag surface is the WRAPPER, not each slide — bound to a slide it would be torn off the
+          moment the track moved under the pointer. */}
       <div className="relative" {...car.bind}>
-        <CarouselTrack
-          car={car}
-          perView={perView}
-          gap={gap}
-          speed={String(cfg.speed ?? 'normal')}
-          fade={String(cfg.transition ?? 'slide') === 'fade'}
-        >{slides.map(slide)}</CarouselTrack>
-        {arrowsOn && place === 'over' && <CarouselArrows car={car} placement="over" over />}
-        {dotsOn && dotsOver && <CarouselDots car={car} count={slides.length} style={String(cfg.dotStyle ?? 'dots')} over />}
+        <CarouselTrack car={car} gap={GAP}>
+          {slides.map((s) => {
+            const inode = itemNodeId(nodeId, s.id);
+            return (
+              <Sel key={s.id} id={inode} className="block">
+                <div className="relative overflow-hidden rounded-lg bg-[#1E293B]" style={{ aspectRatio: '16 / 9' }}>
+                  {media(s.src, s.alt)}
+                  <span className="absolute inset-0" style={{ background: `rgba(0,0,0,${overlay})` }} />
+                  <div className="absolute inset-x-0 bottom-6">{words(s, inode)}</div>
+                </div>
+              </Sel>
+            );
+          })}
+        </CarouselTrack>
+        {dots}
       </div>
-      {/* Anything sitting UNDER the media shares one row, so arrows and dots cannot collide. */}
-      {((arrowsOn && place !== 'over') || (dotsOn && !dotsOver)) && (
-        <div className="mt-2 flex items-center gap-3">
-          {arrowsOn && place !== 'over' && <CarouselArrows car={car} placement={place} />}
-          {dotsOn && !dotsOver && <CarouselDots car={car} count={slides.length} style={String(cfg.dotStyle ?? 'dots')} />}
-        </div>
-      )}
     </div>
   );
 }
-
 /* ⚠️ The private `Dots` that used to live here is GONE — `CarouselDots` in PortalCarousel.tsx is
    the one readout, shared with the Announcements carousel. Two dot rows over one mechanism is two
    places for the active-dot colour to drift. */
