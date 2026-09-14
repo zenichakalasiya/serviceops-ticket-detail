@@ -62,8 +62,10 @@ export function Field({ label, help, info, children, action, divider, tight }: {
  * thought; a group that shuts the one you were reading to open the next makes you re-open it every
  * time. Open state is remembered per widget type by the drawer, not here.
  * ⚠️ A group with zero visible fields is never rendered empty — the drawer drops it entirely. */
-export function Group({ title, open, onToggle, badge, children }: {
+export function Group({ title, open, onToggle, badge, children, bodyClass = '' }: {
   title: string; open: boolean; onToggle: () => void; badge?: ReactNode; children: ReactNode;
+  /** Extra classes on the body, for a group whose first row needs air under the title. */
+  bodyClass?: string;
 }) {
   /* ⚠️ The HEADER is the detail-page properties-panel recipe, byte for byte: `px-4 py-2.5`, the
      `#F9FAFB` hover, an `#E5E7EB` rule between rows. Those panels' components themselves cannot be
@@ -91,7 +93,7 @@ export function Group({ title, open, onToggle, badge, children }: {
           ⚠️ This is EVERY group in the panel, Design accordions included, not only collections.
           That is deliberate: one gap under a group header, the same everywhere, is what makes it
           readable as a rule rather than a number chosen per widget. */}
-      {open && <div className="px-4 pb-4">{children}</div>}
+      {open && <div className={`px-4 pb-4 ${bodyClass}`.trim()}>{children}</div>}
     </div>
   );
 }

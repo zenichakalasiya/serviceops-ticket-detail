@@ -55,11 +55,10 @@ function ShadowGroup({ nodeId, styles, setStyle, open, onToggle }: {
   if (/-(title|sub|subtitle|label|viewall|caption)$|-c[lv]\d+$|~/.test(nodeId)) return null;
   const own = styles[nodeId] ?? {};
   return (
-    <Group title="Shadow" open={open} onToggle={onToggle}>
+    <Group title="Shadow" open={open} onToggle={onToggle} bodyClass="pt-1">
       {/* The group is already titled Shadow, so the switch says what it does rather than repeating it.
-          `pt-1`: the switch is the group's first row, so ShadowBlock's own top margin collapses to 0
-          and the toggle sat flush against the group title. */}
-      <div className="pt-1">
+          `pt-1` on the group body: the switch is the first row, so ShadowBlock's own top margin
+          collapses to 0 and the toggle sat flush against the group title. */}
       <ShadowBlock
         label="Add shadow"
         value={{
@@ -70,7 +69,6 @@ function ShadowGroup({ nodeId, styles, setStyle, open, onToggle }: {
         }}
         onChange={(x) => setStyle(nodeId, { shadowOn: x.on, shadowColor: x.color, shadowType: x.type, shadowPos: x.pos })}
       />
-      </div>
     </Group>
   );
 }
