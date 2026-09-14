@@ -334,6 +334,26 @@ export const IMAGE_CAPTION_SPEC: WidgetSpec = {
   defaults: {},
 };
 
+/* The data cards inside My Assets, My CIs and the two service rows. DESIGN only — what the cards
+   show is the widget's (and the backend's) business; how they look is this layer's. Icon first,
+   because the badge is the part of a tile people reach for, and it is where a click on the icon
+   lands. Every control is a shared one: the Style group is P1, Spacing is the matrix, and the icon
+   box is built from the same ColorField / RadiusRow / BorderRow. */
+export const DATA_TILE_SPEC: WidgetSpec = {
+  id: 'data_tile', name: 'Data cards', group: 'Basic', reuse: 'many', family: 'flat',
+  panel: {
+    content: [],
+    accordions: [
+      { id: 'icon', open: true, groups: ['G6'] },
+      { id: 'style', open: true, groups: ['G1'] },
+      { id: 'spacing', spacing: 'both' },
+    ],
+  },
+  noDelete: true,
+  fields: [], packs: [],
+  defaults: {},
+};
+
 export const LIST_TITLE_SPEC = textSpec('list_title', 'Heading', 'title');
 export const LIST_LABEL_SPEC = textSpec('list_label', 'Label', 'label');
 export const LIST_LINK_SPEC = textSpec('list_link', 'Link label', 'viewAllLabel');
@@ -341,7 +361,7 @@ export const LIST_LINK_SPEC = textSpec('list_link', 'Link label', 'viewAllLabel'
 export const PANEL_SPECS: WidgetSpec[] = [
   DIVIDER_SPEC, SPACER_SPEC, TITLE_LG_SPEC, TITLE_SM_SPEC, ICON_SPEC, SHAPE_SPEC,
   CARD_TITLE_SPEC, CARD_SUB_SPEC, CARD_ICON_SPEC, LIST_TITLE_SPEC, LIST_LABEL_SPEC, LIST_LINK_SPEC,
-  IMAGE_CAPTION_SPEC,
+  IMAGE_CAPTION_SPEC, DATA_TILE_SPEC,
 ];
 
 /** Palette element → panel spec. Separate from WIDGET_FOR_TYPE only for readability. */

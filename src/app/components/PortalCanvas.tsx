@@ -1986,6 +1986,7 @@ export function Sel({ id, children, className = '', toolbarBelow = false, style:
 
   const on = selectedId === id;
   const hov = hoverId === id && !on;
+  const sharedTile = /-tile$/.test(id);
 
   /* ⚠️ FREE PLACEMENT, banner children only. Everything else on this page is laid out — a card is in
      a row, a row is in a section — and letting those be dragged anywhere would break the layout that
@@ -2087,7 +2088,7 @@ export function Sel({ id, children, className = '', toolbarBelow = false, style:
     >
       {/* Name chip on HOVER only. Once selected, the toolbar and handles say what you have, and the
           panel's breadcrumb handles stepping up — a chip on top of that is one label too many. */}
-      {hov && (
+      {hov && !sharedTile && (
         <span
           /* Sits fully ABOVE the element, clear of its top edge. Straddling the border put the
              chip inside the card and covered the content it was meant to label. */
@@ -2117,7 +2118,9 @@ export function Sel({ id, children, className = '', toolbarBelow = false, style:
           className="absolute -top-3 left-1/2 z-40 flex size-6 -translate-x-1/2 cursor-move items-center justify-center rounded-full border border-[#3D8BD0] bg-white text-[#3D8BD0] shadow-sm"
         ><Move size={13} /></span>
       )}
-      {on && <SelectionHandles id={id} elRef={ref} />}
+      {/* ⚠️ Not on data cards: every tile in a widget is ONE node, so handles, a toolbar or a name chip
+          would paint once per tile. The outline alone says all of them are selected. */}
+      {on && !sharedTile && <SelectionHandles id={id} elRef={ref} />}
 
       {/* ⚠️ A built-in band gets the SAME four handles an empty box does — that is the whole point
           of hosting it in a section tree. This branch covers only the FIRST split, while the band
@@ -2141,7 +2144,7 @@ export function Sel({ id, children, className = '', toolbarBelow = false, style:
       {/* ⚠️ Product chrome gets no floating toolbar — the banner, the left rail, the top bar and
           everything the bar contains. Every action on it (move, duplicate, align, delete) is either
           disabled or a lie over navigation the admin does not own. */}
-      {on && id !== 'hero' && id !== 'rail' && !/^header/.test(id) && (
+      {on && !sharedTile && id !== 'hero' && id !== 'rail' && !/^header/.test(id) && (
         <ToolbarSlot toolbarBelow={toolbarBelow}>
           {/* ⚠️ A PLACED text gets BOTH bars; a text CHILD gets only the formatting one.
               The rule used to be "kind === text → formatting bar", which is right for a widget's

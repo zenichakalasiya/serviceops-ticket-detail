@@ -21,7 +21,7 @@ import { LineMark } from './PortalLineStyles';
 import type { LineStyle } from './PortalLineStyles';
 import type { CarouselType } from './PortalCarousel';
 import type { PortalStyles } from './portalPageModel';
-import { chosen, resolveType, roleStyle } from './portalStyleResolver';
+import { chosen, iconBoxCss, resolveType, roleStyle } from './portalStyleResolver';
 import { IconFrameBox } from './PortalIconFrame';
 import type { IconFrame } from './PortalIconFrame';
 import type { Cfg } from './portalWidgetSpec';
@@ -796,8 +796,10 @@ function ServiceTiles({ nodeId, items, showDesc, tpl = 'top', cols, chips, look 
       style={{ gridTemplateColumns: `repeat(${Math.max(1, cols ?? Math.min(items.length, MAX_SERVICE_TILES))}, minmax(0,1fr))` }}
     >
       {items.slice(0, MAX_SERVICE_TILES).map((s) => (
-        <div
+        /* One node for every tile in the row — selecting a service card styles all of them. */
+        <Sel
           key={s.id}
+          id={`${nodeId}-tile`}
           className={`flex min-w-0 rounded-lg border border-[#E5E7EB] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)] ${
             action ? 'gap-3 px-3.5 py-3' : 'gap-2 px-3 py-4'
           } ${
@@ -808,7 +810,7 @@ function ServiceTiles({ nodeId, items, showDesc, tpl = 'top', cols, chips, look 
               sits and whether there IS one are one question with four answers, which is why they
               share a control rather than needing a separate switch. */}
           {!noIcon && (
-            <span className={`flex size-9 flex-shrink-0 items-center justify-center rounded-lg ${
+            <span style={iconBoxCss(styles, `${nodeId}-tile`)} className={`flex size-9 flex-shrink-0 items-center justify-center rounded-lg ${
               action ? 'bg-[#EAF3FB] text-[#2F6FB5]' : 'bg-[#F1F5F9] text-[#475467]'
             }`}>
               <ShoppingCart size={18} strokeWidth={1.7} />
@@ -829,7 +831,7 @@ function ServiceTiles({ nodeId, items, showDesc, tpl = 'top', cols, chips, look 
               }`}>{s.desc}</span>
             )}
           </span>
-        </div>
+        </Sel>
       ))}
     </div>
   );
@@ -851,7 +853,10 @@ export function FeaturedServicesRender({ nodeId, cfg }: { nodeId: string; cfg: C
   const items = FEATURED_SERVICES.slice(0, Number(cfg.show ?? 6));
   /* Columns lives in the STYLE store, because the Content tab and the Arrangement pack are two
      controls for one value (§7.8) — read it back from the same place both of them write. */
-  const cols = Number(chosen(styles, nodeId, 'columns') ?? cfg.columns ?? 3);
+  /* ⚠️ No fallback of 3. With nothing chosen the grid gives each service its own column — the same
+     default Favourite Services uses — because four services in three columns left the fourth alone
+     on a second row, directly under a Favourite row that reads as one clean line. */
+  const cols = Number(chosen(styles, nodeId, 'columns') ?? cfg.columns) || undefined;
   /* ⚠️ One value decides icon position AND whether there is an icon — 'none' is the Text-only tile.
      The old `showIcon` toggle is gone with the Icon group it belonged to; two controls answering
      one question is how a card ends up with a position set for an icon it does not have. */

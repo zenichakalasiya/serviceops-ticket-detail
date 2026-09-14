@@ -107,9 +107,13 @@ export function RadiusRow({ value, onChange, corners, onCorners }: {
 
 export interface BorderSides { top: number; right: number; bottom: number; left: number }
 
-export function BorderRow({ width, color, sides, onWidth, onColor, onSides, colorModes }: {
+export function BorderRow({ width, color, sides, onWidth, onColor, onSides, colorModes, stroke, onStroke }: {
   width: number; color: string; sides?: BorderSides;
   onWidth: (v: number) => void; onColor: (v: string) => void;
+  /* The line's STYLE — solid, dashed or dotted. Optional, so a caller that never offered one is
+     unchanged; shown only while there is a border, because a dash pattern on 0px is nothing. */
+  stroke?: string;
+  onStroke?: (v: string) => void;
   onSides?: (s: BorderSides | undefined) => void;
   /* The border colour's light and dark values, forwarded straight to `ColorField`.
      ⚠️ Passed in rather than resolved here: this component takes plain values and knows nothing
@@ -152,7 +156,7 @@ export function BorderRow({ width, color, sides, onWidth, onColor, onSides, colo
           </div>
           <div className="mt-2 flex items-center justify-between gap-3">
             <span className="text-[12px] font-normal text-[#7B8FA5]">Colour</span>
-            <span className="w-[38px]"><ColorField value={color} onChange={onColor} modes={colorModes} /></span>
+            <span className="w-[38px]"><ColorField compact value={color} onChange={onColor} modes={colorModes} /></span>
           </div>
         </>
       ) : (
@@ -171,7 +175,27 @@ export function BorderRow({ width, color, sides, onWidth, onColor, onSides, colo
             />
             <span className={unitBox}>px</span>
           </span>
-          <span className="w-[38px] flex-shrink-0"><ColorField value={color} onChange={onColor} modes={colorModes} /></span>
+          <span className="w-[38px] flex-shrink-0"><ColorField compact value={color} onChange={onColor} modes={colorModes} /></span>
+        </div>
+      )}
+      {onStroke && (adv ? Math.max(s.top, s.right, s.bottom, s.left) : width) > 0 && (
+        <div className="mt-2 flex items-center justify-between gap-3">
+          <span className="text-[12px] font-normal text-[#7B8FA5]">Stroke</span>
+          <span className="flex rounded border border-[#DFE5ED] bg-white p-0.5">
+            {(['solid', 'dashed', 'dotted'] as const).map((k) => (
+              <button
+                key={k}
+                onClick={() => onStroke(k)}
+                title={k}
+                className={`flex h-6 w-10 items-center justify-center rounded transition-colors ${
+                  (stroke ?? 'solid') === k ? 'bg-[#EBF5FF]' : 'hover:bg-[#F5F7FA]'
+                }`}
+              >
+                {/* The stroke drawn, not named — a dotted line says "dotted" better than the word. */}
+                <span className="block w-6" style={{ borderTop: `2px ${k} ${(stroke ?? 'solid') === k ? '#3D8BD0' : '#64748B'}` }} />
+              </button>
+            ))}
+          </span>
         </div>
       )}
     </div>

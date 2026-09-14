@@ -16,7 +16,7 @@ import {
 } from './supportPortalData';
 import { AddSectionSeam, ColumnAdders, MOVE_MIME, Sel, draggedElement, draggedNode, styleOf, useCanvas } from './PortalCanvas';
 import { HUGS_CONTENT } from './portalPageModel';
-import { PAGE_ID, chosen, roleStyle } from './portalStyleResolver';
+import { PAGE_ID, chosen, iconBoxCss, roleStyle } from './portalStyleResolver';
 import { bannerLayout } from './supportPortalData';
 import { shadowCss } from './PortalBoxControls';
 import { PortalPlacedElement } from './PortalPlacedElement';
@@ -2915,8 +2915,11 @@ function RecordTiles({ nodeId, titleFallback, cfg, rows, icon, headIcon }: {
                two text lines. Centred, it lined up with the gap between the name and the meta line —
                so the one element that should anchor the top-left corner of the tile was the only
                thing not aligned to anything. */
-            <div key={r.id} className="flex min-w-0 items-start gap-2.5 rounded-lg bg-[#F9FAFB] p-3">
-              <span className="flex size-9 flex-shrink-0 items-center justify-center rounded-md bg-white text-[#5A6B80]">{icon}</span>
+            /* ⚠️ Every tile is the SAME node (`<widget>-tile`), so selecting one outlines all four and
+               the panel's Icon · Style · Spacing restyle them together — see the note in `nodeById`.
+               The tile's resting classes stay; `Sel` lays the chosen values over them. */
+            <Sel key={r.id} id={`${nodeId}-tile`} className="flex min-w-0 items-start gap-2.5 rounded-lg bg-[#F9FAFB] p-3">
+              <span style={iconBoxCss(styles, `${nodeId}-tile`)} className="flex size-9 flex-shrink-0 items-center justify-center rounded-md bg-white text-[#5A6B80]">{icon}</span>
               {/* ⚠️ The NAME leads. It was third — under the ID pill and the type — so the tile
                   opened with a reference number and made you read past it to find out what the thing
                   actually is. What identifies an asset to a person is its name; the id is how the
@@ -2940,7 +2943,7 @@ function RecordTiles({ nodeId, titleFallback, cfg, rows, icon, headIcon }: {
                   )}
                 </span>
               </span>
-            </div>
+            </Sel>
           ))}
         </div>
       </div>

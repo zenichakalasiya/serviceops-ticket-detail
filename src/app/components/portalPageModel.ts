@@ -211,6 +211,19 @@ export function nodeById(id: string): PortalNodeDef | undefined {
       content: 'text',
     };
   }
+  /* A widget's DATA CARDS — every tile inside My Assets, My CIs or a services row. ONE node for all
+     of them: the tiles are live records, so a style keyed to one record would vanish the day that
+     record left the list, and a 2x2 block where one tile looks different reads as a state. */
+  const tile = /^(.+)-tile$/.exec(id);
+  if (tile) {
+    return {
+      id,
+      name: 'Data cards',
+      kind: 'card',
+      parent: tile[1],
+      content: 'none',
+    };
+  }
   const ico = /^(.+)-icon$/.exec(id);
   if (ico) return { id, name: 'Icon', kind: 'icon', parent: ico[1], content: 'none' };
   const txt = /^(quick-[a-z]+)-(title|sub)$/.exec(id);
@@ -290,7 +303,9 @@ export const DEFAULT_BLOCK_ORDER = ['quick', 'favourites', 'services', 'work', '
    right. Left as their own full-width band underneath, they ran the whole page width while the rail
    beside them was still going — so the rail ended level with nothing, and the two widest cards on
    the page were the two with the least in them. */
-export const BLOCK_ORDER_V2 = ['quick', 'favourites', 'work'];
+/* Most Used Services sits directly under Favourite Services — the two rows answer "what can I ask for"
+   together, pinned first and popular second. */
+export const BLOCK_ORDER_V2 = ['quick', 'favourites', 'services', 'work'];
 
 export const ROW_ORDER_V2: Record<string, string[]> = {
   quick: ['quick-incident', 'quick-service', 'quick-ad', 'quick-knowledge'],
@@ -447,6 +462,12 @@ export interface NodeStyle {
   iconShape?: 'none' | 'square' | 'circle';
   iconFill?: string;
   iconPos?: 'left' | 'top' | 'right';
+  /* The icon's BOX, for a data card's badge: corner radius and a stroke of its own. Separate from
+     the card's `radius`/`border*` because a card and the badge inside it are two boxes. */
+  iconRadius?: number;
+  iconBorderWidth?: number;
+  iconBorderColor?: string;
+  iconBorderStyle?: string;
   /* ── P7 Interactive states ── */
   hover?: 'none' | 'lift' | 'tint' | 'outline';
   pressed?: 'none' | 'tint';

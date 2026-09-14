@@ -207,14 +207,14 @@ export interface CollectionSpec {
  * ⚠️ Only the accordions an element NEEDS appear. Blank in the §4 coverage matrix means the
  * accordion is absent, not disabled and not empty — a Divider has no padding, so it shows no
  * Spacing padding box at all. */
-export type PanelAccordionId = 'layout' | 'style' | 'spacing' | 'size' | 'alignment';
+export type PanelAccordionId = 'layout' | 'style' | 'spacing' | 'size' | 'alignment' | 'icon';
 
 export interface PanelAccordion {
   id: PanelAccordionId;
   /** The one accordion that opens by default, named per element in §3. */
   open?: boolean;
-  /** Shared groups composed in: G1 background & container, G3 text roles. */
-  groups?: ('G1' | 'G3')[];
+  /** Shared groups composed in: G1 background & container, G3 text roles, G6 the icon's box. */
+  groups?: ('G1' | 'G3' | 'G6')[];
   roles?: TypeRole[];
   /** Spacing accordion: which boxes it shows. A Divider gets margin only. */
   spacing?: 'padding' | 'margin' | 'both';
@@ -1003,6 +1003,8 @@ export function structureSpecId(nodeId: string): string | undefined {
   if (/^quick-[a-z]+-title$/.test(nodeId)) return 'card_title';
   if (/^quick-[a-z]+-sub$/.test(nodeId)) return 'card_sub';
   if (/-icon$/.test(nodeId)) return 'card_icon';
+  /* A widget's data cards — matched before the widget, so clicking a tile opens the TILES. */
+  if (/-tile$/.test(nodeId)) return 'data_tile';
   /* A list widget's heading and its "View all" link are their own panels, matched before the widget
      itself so clicking the words opens the WORDS. */
   if (/-title$/.test(nodeId)) return 'list_title';

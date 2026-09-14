@@ -27,7 +27,7 @@ import type { NodeStyle, PortalStyles } from './portalPageModel';
 import { DEFAULT_SHADOW_COLOR, PAGE_ID, hasOwn, portalColorMode, resolve } from './portalStyleResolver';
 import { ContrastMeter, useBackdrop } from './PortalContrastMeter';
 import type { BackdropSpec } from './PortalContrastMeter';
-import { ALL_PACKS, packBadge } from './PortalStylePacks';
+import { ALL_PACKS, IconBoxBlock, packBadge } from './PortalStylePacks';
 import {
   ALIGN_OPTIONS, Badge, ChipEditor, Chips, Field, GridPicker, Group, LogoPair, Note, NumberField, RichText,
   SelectField, Segmented, SliderRow, StepRail, TextField, ToggleRow, UploadZone, VideoSource,
@@ -392,7 +392,7 @@ function ColumnsEditor({ cfg, onChange }: { cfg: Cfg; onChange: (patch: Cfg) => 
 /* ── the NEW-ELEMENT accordion panel (NEW-ELEMENT-PANELS-SPEC §1.1–§1.2) ──── */
 
 const ACCORDION_TITLE: Record<string, string> = {
-  layout: 'Layout', style: 'Style', spacing: 'Spacing', size: 'Size', alignment: 'Alignment',
+  layout: 'Layout', style: 'Style', spacing: 'Spacing', size: 'Size', alignment: 'Alignment', icon: 'Icon',
 };
 
 /* §1.3 — the accordion header carries a dot when anything inside it is set away from default, so a
@@ -521,6 +521,7 @@ function PanelBody({ spec, nodeId, cfg, renderField, openGroups, toggleGroup, st
               )}
             >
               {visible(a.fields).map(renderField)}
+              {a.groups?.includes('G6') && <IconBoxBlock {...packProps} />}
               {a.groups?.includes('G1') && <ALL_PACKS.P1.Render {...packProps} />}
               {a.groups?.includes('G3') && <ALL_PACKS.P3.Render {...packProps} roles={a.roles} />}
               {/* ⚠️ The spacing accordion shows only the boxes this element HAS. A divider gets a

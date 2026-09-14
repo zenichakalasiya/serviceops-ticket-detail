@@ -421,9 +421,11 @@ export function ColorDot({ value, onChange, title, modes }: {
   );
 }
 
-export function ColorField({ value, onChange, modes }: {
+export function ColorField({ value, onChange, modes, compact }: {
   value: string;
   onChange: (v: string) => void;
+  /** Swatch only — for a slot too narrow for the value and chevron (the Border row's 38px). */
+  compact?: boolean;
   /* Both of this colour's values, so the picker offers a tab per mode — the same contract
    * `ColorDot` takes in the Theme panel, and deliberately the same words on screen.
    *
@@ -455,12 +457,12 @@ export function ColorField({ value, onChange, modes }: {
           setTab(modes?.mode ?? 'light');
           setAnchor(anchor ? null : btnRef.current!.getBoundingClientRect());
         }}
-        className="flex h-9 w-full items-center gap-2 rounded border border-[#d1d5db] bg-white px-2 text-left transition-colors hover:border-[#3D8BD0]"
+        className={`flex h-9 w-full items-center gap-2 rounded border border-[#d1d5db] bg-white text-left transition-colors hover:border-[#3D8BD0] ${compact ? 'justify-center' : 'px-2'}`}
       >
         <span className="size-5 flex-shrink-0 rounded border border-black/10" style={{ background: value }} />
         {/* A colour with opacity reads as its hex and a percentage, the two things the picker edits — not as a raw rgba() string. */}
-        <span className="min-w-0 flex-1 truncate text-[13px] text-[#364658]">{(() => { const p = parseColor(value); return p.opacity < 100 ? `${p.hex} · ${p.opacity}%` : (value || '').toUpperCase(); })()}</span>
-        <ChevronDown size={14} className="flex-shrink-0 text-[#9CA3AF]" />
+        {!compact && <span className="min-w-0 flex-1 truncate text-[13px] text-[#364658]">{(() => { const p = parseColor(value); return p.opacity < 100 ? `${p.hex} · ${p.opacity}%` : (value || '').toUpperCase(); })()}</span>}
+        {!compact && <ChevronDown size={14} className="flex-shrink-0 text-[#9CA3AF]" />}
       </button>
       {anchor && (
         <PortalColorPicker

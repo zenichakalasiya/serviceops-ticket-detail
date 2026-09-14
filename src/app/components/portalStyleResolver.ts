@@ -298,6 +298,25 @@ export function shadowString(color: string, type: 'outer' | 'inner', pos: string
   return `${type === 'inner' ? 'inset ' : ''}${x}px ${y}px ${blur}px 0 ${color}`;
 }
 
+/** The badge on a data card, from the Icon group. Own-only and mode-aware like every box key, and
+ *  nothing is emitted for a value nobody chose, so an untouched badge keeps its resting classes. */
+export function iconBoxCss(styles: PortalStyles, id: string): React.CSSProperties {
+  const own = styles[id];
+  if (!own) return {};
+  const b = <K extends keyof NodeStyle>(k: K) =>
+    (ACTIVE_MODE === 'dark' ? own[`dark:${String(k)}` as K] : undefined) ?? own[k];
+  const css: React.CSSProperties = {};
+  if (b('iconColor')) css.color = String(b('iconColor'));
+  if (b('iconFill')) css.backgroundColor = String(b('iconFill'));
+  if (b('iconRadius') !== undefined) css.borderRadius = `${b('iconRadius')}px`;
+  if (Number(b('iconBorderWidth') ?? 0) > 0) {
+    css.borderWidth = `${b('iconBorderWidth')}px`;
+    css.borderStyle = String(b('iconBorderStyle') ?? 'solid');
+    css.borderColor = String(b('iconBorderColor') ?? '#E5E7EB');
+  }
+  return css;
+}
+
 export function containerCss(styles: PortalStyles, id: string): React.CSSProperties {
   const css: React.CSSProperties = {};
   const g = <K extends keyof NodeStyle>(k: K) => chosen(styles, id, k);

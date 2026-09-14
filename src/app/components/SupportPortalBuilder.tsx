@@ -318,7 +318,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
      It was missing, so the Logo panel's upload stored under `widgetCfg['header-logo']` and
      `PortalHeader` read `wc('header')` — a control that saved a value nothing rendered, which is
      why uploading a logo appeared to do nothing at all. */
-  const ownerOf = (id: string) => parseItemId(id)?.widget ?? id.replace(/-(title|sub|label|viewall|icon|search|caption|logo|cl\d+|cv\d+)$/, '');
+  const ownerOf = (id: string) => parseItemId(id)?.widget ?? id.replace(/-(title|sub|label|viewall|icon|search|caption|logo|tile|cl\d+|cv\d+)$/, '');
 
   const specForNode = useCallback((id: string | null): WidgetSpec | undefined => {
     if (!id) return undefined;
@@ -327,7 +327,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
        the one thing you aimed at is the one thing you cannot edit. Config and panel resolve
        differently here on purpose. */
     const own = structureSpecId(id);
-    if (['card_title', 'card_sub', 'card_icon', 'list_title', 'list_label', 'list_link', 'search', 'image_caption', 'logo'].includes(own ?? '')) return specById(own);
+    if (['card_title', 'card_sub', 'card_icon', 'list_title', 'list_label', 'list_link', 'search', 'image_caption', 'logo', 'data_tile'].includes(own ?? '')) return specById(own);
 
     const owner = ownerOf(id);
     const direct = WIDGET_FOR_NODE[owner];

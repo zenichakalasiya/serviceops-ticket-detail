@@ -153,6 +153,8 @@ export const P1_Container: StylePack = {
           onSides={(x) => set('borderSides', x)}
           onWidth={(x) => set('borderWidth', x)}
           onColor={(x) => set('borderColor', x)}
+          stroke={String(g('borderStyle') ?? 'solid')}
+          onStroke={(x) => set('borderStyle', x)}
           /* The same pair the background colour gets — one rule for every colour in this pack. */
           colorModes={{
             mode: portalColorMode(),
@@ -365,6 +367,51 @@ export const P5_Media: StylePack = {
     );
   },
 };
+
+/* ── The icon's box (data cards) ─────────────────────────────────────────── */
+
+/** Icon colour, background, corner radius and border for the badge on a data card.
+ *
+ * ⚠️ OWN values only, read straight off this node — the same own-only rule `containerCss` keeps for
+ * box keys, and `iconBoxCss` paints from exactly these. The fallbacks are the tile's RESTING look
+ * (a white badge on a grey record tile, a grey badge on a white service tile), so each swatch shows
+ * the colour actually on the canvas before anyone has touched it. */
+export function IconBoxBlock(p: PackProps) {
+  const own = p.styles[p.id] ?? {};
+  const service = /^(favourites|services)-tile$/.test(p.id);
+  const rest = service
+    ? { color: '#475467', bg: '#F1F5F9', radius: 8 }
+    : { color: '#5A6B80', bg: '#FFFFFF', radius: 6 };
+  const set = (patch: Partial<NodeStyle>) => p.setStyle(p.id, patch);
+  const pair = (key: 'iconColor' | 'iconFill' | 'iconBorderColor', fallback: string) => ({
+    mode: portalColorMode(),
+    light: String(own[key] ?? fallback),
+    dark: String((own as Record<string, unknown>)[`dark:${key}`] ?? own[key] ?? fallback),
+    onChange: (m: 'light' | 'dark', v: string) => set({ [modeKey(m, key)]: v } as Partial<NodeStyle>),
+  });
+  return (
+    <>
+      <div className="mt-4 flex items-center justify-between gap-3 first:mt-0">
+        <span className="text-[13px] text-[#364658]">Icon colour</span>
+        <span className="w-[176px]"><ColorField value={String(own.iconColor ?? rest.color)} onChange={(v) => set({ iconColor: v })} modes={pair('iconColor', rest.color)} /></span>
+      </div>
+      <div className="mt-3 flex items-center justify-between gap-3">
+        <span className="text-[13px] text-[#364658]">Background</span>
+        <span className="w-[176px]"><ColorField value={String(own.iconFill ?? rest.bg)} onChange={(v) => set({ iconFill: v })} modes={pair('iconFill', rest.bg)} /></span>
+      </div>
+      <RadiusRow value={Number(own.iconRadius ?? rest.radius)} onChange={(x) => set({ iconRadius: x })} />
+      <BorderRow
+        width={Number(own.iconBorderWidth ?? 0)}
+        color={String(own.iconBorderColor ?? '#E5E7EB')}
+        onWidth={(x) => set({ iconBorderWidth: x })}
+        onColor={(x) => set({ iconBorderColor: x })}
+        colorModes={pair('iconBorderColor', '#E5E7EB')}
+        stroke={String(own.iconBorderStyle ?? 'solid')}
+        onStroke={(x) => set({ iconBorderStyle: x })}
+      />
+    </>
+  );
+}
 
 /* ── P6 — Icon ───────────────────────────────────────────────────────────── */
 
