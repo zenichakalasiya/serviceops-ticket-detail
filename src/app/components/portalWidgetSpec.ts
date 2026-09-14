@@ -54,6 +54,7 @@ export type ControlKind =
   | 'bannerUpload'
   /** A section's layout preset row. */
   | 'sectionPreset'
+  | 'tilePreset'
   /** Horizontal content distribution, icon-only (5). */
   | 'distribute'
   /** Vertical content alignment, icon-only (4). */
