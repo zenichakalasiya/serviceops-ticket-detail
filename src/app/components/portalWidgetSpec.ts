@@ -363,7 +363,11 @@ export const WIDGET_SPECS: WidgetSpec[] = [
        the page's business, because it is a decision about the space the card is sitting in.
        ⚠️ Defaults to `regular`, so every portal already carrying this card is untouched. */
     fields: [
-      TITLE_FIELD,
+      /* ⚠️ The header can go. A template's announcement STRIP — one notice, its controls and the
+         link on the same line — has no title and no badge, and the editor has to be able to build
+         the section a template ships with. Title only asks its question while there IS a header. */
+      { key: 'showHeader', label: 'Show header', control: 'toggle', group: 'Content' },
+      { ...TITLE_FIELD, when: (c) => c.showHeader !== false },
       {
         key: 'display', label: 'Display', control: 'segmented', group: 'Content',
         options: [{ value: 'regular', label: 'Regular card' }, { value: 'carousel', label: 'Carousel' }],
@@ -377,7 +381,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
          page that stored them still resolves; the renderer no longer reads them. */
     ],
     packs: LIVE_CARD_PACKS, roles: LIST_CARD_ROLES,
-    defaults: { ...listCardDefaults, title: 'Announcements', show: 3, showDate: true, rowLayout: 'stacked', display: 'regular', sliderType: 'manual', interval: 5, dots: true },
+    defaults: { ...listCardDefaults, title: 'Announcements', show: 3, showDate: true, rowLayout: 'stacked', display: 'regular', showHeader: true, sliderType: 'manual', interval: 5, dots: true },
   },
 
   /* ─────────── §7.6 Most Read Knowledge ─────────── */

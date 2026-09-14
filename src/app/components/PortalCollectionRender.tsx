@@ -653,7 +653,10 @@ export function AnnouncementsRender({ nodeId, cfg, headIcon }: { nodeId: string;
   /* ⚠️ The carousel moves through EVERY announcement, two to a page. The count badge beside the
      heading says how many there are, so the carousel is the way to reach all of them — capping it at
      the regular card's `show` would leave the badge promising rows nothing could get to. */
-  const PER_PAGE = 2;
+  /* With the header on, a page is two rows under it. With it OFF the card is a one-line STRIP, so a
+     page is one notice with its controls beside it (see the strip branch below). */
+  const headerOn = cfg.showHeader !== false;
+  const PER_PAGE = headerOn ? 2 : 1;
   const pages: (typeof ANNOUNCEMENTS)[] = [];
   for (let i = 0; i < ANNOUNCEMENTS.length; i += PER_PAGE) pages.push(ANNOUNCEMENTS.slice(i, i + PER_PAGE));
   /* ⚠️ Called UNCONDITIONALLY — a hook behind an `if` changes the hook count the moment Display is
@@ -706,6 +709,25 @@ export function AnnouncementsRender({ nodeId, cfg, headIcon }: { nodeId: string;
     </span>
   );
 
+  if (carousel && !headerOn) {
+    /* The STRIP: one announcement, then the controls and the link on the same line, at the right.
+       ⚠️ `flex-wrap` so a narrow column drops the controls under the notice instead of squeezing the
+       headline to nothing. */
+    return (
+      <div className="@container flex min-w-0 flex-wrap items-center gap-x-6 gap-y-2">
+        <div {...car.bind} className="min-w-[240px] flex-1">
+          <CarouselTrack car={car}>
+            {pages.map((pg, i) => <div key={i}>{pg.map(row)}</div>)}
+          </CarouselTrack>
+        </div>
+        <div className="ml-auto flex flex-shrink-0 items-center gap-4">
+          {pages.length > 1 && <CarouselNav car={car} count={pages.length} />}
+          {allLink}
+        </div>
+      </div>
+    );
+  }
+
   if (carousel) {
     /* ⚠️ A flex COLUMN that fills its card, so the controls take `mt-auto` and sit on the card's
        bottom edge — the card is often taller than a page (it stretches to its row). */
@@ -734,8 +756,9 @@ export function AnnouncementsRender({ nodeId, cfg, headIcon }: { nodeId: string;
 
   return (
     <div className="@container min-w-0">
-      <WidgetTitle nodeId={nodeId} text={cfg.title} icon={headIcon} count={ANNOUNCEMENTS.length} action={allLink} />
-      <div {...stackProps(gap, dividers)}>{rows.map(row)}</div>
+      {headerOn && <WidgetTitle nodeId={nodeId} text={cfg.title} icon={headIcon} count={ANNOUNCEMENTS.length} action={allLink} />}
+      {/* No header, no rule above the first row either — it would be a line under nothing. */}
+      <div {...stackProps(gap, dividers)} className={headerOn ? stackProps(gap, dividers).className : (dividers ? '[&>*+*]:border-t [&>*+*]:border-t-[#F0F2F5]' : '')}>{rows.map(row)}</div>
     </div>
   );
 }
