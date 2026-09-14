@@ -315,7 +315,9 @@ export const CARD_ICON_SPEC: WidgetSpec = {
   id: 'card_icon', name: 'Icon', group: 'Basic', reuse: 'many', family: 'flat',
   panel: {
     content: [{ key: 'icon', label: 'Icon', control: 'icon' }],
-    accordions: [{ id: 'spacing', spacing: 'both' }],
+    /* The same Icon group a data card's badge gets — colour, background, radius, border — so an
+       action card's icon is styled with the controls it is already recognised by. */
+    accordions: [{ id: 'icon', open: true, groups: ['G6'] }, { id: 'spacing', spacing: 'both' }],
   },
   fields: [], packs: [],
   defaults: {},

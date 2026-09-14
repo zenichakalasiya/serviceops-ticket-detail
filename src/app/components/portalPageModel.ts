@@ -1317,7 +1317,8 @@ export const defaultAlignH = (id: string): string =>
  *  Everything that paints its own surface, plus the Button: it hugs its label, so a shadow on its
  *  wrapper fell on the whole column the button sits in rather than on the button. */
 export function paintsOwnShadow(id: string): boolean {
-  return paintsOwnSurface(id) || placedType(id) === 'b-button';
+  /* An icon node paints its shadow on the BADGE — its Sel wrapper is a square box around a rounded one. */
+  return paintsOwnSurface(id) || placedType(id) === 'b-button' || /-icon$/.test(id);
 }
 
 export function paintsOwnSurface(id: string): boolean {

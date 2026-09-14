@@ -1757,6 +1757,9 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
           const iconColor = chosen(styles, a.id, 'iconColor');
           const iconShape = chosen(styles, a.id, 'iconShape');
           const iconFill = chosen(styles, a.id, 'iconFill');
+          /* The icon NODE's own Icon group wins over the card-level values above — it is the more
+             specific decision. */
+          const { backgroundColor: iconBoxBg, color: iconBoxColor, borderRadius: iconBoxRadius, ...iconBoxRest } = iconBoxCss(styles, `${a.id}-icon`);
           return (
             <Sel key={a.id} id={a.id} className="@container min-w-0 rounded-lg" style={{ ...share(secCols("quick", content.cols.quick), secGap("quick"), secGrow("quick")) }}>
               <div
@@ -1801,15 +1804,18 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                   onClick={enabled ? (ev) => { ev.stopPropagation(); select(`${a.id}-icon`); pickIcon(a.id, (ev.currentTarget as HTMLElement).getBoundingClientRect()); } : undefined}
                   title={enabled ? 'Click to change this icon' : undefined}
                   style={{
-                    color: iconColor as string | undefined,
-                    background: cardImage
+                    color: iconBoxColor ?? (iconColor as string | undefined),
+                    /* ⚠️ backgroundColor, not the `background` shorthand — this badge also sets backgroundImage,
+                       Size and Position, and React warns (and mis-orders) the moment the shorthand changes beside them. */
+                    backgroundColor: cardImage
                       ? undefined
-                      : iconShape === 'none' ? 'transparent' : (iconFill as string | undefined),
+                      : iconBoxBg ?? (iconShape === 'none' ? 'transparent' : (iconFill as string | undefined)),
                     backgroundImage: cardImage ? `url(${cardImage})` : undefined,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
-                    borderRadius: iconShape === 'circle' ? 999 : undefined,
+                    borderRadius: iconBoxRadius ?? (iconShape === 'circle' ? 999 : undefined),
                     width: Number(iconSize) + 22, height: Number(iconSize) + 22,
+                    ...iconBoxRest,
                   }}
                   className={`flex flex-shrink-0 items-center justify-center overflow-hidden rounded text-[#475467] ${
                     cardImage ? '' : 'bg-[#F1F5F9]'

@@ -314,6 +314,16 @@ export function iconBoxCss(styles: PortalStyles, id: string): React.CSSPropertie
     css.borderStyle = String(b('iconBorderStyle') ?? 'solid');
     css.borderColor = String(b('iconBorderColor') ?? '#E5E7EB');
   }
+  /* An icon NODE's shadow lands on the badge too (Sel withholds it — see `paintsOwnShadow`).
+     ⚠️ Icon nodes only: a DATA CARD's shadow is the card's, and reading it here would cast it off
+     the badge inside the card as well. */
+  if (/-icon$/.test(id) && b('shadowOn') === true) {
+    css.boxShadow = shadowString(
+      String(b('shadowColor') ?? DEFAULT_SHADOW_COLOR),
+      (b('shadowType') as string) === 'inner' ? 'inner' : 'outer',
+      String(b('shadowPos') ?? 'bottom'),
+    );
+  }
   return css;
 }
 

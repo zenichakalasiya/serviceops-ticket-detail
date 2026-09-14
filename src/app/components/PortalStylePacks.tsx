@@ -379,7 +379,13 @@ export const P5_Media: StylePack = {
 export function IconBoxBlock(p: PackProps) {
   const own = p.styles[p.id] ?? {};
   const service = /^(favourites|services)-tile$/.test(p.id);
-  const rest = service
+  /* An action card's icon node (`<card>-icon`) rests on whatever the CARD's own icon style already
+     chose (a template can seed one), else the product's grey badge. */
+  const card = /^(.+)-icon$/.exec(p.id)?.[1];
+  const cardStyle = card ? p.styles[card] ?? {} : {};
+  const rest = card
+    ? { color: String(cardStyle.iconColor ?? '#475467'), bg: String(cardStyle.iconFill ?? '#F1F5F9'), radius: cardStyle.iconShape === 'circle' ? 999 : 4 }
+    : service
     ? { color: '#475467', bg: '#F1F5F9', radius: 8 }
     : { color: '#5A6B80', bg: '#FFFFFF', radius: 6 };
   const set = (patch: Partial<NodeStyle>) => p.setStyle(p.id, patch);

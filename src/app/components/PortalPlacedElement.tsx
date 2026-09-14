@@ -23,7 +23,7 @@ const COUNTS: Record<string, number> = {
   'My CIs': 4,
   'Knowledge': PORTAL_ARTICLES.length,
 };
-import { containerCss } from './portalStyleResolver';
+import { containerCss, iconBoxCss } from './portalStyleResolver';
 
 import { LineMark } from './PortalLineStyles';
 import { Sel } from './PortalCanvas';
@@ -242,6 +242,7 @@ function specDrivenBody(type: string, cfg: Record<string, unknown> | undefined, 
             role={enabled ? 'button' : undefined}
             onClick={enabled ? (ev) => { ev.stopPropagation(); select(`${nodeId}-icon`); pickIcon(nodeId, (ev.currentTarget as HTMLElement).getBoundingClientRect()); } : undefined}
             title={enabled ? 'Click to change this icon' : undefined}
+            style={iconBoxCss(styles ?? {}, `${nodeId}-icon`)}
             className="flex size-11 items-center justify-center rounded bg-[#F1F5F9] text-[#475467]"
           >
             {glyph ?? <Star size={22} />}
@@ -443,6 +444,7 @@ function specDrivenBody(type: string, cfg: Record<string, unknown> | undefined, 
               role={enabled ? 'button' : undefined}
               onClick={enabled ? (ev) => { ev.stopPropagation(); select(`${nodeId}-icon`); pickIcon(nodeId, (ev.currentTarget as HTMLElement).getBoundingClientRect()); } : undefined}
               title={enabled ? 'Click to change this icon' : undefined}
+              style={iconBoxCss(styles ?? {}, `${nodeId}-icon`)}
               className="flex size-11 items-center justify-center rounded bg-[#F1F5F9] text-[#475467]"
               /* ⚠️ `cfg.icon` is the FALLBACK. The icons store wins because that is what the
                  picker writes, but a widget placed by a banner layout has never been through the
