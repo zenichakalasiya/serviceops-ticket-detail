@@ -36,8 +36,8 @@ import {
 import { PortalItemList } from './PortalItemList';
 import { RecordFilterField } from './PortalRecordFilter';
 import type { RecordFilter } from './portalRecordFilters';
-import { bannerLayoutsFor, recordModule } from './supportPortalData';
-import { AnnouncementTypePicker, BannerLayoutPicker, TemplatePicker } from './PortalSectionControls';
+import { BANNER_SHAPES, bannerLayoutsFor, recordModule } from './supportPortalData';
+import { AnnouncementTypePicker, BannerLayoutPicker, BannerShapePicker, TemplatePicker } from './PortalSectionControls';
 import { ACROSS_ROW, ACROSS_STACK, DOWN_ROW, DOWN_STACK, SectionPresets } from './PortalSectionLayout';
 import type { PresetId } from './PortalSectionLayout';
 import { BorderRow, RadiusRow, ShadowBlock, SizeRow } from './PortalBoxControls';
@@ -686,10 +686,12 @@ export interface WidgetDrawerProps {
       A PROP rather than a canvas-context member, matching `onAddLinkCard`: both are builder
       actions the drawer triggers, and one route is enough. */
   onApplyBannerLayout?: (id: string) => void;
+  /** Builds or re-arranges the banner from a starting shape — a builder action, see `applyBannerShape`. */
+  onApplyBannerShape?: (id: string) => void;
 }
 
 export function PortalWidgetDrawer(props: WidgetDrawerProps) {
-  const { nodeId, spec, cfg, setCfg, styles, setStyle, replaceStyle, onSelect, onReset, applyPreset, icon, setIcon, onAddLinkCard, onApplyBannerLayout } = props;
+  const { nodeId, spec, cfg, setCfg, styles, setStyle, replaceStyle, onSelect, onReset, applyPreset, icon, setIcon, onAddLinkCard, onApplyBannerLayout, onApplyBannerShape } = props;
   const node = nodeById(nodeId);
   const path = nodePath(nodeId);
   /* What arrives OPEN. ⚠️ CONTENT only — every DESIGN accordion starts collapsed.
@@ -1132,6 +1134,15 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
             value={String(v ?? 'classic')}
             options={bannerLayoutsFor(viewCfg.__blankPage === true)}
             onChange={(x) => onApplyBannerLayout?.(x)}
+          />
+        );
+      case 'bannerShape':
+        /* Not `set` — a shape rebuilds the banner's whole tree, which is a builder action. */
+        return (
+          <BannerShapePicker
+            value={v ? String(v) : undefined}
+            options={BANNER_SHAPES.filter((s) => s.orientation === 'horizontal')}
+            onChange={(x) => onApplyBannerShape?.(x)}
           />
         );
       case 'announcementType':

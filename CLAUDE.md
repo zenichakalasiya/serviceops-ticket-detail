@@ -447,6 +447,32 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   able to tell you it had happened. `toggleHeaderCell` stays exported from the model, unreferenced, as
   the correct primitive if a header-cell feature ever arrives with a coverage map behind it.
 
+- **Support Portal — the SHAPED banner (Banner Builder phase 1 of 4, 14 Sep 2026).** Spec:
+  https://claude.ai/code/artifact/6836c07d-d9c2-4273-9fe9-f610f67f92a3 — decisions: vertical banner is a
+  column beside the page, fixed while it scrolls (4f/4g); a curated set of blocks; the photo panel takes
+  an image or an announcement carousel; shapes arrive READY-FILLED; editor powers = change shape keeping
+  content, Replace, Quick styles, Save as my banner. **Phase 1 (built):** the banner's content is an
+  ordinary `CustomSection` flagged **`banner: true`** (afterId `hero`, at most one), drawn INSIDE the
+  hero band by `heroBand` and filtered out of the page's section loops — so split, drop, drag, Replace and
+  delete all work on the banner with no second implementation. The hero band keeps its background,
+  artwork and height. `BANNER_SHAPES` (supportPortalData) are 6 horizontal starting shapes as a tree DSL
+  (`ShapeNode`); **`applyBannerShape`** (builder) builds the tree, each slot first TAKING an existing
+  element of the same type so content survives a shape change, and anything with no slot goes into a new
+  row at the foot with a toast — never deleted. Element ids are kept, so their config/style travel.
+  Heading and search are blocks **`bn-heading` / `bn-search`** (hidden catalogue entries) rendered via the
+  `BannerParts` context with the hero's OWN node ids (`hero-title`/`hero-subtitle`/`hero-search`), so
+  inline edit and their panels are unchanged; deleting `hero-search` deletes its block. ⚠️ **One gate,
+  `bannerRefusal`**, is called by dropInColumn, dropBeside, relocate, Replace and addElement: only
+  `BANNER_BLOCKS` types (portalPageModel) go on a banner, heading and search once each, and a refusal
+  gives the reason rather than falling through to a new section. The canvas "+"/Replace pickers offer the
+  same list (`inBanner(id)`). The banner's section renders through `SectionShell bare`, so a click on the
+  background still selects the BANNER. The Shape picker (`BannerShapePicker`, thumbnails drawn from the
+  shape tree) is the hero panel's first group; the old `bannerLayout` field only shows for a legacy page
+  still carrying a layout, and `showSearch` hides once shaped. ⚠️ On a non-blank page the band keeps its
+  86px bottom reserve, or the Quick Actions overlap covers the banner's content. **Next:** phase 2
+  (background layer: photo panel w/ drag edge + carousel, overlay, pattern, Quick styles), phase 3
+  (vertical, fixed), phase 4 (templates onto shapes + Save as my banner).
+
 ## Parked features
 Four Support Portal features are BUILT-OR-PART-BUILT AND SWITCHED OFF, with their full context in
 [future-tasks.md](future-tasks.md): **AI** (rail item commented out in `SupportPortalBuilder`; the

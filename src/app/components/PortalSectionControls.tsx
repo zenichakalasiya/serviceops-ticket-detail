@@ -9,7 +9,94 @@ import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Check, X } from 'lucide-react';
-import type { BannerLayout } from './supportPortalData';
+import type { BannerLayout, BannerShape, ShapeNode } from './supportPortalData';
+
+/* ── Banner starting shapes ─────────────────────────────────────────────────
+ *
+ * ⚠️ Each thumbnail is DRAWN FROM THE SHAPE'S OWN TREE — the same data `applyBannerShape` builds the
+ * banner from — so a tile can never promise an arrangement the banner does not get. */
+function ShapeNodeArt({ n, center }: { n: ShapeNode; center: boolean }) {
+  const grow = { flexGrow: n.weight ?? 1, flexBasis: 0, minWidth: 0 } as const;
+  if ('children' in n) {
+    return (
+      <span style={grow} className={`flex gap-[3px] ${n.dir === 'row' ? 'flex-row items-center' : 'flex-col justify-center'}`}>
+        {n.children.map((c, i) => <ShapeNodeArt key={i} n={c} center={center} />)}
+      </span>
+    );
+  }
+  const al = center ? 'items-center' : 'items-start';
+  switch (n.el) {
+    case 'bn-heading':
+      return (
+        <span style={grow} className={`flex flex-col gap-[2px] ${al}`}>
+          <span className="block h-[4px] w-[70%] rounded-sm bg-white/90" />
+          <span className="block h-[3px] w-[48%] rounded-sm bg-white/45" />
+        </span>
+      );
+    case 'bn-search':
+      return <span style={grow} className={`flex ${center ? 'justify-center' : ''}`}><span className="block h-[6px] w-[64%] rounded-sm bg-white" /></span>;
+    case 'v-image':
+      return <span style={grow} className="block h-[30px] self-stretch rounded-sm bg-[linear-gradient(135deg,#8FA9C3,#D3DEE9)]" />;
+    case 'c-announcements':
+      return (
+        <span style={grow} className="flex h-[22px] flex-col justify-between rounded-sm bg-white px-[3px] py-[3px]">
+          <span className="block h-[2px] w-[80%] rounded-sm bg-[#B6C2D0]" />
+          <span className="flex gap-[2px]"><span className="h-[2px] w-[6px] rounded-sm bg-[#3D8BD0]" /><span className="h-[2px] w-[2px] rounded-full bg-[#C3CBD6]" /><span className="h-[2px] w-[2px] rounded-full bg-[#C3CBD6]" /></span>
+        </span>
+      );
+    default:
+      return <span style={grow} className="block h-[12px] rounded-sm bg-white/85" />;
+  }
+}
+
+export function ShapeArt({ s }: { s: BannerShape }) {
+  return (
+    <span className="flex size-full flex-col gap-[3px] rounded bg-[#EEF2F7] p-[4px]">
+      <span className="flex min-h-0 flex-[3] rounded-sm bg-[#1C3D68] p-[5px]">
+        <ShapeNodeArt n={s.tree} center={s.hero?.contentAlign === 'center'} />
+      </span>
+      <span className="grid flex-1 grid-cols-3 gap-[3px]">
+        <span className="rounded-sm bg-white" /><span className="rounded-sm bg-white" /><span className="rounded-sm bg-white" />
+      </span>
+    </span>
+  );
+}
+
+/* Two across, every shape visible at once — six choices do not earn a dialog. The lit tile is the
+   banner's current shape; picking another CHANGES the shape and keeps the content (see the builder). */
+export function BannerShapePicker({ value, options, onChange }: {
+  value: string | undefined;
+  options: BannerShape[];
+  onChange: (id: string) => void;
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      {options.map((s) => {
+        const on = s.id === value;
+        return (
+          <button
+            key={s.id}
+            type="button"
+            onClick={() => { if (!on) onChange(s.id); }}
+            aria-pressed={on}
+            title={s.note}
+            className={`flex flex-col gap-1.5 rounded-lg border-2 bg-white p-1.5 text-left transition-colors ${on ? 'border-[#3D8BD0]' : 'border-[#E5E7EB] hover:border-[#C3CBD6]'}`}
+          >
+            <span className="relative block h-[64px] w-full">
+              <ShapeArt s={s} />
+              {on && (
+                <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#3D8BD0] text-white">
+                  <Check size={11} strokeWidth={3} />
+                </span>
+              )}
+            </span>
+            <span className={`block truncate px-0.5 text-[12px] font-medium ${on ? 'text-[#3D8BD0]' : 'text-[#364658]'}`}>{s.name}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 /* ── Card templates ──────────────────────────────────────────────────────────
  *

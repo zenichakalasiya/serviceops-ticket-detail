@@ -49,6 +49,9 @@ export const SEARCH_SPEC: WidgetSpec = {
 export const HERO_SPEC: WidgetSpec = {
   id: 'hero', name: 'Banner', group: 'Structure', reuse: 'single', family: 'collection',
   fields: [
+    /* ⚠️ FIRST, because it decides everything under it: how the banner is arranged. Picking one builds
+       the banner ready-filled; picking another later keeps the content and re-arranges it. */
+    { key: 'bannerShape', label: '', control: 'bannerShape', group: 'Shape' } as WidgetField,
     { key: 'heading', label: 'Heading', control: 'text', group: 'Content' },
     { key: 'sub', label: 'Sub-heading', control: 'text', group: 'Content' },
     /* ⚠️ The picture belongs to the LAYOUT that has a picture slot, not to the banner in general.
@@ -61,7 +64,8 @@ export const HERO_SPEC: WidgetSpec = {
       key: 'sideImage', label: 'Picture beside the heading', control: 'upload', suggested: '680 × 440',
       noun: 'picture', group: 'Content', when: (c) => c.__layoutHasImage === true,
     } as WidgetField,
-    { key: 'showSearch', label: 'Show the search bar', control: 'toggle', group: 'Content' },
+    /* On a SHAPED banner the search is a block you add or delete, so this toggle would be a second switch for one thing. */
+    { key: 'showSearch', label: 'Show the search bar', control: 'toggle', group: 'Content', when: (c) => !c.bannerShape },
     { key: 'searchPlaceholder', label: 'Search placeholder', control: 'text', group: 'Content', when: (c) => c.showSearch !== false },
     /* ⚠️ FOUR named sizes, not a 120–600px slider. A banner has about four useful heights — enough
        for a line of text, the standard band, something you notice, and a near-full screen — and the
@@ -78,6 +82,9 @@ export const HERO_SPEC: WidgetSpec = {
          it answered. A layout brings a finished banner you then edit.
          ⚠️ A drawn picker, not a dropdown: which banner you want is recognised by looking. */
       key: 'bannerLayout', label: 'Banner layout', control: 'bannerLayout', tab: 'style', group: 'Banner',
+      /* ⚠️ RETIRED in favour of Shape. Kept only for a page still carrying a layout from before —
+         once a shape is chosen the banner is a section tree and a finished layout cannot describe it. */
+      when: (c) => !c.bannerShape && !!c.bannerLayout && c.bannerLayout !== 'classic',
     } as WidgetField,
     {
       /* ⚠️ A RAIL, not four tabs. Height is an ordered axis, and four buttons said four unrelated

@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 // ArrowLeft stays in use by the card toolbar's "Move left".
 import { toast } from 'sonner';
-import { HEADING_SIZE, PORTAL_FONTS, SECTION_LAYOUTS, SPLITTABLE_BANDS, TEXT_STYLES, ZERO_BOX, COMPOSABLE, boxInfo, canAddBeside, defaultAlignH, nodeById, paintsOwnShadow, paintsOwnSurface, toolbarCaps, nodePath, placedIn, placedType } from './portalPageModel';
+import { HEADING_SIZE, PORTAL_FONTS, SECTION_LAYOUTS, SPLITTABLE_BANDS, TEXT_STYLES, ZERO_BOX, COMPOSABLE, BANNER_BLOCKS, inBanner, boxInfo, canAddBeside, defaultAlignH, nodeById, paintsOwnShadow, paintsOwnSurface, toolbarCaps, nodePath, placedIn, placedType } from './portalPageModel';
 import { DEFAULT_THEME } from './PortalThemePanel';
 import type { PortalTheme } from './PortalThemePanel';
 import { boxCss, containerCss } from './portalStyleResolver';
@@ -745,7 +745,12 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
      another of the six in the slot BESIDE this one, Replace swaps this one. Everything else keeps
      the single Add-or-Replace slot it always had. */
   const composable = canAddBeside(id);
-  const sixOnly = composable ? COMPOSABLE.map((t) => ({ type: t, label: elementLabel(t) })) : undefined;
+  /* ⚠️ ON THE BANNER both pickers offer the banner's curated blocks and nothing else — the same list
+     the builder's gate enforces, so the list never offers something the drop would then refuse. */
+  const onBanner = inBanner(id);
+  const sixOnly = onBanner && (composable || placed || canAdd)
+    ? BANNER_BLOCKS
+    : composable ? COMPOSABLE.map((t) => ({ type: t, label: elementLabel(t) })) : undefined;
   /* Null for anything that is not a box, which is how Split stays off cards, text and page bands. */
   const split = splitInfo?.(id) ?? null;
 

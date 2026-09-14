@@ -245,7 +245,8 @@ function specDrivenBody(type: string, cfg: Record<string, unknown> | undefined, 
             style={iconBoxCss(styles ?? {}, `${nodeId}-icon`)}
             className="flex size-11 items-center justify-center rounded bg-[#F1F5F9] text-[#475467]"
           >
-            {glyph ?? <Star size={22} />}
+            {/* `cfg.icon` is the fallback for a card placed with its icon already chosen (a banner shape) — the icons store still wins. */}
+            {glyph ?? iconNode({ key: String(cfg.icon ?? '') }, 22) ?? <Star size={22} />}
           </span>
         </Sel>}
         <span className="min-w-0 flex-1">

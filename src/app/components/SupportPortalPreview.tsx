@@ -195,6 +195,7 @@ function DropLine({ zone, inset }: { zone: Zone; inset: number }) {
 function ColumnBody({ id, item, band, live, dir, icons, placedText, cfg }: { id: string; item?: PlacedElement; band?: string; live: boolean; dir?: BoxDir; icons?: Record<string, IconChoice | undefined>; placedText?: Record<string, { title?: string; desc?: string }>; cfg?: (id: string) => Record<string, unknown> }) {
   /* A hosted BAND is this box's content, exactly as a placed element is — see `Box.band`. */
   const bandNode = useContext(BandSlots)[band ?? ''];
+  const bannerParts = useContext(BannerParts);
   /* ⚠️ ONE test for "this box has something in it", used by every class below. Testing `item`
      alone left a hosted band sitting inside the dashed empty-column treatment, with the "+ add an
      element here" button painted over the band it already contains. */
@@ -343,7 +344,9 @@ function ColumnBody({ id, item, band, live, dir, icons, placedText, cfg }: { id:
               overruled and the outline would still have spanned the column. Two changes, one
               effect; either on its own does nothing. */}
           <Sel id={item.id} className={HUGS_CONTENT.has(item.type) ? 'w-fit max-w-full' : 'w-full'}>
-            <PortalPlacedElement item={item} icon={icons?.[item.id]} text={placedText?.[item.id]} cfg={cfg?.(item.id)} />
+            {item.type === 'bn-heading' ? bannerParts.heading
+              : item.type === 'bn-search' ? bannerParts.search
+                : <PortalPlacedElement item={item} icon={icons?.[item.id]} text={placedText?.[item.id]} cfg={cfg?.(item.id)} />}
           </Sel>
           {/* ⚠️ A FILLED column keeps its adders too. They used to appear only on an empty column,
               so the moment you put something in one — or selected what was already there — the way
@@ -403,6 +406,11 @@ export const SECTION_PAD = 'px-6 py-3';
  * them reads is four chances to drop it — which would render the box empty and lose the band with
  * no error, since an empty leaf is a legal box. */
 const BandSlots = createContext<Record<string, ReactNode>>({});
+/* The banner's HEADING and SEARCH, built once by the preview (where the hero's config and content
+   live) and handed to whichever box on the banner holds them. ⚠️ They keep the hero's own node ids
+   (`hero-title`, `hero-subtitle`, `hero-search`), so inline editing and their panels are unchanged —
+   a block only decides WHERE they sit. */
+const BannerParts = createContext<{ heading?: ReactNode; search?: ReactNode }>({});
 
 /* The Style accordion's four keys, as CSS. Shared by the built-in bands and added sections so a
    section painted one way in one place cannot come out another way in the other. */
@@ -523,10 +531,16 @@ function BoxChildren({ box, resize, icons, placedText, cfg }: {
  *  selected and kept its four adders — sitting on exactly the four edges the element's own resize
  *  handles were drawn on. Two controls, one point, and the click went to whichever painted last.
  *  Once anything in a box is selected you are working inside it, so its adders step aside. */
+/* A section's outer box — a selectable `Sel`, or a plain padded div when the section is the banner's
+   own content and the banner is what a click on its background should select. */
+function SectionShell({ bare, id, className, style, children }: { bare?: boolean; id: string; className: string; style?: React.CSSProperties; children: ReactNode }) {
+  return bare ? <div className={className}>{children}</div> : <Sel id={id} className={className} style={style}>{children}</Sel>;
+}
+
 const nodeSelectedWithin = (selectedId: string | null, boxId: string) =>
   !!selectedId && nodePath(selectedId).some((n) => n.id === boxId);
 
-function AddedSection({ section, icons, placedText, cfg, bandNode }: { section: CustomSection; icons?: Record<string, IconChoice | undefined>; placedText?: Record<string, { title?: string; desc?: string }>; cfg?: (id: string) => Record<string, unknown>; bandNode?: ReactNode }) {
+function AddedSection({ section, icons, placedText, cfg, bandNode, bare }: { section: CustomSection; icons?: Record<string, IconChoice | undefined>; placedText?: Record<string, { title?: string; desc?: string }>; cfg?: (id: string) => Record<string, unknown>; bandNode?: ReactNode; bare?: boolean }) {
   const { selectedId, hoverId } = useCanvas();
   /* An added section answers Responsive behaviour exactly as a built-in band does — it is the same
      Section spec, so an empty section you just dropped in has the control from its first column. */
@@ -547,7 +561,7 @@ function AddedSection({ section, icons, placedText, cfg, bandNode }: { section: 
        keeping both printed the band 48px in from the page edge while the empty column beside it
        sat at 24px — one row with two left edges. The vertical padding stays: that is the gap to
        the block above, which the band does not provide. */
-    <Sel id={section.id} className={section.band ? 'py-3' : SECTION_PAD} style={fillCss(cfg?.(section.id) ?? {})}>
+    <SectionShell bare={bare} id={section.id} className={section.band ? 'py-3' : SECTION_PAD} style={fillCss(cfg?.(section.id) ?? {})}>
       {isBranch(root) ? (
         <BoxChildren box={root} resize={resize} icons={icons} placedText={placedText} cfg={cfg} />
       ) : (
@@ -556,7 +570,7 @@ function AddedSection({ section, icons, placedText, cfg, bandNode }: { section: 
            the root has no parent for a sibling to go into. */
         <ColumnBody id={root.id} item={root.el} band={root.band} live={live} icons={icons} placedText={placedText} cfg={cfg} />
       )}
-    </Sel>
+    </SectionShell>
   );
 
   /* ⚠️ The provider goes OUTSIDE the section's own `Sel`, so the band reaches whichever box holds
@@ -1602,7 +1616,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
       {/* ⚠️ `!s.section.band` — a section that HOSTS a band is drawn in that band's own slot
           instead (see `host` below). Without this it renders here as well, so the page carries the
           band twice: once in place and once again underneath. */}
-      {sections.filter((s) => !s.section.band && (blank ? BUILT_IN_ANCHORS.has(s.afterId) : s.afterId === id)).map((s) => (
+      {sections.filter((s) => !s.section.band && !s.section.banner && (blank ? BUILT_IN_ANCHORS.has(s.afterId) : s.afterId === id)).map((s) => (
         <Fragment key={s.section.id}>
           <AddedSection section={s.section} icons={icons} placedText={placedText} cfg={cfg} />
           <div className="px-6"><AddSectionSeam afterId={s.section.id} /></div>
@@ -1923,6 +1937,42 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
 
   /* Whether this page is carrying a banner at all. A blank portal starts without one. */
   const hasHero = !removed.includes('hero');
+  /* ── The SHAPED banner ─────────────────────────────────────────────────────
+   * Once a starting shape is applied, what sits on the banner is its own section tree — the band
+   * below keeps its background, artwork and height, and the tree replaces the fixed heading/search
+   * arrangement. See `applyBannerShape`. */
+  const bannerSec = sections.find((s) => s.section.banner)?.section;
+  const bannerAlign = heroAlignX(String(wc('hero').contentAlign ?? 'center'));
+  const bannerHeading = (
+    <div className="w-full" style={{ textAlign: bannerAlign }}>
+      <Sel id="hero-title" className="block w-full px-1" style={heroLine('hero-title')}>
+        <h2
+          style={{ ...roleStyle(styles, 'hero', 'title'), color: String(wc('hero').headingColor ?? (darkHeroInk ? '#0B2545' : '#FFFFFF')), ...st('hero-title') }}
+          className="text-[30px] font-semibold leading-tight"
+        >{String(wc('hero').heading ?? content.hero.title)}</h2>
+      </Sel>
+      <Sel id="hero-subtitle" className="mt-2 block w-full px-1" style={heroLine('hero-subtitle')}>
+        <p
+          style={{ ...roleStyle(styles, 'hero', 'subtitle'), ...(darkHeroInk ? { color: 'rgba(15,51,39,0.72)' } : null), ...st('hero-subtitle') }}
+          className={`text-[15px] ${darkHeroInk ? '' : 'text-white/85'}`}
+        >{String(wc('hero').sub ?? content.hero.subtitle)}</p>
+      </Sel>
+    </div>
+  );
+  const bannerSearch = (
+    <Sel
+      id="hero-search"
+      className="block w-full"
+      style={{
+        maxWidth: `${Number(wc('hero').searchWidth ?? 70)}%`,
+        marginLeft: bannerAlign === 'left' ? 0 : 'auto',
+        marginRight: bannerAlign === 'right' ? 0 : 'auto',
+      }}
+    >
+      <HeroSearch cfg={wc('hero')} fallback={content.hero.placeholder} style={{ borderRadius: Number(wc('hero').searchRadius ?? 4), ...st('hero-search') }} />
+    </Sel>
+  );
+
   const heroBand = (
     <>
     {/* Full bleed ignores the page's side inset (§7.20); the 9-point picker places the
@@ -1947,7 +1997,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
         /* ⚠️ A RAIL reads top-down. Centring is right for a band — the copy sits in the middle
            of the colour however tall it is made — and wrong for a column, where it pushes the
            greeting to the vertical middle of the page and the action rows off the bottom. */
-        className={`relative flex flex-col ${heroSide ? 'justify-start pt-10 pb-10' : `justify-center ${(tileActions || quickOnBanner) && !searchFloats ? 'pb-10' : 'pb-[86px]'}`} ${searchFloats ? 'overflow-visible' : heroSticky ? 'overflow-x-hidden overflow-y-auto scrollbar-hide' : 'overflow-hidden'}`}
+        className={`relative flex flex-col ${heroSide ? 'justify-start pt-10 pb-10' : bannerSec ? (blank || tileActions || quickOnBanner ? 'justify-center py-5' : 'justify-center pt-5 pb-[86px]') : `justify-center ${(tileActions || quickOnBanner) && !searchFloats ? 'pb-10' : 'pb-[86px]'}`} ${searchFloats && !bannerSec ? 'overflow-visible' : heroSticky ? 'overflow-x-hidden overflow-y-auto scrollbar-hide' : 'overflow-hidden'}`}
         style={{
           /* ⚠️ The tabs decide, in one place. Image wins when one is uploaded; Colour paints
              flat; and with neither the band keeps its gradient, so a portal nobody has touched
@@ -1993,7 +2043,16 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
             existing template's hero is touched by this existing. Mirrors the reference's own
             `align-items:flex-end` pairing: the heading block and the search box share a
             bottom edge rather than the search sitting BELOW the subtitle. */}
-        {searchSide ? (
+        {bannerSec ? (
+          /* ⚠️ BARE: the banner's section draws no selectable box of its own, so a click on the
+             banner's background still selects the BANNER — the columns and blocks inside it are the
+             selectable things. */
+          <BannerParts.Provider value={{ heading: bannerHeading, search: bannerSearch }}>
+            <div className="relative w-full">
+              <AddedSection section={bannerSec} icons={icons} placedText={placedText} cfg={cfg} bare />
+            </div>
+          </BannerParts.Provider>
+        ) : searchSide ? (
           <div className="relative flex w-full items-end gap-10 px-6 py-6">
             <div className="min-w-0 flex-1">
               <Sel id="hero-title" className="block w-full px-1">
@@ -2133,7 +2192,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
             edge makes the effect independent of whatever padding the band is carrying.
             ⚠️ Needs `overflow-visible` on the band above, or the half hanging out is clipped
             off and the whole idea silently becomes an inset field again. */}
-        {wc('hero').showSearch !== false && searchFloats && (
+        {!bannerSec && wc('hero').showSearch !== false && searchFloats && (
           <div className="absolute inset-x-0 bottom-0 z-20 w-full translate-y-1/2 px-6">
             <Sel
               id="hero-search"

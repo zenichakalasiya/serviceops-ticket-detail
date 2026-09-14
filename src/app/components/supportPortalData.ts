@@ -1189,6 +1189,98 @@ export const bannerLayout = (id: string | undefined) =>
 export const bannerLayoutsFor = (blankPage: boolean) =>
   BANNER_LAYOUTS.filter((l) => blankPage || l.orientation === 'horizontal');
 
+/* ── Banner STARTING SHAPES ────────────────────────────────────────────────
+ *
+ * The replacement for `BANNER_LAYOUTS`. A layout was a finished banner you picked and could not
+ * rearrange; a shape is only a STARTING POINT — it builds the banner's section tree, already filled
+ * with real blocks, and from then on the banner is edited like any other section.
+ *
+ * ⚠️ READY-FILLED, not empty drop spaces: an admin is not a designer, and a banner that lands
+ * complete only asks them to replace what they do not want.
+ * ⚠️ Switching shape KEEPS content: blocks of the same type move into the new shape, and a block
+ * the new shape has no place for goes into a row of its own at the foot of the banner rather than
+ * being deleted (`applyBannerShape` in the builder).
+ * Background stays the banner's own setting — a shape is an arrangement, not a colour. */
+export type ShapeNode =
+  | { dir: 'row' | 'column'; weight?: number; children: ShapeNode[] }
+  | { el: string; weight?: number; cfg?: Record<string, unknown> };
+
+export interface BannerShape {
+  id: string;
+  name: string;
+  /** One line on when to reach for it. */
+  note: string;
+  /** A reference template that uses this arrangement. */
+  seen: string;
+  orientation: 'horizontal' | 'vertical';
+  tree: ShapeNode;
+  /** Written onto the hero's config — alignment only. */
+  hero?: Record<string, unknown>;
+}
+
+const HEADING: ShapeNode = { el: 'bn-heading' };
+const SEARCH: ShapeNode = { el: 'bn-search' };
+const actionCard = (title: string, sub: string, icon: string, destination: string): ShapeNode =>
+  ({ el: 'x-action-card', cfg: { title, sub, icon, destination } });
+
+export const BANNER_SHAPES: BannerShape[] = [
+  {
+    id: 'text', name: 'Text only', orientation: 'horizontal', seen: '3b2 without its card',
+    note: 'Heading, subheading and search — the simplest start.',
+    tree: { dir: 'column', children: [HEADING, SEARCH] },
+    hero: { contentAlign: 'left' },
+  },
+  {
+    id: 'text-block', name: 'Text + block', orientation: 'horizontal', seen: '3b2 · 3g · 5a · 4b',
+    note: 'Text on the left, one block beside it — an announcement carousel to start.',
+    tree: { dir: 'row', children: [
+      { dir: 'column', weight: 3, children: [HEADING, SEARCH] },
+      { el: 'c-announcements', weight: 2, cfg: { display: 'carousel' } },
+    ] },
+    hero: { contentAlign: 'left' },
+  },
+  {
+    id: 'text-photo', name: 'Text + photo', orientation: 'horizontal', seen: '8a · 8b · 4a',
+    note: 'Text on the banner colour, a picture in the other half.',
+    tree: { dir: 'row', children: [
+      { dir: 'column', weight: 1, children: [HEADING, SEARCH] },
+      { el: 'v-image', weight: 1 },
+    ] },
+    hero: { contentAlign: 'left' },
+  },
+  {
+    id: 'text-row', name: 'Text over a row of blocks', orientation: 'horizontal', seen: '2a · 7c',
+    note: 'Text on top, the four action cards in a row underneath.',
+    tree: { dir: 'column', children: [
+      HEADING, SEARCH,
+      { dir: 'row', children: [
+        actionCard('Report an Incident', 'Something is broken', 'ticket', 'incident'),
+        actionCard('Request Service', 'Browse the catalog', 'cart', 'service'),
+        actionCard('AD Self Service', 'Reset your password', 'key', 'ad'),
+        actionCard('Knowledge', 'Browse articles', 'book', 'knowledge'),
+      ] },
+    ] },
+    hero: { contentAlign: 'left' },
+  },
+  {
+    id: 'centred', name: 'Centred', orientation: 'horizontal', seen: '6a Gazette',
+    note: 'Heading and search in the middle of the banner.',
+    tree: { dir: 'column', children: [HEADING, SEARCH] },
+    hero: { contentAlign: 'center' },
+  },
+  {
+    id: 'text-search-row', name: 'Text + search row', orientation: 'horizontal', seen: '8a Vault',
+    note: 'Heading beside a picture, the search in its own row underneath.',
+    tree: { dir: 'column', children: [
+      { dir: 'row', children: [HEADING, { el: 'v-image' }] },
+      SEARCH,
+    ] },
+    hero: { contentAlign: 'left' },
+  },
+];
+
+export const bannerShape = (id: string | undefined) => BANNER_SHAPES.find((s) => s.id === id);
+
 export const RECORD_MODULES: RecordModule[] = [
   {
     key: 'request', label: 'Requests',
@@ -1414,6 +1506,11 @@ export const PORTAL_ELEMENTS: PortalElement[] = [
      its renderer and its panel all stay, so a page already carrying a placed KPI keeps working and
      editing exactly as it did. */
   { id: 'x-kpi', name: 'KPI', icon: 'kpi', group: 'Custom', hidden: true, keywords: 'metric stat number' },
+  /* ⚠️ The banner's own two blocks. Hidden from the palette — they only exist ON a banner, where the
+     banner's "+" offers them — but catalogue entries all the same, so a placed one has a name. */
+  { id: 'bn-heading', name: 'Heading & subheading', icon: 'text', group: 'Basic', hidden: true },
+  { id: 'bn-search', name: 'Search', icon: 'search', group: 'Basic', hidden: true },
+  { id: 'b-list', name: 'Quick links', icon: 'list', group: 'Basic', hidden: true },
 ];
 
 /* ── Helpers ─────────────────────────────────────────────────────────────── */

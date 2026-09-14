@@ -706,6 +706,12 @@ export interface CustomSection {
    * band never moves it down the page. Filtering it out of that loop is what stops it rendering
    * twice — once in place and once as a free section underneath. */
   band?: string;
+  /** The BANNER's own content. The banner is a background layer, and what sits on it is an ordinary
+   *  section tree — so split, drop, drag, replace and delete work there with no second implementation.
+   *
+   * ⚠️ Drawn INSIDE the banner's band, never by the page's section loops (they filter it out), and
+   * there is at most one. Its elements are limited to `BANNER_BLOCKS`. */
+  banner?: boolean;
 }
 
 /* ⚠️ Ids are MINTED, never derived from position.
@@ -1044,6 +1050,7 @@ export const isBoxId = (id: string) => /^sec-[0-9]+-b[0-9]+$/.test(id);
  * ⚠️ The ROOT is deliberately NOT registered. Its id is the section id, and `nodeById` answers
  *  that with 'Section' — registering it too would shadow that and label the section a Column. */
 export function registerTree(section: CustomSection) {
+  if (section.banner) BANNER_SECTION_IDS.add(section.id);
   const walk = (b: Box, parentDir: BoxDir, depth: number, parent?: string) => {
     if (parent) registerBox(b.id, parentDir, depth, parent);
     b.children?.forEach((c) => walk(c, b.dir, depth + 1, b.id));
@@ -1246,6 +1253,31 @@ export const isComposable = (id: string): boolean => {
   const t = placedType(id);
   return !!t && COMPOSABLE_SET.has(t);
 };
+
+/* ── The banner's curated blocks ────────────────────────────────────────────
+ *
+ * What may sit ON a banner. Short things that stay readable over colour or a photograph — long
+ * lists (requests, approvals, assets, tables, FAQ) belong on the page below, where they have room.
+ * ⚠️ This is the ONE list: the banner's "+", its Replace, the palette drop and click-to-add all
+ * read it, so no route can put something on a banner the others would refuse. */
+export const BANNER_BLOCKS: { type: string; label: string }[] = [
+  { type: 'bn-heading', label: 'Heading & subheading' },
+  { type: 'bn-search', label: 'Search' },
+  { type: 'x-action-card', label: 'Action card' },
+  { type: 'x-kpi', label: 'KPI tile' },
+  { type: 'c-announcements', label: 'Announcements' },
+  { type: 'c-contact', label: 'Contact Us' },
+  { type: 'b-list', label: 'Quick links' },
+  { type: 'b-text', label: 'Text' },
+  { type: 'v-image', label: 'Image' },
+];
+export const BANNER_BLOCK_TYPES = new Set(BANNER_BLOCKS.map((b) => b.type));
+/** Filled by `registerTree`, so any node can ask whether it lives on the banner. */
+export const BANNER_SECTION_IDS = new Set<string>();
+/** True when this node — a box, an element, or one of an element's parts — sits on the banner. */
+export const inBanner = (id: string): boolean => nodePath(id).some((n) => BANNER_SECTION_IDS.has(n.id));
+/** The banner's heading and search appear ONCE each — a second copy is two things to keep in step. */
+export const SINGLE_BANNER_BLOCKS = new Set(['bn-heading', 'bn-search']);
 
 /** True for anything that may put one of the six in the slot beside it. */
 export const canAddBeside = (id: string): boolean => {

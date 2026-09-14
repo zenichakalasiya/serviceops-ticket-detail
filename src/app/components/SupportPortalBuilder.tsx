@@ -25,13 +25,15 @@ import {
   MAX_COLUMNS, addNeighbour, addNeighbourAt, addSibling, neighbourBlockedBecause, rowTargetOf, boxOfElement, findBox, isBoxId, freeLeaves, isBranch, mapBox, parentOfBox, registerTree, removeBox,
   bandSection, sectionElements, sectionFromRows, sectionIdOfBox, sectionRebuild, sectionRows, setBoxDir, setBoxEl,
   splitBlockedBecause, splitBox,
+  BANNER_BLOCK_TYPES, SINGLE_BANNER_BLOCKS, mintBox,
 } from './portalPageModel';
 import { PortalBuilderTour } from './PortalBuilderTour';
 import { PortalWidgetDrawer } from './PortalWidgetDrawer';
 import { WIDGET_FOR_NODE, WIDGET_FOR_TYPE, specById, structureSpecId } from './portalWidgetSpec';
 import type { Cfg, WidgetSpec } from './portalWidgetSpec';
 import type { Box, BoxDir, CustomSection, NodeStyle, PlacedElement, PortalPageContent, PortalStyles } from './portalPageModel';
-import { PORTAL_ELEMENTS, PORTAL_EMPTY_WIDGETS, PORTAL_TEMPLATES, bannerLayout } from './supportPortalData';
+import { PORTAL_ELEMENTS, PORTAL_EMPTY_WIDGETS, PORTAL_TEMPLATES, bannerLayout, bannerShape } from './supportPortalData';
+import type { ShapeNode } from './supportPortalData';
 import { IconPopover } from './PortalIconPicker';
 import type { IconChoice } from './PortalIconPicker';
 import type { PortalPage } from './supportPortalData';
@@ -678,7 +680,26 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     return !!parent && parent.dir === 'row' && (parent.children?.length ?? 0) >= MAX_COLUMNS;
   }, []);
 
+  /* What the BANNER refuses, and why — or null when the drop is fine.
+   *
+   * ⚠️ ONE gate, called by every route onto a box: palette drag, click-to-add, drop-beside, move and
+   * Replace. A banner that accepted a Pending Approvals list by drag but refused it by click would
+   * be two rules for one place. `replacing` is the element being swapped out, so replacing the
+   * heading with a heading is not refused as a second heading. */
+  const bannerRefusal = (boxId: string, type: string, replacing?: string): string | null => {
+    const sec = sectionsRef.current.find((s) => s.section.id === sectionIdOfBox(boxId))?.section;
+    if (!sec?.banner) return null;
+    const name = PORTAL_ELEMENTS.find((e) => e.id === type)?.name ?? 'That widget';
+    if (!BANNER_BLOCK_TYPES.has(type)) return `${name} stays on the page — a banner holds short blocks only`;
+    if (SINGLE_BANNER_BLOCKS.has(type) && sectionElements(sec).some((e) => e.type === type && e.id !== replacing)) {
+      return `The banner already has its ${name.toLowerCase()}`;
+    }
+    return null;
+  };
+
   const dropInColumn = useCallback((columnId: string, type: string) => {
+    const refused = bannerRefusal(columnId, type);
+    if (refused) { toast.error(refused); return; }
     const sectionId = sectionIdOfBox(columnId);
     const el = makeElement(type, columnId);
     setSections((prev) => prev.map((s) => (
@@ -858,7 +879,9 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
        element ticked against a band that is not showing one. */
     if (!removed.includes('hero')) {
       nodes.add('hero');
-      if (widgetCfg.hero?.showSearch !== false) nodes.add('hero-search');
+      /* A SHAPED banner carries its search as a block, so the block is the answer there. */
+      const shaped = sections.find((s) => s.section.banner)?.section;
+      if (shaped ? sectionElements(shaped).some((e) => e.type === 'bn-search') : widgetCfg.hero?.showSearch !== false) nodes.add('hero-search');
     }
     /* ⚠️ Only what the page actually DRAWS. A section is painted after its anchor band, and the
        preview skips it when that band is not on the page — the default (v2) portal seeds its example
@@ -1027,6 +1050,80 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
    * one signal saying it worked was the signal that lied. An add now always lands somewhere real:
    * the column whose "+" aimed it, else a free column in the section you are in, else the row you
    * are in, else its own new section at the foot of the page. Selecting the result is the proof. */
+  /* Apply a banner STARTING SHAPE — or change to another one, keeping what is already there.
+   *
+   * ⚠️ It builds the banner's section tree from the shape, READY-FILLED: every slot gets a real block
+   * with its starting config, so the banner lands complete and the admin replaces rather than builds.
+   * ⚠️ Switching shape KEEPS content. Each slot first takes an existing block of the same type, in
+   * order, so the heading you typed and the search you set move into the new arrangement. A block the
+   * new shape has no slot for is NOT deleted — it lands in a row of its own at the foot of the banner,
+   * and the toast says so. Losing someone's announcement because they tried a different shape is the
+   * one outcome this must never have.
+   * ⚠️ The section is minted fresh (new box ids) but the ELEMENTS keep their ids, so every stored
+   * config, style, icon and text keyed by element id comes with them. */
+  const applyBannerShape = useCallback((shapeId: string) => {
+    const shape = bannerShape(shapeId);
+    if (!shape) return;
+    const current = sectionsRef.current.find((s) => s.section.banner)?.section;
+    const pool = current ? [...sectionElements(current)] : [];
+    const take = (type: string) => {
+      const i = pool.findIndex((e) => e.type === type);
+      return i >= 0 ? pool.splice(i, 1)[0] : undefined;
+    };
+    const id = `sec-${nextSectionId.current++}`;
+    const section: CustomSection = { id, root: { id, dir: 'row', weight: 1 }, next: 0, banner: true };
+    const seeds: Record<string, Cfg> = {};
+    const fill = (n: ShapeNode, box: Box): Box => {
+      if ('el' in n) {
+        const kept = take(n.el);
+        const el = kept ?? makeElement(n.el, box.id);
+        if (!kept && n.cfg) seeds[el.id] = n.cfg as Cfg;
+        return { ...box, el };
+      }
+      return { ...box, dir: n.dir, children: n.children.map((c) => fill(c, mintBox(section, 'column', c.weight ?? 1))) };
+    };
+    section.root = fill(shape.tree, section.root);
+    const leftover = pool.length;
+    if (leftover) {
+      /* A row of their own at the foot, one cell each. */
+      const tail: Box = { ...mintBox(section, 'row'), children: pool.map((el) => ({ ...mintBox(section, 'column'), el })) };
+      section.root = section.root.dir === 'column'
+        ? { ...section.root, children: [...(section.root.children ?? []), tail] }
+        : { id, dir: 'column', weight: 1, children: [{ ...section.root, id: `${id}-b${section.next++}` }, tail] };
+    }
+    /* Every element's PARENT is the box it now sits in — `nodeById` reads this registry. */
+    const walk = (b: Box) => { if (b.el) registerPlaced(b.el.id, b.el.name, b.el.type, b.id); b.children?.forEach(walk); };
+    walk(section.root);
+    setSections((prev) => [...prev.filter((s) => !s.section.banner), { afterId: 'hero', section }]);
+    if (Object.keys(seeds).length) setWidgetCfg((prev) => ({ ...prev, ...seeds }));
+    setRemoved((r) => r.filter((x) => x !== 'hero'));
+    patchCfg('hero', { bannerShape: shape.id, ...(shape.hero ?? {}) });
+    select('hero');
+    if (!current) toast.success(`${shape.name} banner added — replace any block you don't need`);
+    else if (leftover) toast.success(`Changed to ${shape.name}. ${leftover === 1 ? 'One block' : `${leftover} blocks`} had no place in it, so ${leftover === 1 ? 'it is' : 'they are'} in a new row at the bottom`);
+    else toast.success(`Changed to ${shape.name} — your content moved with it`);
+  }, [makeElement, patchCfg, select]);
+
+  /* Put one block on the banner in a row of its own at the foot — the route for adding a search to a
+     banner that does not have one yet. */
+  const appendToBanner = useCallback((type: string) => {
+    const current = sectionsRef.current.find((s) => s.section.banner)?.section;
+    if (!current) return false;
+    const refused = bannerRefusal(current.id, type);
+    if (refused) { toast.error(refused); return true; }
+    const section: CustomSection = { ...current, root: { ...current.root } };
+    const cell = mintBox(section, 'column');
+    const el = makeElement(type, cell.id);
+    const leaf: Box = { ...cell, el };
+    section.root = section.root.dir === 'column' && section.root.children?.length
+      ? { ...section.root, children: [...section.root.children, leaf] }
+      : { id: section.id, dir: 'column', weight: 1, children: [{ ...current.root, id: `${section.id}-b${section.next++}` }, leaf] };
+    setSections((prev) => prev.map((s) => (s.section.banner ? { ...s, section } : s)));
+    select(el.id);
+    toast.success(`${el.name} added to the banner`);
+    return true;
+  }, [makeElement, select]);
+
   const addElement = useCallback((type: string, anchorOverride?: string) => {
     /* ⚠️ An action card is not a generic placed element — it is a member of the Quick Actions row,
        and the row is what gives it its shape, its share of the width and its editor. So adding one
@@ -1044,16 +1141,18 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     /* ⚠️ The BANNER is not a placed element — it is the page's own band, turned back on. Dropping
        a stand-in into a column would give you a second banner inside the page rather than the
        band every reference portal opens with, and none of its controls would reach it. */
+    /* ⚠️ A blank page's banner lands READY-FILLED from the first shape, and the panel opens on the
+       shape picker — so "add a banner" produces a finished banner, not an empty band to build. */
     if (type === 'x-banner') {
-      setRemoved((r) => r.filter((x) => x !== 'hero'));
-      setSelectedId('hero');
-      toast.success('Banner added — pick its type under Design');
+      applyBannerShape('text');
       return;
     }
     /* ⚠️ The SEARCH is the banner's own field, so it needs a banner. Refusing WITH THE REASON at
        the moment you try is the rule this builder follows everywhere a limit has one instance —
        a silent no-op reads as a broken palette row. */
     if (type === 'x-search') {
+      /* On a shaped banner the search is a BLOCK, so it goes on as one. */
+      if (appendToBanner('bn-search')) return;
       if (removed.includes('hero')) {
         toast.error('Add a Banner first — the search bar lives in it');
         return;
@@ -1087,6 +1186,12 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     const secId = anchor ? /^sec-\d+/.exec(anchor)?.[0] : undefined;
     const sec = secId ? sections.find((s) => s.section.id === secId)?.section : undefined;
     if (sec) {
+      /* ⚠️ On the banner a refused block does NOT fall through to a new section somewhere else — you
+         aimed it at the banner, so the answer is the reason, not a surprise further down the page. */
+      if (sec.banner) {
+        const refused = bannerRefusal(sec.id, type);
+        if (refused) { toast.error(refused); return; }
+      }
       /* ⚠️ The aimed cell has to be a LEAF that is empty — a branch has no content of its own, and
          a full leaf would mean silently replacing somebody's element. */
       const aimedBox = anchor ? findBox(sec.root, anchor) : undefined;
@@ -1104,7 +1209,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
 
     const last = blockOrder.filter((b) => !removed.includes(b)).slice(-1)[0] ?? 'hero';
     dropAtSeam(last, type);
-  }, [content.quick, selectedId, sections, rowOrder, blockOrder, removed, placedPredefined, dropInColumn, dropInRow, dropAtSeam, select, patchCfg]);
+  }, [content.quick, selectedId, sections, rowOrder, blockOrder, removed, placedPredefined, dropInColumn, dropInRow, dropAtSeam, select, patchCfg, applyBannerShape, appendToBanner]);
 
   /* Add the row's one external-link card.
    *
@@ -1297,6 +1402,8 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
      overwriting — dropping onto a filled column used to be the one gesture that could destroy work,
      and a swap is what you meant by dragging one thing onto another anyway. */
   const relocateElement = useCallback((id: string, destCol: string) => {
+    const refusedMove = bannerRefusal(destCol, placedType(id) ?? '', id);
+    if (refusedMove) { toast.error(refusedMove); return; }
     const destSec = sectionIdOfBox(destCol);
     let occupant: PlacedElement | null = null;
     let sourceCol: string | null = null;
@@ -1346,6 +1453,8 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     payload: { type: string } | { move: string },
     side: 'left' | 'right' | 'above' | 'below',
   ) => {
+    const refusedDrop = bannerRefusal(boxId, 'move' in payload ? placedType(payload.move) ?? '' : payload.type, 'move' in payload ? payload.move : undefined);
+    if (refusedDrop) { toast.error(refusedDrop); return; }
     const sectionId = sectionIdOfBox(boxId);
     const current = sectionsRef.current.find((s) => s.section.id === sectionId)?.section;
     if (!current) return;
@@ -1662,6 +1771,14 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
   }, [select]);
 
   const deleteNode = useCallback((id: string) => {
+    /* ⚠️ On a SHAPED banner the search field is the inner node of a Search BLOCK. Deleting the field
+       therefore deletes the block — otherwise the toggle it used to flip goes off while the block still
+       draws the field, and Delete appears to do nothing. */
+    if (id === 'hero-search') {
+      const shaped = sectionsRef.current.find((s) => s.section.banner)?.section;
+      const block = shaped && sectionElements(shaped).find((e) => e.type === 'bn-search');
+      if (block) { deleteNode(block.id); return; }
+    }
     if (/^sec-\d+$/.test(id)) {
       setSections((prev) => prev.filter((s) => s.section.id !== id));
     } else if (/^sec-\d+-b\d+$/.test(id)) {
@@ -1793,6 +1910,8 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     }
     const home = nodeById(id)?.parent ?? null;
     if (!home) return;
+    const refusedSwap = bannerRefusal(home, type, id);
+    if (refusedSwap) { toast.error(refusedSwap); return; }
     const made = makeElement(type, home);
     /* ⚠️ `isBoxId`, not a regex written here. This tested `-c\d+` — the box naming from BEFORE
        task 23 minted ids — so it had matched nothing since, and every Replace on an element inside
@@ -2317,6 +2436,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
                   cfg={cfgFor(selectedId)}
                   onAddLinkCard={addLinkCard}
                   onApplyBannerLayout={applyBannerLayout}
+                  onApplyBannerShape={applyBannerShape}
                   setCfg={(patch) => patchCfg(ownerOf(selectedId), patch)}
                   styles={styles}
                   setStyle={setStyle}
