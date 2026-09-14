@@ -660,7 +660,10 @@ export function AnnouncementsRender({ nodeId, cfg, headIcon }: { nodeId: string;
   /* The image carousel shows ONE notice in its band, header or not. */
   const PER_PAGE = headerOn && !imageDisplay ? 2 : 1;
   const pages: (typeof ANNOUNCEMENTS)[] = [];
-  for (let i = 0; i < ANNOUNCEMENTS.length; i += PER_PAGE) pages.push(ANNOUNCEMENTS.slice(i, i + PER_PAGE));
+  /* ⚠️ The carousels show the latest THREE — three dots, three notices. A carousel is for what is
+     current; the rest are one click away through All announcements. */
+  const CAROUSEL_ITEMS = ANNOUNCEMENTS.slice(0, 3);
+  for (let i = 0; i < CAROUSEL_ITEMS.length; i += PER_PAGE) pages.push(CAROUSEL_ITEMS.slice(i, i + PER_PAGE));
   /* ⚠️ Called UNCONDITIONALLY — a hook behind an `if` changes the hook count the moment Display is
      switched. ⚠️ Always MANUAL: nothing left in the panel could turn an automatic one off. */
   const car = useCarousel({
