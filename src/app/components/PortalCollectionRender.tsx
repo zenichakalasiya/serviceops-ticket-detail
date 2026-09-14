@@ -11,7 +11,7 @@
 import { useRef, useState } from 'react';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import type { ReactNode } from 'react';
-import { ChevronDown, ChevronLeft, LayoutList, ChevronRight, ChevronsRight, ImageOff, Mail, Phone, ShoppingCart, Star } from 'lucide-react';
+import { ChevronDown, ChevronLeft, LayoutList, ChevronRight, ChevronsRight, ImageIcon, ImageOff, Mail, Phone, ShoppingCart, Star } from 'lucide-react';
 import { Sel, useCanvas } from './PortalCanvas';
 /* The Table is a module of its own — a spreadsheet-grade editor is a different kind of thing from
    the read-only renderers in this file, and it owns its data model, its handles and its menus. */
@@ -337,9 +337,23 @@ export function SliderRender({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
     return (
       <div>
         <WidgetTitle nodeId={nodeId} text={cfg.title} />
-        {/* The image is FIXED; only the text band slides across it. */}
-        <div className="relative overflow-hidden rounded-lg bg-[#1E293B]" style={{ aspectRatio: '16 / 9' }} {...car.bind}>
-          {media(cfg.bgImage, '')}
+        {/* The image is FIXED; only the text band slides across it.
+            ⚠️ `car.bind` carries its own `style` (touch-action, cursor), so it is spread FIRST and the two
+            styles are merged: spread after, it replaced the aspect ratio and the whole slider collapsed to
+            the height of its dots — a thin dark bar. */}
+        <div
+          {...car.bind}
+          className="relative overflow-hidden rounded-lg bg-[#1E293B]"
+          style={{ ...car.bind.style, aspectRatio: '16 / 9', minHeight: 220 }}
+        >
+          {cfg.bgImage ? media(cfg.bgImage, '') : (
+            /* Before an image is uploaded the slider still reads as an image with words over it — a
+               placeholder picture, not an empty band — so the admin sees what they added. */
+            <span className="flex size-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-[#334155] to-[#1E293B] pb-16 text-white/45">
+              <ImageIcon size={40} strokeWidth={1.5} />
+              <span className="text-[12px] font-medium">Background image</span>
+            </span>
+          )}
           <span className="absolute inset-0" style={{ background: `rgba(0,0,0,${overlay})` }} />
           <div className="absolute inset-x-0 bottom-6">
             <CarouselTrack car={car} gap={GAP}>
