@@ -232,21 +232,22 @@ function TemplateCard({ art, name, meta, badge, onPreview, onUse }: {
   art: ReactNode; name: string; meta: string; badge?: string;
   onPreview: () => void; onUse: () => void;
 }) {
+  /* Hover is QUIET: the border darkens one step and a light scrim carries the two actions — no lift, no shadow, no zoom. */
   return (
-    <div className="group/tpl flex flex-col overflow-hidden rounded-xl border border-[#E5E7EB] bg-white transition-all duration-200 hover:-translate-y-0.5 hover:border-[#C9D8EA] hover:shadow-[0_12px_28px_-10px_rgba(16,24,40,0.18)] focus-within:border-[#C9D8EA]">
+    <div className="group/tpl flex flex-col overflow-hidden rounded-xl border border-[#E5E7EB] bg-white transition-colors duration-150 hover:border-[#CBD5E1] focus-within:border-[#CBD5E1]">
       <div className="relative h-[210px] w-full flex-shrink-0 overflow-hidden bg-[linear-gradient(180deg,#F7F9FC_0%,#EEF2F7_100%)] p-4">
-        <div className="size-full transition-transform duration-300 group-hover/tpl:scale-[1.02]">{art}</div>
+        <div className="size-full">{art}</div>
         {badge && (
           <span className="absolute left-3 top-3 rounded-md bg-white/95 px-2 py-0.5 text-[10.5px] font-semibold tracking-wide text-[#3D8BD0] shadow-[0_1px_2px_rgba(16,24,40,0.08)]">{badge}</span>
         )}
-        <div className="absolute inset-0 flex items-center justify-center gap-2.5 bg-[#0F172A]/45 opacity-0 backdrop-blur-[1.5px] transition-opacity duration-200 group-hover/tpl:opacity-100 group-focus-within/tpl:opacity-100">
+        <div className="absolute inset-0 flex items-center justify-center gap-2 bg-[#0F172A]/[0.12] opacity-0 transition-opacity duration-150 group-hover/tpl:opacity-100 group-focus-within/tpl:opacity-100">
           <button
             onClick={onPreview}
-            className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-white px-3.5 text-[13px] font-semibold text-[#1E293B] shadow-[0_2px_6px_rgba(16,24,40,0.18)] transition-colors hover:bg-[#F5F7FA]"
+            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#DFE5ED] bg-white px-3.5 text-[13px] font-medium text-[#1E293B] transition-colors hover:bg-[#F5F7FA]"
           ><Eye size={15} /> Preview</button>
           <button
             onClick={onUse}
-            className="inline-flex h-9 items-center rounded-lg bg-[#3D8BD0] px-3.5 text-[13px] font-semibold text-white shadow-[0_2px_6px_rgba(16,24,40,0.18)] transition-colors hover:bg-[#2F77B8]"
+            className="inline-flex h-9 items-center rounded-lg bg-[#3D8BD0] px-3.5 text-[13px] font-medium text-white transition-colors hover:bg-[#2F77B8]"
           >Use template</button>
         </div>
       </div>
@@ -300,10 +301,10 @@ export function CreateSupportPortalModal({ onClose, onSaveDetails, onScratch, on
   const templates = VISIBLE_TEMPLATES().filter((t) => category === 'All' || t.category === category);
 
   return createPortal(
-    <div hidden={hidden} className="fixed inset-0 z-[10000] flex items-start justify-center bg-[#0F172A]/40 p-6 pt-[4vh]">
-      {/* ⚠️ WIDER once templates are on screen — at 960px three cards were thumbnails you squinted at.
-          Step 1 stays at the form's width; a 1200px dialog around five fields is mostly empty. */}
-      <div className={`flex max-h-[92vh] w-full flex-col overflow-hidden rounded-xl bg-white shadow-[0_24px_48px_-12px_rgba(16,24,40,0.25)] transition-[max-width] duration-200 ${step === 2 ? 'max-w-[1200px]' : 'max-w-[960px]'}`}>
+    <div hidden={hidden} className="fixed inset-0 z-[10000] flex items-start justify-center bg-[#0F172A]/40 p-[4vh]">
+      {/* ⚠️ ONE width for both steps — the dialog does not grow after step 1. It fills the screen minus the
+          SAME 4vh margin on all four sides, so the gap left and right matches the gap above and below. */}
+      <div className="flex max-h-[92vh] w-full flex-col overflow-hidden rounded-xl bg-white shadow-[0_24px_48px_-12px_rgba(16,24,40,0.25)]">
         <div className="flex flex-shrink-0 items-center gap-3 border-b border-[#E5E7EB] px-5 py-3.5">
           <h2 className="flex-1 text-[16px] font-semibold text-[#364658]">Create Support Portal</h2>
           <button onClick={onClose} className="flex size-8 items-center justify-center rounded text-[#64748B] transition-colors hover:bg-[#F3F4F6]"><X size={18} /></button>

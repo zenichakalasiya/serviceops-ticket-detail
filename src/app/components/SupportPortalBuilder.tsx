@@ -1999,8 +1999,10 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
 
   // ── preview ───────────────────────────────────────────────────────────────
   if (preview) {
+    /* ⚠️ Below the 56px PRODUCT header, exactly where the editor sits — the preview is still inside the
+       product, so its header stays on screen instead of being covered by the portal page. */
     return (
-      <div className="fixed inset-0 z-[9500] flex flex-col bg-[#EEF1F5]">
+      <div className="fixed inset-x-0 bottom-0 top-[56px] z-[9500] flex flex-col bg-[#EEF1F5]">
         {templatePreview ? (
           /* The TEMPLATE preview bar: back to the gallery on the left, the one decision on the right. */
           <div className="flex h-14 flex-shrink-0 items-center gap-3 border-b border-[#e5e7eb] bg-white px-4">
