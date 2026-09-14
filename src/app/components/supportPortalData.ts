@@ -1315,7 +1315,9 @@ export const PORTAL_ELEMENTS: PortalElement[] = [
      so placing it turns the banner's own field on, and it needs a banner to live in. */
   { id: 'x-banner', name: 'Banner', icon: 'banner', group: 'Data', node: 'hero', keywords: 'hero header masthead top band' },
   { id: 'x-search', name: 'Search', icon: 'search', group: 'Data', node: 'hero-search', keywords: 'find lookup search bar' },
-  { id: 'c-announcements', name: 'Announcements', icon: 'announcements', group: 'Data', keywords: 'news broadcast banner' },
+  /* `node: 'news'` — the v2 portal renders Announcements as a FIXED card (`news` in the work row), so
+     without the link the palette never ticked it while that card was on the page. */
+  { id: 'c-announcements', name: 'Announcements', icon: 'announcements', group: 'Data', node: 'news', keywords: 'news broadcast banner' },
   { id: 'c-knowledge', name: 'Most Read Knowledge', icon: 'knowledge', group: 'Data', onPage: true, node: 'knowledge', keywords: 'articles kb most read' },
   /* ⚠️ LIVE DATA, not Custom. Its own spec has said `group: 'Data'` all along — only the
      PALETTE entry disagreed, and the palette is the one an admin reads. The group is not decoration

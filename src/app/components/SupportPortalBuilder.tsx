@@ -857,9 +857,23 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
       nodes.add('hero');
       if (widgetCfg.hero?.showSearch !== false) nodes.add('hero-search');
     }
+    /* ⚠️ Only what the page actually DRAWS. A section is painted after its anchor band, and the
+       preview skips it when that band is not on the page — the default (v2) portal seeds its example
+       sections after `records`, a band the v2 layout never renders, so Announcements, Contact Us and
+       both service rows sat in invisible sections and stayed ticked after the visible card was
+       deleted. These tests mirror `after()` / `band()` in SupportPortalPreview. */
+    const bandShown = (id: string) => blockOrder.includes(id) && !removed.includes(id);
+    const anchorShown = (a: string) => (isBlank
+      ? ['hero', 'quick', 'favourites', 'services', 'work', 'records'].includes(a)
+      : a === 'quick' || a === 'work' || bandShown(a));
+    const rowShown = (r: string) => (r === 'hero' ? !removed.includes('hero')
+      : r.startsWith('work') ? bandShown('work')
+      : DEFAULT_BLOCK_ORDER.includes(r) || blockOrder.includes(r) ? bandShown(r) : true);
     const types = new Set<string>();
-    sections.forEach((s) => sectionElements(s.section).forEach((el) => types.add(el.type)));
-    Object.values(rowExtras).forEach((list) => list.forEach((el) => types.add(el.type)));
+    sections
+      .filter((s) => (s.section.band ? bandShown(s.section.band) : anchorShown(s.afterId)))
+      .forEach((s) => sectionElements(s.section).forEach((el) => types.add(el.type)));
+    Object.entries(rowExtras).forEach(([r, list]) => { if (rowShown(r)) list.forEach((el) => types.add(el.type)); });
     /* ⚠️ PREDEFINED is a GROUP rule, not a fixed-block rule. Data and Actions are the product's
        own single-instance widgets; everything in Basic, Visual and Custom is repeatable by design.
        Gating on `node` alone was too narrow: **Announcements** is Data with no fixed page block
