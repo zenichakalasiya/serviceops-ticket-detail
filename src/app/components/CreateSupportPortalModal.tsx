@@ -301,10 +301,11 @@ export function CreateSupportPortalModal({ onClose, onSaveDetails, onScratch, on
   const templates = VISIBLE_TEMPLATES().filter((t) => category === 'All' || t.category === category);
 
   return createPortal(
-    <div hidden={hidden} className="fixed inset-0 z-[10000] flex items-start justify-center bg-[#0F172A]/40 p-[4vh]">
-      {/* ⚠️ ONE width for both steps — the dialog does not grow after step 1. It fills the screen minus the
-          SAME 4vh margin on all four sides, so the gap left and right matches the gap above and below. */}
-      <div className="flex max-h-[92vh] w-full flex-col overflow-hidden rounded-xl bg-white shadow-[0_24px_48px_-12px_rgba(16,24,40,0.25)]">
+    <div hidden={hidden} className="fixed inset-0 z-[10000] flex items-start justify-center bg-[#0F172A]/40 px-6 pb-6 pt-[max(24px,calc((100vh-680px)/2))]">
+      {/* ⚠️ ONE width (1040) and ONE top edge for both steps. Step 2 is 680 tall and centred; step 1 is only as
+          tall as its four fields, hanging from the same top, so moving on just extends the bottom. Filling the
+          whole screen made step 1 a wide, short strip; a 680-tall step 1 was mostly empty space. */}
+      <div className={`flex ${step === 2 ? "h-[min(680px,calc(100vh-48px))]" : "max-h-[calc(100vh-48px)]"} w-[min(1040px,calc(100vw-48px))] flex-col overflow-hidden rounded-xl bg-white shadow-[0_24px_48px_-12px_rgba(16,24,40,0.25)]`}>
         <div className="flex flex-shrink-0 items-center gap-3 border-b border-[#E5E7EB] px-5 py-3.5">
           <h2 className="flex-1 text-[16px] font-semibold text-[#364658]">Create Support Portal</h2>
           <button onClick={onClose} className="flex size-8 items-center justify-center rounded text-[#64748B] transition-colors hover:bg-[#F3F4F6]"><X size={18} /></button>
