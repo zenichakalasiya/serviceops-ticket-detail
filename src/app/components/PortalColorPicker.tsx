@@ -234,6 +234,7 @@ export function PortalColorPicker({ value, onChange, onClose, anchor, modeTab }:
   return createPortal(
     <div
       ref={ref}
+      data-portal-popover=""
       style={{ top, left }}
       className="fixed z-[10000] w-[286px] rounded-lg border border-[#E5E7EB] bg-white p-3.5 shadow-[0_12px_24px_-6px_rgba(16,24,40,0.18)]"
     >

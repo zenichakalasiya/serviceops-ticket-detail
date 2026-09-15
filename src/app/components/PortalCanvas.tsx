@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { cloneElement, createContext, isValidElement, Children, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { WIDGET_FOR_NODE, WIDGET_FOR_TYPE, specById } from './portalWidgetSpec';
 import type { ReactNode } from 'react';
@@ -246,6 +246,71 @@ export function sizeOf(styles: PortalStyles, id: string): React.CSSProperties {
     if (s.margin.right !== undefined) css.marginRight = `${s.margin.right}%`;
   }
   return css;
+}
+
+/* ── INLINE text formatting ─────────────────────────────────────────────────
+ *
+ * A text node is edited in two modes. Selecting it selects the FRAME (the element toolbar, or the text
+ * toolbar acting on the whole node); clicking into the words starts EDITING, and then the text toolbar's
+ * bold / italic / underline / colour / highlight / font / size apply to the SELECTED WORDS only.
+ * ⚠️ The selection is SAVED on every change, because pressing a toolbar control — a select, a colour
+ * spectrum — moves focus out of the words and the browser drops the selection with it. It is restored
+ * into the words before each command. */
+const INLINE_RANGES: Record<string, Range> = {};
+/** True while the pointer went down on a toolbar or a popover it opened — that blur is not "done editing". */
+let toolbarPointer = false;
+if (typeof document !== 'undefined' && !(window as unknown as { __portalInlineWatch?: boolean }).__portalInlineWatch) {
+  (window as unknown as { __portalInlineWatch?: boolean }).__portalInlineWatch = true;
+  document.addEventListener('selectionchange', () => {
+    const s = window.getSelection();
+    if (!s || !s.rangeCount) return;
+    const host = (s.anchorNode instanceof Element ? s.anchorNode : s.anchorNode?.parentElement)?.closest?.('[data-inline-edit]') as HTMLElement | null;
+    if (host) INLINE_RANGES[host.dataset.inlineEdit!] = s.getRangeAt(0).cloneRange();
+  });
+  document.addEventListener('mousedown', (e) => {
+    const t = e.target as Element | null;
+    toolbarPointer = !!t?.closest?.('[data-portal-toolbar],[data-portal-popover]');
+  }, true);
+}
+/** The words are selected (not just a caret) inside this node's editor. */
+const hasInlineSelection = (id: string) => {
+  const r = INLINE_RANGES[id];
+  return !!r && !r.collapsed && !!document.querySelector(`[data-inline-edit="${id}"]`)?.contains(r.commonAncestorContainer);
+};
+/** Runs a formatting command on the saved word selection. False when there is none — the caller then styles the whole node. */
+function applyInline(id: string, run: (host: HTMLElement) => void): boolean {
+  const host = document.querySelector(`[data-inline-edit="${id}"]`) as HTMLElement | null;
+  if (!host || !hasInlineSelection(id)) return false;
+  host.focus();
+  const s = window.getSelection();
+  s?.removeAllRanges();
+  s?.addRange(INLINE_RANGES[id]);
+  document.execCommand('styleWithCSS', false, 'true');
+  run(host);
+  if (s && s.rangeCount) INLINE_RANGES[id] = s.getRangeAt(0).cloneRange();
+  return true;
+}
+/** Wraps the selection in a span carrying one CSS property (font size / family have no execCommand of their own that writes CSS). */
+const wrapInline = (host: HTMLElement, prop: 'fontSize' | 'fontFamily', value: string) => {
+  document.execCommand('fontSize', false, '7');
+  host.querySelectorAll('font[size="7"], span[style*="xxx-large"]').forEach((f) => {
+    const span = document.createElement('span');
+    span.style[prop] = value;
+    if (f instanceof HTMLElement && f.tagName === 'SPAN') { f.style.fontSize = ''; f.style[prop] = value; return; }
+    span.innerHTML = f.innerHTML;
+    f.replaceWith(span);
+  });
+};
+/* Stored words that carry inline markup render AS markup. Anything else stays a plain string. */
+const INLINE_MARKUP = /<(span|b|i|u|strong|em|font)\b/i;
+function richify(n: ReactNode): ReactNode {
+  return Children.map(n, (c) => {
+    if (typeof c === 'string' && INLINE_MARKUP.test(c)) return <span dangerouslySetInnerHTML={{ __html: c }} />;
+    if (isValidElement(c) && typeof c.type === 'string' && (c.props as { children?: ReactNode }).children !== undefined) {
+      return cloneElement(c, undefined, richify((c.props as { children?: ReactNode }).children));
+    }
+    return c;
+  });
 }
 
 /* ── toolbars ────────────────────────────────────────────────────────────── */
@@ -1416,7 +1481,7 @@ function useToolbarTip() {
   return { tip, setTip, readTip };
 }
 
-function TextToolbar({ id }: { id: string }) {
+function TextToolbar({ id, editing = false }: { id: string; editing?: boolean }) {
   const drag = useNodeDragHandle(id);
   const { tip, setTip, readTip } = useToolbarTip();
   const { styles, setStyle, setText } = useCanvas();
@@ -1433,9 +1498,14 @@ function TextToolbar({ id }: { id: string }) {
   const tBtn = (on?: boolean) => (on ? btnOn : btn);
   const sel = 'h-7 cursor-pointer rounded border border-[#E5E7EB] bg-white px-1.5 text-[12px] text-[#364658] outline-none hover:border-[#3D8BD0]';
   const color = s.color ?? '#364658';
+  /* ⚠️ Selected words win: while you are editing with words selected, a control formats THOSE words;
+     otherwise it formats the whole text, as it always has. */
+  const inline = (run: (host: HTMLElement) => void, whole: () => void) => { if (!(editing && applyInline(id, run))) whole(); };
 
   return (
     <div
+      /* Pressing a button must not take focus out of the words — that drops the word selection. */
+      onMouseDown={(e) => { const t = e.target as HTMLElement; if (!t.closest('select,input')) e.preventDefault(); }}
       onClick={(e) => e.stopPropagation()}
       onMouseOver={readTip}
       onMouseMove={readTip}
@@ -1452,9 +1522,9 @@ function TextToolbar({ id }: { id: string }) {
       <span {...drag} className="flex size-7 cursor-grab items-center justify-center text-[#9CA3AF] active:cursor-grabbing"><GripVertical size={14} /></span>
       <span className="mx-0.5 h-4 w-px bg-[#E5E7EB]" />
 
-      <button className={tBtn(s.bold)} data-tip="Bold" onClick={() => setStyle(id, { bold: !s.bold })}><Bold size={14} /></button>
-      <button className={tBtn(s.italic)} data-tip="Italic" onClick={() => setStyle(id, { italic: !s.italic })}><Italic size={14} /></button>
-      <button className={tBtn(s.underline)} data-tip="Underline" onClick={() => setStyle(id, { underline: !s.underline })}><Underline size={14} /></button>
+      <button className={tBtn(s.bold)} data-tip="Bold" onClick={() => inline(() => document.execCommand('bold'), () => setStyle(id, { bold: !s.bold }))}><Bold size={14} /></button>
+      <button className={tBtn(s.italic)} data-tip="Italic" onClick={() => inline(() => document.execCommand('italic'), () => setStyle(id, { italic: !s.italic }))}><Italic size={14} /></button>
+      <button className={tBtn(s.underline)} data-tip="Underline" onClick={() => inline(() => document.execCommand('underline'), () => setStyle(id, { underline: !s.underline }))}><Underline size={14} /></button>
 
       <span className="mx-0.5 h-4 w-px bg-[#E5E7EB]" />
 
@@ -1477,7 +1547,7 @@ function TextToolbar({ id }: { id: string }) {
           works because all six are loaded in fonts.css. */}
       <select
         value={s.font ?? ''}
-        onChange={(e) => setStyle(id, { font: e.target.value || undefined })}
+        onChange={(e) => { const fid = e.target.value; const css = PORTAL_FONTS.find((f) => f.id === fid)?.css; inline((h) => css && wrapInline(h, 'fontFamily', css), () => setStyle(id, { font: fid || undefined })); }}
         className={`${sel} max-w-[136px]`}
         title="Font"
       >
@@ -1489,7 +1559,7 @@ function TextToolbar({ id }: { id: string }) {
 
       <select
         value={s.fontSize ?? HEADING_SIZE[s.heading ?? 'PAR']}
-        onChange={(e) => setStyle(id, { fontSize: Number(e.target.value) })}
+        onChange={(e) => { const n = Number(e.target.value); inline((h) => wrapInline(h, 'fontSize', `${n}px`), () => setStyle(id, { fontSize: n })); }}
         className={`${sel} w-[52px]`}
       >
         {[12, 13, 14, 15, 16, 18, 20, 24, 28, 32, 40, 48].map((n) => <option key={n} value={n}>{n}</option>)}
@@ -1518,7 +1588,7 @@ function TextToolbar({ id }: { id: string }) {
         <PortalColorPicker
           value={color}
           anchor={pickColor}
-          onChange={(v) => setStyle(id, { color: v })}
+          onChange={(v) => inline(() => document.execCommand('foreColor', false, v), () => setStyle(id, { color: v }))}
           onClose={() => setPickColor(null)}
         />
       )}
@@ -1545,7 +1615,7 @@ function TextToolbar({ id }: { id: string }) {
         <PortalColorPicker
           value={s.textBg ?? '#FDE68A'}
           anchor={pickHilite}
-          onChange={(v) => setStyle(id, { textBg: v })}
+          onChange={(v) => inline(() => document.execCommand('hiliteColor', false, v), () => setStyle(id, { textBg: v }))}
           onClose={() => setPickHilite(null)}
         />
       )}
@@ -1562,10 +1632,10 @@ function TextToolbar({ id }: { id: string }) {
       <button
         className={tBtn()}
         data-tip="Clear formatting"
-        onClick={() => {
+        onClick={() => inline(() => document.execCommand('removeFormat'), () => {
           setStyle(id, { bold: undefined, italic: undefined, underline: undefined, color: undefined, fontSize: undefined, heading: undefined, align: undefined });
           toast.success('Formatting cleared');
-        }}
+        })}
       ><RemoveFormatting size={14} /></button>
 
       <span className="mx-0.5 h-4 w-px bg-[#E5E7EB]" />
@@ -2380,6 +2450,27 @@ export function Sel({ id, children, className = '', toolbarBelow = false, style:
   const ref = useRef<HTMLDivElement>(null);
   const [moveOver, setMoveOver] = useState(false);
   const node = nodeById(id);
+  /* Frame selected vs. editing the words inside it — see INLINE text formatting. */
+  const [editing, setEditing] = useState(false);
+  /* Bumped after the words are committed, so the text is REBUILT from what was stored rather than React
+     reconciling against DOM the browser's formatting commands have already rearranged. */
+  const [textVer, setTextVer] = useState(0);
+  const editRef = useRef<HTMLDivElement>(null);
+  const isOn = selectedId === id;
+  useEffect(() => { if (!isOn) setEditing(false); }, [isOn]);
+  /* Clicking anywhere that is not these words, their toolbar or a popover it opened ends the edit. */
+  useEffect(() => {
+    if (!editing) return;
+    const down = (e: MouseEvent) => {
+      const t = e.target as Element | null;
+      if (editRef.current?.contains(t) || t?.closest?.('[data-portal-toolbar],[data-portal-popover]')) return;
+      commitWordsRef.current?.();
+      setEditing(false);
+    };
+    document.addEventListener('mousedown', down, true);
+    return () => document.removeEventListener('mousedown', down, true);
+  }, [editing]);
+  const commitWordsRef = useRef<(() => void) | null>(null);
   /* ⚠️ A TEXT node also renders `containerCss`, which is where bold / italic / underline / size /
      colour from the floating toolbar live. Every other node type has a call site that spreads
      `st(id)` itself, but a text child of a placed element has none — so the toolbar wrote its
@@ -2453,7 +2544,7 @@ export function Sel({ id, children, className = '', toolbarBelow = false, style:
     if (!enabled || !/-tile$/.test(id) || !isServiceTile(id)) return;
     setFirstTile(document.querySelector(`[data-node="${id}"]`) === ref.current);
   });
-  if (!enabled || !node) return <div style={size} className={className}>{body}</div>;
+  if (!enabled || !node) return <div style={size} className={className}>{node?.kind === 'text' && !node.rich ? richify(body) : body}</div>;
 
   const on = selectedId === id;
   const hov = hoverId === id && !on;
@@ -2669,13 +2760,14 @@ export function Sel({ id, children, className = '', toolbarBelow = false, style:
               ⚠️ Formatting on TOP, element bar underneath and nearest the element. The lower bar is
               the one that points at the thing it acts on, and the element bar is the one whose
               actions move it. */}
+          {/* ⚠️ A placed Text shows its ELEMENT toolbar while its frame is selected, and swaps to the TEXT
+              toolbar once you click into the words — two bars stacked put the formatting controls in front
+              of you before you had chosen any words to format. A text child has no element to move, so it
+              keeps the text toolbar in both modes, formatting the whole line or just the selected words. */}
           {node.kind === 'text' && !isContactChild(id) ? (
-            /^el-[0-9]+$/.test(id) ? (
-              <span className="flex flex-col items-center gap-1">
-                <TextToolbar id={id} />
-                <ElementToolbar id={id} kind={node.kind} name={node.name} />
-              </span>
-            ) : <TextToolbar id={id} />
+            /^el-[0-9]+$/.test(id) && !editing
+              ? <ElementToolbar id={id} kind={node.kind} name={node.name} />
+              : <TextToolbar id={id} editing={editing} />
           ) : <ElementToolbar id={id} kind={node.kind} name={node.name} />}
         </ToolbarSlot>
       )}
@@ -2692,14 +2784,36 @@ export function Sel({ id, children, className = '', toolbarBelow = false, style:
           alternative is rendering the text as a bare string and losing its styling. */}
       {on && node.kind === 'text' ? (
         <div
+          key={textVer}
+          ref={editRef}
+          data-inline-edit={id}
           contentEditable
           suppressContentEditableWarning
-          onBlur={(e) => {
-            /* ⚠️ A RICH node commits its markup. Reading textContent here would throw away the
-               bold, the link and the list the moment you clicked away — the formatting would apply
-               while you looked at it and vanish when you stopped. */
-            const el = e.currentTarget as HTMLElement;
-            setText(id, node.rich ? el.innerHTML : (el.textContent ?? '').trim());
+          onFocus={() => {
+            /* ⚠️ The commit reads the EDITOR, so it is (re)bound here where the editor exists. */
+            commitWordsRef.current = () => {
+              const el = editRef.current;
+              if (!el) return;
+              /* ⚠️ A RICH node commits its markup whole. A plain line commits the markup INSIDE its innermost
+                 text element (so a heading does not store its own <h2> wrapper), and only when the words carry
+                 formatting of their own — otherwise the plain words, exactly as before. */
+              let value: string;
+              if (node.rich) value = el.innerHTML;
+              else {
+                let leaf: Element = el;
+                while (leaf.children.length === 1 && ![...leaf.childNodes].some((c) => c.nodeType === 3 && (c.textContent ?? '').trim())) leaf = leaf.children[0];
+                value = leaf.querySelector('span,b,i,u,strong,em,font') ? leaf.innerHTML : (el.textContent ?? '').trim();
+              }
+              setText(id, value);
+              setTextVer((x) => x + 1);
+            };
+            setEditing(true);
+          }}
+          onBlur={() => {
+            /* A blur caused by pressing the toolbar or its popover is not the end of the edit. */
+            if (toolbarPointer) return;
+            commitWordsRef.current?.();
+            setEditing(false);
           }}
           onKeyDown={(e) => {
             /* Enter commits a LABEL and breaks a line in a PARAGRAPH. A caption is prose; a heading
@@ -2708,8 +2822,8 @@ export function Sel({ id, children, className = '', toolbarBelow = false, style:
             if (e.key === 'Escape') (e.currentTarget as HTMLElement).blur();
           }}
           className="outline-none"
-        >{children}</div>
-      ) : body}
+        >{node.rich ? children : richify(children)}</div>
+      ) : node.kind === 'text' && !node.rich ? richify(body) : body}
     </div>
   );
 }

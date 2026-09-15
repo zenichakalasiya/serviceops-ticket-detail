@@ -1987,10 +1987,13 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     /* An image's caption — markup, on the image's own config, which is the key its panel writes. */
     const cap = /^(.+)-caption$/.exec(id);
     if (cap) { patchCfg(cap[1], { caption: text }); return; }
+    /* ⚠️ The banner's two lines FIRST: 'hero-title' also matches the card pattern below, which wrote the
+       heading to `title` — a key the banner never reads — so an inline edit of the heading never showed. */
+    if (id === 'hero-title') { patchCfg('hero', { heading: text }); return; }
+    if (id === 'hero-subtitle') { patchCfg('hero', { sub: text }); return; }
     const card = /^(.*)-(title|sub)$/.exec(id);
     if (card) { patchCfg(card[1], { [card[2] === 'title' ? 'title' : 'sub']: text }); return; }
 
-    if (id === 'hero-title') { patchCfg('hero', { heading: text }); return; }
     /* A "View all" label, edited on the canvas. Same key the panel writes. */
     const link = /^(.+)-viewall$/.exec(id);
     if (link) { patchCfg(link[1], { viewAllLabel: text }); return; }
