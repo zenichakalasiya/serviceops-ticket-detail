@@ -49,9 +49,10 @@ export const SEARCH_SPEC: WidgetSpec = {
 export const HERO_SPEC: WidgetSpec = {
   id: 'hero', name: 'Banner', group: 'Structure', reuse: 'single', family: 'collection',
   fields: [
-    /* ⚠️ FIRST, because it decides everything under it: how the banner is arranged. Picking one builds
-       the banner ready-filled; picking another later keeps the content and re-arranges it. */
-    { key: 'bannerShape', label: '', control: 'bannerShape', group: 'Shape' } as WidgetField,
+    /* ⚠️ Starting SHAPES are switched off for now (15 Sep 2026) — the regular banner is back and gains
+       its controls one at a time. The shape code (`BANNER_SHAPES`, `applyBannerShape`, the banner
+       section tree) stays; restoring the picker is this one field:
+       { key: 'bannerShape', label: '', control: 'bannerShape', group: 'Shape' } */
     { key: 'heading', label: 'Heading', control: 'text', group: 'Content' },
     { key: 'sub', label: 'Sub-heading', control: 'text', group: 'Content' },
     /* ⚠️ The picture belongs to the LAYOUT that has a picture slot, not to the banner in general.
@@ -64,8 +65,7 @@ export const HERO_SPEC: WidgetSpec = {
       key: 'sideImage', label: 'Picture beside the heading', control: 'upload', suggested: '680 × 440',
       noun: 'picture', group: 'Content', when: (c) => c.__layoutHasImage === true,
     } as WidgetField,
-    /* On a SHAPED banner the search is a block you add or delete, so this toggle would be a second switch for one thing. */
-    { key: 'showSearch', label: 'Show the search bar', control: 'toggle', group: 'Content', when: (c) => !c.bannerShape },
+    { key: 'showSearch', label: 'Show the search bar', control: 'toggle', group: 'Content' },
     { key: 'searchPlaceholder', label: 'Search placeholder', control: 'text', group: 'Content', when: (c) => c.showSearch !== false },
     /* ⚠️ FOUR named sizes, not a 120–600px slider. A banner has about four useful heights — enough
        for a line of text, the standard band, something you notice, and a near-full screen — and the
@@ -104,17 +104,18 @@ export const HERO_SPEC: WidgetSpec = {
        having the choice in two places (here and the shared Style pack) meant the two could disagree
        about what the band was showing. */
     {
-      key: 'bgKind', label: 'Background', control: 'segmented', tab: 'style', group: 'Banner',
+      key: 'bgKind', label: 'Background', control: 'segmented', tab: 'style', group: 'Background',
       options: [{ value: 'image', label: 'Image' }, { value: 'color', label: 'Colour' }],
     },
     {
       /* ⚠️ 1600 × 400 — the band is full-width and about 200px tall, so this is a 2× asset that
          stays sharp on a retina screen without being a photograph nobody needs. */
-      key: 'bannerImage', label: 'Banner image', control: 'bannerUpload', suggested: '1600 × 400', tab: 'style', group: 'Banner',
+      key: 'bannerImage', label: 'Banner image', control: 'bannerUpload', suggested: '1600 × 400', tab: 'style', group: 'Background',
       when: (c) => (c.bgKind ?? 'image') === 'image',
     },
     {
-      key: 'bannerColor', label: 'Banner colour', control: 'color', tab: 'style', group: 'Banner',
+      /* Solid or Gradient, through the SAME editor the toolbar's colour popup opens. */
+      key: 'bannerColor', label: '', control: 'bannerFill', tab: 'style', group: 'Background',
       when: (c) => c.bgKind === 'color',
     },
     /* ⚠️ "Also use behind the whole page" is GONE, from the panel and from the canvas toolbar at the
@@ -131,6 +132,31 @@ export const HERO_SPEC: WidgetSpec = {
        spec. The renderer still reads the same cfg keys and the DEFAULTS below still declare them,
        so each falls back to its default and the band looks exactly as it did — cover, centred,
        unshaded. Putting any of them back is one line here, not a rebuild. */
+    /* ── The colour layer over an image ─────────────────────────────────────────────────────────
+       ⚠️ ON by default the moment a banner has a picture: text laid straight onto a photograph is
+       readable only by luck. It sits BETWEEN the image and the words, strongest at the side the words
+       are on, and fades out so the photograph still shows where there is nothing to read. */
+    { key: 'overlayOn', label: 'Colour layer over the image', control: 'toggle', tab: 'style', group: 'Background', when: (c) => (c.bgKind ?? 'image') === 'image' && !!c.bannerImage },
+    { key: 'overlaySide', label: 'Strongest at', control: 'gradientSide', tab: 'style', group: 'Background', when: (c) => (c.bgKind ?? 'image') === 'image' && !!c.bannerImage && c.overlayOn !== false },
+    { key: 'overlayFrom', label: 'Layer colour', control: 'color', tab: 'style', group: 'Background', when: (c) => (c.bgKind ?? 'image') === 'image' && !!c.bannerImage && c.overlayOn !== false },
+    { key: 'overlayTo', label: 'Fades to', control: 'color', tab: 'style', group: 'Background', when: (c) => (c.bgKind ?? 'image') === 'image' && !!c.bannerImage && c.overlayOn !== false },
+    /* ── Where the heading, subheading and search sit — the same two choices the toolbar offers. */
+    {
+      key: 'contentAlign', label: 'Horizontal', control: 'segmented', tab: 'style', group: 'Alignment',
+      options: [{ value: 'left', label: 'Left' }, { value: 'center', label: 'Centre' }, { value: 'right', label: 'Right' }],
+    },
+    {
+      key: 'contentAlignY', label: 'Vertical', control: 'segmented', tab: 'style', group: 'Alignment',
+      options: [{ value: 'start', label: 'Top' }, { value: 'center', label: 'Middle' }, { value: 'end', label: 'Bottom' }],
+    },
+    /* ── Corners and border ─────────────────────────────────────────────────────────────────── */
+    { key: 'bannerRadius', label: 'Corner radius', control: 'slider', tab: 'style', group: 'Corners & border', min: 0, max: 40, unit: 'px' },
+    { key: 'bannerBorderWidth', label: 'Border width', control: 'slider', tab: 'style', group: 'Corners & border', min: 0, max: 8, unit: 'px' },
+    { key: 'bannerBorderColor', label: 'Border colour', control: 'color', tab: 'style', group: 'Corners & border', when: (c) => Number(c.bannerBorderWidth ?? 0) > 0 },
+    {
+      key: 'bannerBorderStyle', label: 'Border style', control: 'segmented', tab: 'style', group: 'Corners & border', when: (c) => Number(c.bannerBorderWidth ?? 0) > 0,
+      options: [{ value: 'solid', label: 'Solid' }, { value: 'dashed', label: 'Dashed' }, { value: 'dotted', label: 'Dotted' }],
+    },
     { key: 'searchWidth', label: 'Search width', control: 'slider', tab: 'style', group: 'Search', min: 40, max: 100, unit: '%', when: (c) => c.showSearch !== false },
     { key: 'searchRadius', label: 'Search corner radius', control: 'slider', tab: 'style', group: 'Search', min: 0, max: 24, when: (c) => c.showSearch !== false },
   ],
@@ -154,6 +180,9 @@ export const HERO_SPEC: WidgetSpec = {
     height: 260, contentAlign: 'center', contentMaxWidth: 70,
     bgKind: 'image', bannerColor: '#3D8BD0', bgWholePage: false,
     bannerFit: 'cover', bannerPos: 'center', bannerRepeat: false, bannerShade: 0,
+    /* No overlaySide default: until one is picked the layer is strongest on the side the TEXT is on (see bannerLayerSide). */
+    overlayOn: true, overlayFrom: 'rgba(15, 23, 42, 0.85)', overlayTo: 'rgba(15, 23, 42, 0)',
+    contentAlignY: 'center', bannerRadius: 0, bannerBorderWidth: 0, bannerBorderColor: '#E5E7EB', bannerBorderStyle: 'solid',
     headingColor: '#FFFFFF', searchWidth: 70, searchRadius: 4,
     // §7.20's search sub-element.
     searchScope: 'knowledge', searchSuggestions: true,

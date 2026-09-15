@@ -1163,7 +1163,10 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     /* ⚠️ A blank page's banner lands READY-FILLED from the first shape, and the panel opens on the
        shape picker — so "add a banner" produces a finished banner, not an empty band to build. */
     if (type === 'x-banner') {
-      applyBannerShape('text');
+      /* The REGULAR banner — starting shapes are switched off for now (see HERO_SPEC). */
+      setRemoved((r) => r.filter((x) => x !== 'hero'));
+      setSelectedId('hero');
+      toast.success('Banner added');
       return;
     }
     /* ⚠️ The SEARCH is the banner's own field, so it needs a banner. Refusing WITH THE REASON at

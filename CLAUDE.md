@@ -447,7 +447,27 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   able to tell you it had happened. `toggleHeaderCell` stays exported from the model, unreferenced, as
   the correct primitive if a header-cell feature ever arrives with a coverage map behind it.
 
-- **Support Portal — the SHAPED banner (Banner Builder phase 1 of 4, 14 Sep 2026).** Spec:
+- **Support Portal — the REGULAR banner's toolbar and style (15 Sep 2026; shapes SWITCHED OFF).** The user
+  asked for the regular banner back and to grow its controls one at a time, so the Shape field is commented
+  out of `HERO_SPEC` (the shape code below stays) and adding a Banner un-removes the regular band again.
+  **`BannerToolbar`** (PortalCanvas, rendered for `id === 'hero'`, placed just INSIDE the band's top edge —
+  `toolbarBelow === true` now means inside): H align (`contentAlign` left/center/right) · V align
+  (`contentAlignY` start/center/end → the band's justify) · **+** adds a widget BESIDE the text
+  (`BANNER_SIDE_WIDGETS` → `dropInRow('hero')`; `bannerSide` turns on when `rowExtras.hero` has any) ·
+  image (file → `bgKind:'image'`, `bannerImage`) · colour popup · delete. **No drag handle** (user's call).
+  **`PortalBannerTools.tsx`** is shared by toolbar and panel: `BannerFillEditor` (Solid/Gradient →
+  `colorMode`, `bannerColor`, `bannerColor2`, `colorSide`), `SideGrid` (9 sides; strongest-at), and
+  `sideGradient()`. ⚠️ Only a banner that carries `colorMode` renders through it — templates' own
+  `bannerStyle` looks are untouched. **The colour layer**: any image banner gets a gradient span
+  (`data-banner-layer`) between picture and words, `overlayOn` default true, strongest at
+  `bannerLayerSide(cfg)` = the picked `overlaySide` or else the side the text is aligned to (so there is
+  deliberately no `overlaySide` default). Style tab groups: Banner (height) · Background (tabs, image,
+  layer controls, fill editor) · Alignment · **Corners & border** (`bannerRadius`, `bannerBorderWidth/
+  Color/Style`, painted on the band). ⚠️ A `…AlignY` segmented draws vertical glyphs (`AlignRow axis`).
+  ⚠️ **Hooks in `Sel` must sit ABOVE its `if (!enabled || !node) return`** — the service-tile
+  `firstTile` hooks were added below it and blanked the canvas with "Rendered fewer hooks than expected".
+
+- **Support Portal — the SHAPED banner (Banner Builder phase 1 of 4, 14 Sep 2026; hidden since 15 Sep).** Spec:
   https://claude.ai/code/artifact/6836c07d-d9c2-4273-9fe9-f610f67f92a3 — decisions: vertical banner is a
   column beside the page, fixed while it scrolls (4f/4g); a curated set of blocks; the photo panel takes
   an image or an announcement carousel; shapes arrive READY-FILLED; editor powers = change shape keeping

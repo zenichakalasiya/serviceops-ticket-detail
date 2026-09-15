@@ -38,6 +38,7 @@ import { RecordFilterField } from './PortalRecordFilter';
 import type { RecordFilter } from './portalRecordFilters';
 import { BANNER_SHAPES, bannerLayoutsFor, recordModule } from './supportPortalData';
 import { AnnouncementTypePicker, BannerLayoutPicker, BannerShapePicker, KpiLayoutPicker, TemplatePicker } from './PortalSectionControls';
+import { BannerFillEditor, SideGrid, bannerLayerSide } from './PortalBannerTools';
 import { ACROSS_ROW, ACROSS_STACK, DOWN_ROW, DOWN_STACK, SectionPresets } from './PortalSectionLayout';
 import type { PresetId } from './PortalSectionLayout';
 import { BorderRow, RadiusRow, ShadowBlock, SizeRow } from './PortalBoxControls';
@@ -868,7 +869,8 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
            `cellAlign`…), so keying off the name would leave some of them as word buttons — and a
            control that looks different in two panels reads as two different controls. */
         if (opts.length && opts.every((o) => ALIGN_ICON[o.value])) {
-          return <AlignRow value={v === undefined ? '' : String(v)} options={opts} onChange={(x) => set(f.key, x)} />;
+          /* A VERTICAL alignment field (…AlignY) draws the top/middle/bottom glyphs, not the left/centre/right ones. */
+          return <AlignRow value={v === undefined ? '' : String(v)} options={opts} onChange={(x) => set(f.key, x)} axis={/AlignY$/.test(f.key) ? 'y' : 'x'} />;
         }
         // Compared as strings so a numeric style value still lights its option.
         return <Segmented value={v === undefined ? '' : String(v)} options={opts} onChange={(x) => set(f.key, x)} />;
@@ -1136,6 +1138,10 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
             onChange={(x) => onApplyBannerLayout?.(x)}
           />
         );
+      case 'gradientSide':
+        return <SideGrid value={f.key === 'overlaySide' ? bannerLayerSide(viewCfg) : String(v ?? 'left')} onChange={(x) => set(f.key, x)} from={String(viewCfg.overlayFrom ?? 'rgba(15,23,42,0.85)')} to={String(viewCfg.overlayTo ?? 'rgba(15,23,42,0)')} />;
+      case 'bannerFill':
+        return <BannerFillEditor cfg={viewCfg} setCfg={(patch) => viewSet(patch)} />;
       case 'kpiLayout':
         return <KpiLayoutPicker value={String(v ?? 'stack')} onChange={(x) => set(f.key, x)} />;
       case 'bannerShape':

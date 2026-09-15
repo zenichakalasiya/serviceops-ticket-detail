@@ -16,6 +16,7 @@ import {
 } from './supportPortalData';
 import { AddSectionSeam, ColumnAdders, MOVE_MIME, Sel, draggedElement, draggedNode, styleOf, useCanvas } from './PortalCanvas';
 import { HUGS_CONTENT, inBanner } from './portalPageModel';
+import { bannerLayerSide, sideGradient } from './PortalBannerTools';
 import { PAGE_ID, chosen, iconBoxCss, roleStyle } from './portalStyleResolver';
 import { bannerLayout } from './supportPortalData';
 import { shadowCss } from './PortalBoxControls';
@@ -1455,7 +1456,8 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
   const heroLayout = bannerLayout(String(wc('hero').bannerLayout ?? 'classic'));
   const heroSlot = heroLayout?.slot;
   /* Beside the heading, so the content block becomes two columns. */
-  const bannerSide = heroSlot === 'side' || heroLayout?.hasImage === true;
+  /* …or when a widget has been added beside the content from the banner toolbar's +. */
+  const bannerSide = heroSlot === 'side' || heroLayout?.hasImage === true || (rowExtras?.['hero']?.length ?? 0) > 0;
   /* A third `heroArt` value, not a new key — same rule `bannerStyle`'s `light` follows. */
   const heroCounterShapes = String(pageCfg.heroArt ?? 'auto') === 'counter';
   /* Favourite Services and Most Used Services SIDE BY SIDE rather than stacked as two full-width
@@ -1557,6 +1559,15 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
   const [workTab, setWorkTab] = useState('requests');
 
   const heroBg: React.CSSProperties = pageImage
+    ? { backgroundColor: String(heroCfg.bannerColor ?? '#3D8BD0'), backgroundImage: 'none' }
+    /* The Solid / Gradient editor (toolbar popup and panel). Only a banner that has been set through it
+       carries `colorMode`, so every template's own look below renders exactly as before. */
+    : heroCfg.bgKind === 'color' && heroCfg.colorMode === 'gradient'
+    ? {
+      backgroundColor: String(heroCfg.bannerColor ?? '#3D8BD0'),
+      backgroundImage: sideGradient(String(heroCfg.colorSide ?? 'left'), String(heroCfg.bannerColor ?? '#3D8BD0'), String(heroCfg.bannerColor2 ?? '#0B1B3F')),
+    }
+    : heroCfg.bgKind === 'color' && heroCfg.colorMode === 'solid'
     ? { backgroundColor: String(heroCfg.bannerColor ?? '#3D8BD0'), backgroundImage: 'none' }
     : heroCfg.bgKind === 'color'
     /* ⚠️ A flat fill and a GRADIENT fill are the same "Colour" tab, one key apart. A second tab
@@ -2087,7 +2098,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
         /* ⚠️ A RAIL reads top-down. Centring is right for a band — the copy sits in the middle
            of the colour however tall it is made — and wrong for a column, where it pushes the
            greeting to the vertical middle of the page and the action rows off the bottom. */
-        className={`relative flex flex-col ${heroSide ? 'justify-start pt-10 pb-10' : bannerSec ? (blank || tileActions || quickOnBanner ? 'justify-center py-5' : 'justify-center pt-5 pb-[86px]') : `justify-center ${(tileActions || quickOnBanner) && !searchFloats ? 'pb-10' : 'pb-[86px]'}`} ${searchFloats && !bannerSec ? 'overflow-visible' : heroSticky ? 'overflow-x-hidden overflow-y-auto scrollbar-hide' : 'overflow-hidden'}`}
+        className={`relative flex flex-col ${heroSide ? 'justify-start pt-10 pb-10' : bannerSec ? (blank || tileActions || quickOnBanner ? 'justify-center py-5' : 'justify-center pt-5 pb-[86px]') : `${({ start: 'justify-start', end: 'justify-end' } as Record<string, string>)[String(wc('hero').contentAlignY ?? 'center')] ?? 'justify-center'} ${(tileActions || quickOnBanner) && !searchFloats ? 'pb-10' : 'pb-[86px]'}`} ${searchFloats && !bannerSec ? 'overflow-visible' : heroSticky ? 'overflow-x-hidden overflow-y-auto scrollbar-hide' : 'overflow-hidden'}`}
         style={{
           /* ⚠️ The tabs decide, in one place. Image wins when one is uploaded; Colour paints
              flat; and with neither the band keeps its gradient, so a portal nobody has touched
@@ -2103,6 +2114,11 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
              ⚠️ `100%` resolves to auto while the wrapper has no explicit height, so an
              untouched banner still sizes from its minHeight and nothing moved. */
           height: '100%',
+          /* Corner radius and border from the Style section — on the band itself, which clips its art. */
+          ...(Number(heroCfg.bannerRadius ?? 0) > 0 ? { borderRadius: Number(heroCfg.bannerRadius) } : {}),
+          ...(Number(heroCfg.bannerBorderWidth ?? 0) > 0 ? {
+            borderWidth: Number(heroCfg.bannerBorderWidth), borderStyle: String(heroCfg.bannerBorderStyle ?? 'solid'), borderColor: String(heroCfg.bannerBorderColor ?? '#E5E7EB'),
+          } : {}),
           ...stInner('hero'),
         }}
       >
@@ -2116,6 +2132,17 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
         {/* ⚠️ Its own clip too, for the same reason — and it sits BEHIND the copy, which is
             why the hero's `contentMaxWidth` is what keeps the two from meeting. */}
         {heroShapes && <span className="pointer-events-none absolute inset-0 overflow-hidden"><HeroShapes /></span>}
+        {/* ⚠️ The COLOUR LAYER, between the picture and the words — on by default for any banner with an
+            image. Strongest at the chosen side, fading to its second colour, so the text side reads and
+            the photograph still shows elsewhere. */}
+        {!pageImage && heroCfg.bgKind !== 'color' && !!heroImg && heroCfg.overlayOn !== false && (
+          <span
+            aria-hidden
+            data-banner-layer
+            className="pointer-events-none absolute inset-0"
+            style={{ backgroundImage: sideGradient(bannerLayerSide(heroCfg), String(heroCfg.overlayFrom ?? 'rgba(15, 23, 42, 0.85)'), String(heroCfg.overlayTo ?? 'rgba(15, 23, 42, 0)')) }}
+          />
+        )}
         {heroRings && (
           <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
             <svg viewBox="0 0 200 200" className="absolute right-[-38px] top-1/2 h-[300px] w-[300px] -translate-y-1/2"

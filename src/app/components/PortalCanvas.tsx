@@ -7,8 +7,9 @@ import {
   AlignLeft, AlignRight, AlignStartHorizontal, AlignStartVertical, ArrowDown, ArrowLeft, ArrowRight,
   ArrowUp, Baseline, Bold, Check, ChevronDown, ChevronRight, Columns2, Copy, GripHorizontal, GripVertical, Italic, Link2, Rows2,
   Braces, Highlighter, Maximize2, UnfoldVertical, Move, MoveHorizontal, MoveVertical, Plus, RemoveFormatting,
-  Replace, SquareDashed, Trash2, Underline, X,
+  Replace, SquareDashed, Trash2, Underline, X, ImagePlus, Palette,
 } from 'lucide-react';
+import { BannerFillEditor } from './PortalBannerTools';
 // ArrowLeft stays in use by the card toolbar's "Move left".
 import { toast } from 'sonner';
 import { HEADING_SIZE, PORTAL_FONTS, SECTION_LAYOUTS, SPLITTABLE_BANDS, TEXT_STYLES, ZERO_BOX, COMPOSABLE, BANNER_BLOCKS, inBanner, dragIdOf, isContactChild, isServiceTile, boxInfo, canAddBeside, defaultAlignH, nodeById, paintsOwnShadow, paintsOwnSurface, toolbarCaps, nodePath, placedIn, placedType } from './portalPageModel';
@@ -1623,6 +1624,101 @@ function PlaceholderPopover({ anchor, onPick, onClose }: { anchor: DOMRect; onPi
  * ⚠️ It follows the element on scroll and resize. Fixed positioning means the toolbar no longer
  * moves with the page on its own, so it is re-measured while it is open — otherwise it would sit
  * where the element USED to be the moment anything scrolled. */
+/* ── The BANNER's floating toolbar ────────────────────────────────────────────────────────────
+ *
+ * Align the heading, subheading and search (both axes) · add a widget beside them · put an image
+ * behind the banner · colour it (solid or gradient) · delete the banner. Every one writes the same
+ * hero config the panel's Style section edits, so the two are one control in two places.
+ * ⚠️ No drag handle: the banner is the top of the page, there is nowhere for it to go. */
+const BANNER_SIDE_WIDGETS: { type: string; label: string }[] = [
+  { type: 'c-announcements', label: 'Announcements' },
+  { type: 'x-kpi', label: 'KPI tile' },
+  { type: 'c-contact', label: 'Contact Us' },
+  { type: 'x-action-card', label: 'Action card' },
+  { type: 'b-list', label: 'Quick links' },
+  { type: 'v-image', label: 'Image' },
+  { type: 'b-text', label: 'Text' },
+  { type: 'b-button', label: 'Button' },
+];
+
+function BannerToolbar() {
+  const { cfg, setCfg, deleteNode, dropInRow } = useCanvas();
+  const hero = cfg?.('hero') ?? {};
+  const [axis, setAxis] = useState<'h' | 'v' | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [fill, setFill] = useState(false);
+  const addRef = useRef<HTMLDivElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const { tip, setTip, readTip } = useToolbarTip();
+  const alignH = String(hero.contentAlign ?? 'center');
+  const h = alignH.includes('left') ? 'left' : alignH.includes('right') ? 'right' : 'center';
+  const vAlign = String(hero.contentAlignY ?? 'center');
+  const H: [string, string, ReactNode][] = [
+    ['left', 'Left', <AlignStartVertical key="l" size={15} />],
+    ['center', 'Centre', <AlignCenterVertical key="c" size={15} />],
+    ['right', 'Right', <AlignEndVertical key="r" size={15} />],
+  ];
+  const V: [string, string, ReactNode][] = [
+    ['start', 'Top', <AlignStartHorizontal key="t" size={15} />],
+    ['center', 'Middle', <AlignCenterHorizontal key="m" size={15} />],
+    ['end', 'Bottom', <AlignEndHorizontal key="b" size={15} />],
+  ];
+  const onFile = (file: File | undefined) => {
+    if (!file) return;
+    if (!/^image\//.test(file.type)) { toast.error('Choose an image file — PNG, JPG, SVG or WebP'); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error('That image is over 5 MB — choose a smaller one'); return; }
+    const r = new FileReader();
+    /* An image background turns the colour layer on, so the words stay readable over the picture. */
+    r.onload = () => { setCfg?.('hero', { bgKind: 'image', bannerImage: String(r.result), overlayOn: hero.overlayOn ?? true }); toast.success('Banner image added'); };
+    r.readAsDataURL(file);
+  };
+  return (
+    <div
+      data-portal-toolbar
+      onClick={(e) => e.stopPropagation()}
+      onMouseOver={readTip}
+      onMouseMove={readTip}
+      onMouseLeave={() => setTip(null)}
+      className="relative flex items-center gap-0.5 rounded border border-[#E5E7EB] bg-white px-1 py-1 shadow-[0_4px_6px_-2px_rgba(16,24,40,0.06),0_12px_16px_-4px_rgba(16,24,40,0.10)]"
+    >
+      {tip && (
+        <span style={{ left: tip.x }} className="pointer-events-none absolute top-full z-[80] mt-1.5 max-w-[220px] -translate-x-1/2 whitespace-nowrap rounded bg-[#1F2937] px-2 py-1 text-[11px] leading-[16px] text-white shadow-[0_4px_10px_rgba(16,24,40,0.18)]">{tip.label}</span>
+      )}
+      <AlignAxis axis="h" value={h} options={H} open={axis === 'h'} onToggle={() => { setFill(false); setAxis((a) => (a === 'h' ? null : 'h')); }} onPick={(x) => { setCfg?.('hero', { contentAlign: x }); setAxis(null); }} />
+      <AlignAxis axis="v" value={vAlign} options={V} open={axis === 'v'} onToggle={() => { setFill(false); setAxis((a) => (a === 'v' ? null : 'v')); }} onPick={(x) => { setCfg?.('hero', { contentAlignY: x }); setAxis(null); }} />
+      <span className="mx-0.5 h-4 w-px bg-[#E5E7EB]" />
+      <div ref={addRef} className="relative">
+        <button className={btn} data-tip="Add a widget beside the banner text" onClick={() => { setAxis(null); setFill(false); setAdding((x) => !x); }}><Plus size={15} /></button>
+        {adding && (
+          <ElementPicker
+            only={BANNER_SIDE_WIDGETS}
+            mode="add"
+            onPick={(t) => { setAdding(false); dropInRow('hero', t); }}
+            onClose={() => setAdding(false)}
+            anchorRef={addRef}
+            targetId="hero"
+          />
+        )}
+      </div>
+      <button className={btn} data-tip={hero.bannerImage ? 'Replace the banner image' : 'Add a banner image'} onClick={() => fileRef.current?.click()}><ImagePlus size={15} /></button>
+      <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { onFile(e.target.files?.[0]); e.target.value = ''; }} />
+      <div className="relative">
+        <button className={fill ? btnOn : btn} data-tip="Banner colour — solid or gradient" onClick={() => { setAxis(null); setAdding(false); setFill((x) => !x); }}><Palette size={15} /></button>
+        {fill && (
+          <>
+            <span className="fixed inset-0 z-[60]" onClick={() => setFill(false)} />
+            <div className="absolute left-1/2 top-[calc(100%+6px)] z-[61] w-[240px] -translate-x-1/2 rounded-lg border border-[#E5E7EB] bg-white p-3 shadow-[0_12px_16px_-4px_rgba(16,24,40,0.10),0_4px_6px_-2px_rgba(16,24,40,0.06)]">
+              <BannerFillEditor cfg={hero} setCfg={(patch) => setCfg?.('hero', patch)} />
+            </div>
+          </>
+        )}
+      </div>
+      <span className="mx-0.5 h-4 w-px bg-[#E5E7EB]" />
+      <button className="flex size-7 items-center justify-center rounded text-[#EF4444] transition-colors hover:bg-[#FEF3F2]" data-tip="Delete the banner" onClick={() => deleteNode('hero')}><Trash2 size={14} /></button>
+    </div>
+  );
+}
+
 function ToolbarSlot({ toolbarBelow, children }: { toolbarBelow?: boolean | 'under'; children: ReactNode }) {
   const anchorRef = useRef<HTMLSpanElement>(null);
   const barRef = useRef<HTMLDivElement>(null);
@@ -1648,7 +1744,9 @@ function ToolbarSlot({ toolbarBelow, children }: { toolbarBelow?: boolean | 'und
       /* Above by default; below when there is no room — the banner's heading sits within 44px of
          the canvas top, and the overflow there is vertical, which no horizontal clamp can fix. */
       const wantBelow = toolbarBelow === 'under' || above < box.top + GAP;
-      const top = wantBelow ? below : above;
+      /* `true` means JUST INSIDE the element's own top edge — the banner's promise. Above it the bar lands on
+         the builder's own top bar, which is not part of the canvas at all. */
+      const top = toolbarBelow === true ? el.top + GAP : wantBelow ? below : above;
 
       let left = el.left;
       if (left + b.width > box.right - GAP) left = box.right - GAP - b.width;
@@ -2028,18 +2126,20 @@ export function Sel({ id, children, className = '', toolbarBelow = false, style:
       </div>
     )
     : children;
+  /* ⚠️ A shared tile id renders once PER TILE, so its toolbar would paint four times. Only the FIRST
+     tile on the page carries it — measured after mount, since which one is first is a DOM fact.
+     ⚠️ ABOVE the early return below: hooks after a conditional return change count between renders
+     ("Rendered fewer hooks than expected") and blank the whole canvas. */
+  const [firstTile, setFirstTile] = useState(false);
+  useEffect(() => {
+    if (!enabled || !/-tile$/.test(id) || !isServiceTile(id)) return;
+    setFirstTile(document.querySelector(`[data-node="${id}"]`) === ref.current);
+  });
   if (!enabled || !node) return <div style={size} className={className}>{body}</div>;
 
   const on = selectedId === id;
   const hov = hoverId === id && !on;
   const sharedTile = /-tile$/.test(id);
-  /* ⚠️ A shared tile id renders once PER TILE, so its toolbar would paint four times. Only the FIRST
-     tile on the page carries it — measured after mount, since which one is first is a DOM fact. */
-  const [firstTile, setFirstTile] = useState(false);
-  useEffect(() => {
-    if (!sharedTile || !isServiceTile(id)) return;
-    setFirstTile(document.querySelector(`[data-node="${id}"]`) === ref.current);
-  });
 
   /* ⚠️ FREE PLACEMENT, banner children only. Everything else on this page is laid out — a card is in
      a row, a row is in a section — and letting those be dragged anywhere would break the layout that
@@ -2219,6 +2319,9 @@ export function Sel({ id, children, className = '', toolbarBelow = false, style:
       {/* ⚠️ Product chrome gets no floating toolbar — the banner, the left rail, the top bar and
           everything the bar contains. Every action on it (move, duplicate, align, delete) is either
           disabled or a lie over navigation the admin does not own. */}
+      {on && enabled && id === 'hero' && (
+        <ToolbarSlot toolbarBelow={toolbarBelow}><BannerToolbar /></ToolbarSlot>
+      )}
       {on && (!sharedTile || firstTile) && id !== 'hero' && id !== 'rail' && !/^header/.test(id) && (
         <ToolbarSlot toolbarBelow={toolbarBelow}>
           {/* ⚠️ A PLACED text gets BOTH bars; a text CHILD gets only the formatting one.
