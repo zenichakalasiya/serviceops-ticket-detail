@@ -1061,6 +1061,12 @@ function SelectionHandles({ id, elRef }: { id: string; elRef: React.RefObject<HT
     track: number;
     /** Node ids sharing this row, their starting widths, and where the dragged one sits. */
     siblings: string[]; widths: number[]; index: number;
+    /** The parent's CONTENT width — what `width: N%` and `margin-left: N%` resolve against. */
+    contentW: number;
+    /** The margins the element starts with, in px, and its stored margin (so a drag keeps the other sides). */
+    ml: number; mr: number; mt: number; margin: SpacingBox;
+    /** Centred (or end-aligned) in a flex column: the first resize pins it to where it sits, so one edge moves. */
+    pin: boolean;
   } | null>(null);
 
   useEffect(() => {
@@ -1091,69 +1097,90 @@ function SelectionHandles({ id, elRef }: { id: string; elRef: React.RefObject<HT
            ⚠️ Stored as a PERCENTAGE of the row, like every other dragged width here: a px value
            stays put when the panel beside it is dragged or the section is restyled, so a row built
            at one width falls apart at another. */
+        /* ⚠️ EVERY EDGE MOVES ALONE. The edge you hold follows the pointer and the opposite edge stays
+           exactly where it was — that is what a resize handle promises, and it is what the left and top
+           handles were not doing: a width is laid out from the LEFT, so shrinking it from the left edge
+           pulled the right edge in instead, and growing it pushed the element rightward. The left edge
+           therefore moves the element's own left MARGIN by the same amount the width changes, and the
+           top edge does the same with its top margin — so nothing beside or below it moves either. */
+        const west = d.corner.includes('w');
+        const north = d.corner.includes('n');
+        const pct = (px: number, of: number) => Math.round((px / Math.max(of, 1)) * 1000) / 10;
+        const margin: SpacingBox = { ...d.margin };
+        let marginTouched = false;
+
         if (horiz && d.fixed) {
-          const px = d.corner.includes('w') ? d.w - dx : d.w + dx;
-          /* ⚠️ The ceiling is this card's OWN TRACK, not the row's free space. A fixed row is a grid
-             of equal tracks, so a card cannot borrow width from a neighbour even when the neighbour
-             is not using it — which is the whole promise of Fixed, and it makes the clamp a local
-             fact rather than a sum over siblings that a single wrap could poison.
-             ⚠️ The percentage is OF THE TRACK too, because that is what `width: N%` resolves
-             against inside a grid cell. Measured against the row it would come out four times too
-             small on a four-column band. */
-          const room = Math.max(MIN_COL, d.track - 1);
-          const v = Math.max(MIN_COL, Math.min(room, Math.round(px)));
-          /* ⚠️ `flex` is cleared in the same write. It is the Fill representation, it is read FIRST
-             by `sizeOf`, and a leftover from an earlier Fill drag would win over the width you are
-             setting right now — the handle would move and the column would not. */
-          setStyle(id, {
-            widthPct: Math.max(1, Math.floor((v / Math.max(d.track, 1)) * 1000) / 10),
-            flex: undefined,
-            width: undefined,
-          });
-          setLive({ kind: 'size', label: `${v}px` });
+          /* A Fixed row: the card resizes inside its own track, and its free edge moves inside the track. */
+          const room = Math.max(MIN_COL, d.track);
+          if (west) {
+            const px = Math.max(MIN_COL, Math.min(d.w + d.ml, Math.round(d.w - dx)));
+            margin.left = pct(d.ml + (d.w - px), d.track); marginTouched = true;
+            setStyle(id, { widthPct: Math.max(1, pct(px, d.track)), flex: undefined, width: undefined });
+            setLive({ kind: 'size', label: `${px}px` });
+          } else {
+            const px = Math.max(MIN_COL, Math.min(room - d.ml, Math.round(d.w + dx)));
+            setStyle(id, { widthPct: Math.max(1, pct(px, d.track)), flex: undefined, width: undefined });
+            setLive({ kind: 'size', label: `${px}px` });
+          }
         } else if (horiz && d.inRow && d.siblings.length > 1) {
-          const total = d.widths.reduce((a, b) => a + b, 0);
+          /* A Fill row: the edge you hold trades width with the neighbour ON THAT SIDE only, so the cards
+             beyond it do not move. The outermost edges have no neighbour — there the card makes room
+             beside itself instead (its margin grows), and the rest of the row keeps its widths. */
           const i = d.index;
           const floor = 60;
-          const target = Math.max(floor, Math.min(d.widths[i] + (d.corner.includes('w') ? -dx : dx), total - floor * (d.siblings.length - 1)));
-          const rest = total - target;
-          const othersTotal = total - d.widths[i];
-          d.siblings.forEach((sib, j) => {
-            const w = j === i ? target : othersTotal > 0 ? (d.widths[j] / othersTotal) * rest : rest / (d.siblings.length - 1);
-            /* ⚠️ `widthPct` cleared alongside — it is the Fixed representation, and `sizeOf` reads
-               `flex` first only for as long as nothing else claims the width. A column that was
-               dragged while the row was Fixed has to rejoin the row when it goes back to Fill. */
-            setStyle(sib, { flex: Math.round(w), widthPct: undefined, width: undefined });
-          });
-          setLive({ kind: 'size', label: `${Math.round((target / total) * 100)}% of row` });
+          const nb = west ? i - 1 : i + 1;
+          const next = d.widths.slice();
+          if (nb >= 0 && nb < d.widths.length) {
+            const pair = d.widths[i] + d.widths[nb];
+            next[i] = Math.max(floor, Math.min(pair - floor, d.widths[i] + (west ? -dx : dx)));
+            next[nb] = pair - next[i];
+          } else if (west) {
+            next[i] = Math.max(floor, Math.min(d.widths[i] + d.ml, d.widths[i] - dx));
+            margin.left = pct(Math.max(0, d.ml + (d.widths[i] - next[i])), d.contentW); marginTouched = true;
+          } else {
+            next[i] = Math.max(floor, Math.min(d.widths[i] + d.mr, d.widths[i] + dx));
+            margin.right = pct(Math.max(0, d.mr + (d.widths[i] - next[i])), d.contentW); marginTouched = true;
+          }
+          /* ⚠️ Shares in px of the widths they should come out at: with every sibling's share equal to its
+             own width, the row lays out to exactly those widths whatever the margins and gaps are. */
+          d.siblings.forEach((sib, j) => setStyle(sib, { flex: Math.round(next[j]), widthPct: undefined, width: undefined }));
+          const total = d.widths.reduce((a, b) => a + b, 0);
+          setLive({ kind: 'size', label: `${Math.round((next[i] / Math.max(total, 1)) * 100)}% of row` });
         } else if (horiz) {
-          const px = d.corner.includes('w') ? d.w - dx : d.w + dx;
-          patch.widthPct = Math.max(5, Math.min(100, Math.round((px / Math.max(d.parentW, 1)) * 100)));
+          /* On its own in its parent: a share of the parent's content width, moved from the edge you hold. */
+          if (west) {
+            const px = Math.max(MIN_COL, Math.min(d.w + d.ml, d.w - dx));
+            margin.left = pct(Math.max(0, d.ml + (d.w - px)), d.contentW); marginTouched = true;
+            patch.widthPct = Math.max(1, Math.min(100, pct(px, d.contentW)));
+          } else {
+            const px = Math.max(MIN_COL, Math.min(d.contentW - d.ml, d.w + dx));
+            patch.widthPct = Math.max(1, Math.min(100, pct(px, d.contentW)));
+            if (d.pin) { margin.left = pct(d.ml, d.contentW); marginTouched = true; }
+          }
+          if (d.pin) patch.alignY = 'start';
           setLive({ kind: 'size', label: `${patch.widthPct}% of parent` });
         }
 
-        /* ⚠️ Clamped to the SECTION, not to the viewport. A widget taller than the band holding it
-           either spills over the block below it or silently stretches the band — both of which mean
-           the height you dragged is not the height you get. The ceiling is captured once at
-           mousedown: the section's own height follows its tallest child, so measuring it live would
-           let the element chase a limit it was itself pushing upward. */
-        /* ⚠️ The TOP BAR grows by padding, not by height. Its contents are a logo and a row of
-           controls, both vertically centred — giving the band a taller height just pushes empty
-           space to the outside of them, which is not what "make the navbar taller" means. Adding
-           padding moves the bar's own edges away from its contents, so the bar breathes instead of
-           the page gaining a gap. Half the drag per side, so the edge tracks the cursor. */
-        if (id === 'header' && (d.corner.includes('s') || d.corner.includes('n'))) {
-          const delta = d.corner.includes('n') ? -dy : dy;
-          const v = Math.max(0, Math.min(64, Math.round(d.pad.top + delta / 2)));
-          patch.padding = { ...d.pad, top: v, bottom: v };
-          setLive({ kind: 'padY', label: `${v}px` });
+        /* ⚠️ The TOP BAR grows by padding, not by height — its contents are vertically centred, so a taller
+           height only pushes empty space outside them. Half the drag per side, so the edge tracks the cursor. */
+        if (id === 'header' && (d.corner.includes('s') || north)) {
+          const delta = north ? -dy : dy;
+          const val = Math.max(0, Math.min(64, Math.round(d.pad.top + delta / 2)));
+          patch.padding = { ...d.pad, top: val, bottom: val };
+          setLive({ kind: 'padY', label: `${val}px` });
         } else {
           if (d.corner.includes('s')) patch.height = Math.max(24, Math.min(d.maxH, Math.round(d.h + dy)));
-          if (d.corner.includes('n')) patch.height = Math.max(24, Math.min(d.maxH, Math.round(d.h - dy)));
+          if (north) {
+            /* The bottom edge stays: the element grows UP into the space above it, by the same amount. */
+            const hh = Math.max(24, Math.min(d.maxH, Math.round(d.h - dy)));
+            patch.height = hh;
+            margin.top = Math.round(d.mt - (hh - d.h)); marginTouched = true;
+          }
         }
+        if (marginTouched) patch.margin = margin;
         if (Object.keys(patch).length) {
           setStyle(id, patch);
-          if ((!horiz || d.siblings.length <= 1) && !d.fixed) {
+          if (!horiz && !d.fixed) {
             setLive({ kind: 'size', label: `${patch.width ?? Math.round(d.w)} × ${patch.height ?? Math.round(d.h)}` });
           }
         }
@@ -1247,6 +1274,35 @@ function SelectionHandles({ id, elRef }: { id: string; elRef: React.RefObject<HT
       siblings: row.map((c) => c.dataset.node!),
       widths: row.map((c) => c.getBoundingClientRect().width),
       index: row.indexOf(el),
+      ...(() => {
+        const cs = getComputedStyle(el);
+        const host = (id === 'hero-search' ? el.closest('[data-width-root]') : null) as HTMLElement | null ?? el.parentElement;
+        const hs = host ? getComputedStyle(host) : null;
+        const hw = host?.getBoundingClientRect().width ?? r.width;
+        return {
+          /* ⚠️ In a GRID a width and a margin resolve against the element's own TRACK, not the grid's width —
+             measured against the grid, a left-edge drag on one card of a three-card row moved its right edge 168px. */
+          contentW: hs?.display === 'grid' || hs?.display === 'inline-grid'
+            ? (() => { const cols = hs.gridTemplateColumns.split(' ').filter(Boolean); return parseFloat(cols[Math.min(Math.max(row.indexOf(el), 0), cols.length - 1)]) || r.width; })()
+            : hs ? hw - (parseFloat(hs.paddingLeft) || 0) - (parseFloat(hs.paddingRight) || 0) : hw,
+          /* ⚠️ The OFFSET from the parent's content edge, not the computed margin: a flex item centred by
+             `align-items` has a margin of 0 while sitting 100px in, and resizing from that 0 dragged the
+             element back to the edge. In a grid the margin IS the offset inside the track. */
+          ...(() => {
+            const grid = hs?.display === 'grid' || hs?.display === 'inline-grid';
+            const cm = parseFloat(cs.marginLeft) || 0;
+            const cmr = parseFloat(cs.marginRight) || 0;
+            if (grid || !host || !hs) return { ml: cm, mr: cmr, pin: false };
+            const hr = host.getBoundingClientRect();
+            const offL = r.left - hr.left - (parseFloat(hs.borderLeftWidth) || 0) - (parseFloat(hs.paddingLeft) || 0);
+            const offR = hr.right - r.right - (parseFloat(hs.borderRightWidth) || 0) - (parseFloat(hs.paddingRight) || 0);
+            const column = (hs.display === 'flex' || hs.display === 'inline-flex') && hs.flexDirection.startsWith('column');
+            return { ml: Math.max(0, offL), mr: Math.max(0, offR), pin: column && Math.abs(offL - cm) > 1 };
+          })(),
+          mt: styles[id]?.margin?.top ?? (parseFloat(cs.marginTop) || 0),
+          margin: { ...(styles[id]?.margin ?? {}) },
+        };
+      })(),
     };
     document.body.style.userSelect = 'none';
     document.body.style.cursor = kind === 'padY' || kind === 'gap' ? 'ns-resize'
@@ -1280,7 +1336,9 @@ function SelectionHandles({ id, elRef }: { id: string; elRef: React.RefObject<HT
     /* ⚠️ pointer-events-none on the WRAPPER, auto on each handle. Without it this overlay covers
        the whole selected element and swallows clicks on its children — so selecting a section made
        everything inside it unreachable. */
-    <span className="pointer-events-none absolute inset-0 z-20">
+    /* ⚠️ z-[35]: above the add-section strip between bands (z-30), which otherwise covers the corner
+       handles on the top and bottom edges and turns a corner drag into a section drag. */
+    <span className="pointer-events-none absolute inset-0 z-[35]">
       {/* Magenta guides mark the padded edges while you drag them. */}
       {live?.kind === 'padY' && (
         <>
@@ -2559,7 +2617,7 @@ export function Sel({ id, children, className = '', toolbarBelow = false, style:
       {/* ⚠️ Not on data cards: every tile in a widget is ONE node, so handles, a toolbar or a name chip
           would paint once per tile. The outline alone says all of them are selected. */}
       {/* ⚠️ A group HUGS its items, so it has no size of its own to drag — no handles. */}
-      {on && !sharedTile && !BANNER_GROUPS.has(id) && <SelectionHandles id={id} elRef={ref} />}
+      {on && !sharedTile && <SelectionHandles id={id} elRef={ref} />}
       {/* ⚠️ The banner's ITEMS get the four + adders the section boxes have, on hover — left/right put an
           empty cell beside the item as a column, top/bottom as a row. Hover, not selection, for the reason
           the box adders give: a selected item carries resize handles on these very edges. */}
