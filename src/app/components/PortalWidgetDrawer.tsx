@@ -38,7 +38,7 @@ import { RecordFilterField } from './PortalRecordFilter';
 import type { RecordFilter } from './portalRecordFilters';
 import { BANNER_SHAPES, bannerLayoutsFor, recordModule } from './supportPortalData';
 import { AnnouncementTypePicker, BannerLayoutPicker, BannerShapePicker, KpiLayoutPicker, TemplatePicker } from './PortalSectionControls';
-import { BannerFillEditor, BannerPresetPicker, GapField, SideGrid, TilePresetPicker, bannerLayerSide } from './PortalBannerTools';
+import { BannerFillEditor, BannerPresetPicker, GapField, GapPair, SideGrid, TilePresetPicker, bannerLayerSide } from './PortalBannerTools';
 import type { BannerNode } from './portalBannerLayout';
 import { bannerGroupGap } from './portalPageModel';
 import { ACROSS_ROW, ACROSS_STACK, DOWN_ROW, DOWN_STACK, SectionPresets } from './PortalSectionLayout';
@@ -1207,6 +1207,17 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
           />
         );
       }
+      case 'gapPair':
+        return (
+          <GapPair
+            x={Number(viewCfg.__gapX ?? 16)}
+            y={Number(viewCfg.__gapY ?? 16)}
+            mixedX={viewCfg.__gapMixedX === true}
+            mixedY={viewCfg.__gapMixedY === true}
+            onX={(n) => viewSet({ gapPairX: n })}
+            onY={(n) => viewSet({ gapPairY: n })}
+          />
+        );
       case 'sectionPreset':
         return (
           <SectionPresets

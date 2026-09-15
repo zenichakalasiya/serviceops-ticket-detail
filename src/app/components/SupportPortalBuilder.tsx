@@ -35,7 +35,7 @@ import { BANNER_GROUPS } from './portalPageModel';
 import type { Box, BoxDir, CustomSection, NodeStyle, PlacedElement, PortalPageContent, PortalStyles } from './portalPageModel';
 import { PORTAL_ELEMENTS, PORTAL_EMPTY_WIDGETS, PORTAL_TEMPLATES, bannerLayout, bannerShape } from './supportPortalData';
 import type { ShapeNode } from './supportPortalData';
-import { insertBeside, normalizeTree, replaceLeaf, shiftLeaf } from './portalBannerLayout';
+import { insertAtEdge, insertBeside, normalizeTree, replaceLeaf, shiftLeaf } from './portalBannerLayout';
 import { IconPopover } from './PortalIconPicker';
 import type { IconChoice } from './PortalIconPicker';
 import type { PortalPage } from './supportPortalData';
@@ -463,6 +463,36 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     return sec ? findBox(sec.root, id)?.dir : undefined;
   }, []);
 
+  /* The effective column / row gap of a section, a box or a built-in band, for the panel's Gap pair.
+     ⚠️ A box without its own gap takes its SECTION's, and a section reads "Mixed" once any row or
+     column inside it has a gap of its own that differs. */
+  function gapSeed(owner: string): Cfg {
+    const all = widgetCfgRef.current;
+    if (!/^sec-\d+(-b\d+)?$/.test(owner)) {
+      if (!['quick', 'favourites', 'services', 'work', 'records'].includes(owner)) return {};
+      const col = Number(all[owner]?.colGap ?? 16);
+      return { __gapX: col, __gapY: Number(all[owner]?.rowGap ?? col) };
+    }
+    const secId = owner.replace(/-b[0-9]+$/, '');
+    const sec = sectionsRef.current.find((s) => s.section.id === secId)?.section;
+    const box = sec ? (owner === secId ? sec.root : findBox(sec.root, owner)) : undefined;
+    const gx = Number(all[owner]?.gapX ?? all[secId]?.gapX ?? 16);
+    const gy = Number(all[owner]?.gapY ?? all[secId]?.gapY ?? 16);
+    let mixedX = false;
+    let mixedY = false;
+    if (sec && owner === secId) {
+      const walk = (b: Box) => {
+        if (b.id !== secId && b.children?.length) {
+          if (all[b.id]?.gapX !== undefined && Number(all[b.id].gapX) !== gx) mixedX = true;
+          if (all[b.id]?.gapY !== undefined && Number(all[b.id].gapY) !== gy) mixedY = true;
+        }
+        (b.children ?? []).forEach(walk);
+      };
+      walk(sec.root);
+    }
+    return { __gapX: gx, __gapY: gy, __gapMixedX: mixedX, __gapMixedY: mixedY, __branch: !!box?.children?.length };
+  }
+
   const cfgFor = useCallback((id: string): Cfg => {
     const owner = ownerOf(id);
     /* ⚠️ Light is the BARE key and dark is `dark:<key>` — the theme panel's convention, so a page
@@ -487,6 +517,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
          own still wins — this only fills the gap before it chooses. */
       ...(/^quick-/.test(owner) ? { cardTemplate: widgetCfgRef.current.quick?.cardTemplate ?? 'left' } : {}),
       __noData: PORTAL_EMPTY_WIDGETS.has(owner),
+      ...gapSeed(owner),
       /* ⚠️ Which section is allowed the external-link CTA, and whether it already has one. Seeded
          here rather than tested in the spec, because a spec is data and has no way to look at the
          page. `__hasLink` is what disables the CTA with a reason instead of letting a second card
@@ -539,6 +570,33 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
      goes through this function, so there is no path that sets one and misses the other. It is the
      only key in the builder that behaves this way, which is why it is named rather than inferred. */
   const patchCfg = useCallback((id: string, patch: Cfg) => {
+    /* The panel's Gap pair. A built-in band keeps `colGap` / `rowGap`; a section or box keeps `gapX` / `gapY`,
+       and setting it on a SECTION sets every row and column inside it back to that one value. */
+    if (patch.gapPairX !== undefined || patch.gapPairY !== undefined) {
+      const { gapPairX, gapPairY, ...rest } = patch;
+      const boxy = /^sec-/.test(id);
+      const kx = boxy ? 'gapX' : 'colGap';
+      const ky = boxy ? 'gapY' : 'rowGap';
+      setWidgetCfg((prev) => {
+        const next: Record<string, Cfg> = { ...prev, [id]: { ...(prev[id] ?? {}), ...(gapPairX !== undefined ? { [kx]: gapPairX } : {}), ...(gapPairY !== undefined ? { [ky]: gapPairY } : {}) } };
+        if (/^sec-\d+$/.test(id)) {
+          const sec = sectionsRef.current.find((s) => s.section.id === id)?.section;
+          const walk = (b: Box) => {
+            if (b.id !== id && next[b.id]) {
+              const c = { ...next[b.id] };
+              if (gapPairX !== undefined) delete c.gapX;
+              if (gapPairY !== undefined) delete c.gapY;
+              next[b.id] = c;
+            }
+            (b.children ?? []).forEach(walk);
+          };
+          if (sec) walk(sec.root);
+        }
+        return next;
+      });
+      if (!Object.keys(rest).length) return;
+      patch = rest;
+    }
     /* ⚠️ The banner panel's "Gap between items" IS the Content group's gap — one value, written where the
        canvas's pink gap bands write it, so the two can never show different numbers. */
     if (id === 'hero' && (patch.contentGap !== undefined || patch.contentGapY !== undefined)) {
@@ -741,7 +799,8 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
   /** The banner's + adders: an empty cell beside an item — a column to its left or right, a row above or below. */
   const addBannerCell = useCallback((anchorId: string, side: 'left' | 'right' | 'top' | 'bottom') => {
     const el = makeElement('bn-slot', 'hero');
-    const tree = insertBeside(heroTree(), anchorId, el.id, side);
+    /* The banner's own adders put the cell at the banner's EDGE; an item's adders put it beside that item. */
+    const tree = anchorId === 'hero' ? insertAtEdge(heroTree(), el.id, side) : insertBeside(heroTree(), anchorId, el.id, side);
     setRowExtras((prev) => ({ ...prev, hero: [...(prev.hero ?? []), el] }));
     patchCfg('hero', { bannerTree: tree });
     select(el.id);

@@ -193,3 +193,12 @@ export function tilePresets(count: number): { cols: number; label: string }[] {
 
 /** The block types that sit in a narrow column beside the words by default. */
 export const COMPACT_BANNER_TYPES = new Set(['x-actions', 'x-kpis', 'c-contact']);
+
+/** Puts `newId` at an EDGE of the whole banner: left/right add a column, top/bottom a row. */
+export function insertAtEdge(tree: BannerNode | null, newId: string, side: 'left' | 'right' | 'top' | 'bottom'): BannerNode {
+  if (!tree) return newId;
+  const d = side === 'left' || side === 'right' ? 'row' : 'column';
+  const before = side === 'left' || side === 'top';
+  if (typeof tree !== 'string' && tree.d === d) return branch(d, before ? [newId, ...tree.c] : [...tree.c, newId]);
+  return branch(d, before ? [newId, tree] : [tree, newId]);
+}

@@ -13,6 +13,7 @@
  *   overlayOn / overlaySide / overlayFrom / overlayTo — the colour layer between an image and the text
  */
 
+import type { ReactNode } from 'react';
 import { ColorField } from './PortalColorPicker';
 import { activePreset, presetsFor, tilePresets } from './portalBannerLayout';
 import type { BannerNode } from './portalBannerLayout';
@@ -212,6 +213,41 @@ export function TilePresetPicker({ count, value, onChange }: { count: number; va
           </button>
         );
       })}
+    </div>
+  );
+}
+
+/* ── Figma's two spacing fields: the gap between COLUMNS and the gap between ROWS ────────────────
+ * One value each for everything the container holds. "Mixed" when rows or columns inside it were given
+ * their own gap — typing a value here sets them all back to one. */
+export function GapPair({ x, y, mixedX = false, mixedY = false, onX, onY }: {
+  x: number; y: number; mixedX?: boolean; mixedY?: boolean; onX: (n: number) => void; onY: (n: number) => void;
+}) {
+  const cell = (v: number, mixed: boolean, onChange: (n: number) => void, glyph: ReactNode, label: string) => (
+    <label title={label} className="flex h-8 min-w-0 flex-1 items-center gap-2 rounded border border-[#DFE5ED] bg-white px-2 focus-within:border-[#3D8BD0]">
+      <span className="flex-shrink-0 text-[#64748B]">{glyph}</span>
+      <input
+        type="number"
+        min={0}
+        max={200}
+        value={mixed ? '' : v}
+        placeholder={mixed ? 'Mixed' : undefined}
+        onChange={(e) => { if (e.target.value === '') return; onChange(Math.max(0, Math.min(200, Math.round(Number(e.target.value) || 0)))); }}
+        aria-label={label}
+        className="w-full min-w-0 bg-transparent text-[13px] text-[#364658] outline-none placeholder:text-[#364658]"
+      />
+    </label>
+  );
+  const colGlyph = (
+    <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden><rect x="1" y="2" width="3" height="10" rx="1" fill="currentColor" /><rect x="10" y="2" width="3" height="10" rx="1" fill="currentColor" /><path d="M5.5 7h3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
+  );
+  const rowGlyph = (
+    <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden><rect x="2" y="1" width="10" height="3" rx="1" fill="currentColor" /><rect x="2" y="10" width="10" height="3" rx="1" fill="currentColor" /><path d="M7 5.5v3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
+  );
+  return (
+    <div className="flex gap-2">
+      {cell(x, mixedX, onX, colGlyph, 'Gap between columns')}
+      {cell(y, mixedY, onY, rowGlyph, 'Gap between rows')}
     </div>
   );
 }

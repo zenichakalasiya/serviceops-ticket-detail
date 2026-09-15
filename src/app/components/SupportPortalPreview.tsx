@@ -446,7 +446,7 @@ const BOX_GAP = 16;
  * section to have a height of its own — which it does not, and should not. Stacked boxes take the
  * height of what is in them, exactly as the page does today. */
 function BoxView({
-  box, parentDir, resize, icons, placedText, cfg, siblings,
+  box, parentDir, resize, icons, placedText, cfg, siblings, gap = BOX_GAP,
 }: {
   box: Box;
   /** The PARENT's direction — what decides whether this box is a Column or a Row, and which way
@@ -458,6 +458,8 @@ function BoxView({
   cfg?: (id: string) => Record<string, unknown>;
   /** The weights of every child in this row, for the basis calculation. */
   siblings: number[];
+  /** The gap between this box and its siblings — the parent's own. */
+  gap?: number;
 }) {
   const { selectedId, hoverId } = useCanvas();
   const branch = isBranch(box);
@@ -487,7 +489,7 @@ function BoxView({
      would vanish the moment the section was switched. Written as the share it already had, the
      switch is invisible, which is the point. */
   const style: CSSProperties = parentDir === 'row'
-    ? { flex: `${resize === 'fixed' ? 0 : box.weight} ${resize === 'fixed' ? 0 : 1} calc((100% - ${(siblings.length - 1) * BOX_GAP}px) * ${box.weight / total})` }
+    ? { flex: `${resize === 'fixed' ? 0 : box.weight} ${resize === 'fixed' ? 0 : 1} calc((100% - ${(siblings.length - 1) * gap}px) * ${box.weight / total})` }
     : {};
 
   /* ⚠️ On the BANNER, a cell stacked in a column that holds the heading or the search HUGS it, so its
@@ -523,6 +525,9 @@ function BoxChildren({ box, resize, icons, placedText, cfg }: {
 }) {
   const kids = box.children ?? [];
   const weights = kids.map((c) => c.weight);
+  /* The gap between these children: the columns' gap along a row, the rows' gap down a column. */
+  const gapCfg = cfg?.(box.id) ?? {};
+  const boxGap = box.dir === 'row' ? Number(gapCfg.__gapX ?? BOX_GAP) : Number(gapCfg.__gapY ?? BOX_GAP);
   const { dropBeside } = useCanvas();
   const wrapRef = useRef<HTMLDivElement>(null);
   /* ── Drop in the SPACE between blocks, on the banner ─────────────────────────────────────────
@@ -595,8 +600,9 @@ function BoxChildren({ box, resize, icons, placedText, cfg }: {
       /* `dir` IS `flex-direction`. That is the whole of the behaviour setting: a row lays its
          children left-to-right so each reads as a column, a column stacks them so each reads as a
          row. Flipping it moves nothing and destroys nothing. */
-      style={{ flexDirection: box.dir, gap: BOX_GAP, alignItems: box.dir === 'row' ? 'stretch' : undefined }}
+      style={{ flexDirection: box.dir, gap: boxGap, alignItems: box.dir === 'row' ? 'stretch' : undefined }}
       data-dir={box.dir}
+      data-gap-parent={box.id}
     >
       {kids.map((child) => (
         <BoxView
@@ -608,6 +614,7 @@ function BoxChildren({ box, resize, icons, placedText, cfg }: {
           placedText={placedText}
           cfg={cfg}
           siblings={weights}
+          gap={boxGap}
         />
       ))}
       {gap && <span className="pointer-events-none absolute z-30 rounded-full" style={{ ...gap.line, background: LINE }} />}
@@ -1347,6 +1354,8 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
      the widget config so the drawer's sliders move the real band. */
   const secCols = (id: string, fallback: number) => Number(wc(id).cols ?? fallback);
   const secGap = (id: string) => Number(wc(id).colGap ?? 16);
+  /* Row gap, then column gap — the two values of the `gap` shorthand. */
+  const secGapCss = (id: string) => `${Number(wc(id).rowGap ?? wc(id).colGap ?? 16)}px ${secGap(id)}px`;
   /* §Responsive behaviour — how this section's first-layer columns share their row. */
   const secResize = (id: string) => String(wc(id).resize ?? 'fill');
   const secGrow = (id: string) => (secResize(id) === 'fixed' ? 0 : 1);
@@ -1560,6 +1569,12 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
      property of the page — nothing an admin sets and nothing to persist. */
   const [workTab, setWorkTab] = useState('requests');
 
+  /* The banner image as CROPPED on the canvas (double-click the banner): a width as a share of the banner
+     and where it sits. Set only once someone has cropped; until then the image covers the band. */
+  const cropSet = heroCfg.bannerCrop as { scale?: number; x?: number; y?: number } | undefined;
+  const heroCropCss: React.CSSProperties = !pageImage && heroCfg.bgKind !== 'color' && !!heroCfg.bannerImage && cropSet
+    ? { backgroundSize: `${Number(cropSet.scale ?? 100)}% auto`, backgroundPosition: `${Number(cropSet.x ?? 50)}% ${Number(cropSet.y ?? 50)}%`, backgroundRepeat: 'no-repeat' }
+    : {};
   const heroBg: React.CSSProperties = pageImage
     ? { backgroundColor: String(heroCfg.bannerColor ?? '#3D8BD0'), backgroundImage: 'none' }
     /* The Solid / Gradient editor (toolbar popup and panel). Only a banner that has been set through it
@@ -1989,7 +2004,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
   const quickSection = (
     hostBand("quick",
     <Sel id="quick" className={`relative z-10 ${SECTION_PAD} ${blockOrder.indexOf("quick") === 0 && !searchFloats && !tileActions && !quickOnBanner && !hostOf("quick") ? "-mt-[62px]" : ""} ${searchFloats ? "pt-[52px]" : ""} ${tileActions || quickOnBanner ? "pt-6" : ""}`} style={{ order: slot("quick"), ...fillCss(wc('quick')), ...(quickOnBanner ? { marginTop: -1 } : {}) }}>
-      <RowDrop rowId="quick" resize={secResize("quick")} className={`flex flex-wrap${secPacked("quick", 4) ? " portal-row-packed" : ""}`} style={{ gap: secGap("quick"), ...secBox("quick", 4), ...rowFits(inRow("quick"), "quick"), ...secGrid("quick", 4) }}>
+      <RowDrop rowId="quick" resize={secResize("quick")} className={`flex flex-wrap${secPacked("quick", 4) ? " portal-row-packed" : ""}`} style={{ gap: secGapCss("quick"), ...secBox("quick", 4), ...rowFits(inRow("quick"), "quick"), ...secGrid("quick", 4) }}>
         {quickCards.map((a) => quickCardEl(a, { ...share(secCols("quick", content.cols.quick), secGap("quick"), secGrow("quick")) }))}
 
         {(rowExtras?.['quick'] ?? []).map((el) => (
@@ -2133,12 +2148,14 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
         /* ⚠️ A RAIL reads top-down. Centring is right for a band — the copy sits in the middle
            of the colour however tall it is made — and wrong for a column, where it pushes the
            greeting to the vertical middle of the page and the action rows off the bottom. */
+        data-banner-band=""
         className={treeBanner ? 'relative flex flex-col overflow-hidden' : `relative flex flex-col ${heroSide ? 'justify-start pt-10 pb-10' : bannerSec ? (blank || tileActions || quickOnBanner ? 'justify-center py-5' : 'justify-center pt-5 pb-[86px]') : `${({ start: 'justify-start', end: 'justify-end' } as Record<string, string>)[String(wc('hero').contentAlignY ?? 'center')] ?? 'justify-center'} ${(tileActions || quickOnBanner) && !searchFloats ? 'pb-10' : 'pb-[86px]'}`} ${searchFloats && !bannerSec ? 'overflow-visible' : heroSticky ? 'overflow-x-hidden overflow-y-auto scrollbar-hide' : 'overflow-hidden'}`}
         style={{
           /* ⚠️ The tabs decide, in one place. Image wins when one is uploaded; Colour paints
              flat; and with neither the band keeps its gradient, so a portal nobody has touched
              still looks designed rather than blank. */
           ...heroBg,
+          ...heroCropCss,
           minHeight: Number(wc('hero').height ?? 260),
           /* ⚠️ FILL THE WRAPPER. A dragged height is written into `styles.hero` and applied by
              `sizeOf` on the Sel WRAPPER — this inner div is what actually paints the banner,
@@ -2699,7 +2716,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                    panels — only the row they sit in is shared. */
                 <div
                   className={`flex flex-wrap items-stretch ${SECTION_PAD}`}
-                  style={{ order: slot("favourites"), gap: secGap('favourites') }}
+                  style={{ order: slot("favourites"), gap: secGapCss('favourites') }}
                 >
                   <Sel id="favourites" className="min-w-[300px] flex-1" style={fillCss(wc('favourites'))}>
                     <FavouriteServicesRender nodeId="favourites" cfg={servicesChips ? { tileLook: 'chips', ...wc('favourites') } : wc('favourites')} />
@@ -2739,9 +2756,9 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                   /* ⚠️ 1.85 : 1, the same share the work band gives its main region — so the rail is
                      the same width wherever it lands and the page has one rail measure, not two. */
                   return (
-                    <div className="flex flex-wrap items-stretch" style={{ gap: secGap('services') }}>
+                    <div className="flex flex-wrap items-stretch" style={{ gap: secGapCss('services') }}>
                       <div className="min-w-[320px] flex-[1.85_1_0%]">{panel}</div>
-                      <div className="flex min-w-[240px] flex-1 flex-col" style={{ gap: secGap('services') }}>
+                      <div className="flex min-w-[240px] flex-1 flex-col" style={{ gap: secGapCss('services') }}>
                         {(rail ?? []).map((id) => <Fragment key={id}>{railCard(id)}</Fragment>)}
                       </div>
                     </div>
@@ -2756,7 +2773,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
             {/* ── Work row ── one section, three cards, full width. */}
             {hostBand("work",
             <Sel id="work" className={SECTION_PAD} style={{ order: slot("work"), ...fillCss(wc('work')) }}>
-              <RowDrop rowId="work" resize={secResize("work")} className={`flex flex-wrap${secPacked("work", 3) ? " portal-row-packed" : ""}`} style={{ gap: secGap("work"), ...secBox("work", 3), ...rowFits(inRow("work"), "work"), ...secGrid("work", 3) }}>
+              <RowDrop rowId="work" resize={secResize("work")} className={`flex flex-wrap${secPacked("work", 3) ? " portal-row-packed" : ""}`} style={{ gap: secGapCss("work"), ...secBox("work", 3), ...rowFits(inRow("work"), "work"), ...secGrid("work", 3) }}>
               {(() => {
               /* ⚠️ Every work-band card is built as a CONST and PLACED afterwards, because the rail
                  layout puts them in two regions and the flat one puts them in a row — same cards,
@@ -3000,13 +3017,13 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                 const mainRow = (
                   <div
                     className="grid min-w-0"
-                    style={{ gap: secGap('work'), gridTemplateColumns: `repeat(${secCols('work', 3)}, minmax(0, 1fr))` }}
+                    style={{ gap: secGapCss('work'), gridTemplateColumns: `repeat(${secCols('work', 3)}, minmax(0, 1fr))` }}
                   >
                     {main.map((id) => <Fragment key={id}>{workCard(id)}</Fragment>)}
                   </div>
                 );
                 const pairRow = paired.length > 0 ? (
-                  <div className="flex min-w-0 flex-wrap items-stretch" style={{ gap: secGap('work') }}>
+                  <div className="flex min-w-0 flex-wrap items-stretch" style={{ gap: secGapCss('work') }}>
                     {paired.map((id, i) => (
                       /* ⚠️ EQUAL shares when the pair LEADS, 2:1 when it trails. A trailing row is a
                          footer and can be lopsided; a leading row sets the page's column rhythm, and
@@ -3019,7 +3036,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                   </div>
                 ) : null;
                 return (
-                  <div className="flex w-full min-w-0 flex-col" style={{ gap: secGap('work'), gridColumn: '1 / -1' }}>
+                  <div className="flex w-full min-w-0 flex-col" style={{ gap: secGapCss('work'), gridColumn: '1 / -1' }}>
                     {railAbove ? <>{pairRow}{mainRow}</> : <>{mainRow}{pairRow}</>}
                   </div>
                 );
@@ -3057,7 +3074,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                   className="grid min-w-0"
                   style={{
                     flex: '2 1 0%',
-                    gap: secGap("work-main"),
+                    gap: secGapCss("work-main"),
                     gridTemplateColumns: `repeat(${secCols("work-main", 2)}, minmax(0, 1fr))`,
                     /* ⚠️ `auto`, not `1fr`. Equal rows made every row as tall as the TALLEST one on
                        the grid — fine while all four cards were half-width lists of similar length,
@@ -3089,7 +3106,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                 <Sel
                   id="work-rail"
                   className="flex min-w-0 flex-col"
-                  style={{ flex: '1 1 0%', gap: secGap("work-rail") }}
+                  style={{ flex: '1 1 0%', gap: secGapCss("work-rail") }}
                 >
                   {rail.map((id) => (
                     id === 'knowledge' ? <Fragment key={id}>{knowledgeCard}</Fragment>
@@ -3148,7 +3165,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
             {band('records', (
             hostBand("records",
             <Sel id="records" className={SECTION_PAD} style={{ order: slot("records"), ...fillCss(wc('records')) }}>
-              <RowDrop rowId="records" resize={secResize("records")} className={`flex flex-wrap${secPacked("records", 2) ? " portal-row-packed" : ""}`} style={{ gap: secGap("records"), ...secBox("records", 2), ...rowFits(inRow("records"), "records"), ...secGrid("records", 2) }}>
+              <RowDrop rowId="records" resize={secResize("records")} className={`flex flex-wrap${secPacked("records", 2) ? " portal-row-packed" : ""}`} style={{ gap: secGapCss("records"), ...secBox("records", 2), ...rowFits(inRow("records"), "records"), ...secGrid("records", 2) }}>
                 {/* ⚠️ TILES on the rail layout, list rows otherwise — one `rows` shape, two
                     presentations, chosen by the page rather than by either widget. */}
                 {card('assets', rail

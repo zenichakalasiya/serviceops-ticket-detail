@@ -282,6 +282,8 @@ export const SECTION_SPEC: WidgetSpec = {
               { value: 'fixed', label: 'Fixed items' },
             ],
             info: 'Fill — dragging one column re-flows its siblings so the row always fills the section. Fixed — every column keeps its own width, and dragging one leaves the others exactly where they are.' },
+          /* Figma's spacing pair: the gap between the section's columns and between its rows. */
+          { key: 'gapPair', label: 'Gap', control: 'gapPair' },
           { key: 'distribute', label: 'Content alignment', control: 'distribute', when: (c) => Number(c.__count ?? 0) > 1 },
           { key: 'valign', label: '', control: 'valign', when: (c) => Number(c.__count ?? 0) > 1 },
         ],
@@ -334,6 +336,8 @@ export const COLUMN_SPEC: WidgetSpec = {
       key: 'width', label: 'Width', control: 'slider', tab: 'style', group: 'Column', min: 10, max: 90, unit: '%',
       when: (c) => c.hasContent !== false,
     },
+    /* A box holding rows or columns of its own gets the same spacing pair as a section. */
+    { key: 'gapPair', label: 'Gap', control: 'gapPair', tab: 'style', group: 'Gap', when: (c) => c.__branch === true },
     {
       key: 'blockAlign', label: 'Align the blocks inside', control: 'segmented', tab: 'style', group: 'Column',
       options: [{ value: 'start', label: 'Top' }, { value: 'center', label: 'Middle' }, { value: 'end', label: 'Bottom' }],

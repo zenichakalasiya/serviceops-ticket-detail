@@ -1965,22 +1965,34 @@ function GapBands({ id, host }: { id: string; host: React.RefObject<HTMLDivEleme
   /* The arrangement has TWO gaps: between side-by-side items and between stacked ones. */
   const gapY = treeMode ? Number(cfg?.('hero-content')?.gapY ?? 20) : gap;
   const gapFor = (d: string) => (treeMode && d === 'column' ? gapY : gap);
-  const [bands, setBands] = useState<{ x: number; y: number; w: number; h: number; dir: string }[]>([]);
+  /* A SECTION or a box in one: bands for every row and column inside it, each editing the gap of the box
+     that lays it out — the columns' gap along a row, the rows' gap down a column. */
+  const boxMode = /^sec-\d+(-b\d+)?$/.test(id);
+  const [bands, setBands] = useState<{ x: number; y: number; w: number; h: number; dir: string; owner: string }[]>([]);
+  const valueOf = (b: { dir: string; owner: string }) => (boxMode
+    ? Number(cfg?.(b.owner)?.[b.dir === 'row' ? '__gapX' : '__gapY'] ?? 16)
+    : gapFor(b.dir));
   const [drag, setDrag] = useState(false);
   const [hot, setHot] = useState<number | null>(null);
   const sig = `${dir}|${gap}|${gapY}|${String(c.align ?? '')}|${JSON.stringify(cfg?.('hero')?.bannerTree ?? null)}|${JSON.stringify(cfg?.('hero')?.bannerBleed ?? null)}`;
+  /* ⚠️ A node created and selected in the SAME render mounts these bands before its own element ref is
+     attached (a child's layout effect runs first), so the first pass finds no host — try again next frame. */
+  const [retry, setRetry] = useState(0);
   useLayoutEffect(() => {
     const el = host.current;
-    if (!el) return;
+    if (!el) { const f = requestAnimationFrame(() => setRetry((n) => n + 1)); return () => cancelAnimationFrame(f); }
     const measure = () => {
-      const first = treeMode ? el.querySelector<HTMLElement>('[data-banner-root]') : isHero ? el.querySelector<HTMLElement>('[data-gap-parent="hero"]') : el;
+      const first = boxMode ? el.querySelector<HTMLElement>('[data-gap-parent^="sec-"]') : treeMode ? el.querySelector<HTMLElement>('[data-banner-root]') : isHero ? el.querySelector<HTMLElement>('[data-gap-parent="hero"]') : el;
       if (!first) { setBands([]); return; }
       /* The Content group's nested rows and columns share its one gap, so each gets its own bands. */
-      const parents = [...new Set([first, ...(id === 'hero-content' || treeMode ? Array.from(el.querySelectorAll<HTMLElement>('[data-gap-parent="hero-content"]')) : [])])];
+      const parents = boxMode
+        ? Array.from(el.querySelectorAll<HTMLElement>('[data-gap-parent^="sec-"]'))
+        : [...new Set([first, ...(id === 'hero-content' || treeMode ? Array.from(el.querySelectorAll<HTMLElement>('[data-gap-parent="hero-content"]')) : [])])];
       const o = el.getBoundingClientRect();
-      const next: { x: number; y: number; w: number; h: number; dir: string }[] = [];
+      const next: { x: number; y: number; w: number; h: number; dir: string; owner: string }[] = [];
       for (const parent of parents) {
       const pdir = isHero ? 'row' : getComputedStyle(parent).flexDirection.startsWith('row') ? 'row' : 'column';
+      const owner = parent.dataset.gapParent ?? id;
       const kids = Array.from(parent.children).filter((k): k is HTMLElement =>
         k instanceof HTMLElement && (k.hasAttribute('data-node') || k.hasAttribute('data-gap-item')) && k.getBoundingClientRect().width > 0);
       const rs = kids.map((k) => k.getBoundingClientRect()).sort((a, b) => (pdir === 'row' ? a.left - b.left : a.top - b.top));
@@ -1990,11 +2002,11 @@ function GapBands({ id, host }: { id: string; host: React.RefObject<HTMLDivEleme
         if (pdir === 'row') {
           const top = Math.min(a.top, b.top);
           const bottom = Math.max(a.bottom, b.bottom);
-          next.push({ x: a.right - o.left, y: top - o.top, w: Math.max(0, b.left - a.right), h: bottom - top, dir: pdir });
+          next.push({ x: a.right - o.left, y: top - o.top, w: Math.max(0, b.left - a.right), h: bottom - top, dir: pdir, owner });
         } else {
           const left = Math.min(a.left, b.left);
           const right = Math.max(a.right, b.right);
-          next.push({ x: left - o.left, y: a.bottom - o.top, w: right - left, h: Math.max(0, b.top - a.bottom), dir: pdir });
+          next.push({ x: left - o.left, y: a.bottom - o.top, w: right - left, h: Math.max(0, b.top - a.bottom), dir: pdir, owner });
         }
       }
       }
@@ -2006,14 +2018,15 @@ function GapBands({ id, host }: { id: string; host: React.RefObject<HTMLDivEleme
     Array.from(el.querySelectorAll('[data-node],[data-gap-item]')).forEach((k) => ro.observe(k));
     window.addEventListener('resize', measure);
     return () => { ro.disconnect(); window.removeEventListener('resize', measure); };
-  }, [host, isHero, treeMode, sig]);
+  }, [host, isHero, treeMode, boxMode, sig, retry]);
 
   const begin = (e: React.MouseEvent, i: number) => {
     e.preventDefault();
     e.stopPropagation();
     const bdir = bands[i]?.dir ?? dir;
     const start = bdir === 'row' ? e.clientX : e.clientY;
-    const from = gapFor(bdir);
+    const band = bands[i];
+    const from = band ? valueOf(band) : gapFor(bdir);
     setDrag(true);
     setHot(i);
     document.body.style.cursor = bdir === 'row' ? 'ew-resize' : 'ns-resize';
@@ -2021,6 +2034,7 @@ function GapBands({ id, host }: { id: string; host: React.RefObject<HTMLDivEleme
     const move = (ev: MouseEvent) => {
       const d = (bdir === 'row' ? ev.clientX : ev.clientY) - start;
       const nextGap = Math.max(0, Math.min(200, Math.round(from + d)));
+      if (boxMode && band) { setCfg?.(band.owner, bdir === 'row' ? { gapX: nextGap } : { gapY: nextGap }); return; }
       setCfg?.(gapOwner, isHero ? { sideGap: nextGap } : treeMode && bdir === 'column' ? { gapY: nextGap } : { gap: nextGap });
     };
     const up = () => {
@@ -2051,7 +2065,7 @@ function GapBands({ id, host }: { id: string; host: React.RefObject<HTMLDivEleme
             onClick={(e) => e.stopPropagation()}
             onMouseEnter={() => !drag && setHot(i)}
             onMouseLeave={() => !drag && setHot(null)}
-            title={`Gap ${gapFor(dir)}px — drag to change`}
+            title={`Gap ${valueOf(b)}px — drag to change`}
             className="absolute z-40 flex items-center justify-center"
             style={{
               left: b.x + (b.w - hitW) / 2,
@@ -2071,11 +2085,143 @@ function GapBands({ id, host }: { id: string; host: React.RefObject<HTMLDivEleme
                 : { height: 2, width: Math.min(16, Math.max(8, b.w * 0.3)), backgroundColor: GAP_PINK }}
             />
             {lit && (
-              <span className="pointer-events-none absolute z-10 whitespace-nowrap rounded-sm px-1 text-[10px] font-semibold leading-[15px] text-white" style={{ backgroundColor: GAP_PINK }}>{gapFor(dir)}</span>
+              <span className="pointer-events-none absolute z-10 whitespace-nowrap rounded-sm px-1 text-[10px] font-semibold leading-[15px] text-white" style={{ backgroundColor: GAP_PINK }}>{valueOf(b)}</span>
             )}
           </span>
         );
       })}
+    </>
+  );
+}
+
+/* ── Cropping the BANNER image ────────────────────────────────────────────────────────────────────
+ * The whole picture is shown — faded where it runs past the banner, sharp inside it. Drag the picture to
+ * move it, drag a corner to scale it (the opposite corner stays put), Fill / Fit for the two usual
+ * answers. It writes `bannerCrop` = { scale: the picture's width as a % of the banner, x / y: where it
+ * sits, as CSS background-position %s } live, so the banner behind updates as you drag. */
+function BannerCropper({ hostRef, onClose }: { hostRef: React.RefObject<HTMLDivElement | null>; onClose: () => void }) {
+  const { cfg, setCfg } = useCanvas();
+  const hero = cfg?.('hero') ?? {};
+  const src = String(hero.bannerImage ?? '');
+  const [nat, setNat] = useState<{ w: number; h: number } | null>(null);
+  const [box, setBox] = useState<{ l: number; t: number; w: number; h: number } | null>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const barRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const img = new Image();
+    img.onload = () => setNat({ w: img.naturalWidth, h: img.naturalHeight });
+    img.src = src;
+  }, [src]);
+  useLayoutEffect(() => {
+    const measure = () => {
+      const host = hostRef.current;
+      const band = host?.querySelector('[data-banner-band]');
+      if (!host || !band) return;
+      const hr = host.getBoundingClientRect();
+      const br = band.getBoundingClientRect();
+      setBox((p) => { const n = { l: br.left - hr.left, t: br.top - hr.top, w: br.width, h: br.height }; return p && JSON.stringify(p) === JSON.stringify(n) ? p : n; });
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    if (hostRef.current) ro.observe(hostRef.current);
+    return () => ro.disconnect();
+  }, [hostRef]);
+  /* Enter / Escape, or a press anywhere that is not the picture or its bar, finishes. */
+  useEffect(() => {
+    const key = (e: KeyboardEvent) => { if (e.key === 'Escape' || e.key === 'Enter') onClose(); };
+    const down = (e: MouseEvent) => {
+      const t = e.target as Node;
+      if (rootRef.current?.contains(t) || barRef.current?.contains(t)) return;
+      onClose();
+    };
+    window.addEventListener('keydown', key);
+    document.addEventListener('mousedown', down, true);
+    return () => { window.removeEventListener('keydown', key); document.removeEventListener('mousedown', down, true); };
+  }, [onClose]);
+  if (!nat || !box) return null;
+
+  const aspect = nat.h / nat.w;
+  /* Cover: the picture as wide as the banner, or wider when that is what it takes to fill its height. */
+  const coverScale = Math.max(1, box.h / aspect / box.w) * 100;
+  const containScale = Math.min(1, box.h / aspect / box.w) * 100;
+  const saved = hero.bannerCrop as { scale?: number; x?: number; y?: number } | undefined;
+  const crop = { scale: Number(saved?.scale ?? coverScale), x: Number(saved?.x ?? 50), y: Number(saved?.y ?? 50) };
+  const imgW = (box.w * crop.scale) / 100;
+  const imgH = imgW * aspect;
+  const left = ((box.w - imgW) * crop.x) / 100;
+  const top = ((box.h - imgH) * crop.y) / 100;
+  const write = (c: { scale: number; x: number; y: number }) => setCfg?.('hero', { bannerCrop: c });
+  /* An offset → a background-position %. Clamped, so the picture never slides off an edge it can fill. */
+  const pctOf = (off: number, free: number) => (Math.abs(free) < 0.5 ? 50 : Math.max(0, Math.min(100, (off / free) * 100)));
+
+  const start = (e: React.MouseEvent, mode: 'move' | 'nw' | 'ne' | 'sw' | 'se') => {
+    e.preventDefault();
+    e.stopPropagation();
+    const sx = e.clientX;
+    const sy = e.clientY;
+    const s = { left, top, w: imgW, h: imgH, scale: crop.scale };
+    document.body.style.userSelect = 'none';
+    const move = (ev: MouseEvent) => {
+      const dx = ev.clientX - sx;
+      const dy = ev.clientY - sy;
+      if (mode === 'move') {
+        write({ scale: s.scale, x: pctOf(s.left + dx, box.w - s.w), y: pctOf(s.top + dy, box.h - s.h) });
+        return;
+      }
+      const grow = mode.includes('e') ? dx : -dx;
+      const nw = Math.max(box.w * 0.2, s.w + grow);
+      const nh = nw * aspect;
+      const nl = mode.includes('w') ? s.left + (s.w - nw) : s.left;
+      const nt = mode.includes('n') ? s.top + (s.h - nh) : s.top;
+      write({ scale: (nw / box.w) * 100, x: pctOf(nl, box.w - nw), y: pctOf(nt, box.h - nh) });
+    };
+    const up = () => {
+      window.removeEventListener('mousemove', move);
+      window.removeEventListener('mouseup', up);
+      document.body.style.userSelect = '';
+    };
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', up);
+  };
+
+  /* The sharp copy is clipped to the banner, measured from the picture's own box. */
+  const clip = `inset(${-top}px ${imgW - box.w + left}px ${imgH - box.h + top}px ${-left}px)`;
+  const corner = 'absolute size-[10px] rounded-[2px] border border-[#3D8BD0] bg-white';
+  const barBtn = 'h-7 rounded px-2.5 text-[12px] font-medium text-[#364658] transition-colors hover:bg-[#F3F4F6]';
+  return (
+    <>
+      <div
+        ref={rootRef}
+        data-banner-cropper=""
+        onMouseDown={(e) => start(e, 'move')}
+        onClick={(e) => e.stopPropagation()}
+        onDoubleClick={(e) => { e.stopPropagation(); onClose(); }}
+        className="absolute z-[45] cursor-move outline outline-1 outline-[#3D8BD0]"
+        style={{ left: box.l + left, top: box.t + top, width: imgW, height: imgH }}
+      >
+        <img src={src} alt="" draggable={false} className="pointer-events-none absolute inset-0 size-full select-none opacity-40" />
+        <img src={src} alt="" draggable={false} className="pointer-events-none absolute inset-0 size-full select-none" style={{ clipPath: clip }} />
+        <span onMouseDown={(e) => start(e, 'nw')} className={`${corner} -left-[5px] -top-[5px] cursor-nwse-resize`} />
+        <span onMouseDown={(e) => start(e, 'ne')} className={`${corner} -right-[5px] -top-[5px] cursor-nesw-resize`} />
+        <span onMouseDown={(e) => start(e, 'sw')} className={`${corner} -bottom-[5px] -left-[5px] cursor-nesw-resize`} />
+        <span onMouseDown={(e) => start(e, 'se')} className={`${corner} -bottom-[5px] -right-[5px] cursor-nwse-resize`} />
+      </div>
+      {/* The banner's own edge, drawn over everything while cropping, so the frame the picture must fill is visible. */}
+      <span className="pointer-events-none absolute z-[46] outline outline-2 outline-[#EC4899]" style={{ left: box.l, top: box.t, width: box.w, height: box.h }} />
+      <div
+        ref={barRef}
+        data-portal-toolbar
+        onClick={(e) => e.stopPropagation()}
+        className="absolute z-[47] flex items-center gap-0.5 rounded border border-[#E5E7EB] bg-white p-1 shadow-[0_4px_6px_-2px_rgba(16,24,40,0.06),0_12px_16px_-4px_rgba(16,24,40,0.10)]"
+        style={{ left: box.l + 8, top: box.t + 8 }}
+      >
+        <span className="px-2 text-[12px] text-[#7B8FA5]">Crop image</span>
+        <span className="mx-0.5 h-4 w-px bg-[#E5E7EB]" />
+        <button className={barBtn} onClick={() => write({ scale: coverScale, x: 50, y: 50 })}>Fill banner</button>
+        <button className={barBtn} onClick={() => write({ scale: containScale, x: 50, y: 50 })}>Fit whole image</button>
+        <button className={barBtn} onClick={() => setCfg?.('hero', { bannerCrop: undefined })}>Reset</button>
+        <button className="h-7 rounded bg-[#3D8BD0] px-3 text-[12px] font-medium text-white transition-colors hover:bg-[#2d6ca0]" onClick={onClose}>Done</button>
+      </div>
     </>
   );
 }
@@ -2446,7 +2592,9 @@ export function Sel({ id, children, className = '', toolbarBelow = false, style:
      ReferenceError on the very first mousedown — swallowed into the console, so the handler looked
      attached, the cursor looked right, and nothing moved. Three attempts at fixing the drag failed
      because I was reading the rendered output instead of the console. */
-  const { enabled, selectedId, hoverId, select, setHover, styles, setStyle, moveTo, setText, splitBand, bandHosted, addBannerCell } = useCanvas();
+  const { enabled, selectedId, hoverId, select, setHover, styles, setStyle, moveTo, setText, splitBand, bandHosted, addBannerCell, cfg: readCfg } = useCanvas();
+  /* The banner's image is being cropped (double-click the banner). */
+  const [cropping, setCropping] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const [moveOver, setMoveOver] = useState(false);
   const node = nodeById(id);
@@ -2638,6 +2786,15 @@ export function Sel({ id, children, className = '', toolbarBelow = false, style:
       onMouseOver={(e) => { e.stopPropagation(); setHover(id); }}
       onMouseOut={(e) => { e.stopPropagation(); setHover(null); }}
       onClick={(e) => { e.stopPropagation(); select(id); }}
+      onDoubleClick={id === 'hero' ? (e) => {
+        /* Double-clicking the banner's BACKGROUND (not a word or a widget on it) crops its image. */
+        if ((e.target as Element).closest('[data-node]')?.getAttribute('data-node') !== 'hero') return;
+        const h = readCfg?.('hero') ?? {};
+        if (h.bgKind === 'color' || !h.bannerImage) { toast('Add a banner image to crop it — the image button on the banner toolbar'); return; }
+        e.stopPropagation();
+        select('hero');
+        setCropping(true);
+      } : undefined}
       /* Grip-drag drop target. The dragged id is unreadable during dragover, so accept broadly
          here and let moveTo decide whether the two are actually siblings. */
       onDragOver={(e) => {
@@ -2717,7 +2874,7 @@ export function Sel({ id, children, className = '', toolbarBelow = false, style:
         <ColumnAdders columnId={id} filled onSide={(side) => addBannerCell?.(id, side)} />
       )}
       {/* Figma's pink gap bands: on a selected group, and on the banner once widgets sit beside its text. */}
-      {on && enabled && (BANNER_GROUPS.has(id) || id === 'hero') && <GapBands id={id} host={ref} />}
+      {on && enabled && (BANNER_GROUPS.has(id) || id === 'hero' || /^sec-\d+(-b\d+)?$/.test(id)) && !cropping && <GapBands id={id} host={ref} />}
 
       {/* ⚠️ A built-in band gets the SAME four handles an empty box does — that is the whole point
           of hosting it in a section tree. This branch covers only the FIRST split, while the band
@@ -2741,9 +2898,15 @@ export function Sel({ id, children, className = '', toolbarBelow = false, style:
       {/* ⚠️ Product chrome gets no floating toolbar — the banner, the left rail, the top bar and
           everything the bar contains. Every action on it (move, duplicate, align, delete) is either
           disabled or a lie over navigation the admin does not own. */}
-      {on && enabled && id === 'hero' && (
+      {on && enabled && id === 'hero' && !cropping && (
         <ToolbarSlot toolbarBelow={toolbarBelow}><BannerToolbar /></ToolbarSlot>
       )}
+      {/* ⚠️ The banner's OWN four adders, on hovering the banner itself — left/right add a column at the
+          banner's edge, top/bottom a row. Its items keep theirs, which add beside the item. */}
+      {enabled && id === 'hero' && !on && !cropping && hoverId === 'hero' && (
+        <ColumnAdders columnId="hero" filled onSide={(side) => addBannerCell?.('hero', side)} />
+      )}
+      {cropping && <BannerCropper hostRef={ref} onClose={() => setCropping(false)} />}
       {on && enabled && BANNER_GROUPS.has(id) && (
         <ToolbarSlot><GroupToolbar id={id} /></ToolbarSlot>
       )}
