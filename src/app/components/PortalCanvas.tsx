@@ -7,9 +7,11 @@ import {
   AlignLeft, AlignRight, AlignStartHorizontal, AlignStartVertical, ArrowDown, ArrowLeft, ArrowRight,
   ArrowUp, Baseline, Bold, Check, ChevronDown, ChevronRight, Columns2, Copy, GripHorizontal, GripVertical, Italic, Link2, Rows2,
   Braces, Highlighter, Maximize2, UnfoldVertical, Move, MoveHorizontal, MoveVertical, Plus, RemoveFormatting,
-  Replace, SquareDashed, Trash2, Underline, X, ImagePlus, Palette,
+  Replace, SquareDashed, Trash2, Underline, X, ImagePlus, Palette, LayoutDashboard, Columns3, Expand,
 } from 'lucide-react';
-import { BannerFillEditor } from './PortalBannerTools';
+import { BannerFillEditor, BannerPresetPicker } from './PortalBannerTools';
+import { flipRoot } from './portalBannerLayout';
+import type { BannerNode } from './portalBannerLayout';
 import { BANNER_GROUPS, bannerGroupGap } from './portalPageModel';
 // ArrowLeft stays in use by the card toolbar's "Move left".
 import { toast } from 'sonner';
@@ -77,6 +79,10 @@ interface CanvasCtx {
   tourSeam?: string | null;
   /** Drops into a built-in row, alongside the cards already there. */
   dropInRow: (rowId: string, elementType: string) => void;
+  /** The banner: put an empty cell beside one of its items (left/right = a column, top/bottom = a row). */
+  addBannerCell?: (anchorId: string, side: 'left' | 'right' | 'top' | 'bottom') => void;
+  /** The banner's arrangement as drawn — its item tree, repaired against what is on it. */
+  heroTree?: () => BannerNode | null;
   /* ── toolbar actions ── */
   moveNode: (id: string, dir: 'prev' | 'next') => void;
   duplicateNode: (id: string) => void;
@@ -724,7 +730,11 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
      measure itself against — the wrapper it used to be positioned inside. */
   const besideRef = useRef<HTMLDivElement>(null);
   const insideRef = useRef<HTMLDivElement>(null);
-  const { styles, setStyle, moveNode, duplicateNode, deleteNode, canDuplicate, addInside, replaceElement, addChildBlock, splitNode, splitInfo, addLinkCard, addSibling, cfg, splitChildBlock } = useCanvas();
+  const { styles, setStyle, moveNode, duplicateNode, deleteNode, canDuplicate, addInside, replaceElement, addChildBlock, splitNode, splitInfo, addLinkCard, addSibling, cfg, setCfg, splitChildBlock } = useCanvas();
+  const [colsOpen, setColsOpen] = useState(false);
+  const onHero = /^el-\d+$/.test(id) && nodeById(id)?.parent === 'hero';
+  const bleedList = (cfg?.('hero')?.bannerBleed as string[] | undefined) ?? [];
+  const bleeds = bleedList.includes(id);
   const [picking, setPicking] = useState(false);
   const [adding, setAdding] = useState(false);
   const [axis, setAxis] = useState<'h' | 'v' | null>(null);
@@ -780,7 +790,9 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
   /* ⚠️ ON THE BANNER both pickers offer the banner's curated blocks and nothing else — the same list
      the builder's gate enforces, so the list never offers something the drop would then refuse. */
   const onBanner = inBanner(id);
-  const sixOnly = onBanner && (composable || placed || canAdd)
+  const sixOnly = onHero
+    ? BANNER_SIDE_WIDGETS
+    : onBanner && (composable || placed || canAdd)
     ? BANNER_BLOCKS
     : composable ? COMPOSABLE.map((t) => ({ type: t, label: elementLabel(t) })) : undefined;
   /* Null for anything that is not a box, which is how Split stays off cards, text and page bands. */
@@ -939,6 +951,35 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
         <AddItemMenu id={id} type={placedType(id)!} />
       )}
       {placedType(id) === 'v-image' && <CaptionMenu id={id} />}
+      {/* Cards laid out 1–4 across — fewer when there is not room. */}
+      {(placedType(id) === 'x-actions' || placedType(id) === 'x-kpis') && (() => {
+        const cols = String(cfg?.(id)?.cols ?? (placedType(id) === 'x-kpis' ? 3 : 4));
+        return (
+          <div className="relative">
+            <button className={colsOpen ? btnOn : btn} data-tip={`Columns — ${cols}`} onClick={() => setColsOpen((x) => !x)}><Columns3 size={15} /></button>
+            {colsOpen && (
+              <>
+                <span className="fixed inset-0 z-[60]" onClick={() => setColsOpen(false)} />
+                <div className="absolute left-1/2 top-[calc(100%+6px)] z-[61] flex -translate-x-1/2 items-center gap-0.5 rounded border border-[#E5E7EB] bg-white px-1 py-1 shadow-[0_4px_6px_-2px_rgba(16,24,40,0.06),0_12px_16px_-4px_rgba(16,24,40,0.10)]">
+                  {['1', '2', '3', '4'].map((n) => (
+                    <button key={n} className={`${cols === n ? btnOn : btn} text-[12px] font-semibold`} data-tip={`${n} column${n === '1' ? '' : 's'}`} onClick={() => { setCfg?.(id, { cols: n }); setColsOpen(false); }}>{n}</button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        );
+      })()}
+      {/* ⚠️ Fill to the banner's edge: the item ignores the banner's padding on the sides it touches, so a
+          picture can meet the band's edges while the words keep their inset. */}
+      {onHero && (
+        <button
+          className={bleeds ? btnOn : btn}
+          data-tip={bleeds ? 'Keep inside the banner padding' : 'Fill to the banner edge'}
+          aria-pressed={bleeds}
+          onClick={() => setCfg?.('hero', { bannerBleed: bleeds ? bleedList.filter((x) => x !== id) : [...bleedList, id] })}
+        ><Expand size={14} /></button>
+      )}
       {/* ⚠️ A LABELLED action, not a "+". The Quick Actions row takes exactly one thing and it is a
           specific card — a plus would promise the palette, which this row is fenced against, and an
           icon would have to be guessed at. The words are the whole point of it. */}
@@ -1631,11 +1672,11 @@ function PlaceholderPopover({ anchor, onPick, onClose }: { anchor: DOMRect; onPi
  * behind the banner · colour it (solid or gradient) · delete the banner. Every one writes the same
  * hero config the panel's Style section edits, so the two are one control in two places.
  * ⚠️ No drag handle: the banner is the top of the page, there is nowhere for it to go. */
-const BANNER_SIDE_WIDGETS: { type: string; label: string }[] = [
+export const BANNER_SIDE_WIDGETS: { type: string; label: string }[] = [
   { type: 'c-announcements', label: 'Announcements' },
-  { type: 'x-kpi', label: 'KPI tile' },
+  { type: 'x-kpis', label: 'KPI tiles' },
   { type: 'c-contact', label: 'Contact Us' },
-  { type: 'x-action-card', label: 'Action card' },
+  { type: 'x-actions', label: 'Action cards' },
   { type: 'b-list', label: 'Quick links' },
   { type: 'v-image', label: 'Image' },
   { type: 'b-text', label: 'Text' },
@@ -1643,11 +1684,12 @@ const BANNER_SIDE_WIDGETS: { type: string; label: string }[] = [
 ];
 
 function BannerToolbar() {
-  const { cfg, setCfg, deleteNode, dropInRow } = useCanvas();
+  const { cfg, setCfg, deleteNode, dropInRow, heroTree } = useCanvas();
   const hero = cfg?.('hero') ?? {};
   const [axis, setAxis] = useState<'h' | 'v' | null>(null);
   const [adding, setAdding] = useState(false);
   const [fill, setFill] = useState(false);
+  const [layout, setLayout] = useState(false);
   const addRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const { tip, setTip, readTip } = useToolbarTip();
@@ -1688,8 +1730,20 @@ function BannerToolbar() {
       <AlignAxis axis="h" value={h} options={H} open={axis === 'h'} onToggle={() => { setFill(false); setAxis((a) => (a === 'h' ? null : 'h')); }} onPick={(x) => { setCfg?.('hero', { contentAlign: x }); setAxis(null); }} />
       <AlignAxis axis="v" value={vAlign} options={V} open={axis === 'v'} onToggle={() => { setFill(false); setAxis((a) => (a === 'v' ? null : 'v')); }} onPick={(x) => { setCfg?.('hero', { contentAlignY: x }); setAxis(null); }} />
       <span className="mx-0.5 h-4 w-px bg-[#E5E7EB]" />
+      <div className="relative">
+        <button className={layout ? btnOn : btn} data-tip="Arrange the banner's items" onClick={() => { setAxis(null); setFill(false); setAdding(false); setLayout((x) => !x); }}><LayoutDashboard size={15} /></button>
+        {layout && (
+          <>
+            <span className="fixed inset-0 z-[60]" onClick={() => setLayout(false)} />
+            <div className="absolute left-0 top-[calc(100%+6px)] z-[61] w-[280px] rounded-lg border border-[#E5E7EB] bg-white p-3 shadow-[0_12px_16px_-4px_rgba(16,24,40,0.10),0_4px_6px_-2px_rgba(16,24,40,0.06)]">
+              <p className="mb-2 text-[12px] font-medium text-[#364658]">Arrangement</p>
+              <BannerPresetPicker tree={heroTree?.() ?? null} onPick={(t) => setCfg?.('hero', { bannerTree: t })} />
+            </div>
+          </>
+        )}
+      </div>
       <div ref={addRef} className="relative">
-        <button className={btn} data-tip="Add a widget beside the banner text" onClick={() => { setAxis(null); setFill(false); setAdding((x) => !x); }}><Plus size={15} /></button>
+        <button className={btn} data-tip="Add a widget to the banner" onClick={() => { setAxis(null); setFill(false); setLayout(false); setAdding((x) => !x); }}><Plus size={15} /></button>
         {adding && (
           <ElementPicker
             only={BANNER_SIDE_WIDGETS}
@@ -1725,9 +1779,16 @@ function BannerToolbar() {
  * they line up across that direction. The gap is dragged on the canvas (the pink bands) or typed in
  * the panel — a third place for one number would be one too many. */
 function GroupToolbar({ id }: { id: string }) {
-  const { cfg, setCfg } = useCanvas();
+  const { cfg, setCfg, heroTree } = useCanvas();
   const c = cfg?.(id) ?? {};
-  const dir = String(c.dir ?? 'column');
+  /* The Content group IS the banner's arrangement, so its direction is the tree's outermost one. */
+  const tree = id === 'hero-content' ? heroTree?.() ?? null : null;
+  const treeDir = tree && typeof tree !== 'string' ? tree.d : null;
+  const dir = String(treeDir ?? c.dir ?? 'column');
+  const setDir = (d: string) => {
+    if (tree && typeof tree !== 'string') { if (tree.d !== d) setCfg?.('hero', { bannerTree: flipRoot(tree) }); return; }
+    setCfg?.(id, { dir: d });
+  };
   const [open, setOpen] = useState(false);
   const { tip, setTip, readTip } = useToolbarTip();
   const A = dir === 'row'
@@ -1748,8 +1809,8 @@ function GroupToolbar({ id }: { id: string }) {
       {tip && (
         <span style={{ left: tip.x }} className="pointer-events-none absolute top-full z-[80] mt-1.5 max-w-[220px] -translate-x-1/2 whitespace-nowrap rounded bg-[#1F2937] px-2 py-1 text-[11px] leading-[16px] text-white shadow-[0_4px_10px_rgba(16,24,40,0.18)]">{tip.label}</span>
       )}
-      <button className={dir === 'column' ? btnOn : btn} data-tip="Vertical — items stack" aria-pressed={dir === 'column'} onClick={() => setCfg?.(id, { dir: 'column' })}><Rows2 size={15} /></button>
-      <button className={dir === 'row' ? btnOn : btn} data-tip="Horizontal — items side by side" aria-pressed={dir === 'row'} onClick={() => setCfg?.(id, { dir: 'row' })}><Columns2 size={15} /></button>
+      <button className={dir === 'column' ? btnOn : btn} data-tip="Vertical — items stack" aria-pressed={dir === 'column'} onClick={() => setDir('column')}><Rows2 size={15} /></button>
+      <button className={dir === 'row' ? btnOn : btn} data-tip="Horizontal — items side by side" aria-pressed={dir === 'row'} onClick={() => setDir('row')}><Columns2 size={15} /></button>
       <span className="mx-0.5 h-4 w-px bg-[#E5E7EB]" />
       <AlignAxis axis={dir === 'row' ? 'v' : 'h'} value={align} options={A} open={open} onToggle={() => setOpen((x) => !x)} onPick={(x) => { setCfg?.(id, { align: x }); setOpen(false); }} />
     </div>
@@ -1766,36 +1827,47 @@ const GAP_PINK = '#FF24BD';
 function GapBands({ id, host }: { id: string; host: React.RefObject<HTMLDivElement | null> }) {
   const { cfg, setCfg } = useCanvas();
   const c = cfg?.(id) ?? {};
-  const isHero = id === 'hero';
+  /* On an ARRANGED banner the bands are the arrangement's, and they edit the Content group's gap. */
+  const treeMode = id === 'hero' && !!host.current?.querySelector('[data-banner-root]');
+  const isHero = id === 'hero' && !treeMode;
+  const gapOwner = treeMode ? 'hero-content' : id;
   const dir = isHero ? 'row' : String(c.dir ?? 'column');
-  const gap = isHero ? Number(c.sideGap ?? 32) : bannerGroupGap(id, c);
-  const [bands, setBands] = useState<{ x: number; y: number; w: number; h: number }[]>([]);
+  const gap = isHero ? Number(c.sideGap ?? 32) : bannerGroupGap(gapOwner, treeMode ? cfg?.('hero-content') ?? {} : c);
+  /* The arrangement has TWO gaps: between side-by-side items and between stacked ones. */
+  const gapY = treeMode ? Number(cfg?.('hero-content')?.gapY ?? 20) : gap;
+  const gapFor = (d: string) => (treeMode && d === 'column' ? gapY : gap);
+  const [bands, setBands] = useState<{ x: number; y: number; w: number; h: number; dir: string }[]>([]);
   const [drag, setDrag] = useState(false);
   const [hot, setHot] = useState<number | null>(null);
-  const sig = `${dir}|${gap}|${String(c.align ?? '')}`;
+  const sig = `${dir}|${gap}|${gapY}|${String(c.align ?? '')}|${JSON.stringify(cfg?.('hero')?.bannerTree ?? null)}|${JSON.stringify(cfg?.('hero')?.bannerBleed ?? null)}`;
   useLayoutEffect(() => {
     const el = host.current;
     if (!el) return;
     const measure = () => {
-      const parent = isHero ? el.querySelector<HTMLElement>('[data-gap-parent="hero"]') : el;
-      if (!parent) { setBands([]); return; }
+      const first = treeMode ? el.querySelector<HTMLElement>('[data-banner-root]') : isHero ? el.querySelector<HTMLElement>('[data-gap-parent="hero"]') : el;
+      if (!first) { setBands([]); return; }
+      /* The Content group's nested rows and columns share its one gap, so each gets its own bands. */
+      const parents = [...new Set([first, ...(id === 'hero-content' || treeMode ? Array.from(el.querySelectorAll<HTMLElement>('[data-gap-parent="hero-content"]')) : [])])];
+      const o = el.getBoundingClientRect();
+      const next: { x: number; y: number; w: number; h: number; dir: string }[] = [];
+      for (const parent of parents) {
+      const pdir = isHero ? 'row' : getComputedStyle(parent).flexDirection.startsWith('row') ? 'row' : 'column';
       const kids = Array.from(parent.children).filter((k): k is HTMLElement =>
         k instanceof HTMLElement && (k.hasAttribute('data-node') || k.hasAttribute('data-gap-item')) && k.getBoundingClientRect().width > 0);
-      const o = el.getBoundingClientRect();
-      const rs = kids.map((k) => k.getBoundingClientRect()).sort((a, b) => (dir === 'row' ? a.left - b.left : a.top - b.top));
-      const next: { x: number; y: number; w: number; h: number }[] = [];
+      const rs = kids.map((k) => k.getBoundingClientRect()).sort((a, b) => (pdir === 'row' ? a.left - b.left : a.top - b.top));
       for (let i = 0; i < rs.length - 1; i++) {
         const a = rs[i];
         const b = rs[i + 1];
-        if (dir === 'row') {
+        if (pdir === 'row') {
           const top = Math.min(a.top, b.top);
           const bottom = Math.max(a.bottom, b.bottom);
-          next.push({ x: a.right - o.left, y: top - o.top, w: Math.max(0, b.left - a.right), h: bottom - top });
+          next.push({ x: a.right - o.left, y: top - o.top, w: Math.max(0, b.left - a.right), h: bottom - top, dir: pdir });
         } else {
           const left = Math.min(a.left, b.left);
           const right = Math.max(a.right, b.right);
-          next.push({ x: left - o.left, y: a.bottom - o.top, w: right - left, h: Math.max(0, b.top - a.bottom) });
+          next.push({ x: left - o.left, y: a.bottom - o.top, w: right - left, h: Math.max(0, b.top - a.bottom), dir: pdir });
         }
+      }
       }
       setBands((prev) => (JSON.stringify(prev) === JSON.stringify(next) ? prev : next));
     };
@@ -1805,21 +1877,22 @@ function GapBands({ id, host }: { id: string; host: React.RefObject<HTMLDivEleme
     Array.from(el.querySelectorAll('[data-node],[data-gap-item]')).forEach((k) => ro.observe(k));
     window.addEventListener('resize', measure);
     return () => { ro.disconnect(); window.removeEventListener('resize', measure); };
-  }, [host, isHero, sig]);
+  }, [host, isHero, treeMode, sig]);
 
   const begin = (e: React.MouseEvent, i: number) => {
     e.preventDefault();
     e.stopPropagation();
-    const start = dir === 'row' ? e.clientX : e.clientY;
-    const from = gap;
+    const bdir = bands[i]?.dir ?? dir;
+    const start = bdir === 'row' ? e.clientX : e.clientY;
+    const from = gapFor(bdir);
     setDrag(true);
     setHot(i);
-    document.body.style.cursor = dir === 'row' ? 'ew-resize' : 'ns-resize';
+    document.body.style.cursor = bdir === 'row' ? 'ew-resize' : 'ns-resize';
     document.body.style.userSelect = 'none';
     const move = (ev: MouseEvent) => {
-      const d = (dir === 'row' ? ev.clientX : ev.clientY) - start;
+      const d = (bdir === 'row' ? ev.clientX : ev.clientY) - start;
       const nextGap = Math.max(0, Math.min(200, Math.round(from + d)));
-      setCfg?.(id, isHero ? { sideGap: nextGap } : { gap: nextGap });
+      setCfg?.(gapOwner, isHero ? { sideGap: nextGap } : treeMode && bdir === 'column' ? { gapY: nextGap } : { gap: nextGap });
     };
     const up = () => {
       window.removeEventListener('mousemove', move);
@@ -1837,6 +1910,7 @@ function GapBands({ id, host }: { id: string; host: React.RefObject<HTMLDivEleme
     <>
       {bands.map((b, i) => {
         const lit = drag || hot === i;
+        const dir = b.dir;
         /* A zero gap still needs something to grab — the hit area never shrinks below 8px. */
         const hitW = dir === 'row' ? Math.max(b.w, 8) : b.w;
         const hitH = dir === 'row' ? b.h : Math.max(b.h, 8);
@@ -1848,7 +1922,7 @@ function GapBands({ id, host }: { id: string; host: React.RefObject<HTMLDivEleme
             onClick={(e) => e.stopPropagation()}
             onMouseEnter={() => !drag && setHot(i)}
             onMouseLeave={() => !drag && setHot(null)}
-            title={`Gap ${gap}px — drag to change`}
+            title={`Gap ${gapFor(dir)}px — drag to change`}
             className="absolute z-40 flex items-center justify-center"
             style={{
               left: b.x + (b.w - hitW) / 2,
@@ -1868,7 +1942,7 @@ function GapBands({ id, host }: { id: string; host: React.RefObject<HTMLDivEleme
                 : { height: 2, width: Math.min(16, Math.max(8, b.w * 0.3)), backgroundColor: GAP_PINK }}
             />
             {lit && (
-              <span className="pointer-events-none absolute z-10 whitespace-nowrap rounded-sm px-1 text-[10px] font-semibold leading-[15px] text-white" style={{ backgroundColor: GAP_PINK }}>{gap}</span>
+              <span className="pointer-events-none absolute z-10 whitespace-nowrap rounded-sm px-1 text-[10px] font-semibold leading-[15px] text-white" style={{ backgroundColor: GAP_PINK }}>{gapFor(dir)}</span>
             )}
           </span>
         );
@@ -2134,6 +2208,33 @@ function ColumnAddIcon({ size = 16 }: { size?: number }) {
   );
 }
 
+/* An EMPTY cell on the banner, made by its + adders. It asks what goes here and becomes it; on the
+   published portal it draws nothing. */
+export function BannerSlot({ id }: { id: string }) {
+  const { enabled, replaceElement } = useCanvas();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  if (!enabled) return null;
+  return (
+    <div ref={ref} className="flex min-h-[88px] w-full items-center justify-center rounded-lg border border-dashed border-white/60 bg-white/10">
+      <button
+        onClick={(e) => { e.stopPropagation(); setOpen((x) => !x); }}
+        className="flex h-8 items-center gap-1.5 rounded bg-white px-3 text-[12px] font-medium text-[#364658] shadow-sm transition-colors hover:text-[#3D8BD0]"
+      ><Plus size={14} /> Add to banner</button>
+      {open && (
+        <ElementPicker
+          only={BANNER_SIDE_WIDGETS}
+          mode="add"
+          onPick={(t) => { setOpen(false); replaceElement(id, t); }}
+          onClose={() => setOpen(false)}
+          anchorRef={ref}
+          targetId={id}
+        />
+      )}
+    </div>
+  );
+}
+
 export function ColumnAdders({ columnId, filled, onSide }: { columnId: string; filled?: boolean; onSide?: (side: 'left' | 'right' | 'top' | 'bottom') => void }) {
   const { addBeside, addInside } = useCanvas();
   /* ⚠️ ONE component for both callers. A built-in band that has never been split is not a box yet,
@@ -2216,7 +2317,7 @@ export function Sel({ id, children, className = '', toolbarBelow = false, style:
      ReferenceError on the very first mousedown — swallowed into the console, so the handler looked
      attached, the cursor looked right, and nothing moved. Three attempts at fixing the drag failed
      because I was reading the rendered output instead of the console. */
-  const { enabled, selectedId, hoverId, select, setHover, styles, setStyle, moveTo, setText, splitBand, bandHosted } = useCanvas();
+  const { enabled, selectedId, hoverId, select, setHover, styles, setStyle, moveTo, setText, splitBand, bandHosted, addBannerCell } = useCanvas();
   const ref = useRef<HTMLDivElement>(null);
   const [moveOver, setMoveOver] = useState(false);
   const node = nodeById(id);
@@ -2237,7 +2338,7 @@ export function Sel({ id, children, className = '', toolbarBelow = false, style:
      applies them itself, so the space lands inside the border and a dragged height grows the card
      rather than cropping it. Margin and width stay here: those are about where the element sits and
      how much room it takes, which is the wrapper's business either way. */
-  const ownSurface = paintsOwnSurface(id);
+  const ownSurface = paintsOwnSurface(id) || id === 'hero';
   const ownShadow = paintsOwnShadow(id);
   /* ⚠️ PADDING only. Height used to be withheld here too, and that is what made a dragged handle
      resize the wrong thing on most of the catalogue: the wrapper kept its natural size while the
@@ -2297,6 +2398,8 @@ export function Sel({ id, children, className = '', toolbarBelow = false, style:
 
   const on = selectedId === id;
   const hov = hoverId === id && !on;
+  /* One of the banner's items — the Text group, the Search, or a widget placed on the banner. */
+  const heroItem = id === 'hero-copy' || id === 'hero-search' || (/^el-\d+$/.test(id) && nodeById(id)?.parent === 'hero');
   const sharedTile = /-tile$/.test(id);
 
   /* ⚠️ FREE PLACEMENT, banner children only. Everything else on this page is laid out — a card is in
@@ -2457,6 +2560,12 @@ export function Sel({ id, children, className = '', toolbarBelow = false, style:
           would paint once per tile. The outline alone says all of them are selected. */}
       {/* ⚠️ A group HUGS its items, so it has no size of its own to drag — no handles. */}
       {on && !sharedTile && !BANNER_GROUPS.has(id) && <SelectionHandles id={id} elRef={ref} />}
+      {/* ⚠️ The banner's ITEMS get the four + adders the section boxes have, on hover — left/right put an
+          empty cell beside the item as a column, top/bottom as a row. Hover, not selection, for the reason
+          the box adders give: a selected item carries resize handles on these very edges. */}
+      {enabled && heroItem && !on && !!hoverId && nodePath(hoverId).some((n) => n.id === id) && (
+        <ColumnAdders columnId={id} filled onSide={(side) => addBannerCell?.(id, side)} />
+      )}
       {/* Figma's pink gap bands: on a selected group, and on the banner once widgets sit beside its text. */}
       {on && enabled && (BANNER_GROUPS.has(id) || id === 'hero') && <GapBands id={id} host={ref} />}
 

@@ -518,3 +518,20 @@ button:not(:disabled):not([aria-disabled='true']),
 
 /* Support Portal builder — floating toolbars step aside while something is being dragged (see PortalCanvas). */
 body[data-portal-dragging] [data-portal-toolbar] { pointer-events: none; opacity: 0.35; }
+
+/* Support Portal — a banner item set to fill to the banner's edge. The cell stretches to the banner, and the
+   widget inside it follows all the way down, so a picture reaches the band's top and bottom too. */
+.portal-bleed > * { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.portal-bleed > * > * { flex: 1 1 auto; min-height: 0; }
+.portal-bleed .portal-ann-image-root { margin: 0; height: 100%; border-radius: 0; }
+.portal-bleed .portal-ann-image { flex: 1 1 auto; height: auto; min-height: 160px; }
+.portal-bleed [data-surface] { border-radius: 0; border-width: 0; padding: 0; box-shadow: none; }
+
+/* Support Portal — the arranged banner stacks its side-by-side items when it gets narrow, so cards and
+   words never squeeze into columns too thin to read. The banner's content box is the size container. */
+.portal-banner { container: portal-banner / inline-size; }
+@container portal-banner (max-width: 640px) {
+  .portal-banner .portal-banner-row { flex-direction: column !important; }
+  .portal-banner .portal-banner-row > * { flex: 0 0 auto !important; width: 100%; }
+  .portal-banner .portal-banner-row > [data-banner-cell]:not(.portal-bleed) { padding-left: 24px !important; padding-right: 24px !important; }
+}

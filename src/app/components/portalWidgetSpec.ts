@@ -50,6 +50,7 @@ export type ControlKind =
   | 'gradientSide'
   | 'bannerFill'
   | 'gapField'
+  | 'bannerPreset'
   /** An ordered choice on a rail with initials under the stops (banner height). */
   | 'stepRail'
   /* ⚠️ Both were in USE and missing from this union, and the casts that would have caught it
@@ -1122,6 +1123,8 @@ export const WIDGET_FOR_TYPE: Record<string, string> = {
   'c-records': 'record_list',
   'b-button': 'button',
   'x-kpi': 'count_tile',
+  'x-actions': 'action_cards',
+  'x-kpis': 'kpi_group',
   // Collection widgets. `b-accordion` and `c-faq` are the same widget reached two ways.
   'c-faq': 'faq',
   /* ⚠️ No longer an alias of FAQ. They look alike but style differently — an accordion owns a

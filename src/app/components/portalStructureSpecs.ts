@@ -98,6 +98,19 @@ export const HERO_SPEC: WidgetSpec = {
         { value: '480', label: 'Full', short: 'XL' },
       ],
     },
+    /* ── Arrangement: how the banner's items sit — side by side or stacked — from presets that change
+       with the number of items. The gap is the space between every item, down to 0 so two can meet. */
+    { key: 'bannerTree', label: 'Arrangement', control: 'bannerPreset', tab: 'style', group: 'Layout presets' },
+    { key: 'contentGap', label: 'Gap between columns', control: 'gapField', tab: 'style', group: 'Layout presets' },
+    { key: 'contentGapY', label: 'Gap between rows', control: 'gapField', tab: 'style', group: 'Layout presets' },
+    {
+      key: 'bannerSplit', label: 'Column widths', control: 'segmented', tab: 'style', group: 'Layout presets',
+      when: (c) => c.__rootRow2 === true,
+      options: [
+        { value: 'auto', label: 'Auto' }, { value: '1:1', label: '1:1' }, { value: '2:1', label: '2:1' },
+        { value: '1:2', label: '1:2' }, { value: '3:1', label: '3:1' }, { value: '1:3', label: '1:3' },
+      ],
+    },
     /* ⚠️ Background is TWO TABS — Image or Colour — with image the default, because a banner is a
        picture first and the colour is what you fall back to. It replaced Fill's None / Colour /
        Image: "None" was never a real answer for a band whose whole job is to be a backdrop, and
@@ -149,8 +162,6 @@ export const HERO_SPEC: WidgetSpec = {
       key: 'contentAlignY', label: 'Vertical', control: 'segmented', tab: 'style', group: 'Alignment',
       options: [{ value: 'start', label: 'Top' }, { value: 'center', label: 'Middle' }, { value: 'end', label: 'Bottom' }],
     },
-    /* The gap between the banner's text and the widgets added beside it — only once there are some. */
-    { key: 'sideGap', label: 'Gap beside the text', control: 'gapField', tab: 'style', group: 'Alignment', when: (c) => c.__hasSide === true },
     /* ── Corners and border ─────────────────────────────────────────────────────────────────── */
     { key: 'bannerRadius', label: 'Corner radius', control: 'slider', tab: 'style', group: 'Corners & border', min: 0, max: 40, unit: 'px' },
     { key: 'bannerBorderWidth', label: 'Border width', control: 'slider', tab: 'style', group: 'Corners & border', min: 0, max: 8, unit: 'px' },
@@ -185,7 +196,7 @@ export const HERO_SPEC: WidgetSpec = {
     /* No overlaySide default: until one is picked the layer is strongest on the side the TEXT is on (see bannerLayerSide). */
     overlayOn: true, overlayFrom: 'rgba(15, 23, 42, 0.85)', overlayTo: 'rgba(15, 23, 42, 0)',
     contentAlignY: 'center', bannerRadius: 0, bannerBorderWidth: 0, bannerBorderColor: '#E5E7EB', bannerBorderStyle: 'solid',
-    headingColor: '#FFFFFF', searchWidth: 70, searchRadius: 4,
+    headingColor: '#FFFFFF', searchWidth: 70, searchRadius: 4, bannerSplit: 'auto',
     // §7.20's search sub-element.
     searchScope: 'knowledge', searchSuggestions: true,
   },
@@ -575,7 +586,50 @@ export const BANNER_GROUP_SPEC: WidgetSpec = {
   defaults: { dir: 'column' },
 };
 
+/* ── Blocks that hold a SET of cards and lay them out in 1–4 columns ─────────────────────────────── */
+const COLUMNS_FIELD = {
+  key: 'cols', label: 'Columns', control: 'segmented' as const, tab: 'style' as const, group: 'Columns',
+  options: [{ value: '1', label: '1' }, { value: '2', label: '2' }, { value: '3', label: '3' }, { value: '4', label: '4' }],
+  help: 'Fewer columns are used automatically when there is not room for these.',
+};
+
+/* The portal's four action cards as ONE block. Each card stays its own node (select it to edit its
+ * subtitle and icon); the block only decides how many sit across. ⚠️ Adding it MOVES the Quick Actions
+ * row's cards into it rather than showing them twice — see `actionsMoved` in the preview. */
+export const ACTION_CARDS_SPEC: WidgetSpec = {
+  id: 'action_cards', name: 'Action cards', group: 'Actions', reuse: 'single', family: 'flat',
+  fields: [COLUMNS_FIELD],
+  packs: [],
+  defaults: { cols: '4' },
+};
+
+export const KPI_SOURCES = ['My requests', 'My changes', 'Approvals waiting on me', 'My assets', 'My CIs', 'Knowledge'];
+export const KPI_SEED = [
+  { label: 'Open requests', source: 'My requests' },
+  { label: 'Pending approvals', source: 'Approvals waiting on me' },
+  { label: 'My assets', source: 'My assets' },
+];
+/* A set of counters, laid out like the action cards. */
+export const KPI_GROUP_SPEC: WidgetSpec = {
+  id: 'kpi_group', name: 'KPI tiles', group: 'Custom', reuse: 'many', family: 'collection',
+  fields: [COLUMNS_FIELD],
+  packs: [],
+  collection: {
+    key: 'items', group: 'Tiles', addLabel: 'Add tile', max: 8,
+    emptyHint: 'No tiles yet.',
+    hideable: true,
+    label: (it) => String(it.label ?? ''),
+    meta: (it) => String(it.source ?? ''),
+    seed: (i) => ({ ...KPI_SEED[i % KPI_SEED.length] }),
+    fields: [
+      { key: 'label', label: 'Label', control: 'text', group: 'Content' },
+      { key: 'source', label: 'Counts', control: 'select', group: 'Content', options: KPI_SOURCES },
+    ],
+  },
+  defaults: { cols: '3', items: KPI_SEED.map((k) => ({ ...k })) },
+};
+
 export const STRUCTURE_SPECS: WidgetSpec[] = [
-  BANNER_GROUP_SPEC, HERO_SPEC, SEARCH_SPEC, SECTION_SPEC, COLUMN_SPEC, PAGE_SPEC, RAIL_SPEC, NAVBAR_SPEC, LOGO_SPEC,
+  BANNER_GROUP_SPEC, HERO_SPEC, ACTION_CARDS_SPEC, KPI_GROUP_SPEC, SEARCH_SPEC, SECTION_SPEC, COLUMN_SPEC, PAGE_SPEC, RAIL_SPEC, NAVBAR_SPEC, LOGO_SPEC,
   HEADER_ACTIONS_SPEC,
 ];

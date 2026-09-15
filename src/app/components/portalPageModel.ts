@@ -58,10 +58,10 @@ export const PORTAL_NODES: PortalNodeDef[] = [
      subheading; the Content group holds Group 1 and the search. Each group has a direction and a gap,
      and each element inside hugs its own width. */
   { id: 'hero-content', name: 'Content group', kind: 'column', parent: 'hero', content: 'none' },
-  { id: 'hero-copy', name: 'Text group', kind: 'column', parent: 'hero-content', content: 'none' },
+  { id: 'hero-copy', name: 'Text group', kind: 'column', parent: 'hero', content: 'none' },
   { id: 'hero-title', name: 'Heading', kind: 'text', parent: 'hero-copy', content: 'text' },
   { id: 'hero-subtitle', name: 'Subtitle', kind: 'text', parent: 'hero-copy', content: 'text' },
-  { id: 'hero-search', name: 'Search', kind: 'search', parent: 'hero-content', content: 'search' },
+  { id: 'hero-search', name: 'Search', kind: 'search', parent: 'hero', content: 'search' },
 
   /* ── quick actions ──
    * The row IS the section — full width, left edge to right edge — and each tile is a column
@@ -1298,8 +1298,8 @@ export const BANNER_BLOCKS: { type: string; label: string }[] = [
   { type: 'bn-heading', label: 'Heading' },
   { type: 'bn-subheading', label: 'Subheading' },
   { type: 'bn-search', label: 'Search' },
-  { type: 'x-action-card', label: 'Action card' },
-  { type: 'x-kpi', label: 'KPI tile' },
+  { type: 'x-actions', label: 'Action cards' },
+  { type: 'x-kpis', label: 'KPI tiles' },
   { type: 'c-announcements', label: 'Announcements' },
   { type: 'c-contact', label: 'Contact Us' },
   { type: 'b-list', label: 'Quick links' },

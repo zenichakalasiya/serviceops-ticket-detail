@@ -485,6 +485,43 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   toggle looks dead. ⚠️ Free placement of heading/subheading/search (`freePlaced`) is OFF — pinning one
   absolutely would pull it out of its group.
 
+- **Support Portal — the ARRANGED banner: items, presets, gaps, fill-to-edge (`portalBannerLayout.ts`, 15 Sep 2026).**
+  A regular banner holds ITEMS — `hero-copy` (Text group), `hero-search` (while in the band) and every widget
+  in `rowExtras.hero` — laid out by a small tree on hero config, **`bannerTree`** (`BannerNode` = item id, or
+  `{ d: 'row' | 'column', c }`). ⚠️ The stored tree is a PREFERENCE: every read goes through
+  **`normalizeTree(stored, items)`**, which drops leaves whose item has gone and appends new items (search
+  under the words, anything else beside), so delete/add/search-off need no bookkeeping. **Presets**
+  (`presetsFor`) are built from the current leaf order and vary by count (2 → 2, 3 → 6, 4 → 7, 5+ → 4); the
+  picker (`BannerPresetPicker`) draws each thumbnail FROM the tree it applies, labelled per item. It lives on
+  the banner toolbar (LayoutDashboard popup) and in the panel's **Layout presets** group (⚠️ NOT named
+  "Arrangement" — that group name is in the drawer's `DROP_GROUPS` and silently vanishes). **Gaps**: two,
+  both on `hero-content` config — `gap` between side-by-side items (default 20) and `gapY` between stacked ones
+  (default 20, independent); the panel's `contentGap`/`contentGapY` are redirected there by `patchCfg`, and
+  selecting the banner shows pink `GapBands` for every nested row/column (`[data-banner-root]` +
+  `[data-gap-parent="hero-content"]`, direction read from computed `flex-direction`). ⚠️ The arrangement root is
+  a PLAIN div, not the `hero-content` Sel — it fills the band and as a node it swallowed every click meant for
+  the banner. **Padding** is the banner's own spacing (`styles.hero.padding`) applied to the items that TOUCH
+  the band's edges (`childEdges`), never between items; left/right % are emitted as `cqw` of the root so a %
+  means the same at any depth. `Sel` withholds padding for `hero` (it used to land OUTSIDE the band, reading
+  as margin). **Fill to edge**: `bannerBleed: string[]` on hero config (toolbar Expand button on a banner
+  widget) drops those edge paddings and stretches the widget (`.portal-bleed` rules in theme.css); an
+  Announcements placed on the banner seeds `display: 'image'` + bleed. **Column widths**: `bannerSplit`
+  (Auto/1:1/2:1/…) for a two-column root; Auto gives the words 2 shares beside a compact block
+  (`COMPACT_BANNER_TYPES`). **Hover adders** on any banner item (`addBannerCell`) insert a `bn-slot` empty
+  cell (`insertBeside`); its "Add to banner" picker Replaces it in place (`replaceLeaf`). Move arrows reorder
+  leaves (`shiftLeaf`). Narrow banners (<640px, `@container portal-banner`) stack every row. Which banners
+  take the tree: `treeBanner` = not a rail, not side-search, not shaped, and not a template `bannerLayout`
+  until a preset is picked on it.
+  **Action cards block (`x-actions`, spec `action_cards`)** = the four `content.quick` cards drawn by the
+  preview's own `quickCardEl` (provided to placed elements through `PlacedBlockRenderers`), grid of 1–4
+  columns (`cols`, toolbar Columns3 popup; `colsTemplate` drops columns under 150px). ⚠️ Placing it anywhere
+  sets `actionsMoved`, which stops the Quick Actions row rendering — the cards move, never duplicate; deleting
+  the block brings the row back. It is `onPage: true` ONLY so the demo seed does not drop one on every page
+  (which silently hid the Quick Actions row). **KPI tiles (`x-kpis`, spec `kpi_group`)** = a collection of
+  `{label, source}` counters, same 1–4 column preset, counts off `COUNTS`. On the banner both seed `cols: '1'`.
+  ⚠️ **Testing trap:** a hot reload of `PortalCanvas.tsx` swaps its context object mid-session, so the canvas
+  silently reads the read-only default (no `data-node` anywhere, no outlines). Reload before judging.
+
 - **Support Portal — the SHAPED banner (Banner Builder phase 1 of 4, 14 Sep 2026; hidden since 15 Sep).** Spec:
   https://claude.ai/code/artifact/6836c07d-d9c2-4273-9fe9-f610f67f92a3 — decisions: vertical banner is a
   column beside the page, fixed while it scrolls (4f/4g); a curated set of blocks; the photo panel takes

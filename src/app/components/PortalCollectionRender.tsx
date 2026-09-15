@@ -809,13 +809,13 @@ export function AnnouncementsRender({ nodeId, cfg, headIcon }: { nodeId: string;
       );
     };
     return (
-      <div className="@container -m-4 flex min-w-0 flex-col overflow-hidden rounded-xl">
+      <div className="portal-ann-image-root @container -m-4 flex min-w-0 flex-col overflow-hidden rounded-xl">
         {headerOn && (
           <div className="px-4 pt-4">
             <WidgetTitle nodeId={nodeId} text={cfg.title} icon={headIcon} count={ANNOUNCEMENTS.length} />
           </div>
         )}
-        <div className="relative h-[200px] w-full bg-[#E5E7EB]">
+        <div className="portal-ann-image relative h-[200px] w-full bg-[#E5E7EB]">
           {src
             ? <img src={src} alt="" className="size-full object-cover" />
             : (

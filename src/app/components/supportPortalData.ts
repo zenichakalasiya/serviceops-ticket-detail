@@ -1459,6 +1459,8 @@ export const PORTAL_ELEMENTS: PortalElement[] = [
   { id: 'act-service', name: 'Request Service', icon: 'services', group: 'Actions', onPage: true, node: 'quick-service', keywords: 'catalog order' },
   { id: 'act-ad', name: 'AD Self Service', icon: 'adself', group: 'Actions', node: 'quick-ad', keywords: 'password reset domain unlock' },
   { id: 'act-knowledge', name: 'Knowledge', icon: 'knowledge', group: 'Actions', onPage: true, node: 'quick-knowledge', keywords: 'articles help search' },
+  /* The four cards as ONE block with a 1–4 column preset. Placing it moves the Quick Actions row's cards into it. */
+  { id: 'x-actions', name: 'Action cards', icon: 'actionCard', group: 'Actions', onPage: true, keywords: 'quick actions cards incident service knowledge ad' },
 
   { id: 'l-tabs', name: 'Advanced Tabs', icon: 'tabs', group: 'Basic', hidden: true }, // hidden 20 Aug 2026
   /* Back in the palette. It was withheld on 21 Aug with no reason recorded — and unlike Spacer and
@@ -1508,6 +1510,10 @@ export const PORTAL_ELEMENTS: PortalElement[] = [
      its renderer and its panel all stay, so a page already carrying a placed KPI keeps working and
      editing exactly as it did. */
   { id: 'x-kpi', name: 'KPI', icon: 'kpi', group: 'Custom', hidden: true, keywords: 'metric stat number' },
+  /* A SET of counters with a 1–4 column preset — the banner's KPI block. */
+  { id: 'x-kpis', name: 'KPI tiles', icon: 'kpi', group: 'Custom', keywords: 'metric stat number counters kpi' },
+  /* An empty cell on the banner, made by its + adders; it becomes whatever is picked into it. */
+  { id: 'bn-slot', name: 'Empty slot', icon: 'card', group: 'Basic', hidden: true },
   /* ⚠️ The banner's own two blocks. Hidden from the palette — they only exist ON a banner, where the
      banner's "+" offers them — but catalogue entries all the same, so a placed one has a name. */
   { id: 'bn-heading', name: 'Heading', icon: 'text', group: 'Basic', hidden: true },

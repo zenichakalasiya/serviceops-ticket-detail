@@ -35,6 +35,7 @@ import { BANNER_GROUPS } from './portalPageModel';
 import type { Box, BoxDir, CustomSection, NodeStyle, PlacedElement, PortalPageContent, PortalStyles } from './portalPageModel';
 import { PORTAL_ELEMENTS, PORTAL_EMPTY_WIDGETS, PORTAL_TEMPLATES, bannerLayout, bannerShape } from './supportPortalData';
 import type { ShapeNode } from './supportPortalData';
+import { insertBeside, normalizeTree, replaceLeaf, shiftLeaf } from './portalBannerLayout';
 import { IconPopover } from './PortalIconPicker';
 import type { IconChoice } from './PortalIconPicker';
 import type { PortalPage } from './supportPortalData';
@@ -319,6 +320,8 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
    * `cfgFor` composes it — which is what makes Reset to default a one-line delete. */
   const rowOrderRef = useRef<Record<string, string[]>>(DEFAULT_ROW_ORDER);
   const widgetCfgRef = useRef<Record<string, Cfg>>({});
+  /* Filled once the banner helpers below exist — `cfgFor` is declared above them. */
+  const heroTreeRef = useRef<(() => ReturnType<typeof normalizeTree>) | null>(null);
   /* ⚠️ Seeded, so a template's hero and column counts are the page's OWN config rather than a
      branch in the renderer. Everything here is a value the panel can already edit, which is what
      makes a template a starting point instead of a mode. */
@@ -502,6 +505,11 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
             __blankPage: page.start === 'blank',
             __layoutHasImage: bannerLayout(String(widgetCfg.hero?.bannerLayout ?? 'classic'))?.hasImage === true,
             __hasSide: (rowExtrasRef.current.hero?.length ?? 0) > 0,
+            /* The arrangement as drawn, for the preset picker; the gap it shares with the Content group. */
+            __bannerTree: heroTreeRef.current?.() ?? null,
+            __contentGap: Number(widgetCfgRef.current['hero-content']?.gap ?? 20),
+            __contentGapY: Number(widgetCfgRef.current['hero-content']?.gapY ?? 20),
+            __rootRow2: (() => { const t = heroTreeRef.current?.(); return !!t && typeof t !== 'string' && t.d === 'row' && t.c.length === 2; })(),
           }
         : {}),
       ...(widgetCfg[owner] ?? {}),
@@ -529,6 +537,18 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
      goes through this function, so there is no path that sets one and misses the other. It is the
      only key in the builder that behaves this way, which is why it is named rather than inferred. */
   const patchCfg = useCallback((id: string, patch: Cfg) => {
+    /* ⚠️ The banner panel's "Gap between items" IS the Content group's gap — one value, written where the
+       canvas's pink gap bands write it, so the two can never show different numbers. */
+    if (id === 'hero' && (patch.contentGap !== undefined || patch.contentGapY !== undefined)) {
+      const { contentGap, contentGapY, ...rest } = patch;
+      setWidgetCfg((prev) => ({ ...prev, 'hero-content': {
+        ...(prev['hero-content'] ?? {}),
+        ...(contentGap !== undefined ? { gap: contentGap } : {}),
+        ...(contentGapY !== undefined ? { gapY: contentGapY } : {}),
+      } }));
+      if (!Object.keys(rest).length) return;
+      patch = rest;
+    }
     /* ⚠️ Behaviour is TREE state, so it is applied there and REMOVED from the patch rather than
        written to both. Two copies of the property everything is laid out by is the one thing this
        model exists to avoid — and a stored `dir` would win in `cfgFor` the moment the two drifted. */
@@ -688,9 +708,42 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     }
     const el = makeElement(type, rowId);
     setRowExtras((prev) => ({ ...prev, [rowId]: [...(prev[rowId] ?? []), el] }));
+    if (rowId === 'hero') seedBannerItem(el.id, type);
     select(el.id);
     toast.success(`${el.name} added`);
   }, [makeElement, select]);
+
+  /* ── The BANNER's items and their arrangement ────────────────────────────────────────────────
+   * Items = the Text group, the Search (while it sits in the band) and every widget placed on the banner.
+   * ⚠️ Read from the REFS, so the toolbar and the panel see the arrangement as it is right now. */
+  const heroItems = (): string[] => {
+    const h = widgetCfgRef.current.hero ?? {};
+    const search = h.showSearch !== false && String(h.searchPlacement ?? 'in-banner') !== 'floating';
+    return ['hero-copy', ...(search ? ['hero-search'] : []), ...(rowExtrasRef.current.hero ?? []).map((e) => e.id)];
+  };
+  const heroTree = () => normalizeTree(widgetCfgRef.current.hero?.bannerTree, heroItems());
+  heroTreeRef.current = heroTree;
+
+  /* What a widget starts as when it lands on the BANNER rather than on the page: the action cards stack
+     in one column beside the words, and Announcements becomes the image carousel, filling to the edge. */
+  function seedBannerItem(elId: string, type: string) {
+    if (type === 'x-actions') patchCfg(elId, { cols: '1' });
+    if (type === 'x-kpis') patchCfg(elId, { cols: '1' });
+    if (type === 'c-announcements') {
+      patchCfg(elId, { display: 'image' });
+      const cur = (widgetCfgRef.current.hero?.bannerBleed as string[] | undefined) ?? [];
+      patchCfg('hero', { bannerBleed: [...cur, elId] });
+    }
+  }
+
+  /** The banner's + adders: an empty cell beside an item — a column to its left or right, a row above or below. */
+  const addBannerCell = useCallback((anchorId: string, side: 'left' | 'right' | 'top' | 'bottom') => {
+    const el = makeElement('bn-slot', 'hero');
+    const tree = insertBeside(heroTree(), anchorId, el.id, side);
+    setRowExtras((prev) => ({ ...prev, hero: [...(prev.hero ?? []), el] }));
+    patchCfg('hero', { bannerTree: tree });
+    select(el.id);
+  }, [makeElement, patchCfg, select]);
 
 
   /* ⚠️ Read from the REF, not from state: this is called from inside a dragover handler, many times
@@ -1329,6 +1382,11 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
 
   const moveNode = useCallback((id: string, dir: 'prev' | 'next') => {
     const step = dir === 'prev' ? -1 : 1;
+    /* A banner item moves earlier or later in the arrangement, keeping its shape. */
+    if ((rowExtrasRef.current.hero ?? []).some((e) => e.id === id)) {
+      patchCfg('hero', { bannerTree: shiftLeaf(heroTree(), id, step) });
+      return;
+    }
     // A top-level band moves within the page.
     if (blockOrder.includes(id)) { setBlockOrder((o) => moveIn(o, id, step)); return; }
     // A card moves within its row.
@@ -1999,6 +2057,11 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
       setRowExtras((prev) => (
         prev[home] ? { ...prev, [home]: prev[home].map((e) => (e.id === id ? made : e)) } : prev
       ));
+      /* On the banner the replacement takes the replaced item's place in the arrangement. */
+      if (home === 'hero') {
+        patchCfg('hero', { bannerTree: replaceLeaf(heroTree(), id, made.id) });
+        seedBannerItem(made.id, type);
+      }
     }
     select(made.id);
     toast.success(`Replaced with ${made.name}`);
@@ -2028,6 +2091,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
 
   const canvasCtx = {
     selectedId, hoverId, select, setHover: setHoverId, styles, setStyle, setText, setCfg: patchCfg,
+    addBannerCell, heroTree,
     addSection, addBeside, splitBand, bandHosted, dropBeside, columnsFull, splitNode, setNodeDir, splitInfo, addLinkCard, dropInColumn, dropAtSeam, dropInRow,
     addSibling: addSiblingElement, cfg: cfgFor,
     moveNode, duplicateNode, deleteNode, canDuplicate, addInside, moveTo, moveToSeam, addChildBlock, splitChildBlock, fillChildBlock, areSiblings, replaceElement, pickIcon, applyPreset,

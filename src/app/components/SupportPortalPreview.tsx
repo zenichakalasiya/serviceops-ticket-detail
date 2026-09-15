@@ -14,13 +14,15 @@ import {
 import {
   PORTAL_APPROVALS, PORTAL_ARTICLES, PORTAL_OPEN_REQUESTS, statusTone,
 } from './supportPortalData';
-import { AddSectionSeam, ColumnAdders, MOVE_MIME, Sel, draggedElement, draggedNode, styleOf, useCanvas } from './PortalCanvas';
+import { AddSectionSeam, BannerSlot, ColumnAdders, MOVE_MIME, Sel, draggedElement, draggedNode, styleOf, useCanvas } from './PortalCanvas';
 import { HUGS_CONTENT, bannerGroupGap, inBanner } from './portalPageModel';
 import { bannerLayerSide, sideGradient } from './PortalBannerTools';
 import { PAGE_ID, chosen, iconBoxCss, roleStyle } from './portalStyleResolver';
 import { bannerLayout } from './supportPortalData';
 import { shadowCss } from './PortalBoxControls';
-import { PortalPlacedElement } from './PortalPlacedElement';
+import { PlacedBlockRenderers, PortalPlacedElement } from './PortalPlacedElement';
+import { ALL_EDGES, COMPACT_BANNER_TYPES, cellKey, childEdges, colsTemplate, leavesOf, normalizeTree } from './portalBannerLayout';
+import type { BannerNode, Edges } from './portalBannerLayout';
 import { DEFAULT_BLOCK_ORDER, DEFAULT_CONTENT, DEFAULT_ROW_ORDER, fillCss, isBranch, nodePath, isLockedRow, hasFixedTitle, hasFixedViewAll, rowOf } from './portalPageModel';
 import type { Box, BoxDir, CustomSection, PlacedElement, PortalPageContent } from './portalPageModel';
 import { iconNode, isImageChoice } from './PortalIconPicker';
@@ -1834,11 +1836,9 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
      banner while remaining a separate sibling section underneath it — they have to actually BE inside
      the hero's own DOM node, or a canvas that lets you hover/select "Hero" as its own bounded region
      keeps reading as two bands however well the colours line up. */
-  const quickSection = (
-    hostBand("quick",
-    <Sel id="quick" className={`relative z-10 ${SECTION_PAD} ${blockOrder.indexOf("quick") === 0 && !searchFloats && !tileActions && !quickOnBanner && !hostOf("quick") ? "-mt-[62px]" : ""} ${searchFloats ? "pt-[52px]" : ""} ${tileActions || quickOnBanner ? "pt-6" : ""}`} style={{ order: slot("quick"), ...fillCss(wc('quick')), ...(quickOnBanner ? { marginTop: -1 } : {}) }}>
-      <RowDrop rowId="quick" resize={secResize("quick")} className={`flex flex-wrap${secPacked("quick", 4) ? " portal-row-packed" : ""}`} style={{ gap: secGap("quick"), ...secBox("quick", 4), ...rowFits(inRow("quick"), "quick"), ...secGrid("quick", 4) }}>
-        {quickCards.map((a) => {
+  /* ONE action card. The Quick Actions row and the Action cards block both call this, so a card is the
+     same component wherever it sits — its template, icon, words and style all come from the one place. */
+  const quickCardEl = (a: (typeof content.quick)[number], selStyle: React.CSSProperties) => {
           const c = wc(a.id);
           /* ⚠️ The CARD's own template wins; the row's is the default it starts from.
              Read the other way round the card's picker was dead — see the note in fixB. */
@@ -1876,7 +1876,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
              specific decision. */
           const { backgroundColor: iconBoxBg, color: iconBoxColor, borderRadius: iconBoxRadius, ...iconBoxRest } = iconBoxCss(styles, `${a.id}-icon`);
           return (
-            <Sel key={a.id} id={a.id} className="@container min-w-0 rounded-lg" style={{ ...share(secCols("quick", content.cols.quick), secGap("quick"), secGrow("quick")) }}>
+            <Sel key={a.id} id={a.id} className="@container min-w-0 rounded-lg" style={selStyle}>
               <div
                 /* ⚠️ fillCss AFTER st(): the card's Style accordion writes fill / colour /
                    image / border / radius into its CONFIG, and this div was reading only the
@@ -1970,7 +1970,27 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
               </div>
             </Sel>
           );
-        })}
+  };
+
+  /* ⚠️ The Action cards block MOVES the four cards: once one is placed anywhere, the Quick Actions row
+     is not drawn, so a card never appears twice. Deleting the block brings the row back. */
+  const walkEls = (b: Box): PlacedElement[] => [...(b.el ? [b.el] : []), ...(b.children ?? []).flatMap(walkEls)];
+  const actionsMoved = Object.values(rowExtras ?? {}).some((l) => l.some((x) => x.type === 'x-actions'))
+    || sections.some((s) => walkEls(s.section.root).some((x) => x.type === 'x-actions'));
+  const actionsBlock = (nodeId: string) => {
+    const cols = Math.min(4, Math.max(1, Number(wc(nodeId).cols ?? 4)));
+    return (
+      <div className="grid w-full" style={{ gap: 12, gridTemplateColumns: colsTemplate(cols, 12, 150) }}>
+        {quickCards.map((a) => quickCardEl(a, {}))}
+      </div>
+    );
+  };
+
+  const quickSection = (
+    hostBand("quick",
+    <Sel id="quick" className={`relative z-10 ${SECTION_PAD} ${blockOrder.indexOf("quick") === 0 && !searchFloats && !tileActions && !quickOnBanner && !hostOf("quick") ? "-mt-[62px]" : ""} ${searchFloats ? "pt-[52px]" : ""} ${tileActions || quickOnBanner ? "pt-6" : ""}`} style={{ order: slot("quick"), ...fillCss(wc('quick')), ...(quickOnBanner ? { marginTop: -1 } : {}) }}>
+      <RowDrop rowId="quick" resize={secResize("quick")} className={`flex flex-wrap${secPacked("quick", 4) ? " portal-row-packed" : ""}`} style={{ gap: secGap("quick"), ...secBox("quick", 4), ...rowFits(inRow("quick"), "quick"), ...secGrid("quick", 4) }}>
+        {quickCards.map((a) => quickCardEl(a, { ...share(secCols("quick", content.cols.quick), secGap("quick"), secGrow("quick")) }))}
 
         {(rowExtras?.['quick'] ?? []).map((el) => (
           <Sel key={el.id} id={el.id} style={share(secCols("quick", content.cols.quick), secGap("quick"), secGrow("quick"))}>
@@ -2074,6 +2094,16 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
     </Sel>
   );
 
+  /* ⚠️ The ARRANGED banner: every regular banner is drawn from its item tree (see portalBannerLayout).
+     A rail, a side-search, a shaped banner and a template's own banner layout keep their own branches —
+     until an arrangement is picked on a templated one, which then takes the tree like any other. */
+  const treeBanner = !heroSide && !bannerSec && !searchSide
+    && !(heroLayout && heroLayout.id !== 'classic' && !heroCfg.bannerTree);
+  /* The action cards ride up into the banner's lower edge, so the band keeps room for them. */
+  const quickClimbs = !actionsMoved && blockOrder.indexOf('quick') === 0 && !removed.includes('quick') && !searchFloats && !tileActions && !quickOnBanner && !hostOf('quick');
+  /* The banner's PADDING belongs to its items (see the tree renderer), not to the band. */
+  const { paddingTop: _pt, paddingBottom: _pb, paddingLeft: _pl, paddingRight: _pr, ...heroInner } = stInner('hero');
+
   const heroBand = (
     <>
     {/* Full bleed ignores the page's side inset (§7.20); the 9-point picker places the
@@ -2098,7 +2128,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
         /* ⚠️ A RAIL reads top-down. Centring is right for a band — the copy sits in the middle
            of the colour however tall it is made — and wrong for a column, where it pushes the
            greeting to the vertical middle of the page and the action rows off the bottom. */
-        className={`relative flex flex-col ${heroSide ? 'justify-start pt-10 pb-10' : bannerSec ? (blank || tileActions || quickOnBanner ? 'justify-center py-5' : 'justify-center pt-5 pb-[86px]') : `${({ start: 'justify-start', end: 'justify-end' } as Record<string, string>)[String(wc('hero').contentAlignY ?? 'center')] ?? 'justify-center'} ${(tileActions || quickOnBanner) && !searchFloats ? 'pb-10' : 'pb-[86px]'}`} ${searchFloats && !bannerSec ? 'overflow-visible' : heroSticky ? 'overflow-x-hidden overflow-y-auto scrollbar-hide' : 'overflow-hidden'}`}
+        className={treeBanner ? `relative flex flex-col overflow-hidden ${quickClimbs ? 'pb-[62px]' : ''}` : `relative flex flex-col ${heroSide ? 'justify-start pt-10 pb-10' : bannerSec ? (blank || tileActions || quickOnBanner ? 'justify-center py-5' : 'justify-center pt-5 pb-[86px]') : `${({ start: 'justify-start', end: 'justify-end' } as Record<string, string>)[String(wc('hero').contentAlignY ?? 'center')] ?? 'justify-center'} ${(tileActions || quickOnBanner) && !searchFloats ? 'pb-10' : 'pb-[86px]'}`} ${searchFloats && !bannerSec ? 'overflow-visible' : heroSticky ? 'overflow-x-hidden overflow-y-auto scrollbar-hide' : 'overflow-hidden'}`}
         style={{
           /* ⚠️ The tabs decide, in one place. Image wins when one is uploaded; Colour paints
              flat; and with neither the band keeps its gradient, so a portal nobody has touched
@@ -2119,7 +2149,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
           ...(Number(heroCfg.bannerBorderWidth ?? 0) > 0 ? {
             borderWidth: Number(heroCfg.bannerBorderWidth), borderStyle: String(heroCfg.bannerBorderStyle ?? 'solid'), borderColor: String(heroCfg.bannerBorderColor ?? '#E5E7EB'),
           } : {}),
-          ...stInner('hero'),
+          ...(treeBanner ? heroInner : stInner('hero')),
         }}
       >
         {/* The decorative line-work belongs to the DEFAULT band. Over a chosen colour it reads
@@ -2211,7 +2241,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
              28px while the action cards and Contact Us below it sit at the section's own
              24px. Four pixels is invisible across a full-width banner and plainly wrong down
              the side of a 380px column, where every left edge is on one line. */
-          className={`relative w-full ${heroSide ? 'px-5 pt-8 pb-5' : 'px-6 py-6'}`}
+          className={treeBanner ? 'portal-banner relative flex w-full flex-1 flex-col' : `relative w-full ${heroSide ? 'px-5 pt-8 pb-5' : 'px-6 py-6'}`}
           style={{ textAlign: heroAlignX(String(wc('hero').contentAlign ?? 'center')) }}
         >
         {/* ⚠️ `contents` on the REGULAR banner, so the wrapper leaves the layout entirely and the
@@ -2313,6 +2343,107 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
               {heroSlot === 'below' && <div className="w-full">{bannerSlot}</div>}
             </Sel>
           );
+          if (treeBanner) {
+            const heroNow = wc('hero');
+            const items = ['hero-copy', ...(search ? ['hero-search'] : []), ...heroExtras.map((x) => x.id)];
+            const tree: BannerNode = normalizeTree(heroNow.bannerTree, items) ?? 'hero-copy';
+            const bleed = new Set(Array.isArray(heroNow.bannerBleed) ? (heroNow.bannerBleed as string[]) : []);
+            const gap = bannerGroupGap('hero-content', contentCfg);
+            /* Stacked items have their own gap, so text can breathe above a search while sitting flush against a picture. */
+            const gapY = Number(contentCfg.gapY ?? 20);
+            /* ⚠️ The banner's padding lands on the items that TOUCH the banner's edges, never between two
+               items — so padding narrows the space around them while the gap alone decides the space between.
+               Left/right are % of the banner (the product's unit), expressed in `cqw` of the banner's content
+               box so a % means the same thing however deep the item sits. */
+            const pad = styles.hero?.padding;
+            const padT = pad?.top ?? 24;
+            const padB = pad?.bottom ?? 24;
+            const padL = pad?.left !== undefined ? `${pad.left}cqw` : '24px';
+            const padR = pad?.right !== undefined ? `${pad.right}cqw` : '24px';
+            const justifyY = ({ start: 'flex-start', end: 'flex-end' } as Record<string, string>)[String(heroNow.contentAlignY ?? 'center')] ?? 'center';
+            const typeOf = (id: string) => heroExtras.find((x) => x.id === id)?.type ?? '';
+            const compact = (n: BannerNode) => { const ids = leavesOf(n); return ids.length > 0 && ids.every((x) => COMPACT_BANNER_TYPES.has(typeOf(x))); };
+            /* Column widths: the admin's split on a two-column banner, else the words take twice a card column's room. */
+            const weight = (p: { d: 'row' | 'column'; c: BannerNode[] }, i: number) => {
+              const split = String(heroNow.bannerSplit ?? 'auto');
+              if (p === tree && p.c.length === 2 && split !== 'auto') return Number(split.split(':')[i]) || 1;
+              if (compact(p.c[i])) return 1;
+              return p.c.some(compact) ? 2 : 1;
+            };
+            const leafBody = (id: string) => {
+              if (id === 'hero-copy') return textGroup;
+              if (id === 'hero-search') return search;
+              const el = heroExtras.find((x) => x.id === id);
+              if (!el) return null;
+              return (
+                <Sel key={el.id} id={el.id} className="min-w-0">
+                  {el.type === 'bn-slot'
+                    ? <BannerSlot id={el.id} />
+                    : <PortalPlacedElement item={el} icon={icons?.[el.id]} text={placedText?.[el.id]} cfg={wc(el.id)} />}
+                </Sel>
+              );
+            };
+            const draw = (n: BannerNode, edge: Edges, grow?: number): ReactNode => {
+              const flex = grow !== undefined ? { flex: `${grow} 1 0%`, minWidth: 0 } : {};
+              if (typeof n === 'string') {
+                const b = bleed.has(n);
+                const words = n === 'hero-copy' || n === 'hero-search';
+                return (
+                  <div
+                    key={n}
+                    data-gap-item=""
+                    data-banner-cell={n}
+                    className={`flex min-w-0 flex-col ${b ? 'portal-bleed' : ''}`}
+                    style={{
+                      containerType: 'inline-size',
+                      alignItems: words ? (FLEX[bandAlign] ?? 'center') : 'stretch',
+                      /* Widgets keep their own text alignment — the banner's centring is for its words. */
+                      textAlign: words ? undefined : 'left',
+                      justifyContent: b ? 'stretch' : justifyY,
+                      ...(b ? {} : {
+                        paddingTop: edge.top ? padT : undefined, paddingBottom: edge.bottom ? padB : undefined,
+                        paddingLeft: edge.left ? padL : undefined, paddingRight: edge.right ? padR : undefined,
+                      }),
+                      ...flex,
+                    }}
+                  >{leafBody(n)}</div>
+                );
+              }
+              return (
+                <div
+                  key={cellKey(n)}
+                  data-gap-item=""
+                  data-gap-parent="hero-content"
+                  className={`flex min-w-0 ${n.d === 'row' ? 'portal-banner-row' : ''}`}
+                  style={{ flexDirection: n.d, gap: n.d === 'row' ? gap : gapY, alignItems: 'stretch', justifyContent: n.d === 'column' ? justifyY : undefined, ...flex }}
+                >
+                  {n.c.map((k, i) => draw(k, childEdges(n, i, edge), n.d === 'row' ? weight(n, i) : undefined))}
+                </div>
+              );
+            };
+            const root = typeof tree === 'string' ? null : tree;
+            /* ⚠️ A plain box, not a selectable node: it fills the whole banner, so as a node it would take
+               every click meant for the banner. The banner IS its arrangement — select the banner to see
+               the gap handles, and use its Arrangement presets to change the shape. */
+            return (
+              <div
+                data-banner-root=""
+                data-gap-parent="hero-content"
+                className={`flex min-h-0 w-full flex-1 ${root?.d === 'row' ? 'portal-banner-row' : ''}`}
+                style={{
+                  containerType: 'inline-size',
+                  flexDirection: root?.d ?? 'column',
+                  gap: root?.d === 'row' ? gap : gapY,
+                  alignItems: 'stretch',
+                  justifyContent: root?.d === 'row' ? undefined : justifyY,
+                }}
+              >
+                {root
+                  ? root.c.map((k, i) => draw(k, childEdges(root, i, ALL_EDGES), root.d === 'row' ? weight(root, i) : undefined))
+                  : draw(tree, ALL_EDGES)}
+              </div>
+            );
+          }
           return (
             <div
               data-gap-parent={bannerSide ? 'hero' : undefined}
@@ -2380,7 +2511,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
             tiles genuinely PART of the banner rather than a separate section merely painted to
             match it. See the note beside where `quickSection` is built, right before this
             component's `return`. */}
-        {quickOnBanner && quickSection}
+        {quickOnBanner && !actionsMoved && quickSection}
         {/* ⚠️ `mt-auto` pins it to the FOOT of the rail — a last resort belongs at the end of
             the column, not in the middle of it. `bare` because the rail is already a dark
             surface: a card would paint a second one inside it. `portal-help-dark` is the
@@ -2395,6 +2526,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
     </>
   );
   return (
+    <PlacedBlockRenderers.Provider value={{ 'x-actions': actionsBlock }}>
     <div
       className="flex min-h-full flex-col bg-white"
       /* §7.22 — the PAGE layer. The typeface cascades normally; the text scale uses `zoom` because
@@ -2533,7 +2665,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
             {/* ⚠️ `tileActions` also drops the 62px climb. Two objects cannot straddle one edge,
                 and a template that keeps its banner intact wants the cards clear of it — the hero
                 then has one job and every breakpoint has one less thing to solve. */}
-            {!quickOnBanner && quickSection}
+            {!quickOnBanner && !actionsMoved && quickSection}
 
             {after('quick')}
 
@@ -3037,6 +3169,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
         </span>
       </div>
     </div>
+    </PlacedBlockRenderers.Provider>
   );
 }
 

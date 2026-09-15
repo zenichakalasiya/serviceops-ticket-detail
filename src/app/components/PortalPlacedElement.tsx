@@ -1,4 +1,11 @@
+import { createContext, useContext } from 'react';
 import type { ReactNode } from 'react';
+import { colsTemplate } from './portalBannerLayout';
+
+/* Blocks whose cards are drawn by the PAGE rather than here — the Action cards block reuses the
+ * preview's own action-card renderer, so a card in the block and a card in the Quick Actions row are
+ * one component, not two that drift. The preview provides the renderer; this only asks for it. */
+export const PlacedBlockRenderers = createContext<Record<string, (id: string) => ReactNode>>({});
 import { Image as ImageIcon, PlayCircle, Search, Star } from 'lucide-react';
 import { PORTAL_APPROVALS, PORTAL_ARTICLES, PORTAL_ELEMENTS, PORTAL_OPEN_REQUESTS } from './supportPortalData';
 import { ACTION_TYPES, fillCss, paintsOwnSurface, renderSpec } from './portalPageModel';
@@ -96,7 +103,7 @@ function Surface({ children, id }: { children: React.ReactNode; id: string }) {
        a percentage height against an auto-height parent resolves to auto. */
     "flex h-full flex-col",
   ].filter(Boolean).join(" ");
-  return <div className={cls} style={css}>{children}</div>;
+  return <div data-surface="" className={cls} style={css}>{children}</div>;
 }
 
 /* The four spec-driven element types that render from their own config rather than the generic
@@ -469,6 +476,23 @@ function specDrivenBody(type: string, cfg: Record<string, unknown> | undefined, 
   return null;
 }
 
+/* A SET of counters laid out in 1–4 columns (the KPI tiles block). Counts come off the same arrays
+   as everywhere else, so a tile and the card it summarises cannot disagree. */
+function KpiTiles({ cfg }: { cfg: Record<string, unknown> }) {
+  const items = ((Array.isArray(cfg.items) ? cfg.items : []) as { label?: string; source?: string; hidden?: boolean }[]).filter((k) => !k.hidden);
+  const cols = Math.min(4, Math.max(1, Number(cfg.cols ?? 3)));
+  return (
+    <div className="grid w-full" style={{ gap: 12, gridTemplateColumns: colsTemplate(cols, 12, 120) }}>
+      {items.map((k, i) => (
+        <div key={i} className="flex min-w-0 flex-col justify-center rounded-lg border border-[#E5E7EB] bg-white px-4 py-3 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_4px_12px_rgba(16,24,40,0.06)]">
+          <span className="block text-[26px] font-semibold leading-none text-[#364658]">{COUNTS[String(k.source ?? 'My requests')] ?? 0}</span>
+          <span className="mt-1.5 block truncate text-[13px] text-[#7B8FA5]">{String(k.label ?? '')}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function PlacedBody({ item, icon, text, cfg }: {
   item: PlacedElement;
   icon?: IconChoice;
@@ -476,6 +500,7 @@ function PlacedBody({ item, icon, text, cfg }: {
   /** Widget config, for the element types the specification covers (spec §9). */
   cfg?: Record<string, unknown>;
 }) {
+  const blocks = useContext(PlacedBlockRenderers);
   const def = PORTAL_ELEMENTS.find((e) => e.id === item.type);
   const spec = renderSpec(item.type);
   const label = def?.name ?? item.name;
@@ -502,6 +527,9 @@ function PlacedBody({ item, icon, text, cfg }: {
      StyledBox. Action Card and KPI paint their own surface and are excluded for the older reason:
      they would end up as a card inside a card. */
   const dataWidget = (def?.group === 'Data' || def?.group === 'Custom') && !renderSpec(item.type).bare;
+  const drawnByPage = blocks[item.type];
+  if (drawnByPage) return <>{drawnByPage(item.id)}</>;
+  if (item.type === 'x-kpis') return <KpiTiles cfg={cfg ?? {}} />;
   if (Collection && cfg) {
     const drawn = <Collection nodeId={item.id} cfg={cfg} glyph={glyph} />;
     return dataWidget ? <Surface id={item.id}>{drawn}</Surface> : <StyledBox id={item.id}>{drawn}</StyledBox>;

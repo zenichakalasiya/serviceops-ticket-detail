@@ -14,6 +14,9 @@
  */
 
 import { ColorField } from './PortalColorPicker';
+import { activePreset, presetsFor } from './portalBannerLayout';
+import type { BannerNode } from './portalBannerLayout';
+import { nodeById } from './portalPageModel';
 
 /** Figma's gap field: the direction glyph, the number, and a slider — one value, typed or dragged. */
 export function GapField({ value, onChange, dir = 'column' }: { value: number; onChange: (v: number) => void; dir?: string }) {
@@ -134,6 +137,52 @@ export function BannerFillEditor({ cfg, setCfg }: {
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+/* ── The banner's ARRANGEMENT presets ─────────────────────────────────────────────────────────────
+ * One thumbnail per arrangement the current items can take, each drawn from the SAME tree it would
+ * apply — so a thumbnail can never promise a layout you do not get. Every block is labelled with the
+ * item it stands for, because "which box is the search?" is the one question a bare grid cannot answer. */
+function PresetArt({ node, name }: { node: BannerNode; name: (id: string) => string }) {
+  if (typeof node === 'string') {
+    return (
+      <span className="flex min-h-[18px] min-w-0 flex-1 items-center justify-center overflow-hidden rounded-[3px] bg-[#DCE8F5] px-1 text-[9px] font-medium leading-none text-[#3D6F9E]">
+        <span className="truncate">{name(node)}</span>
+      </span>
+    );
+  }
+  return (
+    <span className={`flex min-w-0 flex-1 gap-[3px] ${node.d === 'row' ? 'flex-row' : 'flex-col'}`}>
+      {node.c.map((k, i) => <PresetArt key={i} node={k} name={name} />)}
+    </span>
+  );
+}
+
+export function BannerPresetPicker({ tree, onPick }: { tree: BannerNode | null; onPick: (t: BannerNode) => void }) {
+  const presets = presetsFor(tree);
+  const on = activePreset(tree);
+  const name = (id: string) => (id === 'hero-copy' ? 'Text' : id === 'hero-search' ? 'Search' : nodeById(id)?.name ?? 'Item');
+  if (presets.length < 2) {
+    return <p className="text-[12px] leading-[18px] text-[#7B8FA5]">Add a widget to the banner to choose how its items are arranged.</p>;
+  }
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      {presets.map((p) => (
+        <button
+          key={p.id}
+          type="button"
+          title={p.label}
+          aria-pressed={on === p.id}
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={(e) => { e.stopPropagation(); onPick(p.tree); }}
+          className={`flex flex-col gap-1.5 rounded border p-1.5 text-left transition-colors ${on === p.id ? 'border-[#3D8BD0] bg-[#EBF5FF]' : 'border-[#E5E7EB] bg-white hover:border-[#C3CBD6]'}`}
+        >
+          <span className="flex h-[54px] w-full rounded-[4px] bg-[#F5F7FA] p-1"><PresetArt node={p.tree} name={name} /></span>
+          <span className={`truncate text-[11px] leading-[14px] ${on === p.id ? 'text-[#3D8BD0]' : 'text-[#64748B]'}`}>{p.label}</span>
+        </button>
+      ))}
     </div>
   );
 }

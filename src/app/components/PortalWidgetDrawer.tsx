@@ -38,7 +38,8 @@ import { RecordFilterField } from './PortalRecordFilter';
 import type { RecordFilter } from './portalRecordFilters';
 import { BANNER_SHAPES, bannerLayoutsFor, recordModule } from './supportPortalData';
 import { AnnouncementTypePicker, BannerLayoutPicker, BannerShapePicker, KpiLayoutPicker, TemplatePicker } from './PortalSectionControls';
-import { BannerFillEditor, GapField, SideGrid, bannerLayerSide } from './PortalBannerTools';
+import { BannerFillEditor, BannerPresetPicker, GapField, SideGrid, bannerLayerSide } from './PortalBannerTools';
+import type { BannerNode } from './portalBannerLayout';
 import { bannerGroupGap } from './portalPageModel';
 import { ACROSS_ROW, ACROSS_STACK, DOWN_ROW, DOWN_STACK, SectionPresets } from './PortalSectionLayout';
 import type { PresetId } from './PortalSectionLayout';
@@ -1139,11 +1140,13 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
             onChange={(x) => onApplyBannerLayout?.(x)}
           />
         );
+      case 'bannerPreset':
+        return <BannerPresetPicker tree={(viewCfg.__bannerTree as BannerNode | null) ?? null} onPick={(t) => set(f.key, t)} />;
       case 'gapField':
         return (
           <GapField
-            value={f.key === 'sideGap' ? Number(v ?? 32) : bannerGroupGap(nodeId, viewCfg)}
-            dir={f.key === 'sideGap' ? 'row' : String(viewCfg.dir ?? 'column')}
+            value={f.key === 'contentGap' ? Number(viewCfg.__contentGap ?? 20) : f.key === 'contentGapY' ? Number(viewCfg.__contentGapY ?? 20) : f.key === 'sideGap' ? Number(v ?? 32) : bannerGroupGap(nodeId, viewCfg)}
+            dir={f.key === 'sideGap' || f.key === 'contentGap' ? 'row' : f.key === 'contentGapY' ? 'column' : String(viewCfg.dir ?? 'column')}
             onChange={(x) => set(f.key, x)}
           />
         );
