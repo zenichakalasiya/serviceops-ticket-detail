@@ -198,12 +198,13 @@ export function AnnouncementTypePicker({ value, onChange }: { value: string; onC
                 <span className="flex items-center gap-2">
                   {row}
                   {/* The controls, drawn: ‹ arrow · active pill · dots · arrow › */}
-                  <span className="flex items-center gap-[2px]">
-                    <span className="size-[7px] rounded-full border border-[#C3CBD6]" />
-                    <span className={`h-[3px] w-2 rounded-full ${on ? 'bg-[#3D8BD0]/60' : 'bg-[#C3CBD6]'}`} />
-                    <span className="size-[3px] rounded-full bg-[#DFE5ED]" />
-                    <span className="size-[3px] rounded-full bg-[#DFE5ED]" />
-                    <span className="size-[7px] rounded-full border border-[#C3CBD6]" />
+                  {/* Kept SMALL — the controls are a detail of this card, not its subject. */}
+                  <span className="flex flex-shrink-0 items-center gap-px">
+                    <span className="size-[5px] rounded-full border border-[#C3CBD6]" />
+                    <span className={`h-[2px] w-[5px] rounded-full ${on ? 'bg-[#3D8BD0]/60' : 'bg-[#C3CBD6]'}`} />
+                    <span className="size-[2px] rounded-full bg-[#DFE5ED]" />
+                    <span className="size-[2px] rounded-full bg-[#DFE5ED]" />
+                    <span className="size-[5px] rounded-full border border-[#C3CBD6]" />
                   </span>
                 </span>
               )}
