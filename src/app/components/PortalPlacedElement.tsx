@@ -479,14 +479,25 @@ function specDrivenBody(type: string, cfg: Record<string, unknown> | undefined, 
 /* A SET of counters laid out in 1–4 columns (the KPI tiles block). Counts come off the same arrays
    as everywhere else, so a tile and the card it summarises cannot disagree. */
 function KpiTiles({ cfg }: { cfg: Record<string, unknown> }) {
-  const items = ((Array.isArray(cfg.items) ? cfg.items : []) as { label?: string; source?: string; hidden?: boolean }[]).filter((k) => !k.hidden);
+  const items = ((Array.isArray(cfg.items) ? cfg.items : []) as { label?: string; source?: string; value?: string; hint?: string; hidden?: boolean }[]).filter((k) => !k.hidden);
   const cols = Math.min(4, Math.max(1, Number(cfg.cols ?? 3)));
+  /* The tile's LOOK is the banner's: a banner template sets it so counters sit on a dark band as glass
+     and on a white one as a quiet outline. The plain card is what a tile placed by hand gets. */
+  const look = String(cfg.look ?? 'card');
+  const glass = look === 'glass';
+  const surface = glass
+    ? 'border border-white/15 bg-white/10'
+    : look === 'outline'
+      ? 'border border-[#E5E7EB] bg-white'
+      : 'border border-[#E5E7EB] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04),0_4px_12px_rgba(16,24,40,0.06)]';
   return (
     <div className="grid w-full" style={{ gap: 12, gridTemplateColumns: colsTemplate(cols, 12, 120) }}>
       {items.map((k, i) => (
-        <div key={i} className="flex min-w-0 flex-col justify-center rounded-lg border border-[#E5E7EB] bg-white px-4 py-3 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_4px_12px_rgba(16,24,40,0.06)]">
-          <span className="block text-[26px] font-semibold leading-none text-[#364658]">{COUNTS[String(k.source ?? 'My requests')] ?? 0}</span>
-          <span className="mt-1.5 block truncate text-[13px] text-[#7B8FA5]">{String(k.label ?? '')}</span>
+        <div key={i} className={`flex min-w-0 flex-col justify-center rounded-lg px-4 py-3 ${surface}`}>
+          {/* A tile may carry a fixed VALUE (a percentage, a count the product has no query for); otherwise it counts its source. */}
+          <span className={`block text-[26px] font-semibold leading-none ${glass ? 'text-white' : 'text-[#364658]'}`}>{k.value ?? COUNTS[String(k.source ?? 'My requests')] ?? 0}</span>
+          <span className={`mt-1.5 block truncate text-[13px] ${glass ? 'font-medium text-white/85' : 'text-[#7B8FA5]'}`}>{String(k.label ?? '')}</span>
+          {k.hint && <span className={`mt-0.5 block truncate text-[11.5px] ${glass ? 'text-white/55' : 'text-[#9AA5B4]'}`}>{k.hint}</span>}
         </div>
       ))}
     </div>

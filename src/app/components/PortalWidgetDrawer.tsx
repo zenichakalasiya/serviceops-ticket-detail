@@ -81,7 +81,7 @@ import { LineStylePicker } from './PortalLineStyles';
 import { IconFramePicker } from './PortalIconFrame';
 import type { IconFrame } from './PortalIconFrame';
 import type { LineStyle } from './PortalLineStyles';
-import { SpacingMatrix } from './SpacingMatrix';
+import { SpacingMatrix, useRestingSpacing } from './SpacingMatrix';
 import { PortalBannerPicker } from './PortalBannerPicker';
 import { ColorField } from './PortalColorPicker';
 import { IconField } from './PortalIconPicker';
@@ -533,7 +533,8 @@ function PanelBody({ spec, nodeId, cfg, renderField, openGroups, toggleGroup, st
               {/* ⚠️ The spacing accordion shows only the boxes this element HAS. A divider gets a
                   margin box and no padding box, because a line has no inside. */}
               {a.spacing && (
-                <SpacingMatrix
+                <RestingSpacing
+                  nodeId={nodeId}
                   style={styles[nodeId] ?? {}}
                   onChange={(p) => setStyle(nodeId, p)}
                   only={a.spacing === 'both' ? undefined : a.spacing}
@@ -1810,7 +1811,7 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
               open={openGroups.includes('__spacing')}
               onToggle={() => toggleGroup('__spacing')}
             >
-              <SpacingMatrix style={styles[nodeId] ?? {}} onChange={(p) => setStyle(nodeId, p)} />
+              <RestingSpacing nodeId={nodeId} style={styles[nodeId] ?? {}} onChange={(p) => setStyle(nodeId, p)} />
             </Group>
             {/* ⚠️ Empty state renders AFTER Spacing, which is why it is filtered out of groupsFor.
                 It is the answer to "what does this show when there is nothing to show" — a state the
@@ -1840,4 +1841,12 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
       )}
     </div>
   );
+}
+
+/* The spacing control fed with what the element really rests at, so an unset side reads its true value. */
+function RestingSpacing({ nodeId, style, onChange, only }: {
+  nodeId: string; style: NodeStyle; onChange: (p: Partial<NodeStyle>) => void; only?: 'margin' | 'padding';
+}) {
+  const resting = useRestingSpacing(nodeId, style);
+  return <SpacingMatrix style={style} onChange={onChange} only={only} resting={resting} />;
 }

@@ -2,8 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
   ArrowLeft, ArrowRight, Check, ChevronDown, ChevronLeft, Eye, HelpCircle, RotateCcw,
-  Palette, PanelRight, Paintbrush, Pencil, Plus, Redo2, Undo2, X,
+  Palette, PanelRight, Paintbrush, Pencil, Plus, Redo2, Undo2, X, LayoutPanelTop,
 } from 'lucide-react';
+import { PortalBannersPanel } from './PortalBannersPanel';
+import { TEMPLATE_HERO_KEYS, TEMPLATE_PAGE_KEYS, TEMPLATE_STYLE_IDS, bannerTemplate, instantiateBanner } from './portalBannerTemplates';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { AiSparkle } from './AiSparkle';
@@ -64,7 +66,7 @@ interface SupportPortalBuilderProps {
   onExit: () => void;
 }
 
-type RailKey = 'add' | 'theme' | 'branding' | 'settings' | 'ai';
+type RailKey = 'add' | 'theme' | 'branding' | 'banners' | 'settings' | 'ai';
 
 const RAIL: { key: RailKey; label: string; icon: (on: boolean) => ReactNode }[] = [
   /* ⚠️ "Widgets", not "Add". The rail names PLACES, not verbs — Theme, Branding, Templates are all
@@ -72,6 +74,8 @@ const RAIL: { key: RailKey; label: string; icon: (on: boolean) => ReactNode }[] 
   { key: 'add', label: 'Widgets', icon: () => <Plus size={18} /> },
   { key: 'theme', label: 'Theme', icon: () => <Paintbrush size={18} /> },
   { key: 'branding', label: 'Branding', icon: () => <Palette size={18} /> },
+  /* Every banner from the layout gallery, built with this editor — horizontal and vertical. */
+  { key: 'banners', label: 'Banners', icon: () => <LayoutPanelTop size={18} /> },
   /* ⚠️ Settings is OFF the rail (25 Aug 2026). It used to sit below Branding on the reasoning that
      what a requester may DO on this portal is a property of this portal — but the rail is where you
      go while you are ARRANGING a page, and a nine-accordion permissions screen is not a thing you
@@ -103,6 +107,10 @@ const PANEL_COPY: Record<RailKey, { title: string; body: string }> = {
        per-page override that has never existed. */
     title: 'Branding',
     body: 'Manage your organization’s branding across the Support Portal.',
+  },
+  banners: {
+    title: 'Banners',
+    body: 'Pick a banner for the top of this portal. Only the banner changes — every section below stays as it is.',
   },
   settings: {
     title: 'Settings',
@@ -1414,6 +1422,100 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     toast.success(`${l.name} applied`);
   }, [patchCfg]);
 
+  /* ── Banner TEMPLATES (the Banners menu) ───────────────────────────────────────────────────────
+   * ⚠️ A template REPLACES the banner and nothing else. Hero config keys a template owns are cleared before
+   * its own are written (a merge would leave the last banner's colour under the new one's words), the
+   * banner's widgets are swapped wholesale, and the page keys only a vertical banner sets are cleared by
+   * every horizontal one. Every other key — the search's scope, the sections below — is untouched.
+   * ⚠️ "Default" restores the banner exactly as the page OPENED, captured once at mount — not the
+   * product's generic banner, because a page started from a template opened with that template's. */
+  const defaultBannerRef = useRef<{
+    hero: Cfg; copy: Cfg | undefined; content: Cfg | undefined; page: Cfg;
+    styles: Record<string, NodeStyle | undefined>; extras: PlacedElement[]; extraCfg: Record<string, Cfg>;
+  } | null>(null);
+  if (!defaultBannerRef.current) {
+    const extras = rowExtras.hero ?? [];
+    defaultBannerRef.current = {
+      hero: { ...(widgetCfg.hero ?? {}) },
+      copy: widgetCfg['hero-copy'], content: widgetCfg['hero-content'],
+      page: Object.fromEntries(TEMPLATE_PAGE_KEYS.map((k) => [k, widgetCfg.page?.[k]])),
+      styles: Object.fromEntries(TEMPLATE_STYLE_IDS.map((id) => [id, styles[id]])),
+      extras, extraCfg: Object.fromEntries(extras.map((e) => [e.id, widgetCfg[e.id] ?? {}])),
+    };
+  }
+
+  const clean = (o: Cfg): Cfg => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined));
+  /* ⚠️ A VERTICAL banner carries the action cards down its column, one per row — four across in a 320px
+     rail were four unreadable slivers. The row's own column count is remembered and handed back the moment a
+     horizontal banner (or Default) takes over, so choosing a rail never quietly rewrites the page's cards. */
+  const quickFor = (prevQuick: Cfg | undefined, vertical: boolean): Cfg => {
+    const q: Cfg = { ...(prevQuick ?? {}) };
+    if (vertical) {
+      if (q.railCols !== true) q.railColsPrev = q.cols ?? null;
+      q.cols = '1';
+      q.railCols = true;
+    } else if (q.railCols === true) {
+      if (q.railColsPrev === null || q.railColsPrev === undefined) delete q.cols; else q.cols = q.railColsPrev;
+      delete q.railCols;
+      delete q.railColsPrev;
+    }
+    return q;
+  };
+
+  const applyBannerTemplate = useCallback((id: string) => {
+    const t = bannerTemplate(id);
+    if (!t) return;
+    const applied = instantiateBanner(t, Date.now());
+    applied.widgets.forEach((w) => registerPlaced(w.id, w.name, w.type, 'hero'));
+    setWidgetCfg((prev) => {
+      const next: Record<string, Cfg> = { ...prev };
+      /* The outgoing banner's widgets leave with their config. */
+      (rowExtrasRef.current.hero ?? []).forEach((e) => { delete next[e.id]; });
+      const keep = Object.fromEntries(Object.entries(prev.hero ?? {}).filter(([k]) => !TEMPLATE_HERO_KEYS.includes(k)));
+      next.hero = clean({ ...keep, ...applied.hero });
+      delete next['hero-copy'];
+      next['hero-content'] = clean(applied.content);
+      const keepPage = Object.fromEntries(Object.entries(prev.page ?? {}).filter(([k]) => !TEMPLATE_PAGE_KEYS.includes(k)));
+      next.page = clean({ ...keepPage, ...applied.page });
+      next.quick = quickFor(prev.quick, t.orientation === 'vertical');
+      applied.widgets.forEach((w) => { next[w.id] = { ...w.cfg }; });
+      return next;
+    });
+    setStyles((prev) => {
+      const next = { ...prev };
+      Object.entries(applied.styles).forEach(([sid, s]) => { next[sid] = s; });
+      return next;
+    });
+    setRowExtras((prev) => ({ ...prev, hero: applied.widgets.map(({ id: wid, type, name }) => ({ id: wid, type, name })) }));
+    setRemoved((r) => r.filter((x) => x !== 'hero'));
+    toast.success(`${t.name} banner applied`);
+  }, []);
+
+  const restoreDefaultBanner = useCallback(() => {
+    const d = defaultBannerRef.current;
+    if (!d) return;
+    d.extras.forEach((e) => registerPlaced(e.id, e.name, e.type, 'hero'));
+    setWidgetCfg((prev) => {
+      const next: Record<string, Cfg> = { ...prev };
+      (rowExtrasRef.current.hero ?? []).forEach((e) => { delete next[e.id]; });
+      next.hero = { ...d.hero };
+      if (d.copy) next['hero-copy'] = d.copy; else delete next['hero-copy'];
+      if (d.content) next['hero-content'] = d.content; else delete next['hero-content'];
+      const keepPage = Object.fromEntries(Object.entries(prev.page ?? {}).filter(([k]) => !TEMPLATE_PAGE_KEYS.includes(k)));
+      next.page = clean({ ...keepPage, ...d.page });
+      if (d.page.heroPlacement !== 'left') next.quick = quickFor(prev.quick, false);
+      Object.entries(d.extraCfg).forEach(([eid, c]) => { next[eid] = c; });
+      return next;
+    });
+    setStyles((prev) => {
+      const next = { ...prev };
+      Object.entries(d.styles).forEach(([sid, s]) => { if (s) next[sid] = s; else delete next[sid]; });
+      return next;
+    });
+    setRowExtras((prev) => ({ ...prev, hero: d.extras }));
+    toast.success('Default banner restored');
+  }, []);
+
   const applyBannerLayout = useCallback((id: string) => {
     const current = bannerLayout(String(widgetCfgRef.current.hero?.bannerLayout ?? 'classic'));
     const hero = widgetCfgRef.current.hero ?? {};
@@ -2680,6 +2782,8 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
               <div className="flex min-h-0 flex-1 flex-col"><PortalThemePanel theme={theme} onChange={(patch) => setTheme((t) => ({ ...t, ...patch }))} /></div>
             ) : active === 'branding' ? (
               <div className="min-h-0 flex-1"><PortalBrandingPanel /></div>
+            ) : active === 'banners' ? (
+              <div className="min-h-0 flex-1"><PortalBannersPanel activeId={bannerTemplate(String(widgetCfg.hero?.bannerTemplate ?? '')) ? String(widgetCfg.hero?.bannerTemplate) : null} onApply={applyBannerTemplate} onDefault={restoreDefaultBanner} /></div>
             ) : active === 'settings' ? (
               <div className="min-h-0 flex-1 overflow-y-auto"><AdminSupportPortalSettings compact /></div>
             ) : active ? (

@@ -72,54 +72,98 @@ export const hasRow = (n: BannerNode | null): boolean => !!n && typeof n !== 'st
 
 export interface BannerPreset { id: string; label: string; tree: BannerNode }
 
-type Shape = number | { d: 'row' | 'column'; c: Shape[] };
-const R = (...c: Shape[]): Shape => ({ d: 'row', c });
-const C = (...c: Shape[]): Shape => ({ d: 'column', c });
-const range = (a: number, b: number) => Array.from({ length: Math.max(0, b - a) }, (_, i) => a + i);
+/* ⚠️ Presets arrange the banner's MAIN GROUPS, not its individual items. The Text group and the search are
+   one group — they read as one sentence and are never pulled apart by a preset — and every widget on the
+   banner is a group of its own. A banner holds at most THREE COLUMNS (beyond that nothing is readable),
+   but any number of rows, so the set on offer is every way of laying the groups out as:
+     · columns (1–3), each column stacking its groups, or
+     · rows of up to three groups each, stacked.
+   Order is always kept — a preset rearranges the same groups in the same reading order. */
 
-function shapesFor(n: number): { id: string; label: string; s: Shape }[] {
-  if (n <= 1) return [{ id: 'one', label: 'One item', s: 0 }];
-  if (n === 2) return [
-    { id: 'row', label: 'Side by side', s: R(0, 1) },
-    { id: 'stack', label: 'Stacked', s: C(0, 1) },
-  ];
-  if (n === 3) return [
-    { id: 'stack-beside', label: 'Two stacked, one beside', s: R(C(0, 1), 2) },
-    { id: 'beside-stack', label: 'One, two stacked beside', s: R(0, C(1, 2)) },
-    { id: 'two-over-one', label: 'Two side by side, one below', s: C(R(0, 1), 2) },
-    { id: 'one-over-two', label: 'One on top, two below', s: C(0, R(1, 2)) },
-    { id: 'row', label: 'Three across', s: R(0, 1, 2) },
-    { id: 'stack', label: 'Stacked', s: C(0, 1, 2) },
-  ];
-  if (n === 4) return [
-    { id: 'two-stacks', label: 'Two stacks', s: R(C(0, 1), C(2, 3)) },
-    { id: 'grid', label: 'Two by two', s: C(R(0, 1), R(2, 3)) },
-    { id: 'stack-beside', label: 'Three stacked, one beside', s: R(C(0, 1, 2), 3) },
-    { id: 'beside-stack', label: 'One, three stacked beside', s: R(0, C(1, 2, 3)) },
-    { id: 'three-over-one', label: 'Three side by side, one below', s: C(R(0, 1, 2), 3) },
-    { id: 'row', label: 'Four across', s: R(0, 1, 2, 3) },
-    { id: 'stack', label: 'Stacked', s: C(0, 1, 2, 3) },
-  ];
-  const half = Math.ceil(n / 2);
-  return [
-    { id: 'two-stacks', label: 'Two stacks', s: R(C(...range(0, half)), C(...range(half, n))) },
-    { id: 'stack-beside', label: 'Stack, one beside', s: R(C(...range(0, n - 1)), n - 1) },
-    { id: 'row-over-one', label: 'Row, one below', s: C(R(...range(0, n - 1)), n - 1) },
-    { id: 'stack', label: 'Stacked', s: C(...range(0, n)) },
-  ];
+/** Ordered ways to split `n` into parts, each part ≤ `maxPart`, using at most `maxParts` parts. */
+function compositions(n: number, maxPart: number, maxParts: number): number[][] {
+  const out: number[][] = [];
+  const walk = (left: number, acc: number[]) => {
+    if (left === 0) { out.push(acc); return; }
+    if (acc.length >= maxParts) return;
+    for (let p = 1; p <= Math.min(maxPart, left); p++) walk(left - p, [...acc, p]);
+  };
+  walk(n, []);
+  return out;
 }
 
-const build = (s: Shape, ids: string[]): BannerNode => (typeof s === 'number' ? ids[s] : branch(s.d, s.c.map((k) => build(k, ids))));
+/** A branch holding a branch of the same direction is one branch — the same repair `prune` makes, so a
+ *  preset's tree is spelled exactly as the drawn tree will be. */
+function flat(n: BannerNode): BannerNode {
+  if (typeof n === 'string') return n;
+  const c = n.c.map(flat).flatMap((k) => (typeof k !== 'string' && k.d === n.d ? k.c : [k]));
+  return c.length === 1 ? c[0] : branch(n.d, c);
+}
+
+/** The banner's groups in reading order: Text + Search together, then each widget. */
+function groupsOf(tree: BannerNode | null): BannerNode[] {
+  const ids = leavesOf(tree);
+  const out: BannerNode[] = [];
+  let wordsAt = -1;
+  ids.forEach((id) => {
+    if (id === 'hero-copy' || id === 'hero-search') {
+      if (wordsAt < 0) { wordsAt = out.length; out.push(id); }
+      else { const w = out[wordsAt] as string; out[wordsAt] = branch('column', w === 'hero-copy' ? [w, id] : [id, w]); }
+      return;
+    }
+    out.push(id);
+  });
+  return out;
+}
+
+const split = (items: BannerNode[], parts: number[]) => {
+  let i = 0;
+  return parts.map((p) => { const s = items.slice(i, i + p); i += p; return s; });
+};
+const one = (d: 'row' | 'column', list: BannerNode[]): BannerNode => (list.length === 1 ? list[0] : branch(d, list));
+
+/** Every arrangement of the banner's groups: up to three columns, rows of up to three. */
+function presetList(groups: BannerNode[]): BannerPreset[] {
+  const n = groups.length;
+  if (n <= 1) return [];
+  const seen = new Set<string>();
+  const out: BannerPreset[] = [];
+  const add = (id: string, label: string, t: BannerNode) => {
+    const tree = flat(t);
+    const key = JSON.stringify(tree);
+    if (seen.has(key)) return;
+    seen.add(key);
+    out.push({ id, label, tree });
+  };
+  /* Columns — each column a stack of its groups. */
+  for (let k = Math.min(3, n); k >= 2; k--) {
+    compositions(n, n, k).filter((p) => p.length === k).forEach((parts) => {
+      const cols = split(groups, parts).map((g) => one('column', g));
+      const label = parts.every((p) => p === 1) ? `${k} columns` : `${k} columns · ${parts.join(' + ')}`;
+      add(`cols-${parts.join('-')}`, label, branch('row', cols));
+    });
+  }
+  /* Rows — each row up to three groups side by side. Past four groups only the even fills are offered, so
+     the list stays a choice rather than a catalogue. */
+  compositions(n, 3, n)
+    .filter((p) => p.length >= 2)
+    .filter((p) => n <= 4 || p.every((x, i) => i === 0 || x <= p[i - 1]))
+    .forEach((parts) => {
+      const rows = split(groups, parts).map((g) => one('row', g));
+      const label = parts.every((p) => p === 1) ? 'Stacked' : `Rows · ${parts.join(' then ')}`;
+      add(`rows-${parts.join('-')}`, label, branch('column', rows));
+    });
+  return out;
+}
 
 /** The arrangements on offer for these items, in their current order. */
 export function presetsFor(tree: BannerNode | null): BannerPreset[] {
-  const ids = leavesOf(tree);
-  return shapesFor(ids.length).map((p) => ({ id: p.id, label: p.label, tree: build(p.s, ids) }));
+  return presetList(groupsOf(tree));
 }
 
 /** The preset the drawn tree matches, if any. */
 export function activePreset(tree: BannerNode | null): string | null {
-  const key = JSON.stringify(tree);
+  const key = JSON.stringify(tree ? flat(tree) : tree);
   return presetsFor(tree).find((p) => JSON.stringify(p.tree) === key)?.id ?? null;
 }
 

@@ -526,6 +526,11 @@ body[data-portal-dragging] [data-portal-toolbar] { pointer-events: none; opacity
 .portal-bleed .portal-ann-image-root { margin: 0; height: 100%; border-radius: 0; }
 .portal-bleed .portal-ann-image { flex: 1 1 auto; height: auto; min-height: 160px; }
 .portal-bleed [data-surface] { border-radius: 0; border-width: 0; padding: 0; box-shadow: none; }
+/* A picture filling its banner cell's height, keeping its own corners and border. */
+.portal-fill > * { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.portal-fill > * > * { flex: 1 1 auto; min-height: 0; }
+.portal-fill .portal-ann-image-root { height: 100%; }
+.portal-fill .portal-ann-image { flex: 1 1 auto; height: auto; min-height: 160px; }
 
 /* Support Portal — the arranged banner stacks its side-by-side items when it gets narrow, so cards and
    words never squeeze into columns too thin to read. The banner's content box is the size container. */

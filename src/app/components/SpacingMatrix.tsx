@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 import { SlidersHorizontal } from 'lucide-react';
 import { ZERO_BOX } from './portalPageModel';
 import type { NodeStyle, SpacingBox } from './portalPageModel';
@@ -24,6 +24,47 @@ interface Props {
      box and no padding box at all — NEW-ELEMENT-PANELS-SPEC §3.6/§3.14. Showing both and letting one
      do nothing is the failure that spec spends its first section arguing against. */
   only?: Ring;
+  /* ⚠️ What the element ACTUALLY has on the sides nobody has set. A section carries 24px either side and a
+     banner 24px all round from their own classes, so an unset side showing "0" told the admin there was no
+     space when there plainly was — and gave no way to know that typing 0 would remove it. */
+  resting?: { padding?: SpacingBox; margin?: SpacingBox };
+}
+
+/** Measures an element's resting padding and margin off the canvas. Horizontal sides come back as a % of
+ *  the parent's width — the unit those fields are in — and vertical sides in px. */
+export function useRestingSpacing(nodeId: string, deps: unknown): { padding?: SpacingBox; margin?: SpacingBox } {
+  const [box, setBox] = useState<{ padding?: SpacingBox; margin?: SpacingBox }>({});
+  useLayoutEffect(() => {
+    const measure = () => {
+      const el = document.querySelector(`[data-node="${CSS.escape(nodeId)}"]`) as HTMLElement | null;
+      if (!el) { setBox({}); return; }
+      const parentW = el.parentElement?.clientWidth || el.clientWidth || 1;
+      const pct = (px: number) => Math.round((px / parentW) * 1000) / 10;
+      /* The banner pads the items at its EDGES rather than itself, 24px on every side while unset. */
+      if (nodeId === 'hero') {
+        const w = (el.querySelector('[data-banner-band]') as HTMLElement | null)?.clientWidth || el.clientWidth || 1;
+        const h = Math.round((24 / w) * 1000) / 10;
+        setBox({ padding: { top: 24, bottom: 24, left: h, right: h }, margin: { top: 0, bottom: 0, left: 0, right: 0 } });
+        return;
+      }
+      /* An element that paints its own card keeps its padding on the card, one level in. */
+      let padEl: HTMLElement = el;
+      const cs = getComputedStyle(el);
+      if (['paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft'].every((k) => parseFloat(cs[k as 'paddingTop']) === 0)) {
+        const inner = el.firstElementChild as HTMLElement | null;
+        if (inner) padEl = inner;
+      }
+      const p = getComputedStyle(padEl);
+      setBox({
+        padding: { top: Math.round(parseFloat(p.paddingTop)), bottom: Math.round(parseFloat(p.paddingBottom)), left: pct(parseFloat(p.paddingLeft)), right: pct(parseFloat(p.paddingRight)) },
+        margin: { top: Math.round(parseFloat(cs.marginTop)), bottom: Math.round(parseFloat(cs.marginBottom)), left: pct(parseFloat(cs.marginLeft)), right: pct(parseFloat(cs.marginRight)) },
+      });
+    };
+    measure();
+    const t = window.setTimeout(measure, 60);
+    return () => window.clearTimeout(t);
+  }, [nodeId, JSON.stringify(deps)]);
+  return box;
 }
 
 const AXES = {
@@ -58,7 +99,7 @@ function AxisIcon({ axis }: { axis: Axis }) {
   );
 }
 
-export function SpacingMatrix({ style, onChange, only }: Props) {
+export function SpacingMatrix({ style, onChange, only, resting }: Props) {
   const [advanced, setAdvanced] = useState<string | null>(null);
   const [live, setLive] = useState<string | null>(null);
 
@@ -66,14 +107,22 @@ export function SpacingMatrix({ style, onChange, only }: Props) {
      sides; merging over nothing leaves the sides you did not touch unset, so the element keeps the
      spacing it already had on those edges. */
   const boxOf = (r: Ring): SpacingBox => (r === 'margin' ? style.margin : style.padding) ?? {};
+  /** A side's value as the element really has it: the one set here, else what it rests at. */
+  const sideOf = (r: Ring, s: Side): number => {
+    const own = boxOf(r)[s];
+    if (own !== undefined) return own;
+    const rest = resting?.[r]?.[s];
+    return Number.isFinite(rest) ? Number(rest) : 0;
+  };
   const write = (r: Ring, next: SpacingBox) =>
     onChange(r === 'margin' ? { margin: next } : { padding: next });
 
   /** The axis value, or null when its two sides were set to different numbers. */
   const axisValue = (r: Ring, axis: Axis): number | null => {
-    const box = boxOf(r);
     const [a, b] = AXES[axis];
-    return box[a] === box[b] ? (box[a] ?? 0) : null;
+    const va = sideOf(r, a);
+    const vb = sideOf(r, b);
+    return va === vb ? va : null;
   };
 
   const setAxis = (r: Ring, axis: Axis, v: number) => {
@@ -99,6 +148,7 @@ export function SpacingMatrix({ style, onChange, only }: Props) {
               type="range"
               min={0}
               max={maxOf(axis)}
+              step={axis === 'horizontal' ? 0.1 : 1}
               value={value ?? 0}
               onChange={(e) => setAxis(r, axis, Number(e.target.value))}
               onMouseDown={() => setLive(key)}
@@ -132,7 +182,7 @@ export function SpacingMatrix({ style, onChange, only }: Props) {
                 <span className="relative flex-1">
                   <input
                     type="number"
-                    value={boxOf(r)[side] ?? 0}
+                    value={sideOf(r, side)}
                     onChange={(e) => setSide(r, side, Number(e.target.value))}
                     className="h-8 w-full rounded border border-[#d1d5db] bg-white pl-2 pr-6 text-[12px] text-[#364658] focus:border-[#3D8BD0] focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
                   />

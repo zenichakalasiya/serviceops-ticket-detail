@@ -13,6 +13,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import type { ReactNode } from 'react';
 import { ChevronDown, ChevronLeft, LayoutList, ChevronRight, ChevronsRight, ImageIcon, ImageOff, Mail, Phone, Plus, ShoppingCart, Star } from 'lucide-react';
 import { Sel, useCanvas } from './PortalCanvas';
+import { ImageUploadZone } from './PortalControls';
 /* The Table is a module of its own — a spreadsheet-grade editor is a different kind of thing from
    the read-only renderers in this file, and it owns its data model, its handles and its menus. */
 import { PortalTable } from './PortalTable';
@@ -819,9 +820,7 @@ export function AnnouncementsRender({ nodeId, cfg, headIcon }: { nodeId: string;
           {src
             ? <img src={src} alt="" className="size-full object-cover" />
             : (
-              <span className="flex size-full flex-col items-center justify-center gap-1.5 text-[12px] text-[#7B8FA5]">
-                <ImageOff size={20} />Upload an image in the panel
-              </span>
+              <AnnouncementImageSlot nodeId={nodeId} />
             )}
         </div>
         {/* ⚠️ `@container` on the band: wide, the controls sit beside the notice at the top right; narrow,
@@ -1799,3 +1798,22 @@ export const COLLECTION_RENDERERS: Record<string, (p: { nodeId: string; cfg: Cfg
   'v-gallery': GalleryRender,
   'c-feedback': FeedbackRender,
 };
+
+/* The announcement picture's EMPTY state: a real drop-or-browse slot, not a note sending you to the panel.
+   ⚠️ `relative z-20` — the card lays a click-catcher over itself on the canvas (z-10) so a click selects
+   the card; the slot has to sit above it or the upload could never be reached. */
+function AnnouncementImageSlot({ nodeId }: { nodeId: string }) {
+  const { enabled, setCfg } = useCanvas();
+  if (!enabled) {
+    return (
+      <span className="flex size-full flex-col items-center justify-center gap-1.5 text-[12px] text-[#7B8FA5]">
+        <ImageOff size={20} />No image yet
+      </span>
+    );
+  }
+  return (
+    <div className="relative z-20 flex size-full items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
+      <ImageUploadZone size="md" label="Drop an image or browse" suggested="1200 × 400" onFile={(src) => setCfg?.(nodeId, { coverImage: src })} />
+    </div>
+  );
+}

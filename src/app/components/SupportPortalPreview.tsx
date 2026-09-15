@@ -17,6 +17,8 @@ import {
 import { AddSectionSeam, BannerSlot, ColumnAdders, MOVE_MIME, Sel, draggedElement, draggedNode, styleOf, useCanvas } from './PortalCanvas';
 import { HUGS_CONTENT, bannerGroupGap, inBanner } from './portalPageModel';
 import { bannerLayerCss, sideGradient } from './PortalBannerTools';
+import type { BannerDecor } from './portalBannerTemplates';
+import { ImagePlus } from 'lucide-react';
 import { PAGE_ID, chosen, iconBoxCss, roleStyle } from './portalStyleResolver';
 import { bannerLayout } from './supportPortalData';
 import { shadowCss } from './PortalBoxControls';
@@ -1144,6 +1146,79 @@ function HeroCounterShapes() {
   );
 }
 
+/* ── A banner template's design layer ─────────────────────────────────────── */
+
+/** Texture, the accent bar and the decorative shapes — behind the words, never clickable. */
+function BannerDecorLayer({ decor }: { decor: BannerDecor }) {
+  const tint = decor.patternColor ?? 'rgba(255,255,255,0.08)';
+  const shape = decor.shapeColor ?? '#F5B342';
+  return (
+    <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+      {decor.pattern === 'grid' && (
+        <span className="absolute inset-0" style={{ backgroundImage: `linear-gradient(${tint} 1px, transparent 1px), linear-gradient(90deg, ${tint} 1px, transparent 1px)`, backgroundSize: '28px 28px' }} />
+      )}
+      {decor.pattern === 'dots' && (
+        <span className="absolute inset-0" style={{ backgroundImage: `radial-gradient(${tint} 1.2px, transparent 1.4px)`, backgroundSize: '18px 18px' }} />
+      )}
+      {decor.accent && <span className="absolute inset-y-0 left-0 w-1" style={{ background: decor.accent }} />}
+      {decor.shape === 'circle' && (
+        <span className="absolute rounded-full" style={{ width: 110, height: 110, right: '26%', top: -40, background: shape }} />
+      )}
+      {decor.shape === 'rings' && (
+        <svg viewBox="0 0 200 200" className="absolute bottom-[-40px] right-[-40px] h-[240px] w-[240px]" fill="none" stroke={shape} strokeOpacity="0.1" strokeWidth="2">
+          <circle cx="100" cy="100" r="92" />
+          <circle cx="100" cy="100" r="62" />
+          <circle cx="100" cy="100" r="32" />
+        </svg>
+      )}
+      {decor.shape === 'bars' && (
+        <span className="absolute bottom-0 left-[3%] flex h-[64px] items-end gap-2">
+          {[34, 52, 40, 64, 46, 58, 30].map((h, i) => (
+            <span key={i} className="w-6 rounded-t-[3px]" style={{ height: h, background: shape, opacity: i === 3 ? 0.9 : 0.35 }} />
+          ))}
+        </span>
+      )}
+      {decor.shape === 'hazard' && (
+        <span className="absolute inset-x-0 bottom-0 h-1.5" style={{ backgroundImage: `repeating-linear-gradient(135deg, ${shape} 0 10px, transparent 10px 20px)` }} />
+      )}
+    </span>
+  );
+}
+
+/** A photograph the template expects but does not ship: a drop-or-browse slot on a neutral ground. */
+function BannerPhotoSlot({ enabled, onFile }: { enabled: boolean; onFile: (src: string) => void }) {
+  const ref = useRef<HTMLInputElement>(null);
+  const [over, setOver] = useState(false);
+  const take = (file?: File | null) => {
+    if (!file || !file.type.startsWith('image/')) return;
+    const fr = new FileReader();
+    fr.onload = () => onFile(String(fr.result));
+    fr.readAsDataURL(file);
+  };
+  return (
+    <span className="pointer-events-none absolute inset-0 overflow-hidden">
+      {/* A faint picture glyph, so the band reads as "a photograph goes here" and not as a colour choice. */}
+      <span className="absolute inset-0" style={{ backgroundImage: 'repeating-linear-gradient(135deg, rgba(255,255,255,0.035) 0 14px, transparent 14px 28px)' }} />
+      {enabled && (
+        <span className="pointer-events-auto absolute left-4 top-4 z-30">
+          <button
+            type="button"
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => { e.stopPropagation(); ref.current?.click(); }}
+            onDragOver={(e) => { if (!e.dataTransfer.types.includes('Files')) return; e.preventDefault(); e.stopPropagation(); setOver(true); }}
+            onDragLeave={() => setOver(false)}
+            onDrop={(e) => { if (!e.dataTransfer.files?.length) return; e.preventDefault(); e.stopPropagation(); setOver(false); take(e.dataTransfer.files[0]); }}
+            className={`flex items-center gap-2 rounded-lg border border-dashed px-3 py-2 text-[12.5px] font-medium backdrop-blur-sm transition-colors ${over ? 'border-white bg-white/25 text-white' : 'border-white/50 bg-black/25 text-white/90 hover:border-white hover:bg-black/35'}`}
+          >
+            <ImagePlus size={15} />Drop an image or <span className="underline">browse</span>
+          </button>
+          <input ref={ref} type="file" accept="image/*" className="hidden" onChange={(e) => { take(e.target.files?.[0]); e.target.value = ''; }} />
+        </span>
+      )}
+    </span>
+  );
+}
+
 /* ── Cards ───────────────────────────────────────────────────────────────── */
 
 /* The spine colour per card, for the templates that use the spine treatment.
@@ -1471,6 +1546,12 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
   const bannerSide = heroSlot === 'side' || heroLayout?.hasImage === true || (rowExtras?.['hero']?.length ?? 0) > 0;
   /* A third `heroArt` value, not a new key — same rule `bannerStyle`'s `light` follows. */
   const heroCounterShapes = String(pageCfg.heroArt ?? 'auto') === 'counter';
+  /* A banner template's own DESIGN — texture, accent bar, eyebrow, shapes. Not a widget: it has no node
+     and no palette row, it is simply part of how that banner looks. */
+  const heroDecor = (heroCfg.bannerDecor && typeof heroCfg.bannerDecor === 'object' ? heroCfg.bannerDecor : null) as BannerDecor | null;
+  /* A template that carries a PHOTOGRAPH ships without one: until a picture is dropped, the band shows a
+     neutral ground and a drop-or-browse slot instead of pretending to be finished. */
+  const photoSlotEmpty = heroCfg.photoSlot === true && heroCfg.bgKind !== 'color' && !heroCfg.bannerImage && !pageImage;
   /* Favourite Services and Most Used Services SIDE BY SIDE rather than stacked as two full-width
      bands. They are the same object with two sort orders, so two full-width rows of four is the
      same content read twice down the page; at half width each they read as one browse area.
@@ -1853,7 +1934,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
      keeps reading as two bands however well the colours line up. */
   /* ONE action card. The Quick Actions row and the Action cards block both call this, so a card is the
      same component wherever it sits — its template, icon, words and style all come from the one place. */
-  const quickCardEl = (a: (typeof content.quick)[number], selStyle: React.CSSProperties) => {
+  const quickCardEl = (a: (typeof content.quick)[number], selStyle: React.CSSProperties, opts?: { glass?: boolean }) => {
           const c = wc(a.id);
           /* ⚠️ The CARD's own template wins; the row's is the default it starts from.
              Read the other way round the card's picker was dead — see the note in fixB. */
@@ -1912,7 +1993,9 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                    card is a destination, and colouring four of them in four hues would be
                    inventing a taxonomy the product does not have. Same surface, no stripe. */
                 className={`group/act relative flex h-full gap-3 p-4 @max-[230px]:gap-2 @max-[230px]:p-3 ${tileActions ? 'items-center justify-center px-5 py-6 text-center transition-[transform,box-shadow] hover:-translate-y-0.5' : ''} ${
-                  spineCards
+                  opts?.glass
+                    ? 'rounded-lg border border-white/20 bg-white/10'
+                    : spineCards
                     ? 'rounded-[14px] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04),0_8px_24px_-12px_rgba(16,24,40,0.14)]'
                     : 'rounded-lg border border-[#E5E7EB] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04),0_4px_12px_rgba(16,24,40,0.06)]'
                 } ${
@@ -1934,12 +2017,12 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                   onClick={enabled ? (ev) => { ev.stopPropagation(); select(`${a.id}-icon`); pickIcon(a.id, (ev.currentTarget as HTMLElement).getBoundingClientRect()); } : undefined}
                   title={enabled ? 'Click to change this icon' : undefined}
                   style={{
-                    color: iconBoxColor ?? (iconColor as string | undefined),
+                    color: iconBoxColor ?? (iconColor as string | undefined) ?? (opts?.glass ? '#FFFFFF' : undefined),
                     /* ⚠️ backgroundColor, not the `background` shorthand — this badge also sets backgroundImage,
                        Size and Position, and React warns (and mis-orders) the moment the shorthand changes beside them. */
                     backgroundColor: cardImage
                       ? undefined
-                      : iconBoxBg ?? (iconShape === 'none' ? 'transparent' : (iconFill as string | undefined)),
+                      : iconBoxBg ?? (iconShape === 'none' ? 'transparent' : (iconFill as string | undefined)) ?? (opts?.glass ? 'rgba(255,255,255,0.12)' : undefined),
                     backgroundImage: cardImage ? `url(${cardImage})` : undefined,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
@@ -1966,11 +2049,11 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                       the canvas, independently of `hasFixedTitle`. Emptying that set alone would
                       have fixed the six live-data cards and left these four exactly as they were. */}
                   <Sel id={`${a.id}-title`}>
-                    <span style={{ ...roleStyle(styles, `${a.id}-title`, 'title'), ...(centre && !styles[`${a.id}-title`]?.align ? { textAlign: 'center' as const } : {}) }} className="block truncate text-[16px] font-semibold text-[#364658]">{String(c.title ?? a.title)}</span>
+                    <span style={{ ...roleStyle(styles, `${a.id}-title`, 'title'), ...(opts?.glass && !roleStyle(styles, `${a.id}-title`, 'title').color ? { color: '#FFFFFF' } : {}), ...(centre && !styles[`${a.id}-title`]?.align ? { textAlign: 'center' as const } : {}) }} className="block truncate text-[16px] font-semibold text-[#364658]">{String(c.title ?? a.title)}</span>
                   </Sel>
                   {String(c.sub ?? a.desc) !== '' && (
                     <Sel id={`${a.id}-sub`}>
-                      <span style={{ ...roleStyle(styles, `${a.id}-sub`, 'body'), ...(centre && !styles[`${a.id}-sub`]?.align ? { textAlign: 'center' as const } : {}) }} className="block truncate text-[13px] text-[#7B8FA5]">{String(c.sub ?? a.desc)}</span>
+                      <span style={{ ...roleStyle(styles, `${a.id}-sub`, 'body'), ...(opts?.glass && !roleStyle(styles, `${a.id}-sub`, 'body').color ? { color: 'rgba(255,255,255,0.7)' } : {}), ...(centre && !styles[`${a.id}-sub`]?.align ? { textAlign: 'center' as const } : {}) }} className="block truncate text-[13px] text-[#7B8FA5]">{String(c.sub ?? a.desc)}</span>
                     </Sel>
                   )}
                 </span>
@@ -1996,7 +2079,9 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
     const cols = Math.min(4, Math.max(1, Number(wc(nodeId).cols ?? 4)));
     return (
       <div className="grid w-full" style={{ gap: 12, gridTemplateColumns: colsTemplate(cols, 12, 150) }}>
-        {quickCards.map((a) => quickCardEl(a, {}))}
+        {/* The block's LOOK comes from a banner template: glass cards on a dark band, the first one solid when the
+            template leads with it. */}
+        {quickCards.map((a, i) => quickCardEl(a, {}, { glass: String(wc(nodeId).look ?? '') === 'glass' && !(wc(nodeId).firstSolid === true && i === 0) }))}
       </div>
     );
   };
@@ -2155,6 +2240,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
              flat; and with neither the band keeps its gradient, so a portal nobody has touched
              still looks designed rather than blank. */
           ...heroBg,
+          ...(photoSlotEmpty ? { backgroundColor: '#3B4658', backgroundImage: 'none' } : {}),
           ...heroCropCss,
           minHeight: Number(wc('hero').height ?? 260),
           /* ⚠️ FILL THE WRAPPER. A dragged height is written into `styles.hero` and applied by
@@ -2166,6 +2252,8 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
              ⚠️ `100%` resolves to auto while the wrapper has no explicit height, so an
              untouched banner still sizes from its minHeight and nothing moved. */
           height: '100%',
+          /* A template's INSET: the band sits in from the page's edges as a rounded panel. */
+          ...(Number(heroCfg.bannerInset ?? 0) > 0 && !heroSide ? { margin: Number(heroCfg.bannerInset) } : {}),
           /* Corner radius and border from the Style section — on the band itself, which clips its art. */
           ...(Number(heroCfg.bannerRadius ?? 0) > 0 ? { borderRadius: Number(heroCfg.bannerRadius) } : {}),
           ...(Number(heroCfg.bannerBorderWidth ?? 0) > 0 ? {
@@ -2178,7 +2266,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
             as dirt on the colour, and over a photograph as a scratch on the photograph. */}
         {/* ⚠️ Its own clip. The band drops `overflow-hidden` while the search floats, so the
             decorative line-work would otherwise run past the banner and across the page. */}
-        {heroCfg.bgKind !== 'color' && !heroImg && !heroShapes && (
+        {heroCfg.bgKind !== 'color' && !heroImg && !heroShapes && !photoSlotEmpty && (
           <span className="pointer-events-none absolute inset-0 overflow-hidden"><HeroArtwork /></span>
         )}
         {/* ⚠️ Its own clip too, for the same reason — and it sits BEHIND the copy, which is
@@ -2207,6 +2295,8 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
           </span>
         )}
         {heroCounterShapes && <HeroCounterShapes />}
+        {heroDecor && <BannerDecorLayer decor={heroDecor} />}
+        {photoSlotEmpty && <BannerPhotoSlot enabled={enabled} onFile={(src) => setCfg?.('hero', { bannerImage: src })} />}
         {/* ⚠️ SIDE-BY-SIDE, a wholly separate branch from the stacked layout below — never
             taken unless a hero explicitly asks for it (`searchPlacement: 'side'`), so no
             existing template's hero is touched by this existing. Mirrors the reference's own
@@ -2320,6 +2410,19 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                 ...(contentDir === 'row' ? {} : { alignSelf: contentAlign }),
               }}
             >
+              {heroDecor?.eyebrow && (
+                <div data-gap-item="" className="block px-1" aria-hidden>
+                  {heroDecor.eyebrow === 'dash'
+                    ? <span className="block h-[3px] w-8 rounded-full" style={{ background: heroDecor.eyebrowColor ?? 'currentColor' }} />
+                    : (
+                      <span className="text-[12px] font-bold uppercase tracking-[0.14em]" style={{ color: heroDecor.eyebrowColor ?? 'rgba(255,255,255,0.7)' }}>
+                        {heroDecor.eyebrow === 'date'
+                          ? new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
+                          : heroDecor.eyebrow}
+                      </span>
+                    )}
+                </div>
+              )}
               {title}
               {subtitle}
               {wc('hero').note !== undefined && String(wc('hero').note) !== '' && (
@@ -2423,13 +2526,16 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                 const own = words ? undefined : styles[n];
                 const V: Record<string, string> = { start: 'flex-start', center: 'center', end: 'flex-end', stretch: 'stretch' };
                 const H: Record<string, string> = { left: 'flex-start', center: 'center', right: 'flex-end', stretch: 'stretch' };
-                const fillY = b && own?.height === undefined && (own?.alignY ?? 'stretch') === 'stretch';
+                /* A PICTURE fills its cell's height — an image slot or an image-style announcement sitting small in the
+                   middle of a tall cell reads as a broken layout. Words and cards keep their own height. */
+                const pictureCell = typeOf(n) === 'v-image' || (typeOf(n) === 'c-announcements' && String(wc(n).display ?? '') === 'image');
+                const fillY = (b || pictureCell) && own?.height === undefined && (own?.alignY ?? 'stretch') === 'stretch';
                 return (
                   <div
                     key={n}
                     data-gap-item=""
                     data-banner-cell={n}
-                    className={`flex min-w-0 flex-col ${fillY ? 'portal-bleed' : ''}`}
+                    className={`flex min-w-0 flex-col ${fillY ? (b ? 'portal-bleed' : 'portal-fill') : ''}`}
                     style={{
                       containerType: 'inline-size',
                       alignItems: words ? (FLEX[bandAlign] ?? 'center') : H[String(own?.align ?? 'stretch')] ?? 'stretch',

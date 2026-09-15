@@ -288,9 +288,11 @@ export function TilePresetPicker({ count, value, onChange, kind = 'action' }: {
         const rows = Math.ceil(n / p.cols);
         return (
           <SkeletonTile key={p.cols} on={on} label={p.label} onPick={() => onChange(p.cols)}>
+            {/* ⚠️ A FIXED row height, centred in the tile. Stretched to fill the tile, three tiles in one row came out
+                as three tall vertical bars — nothing like the short, wide cards they stand for. */}
             <span
-              className="grid h-full w-full gap-[3px]"
-              style={{ gridTemplateColumns: `repeat(${p.cols}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))` }}
+              className="grid w-full content-center gap-[3px] self-center"
+              style={{ gridTemplateColumns: `repeat(${p.cols}, minmax(0, 1fr))`, gridAutoRows: rows === 1 ? '20px' : rows === 2 ? '15px' : rows === 3 ? '11px' : '8px' }}
             >
               {Array.from({ length: n }, (_, i) => <CardSkeleton key={i} kind={kind} on={on} flat={p.cols === 1} />)}
             </span>
