@@ -587,10 +587,9 @@ export const BANNER_GROUP_SPEC: WidgetSpec = {
 };
 
 /* ── Blocks that hold a SET of cards and lay them out in 1–4 columns ─────────────────────────────── */
+/* Presets drawn from the real number of cards — all in one row, fewer per row, or stacked. */
 const COLUMNS_FIELD = {
-  key: 'cols', label: 'Columns', control: 'segmented' as const, tab: 'style' as const, group: 'Columns',
-  options: [{ value: '1', label: '1' }, { value: '2', label: '2' }, { value: '3', label: '3' }, { value: '4', label: '4' }],
-  help: 'Fewer columns are used automatically when there is not room for these.',
+  key: 'cols', label: 'Presets', control: 'tilePresets' as const, tab: 'style' as const, group: 'Columns',
 };
 
 /* The portal's four action cards as ONE block. Each card stays its own node (select it to edit its

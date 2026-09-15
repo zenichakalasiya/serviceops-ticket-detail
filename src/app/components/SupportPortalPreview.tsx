@@ -2372,7 +2372,12 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
             const weight = (p: { d: 'row' | 'column'; c: BannerNode[] }, i: number) => {
               const split = String(heroNow.bannerSplit ?? 'auto');
               if (p === tree && p.c.length === 2 && split !== 'auto') return Number(split.split(':')[i]) || 1;
-              if (compact(p.c[i])) return 1;
+              /* A block laying its cards ACROSS needs room for them: its share grows with its column count. */
+              if (compact(p.c[i])) {
+                const ids = leavesOf(p.c[i]);
+                const cols = ids.length === 1 ? Number(wc(ids[0]).cols ?? 1) : 1;
+                return Math.max(1, Math.min(4, cols) * 0.6);
+              }
               return p.c.some(compact) ? 2 : 1;
             };
             const leafBody = (id: string) => {

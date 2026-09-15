@@ -38,7 +38,7 @@ import { RecordFilterField } from './PortalRecordFilter';
 import type { RecordFilter } from './portalRecordFilters';
 import { BANNER_SHAPES, bannerLayoutsFor, recordModule } from './supportPortalData';
 import { AnnouncementTypePicker, BannerLayoutPicker, BannerShapePicker, KpiLayoutPicker, TemplatePicker } from './PortalSectionControls';
-import { BannerFillEditor, BannerPresetPicker, GapField, SideGrid, bannerLayerSide } from './PortalBannerTools';
+import { BannerFillEditor, BannerPresetPicker, GapField, SideGrid, TilePresetPicker, bannerLayerSide } from './PortalBannerTools';
 import type { BannerNode } from './portalBannerLayout';
 import { bannerGroupGap } from './portalPageModel';
 import { ACROSS_ROW, ACROSS_STACK, DOWN_ROW, DOWN_STACK, SectionPresets } from './PortalSectionLayout';
@@ -1140,6 +1140,13 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
             onChange={(x) => onApplyBannerLayout?.(x)}
           />
         );
+      case 'tilePresets': {
+        /* How many cards the block holds: its own visible tiles, or the action cards the page carries. */
+        const count = Array.isArray(viewCfg.items)
+          ? (viewCfg.items as { hidden?: boolean }[]).filter((it) => !it.hidden).length
+          : Number(viewCfg.__tileCount ?? 4);
+        return <TilePresetPicker count={count} value={Number(v ?? count)} onChange={(c) => set(f.key, String(c))} />;
+      }
       case 'bannerPreset':
         return <BannerPresetPicker tree={(viewCfg.__bannerTree as BannerNode | null) ?? null} onPick={(t) => set(f.key, t)} />;
       case 'gapField':

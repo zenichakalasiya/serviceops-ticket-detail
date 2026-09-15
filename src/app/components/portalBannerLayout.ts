@@ -178,9 +178,18 @@ export function childEdges(parent: { d: 'row' | 'column'; c: BannerNode[] }, i: 
 /** A stable key for one cell of a row — its items, joined. */
 export const cellKey = (n: BannerNode) => leavesOf(n).join('|');
 
-/** A card grid that holds `cols` columns while there is room and drops to fewer (never below `min` px a card) when there is not. */
-export const colsTemplate = (cols: number, gap: number, min: number) =>
-  `repeat(auto-fill, minmax(max(${min}px, calc((100% - ${(cols - 1) * gap}px) / ${cols})), 1fr))`;
+/** A card grid of EXACTLY `cols` equal columns. ⚠️ It used to drop to fewer columns below a minimum card
+ *  width, so 3 and 4 silently came out as 2 in a banner column — the count you pick is the count you get;
+ *  a narrow banner stacks its rows instead (see `.portal-banner`). */
+export const colsTemplate = (cols: number, _gap?: number, _min?: number) => `repeat(${Math.max(1, cols)}, minmax(0, 1fr))`;
+
+/** The column presets a set of `count` cards can take: all in one row, fewer per row, or stacked. */
+export function tilePresets(count: number): { cols: number; label: string }[] {
+  const n = Math.max(1, Math.min(count, 4));
+  const out: { cols: number; label: string }[] = [{ cols: n, label: n === 1 ? 'One column' : 'All in one row' }];
+  [3, 2, 1].forEach((c) => { if (c < n) out.push({ cols: c, label: c === 1 ? 'Stacked' : `${c} per row` }); });
+  return out;
+}
 
 /** The block types that sit in a narrow column beside the words by default. */
 export const COMPACT_BANNER_TYPES = new Set(['x-actions', 'x-kpis', 'c-contact']);

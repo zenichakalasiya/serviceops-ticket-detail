@@ -14,7 +14,7 @@
  */
 
 import { ColorField } from './PortalColorPicker';
-import { activePreset, presetsFor } from './portalBannerLayout';
+import { activePreset, presetsFor, tilePresets } from './portalBannerLayout';
 import type { BannerNode } from './portalBannerLayout';
 import { nodeById } from './portalPageModel';
 
@@ -183,6 +183,35 @@ export function BannerPresetPicker({ tree, onPick }: { tree: BannerNode | null; 
           <span className={`truncate text-[11px] leading-[14px] ${on === p.id ? 'text-[#3D8BD0]' : 'text-[#64748B]'}`}>{p.label}</span>
         </button>
       ))}
+    </div>
+  );
+}
+
+/* ── Column PRESETS for a set of cards (Action cards, KPI tiles) ─────────────────────────────────
+ * One thumbnail per arrangement the ACTUAL number of cards can take, each drawn with that many tiles —
+ * the same picture-over-numbers treatment as a section's Layout presets. */
+export function TilePresetPicker({ count, value, onChange }: { count: number; value: number; onChange: (cols: number) => void }) {
+  const n = Math.max(1, count);
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      {tilePresets(n).map((p) => {
+        const on = Math.min(value, Math.min(n, 4)) === p.cols;
+        return (
+          <button
+            key={p.cols}
+            type="button"
+            title={p.label}
+            aria-pressed={on}
+            onClick={() => onChange(p.cols)}
+            className={`flex flex-col gap-1.5 rounded border p-1.5 text-left transition-colors ${on ? 'border-[#3D8BD0] bg-[#EBF5FF]' : 'border-[#E5E7EB] bg-white hover:border-[#C3CBD6]'}`}
+          >
+            <span className="grid h-[54px] w-full content-center gap-[3px] rounded-[4px] bg-[#F5F7FA] p-1.5" style={{ gridTemplateColumns: `repeat(${p.cols}, minmax(0, 1fr))` }}>
+              {Array.from({ length: n }, (_, i) => <span key={i} className={`h-[10px] rounded-[2px] ${on ? 'bg-[#9CC3E6]' : 'bg-[#DCE8F5]'}`} />)}
+            </span>
+            <span className={`truncate text-[11px] leading-[14px] ${on ? 'text-[#3D8BD0]' : 'text-[#64748B]'}`}>{p.label}</span>
+          </button>
+        );
+      })}
     </div>
   );
 }

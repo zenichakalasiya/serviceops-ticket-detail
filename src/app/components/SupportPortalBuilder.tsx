@@ -494,6 +494,8 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
       ...(owner === 'quick'
         ? { __quickRow: true, __hasLink: content.quick.some((q) => q.id === LINK_CARD_ID) }
         : {}),
+      /* The Action cards block's column presets are drawn from how many cards it holds. */
+      ...(placedType(owner) === 'x-actions' ? { __tileCount: content.quick.length } : {}),
       /* ⚠️ Two facts the banner's panel cannot work out for itself, seeded the same way
          `__quickRow` is: a spec is DATA and has no way to look at the page.
          `__blankPage` is what lets the layout picker offer VERTICAL layouts — choosing one turns
@@ -530,7 +532,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
       merged[base] = merged[k];
     }
     return merged;
-  }, [specForNode, widgetCfg, sectionHasContent, boxHasContent, theme.mode]);
+  }, [specForNode, widgetCfg, sectionHasContent, boxHasContent, theme.mode, content]);
 
   /* The two service rows share their tile shape. ⚠️ Mirrored HERE, at the one place widget config
      is written, rather than by giving the field a second home — every route into a widget's config

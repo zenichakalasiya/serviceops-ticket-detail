@@ -534,6 +534,12 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   the block brings the row back. It is `onPage: true` ONLY so the demo seed does not drop one on every page
   (which silently hid the Quick Actions row). **KPI tiles (`x-kpis`, spec `kpi_group`)** = a collection of
   `{label, source}` counters, same 1–4 column preset, counts off `COUNTS`. On the banner both seed `cols: '1'`.
+  ⚠️ **Columns are EXACT** (`colsTemplate` = `repeat(cols, minmax(0,1fr))`): the first version dropped to
+  fewer columns under a minimum card width, so 3 and 4 silently came out as 2 in a banner column. The panel
+  field is **Presets** (`tilePresets` control → `TilePresetPicker`), thumbnails drawn with the block's REAL
+  card count (visible `items`, or `__tileCount` = `content.quick.length` seeded by `cfgFor` for x-actions):
+  All in one row · 3 per row · 2 per row · Stacked. On the banner a compact block's column share grows with
+  its column count (`cols × 0.6`, min 1) so cards laid across get room.
   ⚠️ **The bottom reserve is MEASURED, not fixed:** `quickOverlap` = how far the Quick Actions row
   actually climbs (`-(styles.quick.margin.top ?? -62)`, floored at 0). Dragging the row's top grip down
   out of the banner removes the reserve, so a fill-to-edge widget reaches the banner's bottom again.
