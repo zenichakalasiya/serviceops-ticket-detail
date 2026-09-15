@@ -1224,7 +1224,25 @@ export interface ToolbarCaps {
   alignV?: boolean;
   /** The Quick Actions row's one addable card, offered as a named action rather than a glyph. */
   extLink?: boolean;
+  /** The grip. Off where the thing has no free position to be dragged to. */
+  drag?: boolean;
+  /** Delete. Off where the node is not a thing you remove on its own (a row of shared tiles). */
+  remove?: boolean;
+  /** "Split column" for a block inside a card — puts an empty slot beside it on the same line. */
+  splitItem?: boolean;
 }
+
+/** A Button, Text or Icon block an admin added inside the Contact Us card. */
+export const isContactChild = (id: string): boolean => {
+  const p = parseItemId(id);
+  return !!p && !p.part && (p.widget === 'contact' || placedType(p.widget) === 'c-contact');
+};
+/** The shared tile node of Favourite Services or Most Used Services — the two that align from the toolbar. */
+export const isServiceTile = (id: string): boolean => {
+  const m = /^(.+)-tile$/.exec(id);
+  if (!m) return false;
+  return m[1] === 'favourites' || m[1] === 'services' || placedType(m[1]) === 'c-favourites' || placedType(m[1]) === 'c-services';
+};
 
 /** The four-card main region and the three-card rail. */
 const WORK_REGIONS = new Set(['work-main', 'work-rail']);
@@ -1299,6 +1317,12 @@ export const canAddBeside = (id: string): boolean => {
 };
 
 export function toolbarCaps(id: string): ToolbarCaps {
+  /* A block inside Contact Us: delete, split into a second column, and the two alignments. It is a
+     line inside a card — there is nowhere to drag it to and nothing to duplicate it into. */
+  if (isContactChild(id)) return { move: false, add: false, copy: false, drag: false, splitItem: true };
+  /* The service tiles are ONE node shared by every tile, so the bar is alignment only — moving, copying
+     or deleting "the tile" would mean every tile at once. */
+  if (isServiceTile(id)) return { move: false, add: false, copy: false, drag: false, remove: false };
   /* The banner's search field: one place inside the hero, nothing to duplicate it into, nowhere to
      move to. The grip and Delete are the only two things that were ever true of it. */
   if (id === 'hero-search') return { move: false, add: false, copy: false, alignH: false, alignV: false };
@@ -1359,7 +1383,7 @@ export function toolbarCaps(id: string): ToolbarCaps {
  * into the store instead would have been a change to every page carrying one of these rows, made
  * to leave them looking exactly as they already look. */
 export const defaultAlignH = (id: string): string =>
-  (id === 'quick' || id === 'favourites' || id === 'services' ? 'stretch' : 'left');
+  (id === 'quick' || id === 'favourites' || id === 'services' ? 'stretch' : isServiceTile(id) ? 'center' : 'left');
 
 /** Whether the node draws its OWN shadow on an inner element, so its selection wrapper must not.
  *  Everything that paints its own surface, plus the Button: it hugs its label, so a shadow on its

@@ -46,6 +46,7 @@ export type ControlKind =
   /** A whole banner — shape, treatment and the widgets in it — picked as one drawn tile. */
   | 'bannerLayout'
   | 'bannerShape'
+  | 'kpiLayout'
   /** An ordered choice on a rail with initials under the stops (banner height). */
   | 'stepRail'
   /* ⚠️ Both were in USE and missing from this union, and the casts that would have caught it
@@ -892,7 +893,8 @@ export const WIDGET_SPECS: WidgetSpec[] = [
          this one lists whatever the admin asked for, so only they can name it. */
       /* The ICON that leads the title — a badge before the heading on a list, the glyph beside the
          number on a KPI. Above Title because it is read before it. "None" in the picker removes it. */
-      { key: 'icon', label: 'Icon', control: 'icon', group: 'Content' },
+      /* ⚠️ The LIST only. A KPI is its number and what the number counts — no icon. */
+      { key: 'icon', label: 'Icon', control: 'icon', group: 'Content', when: (c) => c.display !== 'kpi' },
       { key: 'title', label: 'Title', control: 'text', group: 'Content' },
       /* ⚠️ NO one-line help under any field on this panel. "Which records this card lists" under a
          field labelled Module is the label again in a longer sentence, and a caption under every
@@ -917,6 +919,9 @@ export const WIDGET_SPECS: WidgetSpec[] = [
          value the page already answers by being looked at. The key stays in `defaults` and the
          renderer still reads it as the floor, so no card on any page changed. */
       { key: 'filter', label: 'Filter', control: 'recordFilter', group: 'Content' },
+      /* How the number and its title sit together — on the KPI tab only. Where the pair sits inside the
+         card is the floating toolbar's H/V alignment. */
+      { key: 'kpiLayout', label: '', control: 'kpiLayout', group: 'Card templates', when: (c) => c.display === 'kpi' },
     ],
     /* The same Style the trimmed live cards keep. ⚠️ No P8: you asked for the empty state My CIs
        has, which is the product's — not one an admin writes per card. */

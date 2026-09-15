@@ -11,7 +11,7 @@
 import { useRef, useState } from 'react';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import type { ReactNode } from 'react';
-import { ChevronDown, ChevronLeft, LayoutList, ChevronRight, ChevronsRight, ImageIcon, ImageOff, Mail, Phone, ShoppingCart, Star } from 'lucide-react';
+import { ChevronDown, ChevronLeft, LayoutList, ChevronRight, ChevronsRight, ImageIcon, ImageOff, Mail, Phone, Plus, ShoppingCart, Star } from 'lucide-react';
 import { Sel, useCanvas } from './PortalCanvas';
 /* The Table is a module of its own — a spreadsheet-grade editor is a different kind of thing from
    the read-only renderers in this file, and it owns its data model, its handles and its menus. */
@@ -242,7 +242,24 @@ export function CardRender({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
 }
 
 /** A card child is an ordinary widget, drawn the way it draws on the page. */
-function ChildBlock({ item }: { item: Item }) {
+function ChildBlock({ item, nodeId }: { item: Item; nodeId?: string }) {
+  const { enabled, fillChildBlock } = useCanvas();
+  /* The empty slot a Split leaves: pick what goes in it. On the live portal it draws nothing. */
+  if (item.type === 'empty') {
+    if (!enabled) return null;
+    return (
+      <span className="flex min-h-9 w-full flex-wrap items-center justify-center gap-1.5 rounded border border-dashed border-[#C3CBD6] px-2 py-1.5">
+        {[['button', 'Button'], ['text', 'Text'], ['icon_child', 'Icon']].map(([t, l]) => (
+          <button
+            key={t}
+            type="button"
+            onClick={(e) => { e.stopPropagation(); if (nodeId) fillChildBlock?.(nodeId, t); }}
+            className="inline-flex h-7 items-center gap-1 rounded px-2 text-[12px] font-medium text-[#3D8BD0] transition-colors hover:bg-[#EBF5FF]"
+          ><Plus size={12} />{l}</button>
+        ))}
+      </span>
+    );
+  }
   if (item.type === 'button') {
     return (
       <span className="inline-flex h-9 items-center justify-center gap-2 rounded bg-[#3D8BD0] px-4 text-[13px] font-medium text-white">
@@ -603,10 +620,33 @@ export function ContactRender({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
       </div>
       {blocks.length > 0 && (
         <div className="mt-3 flex flex-col gap-2.5">
-          {blocks.map((b) => (
-            <Sel key={b.id} id={itemNodeId(nodeId, b.id)}>
-              <ChildBlock item={b} />
-            </Sel>
+          {/* A block marked `beside` shares the line of the one before it — that is what Split makes. */}
+          {blocks.reduce<Item[][]>((lines, b) => {
+            if (b.beside && lines.length) lines[lines.length - 1].push(b); else lines.push([b]);
+            return lines;
+          }, []).map((line) => (
+            <div key={line[0].id} className="flex min-w-0 items-stretch gap-3">
+              {line.map((b) => {
+                const bid = itemNodeId(nodeId, b.id);
+                /* The toolbar's alignment places the block's CONTENT inside its column. */
+                const h = String(styles[bid]?.align ?? 'left');
+                const v = String(styles[bid]?.alignY ?? 'start');
+                return (
+                  <Sel
+                    key={b.id}
+                    id={bid}
+                    className="flex min-w-0 flex-1 flex-col"
+                    style={{
+                      alignItems: h === 'center' ? 'center' : h === 'right' ? 'flex-end' : h === 'stretch' ? 'stretch' : 'flex-start',
+                      justifyContent: v === 'center' ? 'center' : v === 'end' ? 'flex-end' : 'flex-start',
+                      textAlign: h === 'center' ? 'center' : h === 'right' ? 'right' : 'left',
+                    }}
+                  >
+                    <ChildBlock item={b} nodeId={bid} />
+                  </Sel>
+                );
+              })}
+            </div>
           ))}
         </div>
       )}
@@ -895,6 +935,18 @@ const FEATURED_SERVICES = [
  * catalogue — at which point the requester is better served by the catalogue page itself. */
 const MAX_SERVICE_TILES = 4;
 
+/* Tile content alignment from the toolbar — undefined keys leave the template's own arrangement. */
+const tileAlign = (s: { align?: string; alignY?: string } | undefined, stacked: boolean): React.CSSProperties => {
+  if (!s || (s.align === undefined && s.alignY === undefined)) return {};
+  const h = s.align === 'left' ? 'flex-start' : s.align === 'right' ? 'flex-end' : s.align === 'stretch' ? 'stretch' : 'center';
+  const v = s.alignY === 'center' ? 'center' : s.alignY === 'end' ? 'flex-end' : 'flex-start';
+  const css: React.CSSProperties = stacked
+    ? { alignItems: s.align !== undefined ? h : undefined, justifyContent: s.alignY !== undefined ? v : undefined }
+    : { justifyContent: s.align !== undefined ? h : undefined, alignItems: s.alignY !== undefined ? v : undefined };
+  if (s.align !== undefined) css.textAlign = s.align === 'right' ? 'right' : s.align === 'left' || s.align === 'stretch' ? 'left' : 'center';
+  return css;
+};
+
 function ServiceTiles({ nodeId, items, showDesc, tpl = 'top', cols, chips, look }: {
   nodeId: string; items: { id: string; name: string; desc: string }[]; showDesc: boolean;
   /* The resolved column count. Undefined means "one per service", which is what this grid always
@@ -960,12 +1012,15 @@ function ServiceTiles({ nodeId, items, showDesc, tpl = 'top', cols, chips, look 
           key={s.id}
           id={`${nodeId}-tile`}
           /* A lone last tile spans the row — what the Three-across preset tile draws. */
-          style={(cols ?? 0) > 1 && i === arr.length - 1 && arr.length % (cols ?? 1) === 1 ? { gridColumn: '1 / -1' } : undefined}
+          style={{ ...((cols ?? 0) > 1 && i === arr.length - 1 && arr.length % (cols ?? 1) === 1 ? { gridColumn: '1 / -1' } : {}), ...tileAlign(styles[nodeId + '-tile'], top) }}
           className={`flex min-w-0 rounded-lg border border-[#E5E7EB] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)] ${
             action ? 'gap-3 px-3.5 py-3' : 'gap-2 px-3 py-4'
           } ${
             top ? 'flex-col items-center text-center' : tpl === 'right' ? 'flex-row-reverse items-center' : 'items-center'
           }`}
+          /* ⚠️ The toolbar's H/V alignment, applied INSIDE every tile (all tiles are one node). Stacked, H
+             moves the icon and words across and V moves them down the tile; side by side the two swap. */
+
         >
           {/* ⚠️ 'Text only' hides the badge, exactly as it does on an action card — where the icon
               sits and whether there IS one are one question with four answers, which is why they
@@ -1634,6 +1689,7 @@ function CisRender({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
  * ⚠️ The empty state is the SAME one My CIs draws, not a copy — asked for by name, and the state a
  * requester genuinely lands on when their filter matches nothing. */
 function RecordListRender({ nodeId, cfg, glyph }: { nodeId: string; cfg: Cfg; glyph?: ReactNode }) {
+  const { styles } = useCanvas();
   const mod = recordModule(cfg.module as string);
   /* ⚠️ ONE reader for both halves of the control. A preset and a hand-built condition list are the
      same setting shown two ways, so `activeConditions` resolves whichever is set and the renderer
@@ -1668,15 +1724,25 @@ function RecordListRender({ nodeId, cfg, glyph }: { nodeId: string; cfg: Cfg; gl
    * ⚠️ It reads the LIVE list, not `rows`, which has already been cut to the visible few. A card
    * showing "3" while the filter matches nine is the sort of wrong that looks right. */
   if (cfg.display === 'kpi') {
+    /* ⚠️ NO ICON — a KPI is its number and what the number counts. The layout comes from Card
+       templates (stacked, stacked centred, side by side) and the toolbar's H/V alignment places the
+       pair inside the card; an explicit alignment wins over the template's own. */
+    const layout = String(cfg.kpiLayout ?? 'stack');
+    const own = styles[nodeId] ?? {};
+    const h = String(own.align ?? (layout === 'centred' ? 'center' : 'left'));
+    const v = String(own.alignY ?? 'start');
+    const inline = layout === 'inline';
+    const hFlex = h === 'center' ? 'center' : h === 'right' ? 'flex-end' : 'flex-start';
+    const vFlex = v === 'center' ? 'center' : v === 'end' ? 'flex-end' : 'flex-start';
     return (
-      <div className="flex items-center gap-3.5">
-        <span className="flex size-11 flex-shrink-0 items-center justify-center rounded-lg bg-[#F1F5F9] text-[#475467]">
-          {glyph ?? <LayoutList size={20} />}
-        </span>
-        <span className="min-w-0">
-          <span className="block text-[30px] font-semibold leading-none text-[#364658]">{matching.length}</span>
-          <span className="mt-1.5 block truncate text-[13px] text-[#7B8FA5]">{String(cfg.title ?? mod.label)}</span>
-        </span>
+      <div
+        className={`flex h-full min-w-0 ${inline ? 'flex-row gap-2.5' : 'flex-col gap-1.5'}`}
+        style={inline
+          ? { justifyContent: hFlex, alignItems: v === 'center' ? 'center' : v === 'end' ? 'flex-end' : 'baseline', alignContent: vFlex }
+          : { alignItems: hFlex, justifyContent: vFlex, textAlign: h === 'center' ? 'center' : h === 'right' ? 'right' : 'left' }}
+      >
+        <span className="block text-[30px] font-semibold leading-none text-[#364658]">{matching.length}</span>
+        <span className="block min-w-0 truncate text-[13px] text-[#7B8FA5]">{String(cfg.title ?? mod.label)}</span>
       </div>
     );
   }

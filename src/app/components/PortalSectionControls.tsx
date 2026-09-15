@@ -61,6 +61,47 @@ export function ShapeArt({ s }: { s: BannerShape }) {
 
 /* Two across, every shape visible at once — six choices do not earn a dialog. The lit tile is the
    banner's current shape; picking another CHANGES the shape and keeps the content (see the builder). */
+/* ── KPI card templates ─────────────────────────────────────────────────────
+ * Three icon-free arrangements of a number and its title, drawn as the shape they produce. */
+const KPI_LAYOUTS: { value: string; title: string }[] = [
+  { value: 'stack', title: 'Number above title' },
+  { value: 'centred', title: 'Number above title, centred' },
+  { value: 'inline', title: 'Number beside title' },
+];
+export function KpiLayoutPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="flex gap-2">
+      {KPI_LAYOUTS.map((t) => {
+        const on = value === t.value;
+        const big = on ? 'bg-[#3D8BD0]/35' : 'bg-[#DFE5ED]';
+        const small = on ? 'bg-[#3D8BD0]/20' : 'bg-[#EEF2F6]';
+        return (
+          <button
+            key={t.value}
+            type="button"
+            onClick={() => onChange(t.value)}
+            title={t.title}
+            aria-pressed={on}
+            className={`flex h-[64px] flex-1 items-center justify-center rounded-lg border-2 bg-white transition-colors ${on ? 'border-[#3D8BD0]' : 'border-[#E5E7EB] hover:border-[#C3CBD6]'}`}
+          >
+            {t.value === 'inline' ? (
+              <span className="flex items-end gap-1.5">
+                <span className={`h-[14px] w-4 rounded-sm ${big}`} />
+                <span className={`mb-[2px] h-[4px] w-8 rounded-full ${small}`} />
+              </span>
+            ) : (
+              <span className={`flex w-12 flex-col gap-[5px] ${t.value === 'centred' ? 'items-center' : 'items-start'}`}>
+                <span className={`h-[12px] w-5 rounded-sm ${big}`} />
+                <span className={`h-[4px] w-9 rounded-full ${small}`} />
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export function BannerShapePicker({ value, options, onChange }: {
   value: string | undefined;
   options: BannerShape[];

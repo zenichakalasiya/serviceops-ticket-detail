@@ -37,7 +37,7 @@ import { PortalItemList } from './PortalItemList';
 import { RecordFilterField } from './PortalRecordFilter';
 import type { RecordFilter } from './portalRecordFilters';
 import { BANNER_SHAPES, bannerLayoutsFor, recordModule } from './supportPortalData';
-import { AnnouncementTypePicker, BannerLayoutPicker, BannerShapePicker, TemplatePicker } from './PortalSectionControls';
+import { AnnouncementTypePicker, BannerLayoutPicker, BannerShapePicker, KpiLayoutPicker, TemplatePicker } from './PortalSectionControls';
 import { ACROSS_ROW, ACROSS_STACK, DOWN_ROW, DOWN_STACK, SectionPresets } from './PortalSectionLayout';
 import type { PresetId } from './PortalSectionLayout';
 import { BorderRow, RadiusRow, ShadowBlock, SizeRow } from './PortalBoxControls';
@@ -1136,6 +1136,8 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
             onChange={(x) => onApplyBannerLayout?.(x)}
           />
         );
+      case 'kpiLayout':
+        return <KpiLayoutPicker value={String(v ?? 'stack')} onChange={(x) => set(f.key, x)} />;
       case 'bannerShape':
         /* Not `set` — a shape rebuilds the banner's whole tree, which is a builder action. */
         return (

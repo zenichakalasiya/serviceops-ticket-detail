@@ -1622,6 +1622,35 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     toast.success(`${type[0].toUpperCase()}${type.slice(1)} added`);
   }, [specForNode]);
 
+  /* Contact Us — "Split column": an EMPTY slot lands beside the block, on the same line. The slot offers
+     Button, Text and Icon; deleting it takes the line back to one column. */
+  const splitChildBlock = useCallback((id: string) => {
+    const p = parseItemId(id);
+    if (!p) return;
+    setWidgetCfg((prev) => {
+      const cfg = prev[p.widget] ?? {};
+      const list = (cfg.children as Cfg[]) ?? [];
+      const at = list.findIndex((x) => x.id === p.item);
+      if (at < 0) return prev;
+      /* One slot per line: a block already paired is not split again. */
+      if (list[at].beside || list[at + 1]?.beside) { toast.error('This line already has two columns'); return prev; }
+      const slot = { id: `${Date.now().toString(36)}s`, type: 'empty', beside: true };
+      return { ...prev, [p.widget]: { ...cfg, children: [...list.slice(0, at + 1), slot, ...list.slice(at + 1)] } };
+    });
+  }, []);
+
+  const fillChildBlock = useCallback((id: string, type: string) => {
+    const p = parseItemId(id);
+    if (!p) return;
+    const spec = specForNode(p.widget);
+    const seed = spec?.collection?.seed?.(0) ?? {};
+    setWidgetCfg((prev) => {
+      const cfg = prev[p.widget] ?? {};
+      const list = (cfg.children as Cfg[]) ?? [];
+      return { ...prev, [p.widget]: { ...cfg, children: list.map((x) => (x.id === p.item ? { ...seed, id: x.id, beside: x.beside, type } : x)) } };
+    });
+  }, [specForNode]);
+
   const moveToSeam = useCallback((id: string, afterId: string) => {
     const moving = detachElement(id);
     if (!moving) return;
@@ -1828,6 +1857,23 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
         const hit = Object.keys(prev).find((r) => prev[r].some((e) => e.id === id));
         return hit ? { ...prev, [hit]: prev[hit].filter((e) => e.id !== id) } : prev;
       });
+    } else if (parseItemId(id) && !parseItemId(id)!.part) {
+      /* ⚠️ A block INSIDE a widget (a Contact Us Button, Text or Icon). It lives in its widget's own
+         list, so it is removed from that list — this used to fall through to `removed`, which hides
+         page bands, so the toast said Removed and the block stayed. A slot left beside nothing takes
+         the line back to one column. */
+      const { widget, item } = parseItemId(id)!;
+      setWidgetCfg((prev) => {
+        const cfg = prev[widget] ?? {};
+        const key = Object.keys(cfg).find((k) => Array.isArray(cfg[k]) && (cfg[k] as Cfg[]).some((x) => x?.id === item));
+        if (!key) return prev;
+        const list = cfg[key] as Cfg[];
+        const at = list.findIndex((x) => x.id === item);
+        const next = list.filter((x) => x.id !== item);
+        /* The block that sat BESIDE this one now leads its own line. */
+        if (!list[at].beside && next[at]?.beside) next[at] = { ...next[at], beside: false };
+        return { ...prev, [widget]: { ...cfg, [key]: next } };
+      });
     } else {
       const row = Object.keys(rowOrder).find((r) => rowOrder[r].includes(id));
       if (row) setRowOrder((o) => ({ ...o, [row]: o[row].filter((x) => x !== id) }));
@@ -1977,7 +2023,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     selectedId, hoverId, select, setHover: setHoverId, styles, setStyle, setText, setCfg: patchCfg,
     addSection, addBeside, splitBand, bandHosted, dropBeside, columnsFull, splitNode, setNodeDir, splitInfo, addLinkCard, dropInColumn, dropAtSeam, dropInRow,
     addSibling: addSiblingElement, cfg: cfgFor,
-    moveNode, duplicateNode, deleteNode, canDuplicate, addInside, moveTo, moveToSeam, addChildBlock, areSiblings, replaceElement, pickIcon, applyPreset,
+    moveNode, duplicateNode, deleteNode, canDuplicate, addInside, moveTo, moveToSeam, addChildBlock, splitChildBlock, fillChildBlock, areSiblings, replaceElement, pickIcon, applyPreset,
     tourSeam,
     /* The text toolbar names the theme fonts, so it needs the live theme. */
     theme,

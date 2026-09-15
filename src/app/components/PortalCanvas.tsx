@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 // ArrowLeft stays in use by the card toolbar's "Move left".
 import { toast } from 'sonner';
-import { HEADING_SIZE, PORTAL_FONTS, SECTION_LAYOUTS, SPLITTABLE_BANDS, TEXT_STYLES, ZERO_BOX, COMPOSABLE, BANNER_BLOCKS, inBanner, dragIdOf, boxInfo, canAddBeside, defaultAlignH, nodeById, paintsOwnShadow, paintsOwnSurface, toolbarCaps, nodePath, placedIn, placedType } from './portalPageModel';
+import { HEADING_SIZE, PORTAL_FONTS, SECTION_LAYOUTS, SPLITTABLE_BANDS, TEXT_STYLES, ZERO_BOX, COMPOSABLE, BANNER_BLOCKS, inBanner, dragIdOf, isContactChild, isServiceTile, boxInfo, canAddBeside, defaultAlignH, nodeById, paintsOwnShadow, paintsOwnSurface, toolbarCaps, nodePath, placedIn, placedType } from './portalPageModel';
 import { DEFAULT_THEME } from './PortalThemePanel';
 import type { PortalTheme } from './PortalThemePanel';
 import { boxCss, containerCss } from './portalStyleResolver';
@@ -59,6 +59,10 @@ interface CanvasCtx {
   moveToSeam: (id: string, afterId: string) => void;
   /** Adds one of a container's own block types inside it — the card's "Extra content" list. */
   addChildBlock: (id: string, type: string) => void;
+  /** Contact Us: put an empty slot beside this block on the same line. */
+  splitChildBlock?: (id: string) => void;
+  /** Contact Us: turn an empty slot into a Button, Text or Icon. */
+  fillChildBlock?: (id: string, type: string) => void;
   /** The Quick Actions row's one addable card — see `toolbarCaps`. */
   addLinkCard?: () => void;
   /** The first split of a BUILT-IN band — see `splitBand` in the builder. */
@@ -217,10 +221,14 @@ export function sizeOf(styles: PortalStyles, id: string): React.CSSProperties {
   /* ⚠️ Alignment is applied to the element as a flex ITEM, not to its children. "Align this card
      bottom" is a statement about where the card sits in the row, and `alignSelf` is the only
      property that says it — text-align inside the card would move the words instead. */
-  if (s.alignY !== undefined) {
+  /* ⚠️ Except where the alignment is about what is INSIDE: a service tile, a Contact Us block and a
+     KPI read their own align/alignY and place their content with it — moving the wrapper as well
+     would shrink a tile out of its grid cell. */
+  const alignsInside = /-tile$/.test(id) || isContactChild(id) || placedType(id) === 'c-records';
+  if (s.alignY !== undefined && !alignsInside) {
     css.alignSelf = ({ start: 'flex-start', center: 'center', end: 'flex-end', stretch: 'stretch' } as const)[s.alignY];
   }
-  if (s.align === 'stretch') { css.flexGrow = 1; css.width = '100%'; }
+  if (s.align === 'stretch' && !alignsInside) { css.flexGrow = 1; css.width = '100%'; }
   if (s.margin) {
     /* ⚠️ Per side, and only where set — an unset side must not emit 0 and beat the class. */
     if (s.margin.top !== undefined) css.marginTop = `${s.margin.top}px`;
@@ -714,11 +722,13 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
      measure itself against — the wrapper it used to be positioned inside. */
   const besideRef = useRef<HTMLDivElement>(null);
   const insideRef = useRef<HTMLDivElement>(null);
-  const { styles, setStyle, moveNode, duplicateNode, deleteNode, canDuplicate, addInside, replaceElement, addChildBlock, splitNode, splitInfo, addLinkCard, addSibling } = useCanvas();
+  const { styles, setStyle, moveNode, duplicateNode, deleteNode, canDuplicate, addInside, replaceElement, addChildBlock, splitNode, splitInfo, addLinkCard, addSibling, cfg, splitChildBlock } = useCanvas();
   const [picking, setPicking] = useState(false);
   const [adding, setAdding] = useState(false);
   const [axis, setAxis] = useState<'h' | 'v' | null>(null);
-  const caps = toolbarCaps(id);
+  /* A Custom Data Widget drawn as a KPI takes both alignments — it places its number and title inside itself. The list form keeps none. */
+  const kpi = placedType(id) === 'c-records' && cfg?.(id)?.display === 'kpi';
+  const caps = kpi ? { ...toolbarCaps(id), alignH: undefined, alignV: undefined } : toolbarCaps(id);
 
   /* Side-by-side things move on the horizontal axis; stacked bands move on the vertical one.
      ⚠️ The MEASURED answer wins — see `useSiblingSpan`. The box's declared direction is the next
@@ -833,11 +843,16 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
         >{tip.label}</span>
       )}
       {/* The grip drags the element itself — pick it up here, drop it on a sibling to reorder. */}
-      <span
-        {...useNodeDragHandle(id)}
-        data-tip="Drag to move"
-        className="flex size-7 cursor-grab items-center justify-center text-[#9CA3AF] active:cursor-grabbing"
-      ><GripVertical size={14} /></span>
+      {caps.drag !== false && (
+        <span
+          {...useNodeDragHandle(id)}
+          data-tip="Drag to move"
+          className="flex size-7 cursor-grab items-center justify-center text-[#9CA3AF] active:cursor-grabbing"
+        ><GripVertical size={14} /></span>
+      )}
+      {caps.splitItem && (
+        <button className={btn} data-tip="Split column — add a slot beside this" onClick={() => splitChildBlock?.(id)}><Columns2 size={15} /></button>
+      )}
       {/* ⚠️ NOTHING ON THIS BAR IS EVER SHOWN DISABLED. A move that cannot happen is not rendered,
           the same way the pair disappears entirely when an element has no siblings at all.
           This replaces an earlier rule — "disabled with the reason on it" — which was applied
@@ -965,11 +980,13 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
           onPick={(v) => { setStyle(id, { alignY: v as never }); setAxis(null); }}
         />
       )}
-      <button
-        className="flex size-7 items-center justify-center rounded text-[#EF4444] transition-colors hover:bg-[#FEF3F2]"
-        data-tip="Delete"
-        onClick={() => deleteNode(id)}
-      ><Trash2 size={14} /></button>
+      {caps.remove !== false && (
+        <button
+          className="flex size-7 items-center justify-center rounded text-[#EF4444] transition-colors hover:bg-[#FEF3F2]"
+          data-tip="Delete"
+          onClick={() => deleteNode(id)}
+        ><Trash2 size={14} /></button>
+      )}
     </div>
   );
 }
@@ -2016,6 +2033,13 @@ export function Sel({ id, children, className = '', toolbarBelow = false, style:
   const on = selectedId === id;
   const hov = hoverId === id && !on;
   const sharedTile = /-tile$/.test(id);
+  /* ⚠️ A shared tile id renders once PER TILE, so its toolbar would paint four times. Only the FIRST
+     tile on the page carries it — measured after mount, since which one is first is a DOM fact. */
+  const [firstTile, setFirstTile] = useState(false);
+  useEffect(() => {
+    if (!sharedTile || !isServiceTile(id)) return;
+    setFirstTile(document.querySelector(`[data-node="${id}"]`) === ref.current);
+  });
 
   /* ⚠️ FREE PLACEMENT, banner children only. Everything else on this page is laid out — a card is in
      a row, a row is in a section — and letting those be dragged anywhere would break the layout that
@@ -2195,7 +2219,7 @@ export function Sel({ id, children, className = '', toolbarBelow = false, style:
       {/* ⚠️ Product chrome gets no floating toolbar — the banner, the left rail, the top bar and
           everything the bar contains. Every action on it (move, duplicate, align, delete) is either
           disabled or a lie over navigation the admin does not own. */}
-      {on && !sharedTile && id !== 'hero' && id !== 'rail' && !/^header/.test(id) && (
+      {on && (!sharedTile || firstTile) && id !== 'hero' && id !== 'rail' && !/^header/.test(id) && (
         <ToolbarSlot toolbarBelow={toolbarBelow}>
           {/* ⚠️ A PLACED text gets BOTH bars; a text CHILD gets only the formatting one.
               The rule used to be "kind === text → formatting bar", which is right for a widget's
@@ -2208,7 +2232,7 @@ export function Sel({ id, children, className = '', toolbarBelow = false, style:
               ⚠️ Formatting on TOP, element bar underneath and nearest the element. The lower bar is
               the one that points at the thing it acts on, and the element bar is the one whose
               actions move it. */}
-          {node.kind === 'text' ? (
+          {node.kind === 'text' && !isContactChild(id) ? (
             /^el-[0-9]+$/.test(id) ? (
               <span className="flex flex-col items-center gap-1">
                 <TextToolbar id={id} />
