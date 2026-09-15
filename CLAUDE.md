@@ -534,6 +534,13 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   the block brings the row back. It is `onPage: true` ONLY so the demo seed does not drop one on every page
   (which silently hid the Quick Actions row). **KPI tiles (`x-kpis`, spec `kpi_group`)** = a collection of
   `{label, source}` counters, same 1–4 column preset, counts off `COUNTS`. On the banner both seed `cols: '1'`.
+  ⚠️ **The bottom reserve is MEASURED, not fixed:** `quickOverlap` = how far the Quick Actions row
+  actually climbs (`-(styles.quick.margin.top ?? -62)`, floored at 0). Dragging the row's top grip down
+  out of the banner removes the reserve, so a fill-to-edge widget reaches the banner's bottom again.
+  **A widget is PLACED inside its cell** by its own toolbar alignment: `styles[id].alignY` → the cell's
+  `justify-content` (top/middle/bottom), `styles[id].align` → the cell's `align-items`; `sizeOf` skips
+  `alignSelf` for banner widgets (`alignsInside`). It stretches to fill the cell (`portal-bleed`) only while
+  it fills the edge AND has no dragged height AND no vertical alignment of its own.
   ⚠️ **Testing trap:** a hot reload of `PortalCanvas.tsx` swaps its context object mid-session, so the canvas
   silently reads the read-only default (no `data-node` anywhere, no outlines). Reload before judging.
 

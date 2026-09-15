@@ -232,7 +232,8 @@ export function sizeOf(styles: PortalStyles, id: string): React.CSSProperties {
   /* ⚠️ Except where the alignment is about what is INSIDE: a service tile, a Contact Us block and a
      KPI read their own align/alignY and place their content with it — moving the wrapper as well
      would shrink a tile out of its grid cell. */
-  const alignsInside = /-tile$/.test(id) || isContactChild(id) || placedType(id) === 'c-records';
+  /* A widget on the BANNER is placed by its cell (see the arranged banner), so its alignment is not applied to itself. */
+  const alignsInside = /-tile$/.test(id) || isContactChild(id) || placedType(id) === 'c-records' || (/^el-\d+$/.test(id) && nodeById(id)?.parent === 'hero');
   if (s.alignY !== undefined && !alignsInside) {
     css.alignSelf = ({ start: 'flex-start', center: 'center', end: 'flex-end', stretch: 'stretch' } as const)[s.alignY];
   }

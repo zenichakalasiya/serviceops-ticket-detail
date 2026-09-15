@@ -2101,6 +2101,11 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
     && !(heroLayout && heroLayout.id !== 'classic' && !heroCfg.bannerTree);
   /* The action cards ride up into the banner's lower edge, so the band keeps room for them. */
   const quickClimbs = !actionsMoved && blockOrder.indexOf('quick') === 0 && !removed.includes('quick') && !searchFloats && !tileActions && !quickOnBanner && !hostOf('quick');
+  /* ⚠️ How far the cards ACTUALLY ride into the banner — the room the banner keeps for them. Their top
+     grip can drag them down out of the banner (a margin of its own replaces the -62px climb), and the
+     banner then has nothing to make room for: a fixed reserve left an empty strip under the banner's
+     content where the cards used to sit. */
+  const quickOverlap = quickClimbs ? Math.max(0, -(styles.quick?.margin?.top ?? -62)) : 0;
   /* The banner's PADDING belongs to its items (see the tree renderer), not to the band. */
   const { paddingTop: _pt, paddingBottom: _pb, paddingLeft: _pl, paddingRight: _pr, ...heroInner } = stInner('hero');
 
@@ -2128,7 +2133,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
         /* ⚠️ A RAIL reads top-down. Centring is right for a band — the copy sits in the middle
            of the colour however tall it is made — and wrong for a column, where it pushes the
            greeting to the vertical middle of the page and the action rows off the bottom. */
-        className={treeBanner ? `relative flex flex-col overflow-hidden ${quickClimbs ? 'pb-[62px]' : ''}` : `relative flex flex-col ${heroSide ? 'justify-start pt-10 pb-10' : bannerSec ? (blank || tileActions || quickOnBanner ? 'justify-center py-5' : 'justify-center pt-5 pb-[86px]') : `${({ start: 'justify-start', end: 'justify-end' } as Record<string, string>)[String(wc('hero').contentAlignY ?? 'center')] ?? 'justify-center'} ${(tileActions || quickOnBanner) && !searchFloats ? 'pb-10' : 'pb-[86px]'}`} ${searchFloats && !bannerSec ? 'overflow-visible' : heroSticky ? 'overflow-x-hidden overflow-y-auto scrollbar-hide' : 'overflow-hidden'}`}
+        className={treeBanner ? 'relative flex flex-col overflow-hidden' : `relative flex flex-col ${heroSide ? 'justify-start pt-10 pb-10' : bannerSec ? (blank || tileActions || quickOnBanner ? 'justify-center py-5' : 'justify-center pt-5 pb-[86px]') : `${({ start: 'justify-start', end: 'justify-end' } as Record<string, string>)[String(wc('hero').contentAlignY ?? 'center')] ?? 'justify-center'} ${(tileActions || quickOnBanner) && !searchFloats ? 'pb-10' : 'pb-[86px]'}`} ${searchFloats && !bannerSec ? 'overflow-visible' : heroSticky ? 'overflow-x-hidden overflow-y-auto scrollbar-hide' : 'overflow-hidden'}`}
         style={{
           /* ⚠️ The tabs decide, in one place. Image wins when one is uploaded; Colour paints
              flat; and with neither the band keeps its gradient, so a portal nobody has touched
@@ -2149,7 +2154,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
           ...(Number(heroCfg.bannerBorderWidth ?? 0) > 0 ? {
             borderWidth: Number(heroCfg.bannerBorderWidth), borderStyle: String(heroCfg.bannerBorderStyle ?? 'solid'), borderColor: String(heroCfg.bannerBorderColor ?? '#E5E7EB'),
           } : {}),
-          ...(treeBanner ? heroInner : stInner('hero')),
+          ...(treeBanner ? { ...heroInner, paddingBottom: quickOverlap || undefined } : stInner('hero')),
         }}
       >
         {/* The decorative line-work belongs to the DEFAULT band. Over a chosen colour it reads
@@ -2388,18 +2393,26 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
               if (typeof n === 'string') {
                 const b = bleed.has(n);
                 const words = n === 'hero-copy' || n === 'hero-search';
+                /* ⚠️ A widget is PLACED inside its cell by its own alignment — the toolbar's two align buttons —
+                   so a card made shorter than its column can sit at the top, middle or bottom of it. It only
+                   stretches to fill the cell while it is set to fill the edge, has no dragged height and no
+                   vertical alignment of its own. */
+                const own = words ? undefined : styles[n];
+                const V: Record<string, string> = { start: 'flex-start', center: 'center', end: 'flex-end', stretch: 'stretch' };
+                const H: Record<string, string> = { left: 'flex-start', center: 'center', right: 'flex-end', stretch: 'stretch' };
+                const fillY = b && own?.height === undefined && (own?.alignY ?? 'stretch') === 'stretch';
                 return (
                   <div
                     key={n}
                     data-gap-item=""
                     data-banner-cell={n}
-                    className={`flex min-w-0 flex-col ${b ? 'portal-bleed' : ''}`}
+                    className={`flex min-w-0 flex-col ${fillY ? 'portal-bleed' : ''}`}
                     style={{
                       containerType: 'inline-size',
-                      alignItems: words ? (FLEX[bandAlign] ?? 'center') : 'stretch',
+                      alignItems: words ? (FLEX[bandAlign] ?? 'center') : H[String(own?.align ?? 'stretch')] ?? 'stretch',
                       /* Widgets keep their own text alignment — the banner's centring is for its words. */
                       textAlign: words ? undefined : 'left',
-                      justifyContent: b ? 'stretch' : justifyY,
+                      justifyContent: fillY ? 'stretch' : own?.alignY && own.alignY !== 'stretch' ? V[own.alignY] : b ? 'flex-start' : justifyY,
                       ...(b ? {} : {
                         paddingTop: edge.top ? padT : undefined, paddingBottom: edge.bottom ? padB : undefined,
                         paddingLeft: edge.left ? padL : undefined, paddingRight: edge.right ? padR : undefined,
