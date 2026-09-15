@@ -7,9 +7,9 @@ import {
   AlignLeft, AlignRight, AlignStartHorizontal, AlignStartVertical, ArrowDown, ArrowLeft, ArrowRight,
   ArrowUp, Baseline, Bold, Check, ChevronDown, ChevronRight, Columns2, Copy, GripHorizontal, GripVertical, Italic, Link2, Rows2,
   Braces, Highlighter, Maximize2, UnfoldVertical, Move, MoveHorizontal, MoveVertical, Plus, RemoveFormatting,
-  Replace, SquareDashed, Trash2, Underline, X, ImagePlus, Palette, LayoutDashboard, Columns3, Expand,
+  Replace, SquareDashed, Trash2, Underline, X, ImagePlus, Palette, LayoutDashboard, Columns3,
 } from 'lucide-react';
-import { BannerFillEditor, BannerPresetPicker } from './PortalBannerTools';
+import { BannerFillEditor, BannerPresetPicker, TilePresetPicker } from './PortalBannerTools';
 import { flipRoot } from './portalBannerLayout';
 import type { BannerNode } from './portalBannerLayout';
 import { BANNER_GROUPS, bannerGroupGap } from './portalPageModel';
@@ -803,8 +803,6 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
   const { styles, setStyle, moveNode, duplicateNode, deleteNode, canDuplicate, addInside, replaceElement, addChildBlock, splitNode, splitInfo, addLinkCard, addSibling, cfg, setCfg, splitChildBlock } = useCanvas();
   const [colsOpen, setColsOpen] = useState(false);
   const onHero = /^el-\d+$/.test(id) && nodeById(id)?.parent === 'hero';
-  const bleedList = (cfg?.('hero')?.bannerBleed as string[] | undefined) ?? [];
-  const bleeds = bleedList.includes(id);
   const [picking, setPicking] = useState(false);
   const [adding, setAdding] = useState(false);
   const [axis, setAxis] = useState<'h' | 'v' | null>(null);
@@ -1021,35 +1019,30 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
         <AddItemMenu id={id} type={placedType(id)!} />
       )}
       {placedType(id) === 'v-image' && <CaptionMenu id={id} />}
-      {/* Cards laid out 1–4 across — fewer when there is not room. */}
+      {/* Cards laid out across — the SAME skeleton presets the panel shows, so the toolbar says what each
+          choice looks like instead of offering bare numbers. */}
       {(placedType(id) === 'x-actions' || placedType(id) === 'x-kpis') && (() => {
-        const cols = String(cfg?.(id)?.cols ?? (placedType(id) === 'x-kpis' ? 3 : 4));
+        const own = cfg?.(id) ?? {};
+        const kpi = placedType(id) === 'x-kpis';
+        const count = Array.isArray(own.items)
+          ? (own.items as { hidden?: boolean }[]).filter((it) => !it.hidden).length
+          : Number(own.__tileCount ?? 4);
+        const cols = Number(own.cols ?? Math.min(count, 4));
         return (
           <div className="relative">
-            <button className={colsOpen ? btnOn : btn} data-tip={`Columns — ${cols}`} onClick={() => setColsOpen((x) => !x)}><Columns3 size={15} /></button>
+            <button className={colsOpen ? btnOn : btn} data-tip="Presets" onClick={() => setColsOpen((x) => !x)}><Columns3 size={15} /></button>
             {colsOpen && (
               <>
                 <span className="fixed inset-0 z-[60]" onClick={() => setColsOpen(false)} />
-                <div className="absolute left-1/2 top-[calc(100%+6px)] z-[61] flex -translate-x-1/2 items-center gap-0.5 rounded border border-[#E5E7EB] bg-white px-1 py-1 shadow-[0_4px_6px_-2px_rgba(16,24,40,0.06),0_12px_16px_-4px_rgba(16,24,40,0.10)]">
-                  {['1', '2', '3', '4'].map((n) => (
-                    <button key={n} className={`${cols === n ? btnOn : btn} text-[12px] font-semibold`} data-tip={`${n} column${n === '1' ? '' : 's'}`} onClick={() => { setCfg?.(id, { cols: n }); setColsOpen(false); }}>{n}</button>
-                  ))}
+                <div className="absolute left-0 top-[calc(100%+6px)] z-[61] rounded-lg border border-[#E5E7EB] bg-white p-3 shadow-[0_12px_16px_-4px_rgba(16,24,40,0.10),0_4px_6px_-2px_rgba(16,24,40,0.06)]" style={{ width: Math.min(4, count) * 80 + 24 }}>
+                  <p className="mb-2 text-[12px] font-medium text-[#364658]">Presets</p>
+                  <TilePresetPicker count={count} kind={kpi ? 'kpi' : 'action'} value={cols} onChange={(c) => { setCfg?.(id, { cols: String(c) }); setColsOpen(false); }} />
                 </div>
               </>
             )}
           </div>
         );
       })()}
-      {/* ⚠️ Fill to the banner's edge: the item ignores the banner's padding on the sides it touches, so a
-          picture can meet the band's edges while the words keep their inset. */}
-      {onHero && (
-        <button
-          className={bleeds ? btnOn : btn}
-          data-tip={bleeds ? 'Keep inside the banner padding' : 'Fill to the banner edge'}
-          aria-pressed={bleeds}
-          onClick={() => setCfg?.('hero', { bannerBleed: bleeds ? bleedList.filter((x) => x !== id) : [...bleedList, id] })}
-        ><Expand size={14} /></button>
-      )}
       {/* ⚠️ A LABELLED action, not a "+". The Quick Actions row takes exactly one thing and it is a
           specific card — a plus would promise the palette, which this row is fenced against, and an
           icon would have to be guessed at. The words are the whole point of it. */}
@@ -1868,7 +1861,7 @@ function BannerToolbar() {
         {layout && (
           <>
             <span className="fixed inset-0 z-[60]" onClick={() => setLayout(false)} />
-            <div className="absolute left-0 top-[calc(100%+6px)] z-[61] w-[280px] rounded-lg border border-[#E5E7EB] bg-white p-3 shadow-[0_12px_16px_-4px_rgba(16,24,40,0.10),0_4px_6px_-2px_rgba(16,24,40,0.06)]">
+            <div className="absolute left-0 top-[calc(100%+6px)] z-[61] w-[300px] rounded-lg border border-[#E5E7EB] bg-white p-3 shadow-[0_12px_16px_-4px_rgba(16,24,40,0.10),0_4px_6px_-2px_rgba(16,24,40,0.06)]">
               <p className="mb-2 text-[12px] font-medium text-[#364658]">Arrangement</p>
               <BannerPresetPicker tree={heroTree?.() ?? null} onPick={(t) => setCfg?.('hero', { bannerTree: t })} />
             </div>

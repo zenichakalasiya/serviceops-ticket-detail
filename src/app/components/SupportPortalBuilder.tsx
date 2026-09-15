@@ -789,11 +789,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
   function seedBannerItem(elId: string, type: string) {
     if (type === 'x-actions') patchCfg(elId, { cols: '1' });
     if (type === 'x-kpis') patchCfg(elId, { cols: '1' });
-    if (type === 'c-announcements') {
-      patchCfg(elId, { display: 'image' });
-      const cur = (widgetCfgRef.current.hero?.bannerBleed as string[] | undefined) ?? [];
-      patchCfg('hero', { bannerBleed: [...cur, elId] });
-    }
+    if (type === 'c-announcements') patchCfg(elId, { display: 'image' });
   }
 
   /** The banner's + adders: an empty cell beside an item — a column to its left or right, a row above or below. */

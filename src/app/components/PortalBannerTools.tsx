@@ -19,7 +19,7 @@ import { ArrowLeftRight, Minus, Plus, RotateCw } from 'lucide-react';
 import { ColorField } from './PortalColorPicker';
 import { activePreset, presetsFor, tilePresets } from './portalBannerLayout';
 import type { BannerNode } from './portalBannerLayout';
-import { nodeById } from './portalPageModel';
+import { placedType } from './portalPageModel';
 
 /** Figma's gap field: the direction glyph, the number, and a slider — one value, typed or dragged. */
 export function GapField({ value, onChange, dir = 'column' }: { value: number; onChange: (v: number) => void; dir?: string }) {
@@ -146,73 +146,155 @@ export function BannerFillEditor({ cfg, setCfg }: {
 
 /* ── The banner's ARRANGEMENT presets ─────────────────────────────────────────────────────────────
  * One thumbnail per arrangement the current items can take, each drawn from the SAME tree it would
- * apply — so a thumbnail can never promise a layout you do not get. Every block is labelled with the
- * item it stands for, because "which box is the search?" is the one question a bare grid cannot answer. */
-function PresetArt({ node, name }: { node: BannerNode; name: (id: string) => string }) {
-  if (typeof node === 'string') {
+ * apply — so a thumbnail can never promise a layout you do not get.
+ *
+ * ⚠️ SKELETONS, not labelled boxes, in the Card templates tile language: text is two lines, the search
+ * is a field outline, and each widget is drawn as the shape it makes (a picture, a stack of cards, a
+ * tile of numbers). Words inside every block made seven thumbnails into a wall of truncated labels;
+ * the name lives on the tooltip instead. */
+const INK_ON = 'bg-[#3D8BD0]/45';
+const INK_OFF = 'bg-[#C3CDD9]';
+const FAINT = 'bg-[#E2E8F0]';
+const FILL_ON = 'bg-[#3D8BD0]/10';
+const FILL_OFF = 'bg-[#F1F5F9]';
+const EDGE_ON = 'border-[#3D8BD0]/50';
+const EDGE_OFF = 'border-[#C3CDD9]';
+
+function ItemSkeleton({ id, on }: { id: string; on: boolean }) {
+  const ink = on ? INK_ON : INK_OFF;
+  const edge = on ? EDGE_ON : EDGE_OFF;
+  if (id === 'hero-copy') {
     return (
-      <span className="flex min-h-[18px] min-w-0 flex-1 items-center justify-center overflow-hidden rounded-[3px] bg-[#DCE8F5] px-1 text-[9px] font-medium leading-none text-[#3D6F9E]">
-        <span className="truncate">{name(node)}</span>
+      <span className="flex min-w-0 flex-1 flex-col justify-center gap-[3px] px-[2px]">
+        <span className={`h-[3px] w-[80%] rounded-full ${ink}`} />
+        <span className={`h-[3px] w-[55%] rounded-full ${FAINT}`} />
+      </span>
+    );
+  }
+  if (id === 'hero-search') {
+    return (
+      <span className="flex min-w-0 flex-1 items-center">
+        <span className={`flex h-[9px] w-full items-center justify-end rounded-[3px] border bg-white pr-[2px] ${edge}`}>
+          <span className={`size-[3px] rounded-full ${ink}`} />
+        </span>
+      </span>
+    );
+  }
+  const type = placedType(id) ?? '';
+  if (type === 'bn-slot') {
+    return <span className={`min-h-[8px] min-w-0 flex-1 rounded-[3px] border border-dashed ${edge}`} />;
+  }
+  if (type === 'c-announcements' || type === 'v-image' || type === 'v-slider') {
+    return (
+      <span className={`flex min-h-[8px] min-w-0 flex-1 flex-col justify-end overflow-hidden rounded-[3px] ${on ? FILL_ON : FILL_OFF}`}>
+        <span className={`h-[35%] max-h-[8px] w-full ${ink}`} />
+      </span>
+    );
+  }
+  if (type === 'x-actions' || type === 'x-kpis') {
+    return (
+      <span className="flex min-w-0 flex-1 flex-col justify-center gap-[1px]">
+        {[0, 1].map((i) => (
+          <span key={i} className={`flex h-[6px] items-center gap-[2px] rounded-[2px] px-[2px] ${on ? FILL_ON : FILL_OFF}`}>
+            {type === 'x-actions' && <span className={`size-[3px] flex-shrink-0 rounded-[1px] ${ink}`} />}
+            <span className={`h-[2px] flex-1 rounded-full ${type === 'x-kpis' ? ink : FAINT}`} />
+          </span>
+        ))}
       </span>
     );
   }
   return (
-    <span className={`flex min-w-0 flex-1 gap-[3px] ${node.d === 'row' ? 'flex-row' : 'flex-col'}`}>
-      {node.c.map((k, i) => <PresetArt key={i} node={k} name={name} />)}
+    <span className={`flex min-h-[8px] min-w-0 flex-1 flex-col justify-center gap-[2px] rounded-[3px] px-[3px] ${on ? FILL_ON : FILL_OFF}`}>
+      <span className={`h-[2px] w-[70%] rounded-full ${ink}`} />
+      <span className={`h-[2px] w-[45%] rounded-full ${FAINT}`} />
     </span>
+  );
+}
+
+function PresetArt({ node, on }: { node: BannerNode; on: boolean }) {
+  if (typeof node === 'string') return <ItemSkeleton id={node} on={on} />;
+  return (
+    <span className={`flex min-h-0 min-w-0 flex-1 gap-[3px] ${node.d === 'row' ? 'flex-row' : 'flex-col'}`}>
+      {node.c.map((k, i) => <PresetArt key={i} node={k} on={on} />)}
+    </span>
+  );
+}
+
+/** The one tile both pickers are drawn in — the Card templates tile. */
+function SkeletonTile({ on, label, onPick, children }: { on: boolean; label: string; onPick: () => void; children: ReactNode }) {
+  return (
+    <button
+      type="button"
+      title={label}
+      aria-label={label}
+      aria-pressed={on}
+      onMouseDown={(e) => e.stopPropagation()}
+      onClick={(e) => { e.stopPropagation(); onPick(); }}
+      className={`flex h-[64px] min-w-0 flex-1 overflow-hidden rounded-lg border-2 bg-white p-1.5 transition-colors ${on ? 'border-[#3D8BD0]' : 'border-[#E5E7EB] hover:border-[#C3CBD6]'}`}
+    >{children}</button>
   );
 }
 
 export function BannerPresetPicker({ tree, onPick }: { tree: BannerNode | null; onPick: (t: BannerNode) => void }) {
   const presets = presetsFor(tree);
   const on = activePreset(tree);
-  const name = (id: string) => (id === 'hero-copy' ? 'Text' : id === 'hero-search' ? 'Search' : nodeById(id)?.name ?? 'Item');
   if (presets.length < 2) {
     return <p className="text-[12px] leading-[18px] text-[#7B8FA5]">Add a widget to the banner to choose how its items are arranged.</p>;
   }
   return (
-    <div className="grid grid-cols-2 gap-2">
+    <div className="grid grid-cols-3 gap-2">
       {presets.map((p) => (
-        <button
-          key={p.id}
-          type="button"
-          title={p.label}
-          aria-pressed={on === p.id}
-          onMouseDown={(e) => e.stopPropagation()}
-          onClick={(e) => { e.stopPropagation(); onPick(p.tree); }}
-          className={`flex flex-col gap-1.5 rounded border p-1.5 text-left transition-colors ${on === p.id ? 'border-[#3D8BD0] bg-[#EBF5FF]' : 'border-[#E5E7EB] bg-white hover:border-[#C3CBD6]'}`}
-        >
-          <span className="flex h-[54px] w-full rounded-[4px] bg-[#F5F7FA] p-1"><PresetArt node={p.tree} name={name} /></span>
-          <span className={`truncate text-[11px] leading-[14px] ${on === p.id ? 'text-[#3D8BD0]' : 'text-[#64748B]'}`}>{p.label}</span>
-        </button>
+        <SkeletonTile key={p.id} on={on === p.id} label={p.label} onPick={() => onPick(p.tree)}>
+          <PresetArt node={p.tree} on={on === p.id} />
+        </SkeletonTile>
       ))}
     </div>
   );
 }
 
 /* ── Column PRESETS for a set of cards (Action cards, KPI tiles) ─────────────────────────────────
- * One thumbnail per arrangement the ACTUAL number of cards can take, each drawn with that many tiles —
- * the same picture-over-numbers treatment as a section's Layout presets. */
-export function TilePresetPicker({ count, value, onChange }: { count: number; value: number; onChange: (cols: number) => void }) {
+ * One tile per arrangement the ACTUAL number of cards can take, each drawn with that many skeleton
+ * cards — an action card is an icon beside a line, a KPI a number over a label — and all of them in
+ * ONE row, in the panel and in the toolbar alike. */
+function CardSkeleton({ kind, on, flat }: { kind: 'action' | 'kpi'; on: boolean; flat: boolean }) {
+  const ink = on ? INK_ON : INK_OFF;
+  return (
+    <span className={`flex min-w-0 rounded-[2px] ${on ? FILL_ON : FILL_OFF} ${
+      kind === 'kpi' ? 'flex-col justify-center gap-[2px] px-[3px]' : `${flat ? 'flex-row' : 'flex-col'} items-center justify-center gap-[2px] px-[2px]`
+    }`}>
+      {kind === 'kpi' ? (
+        <>
+          <span className={`h-[3px] w-[45%] rounded-full ${ink}`} />
+          <span className={`h-[2px] w-[75%] rounded-full ${FAINT}`} />
+        </>
+      ) : (
+        <>
+          <span className={`size-[4px] flex-shrink-0 rounded-[1px] ${ink}`} />
+          <span className={`h-[2px] w-[60%] rounded-full ${FAINT}`} />
+        </>
+      )}
+    </span>
+  );
+}
+
+export function TilePresetPicker({ count, value, onChange, kind = 'action' }: {
+  count: number; value: number; onChange: (cols: number) => void; kind?: 'action' | 'kpi';
+}) {
   const n = Math.max(1, count);
   return (
-    <div className="grid grid-cols-2 gap-2">
+    <div className="flex gap-2">
       {tilePresets(n).map((p) => {
         const on = Math.min(value, Math.min(n, 4)) === p.cols;
+        const rows = Math.ceil(n / p.cols);
         return (
-          <button
-            key={p.cols}
-            type="button"
-            title={p.label}
-            aria-pressed={on}
-            onClick={() => onChange(p.cols)}
-            className={`flex flex-col gap-1.5 rounded border p-1.5 text-left transition-colors ${on ? 'border-[#3D8BD0] bg-[#EBF5FF]' : 'border-[#E5E7EB] bg-white hover:border-[#C3CBD6]'}`}
-          >
-            <span className="grid h-[54px] w-full content-center gap-[3px] rounded-[4px] bg-[#F5F7FA] p-1.5" style={{ gridTemplateColumns: `repeat(${p.cols}, minmax(0, 1fr))` }}>
-              {Array.from({ length: n }, (_, i) => <span key={i} className={`h-[10px] rounded-[2px] ${on ? 'bg-[#9CC3E6]' : 'bg-[#DCE8F5]'}`} />)}
+          <SkeletonTile key={p.cols} on={on} label={p.label} onPick={() => onChange(p.cols)}>
+            <span
+              className="grid h-full w-full gap-[3px]"
+              style={{ gridTemplateColumns: `repeat(${p.cols}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))` }}
+            >
+              {Array.from({ length: n }, (_, i) => <CardSkeleton key={i} kind={kind} on={on} flat={p.cols === 1} />)}
             </span>
-            <span className={`truncate text-[11px] leading-[14px] ${on ? 'text-[#3D8BD0]' : 'text-[#64748B]'}`}>{p.label}</span>
-          </button>
+          </SkeletonTile>
         );
       })}
     </div>

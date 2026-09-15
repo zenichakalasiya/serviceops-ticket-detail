@@ -2369,7 +2369,8 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
             const heroNow = wc('hero');
             const items = ['hero-copy', ...(search ? ['hero-search'] : []), ...heroExtras.map((x) => x.id)];
             const tree: BannerNode = normalizeTree(heroNow.bannerTree, items) ?? 'hero-copy';
-            const bleed = new Set(Array.isArray(heroNow.bannerBleed) ? (heroNow.bannerBleed as string[]) : []);
+            /* Fill-to-edge was removed from the toolbar, so a value an older page stored no longer applies — nothing could turn it off. */
+            const bleed = new Set<string>();
             const gap = bannerGroupGap('hero-content', contentCfg);
             /* Stacked items have their own gap, so text can breathe above a search while sitting flush against a picture. */
             const gapY = Number(contentCfg.gapY ?? 20);
