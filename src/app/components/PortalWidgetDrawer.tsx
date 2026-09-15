@@ -38,7 +38,8 @@ import { RecordFilterField } from './PortalRecordFilter';
 import type { RecordFilter } from './portalRecordFilters';
 import { BANNER_SHAPES, bannerLayoutsFor, recordModule } from './supportPortalData';
 import { AnnouncementTypePicker, BannerLayoutPicker, BannerShapePicker, KpiLayoutPicker, TemplatePicker } from './PortalSectionControls';
-import { BannerFillEditor, SideGrid, bannerLayerSide } from './PortalBannerTools';
+import { BannerFillEditor, GapField, SideGrid, bannerLayerSide } from './PortalBannerTools';
+import { bannerGroupGap } from './portalPageModel';
 import { ACROSS_ROW, ACROSS_STACK, DOWN_ROW, DOWN_STACK, SectionPresets } from './PortalSectionLayout';
 import type { PresetId } from './PortalSectionLayout';
 import { BorderRow, RadiusRow, ShadowBlock, SizeRow } from './PortalBoxControls';
@@ -1136,6 +1137,14 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
             value={String(v ?? 'classic')}
             options={bannerLayoutsFor(viewCfg.__blankPage === true)}
             onChange={(x) => onApplyBannerLayout?.(x)}
+          />
+        );
+      case 'gapField':
+        return (
+          <GapField
+            value={f.key === 'sideGap' ? Number(v ?? 32) : bannerGroupGap(nodeId, viewCfg)}
+            dir={f.key === 'sideGap' ? 'row' : String(viewCfg.dir ?? 'column')}
+            onChange={(x) => set(f.key, x)}
           />
         );
       case 'gradientSide':

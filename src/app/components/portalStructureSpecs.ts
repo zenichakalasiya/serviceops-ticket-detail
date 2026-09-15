@@ -149,6 +149,8 @@ export const HERO_SPEC: WidgetSpec = {
       key: 'contentAlignY', label: 'Vertical', control: 'segmented', tab: 'style', group: 'Alignment',
       options: [{ value: 'start', label: 'Top' }, { value: 'center', label: 'Middle' }, { value: 'end', label: 'Bottom' }],
     },
+    /* The gap between the banner's text and the widgets added beside it — only once there are some. */
+    { key: 'sideGap', label: 'Gap beside the text', control: 'gapField', tab: 'style', group: 'Alignment', when: (c) => c.__hasSide === true },
     /* ── Corners and border ─────────────────────────────────────────────────────────────────── */
     { key: 'bannerRadius', label: 'Corner radius', control: 'slider', tab: 'style', group: 'Corners & border', min: 0, max: 40, unit: 'px' },
     { key: 'bannerBorderWidth', label: 'Border width', control: 'slider', tab: 'style', group: 'Corners & border', min: 0, max: 8, unit: 'px' },
@@ -551,7 +553,29 @@ export const NAVBAR_SPEC: WidgetSpec = {
   },
 };
 
+/* ── The banner's auto-layout GROUPS (Text group, Content group) ─────────────────────────────────
+ * Direction, gap and how the children line up — the three questions a Figma auto-layout frame asks.
+ * ⚠️ `gap` has no default here: Group 1 starts at 8px and the Content group at 20px (the spacing the
+ * banner always had), resolved by `bannerGroupGap`. `align` unset means "follow the banner". */
+export const BANNER_GROUP_SPEC: WidgetSpec = {
+  id: 'banner_group', name: 'Group', group: 'Structure', reuse: 'single', family: 'flat',
+  fields: [
+    {
+      key: 'dir', label: 'Direction', control: 'segmented', tab: 'style', group: 'Auto layout',
+      options: [{ value: 'column', label: 'Vertical' }, { value: 'row', label: 'Horizontal' }],
+    },
+    { key: 'gap', label: 'Gap between items', control: 'gapField', tab: 'style', group: 'Auto layout' },
+    {
+      key: 'align', label: 'Align items', control: 'segmented', tab: 'style', group: 'Auto layout',
+      options: [{ value: 'start', label: 'Start' }, { value: 'center', label: 'Centre' }, { value: 'end', label: 'End' }],
+    },
+  ],
+  packs: [],
+  noDelete: true,
+  defaults: { dir: 'column' },
+};
+
 export const STRUCTURE_SPECS: WidgetSpec[] = [
-  HERO_SPEC, SEARCH_SPEC, SECTION_SPEC, COLUMN_SPEC, PAGE_SPEC, RAIL_SPEC, NAVBAR_SPEC, LOGO_SPEC,
+  BANNER_GROUP_SPEC, HERO_SPEC, SEARCH_SPEC, SECTION_SPEC, COLUMN_SPEC, PAGE_SPEC, RAIL_SPEC, NAVBAR_SPEC, LOGO_SPEC,
   HEADER_ACTIONS_SPEC,
 ];

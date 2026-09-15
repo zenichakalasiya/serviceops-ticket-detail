@@ -31,6 +31,7 @@ import { PortalBuilderTour } from './PortalBuilderTour';
 import { PortalWidgetDrawer } from './PortalWidgetDrawer';
 import { WIDGET_FOR_NODE, WIDGET_FOR_TYPE, specById, structureSpecId } from './portalWidgetSpec';
 import type { Cfg, WidgetSpec } from './portalWidgetSpec';
+import { BANNER_GROUPS } from './portalPageModel';
 import type { Box, BoxDir, CustomSection, NodeStyle, PlacedElement, PortalPageContent, PortalStyles } from './portalPageModel';
 import { PORTAL_ELEMENTS, PORTAL_EMPTY_WIDGETS, PORTAL_TEMPLATES, bannerLayout, bannerShape } from './supportPortalData';
 import type { ShapeNode } from './supportPortalData';
@@ -500,6 +501,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
         ? {
             __blankPage: page.start === 'blank',
             __layoutHasImage: bannerLayout(String(widgetCfg.hero?.bannerLayout ?? 'classic'))?.hasImage === true,
+            __hasSide: (rowExtrasRef.current.hero?.length ?? 0) > 0,
           }
         : {}),
       ...(widgetCfg[owner] ?? {}),
@@ -530,7 +532,9 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     /* ⚠️ Behaviour is TREE state, so it is applied there and REMOVED from the patch rather than
        written to both. Two copies of the property everything is laid out by is the one thing this
        model exists to avoid — and a stored `dir` would win in `cfgFor` the moment the two drifted. */
-    if (patch.dir !== undefined) {
+    /* ⚠️ …except the banner's auto-layout GROUPS, which are not in any section tree: their direction
+       is ordinary config, so it is stored like every other key. */
+    if (patch.dir !== undefined && !BANNER_GROUPS.has(id)) {
       const secId = sectionIdOfBox(id);
       setSections((prev) => prev.map((s) => (
         s.section.id === secId ? { ...s, section: setBoxDir(s.section, id, patch.dir as BoxDir) } : s

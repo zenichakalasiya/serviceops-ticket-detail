@@ -467,6 +467,24 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   ⚠️ **Hooks in `Sel` must sit ABOVE its `if (!enabled || !node) return`** — the service-tile
   `firstTile` hooks were added below it and blanked the canvas with "Rendered fewer hooks than expected".
 
+- **Support Portal — the banner's words are AUTO-LAYOUT GROUPS, with Figma gap handles (15 Sep 2026).**
+  Two selectable nodes: **`hero-copy`** (Text group = heading + subheading) inside **`hero-content`**
+  (Content group = Text group + search), both → spec `banner_group` (`BANNER_GROUP_SPEC`: Direction ·
+  Gap · Align items). Every element HUGS its own width (`w-fit`). Config keys on each group: `dir`
+  (`column`|`row`), `gap`, `align` (unset = follow the banner's `contentAlign`); `bannerGroupGap()` gives
+  the resting gaps (8 text, 20 content). The banner's own `sideGap` (default 32) is the space between
+  its text and widgets added beside it (field shows only while `__hasSide`). Canvas: **`GroupToolbar`**
+  (direction + align) and **`GapBands`** — pink `#FF24BD` bands MEASURED from the rendered children
+  (`[data-node]`/`[data-gap-item]`; on the hero, inside `[data-gap-parent="hero"]`), draggable
+  (ns/ew-resize), writing the same key the panel's `GapField` does. Groups get no resize handles.
+  ⚠️ **`patchCfg` strips `dir` into the section TREE** — the groups are exempt (`BANNER_GROUPS`), or the
+  direction toggle silently did nothing. ⚠️ Because the Content group hugs, **its widths are `cqw`**
+  (the text column is `container-type: inline-size`): `searchWidth` and the text cap (`contentMaxWidth`)
+  are shares of the banner's text area, since a % of a hugging parent is a % of itself. ⚠️ Horizontal
+  text group never wraps and takes 100cqw, or its two lines wrap back on top of each other and the
+  toggle looks dead. ⚠️ Free placement of heading/subheading/search (`freePlaced`) is OFF — pinning one
+  absolutely would pull it out of its group.
+
 - **Support Portal — the SHAPED banner (Banner Builder phase 1 of 4, 14 Sep 2026; hidden since 15 Sep).** Spec:
   https://claude.ai/code/artifact/6836c07d-d9c2-4273-9fe9-f610f67f92a3 — decisions: vertical banner is a
   column beside the page, fixed while it scrolls (4f/4g); a curated set of blocks; the photo panel takes

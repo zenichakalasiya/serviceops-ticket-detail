@@ -54,9 +54,14 @@ export const PORTAL_NODES: PortalNodeDef[] = [
 
   // ── hero ──
   { id: 'hero', name: 'Hero', kind: 'section', content: 'hero' },
-  { id: 'hero-title', name: 'Heading', kind: 'text', parent: 'hero', content: 'text' },
-  { id: 'hero-subtitle', name: 'Subtitle', kind: 'text', parent: 'hero', content: 'text' },
-  { id: 'hero-search', name: 'Search', kind: 'search', parent: 'hero', content: 'search' },
+  /* The banner's words are GROUPS, like Figma auto-layout frames: Group 1 holds the heading and the
+     subheading; the Content group holds Group 1 and the search. Each group has a direction and a gap,
+     and each element inside hugs its own width. */
+  { id: 'hero-content', name: 'Content group', kind: 'column', parent: 'hero', content: 'none' },
+  { id: 'hero-copy', name: 'Text group', kind: 'column', parent: 'hero-content', content: 'none' },
+  { id: 'hero-title', name: 'Heading', kind: 'text', parent: 'hero-copy', content: 'text' },
+  { id: 'hero-subtitle', name: 'Subtitle', kind: 'text', parent: 'hero-copy', content: 'text' },
+  { id: 'hero-search', name: 'Search', kind: 'search', parent: 'hero-content', content: 'search' },
 
   /* ── quick actions ──
    * The row IS the section — full width, left edge to right edge — and each tile is a column
@@ -1233,6 +1238,12 @@ export interface ToolbarCaps {
 }
 
 /** A Button, Text or Icon block an admin added inside the Contact Us card. */
+/** The banner's two auto-layout groups. */
+export const BANNER_GROUPS = new Set(['hero-copy', 'hero-content']);
+/** A group's gap when nobody has set one — the spacing the banner always had. */
+export const bannerGroupGap = (id: string, cfg: Record<string, unknown>): number =>
+  Number(cfg.gap ?? (id === 'hero-copy' ? 8 : 20));
+
 export const isContactChild = (id: string): boolean => {
   const p = parseItemId(id);
   return !!p && !p.part && (p.widget === 'contact' || placedType(p.widget) === 'c-contact');

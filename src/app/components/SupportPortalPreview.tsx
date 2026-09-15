@@ -15,7 +15,7 @@ import {
   PORTAL_APPROVALS, PORTAL_ARTICLES, PORTAL_OPEN_REQUESTS, statusTone,
 } from './supportPortalData';
 import { AddSectionSeam, ColumnAdders, MOVE_MIME, Sel, draggedElement, draggedNode, styleOf, useCanvas } from './PortalCanvas';
-import { HUGS_CONTENT, inBanner } from './portalPageModel';
+import { HUGS_CONTENT, bannerGroupGap, inBanner } from './portalPageModel';
 import { bannerLayerSide, sideGradient } from './PortalBannerTools';
 import { PAGE_ID, chosen, iconBoxCss, roleStyle } from './portalStyleResolver';
 import { bannerLayout } from './supportPortalData';
@@ -2220,61 +2220,76 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
             ⚠️ `items-center`, not `items-end`: the thing beside the heading is a card or a
             picture of its own height, and aligning their bottoms leaves the taller one hanging
             off the top of the band. */}
-        <div className={bannerSide ? 'flex w-full items-center gap-8' : 'contents'}>
-        <div className={bannerSide ? 'min-w-0 flex-1' : 'contents'}>
-          {/* ⚠️ BLOCK, not inline-block. Both were inline-block, so the subtitle sat on the
-              same line as the heading and the band read as one run-on sentence — "Welcome to
-              Support Portal Search our support center knowledge base". A heading and its
-              subtext are two lines; the wrapper has to say so. */}
-          <Sel id="hero-title" className="block w-full px-1" style={heroLine('hero-title')}>
-            <h2
-              /* ⚠️ `headingColor` AFTER `roleStyle`, never before it. `roleStyle` returns an
-                 explicit `color: undefined` whenever the colour is still the theme's — and a
-                 spread `undefined` DELETES the key it lands on, so the banner's own heading
-                 colour was being thrown away and the text fell back to the page's near-black.
-                 On an indigo band that measured 1.72:1, against the 4.5 this product's own
-                 contrast meter demands. Same trap `fillCss` carries a warning about. */
-              style={{ ...roleStyle(styles, 'hero', 'title'), color: String(wc('hero').headingColor ?? '#FFFFFF'), ...st('hero-title') }}
-              className="text-[30px] font-semibold leading-tight"
+        {/* ── The banner's words, as AUTO-LAYOUT GROUPS ─────────────────────────────────────────────
+            Content group (Text group + Search) · Text group (Heading + Subheading). Each group has its
+            own direction, gap and item alignment (`wc('hero-copy')`, `wc('hero-content')`), and every
+            element inside HUGS its own width, so an outline is exactly as wide as what it holds.
+            ⚠️ The banner row carries `data-gap-parent` and its two halves `data-gap-item`, so the canvas's
+            gap bands can measure the space between the text and the widgets beside it. */}
+        {(() => {
+          const bandAlign = heroAlignX(String(wc('hero').contentAlign ?? 'center'));
+          const FLEX: Record<string, string> = { start: 'flex-start', left: 'flex-start', center: 'center', end: 'flex-end', right: 'flex-end' };
+          const copyCfg = wc('hero-copy');
+          const contentCfg = wc('hero-content');
+          const copyDir = String(copyCfg.dir ?? 'column');
+          const contentDir = String(contentCfg.dir ?? 'column');
+          /* Unset item alignment follows the banner's own horizontal alignment. */
+          const copyAlign = FLEX[String(copyCfg.align ?? bandAlign)] ?? 'center';
+          const contentAlign = FLEX[String(contentCfg.align ?? bandAlign)] ?? 'center';
+          const title = (
+            <Sel id="hero-title" className="block w-fit max-w-full px-1" style={{ textAlign: bandAlign, ...(styles['hero-title']?.align ? { alignSelf: FLEX[String(styles['hero-title']?.align)], textAlign: styles['hero-title']?.align as React.CSSProperties['textAlign'] } : null) }}>
+              <h2
+                style={{ ...roleStyle(styles, 'hero', 'title'), color: String(wc('hero').headingColor ?? '#FFFFFF'), ...st('hero-title') }}
+                className="text-[30px] font-semibold leading-tight"
+              >
+                {String(wc('hero').heading ?? content.hero.title)}
+              </h2>
+            </Sel>
+          );
+          const subtitle = (
+            <Sel id="hero-subtitle" className="block w-fit max-w-full px-1" style={{ textAlign: bandAlign, ...(styles['hero-subtitle']?.align ? { alignSelf: FLEX[String(styles['hero-subtitle']?.align)], textAlign: styles['hero-subtitle']?.align as React.CSSProperties['textAlign'] } : null) }}>
+              <p style={{ ...roleStyle(styles, 'hero', 'subtitle'), ...(darkHeroInk ? { color: 'rgba(15,51,39,0.72)' } : null), ...st('hero-subtitle') }} className={`text-[15px] ${darkHeroInk ? '' : 'text-white/85'}`}>
+                {String(wc('hero').sub ?? content.hero.subtitle)}
+              </p>
+            </Sel>
+          );
+          const textGroup = (
+            <Sel
+              id="hero-copy"
+              className="flex w-fit min-w-0"
+              style={{
+                /* The banner's text-width cap now limits the GROUP, so its lines still hug. */
+                /* ⚠️ Side by side takes the whole width and never wraps — wrapping put the two lines back
+                   on top of each other and the direction control looked like it did nothing. */
+                maxWidth: copyDir === 'row' ? '100cqw' : `${Number(wc('hero').contentMaxWidth ?? 70)}cqw`,
+                flexDirection: copyDir as React.CSSProperties['flexDirection'],
+                gap: bannerGroupGap('hero-copy', copyCfg),
+                ...(copyDir === 'row' ? { alignItems: FLEX[String(copyCfg.align ?? 'center')] ?? 'center' } : { alignItems: copyAlign }),
+                ...(contentDir === 'row' ? {} : { alignSelf: contentAlign }),
+              }}
             >
-              {String(wc('hero').heading ?? content.hero.title)}
-            </h2>
-          </Sel>
-          {/* ⚠️ A THIRD line under the subtitle, and its own config key rather than more
-              words in `sub`: opening hours are a FACT with a clock beside it, and folding
-              them into the sentence above would lose both the icon and the ability to leave
-              them out. Absent unless a template asks for it. */}
-          <Sel id="hero-subtitle" className="mt-2 block w-full px-1" style={heroLine('hero-subtitle')}>
-            {/* ⚠️ The heading has `headingColor`; the line under it had a hard-coded
-                white/85 and no control at all — so a light banner printed a legible title
-                over an invisible subtitle. It follows the same ink decision. */}
-            <p style={{ ...roleStyle(styles, 'hero', 'subtitle'), ...(darkHeroInk ? { color: 'rgba(15,51,39,0.72)' } : null), ...st('hero-subtitle') }} className={`text-[15px] ${darkHeroInk ? '' : 'text-white/85'}`}>
-              {String(wc('hero').sub ?? content.hero.subtitle)}
-            </p>
-          </Sel>
-          {/* ⚠️ Rendered here ONLY while it belongs to the banner. When it floats it is the
-              same `Sel`, the same id and the same config — moved, not duplicated, because two
-              search bars in the tree would be two things to keep in step and one of them
-              would eventually be edited while the other showed. */}
-          {wc('hero').note !== undefined && String(wc('hero').note) !== '' && (
-            <div className="mt-3 flex w-full items-center gap-2 px-1" style={heroLine('hero-subtitle')}>
-              <Clock size={14} strokeWidth={1.8} style={{ color: darkHeroInk ? 'rgba(15,51,39,.55)' : 'rgba(255,255,255,.6)' }} />
-              <span className="text-[12.5px]" style={{ color: darkHeroInk ? 'rgba(15,51,39,.62)' : 'rgba(255,255,255,.66)' }}>{String(wc('hero').note)}</span>
-            </div>
-          )}
-          {wc('hero').showSearch !== false && !searchFloats && (
+              {title}
+              {subtitle}
+              {wc('hero').note !== undefined && String(wc('hero').note) !== '' && (
+                <div data-gap-item="" className="flex items-center gap-2 px-1">
+                  <Clock size={14} strokeWidth={1.8} style={{ color: darkHeroInk ? 'rgba(15,51,39,.55)' : 'rgba(255,255,255,.6)' }} />
+                  <span className="text-[12.5px]" style={{ color: darkHeroInk ? 'rgba(15,51,39,.62)' : 'rgba(255,255,255,.66)' }}>{String(wc('hero').note)}</span>
+                </div>
+              )}
+            </Sel>
+          );
+          const search = wc('hero').showSearch !== false && !searchFloats ? (
             <Sel
               id="hero-search"
-              className="mt-5 w-full"
-              /* ⚠️ The field follows the BAND's alignment. It was hard-centred, so a hero set
-                 to left-align printed its heading and subtitle on the left and then dropped
-                 the search in the middle — one band with two alignments, and the control was
-                 the odd one out. `heroLine` already answers this question for the two lines
-                 above it; this is the same answer applied to the third. */
-              style={{ maxWidth: `${Number(wc('hero').searchWidth ?? 70)}%`, ...(() => {
-                const a = String(styles['hero-search']?.align ?? heroAlignX(String(wc('hero').contentAlign ?? 'center')));
-                return { marginLeft: a === 'left' ? 0 : 'auto', marginRight: a === 'right' ? 0 : 'auto' };
-              })() }}
+              className="block"
+              /* ⚠️ `cqw`: a share of the BANNER's text area, not of the Content group — the group hugs its items,
+                 so a percentage of it would be a percentage of itself. */
+              style={{
+                width: `${Number(wc('hero').searchWidth ?? 70)}cqw`,
+                maxWidth: '100cqw',
+                flex: contentDir === 'row' ? '0 1 auto' : undefined,
+                ...(styles['hero-search']?.align ? { alignSelf: FLEX[String(styles['hero-search']?.align)] } : null),
+              }}
             >
               <HeroSearch
                 cfg={wc('hero')}
@@ -2282,21 +2297,42 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                 style={{ borderRadius: Number(wc('hero').searchRadius ?? 4), ...st('hero-search') }}
               />
             </Sel>
-          )}
-          {/* ⚠️ UNDER the search and INSIDE the words column, not hung off the band. A layout that
-              puts its counters below the search wants them under the SEARCH, centred with the copy;
-              placed beside the column instead they would sit against the band's right edge while
-              the heading they belong to is centred. */}
-          {heroSlot === 'below' && <div className="mt-6 w-full">{bannerSlot}</div>}
-        </div>
-        {bannerSide && (
-          /* ⚠️ 340px for ONE card, content-width for a ROW of them. A single card wants a stable
-             measure — the heading is the thing that should reflow as the banner narrows. Three
-             counters in 340px is three cramped tiles with their labels clipped to "O..", which is
-             what a fixed width does the moment the slot holds more than one thing. */
-          <div className={`flex-none text-left ${heroExtras.length > 1 ? '' : 'w-[340px]'}`}>{bannerSlot}</div>
-        )}
-        </div>
+          ) : null;
+          const contentGroup = (
+            <Sel
+              id="hero-content"
+              className="flex w-fit min-w-0 max-w-full"
+              style={{
+                flexDirection: contentDir as React.CSSProperties['flexDirection'],
+                gap: bannerGroupGap('hero-content', contentCfg),
+                ...(contentDir === 'row' ? { justifyContent: FLEX[bandAlign] ?? 'center', alignItems: FLEX[String(contentCfg.align ?? 'center')] ?? 'center' } : { alignItems: contentAlign }),
+              }}
+            >
+              {textGroup}
+              {search}
+              {heroSlot === 'below' && <div className="w-full">{bannerSlot}</div>}
+            </Sel>
+          );
+          return (
+            <div
+              data-gap-parent={bannerSide ? 'hero' : undefined}
+              className={bannerSide ? 'flex w-full items-center' : 'w-full'}
+              style={bannerSide ? { gap: Number(wc('hero').sideGap ?? 32) } : undefined}
+            >
+              {/* A column that PLACES the hugging Content group by the banner's alignment, and the size container its
+                  `cqw` widths are measured against. */}
+              <div
+                data-gap-item={bannerSide ? '' : undefined}
+                className={`flex flex-col ${bannerSide ? 'min-w-0 flex-1' : 'w-full'}`}
+                style={{ containerType: 'inline-size', alignItems: FLEX[bandAlign] ?? 'center' }}
+              >{contentGroup}</div>
+              {bannerSide && (
+                /* ⚠️ 340px for ONE card, content-width for a ROW of them — see the note that stood here. */
+                <div data-gap-item="" className={`flex-none text-left ${heroExtras.length > 1 ? '' : 'w-[340px]'}`}>{bannerSlot}</div>
+              )}
+            </div>
+          );
+        })()}
         </div>
         {/* ⚠️ INSIDE the band and pinned to its bottom edge with a negative margin, so half
             the field sits on the colour and half on the page. Placed after the text block and

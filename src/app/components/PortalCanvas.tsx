@@ -10,6 +10,7 @@ import {
   Replace, SquareDashed, Trash2, Underline, X, ImagePlus, Palette,
 } from 'lucide-react';
 import { BannerFillEditor } from './PortalBannerTools';
+import { BANNER_GROUPS, bannerGroupGap } from './portalPageModel';
 // ArrowLeft stays in use by the card toolbar's "Move left".
 import { toast } from 'sonner';
 import { HEADING_SIZE, PORTAL_FONTS, SECTION_LAYOUTS, SPLITTABLE_BANDS, TEXT_STYLES, ZERO_BOX, COMPOSABLE, BANNER_BLOCKS, inBanner, dragIdOf, isContactChild, isServiceTile, boxInfo, canAddBeside, defaultAlignH, nodeById, paintsOwnShadow, paintsOwnSurface, toolbarCaps, nodePath, placedIn, placedType } from './portalPageModel';
@@ -1719,6 +1720,163 @@ function BannerToolbar() {
   );
 }
 
+/* ── The banner's GROUP toolbar (Text group, Content group) ───────────────────────────────────────
+ * The three questions an auto-layout frame asks and nothing else: which way the items run, and how
+ * they line up across that direction. The gap is dragged on the canvas (the pink bands) or typed in
+ * the panel — a third place for one number would be one too many. */
+function GroupToolbar({ id }: { id: string }) {
+  const { cfg, setCfg } = useCanvas();
+  const c = cfg?.(id) ?? {};
+  const dir = String(c.dir ?? 'column');
+  const [open, setOpen] = useState(false);
+  const { tip, setTip, readTip } = useToolbarTip();
+  const A = dir === 'row'
+    ? ([['start', 'Top', <AlignStartHorizontal key="t" size={15} />], ['center', 'Middle', <AlignCenterHorizontal key="m" size={15} />], ['end', 'Bottom', <AlignEndHorizontal key="b" size={15} />]] as [string, string, ReactNode][])
+    : ([['start', 'Left', <AlignStartVertical key="l" size={15} />], ['center', 'Centre', <AlignCenterVertical key="c" size={15} />], ['end', 'Right', <AlignEndVertical key="r" size={15} />]] as [string, string, ReactNode][]);
+  const hero = cfg?.('hero') ?? {};
+  const bandA = String(hero.contentAlign ?? 'center');
+  const align = String(c.align ?? (bandA.includes('left') ? 'start' : bandA.includes('right') ? 'end' : 'center'));
+  return (
+    <div
+      data-portal-toolbar
+      onClick={(e) => e.stopPropagation()}
+      onMouseOver={readTip}
+      onMouseMove={readTip}
+      onMouseLeave={() => setTip(null)}
+      className="relative flex items-center gap-0.5 rounded border border-[#E5E7EB] bg-white px-1 py-1 shadow-[0_4px_6px_-2px_rgba(16,24,40,0.06),0_12px_16px_-4px_rgba(16,24,40,0.10)]"
+    >
+      {tip && (
+        <span style={{ left: tip.x }} className="pointer-events-none absolute top-full z-[80] mt-1.5 max-w-[220px] -translate-x-1/2 whitespace-nowrap rounded bg-[#1F2937] px-2 py-1 text-[11px] leading-[16px] text-white shadow-[0_4px_10px_rgba(16,24,40,0.18)]">{tip.label}</span>
+      )}
+      <button className={dir === 'column' ? btnOn : btn} data-tip="Vertical — items stack" aria-pressed={dir === 'column'} onClick={() => setCfg?.(id, { dir: 'column' })}><Rows2 size={15} /></button>
+      <button className={dir === 'row' ? btnOn : btn} data-tip="Horizontal — items side by side" aria-pressed={dir === 'row'} onClick={() => setCfg?.(id, { dir: 'row' })}><Columns2 size={15} /></button>
+      <span className="mx-0.5 h-4 w-px bg-[#E5E7EB]" />
+      <AlignAxis axis={dir === 'row' ? 'v' : 'h'} value={align} options={A} open={open} onToggle={() => setOpen((x) => !x)} onPick={(x) => { setCfg?.(id, { align: x }); setOpen(false); }} />
+    </div>
+  );
+}
+
+/* ── GAP BANDS — Figma's pink spacing handles ────────────────────────────────────────────────────
+ * Drawn between the direct children of a selected group (or, on the banner, between its text and
+ * the widgets beside it). Each band shows the value; dragging one changes the gap for all of them,
+ * exactly as the panel's Gap field does — the same key, so the two never disagree.
+ * ⚠️ MEASURED from the rendered children, never computed from the value: alignment, wrapping and
+ * hugging all decide where the space actually is. */
+const GAP_PINK = '#FF24BD';
+function GapBands({ id, host }: { id: string; host: React.RefObject<HTMLDivElement | null> }) {
+  const { cfg, setCfg } = useCanvas();
+  const c = cfg?.(id) ?? {};
+  const isHero = id === 'hero';
+  const dir = isHero ? 'row' : String(c.dir ?? 'column');
+  const gap = isHero ? Number(c.sideGap ?? 32) : bannerGroupGap(id, c);
+  const [bands, setBands] = useState<{ x: number; y: number; w: number; h: number }[]>([]);
+  const [drag, setDrag] = useState(false);
+  const [hot, setHot] = useState<number | null>(null);
+  const sig = `${dir}|${gap}|${String(c.align ?? '')}`;
+  useLayoutEffect(() => {
+    const el = host.current;
+    if (!el) return;
+    const measure = () => {
+      const parent = isHero ? el.querySelector<HTMLElement>('[data-gap-parent="hero"]') : el;
+      if (!parent) { setBands([]); return; }
+      const kids = Array.from(parent.children).filter((k): k is HTMLElement =>
+        k instanceof HTMLElement && (k.hasAttribute('data-node') || k.hasAttribute('data-gap-item')) && k.getBoundingClientRect().width > 0);
+      const o = el.getBoundingClientRect();
+      const rs = kids.map((k) => k.getBoundingClientRect()).sort((a, b) => (dir === 'row' ? a.left - b.left : a.top - b.top));
+      const next: { x: number; y: number; w: number; h: number }[] = [];
+      for (let i = 0; i < rs.length - 1; i++) {
+        const a = rs[i];
+        const b = rs[i + 1];
+        if (dir === 'row') {
+          const top = Math.min(a.top, b.top);
+          const bottom = Math.max(a.bottom, b.bottom);
+          next.push({ x: a.right - o.left, y: top - o.top, w: Math.max(0, b.left - a.right), h: bottom - top });
+        } else {
+          const left = Math.min(a.left, b.left);
+          const right = Math.max(a.right, b.right);
+          next.push({ x: left - o.left, y: a.bottom - o.top, w: right - left, h: Math.max(0, b.top - a.bottom) });
+        }
+      }
+      setBands((prev) => (JSON.stringify(prev) === JSON.stringify(next) ? prev : next));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    Array.from(el.querySelectorAll('[data-node],[data-gap-item]')).forEach((k) => ro.observe(k));
+    window.addEventListener('resize', measure);
+    return () => { ro.disconnect(); window.removeEventListener('resize', measure); };
+  }, [host, isHero, sig]);
+
+  const begin = (e: React.MouseEvent, i: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const start = dir === 'row' ? e.clientX : e.clientY;
+    const from = gap;
+    setDrag(true);
+    setHot(i);
+    document.body.style.cursor = dir === 'row' ? 'ew-resize' : 'ns-resize';
+    document.body.style.userSelect = 'none';
+    const move = (ev: MouseEvent) => {
+      const d = (dir === 'row' ? ev.clientX : ev.clientY) - start;
+      const nextGap = Math.max(0, Math.min(200, Math.round(from + d)));
+      setCfg?.(id, isHero ? { sideGap: nextGap } : { gap: nextGap });
+    };
+    const up = () => {
+      window.removeEventListener('mousemove', move);
+      window.removeEventListener('mouseup', up);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      setDrag(false);
+      setHot(null);
+    };
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', up);
+  };
+
+  return (
+    <>
+      {bands.map((b, i) => {
+        const lit = drag || hot === i;
+        /* A zero gap still needs something to grab — the hit area never shrinks below 8px. */
+        const hitW = dir === 'row' ? Math.max(b.w, 8) : b.w;
+        const hitH = dir === 'row' ? b.h : Math.max(b.h, 8);
+        return (
+          <span
+            key={i}
+            data-gap-band
+            onMouseDown={(e) => begin(e, i)}
+            onClick={(e) => e.stopPropagation()}
+            onMouseEnter={() => !drag && setHot(i)}
+            onMouseLeave={() => !drag && setHot(null)}
+            title={`Gap ${gap}px — drag to change`}
+            className="absolute z-40 flex items-center justify-center"
+            style={{
+              left: b.x + (b.w - hitW) / 2,
+              top: b.y + (b.h - hitH) / 2,
+              width: hitW,
+              height: hitH,
+              cursor: dir === 'row' ? 'ew-resize' : 'ns-resize',
+              backgroundColor: lit ? 'rgba(255,36,189,0.14)' : 'transparent',
+              backgroundImage: lit ? `repeating-linear-gradient(45deg, rgba(255,36,189,0.35) 0 1px, transparent 1px 6px)` : undefined,
+            }}
+          >
+            {/* The short pink line Figma draws across the middle of a gap. */}
+            <span
+              className="pointer-events-none absolute rounded-full"
+              style={dir === 'row'
+                ? { width: 2, height: Math.min(16, Math.max(8, b.h * 0.3)), backgroundColor: GAP_PINK }
+                : { height: 2, width: Math.min(16, Math.max(8, b.w * 0.3)), backgroundColor: GAP_PINK }}
+            />
+            {lit && (
+              <span className="pointer-events-none absolute z-10 whitespace-nowrap rounded-sm px-1 text-[10px] font-semibold leading-[15px] text-white" style={{ backgroundColor: GAP_PINK }}>{gap}</span>
+            )}
+          </span>
+        );
+      })}
+    </>
+  );
+}
+
 function ToolbarSlot({ toolbarBelow, children }: { toolbarBelow?: boolean | 'under'; children: ReactNode }) {
   const anchorRef = useRef<HTMLSpanElement>(null);
   const barRef = useRef<HTMLDivElement>(null);
@@ -2152,7 +2310,9 @@ export function Sel({ id, children, className = '', toolbarBelow = false, style:
      neighbours and no longer moves with them. A shaped banner's parts are MOVED instead: their drag
      carries the block (`dragIdOf`) into another row or column. */
   const bannerPart = /^hero-(title|subtitle|search)$/.test(id) && dragIdOf(id) !== id;
-  const freePlaced = /^hero-(title|subtitle|search)$/.test(id) && !bannerPart;
+  /* ⚠️ OFF: the heading, subheading and search are laid out by their auto-layout GROUPS now, and pinning one
+     at an absolute spot would take it out of the group it belongs to. */
+  const freePlaced = false as boolean;
   const free = styles[id];
   const freeStyle: React.CSSProperties = freePlaced && (free?.freeX !== undefined || free?.freeY !== undefined)
     ? { position: 'absolute', left: `${free?.freeX ?? 50}%`, top: `${free?.freeY ?? 50}%`, transform: 'translate(-50%, -50%)', margin: 0 }
@@ -2295,7 +2455,10 @@ export function Sel({ id, children, className = '', toolbarBelow = false, style:
       )}
       {/* ⚠️ Not on data cards: every tile in a widget is ONE node, so handles, a toolbar or a name chip
           would paint once per tile. The outline alone says all of them are selected. */}
-      {on && !sharedTile && <SelectionHandles id={id} elRef={ref} />}
+      {/* ⚠️ A group HUGS its items, so it has no size of its own to drag — no handles. */}
+      {on && !sharedTile && !BANNER_GROUPS.has(id) && <SelectionHandles id={id} elRef={ref} />}
+      {/* Figma's pink gap bands: on a selected group, and on the banner once widgets sit beside its text. */}
+      {on && enabled && (BANNER_GROUPS.has(id) || id === 'hero') && <GapBands id={id} host={ref} />}
 
       {/* ⚠️ A built-in band gets the SAME four handles an empty box does — that is the whole point
           of hosting it in a section tree. This branch covers only the FIRST split, while the band
@@ -2322,7 +2485,10 @@ export function Sel({ id, children, className = '', toolbarBelow = false, style:
       {on && enabled && id === 'hero' && (
         <ToolbarSlot toolbarBelow={toolbarBelow}><BannerToolbar /></ToolbarSlot>
       )}
-      {on && (!sharedTile || firstTile) && id !== 'hero' && id !== 'rail' && !/^header/.test(id) && (
+      {on && enabled && BANNER_GROUPS.has(id) && (
+        <ToolbarSlot><GroupToolbar id={id} /></ToolbarSlot>
+      )}
+      {on && (!sharedTile || firstTile) && id !== 'hero' && !BANNER_GROUPS.has(id) && id !== 'rail' && !/^header/.test(id) && (
         <ToolbarSlot toolbarBelow={toolbarBelow}>
           {/* ⚠️ A PLACED text gets BOTH bars; a text CHILD gets only the formatting one.
               The rule used to be "kind === text → formatting bar", which is right for a widget's

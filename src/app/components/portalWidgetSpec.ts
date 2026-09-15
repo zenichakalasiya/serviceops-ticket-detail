@@ -49,6 +49,7 @@ export type ControlKind =
   | 'kpiLayout'
   | 'gradientSide'
   | 'bannerFill'
+  | 'gapField'
   /** An ordered choice on a rail with initials under the stops (banner height). */
   | 'stepRail'
   /* ⚠️ Both were in USE and missing from this union, and the casts that would have caught it
@@ -1032,6 +1033,8 @@ export const STRUCTURE_FOR_NODE: Record<string, string> = {
   'header-logo': 'logo',
   'header-actions': 'header_actions',
   'hero-search': 'search',
+  'hero-copy': 'banner_group',
+  'hero-content': 'banner_group',
   // The three built-in bands are sections like any other.
   quick: 'section',
   work: 'section',

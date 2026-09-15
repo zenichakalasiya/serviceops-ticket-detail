@@ -15,6 +15,33 @@
 
 import { ColorField } from './PortalColorPicker';
 
+/** Figma's gap field: the direction glyph, the number, and a slider — one value, typed or dragged. */
+export function GapField({ value, onChange, dir = 'column' }: { value: number; onChange: (v: number) => void; dir?: string }) {
+  const set = (n: number) => onChange(Math.max(0, Math.min(200, Math.round(Number.isFinite(n) ? n : 0))));
+  return (
+    <div className="flex items-center gap-3">
+      <label className="flex h-8 w-[92px] flex-shrink-0 items-center gap-1.5 rounded border border-[#DFE5ED] bg-white px-2 focus-within:border-[#3D8BD0]">
+        {/* The glyph turns with the direction, so the field says which way the gap runs. */}
+        <svg width="14" height="14" viewBox="0 0 14 14" className="flex-shrink-0 text-[#64748B]" style={{ transform: dir === 'row' ? 'rotate(90deg)' : undefined }} aria-hidden>
+          <rect x="2" y="1" width="10" height="3" rx="1" fill="currentColor" />
+          <rect x="2" y="10" width="10" height="3" rx="1" fill="currentColor" />
+          <path d="M7 5.5v3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+        </svg>
+        <input
+          type="number"
+          min={0}
+          max={200}
+          value={value}
+          onChange={(e) => set(Number(e.target.value))}
+          className="w-full min-w-0 bg-transparent text-[13px] text-[#364658] outline-none"
+          aria-label="Gap"
+        />
+      </label>
+      <input type="range" min={0} max={120} value={Math.min(value, 120)} onChange={(e) => set(Number(e.target.value))} className="min-w-0 flex-1 accent-[#3D8BD0]" aria-label="Gap slider" />
+    </div>
+  );
+}
+
 export const SIDES = ['top left', 'top', 'top right', 'left', 'center', 'right', 'bottom left', 'bottom', 'bottom right'] as const;
 
 /* Where the colour is STRONGEST → the direction a CSS gradient runs (away from that side). */
