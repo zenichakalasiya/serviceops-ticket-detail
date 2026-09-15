@@ -49,10 +49,33 @@ function append(t: BannerNode | null, id: string): BannerNode {
   return branch('row', [t, id]);
 }
 
+/** The most SECTIONS one banner holds. Beyond four, no arrangement of them reads cleanly. */
+export const MAX_BANNER_SECTIONS = 4;
+
+/** The Text & Search section's node id. Title, one-liner and search are ONE section of the banner. */
+export const TEXT_SECTION = 'hero-content';
+
+/** A stored tree from before the section model named the heading and the search as two items; both
+ *  are now the one Text & Search section, so the first of them becomes it and the second goes. */
+function mergeWords(n: BannerNode): BannerNode {
+  let seen = false;
+  const walk = (k: BannerNode): BannerNode | null => {
+    if (typeof k === 'string') {
+      if (k !== 'hero-copy' && k !== 'hero-search' && k !== TEXT_SECTION) return k;
+      if (seen) return null;
+      seen = true;
+      return TEXT_SECTION;
+    }
+    const c = k.c.map(walk).filter((x): x is BannerNode => x !== null);
+    return c.length === 0 ? null : c.length === 1 ? c[0] : branch(k.d, c);
+  };
+  return walk(n) ?? TEXT_SECTION;
+}
+
 /** The arrangement actually drawn: the stored tree, repaired against the items really on the banner. */
 export function normalizeTree(stored: unknown, items: string[]): BannerNode | null {
   const set = new Set(items);
-  let t = isNode(stored) ? prune(stored, set) : null;
+  let t = isNode(stored) ? prune(mergeWords(stored), set) : null;
   const have = new Set(leavesOf(t));
   /* The Text group first, so a fresh banner builds the way it always looked: words, then search, then widgets. */
   items.filter((i) => !have.has(i)).forEach((i) => { t = append(t, i); });
@@ -100,21 +123,8 @@ function flat(n: BannerNode): BannerNode {
   return c.length === 1 ? c[0] : branch(n.d, c);
 }
 
-/** The banner's groups in reading order: Text + Search together, then each widget. */
-function groupsOf(tree: BannerNode | null): BannerNode[] {
-  const ids = leavesOf(tree);
-  const out: BannerNode[] = [];
-  let wordsAt = -1;
-  ids.forEach((id) => {
-    if (id === 'hero-copy' || id === 'hero-search') {
-      if (wordsAt < 0) { wordsAt = out.length; out.push(id); }
-      else { const w = out[wordsAt] as string; out[wordsAt] = branch('column', w === 'hero-copy' ? [w, id] : [id, w]); }
-      return;
-    }
-    out.push(id);
-  });
-  return out;
-}
+/** The banner's SECTIONS in reading order — the Text & Search section and each widget. */
+const groupsOf = (tree: BannerNode | null): BannerNode[] => leavesOf(tree);
 
 const split = (items: BannerNode[], parts: number[]) => {
   let i = 0;

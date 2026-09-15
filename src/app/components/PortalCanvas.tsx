@@ -4,7 +4,7 @@ import { WIDGET_FOR_NODE, WIDGET_FOR_TYPE, specById } from './portalWidgetSpec';
 import type { ReactNode } from 'react';
 import {
   AlignCenter, AlignCenterHorizontal, AlignCenterVertical, AlignEndHorizontal, AlignEndVertical,
-  AlignLeft, AlignRight, AlignStartHorizontal, AlignStartVertical, ArrowDown, ArrowLeft, ArrowRight,
+  AlignLeft, AlignRight, AlignStartHorizontal, AlignStartVertical, StretchHorizontal, StretchVertical, ArrowDown, ArrowLeft, ArrowRight,
   ArrowUp, Baseline, Bold, Check, ChevronDown, ChevronRight, Columns2, Copy, GripHorizontal, GripVertical, Italic, Link2, Rows2,
   Braces, Highlighter, Maximize2, UnfoldVertical, Move, MoveHorizontal, MoveVertical, Plus, RemoveFormatting,
   Replace, SquareDashed, Trash2, Underline, X, ImagePlus, Palette, LayoutDashboard, Columns3,
@@ -1806,7 +1806,6 @@ export const BANNER_SIDE_WIDGETS: { type: string; label: string }[] = [
   { type: 'b-list', label: 'Quick links' },
   { type: 'v-image', label: 'Image' },
   { type: 'b-text', label: 'Text' },
-  { type: 'b-button', label: 'Button' },
 ];
 
 function BannerToolbar() {
@@ -1907,15 +1906,14 @@ function BannerToolbar() {
 function GroupToolbar({ id }: { id: string }) {
   const { cfg, setCfg, heroTree } = useCanvas();
   const c = cfg?.(id) ?? {};
-  /* The Content group IS the banner's arrangement, so its direction is the tree's outermost one. */
-  const tree = id === 'hero-content' ? heroTree?.() ?? null : null;
-  const treeDir = tree && typeof tree !== 'string' ? tree.d : null;
-  const dir = String(treeDir ?? c.dir ?? 'column');
-  const setDir = (d: string) => {
-    if (tree && typeof tree !== 'string') { if (tree.d !== d) setCfg?.('hero', { bannerTree: flipRoot(tree) }); return; }
-    setCfg?.(id, { dir: d });
-  };
+  /* ⚠️ The Text & Search section's direction is its OWN — whether the words and the search run stacked or
+     side by side. The banner's arrangement of its sections is the presets' job, not this toggle's. */
+  void heroTree;
+  const dir = String(c.dir ?? 'column');
+  const setDir = (d: string) => setCfg?.(id, { dir: d });
+  const textSection = id === 'hero-content';
   const [open, setOpen] = useState(false);
+  const [openY, setOpenY] = useState(false);
   const { tip, setTip, readTip } = useToolbarTip();
   const A = dir === 'row'
     ? ([['start', 'Top', <AlignStartHorizontal key="t" size={15} />], ['center', 'Middle', <AlignCenterHorizontal key="m" size={15} />], ['end', 'Bottom', <AlignEndHorizontal key="b" size={15} />]] as [string, string, ReactNode][])
@@ -1938,7 +1936,19 @@ function GroupToolbar({ id }: { id: string }) {
       <button className={dir === 'column' ? btnOn : btn} data-tip="Vertical — items stack" aria-pressed={dir === 'column'} onClick={() => setDir('column')}><Rows2 size={15} /></button>
       <button className={dir === 'row' ? btnOn : btn} data-tip="Horizontal — items side by side" aria-pressed={dir === 'row'} onClick={() => setDir('row')}><Columns2 size={15} /></button>
       <span className="mx-0.5 h-4 w-px bg-[#E5E7EB]" />
-      <AlignAxis axis={dir === 'row' ? 'v' : 'h'} value={align} options={A} open={open} onToggle={() => setOpen((x) => !x)} onPick={(x) => { setCfg?.(id, { align: x }); setOpen(false); }} />
+      {textSection ? (
+        <>
+          {/* Two axes, always both: where the items sit across the section, and down it. STRETCH on the vertical
+              axis pins the words to the top and the search to the bottom; on the horizontal one (side by side) it
+              spreads them to the two edges. */}
+          <AlignAxis axis="h" value={String(c.align ?? align)} open={open} onToggle={() => { setOpenY(false); setOpen((x) => !x); }} onPick={(x) => { setCfg?.(id, { align: x }); setOpen(false); }}
+            options={[['start', 'Left', <AlignStartVertical key="l" size={15} />], ['center', 'Centre', <AlignCenterVertical key="c" size={15} />], ['end', 'Right', <AlignEndVertical key="r" size={15} />], ['stretch', dir === 'row' ? 'Spread to both edges' : 'Stretch across', <StretchHorizontal key="s" size={15} />]] as [string, string, ReactNode][]} />
+          <AlignAxis axis="v" value={String(c.alignY ?? cfg?.('hero')?.contentAlignY ?? 'center')} open={openY} onToggle={() => { setOpen(false); setOpenY((x) => !x); }} onPick={(x) => { setCfg?.(id, { alignY: x }); setOpenY(false); }}
+            options={[['start', 'Top', <AlignStartHorizontal key="t" size={15} />], ['center', 'Middle', <AlignCenterHorizontal key="m" size={15} />], ['end', 'Bottom', <AlignEndHorizontal key="b" size={15} />], ['stretch', 'Stretch — words top, search bottom', <StretchVertical key="s" size={15} />]] as [string, string, ReactNode][]} />
+        </>
+      ) : (
+        <AlignAxis axis={dir === 'row' ? 'v' : 'h'} value={align} options={A} open={open} onToggle={() => setOpen((x) => !x)} onPick={(x) => { setCfg?.(id, { align: x }); setOpen(false); }} />
+      )}
     </div>
   );
 }
@@ -1956,11 +1966,11 @@ function GapBands({ id, host }: { id: string; host: React.RefObject<HTMLDivEleme
   /* On an ARRANGED banner the bands are the arrangement's, and they edit the Content group's gap. */
   const treeMode = id === 'hero' && !!host.current?.querySelector('[data-banner-root]');
   const isHero = id === 'hero' && !treeMode;
-  const gapOwner = treeMode ? 'hero-content' : id;
+  const gapOwner = treeMode ? 'hero' : id;
   const dir = isHero ? 'row' : String(c.dir ?? 'column');
-  const gap = isHero ? Number(c.sideGap ?? 32) : bannerGroupGap(gapOwner, treeMode ? cfg?.('hero-content') ?? {} : c);
+  const gap = isHero ? Number(c.sideGap ?? 32) : treeMode ? Number(c.sectionGapX ?? 20) : bannerGroupGap(gapOwner, c);
   /* The arrangement has TWO gaps: between side-by-side items and between stacked ones. */
-  const gapY = treeMode ? Number(cfg?.('hero-content')?.gapY ?? 20) : gap;
+  const gapY = treeMode ? Number(c.sectionGapY ?? 20) : gap;
   const gapFor = (d: string) => (treeMode && d === 'column' ? gapY : gap);
   /* A SECTION or a box in one: bands for every row and column inside it, each editing the gap of the box
      that lays it out — the columns' gap along a row, the rows' gap down a column. */
@@ -1984,7 +1994,7 @@ function GapBands({ id, host }: { id: string; host: React.RefObject<HTMLDivEleme
       /* The Content group's nested rows and columns share its one gap, so each gets its own bands. */
       const parents = boxMode
         ? Array.from(el.querySelectorAll<HTMLElement>('[data-gap-parent^="sec-"]'))
-        : [...new Set([first, ...(id === 'hero-content' || treeMode ? Array.from(el.querySelectorAll<HTMLElement>('[data-gap-parent="hero-content"]')) : [])])];
+        : [...new Set([first, ...(treeMode ? Array.from(el.querySelectorAll<HTMLElement>('[data-gap-parent="hero-sections"]')) : [])])];
       const o = el.getBoundingClientRect();
       const next: { x: number; y: number; w: number; h: number; dir: string; owner: string }[] = [];
       for (const parent of parents) {
@@ -2032,7 +2042,7 @@ function GapBands({ id, host }: { id: string; host: React.RefObject<HTMLDivEleme
       const d = (bdir === 'row' ? ev.clientX : ev.clientY) - start;
       const nextGap = Math.max(0, Math.min(200, Math.round(from + d)));
       if (boxMode && band) { setCfg?.(band.owner, bdir === 'row' ? { gapX: nextGap } : { gapY: nextGap }); return; }
-      setCfg?.(gapOwner, isHero ? { sideGap: nextGap } : treeMode && bdir === 'column' ? { gapY: nextGap } : { gap: nextGap });
+      setCfg?.(gapOwner, isHero ? { sideGap: nextGap } : treeMode ? (bdir === 'column' ? { sectionGapY: nextGap } : { sectionGapX: nextGap }) : { gap: nextGap });
     };
     const up = () => {
       window.removeEventListener('mousemove', move);
@@ -2694,7 +2704,7 @@ export function Sel({ id, children, className = '', toolbarBelow = false, style:
   const on = selectedId === id;
   const hov = hoverId === id && !on;
   /* One of the banner's items — the Text group, the Search, or a widget placed on the banner. */
-  const heroItem = id === 'hero-copy' || id === 'hero-search' || (/^el-\d+$/.test(id) && nodeById(id)?.parent === 'hero');
+  const heroItem = id === 'hero-content' || (/^el-\d+$/.test(id) && nodeById(id)?.parent === 'hero');
   const sharedTile = /-tile$/.test(id);
 
   /* ⚠️ FREE PLACEMENT, banner children only. Everything else on this page is laid out — a card is in
@@ -2916,8 +2926,11 @@ export function Sel({ id, children, className = '', toolbarBelow = false, style:
       )}
       {/* ⚠️ The banner's OWN four adders, on hovering the banner itself — left/right add a column at the
           banner's edge, top/bottom a row. Its items keep theirs, which add beside the item. */}
-      {enabled && id === 'hero' && !on && !cropping && hoverId === 'hero' && (
-        <ColumnAdders columnId="hero" filled onSide={(side) => addBannerCell?.('hero', side)} />
+      {/* ⚠️ The banner's edge + adds a PAGE column beside (or row above/below) the banner — it hosts the band in a
+          section, the way every built-in band splits. Sections INSIDE the banner come from its toolbar's + and
+          from the + beside each section. */}
+      {enabled && id === 'hero' && !on && !cropping && hoverId === 'hero' && !bandHosted?.('hero') && (
+        <ColumnAdders columnId="hero" filled onSide={(side) => splitBand?.('hero', side)} />
       )}
       {cropping && <BannerCropper hostRef={ref} onClose={() => setCropping(false)} />}
       {on && enabled && BANNER_GROUPS.has(id) && (

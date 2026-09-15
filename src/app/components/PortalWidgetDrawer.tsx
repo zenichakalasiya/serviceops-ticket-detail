@@ -1153,8 +1153,8 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
       case 'gapField':
         return (
           <GapField
-            value={f.key === 'contentGap' ? Number(viewCfg.__contentGap ?? 20) : f.key === 'contentGapY' ? Number(viewCfg.__contentGapY ?? 20) : f.key === 'sideGap' ? Number(v ?? 32) : bannerGroupGap(nodeId, viewCfg)}
-            dir={f.key === 'sideGap' || f.key === 'contentGap' ? 'row' : f.key === 'contentGapY' ? 'column' : String(viewCfg.dir ?? 'column')}
+            value={f.key === 'contentGap' ? Number(viewCfg.__contentGap ?? 20) : f.key === 'contentGapY' ? Number(viewCfg.__contentGapY ?? 20) : f.key === 'sideGap' ? Number(v ?? 32) : f.key === 'tileGap' ? Number(v ?? 12) : bannerGroupGap(nodeId, viewCfg)}
+            dir={f.key === 'sideGap' || f.key === 'contentGap' || f.key === 'tileGap' ? 'row' : f.key === 'contentGapY' ? 'column' : String(viewCfg.dir ?? 'column')}
             onChange={(x) => set(f.key, x)}
           />
         );

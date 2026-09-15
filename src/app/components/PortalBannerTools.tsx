@@ -171,6 +171,17 @@ function ItemSkeleton({ id, on }: { id: string; on: boolean }) {
       </span>
     );
   }
+  if (id === 'hero-content') {
+    return (
+      <span className="flex min-w-0 flex-1 flex-col justify-center gap-[3px] px-[2px]">
+        <span className={`h-[3px] w-[80%] rounded-full ${ink}`} />
+        <span className={`h-[3px] w-[55%] rounded-full ${FAINT}`} />
+        <span className={`mt-[1px] flex h-[8px] w-full items-center justify-end rounded-[3px] border bg-white pr-[2px] ${edge}`}>
+          <span className={`size-[3px] rounded-full ${ink}`} />
+        </span>
+      </span>
+    );
+  }
   if (id === 'hero-search') {
     return (
       <span className="flex min-w-0 flex-1 items-center">

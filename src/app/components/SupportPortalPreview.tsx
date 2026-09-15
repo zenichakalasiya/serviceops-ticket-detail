@@ -2086,7 +2086,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
   const actionsBlock = (nodeId: string) => {
     const cols = Math.min(4, Math.max(1, Number(wc(nodeId).cols ?? 4)));
     return (
-      <div className="grid w-full" style={{ gap: String(wc(nodeId).look ?? '') === 'row' ? 10 : 12, gridTemplateColumns: colsTemplate(cols, 12, 150) }}>
+      <div className="grid w-full" style={{ gap: Number(wc(nodeId).tileGap ?? (String(wc(nodeId).look ?? '') === 'row' ? 10 : 12)), gridTemplateColumns: colsTemplate(cols, 12, 150) }}>
         {/* The block's LOOK comes from a banner template: glass cards on a dark band (the first one solid when the
             template leads with it), or compact ROWS — icon, title, chevron — under a heading on a light band. */}
         {quickCards.map((a, i) => quickCardEl(a, {}, {
@@ -2211,7 +2211,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
   const treeBanner = !heroSide && !bannerSec && !searchSide
     && !(heroLayout && heroLayout.id !== 'classic' && !heroCfg.bannerTree);
   /* The action cards ride up into the banner's lower edge, so the band keeps room for them. */
-  const quickClimbs = !actionsMoved && blockOrder.indexOf('quick') === 0 && !removed.includes('quick') && !searchFloats && !tileActions && !quickOnBanner && !hostOf('quick');
+  const quickClimbs = !actionsMoved && !hostOf('hero') && blockOrder.indexOf('quick') === 0 && !removed.includes('quick') && !searchFloats && !tileActions && !quickOnBanner && !hostOf('quick');
   /* ⚠️ How far the cards ACTUALLY ride into the banner — the room the banner keeps for them. Their top
      grip can drag them down out of the banner (a margin of its own replaces the -62px climb), and the
      banner then has nothing to make room for: a fixed reserve left an empty strip under the banner's
@@ -2481,13 +2481,40 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
           );
           if (treeBanner) {
             const heroNow = wc('hero');
-            const items = ['hero-copy', ...(search ? ['hero-search'] : []), ...heroExtras.map((x) => x.id)];
-            const tree: BannerNode = normalizeTree(heroNow.bannerTree, items) ?? 'hero-copy';
+            /* ⚠️ The banner is a set of SECTIONS: the Text & Search section (title, one-liner and search, always
+               together) and each widget. Presets arrange sections; nothing inside a section is ever a preset piece. */
+            const items = ['hero-content', ...heroExtras.map((x) => x.id)];
+            const tree: BannerNode = normalizeTree(heroNow.bannerTree, items) ?? 'hero-content';
             /* Fill-to-edge was removed from the toolbar, so a value an older page stored no longer applies — nothing could turn it off. */
             const bleed = new Set<string>();
-            const gap = bannerGroupGap('hero-content', contentCfg);
-            /* Stacked items have their own gap, so text can breathe above a search while sitting flush against a picture. */
-            const gapY = Number(contentCfg.gapY ?? 20);
+            /* ⚠️ The gaps BETWEEN sections are the banner's own two keys, one per axis — never the Text & Search
+               section's inner gap, so changing rows cannot move columns and neither moves anything inside a section. */
+            const gap = Number(heroNow.sectionGapX ?? 20);
+            const gapY = Number(heroNow.sectionGapY ?? 20);
+            /* Text & Search: fills its cell, and places its items horizontally (left / centre / right, or spread when
+               they run side by side) and vertically (top / middle / bottom, or STRETCH — words at the top, search at the
+               bottom, the gap between them growing with the section). */
+            const secAlignY = String(contentCfg.alignY ?? heroNow.contentAlignY ?? 'center');
+            const secAlignH = String(contentCfg.align ?? (bandAlign === 'left' ? 'start' : bandAlign === 'right' ? 'end' : 'center'));
+            const SPREAD: Record<string, string> = { start: 'flex-start', center: 'center', end: 'flex-end', stretch: 'space-between' };
+            const ITEMS: Record<string, string> = { start: 'flex-start', center: 'center', end: 'flex-end', stretch: 'stretch' };
+            const textSection = (
+              <Sel
+                id="hero-content"
+                className="flex min-h-0 min-w-0 w-full flex-1"
+                style={{
+                  containerType: 'inline-size',
+                  flexDirection: contentDir as React.CSSProperties['flexDirection'],
+                  gap: bannerGroupGap('hero-content', contentCfg),
+                  ...(contentDir === 'row'
+                    ? { justifyContent: SPREAD[secAlignH] ?? 'flex-start', alignItems: secAlignY === 'stretch' ? 'center' : ITEMS[secAlignY] ?? 'center' }
+                    : { justifyContent: SPREAD[secAlignY] ?? 'center', alignItems: secAlignH === 'stretch' ? 'flex-start' : ITEMS[secAlignH] ?? 'center' }),
+                }}
+              >
+                {textGroup}
+                {search}
+              </Sel>
+            );
             /* ⚠️ The banner's padding lands on the items that TOUCH the banner's edges, never between two
                items — so padding narrows the space around them while the gap alone decides the space between.
                Left/right are % of the banner (the product's unit), expressed in `cqw` of the banner's content
@@ -2513,8 +2540,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
               return p.c.some(compact) ? 2 : 1;
             };
             const leafBody = (id: string) => {
-              if (id === 'hero-copy') return textGroup;
-              if (id === 'hero-search') return search;
+              if (id === 'hero-content') return textSection;
               const el = heroExtras.find((x) => x.id === id);
               if (!el) return null;
               return (
@@ -2529,7 +2555,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
               const flex = grow !== undefined ? { flex: `${grow} 1 0%`, minWidth: 0 } : {};
               if (typeof n === 'string') {
                 const b = bleed.has(n);
-                const words = n === 'hero-copy' || n === 'hero-search';
+                const words = n === 'hero-content';
                 /* ⚠️ A widget is PLACED inside its cell by its own alignment — the toolbar's two align buttons —
                    so a card made shorter than its column can sit at the top, middle or bottom of it. It only
                    stretches to fill the cell while it is set to fill the edge, has no dragged height and no
@@ -2549,10 +2575,10 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                     className={`flex min-w-0 flex-col ${fillY ? (b ? 'portal-bleed' : 'portal-fill') : ''}`}
                     style={{
                       containerType: 'inline-size',
-                      alignItems: words ? (FLEX[bandAlign] ?? 'center') : H[String(own?.align ?? 'stretch')] ?? 'stretch',
+                      alignItems: words ? 'stretch' : H[String(own?.align ?? 'stretch')] ?? 'stretch',
                       /* Widgets keep their own text alignment — the banner's centring is for its words. */
                       textAlign: words ? undefined : 'left',
-                      justifyContent: fillY ? 'stretch' : own?.alignY && own.alignY !== 'stretch' ? V[own.alignY] : b ? 'flex-start' : justifyY,
+                      justifyContent: words || fillY ? 'stretch' : own?.alignY && own.alignY !== 'stretch' ? V[own.alignY] : b ? 'flex-start' : justifyY,
                       ...(b ? {} : {
                         paddingTop: edge.top ? padT : undefined, paddingBottom: edge.bottom ? padB : undefined,
                         paddingLeft: edge.left ? padL : undefined, paddingRight: edge.right ? padR : undefined,
@@ -2566,7 +2592,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                 <div
                   key={cellKey(n)}
                   data-gap-item=""
-                  data-gap-parent="hero-content"
+                  data-gap-parent="hero-sections"
                   className={`flex min-w-0 ${n.d === 'row' ? 'portal-banner-row' : ''}`}
                   style={{ flexDirection: n.d, gap: n.d === 'row' ? gap : gapY, alignItems: 'stretch', justifyContent: n.d === 'column' ? justifyY : undefined, ...flex }}
                 >
@@ -2581,7 +2607,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
             return (
               <div
                 data-banner-root=""
-                data-gap-parent="hero-content"
+                data-gap-parent="hero-sections"
                 className={`flex min-h-0 w-full flex-1 ${root?.d === 'row' ? 'portal-banner-row' : ''}`}
                 style={{
                   containerType: 'inline-size',
@@ -2678,6 +2704,13 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
     </Sel>
     </>
   );
+  /* ⚠️ A column BESIDE the banner: the banner's own edge + hosts the band in a page section with an empty column
+     next to it (`splitBand('hero', side)`), the same mechanism every built-in band uses — so the new column is
+     a PAGE column, never a cell inside the banner. */
+  const heroHost = hostOf('hero');
+  const heroPlaced = heroHost
+    ? <AddedSection section={heroHost} icons={icons} placedText={placedText} cfg={cfg} bandNode={heroBand} />
+    : heroBand;
   return (
     <PlacedBlockRenderers.Provider value={{ 'x-actions': actionsBlock }}>
     <div
@@ -2734,7 +2767,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
             <>
             {/* ⚠️ ABOVE the padded container, not inside it: a banner is a full-bleed band and the
                 blank page's wrapper carries the content inset every section sits in. */}
-            {hasHero && heroBand}
+            {hasHero && heroPlaced}
             {/* ⚠️ `h-full`, not a `min-h-[420px]` guess. The content area already stretches to the
                 canvas, so a fixed floor left the empty state sitting in a short band with the page
                 colour running on underneath it — the one screen where there is nothing else to look
@@ -2793,7 +2826,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
           {/* ── Hero ── */}
           {/* ⚠️ Gated, because the banner is deletable now that the palette can put one back —
               which is exactly the reason its `noDelete` existed. */}
-          {hasHero && heroBand}
+          {hasHero && heroPlaced}
 
           {/* No horizontal padding here: a SECTION runs from the page's left edge to its right
               edge, so each one carries its own inset instead of sitting inside a padded column. */}

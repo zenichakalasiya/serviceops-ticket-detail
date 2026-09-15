@@ -37,7 +37,7 @@ import { BANNER_GROUPS } from './portalPageModel';
 import type { Box, BoxDir, CustomSection, NodeStyle, PlacedElement, PortalPageContent, PortalStyles } from './portalPageModel';
 import { PORTAL_ELEMENTS, PORTAL_EMPTY_WIDGETS, PORTAL_TEMPLATES, bannerLayout, bannerShape } from './supportPortalData';
 import type { ShapeNode } from './supportPortalData';
-import { insertAtEdge, insertBeside, normalizeTree, removeLeaf, replaceLeaf, shiftLeaf, swapLeaves } from './portalBannerLayout';
+import { MAX_BANNER_SECTIONS, insertAtEdge, insertBeside, normalizeTree, removeLeaf, replaceLeaf, shiftLeaf, swapLeaves } from './portalBannerLayout';
 import { IconPopover } from './PortalIconPicker';
 import type { IconChoice } from './PortalIconPicker';
 import type { PortalPage } from './supportPortalData';
@@ -533,6 +533,8 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
       ...(owner === 'quick'
         ? { __quickRow: true, __hasLink: content.quick.some((q) => q.id === LINK_CARD_ID) }
         : {}),
+      /* The banner's Text & Search section gets its own alignment controls in the panel. */
+      ...(owner === 'hero-content' ? { __textSection: true } : {}),
       /* The Action cards block's column presets are drawn from how many cards it holds. */
       ...(placedType(owner) === 'x-actions' ? { __tileCount: content.quick.length } : {}),
       /* ⚠️ Two facts the banner's panel cannot work out for itself, seeded the same way
@@ -548,8 +550,8 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
             __hasSide: (rowExtrasRef.current.hero?.length ?? 0) > 0,
             /* The arrangement as drawn, for the preset picker; the gap it shares with the Content group. */
             __bannerTree: heroTreeRef.current?.() ?? null,
-            __contentGap: Number(widgetCfgRef.current['hero-content']?.gap ?? 20),
-            __contentGapY: Number(widgetCfgRef.current['hero-content']?.gapY ?? 20),
+            __contentGap: Number(widgetCfgRef.current.hero?.sectionGapX ?? 20),
+            __contentGapY: Number(widgetCfgRef.current.hero?.sectionGapY ?? 20),
             __rootRow2: (() => { const t = heroTreeRef.current?.(); return !!t && typeof t !== 'string' && t.d === 'row' && t.c.length === 2; })(),
           }
         : {}),
@@ -609,10 +611,11 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
        canvas's pink gap bands write it, so the two can never show different numbers. */
     if (id === 'hero' && (patch.contentGap !== undefined || patch.contentGapY !== undefined)) {
       const { contentGap, contentGapY, ...rest } = patch;
-      setWidgetCfg((prev) => ({ ...prev, 'hero-content': {
-        ...(prev['hero-content'] ?? {}),
-        ...(contentGap !== undefined ? { gap: contentGap } : {}),
-        ...(contentGapY !== undefined ? { gapY: contentGapY } : {}),
+      /* The gaps BETWEEN the banner's sections — the banner's own keys, one per axis. */
+      setWidgetCfg((prev) => ({ ...prev, hero: {
+        ...(prev.hero ?? {}),
+        ...(contentGap !== undefined ? { sectionGapX: contentGap } : {}),
+        ...(contentGapY !== undefined ? { sectionGapY: contentGapY } : {}),
       } }));
       if (!Object.keys(rest).length) return;
       patch = rest;
@@ -774,6 +777,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
       toast.error('Quick Actions holds its four action cards and nothing else');
       return;
     }
+    if (rowId === 'hero' && bannerFull()) return;
     const el = makeElement(type, rowId);
     setRowExtras((prev) => ({ ...prev, [rowId]: [...(prev[rowId] ?? []), el] }));
     if (rowId === 'hero') seedBannerItem(el.id, type);
@@ -784,10 +788,14 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
   /* ── The BANNER's items and their arrangement ────────────────────────────────────────────────
    * Items = the Text group, the Search (while it sits in the band) and every widget placed on the banner.
    * ⚠️ Read from the REFS, so the toolbar and the panel see the arrangement as it is right now. */
-  const heroItems = (): string[] => {
-    const h = widgetCfgRef.current.hero ?? {};
-    const search = h.showSearch !== false && String(h.searchPlacement ?? 'in-banner') !== 'floating';
-    return ['hero-copy', ...(search ? ['hero-search'] : []), ...(rowExtrasRef.current.hero ?? []).map((e) => e.id)];
+  const heroItems = (): string[] => ['hero-content', ...(rowExtrasRef.current.hero ?? []).map((e) => e.id)];
+  /* ⚠️ A banner holds at most four SECTIONS (the Text & Search section and three more). Refused at the moment of
+     adding, with the reason — past four, no arrangement of them reads cleanly. An empty slot being FILLED adds
+     nothing, so it is never refused. */
+  const bannerFull = () => {
+    if (heroItems().length < MAX_BANNER_SECTIONS) return false;
+    toast.error(`A banner holds up to ${MAX_BANNER_SECTIONS} sections — remove one to add another`);
+    return true;
   };
   const heroTree = () => normalizeTree(widgetCfgRef.current.hero?.bannerTree, heroItems());
   heroTreeRef.current = heroTree;
@@ -802,6 +810,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
 
   /** The banner's + adders: an empty cell beside an item — a column to its left or right, a row above or below. */
   const addBannerCell = useCallback((anchorId: string, side: 'left' | 'right' | 'top' | 'bottom') => {
+    if (bannerFull()) return;
     const el = makeElement('bn-slot', 'hero');
     /* The banner's own adders put the cell at the banner's EDGE; an item's adders put it beside that item. */
     const tree = anchorId === 'hero' ? insertAtEdge(heroTree(), el.id, side) : insertBeside(heroTree(), anchorId, el.id, side);
@@ -1895,11 +1904,11 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
    * slot was and the slot goes), another banner item is SWAPPED with a banner item or joined BESIDE by
    * something from the page, and the banner's own background adds the widget to the banner. */
   const moveToBanner = useCallback((source: string, anchor: string) => {
-    const src = /^el-\d+$/.test(source) || source === 'hero-copy' || source === 'hero-search' ? source : null;
+    const src = /^el-\d+$/.test(source) || source === 'hero-content' ? source : null;
     if (!src) { toast.error('Only widgets can go on the banner — drag a widget, not a whole section'); return; }
     if (src === anchor) return;
     const heroList = rowExtrasRef.current.hero ?? [];
-    const onBanner = src === 'hero-copy' || src === 'hero-search' || heroList.some((e) => e.id === src);
+    const onBanner = src === 'hero-content' || heroList.some((e) => e.id === src);
     const slot = heroList.find((e) => e.id === anchor && e.type === 'bn-slot');
     let tree = heroTree();
 
@@ -1920,6 +1929,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     }
 
     /* From elsewhere on the page: lift it out of its home first, then give it a place on the banner. */
+    if (!slot && bannerFull()) return;
     const moving = detachElement(src);
     if (!moving) return;
     registerPlaced(moving.id, moving.name, moving.type, 'hero');
@@ -1940,6 +1950,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     const slot = heroList.find((e) => e.id === anchor && e.type === 'bn-slot');
     if (slot) { replaceElement(slot.id, type); return; }
     if (anchor === 'hero' || !heroItems().includes(anchor)) { dropInRow('hero', type); return; }
+    if (bannerFull()) return;
     const el = makeElement(type, 'hero');
     const tree = insertBeside(heroTree(), anchor, el.id, 'right');
     setRowExtras((prev) => ({ ...prev, hero: [...(prev.hero ?? []), el] }));

@@ -53,11 +53,20 @@ const isDark = (t: BannerTemplate | null) =>
   !t || t.hero.bgKind === 'image' || lightness(String(t.hero.bannerColor ?? '#000000')) < 0.55;
 
 /** One piece of a banner, drawn as the shape it makes. */
-function PieceSkeleton({ piece, dark, center }: { piece: BannerPiece | undefined; dark: boolean; center?: boolean }) {
+function PieceSkeleton({ piece, dark, center, textDir }: { piece: BannerPiece | undefined; dark: boolean; center?: boolean; textDir?: string }) {
   const ink = dark ? 'bg-white/85' : 'bg-[#1E293B]/70';
   const soft = dark ? 'bg-white/40' : 'bg-[#64748B]/35';
   const card = dark ? 'bg-white/15' : 'bg-white shadow-[0_0_0_0.5px_rgba(15,23,42,0.12)]';
   const key = piece?.key;
+  /* The Text & Search section: the words and the search, stacked or side by side. */
+  if (key === 'text') {
+    return (
+      <span className={`flex min-w-0 flex-1 gap-[4px] ${textDir === 'row' ? 'flex-row items-center' : 'flex-col justify-center'}`}>
+        <PieceSkeleton piece={{ key: 'copy' }} dark={dark} center={center} />
+        <PieceSkeleton piece={{ key: 'search' }} dark={dark} center={center} />
+      </span>
+    );
+  }
   if (!piece || key === 'copy') {
     return (
       <span className={`flex min-w-0 flex-1 flex-col justify-center gap-[3px] ${center ? 'items-center' : ''}`}>
@@ -161,11 +170,11 @@ function PieceSkeleton({ piece, dark, center }: { piece: BannerPiece | undefined
 
 type Shape = string | { d: 'row' | 'column'; c: Shape[] };
 
-function ShapeSkeleton({ shape, pieces, dark, center }: { shape: Shape; pieces: BannerPiece[]; dark: boolean; center: boolean }) {
-  if (typeof shape === 'string') return <PieceSkeleton piece={pieces.find((p) => p.key === shape)} dark={dark} center={center} />;
+function ShapeSkeleton({ shape, pieces, dark, center, textDir }: { shape: Shape; pieces: BannerPiece[]; dark: boolean; center: boolean; textDir?: string }) {
+  if (typeof shape === 'string') return <PieceSkeleton piece={pieces.find((p) => p.key === shape)} dark={dark} center={center} textDir={textDir} />;
   return (
     <span className={`flex min-h-0 min-w-0 flex-1 gap-[4px] ${shape.d === 'row' ? 'flex-row' : 'flex-col justify-center'}`}>
-      {shape.c.map((k, i) => <ShapeSkeleton key={i} shape={k} pieces={pieces} dark={dark} center={center} />)}
+      {shape.c.map((k, i) => <ShapeSkeleton key={i} shape={k} pieces={pieces} dark={dark} center={center} textDir={textDir} />)}
     </span>
   );
 }
@@ -209,7 +218,7 @@ function HorizontalThumb({ t }: { t: BannerTemplate | null }) {
         {decor && <DecorMini decor={decor} />}
         <span className={`relative flex min-h-0 w-full flex-1 p-[7px] ${center ? 'justify-center text-center' : ''}`}>
           {t?.tree
-            ? <ShapeSkeleton shape={t.tree} pieces={t.pieces ?? []} dark={dark} center={center} />
+            ? <ShapeSkeleton shape={t.tree} pieces={t.pieces ?? []} dark={dark} center={center} textDir={t.text?.dir} />
             : (
               <span className="flex w-full flex-col items-center justify-center gap-[4px]">
                 <PieceSkeleton piece={{ key: 'copy' }} dark center />

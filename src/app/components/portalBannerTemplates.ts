@@ -51,7 +51,7 @@ type Shape = string | { d: 'row' | 'column'; c: Shape[] };
 const R = (...c: Shape[]): Shape => ({ d: 'row', c });
 const C = (...c: Shape[]): Shape => ({ d: 'column', c });
 
-/** A piece of the banner: the Text group, the search, or a widget (keyed so the tree can name it). */
+/** A SECTION of the banner: `text` (title, one-liner and search, always together) or a widget. */
 export interface BannerPiece { key: string; type?: string; cfg?: Record<string, unknown> }
 
 export interface BannerTemplate {
@@ -67,9 +67,11 @@ export interface BannerTemplate {
   subtitle?: { size: number; color: string };
   /** The band's inner padding: top/bottom px, left/right % of the band. */
   pad?: { top: number; bottom: number; left: number; right: number };
-  /** Content group config — the gaps between the banner's items. */
-  content?: Record<string, unknown>;
-  /** The banner's widgets (the Text group is `copy`, the search is `search`). Horizontal only. */
+  /** The Text & Search section: direction of its items, its inner gap, and its alignment on both axes. */
+  text?: { dir?: 'row' | 'column'; gap?: number; align?: 'start' | 'center' | 'end' | 'stretch'; alignY?: 'start' | 'center' | 'end' | 'stretch' };
+  /** The gaps BETWEEN sections — columns and rows, independently. */
+  sectionGap?: { x?: number; y?: number };
+  /** The banner's sections, at most four (`text` is the Text & Search section). Horizontal only. */
   pieces?: BannerPiece[];
   tree?: Shape;
   /** Page keys: a vertical banner turns the page into a column beside the rest. */
@@ -110,9 +112,9 @@ export const BANNER_TEMPLATES: BannerTemplate[] = [
       contentAlign: 'left', height: 220, bannerSplit: '3:2', searchWidth: 100,
     },
     title: WHITE_TITLE, subtitle: WHITE_SUB, pad: { top: 28, bottom: 28, left: 3, right: 3 },
-    content: { gap: 32, gapY: 24 },
-    pieces: [{ key: 'copy' }, { key: 'search' }, announcements('carousel')],
-    tree: R(C('copy', 'search'), 'ann'),
+    sectionGap: { x: 32, y: 24 },
+    pieces: [{ key: 'text' }, announcements('carousel')],
+    tree: R('text', 'ann'),
   },
   {
     id: '3g', name: 'Atlas', industries: ['IT & ITES'], orientation: 'horizontal',
@@ -123,9 +125,10 @@ export const BANNER_TEMPLATES: BannerTemplate[] = [
       contentAlign: 'left', height: 280, bannerRadius: 16, bannerInset: 16, bannerSplit: '3:2', searchWidth: 80,
     },
     title: { size: 30, color: INK }, subtitle: INK_SUB, pad: { top: 32, bottom: 28, left: 3, right: 2 },
-    content: { gap: 40, gapY: 48 },
-    pieces: [{ key: 'copy' }, { key: 'search' }, actions('1')],
-    tree: R(C('copy', 'search'), 'act'),
+    sectionGap: { x: 40, y: 48 },
+    pieces: [{ key: 'text' }, actions('1')],
+    text: { alignY: 'stretch', gap: 48 },
+    tree: R('text', 'act'),
     page: { heroInk: 'dark' },
   },
   {
@@ -138,9 +141,9 @@ export const BANNER_TEMPLATES: BannerTemplate[] = [
       bannerDecor: { pattern: 'grid', patternColor: 'rgba(194,69,47,0.10)', accent: '#C2452F', eyebrow: 'dash', eyebrowColor: '#E59A8B' },
     },
     title: { size: 42, color: '#07101F' }, subtitle: { size: 14, color: '#6B5450' }, pad: { top: 36, bottom: 36, left: 4, right: 4 },
-    content: { gapY: 28 },
-    pieces: [{ key: 'copy' }, { key: 'search' }],
-    tree: C('copy', 'search'),
+    text: { gap: 28 },
+    pieces: [{ key: 'text' }],
+    tree: 'text',
     page: { heroInk: 'dark' },
   },
   {
@@ -153,9 +156,9 @@ export const BANNER_TEMPLATES: BannerTemplate[] = [
       bannerDecor: { pattern: 'grid', patternColor: 'rgba(14,113,80,0.10)', accent: '#0E7150', eyebrow: 'dash', eyebrowColor: '#7AC5A2' },
     },
     title: { size: 42, color: '#0D2C22' }, subtitle: { size: 14, color: '#4C6459' }, pad: { top: 36, bottom: 36, left: 4, right: 4 },
-    content: { gapY: 28 },
-    pieces: [{ key: 'copy' }, { key: 'search' }],
-    tree: C('copy', 'search'),
+    text: { gap: 28 },
+    pieces: [{ key: 'text' }],
+    tree: 'text',
     page: { heroInk: 'dark' },
   },
   {
@@ -169,9 +172,9 @@ export const BANNER_TEMPLATES: BannerTemplate[] = [
       contentAlign: 'left', height: 340, bannerSplit: '3:2', searchWidth: 90,
     },
     title: { size: 32, color: '#FFFFFF' }, subtitle: WHITE_SUB, pad: { top: 28, bottom: 28, left: 3, right: 2 },
-    content: { gap: 40, gapY: 28 },
-    pieces: [{ key: 'copy' }, { key: 'search' }, actions('1'), contact],
-    tree: R(C('copy', 'search'), C('act', 'contact')),
+    sectionGap: { x: 40, y: 28 },
+    pieces: [{ key: 'text' }, actions('1'), contact],
+    tree: R('text', C('act', 'contact')),
   },
   {
     id: '5c', name: 'Bedside', industries: ['Healthcare'], orientation: 'horizontal',
@@ -182,15 +185,14 @@ export const BANNER_TEMPLATES: BannerTemplate[] = [
       contentAlign: 'left', height: 340, bannerSplit: '11:9', searchWidth: 100, contentMaxWidth: 100,
     },
     title: { size: 32, color: INK }, subtitle: INK_SUB, pad: { top: 28, bottom: 28, left: 3, right: 3 },
-    content: { gap: 48, gapY: 20 },
+    sectionGap: { x: 48, y: 20 },
     pieces: [
-      { key: 'copy' },
-      /* The doors under the heading are the product's own ACTION CARDS as compact rows — icon, title, chevron. */
+      { key: 'text' },
+      /* The doors under the Text & Search section are the product's own ACTION CARDS as compact rows — icon, title, chevron. */
       actions('1', { look: 'row' }),
-      { key: 'search' },
       announcements('image'),
     ],
-    tree: R(C('copy', 'act', 'search'), 'ann'),
+    tree: R(C('text', 'act'), 'ann'),
     page: { heroInk: 'dark' },
   },
   {
@@ -203,9 +205,9 @@ export const BANNER_TEMPLATES: BannerTemplate[] = [
       bannerDecor: { pattern: 'grid', patternColor: 'rgba(81,99,129,0.10)', accent: '#516381', eyebrow: 'dash', eyebrowColor: '#9AA9C0' },
     },
     title: { size: 38, color: '#07101F' }, subtitle: { size: 14, color: '#4F5B6D' }, pad: { top: 32, bottom: 32, left: 4, right: 3 },
-    content: { gap: 40, gapY: 24 },
-    pieces: [{ key: 'copy' }, { key: 'search' }, contact],
-    tree: R(C('copy', 'search'), 'contact'),
+    sectionGap: { x: 40, y: 24 },
+    pieces: [{ key: 'text' }, contact],
+    tree: R('text', 'contact'),
     page: { heroInk: 'dark' },
   },
   {
@@ -217,9 +219,10 @@ export const BANNER_TEMPLATES: BannerTemplate[] = [
       contentAlign: 'left', height: 320, bannerSplit: '3:2', searchWidth: 80,
     },
     title: { size: 36, color: INK }, subtitle: INK_SUB, pad: { top: 32, bottom: 32, left: 4, right: 3 },
-    content: { gap: 48, gapY: 40 },
-    pieces: [{ key: 'copy' }, { key: 'search' }, actions('1')],
-    tree: R(C('copy', 'search'), 'act'),
+    sectionGap: { x: 48, y: 40 },
+    text: { alignY: 'stretch', gap: 40 },
+    pieces: [{ key: 'text' }, actions('1')],
+    tree: R('text', 'act'),
     page: { heroInk: 'dark' },
   },
   {
@@ -232,15 +235,10 @@ export const BANNER_TEMPLATES: BannerTemplate[] = [
       contentAlign: 'left', height: 320, bannerSplit: '3:2', searchWidth: 75,
     },
     title: { size: 30, color: INK }, subtitle: INK_SUB, pad: { top: 28, bottom: 28, left: 3, right: 3 },
-    content: { gap: 40, gapY: 24 },
-    pieces: [
-      { key: 'copy' }, { key: 'search' },
-      { key: 'b1', type: 'b-button', cfg: { label: 'Report an Incident', style: 'primary' } },
-      { key: 'b2', type: 'b-button', cfg: { label: 'Request a Service', style: 'outline' } },
-      { key: 'b3', type: 'b-button', cfg: { label: 'Knowledge', style: 'outline' } },
-      announcements('regular'),
-    ],
-    tree: R(C('copy', 'search', R('b1', 'b2', 'b3')), 'ann'),
+    sectionGap: { x: 40, y: 24 },
+    pieces: [{ key: 'text' }, announcements('regular'), actions('4', { look: 'row' })],
+    /* The words and the notices share the top row; the doors run the full width beneath them. */
+    tree: C(R('text', 'ann'), 'act'),
     page: { heroInk: 'dark' },
   },
   {
@@ -252,9 +250,10 @@ export const BANNER_TEMPLATES: BannerTemplate[] = [
       contentAlign: 'left', height: 400, searchWidth: 100,
     },
     title: { size: 20, color: INK }, subtitle: { size: 13, color: '#4F5B6D' }, pad: { top: 20, bottom: 20, left: 2, right: 2 },
-    content: { gap: 16, gapY: 16 },
-    pieces: [announcements('image'), actions('2'), { key: 'copy' }, { key: 'search' }],
-    tree: C(R('ann', 'act'), R('copy', 'search')),
+    sectionGap: { x: 16, y: 16 },
+    pieces: [announcements('image'), actions('2'), { key: 'text' }],
+    text: { dir: 'row', align: 'stretch' },
+    tree: C(R('ann', 'act'), 'text'),
     page: { heroInk: 'dark' },
   },
   {
@@ -266,9 +265,9 @@ export const BANNER_TEMPLATES: BannerTemplate[] = [
       contentAlign: 'left', height: 240, searchWidth: 100,
     },
     title: { size: 22, color: INK }, subtitle: { size: 13, color: '#4F5B6D' }, pad: { top: 20, bottom: 20, left: 2, right: 2 },
-    content: { gap: 16, gapY: 20 },
-    pieces: [announcements('carousel'), { key: 'copy' }, { key: 'search' }, contact],
-    tree: R('ann', C('copy', 'search'), 'contact'),
+    sectionGap: { x: 16, y: 20 },
+    pieces: [announcements('carousel'), { key: 'text' }, contact],
+    tree: R('ann', 'text', 'contact'),
     page: { heroInk: 'dark' },
   },
   {
@@ -280,11 +279,11 @@ export const BANNER_TEMPLATES: BannerTemplate[] = [
       contentAlign: 'left', height: 220, bannerSplit: '3:2', searchWidth: 80,
     },
     title: { size: 30, color: INK }, subtitle: INK_SUB, pad: { top: 28, bottom: 28, left: 3, right: 3 },
-    content: { gap: 40, gapY: 20 },
-    pieces: [{ key: 'copy' }, { key: 'search' }, kpis('3', 'outline', [
+    sectionGap: { x: 40, y: 20 },
+    pieces: [{ key: 'text' }, kpis('3', 'outline', [
       KPI_OPEN, { label: 'My tasks', value: '5', hint: '2 due this shift' }, { label: 'Devices', value: '9', hint: 'under maintenance' },
     ])],
-    tree: R(C('copy', 'search'), 'kpi'),
+    tree: R('text', 'kpi'),
     page: { heroInk: 'dark' },
   },
   {
@@ -297,11 +296,11 @@ export const BANNER_TEMPLATES: BannerTemplate[] = [
       bannerDecor: { shape: 'hazard', shapeColor: '#F5B342' },
     },
     title: { size: 22, color: '#FFFFFF' }, subtitle: { size: 13, color: 'rgba(255,255,255,0.7)' }, pad: { top: 24, bottom: 28, left: 3, right: 3 },
-    content: { gap: 32, gapY: 16 },
-    pieces: [{ key: 'copy' }, { key: 'search' }, kpis('3', 'glass', [
+    sectionGap: { x: 32, y: 16 },
+    pieces: [{ key: 'text' }, kpis('3', 'glass', [
       { label: 'Open requests', source: 'My requests' }, { label: 'Approvals', source: 'Approvals waiting on me' }, { label: 'My assets', source: 'My assets' },
     ])],
-    tree: R(C('copy', 'search'), 'kpi'),
+    tree: R('text', 'kpi'),
   },
   {
     id: '4c', name: 'Mosaic', industries: ['Manufacturing'], orientation: 'horizontal',
@@ -312,9 +311,9 @@ export const BANNER_TEMPLATES: BannerTemplate[] = [
       contentAlign: 'left', height: 130, bannerSplit: '3:2', searchWidth: 100,
     },
     title: { size: 24, color: INK }, subtitle: { size: 13, color: '#4F5B6D' }, pad: { top: 24, bottom: 24, left: 2, right: 2 },
-    content: { gap: 40 },
-    pieces: [{ key: 'copy' }, { key: 'search' }],
-    tree: R('copy', 'search'),
+    text: { dir: 'row', align: 'stretch' },
+    pieces: [{ key: 'text' }],
+    tree: 'text',
     page: { heroInk: 'dark' },
   },
   {
@@ -327,9 +326,9 @@ export const BANNER_TEMPLATES: BannerTemplate[] = [
       bannerBorderWidth: 1, bannerBorderColor: '#E5E7EB', bannerRadius: 8, bannerInset: 16,
     },
     title: { size: 24, color: INK }, subtitle: { size: 13, color: '#4F5B6D' }, pad: { top: 24, bottom: 24, left: 2, right: 2 },
-    content: { gap: 40 },
-    pieces: [{ key: 'copy' }, { key: 'search' }],
-    tree: R('copy', 'search'),
+    text: { dir: 'row', align: 'stretch' },
+    pieces: [{ key: 'text' }],
+    tree: 'text',
     page: { heroInk: 'dark' },
   },
   {
@@ -341,9 +340,9 @@ export const BANNER_TEMPLATES: BannerTemplate[] = [
       contentAlign: 'left', height: 420, bannerSplit: '1:1', searchWidth: 100,
     },
     title: { size: 28, color: INK }, subtitle: INK_SUB, pad: { top: 24, bottom: 24, left: 2, right: 2 },
-    content: { gap: 24, gapY: 20 },
-    pieces: [image, { key: 'copy' }, { key: 'search' }, actions('1')],
-    tree: R('img', C('copy', 'search', 'act')),
+    sectionGap: { x: 24, y: 20 },
+    pieces: [image, { key: 'text' }, actions('1')],
+    tree: R('img', C('text', 'act')),
     page: { heroInk: 'dark' },
   },
   {
@@ -355,9 +354,10 @@ export const BANNER_TEMPLATES: BannerTemplate[] = [
       contentAlign: 'left', height: 320, bannerSplit: '3:2', searchWidth: 70,
     },
     title: { size: 38, color: INK }, subtitle: INK_SUB, pad: { top: 32, bottom: 32, left: 4, right: 3 },
-    content: { gap: 48, gapY: 40 },
-    pieces: [{ key: 'copy' }, { key: 'search' }, announcements('regular', 'Public Notices')],
-    tree: R(C('copy', 'search'), 'ann'),
+    sectionGap: { x: 48, y: 40 },
+    text: { alignY: 'stretch', gap: 40 },
+    pieces: [{ key: 'text' }, announcements('regular', 'Public Notices')],
+    tree: R('text', 'ann'),
     page: { heroInk: 'dark' },
   },
   {
@@ -370,9 +370,9 @@ export const BANNER_TEMPLATES: BannerTemplate[] = [
       bannerDecor: { eyebrow: 'dash', eyebrowColor: 'rgba(255,255,255,0.5)' },
     },
     title: WHITE_TITLE, subtitle: { size: 15, color: 'rgba(255,255,255,0.9)' }, pad: { top: 32, bottom: 32, left: 4, right: 4 },
-    content: { gapY: 24 },
-    pieces: [{ key: 'copy' }, { key: 'search' }],
-    tree: C('copy', 'search'),
+    text: { gap: 24 },
+    pieces: [{ key: 'text' }],
+    tree: 'text',
   },
   {
     id: '3c', name: 'Counter', industries: ['Government'], orientation: 'horizontal',
@@ -384,9 +384,10 @@ export const BANNER_TEMPLATES: BannerTemplate[] = [
       bannerDecor: { shape: 'circle', shapeColor: '#F5B342' },
     },
     title: { size: 36, color: '#FFFFFF' }, subtitle: WHITE_SUB, pad: { top: 32, bottom: 28, left: 3, right: 3 },
-    content: { gap: 48, gapY: 28 },
-    pieces: [{ key: 'copy' }, { key: 'search' }, actions('4', { look: 'glass', firstSolid: true })],
-    tree: C(R('copy', 'search'), 'act'),
+    sectionGap: { x: 48, y: 28 },
+    pieces: [{ key: 'text' }, actions('4', { look: 'glass', firstSolid: true })],
+    text: { dir: 'row', align: 'stretch', alignY: 'end' },
+    tree: C('text', 'act'),
   },
   {
     id: '7a', name: 'Quadrangle', industries: ['Education'], orientation: 'horizontal',
@@ -398,9 +399,9 @@ export const BANNER_TEMPLATES: BannerTemplate[] = [
       contentAlign: 'left', height: 300, searchWidth: 45, contentMaxWidth: 55,
     },
     title: { size: 32, color: '#FFFFFF' }, subtitle: WHITE_SUB, pad: { top: 32, bottom: 32, left: 3, right: 3 },
-    content: { gapY: 24 },
-    pieces: [{ key: 'copy' }, { key: 'search' }],
-    tree: C('copy', 'search'),
+    text: { gap: 24 },
+    pieces: [{ key: 'text' }],
+    tree: 'text',
   },
   {
     id: '7b', name: 'Course Shelf', industries: ['Education'], orientation: 'horizontal',
@@ -411,11 +412,11 @@ export const BANNER_TEMPLATES: BannerTemplate[] = [
       contentAlign: 'left', height: 250, bannerSplit: '3:2', searchWidth: 80,
     },
     title: WHITE_TITLE, subtitle: WHITE_SUB, pad: { top: 28, bottom: 28, left: 3, right: 3 },
-    content: { gap: 40, gapY: 20 },
-    pieces: [{ key: 'copy' }, { key: 'search' }, kpis('2', 'glass', [
+    sectionGap: { x: 40, y: 20 },
+    pieces: [{ key: 'text' }, kpis('2', 'glass', [
       KPI_OPEN, KPI_APPROVALS, { label: 'My tasks', value: '5', hint: '2 due this week' }, { label: 'Attendance', value: '94%', hint: 'this semester' },
     ])],
-    tree: R(C('copy', 'search'), 'kpi'),
+    tree: R('text', 'kpi'),
   },
   {
     id: '7c', name: 'Study Desk', industries: ['Education'], orientation: 'horizontal',
@@ -426,11 +427,11 @@ export const BANNER_TEMPLATES: BannerTemplate[] = [
       contentAlign: 'left', height: 360, searchWidth: 45, contentMaxWidth: 60,
     },
     title: { size: 30, color: '#1F2937' }, subtitle: { size: 13, color: '#6B7280' }, pad: { top: 28, bottom: 28, left: 3, right: 3 },
-    content: { gap: 16, gapY: 20 },
-    pieces: [{ key: 'copy' }, { key: 'search' }, kpis('4', 'card', [
+    sectionGap: { x: 16, y: 20 },
+    pieces: [{ key: 'text' }, kpis('4', 'card', [
       KPI_OPEN, KPI_APPROVALS, { label: 'My tasks', value: '5', hint: '2 due this week' }, { label: 'Attendance', value: '94%', hint: 'this semester' },
     ]), announcements('carousel')],
-    tree: C('copy', 'search', R('kpi', 'ann')),
+    tree: C('text', R('kpi', 'ann')),
     page: { heroInk: 'dark' },
   },
   {
@@ -443,10 +444,9 @@ export const BANNER_TEMPLATES: BannerTemplate[] = [
       bannerDecor: { pattern: 'grid', patternColor: 'rgba(255,255,255,0.06)', shape: 'bars', shapeColor: '#3D6FD8' },
     },
     title: { size: 30, color: '#FFFFFF' }, subtitle: WHITE_SUB, pad: { top: 24, bottom: 24, left: 3, right: 3 },
-    content: { gap: 32, gapY: 20 },
-    pieces: [{ key: 'copy' }, image, { key: 'search' }],
-    tree: C(R('copy', 'img'), 'search'),
-    styles: { search: { align: 'center' } },
+    sectionGap: { x: 32, y: 20 },
+    pieces: [{ key: 'text' }, image],
+    tree: R('text', 'img'),
   },
   {
     id: '8b', name: 'Keystone', industries: ['BFSI'], orientation: 'horizontal',
@@ -457,9 +457,9 @@ export const BANNER_TEMPLATES: BannerTemplate[] = [
       contentAlign: 'left', height: 300, bannerSplit: '1:1', searchWidth: 90,
     },
     title: { size: 34, color: '#FFFFFF' }, subtitle: WHITE_SUB, pad: { top: 28, bottom: 28, left: 3, right: 0 },
-    content: { gap: 32, gapY: 24 },
-    pieces: [{ key: 'copy' }, { key: 'search' }, announcements('image')],
-    tree: R(C('copy', 'search'), 'ann'),
+    sectionGap: { x: 32, y: 24 },
+    pieces: [{ key: 'text' }, announcements('image')],
+    tree: R('text', 'ann'),
   },
   {
     id: '4a', name: 'Service Center', industries: ['BFSI'], orientation: 'horizontal',
@@ -470,9 +470,9 @@ export const BANNER_TEMPLATES: BannerTemplate[] = [
       contentAlign: 'left', height: 280, bannerRadius: 12, bannerInset: 16, bannerSplit: '1:1', searchWidth: 90,
     },
     title: { size: 28, color: '#FFFFFF' }, subtitle: WHITE_SUB, pad: { top: 24, bottom: 24, left: 3, right: 2 },
-    content: { gap: 24, gapY: 20 },
-    pieces: [{ key: 'copy' }, { key: 'search' }, announcements('image')],
-    tree: R(C('copy', 'search'), 'ann'),
+    sectionGap: { x: 24, y: 20 },
+    pieces: [{ key: 'text' }, announcements('image')],
+    tree: R('text', 'ann'),
   },
 
   /* ═════ Vertical — a column beside the page ═════ */
@@ -538,6 +538,7 @@ export const TEMPLATE_HERO_KEYS = [
   'headingColor', 'contentAlign', 'contentAlignY', 'contentMaxWidth', 'height', 'fullBleed', 'bgWholePage',
   'bannerRadius', 'bannerBorderWidth', 'bannerBorderColor', 'bannerBorderStyle', 'bannerInset',
   'bannerTree', 'bannerSplit', 'bannerLayout', 'bannerShape', 'bannerDecor', 'bannerTemplate', 'bannerBleed', 'photoSlot',
+  'sectionGapX', 'sectionGapY',
 ];
 
 /** Page keys a vertical banner sets — cleared by every horizontal one. */
@@ -557,7 +558,7 @@ export interface AppliedBanner {
 /** Turns a template into the writes the builder makes. Widget ids are minted ONCE here, so the tree
  *  and the widget configs name the same elements. */
 export function instantiateBanner(t: BannerTemplate, stamp: number): AppliedBanner {
-  const idOf: Record<string, string> = { copy: 'hero-copy', search: 'hero-search' };
+  const idOf: Record<string, string> = { text: 'hero-content' };
   const widgets = (t.pieces ?? []).filter((p) => p.type).map((p, i) => {
     const id = `hero-t${stamp}-${i}`;
     idOf[p.key] = id;
@@ -569,6 +570,8 @@ export function instantiateBanner(t: BannerTemplate, stamp: number): AppliedBann
   TEMPLATE_HERO_KEYS.forEach((k) => { hero[k] = undefined; });
   Object.assign(hero, t.hero, { bannerTemplate: t.id, showSearch: true });
   if (t.tree) hero.bannerTree = toTree(t.tree);
+  if (t.sectionGap?.x !== undefined) hero.sectionGapX = t.sectionGap.x;
+  if (t.sectionGap?.y !== undefined) hero.sectionGapY = t.sectionGap.y;
   if (t.title) hero.headingColor = t.title.color;
 
   const page: Record<string, unknown> = {};
@@ -588,5 +591,5 @@ export function instantiateBanner(t: BannerTemplate, stamp: number): AppliedBann
   if (t.hero.bgKind === 'color' && lum > 0.94) styles['hero-search'] = { borderWidth: 1, borderColor: '#D9E0EA', borderStyle: 'solid' } as NodeStyle;
   Object.entries(t.styles ?? {}).forEach(([k, s]) => { styles[idOf[k] ?? k] = { ...(styles[idOf[k] ?? k] ?? {}), ...s }; });
 
-  return { hero, content: { gap: undefined, gapY: undefined, dir: undefined, align: undefined, ...(t.content ?? {}) }, page, styles, widgets };
+  return { hero, content: { ...(t.text ?? {}) }, page, styles, widgets };
 }

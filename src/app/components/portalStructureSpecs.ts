@@ -581,7 +581,15 @@ export const BANNER_GROUP_SPEC: WidgetSpec = {
     { key: 'gap', label: 'Gap between items', control: 'gapField', tab: 'style', group: 'Auto layout' },
     {
       key: 'align', label: 'Align items', control: 'segmented', tab: 'style', group: 'Auto layout',
-      options: [{ value: 'start', label: 'Start' }, { value: 'center', label: 'Centre' }, { value: 'end', label: 'End' }],
+      options: (c) => [{ value: 'start', label: 'Start' }, { value: 'center', label: 'Centre' }, { value: 'end', label: 'End' },
+        ...(c.__textSection === true ? [{ value: 'stretch', label: 'Stretch' }] : [])],
+    },
+    /* The Text & Search section only: where its items sit DOWN the section. Stretch pins the words to the top and the
+       search to the bottom, and the space between them grows with the section. */
+    {
+      key: 'alignY', label: 'Vertical', control: 'segmented', tab: 'style', group: 'Auto layout',
+      when: (c) => c.__textSection === true,
+      options: [{ value: 'start', label: 'Top' }, { value: 'center', label: 'Middle' }, { value: 'end', label: 'Bottom' }, { value: 'stretch', label: 'Stretch' }],
     },
   ],
   packs: [],
@@ -594,13 +602,17 @@ export const BANNER_GROUP_SPEC: WidgetSpec = {
 const COLUMNS_FIELD = {
   key: 'cols', label: 'Presets', control: 'tilePresets' as const, tab: 'style' as const, group: 'Columns',
 };
+/* The gap between the cards INSIDE the block — its own number, touching nothing else on the banner. */
+const TILE_GAP_FIELD = {
+  key: 'tileGap', label: 'Gap between cards', control: 'gapField' as const, tab: 'style' as const, group: 'Columns',
+};
 
 /* The portal's four action cards as ONE block. Each card stays its own node (select it to edit its
  * subtitle and icon); the block only decides how many sit across. ⚠️ Adding it MOVES the Quick Actions
  * row's cards into it rather than showing them twice — see `actionsMoved` in the preview. */
 export const ACTION_CARDS_SPEC: WidgetSpec = {
   id: 'action_cards', name: 'Action cards', group: 'Actions', reuse: 'single', family: 'flat',
-  fields: [COLUMNS_FIELD],
+  fields: [COLUMNS_FIELD, TILE_GAP_FIELD],
   packs: [],
   defaults: { cols: '4' },
 };
@@ -614,7 +626,7 @@ export const KPI_SEED = [
 /* A set of counters, laid out like the action cards. */
 export const KPI_GROUP_SPEC: WidgetSpec = {
   id: 'kpi_group', name: 'KPI tiles', group: 'Custom', reuse: 'many', family: 'collection',
-  fields: [COLUMNS_FIELD],
+  fields: [COLUMNS_FIELD, TILE_GAP_FIELD],
   packs: [],
   collection: {
     key: 'items', group: 'Tiles', addLabel: 'Add tile', max: 8,
