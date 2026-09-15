@@ -284,6 +284,24 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
   const [styles, setStyles] = useState<PortalStyles>(() => ({ ...(seed?.styles ?? {}) } as PortalStyles));
 
   const setStyle = useCallback((id: string, p: Partial<NodeStyle>) => {
+    /* ⚠️ On a SHAPED banner the search's width belongs to its CELL, which hugs the field. Writing it
+       on the field would size the field inside a cell that stays put — an outline wider than the thing
+       it outlines, which is exactly what hugging exists to prevent. */
+    if (id === 'hero-search' && p.widthPct !== undefined) {
+      const shaped = sectionsRef.current.find((s) => s.section.banner)?.section;
+      let cell: string | undefined;
+      const walk = (b: Box) => { if (b.el?.type === 'bn-search') cell = b.id; b.children?.forEach(walk); };
+      if (shaped) walk(shaped.root);
+      if (cell) {
+        const { widthPct, width: _w, flex: _f, ...rest } = p;
+        setStyles((prev) => ({
+          ...prev,
+          [cell!]: { ...prev[cell!], widthPct },
+          ...(Object.keys(rest).length ? { [id]: { ...prev[id], ...rest } } : {}),
+        }));
+        return;
+      }
+    }
     setStyles((prev) => ({ ...prev, [id]: { ...prev[id], ...p } }));
   }, []);
 

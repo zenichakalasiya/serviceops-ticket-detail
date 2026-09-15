@@ -343,11 +343,18 @@ function ColumnBody({ id, item, band, live, dir, icons, placedText, cfg }: { id:
               column stretches its children across by default, so `w-fit` alone would have been
               overruled and the outline would still have spanned the column. Two changes, one
               effect; either on its own does nothing. */}
-          <Sel id={item.id} className={HUGS_CONTENT.has(item.type) ? 'w-fit max-w-full' : 'w-full'}>
-            {item.type === 'bn-heading' ? bannerParts.heading
-              : item.type === 'bn-search' ? bannerParts.search
-                : <PortalPlacedElement item={item} icon={icons?.[item.id]} text={placedText?.[item.id]} cfg={cfg?.(item.id)} />}
-          </Sel>
+          {/* ⚠️ The banner's HEADING and SEARCH get no block box of their own. A wrapper there spans the
+              whole column, so its outline described the column instead of the words or the field — the
+              heading, the subheading and the search each carry their own selectable node, and each of
+              those hugs what it holds. The block itself is still the CELL: select the column to replace,
+              move or delete it, and drag the cell to move it. */}
+          {item.type === 'bn-heading' || item.type === 'bn-search' ? (
+            <div className="w-full">{item.type === 'bn-heading' ? bannerParts.heading : bannerParts.search}</div>
+          ) : (
+            <Sel id={item.id} className={HUGS_CONTENT.has(item.type) ? 'w-fit max-w-full' : 'w-full'}>
+              <PortalPlacedElement item={item} icon={icons?.[item.id]} text={placedText?.[item.id]} cfg={cfg?.(item.id)} />
+            </Sel>
+          )}
           {/* ⚠️ A FILLED column keeps its adders too. They used to appear only on an empty column,
               so the moment you put something in one — or selected what was already there — the way
               to add a column beside it vanished, and the only remaining route was to empty it. */}
@@ -477,8 +484,19 @@ function BoxView({
     ? { flex: `${resize === 'fixed' ? 0 : box.weight} ${resize === 'fixed' ? 0 : 1} calc((100% - ${(siblings.length - 1) * BOX_GAP}px) * ${box.weight / total})` }
     : {};
 
+  /* ⚠️ On the BANNER, a cell stacked in a column that holds the heading or the search HUGS it, so its
+     outline describes the words or the field rather than the column. The heading's cell sizes to its
+     text; the search's cell takes the search's width as a share of the column (dragging the field
+     writes it here, see `setStyle`). Both follow the banner's alignment. */
+  const bannerType = parentDir === 'column' && !branch && (box.el?.type === 'bn-heading' || box.el?.type === 'bn-search') ? box.el.type : null;
+  const heroCfg = bannerType ? cfg?.('hero') ?? {} : {};
+  const selfAlign = ({ left: 'flex-start', center: 'center', right: 'flex-end' } as Record<string, string>)[heroAlignX(String(heroCfg.contentAlign ?? 'center'))];
+  const hugStyle: CSSProperties = bannerType === 'bn-search'
+    ? { alignSelf: selfAlign, width: `${Number(heroCfg.searchWidth ?? 70)}%`, maxWidth: '100%' }
+    : bannerType === 'bn-heading' ? { alignSelf: selfAlign, maxWidth: '100%' } : {};
+
   return (
-    <Sel id={box.id} className="min-w-0" style={style}>
+    <Sel id={box.id} className={`min-w-0 ${bannerType === 'bn-heading' ? 'w-fit' : ''}`} style={{ ...style, ...hugStyle }}>
       {branch ? (
         <BoxChildren box={box} resize={resize} icons={icons} placedText={placedText} cfg={cfg} />
       ) : (
@@ -501,6 +519,7 @@ function BoxChildren({ box, resize, icons, placedText, cfg }: {
   const weights = kids.map((c) => c.weight);
   return (
     <div
+      data-width-root
       className="flex min-w-0"
       /* `dir` IS `flex-direction`. That is the whole of the behaviour setting: a row lays its
          children left-to-right so each reads as a column, a column stacks them so each reads as a
@@ -1945,13 +1964,14 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
   const bannerAlign = heroAlignX(String(wc('hero').contentAlign ?? 'center'));
   const bannerHeading = (
     <div className="w-full" style={{ textAlign: bannerAlign }}>
-      <Sel id="hero-title" className="block w-full px-1" style={heroLine('hero-title')}>
+      {/* `w-fit`: each line's outline hugs its own words; `heroLine`'s auto margins still place it. */}
+      <Sel id="hero-title" className="block w-fit max-w-full px-1" style={{ ...heroLine('hero-title'), maxWidth: '100%' }}>
         <h2
           style={{ ...roleStyle(styles, 'hero', 'title'), color: String(wc('hero').headingColor ?? (darkHeroInk ? '#0B2545' : '#FFFFFF')), ...st('hero-title') }}
           className="text-[30px] font-semibold leading-tight"
         >{String(wc('hero').heading ?? content.hero.title)}</h2>
       </Sel>
-      <Sel id="hero-subtitle" className="mt-2 block w-full px-1" style={heroLine('hero-subtitle')}>
+      <Sel id="hero-subtitle" className="mt-2 block w-fit max-w-full px-1" style={{ ...heroLine('hero-subtitle'), maxWidth: '100%' }}>
         <p
           style={{ ...roleStyle(styles, 'hero', 'subtitle'), ...(darkHeroInk ? { color: 'rgba(15,51,39,0.72)' } : null), ...st('hero-subtitle') }}
           className={`text-[15px] ${darkHeroInk ? '' : 'text-white/85'}`}
@@ -1963,11 +1983,8 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
     <Sel
       id="hero-search"
       className="block w-full"
-      style={{
-        maxWidth: `${Number(wc('hero').searchWidth ?? 70)}%`,
-        marginLeft: bannerAlign === 'left' ? 0 : 'auto',
-        marginRight: bannerAlign === 'right' ? 0 : 'auto',
-      }}
+      /* It FILLS its cell — the cell carries the width, so the two outlines are one. */
+      style={{ maxWidth: '100%' }}
     >
       <HeroSearch cfg={wc('hero')} fallback={content.hero.placeholder} style={{ borderRadius: Number(wc('hero').searchRadius ?? 4), ...st('hero-search') }} />
     </Sel>

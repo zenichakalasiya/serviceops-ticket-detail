@@ -1160,7 +1160,9 @@ function SelectionHandles({ id, elRef }: { id: string; elRef: React.RefObject<HT
         if (cols.length) return parseFloat(cols[Math.min(row.indexOf(el), cols.length - 1)]) || r.width;
         return r.width;
       })(),
-      parentW: el.parentElement?.getBoundingClientRect().width ?? r.width,
+      /* ⚠️ The banner's search is sized as a share of its COLUMN (its cell hugs it), so its width is
+         measured against the nearest box container rather than the cell it fills. */
+      parentW: ((id === 'hero-search' ? el.closest('[data-width-root]') : null) as HTMLElement | null ?? el.parentElement)?.getBoundingClientRect().width ?? r.width,
       siblings: row.map((c) => c.dataset.node!),
       widths: row.map((c) => c.getBoundingClientRect().width),
       index: row.indexOf(el),
