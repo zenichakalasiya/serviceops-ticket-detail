@@ -1050,7 +1050,12 @@ export const isBoxId = (id: string) => /^sec-[0-9]+-b[0-9]+$/.test(id);
  * ⚠️ The ROOT is deliberately NOT registered. Its id is the section id, and `nodeById` answers
  *  that with 'Section' — registering it too would shadow that and label the section a Column. */
 export function registerTree(section: CustomSection) {
-  if (section.banner) BANNER_SECTION_IDS.add(section.id);
+  if (section.banner) {
+    BANNER_SECTION_IDS.add(section.id);
+    for (const k of Object.keys(BANNER_PART_OWNER)) delete BANNER_PART_OWNER[k];
+    const own = (b: Box) => { if (b.el && PART_OF[b.el.type]) BANNER_PART_OWNER[PART_OF[b.el.type]] = b.el.id; b.children?.forEach(own); };
+    own(section.root);
+  }
   const walk = (b: Box, parentDir: BoxDir, depth: number, parent?: string) => {
     if (parent) registerBox(b.id, parentDir, depth, parent);
     b.children?.forEach((c) => walk(c, b.dir, depth + 1, b.id));
@@ -1261,7 +1266,8 @@ export const isComposable = (id: string): boolean => {
  * ⚠️ This is the ONE list: the banner's "+", its Replace, the palette drop and click-to-add all
  * read it, so no route can put something on a banner the others would refuse. */
 export const BANNER_BLOCKS: { type: string; label: string }[] = [
-  { type: 'bn-heading', label: 'Heading & subheading' },
+  { type: 'bn-heading', label: 'Heading' },
+  { type: 'bn-subheading', label: 'Subheading' },
   { type: 'bn-search', label: 'Search' },
   { type: 'x-action-card', label: 'Action card' },
   { type: 'x-kpi', label: 'KPI tile' },
@@ -1277,7 +1283,14 @@ export const BANNER_SECTION_IDS = new Set<string>();
 /** True when this node — a box, an element, or one of an element's parts — sits on the banner. */
 export const inBanner = (id: string): boolean => nodePath(id).some((n) => BANNER_SECTION_IDS.has(n.id));
 /** The banner's heading and search appear ONCE each — a second copy is two things to keep in step. */
-export const SINGLE_BANNER_BLOCKS = new Set(['bn-heading', 'bn-search']);
+export const SINGLE_BANNER_BLOCKS = new Set(['bn-heading', 'bn-subheading', 'bn-search']);
+/* The banner's heading, subheading and search render with the HERO's node ids, so a drag started on
+   one of them has to carry the BLOCK it belongs to — otherwise the drop receives `hero-title`, which is
+   not something a cell can hold, and the move silently does nothing. Filled by `registerTree`. */
+const BANNER_PART_OWNER: Record<string, string> = {};
+const PART_OF: Record<string, string> = { 'bn-heading': 'hero-title', 'bn-subheading': 'hero-subtitle', 'bn-search': 'hero-search' };
+/** What a drag started on this node actually moves. */
+export const dragIdOf = (id: string) => BANNER_PART_OWNER[id] ?? id;
 
 /** True for anything that may put one of the six in the slot beside it. */
 export const canAddBeside = (id: string): boolean => {

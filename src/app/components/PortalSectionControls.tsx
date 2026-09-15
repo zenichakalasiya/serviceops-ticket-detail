@@ -27,12 +27,9 @@ function ShapeNodeArt({ n, center }: { n: ShapeNode; center: boolean }) {
   const al = center ? 'items-center' : 'items-start';
   switch (n.el) {
     case 'bn-heading':
-      return (
-        <span style={grow} className={`flex flex-col gap-[2px] ${al}`}>
-          <span className="block h-[4px] w-[70%] rounded-sm bg-white/90" />
-          <span className="block h-[3px] w-[48%] rounded-sm bg-white/45" />
-        </span>
-      );
+      return <span style={grow} className={`flex ${al}`}><span className="block h-[4px] w-[70%] rounded-sm bg-white/90" /></span>;
+    case 'bn-subheading':
+      return <span style={grow} className={`flex ${al}`}><span className="block h-[3px] w-[48%] rounded-sm bg-white/45" /></span>;
     case 'bn-search':
       return <span style={grow} className={`flex ${center ? 'justify-center' : ''}`}><span className="block h-[6px] w-[64%] rounded-sm bg-white" /></span>;
     case 'v-image':

@@ -706,8 +706,9 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
    * heading with a heading is not refused as a second heading. */
   const bannerRefusal = (boxId: string, type: string, replacing?: string): string | null => {
     const sec = sectionsRef.current.find((s) => s.section.id === sectionIdOfBox(boxId))?.section;
-    if (!sec?.banner) return null;
     const name = PORTAL_ELEMENTS.find((e) => e.id === type)?.name ?? 'That widget';
+    /* The banner's own blocks draw the banner's words — off the banner they would have nothing to show. */
+    if (!sec?.banner) return type.startsWith('bn-') ? `The ${name.toLowerCase()} stays on the banner` : null;
     if (!BANNER_BLOCK_TYPES.has(type)) return `${name} stays on the page — a banner holds short blocks only`;
     if (SINGLE_BANNER_BLOCKS.has(type) && sectionElements(sec).some((e) => e.type === type && e.id !== replacing)) {
       return `The banner already has its ${name.toLowerCase()}`;

@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 // ArrowLeft stays in use by the card toolbar's "Move left".
 import { toast } from 'sonner';
-import { HEADING_SIZE, PORTAL_FONTS, SECTION_LAYOUTS, SPLITTABLE_BANDS, TEXT_STYLES, ZERO_BOX, COMPOSABLE, BANNER_BLOCKS, inBanner, boxInfo, canAddBeside, defaultAlignH, nodeById, paintsOwnShadow, paintsOwnSurface, toolbarCaps, nodePath, placedIn, placedType } from './portalPageModel';
+import { HEADING_SIZE, PORTAL_FONTS, SECTION_LAYOUTS, SPLITTABLE_BANDS, TEXT_STYLES, ZERO_BOX, COMPOSABLE, BANNER_BLOCKS, inBanner, dragIdOf, boxInfo, canAddBeside, defaultAlignH, nodeById, paintsOwnShadow, paintsOwnSurface, toolbarCaps, nodePath, placedIn, placedType } from './portalPageModel';
 import { DEFAULT_THEME } from './PortalThemePanel';
 import type { PortalTheme } from './PortalThemePanel';
 import { boxCss, containerCss } from './portalStyleResolver';
@@ -130,6 +130,25 @@ export const draggedElement = (e: React.DragEvent) => e.dataTransfer.getData('te
 /** Reads a node being dragged by its grip. Same caveat: only readable on `drop`. */
 export const draggedNode = (e: React.DragEvent) => e.dataTransfer.getData('text/portal-move') || null;
 export const MOVE_MIME = 'text/portal-move';
+
+/* ⚠️ While ANYTHING is being dragged, the floating toolbars step aside. A selected element's toolbar
+   sits over whatever is above it, so a drag started from that toolbar's own grip had its drop target
+   covered by the toolbar itself — the line never appeared and the drop landed on nothing. The body
+   flag is set by the document-level dragstart (after the element has written its payload) and cleared
+   on dragend or drop; the rule at the foot of theme.css answers it. */
+/* ⚠️ CAPTURE phase, and for every drag. Cells stop dragstart from bubbling (so a nested grip is not
+   re-claimed by its ancestors), which meant a bubbling listener never heard a drag start at all; and
+   at capture time the payload has not been written yet, so there is nothing to test — a drag anywhere
+   on this page is a drag the toolbars should get out of the way of. v2 key: a listener installed by an
+   earlier build of this module must not block this one. */
+if (typeof document !== 'undefined' && !(window as unknown as { __portalDragFlag3?: boolean }).__portalDragFlag3) {
+  (window as unknown as { __portalDragFlag3?: boolean }).__portalDragFlag3 = true;
+  const clear = () => { delete document.body.dataset.portalDragging; };
+  /* A tick LATER: changing the drag source's own styles inside dragstart makes Chrome cancel the drag. */
+  document.addEventListener('dragstart', () => { window.setTimeout(() => { document.body.dataset.portalDragging = '1'; }, 0); }, true);
+  document.addEventListener('dragend', clear, true);
+  document.addEventListener('drop', () => window.setTimeout(clear, 0), true);
+}
 
 export const CanvasProvider = Ctx.Provider;
 export const useCanvas = () => useContext(Ctx);
@@ -430,7 +449,8 @@ function useNodeDragHandle(id: string) {
   return {
     draggable: true,
     onDragStart: (e: React.DragEvent) => {
-      e.dataTransfer.setData(MOVE_MIME, id);
+      /* `dragIdOf`: the banner's heading, subheading and search move their BLOCK, not the text node. */
+      e.dataTransfer.setData(MOVE_MIME, dragIdOf(id));
       e.dataTransfer.effectAllowed = 'move';
     },
   };
@@ -803,6 +823,7 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
       onMouseOver={readTip}
       onMouseMove={readTip}
       onMouseLeave={() => setTip(null)}
+      data-portal-toolbar
       className="relative flex items-center gap-0.5 rounded border border-[#E5E7EB] bg-white px-1 py-1 shadow-[0_4px_6px_-2px_rgba(16,24,40,0.06),0_12px_16px_-4px_rgba(16,24,40,0.10)]"
     >
       {tip && (
@@ -1300,6 +1321,7 @@ function TextToolbar({ id }: { id: string }) {
       onMouseOver={readTip}
       onMouseMove={readTip}
       onMouseLeave={() => setTip(null)}
+      data-portal-toolbar
       className="relative flex items-center gap-0.5 rounded border border-[#E5E7EB] bg-white px-1 py-1 shadow-[0_4px_6px_-2px_rgba(16,24,40,0.06),0_12px_16px_-4px_rgba(16,24,40,0.10)]"
     >
       {tip && (
@@ -2001,7 +2023,12 @@ export function Sel({ id, children, className = '', toolbarBelow = false, style:
      heading, subtext and search have no siblings to align with, so where they sit is the design.
      Stored as a % of the band so the placement survives the banner being made taller or the panel
      being dragged. */
-  const freePlaced = /^hero-(title|subtitle|search)$/.test(id);
+  /* ⚠️ …but NOT on a SHAPED banner. There the heading, subheading and search are blocks in the banner's
+     rows, and pinning one at an absolute spot takes it out of those rows — it floats over its
+     neighbours and no longer moves with them. A shaped banner's parts are MOVED instead: their drag
+     carries the block (`dragIdOf`) into another row or column. */
+  const bannerPart = /^hero-(title|subtitle|search)$/.test(id) && dragIdOf(id) !== id;
+  const freePlaced = /^hero-(title|subtitle|search)$/.test(id) && !bannerPart;
   const free = styles[id];
   const freeStyle: React.CSSProperties = freePlaced && (free?.freeX !== undefined || free?.freeY !== undefined)
     ? { position: 'absolute', left: `${free?.freeX ?? 50}%`, top: `${free?.freeY ?? 50}%`, transform: 'translate(-50%, -50%)', margin: 0 }
@@ -2068,6 +2095,9 @@ export function Sel({ id, children, className = '', toolbarBelow = false, style:
          not discovered by trying. It is the one cursor that means "pick this up and put it
          anywhere", which is exactly what this element can do and what its neighbours cannot. */
       onMouseDown={freePlaced ? beginFree : undefined}
+      /* The banner's SEARCH is not edited in place, so the whole field is its drag handle — press it and drag it into another row. */
+      draggable={enabled && bannerPart && id === 'hero-search' ? true : undefined}
+      onDragStart={enabled && bannerPart && id === 'hero-search' ? (e) => { e.stopPropagation(); e.dataTransfer.setData(MOVE_MIME, dragIdOf(id)); e.dataTransfer.effectAllowed = 'move'; } : undefined}
       onMouseOver={(e) => { e.stopPropagation(); setHover(id); }}
       onMouseOut={(e) => { e.stopPropagation(); setHover(null); }}
       onClick={(e) => { e.stopPropagation(); select(id); }}
@@ -2118,6 +2148,20 @@ export function Sel({ id, children, className = '', toolbarBelow = false, style:
 
       {moveOver && <span className="pointer-events-none absolute inset-0 z-30 rounded ring-2 ring-[#3D8BD0] ring-offset-2" />}
 
+      {/* On a shaped banner the same badge is a real DRAG handle for the block — drop it on any row. */}
+      {on && bannerPart && enabled && (
+        <span
+          draggable
+          onMouseDown={(e) => e.stopPropagation()}
+          onDragStart={(e) => {
+            e.stopPropagation();
+            e.dataTransfer.setData(MOVE_MIME, dragIdOf(id));
+            e.dataTransfer.effectAllowed = 'move';
+          }}
+          title="Drag to move into another row or column of the banner"
+          className="absolute -top-3 left-1/2 z-40 flex size-6 -translate-x-1/2 cursor-grab items-center justify-center rounded-full border border-[#3D8BD0] bg-white text-[#3D8BD0] shadow-sm active:cursor-grabbing"
+        ><Move size={13} /></span>
+      )}
       {on && freePlaced && (
         <span
           onMouseDown={(e) => beginFree(e, true)}

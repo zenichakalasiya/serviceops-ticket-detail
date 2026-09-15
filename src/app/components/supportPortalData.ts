@@ -1218,7 +1218,9 @@ export interface BannerShape {
   hero?: Record<string, unknown>;
 }
 
+/* Heading and subheading are SEPARATE blocks, so each can be dragged into a row of its own. */
 const HEADING: ShapeNode = { el: 'bn-heading' };
+const SUB: ShapeNode = { el: 'bn-subheading' };
 const SEARCH: ShapeNode = { el: 'bn-search' };
 const actionCard = (title: string, sub: string, icon: string, destination: string): ShapeNode =>
   ({ el: 'x-action-card', cfg: { title, sub, icon, destination } });
@@ -1227,14 +1229,14 @@ export const BANNER_SHAPES: BannerShape[] = [
   {
     id: 'text', name: 'Text only', orientation: 'horizontal', seen: '3b2 without its card',
     note: 'Heading, subheading and search — the simplest start.',
-    tree: { dir: 'column', children: [HEADING, SEARCH] },
+    tree: { dir: 'column', children: [HEADING, SUB, SEARCH] },
     hero: { contentAlign: 'left' },
   },
   {
     id: 'text-block', name: 'Text + block', orientation: 'horizontal', seen: '3b2 · 3g · 5a · 4b',
     note: 'Text on the left, one block beside it — an announcement carousel to start.',
     tree: { dir: 'row', children: [
-      { dir: 'column', weight: 3, children: [HEADING, SEARCH] },
+      { dir: 'column', weight: 3, children: [HEADING, SUB, SEARCH] },
       { el: 'c-announcements', weight: 2, cfg: { display: 'carousel' } },
     ] },
     hero: { contentAlign: 'left' },
@@ -1243,7 +1245,7 @@ export const BANNER_SHAPES: BannerShape[] = [
     id: 'text-photo', name: 'Text + photo', orientation: 'horizontal', seen: '8a · 8b · 4a',
     note: 'Text on the banner colour, a picture in the other half.',
     tree: { dir: 'row', children: [
-      { dir: 'column', weight: 1, children: [HEADING, SEARCH] },
+      { dir: 'column', weight: 1, children: [HEADING, SUB, SEARCH] },
       { el: 'v-image', weight: 1 },
     ] },
     hero: { contentAlign: 'left' },
@@ -1252,7 +1254,7 @@ export const BANNER_SHAPES: BannerShape[] = [
     id: 'text-row', name: 'Text over a row of blocks', orientation: 'horizontal', seen: '2a · 7c',
     note: 'Text on top, the four action cards in a row underneath.',
     tree: { dir: 'column', children: [
-      HEADING, SEARCH,
+      HEADING, SUB, SEARCH,
       { dir: 'row', children: [
         actionCard('Report an Incident', 'Something is broken', 'ticket', 'incident'),
         actionCard('Request Service', 'Browse the catalog', 'cart', 'service'),
@@ -1265,14 +1267,14 @@ export const BANNER_SHAPES: BannerShape[] = [
   {
     id: 'centred', name: 'Centred', orientation: 'horizontal', seen: '6a Gazette',
     note: 'Heading and search in the middle of the banner.',
-    tree: { dir: 'column', children: [HEADING, SEARCH] },
+    tree: { dir: 'column', children: [HEADING, SUB, SEARCH] },
     hero: { contentAlign: 'center' },
   },
   {
     id: 'text-search-row', name: 'Text + search row', orientation: 'horizontal', seen: '8a Vault',
     note: 'Heading beside a picture, the search in its own row underneath.',
     tree: { dir: 'column', children: [
-      { dir: 'row', children: [HEADING, { el: 'v-image' }] },
+      { dir: 'row', children: [{ dir: 'column', children: [HEADING, SUB] }, { el: 'v-image' }] },
       SEARCH,
     ] },
     hero: { contentAlign: 'left' },
@@ -1508,7 +1510,8 @@ export const PORTAL_ELEMENTS: PortalElement[] = [
   { id: 'x-kpi', name: 'KPI', icon: 'kpi', group: 'Custom', hidden: true, keywords: 'metric stat number' },
   /* ⚠️ The banner's own two blocks. Hidden from the palette — they only exist ON a banner, where the
      banner's "+" offers them — but catalogue entries all the same, so a placed one has a name. */
-  { id: 'bn-heading', name: 'Heading & subheading', icon: 'text', group: 'Basic', hidden: true },
+  { id: 'bn-heading', name: 'Heading', icon: 'text', group: 'Basic', hidden: true },
+  { id: 'bn-subheading', name: 'Subheading', icon: 'text', group: 'Basic', hidden: true },
   { id: 'bn-search', name: 'Search', icon: 'search', group: 'Basic', hidden: true },
   { id: 'b-list', name: 'Quick links', icon: 'list', group: 'Basic', hidden: true },
 ];

@@ -15,7 +15,7 @@ import {
   PORTAL_APPROVALS, PORTAL_ARTICLES, PORTAL_OPEN_REQUESTS, statusTone,
 } from './supportPortalData';
 import { AddSectionSeam, ColumnAdders, MOVE_MIME, Sel, draggedElement, draggedNode, styleOf, useCanvas } from './PortalCanvas';
-import { HUGS_CONTENT } from './portalPageModel';
+import { HUGS_CONTENT, inBanner } from './portalPageModel';
 import { PAGE_ID, chosen, iconBoxCss, roleStyle } from './portalStyleResolver';
 import { bannerLayout } from './supportPortalData';
 import { shadowCss } from './PortalBoxControls';
@@ -200,7 +200,7 @@ function ColumnBody({ id, item, band, live, dir, icons, placedText, cfg }: { id:
      alone left a hosted band sitting inside the dashed empty-column treatment, with the "+ add an
      element here" button painted over the band it already contains. */
   const full = !!item || !!bandNode;
-  const { styles, dropInColumn, dropBeside, addInside, columnsFull } = useCanvas();
+  const { styles, dropInColumn, dropBeside, addInside, columnsFull, moveTo } = useCanvas();
   const [over, setOver] = useState(false);
   /* Which zone the pointer is in, held across renders so the hysteresis has a previous answer. */
   const [zone, setZone] = useState<Zone | null>(null);
@@ -275,6 +275,9 @@ function ColumnBody({ id, item, band, live, dir, icons, placedText, cfg }: { id:
         e.stopPropagation();
         if (!z || z === 'in') {
           if ('type' in payload) dropInColumn(id, payload.type);
+          /* ⚠️ Something being MOVED into an empty cell lands in it. This branch used to act only for a
+             new element from the library, so dragging an existing block onto an empty cell did nothing. */
+          else if (payload.move !== item?.id) moveTo(payload.move, id);
           return;
         }
         /* ⚠️ Dropping an element onto ITSELF is a no-op, not a split. Without this the source box
@@ -313,7 +316,7 @@ function ColumnBody({ id, item, band, live, dir, icons, placedText, cfg }: { id:
            selection you need to edit it, so the grip stays its only handle. */
         item && item.type !== 'b-text' ? 'cursor-grab active:cursor-grabbing' : ''
       }`}
-      draggable={live && !!item && item.type !== 'b-text'}
+      draggable={live && !!item && item.type !== 'b-text' && item.type !== 'bn-heading' && item.type !== 'bn-subheading'}
       onDragStart={item ? (e) => {
         /* The same payload the toolbar grip sends, so one gesture has one meaning wherever it is
            started from. */
@@ -348,8 +351,8 @@ function ColumnBody({ id, item, band, live, dir, icons, placedText, cfg }: { id:
               heading, the subheading and the search each carry their own selectable node, and each of
               those hugs what it holds. The block itself is still the CELL: select the column to replace,
               move or delete it, and drag the cell to move it. */}
-          {item.type === 'bn-heading' || item.type === 'bn-search' ? (
-            <div className="w-full">{item.type === 'bn-heading' ? bannerParts.heading : bannerParts.search}</div>
+          {item.type === 'bn-heading' || item.type === 'bn-subheading' || item.type === 'bn-search' ? (
+            <div className="w-full">{item.type === 'bn-heading' ? bannerParts.heading : item.type === 'bn-subheading' ? bannerParts.subheading : bannerParts.search}</div>
           ) : (
             <Sel id={item.id} className={HUGS_CONTENT.has(item.type) ? 'w-fit max-w-full' : 'w-full'}>
               <PortalPlacedElement item={item} icon={icons?.[item.id]} text={placedText?.[item.id]} cfg={cfg?.(item.id)} />
@@ -417,7 +420,7 @@ const BandSlots = createContext<Record<string, ReactNode>>({});
    live) and handed to whichever box on the banner holds them. ⚠️ They keep the hero's own node ids
    (`hero-title`, `hero-subtitle`, `hero-search`), so inline editing and their panels are unchanged —
    a block only decides WHERE they sit. */
-const BannerParts = createContext<{ heading?: ReactNode; search?: ReactNode }>({});
+const BannerParts = createContext<{ heading?: ReactNode; subheading?: ReactNode; search?: ReactNode }>({});
 
 /* The Style accordion's four keys, as CSS. Shared by the built-in bands and added sections so a
    section painted one way in one place cannot come out another way in the other. */
@@ -488,15 +491,15 @@ function BoxView({
      outline describes the words or the field rather than the column. The heading's cell sizes to its
      text; the search's cell takes the search's width as a share of the column (dragging the field
      writes it here, see `setStyle`). Both follow the banner's alignment. */
-  const bannerType = parentDir === 'column' && !branch && (box.el?.type === 'bn-heading' || box.el?.type === 'bn-search') ? box.el.type : null;
+  const bannerType = parentDir === 'column' && !branch && (box.el?.type === 'bn-heading' || box.el?.type === 'bn-subheading' || box.el?.type === 'bn-search') ? box.el.type : null;
   const heroCfg = bannerType ? cfg?.('hero') ?? {} : {};
   const selfAlign = ({ left: 'flex-start', center: 'center', right: 'flex-end' } as Record<string, string>)[heroAlignX(String(heroCfg.contentAlign ?? 'center'))];
   const hugStyle: CSSProperties = bannerType === 'bn-search'
     ? { alignSelf: selfAlign, width: `${Number(heroCfg.searchWidth ?? 70)}%`, maxWidth: '100%' }
-    : bannerType === 'bn-heading' ? { alignSelf: selfAlign, maxWidth: '100%' } : {};
+    : bannerType ? { alignSelf: selfAlign, maxWidth: '100%' } : {};
 
   return (
-    <Sel id={box.id} className={`min-w-0 ${bannerType === 'bn-heading' ? 'w-fit' : ''}`} style={{ ...style, ...hugStyle }}>
+    <Sel id={box.id} className={`min-w-0 ${bannerType && bannerType !== 'bn-search' ? 'w-fit' : ''}`} style={{ ...style, ...hugStyle }}>
       {branch ? (
         <BoxChildren box={box} resize={resize} icons={icons} placedText={placedText} cfg={cfg} />
       ) : (
@@ -517,10 +520,75 @@ function BoxChildren({ box, resize, icons, placedText, cfg }: {
 }) {
   const kids = box.children ?? [];
   const weights = kids.map((c) => c.weight);
+  const { dropBeside } = useCanvas();
+  const wrapRef = useRef<HTMLDivElement>(null);
+  /* ── Drop in the SPACE between blocks, on the banner ─────────────────────────────────────────
+   *
+   * ⚠️ On the banner the heading, subheading and search cells HUG their content, so most of a row is
+   * empty space that belongs to no cell — and a drop there used to fall through to the column, which
+   * cannot hold a block, so nothing happened. Here the nearest child along this box's own axis takes
+   * the drop, above/below (a column) or left/right (a row) of it, and the same line shows where. */
+  const onBanner = inBanner(box.id);
+  const [gap, setGap] = useState<{ id: string; side: Zone; line: CSSProperties } | null>(null);
+  /* A drop that a CELL took (cells stop the event) never reaches this box, so the line would stay painted — clear it whenever any drag ends. */
+  useEffect(() => {
+    if (!gap) return;
+    const clear = () => setGap(null);
+    window.addEventListener('dragend', clear, true);
+    window.addEventListener('drop', clear, true);
+    return () => { window.removeEventListener('dragend', clear, true); window.removeEventListener('drop', clear, true); };
+  }, [gap]);
+  const aim = (e: React.DragEvent) => {
+    const wrap = wrapRef.current;
+    if (!wrap) return null;
+    const w = wrap.getBoundingClientRect();
+    const cells = [...wrap.children].filter((c): c is HTMLElement => !!(c as HTMLElement).dataset?.node);
+    if (!cells.length) return null;
+    const vertical = box.dir === 'column';
+    const at = vertical ? e.clientY : e.clientX;
+    let pick = cells[cells.length - 1];
+    let side: Zone = vertical ? 'below' : 'right';
+    for (const c of cells) {
+      const r = c.getBoundingClientRect();
+      if (at < (vertical ? r.top + r.height / 2 : r.left + r.width / 2)) { pick = c; side = vertical ? 'above' : 'left'; break; }
+    }
+    const r = pick.getBoundingClientRect();
+    const line: CSSProperties = vertical
+      ? { left: 0, right: 0, height: 3, top: (side === 'above' ? r.top : r.bottom) - w.top - 1.5 }
+      : { top: 0, bottom: 0, width: 3, left: (side === 'left' ? r.left : r.right) - w.left - 1.5 };
+    return { id: pick.dataset.node!, side, line };
+  };
+  const gapHandlers = onBanner ? {
+    onDragOver: (e: React.DragEvent) => {
+      if (!e.dataTransfer.types.includes('text/portal-element') && !e.dataTransfer.types.includes(MOVE_MIME)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      setGap(aim(e));
+    },
+    onDragLeave: (e: React.DragEvent) => {
+      if (wrapRef.current?.contains(e.relatedTarget as Node)) return;
+      setGap(null);
+    },
+    onDrop: (e: React.DragEvent) => {
+      const target = aim(e);
+      setGap(null);
+      if (!target) return;
+      const t = draggedElement(e);
+      const mv = draggedNode(e);
+      const payload = t ? { type: t } : mv ? { move: mv } : null;
+      if (!payload) return;
+      e.preventDefault();
+      e.stopPropagation();
+      if ('move' in payload && payload.move === target.id) return;
+      dropBeside(target.id, payload, target.side as 'left' | 'right' | 'above' | 'below');
+    },
+  } : {};
   return (
     <div
+      ref={wrapRef}
+      {...gapHandlers}
       data-width-root
-      className="flex min-w-0"
+      className="relative flex min-w-0"
       /* `dir` IS `flex-direction`. That is the whole of the behaviour setting: a row lays its
          children left-to-right so each reads as a column, a column stacks them so each reads as a
          row. Flipping it moves nothing and destroys nothing. */
@@ -539,6 +607,7 @@ function BoxChildren({ box, resize, icons, placedText, cfg }: {
           siblings={weights}
         />
       ))}
+      {gap && <span className="pointer-events-none absolute z-30 rounded-full" style={{ ...gap.line, background: LINE }} />}
     </div>
   );
 }
@@ -1971,7 +2040,11 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
           className="text-[30px] font-semibold leading-tight"
         >{String(wc('hero').heading ?? content.hero.title)}</h2>
       </Sel>
-      <Sel id="hero-subtitle" className="mt-2 block w-fit max-w-full px-1" style={{ ...heroLine('hero-subtitle'), maxWidth: '100%' }}>
+    </div>
+  );
+  const bannerSubheading = (
+    <div className="w-full" style={{ textAlign: bannerAlign }}>
+      <Sel id="hero-subtitle" className="block w-fit max-w-full px-1" style={{ ...heroLine('hero-subtitle'), maxWidth: '100%' }}>
         <p
           style={{ ...roleStyle(styles, 'hero', 'subtitle'), ...(darkHeroInk ? { color: 'rgba(15,51,39,0.72)' } : null), ...st('hero-subtitle') }}
           className={`text-[15px] ${darkHeroInk ? '' : 'text-white/85'}`}
@@ -2064,7 +2137,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
           /* ⚠️ BARE: the banner's section draws no selectable box of its own, so a click on the
              banner's background still selects the BANNER — the columns and blocks inside it are the
              selectable things. */
-          <BannerParts.Provider value={{ heading: bannerHeading, search: bannerSearch }}>
+          <BannerParts.Provider value={{ heading: bannerHeading, subheading: bannerSubheading, search: bannerSearch }}>
             <div className="relative w-full">
               <AddedSection section={bannerSec} icons={icons} placedText={placedText} cfg={cfg} bare />
             </div>

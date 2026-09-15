@@ -515,3 +515,6 @@ button:not(:disabled):not([aria-disabled='true']),
 .portal-help-dark .border-\[\#E5E7EB\],
 .portal-help-dark .border-\[\#EEF2F6\],
 .portal-help-dark .border-\[\#DFE5ED\] { border-color: rgba(255, 255, 255, 0.14); }
+
+/* Support Portal builder — floating toolbars step aside while something is being dragged (see PortalCanvas). */
+body[data-portal-dragging] [data-portal-toolbar] { pointer-events: none; opacity: 0.35; }
