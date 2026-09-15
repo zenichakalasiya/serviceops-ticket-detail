@@ -202,3 +202,15 @@ export function insertAtEdge(tree: BannerNode | null, newId: string, side: 'left
   if (typeof tree !== 'string' && tree.d === d) return branch(d, before ? [newId, ...tree.c] : [...tree.c, newId]);
   return branch(d, before ? [newId, tree] : [tree, newId]);
 }
+
+/** Swaps two items' places, keeping the arrangement's shape. */
+export const swapLeaves = (tree: BannerNode | null, a: string, b: string): BannerNode | null =>
+  !tree ? tree : typeof tree === 'string' ? (tree === a ? b : tree === b ? a : tree) : branch(tree.d, tree.c.map((k) => swapLeaves(k, a, b)!));
+
+/** Removes one item from the arrangement (its branch collapses if it is left holding one). */
+export const removeLeaf = (tree: BannerNode | null, id: string): BannerNode | null => {
+  if (!tree) return tree;
+  if (typeof tree === 'string') return tree === id ? null : tree;
+  const c = tree.c.map((k) => removeLeaf(k, id)).filter((k): k is BannerNode => k !== null);
+  return c.length === 0 ? null : c.length === 1 ? c[0] : branch(tree.d, c);
+};

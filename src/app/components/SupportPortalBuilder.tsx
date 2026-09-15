@@ -35,7 +35,7 @@ import { BANNER_GROUPS } from './portalPageModel';
 import type { Box, BoxDir, CustomSection, NodeStyle, PlacedElement, PortalPageContent, PortalStyles } from './portalPageModel';
 import { PORTAL_ELEMENTS, PORTAL_EMPTY_WIDGETS, PORTAL_TEMPLATES, bannerLayout, bannerShape } from './supportPortalData';
 import type { ShapeNode } from './supportPortalData';
-import { insertAtEdge, insertBeside, normalizeTree, replaceLeaf, shiftLeaf } from './portalBannerLayout';
+import { insertAtEdge, insertBeside, normalizeTree, removeLeaf, replaceLeaf, shiftLeaf, swapLeaves } from './portalBannerLayout';
 import { IconPopover } from './PortalIconPicker';
 import type { IconChoice } from './PortalIconPicker';
 import type { PortalPage } from './supportPortalData';
@@ -1683,7 +1683,10 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
   const placeable = useCallback((id: string): string => {
     let cur = id;
     for (let i = 0; i < 6; i += 1) {
-      if (/^el-\d+$/.test(cur) || /^sec-\d+(-c\d+)?$/.test(cur) || listOf(cur)) return cur;
+      /* ⚠️ `isBoxId`, not `-c\d+`: columns have been minted `sec-N-bM` since the section tree, and the old
+         pattern made every drop onto a column resolve to its whole SECTION — which has no slot — so dragging
+         anything onto a column was refused with "Drop it on a section…". */
+      if (/^el-\d+$/.test(cur) || /^sec-\d+$/.test(cur) || isBoxId(cur) || listOf(cur)) return cur;
       const parent = nodeById(cur)?.parent;
       if (!parent || parent === cur) break;
       cur = parent;
@@ -1787,6 +1790,66 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     select(id);
     toast.success(`${moving.name} moved to a new section`);
   }, [detachElement, select]);
+
+  /* ── Moving onto the BANNER ─────────────────────────────────────────────────────────────────────
+   * The banner is not a column or a row, so `moveTo` had no idea where a drop on it should go and refused
+   * every one. Its anchors are its ITEMS: an EMPTY SLOT is taken over (the widget lands exactly where the
+   * slot was and the slot goes), another banner item is SWAPPED with a banner item or joined BESIDE by
+   * something from the page, and the banner's own background adds the widget to the banner. */
+  const moveToBanner = useCallback((source: string, anchor: string) => {
+    const src = /^el-\d+$/.test(source) || source === 'hero-copy' || source === 'hero-search' ? source : null;
+    if (!src) { toast.error('Only widgets can go on the banner — drag a widget, not a whole section'); return; }
+    if (src === anchor) return;
+    const heroList = rowExtrasRef.current.hero ?? [];
+    const onBanner = src === 'hero-copy' || src === 'hero-search' || heroList.some((e) => e.id === src);
+    const slot = heroList.find((e) => e.id === anchor && e.type === 'bn-slot');
+    let tree = heroTree();
+
+    if (onBanner) {
+      if (anchor === 'hero') return;
+      if (slot) {
+        /* The widget leaves its old place and takes the slot's; the slot is removed. */
+        tree = replaceLeaf(removeLeaf(tree, src), anchor, src);
+        setRowExtras((prev) => ({ ...prev, hero: (prev.hero ?? []).filter((e) => e.id !== anchor) }));
+        toast.success('Moved into the empty slot');
+      } else {
+        tree = swapLeaves(tree, src, anchor);
+        toast.success('Swapped places');
+      }
+      patchCfg('hero', { bannerTree: tree });
+      select(src);
+      return;
+    }
+
+    /* From elsewhere on the page: lift it out of its home first, then give it a place on the banner. */
+    const moving = detachElement(src);
+    if (!moving) return;
+    registerPlaced(moving.id, moving.name, moving.type, 'hero');
+    setRowExtras((prev) => ({
+      ...prev,
+      hero: [...(prev.hero ?? []).filter((e) => !(slot && e.id === anchor)), moving],
+    }));
+    if (slot) tree = replaceLeaf(tree, anchor, moving.id);
+    else if (anchor !== 'hero') tree = insertBeside(tree, anchor, moving.id, 'right');
+    if (anchor !== 'hero') patchCfg('hero', { bannerTree: tree });
+    select(moving.id);
+    toast.success(`${moving.name} moved onto the banner`);
+  }, [detachElement, patchCfg, select]);
+
+  /** A NEW element dropped from the library onto the banner. */
+  const dropIntoBanner = useCallback((type: string, anchor: string) => {
+    const heroList = rowExtrasRef.current.hero ?? [];
+    const slot = heroList.find((e) => e.id === anchor && e.type === 'bn-slot');
+    if (slot) { replaceElement(slot.id, type); return; }
+    if (anchor === 'hero' || !heroItems().includes(anchor)) { dropInRow('hero', type); return; }
+    const el = makeElement(type, 'hero');
+    const tree = insertBeside(heroTree(), anchor, el.id, 'right');
+    setRowExtras((prev) => ({ ...prev, hero: [...(prev.hero ?? []), el] }));
+    seedBannerItem(el.id, type);
+    patchCfg('hero', { bannerTree: tree });
+    select(el.id);
+    toast.success(`${el.name} added`);
+  }, [makeElement, patchCfg, select, dropInRow]);
 
   const moveTo = useCallback((source: string, target: string) => {
     /* Both ends resolve to something placeable first — see the note on `placeable`. */
@@ -2155,7 +2218,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
 
   const canvasCtx = {
     selectedId, hoverId, select, setHover: setHoverId, styles, setStyle, setText, setCfg: patchCfg,
-    addBannerCell, heroTree,
+    addBannerCell, heroTree, moveToBanner, dropIntoBanner,
     addSection, addBeside, splitBand, bandHosted, dropBeside, columnsFull, splitNode, setNodeDir, splitInfo, addLinkCard, dropInColumn, dropAtSeam, dropInRow,
     addSibling: addSiblingElement, cfg: cfgFor,
     moveNode, duplicateNode, deleteNode, canDuplicate, addInside, moveTo, moveToSeam, addChildBlock, splitChildBlock, fillChildBlock, areSiblings, replaceElement, pickIcon, applyPreset,

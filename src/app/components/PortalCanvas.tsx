@@ -83,6 +83,10 @@ interface CanvasCtx {
   addBannerCell?: (anchorId: string, side: 'left' | 'right' | 'top' | 'bottom') => void;
   /** The banner's arrangement as drawn — its item tree, repaired against what is on it. */
   heroTree?: () => BannerNode | null;
+  /** Moves something already on the page onto the banner: into an empty slot, beside/swapped with an item, or onto the banner itself. */
+  moveToBanner?: (sourceId: string, anchorId: string) => void;
+  /** Drops a NEW element from the library onto the banner, at the same kinds of anchor. */
+  dropIntoBanner?: (elementType: string, anchorId: string) => void;
   /* ── toolbar actions ── */
   moveNode: (id: string, dir: 'prev' | 'next') => void;
   duplicateNode: (id: string) => void;
@@ -2592,7 +2596,7 @@ export function Sel({ id, children, className = '', toolbarBelow = false, style:
      ReferenceError on the very first mousedown — swallowed into the console, so the handler looked
      attached, the cursor looked right, and nothing moved. Three attempts at fixing the drag failed
      because I was reading the rendered output instead of the console. */
-  const { enabled, selectedId, hoverId, select, setHover, styles, setStyle, moveTo, setText, splitBand, bandHosted, addBannerCell, cfg: readCfg } = useCanvas();
+  const { enabled, selectedId, hoverId, select, setHover, styles, setStyle, moveTo, setText, splitBand, bandHosted, addBannerCell, cfg: readCfg, moveToBanner, dropIntoBanner } = useCanvas();
   /* The banner's image is being cropped (double-click the banner). */
   const [cropping, setCropping] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -2798,7 +2802,11 @@ export function Sel({ id, children, className = '', toolbarBelow = false, style:
       /* Grip-drag drop target. The dragged id is unreadable during dragover, so accept broadly
          here and let moveTo decide whether the two are actually siblings. */
       onDragOver={(e) => {
-        if (!e.dataTransfer.types.includes(MOVE_MIME)) return;
+        /* ⚠️ ON THE BANNER a NEW element from the library is accepted too — the banner has no columns of its
+           own to drop into, so its cells and its background are the drop targets. */
+        const onBannerArea = id === 'hero' || !!(e.currentTarget as HTMLElement).closest('[data-banner-cell]');
+        const fromLibrary = e.dataTransfer.types.includes('text/portal-element');
+        if (!e.dataTransfer.types.includes(MOVE_MIME) && !(fromLibrary && onBannerArea)) return;
         e.preventDefault();
         e.stopPropagation();
         setMoveOver(true);
@@ -2806,10 +2814,22 @@ export function Sel({ id, children, className = '', toolbarBelow = false, style:
       onDragLeave={() => setMoveOver(false)}
       onDrop={(e) => {
         setMoveOver(false);
+        /* The banner cell this drop landed in (a widget, the text group, the search, an empty slot) — or the
+           banner's own background. Those go to the banner's arrangement rather than to a page list. */
+        const cell = (e.currentTarget as HTMLElement).closest('[data-banner-cell]') as HTMLElement | null;
+        const bannerAnchor = cell?.dataset.bannerCell ?? (id === 'hero' ? 'hero' : null);
+        const type = draggedElement(e);
+        if (type && bannerAnchor) {
+          e.preventDefault();
+          e.stopPropagation();
+          dropIntoBanner?.(type, bannerAnchor);
+          return;
+        }
         const src = draggedNode(e);
         if (!src || src === id) return;
         e.preventDefault();
         e.stopPropagation();
+        if (bannerAnchor && moveToBanner) { moveToBanner(src, bannerAnchor); return; }
         moveTo(src, id);
       }}
       /* No display change here — call sites pass their own layout classes (the header is a flex
