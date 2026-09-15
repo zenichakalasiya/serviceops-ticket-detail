@@ -384,7 +384,10 @@ function specDrivenBody(type: string, cfg: Record<string, unknown> | undefined, 
        before the file is uploaded used to render nothing at all, so the text you had just typed
        vanished and the element looked broken rather than unfinished. */
     if (!src && !caption) return null;
-    const picture = tpl === 'none' || !src ? null : (
+    /* ⚠️ No file yet → the UPLOAD SLOT stays where the picture will go. Writing a caption first used
+       to drop the slot and leave only the words, so the image element turned into a line of text and
+       there was nowhere left on the canvas to put the picture. */
+    const picture = tpl === 'none' ? null : !src ? <ImageDropSlot id={nodeId} /> : (
       <img
         src={src}
         /* ⚠️ The alt text IS what the browser shows when the file will not load, so it is the
