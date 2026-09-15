@@ -78,6 +78,18 @@ function PieceSkeleton({ piece, dark, center }: { piece: BannerPiece | undefined
     case 'x-actions': {
       const cols = Math.max(1, Math.min(4, Number(cfg.cols ?? 1)));
       const glass = cfg.look === 'glass';
+      if (cfg.look === 'row') {
+        return (
+          <span className="flex min-w-0 flex-1 flex-col justify-center gap-[2px]">
+            {[0, 1, 2, 3].map((i) => (
+              <span key={i} className="flex h-[6px] items-center gap-[2px] rounded-[1.5px] border border-[#E2E8F0] bg-white px-[2px]">
+                <span className="size-[2.5px] rounded-full bg-[#3D8BD0]" />
+                <span className="h-[1.5px] w-[50%] rounded-full bg-[#64748B]" />
+              </span>
+            ))}
+          </span>
+        );
+      }
       return (
         <span className="grid min-w-0 flex-1 content-center gap-[2px]" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0,1fr))` }}>
           {Array.from({ length: 4 }, (_, i) => (

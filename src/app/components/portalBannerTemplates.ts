@@ -179,21 +179,18 @@ export const BANNER_TEMPLATES: BannerTemplate[] = [
       heading: 'Welcome to Bedside Health, how can we help you?', sub: 'Report a clinical fault, request access or find a procedure.',
       searchPlaceholder: 'Search services, devices and clinical procedures',
       bgKind: 'color', colorMode: 'solid', bannerColor: '#FFFFFF',
-      contentAlign: 'left', height: 340, bannerSplit: '1:1', searchWidth: 90,
+      contentAlign: 'left', height: 340, bannerSplit: '11:9', searchWidth: 100, contentMaxWidth: 100,
     },
     title: { size: 32, color: INK }, subtitle: INK_SUB, pad: { top: 28, bottom: 28, left: 3, right: 3 },
-    content: { gap: 32, gapY: 20 },
+    content: { gap: 48, gapY: 20 },
     pieces: [
       { key: 'copy' },
-      { key: 'links', type: 'b-list', cfg: { items: [
-        { title: 'Report a clinical fault', desc: '' },
-        { title: 'Request access or equipment', desc: '' },
-        { title: 'Find a procedure or guide', desc: '' },
-      ] } },
+      /* The doors under the heading are the product's own ACTION CARDS as compact rows — icon, title, chevron. */
+      actions('1', { look: 'row' }),
       { key: 'search' },
       announcements('image'),
     ],
-    tree: R(C('copy', 'links', 'search'), 'ann'),
+    tree: R(C('copy', 'act', 'search'), 'ann'),
     page: { heroInk: 'dark' },
   },
   {
@@ -585,6 +582,10 @@ export function instantiateBanner(t: BannerTemplate, stamp: number): AppliedBann
   /* Big display headings read as one block only with a tight line height; the theme's 1.5 spreads two lines apart. */
   styles.hero = { type: { title: { lineHeight: 'tight' } } } as NodeStyle;
   if (t.pad) styles.hero = { ...styles.hero, padding: { top: t.pad.top, bottom: t.pad.bottom, left: t.pad.left, right: t.pad.right } } as NodeStyle;
+  /* A white search on a near-white banner is a field nobody can find — it gets a hairline border there. */
+  const hex = /^#([0-9a-f]{6})$/i.exec(String(t.hero.bannerColor ?? ''));
+  const lum = hex ? (((parseInt(hex[1], 16) >> 16) * 0.299) + (((parseInt(hex[1], 16) >> 8) & 255) * 0.587) + ((parseInt(hex[1], 16) & 255) * 0.114)) / 255 : 0;
+  if (t.hero.bgKind === 'color' && lum > 0.94) styles['hero-search'] = { borderWidth: 1, borderColor: '#D9E0EA', borderStyle: 'solid' } as NodeStyle;
   Object.entries(t.styles ?? {}).forEach(([k, s]) => { styles[idOf[k] ?? k] = { ...(styles[idOf[k] ?? k] ?? {}), ...s }; });
 
   return { hero, content: { gap: undefined, gapY: undefined, dir: undefined, align: undefined, ...(t.content ?? {}) }, page, styles, widgets };

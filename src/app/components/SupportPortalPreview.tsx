@@ -2,7 +2,7 @@ import { Fragment, createContext, useContext, useEffect, useRef, useState } from
 import type { CSSProperties, ReactNode } from 'react';
 import {
   Bell, Check, Info, Keyboard, KeyRound, House, MessageSquare, MessagesSquare, Plus, PanelLeft,
-  Link2, RotateCcw, Search, ShoppingCart, Type, X, ChevronsRight, LayoutGrid,
+  Link2, RotateCcw, Search, ShoppingCart, Type, X, ChevronsRight, ChevronRight, LayoutGrid,
   HardDrive, Server, Ticket, Lightbulb, Clock, Megaphone,
 } from 'lucide-react';
 import { AnnouncementsRender, ContactRender, FavouriteServicesRender, FeaturedServicesRender } from './PortalCollectionRender';
@@ -1934,7 +1934,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
      keeps reading as two bands however well the colours line up. */
   /* ONE action card. The Quick Actions row and the Action cards block both call this, so a card is the
      same component wherever it sits — its template, icon, words and style all come from the one place. */
-  const quickCardEl = (a: (typeof content.quick)[number], selStyle: React.CSSProperties, opts?: { glass?: boolean }) => {
+  const quickCardEl = (a: (typeof content.quick)[number], selStyle: React.CSSProperties, opts?: { glass?: boolean; row?: boolean }) => {
           const c = wc(a.id);
           /* ⚠️ The CARD's own template wins; the row's is the default it starts from.
              Read the other way round the card's picker was dead — see the note in fixB. */
@@ -1964,7 +1964,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
              icon had fallen out of the row rather than like an arrangement anyone picked. */
           const centre = top || tileActions || c.contentAlign === 'center';
           // P6: the icon's size, colour and container are style; WHICH icon is content.
-          const iconSize = chosen(styles, a.id, 'iconSize') ?? 22;
+          const iconSize = chosen(styles, a.id, 'iconSize') ?? (opts?.row ? 18 : 22);
           const iconColor = chosen(styles, a.id, 'iconColor');
           const iconShape = chosen(styles, a.id, 'iconShape');
           const iconFill = chosen(styles, a.id, 'iconFill');
@@ -1992,9 +1992,11 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                    ⚠️ No SPINE on these, though. A spine names a kind of record; an action
                    card is a destination, and colouring four of them in four hues would be
                    inventing a taxonomy the product does not have. Same surface, no stripe. */
-                className={`group/act relative flex h-full gap-3 p-4 @max-[230px]:gap-2 @max-[230px]:p-3 ${tileActions ? 'items-center justify-center px-5 py-6 text-center transition-[transform,box-shadow] hover:-translate-y-0.5' : ''} ${
+                className={`group/act relative flex h-full gap-3 ${opts?.row ? 'px-[18px] py-3' : 'p-4 @max-[230px]:gap-2 @max-[230px]:p-3'} ${tileActions ? 'items-center justify-center px-5 py-6 text-center transition-[transform,box-shadow] hover:-translate-y-0.5' : ''} ${
                   opts?.glass
                     ? 'rounded-lg border border-white/20 bg-white/10'
+                    : opts?.row
+                    ? 'rounded-lg border border-[#E6E6E6] bg-white transition-colors hover:border-[#C3CBD6]'
                     : spineCards
                     ? 'rounded-[14px] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04),0_8px_24px_-12px_rgba(16,24,40,0.14)]'
                     : 'rounded-lg border border-[#E5E7EB] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04),0_4px_12px_rgba(16,24,40,0.06)]'
@@ -2017,17 +2019,18 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                   onClick={enabled ? (ev) => { ev.stopPropagation(); select(`${a.id}-icon`); pickIcon(a.id, (ev.currentTarget as HTMLElement).getBoundingClientRect()); } : undefined}
                   title={enabled ? 'Click to change this icon' : undefined}
                   style={{
-                    color: iconBoxColor ?? (iconColor as string | undefined) ?? (opts?.glass ? '#FFFFFF' : undefined),
+                    color: iconBoxColor ?? (iconColor as string | undefined) ?? (opts?.glass ? '#FFFFFF' : opts?.row ? '#3D8BD0' : undefined),
                     /* ⚠️ backgroundColor, not the `background` shorthand — this badge also sets backgroundImage,
                        Size and Position, and React warns (and mis-orders) the moment the shorthand changes beside them. */
                     backgroundColor: cardImage
                       ? undefined
-                      : iconBoxBg ?? (iconShape === 'none' ? 'transparent' : (iconFill as string | undefined)) ?? (opts?.glass ? 'rgba(255,255,255,0.12)' : undefined),
+                      : iconBoxBg ?? (iconShape === 'none' ? 'transparent' : (iconFill as string | undefined)) ?? (opts?.glass ? 'rgba(255,255,255,0.12)' : opts?.row ? 'transparent' : undefined),
                     backgroundImage: cardImage ? `url(${cardImage})` : undefined,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                     borderRadius: iconBoxRadius ?? (iconShape === 'circle' ? 999 : undefined),
-                    width: Number(iconSize) + 22, height: Number(iconSize) + 22,
+                    /* A ROW card carries a bare glyph, not a badge — the row's own border is the container. */
+                    width: Number(iconSize) + (opts?.row ? 4 : 22), height: Number(iconSize) + (opts?.row ? 4 : 22),
                     ...iconBoxRest,
                   }}
                   className={`flex flex-shrink-0 items-center justify-center overflow-hidden rounded text-[#475467] ${
@@ -2051,7 +2054,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                   <Sel id={`${a.id}-title`}>
                     <span style={{ ...roleStyle(styles, `${a.id}-title`, 'title'), ...(opts?.glass && !roleStyle(styles, `${a.id}-title`, 'title').color ? { color: '#FFFFFF' } : {}), ...(centre && !styles[`${a.id}-title`]?.align ? { textAlign: 'center' as const } : {}) }} className="block truncate text-[16px] font-semibold text-[#364658]">{String(c.title ?? a.title)}</span>
                   </Sel>
-                  {String(c.sub ?? a.desc) !== '' && (
+                  {String(c.sub ?? a.desc) !== '' && !opts?.row && (
                     <Sel id={`${a.id}-sub`}>
                       <span style={{ ...roleStyle(styles, `${a.id}-sub`, 'body'), ...(opts?.glass && !roleStyle(styles, `${a.id}-sub`, 'body').color ? { color: 'rgba(255,255,255,0.7)' } : {}), ...(centre && !styles[`${a.id}-sub`]?.align ? { textAlign: 'center' as const } : {}) }} className="block truncate text-[13px] text-[#7B8FA5]">{String(c.sub ?? a.desc)}</span>
                     </Sel>
@@ -2060,9 +2063,14 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                 {/* ⚠️ AFTER the words, not before them. Placed above the icon in the tree it came out
                     on the LEFT of the row — a chevron on the leading edge points back the way you
                     came. `ml-auto` only reaches the right edge if it is the last child. */}
-                {quickRail && (
+                {quickRail && !opts?.row && (
                   <span aria-hidden className="ml-auto flex flex-shrink-0 items-center text-white/50">
                     <ChevronsRight size={15} strokeWidth={2} />
+                  </span>
+                )}
+                {opts?.row && (
+                  <span aria-hidden className="ml-auto flex flex-shrink-0 items-center text-[#6B7280]">
+                    <ChevronRight size={16} strokeWidth={2} />
                   </span>
                 )}
               </div>
@@ -2078,10 +2086,13 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
   const actionsBlock = (nodeId: string) => {
     const cols = Math.min(4, Math.max(1, Number(wc(nodeId).cols ?? 4)));
     return (
-      <div className="grid w-full" style={{ gap: 12, gridTemplateColumns: colsTemplate(cols, 12, 150) }}>
-        {/* The block's LOOK comes from a banner template: glass cards on a dark band, the first one solid when the
-            template leads with it. */}
-        {quickCards.map((a, i) => quickCardEl(a, {}, { glass: String(wc(nodeId).look ?? '') === 'glass' && !(wc(nodeId).firstSolid === true && i === 0) }))}
+      <div className="grid w-full" style={{ gap: String(wc(nodeId).look ?? '') === 'row' ? 10 : 12, gridTemplateColumns: colsTemplate(cols, 12, 150) }}>
+        {/* The block's LOOK comes from a banner template: glass cards on a dark band (the first one solid when the
+            template leads with it), or compact ROWS — icon, title, chevron — under a heading on a light band. */}
+        {quickCards.map((a, i) => quickCardEl(a, {}, {
+          glass: String(wc(nodeId).look ?? '') === 'glass' && !(wc(nodeId).firstSolid === true && i === 0),
+          row: String(wc(nodeId).look ?? '') === 'row',
+        }))}
       </div>
     );
   };
