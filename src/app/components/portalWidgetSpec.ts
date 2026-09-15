@@ -53,6 +53,7 @@ export type ControlKind =
   | 'bannerPreset'
   | 'tilePresets'
   | 'gapPair'
+  | 'overlayLayer'
   /** An ordered choice on a rail with initials under the stops (banner height). */
   | 'stepRail'
   /* ⚠️ Both were in USE and missing from this union, and the casts that would have caught it

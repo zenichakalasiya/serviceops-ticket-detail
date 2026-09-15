@@ -16,7 +16,7 @@ import {
 } from './supportPortalData';
 import { AddSectionSeam, BannerSlot, ColumnAdders, MOVE_MIME, Sel, draggedElement, draggedNode, styleOf, useCanvas } from './PortalCanvas';
 import { HUGS_CONTENT, bannerGroupGap, inBanner } from './portalPageModel';
-import { bannerLayerSide, sideGradient } from './PortalBannerTools';
+import { bannerLayerCss, sideGradient } from './PortalBannerTools';
 import { PAGE_ID, chosen, iconBoxCss, roleStyle } from './portalStyleResolver';
 import { bannerLayout } from './supportPortalData';
 import { shadowCss } from './PortalBoxControls';
@@ -2192,7 +2192,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
             aria-hidden
             data-banner-layer
             className="pointer-events-none absolute inset-0"
-            style={{ backgroundImage: sideGradient(bannerLayerSide(heroCfg), String(heroCfg.overlayFrom ?? 'rgba(15, 23, 42, 0.85)'), String(heroCfg.overlayTo ?? 'rgba(15, 23, 42, 0)')) }}
+            style={bannerLayerCss(heroCfg)}
           />
         )}
         {heroRings && (

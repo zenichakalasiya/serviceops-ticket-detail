@@ -150,9 +150,8 @@ export const HERO_SPEC: WidgetSpec = {
        readable only by luck. It sits BETWEEN the image and the words, strongest at the side the words
        are on, and fades out so the photograph still shows where there is nothing to read. */
     { key: 'overlayOn', label: 'Colour layer over the image', control: 'toggle', tab: 'style', group: 'Background', when: (c) => (c.bgKind ?? 'image') === 'image' && !!c.bannerImage },
-    { key: 'overlaySide', label: 'Strongest at', control: 'gradientSide', tab: 'style', group: 'Background', when: (c) => (c.bgKind ?? 'image') === 'image' && !!c.bannerImage && c.overlayOn !== false },
-    { key: 'overlayFrom', label: 'Layer colour', control: 'color', tab: 'style', group: 'Background', when: (c) => (c.bgKind ?? 'image') === 'image' && !!c.bannerImage && c.overlayOn !== false },
-    { key: 'overlayTo', label: 'Fades to', control: 'color', tab: 'style', group: 'Background', when: (c) => (c.bgKind ?? 'image') === 'image' && !!c.bannerImage && c.overlayOn !== false },
+    /* Solid (one colour, its opacity in the picker) or Gradient (type, angle and stops) — see OverlayLayerEditor. */
+    { key: 'overlayLayer', label: '', control: 'overlayLayer', tab: 'style', group: 'Background', when: (c) => (c.bgKind ?? 'image') === 'image' && !!c.bannerImage && c.overlayOn !== false },
     /* ── Where the heading, subheading and search sit — the same two choices the toolbar offers. */
     {
       key: 'contentAlign', label: 'Horizontal', control: 'segmented', tab: 'style', group: 'Alignment',

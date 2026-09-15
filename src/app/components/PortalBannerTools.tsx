@@ -13,7 +13,9 @@
  *   overlayOn / overlaySide / overlayFrom / overlayTo — the colour layer between an image and the text
  */
 
-import type { ReactNode } from 'react';
+import { useRef, useState } from 'react';
+import type { CSSProperties, MouseEvent as ReactMouseEvent, ReactNode } from 'react';
+import { ArrowLeftRight, Minus, Plus, RotateCw } from 'lucide-react';
 import { ColorField } from './PortalColorPicker';
 import { activePreset, presetsFor, tilePresets } from './portalBannerLayout';
 import type { BannerNode } from './portalBannerLayout';
@@ -248,6 +250,198 @@ export function GapPair({ x, y, mixedX = false, mixedY = false, onX, onY }: {
     <div className="flex gap-2">
       {cell(x, mixedX, onX, colGlyph, 'Gap between columns')}
       {cell(y, mixedY, onY, rowGlyph, 'Gap between rows')}
+    </div>
+  );
+}
+
+/* ── The COLOUR LAYER between a banner image and its words ────────────────────────────────────────
+ * Solid: one colour, its opacity set in the picker — an even wash over the whole picture.
+ * Gradient: a type (linear / radial), an angle, and colour STOPS dragged along a preview bar, each with
+ * its own opacity — the Figma treatment, in this product's controls.
+ * Keys: `overlayMode` ('solid' | 'gradient'), `overlayColor`, `overlayGradient` = { type, angle, stops }.
+ * ⚠️ A banner that predates this has only overlayFrom / overlayTo / overlaySide; its gradient is BUILT from
+ * those on first read, so it looks the same until someone edits it. */
+export interface LayerStop { pos: number; color: string }
+export interface LayerGradient { type: 'linear' | 'radial'; angle: number; stops: LayerStop[] }
+
+const SIDE_ANGLE: Record<string, number> = {
+  left: 90, right: 270, top: 180, bottom: 0, 'top left': 135, 'top right': 225, 'bottom left': 45, 'bottom right': 315,
+};
+
+/** The gradient as stored, or the legacy side / from / to turned into one. */
+export function layerGradientOf(cfg: Record<string, unknown>): LayerGradient {
+  const g = cfg.overlayGradient as LayerGradient | undefined;
+  if (g && Array.isArray(g.stops) && g.stops.length >= 2) return g;
+  const side = bannerLayerSide(cfg);
+  const from = String(cfg.overlayFrom ?? 'rgba(15, 23, 42, 0.85)');
+  const to = String(cfg.overlayTo ?? 'rgba(15, 23, 42, 0)');
+  return { type: side === 'center' ? 'radial' : 'linear', angle: SIDE_ANGLE[side] ?? 90, stops: [{ pos: 0, color: from }, { pos: 100, color: to }] };
+}
+
+const stopsCss = (stops: LayerStop[]) => [...stops].sort((a, b) => a.pos - b.pos).map((s) => `${s.color} ${s.pos}%`).join(', ');
+export const gradientCss = (g: LayerGradient) => (g.type === 'radial'
+  ? `radial-gradient(circle at center, ${stopsCss(g.stops)})`
+  : `linear-gradient(${g.angle}deg, ${stopsCss(g.stops)})`);
+
+/** What the layer paints — used by the banner itself. */
+export function bannerLayerCss(cfg: Record<string, unknown>): CSSProperties {
+  if (cfg.overlayMode === 'solid') return { backgroundColor: String(cfg.overlayColor ?? 'rgba(15, 23, 42, 0.5)') };
+  return { backgroundImage: gradientCss(layerGradientOf(cfg)) };
+}
+
+const CHECKER: CSSProperties = { backgroundImage: 'repeating-conic-gradient(#E5E7EB 0% 25%, #FFFFFF 0% 50%)', backgroundSize: '10px 10px' };
+
+export function OverlayLayerEditor({ cfg, setCfg }: { cfg: Record<string, unknown>; setCfg: (patch: Record<string, unknown>) => void }) {
+  const mode = cfg.overlayMode === 'solid' ? 'solid' : 'gradient';
+  const g = layerGradientOf(cfg);
+  const [active, setActive] = useState(0);
+  const barRef = useRef<HTMLDivElement>(null);
+  const put = (next: LayerGradient) => setCfg({ overlayMode: 'gradient', overlayGradient: next });
+  const setStop = (i: number, patch: Partial<LayerStop>) => put({ ...g, stops: g.stops.map((s, j) => (j === i ? { ...s, ...patch } : s)) });
+  const sel = Math.min(active, g.stops.length - 1);
+  const label = 'mb-1.5 block text-[12px] font-medium text-[#364658]';
+  const iconBtn = 'flex size-8 items-center justify-center rounded border border-[#DFE5ED] bg-white text-[#64748B] transition-colors hover:border-[#C3CBD6] hover:text-[#364658]';
+
+  /* A stop is dragged along the bar; clicking the bar adds one there, in the nearest stop's colour. */
+  const posAt = (clientX: number) => {
+    const r = barRef.current?.getBoundingClientRect();
+    return r ? Math.max(0, Math.min(100, Math.round(((clientX - r.left) / r.width) * 100))) : 0;
+  };
+  const dragStop = (e: ReactMouseEvent, i: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setActive(i);
+    const base = g;
+    const move = (ev: MouseEvent) => put({ ...base, stops: base.stops.map((s, j) => (j === i ? { ...s, pos: posAt(ev.clientX) } : s)) });
+    const up = () => { window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', up); };
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', up);
+  };
+  const addAt = (pos: number) => {
+    if (g.stops.length >= 6) return;
+    const nearest = [...g.stops].sort((a, b) => Math.abs(a.pos - pos) - Math.abs(b.pos - pos))[0];
+    /* Kept in position order, so the list reads left to right like the bar. */
+    const stops = [...g.stops, { pos, color: nearest.color }].sort((x, y) => x.pos - y.pos);
+    put({ ...g, stops });
+    setActive(stops.findIndex((s) => s.pos === pos));
+  };
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex rounded border border-[#DFE5ED] p-0.5">
+        {(['solid', 'gradient'] as const).map((m) => (
+          <button
+            key={m}
+            type="button"
+            onClick={() => (m === 'solid' ? setCfg({ overlayMode: 'solid' }) : put(g))}
+            className={`h-7 flex-1 rounded text-[12px] font-medium transition-colors ${mode === m ? 'bg-[#3D8BD0] text-white' : 'text-[#64748B] hover:bg-[#F5F7FA]'}`}
+          >{m === 'solid' ? 'Solid' : 'Gradient'}</button>
+        ))}
+      </div>
+
+      {mode === 'solid' ? (
+        <div>
+          <span className={label}>Layer colour</span>
+          <ColorField value={String(cfg.overlayColor ?? 'rgba(15, 23, 42, 0.5)')} onChange={(v) => setCfg({ overlayMode: 'solid', overlayColor: v })} />
+          <span className="mt-1.5 block text-[11px] leading-[16px] text-[#7B8FA5]">Lower the opacity in the picker to let more of the image show through.</span>
+        </div>
+      ) : (
+        <>
+          <div className="flex items-center gap-2">
+            <select
+              value={g.type}
+              onChange={(e) => put({ ...g, type: e.target.value as LayerGradient['type'] })}
+              className="app-select h-8 min-w-0 flex-1 rounded border border-[#DFE5ED] bg-white px-2 text-[13px] text-[#364658] outline-none focus:border-[#3D8BD0]"
+              aria-label="Gradient type"
+            >
+              <option value="linear">Linear</option>
+              <option value="radial">Radial</option>
+            </select>
+            {g.type === 'linear' && (
+              <label className="flex h-8 w-[72px] items-center gap-1 rounded border border-[#DFE5ED] bg-white px-2 focus-within:border-[#3D8BD0]" title="Angle">
+                <input
+                  type="number"
+                  value={g.angle}
+                  onChange={(e) => put({ ...g, angle: ((Math.round(Number(e.target.value) || 0) % 360) + 360) % 360 })}
+                  className="w-full min-w-0 bg-transparent text-[13px] text-[#364658] outline-none"
+                  aria-label="Angle"
+                />
+                <span className="text-[12px] text-[#7B8FA5]">°</span>
+              </label>
+            )}
+            <button type="button" title="Reverse" className={iconBtn} onClick={() => put({ ...g, stops: g.stops.map((s) => ({ ...s, pos: 100 - s.pos })) })}><ArrowLeftRight size={14} /></button>
+            {g.type === 'linear' && (
+              <button type="button" title="Rotate 90°" className={iconBtn} onClick={() => put({ ...g, angle: (g.angle + 90) % 360 })}><RotateCw size={14} /></button>
+            )}
+          </div>
+
+          {/* The bar: the gradient left to right over a checkerboard (so opacity reads), stops above it. */}
+          <div className="relative px-[9px] pt-5">
+            {g.stops.map((s, i) => (
+              <button
+                key={i}
+                type="button"
+                title={`${s.pos}%`}
+                onMouseDown={(e) => dragStop(e, i)}
+                className={`absolute top-0 flex size-[18px] -translate-x-1/2 cursor-ew-resize items-center justify-center rounded-[4px] border-2 bg-white shadow-sm ${i === sel ? 'border-[#3D8BD0]' : 'border-white ring-1 ring-[#C3CBD6]'}`}
+                style={{ left: `calc(9px + (100% - 18px) * ${s.pos / 100})` }}
+              >
+                <span className="size-full rounded-[2px]" style={{ ...CHECKER, backgroundSize: '6px 6px' }}>
+                  <span className="block size-full rounded-[2px]" style={{ backgroundColor: s.color }} />
+                </span>
+              </button>
+            ))}
+            <div
+              ref={barRef}
+              title="Click to add a stop"
+              onMouseDown={(e) => addAt(posAt(e.clientX))}
+              className="h-7 w-full cursor-copy overflow-hidden rounded border border-[#DFE5ED]"
+              style={CHECKER}
+            >
+              <div className="size-full" style={{ backgroundImage: `linear-gradient(90deg, ${stopsCss(g.stops)})` }} />
+            </div>
+          </div>
+
+          <div>
+            <div className="mb-1.5 flex items-center justify-between">
+              <span className="text-[12px] font-medium text-[#364658]">Stops</span>
+              <button
+                type="button"
+                title={g.stops.length >= 6 ? 'Up to six stops' : 'Add a stop'}
+                disabled={g.stops.length >= 6}
+                onClick={() => addAt(50)}
+                className="flex size-6 items-center justify-center rounded text-[#64748B] transition-colors hover:bg-[#F3F4F6] hover:text-[#364658] disabled:opacity-40"
+              ><Plus size={14} /></button>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              {g.stops.map((s, i) => (
+                <div key={i} onMouseDown={() => setActive(i)} className={`flex items-center gap-2 rounded p-1 ${i === sel ? 'bg-[#F5F9FE]' : ''}`}>
+                  <label className="flex h-8 w-[70px] flex-shrink-0 items-center gap-0.5 rounded border border-[#DFE5ED] bg-white px-2 focus-within:border-[#3D8BD0]">
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={s.pos}
+                      onChange={(e) => setStop(i, { pos: Math.max(0, Math.min(100, Math.round(Number(e.target.value) || 0))) })}
+                      className="w-full min-w-0 bg-transparent text-[13px] text-[#364658] outline-none"
+                      aria-label="Stop position"
+                    />
+                    <span className="text-[12px] text-[#7B8FA5]">%</span>
+                  </label>
+                  <div className="min-w-0 flex-1"><ColorField value={s.color} onChange={(v) => setStop(i, { color: v })} /></div>
+                  <button
+                    type="button"
+                    title={g.stops.length <= 2 ? 'A gradient needs two stops' : 'Remove stop'}
+                    disabled={g.stops.length <= 2}
+                    onClick={() => { put({ ...g, stops: g.stops.filter((_, j) => j !== i) }); setActive(0); }}
+                    className="flex size-7 flex-shrink-0 items-center justify-center rounded text-[#64748B] transition-colors hover:bg-[#F3F4F6] hover:text-[#EF4444] disabled:opacity-30"
+                  ><Minus size={14} /></button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
