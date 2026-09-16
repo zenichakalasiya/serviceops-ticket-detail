@@ -1,110 +1,95 @@
-# Handoff — 2026-09-13 21:59
+# Handoff — 2026-09-16 13:30
 
 ## Read first
 
-`CLAUDE.md` → the two bullets just above `## Parked features`: **"The portal template showcase …
-was REMOVED"** and **"Industry templates — the plan the next templates are built from"**. The second
-one is the whole outcome of this session in durable form: the programme, the PMG rejections, the
-coral contrast rule and how the canvas chrome is built.
+`CLAUDE.md`, the Support Portal bullets dated **16 Sep 2026** — they are this session in durable
+form, newest first:
 
-The full reasoning — personas, use cases, and a written ITSM justification for every proposed widget —
-lives in the published doc, **Industry Support Portals**:
-https://claude.ai/code/artifact/e0392ec4-8e36-4de8-83c9-72732dd00054
+- **"a preset skeleton draws THE SECTION, not a bar chart of it"** — the drawing rules for every
+  banner preset thumbnail, and the `cfgOf` reader they depend on.
+- **"the Media Slider asks its question in its own words"** — why a slide's image had no surface at
+  all, and the new `inlineImage` collection option that gave it one.
+- **"the Announcements card, six fixes"**.
+- **"banner and data-card fixes"**, **"banner presets are a FIXED set of eight layouts"**, **"banner
+  sections are placed by DRAGGING"**, **"the banner is a set of SECTIONS"**, **"the BANNERS menu"** —
+  the earlier half of the same session.
+
+Then the two long-standing traps these all sit on: **"the child-selection model"** (config and panel
+resolve differently on purpose) and **"`structureSpecId` matches on id SHAPE"**.
 
 ## What we worked on this session
 
-Design strategy rather than builder code. We reviewed the 21 Support Portal layouts produced in Claude
-Design, mapped them to six industries (IT & ITES, Healthcare & Pharma, Manufacturing, Government,
-Education, BFSI) against personas and ITSM use cases, and folded in PMG's review. Alongside that, the
-canvas's chrome was normalised to the real product and a template review page was removed from the app.
+The Support Portal builder's **banner**, end to end: the section model and its fixed preset set, the
+Banners rail menu of 29 rebuilt layouts, drag-to-place inside the banner, and then three rounds of
+panel repair — the Announcements card, the Media Slider, and the preset skeletons themselves.
 
 ## Completed
 
-- **Reviewed all 21 canvas artboards** and recorded defects with DOM evidence, not by eye: the
-  Concierge pair (`3H`, `3H2`) contradict themselves on screen ("2 Approvals" beside "Nothing to
-  approve"); `4F`, `3H` and `3H2` have no search input at all; `4D` ships a stock "YOUR LOGO PLACE
-  HERE" placeholder; mock counts drift between artboards.
-- **Industry mapping, final** — see the programme in `CLAUDE.md`. Every one of the 22 layouts
-  (21 + the new Ward Desk) has a stated outcome: shipping, held, parked, harvested, retired or
-  rejected.
-- **Industry reference doc published** (link above) and updated twice as decisions changed — it now
-  carries the PMG status, the coral contrast measurements, the Ward Desk band spec and the full
-  disposition table.
-- **Canvas chrome normalised** in `ServiceOps portal layout system/Support Portal Layout System.dc.html`:
-  all 21 artboards now share the product's top bar (lucide) and its 8-destination rail (glyphs
-  extracted from `SidebarIcons.tsx`), drawn as CSS `mask-image` classes defined once. The rail was
-  also **wrong, not just differently drawn** — it invented Dashboard and Org destinations and was
-  missing Changes, My Assets and My Approvals. Five artboards (`4P` `4I` `4H` `4G` `4F`) had no
-  product chrome and were given it. Verified in the DOM: 8 rail items with correct labels and 8
-  top-bar icons on every artboard, zero unresolved masks.
-- **Removed the portal template showcase** — `PortalTemplateShowcase.tsx` deleted, plus its route in
-  `routes.ts` (union member, `PAGES` slug, `PAGE_TITLES` label) and its import + render line in
-  `App.tsx`. Zero references left, `npm run build` green, typecheck on both edited files clean, and
-  `#/portal-templates` confirmed in the browser to canonicalise to `#/request`.
-- **Ward Desk (`5A`) prompt written** for Claude Design — a new Healthcare layout, delivered in chat,
-  not yet generated.
+- **Banner section model** — Text & Search is one stretchable section, each widget is its own
+  section, max 4; gaps between rows and columns independent of each other and of a section's inner
+  gaps; Button removed from the banner. Drag a widget (or a whole page card) onto a section's edge to
+  make a column or a row.
+- **Banner presets are a FIXED set of eight** (`PRESET_SHAPES`), taken from the arrangements that
+  repeat across the 37 gallery layouts — they no longer grow with the widgets on the banner, and a
+  newly added section always lands as a new row at the foot.
+- **Banners rail menu** — 25 horizontal + 4 vertical layouts, all rebuilt with the editor
+  (`portalBannerTemplates.ts`), with drop-image placeholders where artwork can't be generated.
+- **Announcements, six fixes** (`b8b3f6d`): a "View all ›" on the regular card; Card type renamed
+  Regular / Carousel / Image with carousel with each sketch bounded in the card's own frame; the
+  image card starts at 0 corner radius and now reads the Style pack's own value; the picture stretches
+  with a dragged height while the text band keeps its own (measured: 30px of empty space gone); and
+  the banner preset tiles got a ground per section.
+- **Media Slider** (`d34d278`): the group is **Carousel type** — Data only / Image with data — and a
+  slide carries its own image through a new `inlineImage` slot drawn by `InlineImageField` (a 44px
+  preview beside one line, measured 271×69). Media type (Image/Video) left the panel; the renderer
+  always drew an `<img>`.
+- **Preset skeletons** (`406dd2c`): `MiniCard` is the shared card face, so KPI, action cards, Contact
+  Us and the list cards draw as cards; Announcements draws the card type it is showing; an image
+  bleeds like a picture; the drawings read each widget's resolved config and follow the cell's shape.
 
 ## In progress
 
-Nothing mid-flight in code. **One decision is waiting on you** — see Next step 1.
+Nothing mid-flight — the working tree is clean at `406dd2c` and every change above was verified in the
+browser at `localhost:5200`.
 
 ## Next steps
 
-1. **Decide `4C` Mosaic.** Asked last and not yet answered: **(A) retire it**, or **(B) create a
-   seventh "Employee Experience" category** holding `4P` + `4C` (which would move `4P` out of
-   Education). Recommendation was A — it needs three customer photos and uses five colours with no
-   meaning.
-2. **Generate Ward Desk in Claude Design** from the prompt, then review it against the six-band spec
-   in the doc.
-3. **Write the remaining Claude Design prompts** — the `3B` Sidecar rework and the two 2A variants
-   (Coral, Navy) — so PMG sees the revised set in one pass.
-4. **Settle three open questions before building templates:** does `4I` Rails get a search (it lost
-   its only one when its invented header was replaced); who owns flipping the Service Status Board
-   during an incident; and what happens to `tpl-counter` and `tpl-verdant` now that PMG has rejected
-   their references.
-5. **Carried over from the previous session, still open:**
-   - Restrict what the banner card slot accepts (Announcements, Contact Us, action cards only) —
-     gate in `dropInRow` for `rowId === 'hero'`, refusing with a reason.
-   - Make `No filter — every record` a pickable row in the Custom Data Widget's filter dropdown
-     (~5 lines in `PortalRecordFilter.tsx`).
-   - Optional: per-service icons on service tiles (needs a name→icon map over mock data).
+1. **A Media Slider slide's call-to-action has no surface.** `ctaEnabled` / `ctaLabel` / `ctaAction` /
+   `ctaUrl` are declared on the slide but the inline editor draws only its first two fields and there
+   is no chevron (`inlineCoversAll`). The fix is the existing `inlineCta` mechanism — but it
+   hard-codes `linkLabel` / `linkUrl` in `PortalItemList`, so it has to take its keys from the spec
+   first. Offered to the user; they have not asked for it yet.
+2. `future-tasks.md` still lists the Media Slider as parked. `CLAUDE.md` now says otherwise; that file
+   should be corrected or the two will disagree.
+3. The Industry-template programme in `CLAUDE.md` (Ward Desk, Wayfinder, Atrium, Service Center) is
+   still the standing plan and has not been started.
 
 ## Decisions made
 
-- **IT & ITES = `3B` Sidecar, reworked** — chosen over the PMG-clear `3J` Bulletin. The rework's real
-  job is to stop its action column reading as a second rail now that the product rail sits beside it.
-- **Healthcare = Ward Desk, designed from scratch** rather than derived from `2B`, so the
-  status-above-banner inversion and the short hero can be sized for a standing user.
-- **Industry is a category FILTER in the gallery**, with each industry still getting its own seed
-  and tile — otherwise two industries sharing a tile have nowhere to put their own widgets.
-- **Industry widgets are recoverable** via a proposed template-scoped "In this template" palette
-  group, not `noDelete` and not delete-forever.
-- **2A ships as two variants**, Coral and Navy — Coral for Education/Healthcare, Navy for
-  BFSI/Government/IT.
-- **Coral is `#F27564`** and **cannot be a button fill or link colour** (2.80:1). `#07101F` carries
-  action; coral carries identity.
-- **Canvas icon swap is chrome only**; the 350 in-page icons stay Material Symbols.
-- **The rail shows 8 destinations** — Service Catalog is hidden on purpose, matching the shipped
-  default.
-- **Only the showcase page was removed** — the Use-Template gallery and `PORTAL_TEMPLATES` stay.
+- **A preset tile draws the layout the banner will actually produce.** That is why the thumbnails read
+  each widget's resolved config rather than its defaults, and why a block of cards runs across a
+  full-width section and stacks in a narrow column — the same rule `bannerCols` applies on the canvas.
+- **Card type / Carousel type are the same question, asked in the same words.** The Media Slider's
+  group was "Navigation", which named neither what it decides nor what you get; the word "carousel"
+  sits in the group title so both option buttons hold one line at any panel width.
+- **A collection item's picture is not a field.** The inline editor draws field one as a line of text
+  and field two as a paragraph whatever they were declared as, and with no chevron that editor is the
+  item's only surface — so an image needs its own slot (`CollectionSpec.inlineImage`), not a field.
+- **Controls with no effect leave the panel, their stored values stay.** Media type went because the
+  renderer ignores it; a stored `kind` still resolves, so nothing already on a page moves.
 
 ## Gotchas & notes
 
-- ⚠️ **Duplicate `CLAUDE.md` and `HANDOFF.md` exist inside `ServiceOps portal layout system/`** —
-  byte-identical copies of the root files, untracked. This wrap-up updated the **root** files only,
-  so those copies are now stale. They look accidental; worth deleting so no session reads the old one.
-- ⚠️ **The whole canvas folder is untracked by git.** The chrome edits are not version-controlled and
-  won't be published by a push. The pre-edit original is saved beside it as `.dc.html.bak`.
-- ⚠️ **`Support Portal Layout System.html` and `export-src.html` are now stale** — they're Claude
-  Design exports and were not edited. Re-export after opening the canvas.
-- ⚠️ **Vite's file watcher crashed with `EBUSY`** when `src/assets/Portal-Personas-and-Use-Cases.md`
-  appeared and was locked or moved mid-watch. Keep working documents out of `src/` — everything under
-  it is watched. That file now sits at the repo root, untracked.
-- ⚠️ **Canvas edits must be scripted with the Write tool, not bash heredocs** — Git Bash strips
-  backslashes, which silently breaks any regex anchor. Assert expected hit counts before writing: the
-  first chrome pass failed safely on 12 of 16 hits because four artboards used a slightly different
-  grey.
-- The canvas is served for review with `npx http-server -p 5299 -c-1 .` from its folder; the app's dev
-  server is `npm run dev -- --port 5200`.
-- The Figma MCP server needs authorising (`claude mcp` or `/mcp` in an interactive session), and
-  `figma-desktop` failed to connect this session.
+- ⚠️ **The design panel renders OUTSIDE `CanvasProvider`.** Anything in a drawer that needs to read
+  another node's config takes a reader as a PROP (`cfgOf`); `useCanvas()` there silently returns
+  `READONLY_CANVAS`, whose `cfg` is undefined — the panel then draws every block at its factory shape
+  and nothing errors.
+- ⚠️ **Hot-reloading `PortalCanvas.tsx` swaps the canvas context**, so the page keeps rendering with
+  no `data-node` anywhere and no outlines. Reload before judging anything on the canvas.
+- ⚠️ The typecheck is the only thing that catches a missing import or a duplicate key here; run it on
+  the handful of files you touched, from the repo root, and expect these four pre-existing errors:
+  `PortalCanvas` splitNode/splitInfo, `PortalWidgetDrawer` ToggleRow `info`, `portalWidgetSpec:694`
+  TS1117, and `SupportPortalBuilder` `parseItemId(...).key` ×2.
+- Edits this session were made by writing small node scripts into the scratchpad and running them,
+  each asserting its anchor appears exactly once — Git Bash strips backslashes inside heredocs, and
+  the `Write` tool refuses to overwrite a file it has not read.
