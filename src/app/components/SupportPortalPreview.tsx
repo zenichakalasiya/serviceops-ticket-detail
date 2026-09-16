@@ -1990,6 +1990,8 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
          so this wrapper must not paint a second one around the pair — the heading would end up inside a
          white box with a second white box under it. Read from the same key the head reads. */
       className={(look?.fill ? 'flex flex-col ' : '') + (look?.bare || String(wc(id).titlePlace ?? 'inside') === 'outside'
+        /* The announcement card's image form paints its own face — see the note in `PortalPlacedElement`. */
+        || String(wc(id).display ?? '') === 'image'
         ? 'min-w-0'
         : squareCards
         ? 'min-w-0 rounded-md border border-[#E5E7EB] bg-white'

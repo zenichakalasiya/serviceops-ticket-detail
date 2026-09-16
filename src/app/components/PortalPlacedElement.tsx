@@ -543,7 +543,12 @@ function PlacedBody({ item, icon, text, cfg }: {
   if (item.type === 'x-kpis') return <KpiTiles cfg={cfg ?? {}} />;
   if (Collection && cfg) {
     const drawn = <Collection nodeId={item.id} cfg={cfg} glyph={glyph} />;
-    return dataWidget ? <Surface id={item.id}>{drawn}</Surface> : <StyledBox id={item.id}>{drawn}</StyledBox>;
+    /* ⚠️ The announcement card in its IMAGE form paints its OWN face — a photograph reaching the card's
+       edges and a colour band under it — so the generic white surface behind it is a second card nobody
+       can see except at the corners, where its rounded white ring shows around a square-cornered
+       picture. That ring is the artifact; the card's own Corner radius is the one that should govern. */
+    const ownFace = item.type === 'c-announcements' && String(cfg.display ?? '') === 'image';
+    return dataWidget && !ownFace ? <Surface id={item.id}>{drawn}</Surface> : <StyledBox id={item.id}>{drawn}</StyledBox>;
   }
 
   const configured = specDrivenBody(item.type, cfg, glyph, item.id);
