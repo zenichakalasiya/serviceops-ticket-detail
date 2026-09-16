@@ -2678,10 +2678,16 @@ export function ColumnAdders({ columnId, filled, onSide, outer }: {
 
 /* ── selection wrapper ───────────────────────────────────────────────────── */
 
-export function Sel({ id, children, className = '', toolbarBelow = false, style: baseStyle }: {
+export function Sel({ id, children, className = '', toolbarBelow = false, surfaceOff = false, style: baseStyle }: {
   id: string;
   children: ReactNode;
   className?: string;
+  /* The node draws its surface somewhere INSIDE itself, so this wrapper must not draw one too.
+     ⚠️ Set by a card whose heading has moved onto the page: the wrapper then holds the heading AND
+     the card, so a fill painted here tints the words outside the card and a border draws a box
+     around a heading that is meant to be outside one. Only the SURFACE is withheld — width, height
+     and margin stay, because those say where the card sits, which has not changed. */
+  surfaceOff?: boolean;
   /* Where the toolbar goes when there is no room above the element.
      `true`  — just inside its own top edge, for a tall band like the hero whose top strip is empty.
      'under' — fully below its bottom edge, for a short dense bar like the portal's top navigation,
@@ -2751,8 +2757,9 @@ export function Sel({ id, children, className = '', toolbarBelow = false, style:
   /* ⚠️ The SHADOW is withheld from the wrapper for the same reason as padding: the wrapper is a
      square box around a rounded card, so a shadow here showed square corners behind round ones —
      and the card paints the same shadow itself, so leaving it here drew it twice as dark. */
+  const isSurface = (k: string) => k.startsWith('background') || k.startsWith('border') || k === 'boxShadow' || k.startsWith('padding');
   const drop = (x: React.CSSProperties): React.CSSProperties =>
-    Object.fromEntries(Object.entries(x).filter(([k]) => !(ownSurface && k.startsWith('padding')) && !(ownShadow && k === 'boxShadow')));
+    Object.fromEntries(Object.entries(x).filter(([k]) => !(ownSurface && k.startsWith('padding')) && !(ownShadow && k === 'boxShadow') && !(surfaceOff && isSurface(k))));
   const size = {
     ...baseStyle,
     ...drop(sizeOf(styles, id)),

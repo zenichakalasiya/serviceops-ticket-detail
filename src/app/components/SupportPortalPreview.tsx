@@ -1421,7 +1421,17 @@ function CardShell({ nodeId, titleNodeId, title, count, cfg = EMPTY_CFG, hideHea
             the top came from the head's `pt-3.5` and the bottom from the body's `pb-3`. The rows have to
             land where they always landed; a card that shifts its contents 2px when its title moves reads
             as a second, unasked-for change. */}
-        <div className="min-h-0 min-w-0 flex-1 rounded-xl border border-[#E5E7EB] bg-white px-4 pb-3 pt-3.5">{children}</div>
+        {/* ⚠️ `[&>:first-child]:border-t-0` — `ListBody` draws a top rule as the line UNDER the card's
+            header. With the header on the page there is no header in here for it to be under, so it
+            landed one pixel below the card's own top border: a divider across the top of a box,
+            separating nothing from the first row.
+            ⚠️ The card's OWN design is applied here, and `Sel` is told to stop applying it
+            (`surfaceOff`) — this box is the card now, so its fill, border, radius, shadow and padding
+            belong to it. Nothing else about the card changes: only its heading moved. */}
+        <div
+          className="min-h-0 min-w-0 flex-1 rounded-xl border border-[#E5E7EB] bg-white px-4 pb-3 pt-3.5 [&>:first-child]:border-t-0"
+          style={rid ? SURFACE_KEYS(styleOf(styles, rid)) : undefined}
+        >{children}</div>
       </div>
     );
   }
@@ -1440,6 +1450,13 @@ function CardShell({ nodeId, titleNodeId, title, count, cfg = EMPTY_CFG, hideHea
 const IdPill = ({ children }: { children: ReactNode }) => (
   <span className="max-w-full flex-shrink truncate whitespace-nowrap rounded-sm bg-[#F1F5F9] px-1.5 py-0.5 text-[12px] font-medium text-[#475467]">{children}</span>
 );
+
+/* The card's own design, for the box that IS the card once the heading sits above it. Fill,
+   border, corner radius, shadow and padding move; width, height and margin do not — those say where
+   the card sits, and moving its heading does not move the card. */
+const SURFACE_KEYS = (s: React.CSSProperties): React.CSSProperties =>
+  Object.fromEntries(Object.entries(s).filter(([k]) =>
+    k.startsWith('background') || k.startsWith('border') || k === 'boxShadow' || k.startsWith('padding'))) as React.CSSProperties;
 
 /** The rows container — P4's dividers and gap, resolved. */
 function ListBody({ nodeId, children }: { nodeId: string; children: ReactNode }) {
@@ -1987,6 +2004,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
        kind, and nobody can tell you which. */
     <Sel
       id={id}
+      surfaceOff={String(wc(id).titlePlace ?? 'inside') === 'outside'}
       /* ⚠️ `bare` paints NO surface. A card mounted inside a container that already draws a
          border and a background would otherwise draw a second one 1px inside the first — which is
          what a tabbed work band looked like before this existed. */

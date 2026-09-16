@@ -313,7 +313,7 @@ const CARD_LAYOUTS = [
 
 export function CardLayoutPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
-    <div className="grid grid-cols-2 gap-2">
+    <div className="grid grid-cols-3 gap-2">
       {CARD_LAYOUTS.map((t) => {
         const on = value === t.value;
         const ink = on ? 'bg-[#3D8BD0]/45' : 'bg-[#C3CDD9]';
@@ -329,7 +329,7 @@ export function CardLayoutPicker({ value, onChange }: { value: string; onChange:
             <span className={`h-[2px] w-[55%] rounded-full ${faint}`} />
           </span>
         );
-        const button = <span className={`mt-[3px] h-[6px] w-[22px] rounded-[2px] ${ink}`} />;
+        const button = <span className={`mt-[4px] h-[5px] w-[18px] rounded-[2px] ${ink}`} />;
         return (
           <button
             key={t.value}

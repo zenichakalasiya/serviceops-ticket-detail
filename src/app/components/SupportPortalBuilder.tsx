@@ -2405,16 +2405,27 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     const item = parseItemId(id);
     if (item) {
       const owner = item.widget;
+      /* ⚠️ The SEEDED list, read through `cfgFor`, as the fallback. `setWidgetCfg` sees the RAW
+         store, where a widget nobody has edited yet holds nothing at all — so an untouched card's
+         first inline edit found no list, mapped over `[]` and wrote one back, deleting every seeded
+         item the canvas was showing. Typing in a link emptied the card. */
+      const seeded = (cfgFor(owner)[specForNode(owner)?.collection?.key ?? 'items'] as Cfg[]) ?? [];
       setWidgetCfg((prev) => {
         const cfg = prev[owner] ?? {};
-        const list = (cfg[item.key ?? 'items'] as Cfg[]) ?? [];
+        /* ⚠️ The collection's OWN key, read from the widget's spec. It was hard-coded to 'items',
+           which is the key List and Accordion happen to use — so an inline edit of any other
+           collection (a Custom Card's links, a slider's slides) was written into an `items` array
+           that widget does not have, and the words on the canvas snapped back the moment it
+           re-rendered. */
+        const key = specForNode(owner)?.collection?.key ?? 'items';
+        const list = (cfg[key] as Cfg[]) ?? seeded;
         return {
           ...prev,
-          [owner]: { ...cfg, [item.key ?? 'items']: list.map((it, i) => (String(it.id ?? i) === item.item ? { ...it, [item.part ?? 'title']: text } : it)) },
+          [owner]: { ...cfg, [key]: list.map((it, i) => (String(it.id ?? i) === item.item ? { ...it, [item.part ?? 'title']: text } : it)) },
         };
       });
     }
-  }, [patchCfg]);
+  }, [patchCfg, specForNode, cfgFor]);
 
   /* Replace a placed element with a different kind, in the same spot.
      ⚠️ It takes a NEW id rather than mutating the old one's type: config and style are keyed by id,
@@ -2468,8 +2479,14 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
      picker opened while the outline and the sidebar both showed the parent, which is the one thing
      clicking an icon must not do. The VALUE still keys off the card (`icons[ownerOf(id)]`), because
      that is where the glyph is stored; only the selection differs. */
+  /* ⚠️ The id may ALREADY be the icon's node — a collection item's icon is `<widget>~i<n>~icon`,
+     a node in its own right — in which case appending the suffix again makes `~icon-icon`, which is
+     nothing, and the selection lands on no node at all. */
   const pickIcon = useCallback((id: string, anchor: DOMRect) => {
-    setSelectedId(`${id}-icon`);
+    /* An ITEM's icon selects the ITEM. A link is one node carrying a glyph, a label and a
+       destination — splitting the glyph off would open a drawer titled "icon" holding the link's
+       other two fields, which reads as the panel having lost track of what you clicked. */
+    setSelectedId(/~icon$/.test(id) ? id.replace(/~icon$/, '') : /-icon$/.test(id) ? id : `${id}-icon`);
     setIconPick({ id, rect: anchor });
   }, []);
 
@@ -2889,14 +2906,37 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
           {/* With the panel hidden the rail is the only way back to it — this restores the last one. */}
           {/* The inline half of the icon field. Anchored to the icon that was clicked, writing the
               same store the panel writes. */}
-          {iconPick && (
-            <IconPopover
-              value={icons[iconPick.id]}
-              anchor={iconPick.rect}
-              onPick={(c) => { setIcons((m) => ({ ...m, [iconPick.id]: c })); setIconPick(null); }}
-              onClose={() => setIconPick(null)}
-            />
-          )}
+          {iconPick && (() => {
+            /* ⚠️ A collection ITEM's icon lives on the item, inside its widget's config — not in the
+               shared `icons` store, which is keyed by widget: six links would have shared one glyph,
+               and picking on any of them would have changed all six. Same popover, same picker, a
+               different place to put the answer. */
+            const it = parseItemId(iconPick.id);
+            if (it?.part === 'icon') {
+              const key = specForNode(it.widget)?.collection?.key ?? 'items';
+              const list = ((cfgFor(it.widget)[key] as Cfg[]) ?? []);
+              const idx = list.findIndex((x, i) => String(x.id ?? i) === it.item);
+              return (
+                <IconPopover
+                  value={idx >= 0 ? (list[idx].icon as IconChoice | undefined) : undefined}
+                  anchor={iconPick.rect}
+                  onPick={(c) => {
+                    if (idx >= 0) patchCfg(it.widget, { [key]: list.map((x, i) => (i === idx ? { ...x, icon: c } : x)) });
+                    setIconPick(null);
+                  }}
+                  onClose={() => setIconPick(null)}
+                />
+              );
+            }
+            return (
+              <IconPopover
+                value={icons[iconPick.id]}
+                anchor={iconPick.rect}
+                onPick={(c) => { setIcons((m) => ({ ...m, [iconPick.id]: c })); setIconPick(null); }}
+                onClose={() => setIconPick(null)}
+              />
+            );
+          })()}
           {collapsed && (
             <button
               onClick={() => setCollapsed(false)}

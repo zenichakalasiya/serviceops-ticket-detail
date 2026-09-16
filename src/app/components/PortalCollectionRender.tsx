@@ -17,13 +17,13 @@ import { ImageUploadZone } from './PortalControls';
 /* The Table is a module of its own — a spreadsheet-grade editor is a different kind of thing from
    the read-only renderers in this file, and it owns its data model, its handles and its menus. */
 import { PortalTable } from './PortalTable';
-import { hasFixedTitle, hasFixedViewAll, itemNodeId, subNodeId } from './portalPageModel';
+import { hasFixedTitle, hasFixedViewAll, itemNodeId, registerItemName, subNodeId } from './portalPageModel';
 import { CarouselArrows, CarouselDots, CarouselNav, CarouselTrack, useCarousel } from './PortalCarousel';
 import { LineMark } from './PortalLineStyles';
 import type { LineStyle } from './PortalLineStyles';
 import type { CarouselType } from './PortalCarousel';
 import type { PortalStyles } from './portalPageModel';
-import { chosen, iconBoxCss, resolveType, roleStyle } from './portalStyleResolver';
+import { chosen, containerCss, iconBoxCss, resolveType, roleStyle } from './portalStyleResolver';
 import { IconFrameBox } from './PortalIconFrame';
 import { iconNode } from './PortalIconPicker';
 import type { IconChoice } from './PortalIconPicker';
@@ -944,7 +944,9 @@ export function AnnouncementsRender({ nodeId, cfg, headIcon }: { nodeId: string;
         <div className="px-1">
           <WidgetTitle nodeId={nodeId} text={cfg.title} icon={headIcon} count={ANNOUNCEMENTS.length} action={viewAll} flush />
         </div>
-        <div className="min-h-0 min-w-0 flex-1 rounded-xl border border-[#E5E7EB] bg-white px-4 pb-3 pt-3.5">{stack}</div>
+        {/* The card's own fill, border, corners and shadow — this box is the card now. `Sel` is told
+            to stop painting them (`surfaceOff`), so they land here once and only here. */}
+        <div className="min-h-0 min-w-0 flex-1 rounded-xl border border-[#E5E7EB] bg-white px-4 pb-3 pt-3.5" style={containerCss(styles, nodeId)}>{stack}</div>
       </div>
     );
   }
@@ -977,7 +979,7 @@ function CardImageSlot({ nodeId }: { nodeId: string }) {
 }
 
 export function CustomCardRender({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
-  const { styles, enabled } = useCanvas();
+  const { styles, enabled, select, pickIcon } = useCanvas();
   const layout = String(cfg.layout ?? 'imageRight');
   const links = visible((cfg.links as Item[]) ?? [], enabled);
   const side = layout === 'imageRight' || layout === 'imageLeft';
@@ -1014,23 +1016,55 @@ export function CustomCardRender({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) 
      ⚠️ Each row's glyph comes from the ITEM (`l.icon`), through the same `iconNode` the whole builder
      draws icons with, so an uploaded SVG works here exactly as it does on an action card. */
   const linkRows = (
-    <div className="flex min-w-0 flex-col" style={{ marginTop: gap }}>
+    /* ⚠️ The rule is declared on the STACK, not on each row: every row is wrapped in its own `Sel`
+       now, so a `first:border-t-0` on the inner span would look at the span's position inside its
+       wrapper — where every one of them is the first child — and no rule would ever draw. */
+    <div className="flex min-w-0 flex-col [&>*+*]:border-t [&>*+*]:border-t-[#E5E7EB]" style={{ marginTop: gap }}>
       {links.length === 0 && enabled && <span className="py-2 text-[13px] text-[#9CA3AF]">No links yet — add one in the panel.</span>}
-      {links.map((l, i) => (
-        <span
-          key={i}
-          className="flex min-w-0 items-center gap-3 border-t border-[#F0F2F5] text-[14px] text-[#364658] first:border-t-0"
-          style={{ paddingTop: gap / 2, paddingBottom: gap / 2 }}
-        >
-          {l.icon ? (
-            <span className="flex size-[18px] flex-shrink-0 items-center justify-center [&>span>svg]:size-[18px]" style={{ color: 'var(--portal-accent, #3D8BD0)' }}>
-              {iconNode(l.icon as IconChoice, 18)}
+      {links.map((l, i) => {
+        /* ⚠️ `String(l.id ?? i)` — the same key every other collection uses. Seeded items carry no id,
+           so the INDEX is the identity, and on the canvas `visible()` keeps every item (hidden ones
+           included) so that index is the stored one. */
+        const key = String(l.id ?? i);
+        const inode = itemNodeId(nodeId, key);
+        /* So the drawer is headed by the link rather than by the word "Item" — the panel list
+           registers these names, and a link selected on the CANVAS never went through it. */
+        registerItemName(inode, String(l.label ?? '') || `Link ${i + 1}`);
+        /* An EMPTY slot on the canvas, so a link with no icon yet still has something to click.
+           In Preview it draws nothing — a requester must not see a gap where an unset icon would be. */
+        const glyph = l.icon ? iconNode(l.icon as IconChoice, 18) : null;
+        return (
+          <Sel key={key} id={inode}>
+            <span
+              className="flex min-w-0 items-center gap-3 text-[14px] text-[#364658]"
+              style={{ paddingTop: gap / 2, paddingBottom: gap / 2 }}
+            >
+              {(glyph || enabled) ? (
+                <span
+                  onClick={enabled ? (ev) => {
+                    ev.stopPropagation();
+                    /* The picker is told the ICON's node (that is where the glyph is stored); the
+                       SELECTION lands on the link, which is the thing you clicked. */
+                    select(inode);
+                    pickIcon(subNodeId(inode, 'icon'), (ev.currentTarget as HTMLElement).getBoundingClientRect());
+                  } : undefined}
+                  className={`flex size-[18px] flex-shrink-0 items-center justify-center [&>span>svg]:size-[18px]${enabled ? ' cursor-pointer rounded-sm hover:outline hover:outline-1 hover:outline-offset-2 hover:outline-[#3D8BD0]' : ''}`}
+                  style={{ color: 'var(--portal-accent, #3D8BD0)' }}
+                  title={enabled ? 'Change icon' : undefined}
+                >
+                  {glyph ?? <span className="block size-[14px] rounded-sm border border-dashed border-[#C3CDD9]" />}
+                </span>
+              ) : null}
+              {/* The words are the item's — typed here, stored on the link, the same edit the panel makes. */}
+              <Sel id={subNodeId(inode, 'label')} className="min-w-0 flex-1">
+                <span className="block truncate">{String(l.label ?? '')}</span>
+              </Sel>
+              {/* The product's, on every row: it is what says the row goes somewhere. */}
+              <ArrowUpRight size={16} className="flex-shrink-0" style={{ color: 'var(--portal-accent, #3D8BD0)' }} />
             </span>
-          ) : null}
-          <span className="min-w-0 flex-1 truncate">{String(l.label ?? '')}</span>
-          <ArrowUpRight size={16} className="flex-shrink-0" style={{ color: 'var(--portal-accent, #3D8BD0)' }} />
-        </span>
-      ))}
+          </Sel>
+        );
+      })}
     </div>
   );
 

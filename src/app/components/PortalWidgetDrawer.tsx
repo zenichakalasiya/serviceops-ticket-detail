@@ -760,11 +760,21 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
   const collection = spec.collection;
   const allItems = (collection ? ((cfg[collection.key] as Cfg[]) ?? []) : []) as (Cfg & { id: string })[];
   const parsed = parseItemId(nodeId);
-  const selItem = parsed && collection ? allItems.find((x) => x.id === parsed.item) : undefined;
+  /* ⚠️ By INDEX when the item has no id of its own. Seeded items carry none — which is why every
+     renderer keys them `String(it.id ?? i)` — so an id lookup compared `undefined` against the index
+     the canvas had put in the node id, found nothing, and fell back to the WIDGET's own config: the
+     drawer then read and wrote the item's fields on the widget, one level up from where they live. */
+  const selIdx = parsed && collection ? (() => {
+    const byId = allItems.findIndex((x) => x.id === parsed.item);
+    if (byId >= 0) return byId;
+    const n = Number(parsed.item);
+    return Number.isInteger(n) && n >= 0 && n < allItems.length ? n : -1;
+  })() : -1;
+  const selItem = selIdx >= 0 ? allItems[selIdx] : undefined;
 
   const patchItem = (patch: Cfg) => {
-    if (!collection || !selItem) return;
-    setCfg({ [collection.key]: allItems.map((x) => (x.id === selItem.id ? { ...x, ...patch } : x)) });
+    if (!collection || selIdx < 0) return;
+    setCfg({ [collection.key]: allItems.map((x, i) => (i === selIdx ? { ...x, ...patch } : x)) });
   };
 
   /* What this layer edits. A sub-element edits exactly ONE field of its item — the Answer drawer
