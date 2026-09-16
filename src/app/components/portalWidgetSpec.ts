@@ -402,7 +402,10 @@ export const WIDGET_SPECS: WidgetSpec[] = [
          only, so it is a property of the type rather than a second switch that could contradict it.
          Still the `display` key (regular / carousel / image), so every stored card keeps its shape. */
       { key: 'display', label: '', control: 'announcementType', group: 'Card type' },
-      TITLE_PLACE_FIELD,
+      /* ⚠️ The SAME gate the Title field below carries, and for the same reason: only the Regular card has
+         a heading at all — both carousels draw their notices with no header — so asking where to put one is
+         asking about something that is not there. A field whose `when` fails is REMOVED, not disabled. */
+      { ...TITLE_PLACE_FIELD, when: (c: Cfg) => (c.display ?? 'regular') === 'regular' },
       /* Only the Regular card has a header, so only it asks for a title. */
       { ...TITLE_FIELD, when: (c) => (c.display ?? 'regular') === 'regular' },
       /* ── Image carousel only ── ⚠️ All three are REMOVED for the other two displays, not disabled:
