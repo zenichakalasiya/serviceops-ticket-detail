@@ -31,22 +31,16 @@ function prune(n: BannerNode, items: Set<string>): BannerNode | null {
   return branch(n.d, c.flatMap((k) => (typeof k !== 'string' && k.d === n.d ? k.c : [k])));
 }
 
-/** Where a newly arrived item goes when nobody has said: the search under the words, anything else beside. */
+/** Where a newly arrived section goes when nobody has said: a NEW ROW at the foot of the banner.
+ *
+ * ⚠️ A row, never beside. The banner's shape is the PRESET the admin chose, and a widget that inserted itself
+ * into that shape would rearrange a layout they had picked on purpose. Landing underneath leaves the preset
+ * intact and hands the new section the one thing it needs — somewhere to be — which is then split into columns
+ * by dragging it onto an edge or with the + handles. */
 function append(t: BannerNode | null, id: string): BannerNode {
   if (!t) return id;
-  if (id === 'hero-search') {
-    if (t === 'hero-copy') return branch('column', ['hero-copy', 'hero-search']);
-    const put = (n: BannerNode): BannerNode => {
-      if (typeof n === 'string') return n === 'hero-copy' ? branch('column', ['hero-copy', 'hero-search']) : n;
-      const i = n.c.indexOf('hero-copy');
-      if (i >= 0 && n.d === 'column') return branch('column', [...n.c.slice(0, i + 1), 'hero-search', ...n.c.slice(i + 1)]);
-      return branch(n.d, n.c.map(put));
-    };
-    const next = put(t);
-    return leavesOf(next).includes('hero-search') ? next : branch('column', [t, 'hero-search']);
-  }
-  if (typeof t !== 'string' && t.d === 'row') return branch('row', [...t.c, id]);
-  return branch('row', [t, id]);
+  if (typeof t !== 'string' && t.d === 'column') return branch('column', [...t.c, id]);
+  return branch('column', [t, id]);
 }
 
 /** The most SECTIONS one banner holds. Beyond four, no arrangement of them reads cleanly. */
@@ -95,80 +89,78 @@ export const hasRow = (n: BannerNode | null): boolean => !!n && typeof n !== 'st
 
 export interface BannerPreset { id: string; label: string; tree: BannerNode }
 
-/* ⚠️ Presets arrange the banner's MAIN GROUPS, not its individual items. The Text group and the search are
-   one group — they read as one sentence and are never pulled apart by a preset — and every widget on the
-   banner is a group of its own. A banner holds at most THREE COLUMNS (beyond that nothing is readable),
-   but any number of rows, so the set on offer is every way of laying the groups out as:
-     · columns (1–3), each column stacking its groups, or
-     · rows of up to three groups each, stacked.
-   Order is always kept — a preset rearranges the same groups in the same reading order. */
+/* ── PRESETS ─────────────────────────────────────────────────────────────────────────────────────
+ *
+ * ⚠️ A FIXED set of eight shapes, taken from the arrangements that actually repeat across the 37 layout
+ * templates — not every combination the current sections could be put in. A list that grew with each widget
+ * added (2 sections → 2 presets, 4 → 13) offered a wall of near-identical tiles and asked the admin to pick a
+ * layout out of arithmetic; these are the layouts somebody designed.
+ *
+ * Each shape is written in SLOTS: slot 0 is the first section (the Text & Search section on every banner that
+ * has one), and the rest fill in reading order. A preset with more slots than there are sections simply drops
+ * the empty ones, and sections past the last slot are appended as their own full-width ROWS at the foot — so a
+ * preset never hides a section and never has to be re-chosen after adding one.
+ *
+ * ⚠️ Deliberately ONE list for every banner. The tiles are the same eight wherever you are, which is what makes
+ * them recognisable; what changes is the picture inside each tile, drawn from the sections you actually have. */
 
-/** Ordered ways to split `n` into parts, each part ≤ `maxPart`, using at most `maxParts` parts. */
-function compositions(n: number, maxPart: number, maxParts: number): number[][] {
-  const out: number[][] = [];
-  const walk = (left: number, acc: number[]) => {
-    if (left === 0) { out.push(acc); return; }
-    if (acc.length >= maxParts) return;
-    for (let p = 1; p <= Math.min(maxPart, left); p++) walk(left - p, [...acc, p]);
-  };
-  walk(n, []);
-  return out;
-}
+type Shape = number | { d: 'row' | 'column'; c: Shape[] };
+const R = (...c: Shape[]): Shape => ({ d: 'row', c });
+const C = (...c: Shape[]): Shape => ({ d: 'column', c });
 
-/** A branch holding a branch of the same direction is one branch — the same repair `prune` makes, so a
- *  preset's tree is spelled exactly as the drawn tree will be. */
+const PRESET_SHAPES: { id: string; label: string; s: Shape }[] = [
+  { id: 'single', label: 'Stacked', s: 0 },
+  { id: 'text-widget', label: 'Two columns', s: R(0, 1) },
+  { id: 'widget-text', label: 'Two columns, text right', s: R(1, 0) },
+  { id: 'text-two', label: 'Text left, two stacked right', s: R(0, C(1, 2)) },
+  { id: 'text-row', label: 'Text over a row', s: C(0, R(1, 2, 3)) },
+  { id: 'row-text', label: 'Row over text', s: C(R(1, 2, 3), 0) },
+  { id: 'three', label: 'Three across', s: R(1, 0, 2) },
+  { id: 'two-strip', label: 'Two columns, strip below', s: C(R(0, 1), 2) },
+];
+
+/** A branch holding a branch of the same direction is one branch — the repair `prune` makes, so a preset's
+ *  tree is spelled exactly as the drawn tree will be and `activePreset` can match it. */
 function flat(n: BannerNode): BannerNode {
   if (typeof n === 'string') return n;
   const c = n.c.map(flat).flatMap((k) => (typeof k !== 'string' && k.d === n.d ? k.c : [k]));
   return c.length === 1 ? c[0] : branch(n.d, c);
 }
 
-/** The banner's SECTIONS in reading order — the Text & Search section and each widget. */
-const groupsOf = (tree: BannerNode | null): BannerNode[] => leavesOf(tree);
-
-const split = (items: BannerNode[], parts: number[]) => {
-  let i = 0;
-  return parts.map((p) => { const s = items.slice(i, i + p); i += p; return s; });
-};
-const one = (d: 'row' | 'column', list: BannerNode[]): BannerNode => (list.length === 1 ? list[0] : branch(d, list));
-
-/** Every arrangement of the banner's groups: up to three columns, rows of up to three. */
-function presetList(groups: BannerNode[]): BannerPreset[] {
-  const n = groups.length;
-  if (n <= 1) return [];
-  const seen = new Set<string>();
-  const out: BannerPreset[] = [];
-  const add = (id: string, label: string, t: BannerNode) => {
-    const tree = flat(t);
-    const key = JSON.stringify(tree);
-    if (seen.has(key)) return;
-    seen.add(key);
-    out.push({ id, label, tree });
+/** Fills a shape with the sections there are: empty slots collapse, and the rest become rows underneath. */
+function fill(s: Shape, ids: string[]): BannerNode | null {
+  const used = new Set<number>();
+  const walk = (k: Shape): BannerNode | null => {
+    if (typeof k === 'number') {
+      if (!ids[k]) return null;
+      used.add(k);
+      return ids[k];
+    }
+    const c = k.c.map(walk).filter((x): x is BannerNode => x !== null);
+    return c.length === 0 ? null : c.length === 1 ? c[0] : branch(k.d, c);
   };
-  /* Columns — each column a stack of its groups. */
-  for (let k = Math.min(3, n); k >= 2; k--) {
-    compositions(n, n, k).filter((p) => p.length === k).forEach((parts) => {
-      const cols = split(groups, parts).map((g) => one('column', g));
-      const label = parts.every((p) => p === 1) ? `${k} columns` : `${k} columns · ${parts.join(' + ')}`;
-      add(`cols-${parts.join('-')}`, label, branch('row', cols));
-    });
-  }
-  /* Rows — each row up to three groups side by side. Past four groups only the even fills are offered, so
-     the list stays a choice rather than a catalogue. */
-  compositions(n, 3, n)
-    .filter((p) => p.length >= 2)
-    .filter((p) => n <= 4 || p.every((x, i) => i === 0 || x <= p[i - 1]))
-    .forEach((parts) => {
-      const rows = split(groups, parts).map((g) => one('row', g));
-      const label = parts.every((p) => p === 1) ? 'Stacked' : `Rows · ${parts.join(' then ')}`;
-      add(`rows-${parts.join('-')}`, label, branch('column', rows));
-    });
-  return out;
+  const body = walk(s);
+  if (!body) return null;
+  const rest = ids.filter((_, i) => !used.has(i));
+  return flat(rest.length ? branch('column', [body, ...rest]) : body);
 }
 
-/** The arrangements on offer for these items, in their current order. */
+/** The eight presets, drawn for the sections this banner holds. Two shapes that come out identical at this
+ *  section count are shown once — two tiles promising the same layout is a choice that is not one. */
 export function presetsFor(tree: BannerNode | null): BannerPreset[] {
-  return presetList(groupsOf(tree));
+  const ids = leavesOf(tree);
+  if (ids.length < 2) return [];
+  const seen = new Set<string>();
+  const out: BannerPreset[] = [];
+  PRESET_SHAPES.forEach((p) => {
+    const t = fill(p.s, ids);
+    if (!t) return;
+    const key = JSON.stringify(t);
+    if (seen.has(key)) return;
+    seen.add(key);
+    out.push({ id: p.id, label: p.label, tree: t });
+  });
+  return out;
 }
 
 /** The preset the drawn tree matches, if any. */
