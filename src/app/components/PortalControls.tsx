@@ -1017,6 +1017,81 @@ export function ImageUploadZone({
   );
 }
 
+/* A COMPACT image slot — a 56px preview beside one line of controls.
+ *
+ * ⚠️ NOT `ImageUploadZone`, whose smallest size is a 132px drop target. Inside a collection row —
+ * a slide, a card — that zone is taller than the two text fields it sits with, so every open row in
+ * the list scrolls twice as far for a picture that is a thumbnail on the canvas anyway. Dropping
+ * still works (the whole row is the drop target), so the compact form loses nothing but height.
+ * ⚠️ Validation runs BEFORE the file is read, exactly as `ImageUploadZone` does it, so a wrong or
+ * oversized file never draws a preview first and an error second. */
+export function InlineImageField({ value, onChange, label, accept = 'image/*', maxMB = 5 }: {
+  value?: string;
+  onChange: (dataUrl: string | undefined) => void;
+  /** Names the SLOT for screen readers — "Upload this slide's image", not "Upload". */
+  label: string;
+  accept?: string;
+  maxMB?: number;
+}) {
+  const ref = useRef<HTMLInputElement>(null);
+  const [over, setOver] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const take = (file?: File | null) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { setErr(`That file is a ${file.type || 'unknown type'} — this slot takes an image`); return; }
+    const mb = file.size / (1024 * 1024);
+    if (mb > maxMB) { setErr(`That file is ${mb.toFixed(1)}MB — the limit is ${maxMB}MB`); return; }
+    setErr(null);
+    const fr = new FileReader();
+    fr.onload = () => onChange(String(fr.result));
+    fr.readAsDataURL(file);
+  };
+
+  return (
+    <>
+      <div
+        onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setOver(true); setErr(null); }}
+        onDragLeave={() => setOver(false)}
+        onDrop={(e) => { e.preventDefault(); e.stopPropagation(); setOver(false); take(e.dataTransfer.files?.[0]); }}
+        className={`flex items-center gap-2.5 rounded border p-2 transition-colors ${
+          over ? 'border-[#3D8BD0] bg-[#EAF3FB]' : value ? 'border-[#E5E7EB] bg-white' : 'border-dashed border-[#d1d5db] bg-white'
+        }`}
+      >
+        {/* The picture itself, on a chequerboard — the slot is being CHECKED, not confirmed. */}
+        <span
+          aria-hidden
+          className="flex size-[44px] flex-shrink-0 items-center justify-center rounded bg-contain bg-center bg-no-repeat text-[#9CA3AF]"
+          style={value
+            ? { backgroundImage: `url(${value}), ${CHECKER}`, backgroundSize: 'contain, 8px 8px' }
+            : { background: '#F1F5F9' }}
+        >{!value && <Images size={16} strokeWidth={1.6} />}</span>
+        <div className="flex min-w-0 flex-1 flex-col items-start">
+          <button
+            type="button"
+            aria-label={label}
+            onClick={() => ref.current?.click()}
+            className="text-[13px] font-medium text-[#3D8BD0] hover:underline"
+          >{value ? 'Replace image' : 'Upload image'}</button>
+          <span className="mt-0.5 text-[11px] leading-[15px] text-[#9CA3AF]">
+            {value ? 'or drop a new one here' : `Drop one here · PNG, JPG or WebP · max ${maxMB}MB`}
+          </span>
+        </div>
+        {value && (
+          <button
+            type="button"
+            title="Remove this image"
+            onClick={() => onChange(undefined)}
+            className="flex size-6 flex-shrink-0 items-center justify-center rounded text-[#9CA3AF] transition-colors hover:bg-[#F3F4F6] hover:text-[#EF4444]"
+          ><X size={13} /></button>
+        )}
+      </div>
+      <input ref={ref} type="file" accept={accept} className="hidden" onChange={(e) => { take(e.target.files?.[0]); e.currentTarget.value = ''; }} />
+      {err && <p className="mt-1 text-[11px] leading-[15px] text-[#EF4444]">{err}</p>}
+    </>
+  );
+}
+
 export function UploadZone({ value, onChange, accept = 'image/*', label, gallery, suggested, noun }: {
   value?: string; onChange: (dataUrl?: string) => void; accept?: string;
   /* ⚠️ What is in the slot, so the filled CTA can NAME it — "Replace logo", not "Replace". A slot

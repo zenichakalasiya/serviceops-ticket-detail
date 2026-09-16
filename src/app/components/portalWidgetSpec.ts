@@ -164,6 +164,13 @@ export interface CollectionSpec {
    * item to serve the minority that wants one. `flag` is the key it switches on, so the same
    * mechanism serves any collection that wants an optional extra. */
   inlineCta?: { label: string; flag: string; removeLabel: string; clears: string[] };
+  /* A PICTURE the item carries, drawn as a compact slot at the TOP of the inline editor.
+   *
+   * ⚠️ It belongs here rather than in `fields` because the inline editor is the item's ONLY
+   * surface once it covers the field list — there is no chevron — and that editor draws field one as
+   * a text input and field two as a textarea whatever they were declared as. A Media Slider slide's
+   * image WAS field two: it rendered as a textarea, and a slide could not be given a picture. */
+  inlineImage?: { key: string; label: string; altKey?: string; altLabel?: string; when?: (item: Cfg) => boolean };
   /** cfg key holding the array. */
   key: string;
   /** Group title in the widget's Content tab. */

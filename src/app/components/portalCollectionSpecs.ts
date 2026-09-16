@@ -261,17 +261,24 @@ export const SLIDER_SPEC: WidgetSpec = {
      `defaults`, so a page that stored one still resolves. */
   fields: [
     { key: 'title', label: 'Title', control: 'text', group: 'Content', help: 'Optional — hidden when blank.' },
+    /* ⚠️ The group is CAROUSEL TYPE, not "Navigation" — nothing here navigates anything; it is the
+       same question the Announcements card asks under "Card type", and the two widgets should ask it
+       in the same words. The options say what is IN each carousel; the word "carousel" sits in the
+       group's own title so both buttons hold one line at any panel width. */
     {
-      key: 'slideMode', label: '', control: 'segmented', group: 'Navigation',
-      options: [{ value: 'data', label: 'Data only' }, { value: 'both', label: 'Data + image' }],
+      key: 'slideMode', label: '', control: 'segmented', group: 'Carousel type',
+      options: [{ value: 'data', label: 'Data only' }, { value: 'both', label: 'Image with data' }],
       /* The mode is COPIED onto every slide, because a slide's own panel cannot see the widget's config
          — it is how a slide knows to hide its image fields in Data only. */
       consequence: (value, c) => ({
         patch: { slides: ((c.slides as Cfg[]) ?? []).map((sl) => ({ ...sl, __mode: value })) },
-        say: value === 'data' ? 'Data only — one background image, the text slides over it' : 'Data + image — every slide carries its own image',
+        say: value === 'data' ? 'Data only — one background image, the text slides over it' : 'Image with data — every slide carries its own image',
       }),
     },
-    { key: 'bgImage', label: 'Background image', control: 'upload', group: 'Navigation', when: (c) => c.slideMode === 'data' },
+    /* ⚠️ The ONE shared image belongs to Data only, where it is the thing the words slide over.
+       In Image with data every slide brings its own, so a second image here would be a picture the
+       carousel never shows. */
+    { key: 'bgImage', label: 'Background image', control: 'upload', group: 'Carousel type', when: (c) => c.slideMode === 'data' },
     { key: 'slideMaxWidth', label: 'Content max width', control: 'slider', tab: 'style', group: 'Slide', min: 30, max: 100, unit: '%' },
     { key: 'slideOverlay', label: 'Text-over-media overlay', control: 'slider', tab: 'style', group: 'Slide', min: 0, max: 80, unit: '%' },
   ],
@@ -292,18 +299,16 @@ export const SLIDER_SPEC: WidgetSpec = {
     label: (it, i) => String(it.heading ?? '') || `Slide ${i + 1}`,
     meta: (it) => (it.__mode === 'data' ? String(it.caption ?? '') : it.src ? 'Image set' : 'No media yet'),
     seed: (i, c) => ({ kind: 'image', heading: `Slide ${i + 2}`, caption: 'A line about what this slide is for.', ctaEnabled: false, __mode: c?.slideMode ?? 'both' }),
+    /* ⚠️ The slide's PICTURE is an `inlineImage`, not a field — see the note on `CollectionSpec`.
+       As field two it was drawn by the inline editor as a TEXTAREA (that editor draws whatever is
+       first as a line of text and whatever is second as a paragraph), so the one mode whose whole
+       point is a picture per slide had nowhere to put one. Shown only in Image with data, because
+       in Data only the widget's single background is the image.
+       ⚠️ `Media type` (Image / Video) went with it: `SliderRender` draws an `<img>` whatever it
+       says, so it was a control with no effect — and it is what the editor was drawing as a text box
+       reading "image". A stored `kind` is untouched, so nothing already on a page changes. */
+    inlineImage: { key: 'src', label: 'Image', altKey: 'alt', altLabel: 'Alt text — what is in this picture', when: (it) => it.__mode !== 'data' },
     fields: [
-      /* ⚠️ No media fields in Data only — the image is the widget's single background there. */
-      {
-        key: 'kind', label: 'Media type', control: 'segmented', group: 'Media', when: (c) => c.__mode !== 'data',
-        options: [{ value: 'image', label: 'Image' }, { value: 'video', label: 'Video' }],
-      },
-      { key: 'src', label: 'Source', control: 'upload', group: 'Media', when: (c) => c.__mode !== 'data' },
-      {
-        key: 'alt', label: 'Alt text', control: 'text', group: 'Media', when: (c) => c.__mode !== 'data' && c.kind !== 'video',
-        warnWhenBlank: 'No alt text yet — screen-reader users will hear nothing where this slide’s image is.',
-      },
-      { key: 'poster', label: 'Poster image', control: 'upload', group: 'Media', when: (c) => c.__mode !== 'data' && c.kind === 'video' },
       { key: 'heading', label: 'Heading', control: 'text', group: 'Text style' },
       { key: 'caption', label: 'Caption', control: 'textarea', group: 'Text style' },
       { key: 'ctaEnabled', label: 'Call to action', control: 'toggle', group: 'Action' },

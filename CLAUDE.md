@@ -610,6 +610,29 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   ⚠️ **Testing trap:** a hot reload of `PortalCanvas.tsx` swaps its context object mid-session, so the canvas
   silently reads the read-only default (no `data-node` anywhere, no outlines). Reload before judging.
 
+- **Support Portal — the Media Slider asks its question in its own words, and a slide can carry a
+  picture (16 Sep 2026).** The group was called **Navigation** and offered "Data only" / "Data + image",
+  which named neither what it decides nor what you get. It is **Carousel type** now — the same question
+  the Announcements card asks under "Card type" — with **Data only** / **Image with data**; the word
+  "carousel" sits in the group's title so both buttons hold one line at any panel width. The one shared
+  `bgImage` stays gated to Data only, where the words slide over it.
+  ⚠️ **A slide's image could not be uploaded at all, on `main` too.** `PortalItemList`'s inline editor
+  draws `fields[0]` as a line of text and `fields[1]` as a paragraph WHATEVER they were declared as, and
+  for a slide those were `kind` (segmented) and `src` (upload) — so the panel showed a text box reading
+  "image" and a textarea labelled "Source", and with `inlineCoversAll` there is no chevron to a drawer
+  that would have drawn them properly. A field the inline editor does not draw has NO surface.
+  The fix is a new collection option, **`inlineImage`** (`{ key, label, altKey, altLabel, when }` on
+  `CollectionSpec`, passed through `PortalWidgetDrawer`), drawn at the TOP of the inline editor — a slide
+  is a picture with words over it, and the words read differently once you can see what they are on.
+  ⚠️ Its control is **`InlineImageField`** (PortalControls), NOT `ImageUploadZone`: that zone's smallest
+  size is a 132px drop target, taller than the two text fields it sits with, so every open row in the list
+  would scroll twice as far for a thumbnail. The compact form is a 44px preview beside one line of
+  controls (measured 271×69) and the whole row is still a drop target. Alt text sits UNDER the picture
+  and only once there IS one — an alt box above an empty slot asks you to describe nothing.
+  ⚠️ **Media type (Image / Video) is gone from the panel**: `SliderRender` draws an `<img>` whatever it
+  says, so it was a control with no effect — and it was the text box reading "image". A stored `kind` is
+  untouched, so nothing already on a page changes. ⚠️ The Media Slider is NOT hidden any more (no
+  `hidden` on `v-slider`), whatever the Parked-features section below still says.
 - **Support Portal — the Announcements card, six fixes (16 Sep 2026).** (1) The REGULAR card carries its
   own **View all ›** in its heading (`WidgetTitle`'s `action`, drawn exactly as `CardShell` draws every
   other card's). ⚠️ The two carousels do NOT: their last dot already turns Next into "View all", so a

@@ -18,6 +18,7 @@ import { useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { ChevronDown, ChevronRight, ChevronUp, Copy, Eye, EyeOff, GripVertical, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { InlineImageField } from './PortalControls';
 
 export interface CollectionItem {
   id: string;
@@ -63,6 +64,13 @@ interface Props {
   inlineLabels?: [string, string];
   /** The optional extra offered at the foot of the inline editor — see `CollectionSpec.inlineCta`. */
   inlineCta?: { label: string; flag: string; removeLabel: string; clears: string[] };
+  /* A PICTURE this item carries, edited in the inline editor above its words.
+   *
+   * ⚠️ It has to live HERE rather than in the item's own field list, because with `inlineCoversAll`
+   * there is no chevron: a field the inline editor does not draw is a field with no surface at all.
+   * That is exactly what a Media Slider slide used to have — its image was field two, so the editor
+   * drew an upload as a TEXTAREA and there was no way to give a slide a picture. */
+  inlineImage?: { key: string; label: string; altKey?: string; altLabel?: string; when?: (item: CollectionItem) => boolean };
   /** True when the inline editor shows every field the item has — the chevron would then lead to
       the same two fields one navigation away, so it is dropped. */
   inlineCoversAll?: boolean;
@@ -72,7 +80,7 @@ const inputCls = 'h-9 w-full rounded border border-[#d1d5db] bg-white px-3 text-
 
 export function PortalItemList({
   items, label, meta, thumb, onOpen, onChange, addLabel, onAdd, max, hideable, emptyHint, noOpen, inlinePlaceholders, inlineLabels,
-  noAdd, lockedHide, inlineKeys, inlineCoversAll, inlineCta,
+  noAdd, lockedHide, inlineKeys, inlineCoversAll, inlineCta, inlineImage,
 }: Props) {
   const [dragId, setDragId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
@@ -216,6 +224,28 @@ export function PortalItemList({
                 {/* Inline editor — the two fields you actually change, without leaving the list. */}
                 {open && inlineKeys && (
                   <div className="border-t border-[#F0F2F5] px-3 pb-3 pt-2.5" onClick={(e) => e.stopPropagation()}>
+                    {/* The picture FIRST — a slide is an image with words over it, and the words read
+                        differently once you can see what they are on. */}
+                    {inlineImage && (!inlineImage.when || inlineImage.when(item)) && (
+                      <div className="mb-3">
+                        <div className="mb-1 text-[12px] font-normal text-[#7B8FA5]">{inlineImage.label}</div>
+                        <InlineImageField
+                          value={item[inlineImage.key] as string | undefined}
+                          onChange={(src) => patch({ [inlineImage.key]: src ?? '' })}
+                          label={`${inlineImage.label} for this item`}
+                        />
+                        {/* ⚠️ Alt text sits UNDER the picture it describes and only once there IS one —
+                            an alt box above an empty slot asks you to describe nothing. */}
+                        {inlineImage.altKey && item[inlineImage.key] ? (
+                          <input
+                            value={String(item[inlineImage.altKey] ?? '')}
+                            onChange={(e) => patch({ [inlineImage.altKey!]: e.target.value })}
+                            placeholder={inlineImage.altLabel ?? 'Describe this image for screen readers'}
+                            className={`${inputCls} mt-1.5`}
+                          />
+                        ) : null}
+                      </div>
+                    )}
                     <div className="mb-1 text-[12px] font-normal text-[#7B8FA5]">{inlineLabels?.[0] ?? 'Title'}</div>
                     <input
                       value={String(item[inlineKeys[0]] ?? '')}
