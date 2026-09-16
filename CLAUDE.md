@@ -610,6 +610,30 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   ⚠️ **Testing trap:** a hot reload of `PortalCanvas.tsx` swaps its context object mid-session, so the canvas
   silently reads the read-only default (no `data-node` anywhere, no outlines). Reload before judging.
 
+- **Support Portal — a preset skeleton draws THE SECTION, not a bar chart of it (16 Sep 2026).** The
+  arrangement thumbnails and the KPI/Action-card column presets (`PortalBannerTools`) drew every block
+  as bars on a ground, so a KPI block, a row of action cards, Contact Us, an image and a paragraph all
+  made the same picture — a thumbnail that cannot tell those apart is answering a question nobody
+  asked. Now each section is drawn as the thing it IS:
+  **`MiniCard`** is the shared card face (white, hairline border), and every block that renders as a
+  card on the canvas gets one — **KPI** (number over label), **Action cards** (icon badge + title, icon
+  LEFT in one column and on TOP across a row, the two shapes `cardTemplate` draws), **Contact Us** (a
+  heading over two badge-and-line rows), **the list cards** (a heading over its rows). A **picture**
+  (`PictureArt`: a grey plate with the sun and the hill) is the one thing that is neither a card nor a
+  line, and it BLEEDS — no ground, no inset — exactly as it does on the banner.
+  ⚠️ **Announcements draws the card TYPE it is actually showing** — regular (heading + two rows),
+  carousel (heading + a row + dots), image (a picture over the dark band) — because those are three
+  different cards, not three settings of one.
+  ⚠️ **The drawings are read from each widget's RESOLVED CONFIG**, through a new `cfgOf` reader: the
+  canvas toolbar has one on its context, and `PortalWidgetDrawer` takes it as a PROP because the panel
+  renders OUTSIDE `CanvasProvider` and would otherwise pick up the read-only default and draw every
+  block at its factory shape. ⚠️ Columns follow the CELL: a full-width section runs its cards across,
+  a narrow column stacks them, and `__colsSet` (the admin's own choice) wins — the same rule
+  `bannerCols` applies on the canvas, so the tile promises the layout the banner will produce.
+  ⚠️ `CardSkeleton` in the column-preset picker now CALLS the same two card drawings; a KPI card that
+  looked like a card in one picker and like two bars in the other was two answers to one question.
+  Tiles went to 88px and every section keeps a 3px inset from its ground — cards with a face and a
+  border need the room bars did not.
 - **Support Portal — the Media Slider asks its question in its own words, and a slide can carry a
   picture (16 Sep 2026).** The group was called **Navigation** and offered "Data only" / "Data + image",
   which named neither what it decides nor what you get. It is **Carousel type** now — the same question

@@ -692,10 +692,17 @@ export interface WidgetDrawerProps {
   onApplyBannerLayout?: (id: string) => void;
   /** Builds or re-arranges the banner from a starting shape — a builder action, see `applyBannerShape`. */
   onApplyBannerShape?: (id: string) => void;
+  /* ANY node's resolved config, not just this one's.
+   *
+   * ⚠️ The banner's arrangement thumbnails draw every section ON the banner, so they have to read a
+   * widget that is not the one open in the panel. The canvas gets this from its own context; the panel
+   * renders OUTSIDE `CanvasProvider`, so it takes the same reader as a prop rather than picking up the
+   * read-only default and silently drawing every block at its factory shape. */
+  cfgOf?: (id: string) => Cfg;
 }
 
 export function PortalWidgetDrawer(props: WidgetDrawerProps) {
-  const { nodeId, spec, cfg, setCfg, styles, setStyle, replaceStyle, onSelect, onReset, applyPreset, icon, setIcon, onAddLinkCard, onApplyBannerLayout, onApplyBannerShape } = props;
+  const { nodeId, spec, cfg, setCfg, styles, setStyle, replaceStyle, onSelect, onReset, applyPreset, icon, setIcon, onAddLinkCard, onApplyBannerLayout, onApplyBannerShape, cfgOf } = props;
   const node = nodeById(nodeId);
   const path = nodePath(nodeId);
   /* What arrives OPEN. ⚠️ CONTENT only — every DESIGN accordion starts collapsed.
@@ -1149,7 +1156,7 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
         return <TilePresetPicker count={count} kind={Array.isArray(viewCfg.items) ? 'kpi' : 'action'} value={Number(v ?? count)} onChange={(c) => set(f.key, String(c))} />;
       }
       case 'bannerPreset':
-        return <BannerPresetPicker tree={(viewCfg.__bannerTree as BannerNode | null) ?? null} onPick={(t) => set(f.key, t)} />;
+        return <BannerPresetPicker tree={(viewCfg.__bannerTree as BannerNode | null) ?? null} onPick={(t) => set(f.key, t)} cfgOf={cfgOf} />;
       case 'gapField':
         return (
           <GapField

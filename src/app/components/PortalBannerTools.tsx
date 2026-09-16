@@ -155,20 +155,191 @@ export function BannerFillEditor({ cfg, setCfg }: {
 const INK_ON = 'bg-[#3D8BD0]/45';
 const INK_OFF = 'bg-[#C3CDD9]';
 const FAINT = 'bg-[#E2E8F0]';
-const FILL_ON = 'bg-[#3D8BD0]/10';
-const FILL_OFF = 'bg-[#F1F5F9]';
 const EDGE_ON = 'border-[#3D8BD0]/50';
 const EDGE_OFF = 'border-[#C3CDD9]';
 /* The GROUND a section is drawn on inside a preset tile — see `PresetArt`. */
 const CELL_ON = 'bg-[#3D8BD0]/10';
 const CELL_OFF = 'bg-[#F1F5F9]';
+/* A picture: the one thing that is neither a card nor a line. */
+const PIC = 'bg-[#D7DEE7]';
 
-function ItemSkeleton({ id, on }: { id: string; on: boolean }) {
+/* ONE CARD in a skeleton — a white face with a hairline, because that is what a card IS.
+ *
+ * ⚠️ This is the whole point of the rewrite. Bars laid straight on the section's ground read as
+ * LINES OF TEXT, so a KPI block, a row of action cards, Contact Us and a paragraph all drew the same
+ * picture — and a thumbnail that cannot tell those four apart is answering a question nobody asked.
+ * A card is a face with an edge; everything that renders as a card on the canvas gets one here. */
+function MiniCard({ on, className = '', children }: { on: boolean; className?: string; children?: ReactNode }) {
+  return (
+    <span className={`flex min-h-0 min-w-0 overflow-hidden rounded-[2px] border bg-white ${on ? 'border-[#9CC0E4]' : 'border-[#DDE3EA]'} ${className}`}>
+      {children}
+    </span>
+  );
+}
+
+/** A grid of cards at the block's OWN column count — the arrangement its Presets row chose. */
+function CardGrid({ count, cols, children }: { count: number; cols: number; children: (i: number) => ReactNode }) {
+  return (
+    <span
+      className="grid min-h-0 min-w-0 flex-1 gap-[2px]"
+      style={{ gridTemplateColumns: `repeat(${Math.max(1, cols)}, minmax(0, 1fr))`, gridAutoRows: 'minmax(0, 1fr)' }}
+    >
+      {Array.from({ length: Math.max(1, count) }, (_, i) => children(i))}
+    </span>
+  );
+}
+
+/** A KPI card: the number, then its label. */
+function KpiCardArt({ on }: { on: boolean }) {
+  return (
+    <MiniCard on={on} className="flex-col justify-center gap-[2px] px-[3px]">
+      <span className={`h-[4px] w-[45%] rounded-[1px] ${on ? INK_ON : INK_OFF}`} />
+      <span className={`h-[2px] w-[80%] rounded-full ${FAINT}`} />
+    </MiniCard>
+  );
+}
+
+/** An action card: the icon badge, then its title. Icon LEFT in one column, on TOP across a row —
+ *  the same two shapes `cardTemplate` draws on the canvas. */
+function ActionCardArt({ on, row }: { on: boolean; row: boolean }) {
+  return (
+    <MiniCard on={on} className={`items-center justify-center gap-[3px] px-[3px] ${row ? 'flex-row' : 'flex-col'}`}>
+      <span className={`size-[5px] flex-shrink-0 rounded-[1px] ${on ? INK_ON : INK_OFF}`} />
+      <span className={`h-[2px] rounded-full ${FAINT} ${row ? 'flex-1' : 'w-[70%]'}`} />
+    </MiniCard>
+  );
+}
+
+/** A row of a data card: the record's mark, then its two lines. */
+function RowArt({ on, mark = 'tile' }: { on: boolean; mark?: 'tile' | 'dot' }) {
+  return (
+    <span className="flex min-w-0 items-center gap-[3px]">
+      <span className={`${mark === 'tile' ? 'size-[7px] rounded-[1px]' : 'size-[3px] rounded-full'} flex-shrink-0 ${FAINT}`} />
+      <span className="flex min-w-0 flex-1 flex-col gap-[2px]">
+        <span className={`h-[2px] w-[85%] rounded-full ${on ? INK_ON : INK_OFF}`} />
+        <span className={`h-[2px] w-[55%] rounded-full ${FAINT}`} />
+      </span>
+    </span>
+  );
+}
+
+/** A card's heading row: its name, and the link at the far end. */
+function HeadArt({ on }: { on: boolean }) {
+  return (
+    <span className="flex items-center gap-[3px]">
+      <span className={`h-[3px] w-[40%] rounded-full ${on ? INK_ON : INK_OFF}`} />
+      <span className={`ml-auto h-[2px] w-[8px] flex-shrink-0 rounded-full ${FAINT}`} />
+    </span>
+  );
+}
+
+/** Three carousel dots. */
+function DotsArt({ on }: { on: boolean }) {
+  return (
+    <span className="flex items-center gap-[2px]">
+      <span className={`size-[3px] rounded-full ${on ? INK_ON : INK_OFF}`} />
+      <span className={`size-[3px] rounded-full ${FAINT}`} />
+      <span className={`size-[3px] rounded-full ${FAINT}`} />
+    </span>
+  );
+}
+
+/** A PICTURE — a grey plate with the sun and the hill every image placeholder draws. */
+function PictureArt({ className = '' }: { className?: string }) {
+  return (
+    <span className={`relative min-h-[10px] min-w-0 flex-1 overflow-hidden ${PIC} ${className}`}>
+      <span className="absolute left-[4px] top-[3px] size-[3px] rounded-full bg-white/75" />
+      <span className="absolute inset-x-0 bottom-0 h-[55%] bg-white/45" style={{ clipPath: 'polygon(0 100%, 38% 18%, 62% 55%, 78% 32%, 100% 100%)' }} />
+    </span>
+  );
+}
+
+/* Which announcement card an Announcements section is showing — the SAME three the Card type tiles
+   offer, because the thumbnail has to draw the card the admin actually picked. */
+function AnnouncementArt({ on, display }: { on: boolean; display: string }) {
+  if (display === 'image') {
+    /* The picture reaches the card's own edges, with the notice in the band beneath it. */
+    return (
+      <span className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-[2px]">
+        <PictureArt />
+        <span className="flex h-[9px] flex-shrink-0 items-center gap-[3px] bg-[#475569] px-[3px]">
+          <span className="size-[5px] flex-shrink-0 rounded-[1px] bg-white/25" />
+          <span className="h-[2px] flex-1 rounded-full bg-white/70" />
+        </span>
+      </span>
+    );
+  }
+  return (
+    <MiniCard on={on} className="flex-col gap-[3px] p-[3px]">
+      <HeadArt on={on} />
+      <RowArt on={on} />
+      {display === 'carousel' ? <span className="mt-auto"><DotsArt on={on} /></span> : <RowArt on={on} />}
+    </MiniCard>
+  );
+}
+
+/* The list cards — My Open Requests, Approvals, Most Read, a Record List: a heading over its rows. */
+function ListCardArt({ on, mark = 'dot' }: { on: boolean; mark?: 'tile' | 'dot' }) {
+  return (
+    <MiniCard on={on} className="flex-col gap-[3px] p-[3px]">
+      <HeadArt on={on} />
+      <RowArt on={on} mark={mark} />
+      <RowArt on={on} mark={mark} />
+    </MiniCard>
+  );
+}
+
+/* Contact Us: a card of CONTACT LINES — a badge and the address beside it, twice. Drawn as bare
+   text it was indistinguishable from a paragraph, which is exactly what it is not. */
+function ContactArt({ on }: { on: boolean }) {
+  return (
+    <MiniCard on={on} className="flex-col justify-center gap-[3px] p-[3px]">
+      <HeadArt on={on} />
+      <span className="flex items-center gap-[3px]">
+        <span className={`size-[6px] flex-shrink-0 rounded-full ${on ? INK_ON : INK_OFF}`} />
+        <span className={`h-[2px] w-[70%] rounded-full ${FAINT}`} />
+      </span>
+      <span className="flex items-center gap-[3px]">
+        <span className={`size-[6px] flex-shrink-0 rounded-full ${FAINT}`} />
+        <span className={`h-[2px] w-[55%] rounded-full ${FAINT}`} />
+      </span>
+    </MiniCard>
+  );
+}
+
+/* A widget's own arrangement, read off its CONFIG — the columns its Presets row chose, how many
+ * cards it holds, which announcement card it shows.
+ *
+ * ⚠️ It has to be READ, not assumed: two banners holding the same widgets in the same tree can be
+ * laid out completely differently, and a thumbnail drawing four cards in a row for a block set to one
+ * column is telling the admin something untrue about the layout they are about to pick. */
+function itemCfg(id: string, cfgOf?: (id: string) => Record<string, unknown>) {
+  return cfgOf?.(id) ?? {};
+}
+
+/** True for the sections that are a PICTURE — they fill their cell instead of sitting on its ground. */
+function bleeds(id: string, cfgOf?: (id: string) => Record<string, unknown>) {
+  const type = placedType(id) ?? '';
+  if (type === 'v-image' || type === 'v-slider') return true;
+  return type === 'c-announcements' && String(itemCfg(id, cfgOf).display ?? 'regular') === 'image';
+}
+
+function ItemSkeleton({ id, on, cfgOf, wide = true }: {
+  id: string; on: boolean; cfgOf?: (id: string) => Record<string, unknown>;
+  /* Does this section span the banner, or is it a column beside something?
+   *
+   * ⚠️ The SAME question the canvas asks (`bannerCols` in the preview): a block of cards runs all the
+   * way across a full-width section and STACKS in a narrow column. Ignoring it drew three KPI cards
+   * side by side inside a thumbnail's narrow column — three tall slivers, which is the shape nobody
+   * wanted and not the shape the banner would produce. An admin who set the columns themselves
+   * (`__colsSet`) always wins, here as there. */
+  wide?: boolean;
+}) {
   const ink = on ? INK_ON : INK_OFF;
   const edge = on ? EDGE_ON : EDGE_OFF;
   if (id === 'hero-copy') {
     return (
-      <span className="flex min-w-0 flex-1 flex-col justify-center gap-[3px] px-[2px]">
+      <span className="flex min-w-0 flex-1 flex-col justify-center gap-[3px]">
         <span className={`h-[3px] w-[80%] rounded-full ${ink}`} />
         <span className={`h-[3px] w-[55%] rounded-full ${FAINT}`} />
       </span>
@@ -176,7 +347,7 @@ function ItemSkeleton({ id, on }: { id: string; on: boolean }) {
   }
   if (id === 'hero-content') {
     return (
-      <span className="flex min-w-0 flex-1 flex-col justify-center gap-[2px] px-[3px]">
+      <span className="flex min-w-0 flex-1 flex-col justify-center gap-[2px]">
         <span className={`h-[3px] w-[80%] rounded-full ${ink}`} />
         <span className={`h-[3px] w-[55%] rounded-full ${FAINT}`} />
         <span className={`flex h-[7px] w-full items-center justify-end rounded-[3px] border bg-white pr-[2px] ${edge}`}>
@@ -194,55 +365,79 @@ function ItemSkeleton({ id, on }: { id: string; on: boolean }) {
       </span>
     );
   }
+
   const type = placedType(id) ?? '';
+  const cfg = itemCfg(id, cfgOf);
+  const setCols = cfg.__colsSet === true ? Math.max(1, Math.min(4, Number(cfg.cols ?? 0) || 0)) : 0;
+  /** The columns this block comes out at: the admin's if they set one, else across or stacked. */
+  const colsFor = (count: number) => setCols || (wide ? Math.min(count, 4) : 1);
+
   if (type === 'bn-slot') {
     return <span className={`min-h-[8px] min-w-0 flex-1 rounded-[3px] border border-dashed ${edge}`} />;
   }
-  /* ⚠️ No fill of its own any more — `PresetArt` gives every section its ground, and a block painted
-     on a block reads as two nested things rather than one picture. */
-  if (type === 'c-announcements' || type === 'v-image' || type === 'v-slider') {
+  if (type === 'v-image' || type === 'v-slider') return <PictureArt className="rounded-[2px]" />;
+  if (type === 'c-announcements') return <AnnouncementArt on={on} display={String(cfg.display ?? 'regular')} />;
+  if (type === 'c-contact') return <ContactArt on={on} />;
+  if (type === 'x-kpis') {
+    const items = Array.isArray(cfg.items) ? cfg.items.length : 3;
+    return <CardGrid count={items} cols={colsFor(items)}>{(i) => <KpiCardArt key={i} on={on} />}</CardGrid>;
+  }
+  if (type === 'x-actions') {
+    const count = Number(cfg.__tileCount ?? 4) || 4;
+    const c = colsFor(count);
+    return <CardGrid count={count} cols={c}>{(i) => <ActionCardArt key={i} on={on} row={c === 1} />}</CardGrid>;
+  }
+  if (type === 'c-assets' || type === 'c-cis' || type === 'c-favourites' || type === 'c-services') {
+    /* Tiles, not rows — these four draw a grid of record cards. */
+    const c = wide ? 2 : 1;
+    return <CardGrid count={4} cols={c}>{(i) => <ActionCardArt key={i} on={on} row={c === 1} />}</CardGrid>;
+  }
+  if (type === 'c-requests' || type === 'c-approvals' || type === 'c-knowledge' || type === 'record_list') {
+    return <ListCardArt on={on} mark={type === 'c-requests' || type === 'c-approvals' ? 'dot' : 'tile'} />;
+  }
+  if (type === 'b-button') {
     return (
-      <span className="flex min-h-[8px] min-w-0 flex-1 flex-col justify-end overflow-hidden">
-        <span className={`h-[35%] max-h-[8px] w-full ${ink}`} />
+      <span className="flex min-w-0 flex-1 items-center justify-center">
+        <span className={`h-[8px] w-[70%] rounded-[3px] ${ink}`} />
       </span>
     );
   }
-  if (type === 'x-actions' || type === 'x-kpis') {
+  if (type === 'b-text' || type === 'b-large-title' || type === 'b-subtitle' || type === 'b-list') {
     return (
-      <span className="flex min-w-0 flex-1 flex-col justify-center gap-[1px]">
-        {[0, 1].map((i) => (
-          /* WHITE cards on the section's ground — the faint grey they used to take is now the ground
-             itself, so the cards had nothing to read against. */
-          <span key={i} className="flex h-[6px] items-center gap-[2px] rounded-[2px] bg-white px-[2px]">
-            {type === 'x-actions' && <span className={`size-[3px] flex-shrink-0 rounded-[1px] ${ink}`} />}
-            <span className={`h-[2px] flex-1 rounded-full ${type === 'x-kpis' ? ink : FAINT}`} />
-          </span>
-        ))}
+      <span className="flex min-w-0 flex-1 flex-col justify-center gap-[2px]">
+        <span className={`h-[3px] w-[70%] rounded-full ${ink}`} />
+        <span className={`h-[2px] w-[90%] rounded-full ${FAINT}`} />
+        <span className={`h-[2px] w-[60%] rounded-full ${FAINT}`} />
       </span>
     );
   }
-  return (
-    <span className="flex min-h-[8px] min-w-0 flex-1 flex-col justify-center gap-[2px] px-[3px]">
-      <span className={`h-[2px] w-[70%] rounded-full ${ink}`} />
-      <span className={`h-[2px] w-[45%] rounded-full ${FAINT}`} />
-    </span>
-  );
+  /* Anything else a widget could be: a card with a heading and a line, which is the shape most of
+     them make — never bare bars, or it reads as text again. */
+  return <ListCardArt on={on} />;
 }
 
-/* ⚠️ Every SECTION is a BLOCK on its own ground, with real space between blocks. Drawn as bare lines
-   on white a 3px apart, four sections read as one grey smudge — the arrangement, which is the only
-   thing these tiles exist to say, was the one thing you could not see in them. */
-function PresetArt({ node, on }: { node: BannerNode; on: boolean }) {
+/* ⚠️ Every SECTION is a BLOCK on its own ground, with real space between blocks and its content
+   inset from the edges. Drawn as bare lines on white a 3px apart, four sections read as one grey
+   smudge — the arrangement, which is the only thing these tiles exist to say, was the one thing you
+   could not see in them. A PICTURE is the exception: it fills its cell, as it does on the banner. */
+function PresetArt({ node, on, cfgOf, wide = true }: {
+  node: BannerNode; on: boolean; cfgOf?: (id: string) => Record<string, unknown>; wide?: boolean;
+}) {
   if (typeof node === 'string') {
+    const bleed = bleeds(node, cfgOf);
     return (
-      <span className={`flex min-h-0 min-w-0 flex-1 items-stretch overflow-hidden rounded-[3px] ${on ? CELL_ON : CELL_OFF}`}>
-        <ItemSkeleton id={node} on={on} />
+      <span className={`flex min-h-0 min-w-0 flex-1 items-stretch overflow-hidden rounded-[3px] ${bleed ? '' : `p-[3px] ${on ? CELL_ON : CELL_OFF}`}`}>
+        <ItemSkeleton id={node} on={on} cfgOf={cfgOf} wide={wide} />
       </span>
     );
   }
+  /* ⚠️ A child of a ROW is a COLUMN — narrow, whatever the banner's own width. A child of a column
+     keeps whatever width its parent had, which is what makes a section stacked under the words still
+     count as full-width. */
+  const childWide = node.d === 'row' ? node.c.length <= 1 && wide : wide;
   return (
     <span className={`flex min-h-0 min-w-0 flex-1 gap-[4px] ${node.d === 'row' ? 'flex-row' : 'flex-col'}`}>
-      {node.c.map((k, i) => <PresetArt key={i} node={k} on={on} />)}
+      {node.c.map((k, i) => <PresetArt key={i} node={k} on={on} cfgOf={cfgOf} wide={childWide} />)}
     </span>
   );
 }
@@ -257,12 +452,19 @@ function SkeletonTile({ on, label, onPick, children, tall = false }: { on: boole
       aria-pressed={on}
       onMouseDown={(e) => e.stopPropagation()}
       onClick={(e) => { e.stopPropagation(); onPick(); }}
-      className={`flex ${tall ? 'h-[76px]' : 'h-[64px]'} min-w-0 flex-1 overflow-hidden rounded-lg border-2 bg-white p-1.5 transition-colors ${on ? 'border-[#3D8BD0]' : 'border-[#E5E7EB] hover:border-[#C3CBD6]'}`}
+      className={`flex ${tall ? 'h-[88px]' : 'h-[64px]'} min-w-0 flex-1 overflow-hidden rounded-lg border-2 bg-white p-1.5 transition-colors ${on ? 'border-[#3D8BD0]' : 'border-[#E5E7EB] hover:border-[#C3CBD6]'}`}
     >{children}</button>
   );
 }
 
-export function BannerPresetPicker({ tree, onPick }: { tree: BannerNode | null; onPick: (t: BannerNode) => void }) {
+export function BannerPresetPicker({ tree, onPick, cfgOf }: {
+  tree: BannerNode | null;
+  onPick: (t: BannerNode) => void;
+  /* ⚠️ Reads each widget's RESOLVED config, so a thumbnail draws the KPI block at the column count it
+     is actually set to and the Announcements card in the shape it is actually showing. Without it every
+     block falls back to its own default and the tiles promise a layout the banner does not have. */
+  cfgOf?: (id: string) => Record<string, unknown>;
+}) {
   const presets = presetsFor(tree);
   const on = activePreset(tree);
   if (presets.length < 2) {
@@ -272,7 +474,7 @@ export function BannerPresetPicker({ tree, onPick }: { tree: BannerNode | null; 
     <div className="grid grid-cols-3 gap-2">
       {presets.map((p) => (
         <SkeletonTile key={p.id} tall on={on === p.id} label={p.label} onPick={() => onPick(p.tree)}>
-          <PresetArt node={p.tree} on={on === p.id} />
+          <PresetArt node={p.tree} on={on === p.id} cfgOf={cfgOf} />
         </SkeletonTile>
       ))}
     </div>
@@ -283,25 +485,11 @@ export function BannerPresetPicker({ tree, onPick }: { tree: BannerNode | null; 
  * One tile per arrangement the ACTUAL number of cards can take, each drawn with that many skeleton
  * cards — an action card is an icon beside a line, a KPI a number over a label — and all of them in
  * ONE row, in the panel and in the toolbar alike. */
+/* ⚠️ The SAME two card drawings the arrangement tiles use, not a second pair — a KPI card that looks
+   like a card in one picker and like two bars in the other is two answers to "what does this block
+   make". */
 function CardSkeleton({ kind, on, flat }: { kind: 'action' | 'kpi'; on: boolean; flat: boolean }) {
-  const ink = on ? INK_ON : INK_OFF;
-  return (
-    <span className={`flex min-w-0 rounded-[2px] ${on ? FILL_ON : FILL_OFF} ${
-      kind === 'kpi' ? 'flex-col justify-center gap-[2px] px-[3px]' : `${flat ? 'flex-row' : 'flex-col'} items-center justify-center gap-[2px] px-[2px]`
-    }`}>
-      {kind === 'kpi' ? (
-        <>
-          <span className={`h-[3px] w-[45%] rounded-full ${ink}`} />
-          <span className={`h-[2px] w-[75%] rounded-full ${FAINT}`} />
-        </>
-      ) : (
-        <>
-          <span className={`size-[4px] flex-shrink-0 rounded-[1px] ${ink}`} />
-          <span className={`h-[2px] w-[60%] rounded-full ${FAINT}`} />
-        </>
-      )}
-    </span>
-  );
+  return kind === 'kpi' ? <KpiCardArt on={on} /> : <ActionCardArt on={on} row={flat} />;
 }
 
 export function TilePresetPicker({ count, value, onChange, kind = 'action' }: {

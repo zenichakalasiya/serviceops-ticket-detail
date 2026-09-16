@@ -2962,6 +2962,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
                   nodeId={selectedId}
                   spec={specForNode(selectedId)!}
                   cfg={cfgFor(selectedId)}
+                  cfgOf={cfgFor}
                   onAddLinkCard={addLinkCard}
                   onApplyBannerLayout={applyBannerLayout}
                   onApplyBannerShape={applyBannerShape}

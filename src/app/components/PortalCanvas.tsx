@@ -1866,7 +1866,7 @@ function BannerToolbar() {
             <span className="fixed inset-0 z-[60]" onClick={() => setLayout(false)} />
             <div className="absolute left-0 top-[calc(100%+6px)] z-[61] w-[300px] rounded-lg border border-[#E5E7EB] bg-white p-3 shadow-[0_12px_16px_-4px_rgba(16,24,40,0.10),0_4px_6px_-2px_rgba(16,24,40,0.06)]">
               <p className="mb-2 text-[12px] font-medium text-[#364658]">Arrangement</p>
-              <BannerPresetPicker tree={heroTree?.() ?? null} onPick={(t) => setCfg?.('hero', { bannerTree: t })} />
+              <BannerPresetPicker tree={heroTree?.() ?? null} onPick={(t) => setCfg?.('hero', { bannerTree: t })} cfgOf={cfg} />
             </div>
           </>
         )}
