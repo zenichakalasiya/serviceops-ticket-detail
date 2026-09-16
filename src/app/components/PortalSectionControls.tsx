@@ -212,33 +212,17 @@ export function AnnouncementTypePicker({ value, onChange }: { value: string; onC
     <div className="flex items-start gap-2">
       {ANNOUNCEMENT_TYPES.map((t) => {
         const on = value === t.value;
-        const ink = on ? 'bg-[#3D8BD0]/40' : 'bg-[#C3CDD9]';
-        const faint = 'bg-[#E2E8F0]';
-        /* The card's heading: its name, its count badge, and the View-all link at the far right. */
-        const head = (
-          <span className="flex items-center gap-[3px]">
-            <span className={`h-[3px] w-[22px] rounded-full ${ink}`} />
-            <span className="size-[4px] flex-shrink-0 rounded-[1px] bg-[#E2E8F0]" />
-            <span className="ml-auto h-[2px] w-[9px] flex-shrink-0 rounded-full bg-[#DFE5ED]" />
-          </span>
-        );
-        /* One notice — the date tile, then the headline over its detail. `band` draws it in the image
-           card's dark band, where every tone is a share of white instead of the page's greys. */
+        const ink = on ? 'bg-[#3D8BD0]/50' : 'bg-[#BFC9D6]';
+        const faint = 'bg-[#DFE5ED]';
+        /* ⚠️ The card is 18 × 12, CENTRED — the user's own measurement. Drawn full-tile it read as a
+           slab rather than as a card, and three slabs side by side said nothing about which card each
+           one was. At this size the drawing is a SILHOUETTE: a header bar over two lines, the same over
+           dots, a photo over a dark band. Everything is 1–2px, so the shapes carry the difference and
+           there is no room for detail that would only smudge. */
         const row = (band?: boolean) => (
-          <span className="flex items-center gap-[4px]">
-            <span className={`size-[11px] flex-shrink-0 rounded-[2px] ${band ? 'bg-white/20' : 'bg-[#EEF2F6]'}`} />
-            <span className="flex min-w-0 flex-1 flex-col gap-[2px]">
-              <span className={`h-[2px] w-[80%] rounded-full ${band ? 'bg-white/80' : ink}`} />
-              <span className={`h-[2px] w-[55%] rounded-full ${band ? 'bg-white/40' : faint}`} />
-            </span>
-          </span>
-        );
-        /* The carousel's dots, kept SMALL — they are a detail of the card, not its subject. */
-        const dots = (band?: boolean) => (
-          <span className="flex items-center gap-[2px]">
-            <span className={`size-[3px] rounded-full ${band ? 'bg-white/80' : (on ? 'bg-[#3D8BD0]/70' : 'bg-[#9AA7B5]')}`} />
-            <span className={`size-[3px] rounded-full ${band ? 'bg-white/30' : 'bg-[#DFE5ED]'}`} />
-            <span className={`size-[3px] rounded-full ${band ? 'bg-white/30' : 'bg-[#DFE5ED]'}`} />
+          <span className="flex items-center gap-[1px]">
+            <span className={`size-[2px] flex-shrink-0 rounded-[0.5px] ${band ? 'bg-white/30' : faint}`} />
+            <span className={`h-[1px] flex-1 rounded-full ${band ? 'bg-white/80' : ink}`} />
           </span>
         );
         return (
@@ -249,30 +233,38 @@ export function AnnouncementTypePicker({ value, onChange }: { value: string; onC
             onClick={() => onChange(t.value)}
             className="flex min-w-0 flex-1 flex-col items-center gap-1.5"
           >
-            <span className={`flex h-[72px] w-full items-center justify-center rounded-lg border-2 p-[6px] transition-colors ${
+            <span className={`flex h-[56px] w-full items-center justify-center rounded-lg border-2 transition-colors ${
               on ? 'border-[#3D8BD0] bg-[#3D8BD0]/[0.04]' : 'border-[#E5E7EB] bg-white hover:border-[#C3CBD6]'
             }`}>
-              {/* The CARD's own frame, inside the tile. */}
-              <span className={`flex h-full w-full flex-col overflow-hidden rounded-[4px] border bg-white ${on ? 'border-[#3D8BD0]/40' : 'border-[#DFE5ED]'}`}>
+              {/* The CARD, at its own small size in the middle of the tile. */}
+              <span className={`flex h-[12px] w-[18px] flex-col overflow-hidden rounded-[2px] border bg-white ${on ? 'border-[#3D8BD0]/50' : 'border-[#CBD5E1]'}`}>
                 {t.value === 'regular' && (
-                  <span className="flex flex-1 flex-col gap-[5px] p-[5px]">{head}{row()}{row()}</span>
+                  <span className="flex flex-1 flex-col justify-center gap-[1px] p-[1px]">
+                    <span className={`h-[2px] w-[7px] rounded-full ${ink}`} />
+                    {row()}
+                    {row()}
+                  </span>
                 )}
                 {t.value === 'carousel' && (
-                  <span className="flex flex-1 flex-col gap-[5px] p-[5px]">
-                    {head}
+                  <span className="flex flex-1 flex-col justify-center gap-[1px] p-[1px]">
+                    <span className={`h-[2px] w-[7px] rounded-full ${ink}`} />
                     {row()}
-                    <span className="mt-auto">{dots()}</span>
+                    {/* The one mark that separates this card from the regular one. */}
+                    <span className="flex items-center gap-[1px]">
+                      <span className={`size-[1px] rounded-full ${on ? 'bg-[#3D8BD0]/70' : 'bg-[#9AA7B5]'}`} />
+                      <span className={`size-[1px] rounded-full ${faint}`} />
+                      <span className={`size-[1px] rounded-full ${faint}`} />
+                    </span>
                   </span>
                 )}
                 {t.value === 'image' && (
                   <>
                     {/* The photo reaches the card's own edges — which is what this card IS. */}
-                    <span className="flex h-[24px] w-full flex-shrink-0 items-center justify-center bg-[#E9EDF2]">
-                      <span className={`h-[8px] w-[10px] rounded-[1px] ${on ? 'bg-[#3D8BD0]/35' : 'bg-[#C9D2DC]'}`} />
+                    <span className="flex h-[6px] w-full flex-shrink-0 items-center justify-center bg-[#E3E8EE]">
+                      <span className={`size-[2px] rounded-full ${on ? 'bg-[#3D8BD0]/40' : 'bg-[#BFC9D6]'}`} />
                     </span>
-                    <span className="flex flex-1 flex-col justify-center gap-[4px] bg-[#2F3033] p-[5px]">
+                    <span className="flex flex-1 flex-col justify-center gap-[1px] bg-[#2F3033] px-[1px]">
                       {row(true)}
-                      {dots(true)}
                     </span>
                   </>
                 )}
