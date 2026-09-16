@@ -2069,21 +2069,32 @@ function GapBands({ id, host }: { id: string; host: React.RefObject<HTMLDivEleme
       const next: { x: number; y: number; w: number; h: number; dir: string; owner: string }[] = [];
       for (const parent of parents) {
       const pdir = isHero ? 'row' : getComputedStyle(parent).flexDirection.startsWith('row') ? 'row' : 'column';
+      /* ⚠️ A GRID is not a flex box, and `flexDirection` on one still reads "row" — its initial value — so
+         two full-width cards STACKED in a grid were measured as though they sat side by side, and the strip
+         came out as a thin vertical sliver down their right edge instead of a band between them. The same
+         is true of a wrapped flex row, whose second line is stacked however the container is laid out.
+         So a band's pairs are judged by GEOMETRY: whichever way two cards actually sit is the gap they
+         have. Sorted in reading order — down, then across — for the same reason. */
+      const geo = bandMode;
       const owner = parent.dataset.gapParent ?? id;
       const kids = Array.from(parent.children).filter((k): k is HTMLElement =>
         k instanceof HTMLElement && (k.hasAttribute('data-node') || k.hasAttribute('data-gap-item')) && k.getBoundingClientRect().width > 0);
-      const rs = kids.map((k) => k.getBoundingClientRect()).sort((a, b) => (pdir === 'row' ? a.left - b.left : a.top - b.top));
+      const rs = kids.map((k) => k.getBoundingClientRect()).sort((a, b) => (geo
+        ? (Math.abs(a.top - b.top) > 2 ? a.top - b.top : a.left - b.left)
+        : pdir === 'row' ? a.left - b.left : a.top - b.top));
       for (let i = 0; i < rs.length - 1; i++) {
         const a = rs[i];
         const b = rs[i + 1];
-        if (pdir === 'row') {
+        /* Side by side when the next card starts after this one ACROSS and the two share any height. */
+        const pairDir = geo ? (b.left >= a.right - 2 && b.top < a.bottom - 2 ? 'row' : 'column') : pdir;
+        if (pairDir === 'row') {
           const top = Math.min(a.top, b.top);
           const bottom = Math.max(a.bottom, b.bottom);
-          next.push({ x: a.right - o.left, y: top - o.top, w: Math.max(0, b.left - a.right), h: bottom - top, dir: pdir, owner });
+          next.push({ x: a.right - o.left, y: top - o.top, w: Math.max(0, b.left - a.right), h: bottom - top, dir: pairDir, owner });
         } else {
           const left = Math.min(a.left, b.left);
           const right = Math.max(a.right, b.right);
-          next.push({ x: left - o.left, y: a.bottom - o.top, w: right - left, h: Math.max(0, b.top - a.bottom), dir: pdir, owner });
+          next.push({ x: left - o.left, y: a.bottom - o.top, w: right - left, h: Math.max(0, b.top - a.bottom), dir: pairDir, owner });
         }
       }
       }
