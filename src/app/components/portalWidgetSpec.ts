@@ -322,6 +322,12 @@ const LIVE_CARD_PACKS = LIST_CARD_PACKS.filter((p) => p !== 'P8');
 const LIST_CARD_ROLES: TypeRole[] = ['title', 'body', 'meta', 'link'];
 
 const listCardDefaults = {
+  /* ⚠️ `titlePlace` is SEEDED, not left to the renderer's fallback. Every one of these cards draws its
+     heading inside itself, and the renderers said so (`?? 'inside'`) — but the panel reads the stored
+     config, so with nothing stored the segmented control opened with NEITHER option lit: a card whose
+     title is plainly inside it, asking where its title should go. A default is what makes the control
+     state a fact. `titleGap` is the space between the heading and the card once it is outside. */
+  titlePlace: 'inside', titleGap: 12,
   showCount: true, countStyle: 'badge', showViewAll: true, viewAllLabel: 'View all',
   showId: true, idPlacement: 'before', rowLayout: 'single', statusTone: 'status',
 };
@@ -335,6 +341,16 @@ const listCardDefaults = {
 export const TITLE_PLACE_FIELD: WidgetField = {
   key: 'titlePlace', label: 'Title', control: 'segmented', tab: 'style', group: 'Title',
   options: [{ value: 'inside', label: 'Inside the card' }, { value: 'outside', label: 'Above the card' }],
+};
+
+/* The space between a heading that sits ABOVE the card and the card itself.
+ *
+ * ⚠️ REMOVED while the title is inside, not disabled: inside the card the heading and the rows are one
+ * block with the card's own padding between them, so there is no gap to set — a slider that moved nothing
+ * would be the panel describing a distance that does not exist. */
+export const TITLE_GAP_FIELD: WidgetField = {
+  key: 'titleGap', label: 'Gap', control: 'gapField', tab: 'style', group: 'Title',
+  when: (c: Cfg) => String(c.titlePlace ?? 'inside') === 'outside',
 };
 
 /* ── the registry ────────────────────────────────────────────────────────── */
@@ -357,7 +373,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
     gate: { kind: 'module', setting: 'Request module' },
     /* No fields at all — see the note above the registry. Title, Statuses, Rows to show and the two
        toggles are gone, and with them the Header group that `listCardStyleFields` contributed. */
-    fields: [TITLE_FIELD, TITLE_PLACE_FIELD],
+    fields: [TITLE_FIELD, TITLE_PLACE_FIELD, TITLE_GAP_FIELD],
     packs: LIVE_CARD_PACKS, roles: LIST_CARD_ROLES,
     defaults: { ...listCardDefaults, title: 'My Open Requests', statuses: ['Open', 'In Progress', 'Pending'], show: 5, showStatus: true, showDate: true },
   },
@@ -366,7 +382,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
   {
     id: 'pending_approvals', name: 'Pending Approvals', group: 'Data', reuse: 'single', family: 'flat',
     gate: { kind: 'permission', setting: 'Allow Requester To Access My Approvals', section: 'Organization' },
-    fields: [TITLE_FIELD, TITLE_PLACE_FIELD],
+    fields: [TITLE_FIELD, TITLE_PLACE_FIELD, TITLE_GAP_FIELD],
     packs: LIVE_CARD_PACKS, roles: LIST_CARD_ROLES,
     defaults: { ...listCardDefaults, title: 'Pending Approvals', show: 3, showRequester: true, showDate: true },
   },
@@ -409,6 +425,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
          a heading at all — both carousels draw their notices with no header — so asking where to put one is
          asking about something that is not there. A field whose `when` fails is REMOVED, not disabled. */
       { ...TITLE_PLACE_FIELD, when: (c: Cfg) => (c.display ?? 'regular') === 'regular' },
+      { ...TITLE_GAP_FIELD, when: (c: Cfg) => (c.display ?? 'regular') === 'regular' && String(c.titlePlace ?? 'inside') === 'outside' },
       /* Only the Regular card has a header, so only it asks for a title. */
       { ...TITLE_FIELD, when: (c) => (c.display ?? 'regular') === 'regular' },
       /* ── Image carousel only ── ⚠️ All three are REMOVED for the other two displays, not disabled:
@@ -477,7 +494,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
     packs: ['P1'],
     roles: ['title', 'body'],
     defaults: {
-      layout: 'imageRight', title: 'Need a hand?', sub: 'Our service desk answers in minutes during working hours.',
+      layout: 'imageLeft', title: 'Need a hand?', sub: 'Our service desk answers in minutes during working hours.',
       image: '', ctaLabel: 'Contact us', ctaUrl: '',
       cardGap: 16,
       links: [
@@ -492,7 +509,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
   {
     id: 'most_read', name: 'Most Read', group: 'Data', reuse: 'single', family: 'flat',
     gate: { kind: 'permission', setting: 'Allow Requester To Access Knowledge', section: 'Organization' },
-    fields: [TITLE_FIELD, TITLE_PLACE_FIELD],
+    fields: [TITLE_FIELD, TITLE_PLACE_FIELD, TITLE_GAP_FIELD],
     packs: LIVE_CARD_PACKS, roles: LIST_CARD_ROLES,
     defaults: { ...listCardDefaults, title: 'Most Read', show: 3, showCategory: true, showDate: true, rowLayout: 'stacked' },
   },
@@ -518,7 +535,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
        exactly as it did — the values simply stopped being editable. Restoring one is a line in
        `fields`. With nothing left, the CONTENT section is dropped whole, which is the same panel
        the six other live-data widgets already have. */
-    fields: [TITLE_FIELD, TITLE_PLACE_FIELD],
+    fields: [TITLE_FIELD, TITLE_PLACE_FIELD, TITLE_GAP_FIELD],
     /* ⚠️ No P6. Contact Us has no icon of its own — the group was styling a glyph that is not on
        the widget, which is a control with nothing to act on. P4 goes with the global removal. */
     /* ⚠️ No P8 either. An Empty-state group asks what to show when there is nothing to show —
@@ -598,6 +615,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
          is set on the canvas — with one exception carved out for the preset picker, so a Gap declared there
          renders nowhere and the panel looks unchanged. */
       TITLE_PLACE_FIELD,
+      TITLE_GAP_FIELD,
       { key: 'gapPair', label: 'Gap', control: 'gapPair', tab: 'style', group: 'Gap' },
     ],
     packs: ['P1', 'P2'], roles: ['title', 'body', 'meta'],
@@ -645,6 +663,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
          is set on the canvas — with one exception carved out for the preset picker, so a Gap declared there
          renders nowhere and the panel looks unchanged. */
       TITLE_PLACE_FIELD,
+      TITLE_GAP_FIELD,
       { key: 'gapPair', label: 'Gap', control: 'gapPair', tab: 'style', group: 'Gap' },
     ],
     /* ⚠️ P4 and P6 are gone. P4 brought "Divider between items", which cannot mean anything here —

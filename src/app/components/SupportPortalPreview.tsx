@@ -1417,7 +1417,11 @@ function CardShell({ nodeId, titleNodeId, title, count, cfg = EMPTY_CFG, hideHea
     return (
       <div className="@container flex min-w-0 flex-1 flex-col" style={{ gap: Number(cfg.titleGap ?? 12) }}>
         {headRow}
-        <div className="min-h-0 min-w-0 flex-1 rounded-xl border border-[#E5E7EB] bg-white px-4 py-3">{children}</div>
+        {/* ⚠️ `pt-3.5 pb-3`, not `py-3` — the EXACT insets the card had with its heading inside it, where
+            the top came from the head's `pt-3.5` and the bottom from the body's `pb-3`. The rows have to
+            land where they always landed; a card that shifts its contents 2px when its title moves reads
+            as a second, unasked-for change. */}
+        <div className="min-h-0 min-w-0 flex-1 rounded-xl border border-[#E5E7EB] bg-white px-4 pb-3 pt-3.5">{children}</div>
       </div>
     );
   }

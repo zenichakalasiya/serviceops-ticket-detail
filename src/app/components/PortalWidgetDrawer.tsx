@@ -1153,8 +1153,12 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
       case 'gapField':
         return (
           <GapField
-            value={f.key === 'contentGap' ? Number(viewCfg.__contentGap ?? 20) : f.key === 'contentGapY' ? Number(viewCfg.__contentGapY ?? 20) : f.key === 'sideGap' ? Number(v ?? 32) : f.key === 'tileGap' ? Number(v ?? 12) : bannerGroupGap(nodeId, viewCfg)}
-            dir={f.key === 'sideGap' || f.key === 'contentGap' || f.key === 'tileGap' ? 'row' : f.key === 'contentGapY' ? 'column' : String(viewCfg.dir ?? 'column')}
+            /* ⚠️ Every key this control serves has to be NAMED here. The fallback is the banner
+               group's own gap, so a new key that is not listed shows that number instead of its own
+               value — the field reads 20 while the page renders 12, which is the panel disagreeing
+               with the canvas about a distance both of them can see. */
+            value={f.key === 'contentGap' ? Number(viewCfg.__contentGap ?? 20) : f.key === 'contentGapY' ? Number(viewCfg.__contentGapY ?? 20) : f.key === 'sideGap' ? Number(v ?? 32) : f.key === 'tileGap' ? Number(v ?? 12) : f.key === 'titleGap' ? Number(v ?? 12) : f.key === 'cardGap' ? Number(v ?? 16) : bannerGroupGap(nodeId, viewCfg)}
+            dir={f.key === 'sideGap' || f.key === 'contentGap' || f.key === 'tileGap' ? 'row' : f.key === 'contentGapY' || f.key === 'titleGap' ? 'column' : String(viewCfg.dir ?? 'column')}
             onChange={(x) => set(f.key, x)}
           />
         );

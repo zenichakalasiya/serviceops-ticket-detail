@@ -297,14 +297,17 @@ export function AnnouncementTypePicker({ value, onChange }: { value: string; onC
  *
  * Five shapes, drawn as the shape each one makes. ⚠️ The picture is the one element with a FILL — words
  * are lines and a button is a pill — so a tile says which slots its shape has before you read its name. */
-/* ⚠️ FOUR shapes, not five. "Image left" was "Image right" MIRRORED — the one kind of tile this builder
+/* ⚠️ THREE shapes. "Image right" and "Image left" were one arrangement mirrored, and "Text only" is a
+   card with nothing in it but the words — which is the Text element under a card's name. What is left is
+   the three shapes that are genuinely different: the picture beside the words, above them, or a list of
+   links. ⚠️ A card that already stored `imageRight` or `text` still renders — see `CustomCardRender`.
+   OLD NOTE, kept because the reasoning still holds for any tile added here:
    has refused everywhere else, because two tiles that place the same things in the same relationship ask
    the admin to tell a layout from itself. ⚠️ A card that already stored `imageLeft` still renders that
    way — `CustomCardRender` keeps the branch; it simply cannot be chosen any more. */
 const CARD_LAYOUTS = [
-  { value: 'imageRight', title: 'Image right' },
+  { value: 'imageLeft', title: 'Image left' },
   { value: 'imageTop', title: 'Image on top' },
-  { value: 'text', title: 'Text only' },
   { value: 'links', title: 'Links' },
 ] as const;
 
@@ -316,8 +319,11 @@ export function CardLayoutPicker({ value, onChange }: { value: string; onChange:
         const ink = on ? 'bg-[#3D8BD0]/45' : 'bg-[#C3CDD9]';
         const faint = 'bg-[#E2E8F0]';
         const pic = on ? 'bg-[#3D8BD0]/25' : 'bg-[#D7DEE7]';
+        /* ⚠️ The SAME three-line block in every tile that has words — heading, then two lines of text.
+           Drawn without `flex-1`, so it keeps its own height wherever it is put: inside the side layout's
+           column it used to stretch and the two lighter lines closed up into the heading. */
         const lines = (
-          <span className="flex min-w-0 flex-1 flex-col justify-center gap-[3px]">
+          <span className="flex w-full min-w-0 flex-col gap-[3px]">
             <span className={`h-[3px] w-[70%] rounded-full ${ink}`} />
             <span className={`h-[2px] w-[90%] rounded-full ${faint}`} />
             <span className={`h-[2px] w-[55%] rounded-full ${faint}`} />
@@ -332,23 +338,20 @@ export function CardLayoutPicker({ value, onChange }: { value: string; onChange:
             onClick={() => onChange(t.value)}
             className="flex min-w-0 flex-col items-center gap-1.5"
           >
-            <span className={`flex h-[56px] w-full items-center justify-center rounded-lg border-2 p-2 transition-colors ${
+            <span className={`flex h-[64px] w-full items-center justify-center rounded-lg border-2 p-2 transition-colors ${
               on ? 'border-[#3D8BD0] bg-[#3D8BD0]/[0.04]' : 'border-[#E5E7EB] bg-white hover:border-[#C3CBD6]'
             }`}>
-              {(t.value === 'imageRight' || t.value === 'imageLeft') && (
-                <span className={`flex size-full items-center gap-[5px] ${t.value === 'imageLeft' ? 'flex-row-reverse' : ''}`}>
-                  <span className="flex min-w-0 flex-1 flex-col items-start justify-center">{lines}{button}</span>
+              {t.value === 'imageLeft' && (
+                <span className="flex size-full items-center gap-[5px]">
                   <span className={`h-full w-[36%] flex-shrink-0 rounded-[3px] ${pic}`} />
+                  <span className="flex min-w-0 flex-1 flex-col items-start gap-[3px]">{lines}{button}</span>
                 </span>
               )}
               {t.value === 'imageTop' && (
                 <span className="flex size-full flex-col gap-[4px]">
                   <span className={`h-[45%] w-full flex-shrink-0 rounded-[3px] ${pic}`} />
-                  {lines}
+                  <span className="flex min-w-0 flex-1 flex-col justify-center">{lines}</span>
                 </span>
-              )}
-              {t.value === 'text' && (
-                <span className="flex size-full flex-col items-start justify-center">{lines}{button}</span>
               )}
               {t.value === 'links' && (
                 <span className="flex size-full flex-col justify-center gap-[3px]">

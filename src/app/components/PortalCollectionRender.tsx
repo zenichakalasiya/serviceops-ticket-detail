@@ -47,8 +47,11 @@ const visible = (items: Item[] | undefined, live: boolean) =>
    ⚠️ Nothing else was needed: nodeById already describes any `<id>-title` as a text node and
    ownerOf already strips the suffix so the value reads and writes on the WIDGET's config. One
    wrapper turns that latent machinery on for every widget that has a heading. */
-function WidgetTitle({ nodeId, text, icon, action, count }: {
+function WidgetTitle({ nodeId, text, icon, action, count, flush }: {
   nodeId: string; text?: unknown;
+  /* Drops the heading's own bottom margin — for a heading sitting ABOVE its card, where the space
+     below it is the Gap field's to set and two sources for one distance is one too many. */
+  flush?: boolean;
   /* The count badge `CardShell` puts beside every other data card's title. Absent unless passed. */
   count?: number;
   /* Something the heading row carries on its RIGHT — a card-level link. Absent unless a caller
@@ -63,7 +66,7 @@ function WidgetTitle({ nodeId, text, icon, action, count }: {
   const { styles } = useCanvas();
   if (!text) return null;
   const head = (
-    <div className="mb-3 flex items-center gap-2">
+    <div className={(flush ? '' : 'mb-3 ') + 'flex items-center gap-2'}>
       {icon && (
         <span className="flex size-7 flex-shrink-0 items-center justify-center rounded-md bg-[#EAF3FB] text-[#2F6FB5]">{icon}</span>
       )}
@@ -714,6 +717,9 @@ export function AnnouncementsRender({ nodeId, cfg, headIcon }: { nodeId: string;
      page is one notice with its controls beside it (see the strip branch below). */
   /* The header is the REGULAR card's — the two carousel types never carry one (Card type decides). */
   const headerOn = (cfg.display ?? 'regular') !== 'carousel' && cfg.display !== 'image';
+  /* Only the REGULAR card has a heading, so only it can put one above itself — the same gate the
+     panel's Title field carries. */
+  const titleOutside = headerOn && String(cfg.titlePlace ?? 'inside') === 'outside';
   const imageDisplay = cfg.display === 'image' && rows.length > 0;
   /* The image carousel shows ONE notice in its band, header or not. */
   const PER_PAGE = headerOn && !imageDisplay ? 2 : 1;
@@ -920,11 +926,32 @@ export function AnnouncementsRender({ nodeId, cfg, headIcon }: { nodeId: string;
     );
   }
 
+  /* ⚠️ The rule ABOVE the first row belongs to the heading — it is the line UNDER the header, which
+     `stackProps` draws as a top border on the stack. With no header inside the card (either because the
+     card has none at all, or because its heading has moved out onto the page) it would be a line under
+     nothing, one pixel below the card's own top border. The rules BETWEEN rows stay either way. */
+  const stack = (
+    <div {...stackProps(gap, dividers)} className={headerOn && !titleOutside ? stackProps(gap, dividers).className : (dividers ? '[&>*+*]:border-t [&>*+*]:border-t-[#F0F2F5]' : '')}>{rows.map(row)}</div>
+  );
+  /* ⚠️ OUTSIDE: this card draws its own heading rather than going through `CardShell`, so it needs its
+     own copy of that shape — the heading on the page, and the SAME white card, border and padding around
+     the notices. Without it "Above the card" simply took the card away: `Sel` withholds the surface for
+     any widget whose title is outside, on the promise that the widget paints it back, and this one never
+     had the code to. Same box, same insets and the same Gap as every other card. */
+  if (titleOutside) {
+    return (
+      <div className="@container flex min-w-0 flex-1 flex-col" style={{ gap: Number(cfg.titleGap ?? 12) }}>
+        <div className="px-1">
+          <WidgetTitle nodeId={nodeId} text={cfg.title} icon={headIcon} count={ANNOUNCEMENTS.length} action={viewAll} flush />
+        </div>
+        <div className="min-h-0 min-w-0 flex-1 rounded-xl border border-[#E5E7EB] bg-white px-4 pb-3 pt-3.5">{stack}</div>
+      </div>
+    );
+  }
   return (
     <div className="@container min-w-0">
       {headerOn && <WidgetTitle nodeId={nodeId} text={cfg.title} icon={headIcon} count={ANNOUNCEMENTS.length} action={viewAll} />}
-      {/* No header, no rule above the first row either — it would be a line under nothing. */}
-      <div {...stackProps(gap, dividers)} className={headerOn ? stackProps(gap, dividers).className : (dividers ? '[&>*+*]:border-t [&>*+*]:border-t-[#F0F2F5]' : '')}>{rows.map(row)}</div>
+      {stack}
     </div>
   );
 }
