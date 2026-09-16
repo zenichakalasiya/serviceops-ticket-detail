@@ -969,7 +969,7 @@ const tileAlign = (s: { align?: string; alignY?: string } | undefined, stacked: 
   return css;
 };
 
-function ServiceTiles({ nodeId, items, showDesc, tpl = 'top', cols, chips, look }: {
+function ServiceTiles({ nodeId, items, showDesc, tpl = 'top', cols, chips, look, gap }: {
   nodeId: string; items: { id: string; name: string; desc: string }[]; showDesc: boolean;
   /* The resolved column count. Undefined means "one per service", which is what this grid always
      did and stays the right default — four services in four columns is the reference row. */
@@ -988,6 +988,10 @@ function ServiceTiles({ nodeId, items, showDesc, tpl = 'top', cols, chips, look 
      same object as an action card and a second treatment for it would make one row look like two.
      Opt-in: the grey badge stays the default, so no other template's tiles move. */
   look?: string;
+  /* The gap between the tiles, in px — the band's own `colGap` / `rowGap`. ⚠️ It used to be a hard
+     `gap-3`, which is why the two service rows were the only bands whose spacing could not be changed
+     from either the panel or the canvas. */
+  gap?: { x: number; y: number };
 }) {
   const { styles } = useCanvas();
   const top = tpl === 'top';
@@ -1025,8 +1029,13 @@ function ServiceTiles({ nodeId, items, showDesc, tpl = 'top', cols, chips, look 
   }
   return (
     <div
-      className="grid min-w-0 gap-3"
-      style={{ gridTemplateColumns: `repeat(${Math.max(1, cols ?? Math.min(items.length, MAX_SERVICE_TILES))}, minmax(0,1fr))` }}
+      className="grid min-w-0"
+      data-gap-parent={nodeId}
+      style={{
+        columnGap: gap?.x ?? 12,
+        rowGap: gap?.y ?? gap?.x ?? 12,
+        gridTemplateColumns: `repeat(${Math.max(1, cols ?? Math.min(items.length, MAX_SERVICE_TILES))}, minmax(0,1fr))`,
+      }}
     >
       {items.slice(0, MAX_SERVICE_TILES).map((s, i, arr) => (
         /* One node for every tile in the row — selecting a service card styles all of them. */
@@ -1081,7 +1090,7 @@ export function FavouriteServicesRender({ nodeId, cfg }: { nodeId: string; cfg: 
   return (
     <div className="@container min-w-0">
       <WidgetTitle nodeId={nodeId} text={cfg.title ?? 'Favourite Services'} />
-      <ServiceTiles nodeId={nodeId} items={FAVOURITE_SERVICES} showDesc={cfg.showDesc !== false} tpl={String(cfg.cardTemplate ?? 'top')} cols={Number(chosen(styles, nodeId, 'columns') ?? cfg.columns) || undefined} chips={cfg.tileLook === 'chips'} look={String(cfg.tileLook ?? '')} />
+      <ServiceTiles nodeId={nodeId} items={FAVOURITE_SERVICES} showDesc={cfg.showDesc !== false} tpl={String(cfg.cardTemplate ?? 'top')} cols={Number(chosen(styles, nodeId, 'columns') ?? cfg.columns) || undefined} chips={cfg.tileLook === 'chips'} look={String(cfg.tileLook ?? '')} gap={{ x: Number(cfg.colGap ?? 12), y: Number(cfg.rowGap ?? cfg.colGap ?? 12) }} />
     </div>
   );
 }
@@ -1138,7 +1147,7 @@ export function FeaturedServicesRender({ nodeId, cfg }: { nodeId: string; cfg: C
       </div>
       {/* ⚠️ The SAME tiles as Favourite Services. These two sit on one page and list the same kind
           of thing, so two grid languages would be a difference that means nothing. */}
-      <ServiceTiles nodeId={nodeId} items={FEATURED_SERVICES} showDesc={cfg.showDesc !== false} tpl={String(cfg.cardTemplate ?? 'top')} cols={cols} chips={cfg.tileLook === 'chips'} look={String(cfg.tileLook ?? '')} />
+      <ServiceTiles nodeId={nodeId} items={FEATURED_SERVICES} showDesc={cfg.showDesc !== false} tpl={String(cfg.cardTemplate ?? 'top')} cols={cols} chips={cfg.tileLook === 'chips'} look={String(cfg.tileLook ?? '')} gap={{ x: Number(cfg.colGap ?? 12), y: Number(cfg.rowGap ?? cfg.colGap ?? 12) }} />
     </div>
   );
 }

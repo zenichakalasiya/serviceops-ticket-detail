@@ -2004,6 +2004,11 @@ function GroupToolbar({ id }: { id: string }) {
  * ⚠️ MEASURED from the rendered children, never computed from the value: alignment, wrapping and
  * hugging all decide where the space actually is. */
 const GAP_PINK = '#FF24BD';
+/* The built-in bands whose gap is draggable on the canvas. ⚠️ Each one must also mark the container it
+   lays out in with `data-gap-parent="<its id>"` in the preview — the strips are measured off the real
+   children, so a band that does not say which box arranges them simply has no strips. */
+export const GAP_BAND_NODES = new Set(['quick', 'favourites', 'services', 'work', 'work-main', 'records']);
+
 function GapBands({ id, host }: { id: string; host: React.RefObject<HTMLDivElement | null> }) {
   const { cfg, setCfg } = useCanvas();
   const c = cfg?.(id) ?? {};
@@ -2019,10 +2024,20 @@ function GapBands({ id, host }: { id: string; host: React.RefObject<HTMLDivEleme
   /* A SECTION or a box in one: bands for every row and column inside it, each editing the gap of the box
      that lays it out — the columns' gap along a row, the rows' gap down a column. */
   const boxMode = /^sec-\d+(-b\d+)?$/.test(id);
+  /* A built-in BAND — Quick Actions, the two service rows, the work and records rows.
+   *
+   * ⚠️ They were the one kind of container with NO bands: an added section had them, the banner had
+   * them, and the rows that hold the product's own cards did not — so the one place a page is mostly
+   * made of was the one place the gap could only be typed, and on the service rows not even that. The
+   * band's gap is the SAME pair `secGapCss` renders (`colGap` / `rowGap`), so the pink strip and the
+   * panel's Gap field write the same two numbers. */
+  const bandMode = GAP_BAND_NODES.has(id);
   const [bands, setBands] = useState<{ x: number; y: number; w: number; h: number; dir: string; owner: string }[]>([]);
   const valueOf = (b: { dir: string; owner: string }) => (boxMode
     ? Number(cfg?.(b.owner)?.[b.dir === 'row' ? '__gapX' : '__gapY'] ?? 16)
-    : gapFor(b.dir));
+    : bandMode
+      ? Number(cfg?.(b.owner)?.[b.dir === 'row' ? 'colGap' : 'rowGap'] ?? 16)
+      : gapFor(b.dir));
   const [drag, setDrag] = useState(false);
   const [hot, setHot] = useState<number | null>(null);
   const sig = `${dir}|${gap}|${gapY}|${String(c.align ?? '')}|${JSON.stringify(cfg?.('hero')?.bannerTree ?? null)}|${JSON.stringify(cfg?.('hero')?.bannerBleed ?? null)}`;
@@ -2033,11 +2048,18 @@ function GapBands({ id, host }: { id: string; host: React.RefObject<HTMLDivEleme
     const el = host.current;
     if (!el) { const f = requestAnimationFrame(() => setRetry((n) => n + 1)); return () => cancelAnimationFrame(f); }
     const measure = () => {
-      const first = boxMode ? el.querySelector<HTMLElement>('[data-gap-parent^="sec-"]') : treeMode ? el.querySelector<HTMLElement>('[data-banner-root]') : isHero ? el.querySelector<HTMLElement>('[data-gap-parent="hero"]') : el;
+      const first = boxMode ? el.querySelector<HTMLElement>('[data-gap-parent^="sec-"]')
+        : bandMode ? el.querySelector<HTMLElement>(`[data-gap-parent="${id}"]`)
+        : treeMode ? el.querySelector<HTMLElement>('[data-banner-root]')
+        : isHero ? el.querySelector<HTMLElement>('[data-gap-parent="hero"]') : el;
       if (!first) { setBands([]); return; }
       /* The Content group's nested rows and columns share its one gap, so each gets its own bands. */
       const parents = boxMode
         ? Array.from(el.querySelectorAll<HTMLElement>('[data-gap-parent^="sec-"]'))
+        /* A band can lay out in more than one container — the services row draws a grid of tiles under a
+           heading, the work row a grid and a rail — so every container that carries this band's name gets
+           its own strips. */
+        : bandMode ? Array.from(el.querySelectorAll<HTMLElement>(`[data-gap-parent="${id}"]`))
         : [...new Set([first, ...(treeMode ? Array.from(el.querySelectorAll<HTMLElement>('[data-gap-parent="hero-sections"]')) : [])])];
       const o = el.getBoundingClientRect();
       const next: { x: number; y: number; w: number; h: number; dir: string; owner: string }[] = [];
@@ -2069,7 +2091,7 @@ function GapBands({ id, host }: { id: string; host: React.RefObject<HTMLDivEleme
     Array.from(el.querySelectorAll('[data-node],[data-gap-item]')).forEach((k) => ro.observe(k));
     window.addEventListener('resize', measure);
     return () => { ro.disconnect(); window.removeEventListener('resize', measure); };
-  }, [host, isHero, treeMode, boxMode, sig, retry]);
+  }, [host, isHero, treeMode, boxMode, bandMode, id, sig, retry]);
 
   const begin = (e: React.MouseEvent, i: number) => {
     e.preventDefault();
@@ -2086,6 +2108,10 @@ function GapBands({ id, host }: { id: string; host: React.RefObject<HTMLDivEleme
       const d = (bdir === 'row' ? ev.clientX : ev.clientY) - start;
       const nextGap = Math.max(0, Math.min(200, Math.round(from + d)));
       if (boxMode && band) { setCfg?.(band.owner, bdir === 'row' ? { gapX: nextGap } : { gapY: nextGap }); return; }
+      /* ⚠️ Through `gapPairX`/`gapPairY`, the keys the panel's own Gap field writes — `patchCfg`
+         redirects those to `colGap`/`rowGap` for a band. Writing the final keys here instead would be a
+         second route into the same value, and the day the redirect changes only one of them would follow. */
+      if (bandMode && band) { setCfg?.(band.owner, bdir === 'row' ? { gapPairX: nextGap } : { gapPairY: nextGap }); return; }
       setCfg?.(gapOwner, isHero ? { sideGap: nextGap } : treeMode ? (bdir === 'column' ? { sectionGapY: nextGap } : { sectionGapX: nextGap }) : { gap: nextGap });
     };
     const up = () => {
@@ -2958,7 +2984,7 @@ export function Sel({ id, children, className = '', toolbarBelow = false, style:
         <ColumnAdders columnId={id} filled onSide={(side) => addBannerCell?.(id, side)} />
       )}
       {/* Figma's pink gap bands: on a selected group, and on the banner once widgets sit beside its text. */}
-      {on && enabled && (BANNER_GROUPS.has(id) || id === 'hero' || /^sec-\d+(-b\d+)?$/.test(id)) && !cropping && <GapBands id={id} host={ref} />}
+      {on && enabled && (BANNER_GROUPS.has(id) || id === 'hero' || GAP_BAND_NODES.has(id) || /^sec-\d+(-b\d+)?$/.test(id)) && !cropping && <GapBands id={id} host={ref} />}
 
       {/* ⚠️ A built-in band gets the SAME four handles an empty box does — that is the whole point
           of hosting it in a section tree. This branch covers only the FIRST split, while the band

@@ -119,6 +119,9 @@ function RowDrop({ rowId, className, style, resize, children }: {
     <div
       style={style}
       data-resize={resize}
+      /* The row's own cards are laid out HERE, so this is the box the canvas measures its gap strips
+         between — see `GAP_BAND_NODES`. */
+      data-gap-parent={rowId}
       onDragOver={(e) => {
         if (locked) return;
         if (e.dataTransfer.types.includes('text/portal-element')) { e.preventDefault(); setOver(true); }
@@ -3336,6 +3339,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                     the Layout presets on this region would move a control and change nothing. */}
                 <Sel
                   id="work-main"
+                  data-gap-parent="work-main"
                   className="grid min-w-0"
                   style={{
                     flex: '2 1 0%',

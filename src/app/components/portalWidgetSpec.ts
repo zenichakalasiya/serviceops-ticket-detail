@@ -512,6 +512,14 @@ export const WIDGET_SPECS: WidgetSpec[] = [
          other, disagreeing about their own shape is a difference that means nothing. */
       { key: 'cardTemplate', label: '', control: 'templates', group: 'Card templates' },
       { key: '__tilePreset', label: 'Presets', control: 'tilePreset', tab: 'style', group: 'Layout' },
+      /* ⚠️ The GAP between its tiles. It was taken out with the rest of this widget's grid controls and
+         has come back on request: a row of cards whose spacing cannot be changed is the one band on the
+         page that is not the admin's. Same field, same keys and the same pink strips on the canvas as
+         every other band — `gapSeed` already tells it which axes this row actually has. */
+      /* ⚠️ Its OWN group, not 'Layout'. `groupsFor` drops every field in a group called Layout — layout
+         is set on the canvas — with one exception carved out for the preset picker, so a Gap declared there
+         renders nowhere and the panel looks unchanged. */
+      { key: 'gapPair', label: 'Gap', control: 'gapPair', tab: 'style', group: 'Gap' },
     ],
     packs: ['P1', 'P2'], roles: ['title', 'body', 'meta'],
     /* ⚠️ A WARN, not an info. This section can be on the page and invisible to most of the people
@@ -547,6 +555,14 @@ export const WIDGET_SPECS: WidgetSpec[] = [
          other, disagreeing about their own shape is a difference that means nothing. */
       { key: 'cardTemplate', label: '', control: 'templates', group: 'Card templates' },
       { key: '__tilePreset', label: 'Presets', control: 'tilePreset', tab: 'style', group: 'Layout' },
+      /* ⚠️ The GAP between its tiles — back on request. A row of cards whose spacing cannot be changed
+         is the one band on the page that is not the admin's, and this row and Favourite Services were the
+         only two like it. Same field, same keys and the same pink strips on the canvas as every other
+         band; `gapSeed` already says which axes this row actually has. */
+      /* ⚠️ Its OWN group, not 'Layout'. `groupsFor` drops every field in a group called Layout — layout
+         is set on the canvas — with one exception carved out for the preset picker, so a Gap declared there
+         renders nowhere and the panel looks unchanged. */
+      { key: 'gapPair', label: 'Gap', control: 'gapPair', tab: 'style', group: 'Gap' },
     ],
     /* ⚠️ P4 and P6 are gone. P4 brought "Divider between items", which cannot mean anything here —
        these services are a GRID, and there is no gap between rows to rule. P6 brought an Icon group
