@@ -1903,9 +1903,31 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
    * every one. Its anchors are its ITEMS: an EMPTY SLOT is taken over (the widget lands exactly where the
    * slot was and the slot goes), another banner item is SWAPPED with a banner item or joined BESIDE by
    * something from the page, and the banner's own background adds the widget to the banner. */
+  /* A built-in BLOCK dragged onto the banner — My Open Requests, Announcements, Favourite Services, the Quick
+   * Actions row… They are not placed elements, so they cannot simply be relocated: the banner carries widgets.
+   * Each one has a palette element that renders the same card (`PortalElement.node` names the block it stands
+   * for), so the block becomes THAT widget on the banner and leaves the page.
+   * ⚠️ Its config travels with it, or a card that had been given a title and a row count would land on the
+   * banner wearing the product's defaults and read as a different card.
+   * ⚠️ The Quick Actions ROW maps to the Action cards block, which already MOVES the four cards (`actionsMoved`
+   * hides the row), so that one is not added to `removed` — it would hide the row twice and one of them would
+   * still be hiding it after the block was deleted from the banner. */
+  const blockAsWidget = (blockId: string): string | null => {
+    if (blockId === 'quick') return 'x-actions';
+    return PORTAL_ELEMENTS.find((e) => e.node === blockId && e.group !== 'Actions')?.id ?? null;
+  };
+
   const moveToBanner = useCallback((source: string, anchor: string, side?: 'left' | 'right' | 'top' | 'bottom') => {
+    /* A built-in block first: it arrives on the banner as the widget that draws the same card. */
+    const asWidget = /^el-\d+$/.test(source) || source === 'hero-content' ? null : blockAsWidget(source);
+    if (asWidget) { bringBlockToBanner(source, asWidget, anchor, side); return; }
     const src = /^el-\d+$/.test(source) || source === 'hero-content' ? source : null;
-    if (!src) { toast.error('Only widgets can go on the banner — drag a widget, not a whole section'); return; }
+    if (!src) {
+      toast.error(/^quick-/.test(source)
+        ? 'Drag the whole Quick Actions row onto the banner, or add an Action card from the widgets panel'
+        : 'Sections stay on the page — drag a widget or a card onto the banner');
+      return;
+    }
     if (src === anchor) return;
     const heroList = rowExtrasRef.current.hero ?? [];
     const onBanner = src === 'hero-content' || heroList.some((e) => e.id === src);
@@ -1948,6 +1970,29 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     select(moving.id);
     toast.success(`${moving.name} moved onto the banner`);
   }, [detachElement, patchCfg, select]);
+
+  /** A built-in block becoming a banner widget: the same card, now a section of the banner. */
+  const bringBlockToBanner = useCallback((blockId: string, type: string, anchor: string, side?: 'left' | 'right' | 'top' | 'bottom') => {
+    const heroList = rowExtrasRef.current.hero ?? [];
+    const slot = heroList.find((e) => e.id === anchor && e.type === 'bn-slot');
+    if (!slot && bannerFull()) return;
+    const el = makeElement(type, 'hero');
+    let tree = heroTree();
+    if (slot) tree = replaceLeaf(tree, anchor, el.id);
+    else if (anchor !== 'hero') tree = insertBeside(tree, anchor, el.id, side ?? 'right');
+    setRowExtras((prev) => ({
+      ...prev,
+      hero: [...(prev.hero ?? []).filter((e) => !(slot && e.id === anchor)), el],
+    }));
+    /* Whatever the block was told to show, the widget shows — the defaults underneath it are the same. */
+    setWidgetCfg((prev) => (prev[blockId] ? { ...prev, [el.id]: { ...prev[blockId] } } : prev));
+    seedBannerItem(el.id, type);
+    if (anchor !== 'hero' || slot) patchCfg('hero', { bannerTree: tree });
+    /* The block leaves the page — the Action cards block already hides the Quick Actions row by itself. */
+    if (type !== 'x-actions') setRemoved((r) => (r.includes(blockId) ? r : [...r, blockId]));
+    select(el.id);
+    toast.success(`${el.name} moved onto the banner`);
+  }, [makeElement, patchCfg, select]);
 
   /** A NEW element dropped from the library onto the banner. */
   const dropIntoBanner = useCallback((type: string, anchor: string, side?: 'left' | 'right' | 'top' | 'bottom') => {
