@@ -317,8 +317,12 @@ export function TilePresetPicker({ count, value, onChange, kind = 'action' }: {
 /* ── Figma's two spacing fields: the gap between COLUMNS and the gap between ROWS ────────────────
  * One value each for everything the container holds. "Mixed" when rows or columns inside it were given
  * their own gap — typing a value here sets them all back to one. */
-export function GapPair({ x, y, mixedX = false, mixedY = false, onX, onY }: {
+export function GapPair({ x, y, mixedX = false, mixedY = false, onX, onY, showX = true, showY = true }: {
   x: number; y: number; mixedX?: boolean; mixedY?: boolean; onX: (n: number) => void; onY: (n: number) => void;
+  /* ⚠️ Which halves this container actually has. A section laid out as one column has no gap BETWEEN columns,
+     and a field storing a number nothing reads is the definition of a dead control. Both show while the shape
+     has both, and each keeps its own value — changing rows never touches columns. */
+  showX?: boolean; showY?: boolean;
 }) {
   const cell = (v: number, mixed: boolean, onChange: (n: number) => void, glyph: ReactNode, label: string) => (
     <label title={label} className="flex h-8 min-w-0 flex-1 items-center gap-2 rounded border border-[#DFE5ED] bg-white px-2 focus-within:border-[#3D8BD0]">
@@ -343,8 +347,8 @@ export function GapPair({ x, y, mixedX = false, mixedY = false, onX, onY }: {
   );
   return (
     <div className="flex gap-2">
-      {cell(x, mixedX, onX, colGlyph, 'Gap between columns')}
-      {cell(y, mixedY, onY, rowGlyph, 'Gap between rows')}
+      {showX && cell(x, mixedX, onX, colGlyph, 'Gap between columns')}
+      {showY && cell(y, mixedY, onY, rowGlyph, 'Gap between rows')}
     </div>
   );
 }

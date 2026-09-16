@@ -10,7 +10,7 @@ import {
   Replace, SquareDashed, Trash2, Underline, X, ImagePlus, Palette, LayoutDashboard, Columns3,
 } from 'lucide-react';
 import { BannerFillEditor, BannerPresetPicker, TilePresetPicker } from './PortalBannerTools';
-import { flipRoot } from './portalBannerLayout';
+import { flipRoot, presetsFor } from './portalBannerLayout';
 import type { BannerNode } from './portalBannerLayout';
 import { BANNER_GROUPS, bannerGroupGap } from './portalPageModel';
 // ArrowLeft stays in use by the card toolbar's "Move left".
@@ -1855,8 +1855,12 @@ function BannerToolbar() {
       <AlignAxis axis="h" value={h} options={H} open={axis === 'h'} onToggle={() => { setFill(false); setAxis((a) => (a === 'h' ? null : 'h')); }} onPick={(x) => { setCfg?.('hero', { contentAlign: x }); setAxis(null); }} />
       <AlignAxis axis="v" value={vAlign} options={V} open={axis === 'v'} onToggle={() => { setFill(false); setAxis((a) => (a === 'v' ? null : 'v')); }} onPick={(x) => { setCfg?.('hero', { contentAlignY: x }); setAxis(null); }} />
       <span className="mx-0.5 h-4 w-px bg-[#E5E7EB]" />
+      {/* ⚠️ Withheld while the banner holds ONE section. There is no arrangement of a single thing, so the
+          popup would open on the empty-state note — a control that exists to tell you it has nothing to offer.
+          It returns the moment a second section lands. */}
+      {(presetsFor(heroTree?.() ?? null).length > 0) && (
       <div className="relative">
-        <button className={layout ? btnOn : btn} data-tip="Arrange the banner's items" onClick={() => { setAxis(null); setFill(false); setAdding(false); setLayout((x) => !x); }}><LayoutDashboard size={15} /></button>
+        <button className={layout ? btnOn : btn} data-tip="Arrange the banner's sections" onClick={() => { setAxis(null); setFill(false); setAdding(false); setLayout((x) => !x); }}><LayoutDashboard size={15} /></button>
         {layout && (
           <>
             <span className="fixed inset-0 z-[60]" onClick={() => setLayout(false)} />
@@ -1867,6 +1871,7 @@ function BannerToolbar() {
           </>
         )}
       </div>
+      )}
       <div ref={addRef} className="relative">
         <button className={btn} data-tip="Add a widget to the banner" onClick={() => { setAxis(null); setFill(false); setLayout(false); setAdding((x) => !x); }}><Plus size={15} /></button>
         {adding && (
@@ -2528,7 +2533,14 @@ export function BannerSlot({ id }: { id: string }) {
   );
 }
 
-export function ColumnAdders({ columnId, filled, onSide }: { columnId: string; filled?: boolean; onSide?: (side: 'left' | 'right' | 'top' | 'bottom') => void }) {
+export function ColumnAdders({ columnId, filled, onSide, outer }: {
+  columnId: string; filled?: boolean; onSide?: (side: 'left' | 'right' | 'top' | 'bottom') => void;
+  /* ⚠️ The BANNER's four adders take the OUTER track — a quarter of the way down each edge instead of the
+     middle — because the section inside it sits at the same edges and its adders were landing on the same
+     four points. Two controls on one point go to whichever painted last, which is how "add a column beside
+     the banner" kept adding a section inside it. Both are still offered; they no longer overlap. */
+  outer?: boolean;
+}) {
   const { addBeside, addInside } = useCanvas();
   /* ⚠️ ONE component for both callers. A built-in band that has never been split is not a box yet,
      so its four handles run `splitBand` instead of `addBeside` — but they have to be the same
@@ -2549,11 +2561,14 @@ export function ColumnAdders({ columnId, filled, onSide }: { columnId: string; f
      makes the promise keepable everywhere rather than only where the shape already agreed.
      ⚠️ A new row arrives FULL WIDTH and empty. Subdividing it is the same four buttons again, one
      level in — you are never asked to choose a layout before you have anything to lay out. */
+  const along = outer ? 'top-1/4' : 'top-1/2';
+  const across = outer ? 'left-1/4' : 'left-1/2';
+  const what = outer ? ' beside the banner' : '';
   const sides = [
-    { side: 'top' as const, title: 'Add a row above', cls: `${side} absolute -top-3 left-1/2 z-20 -translate-x-1/2`, spin: '-rotate-90' },
-    { side: 'left' as const, title: 'Add a column to the left', cls: `${side} absolute -left-3 top-1/2 z-20 -translate-y-1/2`, spin: '-scale-x-100' },
-    { side: 'right' as const, title: 'Add a column to the right', cls: `${side} absolute -right-3 top-1/2 z-20 -translate-y-1/2`, spin: '' },
-    { side: 'bottom' as const, title: 'Add a row below', cls: `${side} absolute -bottom-3 left-1/2 z-20 -translate-x-1/2`, spin: 'rotate-90' },
+    { side: 'top' as const, title: outer ? 'Add a row above the banner' : 'Add a row above', cls: `${side} absolute -top-3 ${across} z-20 -translate-x-1/2`, spin: '-rotate-90' },
+    { side: 'left' as const, title: `Add a column to the left${what}`, cls: `${side} absolute -left-3 ${along} z-20 -translate-y-1/2`, spin: '-scale-x-100' },
+    { side: 'right' as const, title: `Add a column to the right${what}`, cls: `${side} absolute -right-3 ${along} z-20 -translate-y-1/2`, spin: '' },
+    { side: 'bottom' as const, title: outer ? 'Add a row below the banner' : 'Add a row below', cls: `${side} absolute -bottom-3 ${across} z-20 -translate-x-1/2`, spin: 'rotate-90' },
   ];
 
   return (
@@ -2694,7 +2709,11 @@ export function Sel({ id, children, className = '', toolbarBelow = false, style:
      whatever its neighbour happens to be; `w-full` fills the width the same way. */
   const hasH = styles[id]?.height !== undefined;
   const hasW = styles[id]?.widthPct !== undefined || styles[id]?.width !== undefined;
-  const body = hasH || hasW
+  /* ⚠️ NEVER for the banner's auto-layout groups. The wrapper becomes the children's flex parent, so the
+     direction, gap and alignment the group sets on its own box stop reaching them: dragging the Text & Search
+     section narrower left its search pinned to the left edge while the heading stayed centred. A group is a
+     flex container in its own right — it carries the size itself. */
+  const body = (hasH || hasW) && !BANNER_GROUPS.has(id)
     ? (
       <div className={`flex min-h-0 w-full flex-1 flex-col ${hasH ? '[&>*]:min-h-0 [&>*]:flex-1 ' : ''}${hasW ? '[&>*]:w-full' : ''}`}>
         {children}
@@ -2941,7 +2960,7 @@ export function Sel({ id, children, className = '', toolbarBelow = false, style:
           section, the way every built-in band splits. Sections INSIDE the banner come from its toolbar's + and
           from the + beside each section. */}
       {enabled && id === 'hero' && !on && !cropping && hoverId === 'hero' && !bandHosted?.('hero') && (
-        <ColumnAdders columnId="hero" filled onSide={(side) => splitBand?.('hero', side)} />
+        <ColumnAdders columnId="hero" filled outer onSide={(side) => splitBand?.('hero', side)} />
       )}
       {cropping && <BannerCropper hostRef={ref} onClose={() => setCropping(false)} />}
       {on && enabled && BANNER_GROUPS.has(id) && (

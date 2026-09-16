@@ -100,9 +100,11 @@ export const HERO_SPEC: WidgetSpec = {
     },
     /* ── Arrangement: how the banner's items sit — side by side or stacked — from presets that change
        with the number of items. The gap is the space between every item, down to 0 so two can meet. */
-    { key: 'bannerTree', label: 'Arrangement', control: 'bannerPreset', tab: 'style', group: 'Layout presets' },
-    { key: 'contentGap', label: 'Gap between columns', control: 'gapField', tab: 'style', group: 'Layout presets' },
-    { key: 'contentGapY', label: 'Gap between rows', control: 'gapField', tab: 'style', group: 'Layout presets' },
+    /* ⚠️ Every row here needs a SECOND section to mean anything — see `__bannerSections` in the builder —
+       and each gap row needs that axis to exist. */
+    { key: 'bannerTree', label: 'Arrangement', control: 'bannerPreset', tab: 'style', group: 'Layout presets', when: (c) => Number(c.__bannerSections ?? 1) > 1 },
+    { key: 'contentGap', label: 'Gap between columns', control: 'gapField', tab: 'style', group: 'Layout presets', when: (c) => Number(c.__bannerSections ?? 1) > 1 && c.__hasCols === true },
+    { key: 'contentGapY', label: 'Gap between rows', control: 'gapField', tab: 'style', group: 'Layout presets', when: (c) => Number(c.__bannerSections ?? 1) > 1 && c.__hasRows === true },
     {
       key: 'bannerSplit', label: 'Column widths', control: 'segmented', tab: 'style', group: 'Layout presets',
       when: (c) => c.__rootRow2 === true,
@@ -283,8 +285,12 @@ export const SECTION_SPEC: WidgetSpec = {
             info: 'Fill — dragging one column re-flows its siblings so the row always fills the section. Fixed — every column keeps its own width, and dragging one leaves the others exactly where they are.' },
           /* Figma's spacing pair: the gap between the section's columns and between its rows. */
           { key: 'gapPair', label: 'Gap', control: 'gapPair' },
-          { key: 'distribute', label: 'Content alignment', control: 'distribute', when: (c) => Number(c.__count ?? 0) > 1 },
-          { key: 'valign', label: '', control: 'valign', when: (c) => Number(c.__count ?? 0) > 1 },
+          /* ⚠️ WITHHELD on the bands of data cards (Quick Actions, Favourite / Most Used Services, My Assets,
+             My CIs). Those rows are a grid of equal cards that fill the row — there is no free space for an
+             alignment to act on, so every option but the default moved nothing. The preset row above says how
+             many go across, which is the question that band actually has. */
+          { key: 'distribute', label: 'Content alignment', control: 'distribute', when: (c) => Number(c.__count ?? 0) > 1 && c.__dataBand !== true },
+          { key: 'valign', label: '', control: 'valign', when: (c) => Number(c.__count ?? 0) > 1 && c.__dataBand !== true },
         ],
       },
       {

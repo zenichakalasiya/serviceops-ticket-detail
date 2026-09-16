@@ -2142,8 +2142,14 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
   const walkEls = (b: Box): PlacedElement[] => [...(b.el ? [b.el] : []), ...(b.children ?? []).flatMap(walkEls)];
   const actionsMoved = Object.values(rowExtras ?? {}).some((l) => l.some((x) => x.type === 'x-actions'))
     || sections.some((s) => walkEls(s.section.root).some((x) => x.type === 'x-actions'));
+  /* ⚠️ How many cards a card BLOCK lays across when nobody has said: on the banner it depends on the SHAPE of
+     the section it landed in. A section spanning the banner is a strip — the cards run all the way across it —
+     while a section beside the words is a narrow column, where the same cards have to stack. Filled while the
+     banner draws (below) and read here, so one rule answers for both kinds of block. */
+  const bannerCols = useRef<Record<string, number>>({});
   const actionsBlock = (nodeId: string) => {
-    const cols = Math.min(4, Math.max(1, Number(wc(nodeId).cols ?? 4)));
+    const auto = bannerCols.current[nodeId];
+    const cols = Math.min(4, Math.max(1, Number(wc(nodeId).__colsSet === true || auto === undefined ? (wc(nodeId).cols ?? 4) : auto)));
     return (
       <div className="grid w-full" style={{ gap: Number(wc(nodeId).tileGap ?? (String(wc(nodeId).look ?? '') === 'row' ? 10 : 12)), gridTemplateColumns: colsTemplate(cols, 12, 150) }}>
         {/* The block's LOOK comes from a banner template: glass cards on a dark band (the first one solid when the
@@ -2598,6 +2604,22 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
               }
               return p.c.some(compact) ? 2 : 1;
             };
+            /* A cell is WIDE when nothing sits beside it: the banner's own width, whatever depth it is at. */
+            const wideCell: Record<string, boolean> = {};
+            const walkWide = (n: BannerNode, wide: boolean) => {
+              if (typeof n === 'string') { wideCell[n] = wide; return; }
+              n.c.forEach((k) => walkWide(k, n.d === 'row' && n.c.length > 1 ? false : wide));
+            };
+            walkWide(tree, true);
+            const autoCols = (el: PlacedElement) => {
+              const count = el.type === 'x-kpis'
+                ? ((wc(el.id).items as unknown[] | undefined)?.length ?? 3)
+                : content.quick.length;
+              return wideCell[el.id] ? Math.max(1, Math.min(4, count)) : 1;
+            };
+            heroExtras.forEach((el) => {
+              if (el.type === 'x-actions' || el.type === 'x-kpis') bannerCols.current[el.id] = autoCols(el);
+            });
             const leafBody = (id: string) => {
               if (id === 'hero-content') return textSection;
               const el = heroExtras.find((x) => x.id === id);
@@ -2606,7 +2628,17 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                 <Sel key={el.id} id={el.id} className="min-w-0">
                   {el.type === 'bn-slot'
                     ? <BannerSlot id={el.id} />
-                    : <PortalPlacedElement item={el} icon={icons?.[el.id]} text={placedText?.[el.id]} cfg={wc(el.id)} />}
+                    : (
+                      <PortalPlacedElement
+                        item={el}
+                        icon={icons?.[el.id]}
+                        text={placedText?.[el.id]}
+                        /* The block's own choice wins; the shape of its section is only the default. */
+                        cfg={el.type === 'x-kpis' && wc(el.id).__colsSet !== true
+                          ? { ...wc(el.id), cols: String(autoCols(el)) }
+                          : wc(el.id)}
+                      />
+                    )}
                 </Sel>
               );
             };
@@ -3472,6 +3504,8 @@ function RecordTiles({ nodeId, titleFallback, cfg, rows, icon, headIcon }: {
      a second line that was three tile-widths of nothing. The LIST variant on the other layout still
      honours the setting; the tile variant is a 2x2 block by shape, which is a different promise. */
   const shown = rows.slice(0, 4);
+  /* Where the icon sits on every tile — the card's own template, the same four the action cards offer. */
+  const tileTpl = String(cfg.cardTemplate ?? 'left');
   /* ⚠️ The track count is READABLE now. It was `grid-cols-1 @[290px]:grid-cols-2` and nothing else,
      so the Columns control wrote a value this widget never looked at — the same defect `ServiceTiles`
      had. An explicit value wins; with none set the responsive pair below is still the default, so no
@@ -3520,8 +3554,12 @@ function RecordTiles({ nodeId, titleFallback, cfg, rows, icon, headIcon }: {
                the panel's Icon · Style · Spacing restyle them together — see the note in `nodeById`.
                The tile's resting classes stay; `Sel` lays the chosen values over them. */
             /* A lone last tile spans the row — what the Three-across preset tile draws. */
-            <Sel key={r.id} id={`${nodeId}-tile`} style={tileCols > 1 && i === shown.length - 1 && shown.length % tileCols === 1 ? { gridColumn: '1 / -1' } : undefined} className="flex min-w-0 items-start gap-2.5 rounded-lg bg-[#F9FAFB] p-3">
-              <span style={iconBoxCss(styles, `${nodeId}-tile`)} className="flex size-9 flex-shrink-0 items-center justify-center rounded-md bg-white text-[#5A6B80]">{icon}</span>
+            <Sel key={r.id} id={`${nodeId}-tile`} style={tileCols > 1 && i === shown.length - 1 && shown.length % tileCols === 1 ? { gridColumn: '1 / -1' } : undefined} className={`flex min-w-0 gap-2.5 rounded-lg bg-[#F9FAFB] p-3 ${
+              tileTpl === 'top' ? 'flex-col items-center text-center' : tileTpl === 'right' ? 'flex-row-reverse items-start' : 'items-start'
+            }`}>
+              {tileTpl !== 'none' && (
+                <span style={iconBoxCss(styles, `${nodeId}-tile`)} className="flex size-9 flex-shrink-0 items-center justify-center rounded-md bg-white text-[#5A6B80]">{icon}</span>
+              )}
               {/* ⚠️ The NAME leads. It was third — under the ID pill and the type — so the tile
                   opened with a reference number and made you read past it to find out what the thing
                   actually is. What identifies an asset to a person is its name; the id is how the

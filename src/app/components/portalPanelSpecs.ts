@@ -344,7 +344,10 @@ export const IMAGE_CAPTION_SPEC: WidgetSpec = {
 export const DATA_TILE_SPEC: WidgetSpec = {
   id: 'data_tile', name: 'Data cards', group: 'Basic', reuse: 'many', family: 'flat',
   panel: {
-    content: [],
+    /* ⚠️ Where the icon sits and how the words line up is the FIRST question asked of a card, so it opens the
+       panel. It is asked here, on the cards, rather than on the section around them — the section decides how
+       many there are across, the card decides what one looks like. */
+    content: [{ key: 'cardTemplate', label: 'Card templates', control: 'templates' }],
     accordions: [
       { id: 'icon', open: true, groups: ['G6'] },
       { id: 'style', open: true, groups: ['G1'] },

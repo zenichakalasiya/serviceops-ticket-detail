@@ -1217,6 +1217,9 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
             y={Number(viewCfg.__gapY ?? 16)}
             mixedX={viewCfg.__gapMixedX === true}
             mixedY={viewCfg.__gapMixedY === true}
+            /* Only the axes this container has — and never neither, or the row would be an empty box. */
+            showX={viewCfg.__hasCols !== false || viewCfg.__hasRows === false}
+            showY={viewCfg.__hasRows !== false || viewCfg.__hasCols === false}
             onX={(n) => viewSet({ gapPairX: n })}
             onY={(n) => viewSet({ gapPairY: n })}
           />

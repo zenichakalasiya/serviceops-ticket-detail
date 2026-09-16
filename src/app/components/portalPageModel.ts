@@ -974,8 +974,12 @@ export function removeBox(section: CustomSection, id: string): CustomSection {
     if (kids.length === 1) {
       /* Collapse: the survivor's CONTENT moves up, but the surviving box keeps the PARENT's id so
          anything selected or styled against it still resolves. */
+      /* ⚠️ `band` travels with the survivor. A box HOSTING a built-in band (the banner, once a column was
+         added beside it) carries `band: 'hero'`, and dropping it on collapse left a section that still said
+         it hosted the banner while no box in it drew one — so deleting the empty column beside the banner
+         deleted the BANNER, and deleting again brought it back. */
       const only = kids[0];
-      return { id: b.id, dir: only.dir, weight: b.weight, children: only.children, el: only.el };
+      return { id: b.id, dir: only.dir, weight: b.weight, children: only.children, el: only.el, ...(only.band ? { band: only.band } : {}) };
     }
     return { ...b, children: kids };
   });

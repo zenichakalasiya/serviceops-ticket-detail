@@ -37,7 +37,8 @@ import { BANNER_GROUPS } from './portalPageModel';
 import type { Box, BoxDir, CustomSection, NodeStyle, PlacedElement, PortalPageContent, PortalStyles } from './portalPageModel';
 import { PORTAL_ELEMENTS, PORTAL_EMPTY_WIDGETS, PORTAL_TEMPLATES, bannerLayout, bannerShape } from './supportPortalData';
 import type { ShapeNode } from './supportPortalData';
-import { MAX_BANNER_SECTIONS, insertAtEdge, insertBeside, normalizeTree, removeLeaf, replaceLeaf, shiftLeaf, swapLeaves } from './portalBannerLayout';
+import { MAX_BANNER_SECTIONS, insertAtEdge, insertBeside, leavesOf, normalizeTree, removeLeaf, replaceLeaf, shiftLeaf, swapLeaves } from './portalBannerLayout';
+import type { BannerNode } from './portalBannerLayout';
 import { IconPopover } from './PortalIconPicker';
 import type { IconChoice } from './PortalIconPicker';
 import type { PortalPage } from './supportPortalData';
@@ -479,7 +480,16 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     if (!/^sec-\d+(-b\d+)?$/.test(owner)) {
       if (!['quick', 'favourites', 'services', 'work', 'records'].includes(owner)) return {};
       const col = Number(all[owner]?.colGap ?? 16);
-      return { __gapX: col, __gapY: Number(all[owner]?.rowGap ?? col) };
+      /* ⚠️ Only the gaps this band HAS: cards side by side have a gap between COLUMNS, cards that wrap onto a
+         second line have one between ROWS, and a band one card across has neither to offer. */
+      const items = rowOrderRef.current[owner]?.length ?? 0;
+      const cols = Math.max(1, Number(all[owner]?.cols ?? items));
+      return {
+        __gapX: col,
+        __gapY: Number(all[owner]?.rowGap ?? col),
+        __hasCols: cols > 1,
+        __hasRows: items > cols,
+      };
     }
     const secId = owner.replace(/-b[0-9]+$/, '');
     const sec = sectionsRef.current.find((s) => s.section.id === secId)?.section;
@@ -498,7 +508,16 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
       };
       walk(sec.root);
     }
-    return { __gapX: gx, __gapY: gy, __gapMixedX: mixedX, __gapMixedY: mixedY, __branch: !!box?.children?.length };
+    /* The same question for a section: a branch laid out as a row means columns, one laid out as a column
+       means rows, and a section that is only one of the two never shows the other's gap. */
+    let hasCols = false;
+    let hasRows = false;
+    const axes = (b: Box) => {
+      if ((b.children?.length ?? 0) > 1) { if (b.dir === 'row') hasCols = true; else hasRows = true; }
+      (b.children ?? []).forEach(axes);
+    };
+    if (box) axes(box);
+    return { __gapX: gx, __gapY: gy, __gapMixedX: mixedX, __gapMixedY: mixedY, __branch: !!box?.children?.length, __hasCols: hasCols, __hasRows: hasRows };
   }
 
   const cfgFor = useCallback((id: string): Cfg => {
@@ -525,6 +544,8 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
          own still wins — this only fills the gap before it chooses. */
       ...(/^quick-/.test(owner) ? { cardTemplate: widgetCfgRef.current.quick?.cardTemplate ?? 'left' } : {}),
       __noData: PORTAL_EMPTY_WIDGETS.has(owner),
+      /* A band of data cards: presets only, no content alignment — the cards fill the row. */
+      __dataBand: ['quick', 'favourites', 'services', 'records'].includes(owner),
       ...gapSeed(owner),
       /* ⚠️ Which section is allowed the external-link CTA, and whether it already has one. Seeded
          here rather than tested in the spec, because a spec is data and has no way to look at the
@@ -535,6 +556,12 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
         : {}),
       /* The banner's Text & Search section gets its own alignment controls in the panel. */
       ...(owner === 'hero-content' ? { __textSection: true } : {}),
+      /* ⚠️ Whether a HUMAN chose the column count, which a merged config cannot tell you: every card block
+         carries a spec default, so `cols ?? auto` always read the default and the banner's auto rule never
+         applied. The renderer needs the question answered from the raw store, which only lives here. */
+      ...(placedType(owner) === 'x-actions' || placedType(owner) === 'x-kpis'
+        ? { __colsSet: widgetCfgRef.current[owner]?.cols !== undefined }
+        : {}),
       /* The Action cards block's column presets are drawn from how many cards it holds. */
       ...(placedType(owner) === 'x-actions' ? { __tileCount: content.quick.length } : {}),
       /* ⚠️ Two facts the banner's panel cannot work out for itself, seeded the same way
@@ -550,6 +577,21 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
             __hasSide: (rowExtrasRef.current.hero?.length ?? 0) > 0,
             /* The arrangement as drawn, for the preset picker; the gap it shares with the Content group. */
             __bannerTree: heroTreeRef.current?.() ?? null,
+            /* ⚠️ A banner carrying nothing but its Text & Search section has no arrangement to choose and no
+               gap between sections to set — one section cannot be laid out against anything. The whole Layout
+               presets group is withheld until a second section arrives. */
+            ...(() => {
+              const t = heroTreeRef.current?.() ?? null;
+              let cols = false;
+              let rows = false;
+              const walk = (n: BannerNode) => {
+                if (typeof n === 'string') return;
+                if (n.c.length > 1) { if (n.d === 'row') cols = true; else rows = true; }
+                n.c.forEach(walk);
+              };
+              if (t) walk(t);
+              return { __bannerSections: leavesOf(t).length, __hasCols: cols, __hasRows: rows };
+            })(),
             __contentGap: Number(widgetCfgRef.current.hero?.sectionGapX ?? 20),
             __contentGapY: Number(widgetCfgRef.current.hero?.sectionGapY ?? 20),
             __rootRow2: (() => { const t = heroTreeRef.current?.(); return !!t && typeof t !== 'string' && t.d === 'row' && t.c.length === 2; })(),
@@ -803,8 +845,9 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
   /* What a widget starts as when it lands on the BANNER rather than on the page: the action cards stack
      in one column beside the words, and Announcements becomes the image carousel, filling to the edge. */
   function seedBannerItem(elId: string, type: string) {
-    if (type === 'x-actions') patchCfg(elId, { cols: '1' });
-    if (type === 'x-kpis') patchCfg(elId, { cols: '1' });
+    /* ⚠️ No column count is seeded any more: on the banner it follows the SHAPE of the section the block
+       landed in (see `bannerCols` in the preview) — all the way across a strip, stacked in a narrow column —
+       and a stored '1' would freeze it as stacked wherever it was later moved. */
     if (type === 'c-announcements') patchCfg(elId, { display: 'image' });
   }
 
