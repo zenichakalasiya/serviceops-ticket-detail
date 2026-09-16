@@ -178,8 +178,21 @@ function MiniCard({ on, className = '', children }: { on: boolean; className?: s
   );
 }
 
-/** A KPI card: the number, then its label. */
-function KpiCardArt({ on }: { on: boolean }) {
+/** A KPI card: the number, then its label — side by side once the cards are STACKED.
+ *
+ * ⚠️ A stacked KPI card is WIDE and SHORT (a full-width row about 11px tall in a tile), and a number
+ * over a label inside one is two bars crammed into a box with no room for either — which is what made
+ * the Stacked preset the one tile that read as a jumble. Laid out along the row it is the same card,
+ * drawn the way that shape actually holds it. */
+function KpiCardArt({ on, row = false }: { on: boolean; row?: boolean }) {
+  if (row) {
+    return (
+      <MiniCard on={on} className="flex-row items-center gap-[4px] px-[4px]">
+        <span className={`h-[4px] w-[9px] flex-shrink-0 rounded-[1px] ${on ? INK_ON : INK_OFF}`} />
+        <span className={`h-[2px] flex-1 rounded-full ${FAINT}`} />
+      </MiniCard>
+    );
+  }
   return (
     <MiniCard on={on} className="flex-col justify-center gap-[2px] px-[3px]">
       <span className={`h-[4px] w-[45%] rounded-[1px] ${on ? INK_ON : INK_OFF}`} />
@@ -311,7 +324,7 @@ export function BannerPresetPicker({ tree, onPick }: { tree: BannerNode | null; 
    like a card in one picker and like two bars in the other is two answers to "what does this block
    make". */
 function CardSkeleton({ kind, on, flat }: { kind: 'action' | 'kpi'; on: boolean; flat: boolean }) {
-  return kind === 'kpi' ? <KpiCardArt on={on} /> : <ActionCardArt on={on} row={flat} />;
+  return kind === 'kpi' ? <KpiCardArt on={on} row={flat} /> : <ActionCardArt on={on} row={flat} />;
 }
 
 export function TilePresetPicker({ count, value, onChange, kind = 'action' }: {
