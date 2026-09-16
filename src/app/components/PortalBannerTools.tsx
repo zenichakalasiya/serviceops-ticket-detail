@@ -376,24 +376,24 @@ function ItemSkeleton({ id, on, cfgOf, wide = true }: {
   const colsFor = (count: number) => setCols || (wide ? Math.min(count, 4) : 1);
 
   if (type === 'bn-slot') {
-    return <span className={`min-w-0 rounded-[3px] border border-dashed ${edge} ${wide ? 'min-h-[8px] flex-1' : 'h-[22px] w-full'}`} />;
+    return <span className={`min-h-[8px] min-w-0 flex-1 rounded-[3px] border border-dashed ${edge}`} />;
   }
-  if (type === 'v-image' || type === 'v-slider') return <PictureArt className="rounded-[2px]" fill={wide} />;
-  if (type === 'c-announcements') return <AnnouncementArt on={on} display={String(cfg.display ?? 'regular')} fill={wide} />;
+  if (type === 'v-image' || type === 'v-slider') return <PictureArt className="rounded-[2px]" />;
+  if (type === 'c-announcements') return <AnnouncementArt on={on} display={String(cfg.display ?? 'regular')} />;
   if (type === 'c-contact') return <ContactArt on={on} />;
   if (type === 'x-kpis') {
     const items = Array.isArray(cfg.items) ? cfg.items.length : 3;
-    return <CardGrid count={items} cols={colsFor(items)} fill={wide}>{(i) => <KpiCardArt key={i} on={on} />}</CardGrid>;
+    return <CardGrid count={items} cols={colsFor(items)}>{(i) => <KpiCardArt key={i} on={on} />}</CardGrid>;
   }
   if (type === 'x-actions') {
     const count = Number(cfg.__tileCount ?? 4) || 4;
     const c = colsFor(count);
-    return <CardGrid count={count} cols={c} fill={wide}>{(i) => <ActionCardArt key={i} on={on} row={c === 1} />}</CardGrid>;
+    return <CardGrid count={count} cols={c}>{(i) => <ActionCardArt key={i} on={on} row={c === 1} />}</CardGrid>;
   }
   if (type === 'c-assets' || type === 'c-cis' || type === 'c-favourites' || type === 'c-services') {
     /* Tiles, not rows — these four draw a grid of record cards. */
     const c = wide ? 2 : 1;
-    return <CardGrid count={4} cols={c} fill={wide}>{(i) => <ActionCardArt key={i} on={on} row={c === 1} />}</CardGrid>;
+    return <CardGrid count={4} cols={c}>{(i) => <ActionCardArt key={i} on={on} row={c === 1} />}</CardGrid>;
   }
   if (type === 'c-requests' || type === 'c-approvals' || type === 'c-knowledge' || type === 'record_list') {
     return <ListCardArt on={on} mark={type === 'c-requests' || type === 'c-approvals' ? 'dot' : 'tile'} />;
@@ -438,13 +438,26 @@ function PresetArt({ node, on, cfgOf, wide = true }: {
      keeps whatever width its parent had, which is what makes a section stacked under the words still
      count as full-width. */
   const childWide = node.d === 'row' ? node.c.length <= 1 && wide : wide;
-  /* ⚠️ Side-by-side sections are CENTRED at their own height, never stretched to the tile's.
-     Stretched, a picture beside a line of text became a tall slab and a two-line text section became a
-     tall grey box holding two bars at the top — the tile stopped describing an arrangement and started
-     describing a pair of columns. Stacked sections still fill (they are the tile's height between
-     them), which is why the row presets already read correctly. */
+  /* ⚠️ A ROW is ONE BAND: every section in it is the same height, and the band sits in the middle of
+     the tile rather than being stretched to it.
+     Two separate faults produced the two wrong pictures. Stretched to the TILE, a picture beside a line
+     of text was a tall slab and a text section a tall grey box holding two bars at the top. Centred at
+     their OWN heights instead, the two sections came out different heights and the row looked ragged.
+     So the band takes ONE height — its tallest section, floored at 38px so a row of short sections is
+     still a band rather than a hairline — and every section stretches to it, which is exactly what the
+     banner does with a row of sections. `max-h-full` is what keeps a nested row inside its share.
+     Stacked sections still fill: between them they ARE the tile's height. */
+  if (node.d === 'row') {
+    return (
+      <span className="flex min-h-0 min-w-0 flex-1 flex-col justify-center overflow-hidden">
+        <span className="flex max-h-full min-h-[38px] min-w-0 items-stretch gap-[4px]">
+          {node.c.map((k, i) => <PresetArt key={i} node={k} on={on} cfgOf={cfgOf} wide={childWide} />)}
+        </span>
+      </span>
+    );
+  }
   return (
-    <span className={`flex min-h-0 min-w-0 flex-1 gap-[4px] ${node.d === 'row' ? 'flex-row items-center' : 'flex-col'}`}>
+    <span className="flex min-h-0 min-w-0 flex-1 flex-col gap-[4px]">
       {node.c.map((k, i) => <PresetArt key={i} node={k} on={on} cfgOf={cfgOf} wide={childWide} />)}
     </span>
   );
