@@ -2007,7 +2007,7 @@ const GAP_PINK = '#FF24BD';
 /* The built-in bands whose gap is draggable on the canvas. ⚠️ Each one must also mark the container it
    lays out in with `data-gap-parent="<its id>"` in the preview — the strips are measured off the real
    children, so a band that does not say which box arranges them simply has no strips. */
-export const GAP_BAND_NODES = new Set(['quick', 'favourites', 'services', 'work', 'work-main', 'records']);
+export const GAP_BAND_NODES = new Set(['quick', 'favourites', 'services', 'work', 'work-main', 'work-rail', 'records']);
 
 function GapBands({ id, host }: { id: string; host: React.RefObject<HTMLDivElement | null> }) {
   const { cfg, setCfg } = useCanvas();
@@ -2048,8 +2048,12 @@ function GapBands({ id, host }: { id: string; host: React.RefObject<HTMLDivEleme
     const el = host.current;
     if (!el) { const f = requestAnimationFrame(() => setRetry((n) => n + 1)); return () => cancelAnimationFrame(f); }
     const measure = () => {
+      /* ⚠️ A band's own element can BE the box that lays its cards out — the work rail is a `Sel` with the
+         gap on it — and `querySelectorAll` only ever returns DESCENDANTS, so those bands measured nothing
+         and showed no strips at all. Look at the host itself first. */
+      const ownParent = bandMode && el.matches(`[data-gap-parent="${id}"]`) ? el : null;
       const first = boxMode ? el.querySelector<HTMLElement>('[data-gap-parent^="sec-"]')
-        : bandMode ? el.querySelector<HTMLElement>(`[data-gap-parent="${id}"]`)
+        : bandMode ? ownParent ?? el.querySelector<HTMLElement>(`[data-gap-parent="${id}"]`)
         : treeMode ? el.querySelector<HTMLElement>('[data-banner-root]')
         : isHero ? el.querySelector<HTMLElement>('[data-gap-parent="hero"]') : el;
       if (!first) { setBands([]); return; }
@@ -2059,7 +2063,7 @@ function GapBands({ id, host }: { id: string; host: React.RefObject<HTMLDivEleme
         /* A band can lay out in more than one container — the services row draws a grid of tiles under a
            heading, the work row a grid and a rail — so every container that carries this band's name gets
            its own strips. */
-        : bandMode ? Array.from(el.querySelectorAll<HTMLElement>(`[data-gap-parent="${id}"]`))
+        : bandMode ? [...(ownParent ? [ownParent] : []), ...Array.from(el.querySelectorAll<HTMLElement>(`[data-gap-parent="${id}"]`))]
         : [...new Set([first, ...(treeMode ? Array.from(el.querySelectorAll<HTMLElement>('[data-gap-parent="hero-sections"]')) : [])])];
       const o = el.getBoundingClientRect();
       const next: { x: number; y: number; w: number; h: number; dir: string; owner: string }[] = [];
@@ -2866,6 +2870,10 @@ export function Sel({ id, children, className = '', toolbarBelow = false, style:
     <div
       ref={ref}
       data-node={id}
+      /* ⚠️ A BAND lays its own cards out, so its element IS the box the gap strips are measured in.
+         `Sel` does not forward unknown props, so marking it at the call site did nothing at all — the
+         attribute simply never reached the DOM and the rail and the work grid showed no strips. */
+      data-gap-parent={GAP_BAND_NODES.has(id) ? id : undefined}
       style={{ ...size, ...freeStyle }}
       /* ⚠️ `cursor: move` — the four-arrow glyph — so the affordance is visible before the drag,
          not discovered by trying. It is the one cursor that means "pick this up and put it

@@ -1358,9 +1358,14 @@ function CardShell({ nodeId, titleNodeId, title, count, cfg = EMPTY_CFG, hideHea
      printing it twice one line apart is the same words competing with themselves. An admin never
      asked for it, so it does not belong in their config. */
   if (hideHead) return <div className="@container flex min-w-0 flex-col pt-1">{children}</div>;
-  return (
-    <div className="@container flex min-w-0 flex-col">
-      <div className="flex items-center gap-2 px-4 pb-2.5 pt-3.5">
+  /* ⚠️ OUTSIDE: the heading sits on the PAGE and the white card holds only the rows — the shape the two
+     service rows have always had, now available to every card. It is built HERE rather than by the card
+     wrapper because the head's words, its count and its link belong to the widget: the wrapper knows a
+     card is there, not what it is called. `cardInner` reads the same key and stops painting its surface,
+     so the card is still drawn exactly once. */
+  const outside = String(cfg.titlePlace ?? 'inside') === 'outside';
+  const headRow = (
+    <div className={outside ? 'flex items-center gap-2 px-1' : 'flex items-center gap-2 px-4 pb-2.5 pt-3.5'}>
         {headIcon && (
           <span className="flex size-7 flex-shrink-0 items-center justify-center rounded-md bg-[#EAF3FB] text-[#2F6FB5]">
             {headIcon}
@@ -1407,6 +1412,18 @@ function CardShell({ nodeId, titleNodeId, title, count, cfg = EMPTY_CFG, hideHea
           </span>
         )}
       </div>
+  );
+  if (outside) {
+    return (
+      <div className="@container flex min-w-0 flex-1 flex-col" style={{ gap: Number(cfg.titleGap ?? 12) }}>
+        {headRow}
+        <div className="min-h-0 min-w-0 flex-1 rounded-xl border border-[#E5E7EB] bg-white px-4 py-3">{children}</div>
+      </div>
+    );
+  }
+  return (
+    <div className="@container flex min-w-0 flex-col">
+      {headRow}
       <div className="min-h-0 min-w-0 flex-1 px-4 pb-3">{children}</div>
     </div>
   );
@@ -1969,7 +1986,10 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
       /* ⚠️ `bare` paints NO surface. A card mounted inside a container that already draws a
          border and a background would otherwise draw a second one 1px inside the first — which is
          what a tabbed work band looked like before this existed. */
-      className={(look?.fill ? 'flex flex-col ' : '') + (look?.bare
+      /* ⚠️ A card whose TITLE sits outside it paints its own surface around the rows (see `CardShell`),
+         so this wrapper must not paint a second one around the pair — the heading would end up inside a
+         white box with a second white box under it. Read from the same key the head reads. */
+      className={(look?.fill ? 'flex flex-col ' : '') + (look?.bare || String(wc(id).titlePlace ?? 'inside') === 'outside'
         ? 'min-w-0'
         : squareCards
         ? 'min-w-0 rounded-md border border-[#E5E7EB] bg-white'
@@ -3339,7 +3359,6 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                     the Layout presets on this region would move a control and change nothing. */}
                 <Sel
                   id="work-main"
-                  data-gap-parent="work-main"
                   className="grid min-w-0"
                   style={{
                     flex: '2 1 0%',

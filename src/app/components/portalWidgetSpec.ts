@@ -322,6 +322,17 @@ const listCardDefaults = {
   showId: true, idPlacement: 'before', rowLayout: 'single', statusTone: 'status',
 };
 
+/* Where a card's own heading sits: inside the white card, or on the page above it.
+ *
+ * ⚠️ A LAYOUT decision, so it lives on the Design tab — and it is the one exception to these cards'
+ * content belonging to the backend: WHERE the heading sits is a page decision, the same one the two
+ * service rows have always answered differently from every other card. Shared, so every card answers it
+ * the same way and in the same words. */
+export const TITLE_PLACE_FIELD: WidgetField = {
+  key: 'titlePlace', label: 'Title', control: 'segmented', tab: 'style', group: 'Title',
+  options: [{ value: 'inside', label: 'Inside the card' }, { value: 'outside', label: 'Above the card' }],
+};
+
 /* ── the registry ────────────────────────────────────────────────────────── */
 
 /* The one Title row every predefined card now carries.
@@ -342,7 +353,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
     gate: { kind: 'module', setting: 'Request module' },
     /* No fields at all — see the note above the registry. Title, Statuses, Rows to show and the two
        toggles are gone, and with them the Header group that `listCardStyleFields` contributed. */
-    fields: [TITLE_FIELD],
+    fields: [TITLE_FIELD, TITLE_PLACE_FIELD],
     packs: LIVE_CARD_PACKS, roles: LIST_CARD_ROLES,
     defaults: { ...listCardDefaults, title: 'My Open Requests', statuses: ['Open', 'In Progress', 'Pending'], show: 5, showStatus: true, showDate: true },
   },
@@ -351,7 +362,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
   {
     id: 'pending_approvals', name: 'Pending Approvals', group: 'Data', reuse: 'single', family: 'flat',
     gate: { kind: 'permission', setting: 'Allow Requester To Access My Approvals', section: 'Organization' },
-    fields: [TITLE_FIELD],
+    fields: [TITLE_FIELD, TITLE_PLACE_FIELD],
     packs: LIVE_CARD_PACKS, roles: LIST_CARD_ROLES,
     defaults: { ...listCardDefaults, title: 'Pending Approvals', show: 3, showRequester: true, showDate: true },
   },
@@ -390,6 +401,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
          only, so it is a property of the type rather than a second switch that could contradict it.
          Still the `display` key (regular / carousel / image), so every stored card keeps its shape. */
       { key: 'display', label: '', control: 'announcementType', group: 'Card type' },
+      TITLE_PLACE_FIELD,
       /* Only the Regular card has a header, so only it asks for a title. */
       { ...TITLE_FIELD, when: (c) => (c.display ?? 'regular') === 'regular' },
       /* ── Image carousel only ── ⚠️ All three are REMOVED for the other two displays, not disabled:
@@ -414,7 +426,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
   {
     id: 'most_read', name: 'Most Read', group: 'Data', reuse: 'single', family: 'flat',
     gate: { kind: 'permission', setting: 'Allow Requester To Access Knowledge', section: 'Organization' },
-    fields: [TITLE_FIELD],
+    fields: [TITLE_FIELD, TITLE_PLACE_FIELD],
     packs: LIVE_CARD_PACKS, roles: LIST_CARD_ROLES,
     defaults: { ...listCardDefaults, title: 'Most Read', show: 3, showCategory: true, showDate: true, rowLayout: 'stacked' },
   },
@@ -440,7 +452,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
        exactly as it did — the values simply stopped being editable. Restoring one is a line in
        `fields`. With nothing left, the CONTENT section is dropped whole, which is the same panel
        the six other live-data widgets already have. */
-    fields: [TITLE_FIELD],
+    fields: [TITLE_FIELD, TITLE_PLACE_FIELD],
     /* ⚠️ No P6. Contact Us has no icon of its own — the group was styling a glyph that is not on
        the widget, which is a control with nothing to act on. P4 goes with the global removal. */
     /* ⚠️ No P8 either. An Empty-state group asks what to show when there is nothing to show —
@@ -519,6 +531,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
       /* ⚠️ Its OWN group, not 'Layout'. `groupsFor` drops every field in a group called Layout — layout
          is set on the canvas — with one exception carved out for the preset picker, so a Gap declared there
          renders nowhere and the panel looks unchanged. */
+      TITLE_PLACE_FIELD,
       { key: 'gapPair', label: 'Gap', control: 'gapPair', tab: 'style', group: 'Gap' },
     ],
     packs: ['P1', 'P2'], roles: ['title', 'body', 'meta'],
@@ -530,7 +543,10 @@ export const WIDGET_SPECS: WidgetSpec[] = [
       { tone: 'warn', text: 'This section only appears once a requester has added favourites. Anyone with none sees nothing here — the tiles below are examples.' },
       { tone: 'info', text: 'The services this requester has pinned. Shows up to four — a shortcut that runs longer than that is a catalogue.' },
     ],
-    defaults: { title: 'Favourite Services', showDesc: true, cardTemplate: 'top' },
+    /* ⚠️ `titlePlace: 'outside'` — these two rows are the only ones whose heading has always been on the
+       page rather than in a card, so their default is today's look while every other card defaults to
+       inside. It is the difference the Title control now lets an admin settle either way. */
+    defaults: { titlePlace: 'outside', title: 'Favourite Services', showDesc: true, cardTemplate: 'top' },
   },
 
   /* ─────────── §7.8 Featured Services ─────────── */
@@ -562,6 +578,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
       /* ⚠️ Its OWN group, not 'Layout'. `groupsFor` drops every field in a group called Layout — layout
          is set on the canvas — with one exception carved out for the preset picker, so a Gap declared there
          renders nowhere and the panel looks unchanged. */
+      TITLE_PLACE_FIELD,
       { key: 'gapPair', label: 'Gap', control: 'gapPair', tab: 'style', group: 'Gap' },
     ],
     /* ⚠️ P4 and P6 are gone. P4 brought "Divider between items", which cannot mean anything here —
@@ -576,7 +593,8 @@ export const WIDGET_SPECS: WidgetSpec[] = [
     /* ⚠️ showDesc now ships TRUE. The tile was redesigned around a two-line block — name over
        category — so leaving it off rendered half a design: four cards whose lower half was empty
        beside a Favourite Services grid that filled it. It is still the one control here. */
-    defaults: { title: 'Most Used Services', show: 4, showDesc: true, showBrowse: true, browseLabel: 'Browse catalog', cardTemplate: 'top' },
+    /* ⚠️ `titlePlace: 'outside'` — see the note on Favourite Services. */
+    defaults: { titlePlace: 'outside', title: 'Most Used Services', show: 4, showDesc: true, showBrowse: true, browseLabel: 'Browse catalog', cardTemplate: 'top' },
   },
 
   /* ─────────── §7.10 Action cards ─────────── */
