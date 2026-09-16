@@ -1550,6 +1550,7 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
                     inlineKeys={col.noOpen || col.fields.length < 2 ? undefined : [col.fields[0].key, col.fields[1].key]}
                     inlineCta={col.inlineCta}
                     inlineImage={col.inlineImage}
+                    inlineIcon={col.inlineIcon}
                     inlinePlaceholders={col.fields.length >= 2 ? [col.fields[0].placeholder, col.fields[1].placeholder] : undefined}
                     inlineLabels={col.fields.length >= 2 ? [col.fields[0].label, col.fields[1].label] : undefined}
                     /* An accordion item is a title and a body — both are inline, so the chevron

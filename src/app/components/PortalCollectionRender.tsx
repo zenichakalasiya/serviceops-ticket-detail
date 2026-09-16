@@ -11,7 +11,7 @@
 import { useRef, useState } from 'react';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import type { ReactNode } from 'react';
-import { ChevronDown, ChevronLeft, LayoutList, ChevronRight, ChevronsRight, ImageIcon, ImageOff, Mail, Phone, Plus, ShoppingCart, Star } from 'lucide-react';
+import { ArrowUpRight, ChevronDown, ChevronLeft, LayoutList, ChevronRight, ChevronsRight, ImageIcon, ImageOff, Mail, Phone, Plus, ShoppingCart, Star } from 'lucide-react';
 import { Sel, useCanvas } from './PortalCanvas';
 import { ImageUploadZone } from './PortalControls';
 /* The Table is a module of its own — a spreadsheet-grade editor is a different kind of thing from
@@ -954,6 +954,9 @@ export function CustomCardRender({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) 
   const layout = String(cfg.layout ?? 'imageRight');
   const links = visible((cfg.links as Item[]) ?? [], enabled);
   const side = layout === 'imageRight' || layout === 'imageLeft';
+  /* One number for the space between this card's own parts: its words and its picture, or one link row
+     and the next. Halved on a row, because a row's padding meets its neighbour's. */
+  const gap = Number(cfg.cardGap ?? 16);
 
   const heading = cfg.title ? (
     <Sel id={`${nodeId}-title`}>
@@ -978,13 +981,27 @@ export function CustomCardRender({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) 
       {cfg.image ? <img src={String(cfg.image)} alt="" className="size-full object-cover" /> : <CardImageSlot nodeId={nodeId} />}
     </div>
   );
+  /* ⚠️ A rule BETWEEN rows, not around them, and the icon sits in the accent — a link list reads as one
+     stack of destinations rather than as a set of boxes. The arrow on the right belongs to the product: it
+     is what says the row goes somewhere, and it is true of every link, so it is not a per-row setting.
+     ⚠️ Each row's glyph comes from the ITEM (`l.icon`), through the same `iconNode` the whole builder
+     draws icons with, so an uploaded SVG works here exactly as it does on an action card. */
   const linkRows = (
-    <div className="mt-3 flex min-w-0 flex-col">
+    <div className="flex min-w-0 flex-col" style={{ marginTop: gap }}>
       {links.length === 0 && enabled && <span className="py-2 text-[13px] text-[#9CA3AF]">No links yet — add one in the panel.</span>}
       {links.map((l, i) => (
-        <span key={i} className="flex min-w-0 items-center gap-2 border-t border-[#F0F2F5] py-2.5 text-[14px] text-[#364658] first:border-t-0">
-          <ChevronRight size={14} className="flex-shrink-0 text-[#9CA3AF]" />
-          <span className="min-w-0 truncate">{String(l.label ?? '')}</span>
+        <span
+          key={i}
+          className="flex min-w-0 items-center gap-3 border-t border-[#F0F2F5] text-[14px] text-[#364658] first:border-t-0"
+          style={{ paddingTop: gap / 2, paddingBottom: gap / 2 }}
+        >
+          {l.icon ? (
+            <span className="flex size-[18px] flex-shrink-0 items-center justify-center [&>span>svg]:size-[18px]" style={{ color: 'var(--portal-accent, #3D8BD0)' }}>
+              {iconNode(l.icon as IconChoice, 18)}
+            </span>
+          ) : null}
+          <span className="min-w-0 flex-1 truncate">{String(l.label ?? '')}</span>
+          <ArrowUpRight size={16} className="flex-shrink-0" style={{ color: 'var(--portal-accent, #3D8BD0)' }} />
         </span>
       ))}
     </div>
@@ -1006,7 +1023,7 @@ export function CustomCardRender({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) 
   }
   if (layout === 'imageTop') {
     return (
-      <div className="@container flex min-w-0 flex-col gap-4">
+      <div className="@container flex min-w-0 flex-col" style={{ gap }}>
         {picture}
         {words}
       </div>
@@ -1019,7 +1036,7 @@ export function CustomCardRender({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) 
      stacked however wide it was. */
   return (
     <div className="@container min-w-0">
-      <div className={`flex min-w-0 flex-col gap-4 @[420px]:flex-row @[420px]:items-center ${layout === 'imageLeft' ? '@[420px]:flex-row-reverse' : ''}`}>
+      <div className={`flex min-w-0 flex-col @[420px]:flex-row @[420px]:items-center ${layout === 'imageLeft' ? '@[420px]:flex-row-reverse' : ''}`} style={{ gap }}>
         <div className="flex min-w-0 flex-1 flex-col">{words}</div>
         <div className="flex min-w-0 flex-1 flex-col">{picture}</div>
       </div>

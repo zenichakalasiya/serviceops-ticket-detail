@@ -297,9 +297,12 @@ export function AnnouncementTypePicker({ value, onChange }: { value: string; onC
  *
  * Five shapes, drawn as the shape each one makes. ⚠️ The picture is the one element with a FILL — words
  * are lines and a button is a pill — so a tile says which slots its shape has before you read its name. */
+/* ⚠️ FOUR shapes, not five. "Image left" was "Image right" MIRRORED — the one kind of tile this builder
+   has refused everywhere else, because two tiles that place the same things in the same relationship ask
+   the admin to tell a layout from itself. ⚠️ A card that already stored `imageLeft` still renders that
+   way — `CustomCardRender` keeps the branch; it simply cannot be chosen any more. */
 const CARD_LAYOUTS = [
   { value: 'imageRight', title: 'Image right' },
-  { value: 'imageLeft', title: 'Image left' },
   { value: 'imageTop', title: 'Image on top' },
   { value: 'text', title: 'Text only' },
   { value: 'links', title: 'Links' },
@@ -307,7 +310,7 @@ const CARD_LAYOUTS = [
 
 export function CardLayoutPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
-    <div className="grid grid-cols-3 gap-2">
+    <div className="grid grid-cols-2 gap-2">
       {CARD_LAYOUTS.map((t) => {
         const on = value === t.value;
         const ink = on ? 'bg-[#3D8BD0]/45' : 'bg-[#C3CDD9]';

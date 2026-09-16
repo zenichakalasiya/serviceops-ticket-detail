@@ -172,6 +172,9 @@ export interface CollectionSpec {
    * a text input and field two as a textarea whatever they were declared as. A Media Slider slide's
    * image WAS field two: it rendered as a textarea, and a slide could not be given a picture. */
   inlineImage?: { key: string; label: string; altKey?: string; altLabel?: string; when?: (item: Cfg) => boolean };
+  /* An ICON the item carries, drawn in the inline editor — see the note on `inlineImage`, which it
+     follows for the same reason: a field the inline editor does not draw has no surface at all. */
+  inlineIcon?: { key: string; label: string };
   /** cfg key holding the array. */
   key: string;
   /** Group title in the widget's Content tab. */
@@ -447,6 +450,9 @@ export const WIDGET_SPECS: WidgetSpec[] = [
       /* The button is OPTIONAL everywhere it can appear — an empty label draws nothing. */
       { key: 'ctaLabel', label: 'Button label', control: 'text', group: 'Action', when: (c) => String(c.layout ?? 'imageRight') !== 'links', placeholder: 'Contact us' },
       { key: 'ctaUrl', label: 'Button link', control: 'text', group: 'Action', when: (c) => String(c.layout ?? 'imageRight') !== 'links' && !!c.ctaLabel, placeholder: 'https://' },
+      /* The space between the card's own parts — its words and its picture, or one link and the next.
+         ⚠️ Its own group, never 'Layout': `groupsFor` drops every field in a group by that name. */
+      { key: 'cardGap', label: 'Gap', control: 'gapField', tab: 'style', group: 'Gap' },
     ],
     collection: {
       key: 'links', group: 'Links', addLabel: 'Add link', max: 8, hideable: true,
@@ -456,16 +462,29 @@ export const WIDGET_SPECS: WidgetSpec[] = [
       meta: (it) => String(it.url ?? ''),
       seed: (i) => ({ label: `Link ${i + 1}`, url: 'https://' }),
       fields: [
+        /* ⚠️ The SAME icon field every other widget uses — the shared 43-icon grid, its search and its
+           own SVG/PNG upload — so a link's glyph is chosen the way every glyph in this builder is, and it
+           is kept in the ITEM's own config (the icons store is keyed by the owning widget, so six links
+           would have shared one icon). The arrow on the right is the PRODUCT's: it says the row goes
+           somewhere, which is true of every link and is not the admin's to vary. */
         { key: 'label', label: 'Label', control: 'text', group: 'Content' },
         { key: 'url', label: 'Link', control: 'text', group: 'Content' },
       ],
+      /* ⚠️ The icon is a SLOT, not field one — the inline editor draws its first two fields as a line and
+         a paragraph whatever they are, so an icon declared there came out as a text box. */
+      inlineIcon: { key: 'icon', label: 'Icon' },
     },
     packs: ['P1'],
     roles: ['title', 'body'],
     defaults: {
       layout: 'imageRight', title: 'Need a hand?', sub: 'Our service desk answers in minutes during working hours.',
       image: '', ctaLabel: 'Contact us', ctaUrl: '',
-      links: [{ label: 'Reset my password', url: 'https://' }, { label: 'Request VPN access', url: 'https://' }, { label: 'Book a meeting room', url: 'https://' }],
+      cardGap: 16,
+      links: [
+        { icon: { key: 'key' }, label: 'Reset my password', url: 'https://' },
+        { icon: { key: 'network' }, label: 'Request VPN access', url: 'https://' },
+        { icon: { key: 'calendar' }, label: 'Book a meeting room', url: 'https://' },
+      ],
     },
   },
 

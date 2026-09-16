@@ -19,6 +19,8 @@ import type { ReactNode } from 'react';
 import { ChevronDown, ChevronRight, ChevronUp, Copy, Eye, EyeOff, GripVertical, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { InlineImageField } from './PortalControls';
+import { IconField } from './PortalIconPicker';
+import type { IconChoice } from './PortalIconPicker';
 
 export interface CollectionItem {
   id: string;
@@ -71,6 +73,13 @@ interface Props {
    * That is exactly what a Media Slider slide used to have — its image was field two, so the editor
    * drew an upload as a TEXTAREA and there was no way to give a slide a picture. */
   inlineImage?: { key: string; label: string; altKey?: string; altLabel?: string; when?: (item: CollectionItem) => boolean };
+  /* An ICON this item carries, edited in the inline editor beside its words.
+   *
+   * ⚠️ Same reason as `inlineImage`: the inline editor draws field one as a line of text and field two
+   * as a paragraph WHATEVER they were declared as, and with `inlineCoversAll` there is no chevron — so an
+   * icon left in the field list would render as a text box holding `[object Object]` and there would be
+   * nowhere else to reach it. It opens the SAME 43-icon grid every other icon in the builder opens. */
+  inlineIcon?: { key: string; label: string };
   /** True when the inline editor shows every field the item has — the chevron would then lead to
       the same two fields one navigation away, so it is dropped. */
   inlineCoversAll?: boolean;
@@ -80,7 +89,7 @@ const inputCls = 'h-9 w-full rounded border border-[#d1d5db] bg-white px-3 text-
 
 export function PortalItemList({
   items, label, meta, thumb, onOpen, onChange, addLabel, onAdd, max, hideable, emptyHint, noOpen, inlinePlaceholders, inlineLabels,
-  noAdd, lockedHide, inlineKeys, inlineCoversAll, inlineCta, inlineImage,
+  noAdd, lockedHide, inlineKeys, inlineCoversAll, inlineCta, inlineImage, inlineIcon,
 }: Props) {
   const [dragId, setDragId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
@@ -244,6 +253,12 @@ export function PortalItemList({
                             className={`${inputCls} mt-1.5`}
                           />
                         ) : null}
+                      </div>
+                    )}
+                    {inlineIcon && (
+                      <div className="mb-3">
+                        <div className="mb-1 text-[12px] font-normal text-[#7B8FA5]">{inlineIcon.label}</div>
+                        <IconField value={item[inlineIcon.key] as IconChoice | undefined} onChange={(c) => patch({ [inlineIcon.key]: c })} />
                       </div>
                     )}
                     <div className="mb-1 text-[12px] font-normal text-[#7B8FA5]">{inlineLabels?.[0] ?? 'Title'}</div>
