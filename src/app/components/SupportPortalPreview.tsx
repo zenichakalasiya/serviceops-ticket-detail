@@ -1927,7 +1927,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
      (It calls `card` below; a const arrow is only read at call time, and every call happens
      during render, long after both are initialised.) */
   const railCard = (id: string) => {
-    if (id === 'news') return card('news', <div className="flex flex-1 flex-col p-4"><AnnouncementsRender nodeId="news" cfg={{ title: 'Announcements', ...wc('news') }} headIcon={hIcon(<Megaphone size={15} strokeWidth={1.8} />)} /></div>, 1, secGap('work'), 1, undefined, { fill: true });
+    if (id === 'news') return card('news', <div className={`flex flex-1 flex-col${String(wc('news').display ?? '') === 'image' ? '' : ' p-4'}`}><AnnouncementsRender nodeId="news" cfg={{ title: 'Announcements', ...wc('news') }} headIcon={hIcon(<Megaphone size={15} strokeWidth={1.8} />)} /></div>, 1, secGap('work'), 1, undefined, { fill: true });
     /* ⚠️ Counter's right-hand rail — Assets stacked under Approvals. RecordsCard, not RecordTiles:
        the tile grid is built for a WIDE row, and a narrow rail column wants the same compact list
        treatment `records` already uses when there is no rail at all. */

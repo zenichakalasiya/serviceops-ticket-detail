@@ -828,7 +828,12 @@ export function AnnouncementsRender({ nodeId, cfg, headIcon }: { nodeId: string;
          height the widget was dragged to and hands it to the PICTURE below — the band keeps its own. */
       <div
         style={{ borderRadius: Number(chosen(styles ?? {}, nodeId, 'radius') ?? 0) || undefined }}
-        className="portal-ann-image-root @container -m-4 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
+        /* ⚠️ NO negative margin. It existed to escape the 16px padding of the generic white card this
+           widget used to sit in — and that card is gone now (it paints its own face), so the same -16px
+           pulled the picture and the band OUT of their own node on every side: the selection outline and
+           the drag handles sat 16px inside the card you can see, which is the misalignment in the
+           screenshot. The parent's padding is dropped instead, so the face fills its node exactly. */
+        className="portal-ann-image-root @container flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
       >
         {headerOn && (
           <div className="px-4 pt-4">
