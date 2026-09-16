@@ -193,70 +193,92 @@ export function TemplatePicker({ value, onChange, only }: {
   );
 }
 
-/* ── Announcement card type ──────────────────────────────────────────────────
+/* ── Announcement card type ────────────────────────────────────────
  *
- * The Card templates tile language, with a caption under each tile — these name three different
- * cards rather than three arrangements of one, so the sketch alone is not enough. Each sketch is the
- * card's own skeleton: a header over two rows, one row with its controls, a photo over a band. */
+ * Three different CARDS, not three arrangements of one — so each tile draws the card inside its own
+ * frame, white and bordered exactly as the widget sits on the page, with the name underneath. The
+ * old sketches floated loose in the tile: a header and two bars with nothing around them says
+ * nothing about which of three cards you are picking, and the picture one read as a swatch.
+ * ⚠️ The stored values are untouched (`regular` / `carousel` / `image`) — only the WORDS changed, so
+ * every card already on a page keeps the shape it has. */
 const ANNOUNCEMENT_TYPES = [
   { value: 'regular', title: 'Regular' },
-  { value: 'carousel', title: 'No image' },
-  { value: 'image', title: 'With image' },
+  { value: 'carousel', title: 'Carousel' },
+  { value: 'image', title: 'Image with carousel' },
 ] as const;
 
 export function AnnouncementTypePicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
-    <div className="flex gap-2">
+    <div className="flex items-start gap-2">
       {ANNOUNCEMENT_TYPES.map((t) => {
         const on = value === t.value;
-        const ink = on ? 'bg-[#3D8BD0]/30' : 'bg-[#DFE5ED]';
-        const faint = 'bg-[#EEF2F6]';
-        const row = (
-          <span className="flex items-center gap-1">
-            <span className={`size-2.5 flex-shrink-0 rounded-[2px] ${ink}`} />
-            <span className="flex flex-col gap-[2px]">
-              <span className={`h-[2px] w-6 rounded-full ${ink}`} />
-              <span className={`h-[2px] w-4 rounded-full ${faint}`} />
+        const ink = on ? 'bg-[#3D8BD0]/40' : 'bg-[#C3CDD9]';
+        const faint = 'bg-[#E2E8F0]';
+        /* The card's heading: its name, its count badge, and the View-all link at the far right. */
+        const head = (
+          <span className="flex items-center gap-[3px]">
+            <span className={`h-[3px] w-[22px] rounded-full ${ink}`} />
+            <span className="size-[4px] flex-shrink-0 rounded-[1px] bg-[#E2E8F0]" />
+            <span className="ml-auto h-[2px] w-[9px] flex-shrink-0 rounded-full bg-[#DFE5ED]" />
+          </span>
+        );
+        /* One notice — the date tile, then the headline over its detail. `band` draws it in the image
+           card's dark band, where every tone is a share of white instead of the page's greys. */
+        const row = (band?: boolean) => (
+          <span className="flex items-center gap-[4px]">
+            <span className={`size-[11px] flex-shrink-0 rounded-[2px] ${band ? 'bg-white/20' : 'bg-[#EEF2F6]'}`} />
+            <span className="flex min-w-0 flex-1 flex-col gap-[2px]">
+              <span className={`h-[2px] w-[80%] rounded-full ${band ? 'bg-white/80' : ink}`} />
+              <span className={`h-[2px] w-[55%] rounded-full ${band ? 'bg-white/40' : faint}`} />
             </span>
           </span>
         );
+        /* The carousel's dots, kept SMALL — they are a detail of the card, not its subject. */
+        const dots = (band?: boolean) => (
+          <span className="flex items-center gap-[2px]">
+            <span className={`size-[3px] rounded-full ${band ? 'bg-white/80' : (on ? 'bg-[#3D8BD0]/70' : 'bg-[#9AA7B5]')}`} />
+            <span className={`size-[3px] rounded-full ${band ? 'bg-white/30' : 'bg-[#DFE5ED]'}`} />
+            <span className={`size-[3px] rounded-full ${band ? 'bg-white/30' : 'bg-[#DFE5ED]'}`} />
+          </span>
+        );
         return (
-          <button key={t.value} onClick={() => onChange(t.value)} className="flex flex-1 flex-col items-center gap-1.5">
-            <span className={`flex h-[64px] w-full items-center justify-center rounded-lg border-2 bg-white transition-colors ${
-              on ? 'border-[#3D8BD0]' : 'border-[#E5E7EB] hover:border-[#C3CBD6]'
+          <button
+            key={t.value}
+            type="button"
+            aria-pressed={on}
+            onClick={() => onChange(t.value)}
+            className="flex min-w-0 flex-1 flex-col items-center gap-1.5"
+          >
+            <span className={`flex h-[72px] w-full items-center justify-center rounded-lg border-2 p-[6px] transition-colors ${
+              on ? 'border-[#3D8BD0] bg-[#3D8BD0]/[0.04]' : 'border-[#E5E7EB] bg-white hover:border-[#C3CBD6]'
             }`}>
-              {t.value === 'regular' && (
-                <span className="flex flex-col gap-[4px]">
-                  <span className={`h-[3px] w-5 rounded-full ${ink}`} />
-                  {row}
-                  {row}
-                </span>
-              )}
-              {t.value === 'carousel' && (
-                <span className="flex items-center gap-2">
-                  {row}
-                  {/* The controls, drawn: ‹ arrow · active pill · dots · arrow › */}
-                  {/* Kept SMALL — the controls are a detail of this card, not its subject. */}
-                  <span className="flex flex-shrink-0 items-center gap-px">
-                    <span className="size-[5px] rounded-full border border-[#C3CBD6]" />
-                    <span className={`h-[2px] w-[5px] rounded-full ${on ? 'bg-[#3D8BD0]/60' : 'bg-[#C3CBD6]'}`} />
-                    <span className="size-[2px] rounded-full bg-[#DFE5ED]" />
-                    <span className="size-[2px] rounded-full bg-[#DFE5ED]" />
-                    <span className="size-[5px] rounded-full border border-[#C3CBD6]" />
+              {/* The CARD's own frame, inside the tile. */}
+              <span className={`flex h-full w-full flex-col overflow-hidden rounded-[4px] border bg-white ${on ? 'border-[#3D8BD0]/40' : 'border-[#DFE5ED]'}`}>
+                {t.value === 'regular' && (
+                  <span className="flex flex-1 flex-col gap-[5px] p-[5px]">{head}{row()}{row()}</span>
+                )}
+                {t.value === 'carousel' && (
+                  <span className="flex flex-1 flex-col gap-[5px] p-[5px]">
+                    {head}
+                    {row()}
+                    <span className="mt-auto">{dots()}</span>
                   </span>
-                </span>
-              )}
-              {t.value === 'image' && (
-                <span className="flex w-[46px] flex-col overflow-hidden rounded-[3px]">
-                  <span className={`h-[18px] w-full ${faint}`} />
-                  <span className={`flex items-center gap-1 px-1 py-[3px] ${on ? 'bg-[#3D8BD0]/45' : 'bg-[#C3CBD6]'}`}>
-                    <span className="size-2 flex-shrink-0 rounded-[2px] bg-white/70" />
-                    <span className="h-[2px] w-5 rounded-full bg-white/70" />
-                  </span>
-                </span>
-              )}
+                )}
+                {t.value === 'image' && (
+                  <>
+                    {/* The photo reaches the card's own edges — which is what this card IS. */}
+                    <span className="flex h-[24px] w-full flex-shrink-0 items-center justify-center bg-[#E9EDF2]">
+                      <span className={`h-[8px] w-[10px] rounded-[1px] ${on ? 'bg-[#3D8BD0]/35' : 'bg-[#C9D2DC]'}`} />
+                    </span>
+                    <span className="flex flex-1 flex-col justify-center gap-[4px] bg-[#2F3033] p-[5px]">
+                      {row(true)}
+                      {dots(true)}
+                    </span>
+                  </>
+                )}
+              </span>
             </span>
-            <span className={`text-[12px] ${on ? 'font-medium text-[#3D8BD0]' : 'text-[#475467]'}`}>{t.title}</span>
+            <span className={`text-center text-[11px] leading-[14px] ${on ? 'font-medium text-[#3D8BD0]' : 'text-[#475467]'}`}>{t.title}</span>
           </button>
         );
       })}

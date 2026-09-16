@@ -766,8 +766,17 @@ export function AnnouncementsRender({ nodeId, cfg, headIcon }: { nodeId: string;
     );
   };
 
-  /* ⚠️ No "All announcements" link on any card type — the carousel's last dot turns Next into
-     "View all ›" instead (see the endLabel prop on CarouselNav). */
+  /* The REGULAR card's "View all ›". The two carousels do NOT carry one — their last dot already
+     turns Next into "View all", so a second copy of the same link would sit one line above it.
+     ⚠️ Drawn exactly as `CardShell` draws every other card's: the words, then the product's chevron.
+     Announcements is in `FIXED_VIEWALL_NODES`, so the label is the product's and renders BARE — no
+     `Sel` around it, or the one link on the card would be a second way to type in the heading row. */
+  const viewAll = cfg.showViewAll === false ? undefined : (
+    <span style={roleStyle(styles, nodeId, 'link')} className="flex flex-shrink-0 items-center gap-1 text-[#7B8FA5]">
+      <span className="text-[12px] font-medium">{String(cfg.viewAllLabel ?? 'View all')}</span>
+      <ChevronsRight size={16} />
+    </span>
+  );
 
   /* ── IMAGE CAROUSEL ── one photo the admin uploads, a colour band beneath it, and the notices
      paging inside the band: date tile · headline · detail, controls top right.
@@ -810,13 +819,27 @@ export function AnnouncementsRender({ nodeId, cfg, headIcon }: { nodeId: string;
       );
     };
     return (
-      <div className="portal-ann-image-root @container -m-4 flex min-w-0 flex-col overflow-hidden rounded-xl">
+      /* ⚠️ The corner radius is the CARD's own — the SAME value the Style pack's Corner radius writes and
+         the card's surface paints (`chosen`, own-only, exactly as `containerCss` reads it) — defaulting to
+         0. It used to be a hard-coded `rounded-xl`, so the one card whose face reaches its own edges was
+         the one card whose corners the admin could not change: the slider wrote a number the root painted
+         over, and there was no way down from the rounding it arrived with.
+         ⚠️ `flex-1` with `min-h-0`: `Surface` is a full-height flex column, so the root takes whatever
+         height the widget was dragged to and hands it to the PICTURE below — the band keeps its own. */
+      <div
+        style={{ borderRadius: Number(chosen(styles ?? {}, nodeId, 'radius') ?? 0) || undefined }}
+        className="portal-ann-image-root @container -m-4 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
+      >
         {headerOn && (
           <div className="px-4 pt-4">
             <WidgetTitle nodeId={nodeId} text={cfg.title} icon={headIcon} count={ANNOUNCEMENTS.length} />
           </div>
         )}
-        <div className="portal-ann-image relative h-[200px] w-full bg-[#E5E7EB]">
+        {/* ⚠️ A FLOOR plus `flex-1`, never a fixed height. At rest the column is content-tall and the
+            picture is its 200px; dragged taller, the picture takes every pixel the band does not — which is
+            what "stretch the image, keep the text band" means. A fixed height left the extra space empty
+            UNDER the band, which is the gap in the screenshot. */}
+        <div className="portal-ann-image relative min-h-[200px] w-full flex-1 bg-[#E5E7EB]">
           {src
             ? <img src={src} alt="" className="size-full object-cover" />
             : (
@@ -894,7 +917,7 @@ export function AnnouncementsRender({ nodeId, cfg, headIcon }: { nodeId: string;
 
   return (
     <div className="@container min-w-0">
-      {headerOn && <WidgetTitle nodeId={nodeId} text={cfg.title} icon={headIcon} count={ANNOUNCEMENTS.length} />}
+      {headerOn && <WidgetTitle nodeId={nodeId} text={cfg.title} icon={headIcon} count={ANNOUNCEMENTS.length} action={viewAll} />}
       {/* No header, no rule above the first row either — it would be a line under nothing. */}
       <div {...stackProps(gap, dividers)} className={headerOn ? stackProps(gap, dividers).className : (dividers ? '[&>*+*]:border-t [&>*+*]:border-t-[#F0F2F5]' : '')}>{rows.map(row)}</div>
     </div>

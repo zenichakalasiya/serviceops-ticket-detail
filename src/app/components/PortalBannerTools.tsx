@@ -159,6 +159,9 @@ const FILL_ON = 'bg-[#3D8BD0]/10';
 const FILL_OFF = 'bg-[#F1F5F9]';
 const EDGE_ON = 'border-[#3D8BD0]/50';
 const EDGE_OFF = 'border-[#C3CDD9]';
+/* The GROUND a section is drawn on inside a preset tile — see `PresetArt`. */
+const CELL_ON = 'bg-[#3D8BD0]/10';
+const CELL_OFF = 'bg-[#F1F5F9]';
 
 function ItemSkeleton({ id, on }: { id: string; on: boolean }) {
   const ink = on ? INK_ON : INK_OFF;
@@ -173,10 +176,10 @@ function ItemSkeleton({ id, on }: { id: string; on: boolean }) {
   }
   if (id === 'hero-content') {
     return (
-      <span className="flex min-w-0 flex-1 flex-col justify-center gap-[3px] px-[2px]">
+      <span className="flex min-w-0 flex-1 flex-col justify-center gap-[2px] px-[3px]">
         <span className={`h-[3px] w-[80%] rounded-full ${ink}`} />
         <span className={`h-[3px] w-[55%] rounded-full ${FAINT}`} />
-        <span className={`mt-[1px] flex h-[8px] w-full items-center justify-end rounded-[3px] border bg-white pr-[2px] ${edge}`}>
+        <span className={`flex h-[7px] w-full items-center justify-end rounded-[3px] border bg-white pr-[2px] ${edge}`}>
           <span className={`size-[3px] rounded-full ${ink}`} />
         </span>
       </span>
@@ -195,9 +198,11 @@ function ItemSkeleton({ id, on }: { id: string; on: boolean }) {
   if (type === 'bn-slot') {
     return <span className={`min-h-[8px] min-w-0 flex-1 rounded-[3px] border border-dashed ${edge}`} />;
   }
+  /* ⚠️ No fill of its own any more — `PresetArt` gives every section its ground, and a block painted
+     on a block reads as two nested things rather than one picture. */
   if (type === 'c-announcements' || type === 'v-image' || type === 'v-slider') {
     return (
-      <span className={`flex min-h-[8px] min-w-0 flex-1 flex-col justify-end overflow-hidden rounded-[3px] ${on ? FILL_ON : FILL_OFF}`}>
+      <span className="flex min-h-[8px] min-w-0 flex-1 flex-col justify-end overflow-hidden">
         <span className={`h-[35%] max-h-[8px] w-full ${ink}`} />
       </span>
     );
@@ -206,7 +211,9 @@ function ItemSkeleton({ id, on }: { id: string; on: boolean }) {
     return (
       <span className="flex min-w-0 flex-1 flex-col justify-center gap-[1px]">
         {[0, 1].map((i) => (
-          <span key={i} className={`flex h-[6px] items-center gap-[2px] rounded-[2px] px-[2px] ${on ? FILL_ON : FILL_OFF}`}>
+          /* WHITE cards on the section's ground — the faint grey they used to take is now the ground
+             itself, so the cards had nothing to read against. */
+          <span key={i} className="flex h-[6px] items-center gap-[2px] rounded-[2px] bg-white px-[2px]">
             {type === 'x-actions' && <span className={`size-[3px] flex-shrink-0 rounded-[1px] ${ink}`} />}
             <span className={`h-[2px] flex-1 rounded-full ${type === 'x-kpis' ? ink : FAINT}`} />
           </span>
@@ -215,24 +222,33 @@ function ItemSkeleton({ id, on }: { id: string; on: boolean }) {
     );
   }
   return (
-    <span className={`flex min-h-[8px] min-w-0 flex-1 flex-col justify-center gap-[2px] rounded-[3px] px-[3px] ${on ? FILL_ON : FILL_OFF}`}>
+    <span className="flex min-h-[8px] min-w-0 flex-1 flex-col justify-center gap-[2px] px-[3px]">
       <span className={`h-[2px] w-[70%] rounded-full ${ink}`} />
       <span className={`h-[2px] w-[45%] rounded-full ${FAINT}`} />
     </span>
   );
 }
 
+/* ⚠️ Every SECTION is a BLOCK on its own ground, with real space between blocks. Drawn as bare lines
+   on white a 3px apart, four sections read as one grey smudge — the arrangement, which is the only
+   thing these tiles exist to say, was the one thing you could not see in them. */
 function PresetArt({ node, on }: { node: BannerNode; on: boolean }) {
-  if (typeof node === 'string') return <ItemSkeleton id={node} on={on} />;
+  if (typeof node === 'string') {
+    return (
+      <span className={`flex min-h-0 min-w-0 flex-1 items-stretch overflow-hidden rounded-[3px] ${on ? CELL_ON : CELL_OFF}`}>
+        <ItemSkeleton id={node} on={on} />
+      </span>
+    );
+  }
   return (
-    <span className={`flex min-h-0 min-w-0 flex-1 gap-[3px] ${node.d === 'row' ? 'flex-row' : 'flex-col'}`}>
+    <span className={`flex min-h-0 min-w-0 flex-1 gap-[4px] ${node.d === 'row' ? 'flex-row' : 'flex-col'}`}>
       {node.c.map((k, i) => <PresetArt key={i} node={k} on={on} />)}
     </span>
   );
 }
 
 /** The one tile both pickers are drawn in — the Card templates tile. */
-function SkeletonTile({ on, label, onPick, children }: { on: boolean; label: string; onPick: () => void; children: ReactNode }) {
+function SkeletonTile({ on, label, onPick, children, tall = false }: { on: boolean; label: string; onPick: () => void; children: ReactNode; tall?: boolean }) {
   return (
     <button
       type="button"
@@ -241,7 +257,7 @@ function SkeletonTile({ on, label, onPick, children }: { on: boolean; label: str
       aria-pressed={on}
       onMouseDown={(e) => e.stopPropagation()}
       onClick={(e) => { e.stopPropagation(); onPick(); }}
-      className={`flex h-[64px] min-w-0 flex-1 overflow-hidden rounded-lg border-2 bg-white p-1.5 transition-colors ${on ? 'border-[#3D8BD0]' : 'border-[#E5E7EB] hover:border-[#C3CBD6]'}`}
+      className={`flex ${tall ? 'h-[76px]' : 'h-[64px]'} min-w-0 flex-1 overflow-hidden rounded-lg border-2 bg-white p-1.5 transition-colors ${on ? 'border-[#3D8BD0]' : 'border-[#E5E7EB] hover:border-[#C3CBD6]'}`}
     >{children}</button>
   );
 }
@@ -255,7 +271,7 @@ export function BannerPresetPicker({ tree, onPick }: { tree: BannerNode | null; 
   return (
     <div className="grid grid-cols-3 gap-2">
       {presets.map((p) => (
-        <SkeletonTile key={p.id} on={on === p.id} label={p.label} onPick={() => onPick(p.tree)}>
+        <SkeletonTile key={p.id} tall on={on === p.id} label={p.label} onPick={() => onPick(p.tree)}>
           <PresetArt node={p.tree} on={on === p.id} />
         </SkeletonTile>
       ))}
