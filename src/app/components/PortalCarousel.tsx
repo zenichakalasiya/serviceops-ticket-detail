@@ -312,7 +312,7 @@ export function CarouselNav({ car, count, onDark, endLabel }: {
           type="button"
           aria-label={endLabel}
           onClick={(e) => e.stopPropagation()}
-          className={`flex h-7 flex-shrink-0 items-center gap-0.5 whitespace-nowrap rounded-full border pl-3 pr-2 text-[13px] font-medium transition-colors ${
+          className={`flex h-7 flex-shrink-0 items-center gap-1 whitespace-nowrap rounded-full border pl-3 pr-2 text-[13px] font-medium transition-colors ${
             onDark ? 'border-white/40 text-white hover:border-white' : 'border-[#DFE5ED] bg-white text-[#475467] hover:border-[#3D8BD0] hover:text-[#3D8BD0]'
           }`}
         >{endLabel}<ChevronRight size={15} /></button>

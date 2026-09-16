@@ -214,10 +214,11 @@ export function AnnouncementTypePicker({ value, onChange }: { value: string; onC
         const on = value === t.value;
         const ink = on ? 'bg-[#3D8BD0]/50' : 'bg-[#BFC9D6]';
         const faint = 'bg-[#DFE5ED]';
-        /* ⚠️ The card is 46 × 30 — a RECTANGLE, centred in the tile, sized back up from the 18 × 12 it
+        /* ⚠️ The card is 58 × 38 — a RECTANGLE, centred in the tile, sized up twice now from the 18 × 12 it
            was cut to. At that size it was a chip: too small to hold a header over two rows, so the three
-           types differed by a smudge. This is the same drawing the full-tile version had, at a size that
-           still leaves the card room to read AS a card sitting in the tile rather than filling it. */
+           types differed by a smudge. ⚠️ Its INTERIOR has to clear its own contents — at 30px tall the two
+           notice rows and the header came to more than the card had, so the bottom row sat on the card's
+           edge with no padding under it. 38px leaves 30px inside for 24px of drawing. */
         const head = (
           <span className="flex items-center gap-[3px]">
             <span className={`h-[2px] w-[14px] rounded-full ${ink}`} />
@@ -251,11 +252,11 @@ export function AnnouncementTypePicker({ value, onChange }: { value: string; onC
             onClick={() => onChange(t.value)}
             className="flex min-w-0 flex-1 flex-col items-center gap-1.5"
           >
-            <span className={`flex h-[56px] w-full items-center justify-center rounded-lg border-2 transition-colors ${
+            <span className={`flex h-[72px] w-full items-center justify-center rounded-lg border-2 transition-colors ${
               on ? 'border-[#3D8BD0] bg-[#3D8BD0]/[0.04]' : 'border-[#E5E7EB] bg-white hover:border-[#C3CBD6]'
             }`}>
               {/* The CARD, at its own size in the middle of the tile. */}
-              <span className={`flex h-[30px] w-[46px] flex-col overflow-hidden rounded-[3px] border bg-white ${on ? 'border-[#3D8BD0]/50' : 'border-[#CBD5E1]'}`}>
+              <span className={`flex h-[38px] w-[58px] flex-col overflow-hidden rounded-[3px] border bg-white ${on ? 'border-[#3D8BD0]/50' : 'border-[#CBD5E1]'}`}>
                 {t.value === 'regular' && (
                   <span className="flex flex-1 flex-col justify-center gap-[3px] p-[3px]">
                     {head}
@@ -273,7 +274,7 @@ export function AnnouncementTypePicker({ value, onChange }: { value: string; onC
                 {t.value === 'image' && (
                   <>
                     {/* The photo reaches the card's own edges — which is what this card IS. */}
-                    <span className="flex h-[13px] w-full flex-shrink-0 items-center justify-center bg-[#E3E8EE]">
+                    <span className="flex h-[17px] w-full flex-shrink-0 items-center justify-center bg-[#E3E8EE]">
                       <span className={`size-[4px] rounded-full ${on ? 'bg-[#3D8BD0]/40' : 'bg-[#BFC9D6]'}`} />
                     </span>
                     <span className="flex flex-1 flex-col justify-center gap-[2px] bg-[#2F3033] px-[3px]">
