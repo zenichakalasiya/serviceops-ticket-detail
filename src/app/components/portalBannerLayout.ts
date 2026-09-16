@@ -108,16 +108,29 @@ type Shape = number | { d: 'row' | 'column'; c: Shape[] };
 const R = (...c: Shape[]): Shape => ({ d: 'row', c });
 const C = (...c: Shape[]): Shape => ({ d: 'column', c });
 
-const PRESET_SHAPES: { id: string; label: string; s: Shape }[] = [
-  { id: 'single', label: 'Stacked', s: 0 },
-  { id: 'text-widget', label: 'Two columns', s: R(0, 1) },
-  { id: 'widget-text', label: 'Two columns, text right', s: R(1, 0) },
-  { id: 'text-two', label: 'Text left, two stacked right', s: R(0, C(1, 2)) },
-  { id: 'text-row', label: 'Text over a row', s: C(0, R(1, 2, 3)) },
-  { id: 'row-text', label: 'Row over text', s: C(R(1, 2, 3), 0) },
-  { id: 'three', label: 'Three across', s: R(1, 0, 2) },
-  { id: 'two-strip', label: 'Two columns, strip below', s: C(R(0, 1), 2) },
-];
+/* ⚠️ The set is chosen by HOW MANY sections the banner holds, and every shape in it is a different
+ * ARRANGEMENT — never the same arrangement mirrored. A banner takes at most four sections, so these
+ * ten shapes are the whole vocabulary; anything else on offer was a tile that re-placed the same
+ * sections in the same relationship and asked the admin to tell two identical layouts apart.
+ * Slot 0 is the first section — the Text & Search one on every banner that has it. */
+const PRESET_SHAPES: Record<number, { id: string; label: string; s: Shape }[]> = {
+  2: [
+    { id: 'two-rows', label: 'Two rows', s: C(0, 1) },
+    { id: 'two-cols', label: 'Two columns', s: R(0, 1) },
+  ],
+  3: [
+    { id: 'three-rows', label: 'Three rows', s: C(0, 1, 2) },
+    { id: 'three-cols', label: 'Three columns', s: R(0, 1, 2) },
+    { id: 'two-cols-row', label: 'Two columns, then a row', s: C(R(0, 1), 2) },
+    { id: 'col-two-rows', label: 'A column, and two rows beside it', s: R(0, C(1, 2)) },
+  ],
+  4: [
+    { id: 'four-rows', label: 'Four rows', s: C(0, 1, 2, 3) },
+    { id: 'two-cols-two-rows', label: 'Two columns, then two rows', s: C(R(0, 1), 2, 3) },
+    { id: 'three-cols-row', label: 'Three columns, then a row', s: C(R(0, 1, 2), 3) },
+    { id: 'split-col-row', label: 'Two columns — the second split — then a row', s: C(R(0, C(1, 2)), 3) },
+  ],
+};
 
 /** A branch holding a branch of the same direction is one branch — the repair `prune` makes, so a preset's
  *  tree is spelled exactly as the drawn tree will be and `activePreset` can match it. */
@@ -145,14 +158,17 @@ function fill(s: Shape, ids: string[]): BannerNode | null {
   return flat(rest.length ? branch('column', [body, ...rest]) : body);
 }
 
-/** The eight presets, drawn for the sections this banner holds. Two shapes that come out identical at this
+/** The presets for the number of sections this banner holds. Two shapes that come out identical at this
  *  section count are shown once — two tiles promising the same layout is a choice that is not one. */
 export function presetsFor(tree: BannerNode | null): BannerPreset[] {
   const ids = leavesOf(tree);
   if (ids.length < 2) return [];
+  /* ⚠️ Above four there is no set, because `MAX_BANNER_SECTIONS` is four — a banner that somehow
+     carries more falls back to the four-section shapes, and `fill` appends the extras as rows. */
+  const shapes = PRESET_SHAPES[Math.min(ids.length, 4)] ?? [];
   const seen = new Set<string>();
   const out: BannerPreset[] = [];
-  PRESET_SHAPES.forEach((p) => {
+  shapes.forEach((p) => {
     const t = fill(p.s, ids);
     if (!t) return;
     const key = JSON.stringify(t);
