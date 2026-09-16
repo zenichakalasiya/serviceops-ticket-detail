@@ -1903,7 +1903,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
    * every one. Its anchors are its ITEMS: an EMPTY SLOT is taken over (the widget lands exactly where the
    * slot was and the slot goes), another banner item is SWAPPED with a banner item or joined BESIDE by
    * something from the page, and the banner's own background adds the widget to the banner. */
-  const moveToBanner = useCallback((source: string, anchor: string) => {
+  const moveToBanner = useCallback((source: string, anchor: string, side?: 'left' | 'right' | 'top' | 'bottom') => {
     const src = /^el-\d+$/.test(source) || source === 'hero-content' ? source : null;
     if (!src) { toast.error('Only widgets can go on the banner — drag a widget, not a whole section'); return; }
     if (src === anchor) return;
@@ -1919,6 +1919,11 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
         tree = replaceLeaf(removeLeaf(tree, src), anchor, src);
         setRowExtras((prev) => ({ ...prev, hero: (prev.hero ?? []).filter((e) => e.id !== anchor) }));
         toast.success('Moved into the empty slot');
+      } else if (side) {
+        /* ⚠️ Aimed at an EDGE: it leaves where it was and lands as that section's new column or row —
+           the line on screen is the promise, so a swap here would be telling a different story. */
+        tree = insertBeside(removeLeaf(tree, src), anchor, src, side);
+        toast.success(side === 'left' || side === 'right' ? 'Moved into a new column' : 'Moved into a new row');
       } else {
         tree = swapLeaves(tree, src, anchor);
         toast.success('Swapped places');
@@ -1938,21 +1943,21 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
       hero: [...(prev.hero ?? []).filter((e) => !(slot && e.id === anchor)), moving],
     }));
     if (slot) tree = replaceLeaf(tree, anchor, moving.id);
-    else if (anchor !== 'hero') tree = insertBeside(tree, anchor, moving.id, 'right');
+    else if (anchor !== 'hero') tree = insertBeside(tree, anchor, moving.id, side ?? 'right');
     if (anchor !== 'hero') patchCfg('hero', { bannerTree: tree });
     select(moving.id);
     toast.success(`${moving.name} moved onto the banner`);
   }, [detachElement, patchCfg, select]);
 
   /** A NEW element dropped from the library onto the banner. */
-  const dropIntoBanner = useCallback((type: string, anchor: string) => {
+  const dropIntoBanner = useCallback((type: string, anchor: string, side?: 'left' | 'right' | 'top' | 'bottom') => {
     const heroList = rowExtrasRef.current.hero ?? [];
     const slot = heroList.find((e) => e.id === anchor && e.type === 'bn-slot');
     if (slot) { replaceElement(slot.id, type); return; }
     if (anchor === 'hero' || !heroItems().includes(anchor)) { dropInRow('hero', type); return; }
     if (bannerFull()) return;
     const el = makeElement(type, 'hero');
-    const tree = insertBeside(heroTree(), anchor, el.id, 'right');
+    const tree = insertBeside(heroTree(), anchor, el.id, side ?? 'right');
     setRowExtras((prev) => ({ ...prev, hero: [...(prev.hero ?? []), el] }));
     seedBannerItem(el.id, type);
     patchCfg('hero', { bannerTree: tree });

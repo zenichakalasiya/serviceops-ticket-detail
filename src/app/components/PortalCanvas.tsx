@@ -84,9 +84,9 @@ interface CanvasCtx {
   /** The banner's arrangement as drawn — its item tree, repaired against what is on it. */
   heroTree?: () => BannerNode | null;
   /** Moves something already on the page onto the banner: into an empty slot, beside/swapped with an item, or onto the banner itself. */
-  moveToBanner?: (sourceId: string, anchorId: string) => void;
+  moveToBanner?: (sourceId: string, anchorId: string, side?: 'left' | 'right' | 'top' | 'bottom') => void;
   /** Drops a NEW element from the library onto the banner, at the same kinds of anchor. */
-  dropIntoBanner?: (elementType: string, anchorId: string) => void;
+  dropIntoBanner?: (elementType: string, anchorId: string, side?: 'left' | 'right' | 'top' | 'bottom') => void;
   /* ── toolbar actions ── */
   moveNode: (id: string, dir: 'prev' | 'next') => void;
   duplicateNode: (id: string) => void;
@@ -1932,6 +1932,17 @@ function GroupToolbar({ id }: { id: string }) {
     >
       {tip && (
         <span style={{ left: tip.x }} className="pointer-events-none absolute top-full z-[80] mt-1.5 max-w-[220px] -translate-x-1/2 whitespace-nowrap rounded bg-[#1F2937] px-2 py-1 text-[11px] leading-[16px] text-white shadow-[0_4px_10px_rgba(16,24,40,0.18)]">{tip.label}</span>
+      )}
+      {textSection && (
+        /* ⚠️ A GRIP, so the banner's words move the same way its widgets do — press and drag it onto another
+           section's edge to make a column or a row there. Without one the Text & Search section was the one
+           thing on the banner that could only be moved by picking a preset. */
+        <span
+          draggable
+          data-tip="Drag to move this section"
+          onDragStart={(e) => { e.stopPropagation(); e.dataTransfer.setData(MOVE_MIME, id); e.dataTransfer.effectAllowed = 'move'; }}
+          className="flex size-7 cursor-grab items-center justify-center rounded text-[#94A3B8] transition-colors hover:bg-[#F3F4F6] hover:text-[#364658] active:cursor-grabbing"
+        ><GripVertical size={15} /></span>
       )}
       <button className={dir === 'column' ? btnOn : btn} data-tip="Vertical — items stack" aria-pressed={dir === 'column'} onClick={() => setDir('column')}><Rows2 size={15} /></button>
       <button className={dir === 'row' ? btnOn : btn} data-tip="Horizontal — items side by side" aria-pressed={dir === 'row'} onClick={() => setDir('row')}><Columns2 size={15} /></button>

@@ -171,6 +171,65 @@ function zoneFor(r: DOMRect, x: number, y: number, held: Zone | null, edgesOff: 
   return py < r.height / 2 + (held === 'above' ? HYST : held === 'below' ? -HYST : 0) ? 'above' : 'below';
 }
 
+/* ── One SECTION of the banner, as a drop target ────────────────────────────────────────────────
+ *
+ * ⚠️ CAPTURE phase, for the reason `ColumnBody` gives: the `Sel` inside this cell has banner drop handlers of
+ * its own that stop propagation, so on the bubble phase the cell would never hear a drag that started on the
+ * page. Capturing runs the ancestor first, so the line you can see is the thing that decides.
+ * ⚠️ An EMPTY SLOT takes no line — a line is a statement about a neighbour, and a slot is a place with none.
+ * It takes the drop whole, which is what a slot is for. */
+function BannerCell({ id, slot, className, style, children }: {
+  id: string; slot: boolean; className: string; style: CSSProperties; children: ReactNode;
+}) {
+  const { enabled, moveToBanner, dropIntoBanner } = useCanvas();
+  const ref = useRef<HTMLDivElement>(null);
+  const [zone, setZone] = useState<Zone | null>(null);
+  const accepts = (e: React.DragEvent) =>
+    e.dataTransfer.types.includes('text/portal-element') || e.dataTransfer.types.includes(MOVE_MIME);
+  const SIDE: Record<string, 'left' | 'right' | 'top' | 'bottom'> = { left: 'left', right: 'right', above: 'top', below: 'bottom' };
+  /* The same reserved space a column opens: half the width for a new column, a band for a new row, so the shape
+     of the result is visible before the drop rather than described by a rule at one edge. */
+  const reserve: CSSProperties = !zone || zone === 'in' ? {}
+    : zone === 'left' || zone === 'right'
+      ? { [zone === 'left' ? 'paddingLeft' : 'paddingRight']: '50%' }
+      : { [zone === 'above' ? 'paddingTop' : 'paddingBottom']: 56 };
+  const handlers = enabled ? {
+    onDragOverCapture: (e: React.DragEvent) => {
+      if (!accepts(e)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const r = ref.current?.getBoundingClientRect();
+      if (!r) return;
+      setZone((held) => (slot ? 'in' : zoneFor(r, e.clientX, e.clientY, held, false)));
+    },
+    onDragLeave: (e: React.DragEvent) => {
+      if (ref.current?.contains(e.relatedTarget as Node)) return;
+      setZone(null);
+    },
+    onDropCapture: (e: React.DragEvent) => {
+      const z = zone;
+      setZone(null);
+      const type = draggedElement(e);
+      const move = draggedNode(e);
+      if (!type && !move) return;
+      e.preventDefault();
+      e.stopPropagation();
+      if (move === id) return;
+      const side = z && z !== 'in' ? SIDE[z] : undefined;
+      if (type) dropIntoBanner?.(type, id, side);
+      else if (move) moveToBanner?.(move, id, side);
+    },
+  } : {};
+  return (
+    <div ref={ref} data-gap-item="" data-banner-cell={id} className={`relative ${className}`} style={{ ...style, ...reserve, transition: 'padding 130ms ease' }} {...handlers}>
+      {zone && (zone === 'in'
+        ? <span className="pointer-events-none absolute inset-0 z-30 rounded" style={{ outline: `3px solid ${LINE}`, outlineOffset: -1, background: 'rgba(61,139,208,0.08)' }} />
+        : <DropLine zone={zone} inset={0} />)}
+      {children}
+    </div>
+  );
+}
+
 /** The line, the outline and the chip for one hovered box. */
 function DropLine({ zone, inset }: { zone: Zone; inset: number }) {
   if (zone === 'in') return null;
@@ -2551,6 +2610,9 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                 </Sel>
               );
             };
+            /* ⚠️ Dropping ON a banner section, not only into empty slots: the pointer's edge decides whether the
+               thing lands as a COLUMN beside it (left / right) or as a ROW above or below it — the same promise a
+               section's columns make, nested to whatever depth the aimed section sits at. */
             const draw = (n: BannerNode, edge: Edges, grow?: number): ReactNode => {
               const flex = grow !== undefined ? { flex: `${grow} 1 0%`, minWidth: 0 } : {};
               if (typeof n === 'string') {
@@ -2568,10 +2630,10 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                 const pictureCell = typeOf(n) === 'v-image' || (typeOf(n) === 'c-announcements' && String(wc(n).display ?? '') === 'image');
                 const fillY = (b || pictureCell) && own?.height === undefined && (own?.alignY ?? 'stretch') === 'stretch';
                 return (
-                  <div
+                  <BannerCell
                     key={n}
-                    data-gap-item=""
-                    data-banner-cell={n}
+                    id={n}
+                    slot={typeOf(n) === 'bn-slot'}
                     className={`flex min-w-0 flex-col ${fillY ? (b ? 'portal-bleed' : 'portal-fill') : ''}`}
                     style={{
                       containerType: 'inline-size',
@@ -2585,7 +2647,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                       }),
                       ...flex,
                     }}
-                  >{leafBody(n)}</div>
+                  >{leafBody(n)}</BannerCell>
                 );
               }
               return (
