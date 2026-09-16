@@ -1341,6 +1341,13 @@ export function toolbarCaps(id: string): ToolbarCaps {
   /* The service tiles are ONE node shared by every tile, so the bar is alignment only — moving, copying
      or deleting "the tile" would mean every tile at once. */
   if (isServiceTile(id)) return { move: false, add: false, copy: false, drag: false, remove: false };
+  /* A banner ROW or COLUMN. It holds sections and lays them out: the two alignments are the whole of
+     what it decides here.
+     ⚠️ No Add, Copy, Delete or drag. A row is made by a preset or by dropping a section on an edge
+     and it goes when its sections go — an Add that could only put a widget somewhere ambiguous, a Copy
+     of a container whose children are the page’s only copies of themselves, and a Delete that would
+     have to decide what happens to what is inside are three buttons that could not be honoured. */
+  if (/^hero-bx-/.test(id)) return { move: false, add: false, copy: false, drag: false, remove: false };
   /* The banner's search field: one place inside the hero, nothing to duplicate it into, nowhere to
      move to. The grip and Delete are the only two things that were ever true of it. */
   if (id === 'hero-search') return { move: false, add: false, copy: false, alignH: false, alignV: false };

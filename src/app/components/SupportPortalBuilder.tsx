@@ -37,7 +37,7 @@ import { BANNER_GROUPS } from './portalPageModel';
 import type { Box, BoxDir, CustomSection, NodeStyle, PlacedElement, PortalPageContent, PortalStyles } from './portalPageModel';
 import { PORTAL_ELEMENTS, PORTAL_EMPTY_WIDGETS, PORTAL_TEMPLATES, bannerLayout, bannerShape } from './supportPortalData';
 import type { ShapeNode } from './supportPortalData';
-import { MAX_BANNER_SECTIONS, insertAtEdge, insertBeside, leavesOf, normalizeTree, removeLeaf, replaceLeaf, shiftLeaf, swapLeaves } from './portalBannerLayout';
+import { MAX_BANNER_SECTIONS, insertAtEdge, insertBeside, isBannerBox, leavesOf, normalizeTree, removeLeaf, replaceLeaf, shiftLeaf, swapLeaves } from './portalBannerLayout';
 import type { BannerNode } from './portalBannerLayout';
 import { IconPopover } from './PortalIconPicker';
 import type { IconChoice } from './PortalIconPicker';
@@ -354,7 +354,10 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
      It was missing, so the Logo panel's upload stored under `widgetCfg['header-logo']` and
      `PortalHeader` read `wc('header')` — a control that saved a value nothing rendered, which is
      why uploading a logo appeared to do nothing at all. */
-  const ownerOf = (id: string) => parseItemId(id)?.widget ?? id.replace(/-(title|sub|label|viewall|icon|search|caption|logo|tile|cl\d+|cv\d+)$/, '');
+  /* ⚠️ A banner ROW or COLUMN owns itself. Its id ENDS in the id of the last section it holds, and one
+     of those can be `hero-search` — which the suffix stripper would read as a search child and hand back
+     a node that does not exist. */
+  const ownerOf = (id: string) => (isBannerBox(id) ? id : parseItemId(id)?.widget ?? id.replace(/-(title|sub|label|viewall|icon|search|caption|logo|tile|cl\d+|cv\d+)$/, ''));
 
   const specForNode = useCallback((id: string | null): WidgetSpec | undefined => {
     if (!id) return undefined;

@@ -23,9 +23,9 @@ import { PAGE_ID, chosen, iconBoxCss, roleStyle } from './portalStyleResolver';
 import { bannerLayout } from './supportPortalData';
 import { shadowCss } from './PortalBoxControls';
 import { PlacedBlockRenderers, PortalPlacedElement } from './PortalPlacedElement';
-import { ALL_EDGES, COMPACT_BANNER_TYPES, cellKey, childEdges, colsTemplate, leavesOf, normalizeTree } from './portalBannerLayout';
+import { ALL_EDGES, COMPACT_BANNER_TYPES, bannerBoxId, cellKey, childEdges, colsTemplate, leavesOf, normalizeTree } from './portalBannerLayout';
 import type { BannerNode, Edges } from './portalBannerLayout';
-import { DEFAULT_BLOCK_ORDER, DEFAULT_CONTENT, DEFAULT_ROW_ORDER, fillCss, isBranch, nodePath, isLockedRow, hasFixedTitle, hasFixedViewAll, rowOf } from './portalPageModel';
+import { DEFAULT_BLOCK_ORDER, DEFAULT_CONTENT, DEFAULT_ROW_ORDER, fillCss, isBranch, nodePath, isLockedRow, hasFixedTitle, hasFixedViewAll, registerBox, rowOf } from './portalPageModel';
 import type { Box, BoxDir, CustomSection, PlacedElement, PortalPageContent } from './portalPageModel';
 import { iconNode, isImageChoice } from './PortalIconPicker';
 import type { IconChoice } from './PortalIconPicker';
@@ -2645,7 +2645,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
             /* ⚠️ Dropping ON a banner section, not only into empty slots: the pointer's edge decides whether the
                thing lands as a COLUMN beside it (left / right) or as a ROW above or below it — the same promise a
                section's columns make, nested to whatever depth the aimed section sits at. */
-            const draw = (n: BannerNode, edge: Edges, grow?: number): ReactNode => {
+            const draw = (n: BannerNode, edge: Edges, grow?: number, parentDir: 'row' | 'column' = 'column', depth = 0, parentId = 'hero'): ReactNode => {
               const flex = grow !== undefined ? { flex: `${grow} 1 0%`, minWidth: 0 } : {};
               if (typeof n === 'string') {
                 const b = bleed.has(n);
@@ -2682,16 +2682,23 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                   >{leafBody(n)}</BannerCell>
                 );
               }
+              /* ⚠️ A ROW or COLUMN is a NODE — click it and you select it, exactly as you would a section
+                 on the page: its own outline, its name, its toolbar and its spacing. It is registered as a
+                 BOX, so `nodeById` names it by its parent's direction (a child of a row is a Column, a child
+                 of a column is a Row) and a flip renames its children for free.
+                 ⚠️ The ROOT is deliberately not one of these: it fills the whole banner, so as a node it
+                 would take every click meant for the banner itself. */
+              const boxId = bannerBoxId(n);
+              registerBox(boxId, parentDir, depth, parentId);
               return (
-                <div
+                <Sel
                   key={cellKey(n)}
-                  data-gap-item=""
-                  data-gap-parent="hero-sections"
+                  id={boxId}
                   className={`flex min-w-0 ${n.d === 'row' ? 'portal-banner-row' : ''}`}
                   style={{ flexDirection: n.d, gap: n.d === 'row' ? gap : gapY, alignItems: 'stretch', justifyContent: n.d === 'column' ? justifyY : undefined, ...flex }}
                 >
-                  {n.c.map((k, i) => draw(k, childEdges(n, i, edge), n.d === 'row' ? weight(n, i) : undefined))}
-                </div>
+                  {n.c.map((k, i) => draw(k, childEdges(n, i, edge), n.d === 'row' ? weight(n, i) : undefined, n.d, depth + 1, boxId))}
+                </Sel>
               );
             };
             const root = typeof tree === 'string' ? null : tree;
@@ -2712,7 +2719,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                 }}
               >
                 {root
-                  ? root.c.map((k, i) => draw(k, childEdges(root, i, ALL_EDGES), root.d === 'row' ? weight(root, i) : undefined))
+                  ? root.c.map((k, i) => draw(k, childEdges(root, i, ALL_EDGES), root.d === 'row' ? weight(root, i) : undefined, root.d, 1, 'hero'))
                   : draw(tree, ALL_EDGES)}
               </div>
             );

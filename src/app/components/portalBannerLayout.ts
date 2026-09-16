@@ -238,7 +238,33 @@ export function childEdges(parent: { d: 'row' | 'column'; c: BannerNode[] }, i: 
 }
 
 /** A stable key for one cell of a row — its items, joined. */
-export const cellKey = (n: BannerNode) => leavesOf(n).join('|');
+export const cellKey = (n: BannerNode) => leavesOf(n).join("|");
+
+/* ── A banner ROW or COLUMN as a selectable node ────────────────────────────────
+ *
+ * ⚠️ The id is built from the SECTIONS the branch holds, never from its position in the tree. A
+ * branch IS its sections — that is the whole of what it is — so an id made this way survives a
+ * sibling arriving, a preset being re-picked, and the branch moving up or down the banner, and it
+ * changes exactly when the branch stops being the same branch. The positional ids the page boxes
+ * abandoned (`sec-3-c0`) are the cautionary tale: they renamed every box after an insert, and
+ * every stored value landed on the wrong one. */
+export const bannerBoxId = (n: BannerNode) => "hero-bx-" + cellKey(n);
+export const isBannerBox = (id: string) => id.startsWith("hero-bx-");
+
+/** The branch this id names, while the tree still holds one. */
+export function bannerBranch(tree: BannerNode | null | undefined, id: string): { d: "row" | "column"; c: BannerNode[] } | null {
+  if (!tree || typeof tree === "string") return null;
+  if (bannerBoxId(tree) === id) return tree;
+  for (const k of tree.c) { const f = bannerBranch(k, id); if (f) return f; }
+  return null;
+}
+
+/** Flips one branch between laying its sections across and stacking them — children and order untouched. */
+export function setBannerBoxDir(tree: BannerNode, id: string, d: "row" | "column"): BannerNode {
+  if (typeof tree === "string") return tree;
+  if (bannerBoxId(tree) === id) return branch(d, tree.c);
+  return branch(tree.d, tree.c.map((k) => setBannerBoxDir(k, id, d)));
+}
 
 /** A card grid of EXACTLY `cols` equal columns. ⚠️ It used to drop to fewer columns below a minimum card
  *  width, so 3 and 4 silently came out as 2 in a banner column — the count you pick is the count you get;

@@ -603,7 +603,35 @@ export const BANNER_GROUP_SPEC: WidgetSpec = {
   defaults: { dir: 'column' },
 };
 
-/* ── Blocks that hold a SET of cards and lay them out in 1–4 columns ─────────────────────────────── */
+/* A banner ROW or COLUMN — the container a preset makes when it splits the banner.
+ *
+ * ⚠️ Direction is the ONE thing it decides, and it is TREE state: flipping it turns a row of sections
+ * into a stack of them, children and order untouched, which is the same non-destructive flip a page
+ * section’s Behaviour makes. The gaps between sections stay on the BANNER — one number per axis for the
+ * whole banner, so two rows cannot drift apart — and Spacing is added by the drawer, which is what gives
+ * a row its own padding and its negative margins. */
+export const BANNER_BOX_SPEC: WidgetSpec = {
+  id: 'banner_box', name: 'Row', group: 'Structure', reuse: 'single', family: 'flat',
+  /* ⚠️ NO Behaviour control, and it was built and taken out again rather than never tried. A branch's
+     direction is ALWAYS the opposite of its parent's — `prune` merges a branch into a parent laid out the
+     same way, which is what keeps the tree canonical — so flipping one ALWAYS dissolved it into its
+     parent. The layout that came out was right, but the thing you had selected no longer existed: a
+     control that deletes what you are configuring, wearing the name of a setting. The banner's
+     Arrangement presets are how its shape changes; this panel is what the row is LIKE.
+     Spacing (its own padding, and negative margins) and Shadow are added by the drawer; the two
+     alignments are on its floating toolbar. */
+  fields: [],
+  /* ⚠️ P1, and it is what makes this panel EXIST. The drawer drops the whole Design section — heading
+     and body — for a widget with nothing to style, so a spec carrying no fields and no packs opened as an
+     empty drawer under a title. The pack is also the honest answer to what a row IS: a box, which can
+     take a fill, a border and corners of its own — a tinted band inside the banner is a real thing to
+     want, and `Sel` already paints those keys for any node that does not draw its own surface. */
+  packs: ['P1'],
+  noDelete: true,
+  defaults: {},
+};
+
+/* ── Blocks that hold a SET of cards and lay them out in 1–4 columns ──────────────────────────── */
 /* Presets drawn from the real number of cards — all in one row, fewer per row, or stacked. */
 const COLUMNS_FIELD = {
   key: 'cols', label: 'Presets', control: 'tilePresets' as const, tab: 'style' as const, group: 'Columns',
@@ -650,6 +678,6 @@ export const KPI_GROUP_SPEC: WidgetSpec = {
 };
 
 export const STRUCTURE_SPECS: WidgetSpec[] = [
-  BANNER_GROUP_SPEC, HERO_SPEC, ACTION_CARDS_SPEC, KPI_GROUP_SPEC, SEARCH_SPEC, SECTION_SPEC, COLUMN_SPEC, PAGE_SPEC, RAIL_SPEC, NAVBAR_SPEC, LOGO_SPEC,
+  BANNER_GROUP_SPEC, BANNER_BOX_SPEC, HERO_SPEC, ACTION_CARDS_SPEC, KPI_GROUP_SPEC, SEARCH_SPEC, SECTION_SPEC, COLUMN_SPEC, PAGE_SPEC, RAIL_SPEC, NAVBAR_SPEC, LOGO_SPEC,
   HEADER_ACTIONS_SPEC,
 ];

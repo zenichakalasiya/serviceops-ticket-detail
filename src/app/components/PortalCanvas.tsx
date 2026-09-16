@@ -2947,7 +2947,10 @@ export function Sel({ id, children, className = '', toolbarBelow = false, style:
       {/* ⚠️ Not on data cards: every tile in a widget is ONE node, so handles, a toolbar or a name chip
           would paint once per tile. The outline alone says all of them are selected. */}
       {/* ⚠️ A group HUGS its items, so it has no size of its own to drag — no handles. */}
-      {on && !sharedTile && <SelectionHandles id={id} elRef={ref} />}
+      {/* ⚠️ NO handles on a banner ROW or COLUMN. The banner sizes the columns of a row by WEIGHT
+          (`weight()` in the preview), so a dragged `widthPct` would be a number nothing reads — the
+          handle would move and the column would not. Stretching them needs weights in the tree first. */}
+      {on && !sharedTile && !/^hero-bx-/.test(id) && <SelectionHandles id={id} elRef={ref} />}
       {/* ⚠️ The banner's ITEMS get the four + adders the section boxes have, on hover — left/right put an
           empty cell beside the item as a column, top/bottom as a row. Hover, not selection, for the reason
           the box adders give: a selected item carries resize handles on these very edges. */}
