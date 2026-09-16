@@ -53,6 +53,7 @@ export type ControlKind =
   | 'bannerPreset'
   | 'tilePresets'
   | 'gapPair'
+  | 'cardLayout'
   | 'overlayLayer'
   /** An ordered choice on a rail with initials under the stops (banner height). */
   | 'stepRail'
@@ -420,6 +421,49 @@ export const WIDGET_SPECS: WidgetSpec[] = [
     ],
     packs: LIVE_CARD_PACKS, roles: LIST_CARD_ROLES,
     defaults: { ...listCardDefaults, title: 'Announcements', show: 3, showDate: true, rowLayout: 'stacked', display: 'regular', showHeader: true, coverImage: '', bandColor: '#2F3033', bandTextColor: '#FFFFFF', sliderType: 'manual', interval: 5, dots: true },
+  },
+
+
+  /* ─────────── Custom Card ─────────── */
+  /* The card a portal keeps needing and had no element for: a promo, a help block, a list of links.
+   *
+   * ⚠️ PICK A SHAPE, then fill its slots — not a box you drop blocks into. Five named layouts keep every
+   * card on a page one of a known set, and each one shows only the fields it can honour: asking for a
+   * button on a list of links, or an image on a text card, is a control describing something that is not
+   * there. Changing the layout keeps everything you have written; only what the new shape cannot draw
+   * stops being shown, and it is still stored.
+   * ⚠️ Heading and Subtext are the card's own TEXT NODES (`-title` / `-sub`), so they are edited on the
+   * canvas by clicking the words, exactly like every other card's heading. */
+  {
+    id: 'custom_card', name: 'Custom Card', group: 'Content', reuse: 'many', family: 'collection',
+    fields: [
+      { key: 'layout', label: '', control: 'cardLayout', group: 'Card layout' },
+      { key: 'title', label: 'Heading', control: 'text', group: 'Content' },
+      { key: 'sub', label: 'Subtext', control: 'textarea', group: 'Content' },
+      { key: 'image', label: 'Image', control: 'upload', group: 'Content', suggested: '800 × 600', when: (c) => String(c.layout ?? 'imageRight') !== 'links' && String(c.layout ?? 'imageRight') !== 'text' },
+      /* The button is OPTIONAL everywhere it can appear — an empty label draws nothing. */
+      { key: 'ctaLabel', label: 'Button label', control: 'text', group: 'Action', when: (c) => String(c.layout ?? 'imageRight') !== 'links', placeholder: 'Contact us' },
+      { key: 'ctaUrl', label: 'Button link', control: 'text', group: 'Action', when: (c) => String(c.layout ?? 'imageRight') !== 'links' && !!c.ctaLabel, placeholder: 'https://' },
+    ],
+    collection: {
+      key: 'links', group: 'Links', addLabel: 'Add link', max: 8, hideable: true,
+      when: (c) => String(c.layout ?? 'imageRight') === 'links',
+      emptyHint: 'No links yet — a links card with none renders as a heading on its own.',
+      label: (it, i) => String(it.label ?? '') || `Link ${i + 1}`,
+      meta: (it) => String(it.url ?? ''),
+      seed: (i) => ({ label: `Link ${i + 1}`, url: 'https://' }),
+      fields: [
+        { key: 'label', label: 'Label', control: 'text', group: 'Content' },
+        { key: 'url', label: 'Link', control: 'text', group: 'Content' },
+      ],
+    },
+    packs: ['P1'],
+    roles: ['title', 'body'],
+    defaults: {
+      layout: 'imageRight', title: 'Need a hand?', sub: 'Our service desk answers in minutes during working hours.',
+      image: '', ctaLabel: 'Contact us', ctaUrl: '',
+      links: [{ label: 'Reset my password', url: 'https://' }, { label: 'Request VPN access', url: 'https://' }, { label: 'Book a meeting room', url: 'https://' }],
+    },
   },
 
   /* ─────────── §7.6 Most Read Knowledge ─────────── */
@@ -1171,6 +1215,7 @@ export const WIDGET_FOR_TYPE: Record<string, string> = {
   'x-kpi': 'count_tile',
   'x-actions': 'action_cards',
   'x-kpis': 'kpi_group',
+  'x-card': 'custom_card',
   // Collection widgets. `b-accordion` and `c-faq` are the same widget reached two ways.
   'c-faq': 'faq',
   /* ⚠️ No longer an alias of FAQ. They look alike but style differently — an accordion owns a

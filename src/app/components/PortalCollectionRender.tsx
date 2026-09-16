@@ -924,7 +924,105 @@ export function AnnouncementsRender({ nodeId, cfg, headIcon }: { nodeId: string;
   );
 }
 
-/* ── §7.8 Featured Services ──────────────────────────────────────────────── */
+
+/* ── Custom Card ───────────────────────────────────────────────────────
+ *
+ * Five shapes of one card. ⚠️ The SLOTS are the same in every shape — heading, subtext, picture, button,
+ * links — so changing the layout rearranges what is there rather than asking for it again; a shape that
+ * cannot draw a slot simply does not, and the value stays stored for the shape that can. */
+
+/** The picture's empty state — a real drop zone on the canvas, a quiet placeholder in Preview. */
+function CardImageSlot({ nodeId }: { nodeId: string }) {
+  const { enabled, setCfg } = useCanvas();
+  if (!enabled) {
+    return <span className="flex size-full items-center justify-center text-[#9CA3AF]"><ImageOff size={22} /></span>;
+  }
+  return (
+    <div className="size-full [&>button]:size-full [&>button]:rounded-none [&>button]:border-0" onClick={(e) => e.stopPropagation()}>
+      <ImageUploadZone size="sm" label="Drop an image or browse" suggested="800 × 600" onFile={(src) => setCfg?.(nodeId, { image: src })} />
+    </div>
+  );
+}
+
+export function CustomCardRender({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
+  const { styles, enabled } = useCanvas();
+  const layout = String(cfg.layout ?? 'imageRight');
+  const links = visible((cfg.links as Item[]) ?? [], enabled);
+  const side = layout === 'imageRight' || layout === 'imageLeft';
+
+  const heading = cfg.title ? (
+    <Sel id={`${nodeId}-title`}>
+      <div style={roleStyle(styles, `${nodeId}-title`, 'title')} className="text-[16px] font-semibold text-[#364658]">{String(cfg.title)}</div>
+    </Sel>
+  ) : null;
+  const sub = cfg.sub ? (
+    <Sel id={`${nodeId}-sub`}>
+      <div style={roleStyle(styles, `${nodeId}-sub`, 'body')} className="mt-1.5 text-[13px] leading-[1.6] text-[#7B8FA5]">{String(cfg.sub)}</div>
+    </Sel>
+  ) : null;
+  /* ⚠️ An empty label draws NOTHING. A button is the one slot most of these cards will not use, and a
+     blank one on the canvas is a control the admin has to work out how to remove. */
+  const cta = cfg.ctaLabel ? (
+    <span
+      className="mt-4 inline-flex h-9 flex-shrink-0 items-center self-start px-4 text-[13px] font-medium text-white"
+      style={{ background: 'var(--portal-accent, #3D8BD0)', borderRadius: 'var(--portal-btn-radius, 4px)' }}
+    >{String(cfg.ctaLabel)}</span>
+  ) : null;
+  const picture = (
+    <div className={`relative overflow-hidden rounded-lg bg-[#E9EDF2] ${side ? 'min-h-[150px] w-full flex-1' : 'h-[170px] w-full'}`}>
+      {cfg.image ? <img src={String(cfg.image)} alt="" className="size-full object-cover" /> : <CardImageSlot nodeId={nodeId} />}
+    </div>
+  );
+  const linkRows = (
+    <div className="mt-3 flex min-w-0 flex-col">
+      {links.length === 0 && enabled && <span className="py-2 text-[13px] text-[#9CA3AF]">No links yet — add one in the panel.</span>}
+      {links.map((l, i) => (
+        <span key={i} className="flex min-w-0 items-center gap-2 border-t border-[#F0F2F5] py-2.5 text-[14px] text-[#364658] first:border-t-0">
+          <ChevronRight size={14} className="flex-shrink-0 text-[#9CA3AF]" />
+          <span className="min-w-0 truncate">{String(l.label ?? '')}</span>
+        </span>
+      ))}
+    </div>
+  );
+
+  const words = (
+    <div className="flex min-w-0 flex-col">
+      {heading}
+      {sub}
+      {cta}
+    </div>
+  );
+
+  if (layout === 'links') {
+    return <div className="@container flex min-w-0 flex-col">{heading}{sub}{linkRows}</div>;
+  }
+  if (layout === 'text') {
+    return <div className="@container flex min-w-0 flex-col">{words}</div>;
+  }
+  if (layout === 'imageTop') {
+    return (
+      <div className="@container flex min-w-0 flex-col gap-4">
+        {picture}
+        {words}
+      </div>
+    );
+  }
+  /* Side by side, and it STACKS on a narrow card — a picture and a paragraph in half a column each is
+     two things too narrow to read. The query is the CARD's own width, not the window's.
+     ⚠️ The container and the query are on DIFFERENT elements: an element cannot answer a container query
+     it declares itself, so with both on one div the row never fired and every image card came out
+     stacked however wide it was. */
+  return (
+    <div className="@container min-w-0">
+      <div className={`flex min-w-0 flex-col gap-4 @[420px]:flex-row @[420px]:items-center ${layout === 'imageLeft' ? '@[420px]:flex-row-reverse' : ''}`}>
+        <div className="flex min-w-0 flex-1 flex-col">{words}</div>
+        <div className="flex min-w-0 flex-1 flex-col">{picture}</div>
+      </div>
+    </div>
+  );
+}
+
+/* ── §7.8 Featured Services ───────────────────────────────────────── */
 
 /* ⚠️ The second line is a CATEGORY, not a sentence. The reference shows "HR", "Software",
    "Finance", "Travel" — a service's department, which is what a requester scans a favourites grid
@@ -1810,6 +1908,7 @@ function RecordListRender({ nodeId, cfg, glyph }: { nodeId: string; cfg: Cfg; gl
 
 export const COLLECTION_RENDERERS: Record<string, (p: { nodeId: string; cfg: Cfg; glyph?: ReactNode }) => ReactNode> = {
   'c-records': RecordListRender,
+  'x-card': CustomCardRender,
   'c-requests': RequestsRender,
   'c-approvals': ApprovalsRender,
   'c-knowledge': KnowledgeRender,

@@ -291,6 +291,81 @@ export function AnnouncementTypePicker({ value, onChange }: { value: string; onC
   );
 }
 
+
+/* ── Custom Card layouts ────────────────────────────────────────────────
+ *
+ * Five shapes, drawn as the shape each one makes. ⚠️ The picture is the one element with a FILL — words
+ * are lines and a button is a pill — so a tile says which slots its shape has before you read its name. */
+const CARD_LAYOUTS = [
+  { value: 'imageRight', title: 'Image right' },
+  { value: 'imageLeft', title: 'Image left' },
+  { value: 'imageTop', title: 'Image on top' },
+  { value: 'text', title: 'Text only' },
+  { value: 'links', title: 'Links' },
+] as const;
+
+export function CardLayoutPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="grid grid-cols-3 gap-2">
+      {CARD_LAYOUTS.map((t) => {
+        const on = value === t.value;
+        const ink = on ? 'bg-[#3D8BD0]/45' : 'bg-[#C3CDD9]';
+        const faint = 'bg-[#E2E8F0]';
+        const pic = on ? 'bg-[#3D8BD0]/25' : 'bg-[#D7DEE7]';
+        const lines = (
+          <span className="flex min-w-0 flex-1 flex-col justify-center gap-[3px]">
+            <span className={`h-[3px] w-[70%] rounded-full ${ink}`} />
+            <span className={`h-[2px] w-[90%] rounded-full ${faint}`} />
+            <span className={`h-[2px] w-[55%] rounded-full ${faint}`} />
+          </span>
+        );
+        const button = <span className={`mt-[3px] h-[6px] w-[22px] rounded-[2px] ${ink}`} />;
+        return (
+          <button
+            key={t.value}
+            type="button"
+            aria-pressed={on}
+            onClick={() => onChange(t.value)}
+            className="flex min-w-0 flex-col items-center gap-1.5"
+          >
+            <span className={`flex h-[56px] w-full items-center justify-center rounded-lg border-2 p-2 transition-colors ${
+              on ? 'border-[#3D8BD0] bg-[#3D8BD0]/[0.04]' : 'border-[#E5E7EB] bg-white hover:border-[#C3CBD6]'
+            }`}>
+              {(t.value === 'imageRight' || t.value === 'imageLeft') && (
+                <span className={`flex size-full items-center gap-[5px] ${t.value === 'imageLeft' ? 'flex-row-reverse' : ''}`}>
+                  <span className="flex min-w-0 flex-1 flex-col items-start justify-center">{lines}{button}</span>
+                  <span className={`h-full w-[36%] flex-shrink-0 rounded-[3px] ${pic}`} />
+                </span>
+              )}
+              {t.value === 'imageTop' && (
+                <span className="flex size-full flex-col gap-[4px]">
+                  <span className={`h-[45%] w-full flex-shrink-0 rounded-[3px] ${pic}`} />
+                  {lines}
+                </span>
+              )}
+              {t.value === 'text' && (
+                <span className="flex size-full flex-col items-start justify-center">{lines}{button}</span>
+              )}
+              {t.value === 'links' && (
+                <span className="flex size-full flex-col justify-center gap-[3px]">
+                  <span className={`h-[3px] w-[55%] rounded-full ${ink}`} />
+                  {[0, 1, 2].map((i) => (
+                    <span key={i} className="flex items-center gap-[3px] border-t border-[#EEF2F6] pt-[3px]">
+                      <span className={`size-[3px] flex-shrink-0 rounded-full ${faint}`} />
+                      <span className={`h-[2px] flex-1 rounded-full ${faint}`} />
+                    </span>
+                  ))}
+                </span>
+              )}
+            </span>
+            <span className={`text-center text-[11px] leading-[14px] ${on ? 'font-medium text-[#3D8BD0]' : 'text-[#475467]'}`}>{t.title}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 /* ── Banner layouts ──────────────────────────────────────────────────────────
  *
  * ⚠️ A picker of DRAWN shapes, not a dropdown, for the reason at the top of this file: which

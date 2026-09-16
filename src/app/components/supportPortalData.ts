@@ -1512,6 +1512,9 @@ export const PORTAL_ELEMENTS: PortalElement[] = [
   { id: 'x-kpi', name: 'KPI', icon: 'kpi', group: 'Custom', hidden: true, keywords: 'metric stat number' },
   /* A SET of counters with a 1–4 column preset — the banner's KPI block. */
   { id: 'x-kpis', name: 'KPI tiles', icon: 'kpi', group: 'Custom', keywords: 'metric stat number counters kpi' },
+  /* One card, five shapes — the promo, the help block and the list of links a portal needs and had no
+     element for. Repeatable: two of them side by side is a normal page. */
+  { id: 'x-card', name: 'Custom Card', icon: 'customCard', group: 'Custom', keywords: 'card promo banner image links cta button heading subtitle' },
   /* An empty cell on the banner, made by its + adders; it becomes whatever is picked into it. */
   { id: 'bn-slot', name: 'Empty slot', icon: 'card', group: 'Basic', hidden: true },
   /* ⚠️ The banner's own two blocks. Hidden from the palette — they only exist ON a banner, where the

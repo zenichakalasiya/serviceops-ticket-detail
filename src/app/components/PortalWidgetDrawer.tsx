@@ -37,7 +37,7 @@ import { PortalItemList } from './PortalItemList';
 import { RecordFilterField } from './PortalRecordFilter';
 import type { RecordFilter } from './portalRecordFilters';
 import { BANNER_SHAPES, bannerLayoutsFor, recordModule } from './supportPortalData';
-import { AnnouncementTypePicker, BannerLayoutPicker, BannerShapePicker, KpiLayoutPicker, TemplatePicker } from './PortalSectionControls';
+import { AnnouncementTypePicker, BannerLayoutPicker, BannerShapePicker, CardLayoutPicker, KpiLayoutPicker, TemplatePicker } from './PortalSectionControls';
 import { BannerFillEditor, BannerPresetPicker, GapField, GapPair, OverlayLayerEditor, SideGrid, TilePresetPicker, bannerLayerSide } from './PortalBannerTools';
 import type { BannerNode } from './portalBannerLayout';
 import { bannerGroupGap } from './portalPageModel';
@@ -1175,6 +1175,8 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
         );
       case 'announcementType':
         return <AnnouncementTypePicker value={String(v ?? 'regular')} onChange={(x) => set(f.key, x)} />;
+      case 'cardLayout':
+        return <CardLayoutPicker value={String(v ?? 'imageRight')} onChange={(x) => set(f.key, x)} />;
       case 'templates':
         /* A `templates` field may declare `options` to narrow the row — see TemplatePicker. */
         return (
