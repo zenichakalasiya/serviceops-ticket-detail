@@ -41,10 +41,17 @@ export const PRESETS: Record<PresetId, Preset> = {
   stack: { id: 'stack', title: 'Stacked', rows: (n) => Array.from({ length: Math.max(1, n) }, () => [1]) },
 };
 
-/** Which presets are worth offering for a section holding `n` widgets. */
+/** Which presets are worth offering for a section holding `n` widgets.
+ *
+ * ⚠️ A section holding ONE widget is offered the column shapes too — the Action cards block dropped on
+ * its own is the common case, and the question "split this into two or three columns" is exactly what
+ * an admin asks there next. The extra cells arrive empty, which is what the + handles and a drag fill.
+ * `stack` is dropped at that count because it draws the identical single cell `cols` already shows, and
+ * two tiles promising the same shape is a choice that is not one. */
 export function presetsFor(n: number): Preset[] {
   if (n >= 4) return [PRESETS.cols, PRESETS.grid, PRESETS.three, PRESETS.stack];
   if (n === 3) return [PRESETS.cols, PRESETS.grid, PRESETS.stack];
+  if (n <= 1) return [PRESETS.cols, PRESETS.grid, PRESETS.three];
   return [PRESETS.cols, PRESETS.stack];
 }
 
@@ -89,7 +96,7 @@ export function SectionPresets({ count, current, onPick }: {
           className={`flex h-7 flex-1 items-center justify-center rounded transition-colors ${
             current === p.id ? 'bg-white shadow-[0_1px_2px_rgba(16,24,40,0.06)]' : 'hover:bg-white/60'
           }`}
-        ><Tile rows={p.rows(Math.max(count, 2))} on={current === p.id} /></button>
+        ><Tile rows={p.rows(count <= 1 ? (p.id === 'cols' || p.id === 'stack' ? 1 : 0) : Math.max(count, 2))} on={current === p.id} /></button>
       ))}
     </div>
   );

@@ -1178,7 +1178,12 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
       const sec = entry.section;
       const ordered = sectionElements(sec);
       const cells = sectionRows(sec).reduce((a, r) => a + r.length, 0);
-      const rows = PRESETS[preset].rows(Math.max(ordered.length, cells, 1));
+      /* ⚠️ At one widget (or none) a preset means "give me this many columns", not "lay one widget out":
+         `grid.rows(1)` is a single full-width cell, so picking Grid on a section holding one block changed
+         nothing and the control looked dead. Asking for the shape's own nominal cells makes Grid two columns
+         and Three across three, with the widget in the first and the rest empty for the next one. */
+      const n = Math.max(ordered.length, cells, 1);
+      const rows = n <= 1 && preset !== 'cols' ? PRESETS[preset].rows(0) : PRESETS[preset].rows(n);
       const next = sectionRebuild(sec, rows, ordered);
       /* Every element now sits in a NEW cell, so each has to be told its new parent — without this
          the panel breadcrumb keeps naming a column that no longer exists. */
@@ -1560,15 +1565,71 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     // A card moves within its row.
     const row = Object.keys(rowOrder).find((r) => rowOrder[r].includes(id));
     if (row) { setRowOrder((o) => ({ ...o, [row]: moveIn(o[row], id, step) })); return; }
-    // An added section moves among the sections pinned to the same anchor.
+    /* An added section moves up or down THE PAGE.
+     *
+     * ⚠️ It used to swap two entries in `sections`, which only ever reordered sections pinned to the SAME
+     * band — so the common case (one section under a band of its own) had nothing to swap with and the
+     * arrows did nothing at all, silently. A section's place on the page is its ANCHOR (`afterId`, the band
+     * it sits under) and then its position among the sections sharing that anchor, so moving past the first
+     * or last of its group re-anchors it to the neighbouring band. */
     if (/^sec-\d+$/.test(id)) {
       setSections((prev) => {
         const i = prev.findIndex((s) => s.section.id === id);
-        const j = i + step;
-        if (i < 0 || j < 0 || j >= prev.length) return prev;
-        const next = [...prev];
-        [next[i], next[j]] = [next[j], next[i]];
+        if (i < 0) return prev;
+        const me = prev[i];
+        const group = prev.filter((s) => s.afterId === me.afterId && !s.section.band && !s.section.banner);
+        const at = group.findIndex((s) => s.section.id === id);
+        const swapWith = group[at + step];
+        if (swapWith) {
+          const j = prev.findIndex((s) => s.section.id === swapWith.section.id);
+          const next = [...prev];
+          [next[i], next[j]] = [next[j], next[i]];
+          return next;
+        }
+        /* At the edge of its group: hop to the band before or after this one. */
+        const bands = blockOrder.filter((b) => !removed.includes(b));
+        const a = bands.indexOf(me.afterId);
+        const to = bands[a + step];
+        if (a < 0 || !to) { toast.error(step < 0 ? 'This is already the first section on the page' : 'This is already the last section on the page'); return prev; }
+        const moved = { ...me, afterId: to };
+        const rest = prev.filter((s) => s.section.id !== id);
+        /* Going UP it lands at the END of the band above; going DOWN, at the START of the band below — in
+           both cases immediately beside where it came from. */
+        let lastOfTo = -1;
+        rest.forEach((s, k) => { if (s.afterId === to) lastOfTo = k; });
+        const firstOfTo = rest.findIndex((s) => s.afterId === to);
+        const idx = step < 0 ? lastOfTo + 1 : Math.max(firstOfTo, 0);
+        const next = [...rest];
+        next.splice(idx, 0, moved);
         return next;
+      });
+      return;
+    }
+    /* ⚠️ A PLACED ELEMENT moves with the BOX it sits in. Everything below reads `id` as a box or a
+       band, so a widget — the Action cards block above all — fell past every branch and landed on the
+       "nothing to swap it with" message while sitting in a row with three siblings. An element is not a
+       box; it is the box's content, and what moves is the box. */
+    for (const s of sectionsRef.current) {
+      const box = boxOfElement(s.section.root, id);
+      if (!box) continue;
+      const parent = parentOfBox(s.section.root, box.id);
+      if (!parent?.children) { toast.success('This element sits on its own — nothing to swap it with'); return; }
+      setSections((prev) => prev.map((x) => (
+        x.section.id !== s.section.id ? x : {
+          ...x,
+          section: { ...x.section, root: mapBox(x.section.root, parent.id, (p) => ({ ...p, children: moveIn(p.children!, p.children!.find((c) => c.id === box.id)!, step) })) },
+        }
+      )));
+      return;
+    }
+    /* An element dropped straight into a built-in row moves within that row — the extras render in
+       array order, so the array IS the order. */
+    const host = Object.keys(rowExtrasRef.current).find((r) => (rowExtrasRef.current[r] ?? []).some((e) => e.id === id));
+    if (host) {
+      setRowExtras((prev) => {
+        const list = prev[host] ?? [];
+        const item = list.find((e) => e.id === id);
+        return item ? { ...prev, [host]: moveIn(list, item, step) } : prev;
       });
       return;
     }
@@ -1589,7 +1650,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
       return;
     }
     toast.success('This element sits on its own — nothing to swap it with');
-  }, [blockOrder, rowOrder]);
+  }, [blockOrder, rowOrder, removed]);
 
   /* What the toolbar's Split button needs to know: which way this box splits, and why it cannot.
      ⚠️ Returns a REASON rather than a boolean, so the button can stay visible and disabled with the

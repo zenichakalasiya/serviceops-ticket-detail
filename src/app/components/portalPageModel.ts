@@ -349,7 +349,10 @@ export function rowOf(nodeId: string): string | undefined {
 }
 
 /** Moves `id` one step inside `list`, returning a new array. */
-export function moveIn(list: string[], id: string, dir: -1 | 1): string[] {
+/** Swaps an item with its neighbour. GENERIC: the same one step is asked of a list of ids, a list of
+   boxes and a list of placed elements — three call sites that were each casting around a string-only
+   signature (and one of them has carried a type error since the tree landed). */
+export function moveIn<T>(list: T[], id: T, dir: -1 | 1): T[] {
   const i = list.indexOf(id);
   const j = i + dir;
   if (i < 0 || j < 0 || j >= list.length) return list;

@@ -265,7 +265,7 @@ export const SECTION_SPEC: WidgetSpec = {
            changed and putting the control back is one field; it simply is not a panel decision
            while the section work is parked. */
         fields: [
-          { key: 'preset', label: 'Presets', control: 'sectionPreset', when: (c) => Number(c.__count ?? 0) > 1 },
+          { key: 'preset', label: 'Presets', control: 'sectionPreset', when: (c) => Number(c.__count ?? 0) >= 1 },
           /* ⚠️ On the PARENT, not on each column — the same reason Card templates sits here. How a
              row redistributes is a property of the row: two columns in one section answering that
              question differently is not a layout, it is an argument. Every section gets it, empty
