@@ -303,13 +303,17 @@ export function CarouselNav({ car, count, onDark, endLabel }: {
           />
         ))}
       </div>
+      {/* ⚠️ On the last page the Next arrow BECOMES this — a pill the same height and with the same
+          outline as the arrow it replaces, with the words inside it. Loose words beside a round arrow read
+          as a caption that had escaped the control; the pill says the two are one thing, and that this is
+          still the button on the right-hand end of the row. */}
       {endLabel && car.i === count - 1 ? (
         <button
           type="button"
           aria-label={endLabel}
           onClick={(e) => e.stopPropagation()}
-          className={`flex h-7 flex-shrink-0 items-center gap-0.5 whitespace-nowrap pl-1.5 text-[13px] font-medium transition-colors ${
-            onDark ? 'text-white hover:text-white/80' : 'text-[#475467] hover:text-[#3D8BD0]'
+          className={`flex h-7 flex-shrink-0 items-center gap-0.5 whitespace-nowrap rounded-full border pl-3 pr-2 text-[13px] font-medium transition-colors ${
+            onDark ? 'border-white/40 text-white hover:border-white' : 'border-[#DFE5ED] bg-white text-[#475467] hover:border-[#3D8BD0] hover:text-[#3D8BD0]'
           }`}
         >{endLabel}<ChevronRight size={15} /></button>
       ) : (

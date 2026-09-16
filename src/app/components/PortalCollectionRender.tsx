@@ -1834,8 +1834,13 @@ function AnnouncementImageSlot({ nodeId }: { nodeId: string }) {
       </span>
     );
   }
+  /* ⚠️ FLUSH — no padding around it and no rounding of its own. The picture on this card reaches the
+     card's own edges, so its empty state has to as well: inset by 16px inside a rounded dashed box it drew
+     a frame the real photograph will not have, and those rounded corners read as "the image has a radius"
+     on a card whose radius is zero. With the zone square, the ROOT's radius is the only one in the card,
+     which is what makes the card's own Corner radius the single control over every corner in it. */
   return (
-    <div className="relative z-20 flex size-full items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
+    <div className="relative z-20 size-full [&>button]:size-full [&>button]:rounded-none [&>button]:border-0" onClick={(e) => e.stopPropagation()}>
       <ImageUploadZone size="md" label="Drop an image or browse" suggested="1200 × 400" onFile={(src) => setCfg?.(nodeId, { coverImage: src })} />
     </div>
   );

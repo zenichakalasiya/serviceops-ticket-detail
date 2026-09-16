@@ -35,6 +35,11 @@ export const SEARCH_SPEC: WidgetSpec = {
         fields: [
           { key: 'searchWidth', label: 'Width', control: 'slider', min: 40, max: 100, unit: '%' },
           { key: 'searchRadius', label: 'Corner radius', control: 'radius' },
+          /* ⚠️ The search bar is a WHITE field, and on a pale banner a white field on a near-white band has
+             no edge at all — the one control that could give it one did not exist. Colour appears once there
+             is a width to paint it, the same gate the banner's own border uses. */
+          { key: 'searchBorderWidth', label: 'Border', control: 'slider', min: 0, max: 4, unit: 'px' },
+          { key: 'searchBorderColor', label: 'Border colour', control: 'color', when: (c) => Number(c.searchBorderWidth ?? 0) > 0 },
         ],
       },
       { id: 'spacing', spacing: 'both' },
@@ -43,7 +48,7 @@ export const SEARCH_SPEC: WidgetSpec = {
   /* Nothing in the palette can put the banner's search back, so removing it is the toggle above. */
   noDelete: true,
   fields: [], packs: [],
-  defaults: { searchPlaceholder: 'How can we help you?', searchScope: 'knowledge', searchSuggestions: true, showSearch: true, searchWidth: 70, searchRadius: 4 },
+  defaults: { searchPlaceholder: 'How can we help you?', searchScope: 'knowledge', searchSuggestions: true, showSearch: true, searchWidth: 70, searchRadius: 4, searchBorderWidth: 0, searchBorderColor: '#DFE5ED' },
 };
 
 export const HERO_SPEC: WidgetSpec = {

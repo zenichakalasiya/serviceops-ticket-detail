@@ -751,6 +751,19 @@ function AddedSection({ section, icons, placedText, cfg, bandNode, bare }: { sec
  * ⚠️ On the CANVAS the field is read-only, because a click there has to mean "select this element"
  * — you are arranging a page, not searching it. In Preview and on the live portal it is a real
  * input. The scope pill shows in both, so the setting is legible while you are choosing it. */
+/* The search field's own frame: its corners, and the border it only has once somebody asks for one.
+ *
+ * ⚠️ ONE helper, because the banner draws its search in four places (the stacked layout, the side-by-side
+ * one, the arranged tree and the vertical rail) and a frame written out four times is four places for the
+ * next border setting to be forgotten in. */
+export function searchFrame(hero: Record<string, unknown>): React.CSSProperties {
+  const w = Number(hero.searchBorderWidth ?? 0);
+  return {
+    borderRadius: Number(hero.searchRadius ?? 4),
+    ...(w > 0 ? { borderWidth: w, borderStyle: 'solid', borderColor: String(hero.searchBorderColor ?? '#DFE5ED') } : {}),
+  };
+}
+
 function HeroSearch({ cfg, fallback, style }: {
   cfg: Record<string, unknown>; fallback: string; style: React.CSSProperties;
 }) {
@@ -2266,7 +2279,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
       /* It FILLS its cell — the cell carries the width, so the two outlines are one. */
       style={{ maxWidth: '100%' }}
     >
-      <HeroSearch cfg={wc('hero')} fallback={content.hero.placeholder} style={{ borderRadius: Number(wc('hero').searchRadius ?? 4), ...st('hero-search') }} />
+      <HeroSearch cfg={wc('hero')} fallback={content.hero.placeholder} style={{ ...searchFrame(wc('hero')), ...st('hero-search') }} />
     </Sel>
   );
 
@@ -2410,7 +2423,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                   <HeroSearch
                     cfg={wc('hero')}
                     fallback={content.hero.placeholder}
-                    style={{ borderRadius: Number(wc('hero').searchRadius ?? 4), ...st('hero-search') }}
+                    style={{ ...searchFrame(wc('hero')), ...st('hero-search') }}
                   />
                 </Sel>
               </div>
@@ -2525,7 +2538,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
               <HeroSearch
                 cfg={wc('hero')}
                 fallback={content.hero.placeholder}
-                style={{ borderRadius: Number(wc('hero').searchRadius ?? 4), ...st('hero-search') }}
+                style={{ ...searchFrame(wc('hero')), ...st('hero-search') }}
               />
             </Sel>
           ) : null;
@@ -2775,7 +2788,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                 cfg={wc('hero')}
                 fallback={content.hero.placeholder}
                 style={{
-                  borderRadius: Number(wc('hero').searchRadius ?? 4),
+                  ...searchFrame(wc('hero')),
                   /* The shadow is what makes it read as lifted off the banner rather than cut
                      into it. Tight and low-opacity — a heavy one would look like a modal. */
                   boxShadow: '0 12px 28px -8px rgba(11,27,63,0.35), 0 2px 6px rgba(11,27,63,0.12)',
