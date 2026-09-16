@@ -178,11 +178,14 @@ function MiniCard({ on, className = '', children }: { on: boolean; className?: s
 }
 
 /** A grid of cards at the block's OWN column count — the arrangement its Presets row chose. */
-function CardGrid({ count, cols, children }: { count: number; cols: number; children: (i: number) => ReactNode }) {
+function CardGrid({ count, cols, fill = true, children }: { count: number; cols: number; fill?: boolean; children: (i: number) => ReactNode }) {
   return (
     <span
-      className="grid min-h-0 min-w-0 flex-1 gap-[2px]"
-      style={{ gridTemplateColumns: `repeat(${Math.max(1, cols)}, minmax(0, 1fr))`, gridAutoRows: 'minmax(0, 1fr)' }}
+      className={`grid min-h-0 min-w-0 gap-[2px] ${fill ? 'flex-1' : 'w-full'}`}
+      /* ⚠️ A FIXED card height once the cell stops filling the tile: `1fr` of an undefined height is the
+         card's own content, which is 4px of bars — the cards collapse to slivers the moment a section
+         sits in a column beside another one. */
+      style={{ gridTemplateColumns: `repeat(${Math.max(1, cols)}, minmax(0, 1fr))`, gridAutoRows: fill ? 'minmax(0, 1fr)' : '13px' }}
     >
       {Array.from({ length: Math.max(1, count) }, (_, i) => children(i))}
     </span>
@@ -245,9 +248,9 @@ function DotsArt({ on }: { on: boolean }) {
 }
 
 /** A PICTURE — a grey plate with the sun and the hill every image placeholder draws. */
-function PictureArt({ className = '' }: { className?: string }) {
+function PictureArt({ className = '', fill = true }: { className?: string; fill?: boolean }) {
   return (
-    <span className={`relative min-h-[10px] min-w-0 flex-1 overflow-hidden ${PIC} ${className}`}>
+    <span className={`relative min-w-0 overflow-hidden ${fill ? 'min-h-[10px] flex-1' : 'h-[26px] w-full flex-shrink-0'} ${PIC} ${className}`}>
       <span className="absolute left-[4px] top-[3px] size-[3px] rounded-full bg-white/75" />
       <span className="absolute inset-x-0 bottom-0 h-[55%] bg-white/45" style={{ clipPath: 'polygon(0 100%, 38% 18%, 62% 55%, 78% 32%, 100% 100%)' }} />
     </span>
@@ -256,12 +259,12 @@ function PictureArt({ className = '' }: { className?: string }) {
 
 /* Which announcement card an Announcements section is showing — the SAME three the Card type tiles
    offer, because the thumbnail has to draw the card the admin actually picked. */
-function AnnouncementArt({ on, display }: { on: boolean; display: string }) {
+function AnnouncementArt({ on, display, fill = true }: { on: boolean; display: string; fill?: boolean }) {
   if (display === 'image') {
     /* The picture reaches the card's own edges, with the notice in the band beneath it. */
     return (
-      <span className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-[2px]">
-        <PictureArt />
+      <span className={`flex min-h-0 min-w-0 flex-col overflow-hidden rounded-[2px] ${fill ? 'flex-1' : 'w-full'}`}>
+        <PictureArt fill={fill} className={fill ? '' : 'h-[20px]'} />
         <span className="flex h-[9px] flex-shrink-0 items-center gap-[3px] bg-[#475569] px-[3px]">
           <span className="size-[5px] flex-shrink-0 rounded-[1px] bg-white/25" />
           <span className="h-[2px] flex-1 rounded-full bg-white/70" />
@@ -373,24 +376,24 @@ function ItemSkeleton({ id, on, cfgOf, wide = true }: {
   const colsFor = (count: number) => setCols || (wide ? Math.min(count, 4) : 1);
 
   if (type === 'bn-slot') {
-    return <span className={`min-h-[8px] min-w-0 flex-1 rounded-[3px] border border-dashed ${edge}`} />;
+    return <span className={`min-w-0 rounded-[3px] border border-dashed ${edge} ${wide ? 'min-h-[8px] flex-1' : 'h-[22px] w-full'}`} />;
   }
-  if (type === 'v-image' || type === 'v-slider') return <PictureArt className="rounded-[2px]" />;
-  if (type === 'c-announcements') return <AnnouncementArt on={on} display={String(cfg.display ?? 'regular')} />;
+  if (type === 'v-image' || type === 'v-slider') return <PictureArt className="rounded-[2px]" fill={wide} />;
+  if (type === 'c-announcements') return <AnnouncementArt on={on} display={String(cfg.display ?? 'regular')} fill={wide} />;
   if (type === 'c-contact') return <ContactArt on={on} />;
   if (type === 'x-kpis') {
     const items = Array.isArray(cfg.items) ? cfg.items.length : 3;
-    return <CardGrid count={items} cols={colsFor(items)}>{(i) => <KpiCardArt key={i} on={on} />}</CardGrid>;
+    return <CardGrid count={items} cols={colsFor(items)} fill={wide}>{(i) => <KpiCardArt key={i} on={on} />}</CardGrid>;
   }
   if (type === 'x-actions') {
     const count = Number(cfg.__tileCount ?? 4) || 4;
     const c = colsFor(count);
-    return <CardGrid count={count} cols={c}>{(i) => <ActionCardArt key={i} on={on} row={c === 1} />}</CardGrid>;
+    return <CardGrid count={count} cols={c} fill={wide}>{(i) => <ActionCardArt key={i} on={on} row={c === 1} />}</CardGrid>;
   }
   if (type === 'c-assets' || type === 'c-cis' || type === 'c-favourites' || type === 'c-services') {
     /* Tiles, not rows — these four draw a grid of record cards. */
     const c = wide ? 2 : 1;
-    return <CardGrid count={4} cols={c}>{(i) => <ActionCardArt key={i} on={on} row={c === 1} />}</CardGrid>;
+    return <CardGrid count={4} cols={c} fill={wide}>{(i) => <ActionCardArt key={i} on={on} row={c === 1} />}</CardGrid>;
   }
   if (type === 'c-requests' || type === 'c-approvals' || type === 'c-knowledge' || type === 'record_list') {
     return <ListCardArt on={on} mark={type === 'c-requests' || type === 'c-approvals' ? 'dot' : 'tile'} />;
@@ -435,8 +438,13 @@ function PresetArt({ node, on, cfgOf, wide = true }: {
      keeps whatever width its parent had, which is what makes a section stacked under the words still
      count as full-width. */
   const childWide = node.d === 'row' ? node.c.length <= 1 && wide : wide;
+  /* ⚠️ Side-by-side sections are CENTRED at their own height, never stretched to the tile's.
+     Stretched, a picture beside a line of text became a tall slab and a two-line text section became a
+     tall grey box holding two bars at the top — the tile stopped describing an arrangement and started
+     describing a pair of columns. Stacked sections still fill (they are the tile's height between
+     them), which is why the row presets already read correctly. */
   return (
-    <span className={`flex min-h-0 min-w-0 flex-1 gap-[4px] ${node.d === 'row' ? 'flex-row' : 'flex-col'}`}>
+    <span className={`flex min-h-0 min-w-0 flex-1 gap-[4px] ${node.d === 'row' ? 'flex-row items-center' : 'flex-col'}`}>
       {node.c.map((k, i) => <PresetArt key={i} node={k} on={on} cfgOf={cfgOf} wide={childWide} />)}
     </span>
   );
