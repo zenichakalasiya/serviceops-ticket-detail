@@ -381,19 +381,22 @@ function ItemSkeleton({ id, on, cfgOf, wide = true }: {
   if (type === 'v-image' || type === 'v-slider') return <PictureArt className="rounded-[2px]" />;
   if (type === 'c-announcements') return <AnnouncementArt on={on} display={String(cfg.display ?? 'regular')} />;
   if (type === 'c-contact') return <ContactArt on={on} />;
+  /* ⚠️ A block of cards draws EMPTY CARDS in an arrangement tile — how many and how they are laid
+     out, and nothing inside them. Four action cards in a 38px band leaves each card about 10px tall,
+     and an icon badge with a title line in 10px is a badge and a line with their tops and bottoms cut
+     off: the tile's own information (the arrangement) was being spoiled by detail it has no room for.
+     The COLUMN-preset picker keeps the detail — its tiles hold one row of cards, so there is room. */
   if (type === 'x-kpis') {
     const items = Array.isArray(cfg.items) ? cfg.items.length : 3;
-    return <CardGrid count={items} cols={colsFor(items)}>{(i) => <KpiCardArt key={i} on={on} />}</CardGrid>;
+    return <CardGrid count={items} cols={colsFor(items)}>{(i) => <MiniCard key={i} on={on} />}</CardGrid>;
   }
   if (type === 'x-actions') {
     const count = Number(cfg.__tileCount ?? 4) || 4;
-    const c = colsFor(count);
-    return <CardGrid count={count} cols={c}>{(i) => <ActionCardArt key={i} on={on} row={c === 1} />}</CardGrid>;
+    return <CardGrid count={count} cols={colsFor(count)}>{(i) => <MiniCard key={i} on={on} />}</CardGrid>;
   }
   if (type === 'c-assets' || type === 'c-cis' || type === 'c-favourites' || type === 'c-services') {
     /* Tiles, not rows — these four draw a grid of record cards. */
-    const c = wide ? 2 : 1;
-    return <CardGrid count={4} cols={c}>{(i) => <ActionCardArt key={i} on={on} row={c === 1} />}</CardGrid>;
+    return <CardGrid count={4} cols={wide ? 2 : 1}>{(i) => <MiniCard key={i} on={on} />}</CardGrid>;
   }
   if (type === 'c-requests' || type === 'c-approvals' || type === 'c-knowledge' || type === 'record_list') {
     return <ListCardArt on={on} mark={type === 'c-requests' || type === 'c-approvals' ? 'dot' : 'tile'} />;

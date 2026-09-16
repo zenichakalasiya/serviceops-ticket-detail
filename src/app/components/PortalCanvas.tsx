@@ -800,11 +800,13 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
      measure itself against — the wrapper it used to be positioned inside. */
   const besideRef = useRef<HTMLDivElement>(null);
   const insideRef = useRef<HTMLDivElement>(null);
+  const swapRef = useRef<HTMLDivElement>(null);
   const { styles, setStyle, moveNode, duplicateNode, deleteNode, canDuplicate, addInside, replaceElement, addChildBlock, splitNode, splitInfo, addLinkCard, addSibling, cfg, setCfg, splitChildBlock } = useCanvas();
   const [colsOpen, setColsOpen] = useState(false);
   const onHero = /^el-\d+$/.test(id) && nodeById(id)?.parent === 'hero';
   const [picking, setPicking] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [swapping, setSwapping] = useState(false);
   const [axis, setAxis] = useState<'h' | 'v' | null>(null);
   /* A Custom Data Widget drawn as a KPI takes both alignments — it places its number and title inside itself. The list form keeps none. */
   const kpi = placedType(id) === 'c-records' && cfg?.(id)?.display === 'kpi';
@@ -980,6 +982,32 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
               onPick={(type) => { setAdding(false); addSibling?.(id, type); }}
               onClose={() => setAdding(false)}
               anchorRef={besideRef}
+              targetId={id}
+            />
+          )}
+        </div>
+      )}
+      {/* REPLACE, for a banner widget that is also a CONTAINER.
+          ⚠️ Contact Us is the case: its spec declares `childTypes` (Button, Text, Icon), so the one
+          add-or-replace slot below resolves to "Add a block inside" and the widget had no way to be
+          swapped for another — every other banner widget gets Replace there, and this one silently did
+          not. It is its OWN button rather than a relabel of that one, because both actions are real
+          here: the card still takes blocks inside it, and the banner section it occupies can still
+          become something else.
+          ⚠️ The list is `BANNER_SIDE_WIDGETS` — only what the banner accepts, the same list the
+          builder's own gate enforces, so the picker can never offer something the drop would refuse. */}
+      {onHero && placed && !!childTypes?.length && (
+        <div ref={swapRef} className="relative">
+          <button className={btn} data-tip="Replace this widget" onClick={() => setSwapping((v) => !v)}>
+            <Replace size={15} />
+          </button>
+          {swapping && (
+            <ElementPicker
+              only={BANNER_SIDE_WIDGETS}
+              mode="replace"
+              onPick={(type) => { setSwapping(false); replaceElement(id, type); }}
+              onClose={() => setSwapping(false)}
+              anchorRef={swapRef}
               targetId={id}
             />
           )}
