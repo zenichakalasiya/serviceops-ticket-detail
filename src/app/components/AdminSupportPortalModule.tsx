@@ -371,7 +371,8 @@ export function AdminSupportPortalModule({ onBuilder, openPortal, onOpenPortalCh
      looked at is exactly the page you start editing. Back unmounts it and the popup comes back on
      step 2 with the category you had, because the draft portal still exists. */
   const [previewing, setPreviewing] = useState(false);
-  const [templateCategory, setTemplateCategory] = useState('All');
+  /* The gallery’s industry filter, held here so Back from a template preview lands on the same one. */
+  const [templateIndustry, setTemplateIndustry] = useState<string[]>([]);
   const previewTemplate = (t: PortalTemplate | null) => {
     if (!draftId) return;
     setPages((prev) => prev.map((p) => (p.id === draftId ? { ...p, start: 'template', source: t ? t.name : 'Default portal' } : p)));
@@ -494,8 +495,8 @@ export function AdminSupportPortalModule({ onBuilder, openPortal, onOpenPortalCh
           onTemplate={useTemplate}
           onPreview={previewTemplate}
           initialStep={draftId ? 2 : 1}
-          category={templateCategory}
-          onCategory={setTemplateCategory}
+          industry={templateIndustry}
+          onIndustry={setTemplateIndustry}
         />
       )}
       {gallery && (

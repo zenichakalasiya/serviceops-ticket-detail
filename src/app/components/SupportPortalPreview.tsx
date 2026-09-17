@@ -3743,7 +3743,11 @@ function RecordTiles({ nodeId, titleFallback, cfg, rows, total, icon, headIcon }
       {/* ⚠️ `@container`, not a viewport breakpoint — the tiles answer to the CARD's width, which is
           what lets this row be dragged narrow or dropped into a column and still lay out sensibly.
           Every other grid in this builder that had to survive a resize does the same. */}
-      <div className="@container">
+      {/* ⚠️ The SAME full-width rule under the head that every other data card has — `-mx-4` out
+          to the card's edges, the row list's own treatment. These two were the only cards whose
+          heading ran straight into their contents, so a page of six cards had five with a head and
+          one without, which reads as an unfinished card rather than as a different kind. */}
+      <div className="@container -mx-4 border-t border-[#F0F2F5] px-4 pt-3">
         {/* ⚠️ TWO is the ceiling, at every width. A four-track grid was tried once the card went
             full width — the arithmetic said ~170px a tile, which is what the two-up tiles used to
             measure — but a tile is not just its box: at that width "Dell UltraSharp U2723QE" and

@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowLeft, ChevronRight, Eye, PenLine, X } from 'lucide-react';
-import { TEMPLATE_CATEGORIES, VISIBLE_TEMPLATES, industriesOf, industryChip, industryName } from './supportPortalData';
+import { ArrowLeft, Check, ChevronDown, ChevronRight, Eye, Filter, PenLine, X } from 'lucide-react';
+import { PORTAL_INDUSTRIES, VISIBLE_TEMPLATES, industriesOf, industryChip, industryName } from './supportPortalData';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import type { PortalTemplate } from './supportPortalData';
 import { TemplateArt } from './SupportPortalTemplateGallery';
@@ -258,20 +258,20 @@ function IndustryTags({ ids }: { ids: string[] }) {
   /* ⚠️ The key goes on the Tooltip ITSELF, never on a wrapper. Wrapping it in a keyed `<span>` put
      an inline box around the chip whose line height is taller than the chip is, and the one card
      with a shortened tag came out 3px taller than the rest — which stretched its whole grid row. */
-  const tip = (key: string, label: ReactNode, lines: string[], head: string) => (
+  const tip = (key: string, label: ReactNode, lines: string[]) => (
     <Tooltip key={key} delayDuration={0}>
       <TooltipTrigger asChild>
         {/* ⚠️ `cursor-help`, not a pointer: this is not a button and pressing it does nothing.
             A pointer on a thing that only answers on hover is a promise the chip cannot keep. */}
         <span className={`${chip} cursor-help`}>{label}</span>
       </TooltipTrigger>
-      <TooltipContent side="top" sideOffset={6} className="max-w-[220px] px-2.5 py-2 text-wrap">
-        {/* The heading is what makes two loose words a sentence: the chip asks "+2 what?" and this
-            answers it before the names, in one quiet line that never competes with them. */}
-        <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-white/55">{head}</span>
-        <span className="flex flex-col gap-0.5">
-          {lines.map((n) => <span key={n} className="block whitespace-nowrap text-[12px] leading-[17px]">{n}</span>)}
-        </span>
+      {/* ⚠️ The PRODUCT's tooltip, not a card of its own. Every other hover in this app answers in
+          the same small dark pill, and a bespoke one here — a caps heading over a list — made the
+          one hover on this screen look like a different kind of object. The names, separated the way
+          the chips are. `text-wrap` still overrides the shared `text-balance`, which splits short text
+          into equal lines and leaves a ragged half-empty box. */}
+      <TooltipContent side="top" sideOffset={6} className="max-w-[240px] text-wrap">
+        {lines.join(' · ')}
       </TooltipContent>
     </Tooltip>
   );
@@ -283,11 +283,88 @@ function IndustryTags({ ids }: { ids: string[] }) {
            instantly in the product's, reads as two different controls. Only a chip whose label was
            cut gets one — a tooltip repeating a word already in full is noise. */
         industryChip(id) !== industryName(id)
-          ? tip(id, industryChip(id), [industryName(id)], 'Industry')
+          ? tip(id, industryChip(id), [industryName(id)])
           : <span key={id} className={chip}>{industryChip(id)}</span>
       ))}
-      {rest.length > 0 && tip('more', `+${rest.length}`, rest.map(industryName), 'Also built for')}
+      {rest.length > 0 && tip('more', `+${rest.length}`, rest.map(industryName))}
     </span>
+  );
+}
+
+/* The gallery's filter: which INDUSTRIES a template has to be built for to be shown.
+ *
+ * ⚠️ The product's own Filter PILL and popup — the funnel, the label that reads "All" or
+ * "Government +2", the chips for what is on, the checked rows, and Clear all / Done — the same
+ * control the Deployment tab and the CMDB map already use. A second filter language on the one
+ * screen that is choosing a starting point would be the thing an admin has to learn twice.
+ * ⚠️ It REPLACED the category pills. Category is department scope, every visible template says
+ * "IT Support", and a row of five pills where four return nothing is a control that teaches you not
+ * to touch it. Industry is the axis these templates actually differ on.
+ * ⚠️ MULTI-SELECT, matching OR: an admin shopping for a layout is usually in one vertical but will
+ * happily look at a neighbouring one, and a single-select would make comparing two a round trip.
+ * ⚠️ The DEFAULT tile ignores it — see the note on the grid. */
+function IndustryFilter({ value, onChange }: { value: string[]; onChange: (next: string[]) => void }) {
+  const [open, setOpen] = useState(false);
+  const on = value.length > 0;
+  const label = !on ? 'All industries'
+    : `${industryName(value[0])}${value.length > 1 ? ` +${value.length - 1}` : ''}`;
+  const toggle = (id: string) => onChange(value.includes(id) ? value.filter((x) => x !== id) : [...value, id]);
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        title="Filter templates by industry"
+        className={`inline-flex h-8 items-center gap-1.5 rounded border px-3 text-[13px] font-medium transition-colors ${on ? 'border-[#3D8BD0] bg-[#F0F8FF] text-[#3D8BD0]' : 'border-[#DFE5ED] text-[#364658] hover:bg-[#F3F4F6]'}`}
+      >
+        <Filter size={15} className={on ? 'text-[#3D8BD0]' : 'text-[#7B8FA5]'} />
+        <span className="max-w-[180px] truncate">{label}</span>
+        <ChevronDown size={14} className={`transition-transform ${open ? 'rotate-180' : ''} ${on ? 'text-[#3D8BD0]' : 'text-[#7B8FA5]'}`} />
+      </button>
+      {open && (
+        <>
+          {/* The click-away sheet the product's other filter popups use. */}
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 top-full z-50 mt-1.5 w-[260px] rounded-lg border border-[#DFE5ED] bg-white shadow-lg">
+            {on && (
+              <div className="flex flex-wrap gap-1.5 border-b border-[#F0F2F5] p-2.5">
+                {value.map((id) => (
+                  <span key={id} className="inline-flex items-center gap-1 rounded bg-[#F1F5F9] px-2 py-0.5 text-[12px] text-[#364658]">
+                    {industryName(id)}
+                    <button onClick={() => toggle(id)} className="text-[#7B8FA5] hover:text-[#364658]"><X size={12} /></button>
+                  </span>
+                ))}
+              </div>
+            )}
+            <div className="max-h-[300px] overflow-y-auto py-1">
+              <button
+                onClick={() => onChange([])}
+                className={`flex w-full items-center justify-between px-3 py-2 text-left text-[13px] transition-colors ${!on ? 'bg-[#F1F5F9]' : 'hover:bg-[#F9FAFB]'}`}
+              >
+                <span className="text-[#364658]">All industries</span>
+                {!on && <Check size={15} className="flex-shrink-0 text-[#3D8BD0]" />}
+              </button>
+              {PORTAL_INDUSTRIES.map((i) => {
+                const lit = value.includes(i.id);
+                return (
+                  <button
+                    key={i.id}
+                    onClick={() => toggle(i.id)}
+                    className={`flex w-full items-center justify-between px-3 py-2 text-left text-[13px] transition-colors ${lit ? 'bg-[#F1F5F9]' : 'hover:bg-[#F9FAFB]'}`}
+                  >
+                    <span className="text-[#364658]">{i.name}</span>
+                    {lit && <Check size={15} className="flex-shrink-0 text-[#3D8BD0]" />}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex items-center justify-between border-t border-[#F0F2F5] px-3 py-2">
+              <button onClick={() => onChange([])} className="text-[13px] font-medium text-[#3D8BD0] hover:underline">Clear all</button>
+              <button onClick={() => setOpen(false)} className="rounded bg-[#3D8BD0] px-3 py-1.5 text-[13px] font-medium text-white hover:bg-[#2d6ca0]">Done</button>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 
@@ -307,14 +384,10 @@ function TemplateCard({ art, name, meta, badge, industries = [], onPreview, onUs
         {badge && (
           <span className="absolute left-3 top-3 rounded-md bg-white/95 px-2 py-0.5 text-[10.5px] font-semibold tracking-wide text-[#3D8BD0] shadow-[0_1px_2px_rgba(16,24,40,0.08)]">{badge}</span>
         )}
-        {/* ⚠️ The category, moved off the footer to leave that row to the name and the industries.
-            It sits opposite the DEFAULT badge in the same treatment, so the two read as one kind of
-            thing — what this tile IS — printed on the picture rather than in the caption.
-            ⚠️ Withheld when there is a `badge`: the Default tile's meta is the word "Default", which is
-            what the badge already says, one inch away. */}
-        {!badge && meta && (
-          <span className="absolute right-3 top-3 rounded-md bg-white/95 px-2 py-0.5 text-[10.5px] font-medium text-[#64748B] shadow-[0_1px_2px_rgba(16,24,40,0.08)]">{meta}</span>
-        )}
+        {/* ⚠️ NO category on the tile. It said "IT Support" on every template in the gallery — a
+            label that never varies is not information, it is a word you learn to stop reading — and
+            with the filter above the grid now asking about INDUSTRY, a category stamped on the
+            picture answers a question nobody is being asked. The value is still on the record. */}
         <div className="absolute inset-0 flex items-center justify-center gap-2 bg-[#0F172A]/[0.12] opacity-0 transition-opacity duration-150 group-hover/tpl:opacity-100 group-focus-within/tpl:opacity-100">
           <button
             onClick={onPreview}
@@ -334,7 +407,7 @@ function TemplateCard({ art, name, meta, badge, industries = [], onPreview, onUs
   );
 }
 
-export function CreateSupportPortalModal({ onClose, onSaveDetails, onScratch, onTemplate, onPreview, initialStep = 1, hidden, category: categoryProp, onCategory }: {
+export function CreateSupportPortalModal({ onClose, onSaveDetails, onScratch, onTemplate, onPreview, initialStep = 1, hidden, industry: industryProp, onIndustry }: {
   onClose: () => void;
   /** Step 2 → look at this template full-page before choosing it. `null` = the Default portal. */
   onPreview?: (t: PortalTemplate | null) => void;
@@ -342,9 +415,9 @@ export function CreateSupportPortalModal({ onClose, onSaveDetails, onScratch, on
   initialStep?: 1 | 2;
   /** Kept mounted but out of sight while a preview covers the screen. */
   hidden?: boolean;
-  /** The chosen category, owned by the caller so Back from a preview lands on the same filter. */
-  category?: string;
-  onCategory?: (c: string) => void;
+  /** The chosen industries, owned by the caller so Back from a preview lands on the same filter. */
+  industry?: string[];
+  onIndustry?: (next: string[]) => void;
   /** Step 1 → creates the portal as a Draft and unlocks step 2. */
   onSaveDetails: (d: PortalDetails) => void;
   /** Step 2 → a blank canvas. */
@@ -357,9 +430,9 @@ export function CreateSupportPortalModal({ onClose, onSaveDetails, onScratch, on
   const [d, setD] = useState<PortalDetails>({
     name: '', company: '', url: '', idp: IDPS[0], ssoOnly: false,
   });
-  const [categoryLocal, setCategoryLocal] = useState<string>('All');
-  const category = categoryProp ?? categoryLocal;
-  const setCategory = (c: string) => (onCategory ? onCategory(c) : setCategoryLocal(c));
+  const [industryLocal, setIndustryLocal] = useState<string[]>([]);
+  const industry = industryProp ?? industryLocal;
+  const setIndustry = (next: string[]) => (onIndustry ? onIndustry(next) : setIndustryLocal(next));
 
   /* ⚠️ Save is DISABLED until the three required fields are filled, rather than validating after
      the click. A button that can only tell you what is wrong once you press it makes you press it
@@ -373,7 +446,11 @@ export function CreateSupportPortalModal({ onClose, onSaveDetails, onScratch, on
     setStep(2);
   };
 
-  const templates = VISIBLE_TEMPLATES().filter((t) => category === 'All' || t.category === category);
+  /* ⚠️ OR, not AND: a template shown for "Healthcare" and "Education" matches either. Requiring
+     both would ask for a layout built for two verticals at once, which is not a thing anyone is
+     shopping for — and with six industries and five templates it would nearly always return
+     nothing. Empty selection means every template, the same rule the Record List's statuses follow. */
+  const templates = VISIBLE_TEMPLATES().filter((t) => industry.length === 0 || industriesOf(t).some((i) => industry.includes(i)));
 
   return createPortal(
     <div hidden={hidden} className="fixed inset-0 z-[10000] flex items-center justify-center bg-[#0F172A]/40 p-6">
@@ -438,17 +515,7 @@ export function CreateSupportPortalModal({ onClose, onSaveDetails, onScratch, on
 
               <div className="mt-6 flex items-center gap-3">
                 <h3 className="text-[15px] font-semibold text-[#364658]">Start from a template</h3>
-                <span className="ml-auto flex flex-wrap items-center gap-1.5">
-                  {TEMPLATE_CATEGORIES.map((c) => (
-                    <button
-                      key={c}
-                      onClick={() => setCategory(c)}
-                      className={`h-7 rounded px-2.5 text-[12px] font-medium transition-colors ${
-                        category === c ? 'bg-[#3D8BD0] text-white' : 'border border-[#DFE5ED] bg-white text-[#64748B] hover:bg-[#F5F7FA]'
-                      }`}
-                    >{c}</button>
-                  ))}
-                </span>
+                <span className="ml-auto flex-shrink-0"><IndustryFilter value={industry} onChange={setIndustry} /></span>
               </div>
 
               <div className="mt-4 grid grid-cols-2 gap-4 min-[1000px]:grid-cols-3">
