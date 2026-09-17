@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { ArrowLeft, ChevronRight, Eye, PenLine, X } from 'lucide-react';
-import { TEMPLATE_CATEGORIES, VISIBLE_TEMPLATES, industriesOf, industryName } from './supportPortalData';
+import { TEMPLATE_CATEGORIES, VISIBLE_TEMPLATES, industriesOf, industryChip, industryName } from './supportPortalData';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import type { PortalTemplate } from './supportPortalData';
 import { TemplateArt } from './SupportPortalTemplateGallery';
@@ -234,17 +234,26 @@ function Steps({ step, canGoBack, onBack }: { step: 1 | 2; canGoBack: boolean; o
  * ⚠️ OUTLINE chips, where the category is a filled one. They are two different kinds of label —
  * whose desk this is, and whose business — and drawn identically they read as one row of five tags
  * with no way to tell which is which.
- * ⚠️ Bottom RIGHT, on their own line. The name owns the left edge of the footer; industries are
- * what you scan a grid by once you know what you are looking for, so they sit where the eye lands
- * last and never compete with the template's name. */
+ * ⚠️ On the NAME'S OWN ROW, at its right end — not on a line of their own. A second line grows
+ * every card by 30px to carry two words, and a grid of templates is read by its pictures: paying a
+ * tenth of every tile's height for a label is the wrong trade. It also means the card's height is
+ * the same whether a template has industries or not, so the grid stays even.
+ * ⚠️ Which is what made room for them: the CATEGORY chip moved up onto the thumbnail. Measured, a
+ * name plus two industries plus a count plus a category is 371-401px inside a 351px row — the two
+ * could not share it, and the category is the one already answered by the filter chips directly
+ * above the grid, where every template on screen reads "IT Support".
+ * ⚠️ The chips never shrink and the NAME truncates, because a half-shown tag is unreadable while a
+ * clipped name is still recognisable next to its own picture. */
 function IndustryTags({ ids }: { ids: string[] }) {
   if (!ids.length) return null;
-  const names = ids.map(industryName);
-  const rest = names.slice(2);
-  const chip = 'inline-flex flex-shrink-0 items-center rounded-md border border-[#E5E7EB] bg-white px-1.5 py-0.5 text-[11px] font-medium text-[#64748B]';
+  const rest = ids.slice(2);
+  const chip = 'inline-flex flex-shrink-0 items-center rounded-md bg-[#F1F5F9] px-1.5 py-0.5 text-[11px] font-medium text-[#64748B]';
   return (
-    <div className="flex flex-wrap items-center justify-end gap-1 px-4 pb-3">
-      {names.slice(0, 2).map((n) => <span key={n} className={chip}>{n}</span>)}
+    <span className="flex flex-shrink-0 items-center gap-1">
+      {ids.slice(0, 2).map((id) => (
+        /* The full name on hover, for the one chip that is shortened to fit. */
+        <span key={id} className={chip} title={industryName(id)}>{industryChip(id)}</span>
+      ))}
       {rest.length > 0 && (
         <Tooltip>
           <TooltipTrigger asChild>
@@ -252,10 +261,10 @@ function IndustryTags({ ids }: { ids: string[] }) {
                 A pointer on a thing that only answers on hover is a promise the chip cannot keep. */}
             <span className={`${chip} cursor-help`}>+{rest.length}</span>
           </TooltipTrigger>
-          <TooltipContent side="top">{rest.join(' · ')}</TooltipContent>
+          <TooltipContent side="top">{rest.map(industryName).join(' · ')}</TooltipContent>
         </Tooltip>
       )}
-    </div>
+    </span>
   );
 }
 
@@ -275,6 +284,14 @@ function TemplateCard({ art, name, meta, badge, industries = [], onPreview, onUs
         {badge && (
           <span className="absolute left-3 top-3 rounded-md bg-white/95 px-2 py-0.5 text-[10.5px] font-semibold tracking-wide text-[#3D8BD0] shadow-[0_1px_2px_rgba(16,24,40,0.08)]">{badge}</span>
         )}
+        {/* ⚠️ The category, moved off the footer to leave that row to the name and the industries.
+            It sits opposite the DEFAULT badge in the same treatment, so the two read as one kind of
+            thing — what this tile IS — printed on the picture rather than in the caption.
+            ⚠️ Withheld when there is a `badge`: the Default tile's meta is the word "Default", which is
+            what the badge already says, one inch away. */}
+        {!badge && meta && (
+          <span className="absolute right-3 top-3 rounded-md bg-white/95 px-2 py-0.5 text-[10.5px] font-medium text-[#64748B] shadow-[0_1px_2px_rgba(16,24,40,0.08)]">{meta}</span>
+        )}
         <div className="absolute inset-0 flex items-center justify-center gap-2 bg-[#0F172A]/[0.12] opacity-0 transition-opacity duration-150 group-hover/tpl:opacity-100 group-focus-within/tpl:opacity-100">
           <button
             onClick={onPreview}
@@ -286,14 +303,10 @@ function TemplateCard({ art, name, meta, badge, industries = [], onPreview, onUs
           >Use template</button>
         </div>
       </div>
-      {/* ⚠️ `pb-2` when there are industries under it, `py-3` when there are none — the footer's own
-          bottom inset moves onto whichever row is last, so a card with tags and a card without end
-          with the same space beneath their final line instead of one of them looking loose. */}
-      <div className={`flex items-center gap-2 border-t border-[#F0F2F5] px-4 pt-3 ${industries.length ? 'pb-2' : 'pb-3'}`}>
+      <div className="flex items-center gap-2 border-t border-[#F0F2F5] px-4 py-3">
         <span className="min-w-0 flex-1 truncate text-[14px] font-semibold text-[#1E293B]">{name}</span>
-        <span className="flex-shrink-0 rounded-md bg-[#F1F5F9] px-2 py-0.5 text-[11.5px] font-medium text-[#64748B]">{meta}</span>
+        <IndustryTags ids={industries} />
       </div>
-      <IndustryTags ids={industries} />
     </div>
   );
 }

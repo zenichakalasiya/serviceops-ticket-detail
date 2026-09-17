@@ -65,9 +65,13 @@ export type TemplateLayout = 'portal' | 'classic' | 'spotlight' | 'catalog' | 'k
  * list is how two templates end up tagged "Health" and "Healthcare" and neither finds the other.
  * ⚠️ ORDER MATTERS: it is the order the chips are shown in, so a template's first two tags are the
  * two an admin reads on the card. Broadest first. */
+/* ⚠️ `short` is what a CHIP says; `name` is what the industry is called everywhere else. Only one
+   needs it: "Healthcare & Pharma" is 123px of an 83px share of a 383px card, so on a card it is the
+   difference between a row that fits on one line and a template name truncated to make room for an
+   ampersand. The full name is still on the chip's own hover. */
 export const PORTAL_INDUSTRIES = [
   { id: 'it', name: 'IT / ITES' },
-  { id: 'healthcare', name: 'Healthcare & Pharma' },
+  { id: 'healthcare', name: 'Healthcare & Pharma', short: 'Healthcare' },
   { id: 'manufacturing', name: 'Manufacturing' },
   { id: 'government', name: 'Government' },
   { id: 'education', name: 'Education' },
@@ -79,6 +83,12 @@ export type PortalIndustry = typeof PORTAL_INDUSTRIES[number]['id'];
 /** ⚠️ Falls back to the id, so an unknown one shows SOMETHING rather than an empty chip. */
 export const industryName = (id: string): string =>
   (PORTAL_INDUSTRIES as readonly { id: string; name: string }[]).find((i) => i.id === id)?.name ?? id;
+
+/** The chip form — the short label where there is one, the name where there is not. */
+export const industryChip = (id: string): string => {
+  const i = (PORTAL_INDUSTRIES as readonly { id: string; name: string; short?: string }[]).find((x) => x.id === id);
+  return i?.short ?? i?.name ?? id;
+};
 
 /** A template's industries in `PORTAL_INDUSTRIES` order, whatever order they were written in. */
 export const industriesOf = (t: { industries?: readonly string[] }): string[] =>
