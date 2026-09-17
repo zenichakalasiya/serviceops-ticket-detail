@@ -106,10 +106,14 @@ export const HERO_SPEC: WidgetSpec = {
          ⚠️ A page carrying any other number still renders it. Template banners are authored at
          heights the rail never offered (560, 340, 220…), and snapping them to the nearest stop
          would redesign forty shipped banners to make one control tidier. */
+      /* ⚠️ 140px A STEP. The first pass put the three fixed stops 20px apart, which on a 260px band
+         is a move you cannot see — a rail whose whole job is to change the height, where two of the
+         four stops look identical. S and Screen are the two ends this scale is defined by, so the
+         two in between have to divide that distance into steps somebody can point at. */
       options: [
         { value: '260', label: 'Short', short: 'S' },
-        { value: '280', label: 'Standard', short: 'M' },
-        { value: '300', label: 'Tall', short: 'L' },
+        { value: '400', label: 'Standard', short: 'M' },
+        { value: '540', label: 'Tall', short: 'L' },
         { value: 'screen', label: "As tall as the visitor's screen", short: 'Screen' },
       ],
     },
