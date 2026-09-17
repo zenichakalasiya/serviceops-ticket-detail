@@ -664,9 +664,9 @@ export function ContactRender({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
    three rows would turn a glanceable list into a page of reading — while a carousel shows ONE
    notice at a time and has the room to say what it actually means for the reader. */
 const ANNOUNCEMENTS = [
-  { id: 'a1', title: 'Planned network maintenance — Sat 16 Aug, 02:00–05:00', at: '11 Aug 2026', desc: 'VPN, the intranet and payroll submission will be unavailable for the whole window.' },
-  { id: 'a2', title: 'New VPN client rollout begins next week', at: '08 Aug 2026', desc: 'Check whether your laptop is in the first wave, and restart when you are prompted.' },
-  { id: 'a3', title: 'Service desk hours extended to 20:00 IST', at: '04 Aug 2026', desc: 'Live chat and phone support now cover the evening shift, Monday to Friday.' },
+  { id: 'a1', title: 'Planned network maintenance — Sat 16 Aug, 02:00–05:00', at: '11 Aug 2026', desc: 'VPN, the intranet and payroll submission are unavailable for the full window.' },
+  { id: 'a2', title: 'New VPN client rollout begins next week', at: '08 Aug 2026', desc: 'Check whether your laptop is on the first wave, and what to back up first.' },
+  { id: 'a3', title: 'Service desk hours extended to 20:00 IST', at: '04 Aug 2026', desc: 'Walk-in support at the Block B desk now runs through the evening shift.' },
   { id: 'a4', title: 'Office 365 licence renewal — action needed by 30 Aug', at: '01 Aug 2026', desc: 'Confirm your licence in the self-service portal, or it will be reassigned.' },
   { id: 'a5', title: 'Phishing awareness training is now mandatory', at: '28 Jul 2026', desc: 'The 20-minute module is assigned to everyone and is due by the end of the month.' },
 ];
@@ -692,12 +692,15 @@ function OneLine({ text, className = '', style }: { text: string; className?: st
 }
 
 /** `11 Aug 2026` → `Tue,` + `Aug 11` — the two lines of an announcement's date tile. */
-function postedParts(at: string): { day: string; date: string } {
+/* ⚠️ The MONTH over the DAY, not the weekday over the date. A notice is located by when it
+   landed, and a calendar tile is the shape everyone already reads that from — where "Tue," above
+   "Aug 11" spent the tile's larger half on the one part of a date nobody navigates by. */
+function postedParts(at: string): { month: string; date: string } {
   const d = new Date(at);
-  if (Number.isNaN(d.getTime())) return { day: '', date: at };
+  if (Number.isNaN(d.getTime())) return { month: '', date: at };
   return {
-    day: `${d.toLocaleDateString('en-US', { weekday: 'short' })},`,
-    date: `${d.toLocaleDateString('en-US', { month: 'short' })} ${String(d.getDate()).padStart(2, '0')}`,
+    month: d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase(),
+    date: String(d.getDate()).padStart(2, '0'),
   };
 }
 
@@ -759,9 +762,9 @@ export function AnnouncementsRender({ nodeId, cfg, headIcon }: { nodeId: string;
     return (
       <div key={a.id} className="flex items-stretch gap-3.5 py-3">
         {cfg.showDate !== false && (
-          <div style={{ lineHeight: 1.35, ...chosenRole('meta') }} className="flex w-[62px] flex-shrink-0 flex-col items-center justify-center rounded-lg bg-[#F1F4F8] px-1.5 py-2 text-center text-[12px] text-[#7B8FA5]">
-            {p.day && <span className="whitespace-nowrap">{p.day}</span>}
-            <span className="whitespace-nowrap">{p.date}</span>
+          <div style={chosenRole('meta')} className="flex w-[54px] flex-shrink-0 flex-col items-center justify-center rounded-lg bg-[#F1F4F8] px-1.5 py-1.5 text-center">
+            {p.month && <span className="whitespace-nowrap text-[10px] font-semibold uppercase leading-[13px] tracking-wide text-[#98A6B6]">{p.month}</span>}
+            <span className="whitespace-nowrap text-[18px] font-semibold leading-[22px] text-[#364658]">{p.date}</span>
           </div>
         )}
         <div className="flex min-w-0 flex-1 flex-col justify-center">
@@ -810,11 +813,11 @@ export function AnnouncementsRender({ nodeId, cfg, headIcon }: { nodeId: string;
         <div key={a.id} className="flex items-stretch gap-3.5">
           {cfg.showDate !== false && (
             <div
-              style={{ lineHeight: 1.35, background: `color-mix(in srgb, ${ink} 12%, transparent)`, color: `color-mix(in srgb, ${ink} 85%, transparent)` }}
-              className="flex w-[62px] flex-shrink-0 flex-col items-center justify-center rounded-lg px-1.5 py-2 text-center text-[12px]"
+              style={{ background: `color-mix(in srgb, ${ink} 12%, transparent)`, color: ink }}
+              className="flex w-[54px] flex-shrink-0 flex-col items-center justify-center rounded-lg px-1.5 py-1.5 text-center"
             >
-              {p.day && <span className="whitespace-nowrap">{p.day}</span>}
-              <span className="whitespace-nowrap">{p.date}</span>
+              {p.month && <span className="whitespace-nowrap text-[10px] font-semibold uppercase leading-[13px] tracking-wide opacity-70">{p.month}</span>}
+              <span className="whitespace-nowrap text-[18px] font-semibold leading-[22px]">{p.date}</span>
             </div>
           )}
           <div className="flex min-w-0 flex-1 flex-col justify-center">

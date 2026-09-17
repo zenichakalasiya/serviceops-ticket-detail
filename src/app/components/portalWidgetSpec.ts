@@ -375,7 +375,10 @@ export const WIDGET_SPECS: WidgetSpec[] = [
        toggles are gone, and with them the Header group that `listCardStyleFields` contributed. */
     fields: [TITLE_FIELD, TITLE_PLACE_FIELD, TITLE_GAP_FIELD],
     packs: LIVE_CARD_PACKS, roles: LIST_CARD_ROLES,
-    defaults: { ...listCardDefaults, title: 'My Open Requests', statuses: ['Open', 'In Progress', 'Pending'], show: 5, showStatus: true, showDate: true },
+    /* ⚠️ FOUR rows and the two-line `meta` shape: the id and the subject on one line, the timestamp
+       under it, the status holding the right edge. Five rows of three lines is a card that scrolls;
+       four of two is a card you read at a glance, which is the only thing a summary card is for. */
+    defaults: { ...listCardDefaults, title: 'My Open Requests', statuses: ['Open', 'In Progress', 'Pending'], show: 4, showStatus: true, showDate: true, rowLayout: 'meta', dateFormat: 'short' },
   },
 
   /* ─────────── §7.2 Pending Approvals ─────────── */
@@ -548,7 +551,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
     gate: { kind: 'permission', setting: 'Allow Requester To Access Knowledge', section: 'Organization' },
     fields: [TITLE_FIELD, TITLE_PLACE_FIELD, TITLE_GAP_FIELD],
     packs: LIVE_CARD_PACKS, roles: LIST_CARD_ROLES,
-    defaults: { ...listCardDefaults, title: 'Most Read', show: 3, showCategory: true, showDate: true, rowLayout: 'stacked' },
+    defaults: { ...listCardDefaults, title: 'Most Read Knowledge', show: 4, showCategory: true, showDate: true, rowLayout: 'stacked', dateFormat: 'short' },
   },
 
   /* ─────────── §7.7 Contact Us ─────────── */

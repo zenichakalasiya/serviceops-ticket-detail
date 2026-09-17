@@ -12,7 +12,7 @@ import {
   IconRequest, IconChange, IconAssets, IconCMDB, IconKnowledge, IconMyApproval, IconMyTeam, IconTask,
 } from './SidebarIcons';
 import {
-  PORTAL_APPROVALS, PORTAL_ARTICLES, PORTAL_OPEN_REQUESTS, statusTone,
+  PORTAL_APPROVALS, PORTAL_ARTICLES, PORTAL_ARTICLE_TOTAL, PORTAL_OPEN_REQUESTS, PORTAL_OPEN_REQUEST_TOTAL, statusTone,
 } from './supportPortalData';
 import { AddSectionSeam, BannerSlot, ColumnAdders, MOVE_MIME, Sel, draggedElement, draggedNode, styleOf, useCanvas } from './PortalCanvas';
 import { HUGS_CONTENT, bannerGroupGap, inBanner } from './portalPageModel';
@@ -1459,20 +1459,24 @@ const SURFACE_KEYS = (s: React.CSSProperties): React.CSSProperties =>
     k.startsWith('background') || k.startsWith('border') || k === 'boxShadow' || k.startsWith('padding'))) as React.CSSProperties;
 
 /** The rows container — P4's dividers and gap, resolved. */
+/* ⚠️ `-mx-4` here and `px-4` on each row: the rule runs the CARD's full width while the words keep
+   their inset. Inside the card's padding the divider stopped 16px short at both ends, so a list read
+   as a stack of separate blocks rather than as one list — a rule between two rows is only a rule if
+   it reaches the edges of the thing it is dividing. */
 function ListBody({ nodeId, children }: { nodeId: string; children: ReactNode }) {
   const { dividers, gap } = useListChrome(nodeId);
   return (
     <div
       style={gap !== undefined ? { display: 'flex', flexDirection: 'column', gap: `${gap}px` } : undefined}
-      className={dividers ? 'divide-y divide-[#F0F2F5] border-t border-[#F0F2F5]' : 'border-t border-[#F0F2F5]'}
+      className={`-mx-4 ${dividers ? 'divide-y divide-[#F0F2F5] border-t border-[#F0F2F5]' : 'border-t border-[#F0F2F5]'}`}
     >{children}</div>
   );
 }
 
-/** One row — P4's density decides how much air it gets. */
+/** One row — P4's density decides how much air it gets, and the card's own inset back. */
 function Row({ nodeId, children }: { nodeId: string; children: ReactNode }) {
   const { rowPad } = useListChrome(nodeId);
-  return <div style={{ paddingTop: rowPad, paddingBottom: rowPad }}>{children}</div>;
+  return <div className="px-4" style={{ paddingTop: rowPad, paddingBottom: rowPad }}>{children}</div>;
 }
 
 /* ── The page ────────────────────────────────────────────────────────────── */
@@ -3149,7 +3153,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                  layout puts them in two regions and the flat one puts them in a row — same cards,
                  two arrangements. Authoring each twice is two places for a fix to land in one. */
               const requestsCard = card('requests', (
-                <CardShell nodeId="requests" titleNodeId="requests-title" title={String(wc('requests').title ?? content.requests.title)} count={visibleRequests.length} cfg={wc('requests')} hideHead={workTabs} headIcon={hIcon(<Ticket size={15} strokeWidth={1.8} />)}>
+                <CardShell nodeId="requests" titleNodeId="requests-title" title={String(wc('requests').title ?? content.requests.title)} count={PORTAL_OPEN_REQUEST_TOTAL} cfg={wc('requests')} hideHead={workTabs} headIcon={hIcon(<Ticket size={15} strokeWidth={1.8} />)}>
                   <ListBody nodeId="requests">
                       {visibleRequests.map((r) => {
                         const c = wc('requests');
@@ -3174,8 +3178,12 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                         const dotStatus = c.statusTone === 'dot';
                         /* `Wed, Aug 12, 2026 10:09 AM` -> `Aug 12 - 10:09 AM`. The weekday and the
                            year are the two parts of a timestamp nobody reads in a list. */
+                        /* `Wed, Aug 12, 2026 10:09 AM` -> `Aug 12, 10:09 AM`. The weekday and the year
+                           are the two parts of a timestamp nobody reads in a list, and the comma that
+                           separated the date from the year is the one that now separates it from the
+                           time — a middot there read as one more bullet in a list of bullets. */
                         const when = c.dateFormat === 'short'
-                          ? r.at.replace(/^\w+,\s*/, '').replace(/,\s*\d{4}/, ' ·')
+                          ? r.at.replace(/^\w+,\s*/, '').replace(/,\s*\d{4}/, ',')
                           : r.at;
                         return (
                           <Row key={r.id} nodeId="requests">
@@ -3244,24 +3252,39 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                             {wc('approvals').showId !== false && <IdPill>{a.id}</IdPill>}
                           </div>
                         ) : (<>
-                        <div className="flex flex-wrap items-center gap-2">
-                          {wc('approvals').showId !== false && <IdPill>{a.id}: {a.subject}</IdPill>}
-                          <span className="min-w-0 text-[12px] text-[#64748B]">{a.reason}</span>
+                        {/* ⚠️ TWO lines: WHAT is waiting, then WHO it came from and WHEN. The id and the
+                            subject shared a pill, which made a record's identifier and its title one
+                            object — an id is a thing you copy and a subject is a thing you read. The
+                            reason joins the subject after a middot, because on its own line it read as
+                            a second subject rather than as the qualifier it is.
+                            ⚠️ The three actions sit on the FIRST line, beside what they act on. Under the
+                            requester they lined up with the name and looked like actions on a person. */}
+                        <div className="flex min-w-0 items-center gap-2.5">
+                          {wc('approvals').showId !== false && <IdPill>{a.id}</IdPill>}
+                          <span style={roleStyle(styles, 'approvals', 'body')} className="min-w-0 flex-1 truncate text-[13px] text-[#364658]">
+                            {a.subject}{a.reason ? ` · ${a.reason}` : ''}
+                          </span>
+                          <span className="flex flex-shrink-0 items-center gap-1.5">
+                            <span className="flex size-7 items-center justify-center rounded bg-[#ECFDF3] text-[#22A06B]"><Check size={15} /></span>
+                            <span className="flex size-7 items-center justify-center rounded bg-[#FEF3F2] text-[#DC2626]"><X size={15} /></span>
+                            <span className="flex size-7 items-center justify-center rounded bg-[#FEF3C7] text-[#B45309]"><RotateCcw size={14} /></span>
+                          </span>
                         </div>
-                        <div className="mt-2 flex items-center gap-2">
-                          <div className="min-w-0 flex-1">
-                            {wc('approvals').showDate !== false && <div style={roleStyle(styles, 'approvals', 'meta')} className="text-[12px] text-[#7B8FA5]">{a.at}</div>}
+                        {(wc('approvals').showRequester !== false || wc('approvals').showDate !== false) && (
+                          <div className="mt-2 flex min-w-0 items-center gap-1.5">
                             {wc('approvals').showRequester !== false && (
-                              <div className="mt-1.5 flex items-center gap-1.5">
-                                <span className="flex size-5 items-center justify-center rounded text-[10px] font-semibold text-white" style={{ backgroundColor: a.color }}>{a.initials}</span>
-                                <span style={roleStyle(styles, 'approvals', 'body')} className="truncate text-[13px] text-[#364658]">{a.by}</span>
-                              </div>
+                              <>
+                                <span className="flex size-5 flex-shrink-0 items-center justify-center rounded text-[10px] font-semibold text-white" style={{ backgroundColor: a.color }}>{a.initials}</span>
+                                <span style={roleStyle(styles, 'approvals', 'body')} className="flex-shrink-0 truncate text-[13px] text-[#364658]">{a.by}</span>
+                              </>
+                            )}
+                            {wc('approvals').showDate !== false && (
+                              <span style={roleStyle(styles, 'approvals', 'meta')} className="min-w-0 truncate text-[12px] text-[#98A6B6]">
+                                {wc('approvals').showRequester !== false ? '· ' : ''}{a.at.replace(/^\w+,\s*/, '').replace(/,\s*\d{4}/, ',')}
+                              </span>
                             )}
                           </div>
-                          <span className="flex size-7 flex-shrink-0 items-center justify-center rounded bg-[#ECFDF3] text-[#22A06B]"><Check size={15} /></span>
-                          <span className="flex size-7 flex-shrink-0 items-center justify-center rounded bg-[#FEF3F2] text-[#DC2626]"><X size={15} /></span>
-                          <span className="flex size-7 flex-shrink-0 items-center justify-center rounded bg-[#FEF3C7] text-[#B45309]"><RotateCcw size={14} /></span>
-                        </div>
+                        )}
                         </>)}
                       </Row>
                     ))}
@@ -3269,7 +3292,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                 </CardShell>
               ), rail ? 2 : secCols("work", content.cols.work), secGap("work"), secGrow("work"));
               const knowledgeCard = card('knowledge', (
-                <CardShell nodeId="knowledge" titleNodeId="knowledge-title" title={String(wc('knowledge').title ?? content.knowledge.title)} count={visibleArticles.length} cfg={wc('knowledge')} hideHead={workTabs} headIcon={hIcon(<Lightbulb size={15} strokeWidth={1.8} />)}>
+                <CardShell nodeId="knowledge" titleNodeId="knowledge-title" title={String(wc('knowledge').title ?? content.knowledge.title)} count={PORTAL_ARTICLE_TOTAL} cfg={wc('knowledge')} hideHead={workTabs} headIcon={hIcon(<Lightbulb size={15} strokeWidth={1.8} />)}>
                   <ListBody nodeId="knowledge">
                     {visibleArticles.map((k) => {
                       const c = wc('knowledge');
@@ -3300,14 +3323,17 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                                       ellipsis the thing that gives way. */}
                                   <span style={roleStyle(styles, 'knowledge', 'body')} className="w-0 min-w-0 flex-1 truncate text-[13px] text-[#364658]">{k.title}</span>
                                 </span>
-                                <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                                <span className="mt-1 flex min-w-0 items-center gap-x-2">
                                   {c.showId !== false && below && <IdPill>{k.id}</IdPill>}
                                   {/* ⚠️ The SAME short stamp Requests uses. A page where one card
                                       writes "Thu, Jul 30, 2026 11:34 AM" and the card beside it
                                       writes "Aug 12 · 10:09 AM" is a page with two date formats,
                                       and the reader has to notice that before they can compare. */}
-                                  {c.showDate !== false && <span style={roleStyle(styles, 'knowledge', 'meta')} className="truncate text-[12px] text-[#7B8FA5]">{c.dateFormat === 'short' ? k.at.replace(/^\w+,\s*/, '').replace(/,\s*\d{4}/, ' ·') : k.at}</span>}
-                                  {c.showCategory !== false && <span className="max-w-full truncate rounded-sm bg-[#F1F5F9] px-1.5 py-0.5 text-[11px] text-[#64748B]">{k.tag}</span>}
+                                  {c.showDate !== false && <span style={roleStyle(styles, 'knowledge', 'meta')} className="min-w-0 truncate text-[12px] text-[#7B8FA5]">{c.dateFormat === 'short' ? k.at.replace(/^\w+,\s*/, '').replace(/,\s*\d{4}/, ',') : k.at}</span>}
+                                  {/* ⚠️ The category holds the RIGHT EDGE rather than trailing the date. Inline it
+                                      floated mid-row behind a short date with a ragged gap after it; against the
+                                      edge the four rows line their categories into a column you can read down. */}
+                                  {c.showCategory !== false && <span className="ml-auto max-w-[45%] flex-shrink-0 truncate rounded-sm bg-[#F1F5F9] px-1.5 py-0.5 text-[11px] text-[#64748B]">{k.tag}</span>}
                                 </span>
                               </span>
                             </div>
@@ -3467,7 +3493,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                       tiles inside get room to spread and the two cards stop fighting.
                       ⚠️ Counter moves Assets into the side rail (as a compact list, not this tile
                       grid) — skipped here for the same reason Approvals is. */}
-                  {!rail.includes('assets') && card('assets', <RecordTiles nodeId="assets" titleFallback={content.assets.title} cfg={wc('assets')} rows={MY_ASSETS} icon={<HardDrive size={17} />} headIcon={hIcon(<HardDrive size={15} strokeWidth={1.8} />)} />, undefined, secGap("work"), 1, 2, { full: true })}
+                  {!rail.includes('assets') && card('assets', <RecordTiles nodeId="assets" titleFallback={content.assets.title} cfg={wc('assets')} rows={MY_ASSETS} total={MY_ASSET_TOTAL} icon={<HardDrive size={17} />} headIcon={hIcon(<HardDrive size={15} strokeWidth={1.8} />)} />, undefined, secGap("work"), 1, 2, { full: true })}
                   {card('cis', <RecordTiles nodeId="cis" titleFallback={content.cis.title} cfg={wc('cis')} rows={MY_CIS} icon={<Server size={17} />} headIcon={hIcon(<Server size={15} strokeWidth={1.8} />)} />, undefined, secGap("work"), 1, 3, { full: true })}
                 </Sel>
                 {/* ⚠️ A SECTION too, and for the same reason: the rail owns how its three cards
@@ -3539,7 +3565,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                 {/* ⚠️ TILES on the rail layout, list rows otherwise — one `rows` shape, two
                     presentations, chosen by the page rather than by either widget. */}
                 {card('assets', rail
-                  ? <RecordTiles nodeId="assets" titleFallback={content.assets.title} cfg={wc('assets')} rows={MY_ASSETS} icon={<HardDrive size={17} />} headIcon={hIcon(<HardDrive size={15} strokeWidth={1.8} />)} />
+                  ? <RecordTiles nodeId="assets" titleFallback={content.assets.title} cfg={wc('assets')} rows={MY_ASSETS} total={MY_ASSET_TOTAL} icon={<HardDrive size={17} />} headIcon={hIcon(<HardDrive size={15} strokeWidth={1.8} />)} />
                   : <RecordsCard nodeId="assets" titleFallback={content.assets.title} cfg={wc('assets')} rows={MY_ASSETS} headIcon={hIcon(<HardDrive size={15} strokeWidth={1.8} />)} />,
                   secCols("records", content.cols.records), secGap("records"), secGrow("records"))}
                 {/* ⚠️ My CIs stays EMPTY on the original layout, on purpose (§7.4): it is empty on
@@ -3580,6 +3606,10 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
 
 /* The requester's own kit. ⚠️ Two assets, not twenty — this is what one person has been issued, so
    a long scrolling list would misrepresent the widget. */
+/* ⚠️ The BADGE counts everything the requester has been issued; the tiles show four. Counting the
+   rows in this array instead made the badge a fact about the mock data rather than about the
+   requester — and it contradicted the "View all" beside it, which promises there is more. */
+const MY_ASSET_TOTAL = 8;
 const MY_ASSETS = [
   { id: 'AST-3', name: 'Dell Latitude 5440', type: 'Laptop' },
   { id: 'AST-1', name: 'Dell UltraSharp U2723QE', type: 'Monitor' },
@@ -3608,9 +3638,11 @@ const MY_CIS = [
  * ⚠️ A tile, not a list row — the same records, laid out the way the live portal lays them out. It
  * takes the SAME `rows` shape `RecordsCard` takes, so the two are two presentations of one thing
  * and a page can choose between them without the data knowing which was chosen. */
-function RecordTiles({ nodeId, titleFallback, cfg, rows, icon, headIcon }: {
+function RecordTiles({ nodeId, titleFallback, cfg, rows, total, icon, headIcon }: {
   nodeId: string; titleFallback: string; cfg: Record<string, unknown>;
   rows: { id: string; name: string; type: string }[];
+  /** What the BADGE counts, when that is more than the rows this card draws. */
+  total?: number;
   /* ⚠️ TWO icons, and they are not the same one. `icon` is the glyph on every ROW — what kind of
      thing this is — and `headIcon` is the card's head badge, which the PAGE turns on for every
      card at once. They happen to be the same glyph here; conflating them would mean a page that
@@ -3642,7 +3674,7 @@ function RecordTiles({ nodeId, titleFallback, cfg, rows, icon, headIcon }: {
   const tileCols = Number(chosen(styles, nodeId, 'columns') ?? cfg.columns) || 0;
   if (!shown.length) return <EmptyCard nodeId={nodeId} title={String(cfg.title ?? titleFallback)} cfg={cfg} />;
   return (
-    <CardShell nodeId={nodeId} title={String(cfg.title ?? titleFallback)} count={rows.length} cfg={cfg} headIcon={headIcon}>
+    <CardShell nodeId={nodeId} title={String(cfg.title ?? titleFallback)} count={total ?? rows.length} cfg={cfg} headIcon={headIcon}>
       {/* ⚠️ `@container`, not a viewport breakpoint — the tiles answer to the CARD's width, which is
           what lets this row be dragged narrow or dropped into a column and still lay out sensibly.
           Every other grid in this builder that had to survive a resize does the same. */}

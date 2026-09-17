@@ -745,8 +745,10 @@ export const PORTAL_QUICK_ACTIONS = [
   { key: 'knowledge', title: 'Knowledge', desc: 'Browse knowledge' },
 ] as const;
 
-/** 17 open in total; the card lists the five most recent, which is what the live portal does. */
-export const PORTAL_OPEN_REQUEST_TOTAL = 17;
+/** 8 open in total; the card lists the four most recent, which is what the live portal does.
+ *  ⚠️ The BADGE counts all of them and the card shows four — the contract every live card on this
+ *  page keeps: show a few, count them all, and "View all" is the way to the rest. */
+export const PORTAL_OPEN_REQUEST_TOTAL = 8;
 
 /* Statuses vary on purpose: the builder's Statuses filter has to visibly do something, and a list
    where every row says "Open" would make a working filter look broken. */
@@ -796,19 +798,26 @@ export const statusTone = (status: string, dark = false) =>
 
 export const PORTAL_APPROVALS: PortalApproval[] = [
   {
-    id: 'INC-192', subject: 'Wrong configuration details', reason: 'Peer review requested',
+    id: 'INC-192', subject: 'Wrong configuration details', reason: 'editorial review',
     at: 'Tue, Aug 11, 2026 02:14 PM', by: 'Rosy', initials: 'RO', color: '#3D8BD0',
   },
   {
-    id: 'AST-13', subject: 'DESKTOP-5JPPI6F', reason: 'Approval Required for - AST-13',
+    id: 'AST-13', subject: 'DESKTOP-5JPPI6F', reason: 'asset assignment',
     at: 'Mon, Aug 10, 2026 12:57 PM', by: 'Keya', initials: 'KE', color: '#7C3AED',
   },
 ];
 
+/** 412 articles read in total; the card lists four. */
+export const PORTAL_ARTICLE_TOTAL = 412;
+
+/* ⚠️ Tags are ONE WORD where the catalogue has one. "Guideline Documents" is a chip at the end of a
+   row that already holds an id, a title and a timestamp — at that width it truncates, and a
+   truncated category reads as a fault rather than as a category. */
 export const PORTAL_ARTICLES: PortalArticle[] = [
-  { id: 'KB-4', title: 'How to Reset Your Password', at: 'Thu, Jul 30, 2026 11:34 AM', tag: 'Guideline Documents' },
+  { id: 'KB-4', title: 'How to Reset Your Password', at: 'Thu, Jul 30, 2026 11:34 AM', tag: 'Guideline' },
   { id: 'KB-1', title: 'Connecting to Company VPN', at: 'Sun, Jul 19, 2026 10:58 PM', tag: 'FAQs' },
-  { id: 'KB-6', title: 'Reporting a Hardware Fault', at: 'Tue, Aug 11, 2026 04:38 PM', tag: 'Guideline Documents' },
+  { id: 'KB-6', title: 'Reporting a Hardware Fault', at: 'Tue, Aug 11, 2026 04:38 PM', tag: 'Guideline' },
+  { id: 'KB-9', title: 'Requesting Software Installation', at: 'Fri, Aug 07, 2026 09:12 AM', tag: 'How-to' },
 ];
 
 /* ── Add panel — the element catalogue ───────────────────────────────────── */
