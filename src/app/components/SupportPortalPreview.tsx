@@ -1807,6 +1807,58 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
      rail? Not "does the page have one" — the rail may have moved beside services or below the
      cards, and in both cases this band must lay out as a flat row or it renders an empty column. */
   const workRail = rail && !railInServices && !railBelow && !railAbove;
+  /* ⚠️ The rail's FIRST card ends where the main region's FIRST ROW ends. The two columns are laid
+     out by different mechanisms — the main region is a grid whose rows size to their content, the
+     rail a flex column — so nothing made the card at the top of one line up with the cards at the
+     top of the other, and the page read as two columns that happen to be adjacent rather than as
+     one band. Announcements stopped 33px short of Requests beside it.
+     ⚠️ MEASURED from the grid's own `gridTemplateRows`, which is the height the row actually came
+     out at — not from the card, whose own box is what we are about to change.
+     ⚠️ Reached by walking the DOM from a ref on the rail's first card, NEVER by
+     `querySelector('[data-node="work-main"]')`: `Sel` renders `data-node` only while the canvas is
+     editable, so that lookup finds nothing in Preview and on the published portal — the two places
+     the alignment most has to hold. The same trap the sticky rail's note records.
+     ⚠️ The pinned card also stops GROWING (`flex: 0 0 auto`). Left growing, it took a third of any
+     slack the rail had and overshot the row by that much; the cards under it absorb it instead. */
+  const railTopRef = useRef<HTMLDivElement>(null);
+  const [railTopH, setRailTopH] = useState<number | null>(null);
+  useEffect(() => {
+    if (!workRail) { setRailTopH(null); return; }
+    let raf = 0;
+    let grid: HTMLElement | null = null;
+    const measure = () => {
+      const el = railTopRef.current;
+      grid = (el?.parentElement?.previousElementSibling as HTMLElement | null) ?? null;
+      if (!el || !grid) return;
+      /* ⚠️ The CARDS in the top row, not the grid's own track. The track read 332.97 where the card
+         sitting in it measured 334.19 — a card can be a shade taller than the row it is placed in —
+         and pinning to the track left the very hairline this exists to remove. The row is found by
+         top edge rather than by index, so a reordered card cannot make this measure the wrong one. */
+      const gb = grid.getBoundingClientRect();
+      const top = [...grid.children]
+        .map((c) => c.getBoundingClientRect())
+        .filter((b) => b.height > 0 && Math.abs(b.top - gb.top) < 2);
+      const first = top.length ? Math.max(...top.map((b) => b.height)) : NaN;
+      /* A floor, so a half-built page cannot pin the card to a row that is barely there. */
+      if (!Number.isFinite(first) || first <= 120) { setRailTopH(null); return; }
+      /* ⚠️ A ONE-PIXEL DEADBAND, and it is what stops this chasing its own tail. Pinning the card
+         changes the rail's height, which changes the band's, which lets the grid's auto rows take a
+         fraction more — so each pass would hand back a number a hair larger than the one it just
+         applied, forever. Ignoring sub-pixel drift settles it in two passes and holds. */
+      /* ⚠️ NOT rounded. A grid row lands on a fraction (332.868), and rounding it to 333 put the
+         card's bottom edge a pixel past the row's — visible as a hairline of misalignment on the one
+         edge this exists to line up. */
+      setRailTopH((prev) => (prev !== null && Math.abs(prev - first) < 0.4 ? prev : first));
+    };
+    measure();
+    /* ⚠️ The GRID as well as the body: its first row changes when a card inside it gains a line,
+       and the body's own box does not move when that happens. */
+    const ro = new ResizeObserver(() => { cancelAnimationFrame(raf); raf = requestAnimationFrame(measure); });
+    ro.observe(document.body);
+    if (grid) ro.observe(grid);
+    window.addEventListener('resize', measure);
+    return () => { ro.disconnect(); cancelAnimationFrame(raf); window.removeEventListener('resize', measure); };
+  }, [workRail]);
   /* Which of the three work tabs is open. Local, because it is a reading position rather than a
      property of the page — nothing an admin sets and nothing to persist. */
   const [workTab, setWorkTab] = useState('requests');
@@ -3504,7 +3556,19 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                   className="flex min-w-0 flex-col"
                   style={{ flex: '1 1 0%', gap: secGapCss("work-rail") }}
                 >
-                  {rail.map((id) => (
+                  {rail.map((id, i) => {
+                    /* Only the TOP card is pinned; everything under it keeps the rail's own rhythm.
+                       `flex flex-col` so the card inside fills the height this wrapper is given. */
+                    const pinned = i === 0 && railTopH !== null;
+                    const wrap = (node: ReactNode) => (
+                      <div
+                        key={id}
+                        ref={i === 0 ? railTopRef : undefined}
+                        className="flex min-w-0 flex-col"
+                        style={pinned ? { flex: '0 0 auto', minHeight: railTopH ?? undefined } : undefined}
+                      >{node}</div>
+                    );
+                    return wrap(
                     id === 'knowledge' ? <Fragment key={id}>{knowledgeCard}</Fragment>
                       /* ⚠️ Counter's two rail members. Approvals reuses the pre-built const, exactly
                          like Knowledge above; Assets has no such const to reuse (it is normally a
@@ -3536,8 +3600,9 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                          Contact twice, once in each home. */
                       : (id === 'news' || id === 'contact')
                         ? (railInServices ? null : <Fragment key={id}>{railCard(id)}</Fragment>)
-                          : null
-                  ))}
+                          : null,
+                    );
+                  })}
                 </Sel>
                 </>
               );
