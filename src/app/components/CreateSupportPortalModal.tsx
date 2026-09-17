@@ -248,22 +248,45 @@ function IndustryTags({ ids }: { ids: string[] }) {
   if (!ids.length) return null;
   const rest = ids.slice(2);
   const chip = 'inline-flex flex-shrink-0 items-center rounded-md bg-[#F1F5F9] px-1.5 py-0.5 text-[11px] font-medium text-[#64748B]';
+  /* ⚠️ `delayDuration={0}` — INSTANT, against the product's 700ms default. That default is right for
+     a tooltip that repeats a label you can already read: waiting is what stops it flashing at
+     everything the pointer crosses. This one is the opposite — the chip says "+2" and NOTHING else
+     on screen says which two, so the wait is three quarters of a second of a control that looks
+     broken. A tooltip carrying information you cannot get anywhere else should not be rationed.
+     ⚠️ `text-wrap` overrides the shared content's `text-balance`, which splits short text into
+     equal-length lines and leaves a ragged half-empty box. */
+  /* ⚠️ The key goes on the Tooltip ITSELF, never on a wrapper. Wrapping it in a keyed `<span>` put
+     an inline box around the chip whose line height is taller than the chip is, and the one card
+     with a shortened tag came out 3px taller than the rest — which stretched its whole grid row. */
+  const tip = (key: string, label: ReactNode, lines: string[], head: string) => (
+    <Tooltip key={key} delayDuration={0}>
+      <TooltipTrigger asChild>
+        {/* ⚠️ `cursor-help`, not a pointer: this is not a button and pressing it does nothing.
+            A pointer on a thing that only answers on hover is a promise the chip cannot keep. */}
+        <span className={`${chip} cursor-help`}>{label}</span>
+      </TooltipTrigger>
+      <TooltipContent side="top" sideOffset={6} className="max-w-[220px] px-2.5 py-2 text-wrap">
+        {/* The heading is what makes two loose words a sentence: the chip asks "+2 what?" and this
+            answers it before the names, in one quiet line that never competes with them. */}
+        <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-white/55">{head}</span>
+        <span className="flex flex-col gap-0.5">
+          {lines.map((n) => <span key={n} className="block whitespace-nowrap text-[12px] leading-[17px]">{n}</span>)}
+        </span>
+      </TooltipContent>
+    </Tooltip>
+  );
   return (
     <span className="flex flex-shrink-0 items-center gap-1">
       {ids.slice(0, 2).map((id) => (
-        /* The full name on hover, for the one chip that is shortened to fit. */
-        <span key={id} className={chip} title={industryName(id)}>{industryChip(id)}</span>
+        /* ⚠️ The SAME tooltip for a shortened chip, not a native `title`. One chip in the row
+           answering in the browser's own grey box a second later, while the one beside it answers
+           instantly in the product's, reads as two different controls. Only a chip whose label was
+           cut gets one — a tooltip repeating a word already in full is noise. */
+        industryChip(id) !== industryName(id)
+          ? tip(id, industryChip(id), [industryName(id)], 'Industry')
+          : <span key={id} className={chip}>{industryChip(id)}</span>
       ))}
-      {rest.length > 0 && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            {/* ⚠️ `cursor-help`, not a pointer: the count is not a button and pressing it does nothing.
-                A pointer on a thing that only answers on hover is a promise the chip cannot keep. */}
-            <span className={`${chip} cursor-help`}>+{rest.length}</span>
-          </TooltipTrigger>
-          <TooltipContent side="top">{rest.map(industryName).join(' · ')}</TooltipContent>
-        </Tooltip>
-      )}
+      {rest.length > 0 && tip('more', `+${rest.length}`, rest.map(industryName), 'Also built for')}
     </span>
   );
 }
