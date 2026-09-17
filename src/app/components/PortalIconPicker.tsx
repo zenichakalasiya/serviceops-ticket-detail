@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import type { CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import {
   AppWindow, Baseline, Bell, BookOpen, Boxes, Building2, Calendar, ChevronDown, ClipboardList,
@@ -132,12 +133,30 @@ export function IconPopover({ value, onPick, onClose, anchor }: {
     reader.readAsDataURL(file);
   };
 
-  const H = 420;
-  const top = Math.max(8, Math.min(anchor.bottom + 8, window.innerHeight - H - 8));
-  const left = Math.max(8, Math.min(anchor.left, window.innerWidth - 310));
+  /* ⚠️ It opens BESIDE the icon, never on top of it — the whole point of picking an icon is
+     watching the one you click land on the page. The old placement pinned it under the anchor and
+     then CLAMPED that into the viewport, so on anything in the lower half of the screen the clamp
+     dragged it back up over the icon: you chose a glyph blind and only saw it after the popover
+     closed.
+     ⚠️ The side with more ROOM wins, and the popover is capped to that room rather than to a flat
+     420 — a fixed height is what made the clamp necessary in the first place. Below is preferred on
+     a tie, because a list that grows downward from the thing it belongs to is the direction every
+     menu in this product opens.
+     ⚠️ Placed from the BOTTOM edge when it goes above, so the gap above the icon is exact without
+     measuring the popover first: its height depends on how many groups the search leaves. */
+  const GAP = 8;
+  const W = 300;
+  const below = window.innerHeight - anchor.bottom - GAP * 2;
+  const above = anchor.top - GAP * 2;
+  const placeBelow = below >= above;
+  const maxHeight = Math.max(220, Math.min(420, placeBelow ? below : above));
+  const pos: CSSProperties = placeBelow
+    ? { top: anchor.bottom + GAP }
+    : { bottom: window.innerHeight - anchor.top + GAP };
+  const left = Math.max(8, Math.min(anchor.left, window.innerWidth - W - 8));
 
   return createPortal(
-    <div ref={ref} style={{ top, left }} className="fixed z-[10000] flex max-h-[420px] w-[300px] flex-col rounded-lg border border-[#E5E7EB] bg-white shadow-[0_12px_24px_-6px_rgba(16,24,40,0.18)]">
+    <div ref={ref} style={{ ...pos, left, maxHeight }} className="fixed z-[10000] flex w-[300px] flex-col rounded-lg border border-[#E5E7EB] bg-white shadow-[0_12px_24px_-6px_rgba(16,24,40,0.18)]">
       {/* ⚠️ No rule under the tabs. A tab strip and the panel it switches ARE one block — a line
           between them cuts the control from the thing it controls, which is the same reason the
           Branding panel's section heads lost theirs. */}

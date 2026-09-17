@@ -1030,13 +1030,31 @@ export function CustomCardRender({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) 
         /* So the drawer is headed by the link rather than by the word "Item" — the panel list
            registers these names, and a link selected on the CANVAS never went through it. */
         registerItemName(inode, String(l.label ?? '') || `Link ${i + 1}`);
+        /* ⚠️ The Icon group (P6) writes to the LINK's own node, so every one of these is read per
+           item: one link can carry a bigger, red, circled glyph while the one under it does not.
+           Own-only (`chosen`), because a link's icon is about that link — resolving up the chain
+           would have a value set on the card silently restyle every row that had never been touched. */
+        const isize = Number(chosen(styles, inode, 'iconSize') ?? 18);
+        const icolor = String(chosen(styles, inode, 'iconColor') ?? '') || 'var(--portal-accent, #3D8BD0)';
+        const ishape = String(chosen(styles, inode, 'iconShape') ?? 'none');
+        const ifill = String(chosen(styles, inode, 'iconFill') ?? '') || 'rgba(61,139,208,0.10)';
+        const ipos = String(chosen(styles, inode, 'iconPos') ?? 'left');
         /* An EMPTY slot on the canvas, so a link with no icon yet still has something to click.
            In Preview it draws nothing — a requester must not see a gap where an unset icon would be. */
-        const glyph = l.icon ? iconNode(l.icon as IconChoice, 18) : null;
+        const glyph = l.icon ? iconNode(l.icon as IconChoice, isize) : null;
         return (
           <Sel key={key} id={inode}>
             <span
-              className="flex min-w-0 items-center gap-3 text-[14px] text-[#364658]"
+              /* ⚠️ `iconPos` is honoured on all three of its values, not just the two that suit a
+                 row. A control offering Top and then laying out Left is worse than one that does
+                 something surprising: the surprise can be undone by looking.
+                 ⚠️ ORDER, not `flex-row-reverse`. Reversing the row carried the ARROW with it and
+                 put the product's "this goes somewhere" glyph on the LEFT — icon-right is a choice
+                 about the icon, not permission to rearrange the row. With explicit orders the arrow
+                 is last whatever the icon does. And TOP is a wrap, not a column: `basis-full` gives
+                 the glyph its own line and lets the label and the arrow stay on one line under it,
+                 where a column would have stranded the arrow on a third line of its own. */
+              className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5 text-[14px] text-[#364658]"
               style={{ paddingTop: gap / 2, paddingBottom: gap / 2 }}
             >
               {(glyph || enabled) ? (
@@ -1048,19 +1066,27 @@ export function CustomCardRender({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) 
                     select(inode);
                     pickIcon(subNodeId(inode, 'icon'), (ev.currentTarget as HTMLElement).getBoundingClientRect());
                   } : undefined}
-                  className={`flex size-[18px] flex-shrink-0 items-center justify-center [&>span>svg]:size-[18px]${enabled ? ' cursor-pointer rounded-sm hover:outline hover:outline-1 hover:outline-offset-2 hover:outline-[#3D8BD0]' : ''}`}
-                  style={{ color: 'var(--portal-accent, #3D8BD0)' }}
+                  className={`flex flex-shrink-0 items-center justify-center${ipos === 'top' ? ' basis-full' : ''}${enabled ? ' cursor-pointer hover:outline hover:outline-1 hover:outline-offset-2 hover:outline-[#3D8BD0]' : ''}`}
+                  style={{
+                    order: ipos === 'right' ? 2 : 0,
+                    color: icolor,
+                    /* A container only when one was asked for — the resting link is a bare glyph. */
+                    ...(ishape === 'none'
+                      ? { width: isize, height: isize }
+                      : { background: ifill, borderRadius: ishape === 'circle' ? 9999 : 6, padding: Math.round(isize / 3) }),
+                  }}
                   title={enabled ? 'Change icon' : undefined}
                 >
-                  {glyph ?? <span className="block size-[14px] rounded-sm border border-dashed border-[#C3CDD9]" />}
+                  {glyph ?? <span className="block rounded-sm border border-dashed border-[#C3CDD9]" style={{ width: isize - 4, height: isize - 4 }} />}
                 </span>
               ) : null}
               {/* The words are the item's — typed here, stored on the link, the same edit the panel makes. */}
-              <Sel id={subNodeId(inode, 'label')} className="min-w-0 flex-1">
+              <Sel id={subNodeId(inode, 'label')} className="min-w-0 flex-1" style={{ order: 1 }}>
                 <span className="block truncate">{String(l.label ?? '')}</span>
               </Sel>
-              {/* The product's, on every row: it is what says the row goes somewhere. */}
-              <ArrowUpRight size={16} className="flex-shrink-0" style={{ color: 'var(--portal-accent, #3D8BD0)' }} />
+              {/* The product's, on every row: it is what says the row goes somewhere — so it is
+                  ordered LAST and stays there whichever side the admin puts their own icon on. */}
+              <ArrowUpRight size={16} className="flex-shrink-0" style={{ order: 3, color: 'var(--portal-accent, #3D8BD0)' }} />
             </span>
           </Sel>
         );

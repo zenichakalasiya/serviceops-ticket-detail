@@ -478,6 +478,14 @@ export const WIDGET_SPECS: WidgetSpec[] = [
       label: (it, i) => String(it.label ?? '') || `Link ${i + 1}`,
       meta: (it) => String(it.url ?? ''),
       seed: (i) => ({ label: `Link ${i + 1}`, url: 'https://' }),
+      /* ⚠️ P1 and P6 on the ITEM, not on the card. A link row is a thing you style: its own fill
+         and border (P1), and its glyph's size, colour and container (P6). They write to the ITEM's
+         node in the style store, which is what lets one link carry a red icon while the one under
+         it does not — the card-level equivalent would restyle all of them at once.
+         ⚠️ Shadow and Spacing come with every drawer, so the panel reads Icon · Style · Shadow ·
+         Spacing without either being declared here. */
+      packs: ['P1', 'P6'],
+      roles: ['body'],
       fields: [
         /* ⚠️ The SAME icon field every other widget uses — the shared 43-icon grid, its search and its
            own SVG/PNG upload — so a link's glyph is chosen the way every glyph in this builder is, and it

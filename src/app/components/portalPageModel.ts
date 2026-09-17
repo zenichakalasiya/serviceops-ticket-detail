@@ -1136,6 +1136,11 @@ const CARD_TYPES = new Set([
   'c-services', 'c-favourites', 'c-categories', 'c-requests', 'c-approvals', 'c-assets', 'c-tasks',
   'c-announcements', 'c-knowledge', 'c-faq', 'c-contact',
   'b-card', 'b-table', 'b-accordion', 'b-text-image',
+  /* ⚠️ The Custom Card draws no surface of its own — it is a heading, some words and one of a
+     picture, a button or a list of links — so without this it landed straight on the page ground
+     while every other card on the page sat in a white box with 16px around it. A card element that
+     is the only thing on a page with no boundary reads as a mistake, not as a choice. */
+  'x-card',
   /* ⚠️ Listed, or removing it from SELF_SURFACED changes nothing: renderSpec falls through to a
      bare default, so the KPI stayed flat by a different route than the one that was fixed. */
   'x-kpi',
