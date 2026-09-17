@@ -497,7 +497,14 @@ function KpiTiles({ cfg }: { cfg: Record<string, unknown> }) {
          `tileGap` is the legacy single value and is still the fallback, so nothing already placed moves. */
     <div className="grid w-full" style={{ gap: `${Number(cfg.rowGap ?? cfg.colGap ?? cfg.tileGap ?? 12)}px ${Number(cfg.colGap ?? cfg.tileGap ?? 12)}px`, gridTemplateColumns: colsTemplate(cols, 12, 120) }}>
       {items.map((k, i) => (
-        <div key={i} className={`flex min-w-0 flex-col justify-center rounded-lg px-4 py-3 ${surface}`}>
+        /* A card left ALONE on the last row takes the whole width — the same rule the section Grid
+           preset states and the preset tile now draws: a lone box beside a gap reads as a mistake, a
+           lone box across the width reads as a decision. */
+        <div
+          key={i}
+          style={i === items.length - 1 && items.length % cols === 1 && cols > 1 ? { gridColumn: '1 / -1' } : undefined}
+          className={`flex min-w-0 flex-col justify-center rounded-lg px-4 py-3 ${surface}`}
+        >
           {/* A tile may carry a fixed VALUE (a percentage, a count the product has no query for); otherwise it counts its source. */}
           <span className={`block text-[26px] font-semibold leading-none ${glass ? 'text-white' : 'text-[#364658]'}`}>{k.value ?? COUNTS[String(k.source ?? 'My requests')] ?? 0}</span>
           <span className={`mt-1.5 block truncate text-[13px] ${glass ? 'font-medium text-white/85' : 'text-[#7B8FA5]'}`}>{String(k.label ?? '')}</span>

@@ -1782,9 +1782,13 @@ function LiveCard({ nodeId, cfg, title, count, rows, icon }: {
 }) {
   const { styles } = useCanvas();
   const plain = cfg.countStyle === 'plain';
-  return (
-    <div className="@container flex min-w-0 flex-col">
-      <div className="flex items-center gap-2 pb-2.5">
+  /* ⚠️ This card draws its own heading rather than going through `CardShell`, so it needs its own copy
+     of the Title-placement shape — the same reason the announcement card has one. Without it "Above
+     the card" took the surface off (`Sel` withholds it on the promise the widget paints it back) and
+     put nothing in its place. */
+  const outside = String(cfg.titlePlace ?? 'inside') === 'outside';
+  const head = (
+      <div className={outside ? 'flex items-center gap-2 px-1' : 'flex items-center gap-2 pb-2.5'}>
         {icon && (
           <span className="flex size-7 flex-shrink-0 items-center justify-center rounded-md bg-[#EAF3FB] text-[#2F6FB5] [&_svg]:size-4">{icon}</span>
         )}
@@ -1820,6 +1824,20 @@ function LiveCard({ nodeId, cfg, title, count, rows, icon }: {
           </span>
         )}
       </div>
+  );
+  if (outside) {
+    return (
+      <div className="@container flex min-w-0 flex-1 flex-col" style={{ gap: Number(cfg.titleGap ?? 12) }}>
+        {head}
+        {/* The same box and the same insets as `CardShell`'s: the card keeps the padding it had with its
+            heading inside it, and any rule a row stack draws under a header goes with the header. */}
+        <div className="min-h-0 min-w-0 flex-1 rounded-xl border border-[#E5E7EB] bg-white px-4 pb-3 pt-3.5 [&>:first-child]:border-t-0">{rows}</div>
+      </div>
+    );
+  }
+  return (
+    <div className="@container flex min-w-0 flex-col">
+      {head}
       <div className="min-h-0 min-w-0 flex-1">{rows}</div>
     </div>
   );

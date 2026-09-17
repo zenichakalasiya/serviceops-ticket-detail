@@ -2262,10 +2262,16 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
       <div className="grid w-full" style={{ gap: `${Number(wc(nodeId).rowGap ?? wc(nodeId).colGap ?? wc(nodeId).tileGap ?? (String(wc(nodeId).look ?? '') === 'row' ? 10 : 12))}px ${Number(wc(nodeId).colGap ?? wc(nodeId).tileGap ?? (String(wc(nodeId).look ?? '') === 'row' ? 10 : 12))}px`, gridTemplateColumns: colsTemplate(cols, 12, 150) }}>
         {/* The block's LOOK comes from a banner template: glass cards on a dark band (the first one solid when the
             template leads with it), or compact ROWS — icon, title, chevron — under a heading on a light band. */}
-        {quickCards.map((a, i) => quickCardEl(a, {}, {
-          glass: String(wc(nodeId).look ?? '') === 'glass' && !(wc(nodeId).firstSolid === true && i === 0),
-          row: String(wc(nodeId).look ?? '') === 'row',
-        }))}
+        {/* A card left ALONE on the last row takes the whole width — the rule the preset tile draws
+            and the section Grid preset already states: a lone box beside a gap reads as a mistake. */}
+        {quickCards.map((a, i) => quickCardEl(
+          a,
+          i === quickCards.length - 1 && quickCards.length % cols === 1 && cols > 1 ? { gridColumn: '1 / -1' } : {},
+          {
+            glass: String(wc(nodeId).look ?? '') === 'glass' && !(wc(nodeId).firstSolid === true && i === 0),
+            row: String(wc(nodeId).look ?? '') === 'row',
+          },
+        ))}
       </div>
     );
   };

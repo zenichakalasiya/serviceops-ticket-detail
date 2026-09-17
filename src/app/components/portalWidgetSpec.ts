@@ -395,8 +395,12 @@ export const WIDGET_SPECS: WidgetSpec[] = [
     /* ⚠️ The Gap belongs beside the Presets that decide it: these tiles are a 2×2 block by default,
        so they have BOTH axes, and one column turns them into a list that has only rows. The pair
        reads which it has from the preset — see `gapSeed`. */
+    /* ⚠️ The Title row every other card carries. These two were the only cards on the page
+       whose heading could not be moved out of their box — an omission, not a rule. */
     fields: [
       TITLE_FIELD,
+      TITLE_PLACE_FIELD,
+      TITLE_GAP_FIELD,
       /* ⚠️ Group 'Columns', not 'Layout'. `DROP_GROUPS` removes every Layout field from every panel,
          with ONE exception carved out by control type for the preset picker — so the Gap declared
          beside it rendered nowhere and the panel looked exactly as it had before. The preset is kept
@@ -413,8 +417,12 @@ export const WIDGET_SPECS: WidgetSpec[] = [
   {
     id: 'my_cis', name: 'My CIs', group: 'Data', reuse: 'single', family: 'flat',
     gate: { kind: 'permission', setting: 'Allow Requester to Access My CI', section: 'Organization' },
+    /* ⚠️ The Title row every other card carries. These two were the only cards on the page
+       whose heading could not be moved out of their box — an omission, not a rule. */
     fields: [
       TITLE_FIELD,
+      TITLE_PLACE_FIELD,
+      TITLE_GAP_FIELD,
       /* ⚠️ Group 'Columns', not 'Layout'. `DROP_GROUPS` removes every Layout field from every panel,
          with ONE exception carved out by control type for the preset picker — so the Gap declared
          beside it rendered nowhere and the panel looked exactly as it had before. The preset is kept
@@ -1058,6 +1066,11 @@ export const WIDGET_SPECS: WidgetSpec[] = [
       /* ⚠️ The LIST only. A KPI is its number and what the number counts — no icon. */
       { key: 'icon', label: 'Icon', control: 'icon', group: 'Content', when: (c) => c.display !== 'kpi' },
       { key: 'title', label: 'Title', control: 'text', group: 'Content' },
+      /* ⚠️ The same Title row every other card carries — and this one is the admin's OWN card, which
+         they named, so it has a better claim to the question than the fixed cards do. Withheld from
+         the KPI display, where the "title" is the caption under a number and has nowhere else to go. */
+      { ...TITLE_PLACE_FIELD, when: (c: Cfg) => c.display !== 'kpi' },
+      { ...TITLE_GAP_FIELD, when: (c: Cfg) => c.display !== 'kpi' && String(c.titlePlace ?? 'inside') === 'outside' },
       /* ⚠️ NO one-line help under any field on this panel. "Which records this card lists" under a
          field labelled Module is the label again in a longer sentence, and a caption under every
          control turns four rows into a wall of grey text you learn to skip — which is where the one

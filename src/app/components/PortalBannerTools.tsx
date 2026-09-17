@@ -344,7 +344,21 @@ export function TilePresetPicker({ count, value, onChange, kind = 'action' }: {
               className="grid w-full content-center gap-[3px] self-center"
               style={{ gridTemplateColumns: `repeat(${p.cols}, minmax(0, 1fr))`, gridAutoRows: rows === 1 ? '20px' : rows === 2 ? '15px' : rows === 3 ? '11px' : '8px' }}
             >
-              {Array.from({ length: n }, (_, i) => <CardSkeleton key={i} kind={kind} on={on} flat={p.cols === 1} />)}
+              {/* ⚠️ A card left ALONE on the last row takes the whole width, and the tile draws that —
+                  three across and a fourth underneath it spanning all three, not a quarter-width box
+                  in the corner beside two empty cells. A lone box beside a gap reads as a mistake; a
+                  lone box across the width reads as a decision, which is the same rule the section
+                  Grid preset already states. Drawn here AND applied by the renderers, because a tile
+                  that promises a shape you do not get is worse than no tile. */}
+              {Array.from({ length: n }, (_, i) => (
+                <span
+                  key={i}
+                  className="min-w-0"
+                  style={i === n - 1 && n % p.cols === 1 && p.cols > 1 ? { gridColumn: '1 / -1' } : undefined}
+                >
+                  <CardSkeleton kind={kind} on={on} flat={p.cols === 1} />
+                </span>
+              ))}
             </span>
           </SkeletonTile>
         );
