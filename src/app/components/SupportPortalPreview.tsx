@@ -1730,6 +1730,50 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
     window.addEventListener('resize', measure);
     return () => { ro.disconnect(); cancelAnimationFrame(raf); window.removeEventListener('resize', measure); };
   }, [heroSticky]);
+
+  /* The Height rail's last stop is not a number — it is "as tall as the visitor's screen", so it is
+     MEASURED at render rather than stored.
+     ⚠️ Measured for the same reason the sticky rail above is, and it is worth reading that note
+     first: in the published portal the page scrolls in the WINDOW and `100vh` is exactly right, but
+     in the builder the page is a card inside a scrolling pane that starts ~100px down, so `100vh`
+     there is a banner whose last hundred pixels sit below the fold — the one thing a screen-tall
+     banner must not do, and the one thing the admin chose it to avoid.
+     ⚠️ Measured from the BANNER's OWN TOP, not from the top of the port, so whatever sits above it
+     (the portal's top bar) is taken off. "As tall as the screen" means the screenful you are looking
+     at; a number that merely equals the viewport pushes its own foot off the bottom by the height of
+     the bar. ⚠️ The offset is taken against the port's CONTENT top plus its scroll, which does not
+     move as the page scrolls — a live `rect.top` would shrink the banner as you scrolled past it. */
+  const heroScreen = String(wc('hero').height ?? '') === 'screen';
+  const [screenH, setScreenH] = useState<number | null>(null);
+  const heroBandRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!heroScreen) { setScreenH(null); return; }
+    let raf = 0;
+    const measure = () => {
+      const el = heroBandRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      let port: HTMLElement | null = el.parentElement;
+      while (port) {
+        const o = getComputedStyle(port).overflowY;
+        if (o === 'auto' || o === 'scroll') break;
+        port = port.parentElement;
+      }
+      /* No scrolling ancestor means the WINDOW is the scroll port — the published portal. */
+      if (!port) { setScreenH(Math.max(260, window.innerHeight - (rect.top + window.scrollY))); return; }
+      const cs = getComputedStyle(port);
+      const padT = parseFloat(cs.paddingTop) || 0;
+      const padB = parseFloat(cs.paddingBottom) || 0;
+      const offset = (rect.top - port.getBoundingClientRect().top) + port.scrollTop - padT;
+      setScreenH(Math.max(260, port.clientHeight - padT - padB - offset));
+    };
+    measure();
+    /* Coalesced to one frame — see the rail's note. */
+    const ro2 = new ResizeObserver(() => { cancelAnimationFrame(raf); raf = requestAnimationFrame(measure); });
+    ro2.observe(document.body);
+    window.addEventListener('resize', measure);
+    return () => { ro2.disconnect(); cancelAnimationFrame(raf); window.removeEventListener('resize', measure); };
+  }, [heroScreen]);
   /* Action cards as full-width ROWS inside the rail — icon, label, chevron. A rail is a column, so
      a card that is wider than it is tall is the only shape that fits it. */
   const quickRail = String(pageCfg.quickLook ?? 'row') === 'rail';
@@ -2370,6 +2414,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
            of the colour however tall it is made — and wrong for a column, where it pushes the
            greeting to the vertical middle of the page and the action rows off the bottom. */
         data-banner-band=""
+        ref={heroBandRef}
         className={treeBanner ? 'relative flex flex-col overflow-hidden' : `relative flex flex-col ${heroSide ? 'justify-start pt-10 pb-10' : bannerSec ? (blank || tileActions || quickOnBanner ? 'justify-center py-5' : 'justify-center pt-5 pb-[86px]') : `${({ start: 'justify-start', end: 'justify-end' } as Record<string, string>)[String(wc('hero').contentAlignY ?? 'center')] ?? 'justify-center'} ${(tileActions || quickOnBanner) && !searchFloats ? 'pb-10' : 'pb-[86px]'}`} ${searchFloats && !bannerSec ? 'overflow-visible' : heroSticky ? 'overflow-x-hidden overflow-y-auto scrollbar-hide' : 'overflow-hidden'}`}
         style={{
           /* ⚠️ The tabs decide, in one place. Image wins when one is uploaded; Colour paints
@@ -2378,7 +2423,10 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
           ...heroBg,
           ...(photoSlotEmpty ? { backgroundColor: '#3B4658', backgroundImage: 'none' } : {}),
           ...heroCropCss,
-          minHeight: Number(wc('hero').height ?? 260),
+          /* ⚠️ `Number(…) || 260`, never `?? 260`: the last stop stores the WORD 'screen', and a
+             nullish fallback lets it through to `Number`, which returns NaN — an invalid minHeight
+             the browser drops silently, leaving the band at its content height. */
+          minHeight: heroScreen && screenH ? screenH : (Number(wc('hero').height) || 260),
           /* ⚠️ FILL THE WRAPPER. A dragged height is written into `styles.hero` and applied by
              `sizeOf` on the Sel WRAPPER — this inner div is what actually paints the banner,
              and it was still sizing itself from `minHeight` alone. So stretching the banner

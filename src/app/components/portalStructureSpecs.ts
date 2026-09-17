@@ -96,11 +96,21 @@ export const HERO_SPEC: WidgetSpec = {
          things — the initials keep it to one line at any panel width. The VALUES are unchanged, so
          every template and every page already carrying a height renders exactly as before. */
       key: 'height', label: 'Height', control: 'stepRail', tab: 'style', group: 'Banner',
+      /* ⚠️ S is the height a banner ALREADY HAS (260), and the three fixed stops are 20px apart.
+         The old rail ran 180 / 260 / 360 / 480, so its steps changed the band by 80 to 120px at a
+         time — a control whose smallest move is a redesign. From here the first three are a nudge.
+         ⚠️ The fourth is not a fourth size. `screen` is measured at render, not stored as a number,
+         so the band is as tall as the visitor's screen on whatever screen they open it on — which
+         is why it is LABELLED "Screen" and not XL: the lettering would promise one more step of the
+         same kind. It is the maximum the rail offers.
+         ⚠️ A page carrying any other number still renders it. Template banners are authored at
+         heights the rail never offered (560, 340, 220…), and snapping them to the nearest stop
+         would redesign forty shipped banners to make one control tidier. */
       options: [
-        { value: '180', label: 'Short', short: 'S' },
-        { value: '260', label: 'Standard', short: 'M' },
-        { value: '360', label: 'Tall', short: 'L' },
-        { value: '480', label: 'Full', short: 'XL' },
+        { value: '260', label: 'Short', short: 'S' },
+        { value: '280', label: 'Standard', short: 'M' },
+        { value: '300', label: 'Tall', short: 'L' },
+        { value: 'screen', label: "As tall as the visitor's screen", short: 'Screen' },
       ],
     },
     /* ── Arrangement: how the banner's items sit — side by side or stacked — from presets that change

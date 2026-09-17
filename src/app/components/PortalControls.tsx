@@ -438,8 +438,13 @@ export function StepRail({ value, options, onChange }: {
             type="button"
             title={o.title}
             onClick={() => onChange(o.value)}
-            style={{ left: `calc(${(k / (n - 1)) * 100}% - 12px)` }}
-            className={`absolute top-0 w-6 text-center text-[11px] leading-4 transition-colors ${
+            /* ⚠️ The label sizes to its WORD, and the two ends hang inwards. A fixed 24px box
+               centred on each stop was fine while every label was one or two letters; a word like
+               "Screen" is 40px, so the last one ran off the panel's edge and the first sat left of
+               the track. Centred in the middle, flush at the ends — which is where a reader expects
+               the first and last of a scale to sit anyway. */
+            style={{ left: `${(k / (n - 1)) * 100}%`, transform: `translateX(-${k === 0 ? 0 : k === n - 1 ? 100 : 50}%)` }}
+            className={`absolute top-0 whitespace-nowrap text-center text-[11px] leading-4 transition-colors ${
               k === i ? 'font-semibold text-[#3D8BD0]' : 'text-[#9CA3AF] hover:text-[#64748B]'
             }`}
           >{o.label}</button>

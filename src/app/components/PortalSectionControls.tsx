@@ -456,9 +456,12 @@ function LayoutArt({ l }: { l: BannerLayout }) {
     );
   }
 
-  /* 180 / 260 / 360 / 480 mapped across the tile, so the four steps of the Height rail are four
-     visibly different tiles rather than a spread nobody can read. */
-  const band = Math.max(38, Math.min(84, Math.round((Number(h.height ?? 260) / 600) * 100)));
+  /* The banner's height mapped across the tile, so a taller banner draws a taller band.
+     ⚠️ `|| 600`, not `?? 260`: the Height rail's last stop stores the WORD 'screen', and
+     `Number('screen')` is NaN — which reaches `Math.round`, survives both clamps as NaN and comes
+     out of the tile as a band with no height at all. A screen-tall banner draws as the tallest
+     tile the sketch has. */
+  const band = Math.max(38, Math.min(84, Math.round(((Number(h.height) || (h.height === 'screen' ? 600 : 260)) / 600) * 100)));
   const items = align === 'center' ? 'items-center' : align === 'right' ? 'items-end' : 'items-start';
 
   return (
