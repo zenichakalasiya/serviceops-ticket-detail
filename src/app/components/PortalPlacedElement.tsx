@@ -491,7 +491,11 @@ function KpiTiles({ cfg }: { cfg: Record<string, unknown> }) {
       ? 'border border-[#E5E7EB] bg-white'
       : 'border border-[#E5E7EB] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04),0_4px_12px_rgba(16,24,40,0.06)]';
   return (
-    <div className="grid w-full" style={{ gap: Number(cfg.tileGap ?? 12), gridTemplateColumns: colsTemplate(cols, 12, 120) }}>
+    /* ⚠️ TWO gaps, rows then columns — the CSS `gap` shorthand's own order. It was one number for
+         both axes, so a block laid out in two rows could not have tight rows and wide columns, and on
+         the stacked preset the panel's horizontal glyph named a distance that was entirely vertical.
+         `tileGap` is the legacy single value and is still the fallback, so nothing already placed moves. */
+    <div className="grid w-full" style={{ gap: `${Number(cfg.rowGap ?? cfg.colGap ?? cfg.tileGap ?? 12)}px ${Number(cfg.colGap ?? cfg.tileGap ?? 12)}px`, gridTemplateColumns: colsTemplate(cols, 12, 120) }}>
       {items.map((k, i) => (
         <div key={i} className={`flex min-w-0 flex-col justify-center rounded-lg px-4 py-3 ${surface}`}>
           {/* A tile may carry a fixed VALUE (a percentage, a count the product has no query for); otherwise it counts its source. */}

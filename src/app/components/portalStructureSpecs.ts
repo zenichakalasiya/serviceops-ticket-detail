@@ -651,9 +651,19 @@ export const BANNER_BOX_SPEC: WidgetSpec = {
 const COLUMNS_FIELD = {
   key: 'cols', label: 'Presets', control: 'tilePresets' as const, tab: 'style' as const, group: 'Columns',
 };
-/* The gap between the cards INSIDE the block — its own number, touching nothing else on the banner. */
+/* The gap between the cards INSIDE the block — its own numbers, touching nothing else on the banner.
+ *
+ * ⚠️ A PAIR, and each half appears only when the arrangement HAS that axis. It was one number with a
+ * horizontal glyph, applied as the CSS `gap` shorthand — so on the Stacked preset the control drew a
+ * between-columns icon for a distance that was entirely vertical, and there was no way to say "tight
+ * rows, wide columns" on the presets that have both. The axes come from the preset: all-in-one-row has
+ * columns and no rows, stacked has rows and no columns, 2- and 3-per-row have both once there are more
+ * cards than fit one line.
+ * ⚠️ Same control and same keys as every band and section on the page (`colGap` / `rowGap`, via the
+ * panel's `gapPairX/Y`), so the pink strips on the canvas and this field are one setting. The old
+ * `tileGap` is still READ as the fallback, so a block that already carries one does not move. */
 const TILE_GAP_FIELD = {
-  key: 'tileGap', label: 'Gap between cards', control: 'gapField' as const, tab: 'style' as const, group: 'Columns',
+  key: 'gapPair', label: 'Gap between cards', control: 'gapPair' as const, tab: 'style' as const, group: 'Columns',
 };
 
 /* The portal's four action cards as ONE block. Each card stays its own node (select it to edit its

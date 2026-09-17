@@ -392,7 +392,19 @@ export const WIDGET_SPECS: WidgetSpec[] = [
     id: 'my_assets', name: 'My Assets', group: 'Data', reuse: 'single', family: 'flat',
     gate: { kind: 'permission', setting: 'Allow Requester to Access My Assets', section: 'Organization' },
     /* Layout → Presets arranges the data cards — the same tile row the Quick Actions section uses. */
-    fields: [TITLE_FIELD, { key: '__tilePreset', label: 'Presets', control: 'tilePreset', tab: 'style', group: 'Layout' }],
+    /* ⚠️ The Gap belongs beside the Presets that decide it: these tiles are a 2×2 block by default,
+       so they have BOTH axes, and one column turns them into a list that has only rows. The pair
+       reads which it has from the preset — see `gapSeed`. */
+    fields: [
+      TITLE_FIELD,
+      /* ⚠️ Group 'Columns', not 'Layout'. `DROP_GROUPS` removes every Layout field from every panel,
+         with ONE exception carved out by control type for the preset picker — so the Gap declared
+         beside it rendered nowhere and the panel looked exactly as it had before. The preset is kept
+         by its control whatever group it sits in, so both move to the group the other card blocks
+         already use, and Presets and the Gap they decide stay in one accordion. */
+      { key: '__tilePreset', label: 'Presets', control: 'tilePreset', tab: 'style', group: 'Columns' },
+      { key: 'gapPair', label: 'Gap between cards', control: 'gapPair', tab: 'style', group: 'Columns' },
+    ],
     packs: LIVE_CARD_PACKS, roles: LIST_CARD_ROLES,
     defaults: { ...listCardDefaults, title: 'My Assets', show: 5, showType: true },
   },
@@ -401,7 +413,16 @@ export const WIDGET_SPECS: WidgetSpec[] = [
   {
     id: 'my_cis', name: 'My CIs', group: 'Data', reuse: 'single', family: 'flat',
     gate: { kind: 'permission', setting: 'Allow Requester to Access My CI', section: 'Organization' },
-    fields: [TITLE_FIELD, { key: '__tilePreset', label: 'Presets', control: 'tilePreset', tab: 'style', group: 'Layout' }],
+    fields: [
+      TITLE_FIELD,
+      /* ⚠️ Group 'Columns', not 'Layout'. `DROP_GROUPS` removes every Layout field from every panel,
+         with ONE exception carved out by control type for the preset picker — so the Gap declared
+         beside it rendered nowhere and the panel looked exactly as it had before. The preset is kept
+         by its control whatever group it sits in, so both move to the group the other card blocks
+         already use, and Presets and the Gap they decide stay in one accordion. */
+      { key: '__tilePreset', label: 'Presets', control: 'tilePreset', tab: 'style', group: 'Columns' },
+      { key: 'gapPair', label: 'Gap between cards', control: 'gapPair', tab: 'style', group: 'Columns' },
+    ],
     packs: LIVE_CARD_PACKS, roles: LIST_CARD_ROLES,
     defaults: { ...listCardDefaults, title: 'My CIs', show: 5, showType: true },
   },

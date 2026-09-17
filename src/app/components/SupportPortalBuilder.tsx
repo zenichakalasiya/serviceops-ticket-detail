@@ -329,6 +329,11 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
    * `cfgFor` composes it — which is what makes Reset to default a one-line delete. */
   const rowOrderRef = useRef<Record<string, string[]>>(DEFAULT_ROW_ORDER);
   const widgetCfgRef = useRef<Record<string, Cfg>>({});
+  /* ⚠️ A REF, not the state, because `cfgFor` reads it: §7.8 keeps a card block's column count in
+     the STYLE store, and the Gap pair has to know how many cards sit across to say which gaps the
+     block has. Through the ref it is always current without putting `styles` in `cfgFor`'s deps,
+     where every colour drag would rebuild a callback the whole canvas depends on. */
+  const stylesRef = useRef<PortalStyles>({} as PortalStyles);
   /* Filled once the banner helpers below exist — `cfgFor` is declared above them. */
   const heroTreeRef = useRef<(() => ReturnType<typeof normalizeTree>) | null>(null);
   /* ⚠️ Seeded, so a template's hero and column counts are the page's OWN config rather than a
@@ -338,6 +343,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
   /* ⚠️ Declared ABOVE their first assignment. Put after it, the assignment ran against an
      undefined binding and took the whole builder down on mount. */
   widgetCfgRef.current = widgetCfg;
+  stylesRef.current = styles;
 
   /** The widget spec behind a node, whether it is a fixed block or something an admin dropped.
    *  ⚠️ Both routes must land on the SAME spec, or one widget would edit two different ways. */
@@ -478,13 +484,68 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
   /* The effective column / row gap of a section, a box or a built-in band, for the panel's Gap pair.
      ⚠️ A box without its own gap takes its SECTION's, and a section reads "Mixed" once any row or
      column inside it has a gap of its own that differs. */
+  /* How many cards a block draws and how many sit ACROSS — the two numbers that decide which gaps it
+     has. A band's cards are its row members; a card block's are its own contents, and the two service
+     rows and the tile cards take their column count from the STYLE store (§7.8) rather than config.
+     ⚠️ Returns null for anything that is not a block of cards, which is what keeps the Gap pair off
+     every other widget's panel. */
+  /* ⚠️ `rest` is the gap the block RENDERS at before anybody sets one, and it differs per block —
+     the record tiles sit at 10 where the card grids sit at 12. Seeding them all from one number put
+     12 in a field over a page drawing 10, which is the panel disagreeing with the canvas about a
+     distance both of them show. */
+  function tileShape(owner: string): { count: number; cols: number; rest: number } | null {
+    const all = widgetCfgRef.current;
+    const cfg = all[owner] ?? {};
+    const type = placedType(owner);
+    const styleCols = Number((stylesRef.current[owner] as { columns?: number } | undefined)?.columns ?? NaN);
+    /* A column count a HUMAN set, from either store, else the block's natural one. */
+    const colsOf = (natural: number) => {
+      const n = Number(cfg.cols ?? (Number.isFinite(styleCols) ? styleCols : cfg.columns) ?? NaN);
+      return Math.max(1, Number.isFinite(n) && n > 0 ? n : Math.max(1, natural));
+    };
+    if (type === 'x-actions' || owner === 'quick') {
+      const count = content.quick.length;
+      /* A banner template's compact ROW look rests tighter than its card look. */
+      return { count, cols: colsOf(count), rest: String(cfg.look ?? '') === 'row' ? 10 : 12 };
+    }
+    if (type === 'x-kpis') {
+      const items = (cfg.items as unknown[]) ?? (specForNode(owner)?.defaults.items as unknown[]) ?? [];
+      const count = items.length;
+      return { count, cols: colsOf(count), rest: 12 };
+    }
+    /* The two service rows: four favourites, and Most Used shows what its `show` says. */
+    if (owner === 'favourites') return { count: 4, cols: colsOf(4), rest: 12 };
+    if (owner === 'services') return { count: Math.max(1, Number(cfg.show ?? 4)), cols: colsOf(Number(cfg.show ?? 4)), rest: 12 };
+    /* ⚠️ My Assets and My CIs draw a HARD four tiles — see `RecordTiles` — whatever `show` says, so
+       the axes are read from four rather than from a number the grid does not use. */
+    if (owner === 'assets' || owner === 'cis') return { count: 4, cols: colsOf(2), rest: 10 };
+    return null;
+  }
+
   function gapSeed(owner: string): Cfg {
     const all = widgetCfgRef.current;
     if (!/^sec-\d+(-b\d+)?$/.test(owner)) {
-      if (!['quick', 'favourites', 'services', 'work', 'records'].includes(owner)) return {};
+      const shape = tileShape(owner);
+      if (shape) {
+        /* ⚠️ `tileGap` is the LEGACY single number and is still read as the fallback for both axes,
+           so a block that already carries one keeps the spacing it has. New writes go to the same
+           `colGap` / `rowGap` every band and section uses, which is what makes this field and the
+           canvas's pink strips one setting rather than two that drift. */
+        const legacy = Number(all[owner]?.tileGap ?? NaN);
+        const base = Number.isFinite(legacy) ? legacy : shape.rest;
+        const col = Number(all[owner]?.colGap ?? base);
+        return {
+          __gapX: col,
+          __gapY: Number(all[owner]?.rowGap ?? col),
+          /* Cards side by side have a gap between COLUMNS; cards that wrap onto a second line have
+             one between ROWS; a block one card across has only rows, and one row of cards only
+             columns. The preset decides both, which is the whole point of asking it here. */
+          __hasCols: shape.cols > 1,
+          __hasRows: shape.count > shape.cols,
+        };
+      }
+      if (!['work', 'records'].includes(owner)) return {};
       const col = Number(all[owner]?.colGap ?? 16);
-      /* ⚠️ Only the gaps this band HAS: cards side by side have a gap between COLUMNS, cards that wrap onto a
-         second line have one between ROWS, and a band one card across has neither to offer. */
       const items = rowOrderRef.current[owner]?.length ?? 0;
       const cols = Math.max(1, Number(all[owner]?.cols ?? items));
       return {

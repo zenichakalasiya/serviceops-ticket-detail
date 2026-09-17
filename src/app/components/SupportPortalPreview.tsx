@@ -2255,7 +2255,11 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
     const auto = bannerCols.current[nodeId];
     const cols = Math.min(4, Math.max(1, Number(wc(nodeId).__colsSet === true || auto === undefined ? (wc(nodeId).cols ?? 4) : auto)));
     return (
-      <div className="grid w-full" style={{ gap: Number(wc(nodeId).tileGap ?? (String(wc(nodeId).look ?? '') === 'row' ? 10 : 12)), gridTemplateColumns: colsTemplate(cols, 12, 150) }}>
+      /* ⚠️ TWO gaps, rows then columns — the CSS `gap` shorthand's own order. It was one number for
+         both axes, so a block laid out in two rows could not have tight rows and wide columns, and on
+         the stacked preset the panel's horizontal glyph named a distance that was entirely vertical.
+         `tileGap` is the legacy single value and is still the fallback, so nothing already placed moves. */
+      <div className="grid w-full" style={{ gap: `${Number(wc(nodeId).rowGap ?? wc(nodeId).colGap ?? wc(nodeId).tileGap ?? (String(wc(nodeId).look ?? '') === 'row' ? 10 : 12))}px ${Number(wc(nodeId).colGap ?? wc(nodeId).tileGap ?? (String(wc(nodeId).look ?? '') === 'row' ? 10 : 12))}px`, gridTemplateColumns: colsTemplate(cols, 12, 150) }}>
         {/* The block's LOOK comes from a banner template: glass cards on a dark band (the first one solid when the
             template leads with it), or compact ROWS — icon, title, chevron — under a heading on a light band. */}
         {quickCards.map((a, i) => quickCardEl(a, {}, {
@@ -3646,8 +3650,14 @@ function RecordTiles({ nodeId, titleFallback, cfg, rows, icon, headIcon }: {
             ⚠️ `@container`, not a viewport breakpoint — the tiles answer to the CARD's width, which
             is what lets this card be dragged narrow or dropped into a column and still lay out. */}
         <div
-          className={tileCols ? 'grid gap-2.5' : 'grid grid-cols-1 gap-2.5 @[290px]:grid-cols-2'}
-          style={tileCols ? { gridTemplateColumns: `repeat(${tileCols}, minmax(0, 1fr))` } : undefined}
+          /* ⚠️ The gap is the ADMIN's now. It was a hard `gap-2.5` — the one card block on the page
+              whose spacing could not be touched — while its own Presets control was busy changing
+              whether that spacing ran across, down, or both. 10px stays the resting value. */
+          className={tileCols ? 'grid' : 'grid grid-cols-1 @[290px]:grid-cols-2'}
+          style={{
+            gap: `${Number(cfg.rowGap ?? cfg.colGap ?? 10)}px ${Number(cfg.colGap ?? 10)}px`,
+            ...(tileCols ? { gridTemplateColumns: `repeat(${tileCols}, minmax(0, 1fr))` } : {}),
+          }}
         >
           {shown.map((r, i) => (
             /* ⚠️ FILLED, not outlined. The card is white like every other card on the page, so the
