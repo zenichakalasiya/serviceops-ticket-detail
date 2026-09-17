@@ -172,7 +172,7 @@ const BOX_OFF = 'bg-[#E6EAF0]';
    COLUMN-preset tiles, whose cards sit one row to a tile and so have the room for their contents. */
 function MiniCard({ on, className = '', children }: { on: boolean; className?: string; children?: ReactNode }) {
   return (
-    <span className={`flex min-h-0 min-w-0 overflow-hidden rounded-[2px] border bg-white ${on ? 'border-[#9CC0E4]' : 'border-[#DDE3EA]'} ${className}`}>
+    <span className={`flex min-h-0 min-w-0 overflow-hidden rounded-[3px] border bg-white ${on ? 'border-[#9CC0E4]' : 'border-[#E1E6ED]'} ${className}`}>
       {children}
     </span>
   );
@@ -184,30 +184,65 @@ function MiniCard({ on, className = '', children }: { on: boolean; className?: s
  * over a label inside one is two bars crammed into a box with no room for either — which is what made
  * the Stacked preset the one tile that read as a jumble. Laid out along the row it is the same card,
  * drawn the way that shape actually holds it. */
-function KpiCardArt({ on, row = false }: { on: boolean; row?: boolean }) {
-  if (row) {
+/* ⚠️ A card's insides are drawn to the ROOM IT HAS, and that is the whole of what made these tiles
+   look cluttered. Every card carried a badge AND a line whatever its width, so at three or four
+   across the two sat 2px apart inside a 17px box with a border around them — three shapes fighting
+   for a space that holds one. The Card-templates picker reads clean because it spends its tile on
+   ONE card with room around it; these tiles cannot have one card, so they spend the room on fewer
+   marks per card instead.
+   — `wide`   (one per row): the badge sits beside its line, which is the shape the real card makes.
+   — `medium` (two per row): badge over a line, centred.
+   — narrow   (three or more): the badge alone. A line at that width is two pixels of grey that
+     says nothing except that the card is crowded. */
+function KpiCardArt({ on, row = false, size = 'medium' }: { on: boolean; row?: boolean; size?: 'wide' | 'medium' | 'narrow' }) {
+  const ink = on ? INK_ON : INK_OFF;
+  if (row || size === 'wide') {
     return (
-      <MiniCard on={on} className="flex-row items-center gap-[4px] px-[4px]">
-        <span className={`h-[4px] w-[9px] flex-shrink-0 rounded-[1px] ${on ? INK_ON : INK_OFF}`} />
+      <MiniCard on={on} className="flex-row items-center gap-[5px] px-[5px]">
+        <span className={`h-[5px] w-[10px] flex-shrink-0 rounded-[1px] ${ink}`} />
         <span className={`h-[2px] flex-1 rounded-full ${FAINT}`} />
       </MiniCard>
     );
   }
+  if (size === 'narrow') {
+    return (
+      <MiniCard on={on} className="items-center justify-center">
+        <span className={`h-[5px] w-[9px] rounded-[1px] ${ink}`} />
+      </MiniCard>
+    );
+  }
   return (
-    <MiniCard on={on} className="flex-col justify-center gap-[2px] px-[3px]">
-      <span className={`h-[4px] w-[45%] rounded-[1px] ${on ? INK_ON : INK_OFF}`} />
-      <span className={`h-[2px] w-[80%] rounded-full ${FAINT}`} />
+    <MiniCard on={on} className="flex-col items-center justify-center gap-[3px] px-[4px]">
+      <span className={`h-[5px] w-[11px] rounded-[1px] ${ink}`} />
+      <span className={`h-[2px] w-[70%] rounded-full ${FAINT}`} />
     </MiniCard>
   );
 }
 
 /** An action card: the icon badge, then its title. Icon LEFT in one column, on TOP across a row —
  *  the same two shapes `cardTemplate` draws on the canvas. */
-function ActionCardArt({ on, row }: { on: boolean; row: boolean }) {
+/** The action card, drawn to its room — see the note on `KpiCardArt`. */
+function ActionCardArt({ on, row, size = 'medium' }: { on: boolean; row: boolean; size?: 'wide' | 'medium' | 'narrow' }) {
+  const ink = on ? INK_ON : INK_OFF;
+  if (row || size === 'wide') {
+    return (
+      <MiniCard on={on} className="flex-row items-center gap-[5px] px-[5px]">
+        <span className={`size-[7px] flex-shrink-0 rounded-[2px] ${ink}`} />
+        <span className={`h-[2px] flex-1 rounded-full ${FAINT}`} />
+      </MiniCard>
+    );
+  }
+  if (size === 'narrow') {
+    return (
+      <MiniCard on={on} className="items-center justify-center">
+        <span className={`size-[6px] rounded-[2px] ${ink}`} />
+      </MiniCard>
+    );
+  }
   return (
-    <MiniCard on={on} className={`items-center justify-center gap-[3px] px-[3px] ${row ? 'flex-row' : 'flex-col'}`}>
-      <span className={`size-[5px] flex-shrink-0 rounded-[1px] ${on ? INK_ON : INK_OFF}`} />
-      <span className={`h-[2px] rounded-full ${FAINT} ${row ? 'flex-1' : 'w-[70%]'}`} />
+    <MiniCard on={on} className="flex-col items-center justify-center gap-[3px] px-[4px]">
+      <span className={`size-[7px] flex-shrink-0 rounded-[2px] ${ink}`} />
+      <span className={`h-[2px] w-[70%] rounded-full ${FAINT}`} />
     </MiniCard>
   );
 }
@@ -323,8 +358,8 @@ export function BannerPresetPicker({ tree, onPick }: { tree: BannerNode | null; 
 /* ⚠️ The SAME two card drawings the arrangement tiles use, not a second pair — a KPI card that looks
    like a card in one picker and like two bars in the other is two answers to "what does this block
    make". */
-function CardSkeleton({ kind, on, flat }: { kind: 'action' | 'kpi'; on: boolean; flat: boolean }) {
-  return kind === 'kpi' ? <KpiCardArt on={on} row={flat} /> : <ActionCardArt on={on} row={flat} />;
+function CardSkeleton({ kind, on, flat, size }: { kind: 'action' | 'kpi'; on: boolean; flat: boolean; size: 'wide' | 'medium' | 'narrow' }) {
+  return kind === 'kpi' ? <KpiCardArt on={on} row={flat} size={size} /> : <ActionCardArt on={on} row={flat} size={size} />;
 }
 
 export function TilePresetPicker({ count, value, onChange, kind = 'action' }: {
@@ -339,10 +374,17 @@ export function TilePresetPicker({ count, value, onChange, kind = 'action' }: {
         return (
           <SkeletonTile key={p.cols} on={on} label={p.label} onPick={() => onChange(p.cols)}>
             {/* ⚠️ A FIXED row height, centred in the tile. Stretched to fill the tile, three tiles in one row came out
-                as three tall vertical bars — nothing like the short, wide cards they stand for. */}
+                as three tall vertical bars — nothing like the short, wide cards they stand for.
+                ⚠️ PADDING of its own, on top of the tile's. The cards used to start 6px from the tile's
+                border and run to within 6px of the other side, so four of them read as one crowded
+                strip rather than as four cards in a frame — the Card-templates tiles read clean
+                because their one card sits in obvious space, and space is the thing to copy.
+                ⚠️ The column gap is WIDER than the row gap (4px against 3px). Cards side by side are
+                told apart by the channel between them; stacked, their own edges already do it, and an
+                equal gap on both axes made the rows look loose to buy separation the columns needed. */}
             <span
-              className="grid w-full content-center gap-[3px] self-center"
-              style={{ gridTemplateColumns: `repeat(${p.cols}, minmax(0, 1fr))`, gridAutoRows: rows === 1 ? '20px' : rows === 2 ? '15px' : rows === 3 ? '11px' : '8px' }}
+              className="grid w-full content-center gap-x-1 gap-y-[3px] self-center px-1 py-0.5"
+              style={{ gridTemplateColumns: `repeat(${p.cols}, minmax(0, 1fr))`, gridAutoRows: rows === 1 ? '22px' : rows === 2 ? '17px' : rows === 3 ? '12px' : '8px' }}
             >
               {/* ⚠️ A card left ALONE on the last row takes the whole width, and the tile draws that —
                   three across and a fourth underneath it spanning all three, not a quarter-width box
@@ -356,7 +398,14 @@ export function TilePresetPicker({ count, value, onChange, kind = 'action' }: {
                   className="min-w-0"
                   style={i === n - 1 && n % p.cols === 1 && p.cols > 1 ? { gridColumn: '1 / -1' } : undefined}
                 >
-                  <CardSkeleton kind={kind} on={on} flat={p.cols === 1} />
+                  <CardSkeleton
+                    kind={kind}
+                    on={on}
+                    flat={p.cols === 1}
+                    /* The room this card has — and a card that has been stretched across the whole
+                       row because it was left alone on it is a WIDE one, whatever the column count. */
+                    size={p.cols === 1 || (i === n - 1 && n % p.cols === 1 && p.cols > 1) ? 'wide' : p.cols === 2 ? 'medium' : 'narrow'}
+                  />
                 </span>
               ))}
             </span>
