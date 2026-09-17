@@ -1,95 +1,92 @@
-# Handoff — 2026-09-16 13:30
+# Handoff — 2026-09-17 15:30
 
 ## Read first
 
-`CLAUDE.md`, the Support Portal bullets dated **16 Sep 2026** — they are this session in durable
-form, newest first:
-
-- **"a preset skeleton draws THE SECTION, not a bar chart of it"** — the drawing rules for every
-  banner preset thumbnail, and the `cfgOf` reader they depend on.
-- **"the Media Slider asks its question in its own words"** — why a slide's image had no surface at
-  all, and the new `inlineImage` collection option that gave it one.
-- **"the Announcements card, six fixes"**.
-- **"banner and data-card fixes"**, **"banner presets are a FIXED set of eight layouts"**, **"banner
-  sections are placed by DRAGGING"**, **"the banner is a set of SECTIONS"**, **"the BANNERS menu"** —
-  the earlier half of the same session.
-
-Then the two long-standing traps these all sit on: **"the child-selection model"** (config and panel
-resolve differently on purpose) and **"`structureSpecId` matches on id SHAPE"**.
+Everything this session touched is the **Support Portal builder**. In `CLAUDE.md`, read the
+nine bullets dated **17 Sep 2026** at the end of the Key-context list — they carry the reasoning
+behind each change and the traps that cost a pass. The two older bullets they build on are
+**"the child-selection model"** (how a widget's heading, link or icon becomes its own node) and
+**"the collection contract"** (how an item's config lives in its widget's cfg).
 
 ## What we worked on this session
 
-The Support Portal builder's **banner**, end to end: the section model and its fixed preset set, the
-Banners rail menu of 29 rebuilt layouts, drag-to-place inside the banner, and then three rounds of
-panel repair — the Announcements card, the Media Slider, and the preset skeletons themselves.
+Polish across the Support Portal builder, almost all of it driven by screenshots: the banner's
+height rail, industry tags on template cards, the Custom Card's links and icon picker, per-preset
+Gap axes, the preset tiles' drawing, Title placement on every card, and finally the six data cards'
+content and row shapes from three reference images.
 
 ## Completed
 
-- **Banner section model** — Text & Search is one stretchable section, each widget is its own
-  section, max 4; gaps between rows and columns independent of each other and of a section's inner
-  gaps; Button removed from the banner. Drag a widget (or a whole page card) onto a section's edge to
-  make a column or a row.
-- **Banner presets are a FIXED set of eight** (`PRESET_SHAPES`), taken from the arrangements that
-  repeat across the 37 gallery layouts — they no longer grow with the widgets on the banner, and a
-  newly added section always lands as a new row at the foot.
-- **Banners rail menu** — 25 horizontal + 4 vertical layouts, all rebuilt with the editor
-  (`portalBannerTemplates.ts`), with drop-image placeholders where artwork can't be generated.
-- **Announcements, six fixes** (`b8b3f6d`): a "View all ›" on the regular card; Card type renamed
-  Regular / Carousel / Image with carousel with each sketch bounded in the card's own frame; the
-  image card starts at 0 corner radius and now reads the Style pack's own value; the picture stretches
-  with a dragged height while the text band keeps its own (measured: 30px of empty space gone); and
-  the banner preset tiles got a ground per section.
-- **Media Slider** (`d34d278`): the group is **Carousel type** — Data only / Image with data — and a
-  slide carries its own image through a new `inlineImage` slot drawn by `InlineImageField` (a 44px
-  preview beside one line, measured 271×69). Media type (Image/Video) left the panel; the renderer
-  always drew an `<img>`.
-- **Preset skeletons** (`406dd2c`): `MiniCard` is the shared card face, so KPI, action cards, Contact
-  Us and the list cards draw as cards; Announcements draws the card type it is showing; an image
-  bleeds like a picture; the drawings read each widget's resolved config and follow the cell's shape.
+All pushed to `main` (13 commits, `863c8f0` → `2d44add`), each verified in the browser:
+
+- **Banner height rail** — stops are `260 · 400 · 540 · Screen`, 140px apart. `Screen` stores the
+  word, not a number, and is measured from the banner's own top to the fold.
+- **Industry tags on template cards** — six fixed industries as a second axis beside `category`;
+  two shown, the rest behind a `+N` with an instant tooltip. The category chip moved onto the
+  thumbnail to make room, and the card height is unchanged.
+- **Icon picker** opens beside the icon instead of on top of it.
+- **Custom Card links** — each link is a node: type its words on the canvas, click its glyph for the
+  shared picker, and style it (Style · Icon · Spacing) per link. Fixed four pre-existing faults on
+  the way, including one where typing in a link emptied the card.
+- **Custom Card** is a real card now (white surface, 16px padding) and has three layouts, one row.
+- **Gap follows the preset** on Action cards, KPI tiles, the two service rows and My Assets / My CIs
+  — columns only, rows only, or both, depending on what the arrangement actually has.
+- **Title placement** on every card, including the Custom Data Widget, which needed its own
+  "above the card" shape.
+- **Preset tiles** are plain grey boxes in the arrangement's shape.
+- **The six data cards** carry the reference content and row shapes, full-width dividers, one date
+  format, and badges that count totals rather than mock rows.
+- **The rail's first card** (Announcements) ends exactly where the row beside it ends.
 
 ## In progress
 
-Nothing mid-flight — the working tree is clean at `406dd2c` and every change above was verified in the
-browser at `localhost:5200`.
+Nothing mid-flight. The working tree is clean apart from the untracked files that have always been
+kept out of the repo (`docs/duda/`, screenshots, the design canvas, `.claude/agents/`).
 
 ## Next steps
 
-1. **A Media Slider slide's call-to-action has no surface.** `ctaEnabled` / `ctaLabel` / `ctaAction` /
-   `ctaUrl` are declared on the slide but the inline editor draws only its first two fields and there
-   is no chevron (`inlineCoversAll`). The fix is the existing `inlineCta` mechanism — but it
-   hard-codes `linkLabel` / `linkUrl` in `PortalItemList`, so it has to take its keys from the spec
-   first. Offered to the user; they have not asked for it yet.
-2. `future-tasks.md` still lists the Media Slider as parked. `CLAUDE.md` now says otherwise; that file
-   should be corrected or the two will disagree.
-3. The Industry-template programme in `CLAUDE.md` (Ward Desk, Wayfinder, Atrium, Service Center) is
-   still the standing plan and has not been started.
+1. **Pending Approvals still shows 2 rows** where every other card shows 4 — its badge says 2, so
+   there genuinely are only two seeded. Add more rows if the card should look as full as its
+   neighbours.
+2. **The Custom Card's own title has no "above the card" option.** Its heading is body copy rather
+   than a card header with a count and a View-all, so the question means something different there.
+   Decide whether it should get one.
+3. **Shadow is not in a collection item's Design panel** (a Quick link gets Style · Icon · Spacing).
+   The drawer withholds it from item layers; say if it should come too.
+4. **The Use-template gallery** (`SupportPortalTemplateGallery`, reached from the module's own
+   route) still shows no industry tags — only the create-flow cards have them.
+5. The **Industry templates programme** in `CLAUDE.md` is still the open piece of work: Ward Desk,
+   Wayfinder, Atrium, Service Center and the industry-only widgets.
 
 ## Decisions made
 
-- **A preset tile draws the layout the banner will actually produce.** That is why the thumbnails read
-  each widget's resolved config rather than its defaults, and why a block of cards runs across a
-  full-width section and stacks in a narrow column — the same rule `bannerCols` applies on the canvas.
-- **Card type / Carousel type are the same question, asked in the same words.** The Media Slider's
-  group was "Navigation", which named neither what it decides nor what you get; the word "carousel"
-  sits in the group title so both option buttons hold one line at any panel width.
-- **A collection item's picture is not a field.** The inline editor draws field one as a line of text
-  and field two as a paragraph whatever they were declared as, and with no chevron that editor is the
-  item's only surface — so an image needs its own slot (`CollectionSpec.inlineImage`), not a field.
-- **Controls with no effect leave the panel, their stored values stay.** Media type went because the
-  renderer ignores it; a stored `kind` still resolves, so nothing already on a page moves.
+- **Banner M and L are fixed numbers, not a share of the viewport.** Splitting the range evenly
+  would make the same banner a different height on a different machine. `Screen` is the one stop
+  allowed to answer per-machine, because that is what it says it does.
+- **Existing banners are not snapped to the new stops.** Template banners are authored at heights
+  the rail never offered (560, 340, 220…); snapping would redesign forty shipped banners to tidy
+  one control.
+- **Industry is a second axis beside `category`, and the list is closed.** A hospital's IT desk is
+  both; an open list is how two templates end up tagged "Health" and "Healthcare".
+- **The category chip moved to the thumbnail rather than being deleted.** It is answered by the
+  filter row above the grid, but removing it is a product decision nobody asked for.
+- **One date format across the page**, including where the reference image showed two.
+- **Badges count totals, not rows in a fixture.** A badge counting the mock array contradicted the
+  "View all" beside it.
 
 ## Gotchas & notes
 
-- ⚠️ **The design panel renders OUTSIDE `CanvasProvider`.** Anything in a drawer that needs to read
-  another node's config takes a reader as a PROP (`cfgOf`); `useCanvas()` there silently returns
-  `READONLY_CANVAS`, whose `cfg` is undefined — the panel then draws every block at its factory shape
-  and nothing errors.
-- ⚠️ **Hot-reloading `PortalCanvas.tsx` swaps the canvas context**, so the page keeps rendering with
-  no `data-node` anywhere and no outlines. Reload before judging anything on the canvas.
-- ⚠️ The typecheck is the only thing that catches a missing import or a duplicate key here; run it on
-  the handful of files you touched, from the repo root, and expect these four pre-existing errors:
-  `PortalCanvas` splitNode/splitInfo, `PortalWidgetDrawer` ToggleRow `info`, `portalWidgetSpec:694`
-  TS1117, and `SupportPortalBuilder` `parseItemId(...).key` ×2.
-- Edits this session were made by writing small node scripts into the scratchpad and running them,
-  each asserting its anchor appears exactly once — Git Bash strips backslashes inside heredocs, and
-  the `Write` tool refuses to overwrite a file it has not read.
+- **The Bash heredoc trap is real and bit again.** Git Bash strips backslashes inside `<<'EOF'`,
+  so a script containing a regex silently fails to match. Write those scripts with the editor.
+- **`DROP_GROUPS` removes every field in a group called `Layout`**, with one exception carved out
+  *by control type* for the preset picker. A Gap declared beside it renders nowhere and the panel
+  looks completely untouched — this cost a full pass.
+- **Never reach for `querySelector('[data-node="…"]')` in the preview.** `Sel` renders `data-node`
+  only while the canvas is editable, so the lookup finds nothing in Preview and on the published
+  portal — the two places a measured layout most has to hold.
+- **A measured pin can chase its own tail.** The rail's alignment needed a 0.4px deadband; at 1.5px
+  it swallowed the 1.22px correction it existed to apply and looked stable *and* misaligned.
+- **Hot-reloading `PortalCanvas.tsx` swaps the canvas context**, so `data-node` disappears and the
+  page looks broken. Reload before judging anything.
+- A React `key` belongs on the component, not on a wrapper `<span>` — an inline wrapper around a
+  chip made one card 3px taller and stretched its whole grid row.

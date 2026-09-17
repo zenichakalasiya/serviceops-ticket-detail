@@ -783,6 +783,123 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   (background layer: photo panel w/ drag edge + carousel, overlay, pattern, Quick styles), phase 3
   (vertical, fixed), phase 4 (templates onto shapes + Save as my banner).
 
+- **Support Portal — the banner's HEIGHT rail (17 Sep 2026).** Four stops: **260 · 400 · 540 · Screen**,
+  140px apart. S is the height a banner already has and Screen is measured at render, so the two in
+  between divide that distance into moves somebody can point at — the first pass put them 20px apart,
+  which on a 260px band is not a move. ⚠️ **Screen stores the WORD `screen`**, not a number: the height
+  is measured from the BANNER'S OWN TOP to the bottom of the scroll port, so whatever sits above it (the
+  top bar) is taken off. Measured for the same reason the sticky rail is — published, the page scrolls in
+  the window and `100vh` is right; in the builder the page is a card inside a scrolling pane that starts
+  ~100px down, where `100vh` hangs the banner's last hundred pixels below the fold. Verified in Preview:
+  the band's bottom lands on 876 in an 876px viewport. ⚠️ **Two places read the height as a NUMBER** and
+  would take NaN from the word — the band's own `minHeight` (an invalid value is dropped silently and the
+  banner falls back to its content height) and the banner-layout thumbnail (NaN survives both clamps and
+  draws a band with no height). ⚠️ A page carrying any other number still renders it: template banners are
+  authored at heights the rail never offered (560, 340, 220…), and snapping them to the nearest stop would
+  redesign forty shipped banners to tidy one control. `StepRail`'s labels size to their word now, ends
+  hanging inwards — a fixed 24px box was fine at one or two letters and ran "Screen" off the panel's edge.
+- **Support Portal — INDUSTRY tags on template cards (`PORTAL_INDUSTRIES`, 17 Sep 2026).** Six, fixed:
+  IT / ITES · Healthcare & Pharma · Manufacturing · Government · Education · BFSI. ⚠️ A **SECOND axis
+  beside `category`**, never a replacement — category is department scope (whose desk this portal is),
+  industry is whose business it is, and a hospital's IT desk is both. The list is closed because these are
+  the verticals the portal programme is designed against, and an open one is how two templates end up
+  tagged "Health" and "Healthcare" and neither finds the other. **Two upfront, the rest behind a +N**
+  whose tooltip names them, on the NAME'S OWN ROW at the card's original 268px — a second line grew every
+  card by 30px to carry two words, and a grid of templates is read by its pictures. ⚠️ What made room:
+  the **category chip moved onto the thumbnail**, opposite the DEFAULT badge. Measured, a name plus two
+  industries plus a count plus a category wants 371–401px of a 351px row, and the category is the one
+  already answered by the filter chips directly above the grid. ⚠️ `industryChip()` may return a SHORTER
+  label than `industryName()` — exactly one does ("Healthcare & Pharma" → "Healthcare"), because at 123px
+  it ate an 83px share and clipped a template's name to fit an ampersand. ⚠️ The **+N tooltip is
+  `delayDuration={0}`**, against the product's 700ms default: that default is right for a tooltip
+  repeating a label you can already read, and this one carries the only statement of which two industries
+  are hidden. ⚠️ Its React `key` goes on the `Tooltip` itself, never on a wrapper `<span>` — an inline box
+  around the chip is taller than the chip, and the one card with a shortened tag came out 3px taller,
+  which stretched its whole grid row.
+- **Support Portal — the ICON PICKER opens BESIDE the icon (17 Sep 2026).** It pinned itself under the
+  anchor and then CLAMPED that into the viewport, so anywhere in the lower half of the screen the clamp
+  dragged it back over the icon and you picked a glyph blind. It takes whichever side has more room, caps
+  its height to that room rather than to a flat 420, and is placed from its BOTTOM edge when it goes above
+  — the popover's height depends on what the search left, so a bottom anchor needs no measuring.
+- **Support Portal — a Custom Card LINK is a node you can style (17 Sep 2026).** Each link is
+  `<widget>~i<n>` with its label at `~label`: click the words to type them, click the glyph to open the
+  shared 43-icon picker. Its collection carries `packs: ['P1', 'P6']`, so the item's drawer reads
+  **Style · Icon · Spacing** — its own fill and border, and the glyph's size, colour, container and
+  position, all keyed to the ITEM so one link can differ from the one under it. The renderer reads all
+  five per item with `chosen` (own-only): resolving up the chain would let a value set on the card
+  silently restyle every row nobody had touched. ⚠️ **Position is applied with `order`, never
+  `flex-row-reverse`** — reversing the row carried the ARROW with it and put the product's
+  "this goes somewhere" glyph on the left. Top is a wrap with `basis-full`, not a column, so the label
+  and arrow stay together under the glyph. ⚠️ `x-card` is in `CARD_TYPES` now: it draws no surface of its
+  own, so without that line a placed Custom Card landed straight on the page ground.
+  Four faults found on the way, all pre-existing: `setText` resolved the collection key as the literal
+  `items` (the key List and Accordion happen to use) so an inline edit of any other collection was written
+  into an array that widget does not have; it also read the RAW config store, where an untouched widget
+  holds nothing, so the first edit mapped over `[]` and wrote it back — **typing in a link emptied the
+  card**; the drawer found an item by `id` when seeded items carry none, so it fell back to the WIDGET's
+  config and read and wrote the item's fields one level up; and a per-item icon cannot live in the shared
+  `icons` store, which is keyed by widget — six links would have shared one glyph.
+- **Support Portal — a card block's GAP follows its PRESET (17 Sep 2026).** Action cards, KPI tiles,
+  Favourite / Most Used Services and My Assets / My CIs all take the same **pair** every band and section
+  uses, and each half appears only when the arrangement HAS that axis: all-in-one-row offers columns,
+  Stacked offers rows, 2- and 3-per-row offer both once there are more cards than fit a line. It was one
+  number applied as the CSS `gap` shorthand with a between-columns glyph on it whatever the preset had
+  done. `tileShape(owner)` in the builder answers the two questions that decide it — how many cards, and
+  how many across — per block, because the count lives somewhere different in each (the quick row's own
+  cards, a KPI's items, four service tiles, the hard four `RecordTiles` draws whatever `show` says).
+  My Assets and My CIs had NO gap control at all and a hard `gap-2.5`. ⚠️ `rest` is PER BLOCK: seeding
+  every one from 12 put 12 in a field over a page drawing 10. ⚠️ Group **'Columns', not 'Layout'** —
+  `DROP_GROUPS` removes every Layout field from every panel with ONE exception carved out BY CONTROL TYPE
+  for the preset picker, so a Gap declared beside it renders nowhere and the panel looks untouched.
+  ⚠️ `stylesRef`: §7.8 keeps a block's column count in the STYLE store and `cfgFor` has to read it, but
+  putting `styles` in that callback's deps would rebuild on every colour drag something the whole canvas
+  depends on. New writes go to `colGap` / `rowGap`, the keys the canvas's pink strips write, so the field
+  and the strips are one setting; `tileGap` is still read as the fallback for both axes.
+- **Support Portal — TITLE placement is on every card, and a lone last card spans (17 Sep 2026).**
+  My Assets, My CIs and the Custom Data Widget gained the Title row; the first two were the only cards
+  whose heading could not be moved out of their box. ⚠️ `LiveCard` needed its own copy of the outside
+  shape — it draws its own heading rather than going through `CardShell`, so "Above the card" took its
+  surface off (`Sel` withholds it on the promise the widget paints it back) and put nothing in its place.
+  The KPI display is excluded: there the "title" is the caption under a number. **A card left ALONE on the
+  last row takes the whole width** — three across and a fourth spanning all three — in the preset tile
+  AND in the KPI and action grids; `RecordTiles` already did this and its comment already pointed at the
+  tile, which was drawing a small box.
+- **Support Portal — the COLUMN-PRESET tiles are plain grey boxes (17 Sep 2026).** The banner's
+  arrangement tiles already draw every section that is not the words as a grey box, and the note there
+  says why: a tile answers ONE question. These ask the same one — how are the cards arranged — and were
+  answering a second nobody asked at a size that could not hold it (at three across a card is 17px wide,
+  and a badge with a label line inside a bordered box at 17px is three marks fighting over a space that
+  holds one). ⚠️ A ONE-ROW preset is the SHORTEST, not the tallest: handed the full tile height it drew
+  four portrait bars, the exact "tall vertical bars" its own note warns about. `MiniCard`, `KpiCardArt`,
+  `ActionCardArt` and `CardSkeleton` were deleted and `TilePresetPicker` lost its `kind` prop with them.
+- **Support Portal — the six data cards' CONTENT and row shapes (17 Sep 2026, from reference images).**
+  Page layout untouched; only what the cards say and the shape of one row. **My Open Requests** — four
+  rows in the two-line `meta` shape (id + subject, timestamp under, status holding the right edge), badge
+  8. **Pending Approvals** — the id and the subject stop sharing a pill (an id is a thing you copy, a
+  subject a thing you read), the reason joins the subject after a middot, and the three actions moved onto
+  the FIRST line beside what they act on. **Most Read Knowledge** — its full name, four articles, one-word
+  tags holding the right edge, badge 412. **Announcements** — the tile is the MONTH over the DAY
+  (`postedParts` returns `{ month, date }`), three notices. **My Assets / My CIs** — badges 8 and 4.
+  ⚠️ **Dividers are FULL WIDTH**: `-mx-4` on `ListBody` and `px-4` back on each `Row` — inside the card's
+  padding a rule stopped 16px short at both ends, and a rule between two rows is only a rule if it reaches
+  the edges of the thing it divides. ⚠️ **ONE date format on the page**, `Aug 12, 10:09 AM`, including on
+  the approvals row where the reference wrote `11 Aug`. ⚠️ The badges count **totals**
+  (`PORTAL_OPEN_REQUEST_TOTAL`, `PORTAL_ARTICLE_TOTAL`, `MY_ASSET_TOTAL`, and `RecordTiles`' `total` prop),
+  not the rows in a mock array — which made a badge a fact about the fixture and contradicted the
+  "View all" beside it.
+- **Support Portal — the RAIL's first card ends where the row beside it ends (17 Sep 2026).** The work
+  band is two columns laid out by different mechanisms — the main region is a grid whose rows size to
+  their content, the rail a flex column — so nothing lined up the card at the top of one with the cards at
+  the top of the other, and Announcements stopped 33px short of Requests. The rail's first card is pinned
+  to the main region's first row and stops growing (`flex: 0 0 auto`); the cards under it absorb the
+  slack. ⚠️ Reached by walking the DOM from a REF on the card, never
+  `querySelector('[data-node="work-main"]')` — `Sel` renders `data-node` only while the canvas is editable.
+  ⚠️ It measures the CARDS in the top row, not the grid's own track: the track read 332.97 where the card
+  in it measured 334.19. ⚠️ A **0.4px deadband**, because this chases its own tail — pinning the card
+  changes the rail's height, the band's, and what the grid's auto rows take. A wider band swallowed the
+  correction it was meant to apply: at 1.5px it kept a value 1.22px wrong, which is how the first attempt
+  looked stable and misaligned at once. Verified 0.14px apart across four samples a second apart.
+
 ## Parked features
 Four Support Portal features are BUILT-OR-PART-BUILT AND SWITCHED OFF, with their full context in
 [future-tasks.md](future-tasks.md): **AI** (rail item commented out in `SupportPortalBuilder`; the
