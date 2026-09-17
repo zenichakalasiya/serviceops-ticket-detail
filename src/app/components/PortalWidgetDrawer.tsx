@@ -1156,7 +1156,7 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
         const count = Array.isArray(viewCfg.items)
           ? (viewCfg.items as { hidden?: boolean }[]).filter((it) => !it.hidden).length
           : Number(viewCfg.__tileCount ?? 4);
-        return <TilePresetPicker count={count} kind={Array.isArray(viewCfg.items) ? 'kpi' : 'action'} value={Number(v ?? count)} onChange={(c) => set(f.key, String(c))} />;
+        return <TilePresetPicker count={count} value={Number(v ?? count)} onChange={(c) => set(f.key, String(c))} />;
       }
       case 'bannerPreset':
         return <BannerPresetPicker tree={(viewCfg.__bannerTree as BannerNode | null) ?? null} onPick={(t) => set(f.key, t)} />;

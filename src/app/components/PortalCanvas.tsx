@@ -1064,7 +1064,7 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
                 <span className="fixed inset-0 z-[60]" onClick={() => setColsOpen(false)} />
                 <div className="absolute left-0 top-[calc(100%+6px)] z-[61] rounded-lg border border-[#E5E7EB] bg-white p-3 shadow-[0_12px_16px_-4px_rgba(16,24,40,0.10),0_4px_6px_-2px_rgba(16,24,40,0.06)]" style={{ width: Math.min(4, count) * 80 + 24 }}>
                   <p className="mb-2 text-[12px] font-medium text-[#364658]">Presets</p>
-                  <TilePresetPicker count={count} kind={kpi ? 'kpi' : 'action'} value={cols} onChange={(c) => { setCfg?.(id, { cols: String(c) }); setColsOpen(false); }} />
+                  <TilePresetPicker count={count} value={cols} onChange={(c) => { setCfg?.(id, { cols: String(c) }); setColsOpen(false); }} />
                 </div>
               </>
             )}
