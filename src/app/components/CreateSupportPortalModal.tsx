@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { ArrowLeft, ChevronRight, Eye, PenLine, X } from 'lucide-react';
-import { TEMPLATE_CATEGORIES, VISIBLE_TEMPLATES } from './supportPortalData';
+import { TEMPLATE_CATEGORIES, VISIBLE_TEMPLATES, industriesOf, industryName } from './supportPortalData';
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import type { PortalTemplate } from './supportPortalData';
 import { TemplateArt } from './SupportPortalTemplateGallery';
 import { SupportPortalPreview } from './SupportPortalPreview';
@@ -224,12 +225,46 @@ function Steps({ step, canGoBack, onBack }: { step: 1 | 2; canGoBack: boolean; o
   );
 }
 
+/* The industries a template is built for, on its card.
+ *
+ * ⚠️ TWO upfront and the rest behind a count. A template can serve up to six, and six chips in a
+ * card footer is a list nobody reads sitting where the card's name should be — at this width they
+ * would wrap to three lines and push the grid ragged. Two is enough to say what the layout is FOR;
+ * the count says there is more, and the tooltip says what, which is the one question a "+2" leaves.
+ * ⚠️ OUTLINE chips, where the category is a filled one. They are two different kinds of label —
+ * whose desk this is, and whose business — and drawn identically they read as one row of five tags
+ * with no way to tell which is which.
+ * ⚠️ Bottom RIGHT, on their own line. The name owns the left edge of the footer; industries are
+ * what you scan a grid by once you know what you are looking for, so they sit where the eye lands
+ * last and never compete with the template's name. */
+function IndustryTags({ ids }: { ids: string[] }) {
+  if (!ids.length) return null;
+  const names = ids.map(industryName);
+  const rest = names.slice(2);
+  const chip = 'inline-flex flex-shrink-0 items-center rounded-md border border-[#E5E7EB] bg-white px-1.5 py-0.5 text-[11px] font-medium text-[#64748B]';
+  return (
+    <div className="flex flex-wrap items-center justify-end gap-1 px-4 pb-3">
+      {names.slice(0, 2).map((n) => <span key={n} className={chip}>{n}</span>)}
+      {rest.length > 0 && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            {/* ⚠️ `cursor-help`, not a pointer: the count is not a button and pressing it does nothing.
+                A pointer on a thing that only answers on hover is a promise the chip cannot keep. */}
+            <span className={`${chip} cursor-help`}>+{rest.length}</span>
+          </TooltipTrigger>
+          <TooltipContent side="top">{rest.join(' · ')}</TooltipContent>
+        </Tooltip>
+      )}
+    </div>
+  );
+}
+
 /* One template card: the drawn thumbnail, name and category — and on hover (or keyboard focus) a
    dimmed scrim over the thumbnail carrying the two things you can do with it. ⚠️ No click-anywhere
    action on the card: "look first" and "use it" are different intentions, and a whole-card click
    would have to pick one of them for you. */
-function TemplateCard({ art, name, meta, badge, onPreview, onUse }: {
-  art: ReactNode; name: string; meta: string; badge?: string;
+function TemplateCard({ art, name, meta, badge, industries = [], onPreview, onUse }: {
+  art: ReactNode; name: string; meta: string; badge?: string; industries?: string[];
   onPreview: () => void; onUse: () => void;
 }) {
   /* Hover is QUIET: the border darkens one step and a light scrim carries the two actions — no lift, no shadow, no zoom. */
@@ -251,10 +286,14 @@ function TemplateCard({ art, name, meta, badge, onPreview, onUse }: {
           >Use template</button>
         </div>
       </div>
-      <div className="flex items-center gap-2 border-t border-[#F0F2F5] px-4 py-3">
+      {/* ⚠️ `pb-2` when there are industries under it, `py-3` when there are none — the footer's own
+          bottom inset moves onto whichever row is last, so a card with tags and a card without end
+          with the same space beneath their final line instead of one of them looking loose. */}
+      <div className={`flex items-center gap-2 border-t border-[#F0F2F5] px-4 pt-3 ${industries.length ? 'pb-2' : 'pb-3'}`}>
         <span className="min-w-0 flex-1 truncate text-[14px] font-semibold text-[#1E293B]">{name}</span>
         <span className="flex-shrink-0 rounded-md bg-[#F1F5F9] px-2 py-0.5 text-[11.5px] font-medium text-[#64748B]">{meta}</span>
       </div>
+      <IndustryTags ids={industries} />
     </div>
   );
 }
@@ -400,6 +439,7 @@ export function CreateSupportPortalModal({ onClose, onSaveDetails, onScratch, on
                     art={<TemplateArt layout={t.layout} accent={t.accent} />}
                     name={t.name}
                     meta={t.category}
+                    industries={industriesOf(t)}
                     onPreview={() => (onPreview ? onPreview(t) : onTemplate(t))}
                     onUse={() => onTemplate(t)}
                   />

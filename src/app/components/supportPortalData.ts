@@ -54,11 +54,46 @@ export interface PortalPage {
    and the work cards below them. */
 export type TemplateLayout = 'portal' | 'classic' | 'spotlight' | 'catalog' | 'knowledge' | 'minimal' | 'status' | 'verdant' | 'counter' | 'deskrail';
 
+/* The industries a template is BUILT FOR.
+ *
+ * ⚠️ A SECOND axis beside `category`, never a replacement. Category is department scope — whose
+ * desk this portal is, IT or HR or Facilities — and industry is whose BUSINESS it is. A hospital's
+ * IT desk is both, so a template that could only carry one of them would have to drop the half the
+ * admin was searching on.
+ * ⚠️ SIX, and the list is closed. They are the verticals the portal programme is being designed
+ * against, so a seventh is a decision about the programme rather than a line of data — and an open
+ * list is how two templates end up tagged "Health" and "Healthcare" and neither finds the other.
+ * ⚠️ ORDER MATTERS: it is the order the chips are shown in, so a template's first two tags are the
+ * two an admin reads on the card. Broadest first. */
+export const PORTAL_INDUSTRIES = [
+  { id: 'it', name: 'IT / ITES' },
+  { id: 'healthcare', name: 'Healthcare & Pharma' },
+  { id: 'manufacturing', name: 'Manufacturing' },
+  { id: 'government', name: 'Government' },
+  { id: 'education', name: 'Education' },
+  { id: 'bfsi', name: 'BFSI' },
+] as const;
+
+export type PortalIndustry = typeof PORTAL_INDUSTRIES[number]['id'];
+
+/** ⚠️ Falls back to the id, so an unknown one shows SOMETHING rather than an empty chip. */
+export const industryName = (id: string): string =>
+  (PORTAL_INDUSTRIES as readonly { id: string; name: string }[]).find((i) => i.id === id)?.name ?? id;
+
+/** A template's industries in `PORTAL_INDUSTRIES` order, whatever order they were written in. */
+export const industriesOf = (t: { industries?: readonly string[] }): string[] =>
+  PORTAL_INDUSTRIES.filter((i) => (t.industries ?? []).includes(i.id)).map((i) => i.id);
+
 export interface PortalTemplate {
   id: string;
   name: string;
   desc: string;
   category: 'IT Support' | 'HR' | 'Facilities' | 'General';
+  /* Which businesses this layout was built for — up to six, shown two-at-a-time on its card.
+     ⚠️ Optional: the Default tile has none, and that is not an omission. It is the portal that
+     already exists rather than a layout chosen for a trade, so an industry tag on it would be
+     claiming something nobody decided. */
+  industries?: readonly PortalIndustry[];
   layout: TemplateLayout;
   /** Tints the hero of the page this template produces, so picking one is visibly a choice. */
   accent: string;
@@ -129,6 +164,9 @@ export const PORTAL_TEMPLATES: PortalTemplate[] = [
     name: 'Search Spotlight',
     desc: 'Puts deflection first: a full-bleed search hero with popular articles surfaced before any form.',
     category: 'IT Support',
+    /* Search before a form is the pattern for a population that self-serves and a catalogue that is
+       mostly articles — a service desk and a campus. */
+    industries: ['it', 'education'],
     layout: 'spotlight',
     accent: '#1E3A8A',
     blocks: ['Full-bleed search', 'Popular articles', 'Quick actions', 'My Open Requests'],
@@ -209,6 +247,9 @@ export const PORTAL_TEMPLATES: PortalTemplate[] = [
     name: 'Verdant Service Desk',
     desc: 'A light banner instead of a dark one, actions that stay off it, and the requester’s work in one tabbed panel rather than three cards.',
     category: 'IT Support',
+    /* A calm, light page that never shouts — which is what a ward, a campus and a branch all need
+       from a portal their own staff read between other jobs. */
+    industries: ['healthcare', 'education', 'bfsi'],
     layout: 'verdant',
     /* The tile and the page both read green, but the BANNER is the pale end of it — see
        `bannerStyle: 'light'`. This value tints the gallery chrome, not the band. */
@@ -286,6 +327,9 @@ export const PORTAL_TEMPLATES: PortalTemplate[] = [
   {
     id: 'tpl-counter',
     name: 'Action Counter',
+    /* Four doors inside the banner, reachable in one look — the shape that suits a shift worker at a
+       shared terminal as much as an office. */
+    industries: ['manufacturing', 'it', 'government', 'bfsi'],
     desc: 'Every action lives inside the banner itself as a glass tile, with Report an Incident inverted to solid white — the heading pairs with the search on one line, and the requester’s own work sits beside a stacked side rail below.',
     category: 'IT Support',
     layout: 'counter',
@@ -415,6 +459,9 @@ export const PORTAL_TEMPLATES: PortalTemplate[] = [
   {
     id: 'tpl-deskrail',
     name: 'Service Counter',
+    /* A standing rail of destinations beside the requester’s own records — a counter, which is what
+       a citizen service point and a bank branch both are. */
+    industries: ['government', 'bfsi'],
     desc: 'The banner turns on its side — a full-height navy rail carrying the greeting, the search and the three doors, with everything the requester owns in the column beside it.',
     category: 'IT Support',
     layout: 'deskrail',
