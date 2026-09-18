@@ -3,8 +3,9 @@ import type { CSSProperties, ReactNode } from 'react';
 import {
   Bell, Check, Info, Keyboard, KeyRound, House, MessageSquare, MessagesSquare, Plus, PanelLeft,
   Link2, RotateCcw, Search, ShoppingCart, Type, X, ChevronsRight, ChevronRight, LayoutGrid,
-  HardDrive, Server, Ticket, Lightbulb, Clock, Megaphone, ArrowRight,
+  HardDrive, Server, Ticket, Lightbulb, Clock, Megaphone, ArrowRight, Lock,
 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { AnnouncementsRender, ContactRender, FavouriteServicesRender, FeaturedServicesRender } from './PortalCollectionRender';
 import { MotadataLogo } from './Header';
 import { AiSparkle } from './AiSparkle';
@@ -29,6 +30,47 @@ import { DEFAULT_BLOCK_ORDER, DEFAULT_CONTENT, DEFAULT_ROW_ORDER, fillCss, isBra
 import type { Box, BoxDir, CustomSection, PlacedElement, PortalPageContent } from './portalPageModel';
 import { iconNode, isImageChoice } from './PortalIconPicker';
 import type { IconChoice } from './PortalIconPicker';
+
+/* The space under a vertical banner, in the EDITOR.
+ *
+ * ⚠️ The banner does not stick while you are editing — see `heroSticky` — so the page is one scroll
+ * and the rest of the banner's column is real, visible space. It belongs to the banner: on the live
+ * portal the banner is pinned over exactly this area, so anything placed here would be covered by it.
+ * Saying that with a hatch and a tooltip is the only honest thing to draw here; leaving it blank
+ * invites a drop that could never have worked.
+ *
+ * ⚠️ `onDragOver` does NOT preventDefault. Accepting the dragover is what makes a drop possible, so
+ * refusing it is how the cursor comes to read "no drop" — and `stopPropagation` keeps the columns
+ * and seams behind this area from accepting it on its behalf. */
+function BannerReserved() {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div
+          data-banner-reserved=""
+          onDragOver={(e) => { e.stopPropagation(); }}
+          onDrop={(e) => { e.preventDefault(); e.stopPropagation(); }}
+          className="relative min-h-[64px] w-full flex-1 cursor-not-allowed"
+          style={{
+            /* A hatch, not a flat grey: a plain grey block reads as a card nobody has filled in,
+               and the whole point is that this space cannot be filled in. */
+            backgroundImage:
+              'repeating-linear-gradient(135deg, rgba(100,116,139,0.055) 0 6px, transparent 6px 12px)',
+            borderTop: '1px dashed #D9E0EA',
+          }}
+        >
+          <span className="pointer-events-none absolute left-1/2 top-4 flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap text-[11.5px] font-medium text-[#9AA5B4]">
+            <Lock size={12} strokeWidth={2} />Banner column
+          </span>
+        </div>
+      </TooltipTrigger>
+      <TooltipContent side="right" className="max-w-[260px] text-wrap">
+        This space belongs to the banner. On the live portal the banner stays in place while the page
+        scrolls beside it, so nothing can be added here.
+      </TooltipContent>
+    </Tooltip>
+  );
+}
 
 /* The Support Portal page — what an end user sees, rendered inside the builder canvas.
  *
@@ -1689,7 +1731,20 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
      ⚠️ `self-start` is what makes this work AT ALL: the row is `items-stretch`, so the rail was
      already as tall as everything beside it, and a sticky element with nowhere to travel never
      moves. It has to size to the viewport first, then stick. */
-  const heroSticky = heroSide && pageCfg.heroSticky === true;
+  /* ⚠️ Pinning is a fact about the LIVE page, and it is switched off while you are EDITING.
+     A sticky, screen-tall banner covers its own column at every scroll position, so in the canvas
+     it hid the one thing the admin has to be able to see: that the column beneath it is the
+     banner's and cannot take a widget. The banner therefore scrolls with the page here, the space
+     under it is drawn as reserved (`BannerReserved`), and Preview — which renders this same tree
+     with `enabled: false` — shows the real behaviour: the banner holds still, the page scrolls.
+     ⚠️ `heroPinned` is the SETTING, `heroSticky` is whether it is applied. Keeping them apart is
+     what lets the reserved strip know it is standing in for a banner that will pin later. */
+  const heroPinned = heroSide && pageCfg.heroSticky === true;
+  const heroSticky = heroPinned && !enabled;
+  /* The banner's column is only partly the banner's when the banner pins: a vertical banner that
+     does NOT pin is a column the full height of the page by design (Atrium), and there is no space
+     under it to reserve. */
+  const heroReserved = heroPinned && enabled;
   /* ⚠️ The rail's height is MEASURED, not `100vh`, and this is the whole difficulty of a sticky
      rail. In the published portal the page scrolls in the WINDOW and 100vh is exactly right. In
      the builder the page is a card inside a scrolling pane that starts ~100px down, so a
@@ -2495,7 +2550,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
       id="hero"
       toolbarBelow
       /* Width and the measured height both land in the style below. */
-      className={`${wc('hero').fullBleed === true ? '-mx-0' : ''} ${heroSide ? (heroSticky ? 'flex-none self-start sticky top-0' : 'flex-none self-stretch') : ''}`}
+      className={`${wc('hero').fullBleed === true ? '-mx-0' : ''} ${heroSide ? (heroSticky ? 'flex-none self-start sticky top-0' : heroReserved ? 'flex-none self-start' : 'flex-none self-stretch') : ''}`}
       /* ⚠️ Merged with the measured sticky height rather than replacing it — a rail can be both a
          set width and a measured height, and an object literal here would drop one of them. */
       style={{
@@ -3018,6 +3073,18 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
   const heroPlaced = heroHost
     ? <AddedSection section={heroHost} icons={icons} placedText={placedText} cfg={cfg} bandNode={heroBand} />
     : heroBand;
+  /* ⚠️ The banner and the space under it are ONE column, so the row still divides in two and the
+     right-hand side is unaffected. Built once here and used by both page branches — the blank page
+     and the full one — because a column assembled twice is two places for the reserved strip to
+     stop matching the banner's width. */
+  const heroColumn = heroReserved
+    ? (
+      <div className="flex flex-none flex-col self-stretch">
+        {heroPlaced}
+        <BannerReserved />
+      </div>
+    )
+    : heroPlaced;
   return (
     <PlacedBlockRenderers.Provider value={{ 'x-actions': actionsBlock }}>
     <div
@@ -3078,7 +3145,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
             <div ref={railRowRef} className={heroSide ? 'flex min-h-full items-stretch' : 'contents'}>
             {/* ⚠️ ABOVE the padded container, not inside it: a banner is a full-bleed band and the
                 blank page's wrapper carries the content inset every section sits in. */}
-            {hasHero && heroPlaced}
+            {hasHero && heroColumn}
             {/* ⚠️ `h-full`, not a `min-h-[420px]` guess. The content area already stretches to the
                 canvas, so a fixed floor left the empty state sitting in a short band with the page
                 colour running on underneath it — the one screen where there is nothing else to look
@@ -3086,7 +3153,16 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                 ⚠️ A page carrying a BANNER is no longer empty, so it takes the padded layout and
                 loses the centring — the tall empty state under a banner is a page that says it has
                 nothing on it directly beneath the thing it has. */}
-            <div className={`${sections.length || hasHero ? 'px-6 py-8' : 'flex h-full min-h-[520px] flex-col items-center justify-center px-6 py-16'} ${heroSide ? 'min-w-0 flex-1' : ''}`}>
+            {/* ⚠️ A VERTICAL banner's column carries NO padding of its own — the same rule the full
+                page beside it has always followed ("a SECTION runs from the page's left edge to its
+                right edge, so each one carries its own inset"). The wrapper's px-6/py-8 was a second
+                inset on top of the section's own 24px, so the first section sat 48px from the banner
+                it is meant to sit beside, and the gap read as a margin nobody could find a control
+                for. The empty-column invitation below keeps its own padding, because there is no
+                section there yet to carry any.
+                ⚠️ A blank HORIZONTAL page is deliberately untouched: its sections have always been
+                inset from the page edges, and changing that here would move every existing one. */}
+            <div className={`${heroSide ? 'min-w-0 flex-1' : sections.length || hasHero ? 'px-6 py-8' : 'flex h-full min-h-[520px] flex-col items-center justify-center px-6 py-16'}`}>
               {sections.length === 0 && !hasHero && (
               /* ⚠️ NO dashed box. A dotted rectangle in the middle of an empty page reads as a drop
                   ZONE — a specific place the widget has to land — and the page will take a drop
@@ -3158,7 +3234,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
           {/* ── Hero ── */}
           {/* ⚠️ Gated, because the banner is deletable now that the palette can put one back —
               which is exactly the reason its `noDelete` existed. */}
-          {hasHero && heroPlaced}
+          {hasHero && heroColumn}
 
           {/* No horizontal padding here: a SECTION runs from the page's left edge to its right
               edge, so each one carries its own inset instead of sitting inside a padded column. */}

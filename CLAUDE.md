@@ -944,12 +944,36 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   column carries its own "This column is the page" invitation, because with a banner present the
   tall empty state is suppressed and a whole empty column offering only a 12px seam is an
   instruction nobody can find. Verified: banner 420 × 806px, `position: sticky`, in an 846px pane.
-  **Still to build — stage 2:** width drag on the banner's inner edge, screen-height/sticky on every
-  vertical path, right-column section polish. **Stage 3:** drag the banner between left and right
-  (decided: those two only — a centre banner means two narrow separately-scrolling columns), and the
-  restricted-area treatment, which is shown **while dragging a widget** (hatch + reason + refused
-  drop) rather than as a permanent grey strip: a sticky screen-tall banner covers its column at every
-  scroll position, so a strip beneath it could never be seen.
+  **Still to build — stage 2:** width drag on the banner's inner edge, and right-column section
+  polish. **Stage 3:** drag the banner between left and right (decided: those two only — a centre
+  banner means two narrow separately-scrolling columns).
+- **Support Portal — the vertical banner PINS IN PREVIEW ONLY, and its column is visibly spoken for
+  (18 Sep 2026).** ⚠️ `heroPinned` is the SETTING (`pageCfg.heroSticky`), `heroSticky` is whether it
+  is APPLIED — and it is applied only while `!enabled`, i.e. in Preview and on the published portal.
+  In the editor the banner scrolls with the page. The reason is the one that made the first attempt
+  wrong: a sticky screen-tall banner covers its own column at every scroll position, so the canvas
+  hid the one thing the admin has to see — that the space under the banner is the banner's and
+  cannot take a widget. (This REPLACES the earlier "show the restriction only while dragging"
+  decision, which existed only because the strip could never be seen while the banner was pinned.)
+  ⚠️ `heroReserved = heroPinned && enabled` draws **`BannerReserved`** under the banner: a hatched
+  strip with a lock and "Banner column", plus a Radix tooltip saying the banner will stand over this
+  space on the live portal. Its `onDragOver` deliberately does NOT `preventDefault` — accepting the
+  dragover is what makes a drop possible, so refusing it is what makes the cursor read no-drop — and
+  it `stopPropagation`s so the columns and seams behind it cannot accept the drop on its behalf.
+  ⚠️ The banner and the strip are ONE column (`heroColumn`, built once and used by both page
+  branches), so the row still divides in two and the strip cannot end up a different width from the
+  banner. ⚠️ A vertical banner with `heroSticky` OFF (Atrium) is unchanged: it is a column the full
+  height of the page by design, so it keeps `self-stretch` and has no space under it to reserve.
+  Measured: editor `position: relative`, banner top 68 after a 900px scroll, hatch visible; Preview
+  wrapper `position: sticky`, band 846px in an 846px pane.
+- **Support Portal — a vertical banner's RIGHT COLUMN carries no page padding (18 Sep 2026).** The
+  blank page's wrapper was adding `px-6 py-8` on top of each section's own `SECTION_PAD`, so the
+  first section sat 48px from the banner it is meant to sit beside and the gap read as a margin with
+  no control behind it. It now follows the rule the full page has always followed — *"a SECTION runs
+  from the page's left edge to its right edge, so each one carries its own inset"*. Measured: section
+  left edge 501px = the banner's right edge exactly, wrapper padding `0px`, card still 24px in from
+  the banner. ⚠️ A blank HORIZONTAL page is deliberately untouched — its sections have always been
+  inset from the page edges, and changing that would move every existing one.
 - ⚠️ **You CAN drive the real app headlessly — this is how to verify UI work here.** `playwright-core`
   is already in the npx cache and Chrome is installed, so a plain node script can open the builder,
   click through it and screenshot every step:
