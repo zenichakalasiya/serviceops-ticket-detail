@@ -5,7 +5,10 @@ import {
   Palette, PanelRight, Paintbrush, Pencil, Plus, Redo2, Undo2, X, LayoutPanelTop,
 } from 'lucide-react';
 import { PortalBannersPanel } from './PortalBannersPanel';
-import { TEMPLATE_HERO_KEYS, TEMPLATE_PAGE_KEYS, TEMPLATE_STYLE_IDS, bannerTemplate, instantiateBanner } from './portalBannerTemplates';
+import { SCRATCH_BANNER_ID, TEMPLATE_HERO_KEYS, TEMPLATE_PAGE_KEYS, TEMPLATE_STYLE_IDS, bannerTemplate, instantiateBanner, scratchBanner } from './portalBannerTemplates';
+import type { BannerTemplate } from './portalBannerTemplates';
+import { BannerStartDialog } from './PortalBannerStart';
+import type { BannerStart } from './PortalBannerStart';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { AiSparkle } from './AiSparkle';
@@ -1406,10 +1409,11 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     /* ⚠️ A blank page's banner lands READY-FILLED from the first shape, and the panel opens on the
        shape picker — so "add a banner" produces a finished banner, not an empty band to build. */
     if (type === 'x-banner') {
-      /* The REGULAR banner — starting shapes are switched off for now (see HERO_SPEC). */
-      setRemoved((r) => r.filter((x) => x !== 'hero'));
-      setSelectedId('hero');
-      toast.success('Banner added');
+      /* ⚠️ ASKS first. Orientation is not a style — a vertical banner turns the page into two
+         columns and moves every section beside it — so it cannot be a control you find afterwards,
+         and it decides which banners there are to choose from. The dialog answers both in the order
+         they depend on each other; see PortalBannerStart. */
+      setBannerStart(true);
       return;
     }
     /* ⚠️ The SEARCH is the banner's own field, so it needs a banner. Refusing WITH THE REASON at
@@ -1499,6 +1503,8 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
  * in the band. Switching between layouts on an untouched banner is a thing people do repeatedly
  * while looking, and a dialog on every click of a picker teaches them to dismiss dialogs. */
   const [pendingLayout, setPendingLayout] = useState<string | null>(null);
+  /* The add-a-banner dialog. Open only while the page HAS no banner — see `addElement`. */
+  const [bannerStart, setBannerStart] = useState(false);
 
 
   const runBannerLayout = useCallback((id: string) => {
@@ -1583,8 +1589,10 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     return q;
   };
 
-  const applyBannerTemplate = useCallback((id: string) => {
-    const t = bannerTemplate(id);
+  /* ⚠️ Takes a TEMPLATE as well as an id, so the blank start lands through the same path rather
+     than through writes of its own — see `startBanner`. The Banners panel still hands it an id. */
+  const applyBannerTemplate = useCallback((pick: string | BannerTemplate) => {
+    const t = typeof pick === 'string' ? bannerTemplate(pick) : pick;
     if (!t) return;
     const applied = instantiateBanner(t, Date.now());
     applied.widgets.forEach((w) => registerPlaced(w.id, w.name, w.type, 'hero'));
@@ -1609,8 +1617,25 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     });
     setRowExtras((prev) => ({ ...prev, hero: applied.widgets.map(({ id: wid, type, name }) => ({ id: wid, type, name })) }));
     setRemoved((r) => r.filter((x) => x !== 'hero'));
-    toast.success(`${t.name} banner applied`);
+    /* ⚠️ The blank one says what happened, not what it is called: "Start from scratch banner
+       applied" reads as the name of a banner somebody shipped. */
+    toast.success(t.id === SCRATCH_BANNER_ID ? 'Banner added — design it in the panel' : `${t.name} banner applied`);
   }, []);
+
+  /* ── Adding a banner ───────────────────────────────────────────────────────────────────────
+   * ⚠️ ONE applier for both answers. A scratch banner is a `BannerTemplate` like any other (see
+   * `scratchBanner`), so it goes through `applyBannerTemplate` — the path that already wipes every
+   * key the outgoing banner could have set, swaps the band's widgets wholesale and hands the action
+   * cards' column count back when a horizontal banner takes over. Writing the blank one by hand here
+   * is how it ends up carrying a stale colour from the banner before it. */
+  const startBanner = useCallback((c: BannerStart) => {
+    setBannerStart(false);
+    applyBannerTemplate(c.templateId ?? scratchBanner(c.orientation));
+    /* ⚠️ `select`, not `setSelectedId`. The rail's Widgets list is open — that is where the Banner
+       was just clicked — and only `select` stands it down, so the panel answers with the banner's
+       own settings rather than leaving the library up over the thing it has just added. */
+    select('hero');
+  }, [applyBannerTemplate, select]);
 
   const restoreDefaultBanner = useCallback(() => {
     const d = defaultBannerRef.current;
@@ -3153,6 +3178,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
         />
       )}
       {layoutConfirm}
+      {bannerStart && <BannerStartDialog onPick={startBanner} onClose={() => setBannerStart(false)} />}
     </div>
   );
 }

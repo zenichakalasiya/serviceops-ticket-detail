@@ -526,6 +526,45 @@ export const BANNER_TEMPLATES: BannerTemplate[] = [
 ];
 
 export const bannerTemplate = (id: string | undefined) => BANNER_TEMPLATES.find((t) => t.id === id);
+/* ── Starting from scratch ─────────────────────────────────────────────────────────────────── */
+
+export const SCRATCH_BANNER_ID = 'scratch';
+
+/** The blank start: a plain white band carrying the page's own heading, sub-heading and search, and
+ *  nothing else — the banner an admin designs from the panel rather than picks off a shelf.
+ *
+ * ⚠️ It is a TEMPLATE, not a set of writes of its own, so it lands through `instantiateBanner` like
+ * every other banner. A second applier is how the scratch banner ends up with, say, the template
+ * path's search hairline and none of its key-wiping — and the banner nobody picked off a tile is
+ * the one where a stale key from the previous banner would be hardest to explain.
+ * ⚠️ Its id is deliberately not in `BANNER_TEMPLATES`, so `bannerTemplate(id)` finds nothing and the
+ * Banners panel shows no tile as active: this page is not showing any of them.
+ * ⚠️ No `heading`/`sub`. Leaving them unset falls through to the page's own content, which is what
+ * makes "a title, a sub-heading and a search, and nothing else" true rather than three strings
+ * copied into a second place.
+ * ⚠️ `heroInk: 'dark'` travels with the white: a pale band with the default white heading is an
+ * invisible heading. The search's hairline is added by `instantiateBanner` itself, from the colour,
+ * so a white field on a white banner is not a field nobody can find. */
+export const scratchBanner = (orientation: 'horizontal' | 'vertical'): BannerTemplate => ({
+  id: SCRATCH_BANNER_ID,
+  name: 'Start from scratch',
+  industries: [],
+  orientation,
+  hero: {
+    bgKind: 'color', colorMode: 'solid', bannerColor: '#FFFFFF',
+    showSearch: true,
+    /* A vertical banner is the page's own column, so it is as tall as the screen by default — the
+       same "Screen" stop the Height rail offers, stored as the word because it is measured. */
+    height: orientation === 'vertical' ? 'screen' : 260,
+    contentAlign: 'left',
+  },
+  title: { size: 28, color: INK },
+  subtitle: INK_SUB,
+  page: orientation === 'vertical'
+    ? { heroInk: 'dark', heroPlacement: 'left', heroWidth: 420, heroSticky: true }
+    : { heroInk: 'dark' },
+});
+
 
 /* ── Applying ─────────────────────────────────────────────────────────────────────────────── */
 

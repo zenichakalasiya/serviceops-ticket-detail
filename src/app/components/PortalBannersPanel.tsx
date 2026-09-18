@@ -258,6 +258,49 @@ function VerticalThumb({ t }: { t: BannerTemplate }) {
   );
 }
 
+/* ── Shared with the add-a-banner dialog ──────────────────────────────────────────────────────
+ *
+ * ⚠️ Exported so the dialog that opens when a banner is ADDED draws its tiles with these, not with
+ * a second set of its own. Two pickers for one set of banners is two places for a thumbnail to stop
+ * matching the banner it promises — the fault this file's header exists to prevent. */
+
+/** A template's thumbnail, in whichever shape its orientation makes. `null` is the product default. */
+export function BannerThumb({ t }: { t: BannerTemplate | null }) {
+  return t?.orientation === 'vertical' ? <VerticalThumb t={t} /> : <HorizontalThumb t={t} />;
+}
+
+/** The scratch start, drawn as what it is: a white band with a heading, a sub-heading and a search.
+ *  ⚠️ Same two shapes the real thumbnails use, so "start from scratch" reads as one more banner on
+ *  the shelf rather than as an escape hatch beside them. */
+export function BannerScratchThumb({ orientation }: { orientation: Orientation }) {
+  const words = (
+    <>
+      <PieceSkeleton piece={{ key: 'copy' }} dark={false} />
+      <PieceSkeleton piece={{ key: 'search' }} dark={false} />
+    </>
+  );
+  if (orientation === 'vertical') {
+    return (
+      <span className="flex h-[120px] w-full overflow-hidden rounded-[5px] bg-[#EEF2F6]">
+        <span className="flex w-[42%] flex-none flex-col gap-[5px] bg-white p-[7px] shadow-[0_0_0_0.5px_rgba(15,23,42,0.10)]">{words}</span>
+        <span className="grid flex-1 grid-cols-2 content-start gap-[3px] p-[5px]">
+          {[16, 16, 22, 22, 14, 14].map((h, i) => <span key={i} className="rounded-[2px] bg-white" style={{ height: h }} />)}
+        </span>
+      </span>
+    );
+  }
+  return (
+    <span className="flex h-[84px] w-full flex-col overflow-hidden rounded-[5px] bg-[#EEF2F6]">
+      <span className="flex min-h-0 flex-1 flex-col justify-center gap-[5px] bg-white p-[7px] shadow-[0_0_0_0.5px_rgba(15,23,42,0.10)]">{words}</span>
+      <span className="flex h-[14px] flex-none gap-[3px] px-[5px] pt-[3px]">
+        {[0, 1, 2].map((i) => <span key={i} className="h-[8px] flex-1 rounded-[2px] bg-white" />)}
+      </span>
+    </span>
+  );
+}
+
+
+
 /* ── The panel ─────────────────────────────────────────────────────────────────────────────── */
 
 function Tile({ active, label, sub, onPick, children }: { active: boolean; label: string; sub: string; onPick: () => void; children: ReactNode }) {
@@ -351,3 +394,8 @@ export function PortalBannersPanel({ activeId, onApply, onDefault }: {
     </div>
   );
 }
+
+/* ⚠️ At the FOOT, after the declarations they name: a re-export above them is legal (a function
+   declaration is hoisted) and reads as a second definition. */
+export { Tile as BannerTile };
+export type { Orientation as BannerOrientation };

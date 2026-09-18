@@ -1,92 +1,87 @@
-# Handoff — 2026-09-17 15:30
+# Handoff — 2026-09-18 16:04
 
 ## Read first
+Three bullets at the end of CLAUDE.md's **Key context**, added this session and sitting just above
+`## Parked features`:
 
-Everything this session touched is the **Support Portal builder**. In `CLAUDE.md`, read the
-nine bullets dated **17 Sep 2026** at the end of the Key-context list — they carry the reasoning
-behind each change and the traps that cost a pass. The two older bullets they build on are
-**"the child-selection model"** (how a widget's heading, link or icon becomes its own node) and
-**"the collection contract"** (how an item's config lives in its widget's cfg).
+1. **an action card's CORNER ARROW is a glyph picker** — the panel change, and the two general
+   mechanisms it introduced (`WidgetField.rest`, `PanelAccordion.bodyClass`).
+2. **ADDING a banner asks the shape first** — stage 1 of the banner work, and what stages 2 and 3
+   still owe.
+3. **You CAN drive the real app headlessly** — the Playwright recipe, and the warning that a browser
+   may be serving the old `_Final` copy of this project.
 
 ## What we worked on this session
-
-Polish across the Support Portal builder, almost all of it driven by screenshots: the banner's
-height rail, industry tags on template cards, the Custom Card's links and icon picker, per-preset
-Gap axes, the preset tiles' drawing, Title placement on every card, and finally the six data cards'
-content and row shapes from three reference images.
+Two Support Portal builder jobs: finishing the action card's corner arrow (it shipped that morning
+with three fixed glyph buttons), and starting the vertical-banner feature — which begins with asking
+what kind of banner is being added at all.
 
 ## Completed
-
-All pushed to `main` (13 commits, `863c8f0` → `2d44add`), each verified in the browser:
-
-- **Banner height rail** — stops are `260 · 400 · 540 · Screen`, 140px apart. `Screen` stores the
-  word, not a number, and is measured from the banner's own top to the fold.
-- **Industry tags on template cards** — six fixed industries as a second axis beside `category`;
-  two shown, the rest behind a `+N` with an instant tooltip. The category chip moved onto the
-  thumbnail to make room, and the card height is unchanged.
-- **Icon picker** opens beside the icon instead of on top of it.
-- **Custom Card links** — each link is a node: type its words on the canvas, click its glyph for the
-  shared picker, and style it (Style · Icon · Spacing) per link. Fixed four pre-existing faults on
-  the way, including one where typing in a link emptied the card.
-- **Custom Card** is a real card now (white surface, 16px padding) and has three layouts, one row.
-- **Gap follows the preset** on Action cards, KPI tiles, the two service rows and My Assets / My CIs
-  — columns only, rows only, or both, depending on what the arrangement actually has.
-- **Title placement** on every card, including the Custom Data Widget, which needed its own
-  "above the card" shape.
-- **Preset tiles** are plain grey boxes in the arrangement's shape.
-- **The six data cards** carry the reference content and row shapes, full-width dividers, one date
-  format, and badges that count totals rather than mock rows.
-- **The rail's first card** (Announcements) ends exactly where the row beside it ends.
+- **Corner arrow → icon picker + colour.** The Arrow group is now *Corner arrow* (switch) → *Icon* →
+  *Icon colour*. Icon opens the builder's own picker, led by a new **Arrows** group and with no Image
+  tab; there is no ✕ on it (the switch is the off switch). Colour is unstored until picked, so the
+  mark keeps inheriting the card's title colour, and the swatch shows the grey it is actually
+  painting. `arrowGlyph` is gone; `arrowIcon` + `arrowColor` replace it.
+- **Two general additions** that came out of it: `WidgetField.rest` (what a colour control paints
+  while nothing is stored) and `PanelAccordion.bodyClass`.
+- **Shadow group `pt-1` → `pt-2`.** One shared `ShadowGroup`, so every sidebar that shows Shadow
+  moved together, and it now matches the Arrow group exactly. The rule: a group whose first row is a
+  switch takes `pt-2`.
+- **Banner stage 1.** Clicking **Banner** in the palette opens a two-step dialog — Horizontal /
+  Vertical, then that orientation's layouts with an Industry filter and **Start from scratch** first.
+  Scratch = plain white band, dark ink, heading + sub-heading + search, applied through the same
+  `applyBannerTemplate` path as every template. A **vertical banner now renders as a column on a
+  blank page**, with its own invitation in the right column. Verified in a real browser: 420 × 806px,
+  `position: sticky`, right column takes sections beside it, panel opens on the banner's settings.
+- **Fixed a pre-existing ReferenceError.** `AdminSupportPortalModule.tsx` still called
+  `setTemplateCategory('All')` in three places after that state was removed in `092feb4` — it fired
+  on closing the create dialog and on *Start from scratch*. esbuild cannot see it; a `pageerror`
+  listener caught it.
 
 ## In progress
+Nothing is half-written — stage 1 is complete and building. The banner feature itself is staged, and
+the user asked to review each stage before the next starts.
 
-Nothing mid-flight. The working tree is clean apart from the untracked files that have always been
-kept out of the repo (`docs/duda/`, screenshots, the design canvas, `.claude/agents/`).
+Files this feature lives in: `PortalBannerStart.tsx` (new — the dialog),
+`portalBannerTemplates.ts` (`scratchBanner`, `SCRATCH_BANNER_ID`), `PortalBannersPanel.tsx` (the
+exported tiles), `SupportPortalBuilder.tsx` (`startBanner`, `applyBannerTemplate` widened to take a
+template, `x-banner` in `addElement`), `SupportPortalPreview.tsx` (the blank branch's two-column row
+and the right column's invitation).
 
 ## Next steps
-
-1. **Pending Approvals still shows 2 rows** where every other card shows 4 — its badge says 2, so
-   there genuinely are only two seeded. Add more rows if the card should look as full as its
-   neighbours.
-2. **The Custom Card's own title has no "above the card" option.** Its heading is body copy rather
-   than a card header with a count and a View-all, so the question means something different there.
-   Decide whether it should get one.
-3. **Shadow is not in a collection item's Design panel** (a Quick link gets Style · Icon · Spacing).
-   The drawer withholds it from item layers; say if it should come too.
-4. **The Use-template gallery** (`SupportPortalTemplateGallery`, reached from the module's own
-   route) still shows no industry tags — only the create-flow cards have them.
-5. The **Industry templates programme** in `CLAUDE.md` is still the open piece of work: Ward Desk,
-   Wayfinder, Atrium, Service Center and the industry-only widgets.
+1. **Stage 2 — the vertical banner as a real layout.** Width drag on the banner's inner edge (plus a
+   Width field), screen height and sticky on every vertical path rather than only the ones a template
+   sets, and the right column's unlimited rows/sections polish.
+2. **Stage 3 — placement and the restriction.** Drag the banner between left and right; the
+   restricted area shown **while dragging a widget** (hatch + reason + refused drop), not as a
+   permanent grey strip.
+3. Check the three new CLAUDE.md bullets still read true once stages 2 and 3 land.
 
 ## Decisions made
-
-- **Banner M and L are fixed numbers, not a share of the viewport.** Splitting the range evenly
-  would make the same banner a different height on a different machine. `Screen` is the one stop
-  allowed to answer per-machine, because that is what it says it does.
-- **Existing banners are not snapped to the new stops.** Template banners are authored at heights
-  the rail never offered (560, 340, 220…); snapping would redesign forty shipped banners to tidy
-  one control.
-- **Industry is a second axis beside `category`, and the list is closed.** A hospital's IT desk is
-  both; an open list is how two templates end up tagged "Health" and "Healthcare".
-- **The category chip moved to the thumbnail rather than being deleted.** It is answered by the
-  filter row above the grid, but removing it is a product decision nobody asked for.
-- **One date format across the page**, including where the reference image showed two.
-- **Badges count totals, not rows in a fixture.** A badge counting the mock array contradicted the
-  "View all" beside it.
+- **Left or right only, no centre banner.** A centre banner means two narrow, separately-scrolling
+  content columns, so a row could never span the page and "add a section" would have to ask which
+  side. Confirmed with the user.
+- **The restricted area appears while dragging, not permanently.** A sticky, screen-tall banner
+  covers its whole column at every scroll position, so a greyed strip beneath it could never actually
+  be seen. The rule is shown at the only moment it matters. Confirmed with the user.
+- **Staged delivery, reviewed at each stage.** Confirmed with the user.
+- **Scratch is a template, not its own set of writes** — one applier, so the blank banner cannot miss
+  the key-wiping or the search hairline the template path already does.
+- **Arrows are not in the shared icon catalogue** — they are offered only to the field that asks for
+  them, so no other picker in the builder grows six rows it has no use for.
 
 ## Gotchas & notes
-
-- **The Bash heredoc trap is real and bit again.** Git Bash strips backslashes inside `<<'EOF'`,
-  so a script containing a regex silently fails to match. Write those scripts with the editor.
-- **`DROP_GROUPS` removes every field in a group called `Layout`**, with one exception carved out
-  *by control type* for the preset picker. A Gap declared beside it renders nowhere and the panel
-  looks completely untouched — this cost a full pass.
-- **Never reach for `querySelector('[data-node="…"]')` in the preview.** `Sel` renders `data-node`
-  only while the canvas is editable, so the lookup finds nothing in Preview and on the published
-  portal — the two places a measured layout most has to hold.
-- **A measured pin can chase its own tail.** The rail's alignment needed a 0.4px deadband; at 1.5px
-  it swallowed the 1.22px correction it existed to apply and looked stable *and* misaligned.
-- **Hot-reloading `PortalCanvas.tsx` swaps the canvas context**, so `data-node` disappears and the
-  page looks broken. Reload before judging anything.
-- A React `key` belongs on the component, not on a wrapper `<span>` — an inline wrapper around a
-  chip made one card 3px taller and stretched its whole grid row.
+- ⚠️ **The Claude-in-Chrome browser was serving a different copy of this project** — one with no
+  `src/app/routes.ts`, i.e. `D:\Motadata\ServiceOps-Ticket-Detail--main_Final\...`. The tell is the
+  tab title: this build writes `"<Module> · Motadata ServiceOps"`, the old one says
+  `"Ticket Listing & Full Detail page"`. Don't debug your own change until you have checked which
+  server the browser is on.
+- ✅ **Headless verification works and is worth using.** `playwright-core` is in the npx cache and
+  Chrome is installed — see the CLAUDE.md bullet for the import (it must be a `file://` URL) and the
+  click path to a blank builder page. A `pageerror` listener is what turns a silent ReferenceError
+  into a line of output.
+- ⚠️ **Bash heredocs here strip backslashes, and `node -e "..."` lets the shell eat `$` and
+  backticks.** A `node -e` edit silently produced `<div className={}>` in `SupportPortalPreview.tsx`
+  this session. Write the replacement text to a file first, or use `node <<'EOF'` with no backslashes.
+- A dev server may still be running on **http://127.0.0.1:5233/serviceops-ticket-detail/** from this
+  session's verification.

@@ -86,7 +86,10 @@ export type ControlKind =
   /** Circle / square / banner, shown as the shapes themselves. */
   | 'shape'
   /** Preset filters + a custom condition builder, in one popover (Record List). */
-  | 'recordFilter';
+  | 'recordFilter'
+  /* A GLYPH slot: the same picker every icon in the builder opens, led by the arrows and with no
+     Image half — the mark it sets takes a colour, and a photograph cannot be recoloured. */
+  | 'arrowIcon';
 
 export type Cfg = Record<string, unknown>;
 
@@ -140,6 +143,11 @@ export interface WidgetField {
   warnWhenBlank?: string;
   /** Draw a hairline and extra space above this field, separating it from the one before. */
   divider?: boolean;
+  /* What this control PAINTS while nothing is stored — a colour field's swatch has to state the
+     colour the page is actually showing, or the first click appears to change nothing (the same
+     trap the action card's `bg` default records). Stored only when the admin picks, so a renderer
+     that resolves its own resting colour by context keeps doing so until then. */
+  rest?: string;
 }
 
 export interface WidgetNote {
@@ -248,6 +256,9 @@ export interface PanelAccordion {
   spacing?: 'padding' | 'margin' | 'both';
   /** The ⓘ note on the header, for rows whose behaviour is not obvious from the label. */
   info?: string;
+  /** Extra classes on the body — `pt-2` for a group whose first row is a switch, which owns its own
+      spacing and therefore collapses flush against the group title. */
+  bodyClass?: string;
   /** ⚠️ Whole accordions can be conditional, not just fields — an Alignment section on an EMPTY
       section is a heading over controls with nothing to act on, and hiding its fields one by one
       would leave the heading behind. */
@@ -854,22 +865,25 @@ export const WIDGET_SPECS: WidgetSpec[] = [
            ⚠️ ALWAYS the top-right corner, whatever the card's shape — a row of four cards reads as a set,
            and a mark that moved to the trailing edge on the one card whose template differs would break
            the set for a reason only the template picker knows about.
-           ⚠️ THREE glyphs, because they do not mean the same thing: an arrow goes on, a chevron opens
-           the next step in place, and a diagonal leaves for somewhere else — which is the honest one
-           for an External link card. */
+           ⚠️ The glyph is the SAME picker every other icon in this builder opens, led by an Arrows
+           group — three arrow buttons said "these three and nothing else" about a mark a portal may
+           well want to be a plus, a chevron or its own uploaded stroke, and it taught a second way
+           of choosing an icon in a panel that already has one two accordions above.
+           ⚠️ No ✕ on that field. The switch above it is the one answer to "is there a mark?", and a
+           second way to clear it is how a switch ends up reading on over a card with nothing on it.
+           ⚠️ The colour is OPTIONAL and unstored until it is picked: unset, the mark takes the card's
+           TITLE colour, which is right on every surface for free — these cards are painted by their
+           template, white text on a glass tile and near-black on a white card. `rest` is what keeps
+           the swatch honest about the grey it is painting meanwhile. */
         {
           id: 'arrow', open: false,
+          /* The switch is the first row and owns its own spacing (`first:mt-0`), so without this it
+             sits flush against the group title. Same reason the Shadow group carries one. */
+          bodyClass: 'pt-2',
           fields: [
             { key: 'arrow', label: 'Corner arrow', control: 'toggle' },
-            {
-              key: 'arrowGlyph', label: 'Glyph', control: 'segmented',
-              when: (c: Cfg) => c.arrow === true,
-              options: [
-                { value: 'right', label: '→' },
-                { value: 'chevron', label: '›' },
-                { value: 'diagonal', label: '↗' },
-              ],
-            },
+            { key: 'arrowIcon', label: 'Icon', control: 'arrowIcon', when: (c: Cfg) => c.arrow === true },
+            { key: 'arrowColor', label: 'Icon colour', control: 'color', rest: '#98A6B6', when: (c: Cfg) => c.arrow === true },
           ],
         },
         { id: 'spacing', spacing: 'both' },
@@ -892,7 +906,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
       mostUsed: false,
       /* ⚠️ Same reason, and this one matters more: without it every action card on every portal
          would come up wearing an arrow nobody asked for, because `ToggleRow` reads an unset key as ON. */
-      arrow: false, arrowGlyph: 'right',
+      arrow: false, arrowIcon: { key: 'arrow-right' },
       /* the swatch must state the colour the card would actually paint. Without a bg default the
          ColorField fell back to its own #3D8BD0 while fillCss fell back to white, so the control
          showed blue on a white card and the first click appeared to change nothing. */

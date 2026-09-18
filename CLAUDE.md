@@ -900,6 +900,74 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   correction it was meant to apply: at 1.5px it kept a value 1.22px wrong, which is how the first attempt
   looked stable and misaligned at once. Verified 0.14px apart across four samples a second apart.
 
+- **Support Portal — an action card's CORNER ARROW is a glyph picker, not three buttons (18 Sep 2026).**
+  The Arrow group on an action card is **Corner arrow** (switch) → **Icon** → **Icon colour**. The
+  three `arrowGlyph` segmented buttons are gone: a corner mark is an arrow on most portals and a plus
+  or a chevron on the rest, and three fixed options could only ever offer the first three answers —
+  while teaching a second way of choosing an icon in a panel that already has one two accordions
+  above. ⚠️ `ARROW_GROUP` (six marks) lives in `PortalIconPicker` but is deliberately **NOT in
+  `ICON_GROUPS`** — a service catalogue has no use for six arrows — and is offered only to a field
+  that asks for it through the new `lead` prop; it IS in the `ALL` lookup, or `iconNode` could not
+  draw a key you had just picked. The field is the exported **`IconGlyphField`** with `iconsOnly`
+  (no Image tab: the mark takes a COLOUR and a photograph cannot be recoloured) and
+  `clearable={false}` (the switch above is the one answer to "is there a mark?" — a second way to
+  clear it is how a switch ends up reading *on* over a card with nothing on it). ⚠️ `arrowColor` is
+  **unstored until it is picked**: unset, the mark keeps taking the card's TITLE colour, which is
+  right on a glass tile and on a white card alike. `WidgetField.rest` is the new, general way a
+  colour control states the colour the page is ACTUALLY painting meanwhile (`#98A6B6` here) — the
+  same trap the action card's `bg` default records. ⚠️ `PanelAccordion.bodyClass` is also new:
+  **a group whose first row is a SWITCH takes `pt-2`**, because `ToggleRow` owns its own spacing
+  (`first:mt-0`) and collapses flush against the group title. Arrow and Shadow both carry it, so it
+  is one rule rather than a number chosen per panel.
+- **Support Portal — ADDING a banner asks the shape first (`PortalBannerStart.tsx`, 18 Sep 2026 — stage 1 of 3).**
+  `addElement('x-banner')` no longer just un-removes the band. It opens a centred two-step dialog:
+  **Horizontal / Vertical**, then that orientation's layouts with an Industry filter and
+  **Start from scratch** as the first tile. ⚠️ Orientation cannot be a row inside a list of banners —
+  a vertical banner turns the whole page into two columns and moves every section beside it, so it is
+  a fact about the PAGE, and it decides which banners there are to show. The two shape cards are
+  drawn as whole PAGES for the same reason. ⚠️ A dialog, against this builder's habit: it appears
+  once, when there is no banner at all, and the choice is made from pictures that do not fit a 340px
+  panel. ⚠️ The tiles are the Banners rail panel's OWN (`BannerThumb`, `BannerScratchThumb`,
+  `BannerTile`, `BannerOrientation`, all now exported from `PortalBannersPanel`) — one shelf, so the
+  picker you add from and the picker you swap from cannot drift. ⚠️ **Start from scratch is a
+  `BannerTemplate`** (`scratchBanner(orientation)` + `SCRATCH_BANNER_ID` in `portalBannerTemplates`),
+  applied through the SAME `applyBannerTemplate` — which now takes a template as well as an id — so
+  the blank banner gets the key-wiping, the widget swap, the `quickFor` column hand-back and the
+  near-white search hairline that hand-written writes would have missed. Its id is not in
+  `BANNER_TEMPLATES`, so the Banners panel correctly marks no tile active. It sets no
+  `heading`/`sub`, falling through to the page's own words, and travels with `heroInk: 'dark'`.
+  ⚠️ `startBanner` calls **`select`**, not `setSelectedId` — only `select` stands the rail's Widgets
+  list down, so the panel answers with the banner's settings instead of leaving the library up over
+  the thing it just added. ⚠️ The BLANK page branch in `SupportPortalPreview` now uses the same
+  two-column `railRowRef` row the full page uses (`contents` when the banner is a top band), or a
+  blank page could hold a vertical banner in its config and still draw it across the top; the right
+  column carries its own "This column is the page" invitation, because with a banner present the
+  tall empty state is suppressed and a whole empty column offering only a 12px seam is an
+  instruction nobody can find. Verified: banner 420 × 806px, `position: sticky`, in an 846px pane.
+  **Still to build — stage 2:** width drag on the banner's inner edge, screen-height/sticky on every
+  vertical path, right-column section polish. **Stage 3:** drag the banner between left and right
+  (decided: those two only — a centre banner means two narrow separately-scrolling columns), and the
+  restricted-area treatment, which is shown **while dragging a widget** (hatch + reason + refused
+  drop) rather than as a permanent grey strip: a sticky screen-tall banner covers its column at every
+  scroll position, so a strip beneath it could never be seen.
+- ⚠️ **You CAN drive the real app headlessly — this is how to verify UI work here.** `playwright-core`
+  is already in the npx cache and Chrome is installed, so a plain node script can open the builder,
+  click through it and screenshot every step:
+  ```js
+  import { chromium } from 'file:///C:/Users/Zeni%20Chakalasiya/AppData/Local/npm-cache/_npx/9833c18b2d85bc59/node_modules/playwright-core/index.mjs';
+  const browser = await chromium.launch({ channel: 'chrome', headless: true });
+  ```
+  ⚠️ The import must be a **`file://` URL** (Windows absolute paths are rejected by the ESM loader).
+  Reaching a blank builder page: `#/admin/support-portal` → *Create support portal* → fill
+  *Support Portal Name* + *Support Portal URL* + the first Company option → *Save* → *Start from
+  scratch*. Listening for `pageerror` is what caught the `setTemplateCategory` ReferenceError.
+  ⚠️ **A browser may be serving a DIFFERENT copy of this project.** The Claude-in-Chrome browser
+  reached a dev server whose project has no `src/app/routes.ts` at all — i.e. the old checkout at
+  `D:\Motadata\ServiceOps-Ticket-Detail--main_Final\ServiceOps-Ticket-Detail--main`, not this one.
+  The tell is the tab title: this build writes `"<Module> · Motadata ServiceOps"`, the old one says
+  `"Ticket Listing & Full Detail page"`. Check with `curl` from the project folder before concluding
+  a change did not work.
+
 ## Parked features
 Four Support Portal features are BUILT-OR-PART-BUILT AND SWITCHED OFF, with their full context in
 [future-tasks.md](future-tasks.md): **AI** (rail item commented out in `SupportPortalBuilder`; the

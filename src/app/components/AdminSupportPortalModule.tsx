@@ -350,7 +350,6 @@ export function AdminSupportPortalModule({ onBuilder, openPortal, onOpenPortalCh
     setCreating(false);
     setEditingId(draftId);
     setDraftId(null);
-    setTemplateCategory('All');
   };
 
   const patch = (id: string, changes: Partial<PortalPage>) =>
@@ -380,7 +379,7 @@ export function AdminSupportPortalModule({ onBuilder, openPortal, onOpenPortalCh
     setEditingId(draftId);
   };
   const backToTemplates = () => { setEditingId(null); setPreviewing(false); };
-  const useFromPreview = () => { setPreviewing(false); setCreating(false); setDraftId(null); setTemplateCategory('All'); };
+  const useFromPreview = () => { setPreviewing(false); setCreating(false); setDraftId(null); };
 
   const duplicate = (src: PortalPage) => {
     const now = formatPortalStamp(new Date());
@@ -489,7 +488,12 @@ export function AdminSupportPortalModule({ onBuilder, openPortal, onOpenPortalCh
     <>
       {creating && (
         <CreateSupportPortalModal
-          onClose={() => { setCreating(false); setDraftId(null); setTemplateCategory('All'); }}
+          /* ⚠️ Nothing to reset here. The gallery's filter is the MODAL's own state and the modal
+             unmounts on close, so the three `setTemplateCategory('All')` calls that used to sit on
+             these three paths were left pointing at a state this module no longer holds — a
+             ReferenceError that esbuild cannot see and that fired the moment anyone closed the
+             dialog or started a page from scratch. */
+          onClose={() => { setCreating(false); setDraftId(null); }}
           onSaveDetails={saveDetails}
           onScratch={startBlank}
           onTemplate={useTemplate}

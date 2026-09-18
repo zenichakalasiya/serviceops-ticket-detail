@@ -58,10 +58,12 @@ function ShadowGroup({ nodeId, styles, setStyle, open, onToggle }: {
   if (/-(title|sub|subtitle|label|viewall|caption)$|-c[lv]\d+$|~/.test(nodeId)) return null;
   const own = styles[nodeId] ?? {};
   return (
-    <Group title="Shadow" open={open} onToggle={onToggle} bodyClass="pt-1">
+    <Group title="Shadow" open={open} onToggle={onToggle} bodyClass="pt-2">
       {/* The group is already titled Shadow, so the switch says what it does rather than repeating it.
-          `pt-1` on the group body: the switch is the first row, so ShadowBlock's own top margin
-          collapses to 0 and the toggle sat flush against the group title. */}
+          `pt-2` on the group body: the switch is the first row, so ShadowBlock's own top margin
+          collapses to 0 and the toggle sat flush against the group title. The SAME 8px every other
+          switch-led group takes (the action card's Arrow), so one rule covers both rather than two
+          numbers chosen a panel at a time. */}
       <ShadowBlock
         label="Add shadow"
         value={{
@@ -84,7 +86,7 @@ import type { LineStyle } from './PortalLineStyles';
 import { SpacingMatrix, useRestingSpacing } from './SpacingMatrix';
 import { PortalBannerPicker } from './PortalBannerPicker';
 import { ColorField } from './PortalColorPicker';
-import { IconField } from './PortalIconPicker';
+import { ARROW_GROUP, IconField, IconGlyphField } from './PortalIconPicker';
 import type { IconChoice } from './PortalIconPicker';
 import { GATE_COPY, gateOpen, specById } from './portalWidgetSpec';
 import type { Cfg, WidgetField, WidgetSpec } from './portalWidgetSpec';
@@ -521,6 +523,7 @@ function PanelBody({ spec, nodeId, cfg, renderField, openGroups, toggleGroup, st
             <Group
               key={a.id}
               title={ACCORDION_TITLE[a.id]}
+              bodyClass={a.bodyClass}
               open={!!open}
               onToggle={() => toggleGroup(`shut:${a.id}`)}
               badge={(
@@ -899,11 +902,15 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
            the original under `light:<key>`, which is why the light tab reads that first: without it
            it would fall back to the base key it had just been overwritten by, and both tabs would
            show the dark colour. */
-        const light = (viewCfg[`light:${f.key}`] as string) ?? (v as string) ?? '#3D8BD0';
+        /* ⚠️ The fallback is the field's OWN resting colour where it declares one. A swatch has to
+           state the colour the page is actually painting: #3D8BD0 under a field whose unset value
+           renders grey is a control whose first click appears to change nothing. */
+        const restColor = f.rest ?? '#3D8BD0';
+        const light = (viewCfg[`light:${f.key}`] as string) ?? (v as string) ?? restColor;
         const dark = (viewCfg[`dark:${f.key}`] as string) ?? light;
         return (
           <ColorField
-            value={(v as string) ?? '#3D8BD0'}
+            value={(v as string) ?? restColor}
             onChange={(x) => set(f.key, x)}
             modes={{
               mode: portalColorMode(),
@@ -1016,6 +1023,19 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
         return selItem
           ? <IconField value={viewCfg.icon as IconChoice | undefined} onChange={(c) => set(f.key, c)} />
           : <IconField value={icon} onChange={setIcon} />;
+      /* A glyph slot that keeps its value in CONFIG, not in the icons store — that store is keyed by
+         the owning widget, and an action card already has its own icon in it. Arrows first, and no
+         Image half: the mark this sets takes a colour beneath it, and a photograph cannot take one. */
+      case 'arrowIcon':
+        return (
+          <IconGlyphField
+            value={v as IconChoice | undefined}
+            onChange={(c) => set(f.key, c)}
+            lead={[ARROW_GROUP]}
+            iconsOnly
+            clearable={false}
+          />
+        );
       case 'chipEditor':
         return <ChipEditor value={(v as string[]) ?? []} onChange={(x) => set(f.key, x)} />;
       case 'nine':

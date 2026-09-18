@@ -3,7 +3,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import {
   Bell, Check, Info, Keyboard, KeyRound, House, MessageSquare, MessagesSquare, Plus, PanelLeft,
   Link2, RotateCcw, Search, ShoppingCart, Type, X, ChevronsRight, ChevronRight, LayoutGrid,
-  HardDrive, Server, Ticket, Lightbulb, Clock, Megaphone, ArrowRight, ArrowUpRight,
+  HardDrive, Server, Ticket, Lightbulb, Clock, Megaphone, ArrowRight,
 } from 'lucide-react';
 import { AnnouncementsRender, ContactRender, FavouriteServicesRender, FeaturedServicesRender } from './PortalCollectionRender';
 import { MotadataLogo } from './Header';
@@ -2227,23 +2227,31 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                     ⚠️ ALWAYS the top-right corner, whatever the card's template. A row of four cards
                     reads as a set, and a mark that slid to the trailing edge on the one card whose
                     shape differs would break the set for a reason only the template picker knows.
-                    ⚠️ It takes the TITLE's colour, not the theme accent. These cards are painted by
-                    their template — white text on a glass tile, near-black on a white card — and an
-                    accent-coloured mark was the one element on a dark card that did not belong to it.
-                    `currentColor` through the title role means it is right on every surface for free.
+                    ⚠️ The GLYPH is any icon in the builder's own picker, arrows first — a corner mark
+                    is an arrow on most portals and a plus or a chevron on the rest, and three fixed
+                    buttons could only ever offer the first three answers.
+                    ⚠️ Its colour is the admin's when they pick one, and the TITLE's until they do —
+                    these cards are painted by their template, white text on a glass tile and
+                    near-black on a white card, so inheriting the title is right on every surface for
+                    free where a fixed default could only ever be right on one.
                     ⚠️ `pointer-events-none`: the whole card is the click target, so a mark that swallowed
                     the press in its own corner would be a dead patch on a live card. */}
                 {c.arrow === true && (
                   <span
                     aria-hidden
-                    style={{ color: (roleStyle(styles, `${a.id}-title`, 'title') as React.CSSProperties).color ?? undefined }}
-                    className={`pointer-events-none absolute right-3 top-3 flex items-center justify-center ${opts?.glass ? 'text-white/70' : 'text-[#98A6B6]'}`}
+                    style={{
+                      color: (c.arrowColor as string | undefined)
+                        ?? (roleStyle(styles, `${a.id}-title`, 'title') as React.CSSProperties).color
+                        ?? undefined,
+                    }}
+                    /* ⚠️ The size is a class on the WRAPPER, not a prop: `iconNode` hands back a
+                        registry glyph at lucide's own 24, and only an uploaded mark takes the size
+                        argument. One rule on the span covers both. */
+                    className={`pointer-events-none absolute right-3 top-3 flex items-center justify-center [&_svg]:size-[17px] ${opts?.glass ? 'text-white/70' : 'text-[#98A6B6]'}`}
                   >
-                    {String(c.arrowGlyph ?? 'right') === 'chevron'
-                      ? <ChevronRight size={18} strokeWidth={2} />
-                      : String(c.arrowGlyph ?? 'right') === 'diagonal'
-                      ? <ArrowUpRight size={17} strokeWidth={2} />
-                      : <ArrowRight size={17} strokeWidth={2} />}
+                    {/* The fallback is the mark the toggle promises: a card whose glyph went missing
+                        still shows an arrow rather than an empty corner under a switch reading on. */}
+                    {iconNode(c.arrowIcon as IconChoice | undefined, 17) ?? <ArrowRight size={17} strokeWidth={2} />}
                   </span>
                 )}
                 {/* ⚠️ TOP-RIGHT and on HOVER — the tile look only, and STOOD DOWN once the card carries
@@ -3063,7 +3071,11 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
               anchors on the page, each still offering "+ Add Section" on hover — an empty page that
               answers four different places you never put anything. */}
           {blank ? (
-            <>
+            /* ⚠️ The SAME two-column row the full page uses, and `contents` when the banner is a top
+               band so a horizontal page renders exactly the tree it always did. Without it a blank
+               page could carry a vertical banner in its config and still draw it across the top —
+               the one layout where the banner and the page disagree about what the banner is. */
+            <div ref={railRowRef} className={heroSide ? 'flex min-h-full items-stretch' : 'contents'}>
             {/* ⚠️ ABOVE the padded container, not inside it: a banner is a full-bleed band and the
                 blank page's wrapper carries the content inset every section sits in. */}
             {hasHero && heroPlaced}
@@ -3074,7 +3086,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                 ⚠️ A page carrying a BANNER is no longer empty, so it takes the padded layout and
                 loses the centring — the tall empty state under a banner is a page that says it has
                 nothing on it directly beneath the thing it has. */}
-            <div className={sections.length || hasHero ? 'px-6 py-8' : 'flex h-full min-h-[520px] flex-col items-center justify-center px-6 py-16'}>
+            <div className={`${sections.length || hasHero ? 'px-6 py-8' : 'flex h-full min-h-[520px] flex-col items-center justify-center px-6 py-16'} ${heroSide ? 'min-w-0 flex-1' : ''}`}>
               {sections.length === 0 && !hasHero && (
               /* ⚠️ NO dashed box. A dotted rectangle in the middle of an empty page reads as a drop
                   ZONE — a specific place the widget has to land — and the page will take a drop
@@ -3110,11 +3122,32 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                 )}
               </div>
               )}
+              {/* ⚠️ The vertical banner's own invitation. With a banner on the page the tall empty
+                  state above is suppressed — a page carrying something is not empty — but a VERTICAL
+                  banner leaves a whole column with nothing in it but a 12px seam, which is an
+                  instruction nobody can find. It says what the column IS, because that is the part
+                  of this layout you cannot see until something is in it. */}
+              {heroSide && sections.length === 0 && enabled && (
+                <div className="flex flex-col items-center px-4 py-12 text-center">
+                  <p className="text-[14px] font-semibold text-[#364658]">This column is the page</p>
+                  <p className="mt-1.5 max-w-[380px] text-[12.5px] leading-[1.65] text-[#7B8FA5]">
+                    The banner stays where it is while everything you add here scrolls beside it.
+                    Start with a section — the + handles on its edges split it into as many rows and
+                    columns as you need.
+                  </p>
+                  <button
+                    onClick={() => addSection('hero', [[1]])}
+                    className="mt-5 inline-flex h-9 items-center gap-1.5 rounded bg-[#3D8BD0] px-4 text-[13px] font-medium text-white shadow-sm transition-colors hover:bg-[#2d6ca0]"
+                  >
+                    <Plus size={15} strokeWidth={2.4} />Add section
+                  </button>
+                </div>
+              )}
               {/* The one anchor a blank page has. Everything added lands after it, and every added
                   section then carries a seam of its own. */}
               <div className={sections.length ? '' : 'mt-6'}>{after('hero')}</div>
             </div>
-            </>
+            </div>
           ) : (
           <>
           {/* ⚠️ `contents` when the hero is a top band — the wrapper leaves the layout entirely, so

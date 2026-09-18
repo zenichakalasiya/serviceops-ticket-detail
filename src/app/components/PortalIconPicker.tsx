@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import {
-  AppWindow, Baseline, Bell, BookOpen, Boxes, Building2, Calendar, ChevronDown, ClipboardList,
-  Cloud, Cpu, CreditCard, Database, FileText, Fingerprint, Globe, HardDrive, Headphones, Key,
+  AppWindow, ArrowRight, ArrowUpRight, Baseline, Bell, BookOpen, Boxes, Building2, Calendar,
+  ChevronDown, ChevronRight, ChevronsRight, CircleArrowRight, ClipboardList,
+  Cloud, Cpu, CreditCard, Database, ExternalLink, FileText, Fingerprint, Globe, HardDrive, Headphones, Key,
   Laptop, LifeBuoy, Lock, Mail, MapPin, Monitor, Network, Package, Phone, Plug, Printer, Router,
   Search, Server, Settings2, Shield, ShieldCheck, ShoppingCart, Smartphone, Ticket, Upload,
   UserPlus, Users, Wifi, Wrench, X, Zap,
@@ -72,7 +73,28 @@ const ICON_GROUPS: { group: string; icons: Record<string, React.ReactNode> }[] =
   },
 ];
 
-const ALL = ICON_GROUPS.flatMap((g) => Object.entries(g.icons));
+export interface IconGroup { group: string; icons: Record<string, React.ReactNode> }
+
+/* The arrows, and they are deliberately NOT in `ICON_GROUPS`.
+ *
+ * A service catalogue has no use for six arrows — "VPN access" is not an arrow — so six more rows in
+ * every icon grid in the builder is six more to scan past on the way to the glyph you came for. They
+ * are offered only to a field that asks for them (`lead`), which today is the action card's corner
+ * mark: there the arrows ARE the answer, so they sit first and the whole catalogue follows it.
+ * ⚠️ They ARE in `ALL` below, because `iconNode` resolves a stored key through it — a group the
+ * lookup cannot see is a glyph you can pick and never see drawn. */
+export const ARROW_GROUP: IconGroup = {
+  group: 'Arrows',
+  icons: {
+    /* ⚠️ Six marks that do not mean the same thing: an arrow goes on, a chevron opens the next step
+       in place, a diagonal leaves for somewhere else — which is the honest one on an External link
+       card — and the circled and doubled forms are those three said louder. */
+    'arrow-right': <ArrowRight />, 'chevron-right': <ChevronRight />, 'arrow-up-right': <ArrowUpRight />,
+    'chevrons-right': <ChevronsRight />, 'circle-arrow-right': <CircleArrowRight />, 'external-link': <ExternalLink />,
+  },
+};
+
+const ALL = [...ICON_GROUPS, ARROW_GROUP].flatMap((g) => Object.entries(g.icons));
 
 export const iconNode = (choice?: IconChoice, size = 22) => {
   if (!choice) return null;
@@ -85,13 +107,22 @@ export const iconNode = (choice?: IconChoice, size = 22) => {
 
 /* ⚠️ Exported so the CANVAS can open the very same grid the panel field opens. Two icon pickers for
    one setting is how the two end up offering different icons. */
-export function IconPopover({ value, onPick, onClose, anchor }: {
+export function IconPopover({ value, onPick, onClose, anchor, lead, iconsOnly }: {
   value?: IconChoice; onPick: (c: IconChoice) => void; onClose: () => void; anchor: DOMRect;
+  /* Groups shown FIRST, above the catalogue — for a slot whose likely answer is a set of its own
+     (the action card's corner mark leads with the arrows). They are the caller's, not the
+     catalogue's, so nothing else in the builder grows a row it has no use for. */
+  lead?: IconGroup[];
+  /* ⚠️ No Icon/Image tabs. A slot that takes a COLOUR takes a glyph — a photograph cannot be
+     recoloured, so offering the Image tab beside an Icon colour field would be two controls
+     contradicting each other on the same mark. */
+  iconsOnly?: boolean;
 }) {
   const [q, setQ] = useState('');
   /* Opens on whichever kind is already set, so returning to change a picture does not land you in
      the glyph grid you did not choose. */
-  const [mode, setMode] = useState<'icon' | 'image'>(isImageChoice(value) ? 'image' : 'icon');
+  const [pickedMode, setMode] = useState<'icon' | 'image'>(isImageChoice(value) ? 'image' : 'icon');
+  const mode = iconsOnly ? 'icon' : pickedMode;
   const ref = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const imgRef = useRef<HTMLInputElement>(null);
@@ -105,7 +136,7 @@ export function IconPopover({ value, onPick, onClose, anchor }: {
   }, [onClose]);
 
   const query = q.trim().toLowerCase();
-  const groups = ICON_GROUPS
+  const groups = [...(lead ?? []), ...ICON_GROUPS]
     .map((g) => ({ ...g, hits: Object.entries(g.icons).filter(([k]) => !query || k.includes(query) || g.group.toLowerCase().includes(query)) }))
     .filter((g) => g.hits.length);
 
@@ -162,7 +193,7 @@ export function IconPopover({ value, onPick, onClose, anchor }: {
           Branding panel's section heads lost theirs. */}
       <div className="flex-shrink-0 p-3">
         {/* Two ways to fill one slot, named up front. */}
-        <div className="mb-2.5 flex gap-1 rounded bg-[#F1F5F9] p-0.5">
+        <div className={`mb-2.5 flex gap-1 rounded bg-[#F1F5F9] p-0.5 ${iconsOnly ? 'hidden' : ''}`}>
           {(['icon', 'image'] as const).map((m) => (
             <button
               key={m}
@@ -304,13 +335,24 @@ export function IconField({ value, onChange }: { value?: IconChoice; onChange: (
                different answer from one who clicked the icon on the canvas. */
             suggested="128 × 128"
           />
-        : <IconOnlyField value={isImageChoice(value) ? undefined : value} onChange={onChange} />}
+        : <IconGlyphField value={isImageChoice(value) ? undefined : value} onChange={onChange} />}
     </div>
   );
 }
 
-/** The icon half: the current glyph, its name, and the picker. */
-function IconOnlyField({ value, onChange }: { value?: IconChoice; onChange: (c?: IconChoice) => void }) {
+/** The icon half: the current glyph, its name, and the picker.
+ *
+ * ⚠️ Exported, because a slot can be glyph-only — the action card's corner mark takes an icon
+ * colour, so it takes a glyph and never a picture, and the Image half of `IconField` would have been
+ * a tab offering the one thing that control cannot then style. */
+export function IconGlyphField({ value, onChange, lead, iconsOnly, clearable = true }: {
+  value?: IconChoice; onChange: (c?: IconChoice) => void;
+  lead?: IconGroup[]; iconsOnly?: boolean;
+  /* ⚠️ A mark that a SWITCH turns on is not cleared here as well. Two ways to turn one thing off is
+     how a switch ends up reading "on" over a card with nothing on it — so the corner arrow's field
+     has no ✕ and the toggle above it stays the one answer to "is there a mark?". */
+  clearable?: boolean;
+}) {
   const [anchor, setAnchor] = useState<DOMRect | null>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
 
@@ -327,14 +369,14 @@ function IconOnlyField({ value, onChange }: { value?: IconChoice; onChange: (c?:
         <span className="truncate">{value ? (value.key === 'upload' ? 'Custom icon' : value.key) : 'Choose an icon'}</span>
         <ChevronDown size={14} className="flex-shrink-0 text-[#9CA3AF]" />
       </button>
-      {value && (
+      {value && clearable && (
         <button
           onClick={() => onChange(undefined)}
           title="Remove icon"
           className="flex size-9 flex-shrink-0 items-center justify-center rounded text-[#64748B] transition-colors hover:bg-[#F3F4F6] hover:text-[#364658]"
         ><X size={15} /></button>
       )}
-      {anchor && <IconPopover value={value} anchor={anchor} onPick={onChange} onClose={() => setAnchor(null)} />}
+      {anchor && <IconPopover value={value} anchor={anchor} lead={lead} iconsOnly={iconsOnly} onPick={onChange} onClose={() => setAnchor(null)} />}
     </div>
   );
 }
