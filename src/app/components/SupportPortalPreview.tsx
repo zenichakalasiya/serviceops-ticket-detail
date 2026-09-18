@@ -3153,16 +3153,17 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                 ⚠️ A page carrying a BANNER is no longer empty, so it takes the padded layout and
                 loses the centring — the tall empty state under a banner is a page that says it has
                 nothing on it directly beneath the thing it has. */}
-            {/* ⚠️ A VERTICAL banner's column carries NO padding of its own — the same rule the full
-                page beside it has always followed ("a SECTION runs from the page's left edge to its
-                right edge, so each one carries its own inset"). The wrapper's px-6/py-8 was a second
-                inset on top of the section's own 24px, so the first section sat 48px from the banner
-                it is meant to sit beside, and the gap read as a margin nobody could find a control
-                for. The empty-column invitation below keeps its own padding, because there is no
-                section there yet to carry any.
-                ⚠️ A blank HORIZONTAL page is deliberately untouched: its sections have always been
-                inset from the page edges, and changing that here would move every existing one. */}
-            <div className={`${heroSide ? 'min-w-0 flex-1' : sections.length || hasHero ? 'px-6 py-8' : 'flex h-full min-h-[520px] flex-col items-center justify-center px-6 py-16'}`}>
+            {/* ⚠️ Once a blank page HAS something on it, its content column IS the full page's
+                content column — the same class string, so the two cannot drift. That column carries
+                no horizontal or top padding at all, because "a SECTION runs from the page's left edge
+                to its right edge, so each one carries its own inset". The wrapper's px-6/py-8 was a
+                second inset on top of each section's own 24px, which is why a widget dropped on a
+                from-scratch page sat in from the edges while the very same section on a template page
+                ran end to end — one page, two different answers, and a gap with no control behind it.
+                ⚠️ `pb-8` survives: that is breathing room at the FOOT of the page, not an inset, and
+                the full page has always had it.
+                ⚠️ The empty state keeps its own padding — there is no section there yet to carry any. */}
+            <div className={`${sections.length || hasHero ? 'flex flex-col pb-8' : 'flex h-full min-h-[520px] flex-col items-center justify-center px-6 py-16'} ${heroSide ? 'min-w-0 flex-1' : ''}`}>
               {sections.length === 0 && !hasHero && (
               /* ⚠️ NO dashed box. A dotted rectangle in the middle of an empty page reads as a drop
                   ZONE — a specific place the widget has to land — and the page will take a drop

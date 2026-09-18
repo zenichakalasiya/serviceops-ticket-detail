@@ -1,40 +1,38 @@
-# Handoff — 2026-09-18 16:31
+# Handoff — 2026-09-18 17:02
 
 ## Read first
-Four bullets at the end of CLAUDE.md's **Key context**, just above `## Parked features`:
+Five bullets at the end of CLAUDE.md's **Key context**, just above `## Parked features`:
 
 1. **an action card's CORNER ARROW is a glyph picker** — and the two general mechanisms it added
    (`WidgetField.rest`, `PanelAccordion.bodyClass`).
 2. **ADDING a banner asks the shape first** — stage 1 of the banner work, and what stages 2 and 3
    still owe.
 3. **the vertical banner PINS IN PREVIEW ONLY** — the `heroPinned` / `heroSticky` split and the
-   reserved column. Read this one before touching anything sticky.
-4. **a vertical banner's RIGHT COLUMN carries no page padding.**
+   reserved column. Read this before touching anything sticky.
+4. **a BLANK page's content column IS the full page's content column.**
+5. **ADD SEVERAL AT ONCE, from-scratch pages only** — including the temporal-dead-zone trap that
+   blanked the builder while the build stayed green.
 
-Plus the **headless verification** bullet below them: `playwright-core` is in the npx cache, so UI
-work here can be driven and screenshotted for real. Every measurement quoted in this handoff came
-from it.
+Plus the **headless verification** bullet below them. Every number quoted here was measured with it.
 
 ## What we worked on this session
-The Support Portal builder: finishing the action card's corner arrow, then the first stage of the
-vertical-banner feature — adding a banner, how its column behaves in the editor versus in Preview,
-and the padding around the page beside it.
+The Support Portal builder, all of it in the from-scratch flow: the action card's corner arrow,
+adding a banner, how a vertical banner behaves in the editor versus Preview, the padding around a
+blank page's sections, and a way to place several widgets at once.
 
 ## Completed
-- **Corner arrow → icon picker + colour.** *Corner arrow* (switch) → *Icon* → *Icon colour*. The
-  icon opens the builder's own picker led by a new Arrows group, with no Image tab and no ✕. The
-  colour is unstored until picked, so the mark keeps inheriting the card's title colour.
-- **Shadow group `pt-1` → `pt-2`,** one shared `ShadowGroup`, so every sidebar moved together.
-- **Banner stage 1.** Clicking *Banner* opens a two-step dialog — Horizontal / Vertical, then that
-  orientation's layouts with **Start from scratch** first. Scratch is a `BannerTemplate` applied
-  through the same path as every template. A vertical banner renders as a column on a blank page.
-- **The editor no longer pins the banner.** It scrolls with the page; the space under it is a
-  hatched **"Banner column"** strip that refuses drops and explains itself on hover. Preview and the
-  published portal still pin it. Measured both ways.
-- **The right column lost its page padding,** so the first section sits against the banner and the
-  card inside keeps the section's own 24px.
-- **Fixed a pre-existing ReferenceError** — `AdminSupportPortalModule` still called
-  `setTemplateCategory('All')` in three places after that state was removed in `092feb4`.
+- **Corner arrow → icon picker + colour.** *Corner arrow* (switch) → *Icon* → *Icon colour*, with
+  the builder's own picker led by a new Arrows group. Shadow's group padding moved to `pt-2` to match.
+- **Banner stage 1.** Clicking *Banner* asks Horizontal / Vertical, then shows that orientation's
+  layouts with **Start from scratch** first. Scratch is a `BannerTemplate` applied through the same
+  path as every template.
+- **The editor no longer pins the banner.** It scrolls with the page and the space under it is a
+  hatched **"Banner column"** strip that refuses drops and explains itself. Preview still pins.
+- **A blank page's sections run end to end**, identical to a template page's — measured 81 → 1062
+  against a page of exactly 81 → 1062.
+- **Add several at once.** On a from-scratch page, pick N widgets in the palette and they land one
+  per row in the order picked.
+- **Fixed a pre-existing ReferenceError** — `setTemplateCategory` in `AdminSupportPortalModule`.
 
 ## In progress
 Nothing is half-written in THIS repo.
@@ -59,33 +57,35 @@ gallery; it has its own CLAUDE.md and HANDOFF.md, and `node build.js` must run a
 
 ## Next steps
 1. Answer the `2b` question, then do the two gallery jobs above.
-2. **Banner stage 2** — width drag on the banner's inner edge (plus a Width field), and right-column
-   section polish.
+2. **Banner stage 2** — width drag on the banner's inner edge, and right-column section polish.
 3. **Banner stage 3** — drag the banner between left and right.
+4. Offered and not yet answered: the **topmost section's floating toolbar overlaps the portal's own
+   header bar** (true before this session too, since the toolbar is taller than the gap it had).
+   Bands at the very top solve this with `toolbarBelow`; a first-on-the-page section could do the same.
 
 ## Decisions made
-- **The editor does not pin the banner; Preview does.** This REPLACES this morning's "show the
-  restriction only while dragging". A pinned screen-tall banner covers its own column at every scroll
-  position, so the canvas hid the one thing the admin has to see. Now the editor shows the page as
-  one scroll with the column visibly spoken for, and Preview shows the real behaviour.
-- **Left or right only, no centre banner** — a centre banner means two narrow, separately-scrolling
-  content columns.
-- **Staged delivery, reviewed at each stage.**
-- **Scratch is a template, not its own writes** — one applier, so the blank banner cannot miss the
-  key-wiping or the search hairline the template path already does.
-- **Arrows are not in the shared icon catalogue** — offered only to the field that asks for them.
-- **The horizontal blank page keeps its padding** — the padding fix is scoped to the vertical column,
-  because unscoping it would move every existing blank page.
+- **The editor does not pin the banner; Preview does.** This replaced an earlier "show the
+  restriction only while dragging" call — a pinned screen-tall banner covers its own column at every
+  scroll position, so the canvas hid the one thing the admin has to see.
+- **A blank page's column matches the full page's, horizontally too.** This unscoped a deliberate
+  exception from earlier the same day; the user asked for it once they saw the inconsistency.
+- **Batch add is gated by a prop, not inferred** — a template page already has its shape.
+- **The batch selects nothing and exits the mode** — no one thing is being edited afterwards, and a
+  mode with no task left is how a later click lands somewhere nobody meant.
+- **Left or right only, no centre banner**; **staged delivery**; **scratch is a template, not its own
+  writes**; **arrows are not in the shared icon catalogue**.
 
 ## Gotchas & notes
+- ⚠️ **Files in this repo are a MIX of LF and CRLF.** A multi-line anchor for a scripted edit must be
+  joined with the file's own EOL — `SupportPortalAddPanel.tsx` is CRLF and a `\n`-joined anchor
+  silently matches nothing. Detect with `s.includes('\r\n')` and join with that.
+- ⚠️ **A `useCallback` evaluates its dependency array during render**, so a helper placed above the
+  state it depends on is a temporal-dead-zone crash that esbuild cannot see. It blanked the builder
+  this session; a `pageerror` listener caught it in seconds.
 - ⚠️ **The Claude-in-Chrome browser serves a different copy of this project** — one with no
-  `src/app/routes.ts`, i.e. `D:\Motadata\ServiceOps-Ticket-Detail--main_Final\...`. The tell is the
-  tab title: this build writes `"<Module> · Motadata ServiceOps"`, the old one says
-  `"Ticket Listing & Full Detail page"`. Use the headless recipe instead.
-- ⚠️ **A Playwright selector can collide with the page you are building.** Naming a test portal
-  "Vertical Pad" made `getByRole('button', {name: /Vertical/})` match the page-title rename button
-  and the run timed out on the dialog.
-- ⚠️ **Bash heredocs here strip backslashes, and `node -e "..."` lets the shell eat `$` and
-  backticks** — that silently produced `<div className={}>` in `SupportPortalPreview.tsx` this
-  session. Write the replacement to a file first, or use `node <<'EOF'` with no backslashes.
+  `src/app/routes.ts` (the `_Final` folder). Use the headless recipe in CLAUDE.md instead.
+- ⚠️ **A Playwright selector can collide with the page you are building** — naming a test portal
+  "Vertical Pad" made `getByRole('button', {name: /Vertical/})` match the page-title rename button.
+- ⚠️ **Bash heredocs here strip backslashes, and `node -e "..."` lets the shell eat `$` and backticks.**
+  Write the replacement to a file first, or use `node <<'EOF'` with no backslashes.
 - A dev server may still be running at **http://127.0.0.1:5233/serviceops-ticket-detail/**.

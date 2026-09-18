@@ -966,14 +966,35 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   height of the page by design, so it keeps `self-stretch` and has no space under it to reserve.
   Measured: editor `position: relative`, banner top 68 after a 900px scroll, hatch visible; Preview
   wrapper `position: sticky`, band 846px in an 846px pane.
-- **Support Portal — a vertical banner's RIGHT COLUMN carries no page padding (18 Sep 2026).** The
-  blank page's wrapper was adding `px-6 py-8` on top of each section's own `SECTION_PAD`, so the
-  first section sat 48px from the banner it is meant to sit beside and the gap read as a margin with
-  no control behind it. It now follows the rule the full page has always followed — *"a SECTION runs
-  from the page's left edge to its right edge, so each one carries its own inset"*. Measured: section
-  left edge 501px = the banner's right edge exactly, wrapper padding `0px`, card still 24px in from
-  the banner. ⚠️ A blank HORIZONTAL page is deliberately untouched — its sections have always been
-  inset from the page edges, and changing that would move every existing one.
+- **Support Portal — a BLANK page's content column IS the full page's content column (18 Sep 2026).**
+  Once a from-scratch page has anything on it, its column takes the same class string the non-blank
+  page uses — `flex flex-col pb-8` — so the two cannot drift. The wrapper used to add `px-6 py-8` on
+  top of every section's own `SECTION_PAD`, which meant the SAME widget in the SAME kind of section
+  sat inset on a from-scratch page and ran end to end on a template page: one page, two answers, and
+  a gap with no control behind it. The rule is the one the full page has always stated — *"a SECTION
+  runs from the page's left edge to its right edge, so each one carries its own inset"*. ⚠️ `pb-8`
+  survives because that is breathing room at the FOOT of the page, not an inset. ⚠️ The empty state
+  keeps its own padding — there is no section there yet to carry any. Measured, all three identical:
+  a scratch page's section 81 → 1062, a template page's section 81 → 1062, the page itself 81 → 1062;
+  and beside a vertical banner, 501 (the banner's right edge) → 1062.
+- **Support Portal — ADD SEVERAL AT ONCE, from-scratch pages only (18 Sep 2026).** A dashed row under
+  the Widgets search — *"Add several at once · each in its own row"* — puts the palette into a pick
+  mode: every addable row grows a circle, ticking one fills it with **its number**, and a sticky
+  footer offers `Add N widgets` / `Cancel`. Each pick lands as its own full-width section, in the
+  order picked. ⚠️ The badge carries a NUMBER, not a tick: several widgets landing together arrive in
+  an order, and the order is the one thing a tick cannot tell you. ⚠️ ONE `setSections`
+  (`addElements` in the builder), never N calls to `dropAtSeam` — N would be N toasts, N selections
+  and N renders of what is one action, and the last selection would close the library the admin is
+  still working in. ⚠️ NOTHING is selected afterwards: the admin picked several, so there is no one
+  thing they are now editing. ⚠️ The mode EXITS after the batch — it changes what a click does, and a
+  mode still running with no task left is how a later click lands somewhere nobody meant. ⚠️ Gated by
+  a PROP (`onAddMany`, passed only when `isBlank`), never inferred inside the panel: a page started
+  from a template already has its shape, so "give me six rows of cards" is an answer to a question
+  only a blank page asks. Verified: 4 sections in the picked order on a scratch page, and the row
+  absent on a template page. ⚠️ **`addElements` must be declared BELOW `blockOrder`/`removed`** — a
+  `useCallback` evaluates its dependency array during render, so beside `dropAtSeam` (where it
+  belongs by subject) it was a temporal-dead-zone crash that blanked the whole builder while
+  `npm run build` stayed green. A `pageerror` listener in the Playwright script is what caught it.
 - ⚠️ **You CAN drive the real app headlessly — this is how to verify UI work here.** `playwright-core`
   is already in the npx cache and Chrome is installed, so a plain node script can open the builder,
   click through it and screenshot every step:
