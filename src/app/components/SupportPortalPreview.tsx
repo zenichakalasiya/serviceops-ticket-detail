@@ -3,7 +3,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import {
   Bell, Check, Info, Keyboard, KeyRound, House, MessageSquare, MessagesSquare, Plus, PanelLeft,
   Link2, RotateCcw, Search, ShoppingCart, Type, X, ChevronsRight, ChevronRight, LayoutGrid,
-  HardDrive, Server, Ticket, Lightbulb, Clock, Megaphone,
+  HardDrive, Server, Ticket, Lightbulb, Clock, Megaphone, ArrowRight, ArrowUpRight,
 } from 'lucide-react';
 import { AnnouncementsRender, ContactRender, FavouriteServicesRender, FeaturedServicesRender } from './PortalCollectionRender';
 import { MotadataLogo } from './Header';
@@ -2223,9 +2223,33 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                   top ? 'flex-col' : stackedLeft ? 'flex-col justify-between' : iconRight ? 'flex-row-reverse items-center' : 'items-center'
                 } ${centre ? 'items-center text-center' : ''}`}
               >
-                {/* ⚠️ TOP-RIGHT and on HOVER — the tile look only. A row-shaped action gets a
-                    chevron on its trailing edge instead; see the quickRail block below the label. */}
-                {tileActions && (
+                {/* The ADMIN's corner arrow — off unless the card's panel asks for it.
+                    ⚠️ ALWAYS the top-right corner, whatever the card's template. A row of four cards
+                    reads as a set, and a mark that slid to the trailing edge on the one card whose
+                    shape differs would break the set for a reason only the template picker knows.
+                    ⚠️ It takes the TITLE's colour, not the theme accent. These cards are painted by
+                    their template — white text on a glass tile, near-black on a white card — and an
+                    accent-coloured mark was the one element on a dark card that did not belong to it.
+                    `currentColor` through the title role means it is right on every surface for free.
+                    ⚠️ `pointer-events-none`: the whole card is the click target, so a mark that swallowed
+                    the press in its own corner would be a dead patch on a live card. */}
+                {c.arrow === true && (
+                  <span
+                    aria-hidden
+                    style={{ color: (roleStyle(styles, `${a.id}-title`, 'title') as React.CSSProperties).color ?? undefined }}
+                    className={`pointer-events-none absolute right-3 top-3 flex items-center justify-center ${opts?.glass ? 'text-white/70' : 'text-[#98A6B6]'}`}
+                  >
+                    {String(c.arrowGlyph ?? 'right') === 'chevron'
+                      ? <ChevronRight size={18} strokeWidth={2} />
+                      : String(c.arrowGlyph ?? 'right') === 'diagonal'
+                      ? <ArrowUpRight size={17} strokeWidth={2} />
+                      : <ArrowRight size={17} strokeWidth={2} />}
+                  </span>
+                )}
+                {/* ⚠️ TOP-RIGHT and on HOVER — the tile look only, and STOOD DOWN once the card carries
+                    an arrow of its own: two marks in one corner, one of them appearing under the
+                    pointer, is the corner arguing with itself. */}
+                {tileActions && c.arrow !== true && (
                   <span aria-hidden className="pointer-events-none absolute right-3 top-3 flex size-8 items-center justify-center rounded-[9px] bg-[#1E7A5A] text-white opacity-0 transition-opacity duration-150 group-hover/act:opacity-100">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-[15px]">
                       <path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5" />

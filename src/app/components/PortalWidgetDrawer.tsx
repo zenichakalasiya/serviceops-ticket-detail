@@ -399,6 +399,10 @@ function ColumnsEditor({ cfg, onChange }: { cfg: Cfg; onChange: (patch: Cfg) => 
 
 const ACCORDION_TITLE: Record<string, string> = {
   layout: 'Layout', style: 'Style', spacing: 'Spacing', size: 'Size', alignment: 'Alignment', icon: 'Icon',
+  /* ⚠️ An accordion with no entry here renders with NO HEADING — a nameless strip you can collapse,
+     which reads as a rendering fault rather than as a group. Adding an accordion means adding its
+     title in the same breath. */
+  arrow: 'Arrow',
 };
 
 /* §1.3 — the accordion header carries a dot when anything inside it is set away from default, so a

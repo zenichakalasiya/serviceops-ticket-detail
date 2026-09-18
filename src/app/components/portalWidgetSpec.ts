@@ -232,7 +232,10 @@ export interface CollectionSpec {
  * ⚠️ Only the accordions an element NEEDS appear. Blank in the §4 coverage matrix means the
  * accordion is absent, not disabled and not empty — a Divider has no padding, so it shows no
  * Spacing padding box at all. */
-export type PanelAccordionId = 'layout' | 'style' | 'spacing' | 'size' | 'alignment' | 'icon';
+/* ⚠️ A CLOSED union, and adding an id here is half the job: the other half is its title in
+   `ACCORDION_TITLE` (PortalWidgetDrawer), without which the accordion renders with no heading — a
+   nameless strip you can collapse, which reads as a rendering fault rather than as a group. */
+export type PanelAccordionId = 'layout' | 'style' | 'spacing' | 'size' | 'alignment' | 'icon' | 'arrow';
 
 export interface PanelAccordion {
   id: PanelAccordionId;
@@ -842,6 +845,33 @@ export const WIDGET_SPECS: WidgetSpec[] = [
                rendering it; there is simply no longer a control to set one. */
           ],
         },
+        /* The CORNER ARROW — the small "this goes somewhere" mark a lot of portals put in an action
+           card's top-right corner.
+           ⚠️ OFF unless it is asked for. Every one of these cards is already a link: its whole surface
+           is the click target and its title says where it goes, so the arrow adds emphasis rather than
+           information, and four of them in a row is four marks competing. It is offered because the
+           reference portals use it, not because a card needs one.
+           ⚠️ ALWAYS the top-right corner, whatever the card's shape — a row of four cards reads as a set,
+           and a mark that moved to the trailing edge on the one card whose template differs would break
+           the set for a reason only the template picker knows about.
+           ⚠️ THREE glyphs, because they do not mean the same thing: an arrow goes on, a chevron opens
+           the next step in place, and a diagonal leaves for somewhere else — which is the honest one
+           for an External link card. */
+        {
+          id: 'arrow', open: false,
+          fields: [
+            { key: 'arrow', label: 'Corner arrow', control: 'toggle' },
+            {
+              key: 'arrowGlyph', label: 'Glyph', control: 'segmented',
+              when: (c: Cfg) => c.arrow === true,
+              options: [
+                { value: 'right', label: '→' },
+                { value: 'chevron', label: '›' },
+                { value: 'diagonal', label: '↗' },
+              ],
+            },
+          ],
+        },
         { id: 'spacing', spacing: 'both' },
         { id: 'size', fields: [{ key: 'minHeight', label: 'Height', control: 'sliderUnit', min: 0, max: 400, unit: 'px' }] },
         /* ⚠️ No Alignment accordion. It moved the WORDS only, so "centre" left the icon where it
@@ -860,6 +890,9 @@ export const WIDGET_SPECS: WidgetSpec[] = [
       /* Off by default. A ToggleRow reads an unset key as ON, so a field that has just appeared
          because you picked a destination would arrive having already changed what the card does. */
       mostUsed: false,
+      /* ⚠️ Same reason, and this one matters more: without it every action card on every portal
+         would come up wearing an arrow nobody asked for, because `ToggleRow` reads an unset key as ON. */
+      arrow: false, arrowGlyph: 'right',
       /* the swatch must state the colour the card would actually paint. Without a bg default the
          ColorField fell back to its own #3D8BD0 while fillCss fell back to white, so the control
          showed blue on a white card and the first click appeared to change nothing. */
