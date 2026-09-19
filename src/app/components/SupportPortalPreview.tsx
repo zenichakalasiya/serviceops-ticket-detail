@@ -17,7 +17,7 @@ import {
 } from './supportPortalData';
 import { AddSectionSeam, BannerSlot, ColumnAdders, MOVE_MIME, Sel, draggedElement, draggedNode, styleOf, useCanvas } from './PortalCanvas';
 import { HUGS_CONTENT, bannerGroupGap, inBanner } from './portalPageModel';
-import { bannerLayerCss, sideGradient } from './PortalBannerTools';
+import { bannerGradientOf, bannerLayerCss, gradientCss } from './PortalBannerTools';
 import type { BannerDecor } from './portalBannerTemplates';
 import { ImagePlus } from 'lucide-react';
 import { PAGE_ID, chosen, iconBoxCss, roleStyle } from './portalStyleResolver';
@@ -1931,7 +1931,9 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
     : heroCfg.bgKind === 'color' && heroCfg.colorMode === 'gradient'
     ? {
       backgroundColor: String(heroCfg.bannerColor ?? '#3D8BD0'),
-      backgroundImage: sideGradient(String(heroCfg.colorSide ?? 'left'), String(heroCfg.bannerColor ?? '#3D8BD0'), String(heroCfg.bannerColor2 ?? '#0B1B3F')),
+      /* ⚠️ Through `bannerGradientOf`, which falls back to the old side/start/end keys — so a
+         banner nobody has re-edited paints exactly what it painted before the editor changed. */
+      backgroundImage: gradientCss(bannerGradientOf(heroCfg)),
     }
     : heroCfg.bgKind === 'color' && heroCfg.colorMode === 'solid'
     ? { backgroundColor: String(heroCfg.bannerColor ?? '#3D8BD0'), backgroundImage: 'none' }

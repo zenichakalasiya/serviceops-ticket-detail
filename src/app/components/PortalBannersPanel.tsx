@@ -14,7 +14,7 @@
 import { useMemo, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { Check } from 'lucide-react';
-import { sideGradient } from './PortalBannerTools';
+import { bannerGradientOf, gradientCss } from './PortalBannerTools';
 import { BANNER_INDUSTRIES, BANNER_TEMPLATES } from './portalBannerTemplates';
 import type { BannerDecor, BannerIndustry, BannerPiece, BannerTemplate } from './portalBannerTemplates';
 
@@ -44,7 +44,7 @@ function bandCss(t: BannerTemplate | null): CSSProperties {
     return { backgroundColor: '#3B4658', backgroundImage: 'repeating-linear-gradient(135deg, rgba(255,255,255,0.06) 0 4px, transparent 4px 8px)' };
   }
   if (h.colorMode === 'gradient') {
-    return { backgroundImage: sideGradient(String(h.colorSide ?? 'left'), String(h.bannerColor), String(h.bannerColor2 ?? h.bannerColor)) };
+    return { backgroundImage: gradientCss(bannerGradientOf(h)) };
   }
   return { backgroundColor: String(h.bannerColor ?? '#3D8BD0') };
 }

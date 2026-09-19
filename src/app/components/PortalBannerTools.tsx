@@ -102,8 +102,7 @@ export function BannerFillEditor({ cfg, setCfg }: {
 }) {
   const mode = String(cfg.colorMode ?? 'solid');
   const c1 = String(cfg.bannerColor ?? '#3D8BD0');
-  const c2 = String(cfg.bannerColor2 ?? '#0B1B3F');
-  const side = String(cfg.colorSide ?? 'left');
+  const grad = bannerGradientOf(cfg);
   /* Picking a colour here MEANS "a coloured banner", so it switches the background to Colour too. */
   const put = (patch: Record<string, unknown>) => setCfg({ bgKind: 'color', ...patch });
   const label = 'mb-1.5 block text-[12px] font-medium text-[#364658]';
@@ -125,20 +124,22 @@ export function BannerFillEditor({ cfg, setCfg }: {
           <ColorField value={c1} onChange={(v) => put({ bannerColor: v, colorMode: 'solid' })} />
         </div>
       ) : (
-        <>
-          <div>
-            <span className={label}>Strongest at</span>
-            <SideGrid value={side} onChange={(v) => put({ colorSide: v, colorMode: 'gradient' })} from={c1} to={c2} />
-          </div>
-          <div>
-            <span className={label}>Start colour</span>
-            <ColorField value={c1} onChange={(v) => put({ bannerColor: v, colorMode: 'gradient' })} />
-          </div>
-          <div>
-            <span className={label}>End colour</span>
-            <ColorField value={c2} onChange={(v) => put({ bannerColor2: v, colorMode: 'gradient' })} />
-          </div>
-        </>
+        /* ⚠️ The SAME editor the image tab's colour layer uses. The nine-tile "strongest at" grid
+           with a start and an end colour could only ever express two stops on one of nine axes —
+           and it taught a second way of describing a gradient in a builder that already had one.
+           ⚠️ `bannerColor` is kept in step with the first stop. It is what paints UNDER the
+              gradient (so a stop with opacity has something honest behind it), what the Solid tab
+              shows if you switch back, and what the template thumbnails read to decide whether a
+              banner is dark — three places that would otherwise still be answering with the colour
+              from before the edit. */
+        <GradientEditor
+          value={grad}
+          onChange={(next) => put({
+            colorMode: 'gradient',
+            bannerGradient: next,
+            bannerColor: [...next.stops].sort((x, y) => x.pos - y.pos)[0]?.color ?? c1,
+          })}
+        />
       )}
     </div>
   );
@@ -400,6 +401,29 @@ export function layerGradientOf(cfg: Record<string, unknown>): LayerGradient {
   return { type: side === 'center' ? 'radial' : 'linear', angle: SIDE_ANGLE[side] ?? 90, stops: [{ pos: 0, color: from }, { pos: 100, color: to }] };
 }
 
+/** The banner's OWN gradient as stored, or the nine-tile side / start / end it used to be, turned
+ *  into one.
+ *
+ * ⚠️ The same move `layerGradientOf` makes for the colour layer, and for the same reason: every
+ * banner already on a page — and all 29 templates — carry `colorSide`, `bannerColor` and
+ * `bannerColor2`, so the new editor has to be able to read those on first open or a banner would
+ * repaint itself the day this shipped. Nothing is migrated on load; the moment somebody edits the
+ * gradient, `bannerGradient` is written and takes over. */
+export function bannerGradientOf(cfg: Record<string, unknown>): LayerGradient {
+  const g = cfg.bannerGradient as LayerGradient | undefined;
+  if (g && Array.isArray(g.stops) && g.stops.length >= 2) return g;
+  const side = String(cfg.colorSide ?? 'left');
+  const from = String(cfg.bannerColor ?? '#3D8BD0');
+  const to = String(cfg.bannerColor2 ?? '#0B1B3F');
+  return { type: side === 'center' ? 'radial' : 'linear', angle: SIDE_ANGLE[side] ?? 90, stops: [{ pos: 0, color: from }, { pos: 100, color: to }] };
+}
+
+/** What the banner's Colour tab paints. */
+export function bannerFillCss(cfg: Record<string, unknown>): CSSProperties {
+  if (cfg.colorMode === 'solid') return { backgroundColor: String(cfg.bannerColor ?? '#3D8BD0'), backgroundImage: 'none' };
+  return { backgroundColor: String(cfg.bannerColor ?? '#3D8BD0'), backgroundImage: gradientCss(bannerGradientOf(cfg)) };
+}
+
 const stopsCss = (stops: LayerStop[]) => [...stops].sort((a, b) => a.pos - b.pos).map((s) => `${s.color} ${s.pos}%`).join(', ');
 export const gradientCss = (g: LayerGradient) => (g.type === 'radial'
   ? `radial-gradient(circle at center, ${stopsCss(g.stops)})`
@@ -413,15 +437,24 @@ export function bannerLayerCss(cfg: Record<string, unknown>): CSSProperties {
 
 const CHECKER: CSSProperties = { backgroundImage: 'repeating-conic-gradient(#E5E7EB 0% 25%, #FFFFFF 0% 50%)', backgroundSize: '10px 10px' };
 
-export function OverlayLayerEditor({ cfg, setCfg }: { cfg: Record<string, unknown>; setCfg: (patch: Record<string, unknown>) => void }) {
-  const mode = cfg.overlayMode === 'solid' ? 'solid' : 'gradient';
-  const g = layerGradientOf(cfg);
+/* ── The gradient editor ──────────────────────────────────────────────────────────────────────
+ *
+ * ⚠️ ONE editor, used by the image tab's colour layer AND by the banner's own colour. The two used
+ * to ask for a gradient in two different languages: the layer took a type, an angle and any number
+ * of stops, while the fill took a nine-tile "strongest at" grid and exactly two colours. Same value,
+ * two vocabularies — so what you could express depended on which tab you happened to be in, and
+ * nothing you learned in one carried to the other.
+ * ⚠️ It is a CONTROLLED component over `LayerGradient`. It stores nothing itself except which stop
+ * is selected, so both callers keep owning their own config key. */
+export function GradientEditor({ value: g, onChange }: {
+  value: LayerGradient;
+  onChange: (next: LayerGradient) => void;
+}) {
   const [active, setActive] = useState(0);
   const barRef = useRef<HTMLDivElement>(null);
-  const put = (next: LayerGradient) => setCfg({ overlayMode: 'gradient', overlayGradient: next });
+  const put = onChange;
   const setStop = (i: number, patch: Partial<LayerStop>) => put({ ...g, stops: g.stops.map((s, j) => (j === i ? { ...s, ...patch } : s)) });
   const sel = Math.min(active, g.stops.length - 1);
-  const label = 'mb-1.5 block text-[12px] font-medium text-[#364658]';
   const iconBtn = 'flex size-8 items-center justify-center rounded border border-[#DFE5ED] bg-white text-[#64748B] transition-colors hover:border-[#C3CBD6] hover:text-[#364658]';
 
   /* A stop is dragged along the bar; clicking the bar adds one there, in the nearest stop's colour. */
@@ -449,13 +482,117 @@ export function OverlayLayerEditor({ cfg, setCfg }: { cfg: Record<string, unknow
   };
 
   return (
+    <>
+      <div className="flex items-center gap-2">
+        <select
+          value={g.type}
+          onChange={(e) => put({ ...g, type: e.target.value as LayerGradient['type'] })}
+          className="app-select h-8 min-w-0 flex-1 rounded border border-[#DFE5ED] bg-white px-2 text-[13px] text-[#364658] outline-none focus:border-[#3D8BD0]"
+          aria-label="Gradient type"
+        >
+          <option value="linear">Linear</option>
+          <option value="radial">Radial</option>
+        </select>
+        {g.type === 'linear' && (
+          <label className="flex h-8 w-[72px] items-center gap-1 rounded border border-[#DFE5ED] bg-white px-2 focus-within:border-[#3D8BD0]" title="Angle">
+            <input
+              type="number"
+              value={g.angle}
+              onChange={(e) => put({ ...g, angle: ((Math.round(Number(e.target.value) || 0) % 360) + 360) % 360 })}
+              className="w-full min-w-0 bg-transparent text-[13px] text-[#364658] outline-none"
+              aria-label="Angle"
+            />
+            <span className="text-[12px] text-[#7B8FA5]">°</span>
+          </label>
+        )}
+        <button type="button" title="Reverse" className={iconBtn} onClick={() => put({ ...g, stops: g.stops.map((s) => ({ ...s, pos: 100 - s.pos })) })}><ArrowLeftRight size={14} /></button>
+        {g.type === 'linear' && (
+          <button type="button" title="Rotate 90°" className={iconBtn} onClick={() => put({ ...g, angle: (g.angle + 90) % 360 })}><RotateCw size={14} /></button>
+        )}
+      </div>
+
+      {/* The bar: the gradient left to right over a checkerboard (so opacity reads), stops above it. */}
+      <div className="relative px-[9px] pt-5">
+        {g.stops.map((s, i) => (
+          <button
+            key={i}
+            type="button"
+            title={`${s.pos}%`}
+            onMouseDown={(e) => dragStop(e, i)}
+            className={`absolute top-0 flex size-[18px] -translate-x-1/2 cursor-ew-resize items-center justify-center rounded-[4px] border-2 bg-white shadow-sm ${i === sel ? 'border-[#3D8BD0]' : 'border-white ring-1 ring-[#C3CBD6]'}`}
+            style={{ left: `calc(9px + (100% - 18px) * ${s.pos / 100})` }}
+          >
+            <span className="size-full rounded-[2px]" style={{ ...CHECKER, backgroundSize: '6px 6px' }}>
+              <span className="block size-full rounded-[2px]" style={{ backgroundColor: s.color }} />
+            </span>
+          </button>
+        ))}
+        <div
+          ref={barRef}
+          title="Click to add a stop"
+          onMouseDown={(e) => addAt(posAt(e.clientX))}
+          className="h-7 w-full cursor-copy overflow-hidden rounded border border-[#DFE5ED]"
+          style={CHECKER}
+        >
+          <div className="size-full" style={{ backgroundImage: `linear-gradient(90deg, ${stopsCss(g.stops)})` }} />
+        </div>
+      </div>
+
+      <div>
+        <div className="mb-1.5 flex items-center justify-between">
+          <span className="text-[12px] font-medium text-[#364658]">Stops</span>
+          <button
+            type="button"
+            title={g.stops.length >= 6 ? 'Up to six stops' : 'Add a stop'}
+            disabled={g.stops.length >= 6}
+            onClick={() => addAt(50)}
+            className="flex size-6 items-center justify-center rounded text-[#64748B] transition-colors hover:bg-[#F3F4F6] hover:text-[#364658] disabled:opacity-40"
+          ><Plus size={14} /></button>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          {g.stops.map((s, i) => (
+            <div key={i} onMouseDown={() => setActive(i)} className={`flex items-center gap-2 rounded p-1 ${i === sel ? 'bg-[#F5F9FE]' : ''}`}>
+              <label className="flex h-8 w-[70px] flex-shrink-0 items-center gap-0.5 rounded border border-[#DFE5ED] bg-white px-2 focus-within:border-[#3D8BD0]">
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={s.pos}
+                  onChange={(e) => setStop(i, { pos: Math.max(0, Math.min(100, Math.round(Number(e.target.value) || 0))) })}
+                  className="w-full min-w-0 bg-transparent text-[13px] text-[#364658] outline-none"
+                  aria-label="Stop position"
+                />
+                <span className="text-[12px] text-[#7B8FA5]">%</span>
+              </label>
+              <div className="min-w-0 flex-1"><ColorField value={s.color} onChange={(v) => setStop(i, { color: v })} /></div>
+              <button
+                type="button"
+                title={g.stops.length <= 2 ? 'A gradient needs two stops' : 'Remove stop'}
+                disabled={g.stops.length <= 2}
+                onClick={() => { put({ ...g, stops: g.stops.filter((_, j) => j !== i) }); setActive(0); }}
+                className="flex size-7 flex-shrink-0 items-center justify-center rounded text-[#64748B] transition-colors hover:bg-[#F3F4F6] hover:text-[#EF4444] disabled:opacity-30"
+              ><Minus size={14} /></button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
+
+export function OverlayLayerEditor({ cfg, setCfg }: { cfg: Record<string, unknown>; setCfg: (patch: Record<string, unknown>) => void }) {
+  const mode = cfg.overlayMode === 'solid' ? 'solid' : 'gradient';
+  const g = layerGradientOf(cfg);
+  const label = 'mb-1.5 block text-[12px] font-medium text-[#364658]';
+
+  return (
     <div className="flex flex-col gap-3">
       <div className="flex rounded border border-[#DFE5ED] p-0.5">
         {(['solid', 'gradient'] as const).map((m) => (
           <button
             key={m}
             type="button"
-            onClick={() => (m === 'solid' ? setCfg({ overlayMode: 'solid' }) : put(g))}
+            onClick={() => (m === 'solid' ? setCfg({ overlayMode: 'solid' }) : setCfg({ overlayMode: 'gradient', overlayGradient: g }))}
             className={`h-7 flex-1 rounded text-[12px] font-medium transition-colors ${mode === m ? 'bg-[#3D8BD0] text-white' : 'text-[#64748B] hover:bg-[#F5F7FA]'}`}
           >{m === 'solid' ? 'Solid' : 'Gradient'}</button>
         ))}
@@ -468,101 +605,7 @@ export function OverlayLayerEditor({ cfg, setCfg }: { cfg: Record<string, unknow
           <span className="mt-1.5 block text-[11px] leading-[16px] text-[#7B8FA5]">Lower the opacity in the picker to let more of the image show through.</span>
         </div>
       ) : (
-        <>
-          <div className="flex items-center gap-2">
-            <select
-              value={g.type}
-              onChange={(e) => put({ ...g, type: e.target.value as LayerGradient['type'] })}
-              className="app-select h-8 min-w-0 flex-1 rounded border border-[#DFE5ED] bg-white px-2 text-[13px] text-[#364658] outline-none focus:border-[#3D8BD0]"
-              aria-label="Gradient type"
-            >
-              <option value="linear">Linear</option>
-              <option value="radial">Radial</option>
-            </select>
-            {g.type === 'linear' && (
-              <label className="flex h-8 w-[72px] items-center gap-1 rounded border border-[#DFE5ED] bg-white px-2 focus-within:border-[#3D8BD0]" title="Angle">
-                <input
-                  type="number"
-                  value={g.angle}
-                  onChange={(e) => put({ ...g, angle: ((Math.round(Number(e.target.value) || 0) % 360) + 360) % 360 })}
-                  className="w-full min-w-0 bg-transparent text-[13px] text-[#364658] outline-none"
-                  aria-label="Angle"
-                />
-                <span className="text-[12px] text-[#7B8FA5]">°</span>
-              </label>
-            )}
-            <button type="button" title="Reverse" className={iconBtn} onClick={() => put({ ...g, stops: g.stops.map((s) => ({ ...s, pos: 100 - s.pos })) })}><ArrowLeftRight size={14} /></button>
-            {g.type === 'linear' && (
-              <button type="button" title="Rotate 90°" className={iconBtn} onClick={() => put({ ...g, angle: (g.angle + 90) % 360 })}><RotateCw size={14} /></button>
-            )}
-          </div>
-
-          {/* The bar: the gradient left to right over a checkerboard (so opacity reads), stops above it. */}
-          <div className="relative px-[9px] pt-5">
-            {g.stops.map((s, i) => (
-              <button
-                key={i}
-                type="button"
-                title={`${s.pos}%`}
-                onMouseDown={(e) => dragStop(e, i)}
-                className={`absolute top-0 flex size-[18px] -translate-x-1/2 cursor-ew-resize items-center justify-center rounded-[4px] border-2 bg-white shadow-sm ${i === sel ? 'border-[#3D8BD0]' : 'border-white ring-1 ring-[#C3CBD6]'}`}
-                style={{ left: `calc(9px + (100% - 18px) * ${s.pos / 100})` }}
-              >
-                <span className="size-full rounded-[2px]" style={{ ...CHECKER, backgroundSize: '6px 6px' }}>
-                  <span className="block size-full rounded-[2px]" style={{ backgroundColor: s.color }} />
-                </span>
-              </button>
-            ))}
-            <div
-              ref={barRef}
-              title="Click to add a stop"
-              onMouseDown={(e) => addAt(posAt(e.clientX))}
-              className="h-7 w-full cursor-copy overflow-hidden rounded border border-[#DFE5ED]"
-              style={CHECKER}
-            >
-              <div className="size-full" style={{ backgroundImage: `linear-gradient(90deg, ${stopsCss(g.stops)})` }} />
-            </div>
-          </div>
-
-          <div>
-            <div className="mb-1.5 flex items-center justify-between">
-              <span className="text-[12px] font-medium text-[#364658]">Stops</span>
-              <button
-                type="button"
-                title={g.stops.length >= 6 ? 'Up to six stops' : 'Add a stop'}
-                disabled={g.stops.length >= 6}
-                onClick={() => addAt(50)}
-                className="flex size-6 items-center justify-center rounded text-[#64748B] transition-colors hover:bg-[#F3F4F6] hover:text-[#364658] disabled:opacity-40"
-              ><Plus size={14} /></button>
-            </div>
-            <div className="flex flex-col gap-1.5">
-              {g.stops.map((s, i) => (
-                <div key={i} onMouseDown={() => setActive(i)} className={`flex items-center gap-2 rounded p-1 ${i === sel ? 'bg-[#F5F9FE]' : ''}`}>
-                  <label className="flex h-8 w-[70px] flex-shrink-0 items-center gap-0.5 rounded border border-[#DFE5ED] bg-white px-2 focus-within:border-[#3D8BD0]">
-                    <input
-                      type="number"
-                      min={0}
-                      max={100}
-                      value={s.pos}
-                      onChange={(e) => setStop(i, { pos: Math.max(0, Math.min(100, Math.round(Number(e.target.value) || 0))) })}
-                      className="w-full min-w-0 bg-transparent text-[13px] text-[#364658] outline-none"
-                      aria-label="Stop position"
-                    />
-                    <span className="text-[12px] text-[#7B8FA5]">%</span>
-                  </label>
-                  <div className="min-w-0 flex-1"><ColorField value={s.color} onChange={(v) => setStop(i, { color: v })} /></div>
-                  <button
-                    type="button"
-                    title={g.stops.length <= 2 ? 'A gradient needs two stops' : 'Remove stop'}
-                    disabled={g.stops.length <= 2}
-                    onClick={() => { put({ ...g, stops: g.stops.filter((_, j) => j !== i) }); setActive(0); }}
-                    className="flex size-7 flex-shrink-0 items-center justify-center rounded text-[#64748B] transition-colors hover:bg-[#F3F4F6] hover:text-[#EF4444] disabled:opacity-30"
-                  ><Minus size={14} /></button>
-                </div>
-              ))}
-            </div>
-          </div>
-        </>
+        <GradientEditor value={g} onChange={(next) => setCfg({ overlayMode: 'gradient', overlayGradient: next })} />
       )}
     </div>
   );

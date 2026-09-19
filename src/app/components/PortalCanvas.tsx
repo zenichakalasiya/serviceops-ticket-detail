@@ -1920,7 +1920,12 @@ function BannerToolbar() {
         {fill && (
           <>
             <span className="fixed inset-0 z-[60]" onClick={() => setFill(false)} />
-            <div className="absolute left-1/2 top-[calc(100%+6px)] z-[61] w-[240px] -translate-x-1/2 rounded-lg border border-[#E5E7EB] bg-white p-3 shadow-[0_12px_16px_-4px_rgba(16,24,40,0.10),0_4px_6px_-2px_rgba(16,24,40,0.06)]">
+            {/* ⚠️ 320px, and a scroll once it is tall. This popup holds the SAME gradient editor the
+                panel does, and the editor is a row of four controls over a list of stops — at 240px
+                the type select read "L" and every stop colour read "#…", which is a control you have
+                to open to find out what it says. The colour picker it opens is portalled to the body,
+                so the scroll box cannot clip it. */}
+            <div className="absolute left-1/2 top-[calc(100%+6px)] z-[61] max-h-[min(70vh,540px)] w-[320px] -translate-x-1/2 overflow-y-auto rounded-lg border border-[#E5E7EB] bg-white p-3 shadow-[0_12px_16px_-4px_rgba(16,24,40,0.10),0_4px_6px_-2px_rgba(16,24,40,0.06)]">
               <BannerFillEditor cfg={hero} setCfg={(patch) => setCfg?.('hero', patch)} />
             </div>
           </>
@@ -2336,6 +2341,18 @@ function ToolbarSlot({ toolbarBelow, children }: { toolbarBelow?: boolean | 'und
          that merely fits the viewport can still sit underneath the panel. */
       const canvas = host.closest('[data-portal-canvas]') ?? document.body;
       const box = canvas.getBoundingClientRect();
+      /* ⚠️ The canvas CARD is the horizontal bound and the wrong vertical one: it is the page
+         itself, so it scrolls, and on a long page its top sits far above the screen. What is
+         actually on view is the SCROLL PORT around it — so that is what holds the bar top and
+         bottom. Clamping to the card let a scrolled banner take its toolbar up over the
+         builder's top bar, which is exactly what the clamp exists to prevent. */
+      let port: HTMLElement | null = canvas.parentElement as HTMLElement | null;
+      while (port) {
+        const o = getComputedStyle(port).overflowY;
+        if (o === 'auto' || o === 'scroll') break;
+        port = port.parentElement;
+      }
+      const view = (port ?? canvas).getBoundingClientRect();
 
       const GAP = 8;
       const above = el.top - b.height - 6;
@@ -2345,13 +2362,31 @@ function ToolbarSlot({ toolbarBelow, children }: { toolbarBelow?: boolean | 'und
       const wantBelow = toolbarBelow === 'under' || above < box.top + GAP;
       /* `true` means JUST INSIDE the element's own top edge — the banner's promise. Above it the bar lands on
          the builder's own top bar, which is not part of the canvas at all. */
-      const top = toolbarBelow === true ? el.top + GAP : wantBelow ? below : above;
+      let top = toolbarBelow === true ? el.top + GAP : wantBelow ? below : above;
 
       let left = el.left;
       if (left + b.width > box.right - GAP) left = box.right - GAP - b.width;
       if (left < box.left + GAP) left = box.left + GAP;
 
-      setPos({ top, left });
+      /* ⚠️ CLAMPED VERTICALLY TOO, and this is the whole reason the bar is worth measuring: it is
+         `position: fixed` on the BODY, so nothing clips it. Left and right were held inside the
+         canvas from the start, while the top was left to follow the element — so scrolling a tall
+         selected element (a banner, a full-height column) carried its toolbar straight up out of
+         the canvas and across the builder's top bar and the product header, painting over
+         navigation it has nothing to do with. Held at the canvas's own edges it stays with the
+         thing it belongs to.
+         ⚠️ `minTop` wins the clamp: on a short canvas the two bounds cross, and of the two
+         "just inside the top" is the one that keeps the bar reachable. */
+      const minTop = view.top + GAP;
+      const maxTop = view.bottom - GAP - b.height;
+      top = Math.max(minTop, Math.min(top, maxTop));
+
+      /* ⚠️ And GONE once the element itself has scrolled out of the canvas. A toolbar pinned to the
+         canvas edge for an element nobody can see is a set of controls floating over somebody
+         else's content — the selection is still real, so it comes back the moment the element
+         does. */
+      const onScreen = el.bottom > view.top + GAP && el.top < view.bottom - GAP;
+      setPos(onScreen ? { top, left } : null);
     };
     place();
     /* Capture, so a scroll inside ANY ancestor moves it, not just the window. */

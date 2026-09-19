@@ -1013,6 +1013,27 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   `"Ticket Listing & Full Detail page"`. Check with `curl` from the project folder before concluding
   a change did not work.
 
+- **Support Portal — ONE gradient editor, for the banner's colour and for the image's colour layer
+  (19 Sep 2026).** The two used to ask for a gradient in different languages: the layer took a type,
+  an angle and any number of stops, while the banner's own fill took a nine-tile "Strongest at" grid
+  and exactly two colours. Same value, two vocabularies — so what you could express depended on which
+  tab you were in, and nothing learned in one carried to the other. **`GradientEditor`**
+  (`PortalBannerTools`) is now that editor, controlled over a `LayerGradient`, used by
+  `OverlayLayerEditor` AND `BannerFillEditor` — which means the panel field and the canvas toolbar's
+  colour popup both get it, since they render the same component. ⚠️ The banner stores
+  **`bannerGradient`**, read through **`bannerGradientOf(cfg)`**, which falls back to the legacy
+  `colorSide` / `bannerColor` / `bannerColor2` exactly as `layerGradientOf` does for the layer — all
+  29 templates and every page already built carry those keys, so nothing repaints until someone
+  edits it, and nothing is migrated on load. ⚠️ `bannerColor` is kept in step with the FIRST stop: it
+  paints under the gradient (so a stop with opacity has something honest behind it), it is what the
+  Solid tab shows if you switch back, and the template thumbnails read it to decide whether a banner
+  is dark. ⚠️ `bannerGradient` is in `TEMPLATE_HERO_KEYS`, or applying a template would leave the
+  previous banner's gradient under the new one's colours. ⚠️ The toolbar popup went 240px → 320px
+  with a scroll: the editor is four controls over a list of stops, and at 240 the type select read
+  "L" and every stop colour read "#…". The colour picker it opens is portalled to the body, so the
+  scroll box cannot clip it. `SideGrid` / `sideGradient` stay — the colour LAYER's legacy
+  `overlaySide` field still uses them.
+
 ## Parked features
 Four Support Portal features are BUILT-OR-PART-BUILT AND SWITCHED OFF, with their full context in
 [future-tasks.md](future-tasks.md): **AI** (rail item commented out in `SupportPortalBuilder`; the

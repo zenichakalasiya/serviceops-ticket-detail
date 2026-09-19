@@ -572,7 +572,7 @@ export const scratchBanner = (orientation: 'horizontal' | 'vertical'): BannerTem
  *  instead of merging into it — a banner nobody picked is what a merge produces. */
 export const TEMPLATE_HERO_KEYS = [
   'heading', 'sub', 'note', 'searchPlaceholder', 'showSearch', 'searchPlacement', 'searchWidth', 'searchRadius',
-  'bgKind', 'bannerStyle', 'colorMode', 'bannerColor', 'bannerColor2', 'colorSide', 'bannerImage', 'bannerCrop',
+  'bgKind', 'bannerStyle', 'colorMode', 'bannerColor', 'bannerColor2', 'colorSide', 'bannerGradient', 'bannerImage', 'bannerCrop',
   'overlayOn', 'overlayMode', 'overlayColor', 'overlayGradient', 'overlaySide', 'overlayFrom', 'overlayTo',
   'headingColor', 'contentAlign', 'contentAlignY', 'contentMaxWidth', 'height', 'fullBleed', 'bgWholePage',
   'bannerRadius', 'bannerBorderWidth', 'bannerBorderColor', 'bannerBorderStyle', 'bannerInset',
