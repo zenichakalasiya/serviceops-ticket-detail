@@ -92,6 +92,16 @@ export const HERO_SPEC: WidgetSpec = {
       when: (c) => !c.bannerShape && !!c.bannerLayout && c.bannerLayout !== 'classic',
     } as WidgetField,
     {
+      /* ⚠️ FIRST in the group, above Height — the slot the retired `bannerLayout` picker had, and
+         for the reason written there: a control that reframes everything under it is read too late
+         at the bottom. Changing the layout replaces the band's treatment, its copy and the widgets
+         in it, so Height, Background and the rest are its consequences.
+         ⚠️ It opens the SAME picker the add flow uses, locked to the shape the page already has —
+         a vertical banner IS the page in two columns, so that question was settled when the banner
+         went on. The Banners rail keeps both shapes, which is where changing it lives. */
+      key: 'bannerTemplate', label: 'Banner layout', control: 'bannerChange', tab: 'style', group: 'Banner',
+    },
+    {
       /* ⚠️ A RAIL, not four tabs. Height is an ordered axis, and four buttons said four unrelated
          things — the initials keep it to one line at any panel width. The VALUES are unchanged, so
          every template and every page already carrying a height renders exactly as before. */

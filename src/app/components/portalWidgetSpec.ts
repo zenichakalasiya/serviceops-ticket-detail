@@ -46,6 +46,9 @@ export type ControlKind =
   /** A whole banner — shape, treatment and the widgets in it — picked as one drawn tile. */
   | 'bannerLayout'
   | 'bannerShape'
+  /* The banner's current layout, and the way to change it: one row that names what the banner is on
+     now and opens the layout picker for the shape the page already has. */
+  | 'bannerChange'
   | 'kpiLayout'
   | 'gradientSide'
   | 'bannerFill'

@@ -1034,6 +1034,26 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   scroll box cannot clip it. `SideGrid` / `sideGradient` stay — the colour LAYER's legacy
   `overlaySide` field still uses them.
 
+- **Support Portal — CHANGING the banner's layout lives in the banner's own panel (21 Sep 2026).**
+  **Banner layout** is the first row of the Banner group, above Height — the slot the retired
+  `bannerLayout` picker had, for the reason written there: a control that reframes everything under
+  it is read too late at the bottom. It DRAWS the layout the banner is on (`BannerMiniPreview` in
+  `PortalBannersPanel` — the real gallery thumbnail, scaled into a fixed box, never a hand-made
+  miniature that could drift from the tiles it sits beside), names it, and the link says which shape
+  it will offer: *Change horizontal layout* / *Change vertical layout*. ⚠️ It opens the SAME dialog
+  the add flow uses, through a new `lockTo` prop — one component, because a separate edit picker is
+  how the add shelf and the change shelf end up holding different banners. In that mode the dialog
+  skips the shape step, drops the back arrow (there is nothing to go back to), ticks the layout the
+  banner is on, and carries one line saying where the OTHER shape lives, since the rail keeps both
+  and a picker that silently drops half the catalogue reads as a catalogue that shrank. ⚠️ The shape
+  is read from the PAGE (`heroPlacement`, seeded to the panel as `__vertical`), not from a second
+  copy of the answer, so the picker cannot disagree with what is on screen. ⚠️ The two-step
+  Horizontal/Vertical dialog is still **first-add only** — `bannerStart` is one state
+  (`'add' | 'edit' | null`) rather than two booleans that could both be true — and deleting the
+  banner and adding it again brings the shape question back. Verified in a browser across all three
+  starts: a template banner, a vertical one, and a scratch banner (which reads "Start from scratch"
+  and ticks the scratch tile).
+
 ## Parked features
 Four Support Portal features are BUILT-OR-PART-BUILT AND SWITCHED OFF, with their full context in
 [future-tasks.md](future-tasks.md): **AI** (rail item commented out in `SupportPortalBuilder`; the

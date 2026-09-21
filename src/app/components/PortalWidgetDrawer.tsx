@@ -39,6 +39,8 @@ import type { RecordFilter } from './portalRecordFilters';
 import { BANNER_SHAPES, bannerLayoutsFor, recordModule } from './supportPortalData';
 import { AnnouncementTypePicker, BannerLayoutPicker, BannerShapePicker, CardLayoutPicker, KpiLayoutPicker, TemplatePicker } from './PortalSectionControls';
 import { BannerFillEditor, BannerPresetPicker, GapField, GapPair, OverlayLayerEditor, SideGrid, TilePresetPicker, bannerLayerSide } from './PortalBannerTools';
+import { SCRATCH_BANNER_ID, bannerTemplate } from './portalBannerTemplates';
+import { BannerMiniPreview } from './PortalBannersPanel';
 import type { BannerNode } from './portalBannerLayout';
 import { bannerGroupGap } from './portalPageModel';
 import { ACROSS_ROW, ACROSS_STACK, DOWN_ROW, DOWN_STACK, SectionPresets } from './PortalSectionLayout';
@@ -699,10 +701,12 @@ export interface WidgetDrawerProps {
   onApplyBannerLayout?: (id: string) => void;
   /** Builds or re-arranges the banner from a starting shape — a builder action, see `applyBannerShape`. */
   onApplyBannerShape?: (id: string) => void;
+  /** Opens the layout picker for the banner already on the page, locked to its shape. */
+  onChangeBanner?: () => void;
 }
 
 export function PortalWidgetDrawer(props: WidgetDrawerProps) {
-  const { nodeId, spec, cfg, setCfg, styles, setStyle, replaceStyle, onSelect, onReset, applyPreset, icon, setIcon, onAddLinkCard, onApplyBannerLayout, onApplyBannerShape } = props;
+  const { nodeId, spec, cfg, setCfg, styles, setStyle, replaceStyle, onSelect, onReset, applyPreset, icon, setIcon, onAddLinkCard, onApplyBannerLayout, onApplyBannerShape, onChangeBanner } = props;
   const node = nodeById(nodeId);
   const path = nodePath(nodeId);
   /* What arrives OPEN. ⚠️ CONTENT only — every DESIGN accordion starts collapsed.
@@ -1198,6 +1202,39 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
         );
       case 'gradientSide':
         return <SideGrid value={f.key === 'overlaySide' ? bannerLayerSide(viewCfg) : String(v ?? 'left')} onChange={(x) => set(f.key, x)} from={String(viewCfg.overlayFrom ?? 'rgba(15,23,42,0.85)')} to={String(viewCfg.overlayTo ?? 'rgba(15,23,42,0)')} />;
+      /* The banner's current layout, and the door to changing it.
+         ⚠️ It NAMES what the banner is on rather than drawing it. The banner itself is on the canvas
+            two feet to the left, so a thumbnail of it would be the one picture in this panel you can
+            already see full size; what the panel can say that the canvas cannot is which of the
+            twenty-nine layouts you are looking at.
+         ⚠️ A banner nobody picked a layout for reads "Custom" — the page default, a template's own
+            banner or one that has since been edited. Naming it "Classic" or leaving it blank would
+            both claim something the config does not say. */
+      case 'bannerChange': {
+        const cur = String(viewCfg.bannerTemplate ?? '');
+        const vertical = viewCfg.__vertical === true;
+        const name = cur === SCRATCH_BANNER_ID ? 'Start from scratch' : bannerTemplate(cur)?.name ?? 'Custom';
+        const sub = cur === SCRATCH_BANNER_ID
+          ? 'A plain banner you designed yourself'
+          : bannerTemplate(cur)?.industries.join(', ') || (vertical ? 'A column beside the page' : 'A band across the top');
+        return (
+          <button
+            type="button"
+            onClick={() => onChangeBanner?.()}
+            title="Choose a different banner layout"
+            className="group flex w-full items-center gap-3 rounded-lg border border-[#DFE5ED] bg-white p-2 text-left transition-all hover:border-[#3D8BD0] hover:shadow-[0_1px_2px_rgba(16,24,40,0.04),0_2px_8px_rgba(16,24,40,0.06)]"
+          >
+            <BannerMiniPreview id={cur} vertical={vertical} />
+            <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+              <span className="truncate text-[13px] font-medium text-[#364658] group-hover:text-[#3D8BD0]">{name}</span>
+              <span className="truncate text-[11.5px] text-[#9AA5B4]">{sub}</span>
+              <span className="mt-1 inline-flex items-center gap-0.5 text-[12px] font-medium text-[#3D8BD0]">
+                {vertical ? 'Change vertical layout' : 'Change horizontal layout'}<ChevronRight size={13} />
+              </span>
+            </span>
+          </button>
+        );
+      }
       case 'bannerFill':
         return <BannerFillEditor cfg={viewCfg} setCfg={(patch) => viewSet(patch)} />;
       case 'kpiLayout':

@@ -1,4 +1,4 @@
-/* Support Portal builder — ADDING a banner.
+/* Support Portal builder — ADDING a banner, and CHANGING the one a page already has.
  *
  * Two questions, in the order they actually depend on each other: which SHAPE the banner is, then
  * which banner. Orientation is not a style — a vertical banner turns the whole page into two
@@ -15,13 +15,18 @@
  * the shelf you pick from here and the shelf you swap from later cannot drift apart.
  *
  * ⚠️ Orientation stays reachable afterwards: the Banners rail panel has both tabs, so nothing here
- * is a one-way door. */
+ * is a one-way door.
+ *
+ * ⚠️ `lockTo` is the EDIT mode — the banner's own panel opens this with the shape the page already
+ * has, so the first question is not asked again and only that shape's layouts are offered. The two
+ * modes are one component on purpose: a separate edit picker is how the add shelf and the change
+ * shelf end up holding different banners. */
 
 import { useState } from 'react';
 import { ArrowLeft, X } from 'lucide-react';
 import { BannerScratchThumb, BannerThumb, BannerTile } from './PortalBannersPanel';
 import type { BannerOrientation } from './PortalBannersPanel';
-import { BANNER_INDUSTRIES, BANNER_TEMPLATES } from './portalBannerTemplates';
+import { BANNER_INDUSTRIES, BANNER_TEMPLATES, SCRATCH_BANNER_ID } from './portalBannerTemplates';
 import type { BannerIndustry } from './portalBannerTemplates';
 
 /** What the admin chose: an orientation, and a template — or `null` for the blank start. */
@@ -77,11 +82,18 @@ function ShapeCard({ orientation, title, blurb, onPick }: {
 
 /* ── The dialog ────────────────────────────────────────────────────────────────────────────── */
 
-export function BannerStartDialog({ onPick, onClose }: {
+export function BannerStartDialog({ onPick, onClose, lockTo, activeId }: {
   onPick: (choice: BannerStart) => void;
   onClose: () => void;
+  /* CHANGING the banner rather than adding one: the page already has a shape — a vertical banner
+     IS the page in two columns — so the shape question is settled and only its layouts are shown.
+     ⚠️ Not a second dialog. One component, one set of tiles: an edit picker of its own is how the
+     two shelves end up offering different banners. */
+  lockTo?: BannerOrientation;
+  /** The layout the banner is on now, ticked so the grid says where you are before you move. */
+  activeId?: string | null;
 }) {
-  const [orientation, setOrientation] = useState<BannerOrientation | null>(null);
+  const [orientation, setOrientation] = useState<BannerOrientation | null>(lockTo ?? null);
   const [industry, setIndustry] = useState<'all' | BannerIndustry>('all');
   const list = BANNER_TEMPLATES.filter(
     (t) => t.orientation === orientation && (industry === 'all' || t.industries.includes(industry)),
@@ -93,7 +105,7 @@ export function BannerStartDialog({ onPick, onClose }: {
         <div className="flex flex-none items-start gap-3 border-b border-[#E5E7EB] px-5 py-4">
           {/* ⚠️ Back, not a stepper. There are two steps and the first is one click — a numbered
               rail above two tiles is more chrome than the flow it describes. */}
-          {orientation && (
+          {orientation && !lockTo && (
             <button
               onClick={() => setOrientation(null)}
               title="Back to shape"
@@ -113,6 +125,14 @@ export function BannerStartDialog({ onPick, onClose }: {
                 ? 'A column beside the page. Every section moves into the space next to it, and the column stays put while that space scrolls.'
                 : 'A band across the top of the page, with every section below it.'}
             </p>
+            {/* ⚠️ Says where the OTHER shape lives rather than leaving it to be hunted for. This grid
+                is one shape because the page is already built around it; the rail keeps both, and a
+                picker that silently drops half the catalogue reads as a catalogue that shrank. */}
+            {lockTo && (
+              <p className="mt-1 text-[12px] leading-[1.5] text-[#9AA5B4]">
+                Changing the design only. For the other shape, open <span className="font-medium text-[#7B8FA5]">Banners</span> in the rail.
+              </p>
+            )}
           </div>
           <button
             onClick={onClose}
@@ -155,7 +175,7 @@ export function BannerStartDialog({ onPick, onClose }: {
                     the way out of a picker that failed you; as the first tile it is one more way to
                     begin, which is what it is. */}
                 <BannerTile
-                  active={false}
+                  active={activeId === SCRATCH_BANNER_ID}
                   label="Start from scratch"
                   sub="A plain banner you design yourself"
                   onPick={() => onPick({ orientation, templateId: null })}
@@ -165,7 +185,7 @@ export function BannerStartDialog({ onPick, onClose }: {
                 {list.map((t) => (
                   <BannerTile
                     key={t.id}
-                    active={false}
+                    active={activeId === t.id}
                     label={t.name}
                     sub={t.industries.join(', ')}
                     onPick={() => onPick({ orientation, templateId: t.id })}

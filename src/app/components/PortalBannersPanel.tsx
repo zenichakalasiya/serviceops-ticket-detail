@@ -395,6 +395,31 @@ export function PortalBannersPanel({ activeId, onApply, onDefault }: {
   );
 }
 
+/* The banner a page is on RIGHT NOW, small enough for a panel row.
+ *
+ * ⚠️ The real thumbnail, SCALED — not a simplified second drawing. Every tile in this builder is
+ * drawn from the data it applies so it cannot promise a banner you do not get, and a hand-made
+ * miniature would be exactly the kind of picture that drifts from the five it sits beside.
+ * ⚠️ A fixed outer box with the real thumb scaled inside it: the horizontal thumb is 84px tall and
+ * the vertical one 120, and a row that changed height with the shape of the banner would make the
+ * panel jump the moment somebody switched. */
+export function BannerMiniPreview({ id, vertical }: { id: string; vertical: boolean }) {
+  const t = BANNER_TEMPLATES.find((x) => x.id === id) ?? null;
+  const H = vertical ? 120 : 84;
+  const W = 150;
+  const BOX_W = 84;
+  const scale = BOX_W / W;
+  return (
+    <span className="block flex-shrink-0 overflow-hidden rounded border border-[#E5E7EB]" style={{ width: BOX_W, height: Math.round(H * scale) }}>
+      <span className="block origin-top-left" style={{ width: W, transform: `scale(${scale})` }}>
+        {id === 'scratch' || (!t && vertical)
+          ? <BannerScratchThumb orientation={vertical ? 'vertical' : 'horizontal'} />
+          : <BannerThumb t={t} />}
+      </span>
+    </span>
+  );
+}
+
 /* ⚠️ At the FOOT, after the declarations they name: a re-export above them is legal (a function
    declaration is hoisted) and reads as a second definition. */
 export { Tile as BannerTile };

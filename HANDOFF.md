@@ -1,38 +1,46 @@
-# Handoff — 2026-09-18 17:02
+# Handoff — 2026-09-21 18:33
 
 ## Read first
-Five bullets at the end of CLAUDE.md's **Key context**, just above `## Parked features`:
+The last seven bullets of CLAUDE.md's **Key context**, just above `## Parked features` — they are
+this week's Support Portal work and they build on each other:
 
-1. **an action card's CORNER ARROW is a glyph picker** — and the two general mechanisms it added
+1. **an action card's CORNER ARROW is a glyph picker** — plus the two general mechanisms it added
    (`WidgetField.rest`, `PanelAccordion.bodyClass`).
-2. **ADDING a banner asks the shape first** — stage 1 of the banner work, and what stages 2 and 3
+2. **ADDING a banner asks the shape first** — the two-step dialog, and what banner stages 2 and 3
    still owe.
 3. **the vertical banner PINS IN PREVIEW ONLY** — the `heroPinned` / `heroSticky` split and the
    reserved column. Read this before touching anything sticky.
 4. **a BLANK page's content column IS the full page's content column.**
 5. **ADD SEVERAL AT ONCE, from-scratch pages only** — including the temporal-dead-zone trap that
    blanked the builder while the build stayed green.
+6. **ONE gradient editor** for the banner's colour and the image's colour layer, and the
+   `bannerGradient` key with its fallback.
+7. **CHANGING the banner's layout lives in the banner's own panel** — the newest, and the one that
+   answers "where do I change this later".
 
-Plus the **headless verification** bullet below them. Every number quoted here was measured with it.
+Plus the **headless verification** bullet below them. Every number and state quoted here was
+measured with it.
 
 ## What we worked on this session
-The Support Portal builder, all of it in the from-scratch flow: the action card's corner arrow,
-adding a banner, how a vertical banner behaves in the editor versus Preview, the padding around a
-blank page's sections, and a way to place several widgets at once.
+The Support Portal builder, end to end on the from-scratch flow: the action card's corner arrow, the
+banner add/edit flow, how a vertical banner behaves in the editor versus Preview, padding, placing
+several widgets at once, and one gradient editor for both places a gradient is set.
 
 ## Completed
-- **Corner arrow → icon picker + colour.** *Corner arrow* (switch) → *Icon* → *Icon colour*, with
-  the builder's own picker led by a new Arrows group. Shadow's group padding moved to `pt-2` to match.
-- **Banner stage 1.** Clicking *Banner* asks Horizontal / Vertical, then shows that orientation's
-  layouts with **Start from scratch** first. Scratch is a `BannerTemplate` applied through the same
-  path as every template.
-- **The editor no longer pins the banner.** It scrolls with the page and the space under it is a
-  hatched **"Banner column"** strip that refuses drops and explains itself. Preview still pins.
-- **A blank page's sections run end to end**, identical to a template page's — measured 81 → 1062
-  against a page of exactly 81 → 1062.
-- **Add several at once.** On a from-scratch page, pick N widgets in the palette and they land one
-  per row in the order picked.
-- **Fixed a pre-existing ReferenceError** — `setTemplateCategory` in `AdminSupportPortalModule`.
+- **Corner arrow → icon picker + colour**, and Shadow's group padding moved to `pt-2` to match.
+- **Banner stage 1** — adding a banner asks Horizontal / Vertical, then that shape's layouts with
+  **Start from scratch** first.
+- **The editor no longer pins the banner**; the space under it is a hatched **"Banner column"** strip
+  that refuses drops. Preview and the published portal still pin it.
+- **A blank page's sections run end to end**, matching a template page exactly (81 → 1062).
+- **Add several at once** — pick N widgets on a from-scratch page, each lands in its own row.
+- **One gradient editor** for the banner's colour and the image's colour layer, with `bannerGradient`
+  falling back to the legacy side/start/end keys so nothing repaints until it is edited.
+- **Change the banner's layout from its own panel** — a drawn "Banner layout" row above Height that
+  opens the same picker locked to the shape already on the page.
+- **Fixed two pre-existing faults:** the `setTemplateCategory` ReferenceError in
+  `AdminSupportPortalModule`, and the floating toolbar escaping the canvas over both headers
+  (`ToolbarSlot` now clamps to the scroll port, not the page card).
 
 ## In progress
 Nothing is half-written in THIS repo.
@@ -60,32 +68,35 @@ gallery; it has its own CLAUDE.md and HANDOFF.md, and `node build.js` must run a
 2. **Banner stage 2** — width drag on the banner's inner edge, and right-column section polish.
 3. **Banner stage 3** — drag the banner between left and right.
 4. Offered and not yet answered: the **topmost section's floating toolbar overlaps the portal's own
-   header bar** (true before this session too, since the toolbar is taller than the gap it had).
-   Bands at the very top solve this with `toolbarBelow`; a first-on-the-page section could do the same.
+   header bar** inside the canvas. Bands at the very top solve this with `toolbarBelow`; a
+   first-on-the-page section could do the same.
 
 ## Decisions made
-- **The editor does not pin the banner; Preview does.** This replaced an earlier "show the
-  restriction only while dragging" call — a pinned screen-tall banner covers its own column at every
-  scroll position, so the canvas hid the one thing the admin has to see.
-- **A blank page's column matches the full page's, horizontally too.** This unscoped a deliberate
-  exception from earlier the same day; the user asked for it once they saw the inconsistency.
-- **Batch add is gated by a prop, not inferred** — a template page already has its shape.
-- **The batch selects nothing and exits the mode** — no one thing is being edited afterwards, and a
-  mode with no task left is how a later click lands somewhere nobody meant.
-- **Left or right only, no centre banner**; **staged delivery**; **scratch is a template, not its own
-  writes**; **arrows are not in the shared icon catalogue**.
+- **Changing the layout lives in the banner's panel; the Banners rail keeps both shape tabs.** Two
+  jobs, two surfaces: the panel changes the DESIGN within the shape you chose, the rail changes the
+  SHAPE. Nothing that worked before was taken away.
+- **The editor does not pin the banner; Preview does.** A pinned screen-tall banner covers its own
+  column at every scroll position, so the canvas hid the one thing the admin has to see.
+- **A blank page's column matches the full page's, horizontally too.**
+- **Batch add is gated by a prop, selects nothing, and exits its mode afterwards.**
+- **One gradient editor, and `bannerColor` follows the first stop** — it paints under the gradient,
+  it is what the Solid tab shows, and the thumbnails read it to judge whether a banner is dark.
+- **Left or right only, no centre banner**; **scratch is a template, not its own writes**; **arrows
+  are not in the shared icon catalogue**.
 
 ## Gotchas & notes
-- ⚠️ **Files in this repo are a MIX of LF and CRLF.** A multi-line anchor for a scripted edit must be
-  joined with the file's own EOL — `SupportPortalAddPanel.tsx` is CRLF and a `\n`-joined anchor
-  silently matches nothing. Detect with `s.includes('\r\n')` and join with that.
+- ⚠️ **Line endings in this repo are MIXED — within a single file.** A scripted multi-line edit must
+  try BOTH `\n` and `\r\n` when matching an anchor; `SupportPortalBuilder.tsx` has blocks of each,
+  and an anchor joined with the wrong one silently matches nothing.
 - ⚠️ **A `useCallback` evaluates its dependency array during render**, so a helper placed above the
-  state it depends on is a temporal-dead-zone crash that esbuild cannot see. It blanked the builder
-  this session; a `pageerror` listener caught it in seconds.
-- ⚠️ **The Claude-in-Chrome browser serves a different copy of this project** — one with no
-  `src/app/routes.ts` (the `_Final` folder). Use the headless recipe in CLAUDE.md instead.
+  state it depends on is a temporal-dead-zone crash that esbuild cannot see.
+- ⚠️ **`overflow-x-visible` beside `overflow-y-auto` does nothing**, and anything `position: fixed`
+  needs clamping to the SCROLL PORT, not to `[data-portal-canvas]` (that is the page card, which
+  scrolls).
+- ⚠️ **The Claude-in-Chrome browser serves a different copy of this project** (the `_Final` folder,
+  which has no `src/app/routes.ts`). Use the headless Playwright recipe in CLAUDE.md.
 - ⚠️ **A Playwright selector can collide with the page you are building** — naming a test portal
   "Vertical Pad" made `getByRole('button', {name: /Vertical/})` match the page-title rename button.
-- ⚠️ **Bash heredocs here strip backslashes, and `node -e "..."` lets the shell eat `$` and backticks.**
-  Write the replacement to a file first, or use `node <<'EOF'` with no backslashes.
+- ⚠️ **What the user sees is the PUBLISHED build.** A feature that is built, verified and unpushed is
+  a feature they will report as missing — as happened with the Banner layout field this session.
 - A dev server may still be running at **http://127.0.0.1:5233/serviceops-ticket-detail/**.

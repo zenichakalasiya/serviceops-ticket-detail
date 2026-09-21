@@ -640,6 +640,10 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
       ...(owner === 'hero'
         ? {
             __blankPage: page.start === 'blank',
+            /* Which SHAPE the banner is, for the layout row's preview and for the picker it opens.
+               ⚠️ Read from the PAGE, not from the banner: a vertical banner is the page in two
+               columns, so `heroPlacement` is where that fact actually lives. */
+            __vertical: widgetCfgRef.current.page?.heroPlacement === 'left',
             __layoutHasImage: bannerLayout(String(widgetCfg.hero?.bannerLayout ?? 'classic'))?.hasImage === true,
             __hasSide: (rowExtrasRef.current.hero?.length ?? 0) > 0,
             /* The arrangement as drawn, for the preset picker; the gap it shares with the Content group. */
@@ -1413,7 +1417,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
          columns and moves every section beside it — so it cannot be a control you find afterwards,
          and it decides which banners there are to choose from. The dialog answers both in the order
          they depend on each other; see PortalBannerStart. */
-      setBannerStart(true);
+      setBannerStart('add');
       return;
     }
     /* ⚠️ The SEARCH is the banner's own field, so it needs a banner. Refusing WITH THE REASON at
@@ -1534,8 +1538,11 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
  * in the band. Switching between layouts on an untouched banner is a thing people do repeatedly
  * while looking, and a dialog on every click of a picker teaches them to dismiss dialogs. */
   const [pendingLayout, setPendingLayout] = useState<string | null>(null);
-  /* The add-a-banner dialog. Open only while the page HAS no banner — see `addElement`. */
-  const [bannerStart, setBannerStart] = useState(false);
+  /* The banner picker. `add` is the two-step flow, open only while the page has NO banner (see
+     `addElement`); `edit` is the same dialog opened from the banner's own panel with the shape
+     already settled, so it skips the first question and offers that shape's layouts.
+     ⚠️ ONE state, not two booleans: they are two modes of one dialog, and two flags can both be true. */
+  const [bannerStart, setBannerStart] = useState<'add' | 'edit' | null>(null);
 
 
   const runBannerLayout = useCallback((id: string) => {
@@ -1660,7 +1667,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
    * cards' column count back when a horizontal banner takes over. Writing the blank one by hand here
    * is how it ends up carrying a stale colour from the banner before it. */
   const startBanner = useCallback((c: BannerStart) => {
-    setBannerStart(false);
+    setBannerStart(null);
     applyBannerTemplate(c.templateId ?? scratchBanner(c.orientation));
     /* ⚠️ `select`, not `setSelectedId`. The rail's Widgets list is open — that is where the Banner
        was just clicked — and only `select` stands it down, so the panel answers with the banner's
@@ -3125,6 +3132,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
                   onAddLinkCard={addLinkCard}
                   onApplyBannerLayout={applyBannerLayout}
                   onApplyBannerShape={applyBannerShape}
+                  onChangeBanner={() => setBannerStart('edit')}
                   setCfg={(patch) => patchCfg(ownerOf(selectedId), patch)}
                   styles={styles}
                   setStyle={setStyle}
@@ -3209,7 +3217,17 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
         />
       )}
       {layoutConfirm}
-      {bannerStart && <BannerStartDialog onPick={startBanner} onClose={() => setBannerStart(false)} />}
+      {bannerStart && (
+        <BannerStartDialog
+          onPick={startBanner}
+          onClose={() => setBannerStart(null)}
+          /* ⚠️ EDIT is locked to the shape the page is already built around, read from the PAGE
+             rather than from a second copy of the answer, so it cannot disagree with what is on
+             screen. */
+          lockTo={bannerStart === 'edit' ? (widgetCfg.page?.heroPlacement === 'left' ? 'vertical' : 'horizontal') : undefined}
+          activeId={bannerStart === 'edit' ? String(widgetCfg.hero?.bannerTemplate ?? '') : undefined}
+        />
+      )}
     </div>
   );
 }
