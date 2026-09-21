@@ -1102,6 +1102,24 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   grip**, never as a side effect of the banner running out of height — a banner with nowhere left to
   shrink must stop, not start pulling the row beneath it up.
 
+- **Support Portal — the banner's "+" offers the SINGLE card and KPI, with their own icons, under the
+  button (21 Sep 2026).** Three fixes to one popup. (1) `BANNER_SIDE_WIDGETS` now names
+  `x-action-card` and `x-kpi`, not the `x-actions` / `x-kpis` BLOCKS. ⚠️ That list renders its own
+  rows and so **bypasses the catalogue's `hidden` flag** — the note on it has always said so — which
+  is how the banner went on handing out both blocks for weeks after they were withheld from the
+  palette, leaving one surface in the builder still offering a widget the rest of the product had
+  stopped believing in. The reasons are the ones that hid them: cards added one at a time can be
+  removed one at a time, and the KPI SET is what the Custom Data Widget is for. (2) A row in the
+  short list draws that element's **own icon** in the same badge the full library uses; all seven
+  carried one grey "+", so seven widgets read as seven copies of one thing and the glyph said "add",
+  which the popup already says. A container's child types are not catalogue elements, so those keep
+  the "+". (3) ⚠️ **A toolbar that sits INSIDE its element anchors to the BUTTON.** `ElementPicker`
+  places itself clear of the node it is filling, which cannot be done when the element SURROUNDS the
+  "+" (`toolbarBelow` draws the banner's bar just inside the band's top edge) — so it fell through to
+  "below the element" and opened past the banner's bottom: measured, top 449 for a button whose
+  bottom is 222, and further with every step up the height rail. Where covering is unavoidable,
+  nearness is what is left, so it opens 8px under the "+" (measured 230).
+
 ## Parked features
 Four Support Portal features are BUILT-OR-PART-BUILT AND SWITCHED OFF, with their full context in
 [future-tasks.md](future-tasks.md): **AI** (rail item commented out in `SupportPortalBuilder`; the

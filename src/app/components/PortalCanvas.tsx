@@ -429,6 +429,19 @@ function ElementPicker({ mode, onPick, onClose, only, anchorRef, targetId }: {
          design panel, a long way from the thing it was adding to.
          ⚠️ Cleared of the TOOLBAR, not just the element — `btn.top` is above `el.top`, and landing
          on the bar you just clicked hides the control that opened it. */
+      /* ⚠️ A toolbar that sits INSIDE its element anchors to the BUTTON, and opens BELOW it.
+         The banner's bar is drawn just inside the band's top edge (`toolbarBelow`), so the element
+         surrounds the "+" and "clear of what you are filling" cannot be satisfied at all — the rule
+         below resolved it by dropping past the band's BOTTOM, which on a 540px banner put the list
+         half a screen from the button that opened it. Where covering is unavoidable, nearness is
+         what is left: directly under the "+", which is also where a menu is expected. */
+      const inside = btn.top >= el.top - 1 && btn.bottom <= el.bottom + 1;
+      if (inside) {
+        if (vh - btn.bottom - GAP - EDGE >= h) { setPos({ left, top: btn.bottom + GAP }); return; }
+        if (btn.top - GAP - EDGE >= h) { setPos({ left, top: btn.top - GAP - h }); return; }
+        setPos({ left, top: Math.max(EDGE, Math.min(btn.bottom + GAP, vh - h - EDGE)) });
+        return;
+      }
       const overhead = Math.min(el.top, btn.top);
       if (overhead - GAP - EDGE >= h) { setPos({ left, top: overhead - GAP - h }); return; }
       if (vh - el.bottom - GAP - EDGE >= h) { setPos({ left, top: el.bottom + GAP }); return; }
@@ -482,13 +495,26 @@ function ElementPicker({ mode, onPick, onClose, only, anchorRef, targetId }: {
           <>
             {/* ⚠️ No search. Three options do not need one, and a search box over three rows is a
                 control that costs a line to say nothing. */}
-            {only.map((ct) => (
-              <button
-                key={ct.type}
-                onClick={() => onPick(ct.type)}
-                className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-[13px] text-[#364658] transition-colors hover:bg-[#F5F7FA]"
-              ><Plus size={13} className="text-[#9CA3AF]" /> {ct.label}</button>
-            ))}
+            {/* ⚠️ Each element's OWN icon, in the same badge the full library draws — every row used
+                to carry the same grey "+", so seven widgets read as seven copies of one thing and the
+                glyph said "add", which the whole popup already says. One catalogue, one picture per
+                element, whichever list you meet it in.
+                A container's child types are not catalogue elements, so those keep the "+". */}
+            {only.map((ct) => {
+              const def = PORTAL_ELEMENTS.find((e) => e.id === ct.type);
+              return (
+                <button
+                  key={ct.type}
+                  onClick={() => onPick(ct.type)}
+                  className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-[13px] text-[#364658] transition-colors hover:bg-[#F5F7FA]"
+                >
+                  <span className="flex size-6 flex-shrink-0 items-center justify-center rounded bg-[#F1F5F9] text-[#64748B]">
+                    {def ? elementIcon(def.icon) : <Plus size={13} className="text-[#9CA3AF]" />}
+                  </span>
+                  <span className="truncate">{ct.label}</span>
+                </button>
+              );
+            })}
           </>
         ) : (
           <>
@@ -1837,11 +1863,18 @@ function PlaceholderPopover({ anchor, onPick, onClose }: { anchor: DOMRect; onPi
  * behind the banner · colour it (solid or gradient) · delete the banner. Every one writes the same
  * hero config the panel's Style section edits, so the two are one control in two places.
  * ⚠️ No drag handle: the banner is the top of the page, there is nowhere for it to go. */
+/* ⚠️ The SINGLE Action Card and the SINGLE KPI, never the blocks that hold a set of them.
+   This list renders its own rows and so bypasses the catalogue's `hidden` flag — which is how
+   `x-actions` and `x-kpis` went on being offered here for weeks after they were withheld from
+   the palette, leaving the banner the one surface in the builder still handing out a widget the
+   rest of the product had stopped believing in.
+   The reasons are the ones that hid them: a card added one at a time can be removed one at a time,
+   which a block of four cannot, and the KPI set is what the Custom Data Widget is for. */
 export const BANNER_SIDE_WIDGETS: { type: string; label: string }[] = [
   { type: 'c-announcements', label: 'Announcements' },
-  { type: 'x-kpis', label: 'KPI tiles' },
+  { type: 'x-kpi', label: 'KPI' },
   { type: 'c-contact', label: 'Contact Us' },
-  { type: 'x-actions', label: 'Action cards' },
+  { type: 'x-action-card', label: 'Action Card' },
   { type: 'b-list', label: 'Quick links' },
   { type: 'v-image', label: 'Image' },
   { type: 'b-text', label: 'Text' },
