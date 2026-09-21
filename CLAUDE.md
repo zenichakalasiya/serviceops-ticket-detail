@@ -1120,6 +1120,28 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   bottom is 222, and further with every step up the height rail. Where covering is unavoidable,
   nearness is what is left, so it opens 8px under the "+" (measured 230).
 
+- **Support Portal — CARDS GATHER ON THE BANNER, and a gathered row is ONE section (21 Sep 2026).**
+  The banner tree gained a GROUP: a branch carrying `g: true` is one set of cards, and
+  `unitsOf(tree)` — leaves, except that a group counts once — is now what the four-section cap
+  counts and what `presetsFor` arranges. ⚠️ Without it the banner had no way to say "these belong
+  together": every card was a section of its own, so four action cards filled a banner that holds
+  four sections and left no room for the words to share it with anything, and any preset scattered
+  them into separate rows. It is the banner's half of the page's GATHERING rule. Verified: four cards
+  land in one row (evenly 243px each), the row survives a preset (two columns moved all three cards
+  into the right column together), Announcements still fits afterwards, a fifth card is refused with
+  "A row holds up to 4 cards", and deleting down to one card hands the section back as a plain leaf.
+  ⚠️ **A group is ATOMIC to insert beside** — `insertBeside` aimed at one of its cards lands the new
+  item beside the WHOLE row, and `insertAtEdge` never opens one, or a section would be partly a card
+  row. ⚠️ **Every rebuild carries `g`** (prune, flat, mergeWords, replaceLeaf, flipRoot, shiftLeaf,
+  swapLeaves, removeLeaf, setBannerBoxDir): one missed call site silently dissolves the group. ⚠️ Two
+  rules keep it self-cleaning: `prune`/`removeLeaf`'s existing "a branch left holding one child
+  becomes that child" line retires a group down to its last card, and `flat` must NOT dissolve a
+  group into its parent. ⚠️ ONE constructor, key order always `d, c, g` — `activePreset` compares
+  trees with JSON.stringify, which preserves insertion order. ⚠️ `fill` places NODES, not ids, which
+  is what lets a preset move a whole row as one unit. ⚠️ `GATHERING` moved to MODULE scope: it was
+  declared 500 lines below `dropInRow`, which now reads it — safe only because a callback body runs
+  after the component has, the exact ordering the useCallback temporal-dead-zone note warns about.
+
 ## Parked features
 Four Support Portal features are BUILT-OR-PART-BUILT AND SWITCHED OFF, with their full context in
 [future-tasks.md](future-tasks.md): **AI** (rail item commented out in `SupportPortalBuilder`; the

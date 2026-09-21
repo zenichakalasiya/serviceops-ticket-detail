@@ -40,7 +40,7 @@ import { BANNER_GROUPS } from './portalPageModel';
 import type { Box, BoxDir, CustomSection, NodeStyle, PlacedElement, PortalPageContent, PortalStyles } from './portalPageModel';
 import { PORTAL_ELEMENTS, PORTAL_EMPTY_WIDGETS, PORTAL_TEMPLATES, bannerLayout, bannerShape } from './supportPortalData';
 import type { ShapeNode } from './supportPortalData';
-import { MAX_BANNER_SECTIONS, insertAtEdge, insertBeside, isBannerBox, leavesOf, normalizeTree, removeLeaf, replaceLeaf, shiftLeaf, swapLeaves } from './portalBannerLayout';
+import { MAX_BANNER_CARDS, MAX_BANNER_SECTIONS, addToGroup, groupOf, insertAtEdge, insertBeside, isBannerBox, leavesOf, normalizeTree, removeLeaf, replaceLeaf, shiftLeaf, swapLeaves, unitsOf } from './portalBannerLayout';
 import type { BannerNode } from './portalBannerLayout';
 import { IconPopover } from './PortalIconPicker';
 import type { IconChoice } from './PortalIconPicker';
@@ -182,6 +182,14 @@ function PanelEmptyState({ active }: { active: RailKey | null }) {
  * testing for exactly this id, and `WIDGET_FOR_NODE` maps it to the spec — three places that have
  * to agree, so the name is written once. */
 export const LINK_CARD_ID = 'quick-link';
+
+/* The two elements that GATHER rather than each taking a place of their own — see the note at the
+   foot of `addElement` for the page, and `dropInRow` for the banner. Both are one tile of a set by
+   nature, and nobody wants four of them in four full-width sections.
+   ⚠️ MODULE scope. It used to be declared among the callbacks, 500 lines BELOW the first function
+   that now reads it — safe only because a callback body runs after the component has, which is
+   exactly the kind of ordering that breaks the day somebody adds it to a dependency array. */
+const GATHERING = ['x-action-card', 'x-kpi'];
 
 const HERO_LAYOUT_KEYS = [
   'heading', 'sub', 'note', 'bgKind', 'bannerStyle', 'bannerColor', 'bannerImage',
@@ -890,13 +898,39 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
       toast.error('Quick Actions holds its four action cards and nothing else');
       return;
     }
+    /* CARDS GATHER ON THE BANNER TOO. On the page a second Action Card lands beside the first and
+       the row grows across; on the banner it used to take a whole section of its own, so four cards
+       filled a banner that holds four sections and left no room for the words to share it with
+       anything. The second one joins the first's GROUP — one section however many cards are in it,
+       arranged, moved and counted as the one thing you placed (see `addToGroup`).
+       ⚠️ Checked BEFORE `bannerFull`: joining a row adds no section, so the cap has nothing to
+       refuse, and refusing here would be refusing the very thing gathering exists to allow.
+       ⚠️ The LAST card of that type is the anchor, so cards keep arriving at the end of the row
+       rather than after whichever one happened to be added first. */
+    if (rowId === 'hero' && GATHERING.includes(type)) {
+      const host = [...(rowExtrasRef.current.hero ?? [])].reverse().find((e) => e.type === type)?.id;
+      if (host) {
+        const tree = heroTreeRef.current?.() ?? null;
+        const grp = groupOf(tree, host);
+        if (grp && leavesOf(grp).length >= MAX_BANNER_CARDS) {
+          toast.error(`A row holds up to ${MAX_BANNER_CARDS} cards — remove one to add another`);
+          return;
+        }
+        const card = makeElement(type, rowId);
+        setRowExtras((prev) => ({ ...prev, hero: [...(prev.hero ?? []), card] }));
+        patchCfg('hero', { bannerTree: addToGroup(tree, host, card.id) });
+        select(card.id);
+        toast.success(`${card.name} added beside the others`);
+        return;
+      }
+    }
     if (rowId === 'hero' && bannerFull()) return;
     const el = makeElement(type, rowId);
     setRowExtras((prev) => ({ ...prev, [rowId]: [...(prev[rowId] ?? []), el] }));
     if (rowId === 'hero') seedBannerItem(el.id, type);
     select(el.id);
     toast.success(`${el.name} added`);
-  }, [makeElement, select]);
+  }, [makeElement, patchCfg, select]);
 
   /* ── The BANNER's items and their arrangement ────────────────────────────────────────────────
    * Items = the Text group, the Search (while it sits in the band) and every widget placed on the banner.
@@ -906,7 +940,10 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
      adding, with the reason — past four, no arrangement of them reads cleanly. An empty slot being FILLED adds
      nothing, so it is never refused. */
   const bannerFull = () => {
-    if (heroItems().length < MAX_BANNER_SECTIONS) return false;
+    /* ⚠️ SECTIONS, not items: a gathered row of cards is ONE section, so a banner carrying the
+       words and four action cards has two sections and room for two more. Counting leaves made
+       every card cost a section and put the cap four cards short of what it means. */
+    if (unitsOf(heroTree()).length < MAX_BANNER_SECTIONS) return false;
     toast.error(`A banner holds up to ${MAX_BANNER_SECTIONS} sections — remove one to add another`);
     return true;
   };
@@ -1392,10 +1429,6 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     toast.success(`${el.name} added to the banner`);
     return true;
   }, [makeElement, select]);
-
-  /* The two elements that GATHER rather than each taking a section of their own — see the note at
-     the foot of `addElement`. Both are one tile of a set by nature. */
-  const GATHERING = ['x-action-card', 'x-kpi'];
 
   const addElement = useCallback((type: string, anchorOverride?: string) => {
     /* ⚠️ An action card is not a generic placed element — it is a member of the Quick Actions row,

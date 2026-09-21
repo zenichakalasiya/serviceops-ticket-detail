@@ -14,12 +14,54 @@
  * so picking one rearranges the same items rather than asking which item goes where. The set on
  * offer depends on how many items there are — two items have two arrangements, four have seven. */
 
-export type BannerNode = string | { d: 'row' | 'column'; c: BannerNode[] };
+/* ⚠️ A branch may be a GROUP (`g`) — one SET of cards, which is ONE section however many cards
+   are in it. Without it the banner had no way to say "these belong together": every card was a
+   section of its own, so four of them filled a banner that holds four sections and left no room for
+   anything else, and any preset would scatter them into separate rows. It is the banner's answer to
+   the page's GATHERING rule, and it is what lets a row of cards be arranged, moved and counted as
+   the one thing the admin thinks they placed. */
+export type BannerNode = string | { d: 'row' | 'column'; c: BannerNode[]; g?: true };
 
-const branch = (d: 'row' | 'column', c: BannerNode[]): BannerNode => ({ d, c });
+/* ⚠️ ONE constructor, and the key order is always d, c, g — `activePreset` compares trees by
+   JSON.stringify, which preserves insertion order, so two ways of building the same node would read
+   as two different layouts. */
+const branch = (d: 'row' | 'column', c: BannerNode[], g?: true): BannerNode => (g ? { d, c, g } : { d, c });
 
 export const leavesOf = (n: BannerNode | null | undefined): string[] =>
   !n ? [] : typeof n === 'string' ? [n] : n.c.flatMap(leavesOf);
+
+/** A branch the builder made to hold one set of cards. */
+export const isGroup = (n: BannerNode | null | undefined): n is { d: 'row' | 'column'; c: BannerNode[]; g: true } =>
+  !!n && typeof n !== 'string' && n.g === true;
+
+/** The banner's SECTIONS — its leaves, except that a group of cards counts as one.
+ *  This is what the four-section cap counts and what the presets arrange. */
+export const unitsOf = (n: BannerNode | null | undefined): BannerNode[] =>
+  !n ? [] : typeof n === 'string' ? [n] : isGroup(n) ? [n] : n.c.flatMap(unitsOf);
+
+/** The group holding this item, while it is in one. */
+export function groupOf(tree: BannerNode | null | undefined, id: string): BannerNode | null {
+  if (!tree || typeof tree === 'string') return null;
+  if (isGroup(tree) && leavesOf(tree).includes(id)) return tree;
+  for (const k of tree.c) { const f = groupOf(k, id); if (f) return f; }
+  return null;
+}
+
+/** Puts `newId` in `anchor`'s group, making one of the two if `anchor` is on its own.
+ *  ⚠️ A ROW: cards gather ACROSS. Stacking them is what the section's own column preset is for,
+ *  and that is a control you can change, where a shape chosen by the act of adding is not. */
+export function addToGroup(tree: BannerNode | null, anchor: string, newId: string): BannerNode {
+  if (!tree) return branch('row', [anchor, newId], true);
+  const walk = (n: BannerNode): BannerNode => {
+    if (typeof n === 'string') return n === anchor ? branch('row', [n, newId], true) : n;
+    if (isGroup(n) && n.c.includes(anchor)) return branch(n.d, [...n.c, newId], true);
+    return branch(n.d, n.c.map(walk), n.g);
+  };
+  return walk(tree);
+}
+
+/** The most cards one gathered row holds — the page's own four-columns-to-a-row rule. */
+export const MAX_BANNER_CARDS = 4;
 
 /** Removes leaves not in `items` and collapses a branch left holding one child. */
 function prune(n: BannerNode, items: Set<string>): BannerNode | null {
@@ -27,8 +69,11 @@ function prune(n: BannerNode, items: Set<string>): BannerNode | null {
   const c = n.c.map((k) => prune(k, items)).filter((k): k is BannerNode => k !== null);
   if (!c.length) return null;
   if (c.length === 1) return c[0];
-  /* A branch holding a branch of the same direction is one branch. */
-  return branch(n.d, c.flatMap((k) => (typeof k !== 'string' && k.d === n.d ? k.c : [k])));
+  /* A branch holding a branch of the same direction is one branch — unless the child is a GROUP,
+     which is one section and has to stay whole.
+     ⚠️ A group left holding ONE card is not a group: the c.length === 1 line above returns that
+     card, so deleting cards down to the last one hands its section back with nothing to clean up. */
+  return branch(n.d, c.flatMap((k) => (typeof k !== 'string' && !k.g && k.d === n.d ? k.c : [k])), n.g);
 }
 
 /** Where a newly arrived section goes when nobody has said: a NEW ROW at the foot of the banner.
@@ -61,7 +106,7 @@ function mergeWords(n: BannerNode): BannerNode {
       return TEXT_SECTION;
     }
     const c = k.c.map(walk).filter((x): x is BannerNode => x !== null);
-    return c.length === 0 ? null : c.length === 1 ? c[0] : branch(k.d, c);
+    return c.length === 0 ? null : c.length === 1 ? c[0] : branch(k.d, c, k.g);
   };
   return walk(n) ?? TEXT_SECTION;
 }
@@ -136,32 +181,37 @@ const PRESET_SHAPES: Record<number, { id: string; label: string; s: Shape }[]> =
  *  tree is spelled exactly as the drawn tree will be and `activePreset` can match it. */
 function flat(n: BannerNode): BannerNode {
   if (typeof n === 'string') return n;
-  const c = n.c.map(flat).flatMap((k) => (typeof k !== 'string' && k.d === n.d ? k.c : [k]));
+  /* A group is one section — flattening it into its parent spills the cards across the banner. */
+  if (n.g) return branch(n.d, n.c.map(flat), n.g);
+  const c = n.c.map(flat).flatMap((k) => (typeof k !== 'string' && !k.g && k.d === n.d ? k.c : [k]));
   return c.length === 1 ? c[0] : branch(n.d, c);
 }
 
-/** Fills a shape with the sections there are: empty slots collapse, and the rest become rows underneath. */
-function fill(s: Shape, ids: string[]): BannerNode | null {
+/** Fills a shape with the sections there are: empty slots collapse, and the rest become rows underneath.
+ *  ⚠️ A section is a NODE, not an id — a gathered row of cards is one section and is placed whole. */
+function fill(s: Shape, units: BannerNode[]): BannerNode | null {
   const used = new Set<number>();
   const walk = (k: Shape): BannerNode | null => {
     if (typeof k === 'number') {
-      if (!ids[k]) return null;
+      if (!units[k]) return null;
       used.add(k);
-      return ids[k];
+      return units[k];
     }
     const c = k.c.map(walk).filter((x): x is BannerNode => x !== null);
     return c.length === 0 ? null : c.length === 1 ? c[0] : branch(k.d, c);
   };
   const body = walk(s);
   if (!body) return null;
-  const rest = ids.filter((_, i) => !used.has(i));
+  const rest = units.filter((_, i) => !used.has(i));
   return flat(rest.length ? branch('column', [body, ...rest]) : body);
 }
 
 /** The presets for the number of sections this banner holds. Two shapes that come out identical at this
  *  section count are shown once — two tiles promising the same layout is a choice that is not one. */
 export function presetsFor(tree: BannerNode | null): BannerPreset[] {
-  const ids = leavesOf(tree);
+  /* ⚠️ SECTIONS, not leaves: a gathered row of cards is one thing to arrange, so four cards beside
+     the words offer the TWO-section shapes rather than falling off the end of the set. */
+  const ids = unitsOf(tree);
   if (ids.length < 2) return [];
   /* ⚠️ Above four there is no set, because `MAX_BANNER_SECTIONS` is four — a banner that somehow
      carries more falls back to the four-section shapes, and `fill` appends the extras as rows. */
@@ -196,10 +246,14 @@ export function insertBeside(tree: BannerNode | null, anchor: string, newId: str
     if (typeof n === 'string') {
       return n === anchor ? branch(d, before ? [newId, n] : [n, newId]) : n;
     }
+    /* ⚠️ A GROUP is ATOMIC here: aiming at one of its cards lands the new item beside the WHOLE
+       row of them, never inside it. A group is the set of cards somebody gathered, and an
+       Announcements dropped into the middle of it would be a section that is partly a card row. */
+    if (isGroup(n)) return leavesOf(n).includes(anchor) ? branch(d, before ? [newId, n] : [n, newId]) : n;
     const i = n.c.indexOf(anchor);
     /* Already in a branch of the asked direction — join it rather than nesting a new one. */
-    if (i >= 0 && n.d === d) return branch(d, [...n.c.slice(0, before ? i : i + 1), newId, ...n.c.slice(before ? i : i + 1)]);
-    return branch(n.d, n.c.map(walk));
+    if (i >= 0 && n.d === d) return branch(d, [...n.c.slice(0, before ? i : i + 1), newId, ...n.c.slice(before ? i : i + 1)], n.g);
+    return branch(n.d, n.c.map(walk), n.g);
   };
   const next = walk(tree);
   return leavesOf(next).includes(newId) ? next : branch(d, before ? [newId, tree] : [tree, newId]);
@@ -207,11 +261,11 @@ export function insertBeside(tree: BannerNode | null, anchor: string, newId: str
 
 /** Swaps one item for another in the same spot (Replace). */
 export const replaceLeaf = (tree: BannerNode | null, from: string, to: string): BannerNode | null =>
-  !tree ? tree : typeof tree === 'string' ? (tree === from ? to : tree) : branch(tree.d, tree.c.map((k) => replaceLeaf(k, from, to)!));
+  !tree ? tree : typeof tree === 'string' ? (tree === from ? to : tree) : branch(tree.d, tree.c.map((k) => replaceLeaf(k, from, to)!), tree.g);
 
 /** Flips the outermost arrangement between side by side and stacked, keeping every item and its order. */
 export const flipRoot = (tree: BannerNode | null): BannerNode | null =>
-  !tree || typeof tree === 'string' ? tree : branch(tree.d === 'row' ? 'column' : 'row', tree.c);
+  !tree || typeof tree === 'string' ? tree : branch(tree.d === 'row' ? 'column' : 'row', tree.c, tree.g);
 
 /** Moves an item one place earlier or later in reading order, keeping the arrangement's shape. */
 export function shiftLeaf(tree: BannerNode | null, id: string, by: -1 | 1): BannerNode | null {
@@ -222,7 +276,7 @@ export function shiftLeaf(tree: BannerNode | null, id: string, by: -1 | 1): Bann
   const swapped = ids.slice();
   [swapped[i], swapped[j]] = [swapped[j], swapped[i]];
   let k = 0;
-  const rebuild = (n: BannerNode): BannerNode => (typeof n === 'string' ? swapped[k++] : branch(n.d, n.c.map(rebuild)));
+  const rebuild = (n: BannerNode): BannerNode => (typeof n === 'string' ? swapped[k++] : branch(n.d, n.c.map(rebuild), n.g));
   return tree ? rebuild(tree) : tree;
 }
 
@@ -262,8 +316,8 @@ export function bannerBranch(tree: BannerNode | null | undefined, id: string): {
 /** Flips one branch between laying its sections across and stacking them — children and order untouched. */
 export function setBannerBoxDir(tree: BannerNode, id: string, d: "row" | "column"): BannerNode {
   if (typeof tree === "string") return tree;
-  if (bannerBoxId(tree) === id) return branch(d, tree.c);
-  return branch(tree.d, tree.c.map((k) => setBannerBoxDir(k, id, d)));
+  if (bannerBoxId(tree) === id) return branch(d, tree.c, tree.g);
+  return branch(tree.d, tree.c.map((k) => setBannerBoxDir(k, id, d)), tree.g);
 }
 
 /** A card grid of EXACTLY `cols` equal columns. ⚠️ It used to drop to fewer columns below a minimum card
@@ -280,25 +334,26 @@ export function tilePresets(count: number): { cols: number; label: string }[] {
 }
 
 /** The block types that sit in a narrow column beside the words by default. */
-export const COMPACT_BANNER_TYPES = new Set(['x-actions', 'x-kpis', 'c-contact']);
+export const COMPACT_BANNER_TYPES = new Set(['x-actions', 'x-kpis', 'x-action-card', 'x-kpi', 'c-contact']);
 
 /** Puts `newId` at an EDGE of the whole banner: left/right add a column, top/bottom a row. */
 export function insertAtEdge(tree: BannerNode | null, newId: string, side: 'left' | 'right' | 'top' | 'bottom'): BannerNode {
   if (!tree) return newId;
   const d = side === 'left' || side === 'right' ? 'row' : 'column';
   const before = side === 'left' || side === 'top';
-  if (typeof tree !== 'string' && tree.d === d) return branch(d, before ? [newId, ...tree.c] : [...tree.c, newId]);
+  /* ⚠️ Never INTO a group: the banner's own edge adders put a section beside the cards, not among them. */
+  if (typeof tree !== 'string' && !tree.g && tree.d === d) return branch(d, before ? [newId, ...tree.c] : [...tree.c, newId]);
   return branch(d, before ? [newId, tree] : [tree, newId]);
 }
 
 /** Swaps two items' places, keeping the arrangement's shape. */
 export const swapLeaves = (tree: BannerNode | null, a: string, b: string): BannerNode | null =>
-  !tree ? tree : typeof tree === 'string' ? (tree === a ? b : tree === b ? a : tree) : branch(tree.d, tree.c.map((k) => swapLeaves(k, a, b)!));
+  !tree ? tree : typeof tree === 'string' ? (tree === a ? b : tree === b ? a : tree) : branch(tree.d, tree.c.map((k) => swapLeaves(k, a, b)!), tree.g);
 
 /** Removes one item from the arrangement (its branch collapses if it is left holding one). */
 export const removeLeaf = (tree: BannerNode | null, id: string): BannerNode | null => {
   if (!tree) return tree;
   if (typeof tree === 'string') return tree === id ? null : tree;
   const c = tree.c.map((k) => removeLeaf(k, id)).filter((k): k is BannerNode => k !== null);
-  return c.length === 0 ? null : c.length === 1 ? c[0] : branch(tree.d, c);
+  return c.length === 0 ? null : c.length === 1 ? c[0] : branch(tree.d, c, tree.g);
 };
