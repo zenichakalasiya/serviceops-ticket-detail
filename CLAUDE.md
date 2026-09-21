@@ -1054,6 +1054,41 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   starts: a template banner, a vertical one, and a scratch banner (which reads "Start from scratch"
   and ticks the scratch tile).
 
+- **Support Portal — the banner tiles are PHOTOGRAPHS now, and eight banners are offered (21 Sep 2026).**
+  Every tile used to be DRAWN from its template's own config, on the rule that a drawing cannot
+  promise a banner the template does not build. The rule was right and the result was a grid of grey
+  bars — the same shapes in different colours on all twenty-five, which is the one thing a picker of
+  banners must not be. **`scripts/capture-banners.mjs`** drives the real builder (playwright-core from
+  the npx cache), applies each offered banner, screenshots the band into `public/banner-shots/<id>.png`
+  and writes the generated **`bannerShots.ts`** — a `BANNER_SHOT_RATIO` map the tiles read while they
+  render, which is why it is a module and not a JSON file fetched at runtime. ⚠️ They are SNAPSHOTS:
+  edit a template and re-run that script, or the tile keeps the old design. ⚠️ The chrome is hidden
+  FOR THE SHOT ONLY — hiding it for the whole run also hid the Delete button, so the banner was never
+  cleared between shapes and every later shot was of the wrong banner. ⚠️ The picture is CONTAINED in
+  a fixed box, never cropped: the arrangement ACROSS a banner is what tells one from another, and
+  sizing each tile to its own proportion put every row of three on a different baseline. ⚠️ A VERTICAL
+  tile keeps a minimal page skeleton beside the column — otherwise it is a coloured rectangle, and the
+  one thing it has to say is that the banner stands beside the page. ⚠️ The seventeen withheld
+  templates have no shot, so the DRAWING stays as the fallback (`BannerMiniPreview` draws any id a
+  page might be carrying). **Eight horizontal banners are offered**, one per arrangement
+  (`featured: true` + `visibleBannerTemplates()`); the rest stay in `BANNER_TEMPLATES` because a page
+  built on one resolves its name and thumbnail through there. The Industry filter went with the trim:
+  over eight tiles, none of them labelled with an industry, it could only hide banners — and four of
+  the six industries have no banner among the eight, so it could empty the grid. Same shelf in the
+  rail panel and in the add/change dialog, and the tiles carry a name and nothing else.
+- **Support Portal — one Action Card and one KPI, and they GATHER (21 Sep 2026).** The **Action cards**
+  and **KPI tiles** BLOCKS are hidden from the palette; the single **Action Card** and **KPI** are back
+  in it. A block that holds N cards and a card you add N times are two answers to one question, and
+  the block forced a decision — how many, in what column count — before you had seen one on the page.
+  ⚠️ `GATHERING` in `SupportPortalBuilder`: adding one of those two lands it BESIDE the last one of
+  the same type, in that section, so a row builds itself. Only as a FALLBACK — an explicit aim (a
+  selected column, a drop, a "+") has already returned — and the four-column cap is checked BEFORE
+  trying, because `dropBeside` refuses a fifth with a toast and the click would otherwise do nothing.
+  ⚠️ Both blocks STAY in the catalogue: the banner templates place them, and the banner's own "+"
+  offers them through `BANNER_SIDE_WIDGETS`, which renders its own list and bypasses the `hidden` flag.
+  ⚠️ The Edit-details dialog now matches the create dialog's width (1240px) — they ask the identical
+  five questions, and a narrower box made the same form read as a different, smaller one.
+
 ## Parked features
 Four Support Portal features are BUILT-OR-PART-BUILT AND SWITCHED OFF, with their full context in
 [future-tasks.md](future-tasks.md): **AI** (rail item commented out in `SupportPortalBuilder`; the

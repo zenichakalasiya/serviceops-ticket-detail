@@ -26,8 +26,7 @@ import { useState } from 'react';
 import { ArrowLeft, X } from 'lucide-react';
 import { BannerScratchThumb, BannerThumb, BannerTile } from './PortalBannersPanel';
 import type { BannerOrientation } from './PortalBannersPanel';
-import { BANNER_INDUSTRIES, BANNER_TEMPLATES, SCRATCH_BANNER_ID } from './portalBannerTemplates';
-import type { BannerIndustry } from './portalBannerTemplates';
+import { SCRATCH_BANNER_ID, visibleBannerTemplates } from './portalBannerTemplates';
 
 /** What the admin chose: an orientation, and a template — or `null` for the blank start. */
 export interface BannerStart {
@@ -94,10 +93,7 @@ export function BannerStartDialog({ onPick, onClose, lockTo, activeId }: {
   activeId?: string | null;
 }) {
   const [orientation, setOrientation] = useState<BannerOrientation | null>(lockTo ?? null);
-  const [industry, setIndustry] = useState<'all' | BannerIndustry>('all');
-  const list = BANNER_TEMPLATES.filter(
-    (t) => t.orientation === orientation && (industry === 'all' || t.industries.includes(industry)),
-  );
+  const list = orientation ? visibleBannerTemplates(orientation) : [];
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 p-6">
@@ -157,19 +153,12 @@ export function BannerStartDialog({ onPick, onClose, lockTo, activeId }: {
           </div>
         ) : (
           <>
-            <div className="flex flex-none items-center gap-2 px-5 pb-1 pt-3">
-              <label htmlFor="banner-start-industry" className="text-[12px] text-[#7B8FA5]">Industry</label>
-              <select
-                id="banner-start-industry"
-                value={industry}
-                onChange={(e) => setIndustry(e.target.value as 'all' | BannerIndustry)}
-                className="app-select h-8 w-[240px] rounded border border-[#DFE5ED] bg-white pl-2.5 text-[12.5px] text-[#364658] focus:border-[#3D8BD0] focus:outline-none"
-              >
-                <option value="all">All industries</option>
-                {BANNER_INDUSTRIES.map((i) => <option key={i} value={i}>{i}</option>)}
-              </select>
-            </div>
-            <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-6 pt-2">
+            {/* ⚠️ NO industry filter. It was a way through twenty-five tiles; over eight — all of them
+                on screen at once, none of them labelled with an industry any more — it is a control
+                that can only hide banners, and four of the six industries have no banner of their own
+                in the eight, so it can empty the grid outright. You are choosing a shape by looking
+                at it, which is the same reason the artwork gallery has never had a search. */}
+            <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-6 pt-4">
               <div className="grid grid-cols-3 gap-3">
                 {/* ⚠️ FIRST, and a tile like any other. "Start from scratch" as a footer link reads as
                     the way out of a picker that failed you; as the first tile it is one more way to
@@ -177,7 +166,7 @@ export function BannerStartDialog({ onPick, onClose, lockTo, activeId }: {
                 <BannerTile
                   active={activeId === SCRATCH_BANNER_ID}
                   label="Start from scratch"
-                  sub="A plain banner you design yourself"
+                  sub="A plain banner you design yourself"  /* tooltip only — see Tile */
                   onPick={() => onPick({ orientation, templateId: null })}
                 >
                   <BannerScratchThumb orientation={orientation} />
@@ -194,11 +183,7 @@ export function BannerStartDialog({ onPick, onClose, lockTo, activeId }: {
                   </BannerTile>
                 ))}
               </div>
-              {list.length === 0 && (
-                <p className="py-6 text-center text-[12.5px] text-[#7B8FA5]">
-                  No {orientation} banners for this industry — start from scratch, or choose another.
-                </p>
-              )}
+
             </div>
           </>
         )}

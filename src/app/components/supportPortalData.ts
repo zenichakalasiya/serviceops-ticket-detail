@@ -1526,7 +1526,13 @@ export const PORTAL_ELEMENTS: PortalElement[] = [
   { id: 'act-ad', name: 'AD Self Service', icon: 'adself', group: 'Actions', node: 'quick-ad', keywords: 'password reset domain unlock' },
   { id: 'act-knowledge', name: 'Knowledge', icon: 'knowledge', group: 'Actions', onPage: true, node: 'quick-knowledge', keywords: 'articles help search' },
   /* The four cards as ONE block with a 1–4 column preset. Placing it moves the Quick Actions row's cards into it. */
-  { id: 'x-actions', name: 'Action cards', icon: 'actionCard', group: 'Actions', onPage: true, keywords: 'quick actions cards incident service knowledge ad' },
+  /* ⚠️ HIDDEN from the palette (21 Sep 2026), with the single Action Card taking its place. A block
+     that holds N cards and a card you add N times are two answers to one question, and the block
+     forced a decision — how many, in what column count — before you had seen one on the page.
+     It STAYS in the catalogue: the banner templates place it (its `actions()` piece), the banner's
+     own "+" still offers it through `BANNER_SIDE_WIDGETS`, which bypasses this flag, and a page
+     already carrying one keeps rendering and editing exactly as before. */
+  { id: 'x-actions', name: 'Action cards', icon: 'actionCard', group: 'Actions', onPage: true, hidden: true, keywords: 'quick actions cards incident service knowledge ad' },
 
   { id: 'l-tabs', name: 'Advanced Tabs', icon: 'tabs', group: 'Basic', hidden: true }, // hidden 20 Aug 2026
   /* Back in the palette. It was withheld on 21 Aug with no reason recorded — and unlike Spacer and
@@ -1566,18 +1572,25 @@ export const PORTAL_ELEMENTS: PortalElement[] = [
 
 
   // ── Custom ──
-  /* ⚠️ HIDDEN, not deleted — an action card belongs inside the Quick Actions row, never as a
-     standalone block on the page. The spec, the renderer and the preview all stay, so anything a
-     page is already carrying keeps working and restoring it is one word. */
-  { id: 'x-action-card', name: 'Action Card', icon: 'actionCard', group: 'Custom', keywords: 'quick action tile', hidden: true }, // hidden 24 Aug 2026
+  /* ⚠️ BACK in the palette (21 Sep 2026), and it is now the ONLY way to put an action card on the
+     page — the block that held four of them is hidden instead. The 24 Aug note said a card belongs
+     inside the Quick Actions row rather than standing alone; what replaced that is a card that
+     GATHERS: the second one lands beside the first and the row builds itself (see `GATHERING`).
+     One card, added as many times as you want, is the row without having to choose its shape first. */
+  { id: 'x-action-card', name: 'Action Card', icon: 'actionCard', group: 'Custom', keywords: 'quick action tile' },
   /* ⚠️ HIDDEN, not deleted. The KPI is now a DISPLAY MODE of the Custom data widget rather than a
      widget of its own — the two asked the same question (which records?) and answered it in two
      shapes, so an admin had to know which they wanted before they could pick a module. Its spec,
      its renderer and its panel all stay, so a page already carrying a placed KPI keeps working and
      editing exactly as it did. */
-  { id: 'x-kpi', name: 'KPI', icon: 'kpi', group: 'Custom', hidden: true, keywords: 'metric stat number' },
+  /* ⚠️ BACK too, and for the same reason: one counter, added one at a time, gathering into its own
+     row. The 24 Aug note hid it as a duplicate of the Custom Data Widget's KPI display — that widget
+     answers "which records?" and draws a number; this is a number you place and label yourself. */
+  { id: 'x-kpi', name: 'KPI', icon: 'kpi', group: 'Custom', keywords: 'metric stat number' },
   /* A SET of counters with a 1–4 column preset — the banner's KPI block. */
-  { id: 'x-kpis', name: 'KPI tiles', icon: 'kpi', group: 'Custom', keywords: 'metric stat number counters kpi' },
+  /* ⚠️ HIDDEN for the same reason as Action cards, and on the same day — the single KPI replaces it.
+     Still placed by the banner templates and still offered by the banner's own "+". */
+  { id: 'x-kpis', name: 'KPI tiles', icon: 'kpi', group: 'Custom', hidden: true, keywords: 'metric stat number counters kpi' },
   /* One card, five shapes — the promo, the help block and the list of links a portal needs and had no
      element for. Repeatable: two of them side by side is a normal page. */
   { id: 'x-card', name: 'Custom Card', icon: 'customCard', group: 'Custom', keywords: 'card promo banner image links cta button heading subtitle' },

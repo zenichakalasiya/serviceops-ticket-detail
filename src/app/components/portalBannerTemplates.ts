@@ -76,6 +76,13 @@ export interface BannerTemplate {
   tree?: Shape;
   /** Page keys: a vertical banner turns the page into a column beside the rest. */
   page?: Record<string, unknown>;
+  /* OFFERED in the pickers. Twenty-five horizontal banners is a wall, and a third of them differ
+     only by colour — three Prisms, two Mosaics — so the grid asked you to tell near-identical tiles
+     apart before you could choose a shape. Eight, one per arrangement.
+     ⚠️ WITHHELD, NEVER DELETED: the other seventeen stay in this array because a page already built
+     on one resolves its name and its thumbnail through here. Narrowing the array itself would turn
+     those pages into "Custom" overnight. Same pattern as `VISIBLE_TEMPLATES` and the record modules. */
+  featured?: true;
   /** Extra node styles, keyed by `copy` / `search` / a piece key. */
   styles?: Record<string, NodeStyle>;
 }
@@ -104,7 +111,7 @@ const KPI_APPROVALS: Kpi = { label: 'Approvals', source: 'Approvals waiting on m
 export const BANNER_TEMPLATES: BannerTemplate[] = [
   /* ═════ Horizontal ═════ */
   {
-    id: '3b2', name: 'Sidecar · Announcements', industries: ['IT & ITES'], orientation: 'horizontal',
+    id: '3b2', name: 'Sidecar · Announcements', industries: ['IT & ITES'], orientation: 'horizontal', featured: true,
     hero: {
       heading: 'Welcome to the IT Help Desk', sub: 'Incidents, access requests and equipment — all in one place',
       searchPlaceholder: 'Search or describe a problem',
@@ -117,7 +124,7 @@ export const BANNER_TEMPLATES: BannerTemplate[] = [
     tree: R('text', 'ann'),
   },
   {
-    id: '3g', name: 'Atlas', industries: ['IT & ITES'], orientation: 'horizontal',
+    id: '3g', name: 'Atlas', industries: ['IT & ITES'], orientation: 'horizontal', featured: true,
     hero: {
       heading: 'Welcome back, Yash', sub: 'Two approvals need you today. Everything else is moving.',
       searchPlaceholder: 'Search our knowledge base',
@@ -132,7 +139,7 @@ export const BANNER_TEMPLATES: BannerTemplate[] = [
     page: { heroInk: 'dark' },
   },
   {
-    id: '2a', name: 'Prism · Coral', industries: ['IT & ITES'], orientation: 'horizontal',
+    id: '2a', name: 'Prism · Coral', industries: ['IT & ITES'], orientation: 'horizontal', featured: true,
     hero: {
       heading: 'How can we help you today?', sub: 'Search 412 articles and 214 services, or raise a request.',
       searchPlaceholder: 'Search 412 articles and 214 services',
@@ -162,7 +169,7 @@ export const BANNER_TEMPLATES: BannerTemplate[] = [
     page: { heroInk: 'dark' },
   },
   {
-    id: '5a', name: 'Meridian', industries: ['Healthcare'], orientation: 'horizontal',
+    id: '5a', name: 'Meridian', industries: ['Healthcare'], orientation: 'horizontal', featured: true,
     hero: {
       heading: 'Welcome to the Meridian Health Service Desk',
       sub: 'Clinical and corporate systems, devices and access — anything touching live patient care is triaged first.',
@@ -226,7 +233,7 @@ export const BANNER_TEMPLATES: BannerTemplate[] = [
     page: { heroInk: 'dark' },
   },
   {
-    id: '4b', name: 'Broadsheet', industries: ['Healthcare', 'Government'], orientation: 'horizontal',
+    id: '4b', name: 'Broadsheet', industries: ['Healthcare', 'Government'], orientation: 'horizontal', featured: true,
     hero: {
       heading: 'Welcome to the Department Service Catalogue',
       sub: 'Certificates, licences, connections and grievances — browse the catalogue or find the answer yourself.',
@@ -287,7 +294,7 @@ export const BANNER_TEMPLATES: BannerTemplate[] = [
     page: { heroInk: 'dark' },
   },
   {
-    id: '3h', name: 'Concierge', industries: ['Manufacturing'], orientation: 'horizontal',
+    id: '3h', name: 'Concierge', industries: ['Manufacturing'], orientation: 'horizontal', featured: true,
     hero: {
       heading: 'Welcome to the Plant IT Service Desk', sub: "Acme Corporation IT Service Desk · we're here to help. Tell us what you need.",
       searchPlaceholder: 'Search services, articles and requests',
@@ -332,7 +339,7 @@ export const BANNER_TEMPLATES: BannerTemplate[] = [
     page: { heroInk: 'dark' },
   },
   {
-    id: '4d', name: 'Portico', industries: ['Manufacturing'], orientation: 'horizontal',
+    id: '4d', name: 'Portico', industries: ['Manufacturing'], orientation: 'horizontal', featured: true,
     hero: {
       heading: 'Welcome to Acme IT Service Portal', sub: 'Raise a ticket, request a service or search 412 knowledge articles. Average first response is 22 minutes.',
       searchPlaceholder: 'Search services, articles and requests',
@@ -375,7 +382,7 @@ export const BANNER_TEMPLATES: BannerTemplate[] = [
     tree: 'text',
   },
   {
-    id: '3c', name: 'Counter', industries: ['Government'], orientation: 'horizontal',
+    id: '3c', name: 'Counter', industries: ['Government'], orientation: 'horizontal', featured: true,
     hero: {
       heading: 'Welcome to Support Portal', sub: '',
       searchPlaceholder: 'Search services, articles or a request ID',
@@ -477,7 +484,7 @@ export const BANNER_TEMPLATES: BannerTemplate[] = [
 
   /* ═════ Vertical — a column beside the page ═════ */
   {
-    id: '4f', name: 'Front Desk', industries: ['IT & ITES', 'Healthcare', 'Government', 'BFSI'], orientation: 'vertical',
+    id: '4f', name: 'Front Desk', industries: ['IT & ITES', 'Healthcare', 'Government', 'BFSI'], orientation: 'vertical', featured: true,
     hero: {
       heading: 'Welcome. How can we help you?', sub: 'Report a fault, request a service, or reset your account. No appointment needed.',
       searchPlaceholder: 'Search services and articles',
@@ -489,7 +496,7 @@ export const BANNER_TEMPLATES: BannerTemplate[] = [
     page: { heroPlacement: 'left', heroWidth: 320, quickLook: 'rail', heroSticky: true },
   },
   {
-    id: '4f2', name: 'Counter · Image', industries: ['IT & ITES'], orientation: 'vertical',
+    id: '4f2', name: 'Counter · Image', industries: ['IT & ITES'], orientation: 'vertical', featured: true,
     hero: {
       heading: 'Welcome. How can we help you?', sub: 'Report a fault, request a service, or reset your account. No appointment needed.',
       searchPlaceholder: 'Search services and articles',
@@ -501,7 +508,7 @@ export const BANNER_TEMPLATES: BannerTemplate[] = [
     page: { heroPlacement: 'left', heroWidth: 320, quickLook: 'rail', heroSticky: true },
   },
   {
-    id: '4g', name: 'Half Deck', industries: ['IT & ITES', 'Government', 'BFSI'], orientation: 'vertical',
+    id: '4g', name: 'Half Deck', industries: ['IT & ITES', 'Government', 'BFSI'], orientation: 'vertical', featured: true,
     hero: {
       heading: 'Welcome, how can we help you?', sub: 'Report a fault, request a service or reset your account.',
       searchPlaceholder: 'Search services, articles and requests',
@@ -512,7 +519,7 @@ export const BANNER_TEMPLATES: BannerTemplate[] = [
     page: { heroPlacement: 'left', heroWidth: 520, quickLook: 'rail', heroSticky: true },
   },
   {
-    id: '4e', name: 'Atrium', industries: ['Education'], orientation: 'vertical',
+    id: '4e', name: 'Atrium', industries: ['Education'], orientation: 'vertical', featured: true,
     hero: {
       heading: 'Welcome to Ashgrove University, how can we help you?', sub: 'Solutions, templates, announcements and requests in one place.',
       searchPlaceholder: 'Search for solutions, templates and requests',
@@ -526,6 +533,10 @@ export const BANNER_TEMPLATES: BannerTemplate[] = [
 ];
 
 export const bannerTemplate = (id: string | undefined) => BANNER_TEMPLATES.find((t) => t.id === id);
+
+/** What a PICKER offers, for one orientation. Every picker reads this; only a lookup reads the array. */
+export const visibleBannerTemplates = (orientation: 'horizontal' | 'vertical') =>
+  BANNER_TEMPLATES.filter((t) => t.orientation === orientation && t.featured);
 /* ── Starting from scratch ─────────────────────────────────────────────────────────────────── */
 
 export const SCRATCH_BANNER_ID = 'scratch';

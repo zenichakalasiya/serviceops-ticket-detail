@@ -163,7 +163,12 @@ export function EditPortalDetailsModal({ title, initial, onClose, onSave }: {
   const ready = detailsReady(d);
   return createPortal(
     <div className="fixed inset-0 z-[10000] flex items-start justify-center bg-[#0F172A]/40 p-6 pt-[10vh]">
-      <div className="flex w-full max-w-[880px] flex-col overflow-hidden rounded-lg bg-white shadow-[0_24px_48px_-12px_rgba(16,24,40,0.25)]">
+      {/* ⚠️ The SAME width as the create dialog — `min(1240px, 100vw-48px)`. They ask the identical five
+          questions, so a narrower box made Edit details read as a different, smaller form: the fields
+          moved, the two columns changed width, and the same five answers wrapped differently in each.
+          Height is NOT shared: create is two steps and reserves room for the template grid, while this
+          is one short form and would be mostly empty at 980px. */}
+      <div className="flex w-[min(1240px,calc(100vw-48px))] flex-col overflow-hidden rounded-lg bg-white shadow-[0_24px_48px_-12px_rgba(16,24,40,0.25)]">
         <div className="flex items-center gap-3 border-b border-[#E5E7EB] px-5 py-3.5">
           <h2 className="flex-1 text-[16px] font-semibold text-[#364658]">{title}</h2>
           <button onClick={onClose} className="flex size-8 items-center justify-center rounded text-[#64748B] transition-colors hover:bg-[#F3F4F6]"><X size={18} /></button>

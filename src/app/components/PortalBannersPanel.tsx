@@ -15,8 +15,9 @@ import { useMemo, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { Check } from 'lucide-react';
 import { bannerGradientOf, gradientCss } from './PortalBannerTools';
-import { BANNER_INDUSTRIES, BANNER_TEMPLATES } from './portalBannerTemplates';
-import type { BannerDecor, BannerIndustry, BannerPiece, BannerTemplate } from './portalBannerTemplates';
+import { BANNER_TEMPLATES, visibleBannerTemplates } from './portalBannerTemplates';
+import { BANNER_SHOT_RATIO } from './bannerShots';
+import type { BannerDecor, BannerPiece, BannerTemplate } from './portalBannerTemplates';
 
 type Orientation = 'horizontal' | 'vertical';
 
@@ -203,8 +204,40 @@ function DecorMini({ decor }: { decor: BannerDecor }) {
   );
 }
 
+/* ── The shots ────────────────────────────────────────────────────────────────────────────────
+ *
+ * The tiles used to be DRAWN from each template's own config, on the rule that a drawing cannot
+ * promise a banner the template does not build. The rule was right and the result was a grid of grey
+ * bars — the same shapes in different colours on every tile, which is the one thing a picker of
+ * banners must not be. These are photographs of the real thing, taken by running the real builder
+ * (`scripts/capture-banners.mjs`).
+ *
+ * ⚠️ They are SNAPSHOTS: edit a template and its picture keeps the old design until someone re-runs
+ * that script. Nothing regenerates them automatically.
+ * ⚠️ Only the OFFERED templates have one. The seventeen withheld ones are still reachable — a page
+ * built on one shows its name and its thumbnail in the banner panel — so the drawing stays as the
+ * fallback rather than being deleted. */
+const SHOT_DIR = `${import.meta.env.BASE_URL}banner-shots/`;
+const shotOf = (id?: string) => (id && BANNER_SHOT_RATIO[id] ? `${SHOT_DIR}${id}.png` : null);
+
+/** The picture, drawn WHOLE — never cropped: the arrangement across a banner is what tells one from
+ *  another, and a crop takes that first.
+ *  ⚠️ In a box of FIXED height, so the grid stays a grid. Sized to its own proportion the tiles came
+ *  out between 46 and 150px tall and every row of three sat on a different baseline; contained in one
+ *  box, a wide banner keeps a little ground above and below and a tall one keeps it at the sides. */
+function Shot({ id, className = '' }: { id: string; className?: string }) {
+  return (
+    <span
+      className={`block h-[92px] w-full bg-[#EEF2F6] bg-contain bg-center bg-no-repeat ${className}`}
+      style={{ backgroundImage: `url("${shotOf(id)}")` }}
+    />
+  );
+}
+
 /** A horizontal banner, in miniature, on a sliver of page ground. */
 function HorizontalThumb({ t }: { t: BannerTemplate | null }) {
+  const shot = shotOf(t?.id);
+  if (shot && t) return <Shot id={t.id} className="overflow-hidden rounded-[5px]" />;
   const dark = isDark(t);
   const center = t ? t.hero.contentAlign === 'center' : true;
   const inset = t && Number(t.hero.bannerInset ?? 0) > 0;
@@ -227,10 +260,11 @@ function HorizontalThumb({ t }: { t: BannerTemplate | null }) {
             )}
         </span>
       </span>
-      {/* The page under the banner, so the tile reads as "the top of a page" rather than as a swatch. */}
-      <span className="flex h-[14px] flex-none gap-[3px] px-[5px] pt-[3px]">
-        {[0, 1, 2].map((i) => <span key={i} className="h-[8px] flex-1 rounded-[2px] bg-white" />)}
-      </span>
+      {/* ⚠️ NO page strip under the band. Three faint rows of "the page below" said the same thing on
+          all twenty-five tiles — every horizontal banner has a page under it — so it was a sixth of
+          each tile spent on the one fact they share, and at this size it read as clutter rather than
+          as context. The band now fills the tile, which is what you are choosing. The VERTICAL thumb
+          keeps its page area: there it is what shows the banner is a column beside the page. */}
     </span>
   );
 }
@@ -239,6 +273,25 @@ function HorizontalThumb({ t }: { t: BannerTemplate | null }) {
 function VerticalThumb({ t }: { t: BannerTemplate }) {
   const w = Math.round(Math.min(55, Math.max(28, (Number(t.page?.heroWidth ?? 380) / 1000) * 100)));
   const decor = (t.hero.bannerDecor ?? null) as BannerDecor | null;
+  /* ⚠️ The shot is the COLUMN only — that is what the banner is — so the tile keeps a minimal page
+     beside it. Without it a vertical tile is a coloured rectangle, and the one thing it has to say is
+     that the banner stands beside the page rather than across the top of it. */
+  const shot = shotOf(t.id);
+  if (shot) {
+    return (
+      <span className="flex h-[120px] w-full overflow-hidden rounded-[5px] bg-[#EEF2F6]">
+        {/* ⚠️ The column is as wide as the SHOT is — its own proportion, not the `heroWidth` guess the
+            drawing used — so the tile shows the real share of the page the banner takes. */}
+        <span
+          className="h-full flex-none bg-cover bg-top"
+          style={{ width: Math.round(120 * (BANNER_SHOT_RATIO[t.id] ?? 0.45)), backgroundImage: `url("${shot}")` }}
+        />
+        <span className="grid flex-1 grid-cols-2 content-start gap-[3px] p-[5px]">
+          {[16, 16, 22, 22, 14, 14].map((h, i) => <span key={i} className="rounded-[2px] bg-white" style={{ height: h }} />)}
+        </span>
+      </span>
+    );
+  }
   return (
     <span className="flex h-[120px] w-full overflow-hidden rounded-[5px] bg-[#EEF2F6]">
       <span className="relative flex flex-none flex-col justify-between overflow-hidden p-[7px]" style={{ width: `${w}%`, ...bandCss(t) }}>
@@ -273,6 +326,19 @@ export function BannerThumb({ t }: { t: BannerTemplate | null }) {
  *  ⚠️ Same two shapes the real thumbnails use, so "start from scratch" reads as one more banner on
  *  the shelf rather than as an escape hatch beside them. */
 export function BannerScratchThumb({ orientation }: { orientation: Orientation }) {
+  const id = orientation === 'vertical' ? 'scratch-v' : 'scratch-h';
+  if (shotOf(id)) {
+    return orientation === 'vertical' ? (
+      <span className="flex h-[120px] w-full overflow-hidden rounded-[5px] bg-[#EEF2F6]">
+        <span className="h-full flex-none bg-cover bg-top" style={{ width: Math.round(120 * (BANNER_SHOT_RATIO[id] ?? 0.45)), backgroundImage: `url("${shotOf(id)}")` }} />
+        <span className="grid flex-1 grid-cols-2 content-start gap-[3px] p-[5px]">
+          {[16, 16, 22, 22, 14, 14].map((h, i) => <span key={i} className="rounded-[2px] bg-white" style={{ height: h }} />)}
+        </span>
+      </span>
+    ) : (
+      <Shot id={id} className="overflow-hidden rounded-[5px] border border-[#EEF2F6]" />
+    );
+  }
   const words = (
     <>
       <PieceSkeleton piece={{ key: 'copy' }} dark={false} />
@@ -291,10 +357,8 @@ export function BannerScratchThumb({ orientation }: { orientation: Orientation }
   }
   return (
     <span className="flex h-[84px] w-full flex-col overflow-hidden rounded-[5px] bg-[#EEF2F6]">
+      {/* No page strip, for the reason the horizontal thumb gives: the tile is the banner. */}
       <span className="flex min-h-0 flex-1 flex-col justify-center gap-[5px] bg-white p-[7px] shadow-[0_0_0_0.5px_rgba(15,23,42,0.10)]">{words}</span>
-      <span className="flex h-[14px] flex-none gap-[3px] px-[5px] pt-[3px]">
-        {[0, 1, 2].map((i) => <span key={i} className="h-[8px] flex-1 rounded-[2px] bg-white" />)}
-      </span>
     </span>
   );
 }
@@ -303,7 +367,10 @@ export function BannerScratchThumb({ orientation }: { orientation: Orientation }
 
 /* ── The panel ─────────────────────────────────────────────────────────────────────────────── */
 
-function Tile({ active, label, sub, onPick, children }: { active: boolean; label: string; sub: string; onPick: () => void; children: ReactNode }) {
+/* ⚠️ The NAME only. The industries told twenty-five tiles apart while the grid was twenty-five long;
+   at eight they were a grey line under every picture saying something you are not choosing on. They
+   stay on the tooltip, so nothing is lost for anyone who wants them. */
+function Tile({ active, label, sub, onPick, children }: { active: boolean; label: string; sub?: string; onPick: () => void; children: ReactNode }) {
   return (
     <button
       type="button"
@@ -315,7 +382,6 @@ function Tile({ active, label, sub, onPick, children }: { active: boolean; label
       {children}
       <span className="min-w-0 px-0.5 pb-0.5">
         <span className={`block truncate text-[12px] font-medium ${active ? 'text-[#3D8BD0]' : 'text-[#364658]'}`}>{label}</span>
-        <span className="block truncate text-[11px] text-[#9AA5B4]">{sub}</span>
       </span>
       {active && (
         <span className="absolute right-2.5 top-2.5 flex size-4 items-center justify-center rounded-full bg-[#3D8BD0] text-white"><Check size={10} strokeWidth={3} /></span>
@@ -332,12 +398,12 @@ export function PortalBannersPanel({ activeId, onApply, onDefault }: {
 }) {
   const activeTemplate = BANNER_TEMPLATES.find((t) => t.id === activeId);
   const [tab, setTab] = useState<Orientation>(activeTemplate?.orientation ?? 'horizontal');
-  const [industry, setIndustry] = useState<'all' | BannerIndustry>('all');
-  const list = useMemo(
-    () => BANNER_TEMPLATES.filter((t) => t.orientation === tab && (industry === 'all' || t.industries.includes(industry))),
-    [tab, industry],
-  );
-  const count = (o: Orientation) => BANNER_TEMPLATES.filter((t) => t.orientation === o).length;
+
+  /* ⚠️ The SAME shelf the add/change dialog offers — `visibleBannerTemplates`, not the whole array.
+     Two surfaces holding different stock is how an admin finds a banner in one place and cannot find
+     it in the other. */
+  const list = useMemo(() => visibleBannerTemplates(tab), [tab]);
+  const count = (o: Orientation) => visibleBannerTemplates(o).length;
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -346,6 +412,7 @@ export function PortalBannersPanel({ activeId, onApply, onDefault }: {
           <button
             key={o}
             type="button"
+            data-banner-tab={o}
             onClick={() => setTab(o)}
             className={`-mb-px border-b-2 px-2 py-2.5 text-[13px] transition-colors ${tab === o ? 'border-[#3D8BD0] font-medium text-[#3D8BD0]' : 'border-transparent text-[#6b7280] hover:border-[#CBD5E1] hover:bg-[#F5F7FA]'}`}
           >
@@ -355,18 +422,8 @@ export function PortalBannersPanel({ activeId, onApply, onDefault }: {
         ))}
       </div>
 
-      <div className="flex flex-none items-center gap-2 px-4 pb-2 pt-3">
-        <label htmlFor="banner-industry" className="text-[12px] text-[#7B8FA5]">Industry</label>
-        <select
-          id="banner-industry"
-          value={industry}
-          onChange={(e) => setIndustry(e.target.value as 'all' | BannerIndustry)}
-          className="app-select h-8 flex-1 rounded border border-[#DFE5ED] bg-white pl-2.5 text-[12.5px] text-[#364658] focus:border-[#3D8BD0] focus:outline-none"
-        >
-          <option value="all">All industries</option>
-          {BANNER_INDUSTRIES.map((i) => <option key={i} value={i}>{i}</option>)}
-        </select>
-      </div>
+      {/* ⚠️ No industry filter — see the note in the add/change dialog. Both shelves hold the same
+          eight, and both are short enough to read. */}
 
       {tab === 'vertical' && (
         <p className="flex-none px-4 pb-2 text-[11.5px] leading-[1.5] text-[#7B8FA5]">
@@ -376,7 +433,7 @@ export function PortalBannersPanel({ activeId, onApply, onDefault }: {
 
       <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-6 pt-1">
         <div className="grid grid-cols-2 gap-2.5">
-          {tab === 'horizontal' && industry === 'all' && (
+          {tab === 'horizontal' && (
             <Tile active={!activeId} label="Default" sub="The banner this page opened with" onPick={onDefault}>
               <HorizontalThumb t={null} />
             </Tile>
@@ -387,9 +444,7 @@ export function PortalBannersPanel({ activeId, onApply, onDefault }: {
             </Tile>
           ))}
         </div>
-        {list.length === 0 && (
-          <p className="py-8 text-center text-[12.5px] text-[#7B8FA5]">No {tab} banners for this industry.</p>
-        )}
+
       </div>
     </div>
   );
@@ -405,7 +460,9 @@ export function PortalBannersPanel({ activeId, onApply, onDefault }: {
  * panel jump the moment somebody switched. */
 export function BannerMiniPreview({ id, vertical }: { id: string; vertical: boolean }) {
   const t = BANNER_TEMPLATES.find((x) => x.id === id) ?? null;
-  const H = vertical ? 120 : 84;
+  /* ⚠️ 92, the height `Shot` draws at — not the 84 the old drawing used. A box sized to the wrong
+     number crops the picture it was meant to frame. */
+  const H = vertical ? 120 : 92;
   const W = 150;
   const BOX_W = 84;
   const scale = BOX_W / W;

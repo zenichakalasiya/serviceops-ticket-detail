@@ -86,7 +86,7 @@ import { IconFramePicker } from './PortalIconFrame';
 import type { IconFrame } from './PortalIconFrame';
 import type { LineStyle } from './PortalLineStyles';
 import { SpacingMatrix, useRestingSpacing } from './SpacingMatrix';
-import { PortalBannerPicker } from './PortalBannerPicker';
+
 import { ColorField } from './PortalColorPicker';
 import { ARROW_GROUP, IconField, IconGlyphField } from './PortalIconPicker';
 import type { IconChoice } from './PortalIconPicker';
@@ -101,7 +101,6 @@ import { TableGridPicker } from './PortalTable';
 const GROUP_MEMORY: Record<string, string[]> = {};
 
 /* Which banner slot has its gallery open, and how to fall back to the file picker from inside it. */
-type BannerPick = { anchor: DOMRect; chooseFile: () => void; key: string } | null;
 
 /* §7.19 — one item per file, appended in selection order. Adding 12 photos one at a time is not a
    workflow anybody completes. */
@@ -742,9 +741,7 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
       ...(spec.panel?.accordions ?? []).filter((a) => a.id !== firstPanelAccordion).map((a) => `shut:${a.id}`),
     ]),
   ];
-  /* The banner gallery is opened FROM a field and rendered at the drawer's root — a popover mounted
-     inside a scrolling panel is clipped the moment it is taller than the space below its trigger. */
-  const [bannerPick, setBannerPick] = useState<BannerPick>(null);
+
   const [openGroups, setOpenGroupsState] = useState<string[]>(GROUP_MEMORY[spec.id] ?? DEFAULT_OPEN);
   /* ⚠️ RE-SEEDED when the selected widget changes. This drawer is ONE component instance that
      swaps its spec as you click around the page, and `useState` only ever reads its initial value —
@@ -1011,14 +1008,21 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
           </div>
         );
       }
-      /* The banner's slot: the same zone, plus the gallery route. */
+      /* The banner's own picture — an upload, and nothing else.
+         ⚠️ The "Choose a ready-made banner" route is GONE. Since the Banner layout field arrived at
+            the top of this group, there are two ways to get a designed banner and they disagree: a
+            layout brings a whole banner — its treatment, its copy, the widgets in it — while the
+            gallery dropped a stock photograph behind whatever is already there. Two doors to one
+            room, and the one in this field was the one that could not say what it would do.
+         ⚠️ `PortalBannerPicker` and `PORTAL_BANNERS` stay on disk, unreferenced: nothing resolves a
+            saved value through them, but a stock-artwork gallery is a decision somebody may want
+            back, and it is cheaper to re-open a door than to rebuild one. */
       case 'bannerUpload':
         return (
           <UploadZone
             value={v as string}
             onChange={(x) => set(f.key, x ?? '')}
             suggested={f.suggested}
-            gallery={(anchor, chooseFile) => setBannerPick({ anchor, chooseFile, key: f.key })}
           />
         );
       case 'icon':
@@ -1214,9 +1218,9 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
         const cur = String(viewCfg.bannerTemplate ?? '');
         const vertical = viewCfg.__vertical === true;
         const name = cur === SCRATCH_BANNER_ID ? 'Start from scratch' : bannerTemplate(cur)?.name ?? 'Custom';
-        const sub = cur === SCRATCH_BANNER_ID
-          ? 'A plain banner you designed yourself'
-          : bannerTemplate(cur)?.industries.join(', ') || (vertical ? 'A column beside the page' : 'A band across the top');
+        /* ⚠️ NO sub-line. The industries belong to the GALLERY, where they tell twenty-nine banners
+           apart while you choose between them; here there is one banner and you have already chosen
+           it, so they were a line of text answering a question nobody is asking any more. */
         return (
           <button
             type="button"
@@ -1225,10 +1229,9 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
             className="group flex w-full items-center gap-3 rounded-lg border border-[#DFE5ED] bg-white p-2 text-left transition-all hover:border-[#3D8BD0] hover:shadow-[0_1px_2px_rgba(16,24,40,0.04),0_2px_8px_rgba(16,24,40,0.06)]"
           >
             <BannerMiniPreview id={cur} vertical={vertical} />
-            <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+            <span className="flex min-w-0 flex-1 flex-col gap-1">
               <span className="truncate text-[13px] font-medium text-[#364658] group-hover:text-[#3D8BD0]">{name}</span>
-              <span className="truncate text-[11.5px] text-[#9AA5B4]">{sub}</span>
-              <span className="mt-1 inline-flex items-center gap-0.5 text-[12px] font-medium text-[#3D8BD0]">
+              <span className="inline-flex items-center gap-0.5 text-[12px] font-medium text-[#3D8BD0]">
                 {vertical ? 'Change vertical layout' : 'Change horizontal layout'}<ChevronRight size={13} />
               </span>
             </span>
@@ -1912,15 +1915,7 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
         </>
         )}
       </div>
-      {bannerPick && (
-        <PortalBannerPicker
-          anchor={bannerPick.anchor}
-          value={cfg[bannerPick.key] as string | undefined}
-          onPick={(b) => setCfg({ [bannerPick.key]: b.src })}
-          onUpload={bannerPick.chooseFile}
-          onClose={() => setBannerPick(null)}
-        />
-      )}
+
     </div>
   );
 }

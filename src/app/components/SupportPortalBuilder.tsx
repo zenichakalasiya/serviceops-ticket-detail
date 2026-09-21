@@ -1393,6 +1393,10 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     return true;
   }, [makeElement, select]);
 
+  /* The two elements that GATHER rather than each taking a section of their own — see the note at
+     the foot of `addElement`. Both are one tile of a set by nature. */
+  const GATHERING = ['x-action-card', 'x-kpi'];
+
   const addElement = useCallback((type: string, anchorOverride?: string) => {
     /* ⚠️ An action card is not a generic placed element — it is a member of the Quick Actions row,
        and the row is what gives it its shape, its share of the width and its editor. So adding one
@@ -1480,6 +1484,29 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     const row = anchor && (rowOrder[anchor] ? anchor : Object.keys(rowOrder).find((r) => rowOrder[r].includes(anchor)));
     if (row && !isLockedRow(row)) { dropInRow(row, type); return; }
 
+    /* CARDS GATHER. An action card and a KPI are one tile of a set — nobody wants four of them in
+       four full-width sections down the page — so the second one lands BESIDE the first, in that
+       section, and the row grows across.
+       ⚠️ Only as a FALLBACK: an explicit aim (a selected column, a drop, a "+" on a box) has already
+       returned above. This is what a plain click on the palette does when nothing says otherwise.
+       ⚠️ The column cap is checked BEFORE trying, not caught afterwards — `dropBeside` refuses a
+       fifth column with a toast, which would leave the click having done nothing at all. Full, the
+       card starts a new section instead, which is the honest next place for it. */
+    if (GATHERING.includes(type)) {
+      let host: string | null = null;
+      const scan = (b: Box) => {
+        if (b.el?.type === type) host = b.id;
+        b.children?.forEach(scan);
+      };
+      sectionsRef.current.forEach((x) => scan(x.section.root));
+      if (host) {
+        const sec = sectionsRef.current.find((x) => x.section.id === sectionIdOfBox(host!))?.section;
+        if (sec && !neighbourBlockedBecause(sec.root, host, 'row')) {
+          dropBesideRef.current?.(host, { type }, 'right');
+          return;
+        }
+      }
+    }
     const last = blockOrder.filter((b) => !removed.includes(b)).slice(-1)[0] ?? 'hero';
     dropAtSeam(last, type);
   }, [content.quick, selectedId, sections, rowOrder, blockOrder, removed, placedPredefined, dropInColumn, dropInRow, dropAtSeam, select, patchCfg, applyBannerShape, appendToBanner]);
