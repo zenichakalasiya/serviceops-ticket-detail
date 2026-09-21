@@ -1089,6 +1089,19 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   ⚠️ The Edit-details dialog now matches the create dialog's width (1240px) — they ask the identical
   five questions, and a narrower box made the same form read as a different, smaller one.
 
+- **Support Portal — the banner's bottom edge STOPS at 260 (21 Sep 2026).** `MIN_BANNER_H` in
+  `PortalCanvas` — the S stop the height rail offers — is the floor for the banner's south and north
+  drags, where every other element keeps the old 24px (`minHeightFor(id)`, seeded onto the drag as
+  `minH`). ⚠️ Two heights were being applied at once and only one of them had the floor: the DRAG
+  writes `styles.hero.height` onto the `Sel` wrapper, while the band inside it kept sizing from the
+  RAIL's `minHeight`. So dragging past the smallest stop shrank the outline and left the picture where
+  it was — measured before the fix, a 500px up-drag from 540 gave a 40px wrapper around a 260px band,
+  with the action cards sitting 282px up inside the banner instead of 62. Which is the second half of
+  the fix: the band's `minHeight` now takes the dragged height when there is one, so the artwork can
+  never outgrow the outline holding it. ⚠️ **The cards ride up onto the banner from their OWN top
+  grip**, never as a side effect of the banner running out of height — a banner with nowhere left to
+  shrink must stop, not start pulling the row beneath it up.
+
 ## Parked features
 Four Support Portal features are BUILT-OR-PART-BUILT AND SWITCHED OFF, with their full context in
 [future-tasks.md](future-tasks.md): **AI** (rail item commented out in `SupportPortalBuilder`; the

@@ -1133,6 +1133,14 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
  * magenta guides + live badge appear only for spacing, where you need to see what you are setting. */
 /** The narrowest a dragged column may become — below this it stops being a column you can aim at. */
 const MIN_COL = 40;
+/* ⚠️ The BANNER stops at its own smallest stop, 260 — the S the height rail offers, so the drag and
+   the rail agree about how small a banner goes. Below it the band's own minHeight took over and the
+   picture kept its height while the wrapper shrank, so the artwork spilled out of the outline and
+   the action cards underneath climbed into it. The cards ride up onto the banner when their OWN top
+   grip is dragged; a banner that has run out of height must stop, not push the row below it up. */
+const MIN_BANNER_H = 260;
+/** The floor a south / north drag may take this node to. */
+const minHeightFor = (id: string) => (id === 'hero' ? MIN_BANNER_H : 24);
 
 function SelectionHandles({ id, elRef }: { id: string; elRef: React.RefObject<HTMLDivElement | null> }) {
   const { styles, setStyle } = useCanvas();
@@ -1142,6 +1150,8 @@ function SelectionHandles({ id, elRef }: { id: string; elRef: React.RefObject<HT
     w: number; h: number; pad: SpacingBox; gap: number; parentW: number;
     /** How tall this element may become before it outgrows the section holding it. */
     maxH: number;
+    /** The floor — 24 for anything on the page, the banner's own smallest stop for the banner. */
+    minH: number;
     /** True when the parent lays its children out in a line, so widths are shares of it. */
     inRow: boolean;
     /** The row is set to Fixed items: this column resizes alone, inside the room the row has left. */
@@ -1260,10 +1270,10 @@ function SelectionHandles({ id, elRef }: { id: string; elRef: React.RefObject<HT
           patch.padding = { ...d.pad, top: val, bottom: val };
           setLive({ kind: 'padY', label: `${val}px` });
         } else {
-          if (d.corner.includes('s')) patch.height = Math.max(24, Math.min(d.maxH, Math.round(d.h + dy)));
+          if (d.corner.includes('s')) patch.height = Math.max(d.minH, Math.min(d.maxH, Math.round(d.h + dy)));
           if (north) {
             /* The bottom edge stays: the element grows UP into the space above it, by the same amount. */
-            const hh = Math.max(24, Math.min(d.maxH, Math.round(d.h - dy)));
+            const hh = Math.max(d.minH, Math.min(d.maxH, Math.round(d.h - dy)));
             patch.height = hh;
             margin.top = Math.round(d.mt - (hh - d.h)); marginTouched = true;
           }
@@ -1343,6 +1353,7 @@ function SelectionHandles({ id, elRef }: { id: string; elRef: React.RefObject<HT
          inventing one produces a control that ignores half of what you ask it. The 24px floor stays:
          an element with no height at all is not a smaller element, it is a missing one. */
       maxH: Number.POSITIVE_INFINITY,
+      minH: minHeightFor(id),
       inRow: (() => {
         const ps = el.parentElement ? getComputedStyle(el.parentElement) : null;
         return !!ps && (ps.display === 'flex' || ps.display === 'inline-flex') && !ps.flexDirection.startsWith('column');

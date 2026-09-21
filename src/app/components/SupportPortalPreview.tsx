@@ -2581,7 +2581,12 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
           /* ⚠️ `Number(…) || 260`, never `?? 260`: the last stop stores the WORD 'screen', and a
              nullish fallback lets it through to `Number`, which returns NaN — an invalid minHeight
              the browser drops silently, leaving the band at its content height. */
-          minHeight: heroScreen && screenH ? screenH : (Number(wc('hero').height) || 260),
+          /* ⚠️ A DRAGGED height wins over the rail's. Both used to apply — the wrapper took the
+             dragged number and this band kept the rail's — so dragging below the current stop left
+             the picture taller than the outline holding it, overflowing onto the action cards
+             underneath. The drag is the more specific answer, and it cannot go below 260 anyway
+             (see MIN_BANNER_H), so the smallest banner is the same size whichever control set it. */
+          minHeight: styles.hero?.height ?? (heroScreen && screenH ? screenH : (Number(wc('hero').height) || 260)),
           /* ⚠️ FILL THE WRAPPER. A dragged height is written into `styles.hero` and applied by
              `sizeOf` on the Sel WRAPPER — this inner div is what actually paints the banner,
              and it was still sizing itself from `minHeight` alone. So stretching the banner
