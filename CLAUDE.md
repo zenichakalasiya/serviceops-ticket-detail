@@ -1225,6 +1225,25 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   THEMED**, by decision: it is the status language, and an Open pill in Broadside's brown stops
   saying "waiting". Verified identical across all eight (amber `rgb(254,243,199)` / `rgb(180,83,9)`).
 
+- **Support Portal — the PAGE'S GROUND follows the theme (22 Sep 2026).** The theme's page colour was
+  being set correctly and painted over, in two places at once, so switching a theme appeared to leave
+  the page the same blue-grey and dragging the Home-page-background picker appeared to do nothing.
+  ⚠️ **`SupportPortalPreview`'s root carried `bg-white`** and the **content column carried
+  `bg-[#F4F6FA]`** — the second is the one an admin means by "the page background", the surface
+  behind the banner and every widget. Both now read **`var(--portal-page-bg, …)`**, set by the
+  builder's theme wrapper beside `--portal-accent`, and their old hard-coded colours are the
+  FALLBACKS — so the create dialog's thumbnail, the one call site that renders the portal with no
+  theme around it, is unchanged. ⚠️ The variable is `transparent` while a page IMAGE is set: the
+  picture lives on the wrapper, so a colour on either surface would paint straight over it — which
+  is why the page background image had never been visible either. ⚠️ Both spread the variable BEFORE
+  their other styles, so `styleOf(styles, PAGE_ID)` and a hero image told to cover the whole page
+  still win. ⚠️ **Clarity's `pageBg` is `#F4F6FA`, not `#FFFFFF`** — while nothing read that slot
+  it could say white harmlessly, and the moment the ground read it, white was the value that would
+  have repainted every existing portal and left its white cards with only a hairline against the
+  page. Verified: Clarity `rgb(244,246,250)` (unchanged), Broadside `rgb(250,246,239)`, Prism Green
+  `rgb(244,249,246)`, Vault `rgb(244,246,251)`, Prism Coral `rgb(252,247,246)`, and typing
+  `#DCE8F5` into the picker → `rgb(220,232,245)` in the same frame.
+
 ## Parked features
 Four Support Portal features are BUILT-OR-PART-BUILT AND SWITCHED OFF, with their full context in
 [future-tasks.md](future-tasks.md): **AI** (rail item commented out in `SupportPortalBuilder`; the

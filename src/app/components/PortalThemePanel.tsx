@@ -69,7 +69,11 @@ const prim = (
    for a reason nobody asked for. Its page stays WHITE for the same reason; the seven gallery themes
    bring the ground tint the gallery uses. */
 export const PALETTES: Palette[] = [
-  { id: 'blue', name: 'Clarity', primary: prim('#3D8BD0', '#2D6CA0', '#0F172A', '#FFFFFF', '#5AA7E5', '#3D8BD0', '#E8EEF6', '#0F172A') },
+  /* ⚠️ Clarity's page is #F4F6FA, the ground the product ACTUALLY has — not #FFFFFF. While
+     nothing read this slot it could say white harmlessly; now that the page's own ground reads it,
+     white is the value that would repaint every existing portal and leave its white cards with
+     only a hairline to separate them from the page. */
+  { id: 'blue', name: 'Clarity', primary: prim('#3D8BD0', '#2D6CA0', '#0F172A', '#F4F6FA', '#5AA7E5', '#3D8BD0', '#E8EEF6', '#0F172A') },
   { id: 'meridian', name: 'Meridian', primary: prim('#0F5C8C', '#0A4267', '#0B2F42', '#F2F8FC', '#4BA3D4', '#2B7BA8', '#E6F2F9', '#07161F') },
   { id: 'prismGreen', name: 'Prism Green', primary: prim('#0E7150', '#0A533B', '#0D2C22', '#F4F9F6', '#45B98D', '#199268', '#E6F4EC', '#07160F') },
   { id: 'studyDesk', name: 'Study Desk', primary: prim('#2B3A8F', '#1E296A', '#14183A', '#F5F6FC', '#7F8CE0', '#4B5BBD', '#E8EAF9', '#0C0E20') },

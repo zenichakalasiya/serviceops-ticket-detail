@@ -2812,6 +2812,14 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
        `themeAccent`, which already resolves a hand-edited primary, so dragging that colour in the
        panel re-tones the whole page live rather than leaving the old hue painted behind the new. */
     ...toneVars(themeAccent),
+    /* ⚠️ The page's ground, handed DOWN rather than only painted here. This wrapper is behind the
+       portal, and the portal's own root painted `bg-white` over the whole of it — so the theme's
+       page colour and the page IMAGE were both set correctly and both invisible, every time. The
+       root reads this variable instead, with white as its fallback for the one call site that
+       renders the portal outside a theme (the create dialog's thumbnail).
+       ⚠️ `transparent` while an image is set: the picture is on THIS element, so a colour on the
+       root would be painted straight over it. */
+    '--portal-page-bg': pageImg ? 'transparent' : themeSw[0],
   } as React.CSSProperties;
   /* ⚠️ A confirm, not a toast-with-undo. Applying a layout rewrites the copy, the treatment and
      the widgets in the band at once — too much to describe in a toast and too much to expect

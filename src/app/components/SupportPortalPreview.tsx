@@ -3344,12 +3344,21 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
       'c-cis': (id) => placedLive(id, <RecordTiles nodeId={id} titleFallback={content.cis.title} cfg={wc(id)} rows={MY_CIS} icon={<Server size={17} />} headIcon={hIcon(<Server size={15} strokeWidth={1.8} />)} />),
     }}>
     <div
-      className="flex min-h-full flex-col bg-white"
+      /* ⚠️ NO `bg-white` class here — see `--portal-page-bg` below. */
+      className="flex min-h-full flex-col"
       /* §7.22 — the PAGE layer. The typeface cascades normally; the text scale uses `zoom` because
          this page is built from px sizes, so a root font-size would move nothing. The spec's own
          words are "scales every size together", which is what zoom does. It stops at 90–115%
          because past that the layout breaks — which is why the slider stops there too. */
       style={{
+        /* ⚠️ THE PAGE'S GROUND. It was a hard `bg-white` class, which covered the theme's page
+           colour and the page background image alike — both were being set on the wrapper above
+           this element and neither could ever be seen, so changing a theme appeared to leave the
+           page blue and editing the colour picker appeared to do nothing.
+           The variable is set by the builder's theme wrapper; the fallback is the white this
+           always was, for the create dialog's thumbnail, which renders the portal with no theme
+           around it. A page fill the admin set on the PAGE node still wins — it is spread after. */
+        backgroundColor: 'var(--portal-page-bg, #FFFFFF)',
         fontFamily: pageCfg.typeface ? String(pageCfg.typeface) : undefined,
         zoom: pageCfg.fontScale ? Number(pageCfg.fontScale) / 100 : undefined,
         ...styleOf(styles, PAGE_ID),
@@ -3383,11 +3392,20 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
         />
 
         {/* ⚠️ The page takes the SAME resolved background, not a second copy of the setting — one
-            upload, two surfaces, and no way for them to drift. `bg-[#F4F6FA]` stays as the class so
-            an untouched page is unchanged; the inline style only exists while the toggle is on. */}
+            upload, two surfaces, and no way for them to drift. */}
+        {/* ⚠️ THIS IS THE PAGE'S GROUND — the colour behind the banner and every widget, and the one
+            an admin means by "the page background". It was a hard `bg-[#F4F6FA]`, so a theme could
+            set its page colour and the Home-page-background picker could be dragged live and this
+            surface went on painting the same blue-grey over both. The theme wrapper sets the
+            variable; `#F4F6FA` stays as the FALLBACK, so a page rendered outside a theme (the create
+            dialog's thumbnail) is unchanged.
+            ⚠️ Spread AFTER it, so a hero image told to cover the whole page still wins. */}
         <div
-          className="min-w-0 flex-1 bg-[#F4F6FA]"
-          style={heroCfg.bgWholePage === true ? { ...heroBg, backgroundAttachment: 'fixed' } : undefined}
+          className="min-w-0 flex-1"
+          style={{
+            backgroundColor: 'var(--portal-page-bg, #F4F6FA)',
+            ...(heroCfg.bgWholePage === true ? { ...heroBg, backgroundAttachment: 'fixed' } : null),
+          }}
         >
           {/* ⚠️ On a blank portal the whole content area is replaced by ONE empty state and its
               seam. Rendering the bands and hiding them individually would leave four invisible
