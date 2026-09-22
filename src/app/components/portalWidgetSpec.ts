@@ -592,7 +592,27 @@ export const WIDGET_SPECS: WidgetSpec[] = [
        exactly as it did — the values simply stopped being editable. Restoring one is a line in
        `fields`. With nothing left, the CONTENT section is dropped whole, which is the same panel
        the six other live-data widgets already have. */
-    fields: [TITLE_FIELD, TITLE_PLACE_FIELD, TITLE_GAP_FIELD],
+    fields: [
+      TITLE_FIELD, TITLE_PLACE_FIELD, TITLE_GAP_FIELD,
+      /* How the two contact lines sit. On ONE line the card is a heading over a single sentence,
+         which is the shape a contact block usually wants when it sits under something else rather
+         than beside it — a whole card spent on two short values reads as an empty card.
+         ⚠️ One line DROPS THE ICONS and joins the values with a middot, rather than offering icons
+         as a second switch. The glyphs are there to say which line is which, and stacked that is a
+         real question; side by side it is not — a phone number and an email address are
+         unmistakable from their own shape, which is the same argument that already removed the
+         words "Phone" and "Email" from these rows. A separate toggle would also allow
+         "icon value · icon value", which is a separator and a glyph both answering one question.
+         ⚠️ A DEFAULT is seeded below. Without one neither segment lights up, and the control opens
+         saying nothing about the card it belongs to — the exact fault `titlePlace` shipped with. */
+      {
+        key: 'lineLayout', label: 'Contact details', control: 'segmented', group: 'Content',
+        options: [
+          { value: 'stacked', label: 'Stacked' },
+          { value: 'inline', label: 'One line' },
+        ],
+      },
+    ],
     /* ⚠️ No P6. Contact Us has no icon of its own — the group was styling a glyph that is not on
        the widget, which is a control with nothing to act on. P4 goes with the global removal. */
     /* ⚠️ No P8 either. An Empty-state group asks what to show when there is nothing to show —
@@ -618,6 +638,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
        code that read it, both halves dead at once. */
     defaults: {
       title: 'Contact Us',
+      lineLayout: 'stacked',
       /* Only the two VALUES. The labels are the product's words and the renderer owns them now,
          so a seeded ` + String.fromCharCode(96) + `cl0` + String.fromCharCode(96) + ` would be a value nothing reads — and the Hours pair went with the line. */
       cv0: 'servicedesk@acme.com',

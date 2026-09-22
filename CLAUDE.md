@@ -1142,6 +1142,26 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   declared 500 lines below `dropInRow`, which now reads it — safe only because a callback body runs
   after the component has, the exact ordering the useCallback temporal-dead-zone note warns about.
 
+- **Support Portal — Contact Us puts its two lines on ONE line (22 Sep 2026).** A new Content field,
+  **Contact details** — Stacked (as before) or **One line**, which draws the phone and the email as
+  one sentence joined by a middot under the heading's hairline. A whole card spent on two short
+  values reads as an empty card, and under something else rather than beside it a contact block
+  usually wants to be a heading over a sentence. ⚠️ **One line DROPS THE ICONS**, and that is part of
+  the layout rather than a second switch: the glyphs exist to say which line is which, which is a
+  real question stacked and not one side by side — a phone number and an email address are
+  unmistakable from their own shape, the same argument that already took the WORDS "Phone" and
+  "Email" off these rows. A separate icon toggle would also permit "icon value · icon value", a
+  separator and a glyph both answering one question. ⚠️ `lineLayout: 'stacked'` is seeded in the
+  defaults — without one neither segment lights up and the control opens saying nothing about the
+  card it belongs to, the fault `titlePlace` shipped with. ⚠️ The row WRAPS rather than truncating:
+  the two values are the whole content of the card, so a narrow column dropping the email to a
+  second line still says both things where one clipped line says neither. The middot travels with
+  the value BEFORE it, so a wrapped line never opens on a separator. ⚠️ The spacing around it is
+  6px, not 8: at 8 the pair needed 306px in a 305px rail and wrapped by ONE pixel — measured 304 now,
+  and it is also closer to the reference. ⚠️ Unrelated but confirmed on the way: the pre-existing
+  TS1117 duplicate key is at **portalWidgetSpec.ts:921** (the action-card factory's `fields: [], packs: []`),
+  not line 597 as the How-to-run section still says.
+
 ## Parked features
 Four Support Portal features are BUILT-OR-PART-BUILT AND SWITCHED OFF, with their full context in
 [future-tasks.md](future-tasks.md): **AI** (rail item commented out in `SupportPortalBuilder`; the

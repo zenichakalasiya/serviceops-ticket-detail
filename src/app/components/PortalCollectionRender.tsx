@@ -609,9 +609,27 @@ export function ContactRender({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
     { key: 'cv1', label: 'Phone', icon: <Phone size={17} strokeWidth={1.6} />, value: CONTACT_LINES[1].value },
     { key: 'cv0', label: 'Email', icon: <Mail size={17} strokeWidth={1.6} />, value: CONTACT_LINES[0].value },
   ];
+  /* Two short values side by side, or a row each. See the panel field for why one line has no icons. */
+  const inline = String(cfg.lineLayout ?? 'stacked') === 'inline';
   return (
     <div className="@container min-w-0">
       <WidgetTitle nodeId={nodeId} text={cfg.title} />
+      {inline ? (
+        /* ⚠️ It WRAPS rather than truncating the pair. The two values are the whole content of the
+           card, so a narrow column dropping the email onto a second line still says both things,
+           where one clipped line says neither properly. The middot travels with the value BEFORE
+           it, so a wrapped line never opens on a separator. */
+        <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 border-t border-[#F0F2F5] pt-3.5">
+          {lines.map((l, i) => (
+            <span key={l.key} className="inline-flex min-w-0 items-center gap-1.5">
+              <span title={l.label} style={roleStyle(styles, nodeId, 'body')} className="min-w-0 truncate text-[14px] text-[#1E293B]">
+                {String(cfg[l.key] ?? l.value)}
+              </span>
+              {i < lines.length - 1 && <span aria-hidden className="text-[#98A6B6]">·</span>}
+            </span>
+          ))}
+        </div>
+      ) : (
       <div className="flex flex-col gap-3.5 border-t border-[#F0F2F5] pt-3.5">
         {lines.map((l) => (
           <div key={l.key} className="flex min-w-0 items-center gap-3">
@@ -622,6 +640,7 @@ export function ContactRender({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
           </div>
         ))}
       </div>
+      )}
       {blocks.length > 0 && (
         <div className="mt-3 flex flex-col gap-2.5">
           {/* A block marked `beside` shares the line of the one before it — that is what Split makes. */}
