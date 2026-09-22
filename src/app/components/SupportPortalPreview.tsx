@@ -24,6 +24,7 @@ import { PAGE_ID, chosen, iconBoxCss, roleStyle } from './portalStyleResolver';
 import { bannerLayout } from './supportPortalData';
 import { shadowCss } from './PortalBoxControls';
 import { PlacedBlockRenderers, PortalPlacedElement } from './PortalPlacedElement';
+import { TONE } from './portalTone';
 import { ALL_EDGES, COMPACT_BANNER_TYPES, bannerBoxId, cellKey, childEdges, colsTemplate, leavesOf, normalizeTree } from './portalBannerLayout';
 import type { BannerNode, Edges } from './portalBannerLayout';
 import { DEFAULT_BLOCK_ORDER, DEFAULT_CONTENT, DEFAULT_ROW_ORDER, fillCss, isBranch, nodePath, isLockedRow, hasFixedTitle, hasFixedViewAll, registerBox, rowOf } from './portalPageModel';
@@ -1409,9 +1410,10 @@ function CardShell({ nodeId, titleNodeId, title, count, cfg = EMPTY_CFG, hideHea
   const headRow = (
     <div className={outside ? 'flex items-center gap-2 px-1' : 'flex items-center gap-2 px-4 pb-2.5 pt-3.5'}>
         {headIcon && (
-          <span className="flex size-7 flex-shrink-0 items-center justify-center rounded-md bg-[#EAF3FB] text-[#2F6FB5]">
-            {headIcon}
-          </span>
+          <span
+            style={{ backgroundColor: TONE.soft, color: TONE.ink }}
+            className="flex size-7 flex-shrink-0 items-center justify-center rounded-md"
+          >{headIcon}</span>
         )}
         <span className="flex min-w-0 flex-1 items-center gap-2">
           {titleId ? (
@@ -1489,8 +1491,15 @@ function CardShell({ nodeId, titleNodeId, title, count, cfg = EMPTY_CFG, hideHea
    ⚠️ `max-w-full truncate` rather than a bare `whitespace-nowrap`: a long one like
    "AST-13: DESKTOP-5JPPI6F" would otherwise set a min-content floor that pushes the card wider than
    its column and defeats every width the section asks for. */
+/* ⚠️ A TONE of the theme's colour, not a fixed grey — see portalTone. The ID pill is one of the
+   four blocks the layout gallery tints from the banner's own colour, and it is the most repeated
+   of them: every row of every list card carries one, so it is what makes a page read as themed
+   rather than as a grey product wearing a coloured banner. The fallback is the grey it always was. */
 const IdPill = ({ children }: { children: ReactNode }) => (
-  <span className="max-w-full flex-shrink truncate whitespace-nowrap rounded-sm bg-[#F1F5F9] px-1.5 py-0.5 text-[12px] font-medium text-[#475467]">{children}</span>
+  <span
+    style={{ backgroundColor: TONE.wash, color: TONE.ink }}
+    className="max-w-full flex-shrink truncate whitespace-nowrap rounded-sm px-1.5 py-0.5 text-[12px] font-medium"
+  >{children}</span>
 );
 
 /* The card's own design, for the box that IS the card once the heading sits above it. Fill,
@@ -2379,7 +2388,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
             <Row key={k.id} nodeId={id}>
               <div className="@container min-w-0">
                 <div className="flex min-w-0 gap-2 @[230px]:gap-3">
-                  <span className="hidden size-9 flex-shrink-0 items-center justify-center rounded bg-[#F1F5F9] text-[#7B8FA5] @[230px]:flex"><IconKnowledge size={18} /></span>
+                  <span style={{ backgroundColor: TONE.wash, color: TONE.ink }} className="hidden size-9 flex-shrink-0 items-center justify-center rounded @[230px]:flex"><IconKnowledge size={18} /></span>
                   <span className="min-w-0 flex-1">
                     {/* ⚠️ NOT flex-wrap. A wrapping row lets an item move to a new line instead of
                         shrinking, so the title kept its natural width and pushed the card into
@@ -3978,7 +3987,15 @@ function RecordTiles({ nodeId, titleFallback, cfg, rows, total, icon, headIcon }
                the panel's Icon · Style · Spacing restyle them together — see the note in `nodeById`.
                The tile's resting classes stay; `Sel` lays the chosen values over them. */
             /* A lone last tile spans the row — what the Three-across preset tile draws. */
-            <Sel key={r.id} id={`${nodeId}-tile`} style={tileCols > 1 && i === shown.length - 1 && shown.length % tileCols === 1 ? { gridColumn: '1 / -1' } : undefined} className={`flex min-w-0 gap-2.5 rounded-lg bg-[#F9FAFB] p-3 ${
+            /* ⚠️ The tile's FILL is a tone of the theme (portalTone), not a fixed grey. It is the
+               largest of the four tinted blocks the layout gallery themes, and the one that carries
+               the colour across the widest area of the page.
+               ⚠️ Passed as the Sel's BASE style, never as a class: `Sel` composes
+               `{...baseStyle, ...styleOf}`, so a fill the admin picks for these tiles still wins —
+               a class would be beaten by nothing and a theme default must always yield to a choice.
+               The white icon badge below stays white: the tile is the tinted thing now, and the
+               badge has to be a step away from whatever it sits on. */
+            <Sel key={r.id} id={`${nodeId}-tile`} style={{ backgroundColor: TONE.wash, ...(tileCols > 1 && i === shown.length - 1 && shown.length % tileCols === 1 ? { gridColumn: '1 / -1' } : null) }} className={`flex min-w-0 gap-2.5 rounded-lg p-3 ${
               tileTpl === 'top' ? 'flex-col items-center text-center' : tileTpl === 'right' ? 'flex-row-reverse items-start' : 'items-start'
             }`}>
               {tileTpl !== 'none' && (
@@ -3997,7 +4014,7 @@ function RecordTiles({ nodeId, titleFallback, cfg, rows, total, icon, headIcon }
                 <span style={roleStyle(styles, nodeId, 'body')} className="truncate text-[13px] font-medium leading-snug text-[#364658]">{r.name}</span>
                 <span className="mt-1 flex min-w-0 items-center gap-1.5">
                   {cfg.showId !== false && (
-                    <span className="flex-shrink-0 truncate whitespace-nowrap rounded-sm bg-[#EBF5FF] px-1.5 py-0.5 text-[11px] font-medium text-[#3D8BD0]">{r.id}</span>
+                    <span style={{ backgroundColor: TONE.soft, color: TONE.ink }} className="flex-shrink-0 truncate whitespace-nowrap rounded-sm px-1.5 py-0.5 text-[11px] font-medium">{r.id}</span>
                   )}
                   {cfg.showId !== false && cfg.showType !== false && (
                     <span className="flex-shrink-0 text-[11px] text-[#C3CBD6]">·</span>
@@ -4030,7 +4047,7 @@ function RecordsCard({ nodeId, titleFallback, cfg, rows, headIcon }: {
           <Row key={r.id} nodeId={nodeId}>
             <div className="flex items-center gap-2.5">
               {cfg.showId !== false && (
-                <span className="max-w-full flex-shrink truncate whitespace-nowrap rounded-sm bg-[#EBF5FF] px-1.5 py-0.5 text-[12px] font-medium text-[#3D8BD0]">{r.id}</span>
+                <span style={{ backgroundColor: TONE.wash, color: TONE.ink }} className="max-w-full flex-shrink truncate whitespace-nowrap rounded-sm px-1.5 py-0.5 text-[12px] font-medium">{r.id}</span>
               )}
               <span style={roleStyle(styles, nodeId, 'body')} className="min-w-0 flex-1 truncate text-[13px] text-[#364658]">{r.name}</span>
               {cfg.showType !== false && (

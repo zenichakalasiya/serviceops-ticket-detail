@@ -1189,6 +1189,41 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   (grey for requests/approvals/knowledge, `#EBF5FF`/`#3D8BD0` for assets/CIs), identical badge
   totals, rules at the card's full width, and the same face (white, 14px radius, 1px `#E5E7EB`).
 
+- **Support Portal — the THEMES are the layout gallery's, and a theme's tones paint the page
+  (`portalTone.ts`, 22 Sep 2026).** The gallery themes a portal the way a designer does: one colour
+  is chosen for the banner, and everything tinted on the page is a TONE of it. That is now the
+  product's theme system. **Eight themes, one per HUE FAMILY**, curated out of the 37 layouts —
+  Clarity (blue) · Meridian (teal) · Prism Green · Study Desk (indigo) · Vault (navy) · Prism Coral
+  · Broadside (sand) · Triptych (graphite) — each carrying its palette, a type pairing and a button
+  shape, and each named for the template it came from. ⚠️ Two gallery colours were deliberately left
+  out: **amber** (Concierge `#F2A81D`) cannot be a PRIMARY at 1.85:1 on white — every link and
+  button label built from it would be unreadable, the same measurement that keeps coral off text
+  elsewhere — and Gazette's gold is an accent beside a blue, not a hue a page is built from.
+  ⚠️ **CLARITY IS UNCHANGED AND STAYS FIRST**: it is the product's blue and what every portal already
+  built is on, so swapping it for the nearest gallery blue would repaint every existing page for a
+  reason nobody asked for. Its page stays WHITE for the same reason; the seven others bring the
+  gallery's ground tint. ⚠️ **`paletteOf`'s fallback index moved 4 → 0** with the list — a stale
+  index there does not throw, it silently themes an unknown palette as somebody else.
+  **The tones are COMPUTED, never authored** (`tonesOf` → `wash` / `soft` / `line` / `ink`, emitted as
+  `--portal-tone-*` on the builder's theme wrapper beside `--portal-accent`). Two reasons, the second
+  decisive: eight hand-tuned sets are eight chances to get a relationship wrong, but more than that
+  the admin can EDIT the primary — an authored set would go on painting the old hue behind the new
+  one and no control anywhere would explain why. Derived, the whole page follows the colour they are
+  dragging, live (verified: typing `#7A1FA2` over Clarity's primary moved wash, ink, the pill and
+  the asset tile in the same frame). ⚠️ Saturation is CAPPED for the tints and has a FLOOR: a wash at
+  the primary's full saturation is a coloured surface rather than a tint of white, and a nearly-grey
+  primary (Triptych) scaled down would give a wash you cannot tell from the card behind it. ⚠️ The
+  **ink is darkened UNTIL IT READS** (4.5:1 against its own wash), not set to a fixed lightness — the
+  same bar the banner's contrast guard holds text to. **What is toned:** the record ID pill, the card
+  head's icon badge, the service tile and Record List badges, the My Assets / My CIs tile fill and
+  its pill, the knowledge row's glyph, and the page ground. ⚠️ Every consumer states a FALLBACK equal
+  to the colour that block had before any of this, so a card rendered outside the theme wrapper is
+  unchanged rather than black. ⚠️ Tile and icon tones are passed as the **base** style
+  (`{...baseStyle, ...styleOf}` in `Sel`; spread before `iconBoxCss`), so a fill or icon colour the
+  admin picked still wins — a theme supplies the default, never the answer. ⚠️ **SECONDARY IS NOT
+  THEMED**, by decision: it is the status language, and an Open pill in Broadside's brown stops
+  saying "waiting". Verified identical across all eight (amber `rgb(254,243,199)` / `rgb(180,83,9)`).
+
 ## Parked features
 Four Support Portal features are BUILT-OR-PART-BUILT AND SWITCHED OFF, with their full context in
 [future-tasks.md](future-tasks.md): **AI** (rail item commented out in `SupportPortalBuilder`; the

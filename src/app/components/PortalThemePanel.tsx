@@ -4,6 +4,7 @@ import { Check, ChevronDown, Moon, Sun } from 'lucide-react';
 import { toast } from 'sonner';
 import { ColorDot } from './PortalColorPicker';
 import { Segmented, UploadZone } from './PortalControls';
+import { tonesOf } from './portalTone';
 
 /* Theme — the portal's own style system.
  *
@@ -56,15 +57,26 @@ const prim = (
   { key: 'pageBg', label: 'Page background', light: bg, dark: dBg },
 ];
 
+/* ⚠️ TAKEN FROM THE LAYOUT GALLERY, one per HUE FAMILY. The gallery's 37 templates are not 37
+   palettes — most share a navy base and carry their own accent — so eight were curated out of it,
+   each a family the others cannot stand in for: blue, teal, green, indigo, navy, coral, sand,
+   graphite. Two that exist there were deliberately left out. Amber (Concierge `#F2A81D`) cannot be
+   a PRIMARY: it reads 1.85:1 on white, so every link and every button label built from it would be
+   unreadable — the same measurement that keeps coral off text elsewhere in this product. And
+   Gazette's gold is an accent beside a blue, not a hue a whole page can be built from.
+   ⚠️ CLARITY IS UNCHANGED AND STAYS FIRST. It is the product's own blue and it is what every portal
+   already built is on — swapping it for the nearest gallery blue would repaint every existing page
+   for a reason nobody asked for. Its page stays WHITE for the same reason; the seven gallery themes
+   bring the ground tint the gallery uses. */
 export const PALETTES: Palette[] = [
-  { id: 'blueMagenta', name: 'Blue Magenta', primary: prim('#69568C', '#3E5277', '#2F4858', '#FFFFFF', '#A48FD1', '#6E86B8', '#E8EEF6', '#141021') },
-  { id: 'green', name: 'Green', primary: prim('#4C9A5B', '#2F6B45', '#1B3A28', '#FFFFFF', '#68C77C', '#3E8F5C', '#EAF6EE', '#0E1A13') },
-  { id: 'red', name: 'Red', primary: prim('#D6274B', '#96162F', '#3A0E18', '#FFFFFF', '#FF5C7A', '#C23050', '#FDECEF', '#1A0A0E') },
-  { id: 'orange', name: 'Orange', primary: prim('#F0842A', '#B85C12', '#40230A', '#FFFFFF', '#FFA35A', '#D97A28', '#FFF3E8', '#1C1108') },
-  { id: 'blue', name: 'Blue', primary: prim('#3D8BD0', '#2D6CA0', '#0F172A', '#FFFFFF', '#5AA7E5', '#3D8BD0', '#E8EEF6', '#0F172A') },
-  { id: 'slate', name: 'Slate', primary: prim('#475467', '#334155', '#0F172A', '#FFFFFF', '#94A3B8', '#64748B', '#F8FAFC', '#0B1220') },
-  { id: 'stone', name: 'Stone', primary: prim('#6B5B4A', '#4A3E32', '#2A211A', '#FFFFFF', '#C4A98C', '#8A7460', '#F5EFE8', '#1A1512') },
-  { id: 'teal', name: 'Teal', primary: prim('#0E7C86', '#0A5A61', '#0B2E31', '#FFFFFF', '#3FBFC9', '#12909B', '#E6F6F7', '#08191B') },
+  { id: 'blue', name: 'Clarity', primary: prim('#3D8BD0', '#2D6CA0', '#0F172A', '#FFFFFF', '#5AA7E5', '#3D8BD0', '#E8EEF6', '#0F172A') },
+  { id: 'meridian', name: 'Meridian', primary: prim('#0F5C8C', '#0A4267', '#0B2F42', '#F2F8FC', '#4BA3D4', '#2B7BA8', '#E6F2F9', '#07161F') },
+  { id: 'prismGreen', name: 'Prism Green', primary: prim('#0E7150', '#0A533B', '#0D2C22', '#F4F9F6', '#45B98D', '#199268', '#E6F4EC', '#07160F') },
+  { id: 'studyDesk', name: 'Study Desk', primary: prim('#2B3A8F', '#1E296A', '#14183A', '#F5F6FC', '#7F8CE0', '#4B5BBD', '#E8EAF9', '#0C0E20') },
+  { id: 'vault', name: 'Vault', primary: prim('#10306B', '#0A2350', '#0B2545', '#F4F6FB', '#6F93D6', '#4A6DAD', '#E8EEF6', '#0B1020') },
+  { id: 'prismCoral', name: 'Prism Coral', primary: prim('#C2452F', '#94301F', '#3A1510', '#FCF7F6', '#E8806C', '#C2452F', '#FBE9E5', '#1C0E0B') },
+  { id: 'broadside', name: 'Broadside', primary: prim('#8A4A10', '#63340A', '#2A2317', '#FAF6EF', '#D29257', '#A3601F', '#F5EAD9', '#1A1509') },
+  { id: 'triptych', name: 'Triptych', primary: prim('#2E3A4B', '#1B2430', '#1B2430', '#F6F7F9', '#9AA7B8', '#6B7A8E', '#E9EDF2', '#0D1117') },
 ];
 
 /* Shared across every theme — see the note above. */
@@ -128,18 +140,24 @@ export const BUTTON_STYLES = [
    its own in its card. The palette section below is the colour authority; a style card that also
    painted a swatch strip would give two answers to "what colour is this portal", and the one you
    edited would be the one silently overruled the next time you tried a style. */
+/* ⚠️ A style now carries its palette's NAME, because the two are one choice: these are the layout
+   gallery's themes, and a portal on Broadside should say Broadside rather than "Warmth". The type
+   pairing and the button shape still travel with it — a theme is how the page LOOKS, and the
+   gallery's warm editorial templates are not set in the same face as its technical ones. */
 export const THEME_STYLES = [
-  { id: 'clarity', name: 'Clarity', paletteId: 'blue', packId: 'inter', buttonId: 'solid', note: 'The product default — neutral type and lightly rounded buttons.' },
-  { id: 'editorial', name: 'Editorial', paletteId: 'stone', packId: 'merri', buttonId: 'outline', note: 'Serif headings and outlined buttons. Reads like a written page.' },
-  { id: 'friendly', name: 'Friendly', paletteId: 'green', packId: 'poppins', buttonId: 'rounded', note: 'Geometric type and fully rounded buttons. Approachable.' },
-  { id: 'technical', name: 'Technical', paletteId: 'slate', packId: 'plex', buttonId: 'square', note: 'Flat greys and hard corners. Utilitarian by design.' },
-  { id: 'warmth', name: 'Warmth', paletteId: 'orange', packId: 'source', buttonId: 'soft', note: 'Amber accents on soft-filled buttons. Inviting without shouting.' },
-  { id: 'focus', name: 'Focus', paletteId: 'blueMagenta', packId: 'roboto', buttonId: 'solid', note: 'Compact type and a muted violet accent. The page carries the emphasis.' },
-  { id: 'alert', name: 'Alert', paletteId: 'red', packId: 'inter', buttonId: 'solid', note: 'For a status or incident portal, where urgency is the point.' },
-  { id: 'calm', name: 'Calm', paletteId: 'teal', packId: 'source', buttonId: 'soft', note: 'Cool teal and humanist type. Quiet under heavy use.' },
+  { id: 'clarity', name: 'Clarity', paletteId: 'blue', packId: 'inter', buttonId: 'solid', note: 'The product default. Neutral type, lightly rounded buttons, a white page.' },
+  { id: 'meridian', name: 'Meridian', paletteId: 'meridian', packId: 'source', buttonId: 'soft', note: 'Deep teal on a cool ground. Humanist type, quiet under heavy use.' },
+  { id: 'prismGreen', name: 'Prism Green', paletteId: 'prismGreen', packId: 'poppins', buttonId: 'rounded', note: 'Forest green and geometric type. Approachable without shouting.' },
+  { id: 'studyDesk', name: 'Study Desk', paletteId: 'studyDesk', packId: 'merri', buttonId: 'outline', note: 'Indigo with serif headings. An academic or knowledge-led portal.' },
+  { id: 'vault', name: 'Vault', paletteId: 'vault', packId: 'inter', buttonId: 'solid', note: 'Institutional navy. The most formal of the eight.' },
+  { id: 'prismCoral', name: 'Prism Coral', paletteId: 'prismCoral', packId: 'source', buttonId: 'soft', note: 'Warm coral on a blush ground. Suits education and healthcare tenants.' },
+  { id: 'broadside', name: 'Broadside', paletteId: 'broadside', packId: 'merri', buttonId: 'soft', note: 'Burnt sienna on parchment. Editorial, and unlike anything else here.' },
+  { id: 'triptych', name: 'Triptych', paletteId: 'triptych', packId: 'plex', buttonId: 'square', note: 'Graphite and hard corners. Utilitarian by design.' },
 ];
 
-export const paletteOf = (t: PortalTheme) => PALETTES.find((p) => p.id === t.paletteId) ?? PALETTES[4];
+/* ⚠️ Index 0, which is Clarity — the product default. It was 4 while 'blue' sat fifth in the list;
+   a stale index here does not throw, it silently themes an unknown palette as somebody else. */
+export const paletteOf = (t: PortalTheme) => PALETTES.find((p) => p.id === t.paletteId) ?? PALETTES[0];
 export const packOf = (t: PortalTheme) => FONT_PACKS.find((f) => f.id === t.packId) ?? FONT_PACKS[0];
 export const buttonOf = (t: PortalTheme) => BUTTON_STYLES.find((b) => b.id === t.buttonId) ?? BUTTON_STYLES[0];
 export const styleOfTheme = (t: PortalTheme) =>
@@ -161,6 +179,10 @@ export const colorIn = (t: PortalTheme, s: Swatch, mode: 'light' | 'dark') =>
 
 /** One swatch's value for the mode that is on. */
 export const colorOf = (t: PortalTheme, s: Swatch) => colorIn(t, s, t.mode);
+
+/* The TINTS — see portalTone. Read from the theme's live primary, so dragging that colour in the
+   panel re-tones the pills, the icon badges, the asset tiles and the page ground as you drag. */
+export const tonesOfTheme = (t: PortalTheme) => tonesOf(swatchesOf(t)[3]);
 
 /** page · surface · muted · accent · ink — what the canvas paints with. */
 export const swatchesOf = (t: PortalTheme): [string, string, string, string, string] => {

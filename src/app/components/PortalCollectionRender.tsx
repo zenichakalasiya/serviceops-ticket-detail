@@ -13,6 +13,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import type { ReactNode } from 'react';
 import { ArrowUpRight, ChevronDown, ChevronLeft, LayoutList, ChevronRight, ChevronsRight, ImageIcon, ImageOff, Mail, Phone, Plus, ShoppingCart, Star } from 'lucide-react';
 import { Sel, useCanvas } from './PortalCanvas';
+import { TONE } from './portalTone';
 import { ImageUploadZone } from './PortalControls';
 /* The Table is a module of its own — a spreadsheet-grade editor is a different kind of thing from
    the read-only renderers in this file, and it owns its data model, its handles and its menus. */
@@ -1246,7 +1247,7 @@ function ServiceTiles({ nodeId, items, showDesc, tpl = 'top', cols, chips, look,
             className="inline-flex min-w-0 max-w-full items-center gap-2.5 rounded-full border border-[#E5E7EB] bg-white py-1.5 pl-1.5 pr-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
           >
             {!noIcon && (
-              <span className="flex size-7 flex-shrink-0 items-center justify-center rounded-full bg-[#F1F5F9] text-[#475467]">
+              <span style={{ backgroundColor: TONE.soft, color: TONE.ink }} className="flex size-7 flex-shrink-0 items-center justify-center rounded-full">
                 <ShoppingCart size={15} strokeWidth={1.7} />
               </span>
             )}
@@ -1286,9 +1287,11 @@ function ServiceTiles({ nodeId, items, showDesc, tpl = 'top', cols, chips, look,
               sits and whether there IS one are one question with four answers, which is why they
               share a control rather than needing a separate switch. */}
           {!noIcon && (
-            <span style={iconBoxCss(styles, `${nodeId}-tile`)} className={`flex size-9 flex-shrink-0 items-center justify-center rounded-lg ${
-              action ? 'bg-[#EAF3FB] text-[#2F6FB5]' : 'bg-[#F1F5F9] text-[#475467]'
-            }`}>
+            /* ⚠️ The badge is a TONE of the theme (portalTone), spread BEFORE `iconBoxCss` so that an
+               icon colour the admin picked for these tiles still wins — a theme supplies the
+               default, never the answer. An action tile takes the deeper step, a plain one the
+               lightest, so the two looks stay a step apart now that both are themed. */
+            <span style={{ backgroundColor: action ? TONE.soft : TONE.wash, color: TONE.ink, ...iconBoxCss(styles, `${nodeId}-tile`) }} className="flex size-9 flex-shrink-0 items-center justify-center rounded-lg">
               <ShoppingCart size={18} strokeWidth={1.7} />
             </span>
           )}
@@ -1873,7 +1876,11 @@ function LiveCard({ nodeId, cfg, title, count, rows, icon }: {
    it stopped 16px short at both ends, so a list read as a stack of separate blocks rather than as
    one list — and it read differently from every built-in card beside it. */
 const liveRow = '-mx-4 border-t border-[#F0F2F5] px-4 py-2.5 first:border-t-0';
-const livePill = 'max-w-full flex-shrink truncate whitespace-nowrap rounded-sm bg-[#F1F5F9] px-1.5 py-0.5 text-[12px] font-medium text-[#475467]';
+/* ⚠️ The colour moved to an inline style so it can be a TONE of the theme (see portalTone); the
+   class string keeps everything that is not colour. A Record List is a card an admin built, and a
+   card they built should be themed exactly like the ones the product ships. */
+const livePill = 'max-w-full flex-shrink truncate whitespace-nowrap rounded-sm px-1.5 py-0.5 text-[12px] font-medium';
+const livePillCss = { backgroundColor: TONE.wash, color: TONE.ink };
 
 /* ⚠️ THE FIVE LIVE CARDS ARE DRAWN BY THE PAGE, not here — see `PlacedBlockRenderers` in
  * `SupportPortalPreview`, which hands `PortalPlacedElement` a renderer for c-requests,
@@ -1968,7 +1975,7 @@ function RecordListRender({ nodeId, cfg, glyph }: { nodeId: string; cfg: Cfg; gl
         return (
           <div key={x.id} className={liveRow}>
             <div className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1">
-              <span className={livePill}>{x.id}</span>
+              <span style={livePillCss} className={livePill}>{x.id}</span>
               <span className="min-w-0 flex-1 truncate text-[13px] text-[#364658]">{x.title}</span>
               <span
                 className="flex-shrink-0 whitespace-nowrap rounded-sm px-2 py-0.5 text-[12px] font-medium"

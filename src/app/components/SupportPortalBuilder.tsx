@@ -40,6 +40,7 @@ import { BANNER_GROUPS } from './portalPageModel';
 import type { Box, BoxDir, CustomSection, NodeStyle, PlacedElement, PortalPageContent, PortalStyles } from './portalPageModel';
 import { PORTAL_ELEMENTS, PORTAL_EMPTY_WIDGETS, PORTAL_TEMPLATES, bannerLayout, bannerShape } from './supportPortalData';
 import type { ShapeNode } from './supportPortalData';
+import { toneVars } from './portalTone';
 import { MAX_BANNER_CARDS, MAX_BANNER_SECTIONS, addToGroup, groupOf, insertAtEdge, insertBeside, isBannerBox, leavesOf, normalizeTree, removeLeaf, replaceLeaf, shiftLeaf, swapLeaves, unitsOf } from './portalBannerLayout';
 import type { BannerNode } from './portalBannerLayout';
 import { IconPopover } from './PortalIconPicker';
@@ -2806,6 +2807,11 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     '--portal-heading': faceOf(theme, 'heading').css,
     '--portal-accent': themeAccent,
     '--portal-btn-radius': `${buttonOf(theme).radius}px`,
+    /* The theme's TINTS — the ID pill, the icon badge, an asset tile and the hairline round a
+       tinted block are all tones of the one main colour (see portalTone). ⚠️ Derived from
+       `themeAccent`, which already resolves a hand-edited primary, so dragging that colour in the
+       panel re-tones the whole page live rather than leaving the old hue painted behind the new. */
+    ...toneVars(themeAccent),
   } as React.CSSProperties;
   /* ⚠️ A confirm, not a toast-with-undo. Applying a layout rewrites the copy, the treatment and
      the widgets in the band at once — too much to describe in a toast and too much to expect
