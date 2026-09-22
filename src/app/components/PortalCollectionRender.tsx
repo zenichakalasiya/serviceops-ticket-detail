@@ -1868,100 +1868,28 @@ function LiveCard({ nodeId, cfg, title, count, rows, icon }: {
 /* ⚠️ Every row is `min-w-0` with a truncating subject and non-shrinking chips. Narrowed, a row
    whose longest unbreakable word set a min-content floor pushed the whole card wider than the
    column it was in — so the card stopped obeying the width its section asked for. */
-const liveRow = 'border-t border-[#F0F2F5] py-2.5 first:border-t-0';
+/* ⚠️ `-mx-4` out and `px-4` back, the same treatment `ListBody` gives every card the page
+   draws: the rule runs the CARD's full width while the words keep their inset. Inside the padding
+   it stopped 16px short at both ends, so a list read as a stack of separate blocks rather than as
+   one list — and it read differently from every built-in card beside it. */
+const liveRow = '-mx-4 border-t border-[#F0F2F5] px-4 py-2.5 first:border-t-0';
 const livePill = 'max-w-full flex-shrink truncate whitespace-nowrap rounded-sm bg-[#F1F5F9] px-1.5 py-0.5 text-[12px] font-medium text-[#475467]';
 
-function RequestsRender({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
-  const rows = PORTAL_OPEN_REQUESTS.slice(0, Number(cfg.show ?? 5));
-  return (
-    <LiveCard nodeId={nodeId} cfg={cfg} title="My Open Requests" count={rows.length} rows={
-      rows.map((r) => {
-        /* Same mode-aware tone the built-in card uses — a copy must not glow where the original does not. */
-        const tone = statusTone(r.status, typeof document !== 'undefined' && !!document.querySelector('.portal-dark'));
-        return (
-          <div key={r.id} className={liveRow}>
-            <div className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1">
-              {cfg.showId !== false && <span className={livePill}>{r.id}</span>}
-              <span className="min-w-0 flex-1 truncate text-[13px] text-[#364658]">{r.subject}</span>
-              <span
-                className="flex-shrink-0 whitespace-nowrap rounded-sm px-2 py-0.5 text-[12px] font-medium"
-                style={{ color: tone.fg, background: tone.bg }}
-              >{r.status}</span>
-            </div>
-            {cfg.showDate !== false && <div className="mt-1 text-[12px] text-[#7B8FA5]">{r.at}</div>}
-          </div>
-        );
-      })
-    } />
-  );
-}
-
-function ApprovalsRender({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
-  const rows = PORTAL_APPROVALS.slice(0, Number(cfg.show ?? 5));
-  return (
-    <LiveCard nodeId={nodeId} cfg={cfg} title="Pending Approvals" count={rows.length} rows={
-      rows.map((a) => (
-        <div key={a.id} className={liveRow}>
-          <div className="min-w-0 truncate text-[13px] text-[#364658]">{a.id}: {a.subject}</div>
-          <div className="mt-0.5 min-w-0 truncate text-[12px] text-[#7B8FA5]">{a.reason}</div>
-          <div className="mt-1 min-w-0 truncate text-[12px] text-[#7B8FA5]">{a.at}</div>
-        </div>
-      ))
-    } />
-  );
-}
-
-function KnowledgeRender({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
-  const rows = PORTAL_ARTICLES.slice(0, Number(cfg.show ?? 5));
-  return (
-    <LiveCard nodeId={nodeId} cfg={cfg} title="Most Read" count={rows.length} rows={
-      rows.map((k) => (
-        <div key={k.id} className={liveRow}>
-          <div className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1">
-            <span className={livePill}>{k.id}</span>
-            <span className="min-w-0 flex-1 truncate text-[13px] text-[#364658]">{k.title}</span>
-          </div>
-          <div className="mt-1 min-w-0 truncate text-[12px] text-[#7B8FA5]">{k.at}</div>
-        </div>
-      ))
-    } />
-  );
-}
-
-const PLACED_ASSETS = [
-  { id: 'AST-3', name: 'Dell Latitude 5440', type: 'Laptop' },
-  { id: 'AST-1', name: 'Dell UltraSharp U2723QE', type: 'Monitor' },
-  { id: 'AST-7', name: 'Logitech MX Master 3S', type: 'Mouse' },
-  { id: 'AST-12', name: 'Jabra Evolve2 65', type: 'Headset' },
-  { id: 'AST-9', name: 'iPhone 14', type: 'Mobile' },
-];
-
-function AssetsRender({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
-  const rows = PLACED_ASSETS.slice(0, Number(cfg.show ?? 5));
-  return (
-    <LiveCard nodeId={nodeId} cfg={cfg} title="My Assets" count={rows.length} rows={
-      rows.map((a) => (
-        <div key={a.id} className={`${liveRow} flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1`}>
-          <span className={livePill}>{a.id}</span>
-          <span className="min-w-0 flex-1 truncate text-[13px] text-[#364658]">{a.name}</span>
-          <span className="flex-shrink-0 whitespace-nowrap text-[12px] text-[#9CA3AF]">{a.type}</span>
-        </div>
-      ))
-    } />
-  );
-}
-
-/* ⚠️ My CIs is EMPTY BY DESIGN (§7.4) — it is empty on most real instances, so its empty state is
-   the state most requesters see, and a truthful copy of it is empty too. */
-function CisRender({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
-  return (
-    <LiveCard nodeId={nodeId} cfg={cfg} title="My CIs" count={0} rows={
-      <div className="flex items-center justify-center rounded border border-dashed border-[#E5E7EB] py-7 text-[13px] text-[#9CA3AF]">
-        No Data Found
-      </div>
-    } />
-  );
-}
+/* ⚠️ THE FIVE LIVE CARDS ARE DRAWN BY THE PAGE, not here — see `PlacedBlockRenderers` in
+ * `SupportPortalPreview`, which hands `PortalPlacedElement` a renderer for c-requests,
+ * c-approvals, c-knowledge, c-assets and c-cis.
+ *
+ * There used to be a second, simpler implementation of each in this file, and it is what a
+ * from-scratch page got. The two drifted exactly as far as you would expect: My Assets came out as
+ * a list of grey pills where the real card is a 2x2 tile grid, Pending Approvals lost its id pill,
+ * its three actions and its requester line, Most Read lost its category tags, every divider stopped
+ * 16px short of the card's edges instead of running its full width, and each badge counted the rows
+ * on screen rather than the records behind them. The same widget rendered differently depending on
+ * which page it was on, which means it was not the same widget.
+ *
+ * ⚠️ Do NOT add a copy back here. A placed card resolves to the SAME widget spec as the page's own
+ * block (`WIDGET_FOR_TYPE` and `WIDGET_FOR_NODE` both point at 'my_requests' and friends), so it
+ * already arrives with the same defaults; what it needed was the same renderer, and it has one. */
 
 /* A Record List: the live card, with the query left to the admin.
  *
@@ -2058,11 +1986,8 @@ function RecordListRender({ nodeId, cfg, glyph }: { nodeId: string; cfg: Cfg; gl
 export const COLLECTION_RENDERERS: Record<string, (p: { nodeId: string; cfg: Cfg; glyph?: ReactNode }) => ReactNode> = {
   'c-records': RecordListRender,
   'x-card': CustomCardRender,
-  'c-requests': RequestsRender,
-  'c-approvals': ApprovalsRender,
-  'c-knowledge': KnowledgeRender,
-  'c-assets': AssetsRender,
-  'c-cis': CisRender,
+  /* c-requests / c-approvals / c-knowledge / c-assets / c-cis are drawn by the PAGE — see the
+     note where their renderers used to be. */
   'b-text-image': TextImageRender,
   'b-list': ListRender,
   'l-divider': DividerRender,

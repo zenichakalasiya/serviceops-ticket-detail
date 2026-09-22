@@ -2135,6 +2135,22 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
     return cardInner(id, body, cols, order, gap, grow, look);
   };
 
+  /* The FACE a data card is drawn on — the white box, its corners and its hairline, chosen by the
+     page's card look. ⚠️ Extracted so that a card the PAGE lays out and a copy of the same card
+     PLACED from the palette are the same box. They were two: a placed one came out on the generic
+     `Surface` (rounded-lg, 16px of its own padding) while the page's is rounded-xl with the padding
+     inside its head and rows — so the same widget had two shapes depending on which page it was on.
+     ⚠️ An announcement in its image form and a card whose title sits above it both paint their own
+     face, so they get none from here. */
+  const cardFace = (id: string) =>
+    (String(wc(id).titlePlace ?? 'inside') === 'outside' || String(wc(id).display ?? '') === 'image'
+      ? 'min-w-0'
+      : squareCards
+      ? 'min-w-0 rounded-md border border-[#E5E7EB] bg-white'
+      : spineCards
+      ? 'min-w-0 overflow-hidden rounded-[14px] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04),0_8px_24px_-12px_rgba(16,24,40,0.14)]'
+      : 'min-w-0 rounded-xl border border-[#E5E7EB] bg-white');
+
   const cardInner = (id: string, body: ReactNode, cols: number | undefined, order: number, gap = 16, grow = 1, look?: { full?: boolean; bare?: boolean; fill?: boolean }) => (
     /* ⚠️ No overflow-hidden here. The chip sits at -top-4 and the toolbar at -top-11, both OUTSIDE
        the wrapper — clipping it silently removes the card's hover outline and quick actions. */
@@ -2168,15 +2184,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
       /* ⚠️ A card whose TITLE sits outside it paints its own surface around the rows (see `CardShell`),
          so this wrapper must not paint a second one around the pair — the heading would end up inside a
          white box with a second white box under it. Read from the same key the head reads. */
-      className={(look?.fill ? 'flex flex-col ' : '') + (look?.bare || String(wc(id).titlePlace ?? 'inside') === 'outside'
-        /* The announcement card's image form paints its own face — see the note in `PortalPlacedElement`. */
-        || String(wc(id).display ?? '') === 'image'
-        ? 'min-w-0'
-        : squareCards
-        ? 'min-w-0 rounded-md border border-[#E5E7EB] bg-white'
-        : spineCards
-        ? 'min-w-0 overflow-hidden rounded-[14px] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04),0_8px_24px_-12px_rgba(16,24,40,0.14)]'
-        : 'min-w-0 rounded-xl border border-[#E5E7EB] bg-white')}
+      className={(look?.fill ? 'flex flex-col ' : '') + (look?.bare ? 'min-w-0' : cardFace(id))}
       style={{ ...(cols ? share(cols, gap, grow) : {}), ...(look?.full ? { gridColumn: '1 / -1' } : {}), order }}
     >
       {/* No overflow-hidden: a card must be free to grow past a dragged height rather than clip
@@ -2192,6 +2200,228 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
         className={`${spineCards ? 'rounded-[14px]' : 'rounded-xl'}${look?.fill ? ' flex flex-1 flex-col' : ''}`}
       >{body}</div>
     </Sel>
+  );
+
+  /* ── The live cards' BODIES, keyed by node id ───────────────────────────────────────────────
+   *
+   * ⚠️ ONE implementation per card, used by the page's own block AND by a copy placed from the
+   * palette. There used to be two: these, and a simpler set in `PortalCollectionRender` that a
+   * from-scratch page got instead — so My Assets came out as a list of pills where the real card is
+   * a 2x2 tile grid, Pending Approvals lost its id pill, its actions and its requester line, every
+   * divider stopped short of the card's edges, and each badge counted the rows on screen rather
+   * than the records behind them. A widget that renders differently depending on which page it is
+   * on is not the same widget, and no amount of matching the copies up by hand keeps them matched.
+   * ⚠️ A placed copy resolves to the SAME widget spec (`WIDGET_FOR_TYPE` and `WIDGET_FOR_NODE` both
+   * point at 'my_requests' and friends), so it arrives with the same defaults — the row shape, the
+   * rows to show and the date format come out identical without being passed. */
+  const requestsBody = (id: string) => {
+    const rows = PORTAL_OPEN_REQUESTS.slice(0, Number(wc(id).show ?? content.requests.show));
+    return (
+    <CardShell nodeId={id} title={String(wc(id).title ?? content.requests.title)} count={PORTAL_OPEN_REQUEST_TOTAL} cfg={wc(id)} hideHead={workTabs} headIcon={hIcon(<Ticket size={15} strokeWidth={1.8} />)}>
+      <ListBody nodeId={id}>
+          {rows.map((r) => {
+            const c = wc(id);
+            const tone = statusTone(r.status, darkMode);
+            /* ⚠️ Statuses is a DISPLAY toggle, not a row filter: unticking one hides
+               that badge from the rows carrying it, and the request stays listed.
+               Filtering rows out would put "Rows to show" and the status list in a
+               fight over how many rows appear. */
+            const statusOn = c.showStatus !== false
+              && ((c.statuses as string[]) ?? content.requests.statuses).includes(r.status);
+            const neutral = c.statusTone === 'neutral';
+            const below = c.idPlacement === 'below';
+            const stacked = c.rowLayout === 'stacked';
+            /* ⚠️ A THIRD row shape. `stacked` puts the status under the subject and the
+               date under that — three lines. `meta` keeps the row to two: the subject
+               and its timestamp share the text column, and the status holds the right
+               edge. It is what lets a list of five fit a card without scrolling. */
+            const metaRow = c.rowLayout === 'meta';
+            /* A DOT and the word, not a filled pill. Five filled pills in a column are
+               five of the loudest objects on the page competing with the subjects they
+               are meant to qualify; a dot carries the same colour at a tenth the area. */
+            const dotStatus = c.statusTone === 'dot';
+            /* `Wed, Aug 12, 2026 10:09 AM` -> `Aug 12 - 10:09 AM`. The weekday and the
+               year are the two parts of a timestamp nobody reads in a list. */
+            /* `Wed, Aug 12, 2026 10:09 AM` -> `Aug 12, 10:09 AM`. The weekday and the year
+               are the two parts of a timestamp nobody reads in a list, and the comma that
+               separated the date from the year is the one that now separates it from the
+               time — a middot there read as one more bullet in a list of bullets. */
+            const when = c.dateFormat === 'short'
+              ? r.at.replace(/^\w+,\s*/, '').replace(/,\s*\d{4}/, ',')
+              : r.at;
+            return (
+              <Row key={r.id} nodeId={id}>
+                {metaRow ? (
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    {c.showId !== false && <IdPill>{r.id}</IdPill>}
+                    <span className="min-w-0 flex-1">
+                      <span style={roleStyle(styles, id, 'body')} className="block truncate text-[13px] font-medium text-[#364658]">{r.subject}</span>
+                      {c.showDate !== false && (
+                        <span style={roleStyle(styles, id, 'meta')} className="mt-0.5 block truncate text-[12px] text-[#98A6B6]">{when}</span>
+                      )}
+                    </span>
+                    {statusOn && (dotStatus ? (
+                      <span className="flex flex-shrink-0 items-center gap-1.5 whitespace-nowrap text-[12px] text-[#64748B]">
+                        <span className="size-1.5 rounded-full" style={{ background: neutral ? '#94A3B8' : tone.fg }} />
+                        {r.status}
+                      </span>
+                    ) : (
+                      <span
+                        className="flex-shrink-0 whitespace-nowrap rounded-sm px-2 py-0.5 text-[12px] font-medium"
+                        style={neutral ? { color: '#64748B', background: '#F1F5F9' } : { color: tone.fg, background: tone.bg }}
+                      >{r.status}</span>
+                    ))}
+                  </div>
+                ) : (<>
+                <div className={stacked ? '' : 'flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1'}>
+                  {c.showId !== false && !below && <IdPill>{r.id}</IdPill>}
+                  <span style={roleStyle(styles, id, 'body')} className={`min-w-0 ${stacked ? 'block' : 'flex-1 truncate'} text-[13px] text-[#364658]`}>{r.subject}</span>
+                  {statusOn && (
+                    <span
+                      className={`${stacked ? 'mt-1 inline-block' : 'flex-shrink-0'} whitespace-nowrap rounded-sm px-2 py-0.5 text-[12px] font-medium`}
+                      style={neutral ? { color: '#64748B', background: '#F1F5F9' } : { color: tone.fg, background: tone.bg }}
+                    >{r.status}</span>
+                  )}
+                </div>
+                {(c.showId !== false && below) && <div className="mt-1"><IdPill>{r.id}</IdPill></div>}
+                {c.showDate !== false && <div style={roleStyle(styles, id, 'meta')} className="mt-1 text-[12px] text-[#7B8FA5]">{r.at}</div>}
+                </>)}
+              </Row>
+            );
+          })}
+      </ListBody>
+    </CardShell>
+    );
+  };
+  const approvalsBody = (id: string) => {
+    const rows = PORTAL_APPROVALS.slice(0, Number(wc(id).show ?? content.approvals.show));
+    return (
+    <CardShell nodeId={id} title={String(wc(id).title ?? content.approvals.title)} count={rows.length} cfg={wc(id)} hideHead={workTabs} headIcon={hIcon(<Check size={15} strokeWidth={2} />)}>
+      <ListBody nodeId={id}>
+        {rows.map((a) => (
+          <Row key={a.id} nodeId={id}>
+            {/* ⚠️ THE SAME ROW as My Open Requests — a leading token, a text column of
+                subject over meta, and one trailing token. Two cards side by side that
+                arrange their rows differently read as two different kinds of thing,
+                which is exactly what the page is trying not to say.
+                ⚠️ No Approve/Reject/Refer buttons in this shape. Three buttons per row
+                is the loudest object in the card, on the card the requester glances at
+                rather than works in — the decision belongs on the record. */}
+            {wc(id).rowLayout === 'meta' ? (
+              <div className="flex min-w-0 items-center gap-2.5">
+                {wc(id).showRequester !== false && (
+                  <span className="flex size-8 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-white" style={{ backgroundColor: a.color }}>{a.initials}</span>
+                )}
+                <span className="min-w-0 flex-1">
+                  <span style={roleStyle(styles, id, 'body')} className="block truncate text-[13px] font-medium text-[#364658]">{a.subject}</span>
+                  <span style={roleStyle(styles, id, 'meta')} className="mt-0.5 block truncate text-[12px] text-[#98A6B6]">{a.reason} · {a.by}</span>
+                </span>
+                {wc(id).showId !== false && <IdPill>{a.id}</IdPill>}
+              </div>
+            ) : (<>
+            {/* ⚠️ TWO lines: WHAT is waiting, then WHO it came from and WHEN. The id and the
+                subject shared a pill, which made a record's identifier and its title one
+                object — an id is a thing you copy and a subject is a thing you read. The
+                reason joins the subject after a middot, because on its own line it read as
+                a second subject rather than as the qualifier it is.
+                ⚠️ The three actions sit on the FIRST line, beside what they act on. Under the
+                requester they lined up with the name and looked like actions on a person. */}
+            <div className="flex min-w-0 items-center gap-2.5">
+              {wc(id).showId !== false && <IdPill>{a.id}</IdPill>}
+              <span style={roleStyle(styles, id, 'body')} className="min-w-0 flex-1 truncate text-[13px] text-[#364658]">
+                {a.subject}{a.reason ? ` · ${a.reason}` : ''}
+              </span>
+              <span className="flex flex-shrink-0 items-center gap-1.5">
+                <span className="flex size-7 items-center justify-center rounded bg-[#ECFDF3] text-[#22A06B]"><Check size={15} /></span>
+                <span className="flex size-7 items-center justify-center rounded bg-[#FEF3F2] text-[#DC2626]"><X size={15} /></span>
+                <span className="flex size-7 items-center justify-center rounded bg-[#FEF3C7] text-[#B45309]"><RotateCcw size={14} /></span>
+              </span>
+            </div>
+            {(wc(id).showRequester !== false || wc(id).showDate !== false) && (
+              <div className="mt-2 flex min-w-0 items-center gap-1.5">
+                {wc(id).showRequester !== false && (
+                  <>
+                    <span className="flex size-5 flex-shrink-0 items-center justify-center rounded text-[10px] font-semibold text-white" style={{ backgroundColor: a.color }}>{a.initials}</span>
+                    <span style={roleStyle(styles, id, 'body')} className="flex-shrink-0 truncate text-[13px] text-[#364658]">{a.by}</span>
+                  </>
+                )}
+                {wc(id).showDate !== false && (
+                  <span style={roleStyle(styles, id, 'meta')} className="min-w-0 truncate text-[12px] text-[#98A6B6]">
+                    {wc(id).showRequester !== false ? '· ' : ''}{a.at.replace(/^\w+,\s*/, '').replace(/,\s*\d{4}/, ',')}
+                  </span>
+                )}
+              </div>
+            )}
+            </>)}
+          </Row>
+        ))}
+      </ListBody>
+    </CardShell>
+    );
+  };
+  const knowledgeBody = (id: string) => {
+    const rows = PORTAL_ARTICLES.slice(0, Number(wc(id).show ?? content.knowledge.show));
+    return (
+    <CardShell nodeId={id} title={String(wc(id).title ?? content.knowledge.title)} count={PORTAL_ARTICLE_TOTAL} cfg={wc(id)} hideHead={workTabs} headIcon={hIcon(<Lightbulb size={15} strokeWidth={1.8} />)}>
+      <ListBody nodeId={id}>
+        {rows.map((k) => {
+          const c = wc(id);
+          const below = c.idPlacement === 'below';
+          return (
+            /* ⚠️ The row answers to the WIDGET's width, not the window's — `@container`,
+                the same mechanism the software card grid uses. Dragging this card narrow
+                used to squeeze the icon and truncate the title to two characters while
+                the date and the tag sat on one long line, because every breakpoint here
+                was either absent or keyed to a viewport that had not changed.
+                Below ~230px the icon goes (it repeats for every row and carries no
+                information the title does not) and the meta line stacks; above it, the
+                row is exactly what it was. */
+            <Row key={k.id} nodeId={id}>
+              <div className="@container min-w-0">
+                <div className="flex min-w-0 gap-2 @[230px]:gap-3">
+                  <span className="hidden size-9 flex-shrink-0 items-center justify-center rounded bg-[#F1F5F9] text-[#7B8FA5] @[230px]:flex"><IconKnowledge size={18} /></span>
+                  <span className="min-w-0 flex-1">
+                    {/* ⚠️ NOT flex-wrap. A wrapping row lets an item move to a new line instead of
+                        shrinking, so the title kept its natural width and pushed the card into
+                        horizontal overflow — the exact opposite of responsive. No wrap plus
+                        min-w-0 is what makes truncation the pressure valve. */}
+                    <span className={c.rowLayout === 'single' ? 'flex min-w-0 items-center gap-2' : 'block'}>
+                      {c.showId !== false && !below && <IdPill>{k.id}</IdPill>}
+                      {/* ⚠️ `w-0` with `flex-1`, not `min-w-0` alone. A flex item's basis is its CONTENT by
+                          default, so it refuses to go below its natural width and pushes the card
+                          into overflow instead of truncating. Zeroing the basis is what makes the
+                          ellipsis the thing that gives way. */}
+                      <span style={roleStyle(styles, id, 'body')} className="w-0 min-w-0 flex-1 truncate text-[13px] text-[#364658]">{k.title}</span>
+                    </span>
+                    <span className="mt-1 flex min-w-0 items-center gap-x-2">
+                      {c.showId !== false && below && <IdPill>{k.id}</IdPill>}
+                      {/* ⚠️ The SAME short stamp Requests uses. A page where one card
+                          writes "Thu, Jul 30, 2026 11:34 AM" and the card beside it
+                          writes "Aug 12 · 10:09 AM" is a page with two date formats,
+                          and the reader has to notice that before they can compare. */}
+                      {c.showDate !== false && <span style={roleStyle(styles, id, 'meta')} className="min-w-0 truncate text-[12px] text-[#7B8FA5]">{c.dateFormat === 'short' ? k.at.replace(/^\w+,\s*/, '').replace(/,\s*\d{4}/, ',') : k.at}</span>}
+                      {/* ⚠️ The category holds the RIGHT EDGE rather than trailing the date. Inline it
+                          floated mid-row behind a short date with a ragged gap after it; against the
+                          edge the four rows line their categories into a column you can read down. */}
+                      {c.showCategory !== false && <span className="ml-auto max-w-[45%] flex-shrink-0 truncate rounded-sm bg-[#F1F5F9] px-1.5 py-0.5 text-[11px] text-[#64748B]">{k.tag}</span>}
+                    </span>
+                  </span>
+                </div>
+              </div>
+            </Row>
+          );
+        })}
+      </ListBody>
+    </CardShell>
+    );
+  };
+
+  /* A card PLACED from the palette: the same body, on the same face. ⚠️ It carries `stInner` for
+     the same reason `cardInner` does — the widget's own fill, border and radius are read off the
+     style store here, and `Sel` withholds them (`paintsOwnSurface`) precisely so this box can
+     paint them once. */
+  const placedLive = (id: string, body: ReactNode) => (
+    <div className={cardFace(id)} style={stInner(id)}>{body}</div>
   );
 
   /* Order and membership come from state, so the toolbar's move and delete actually rewrite what
@@ -3092,8 +3322,18 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
       </div>
     )
     : heroPlaced;
+  /* ⚠️ The five LIVE data cards are drawn by the page for a PLACED copy too — see the note on the
+     bodies above. `PortalPlacedElement` prefers whatever it finds here over its own
+     `COLLECTION_RENDERERS` entry, which is the seam the Action cards block already used. */
   return (
-    <PlacedBlockRenderers.Provider value={{ 'x-actions': actionsBlock }}>
+    <PlacedBlockRenderers.Provider value={{
+      'x-actions': actionsBlock,
+      'c-requests': (id) => placedLive(id, requestsBody(id)),
+      'c-approvals': (id) => placedLive(id, approvalsBody(id)),
+      'c-knowledge': (id) => placedLive(id, knowledgeBody(id)),
+      'c-assets': (id) => placedLive(id, <RecordTiles nodeId={id} titleFallback={content.assets.title} cfg={wc(id)} rows={MY_ASSETS} total={MY_ASSET_TOTAL} icon={<HardDrive size={17} />} headIcon={hIcon(<HardDrive size={15} strokeWidth={1.8} />)} />),
+      'c-cis': (id) => placedLive(id, <RecordTiles nodeId={id} titleFallback={content.cis.title} cfg={wc(id)} rows={MY_CIS} icon={<Server size={17} />} headIcon={hIcon(<Server size={15} strokeWidth={1.8} />)} />),
+    }}>
     <div
       className="flex min-h-full flex-col bg-white"
       /* §7.22 — the PAGE layer. The typeface cascades normally; the text scale uses `zoom` because
@@ -3345,198 +3585,9 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
               /* ⚠️ Every work-band card is built as a CONST and PLACED afterwards, because the rail
                  layout puts them in two regions and the flat one puts them in a row — same cards,
                  two arrangements. Authoring each twice is two places for a fix to land in one. */
-              const requestsCard = card('requests', (
-                <CardShell nodeId="requests" titleNodeId="requests-title" title={String(wc('requests').title ?? content.requests.title)} count={PORTAL_OPEN_REQUEST_TOTAL} cfg={wc('requests')} hideHead={workTabs} headIcon={hIcon(<Ticket size={15} strokeWidth={1.8} />)}>
-                  <ListBody nodeId="requests">
-                      {visibleRequests.map((r) => {
-                        const c = wc('requests');
-                        const tone = statusTone(r.status, darkMode);
-                        /* ⚠️ Statuses is a DISPLAY toggle, not a row filter: unticking one hides
-                           that badge from the rows carrying it, and the request stays listed.
-                           Filtering rows out would put "Rows to show" and the status list in a
-                           fight over how many rows appear. */
-                        const statusOn = c.showStatus !== false
-                          && ((c.statuses as string[]) ?? content.requests.statuses).includes(r.status);
-                        const neutral = c.statusTone === 'neutral';
-                        const below = c.idPlacement === 'below';
-                        const stacked = c.rowLayout === 'stacked';
-                        /* ⚠️ A THIRD row shape. `stacked` puts the status under the subject and the
-                           date under that — three lines. `meta` keeps the row to two: the subject
-                           and its timestamp share the text column, and the status holds the right
-                           edge. It is what lets a list of five fit a card without scrolling. */
-                        const metaRow = c.rowLayout === 'meta';
-                        /* A DOT and the word, not a filled pill. Five filled pills in a column are
-                           five of the loudest objects on the page competing with the subjects they
-                           are meant to qualify; a dot carries the same colour at a tenth the area. */
-                        const dotStatus = c.statusTone === 'dot';
-                        /* `Wed, Aug 12, 2026 10:09 AM` -> `Aug 12 - 10:09 AM`. The weekday and the
-                           year are the two parts of a timestamp nobody reads in a list. */
-                        /* `Wed, Aug 12, 2026 10:09 AM` -> `Aug 12, 10:09 AM`. The weekday and the year
-                           are the two parts of a timestamp nobody reads in a list, and the comma that
-                           separated the date from the year is the one that now separates it from the
-                           time — a middot there read as one more bullet in a list of bullets. */
-                        const when = c.dateFormat === 'short'
-                          ? r.at.replace(/^\w+,\s*/, '').replace(/,\s*\d{4}/, ',')
-                          : r.at;
-                        return (
-                          <Row key={r.id} nodeId="requests">
-                            {metaRow ? (
-                              <div className="flex min-w-0 items-center gap-2.5">
-                                {c.showId !== false && <IdPill>{r.id}</IdPill>}
-                                <span className="min-w-0 flex-1">
-                                  <span style={roleStyle(styles, 'requests', 'body')} className="block truncate text-[13px] font-medium text-[#364658]">{r.subject}</span>
-                                  {c.showDate !== false && (
-                                    <span style={roleStyle(styles, 'requests', 'meta')} className="mt-0.5 block truncate text-[12px] text-[#98A6B6]">{when}</span>
-                                  )}
-                                </span>
-                                {statusOn && (dotStatus ? (
-                                  <span className="flex flex-shrink-0 items-center gap-1.5 whitespace-nowrap text-[12px] text-[#64748B]">
-                                    <span className="size-1.5 rounded-full" style={{ background: neutral ? '#94A3B8' : tone.fg }} />
-                                    {r.status}
-                                  </span>
-                                ) : (
-                                  <span
-                                    className="flex-shrink-0 whitespace-nowrap rounded-sm px-2 py-0.5 text-[12px] font-medium"
-                                    style={neutral ? { color: '#64748B', background: '#F1F5F9' } : { color: tone.fg, background: tone.bg }}
-                                  >{r.status}</span>
-                                ))}
-                              </div>
-                            ) : (<>
-                            <div className={stacked ? '' : 'flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1'}>
-                              {c.showId !== false && !below && <IdPill>{r.id}</IdPill>}
-                              <span style={roleStyle(styles, 'requests', 'body')} className={`min-w-0 ${stacked ? 'block' : 'flex-1 truncate'} text-[13px] text-[#364658]`}>{r.subject}</span>
-                              {statusOn && (
-                                <span
-                                  className={`${stacked ? 'mt-1 inline-block' : 'flex-shrink-0'} whitespace-nowrap rounded-sm px-2 py-0.5 text-[12px] font-medium`}
-                                  style={neutral ? { color: '#64748B', background: '#F1F5F9' } : { color: tone.fg, background: tone.bg }}
-                                >{r.status}</span>
-                              )}
-                            </div>
-                            {(c.showId !== false && below) && <div className="mt-1"><IdPill>{r.id}</IdPill></div>}
-                            {c.showDate !== false && <div style={roleStyle(styles, 'requests', 'meta')} className="mt-1 text-[12px] text-[#7B8FA5]">{r.at}</div>}
-                            </>)}
-                          </Row>
-                        );
-                      })}
-                  </ListBody>
-                </CardShell>
-              ), rail ? 2 : secCols("work", content.cols.work), secGap("work"), secGrow("work"));
-              const approvalsCard = card('approvals', (
-                <CardShell nodeId="approvals" titleNodeId="approvals-title" title={String(wc('approvals').title ?? content.approvals.title)} count={visibleApprovals.length} cfg={wc('approvals')} hideHead={workTabs} headIcon={hIcon(<Check size={15} strokeWidth={2} />)}>
-                  <ListBody nodeId="approvals">
-                    {visibleApprovals.map((a) => (
-                      <Row key={a.id} nodeId="approvals">
-                        {/* ⚠️ THE SAME ROW as My Open Requests — a leading token, a text column of
-                            subject over meta, and one trailing token. Two cards side by side that
-                            arrange their rows differently read as two different kinds of thing,
-                            which is exactly what the page is trying not to say.
-                            ⚠️ No Approve/Reject/Refer buttons in this shape. Three buttons per row
-                            is the loudest object in the card, on the card the requester glances at
-                            rather than works in — the decision belongs on the record. */}
-                        {wc('approvals').rowLayout === 'meta' ? (
-                          <div className="flex min-w-0 items-center gap-2.5">
-                            {wc('approvals').showRequester !== false && (
-                              <span className="flex size-8 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-white" style={{ backgroundColor: a.color }}>{a.initials}</span>
-                            )}
-                            <span className="min-w-0 flex-1">
-                              <span style={roleStyle(styles, 'approvals', 'body')} className="block truncate text-[13px] font-medium text-[#364658]">{a.subject}</span>
-                              <span style={roleStyle(styles, 'approvals', 'meta')} className="mt-0.5 block truncate text-[12px] text-[#98A6B6]">{a.reason} · {a.by}</span>
-                            </span>
-                            {wc('approvals').showId !== false && <IdPill>{a.id}</IdPill>}
-                          </div>
-                        ) : (<>
-                        {/* ⚠️ TWO lines: WHAT is waiting, then WHO it came from and WHEN. The id and the
-                            subject shared a pill, which made a record's identifier and its title one
-                            object — an id is a thing you copy and a subject is a thing you read. The
-                            reason joins the subject after a middot, because on its own line it read as
-                            a second subject rather than as the qualifier it is.
-                            ⚠️ The three actions sit on the FIRST line, beside what they act on. Under the
-                            requester they lined up with the name and looked like actions on a person. */}
-                        <div className="flex min-w-0 items-center gap-2.5">
-                          {wc('approvals').showId !== false && <IdPill>{a.id}</IdPill>}
-                          <span style={roleStyle(styles, 'approvals', 'body')} className="min-w-0 flex-1 truncate text-[13px] text-[#364658]">
-                            {a.subject}{a.reason ? ` · ${a.reason}` : ''}
-                          </span>
-                          <span className="flex flex-shrink-0 items-center gap-1.5">
-                            <span className="flex size-7 items-center justify-center rounded bg-[#ECFDF3] text-[#22A06B]"><Check size={15} /></span>
-                            <span className="flex size-7 items-center justify-center rounded bg-[#FEF3F2] text-[#DC2626]"><X size={15} /></span>
-                            <span className="flex size-7 items-center justify-center rounded bg-[#FEF3C7] text-[#B45309]"><RotateCcw size={14} /></span>
-                          </span>
-                        </div>
-                        {(wc('approvals').showRequester !== false || wc('approvals').showDate !== false) && (
-                          <div className="mt-2 flex min-w-0 items-center gap-1.5">
-                            {wc('approvals').showRequester !== false && (
-                              <>
-                                <span className="flex size-5 flex-shrink-0 items-center justify-center rounded text-[10px] font-semibold text-white" style={{ backgroundColor: a.color }}>{a.initials}</span>
-                                <span style={roleStyle(styles, 'approvals', 'body')} className="flex-shrink-0 truncate text-[13px] text-[#364658]">{a.by}</span>
-                              </>
-                            )}
-                            {wc('approvals').showDate !== false && (
-                              <span style={roleStyle(styles, 'approvals', 'meta')} className="min-w-0 truncate text-[12px] text-[#98A6B6]">
-                                {wc('approvals').showRequester !== false ? '· ' : ''}{a.at.replace(/^\w+,\s*/, '').replace(/,\s*\d{4}/, ',')}
-                              </span>
-                            )}
-                          </div>
-                        )}
-                        </>)}
-                      </Row>
-                    ))}
-                  </ListBody>
-                </CardShell>
-              ), rail ? 2 : secCols("work", content.cols.work), secGap("work"), secGrow("work"));
-              const knowledgeCard = card('knowledge', (
-                <CardShell nodeId="knowledge" titleNodeId="knowledge-title" title={String(wc('knowledge').title ?? content.knowledge.title)} count={PORTAL_ARTICLE_TOTAL} cfg={wc('knowledge')} hideHead={workTabs} headIcon={hIcon(<Lightbulb size={15} strokeWidth={1.8} />)}>
-                  <ListBody nodeId="knowledge">
-                    {visibleArticles.map((k) => {
-                      const c = wc('knowledge');
-                      const below = c.idPlacement === 'below';
-                      return (
-                        /* ⚠️ The row answers to the WIDGET's width, not the window's — `@container`,
-                            the same mechanism the software card grid uses. Dragging this card narrow
-                            used to squeeze the icon and truncate the title to two characters while
-                            the date and the tag sat on one long line, because every breakpoint here
-                            was either absent or keyed to a viewport that had not changed.
-                            Below ~230px the icon goes (it repeats for every row and carries no
-                            information the title does not) and the meta line stacks; above it, the
-                            row is exactly what it was. */
-                        <Row key={k.id} nodeId="knowledge">
-                          <div className="@container min-w-0">
-                            <div className="flex min-w-0 gap-2 @[230px]:gap-3">
-                              <span className="hidden size-9 flex-shrink-0 items-center justify-center rounded bg-[#F1F5F9] text-[#7B8FA5] @[230px]:flex"><IconKnowledge size={18} /></span>
-                              <span className="min-w-0 flex-1">
-                                {/* ⚠️ NOT flex-wrap. A wrapping row lets an item move to a new line instead of
-                                    shrinking, so the title kept its natural width and pushed the card into
-                                    horizontal overflow — the exact opposite of responsive. No wrap plus
-                                    min-w-0 is what makes truncation the pressure valve. */}
-                                <span className={c.rowLayout === 'single' ? 'flex min-w-0 items-center gap-2' : 'block'}>
-                                  {c.showId !== false && !below && <IdPill>{k.id}</IdPill>}
-                                  {/* ⚠️ `w-0` with `flex-1`, not `min-w-0` alone. A flex item's basis is its CONTENT by
-                                      default, so it refuses to go below its natural width and pushes the card
-                                      into overflow instead of truncating. Zeroing the basis is what makes the
-                                      ellipsis the thing that gives way. */}
-                                  <span style={roleStyle(styles, 'knowledge', 'body')} className="w-0 min-w-0 flex-1 truncate text-[13px] text-[#364658]">{k.title}</span>
-                                </span>
-                                <span className="mt-1 flex min-w-0 items-center gap-x-2">
-                                  {c.showId !== false && below && <IdPill>{k.id}</IdPill>}
-                                  {/* ⚠️ The SAME short stamp Requests uses. A page where one card
-                                      writes "Thu, Jul 30, 2026 11:34 AM" and the card beside it
-                                      writes "Aug 12 · 10:09 AM" is a page with two date formats,
-                                      and the reader has to notice that before they can compare. */}
-                                  {c.showDate !== false && <span style={roleStyle(styles, 'knowledge', 'meta')} className="min-w-0 truncate text-[12px] text-[#7B8FA5]">{c.dateFormat === 'short' ? k.at.replace(/^\w+,\s*/, '').replace(/,\s*\d{4}/, ',') : k.at}</span>}
-                                  {/* ⚠️ The category holds the RIGHT EDGE rather than trailing the date. Inline it
-                                      floated mid-row behind a short date with a ragged gap after it; against the
-                                      edge the four rows line their categories into a column you can read down. */}
-                                  {c.showCategory !== false && <span className="ml-auto max-w-[45%] flex-shrink-0 truncate rounded-sm bg-[#F1F5F9] px-1.5 py-0.5 text-[11px] text-[#64748B]">{k.tag}</span>}
-                                </span>
-                              </span>
-                            </div>
-                          </div>
-                        </Row>
-                      );
-                    })}
-                  </ListBody>
-                </CardShell>
-              ), workRail ? 1 : secCols("work", content.cols.work), secGap("work"), secGrow("work"), undefined, workTabs ? { bare: true } : undefined);
+              const requestsCard = card('requests', requestsBody('requests'), rail ? 2 : secCols("work", content.cols.work), secGap("work"), secGrow("work"));
+              const approvalsCard = card('approvals', approvalsBody('approvals'), rail ? 2 : secCols("work", content.cols.work), secGap("work"), secGrow("work"));
+              const knowledgeCard = card('knowledge', knowledgeBody('knowledge'), workRail ? 1 : secCols("work", content.cols.work), secGap("work"), secGrow("work"), undefined, workTabs ? { bare: true } : undefined);
               /* ⚠️ ONE container, three tabs — and each panel MOUNTS THE REAL CARD. The strip
                  decides which of the three is in the tree; it does not redraw any of them. So each
                  keeps its node id, its selection, its widget drawer and its removal, and "tabs" is

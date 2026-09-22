@@ -1162,6 +1162,33 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   TS1117 duplicate key is at **portalWidgetSpec.ts:921** (the action-card factory's `fields: [], packs: []`),
   not line 597 as the How-to-run section still says.
 
+- **Support Portal — ONE renderer per live data card, page block and placed copy alike (22 Sep 2026).**
+  A card placed on a from-scratch page was a DIFFERENT card from the same widget on the default
+  page, because there were two implementations: the page's own (`CardShell` + `ListBody`/`Row`,
+  built up over months of row-shape work) and a simpler set in `PortalCollectionRender` that only a
+  placed element ever reached. Measured, they had drifted this far — **My Assets** came out as a
+  list of grey pills where the real card is a 2x2 tile grid with blue pills and row icons; **Pending
+  Approvals** lost its id pill, its Approve/Reject/Refer buttons and its requester line and printed
+  three plain stacked lines instead; **Most Read** was titled "Most Read" not "Most Read Knowledge"
+  and dropped the category tags; every **divider** stopped 16px short of the card's edges; and every
+  **badge** counted the rows on screen (5) rather than the records behind them (8 / 412). Now the
+  three inline bodies are `requestsBody(id)` / `approvalsBody(id)` / `knowledgeBody(id)`, the page
+  hands all five to placed elements through `PlacedBlockRenderers` — the seam the Action cards
+  block already used — and the five copies in `PortalCollectionRender` are DELETED, not left as a
+  fallback, because a dead second implementation is exactly what produced this. ⚠️ Nothing had to be
+  passed to make the ROWS match: `WIDGET_FOR_TYPE` and `WIDGET_FOR_NODE` both resolve to
+  `'my_requests'` and friends, so a placed copy already arrives with the same spec defaults (row
+  shape, rows to show, date format). ⚠️ **`cardFace(id)`** is the white box, extracted from
+  `cardInner` so both routes paint the same one: a placed card used to land on the generic
+  `Surface` (rounded-lg, its own 16px) while the page's is rounded-xl with the padding inside its
+  head and rows. The placed wrapper carries `stInner` for the same reason `cardInner` does — `Sel`
+  withholds the surface (`paintsOwnSurface`) precisely so one box paints it. ⚠️ The Record List
+  keeps its own `LiveCard` — it is admin-authored and has no page block to match — but its rules
+  now run `-mx-4` to the card's edges like every other card's. Verified by placing all five on a
+  scratch page and diffing against the default page: identical innerText, identical pill colours
+  (grey for requests/approvals/knowledge, `#EBF5FF`/`#3D8BD0` for assets/CIs), identical badge
+  totals, rules at the card's full width, and the same face (white, 14px radius, 1px `#E5E7EB`).
+
 ## Parked features
 Four Support Portal features are BUILT-OR-PART-BUILT AND SWITCHED OFF, with their full context in
 [future-tasks.md](future-tasks.md): **AI** (rail item commented out in `SupportPortalBuilder`; the
