@@ -1202,8 +1202,9 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   elsewhere — and Gazette's gold is an accent beside a blue, not a hue a page is built from.
   ⚠️ **CLARITY IS UNCHANGED AND STAYS FIRST**: it is the product's blue and what every portal already
   built is on, so swapping it for the nearest gallery blue would repaint every existing page for a
-  reason nobody asked for. Its page stays WHITE for the same reason; the seven others bring the
-  gallery's ground tint. ⚠️ **`paletteOf`'s fallback index moved 4 → 0** with the list — a stale
+  reason nobody asked for. Its page is #F4F6FA — the ground the product ACTUALLY has, corrected the
+  day the page's ground started reading that slot (see the page-ground bullet below); the seven
+  others bring the gallery's own ground tint. ⚠️ **`paletteOf`'s fallback index moved 4 → 0** with the list — a stale
   index there does not throw, it silently themes an unknown palette as somebody else.
   **The tones are COMPUTED, never authored** (`tonesOf` → `wash` / `soft` / `line` / `ink`, emitted as
   `--portal-tone-*` on the builder's theme wrapper beside `--portal-accent`). Two reasons, the second
