@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import { isPredefinedType } from './supportPortalData';
 /* Support Portal builder — the page model.
  *
  * Three things live here and nothing else does:
@@ -1418,6 +1419,14 @@ export function toolbarCaps(id: string): ToolbarCaps {
      and the KPI is not in it. A cap here would have removed its Replace as well, which is a swap
      rather than an add and is the one structural thing it should still offer. */
   const t = placedType(id);
+  /* ⚠️ NO DUPLICATE on a PLACED predefined widget. Data and Actions are the product's
+     single-instance widgets — one My Open Requests to a page — and every other route already
+     enforces it: the palette greys the row and ticks it, both pickers withhold it, and `addElement`
+     refuses it with the reason. Copy was the one door left open into the state all of that exists
+     to prevent, and a second copy of a live card is not a second card, it is the same query drawn
+     twice. The built-in blocks were already covered by `LIVE_WIDGETS` above; this is the same rule
+     for the same widget dropped as an element. */
+  if (t && isPredefinedType(t)) return { copy: false };
   /* ⚠️ `l-divider` joins them for the same reason and one of its own: a rule fills the column it is
      dropped into, so neither axis had a position to report — and its sidebar Alignment accordion
      was removed for exactly that, so leaving the toolbar pair would have kept a second copy of a

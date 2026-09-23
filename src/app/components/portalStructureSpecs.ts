@@ -297,12 +297,16 @@ export const SECTION_SPEC: WidgetSpec = {
             info: 'Fill — dragging one column re-flows its siblings so the row always fills the section. Fixed — every column keeps its own width, and dragging one leaves the others exactly where they are.' },
           /* Figma's spacing pair: the gap between the section's columns and between its rows. */
           { key: 'gapPair', label: 'Gap', control: 'gapPair' },
-          /* ⚠️ WITHHELD on the bands of data cards (Quick Actions, Favourite / Most Used Services, My Assets,
-             My CIs). Those rows are a grid of equal cards that fill the row — there is no free space for an
-             alignment to act on, so every option but the default moved nothing. The preset row above says how
-             many go across, which is the question that band actually has. */
-          { key: 'distribute', label: 'Content alignment', control: 'distribute', when: (c) => Number(c.__count ?? 0) > 1 && c.__dataBand !== true },
-          { key: 'valign', label: '', control: 'valign', when: (c) => Number(c.__count ?? 0) > 1 && c.__dataBand !== true },
+          /* ⚠️ NO Content alignment, on ANY section — the cards row, the side rail, the work cards and
+             every custom section alike. It was already withheld on the bands of data cards, and the
+             reason given there turns out to be the reason everywhere: a section's columns FILL it.
+             Whether they are four equal cards or two dragged to 2:1, the row has no free space left
+             for an alignment to distribute, so every option but the default moved nothing — two rows
+             of eight icon buttons reporting a layout that does not exist.
+             The questions a section actually has are answered above it: how many columns (the preset
+             row), how wide (the column drags), and how far apart (Gap).
+             ⚠️ `distribute` and `valign` are still READ by the preview (`secBox`), so a section that
+             stored one keeps the layout it has — the controls are gone, the values are not. */
         ],
       },
       {

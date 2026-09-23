@@ -1503,6 +1503,33 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   being imported from lucide. This is the failure mode the How-to-run section names, and a browser
   probe is the only thing that finds it.
 
+- **Support Portal — Content alignment is gone from every section, and a predefined widget cannot be
+  duplicated (23 Sep 2026).**
+  ⚠️ **No Content alignment on ANY section** — the cards row, the side rail, the work cards and every
+  custom section alike (`distribute` + `valign` removed from `SECTION_SPEC`). It was already
+  withheld on the bands of data cards, and the reason written there turns out to be the reason
+  everywhere: a section's columns FILL it. Whether they are four equal cards or two dragged to 2:1,
+  the row has no free space left for an alignment to distribute — so every option but the default
+  moved nothing, which is two rows of eight icon buttons reporting a layout that does not exist. The
+  questions a section actually has are answered above it: how many columns (the preset row), how wide
+  (the column drags) and how far apart (Gap). ⚠️ Both keys are still READ by `secBox` in the preview,
+  so a section that stored one keeps the layout it has — the controls went, the values did not.
+  ⚠️ **A PLACED predefined widget has no Duplicate** (`toolbarCaps`: `isPredefinedType(t) → copy: false`).
+  Data and Actions are the product's single-instance widgets, and every other route already enforced
+  it — the palette greys the row and ticks it, both pickers withhold it, `addElement` refuses it with
+  the reason — so Copy was the one door left open into the state all of that exists to prevent. A
+  second copy of a live card is not a second card, it is the same query drawn twice. The built-in
+  BLOCKS were already covered by `LIVE_WIDGETS`; this is the same rule for the same widget dropped as
+  an element. Verified: a placed Text keeps Copy, Announcements / My Assets / Contact Us / Most Read /
+  New Incident all lose it.
+  ⚠️ `portalPageModel` now imports `isPredefinedType` from `supportPortalData` — a NEW edge, and a
+  safe one: `supportPortalData` has no imports at all, so there is no cycle to create.
+  ⚠️ **Probe gotcha worth keeping:** in the create dialog, `p.locator('input').first()` is the ADMIN
+  SIDEBAR's "Search settings…" box, not the form's first field — a script that fills it leaves Name
+  empty and then waits forever on a Save button that is correctly disabled. Address those fields by
+  placeholder (`getByPlaceholder('Support Portal Name')` / `'Support Portal URL'`) and the Company
+  `<select>` by index.
+
 ## Parked features
 Four Support Portal features are BUILT-OR-PART-BUILT AND SWITCHED OFF, with their full context in
 [future-tasks.md](future-tasks.md): **AI** (rail item commented out in `SupportPortalBuilder`; the
