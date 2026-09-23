@@ -2628,8 +2628,14 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
   /* ⚠️ The Action cards block MOVES the four cards: once one is placed anywhere, the Quick Actions row
      is not drawn, so a card never appears twice. Deleting the block brings the row back. */
   const walkEls = (b: Box): PlacedElement[] => [...(b.el ? [b.el] : []), ...(b.children ?? []).flatMap(walkEls)];
-  const actionsMoved = Object.values(rowExtras ?? {}).some((l) => l.some((x) => x.type === 'x-actions'))
-    || sections.some((s) => walkEls(s.section.root).some((x) => x.type === 'x-actions'));
+  /* ⚠️ The four cards moved ONE AT A TIME count too. Picking "Action Card" on the banner moves the
+     set — four individually selectable cards in one row — and each carries `fromQuick`, the id of
+     the destination it IS. Without this the page went on drawing the Quick Actions row underneath
+     them and every card appeared twice. Deleting them all flips this back on its own, because it is
+     derived rather than stored. */
+  const movedCard = (x: PlacedElement) => x.type === 'x-action-card' && !!cfg?.(x.id)?.fromQuick;
+  const actionsMoved = Object.values(rowExtras ?? {}).some((l) => l.some((x) => x.type === 'x-actions' || movedCard(x)))
+    || sections.some((s) => walkEls(s.section.root).some((x) => x.type === 'x-actions' || movedCard(x)));
   /* ⚠️ How many cards a card BLOCK lays across when nobody has said: on the banner it depends on the SHAPE of
      the section it landed in. A section spanning the banner is a strip — the cards run all the way across it —
      while a section beside the words is a narrow column, where the same cards have to stack. Filled while the

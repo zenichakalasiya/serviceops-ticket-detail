@@ -41,7 +41,7 @@ import type { Box, BoxDir, CustomSection, NodeStyle, PlacedElement, PortalPageCo
 import { PORTAL_ELEMENTS, PORTAL_EMPTY_WIDGETS, PORTAL_TEMPLATES, bannerLayout, bannerShape } from './supportPortalData';
 import type { ShapeNode } from './supportPortalData';
 import { toneVars } from './portalTone';
-import { MAX_BANNER_CARDS, MAX_BANNER_SECTIONS, addToGroup, groupOf, insertAtEdge, insertBeside, isBannerBox, leavesOf, normalizeTree, removeLeaf, replaceLeaf, shiftLeaf, swapLeaves, unitsOf } from './portalBannerLayout';
+import { MAX_BANNER_CARDS, MAX_BANNER_SECTIONS, addToGroup, appendGroup, groupOf, insertAtEdge, insertBeside, isBannerBox, leavesOf, normalizeTree, removeLeaf, replaceLeaf, shiftLeaf, swapLeaves, unitsOf } from './portalBannerLayout';
 import type { BannerNode } from './portalBannerLayout';
 import { IconPopover } from './PortalIconPicker';
 import type { IconChoice } from './PortalIconPicker';
@@ -908,6 +908,66 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
        refuse, and refusing here would be refusing the very thing gathering exists to allow.
        ⚠️ The LAST card of that type is the anchor, so cards keep arriving at the end of the row
        rather than after whichever one happened to be added first. */
+    /* ⚠️ "Action Card" on the BANNER means THE SET. The four are the product's own destinations and
+       a portal has one of each — the palette ticks them as already added, and AD Self Service is a
+       fixed key that cannot exist twice — so picking this MOVES them rather than minting copies:
+       four individually selectable cards in ONE group row, laid out as columns inside it, and the
+       page's Quick Actions row stands down exactly as it does when the Action cards BLOCK is placed.
+       Delete them and the row comes back, because `actionsMoved` is derived.
+       ⚠️ Each clone carries `fromQuick`, the id of the card it IS. That is what the preview reads to
+       know the set has moved, and it is what keeps a card's destination and icon its own after the
+       move — a card that arrived wearing the factory defaults would be a fourth "Action Card" beside
+       three real ones. */
+    if (rowId === 'hero' && type === 'x-action-card') {
+      const here = rowExtrasRef.current.hero ?? [];
+      if (here.some((e) => !!widgetCfgRef.current[e.id]?.fromQuick)) {
+        toast.error('The action cards are already on this banner');
+        return;
+      }
+      const cards = contentRef.current.quick;
+      if (!cards.length) { toast.error('There are no action cards to move'); return; }
+      if (bannerFull()) return;
+      const made = cards.map((c) => {
+        const el = makeElement(type, rowId);
+        /* The card's own name, so the canvas chip and the breadcrumb say which one this is. */
+        return { el: { ...el, name: String(c.title ?? el.name) }, from: c.id, entry: c };
+      });
+      setRowExtras((prev) => ({ ...prev, hero: [...(prev.hero ?? []), ...made.map((m) => m.el)] }));
+      /* ⚠️ Seeded from the RESOLVED config, not the raw store: an untouched card keeps its title,
+         subtitle, icon and destination in its spec's defaults, so the raw store is empty and a copy
+         of it would be blank. */
+      setWidgetCfg((prev) => {
+        const next = { ...prev };
+        made.forEach(({ el, from, entry }) => {
+          next[el.id] = {
+            ...cfgFor(from),
+            ...(entry.title ? { title: entry.title } : null),
+            ...(entry.desc ? { sub: entry.desc } : null),
+            fromQuick: from,
+          };
+        });
+        return next;
+      });
+      setIcons((prev) => {
+        const next = { ...prev };
+        made.forEach(({ el, from }) => { if (prev[from]) next[el.id] = prev[from]; });
+        return next;
+      });
+      setStyles((prev) => {
+        const next = { ...prev };
+        made.forEach(({ el, from }) => {
+          if (prev[from]) next[el.id] = { ...prev[from] };
+          ['-title', '-sub', '-icon'].forEach((s) => { if (prev[from + s]) next[el.id + s] = { ...prev[from + s] }; });
+        });
+        return next;
+      });
+      patchCfg('hero', { bannerTree: appendGroup(heroTreeRef.current?.() ?? null, made.map((m) => m.el.id)) });
+      /* ⚠️ NOTHING is selected: you placed a SET, and selecting the first of four says the
+         opposite. The toast is what reports the move, and the next click picks whichever card the
+         admin actually wants to edit. */
+      toast.success('Action cards moved to the banner');
+      return;
+    }
     if (rowId === 'hero' && GATHERING.includes(type)) {
       const host = [...(rowExtrasRef.current.hero ?? [])].reverse().find((e) => e.type === type)?.id;
       if (host) {
@@ -2419,6 +2479,37 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
       toast.success('Section duplicated');
       return;
     }
+    /* ⚠️ A BANNER item clones INTO ITS OWN SECTION. `placedParent` only knows about section boxes,
+       so a banner widget fell straight past every branch here and Duplicate did nothing at all —
+       which is the one route the KPI has to a second tile. `addToGroup` puts the copy beside the
+       original, making the group if the original was alone, so "duplicate" reads as "another one of
+       these, here" rather than "another section". */
+    const onBanner = (rowExtrasRef.current.hero ?? []).find((e) => e.id === id);
+    if (onBanner) {
+      const tree = heroTreeRef.current?.() ?? null;
+      const grp = groupOf(tree, id);
+      if (grp && leavesOf(grp).length >= MAX_BANNER_CARDS) {
+        toast.error(`A row holds up to ${MAX_BANNER_CARDS} cards — remove one to add another`);
+        return;
+      }
+      const copy = makeElement(onBanner.type, 'hero');
+      setRowExtras((prev) => ({ ...prev, hero: [...(prev.hero ?? []), copy] }));
+      /* Same content, same design — the rule every other clone here follows. */
+      setWidgetCfg((m) => (m[id] ? { ...m, [copy.id]: { ...m[id] } } : m));
+      setStyles((m) => {
+        if (!m[id] && !['-title', '-sub', '-icon'].some((s) => m[id + s])) return m;
+        const next = { ...m };
+        if (m[id]) next[copy.id] = { ...m[id] };
+        ['-title', '-sub', '-icon'].forEach((s) => { if (m[id + s]) next[copy.id + s] = { ...m[id + s] }; });
+        return next;
+      });
+      setPlacedText((m) => (m[id] ? { ...m, [copy.id]: { ...m[id] } } : m));
+      setIcons((m) => (m[id] ? { ...m, [copy.id]: m[id] } : m));
+      patchCfg('hero', { bannerTree: addToGroup(tree, id, copy.id) });
+      select(copy.id);
+      toast.success(`${copy.name} copied`);
+      return;
+    }
     // A placed element clones into a fresh column beside its own.
     const col = placedParent(id);
     if (!col) return;
@@ -2456,7 +2547,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
       select(cloneId);
     }
     toast.success('Element duplicated');
-  }, [select]);
+  }, [select, patchCfg]);
 
   const deleteNode = useCallback((id: string) => {
     /* ⚠️ On a SHAPED banner the search field is the inner node of a Search BLOCK. Deleting the field

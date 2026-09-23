@@ -82,10 +82,18 @@ function prune(n: BannerNode, items: Set<string>): BannerNode | null {
  * into that shape would rearrange a layout they had picked on purpose. Landing underneath leaves the preset
  * intact and hands the new section the one thing it needs — somewhere to be — which is then split into columns
  * by dragging it onto an edge or with the + handles. */
-function append(t: BannerNode | null, id: string): BannerNode {
-  if (!t) return id;
-  if (typeof t !== 'string' && t.d === 'column') return branch('column', [...t.c, id]);
-  return branch('column', [t, id]);
+function append(t: BannerNode | null, node: BannerNode): BannerNode {
+  if (!t) return node;
+  if (typeof t !== 'string' && t.d === 'column') return branch('column', [...t.c, node]);
+  return branch('column', [t, node]);
+}
+
+/** Adds a SET of cards as one new row at the foot — a group, so they are one section.
+ *  ⚠️ Written into the stored tree BEFORE the items exist as leaves anywhere else, which is what
+ *  stops `normalizeTree` from meeting them as strangers and appending each as a row of its own. */
+export function appendGroup(tree: BannerNode | null, ids: string[]): BannerNode | null {
+  if (!ids.length) return tree;
+  return append(tree, ids.length === 1 ? ids[0] : branch('row', ids, true));
 }
 
 /** The most SECTIONS one banner holds. Beyond four, no arrangement of them reads cleanly. */

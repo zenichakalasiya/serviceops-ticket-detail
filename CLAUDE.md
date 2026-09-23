@@ -1245,6 +1245,29 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   `rgb(244,249,246)`, Vault `rgb(244,246,251)`, Prism Coral `rgb(252,247,246)`, and typing
   `#DCE8F5` into the picker → `rgb(220,232,245)` in the same frame.
 
+- **Support Portal — the Action Card and the KPI belong to the BANNER (23 Sep 2026).** Both are
+  `hidden` from the palette; the banner's "+" still offers them, because that list renders its own
+  rows and does not read the flag. An action card is one of the product's four destinations and a
+  KPI is a counter beside the words — neither is a block somebody drops into the middle of a page
+  on its own. **"Action Card" on the banner means THE SET**: the four move there as four
+  individually selectable cards in ONE group row (`appendGroup`), laid out as columns inside it,
+  and the page's Quick Actions row stands down. ⚠️ Each carries **`fromQuick`**, the id of the
+  card it IS — that is what `actionsMoved` reads (it counted only the `x-actions` BLOCK before, so
+  the page went on drawing the row underneath and every card appeared twice), and it is what keeps
+  each card's title, subtitle, icon and destination its own. ⚠️ Seeded from the **RESOLVED** config
+  (`cfgFor(quickId)`), not the raw store: an untouched card keeps everything in its spec's
+  defaults, so a copy of the raw store would be four blank cards. ⚠️ Nothing is selected afterwards —
+  you placed a set, and selecting the first of four says the opposite. **KPI** arrives as one tile in
+  its own section, and **Duplicate puts the copy in that same section** (`addToGroup`, which makes
+  the group when the original is alone). ⚠️ That needed a BANNER branch in `duplicateNode`:
+  `placedParent` only knows about section boxes, so a banner widget fell past every branch and
+  Duplicate did nothing at all — the one route the KPI has to a second tile. ⚠️ `append` in
+  `portalBannerLayout` takes a NODE now, not an id, which is what lets a set be appended as one row.
+  ⚠️ **Testing trap, cost an hour:** reading a card's text with `innerText` on its `[data-node]`
+  wrapper picks up any popover open inside it — an icon picker left open by an earlier click made a
+  correct card report itself as "Action Card" and looked exactly like lost config. Read the title's
+  OWN node (`el-N-title`), and check a screenshot before believing a text diff.
+
 ## Parked features
 Four Support Portal features are BUILT-OR-PART-BUILT AND SWITCHED OFF, with their full context in
 [future-tasks.md](future-tasks.md): **AI** (rail item commented out in `SupportPortalBuilder`; the

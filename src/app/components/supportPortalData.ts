@@ -1577,7 +1577,11 @@ export const PORTAL_ELEMENTS: PortalElement[] = [
      inside the Quick Actions row rather than standing alone; what replaced that is a card that
      GATHERS: the second one lands beside the first and the row builds itself (see `GATHERING`).
      One card, added as many times as you want, is the row without having to choose its shape first. */
-  { id: 'x-action-card', name: 'Action Card', icon: 'actionCard', group: 'Custom', keywords: 'quick action tile' },
+  /* ⚠️ HIDDEN from the palette, and still offered by the BANNER's "+" — that list renders its own
+     rows and does not read this flag. These two belong to the banner: an action card is one of the
+     product's four destinations and a KPI is a counter beside the words, and neither is a block
+     somebody drops into the middle of a page on its own. */
+  { id: 'x-action-card', name: 'Action Card', icon: 'actionCard', group: 'Custom', hidden: true, keywords: 'quick action tile' },
   /* ⚠️ HIDDEN, not deleted. The KPI is now a DISPLAY MODE of the Custom data widget rather than a
      widget of its own — the two asked the same question (which records?) and answered it in two
      shapes, so an admin had to know which they wanted before they could pick a module. Its spec,
@@ -1586,7 +1590,7 @@ export const PORTAL_ELEMENTS: PortalElement[] = [
   /* ⚠️ BACK too, and for the same reason: one counter, added one at a time, gathering into its own
      row. The 24 Aug note hid it as a duplicate of the Custom Data Widget's KPI display — that widget
      answers "which records?" and draws a number; this is a number you place and label yourself. */
-  { id: 'x-kpi', name: 'KPI', icon: 'kpi', group: 'Custom', keywords: 'metric stat number' },
+  { id: 'x-kpi', name: 'KPI', icon: 'kpi', group: 'Custom', hidden: true, keywords: 'metric stat number' },
   /* A SET of counters with a 1–4 column preset — the banner's KPI block. */
   /* ⚠️ HIDDEN for the same reason as Action cards, and on the same day — the single KPI replaces it.
      Still placed by the banner templates and still offered by the banner's own "+". */
