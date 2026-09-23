@@ -631,7 +631,10 @@ export function PortalTable({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
     /* ⚠️ Writes the CONFIG key, not the model — the panel's "First row is a header" switch writes
        the same one, so the menu item and the switch are two ways to reach one value rather than two
        values that drift. `tableFrom` applies it to the model on every read. */
-    { label: model.headerRow ? 'Remove header row' : 'Make header row', icon: <Heading size={14} />, divider: true, blocked: i === 0 ? null : 'Only the first row can be the header', run: () => setCfg?.(nodeId, { headerRow: !model.headerRow }) },
+    /* ⚠️ NO header-row item. A table's first row IS its header — that is the one shape this
+       widget draws — so an admin turning it off produced a table that reads as headerless and
+       exports as neither. The panel's two header switches went with it, so there is nothing left
+       anywhere to contradict. `headerRow` is still in config and still applied by `withHeaders`. */
     { label: 'Clear contents', icon: <Eraser size={14} />, run: () => write(clearRowContent(model, i)) },
     { label: 'Delete row', icon: <Trash2 size={14} />, divider: true, blocked: deleteRowBlocked(model), run: () => write(deleteRow(model, i)) },
   ];
@@ -678,7 +681,9 @@ export function PortalTable({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
     { label: 'Duplicate column', icon: <Copy size={14} />, divider: true, blocked: addColumnBlocked(model), run: () => write(duplicateColumn(model, i)) },
     { label: model.headerColumn ? 'Remove header column' : 'Make header column', icon: <Heading size={14} />, divider: true, blocked: i === 0 ? null : 'Only the first column can be the header', run: () => setCfg?.(nodeId, { firstColumn: !model.headerColumn }) },
     { label: 'Clear contents', icon: <Eraser size={14} />, run: () => write(clearColumnContent(model, i)) },
-    { label: 'Fit columns to width', icon: <Maximize2 size={14} />, run: () => write(fitTableToWidth(model)) },
+    /* ⚠️ NO Fit-columns item. Columns are always an equal share of the table's width (the spec's
+       own rule, and why there is no Even-column-width toggle either), so 'fit' had nothing left
+       to do that the default does not already do on every render. */
     { label: 'Delete column', icon: <Trash2 size={14} />, divider: true, blocked: deleteColumnBlocked(model), run: () => write(deleteColumn(model, i)) },
   ];
 

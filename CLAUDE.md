@@ -1426,6 +1426,46 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   falls back to `'empty'`, i.e. to the previous behaviour, so a fault there can only be a missing
   restriction rather than a regression.
 
+- **Support Portal — NO SECTION OVERLAPS ANOTHER, and eight controls withdrawn (23 Sep 2026).**
+  ⚠️ **The Quick Actions row no longer climbs into the banner.** It used to take `-mt-[62px]` unless
+  a page said otherwise, and `quickOverlap` read `?? -62` as its fallback — so by DEFAULT the action
+  cards sat half on the banner and half off it, two sections sharing the same pixels, which is what
+  the row-and-column model exists to prevent. Both are gone; measured, the row's top is now exactly
+  the banner's bottom (441 = 441) with `margin-top: 0`. No template seeded a negative margin — they
+  only ever turned the default OFF — so none moved.
+  ⚠️ **The top-gap grip STOPS AT ZERO** (was `-MAX_OVERLAP`, one level of negative at −120px). Dragging
+  up closes the gap and holds there with the two outlines touching. A deliberate overlap is no longer
+  reachable by any route, which is the point.
+  ⚠️ **The BANNER's "+" withholds a placed predefined widget**, like every other picker. Its flat list
+  obeys `allow` now (the grouped branch already did), and the two banner pickers that render their
+  own list — `BannerToolbar`'s "+" and `BannerSlot`'s "Add to banner" — take `notPlaced(placedPredefined)`.
+  Of the seven, only **Announcements** and **Contact Us** are Data; KPI, Action Card, Quick links,
+  Image and Text are repeatable. Verified: the default page carries both, so the list comes up
+  `["KPI","Action Card","Quick links","Image","Text"]`.
+  ⚠️ **`COMPOSABLE` is filtered by `hidden`** where it becomes a picker list. The palette refusing
+  Accordion while the "+ beside" button still handed it out is two pickers over one catalogue
+  disagreeing about what exists.
+  **Withdrawn, every one of them keeping its key, its default and its renderer** — so no page already
+  built changes, and restoring any is one line in `fields`:
+  · the banner's **Height** rail (the bottom edge is dragged; a rail of four stops beside a handle
+  offering every value between them is two controls for one number)
+  · the banner's **Search width** and **Search corner radius** (width is the Text & Search section's
+  own drag; radius is the theme's button radius, and a search whose corners disagree with the buttons
+  reads as two designs)
+  · **Accordion** from the palette (FAQ is the same widget under a name that says what it is for)
+  · Announcements' **Image with carousel** type and its three settings — the photo, the band colour
+  and the band's text colour — which only that type ever asked for
+  · Contact Us' **Contact details** (Stacked / One line)
+  · the table's **Remove header row** (row menu), **Fit columns to width** (column menu), **both
+  header toggles** and **Cell padding** (panel). A table's first row IS its header, columns are
+  always an equal share, and padding is dragged on the bottom edge.
+  ⚠️ The palette's hover **"+" sits on `#F1F5F9`**, the same fill the row's own icon badge carries —
+  bare on white it read as a stray glyph rather than as the one thing on the row you press.
+  ⚠️ **Typecheck gotcha:** `CatalogItemDetailsModal.tsx` has pre-existing TS1127 "Invalid character"
+  errors that make `tsc` bail before it reaches your files, which is why a run can come back looking
+  clean when it never checked anything. Grep the output for YOUR filenames rather than trusting an
+  empty result.
+
 ## Parked features
 Four Support Portal features are BUILT-OR-PART-BUILT AND SWITCHED OFF, with their full context in
 [future-tasks.md](future-tasks.md): **AI** (rail item commented out in `SupportPortalBuilder`; the

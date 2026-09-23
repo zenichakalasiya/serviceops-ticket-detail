@@ -477,13 +477,10 @@ export const WIDGET_SPECS: WidgetSpec[] = [
       { ...TITLE_GAP_FIELD, when: (c: Cfg) => (c.display ?? 'regular') === 'regular' && String(c.titlePlace ?? 'inside') === 'outside' },
       /* Only the Regular card has a header, so only it asks for a title. */
       { ...TITLE_FIELD, when: (c) => (c.display ?? 'regular') === 'regular' },
-      /* ── Image carousel only ── ⚠️ All three are REMOVED for the other two displays, not disabled:
-         a photo and a band colour mean nothing on a card that has neither. One photo for the whole
-         card, uploaded here — it stays put while the notices page underneath it. */
-      { key: 'coverImage', label: 'Image', control: 'upload', group: 'Content', when: (c) => c.display === 'image' },
-      { key: 'bandColor', label: 'Band colour', control: 'color', tab: 'style', group: 'Band', when: (c) => c.display === 'image' },
-      /* Any colour, not Light / Dark — the band can be any colour, so its text has to be free to match. */
-      { key: 'bandTextColor', label: 'Band text colour', control: 'color', tab: 'style', group: 'Band', when: (c) => c.display === 'image' },
+      /* ⚠️ The image carousel's three settings — the photo, the band colour and the band's text
+         colour — went with the type that was the only thing asking for them (see the note on
+         `ANNOUNCEMENT_TYPES`). Their keys stay in `defaults` and the renderer still reads them, so a
+         card that already stores `display: 'image'` draws exactly as it did. */
       /* ⚠️ NOTHING follows Display. The carousel used to bring Type (Automatic / Manual), Interval and
          Show dots with it — three settings for one small card, where the card has one right answer:
          arrows either side of the dots, always there. An announcement that moves on by itself is an
@@ -594,24 +591,10 @@ export const WIDGET_SPECS: WidgetSpec[] = [
        the six other live-data widgets already have. */
     fields: [
       TITLE_FIELD, TITLE_PLACE_FIELD, TITLE_GAP_FIELD,
-      /* How the two contact lines sit. On ONE line the card is a heading over a single sentence,
-         which is the shape a contact block usually wants when it sits under something else rather
-         than beside it — a whole card spent on two short values reads as an empty card.
-         ⚠️ One line DROPS THE ICONS and joins the values with a middot, rather than offering icons
-         as a second switch. The glyphs are there to say which line is which, and stacked that is a
-         real question; side by side it is not — a phone number and an email address are
-         unmistakable from their own shape, which is the same argument that already removed the
-         words "Phone" and "Email" from these rows. A separate toggle would also allow
-         "icon value · icon value", which is a separator and a glyph both answering one question.
-         ⚠️ A DEFAULT is seeded below. Without one neither segment lights up, and the control opens
-         saying nothing about the card it belongs to — the exact fault `titlePlace` shipped with. */
-      {
-        key: 'lineLayout', label: 'Contact details', control: 'segmented', group: 'Content',
-        options: [
-          { value: 'stacked', label: 'Stacked' },
-          { value: 'inline', label: 'One line' },
-        ],
-      },
+      /* ⚠️ NO Contact-details row. Stacked / One line was a layout choice on a card whose whole
+         content is two short values, and the product has one answer for it: the two lines stacked
+         with their glyphs. `lineLayout` stays in `defaults` and the renderer still reads it, so a
+         card that stored `inline` keeps its shape — the value simply stopped being editable. */
     ],
     /* ⚠️ No P6. Contact Us has no icon of its own — the group was styling a glyph that is not on
        the widget, which is a control with nothing to act on. P4 goes with the global removal. */

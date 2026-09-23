@@ -1556,7 +1556,10 @@ export const PORTAL_ELEMENTS: PortalElement[] = [
   { id: 'b-button', name: 'Button', icon: 'button', group: 'Basic', keywords: 'cta link action' },
   { id: 'b-spacer', name: 'Spacer', icon: 'spacer', group: 'Basic', keywords: 'gap whitespace', hidden: true }, // hidden 20 Aug 2026
   { id: 'b-table', name: 'Table', icon: 'table', group: 'Basic', keywords: 'grid rows columns data' },
-  { id: 'b-accordion', name: 'Accordion', icon: 'accordion', group: 'Basic', keywords: 'collapse faq expand' },
+  /* Withheld: FAQ is the same widget under a name that says what it is for, and the two were
+     edited the same way after the Sep 2026 pass — one shape, two palette rows. Spec and renderer stay,
+     so any page already carrying one keeps working. */
+  { id: 'b-accordion', name: 'Accordion', icon: 'accordion', group: 'Basic', hidden: true, keywords: 'collapse faq expand' },
   { id: 'b-text-image', name: 'Text with Image', icon: 'textImage', group: 'Basic', keywords: 'media split', hidden: true },
   /* ⚠️ HIDDEN, not deleted — the spec, the renderer and the panel all stay, so a page already
      carrying a Card keeps working and restoring the row is one word. */

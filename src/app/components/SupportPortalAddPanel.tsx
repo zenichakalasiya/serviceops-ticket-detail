@@ -385,7 +385,10 @@ export function SupportPortalAddPanel({ onAdd, placed }: Props) {
                         onClick={(ev) => { ev.stopPropagation(); onAdd(e.id, true); }}
                         title={`Add “${e.name}” and keep this list open`}
                         aria-label={`Add ${e.name}`}
-                        className="flex size-6 flex-shrink-0 items-center justify-center rounded text-[#9AA6B6] opacity-0 transition-all hover:bg-[#EBF5FF] hover:text-[#3D8BD0] focus-visible:opacity-100 group-hover/el:opacity-100"
+                        /* ⚠️ On the design system's light grey (`#F1F5F9`) — the same fill the row's
+                           own icon badge carries. Bare on white it read as a stray glyph rather than
+                           as a control, and a "+" is the one thing on this row you press. */
+                        className="flex size-6 flex-shrink-0 items-center justify-center rounded bg-[#F1F5F9] text-[#64748B] opacity-0 transition-all hover:bg-[#EBF5FF] hover:text-[#3D8BD0] focus-visible:opacity-100 group-hover/el:opacity-100"
                       ><Plus size={15} /></button>
                     )}
                   </div>

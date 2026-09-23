@@ -2668,7 +2668,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
 
   const quickSection = (
     hostBand("quick",
-    <Sel id="quick" className={`relative z-10 ${SECTION_PAD} ${blockOrder.indexOf("quick") === 0 && !searchFloats && !tileActions && !quickOnBanner && !hostOf("quick") ? "-mt-[62px]" : ""} ${searchFloats ? "pt-[52px]" : ""} ${tileActions || quickOnBanner ? "pt-6" : ""}`} style={{ order: slot("quick"), ...fillCss(wc('quick')), ...(quickOnBanner ? { marginTop: -1 } : {}) }}>
+    <Sel id="quick" className={`relative z-10 ${SECTION_PAD} ${""} ${searchFloats ? "pt-[52px]" : ""} ${tileActions || quickOnBanner ? "pt-6" : ""}`} style={{ order: slot("quick"), ...fillCss(wc('quick')), ...(quickOnBanner ? { marginTop: -1 } : {}) }}>
       <RowDrop rowId="quick" resize={secResize("quick")} className={`flex flex-wrap${secPacked("quick", 4) ? " portal-row-packed" : ""}`} style={{ gap: secGapCss("quick"), ...secBox("quick", 4), ...rowFits(inRow("quick"), "quick"), ...secGrid("quick", 4) }}>
         {quickCards.map((a) => quickCardEl(a, { ...share(secCols("quick", content.cols.quick), secGap("quick"), secGrow("quick")) }))}
 
@@ -2785,7 +2785,13 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
      grip can drag them down out of the banner (a margin of its own replaces the -62px climb), and the
      banner then has nothing to make room for: a fixed reserve left an empty strip under the banner's
      content where the cards used to sit. */
-  const quickOverlap = quickClimbs ? Math.max(0, -(styles.quick?.margin?.top ?? -62)) : 0;
+  /* ⚠️ NO default overlap. The Quick Actions row used to climb 62px into the banner unless a page
+     said otherwise (`?? -62`), which put the action cards half on the banner and half off it — two
+     sections sharing the same pixels, which is exactly what the row-and-column model is there to
+     prevent. The row sits BELOW the banner now and the reserve it asked the band to leave goes with
+     it. A page that has been dragged into an overlap still reads its own value, because the drag
+     is where a deliberate overlap belongs. */
+  const quickOverlap = quickClimbs ? Math.max(0, -(styles.quick?.margin?.top ?? 0)) : 0;
   /* The banner's PADDING belongs to its items (see the tree renderer), not to the band. */
   const { paddingTop: _pt, paddingBottom: _pb, paddingLeft: _pl, paddingRight: _pr, ...heroInner } = stInner('hero');
 

@@ -101,32 +101,12 @@ export const HERO_SPEC: WidgetSpec = {
          went on. The Banners rail keeps both shapes, which is where changing it lives. */
       key: 'bannerTemplate', label: 'Banner layout', control: 'bannerChange', tab: 'style', group: 'Banner',
     },
-    {
-      /* ⚠️ A RAIL, not four tabs. Height is an ordered axis, and four buttons said four unrelated
-         things — the initials keep it to one line at any panel width. The VALUES are unchanged, so
-         every template and every page already carrying a height renders exactly as before. */
-      key: 'height', label: 'Height', control: 'stepRail', tab: 'style', group: 'Banner',
-      /* ⚠️ S is the height a banner ALREADY HAS (260), and the three fixed stops are 20px apart.
-         The old rail ran 180 / 260 / 360 / 480, so its steps changed the band by 80 to 120px at a
-         time — a control whose smallest move is a redesign. From here the first three are a nudge.
-         ⚠️ The fourth is not a fourth size. `screen` is measured at render, not stored as a number,
-         so the band is as tall as the visitor's screen on whatever screen they open it on — which
-         is why it is LABELLED "Screen" and not XL: the lettering would promise one more step of the
-         same kind. It is the maximum the rail offers.
-         ⚠️ A page carrying any other number still renders it. Template banners are authored at
-         heights the rail never offered (560, 340, 220…), and snapping them to the nearest stop
-         would redesign forty shipped banners to make one control tidier. */
-      /* ⚠️ 140px A STEP. The first pass put the three fixed stops 20px apart, which on a 260px band
-         is a move you cannot see — a rail whose whole job is to change the height, where two of the
-         four stops look identical. S and Screen are the two ends this scale is defined by, so the
-         two in between have to divide that distance into steps somebody can point at. */
-      options: [
-        { value: '260', label: 'Short', short: 'S' },
-        { value: '400', label: 'Standard', short: 'M' },
-        { value: '540', label: 'Tall', short: 'L' },
-        { value: 'screen', label: "As tall as the visitor's screen", short: 'Screen' },
-      ],
-    },
+    /* ⚠️ HEIGHT IS NOT IN THE PANEL. The band is sized by DRAGGING its bottom edge, which is the
+       one property of a banner you judge by eye against the words and the picture inside it — and
+       a rail of four fixed stops beside a handle that offers every value in between is two
+       controls for one number, where the one you did not touch last is wrong. The handle stays;
+       `height` is still read, so every template and every page already carrying one is unchanged.
+       `stepRail` and its options are gone with the field. */
     /* ── Arrangement: how the banner's items sit — side by side or stacked — from presets that change
        with the number of items. The gap is the space between every item, down to 0 so two can meet. */
     /* ⚠️ Every row here needs a SECOND section to mean anything — see `__bannerSections` in the builder —
@@ -200,8 +180,11 @@ export const HERO_SPEC: WidgetSpec = {
       key: 'bannerBorderStyle', label: 'Border style', control: 'segmented', tab: 'style', group: 'Corners & border', when: (c) => Number(c.bannerBorderWidth ?? 0) > 0,
       options: [{ value: 'solid', label: 'Solid' }, { value: 'dashed', label: 'Dashed' }, { value: 'dotted', label: 'Dotted' }],
     },
-    { key: 'searchWidth', label: 'Search width', control: 'slider', tab: 'style', group: 'Search', min: 40, max: 100, unit: '%', when: (c) => c.showSearch !== false },
-    { key: 'searchRadius', label: 'Search corner radius', control: 'slider', tab: 'style', group: 'Search', min: 0, max: 24, when: (c) => c.showSearch !== false },
+    /* ⚠️ NO Search group. Width and corner radius were the whole of it, and both are answered
+       better elsewhere: the field's width is dragged with the Text & Search section it belongs to,
+       and its radius is the theme's button radius — a portal whose search corners disagree with its
+       buttons reads as two designs. Both keys are still READ (`searchWidth`, `searchRadius`), so
+       every template and every page already carrying a value renders exactly as before. */
   ],
   /* ⚠️ NO P1. That pack opens with Fill (None / Colour / Image), which is the same question the
      Background tabs above already ask — two controls for one value, and the loser is whichever you

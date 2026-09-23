@@ -194,8 +194,12 @@ export const TABLE_SPEC: WidgetSpec = {
        other — and both are about what the table MEANS, not what it looks like.
        Each is also reachable from its own handle menu on the canvas; both write these keys, so the
        switch and the menu item cannot disagree. */
-    { key: 'headerRow', label: 'First row is a header', control: 'toggle', group: 'Content' },
-    { key: 'firstColumn', label: 'First column is a header', control: 'toggle', group: 'Content' },
+    /* ⚠️ NO header switches and NO cell padding. A table's first row IS its header — one shape,
+       so there is nothing to ask — and the two menu items that used to offer the same thing went
+       from the row and column popups in the same pass, which is what keeps the panel and the
+       canvas telling one story. Padding is dragged on the table's bottom edge.
+       All three keys stay in `defaults` and are still read, so every table already on a page
+       renders exactly as it did. */
     /* §7.17's column list. Width and alignment live HERE rather than in a second Styling block —
        reordering a column and setting its width are the same act of shaping the table, and the
        spec's own rule forbids two controls for one value. */
@@ -211,7 +215,6 @@ export const TABLE_SPEC: WidgetSpec = {
      * **Border** drew a frame round a grid whose lines the cells already draw.
      * ⚠️ Every removed value stays in `defaults` and is still read by the renderer, so no table on
      * any page moved — the controls simply stopped being duplicated. */
-    { key: 'cellPad', label: 'Cell padding', control: 'sliderUnit', tab: 'style', group: 'Table', min: 4, max: 24, unit: 'px' },
     /* ⚠️ "Horizontal scroll on narrow screens" is GONE, and unlike the other removals this one took
        its stored value with it. It is not a look an admin chooses — it is what a wide table has to
        do on a phone, and asking every author to decide it put a question on the panel that has only

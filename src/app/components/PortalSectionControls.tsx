@@ -201,10 +201,14 @@ export function TemplatePicker({ value, onChange, only }: {
  * nothing about which of three cards you are picking, and the picture one read as a swatch.
  * ⚠️ The stored values are untouched (`regular` / `carousel` / `image`) — only the WORDS changed, so
  * every card already on a page keeps the shape it has. */
+/* ⚠️ "Image with carousel" is no longer OFFERED, and its renderer stays. A picture the whole width
+   of the card, with the notices reduced to a dark strip under it, is a poster rather than an
+   announcement list — and it was the one type that needed three settings of its own (the photo, the
+   band colour and the band's text colour) to be usable at all. A card that already stores `image`
+   keeps drawing as it did; only the tile is gone, so nothing can be moved INTO that shape. */
 const ANNOUNCEMENT_TYPES = [
   { value: 'regular', title: 'Regular' },
   { value: 'carousel', title: 'Carousel' },
-  { value: 'image', title: 'Image with carousel' },
 ] as const;
 
 export function AnnouncementTypePicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {

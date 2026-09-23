@@ -511,12 +511,19 @@ function ElementPicker({ mode, onPick, onClose, only, allow, anchorRef, targetId
           <>
             {/* ⚠️ No search. Three options do not need one, and a search box over three rows is a
                 control that costs a line to say nothing. */}
+            {/* ⚠️ The flat list obeys `allow` too. It is the BANNER's list, and a predefined widget
+                is one to a page wherever it is offered from — Announcements and Contact Us are Data,
+                so once one is on the banner the row has to go, exactly as it does on the page. */}
             {/* ⚠️ Each element's OWN icon, in the same badge the full library draws — every row used
                 to carry the same grey "+", so seven widgets read as seven copies of one thing and the
                 glyph said "add", which the whole popup already says. One catalogue, one picture per
                 element, whichever list you meet it in.
                 A container's child types are not catalogue elements, so those keep the "+". */}
-            {only.map((ct) => {
+            {only.filter((ct) => {
+              const def = PORTAL_ELEMENTS.find((e) => e.id === ct.type);
+              /* A container's child types are not catalogue elements — nothing to withhold. */
+              return !def || !allow || allow(def);
+            }).map((ct) => {
               const def = PORTAL_ELEMENTS.find((e) => e.id === ct.type);
               return (
                 <button
@@ -913,7 +920,11 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
     ? BANNER_SIDE_WIDGETS
     : onBanner && (composable || placed || canAdd)
     ? BANNER_BLOCKS
-    : composable ? COMPOSABLE.map((t) => ({ type: t, label: elementLabel(t) })) : undefined;
+    /* ⚠️ Filtered by `hidden`. A withheld element is withheld everywhere — the palette refusing
+       Accordion while the "+ beside" button still handed it out is two pickers over one catalogue
+       disagreeing about what exists, which is the fault this file already carries a note about. */
+    : composable ? COMPOSABLE.filter((t) => !PORTAL_ELEMENTS.find((e) => e.id === t)?.hidden)
+      .map((t) => ({ type: t, label: elementLabel(t) })) : undefined;
   /* ── What the page's Add and Replace pickers may offer here ──────────────────────────────────
    *
    * Two classes of widget, and they never mix in one picker. **PREDEFINED** (Data, Actions, plus the
@@ -928,9 +939,13 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
    * banner's sections have their own rules about what may sit on them. */
   const swapType = swaps && swapTarget ? placedType(swapTarget) : undefined;
   const secKind = sectionKind?.(id) ?? 'empty';
-  const allow = onHero || onBanner ? undefined : (e: PortalElement) => {
+  const allow = (e: PortalElement) => {
     const pre = isPredefinedElement(e);
     if (pre && placedPredefined?.has(e.id)) return false;
+    /* ⚠️ The BANNER stops here. Its curated list IS its rule — it mixes the two classes on purpose
+       (words, a card, a counter and a picture on one band) — but "one to a page" is about the PAGE,
+       so a predefined widget already placed is withheld there like anywhere else. */
+    if (onHero || onBanner) return true;
     /* Replacing: the same class as the thing being replaced. */
     if (swapType) return pre === isPredefinedType(swapType);
     /* Adding: a section already holding an ordinary widget can only take more of those. An empty
@@ -1097,6 +1112,7 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
           {swapping && (
             <ElementPicker
               only={BANNER_SIDE_WIDGETS}
+              allow={allow}
               mode="replace"
               onPick={(type) => { setSwapping(false); replaceElement(id, type); }}
               onClose={() => setSwapping(false)}
@@ -1397,9 +1413,11 @@ function SelectionHandles({ id, elRef }: { id: string; elRef: React.RefObject<HT
           }
         }
       } else if (d.kind === 'gap') {
-        /* One level of negative: far enough to sit an element over the band above it, not so far
-           that it can be dragged off the top of the page and lost. */
-        const v = Math.max(-MAX_OVERLAP, Math.min(240, Math.round(d.gap + dy)));
+        /* ⚠️ It STOPS at zero. It used to go one level negative (-120px) so a card could ride up
+           over the band above it — but a negative gap is two sections sharing the same pixels, and
+           the whole point of the row-and-column model is that they do not. Dragging up now closes
+           the gap and holds there, with the two outlines touching, which is the honest floor. */
+        const v = Math.max(0, Math.min(240, Math.round(d.gap + dy)));
         setStyle(id, { margin: { ...(styles[id]?.margin ?? ZERO_BOX), top: v } });
         setLive({ kind: 'gap', label: `${v}px` });
       } else if (d.kind === 'padY') {
@@ -1582,9 +1600,9 @@ function SelectionHandles({ id, elRef }: { id: string; elRef: React.RefObject<HT
           Height is what the bottom edge is for, and dragging the top to make something taller grows
           it upward into the block above — which reads as moving, not resizing. The space between two
           stacked things is the question people actually have at that edge, so that is what it asks.
-          ⚠️ It goes NEGATIVE by one step (down to -120px), which is what lets a card ride
-          up over the band above it — the overlap the hero's action cards already use, offered to
-          everything else rather than hard-coded in one place. */}
+          ⚠️ It STOPS at ZERO. A negative gap is two sections sharing the same pixels, which is what
+          the row-and-column model exists to prevent — so dragging up closes the gap and holds there,
+          with the two outlines touching. */}
       <span
         onMouseDown={(e) => begin(e, 'gap')}
         title="Drag to change the gap above"
@@ -1955,6 +1973,10 @@ function PlaceholderPopover({ anchor, onPick, onClose }: { anchor: DOMRect; onPi
    rest of the product had stopped believing in.
    The reasons are the ones that hid them: a card added one at a time can be removed one at a time,
    which a block of four cannot, and the KPI set is what the Custom Data Widget is for. */
+/** One to a page, wherever the picker is: a predefined widget already placed is never offered.
+ *  The banner pickers render their own flat list, so they take this rather than the class rule. */
+const notPlaced = (placed?: Set<string>) => (e: PortalElement) => !(isPredefinedElement(e) && placed?.has(e.id));
+
 export const BANNER_SIDE_WIDGETS: { type: string; label: string }[] = [
   { type: 'c-announcements', label: 'Announcements' },
   { type: 'x-kpi', label: 'KPI' },
@@ -1971,7 +1993,7 @@ export const BANNER_SIDE_WIDGETS: { type: string; label: string }[] = [
 ];
 
 function BannerToolbar() {
-  const { cfg, setCfg, deleteNode, dropInRow, heroTree } = useCanvas();
+  const { cfg, setCfg, deleteNode, dropInRow, heroTree, placedPredefined } = useCanvas();
   const hero = cfg?.('hero') ?? {};
   const [axis, setAxis] = useState<'h' | 'v' | null>(null);
   const [adding, setAdding] = useState(false);
@@ -2039,6 +2061,7 @@ function BannerToolbar() {
         {adding && (
           <ElementPicker
             only={BANNER_SIDE_WIDGETS}
+            allow={notPlaced(placedPredefined)}
             mode="add"
             onPick={(t) => { setAdding(false); dropInRow('hero', t); }}
             onClose={() => setAdding(false)}
@@ -2747,7 +2770,7 @@ function ColumnAddIcon({ size = 16 }: { size?: number }) {
 /* An EMPTY cell on the banner, made by its + adders. It asks what goes here and becomes it; on the
    published portal it draws nothing. */
 export function BannerSlot({ id }: { id: string }) {
-  const { enabled, replaceElement } = useCanvas();
+  const { enabled, replaceElement, placedPredefined } = useCanvas();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   if (!enabled) return null;
@@ -2760,6 +2783,7 @@ export function BannerSlot({ id }: { id: string }) {
       {open && (
         <ElementPicker
           only={BANNER_SIDE_WIDGETS}
+          allow={notPlaced(placedPredefined)}
           mode="add"
           onPick={(t) => { setOpen(false); replaceElement(id, t); }}
           onClose={() => setOpen(false)}
