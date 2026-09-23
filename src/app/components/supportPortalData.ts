@@ -1608,6 +1608,29 @@ export const PORTAL_ELEMENTS: PortalElement[] = [
   { id: 'b-list', name: 'Quick links', icon: 'list', group: 'Basic', hidden: true },
 ];
 
+/* ── PREDEFINED vs OTHER ────────────────────────────────────────────────────
+ *
+ * The one rule both the palette and the canvas's own Add/Replace pickers read.
+ *
+ * ⚠️ PREDEFINED is a GROUP rule, not a fixed-block rule. **Data** and **Actions** are the product's
+ * own single-instance widgets — one My Open Requests, one Request Service — and a section carrying
+ * one is committed to it: nothing else may join it and the only change left is swapping it for
+ * another predefined widget. Everything in **Basic, Visual and Custom** is repeatable by design, may
+ * sit several to a section, and swaps only for its own kind.
+ * ⚠️ Gating on `node` alone was too narrow: Announcements is Data with no fixed page block, so it
+ * could never be counted however many copies the page carried. The two service rows keep their
+ * `node` because they sit in Custom, where the group rule does not reach — they are the exception
+ * the flag exists for. */
+export const isPredefinedElement = (e: PortalElement) =>
+  e.group === 'Data' || e.group === 'Actions' || !!e.node;
+
+/** The same question asked of a catalogue id, which is what the canvas has to hand. */
+export const isPredefinedType = (type: string) => {
+  const e = PORTAL_ELEMENTS.find((x) => x.id === type);
+  return !!e && isPredefinedElement(e);
+};
+
+
 /* ── Helpers ─────────────────────────────────────────────────────────────── */
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];

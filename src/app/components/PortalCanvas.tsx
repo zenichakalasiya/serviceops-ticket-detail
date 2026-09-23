@@ -19,7 +19,8 @@ import { HEADING_SIZE, PORTAL_FONTS, SECTION_LAYOUTS, SPLITTABLE_BANDS, TEXT_STY
 import { DEFAULT_THEME } from './PortalThemePanel';
 import type { PortalTheme } from './PortalThemePanel';
 import { boxCss, containerCss } from './portalStyleResolver';
-import { PORTAL_ELEMENTS, PORTAL_ELEMENT_GROUPS } from './supportPortalData';
+import { PORTAL_ELEMENTS, PORTAL_ELEMENT_GROUPS, isPredefinedElement, isPredefinedType } from './supportPortalData';
+import type { PortalElement } from './supportPortalData';
 import { elementIcon } from './SupportPortalAddPanel';
 import { PortalColorPicker } from './PortalColorPicker';
 import type { BoxDir, NodeStyle, PortalStyles, SpacingBox } from './portalPageModel';
@@ -83,6 +84,11 @@ interface CanvasCtx {
   addBannerCell?: (anchorId: string, side: 'left' | 'right' | 'top' | 'bottom') => void;
   /** The banner's arrangement as drawn — its item tree, repaired against what is on it. */
   heroTree?: () => BannerNode | null;
+  /** Catalogue ids of the PREDEFINED widgets the page is already carrying — one instance each, so
+   *  the Add and Replace pickers must not offer them a second time. */
+  placedPredefined?: Set<string>;
+  /** What a section is already committed to — see `sectionKind` in the builder. */
+  sectionKind?: (id: string) => 'empty' | 'predefined' | 'other';
   /** Moves something already on the page onto the banner: into an empty slot, beside/swapped with an item, or onto the banner itself. */
   moveToBanner?: (sourceId: string, anchorId: string, side?: 'left' | 'right' | 'top' | 'bottom') => void;
   /** Drops a NEW element from the library onto the banner, at the same kinds of anchor. */
@@ -324,6 +330,8 @@ const btn = 'flex size-7 items-center justify-center rounded text-[#64748B] tran
 const MAX_OVERLAP = 120;
 
 const btnOn = 'flex size-7 items-center justify-center rounded bg-[#EBF5FF] text-[#3D8BD0]';
+/* A cap, not an absence: the button stays where it was and carries the reason on hover. */
+const btnOff = 'flex size-7 cursor-not-allowed items-center justify-center rounded text-[#C3CBD6]';
 
 /* One axis of alignment: a button showing what is set, and a popup of the four ways to set it.
    ⚠️ The trigger shows the CURRENT option's glyph, not a generic "align" symbol. A fixed icon would
@@ -378,10 +386,17 @@ function childTypesOf(id: string): { type: string; label: string }[] | undefined
   return specId ? specById(specId)?.collection?.childTypes : undefined;
 }
 
-function ElementPicker({ mode, onPick, onClose, only, anchorRef, targetId }: {
+function ElementPicker({ mode, onPick, onClose, only, allow, anchorRef, targetId }: {
   mode: 'add' | 'replace'; onPick: (type: string) => void; onClose: () => void;
   /** A container's own block types. When present this IS the list — see the note below. */
   only?: { type: string; label: string }[];
+  /* Which catalogue elements this picker may offer.
+   *
+   * ⚠️ A PREDICATE over the grouped list, not a flat `only` array. The grouped branch is the page's
+   * picker — search, group headings, thirty-odd elements — and handing it a flat list would trade
+   * all of that for a scroll of unlabelled rows. What changes here is WHAT IS IN the groups, never
+   * how they are drawn. */
+  allow?: (e: PortalElement) => boolean;
   /** The "+" button's wrapper — where the list is anchored FROM. */
   anchorRef: React.RefObject<HTMLDivElement | null>;
   /** The node the toolbar belongs to — what the list must not COVER.
@@ -469,6 +484,7 @@ function ElementPicker({ mode, onPick, onClose, only, anchorRef, targetId }: {
        Card, KPI — was reachable from the canvas toolbar while the Widgets panel refused it. Two
        pickers over one catalogue disagreeing about what exists is worse than either answer. */
     items: PORTAL_ELEMENTS.filter((e) => e.group === g && !e.onPage && !e.hidden
+      && (!allow || allow(e))
       && (!q || `${e.name} ${e.keywords ?? ''}`.toLowerCase().includes(q.toLowerCase()))),
   })).filter((g) => g.items.length);
 
@@ -544,7 +560,14 @@ function ElementPicker({ mode, onPick, onClose, only, anchorRef, targetId }: {
                 ))}
               </div>
             ))}
-            {!groups.length && <p className="px-3 py-4 text-center text-[12px] text-[#9CA3AF]">Nothing matches “{q}”.</p>}
+            {/* ⚠️ Two different empty states, because they mean two different things. "Nothing
+                matches" is about the SEARCH and clears when you delete it; the other is about the
+                page — every predefined widget is already on it — and says so, or the admin is left
+                looking at a blank box wondering what broke. */}
+            {!groups.length && (q
+              ? <p className="px-3 py-4 text-center text-[12px] text-[#9CA3AF]">Nothing matches “{q}”.</p>
+              : <p className="px-3 py-4 text-center text-[12px] leading-[1.5] text-[#9CA3AF]">Every widget of this kind is already on the page.</p>
+            )}
           </>
         )}
       </div>
@@ -827,7 +850,7 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
   const besideRef = useRef<HTMLDivElement>(null);
   const insideRef = useRef<HTMLDivElement>(null);
   const swapRef = useRef<HTMLDivElement>(null);
-  const { styles, setStyle, moveNode, duplicateNode, deleteNode, canDuplicate, addInside, replaceElement, addChildBlock, splitNode, splitInfo, addLinkCard, addSibling, cfg, setCfg, splitChildBlock, select, heroTree } = useCanvas();
+  const { styles, setStyle, moveNode, duplicateNode, deleteNode, canDuplicate, addInside, replaceElement, addChildBlock, splitNode, splitInfo, addLinkCard, addSibling, cfg, setCfg, splitChildBlock, select, heroTree, placedPredefined, sectionKind } = useCanvas();
   const [colsOpen, setColsOpen] = useState(false);
   const onHero = /^el-\d+$/.test(id) && nodeById(id)?.parent === 'hero';
   const [picking, setPicking] = useState(false);
@@ -891,6 +914,35 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
     : onBanner && (composable || placed || canAdd)
     ? BANNER_BLOCKS
     : composable ? COMPOSABLE.map((t) => ({ type: t, label: elementLabel(t) })) : undefined;
+  /* ── What the page's Add and Replace pickers may offer here ──────────────────────────────────
+   *
+   * Two classes of widget, and they never mix in one picker. **PREDEFINED** (Data, Actions, plus the
+   * two service rows that carry a `node`) are the product's single-instance widgets: one to a page,
+   * one to a section, and a section holding one takes nothing else. **OTHER** (Basic, Visual,
+   * Custom) is repeatable — several to a section, and it swaps only for its own kind.
+   *
+   * ⚠️ A predefined widget already ON the page is never offered again, by either picker. The palette
+   * greys such a row and ticks it, because that is a catalogue you browse; this is a list of what
+   * you can put HERE right now, so the row is gone rather than dead.
+   * ⚠️ The BANNER is exempt end to end — `sixOnly` answers first with `BANNER_SIDE_WIDGETS`, and the
+   * banner's sections have their own rules about what may sit on them. */
+  const swapType = swaps && swapTarget ? placedType(swapTarget) : undefined;
+  const secKind = sectionKind?.(id) ?? 'empty';
+  const allow = onHero || onBanner ? undefined : (e: PortalElement) => {
+    const pre = isPredefinedElement(e);
+    if (pre && placedPredefined?.has(e.id)) return false;
+    /* Replacing: the same class as the thing being replaced. */
+    if (swapType) return pre === isPredefinedType(swapType);
+    /* Adding: a section already holding an ordinary widget can only take more of those. An empty
+       one takes either, and a section a predefined widget owns never reaches here (see below). */
+    return secKind === 'other' ? !pre : true;
+  };
+  /* ⚠️ DISABLED with the reason on it, the rule every other cap in this builder follows — a "+"
+     that opens an empty list, or silently vanishes, both read as a bug rather than as a limit. */
+  const addBlocked = !swaps && !childTypes?.length && !onHero && !onBanner && secKind === 'predefined'
+    ? 'This section holds a predefined widget, so it takes nothing else — replace it, or add to another section'
+    : null;
+
   /* Null for anything that is not a box, which is how Split stays off cards, text and page bands. */
   const split = splitInfo?.(id) ?? null;
 
@@ -1063,14 +1115,21 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
       {caps.add !== false && !(onHero && placed && !!childTypes?.length) && (canAdd || placed || kind === 'card') && (
         <div ref={insideRef} className="relative">
           <button
-            className={btn}
-            data-tip={childTypes?.length && !sixOnly ? 'Add a block inside' : swaps ? 'Replace widget' : 'Add widget'}
-            onClick={() => setPicking((v) => !v)}
+            className={addBlocked ? btnOff : btn}
+            disabled={!!addBlocked}
+            data-tip={addBlocked ?? (childTypes?.length && !sixOnly ? 'Add a block inside' : swaps ? 'Replace widget' : 'Add widget')}
+            onClick={() => { if (!addBlocked) setPicking((v) => !v); }}
           >{swaps ? <Replace size={15} /> : <Plus size={15} />}</button>
           {picking && (
             <ElementPicker
-              /* On the six, Replace offers the six. Everywhere else it offers what it always did. */
-              only={sixOnly ?? (swaps ? undefined : childTypes)}
+              /* ⚠️ On the PAGE, Replace offers the whole of the widget's own class, never the six.
+                 `COMPOSABLE` is the list of things a section is BUILT from, which is the right answer
+                 for the "+ put another beside me" button above and the wrong one here: swapping a
+                 Text for an Image is the same intent as swapping it for a Table or a Custom Card,
+                 and six of the twenty-three could offer no reason for the other seventeen's absence.
+                 The BANNER keeps its own lists — `sixOnly` answers first there. */
+              only={!onHero && !onBanner && swaps ? undefined : sixOnly ?? (swaps ? undefined : childTypes)}
+              allow={allow}
               mode={swaps ? 'replace' : 'add'}
               onPick={(type) => {
                 setPicking(false);

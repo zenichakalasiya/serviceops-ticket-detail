@@ -38,7 +38,7 @@ import { WIDGET_FOR_NODE, WIDGET_FOR_TYPE, specById, structureSpecId } from './p
 import type { Cfg, WidgetSpec } from './portalWidgetSpec';
 import { BANNER_GROUPS } from './portalPageModel';
 import type { Box, BoxDir, CustomSection, NodeStyle, PlacedElement, PortalPageContent, PortalStyles } from './portalPageModel';
-import { PORTAL_ELEMENTS, PORTAL_EMPTY_WIDGETS, PORTAL_TEMPLATES, bannerLayout, bannerShape } from './supportPortalData';
+import { PORTAL_ELEMENTS, PORTAL_EMPTY_WIDGETS, PORTAL_TEMPLATES, bannerLayout, bannerShape, isPredefinedElement, isPredefinedType } from './supportPortalData';
 import type { ShapeNode } from './supportPortalData';
 import { toneVars } from './portalTone';
 import { MAX_BANNER_CARDS, MAX_BANNER_SECTIONS, addToGroup, appendGroup, branchNode, groupOf, insertAtEdge, insertBeside, isBannerBox, isBannerGroup, leavesOf, normalizeTree, removeBranch, removeLeaf, replaceLeaf, shiftLeaf, swapLeaves, unitsOf } from './portalBannerLayout';
@@ -1270,20 +1270,33 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
       .filter((s) => (s.section.band ? bandShown(s.section.band) : anchorShown(s.afterId)))
       .forEach((s) => sectionElements(s.section).forEach((el) => types.add(el.type)));
     Object.entries(rowExtras).forEach(([r, list]) => { if (rowShown(r)) list.forEach((el) => types.add(el.type)); });
-    /* ⚠️ PREDEFINED is a GROUP rule, not a fixed-block rule. Data and Actions are the product's
-       own single-instance widgets; everything in Basic, Visual and Custom is repeatable by design.
-       Gating on `node` alone was too narrow: **Announcements** is Data with no fixed page block
-       — it is only ever placed — so it could never be marked however many copies the page carried,
-       while its five neighbours in the same group all were. One group, two behaviours, for a reason
-       nobody looking at the panel could see.
-       The two service rows keep their `node` because they sit in Custom, where the group rule does
-       not reach — they are the exception the flag exists for. */
-    const predefined = (e: (typeof PORTAL_ELEMENTS)[number]) =>
-      e.group === 'Data' || e.group === 'Actions' || !!e.node;
+    /* ⚠️ The rule itself lives in `supportPortalData` — the palette's tick, the canvas's Add and its
+       Replace all ask the same question, and three copies of "what counts as predefined" is three
+       chances for one surface to disagree with the other two. */
     return new Set(PORTAL_ELEMENTS
-      .filter((e) => predefined(e) && ((e.node && nodes.has(e.node)) || types.has(e.id)))
+      .filter((e) => isPredefinedElement(e) && ((e.node && nodes.has(e.node)) || types.has(e.id)))
       .map((e) => e.id));
   }, [rowOrder, removed, content.quick, blockOrder, sections, rowExtras, isBlank, widgetCfg]);
+
+  /* What a section is already COMMITTED to, which is what decides the list its "+" may offer.
+   *
+   * ⚠️ Computed in the BUILDER from the live `sections` array, then read by the canvas — the same
+   * "the builder decides, the canvas reads" split `placedPredefined`, `splitInfo` and `canDuplicate`
+   * already follow. The alternative was walking the `PLACED` registry from the canvas, which is
+   * keyed by id and keeps entries for elements that have since been deleted, so a section could
+   * report itself committed to a widget nobody could see.
+   * ⚠️ 'predefined' means the section holds one of the product's single-instance widgets, and that
+   * is the whole of it: nothing may be added beside it, because a Data or Actions widget owns the
+   * section it lands in. 'other' means Basic/Visual/Custom, which stack as many to a section as
+   * they like. */
+  const sectionKind = useCallback((id: string): 'empty' | 'predefined' | 'other' => {
+    const secId = /^sec-\d+/.exec(id)?.[0];
+    const sec = secId ? sectionsRef.current.find((s) => s.section.id === secId)?.section : undefined;
+    if (!sec) return 'empty';
+    const types = sectionElements(sec).map((e) => e.type);
+    if (!types.length) return 'empty';
+    return types.some(isPredefinedType) ? 'predefined' : 'other';
+  }, []);
 
   /* Reset to default — every store the canvas reads, back to its seed.
      ⚠️ It must clear ALL of them. Missing one leaves the page in a state that is neither the
@@ -2781,7 +2794,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     addBannerCell, heroTree, moveToBanner, dropIntoBanner,
     addSection, addBeside, splitBand, bandHosted, dropBeside, columnsFull, splitNode, setNodeDir, splitInfo, addLinkCard, dropInColumn, dropAtSeam, dropInRow,
     addSibling: addSiblingElement, cfg: cfgFor,
-    moveNode, duplicateNode, deleteNode, canDuplicate, addInside, moveTo, moveToSeam, addChildBlock, splitChildBlock, fillChildBlock, areSiblings, replaceElement, pickIcon, applyPreset,
+    moveNode, duplicateNode, deleteNode, canDuplicate, addInside, moveTo, moveToSeam, addChildBlock, splitChildBlock, fillChildBlock, areSiblings, replaceElement, pickIcon, applyPreset, placedPredefined, sectionKind,
     tourSeam,
     /* The text toolbar names the theme fonts, so it needs the live theme. */
     theme,

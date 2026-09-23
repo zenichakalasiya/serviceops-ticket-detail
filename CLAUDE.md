@@ -1388,6 +1388,44 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   Stacked; a card's bar reads Drag · Select the row · Replace · Copy · both alignments · Delete; and
   all six other banner widgets offer Replace and none offers a "+".
 
+- **Support Portal — PREDEFINED and OTHER never mix in a picker (23 Sep 2026).** Two classes, one
+  rule, now shared: **`isPredefinedElement`** / **`isPredefinedType`** in `supportPortalData`.
+  **Predefined** = the **Data** and **Actions** groups plus anything carrying an explicit `node` (the
+  two service rows, which sit in Custom) — the product's single-instance widgets: one to a page, one
+  to a section, and a section holding one takes nothing else. **Other** = **Basic, Visual, Custom**,
+  repeatable, several to a section, swaps only for its own kind. The catalogue has exactly five
+  groups, so there is no third case.
+  ⚠️ **A predefined widget already on the page is never offered again by either picker.** The palette
+  greys such a row and ticks it because that is a CATALOGUE you browse; the canvas popup is a list of
+  what you can put HERE right now, so the row is gone rather than dead. Two surfaces, two truthful
+  answers to different questions.
+  ⚠️ **`allow` is a PREDICATE over the grouped list, not a flat `only` array.** The grouped branch is
+  the page's picker — search, group headings, thirty-odd elements — and handing it a flat list would
+  trade all of that for a scroll of unlabelled rows. What changes is what is IN the groups.
+  ⚠️ **Replace on the page no longer offers `COMPOSABLE`.** That list is what a section is BUILT
+  from, which is the right answer for the "+ put another beside me" button and the wrong one for
+  Replace: swapping a Text for an Image is the same intent as swapping it for a Table or a Custom
+  Card, and six of twenty-three could give no reason for the other seventeen's absence.
+  ⚠️ **`sectionKind(id)` is computed in the BUILDER and read by the canvas** — the same split
+  `placedPredefined`, `splitInfo` and `canDuplicate` follow. Walking the `PLACED` registry from the
+  canvas was the alternative, and that registry keeps entries for elements that have since been
+  deleted, so a section could report itself committed to a widget nobody could see.
+  ⚠️ **The BANNER is exempt end to end** — `sixOnly` answers first with `BANNER_SIDE_WIDGETS`, and the
+  banner's sections have their own rules about what may sit on them.
+  ⚠️ **`placedPredefined` and `sectionKind` have to be DESTRUCTURED from `useCanvas()`**, and adding
+  them to the context type and the provider value is not enough. Referencing them without that is a
+  ReferenceError that blanks the builder, which esbuild cannot see — caught here only by a
+  `pageerror` listener in the browser, which is why that listener is in every probe script.
+  Verified in BOTH editors: Replace on a Text offers Basic/Visual/Custom (10 items, no Data/Actions);
+  Replace on a predefined widget offers Data/Actions and only the six not already placed; on the
+  default page every predefined row is already ticked in the library, which is consistent.
+  ⚠️ **NOT verified in the UI:** the `addBlocked` cap (a section a predefined widget owns offers
+  nothing, disabled with the reason) and the section-scoped Add list. Both compile and are wired, but
+  a section holding one widget selects the WIDGET, and an empty column's centre "+" opens the library
+  PANEL rather than the popup — so neither state was reachable from an automated run. `secKind`
+  falls back to `'empty'`, i.e. to the previous behaviour, so a fault there can only be a missing
+  restriction rather than a regression.
+
 ## Parked features
 Four Support Portal features are BUILT-OR-PART-BUILT AND SWITCHED OFF, with their full context in
 [future-tasks.md](future-tasks.md): **AI** (rail item commented out in `SupportPortalBuilder`; the
