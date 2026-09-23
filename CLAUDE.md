@@ -1478,6 +1478,11 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   colour, an inner shadow or an off-centre position still RENDERS it — the presets simply cannot
   produce one any more. ⚠️ Every preset writes `shadowType: 'outer'` and `shadowPos: 'bottom'`
   EXPLICITLY, or a block once given an inner shadow would keep it while the tile said "Soft".
+  ⚠️ **The icon is DRAWN (`ShadowGlyph`), not borrowed from lucide.** The set has no drop-shadow
+  glyph: `Square` is a shape and reads as one, and the two that do show an offset pair — `Copy` and
+  `SquareStack` — already mean copy in this product, one of them on the very same toolbar. A shadow
+  icon has to show the one thing a shadow IS: a shape, and the same shape displaced behind it. Two
+  rects, the back one filled at 0.3 and offset down-right.
   ⚠️ `ShadowMenu` is withheld from a text CHILD but kept on a placed Text (`kind !== 'text' || placed`)
   — the rule the panel group already had: a shadow on a run of words inside a card is a box round
   nothing, but a dropped Text element is a widget in its own right.

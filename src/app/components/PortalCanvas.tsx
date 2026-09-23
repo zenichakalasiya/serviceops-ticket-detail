@@ -7,7 +7,7 @@ import {
   AlignLeft, AlignRight, AlignStartHorizontal, AlignStartVertical, StretchHorizontal, StretchVertical, ArrowDown, ArrowLeft, ArrowRight,
   ArrowUp, Baseline, Bold, Check, ChevronDown, ChevronRight, Columns2, Copy, GripHorizontal, GripVertical, Italic, Link2, Rows2,
   Braces, Highlighter, Maximize2, UnfoldVertical, Move, MoveHorizontal, MoveVertical, Plus, RemoveFormatting,
-  Replace, Square, SquareDashed, Trash2, Underline, X, ImagePlus, Palette, LayoutDashboard, Columns3,
+  Replace, SquareDashed, Trash2, Underline, X, ImagePlus, Palette, LayoutDashboard, Columns3,
 } from 'lucide-react';
 import { BannerFillEditor, BannerPresetPicker, TilePresetPicker } from './PortalBannerTools';
 import { bannerBoxId, flipRoot, groupOf, presetsFor } from './portalBannerLayout';
@@ -688,6 +688,20 @@ const BUTTON_STYLES: [string, string][] = [
   ['primary', 'Primary'], ['outline', 'Outline'], ['link', 'Link'], ['icon', 'Icon'],
 ];
 
+/* ⚠️ DRAWN, not borrowed from lucide. The set has no drop-shadow glyph: `Square` is a shape and read
+   as one, and the two that do show an offset pair — `Copy` and `SquareStack` — already mean copy in
+   this product, one of them on the very same toolbar. A shadow icon has to show the ONE thing a
+   shadow is: a shape, and the same shape displaced behind it. So it is two squares, the back one
+   filled at low opacity and offset down-right, exactly what the effect does to the block. */
+function ShadowGlyph({ size = 15 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" aria-hidden>
+      <rect x="5.4" y="5.4" width="9.2" height="9.2" rx="2" fill="currentColor" opacity="0.3" />
+      <rect x="1.4" y="1.4" width="9.2" height="9.2" rx="2" fill="#FFFFFF" stroke="currentColor" strokeWidth="1.3" />
+    </svg>
+  );
+}
+
 /* ── SHADOW, as four presets ───────────────────────────────────────────────────────────────────
  *
  * ⚠️ PRESETS, not the four controls the panel had. A shadow is chosen by looking at the block
@@ -722,7 +736,7 @@ function ShadowMenu({ id }: { id: string }) {
   return (
     <div className="relative">
       <button className={open ? btnOn : btn} data-tip="Shadow" onClick={() => setOpen((x) => !x)}>
-        <Square size={15} />
+        <ShadowGlyph />
       </button>
       {open && (
         <>
