@@ -10,7 +10,7 @@ import {
   Replace, SquareDashed, Trash2, Underline, X, ImagePlus, Palette, LayoutDashboard, Columns3,
 } from 'lucide-react';
 import { BannerFillEditor, BannerPresetPicker, TilePresetPicker } from './PortalBannerTools';
-import { flipRoot, presetsFor } from './portalBannerLayout';
+import { bannerBoxId, flipRoot, groupOf, presetsFor } from './portalBannerLayout';
 import type { BannerNode } from './portalBannerLayout';
 import { BANNER_GROUPS, bannerGroupGap } from './portalPageModel';
 // ArrowLeft stays in use by the card toolbar's "Move left".
@@ -827,7 +827,7 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
   const besideRef = useRef<HTMLDivElement>(null);
   const insideRef = useRef<HTMLDivElement>(null);
   const swapRef = useRef<HTMLDivElement>(null);
-  const { styles, setStyle, moveNode, duplicateNode, deleteNode, canDuplicate, addInside, replaceElement, addChildBlock, splitNode, splitInfo, addLinkCard, addSibling, cfg, setCfg, splitChildBlock } = useCanvas();
+  const { styles, setStyle, moveNode, duplicateNode, deleteNode, canDuplicate, addInside, replaceElement, addChildBlock, splitNode, splitInfo, addLinkCard, addSibling, cfg, setCfg, splitChildBlock, select, heroTree } = useCanvas();
   const [colsOpen, setColsOpen] = useState(false);
   const onHero = /^el-\d+$/.test(id) && nodeById(id)?.parent === 'hero';
   const [picking, setPicking] = useState(false);
@@ -1013,6 +1013,21 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
           )}
         </div>
       )}
+      {/* ⚠️ SELECT THE ROW, from any card inside a gathered one. The row's outline now hugs its
+          cards edge to edge, so the only bare pixels left to click are the gaps between them — and
+          at a gap of 0 there are none at all, which would leave the row's Presets, Delete, handles
+          and panel unreachable. The chip's step-up arrow was removed long ago (it was
+          `pointer-events-none`, so it looked like a control and behaved like an illustration), so
+          this is the one route up and it belongs on the bar rather than on a hover target. */}
+      {(() => {
+        const g = onHero ? groupOf(heroTree?.() ?? null, id) : null;
+        if (!g) return null;
+        return (
+          <button className={btn} data-tip="Select the row" onClick={() => select(bannerBoxId(g))}>
+            <SquareDashed size={15} />
+          </button>
+        );
+      })()}
       {/* REPLACE, for a banner widget that is also a CONTAINER.
           ⚠️ Contact Us is the case: its spec declares `childTypes` (Button, Text, Icon), so the one
           add-or-replace slot below resolves to "Add a block inside" and the widget had no way to be
@@ -1039,7 +1054,13 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
           )}
         </div>
       )}
-      {caps.add !== false && (canAdd || placed || kind === 'card') && (
+      {/* ⚠️ A banner CONTAINER gets no "+". Contact Us is the one — its spec declares childTypes, so
+          the slot below would render as Add; but on the banner `sixOnly` is in force, so what it
+          offered to put INSIDE the card was the banner's seven section widgets. An Announcements
+          card inside Contact Us is not something the card can hold, and the dedicated Replace button
+          above already covers the action that is real here. On the PAGE the "+" stays: there the
+          list is the card's own Button, Text and Icon blocks, which it genuinely takes. */}
+      {caps.add !== false && !(onHero && placed && !!childTypes?.length) && (canAdd || placed || kind === 'card') && (
         <div ref={insideRef} className="relative">
           <button
             className={btn}
@@ -3091,7 +3112,11 @@ export function Sel({ id, children, className = '', toolbarBelow = false, surfac
       {/* ⚠️ NO handles on a banner ROW or COLUMN. The banner sizes the columns of a row by WEIGHT
           (`weight()` in the preview), so a dragged `widthPct` would be a number nothing reads — the
           handle would move and the column would not. Stretching them needs weights in the tree first. */}
-      {on && !sharedTile && !/^hero-(bx|gp)-/.test(id) && <SelectionHandles id={id} elRef={ref} />}
+      {/* ⚠️ A structural banner ROW (`hero-bx-`) has none: the banner sizes those by WEIGHT, so a
+          dragged width would be a number nothing reads. A GATHERED ROW (`hero-gp-`) keeps them —
+          its padding now sits on a wrapper outside it, so the node itself is free to take a width,
+          a height and a top margin, and every one of those lands. */}
+      {on && !sharedTile && !/^hero-bx-/.test(id) && <SelectionHandles id={id} elRef={ref} />}
       {/* ⚠️ The banner's ITEMS get the four + adders the section boxes have, on hover — left/right put an
           empty cell beside the item as a column, top/bottom as a row. Hover, not selection, for the reason
           the box adders give: a selected item carries resize handles on these very edges. */}

@@ -294,6 +294,8 @@ export function shiftLeaf(tree: BannerNode | null, id: string, by: -1 | 1): Bann
 /** Which banner edges a node touches, for items that fill to the banner's edge. */
 export type Edges = { top: boolean; right: boolean; bottom: boolean; left: boolean };
 export const ALL_EDGES: Edges = { top: true, right: true, bottom: true, left: true };
+/** A cell inside a gathered row: the section’s padding is on its wrapper, so no cell carries any. */
+export const NO_EDGES: Edges = { top: false, right: false, bottom: false, left: false };
 export function childEdges(parent: { d: 'row' | 'column'; c: BannerNode[] }, i: number, e: Edges): Edges {
   const first = i === 0;
   const last = i === parent.c.length - 1;

@@ -25,7 +25,7 @@ import { bannerLayout } from './supportPortalData';
 import { shadowCss } from './PortalBoxControls';
 import { PlacedBlockRenderers, PortalPlacedElement } from './PortalPlacedElement';
 import { TONE } from './portalTone';
-import { ALL_EDGES, COMPACT_BANNER_TYPES, bannerBoxId, cellKey, childEdges, colsTemplate, isGroup, leavesOf, normalizeTree } from './portalBannerLayout';
+import { ALL_EDGES, COMPACT_BANNER_TYPES, NO_EDGES, bannerBoxId, cellKey, childEdges, colsTemplate, isGroup, leavesOf, normalizeTree } from './portalBannerLayout';
 import type { BannerNode, Edges } from './portalBannerLayout';
 import { DEFAULT_BLOCK_ORDER, DEFAULT_CONTENT, DEFAULT_ROW_ORDER, fillCss, isBranch, nodePath, isLockedRow, hasFixedTitle, hasFixedViewAll, registerBox, rowOf } from './portalPageModel';
 import type { Box, BoxDir, CustomSection, PlacedElement, PortalPageContent } from './portalPageModel';
@@ -3214,24 +3214,45 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                  row's first card no left inset and left the two rows starting 24px apart. Here the
                  edge a cell touches is its position in the GRID: column 0 touches the left, the last
                  column the right, the first row the top and the last row the bottom. */
-              const rows = group ? Math.ceil(n.c.length / cols) : 0;
-              const gridEdge = (i: number): Edges => ({
-                left: edge.left && i % cols === 0,
-                right: edge.right && (i % cols === cols - 1 || i === n.c.length - 1),
-                top: edge.top && i < cols,
-                bottom: edge.bottom && Math.floor(i / cols) === rows - 1,
-              });
-              return (
+              /* ⚠️ The banner's edge padding goes on a WRAPPER, OUTSIDE the group's own node, and the
+                 cards inside get none. A gathered row is a section like the Text & Search one, and
+                 that one's outline sits INSIDE the padding (measured: hero-content at x105 w1033
+                 inside a banner at x81 w1081) — with the padding on the cells the group's outline
+                 ran to the banner's edge with 24px of empty blue trapped between it and the first
+                 card, which reads as a box drawn round the wrong thing. Now the outline is edge to
+                 edge on the cards themselves.
+                 ⚠️ The BANNER only. On the page the Action cards block keeps the gap it has always
+                 had — this is the banner's own inset, and nothing on the page is inside it. */
+              const own = group ? styles[boxId] : undefined;
+              const H: Record<string, string> = { left: 'flex-start', center: 'center', right: 'flex-end', stretch: 'stretch' };
+              const V: Record<string, string> = { start: 'flex-start', center: 'center', end: 'flex-end', stretch: 'stretch' };
+              const body = (
                 <Sel
                   key={cellKey(n)}
                   id={boxId}
                   className={`min-w-0 ${group ? '' : 'flex'} ${n.d === 'row' ? 'portal-banner-row' : ''}`}
                   style={group
-                    ? { display: 'grid', gridTemplateColumns: colsTemplate(cols), gap: `${gapY}px ${gap}px`, alignItems: 'stretch', ...flex }
+                    ? { display: 'grid', gridTemplateColumns: colsTemplate(cols), gap: `${gapY}px ${gap}px`, alignItems: 'stretch' }
                     : { flexDirection: n.d, gap: n.d === 'row' ? gap : gapY, alignItems: 'stretch', justifyContent: n.d === 'column' ? justifyY : undefined, ...flex }}
                 >
-                  {n.c.map((k, i) => draw(k, group ? gridEdge(i) : childEdges(n, i, edge), group ? undefined : n.d === 'row' ? weight(n, i) : undefined, n.d, depth + 1, boxId))}
+                  {n.c.map((k, i) => draw(k, group ? NO_EDGES : childEdges(n, i, edge), group ? undefined : n.d === 'row' ? weight(n, i) : undefined, n.d, depth + 1, boxId))}
                 </Sel>
+              );
+              if (!group) return body;
+              return (
+                <div
+                  key={cellKey(n)}
+                  className="flex min-w-0 flex-col"
+                  style={{
+                    ...flex,
+                    /* The group's own two alignments, which is where they belong now that the padded
+                       wrapper is the flex child — on the node itself `alignSelf` had nothing to act on. */
+                    alignItems: H[String(own?.align ?? 'stretch')] ?? 'stretch',
+                    justifyContent: own?.alignY && own.alignY !== 'stretch' ? V[own.alignY] : justifyY,
+                    paddingTop: edge.top ? padT : undefined, paddingBottom: edge.bottom ? padB : undefined,
+                    paddingLeft: edge.left ? padL : undefined, paddingRight: edge.right ? padR : undefined,
+                  }}
+                >{body}</div>
               );
             };
             const root = typeof tree === 'string' ? null : tree;

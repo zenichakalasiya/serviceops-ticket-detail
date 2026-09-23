@@ -1357,6 +1357,37 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   10px radius with 1px dividers between three rows and three accent `↗` arrows; the panel opens on
   Custom Card with Card layout · Content · Links · Gap · Style · Shadow · Spacing and the Links tile lit.
 
+- **Support Portal — a gathered row's outline HUGS its cards, and the way back up (23 Sep 2026).**
+  The banner's edge padding now sits on a WRAPPER outside the group's own node, and the cells inside
+  take `NO_EDGES`. A gathered row is a section like the Text & Search one, and that one's outline
+  sits INSIDE the padding — measured, `hero-content` is at x105 w1033 inside a banner at x81 w1081 —
+  where the group's ran to the banner's edge with 24px of empty blue trapped between it and the first
+  card, which reads as a box drawn round the wrong thing. It is now x105 w1033 too, edge to edge on
+  the cards. ⚠️ **The BANNER only**: on the page the Action cards block keeps the gap it has always
+  had, because nothing there is inside the banner's inset.
+  ⚠️ **The group's two ALIGNMENTS moved onto that wrapper.** On the node itself they were written as
+  `alignSelf`, which had nothing to act on once the wrapper became the flex child.
+  ⚠️ **Selection handles are BACK on `hero-gp-`** (a structural `hero-bx-` row still has none): with
+  the padding outside it, the node is free to take a width, a height and a top margin, and all three
+  land. That was not true before, which is why they were withheld.
+  ⚠️ **"Select the row" is a new toolbar button on every card inside a gathered one**, and it is not
+  a convenience — it is the ONLY route up. Hugging the cards leaves the gaps between them as the
+  only bare pixels to click, and at a gap of 0 there are none, which would strand the row's Presets,
+  Delete, handles and panel. The chip's step-up arrow was removed long ago (it was
+  `pointer-events-none`, so it looked like a control and behaved like an illustration), so this
+  belongs on the bar rather than on a hover target. It reads the group off the tree with
+  `groupOf(heroTree())` — a card's registered parent is `'hero'`, not its group, so `nodeById`
+  cannot answer this.
+  ⚠️ **A banner CONTAINER gets no "+".** Contact Us declares `childTypes`, so the add-or-replace slot
+  rendered as Add — but on the banner `sixOnly` is in force, so what it offered to put INSIDE the
+  card was the banner's seven SECTION widgets. An Announcements inside Contact Us is not something
+  the card can hold, and its own Replace button already covers the real action. On the PAGE the "+"
+  stays, where the list is the card's own Button, Text and Icon blocks.
+  Verified: group [105,365,1033,78] against card1 [105,…] and hero-content [105,…,1033]; 7 handles;
+  the row's bar reads Drag · Presets · both alignments · Delete with tiles All in one row / 3 / 2 /
+  Stacked; a card's bar reads Drag · Select the row · Replace · Copy · both alignments · Delete; and
+  all six other banner widgets offer Replace and none offers a "+".
+
 ## Parked features
 Four Support Portal features are BUILT-OR-PART-BUILT AND SWITCHED OFF, with their full context in
 [future-tasks.md](future-tasks.md): **AI** (rail item commented out in `SupportPortalBuilder`; the
