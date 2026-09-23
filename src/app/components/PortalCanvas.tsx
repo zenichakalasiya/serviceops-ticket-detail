@@ -1880,7 +1880,12 @@ export const BANNER_SIDE_WIDGETS: { type: string; label: string }[] = [
   { type: 'x-kpi', label: 'KPI' },
   { type: 'c-contact', label: 'Contact Us' },
   { type: 'x-action-card', label: 'Action Card' },
-  { type: 'b-list', label: 'Quick links' },
+  /* ⚠️ Quick links is the CUSTOM CARD on its Links layout, not the plain List. A row of links is a
+     glyph, a destination and the arrow that says it goes somewhere — which is what the Links layout
+     already draws, down to the hairlines between rows — where a List is a title over a paragraph.
+     The plain List left the banner with the name: two rows in this popup both meaning "a list of
+     links" is the one-widget-two-names trap, and List is still on the palette for the page. */
+  { type: 'x-card', label: 'Quick links' },
   { type: 'v-image', label: 'Image' },
   { type: 'b-text', label: 'Text' },
 ];

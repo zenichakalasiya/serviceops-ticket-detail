@@ -1018,6 +1018,14 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
        landed in (see `bannerCols` in the preview) — all the way across a strip, stacked in a narrow column —
        and a stored '1' would freeze it as stacked wherever it was later moved. */
     if (type === 'c-announcements') patchCfg(elId, { display: 'image' });
+    /* ⚠️ The Custom Card arrives on the banner as QUICK LINKS — that is the name the "+" offered it
+       under, so it has to land on the Links layout or the admin gets a picture-and-paragraph card
+       they did not ask for. The three links themselves are the card's OWN defaults; only the layout,
+       the heading and the empty subtext are seeded here.
+       ⚠️ `sub: ''` is deliberate, not an omission: the card's default subtext is a sentence about the
+       service desk, which under a heading reading "Quick links" describes nothing on the card. An
+       empty string draws nothing and the field is still there to type into. */
+    if (type === 'x-card') patchCfg(elId, { layout: 'links', title: 'Quick links', sub: '' });
   }
 
   /** The banner's + adders: an empty cell beside an item — a column to its left or right, a row above or below. */

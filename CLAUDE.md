@@ -1335,6 +1335,28 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   and handing the Quick Actions row back, and a real HTML5 drag onto the Text & Search section's top
   edge moving all four together ("Moved into a new row").
 
+- **Support Portal — the banner's QUICK LINKS is the Custom Card (23 Sep 2026).** The banner's "+"
+  offered "Quick links" and gave you `b-list`, the plain List — a title over a paragraph. What the
+  name promises is a glyph, a destination and the arrow that says the row goes somewhere, which the
+  **Custom Card's Links layout already draws**, down to the hairlines between rows. So the name now
+  points at `x-card` in BOTH of the banner's pickers (`BANNER_SIDE_WIDGETS` and `BANNER_BLOCKS`) and
+  `seedBannerItem` lands it on `layout: 'links'` with the heading **Quick links**.
+  ⚠️ **Nothing was built** — the layout, the three-link collection, the per-link icon picker and the
+  item-level Icon/Style packs were all already there, which is why selecting the card opens the
+  Custom Card panel with **Links** lit in Card layout and **Links 3/8** listing the rows. A second
+  links widget would have been the one-widget-two-names trap the FAQ/Accordion note records.
+  ⚠️ **The plain List LEFT the banner** rather than keeping a second row under its own name — two
+  entries in a seven-item popup both meaning "a list of links" is that same trap. It is untouched on
+  the palette for the page.
+  ⚠️ **The three links are the card's OWN defaults** (Reset my password · Request VPN access · Book a
+  meeting room), not copy invented for a banner. Only `layout`, `title` and `sub` are seeded.
+  ⚠️ `sub: ''` is deliberate, not an omission: the card's default subtext is a sentence about the
+  service desk, which under a heading reading "Quick links" describes nothing on the card. An empty
+  string draws nothing and the field is still there to type into.
+  Verified in a browser: the "+" offers Quick links and no longer List; the card lands white, bordered,
+  10px radius with 1px dividers between three rows and three accent `↗` arrows; the panel opens on
+  Custom Card with Card layout · Content · Links · Gap · Style · Shadow · Spacing and the Links tile lit.
+
 ## Parked features
 Four Support Portal features are BUILT-OR-PART-BUILT AND SWITCHED OFF, with their full context in
 [future-tasks.md](future-tasks.md): **AI** (rail item commented out in `SupportPortalBuilder`; the

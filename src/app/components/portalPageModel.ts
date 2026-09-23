@@ -1324,7 +1324,9 @@ export const BANNER_BLOCKS: { type: string; label: string }[] = [
   { type: 'x-kpis', label: 'KPI tiles' },
   { type: 'c-announcements', label: 'Announcements' },
   { type: 'c-contact', label: 'Contact Us' },
-  { type: 'b-list', label: 'Quick links' },
+  /* Quick links is the Custom Card's Links layout — see the note on `BANNER_SIDE_WIDGETS`. One name,
+     one widget, whichever of the banner's two pickers you reach it from. */
+  { type: 'x-card', label: 'Quick links' },
   { type: 'b-text', label: 'Text' },
   { type: 'v-image', label: 'Image' },
 ];
