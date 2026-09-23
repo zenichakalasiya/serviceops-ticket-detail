@@ -245,6 +245,16 @@ export function nodeById(id: string): PortalNodeDef | undefined {
      column is a Row — so a section flipped from row to column renames every child for free.
      Storing the name would leave "Column" written on something that is now stacked. */
   const box = BOXES[id];
+  /* ⚠️ A GATHERED ROW is named after WHAT IT HOLDS, not after its axis. "Row" is the honest name for
+     structure a preset made; it is the wrong name for the set of action cards somebody placed, which
+     is a section of the banner in its own right. The types are read straight out of the id — it is
+     built from the cards it holds — so this stays a pure lookup with no registry to keep in step. */
+  if (box && id.startsWith('hero-gp-')) {
+    const types = new Set(id.slice(8).split('|').map((k) => PLACED[k]?.type));
+    const one = types.size === 1 ? [...types][0] : undefined;
+    const name = one === 'x-action-card' ? 'Action cards' : one === 'x-kpi' ? 'KPI tiles' : 'Cards';
+    return { id, name, kind: 'section', parent: box.parent, content: 'none' };
+  }
   if (box) return { id, name: box.parentDir === 'row' ? 'Column' : 'Row', kind: 'column', parent: box.parent, content: 'none' };
   if (/^sec-\d+$/.test(id)) return { id, name: 'Section', kind: 'section', content: 'none' };
   return undefined;
@@ -1353,6 +1363,15 @@ export function toolbarCaps(id: string): ToolbarCaps {
      of a container whose children are the page’s only copies of themselves, and a Delete that would
      have to decide what happens to what is inside are three buttons that could not be honoured. */
   if (/^hero-bx-/.test(id)) return { move: false, add: false, copy: false, drag: false, remove: false };
+  /* A GATHERED ROW of cards — the banner section the admin placed, as opposed to the structure above.
+     It carries the bar a section should: a grip to move the whole set, the two alignments, its
+     cards-per-row presets and Delete, because the four cards arrived together and they leave together.
+     ⚠️ No Add and no Copy. Another card comes from the banner's own "+", which knows the four-card
+     cap and which row it is filling; and a copy of a row whose cards are the product's own four
+     destinations would be the same four destinations drawn twice.
+     ⚠️ No MOVE arrows either — those step a node among its siblings, which a branch has no support
+     for; the grip is the one honest way to move a row, and it can reach any edge of any section. */
+  if (/^hero-gp-/.test(id)) return { move: false, add: false, copy: false };
   /* The banner's search field: one place inside the hero, nothing to duplicate it into, nowhere to
      move to. The grip and Delete are the only two things that were ever true of it. */
   if (id === 'hero-search') return { move: false, add: false, copy: false, alignH: false, alignV: false };

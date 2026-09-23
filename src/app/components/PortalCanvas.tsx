@@ -1075,12 +1075,17 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
       {placedType(id) === 'v-image' && <CaptionMenu id={id} />}
       {/* Cards laid out across — the SAME skeleton presets the panel shows, so the toolbar says what each
           choice looks like instead of offering bare numbers. */}
-      {(placedType(id) === 'x-actions' || placedType(id) === 'x-kpis') && (() => {
+      {/* ⚠️ A GATHERED ROW gets the SAME control, and it is the same question: how many of these cards
+          sit across before the rest wrap under them. Its count comes out of its id, which is built
+          from the cards it holds. */}
+      {(placedType(id) === 'x-actions' || placedType(id) === 'x-kpis' || /^hero-gp-/.test(id)) && (() => {
         const own = cfg?.(id) ?? {};
-        const kpi = placedType(id) === 'x-kpis';
-        const count = Array.isArray(own.items)
-          ? (own.items as { hidden?: boolean }[]).filter((it) => !it.hidden).length
-          : Number(own.__tileCount ?? 4);
+        const group = /^hero-gp-/.test(id);
+        const count = group
+          ? id.slice(8).split('|').length
+          : Array.isArray(own.items)
+            ? (own.items as { hidden?: boolean }[]).filter((it) => !it.hidden).length
+            : Number(own.__tileCount ?? 4);
         const cols = Number(own.cols ?? Math.min(count, 4));
         return (
           <div className="relative">
@@ -3081,7 +3086,7 @@ export function Sel({ id, children, className = '', toolbarBelow = false, surfac
       {/* ⚠️ NO handles on a banner ROW or COLUMN. The banner sizes the columns of a row by WEIGHT
           (`weight()` in the preview), so a dragged `widthPct` would be a number nothing reads — the
           handle would move and the column would not. Stretching them needs weights in the tree first. */}
-      {on && !sharedTile && !/^hero-bx-/.test(id) && <SelectionHandles id={id} elRef={ref} />}
+      {on && !sharedTile && !/^hero-(bx|gp)-/.test(id) && <SelectionHandles id={id} elRef={ref} />}
       {/* ⚠️ The banner's ITEMS get the four + adders the section boxes have, on hover — left/right put an
           empty cell beside the item as a column, top/bottom as a row. Hover, not selection, for the reason
           the box adders give: a selected item carries resize handles on these very edges. */}

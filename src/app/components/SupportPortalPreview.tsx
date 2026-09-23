@@ -25,7 +25,7 @@ import { bannerLayout } from './supportPortalData';
 import { shadowCss } from './PortalBoxControls';
 import { PlacedBlockRenderers, PortalPlacedElement } from './PortalPlacedElement';
 import { TONE } from './portalTone';
-import { ALL_EDGES, COMPACT_BANNER_TYPES, bannerBoxId, cellKey, childEdges, colsTemplate, leavesOf, normalizeTree } from './portalBannerLayout';
+import { ALL_EDGES, COMPACT_BANNER_TYPES, bannerBoxId, cellKey, childEdges, colsTemplate, isGroup, leavesOf, normalizeTree } from './portalBannerLayout';
 import type { BannerNode, Edges } from './portalBannerLayout';
 import { DEFAULT_BLOCK_ORDER, DEFAULT_CONTENT, DEFAULT_ROW_ORDER, fillCss, isBranch, nodePath, isLockedRow, hasFixedTitle, hasFixedViewAll, registerBox, rowOf } from './portalPageModel';
 import type { Box, BoxDir, CustomSection, PlacedElement, PortalPageContent } from './portalPageModel';
@@ -3203,14 +3203,34 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                  would take every click meant for the banner itself. */
               const boxId = bannerBoxId(n);
               registerBox(boxId, parentDir, depth, parentId);
+              /* ⚠️ A GATHERED ROW lays its cards out on a GRID, not as a flex row, because the one
+                 thing it is asked is how many sit across — and a wrapped card in a flex row keeps
+                 the width of its own words where a grid track gives it an equal share. Its default
+                 is every card on one line, which is the row as it arrived. */
+              const group = isGroup(n);
+              const cols = group ? Math.max(1, Math.min(4, Number(wc(boxId).cols ?? Math.min(n.c.length, 4)))) : 0;
+              /* ⚠️ A grid needs its OWN edge rule. `childEdges` answers for a single line — first cell
+                 takes the left inset, last takes the right — which on a wrapped grid gave the second
+                 row's first card no left inset and left the two rows starting 24px apart. Here the
+                 edge a cell touches is its position in the GRID: column 0 touches the left, the last
+                 column the right, the first row the top and the last row the bottom. */
+              const rows = group ? Math.ceil(n.c.length / cols) : 0;
+              const gridEdge = (i: number): Edges => ({
+                left: edge.left && i % cols === 0,
+                right: edge.right && (i % cols === cols - 1 || i === n.c.length - 1),
+                top: edge.top && i < cols,
+                bottom: edge.bottom && Math.floor(i / cols) === rows - 1,
+              });
               return (
                 <Sel
                   key={cellKey(n)}
                   id={boxId}
-                  className={`flex min-w-0 ${n.d === 'row' ? 'portal-banner-row' : ''}`}
-                  style={{ flexDirection: n.d, gap: n.d === 'row' ? gap : gapY, alignItems: 'stretch', justifyContent: n.d === 'column' ? justifyY : undefined, ...flex }}
+                  className={`min-w-0 ${group ? '' : 'flex'} ${n.d === 'row' ? 'portal-banner-row' : ''}`}
+                  style={group
+                    ? { display: 'grid', gridTemplateColumns: colsTemplate(cols), gap: `${gapY}px ${gap}px`, alignItems: 'stretch', ...flex }
+                    : { flexDirection: n.d, gap: n.d === 'row' ? gap : gapY, alignItems: 'stretch', justifyContent: n.d === 'column' ? justifyY : undefined, ...flex }}
                 >
-                  {n.c.map((k, i) => draw(k, childEdges(n, i, edge), n.d === 'row' ? weight(n, i) : undefined, n.d, depth + 1, boxId))}
+                  {n.c.map((k, i) => draw(k, group ? gridEdge(i) : childEdges(n, i, edge), group ? undefined : n.d === 'row' ? weight(n, i) : undefined, n.d, depth + 1, boxId))}
                 </Sel>
               );
             };

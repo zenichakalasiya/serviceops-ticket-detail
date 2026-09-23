@@ -41,7 +41,7 @@ import type { Box, BoxDir, CustomSection, NodeStyle, PlacedElement, PortalPageCo
 import { PORTAL_ELEMENTS, PORTAL_EMPTY_WIDGETS, PORTAL_TEMPLATES, bannerLayout, bannerShape } from './supportPortalData';
 import type { ShapeNode } from './supportPortalData';
 import { toneVars } from './portalTone';
-import { MAX_BANNER_CARDS, MAX_BANNER_SECTIONS, addToGroup, appendGroup, groupOf, insertAtEdge, insertBeside, isBannerBox, leavesOf, normalizeTree, removeLeaf, replaceLeaf, shiftLeaf, swapLeaves, unitsOf } from './portalBannerLayout';
+import { MAX_BANNER_CARDS, MAX_BANNER_SECTIONS, addToGroup, appendGroup, branchNode, groupOf, insertAtEdge, insertBeside, isBannerBox, isBannerGroup, leavesOf, normalizeTree, removeBranch, removeLeaf, replaceLeaf, shiftLeaf, swapLeaves, unitsOf } from './portalBannerLayout';
 import type { BannerNode } from './portalBannerLayout';
 import { IconPopover } from './PortalIconPicker';
 import type { IconChoice } from './PortalIconPicker';
@@ -2238,6 +2238,18 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
   };
 
   const moveToBanner = useCallback((source: string, anchor: string, side?: 'left' | 'right' | 'top' | 'bottom') => {
+    /* ⚠️ A GATHERED ROW moves as ONE, and it is the only thing here that is not a leaf. Its cards are
+       the row — dragging it has to carry all of them or it is not that row any more — so it is lifted
+       out as a NODE and put back beside the section you aimed at, which is why `insertBeside` takes a
+       node rather than an id. */
+    if (isBannerGroup(source)) {
+      const node = branchNode(heroTree(), source);
+      if (!node || anchor === 'hero' || leavesOf(node).includes(anchor)) return;
+      const rest = removeBranch(heroTree(), source);
+      patchCfg('hero', { bannerTree: insertBeside(rest, anchor, node, side ?? 'right') });
+      toast.success(side === 'top' || side === 'bottom' ? 'Moved into a new row' : 'Moved into a new column');
+      return;
+    }
     /* A built-in block first: it arrives on the banner as the widget that draws the same card. */
     const asWidget = /^el-\d+$/.test(source) || source === 'hero-content' ? null : blockAsWidget(source);
     if (asWidget) { bringBlockToBanner(source, asWidget, anchor, side); return; }
@@ -2525,6 +2537,19 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
       const shaped = sectionsRef.current.find((s) => s.section.banner)?.section;
       const block = shaped && sectionElements(shaped).find((e) => e.type === 'bn-search');
       if (block) { deleteNode(block.id); return; }
+    }
+    /* ⚠️ A GATHERED ROW deletes as ONE. Its cards arrived together — placing "Action Card" on the
+       banner places the product's four — so leaving three of them behind would be the row half
+       removed, which is not a state anybody asked for. Both stores go in the same pass: the leaves
+       leave `rowExtras.hero` and the branch leaves the tree. */
+    if (isBannerGroup(id)) {
+      const node = branchNode(heroTree(), id);
+      const gone = new Set(leavesOf(node));
+      patchCfg('hero', { bannerTree: removeBranch(heroTree(), id) });
+      setRowExtras((prev) => ({ ...prev, hero: (prev.hero ?? []).filter((e) => !gone.has(e.id)) }));
+      select(null);
+      toast.success(`${nodeById(id)?.name ?? 'Cards'} removed`);
+      return;
     }
     if (/^sec-\d+$/.test(id)) {
       setSections((prev) => prev.filter((s) => s.section.id !== id));

@@ -245,8 +245,10 @@ export function activePreset(tree: BannerNode | null): string | null {
 
 /* ── Edits ───────────────────────────────────────────────────────────────── */
 
-/** Puts `newId` beside `anchor`: left/right make a column beside it, top/bottom a row above or below. */
-export function insertBeside(tree: BannerNode | null, anchor: string, newId: string, side: 'left' | 'right' | 'top' | 'bottom'): BannerNode {
+/** Puts `newId` beside `anchor`: left/right make a column beside it, top/bottom a row above or below.
+ *  ⚠️ It takes a NODE, not only an id, so a whole gathered row can be dropped beside a section and
+ *  arrive intact — the same reason `append` takes one. */
+export function insertBeside(tree: BannerNode | null, anchor: string, newId: BannerNode, side: 'left' | 'right' | 'top' | 'bottom'): BannerNode {
   if (!tree) return newId;
   const d = side === 'left' || side === 'right' ? 'row' : 'column';
   const before = side === 'left' || side === 'top';
@@ -264,7 +266,8 @@ export function insertBeside(tree: BannerNode | null, anchor: string, newId: str
     return branch(n.d, n.c.map(walk), n.g);
   };
   const next = walk(tree);
-  return leavesOf(next).includes(newId) ? next : branch(d, before ? [newId, tree] : [tree, newId]);
+  const landed = leavesOf(next);
+  return leavesOf(newId).every((x) => landed.includes(x)) ? next : branch(d, before ? [newId, tree] : [tree, newId]);
 }
 
 /** Swaps one item for another in the same spot (Replace). */
@@ -310,8 +313,33 @@ export const cellKey = (n: BannerNode) => leavesOf(n).join("|");
  * changes exactly when the branch stops being the same branch. The positional ids the page boxes
  * abandoned (`sec-3-c0`) are the cautionary tale: they renamed every box after an insert, and
  * every stored value landed on the wrong one. */
-export const bannerBoxId = (n: BannerNode) => "hero-bx-" + cellKey(n);
-export const isBannerBox = (id: string) => id.startsWith("hero-bx-");
+/* ⚠️ A GROUP carries its OWN prefix, and the difference is not cosmetic. A plain branch is
+ * STRUCTURE — a row or a column a preset made — and it goes when its sections go; a group is a
+ * THING the admin placed, the set of cards they gathered, occupying one of the banner's four
+ * section slots. So they answer different questions and get different answers: a group is named
+ * after what it holds, moves and deletes as one, and lays its cards out in however many columns it
+ * is asked for, where a plain branch has none of those. Putting that in the id keeps `toolbarCaps`
+ * and `nodeById` pure lookups rather than giving either a dependency on the tree. */
+export const bannerBoxId = (n: BannerNode) => (isGroup(n) ? "hero-gp-" : "hero-bx-") + cellKey(n);
+export const isBannerBox = (id: string) => id.startsWith("hero-bx-") || id.startsWith("hero-gp-");
+/** A gathered row of cards, as opposed to a row a preset built. */
+export const isBannerGroup = (id: string) => id.startsWith("hero-gp-");
+
+/** The branch this box id names, as a NODE — what a whole row being dragged or deleted needs. */
+export function branchNode(tree: BannerNode | null | undefined, id: string): BannerNode | null {
+  if (!tree || typeof tree === "string") return null;
+  if (bannerBoxId(tree) === id) return tree;
+  for (const k of tree.c) { const f = branchNode(k, id); if (f) return f; }
+  return null;
+}
+
+/** Lifts a whole branch out, collapsing anything left holding one child — `removeLeaf` for a row. */
+export function removeBranch(tree: BannerNode | null, id: string): BannerNode | null {
+  if (!tree || typeof tree === "string") return tree;
+  if (bannerBoxId(tree) === id) return null;
+  const c = tree.c.map((k) => removeBranch(k, id)).filter((k): k is BannerNode => k !== null);
+  return c.length === 0 ? null : c.length === 1 ? c[0] : branch(tree.d, c, tree.g);
+}
 
 /** The branch this id names, while the tree still holds one. */
 export function bannerBranch(tree: BannerNode | null | undefined, id: string): { d: "row" | "column"; c: BannerNode[] } | null {

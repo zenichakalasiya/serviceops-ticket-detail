@@ -1297,6 +1297,44 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   ⚠️ **Testing trap:** "Search for elements" is a PLACEHOLDER, so `innerText` never contains it — a
   probe testing "is the library open" that way reports `false` on a working panel. Match the input.
 
+- **Support Portal — a GATHERED ROW of cards is a section in its own right (23 Sep 2026).** The set of
+  action cards (or KPI tiles) on the banner now reads as one thing: it is BOUNDED, it is named after
+  what it holds, and it carries the bar a section should — **grip · Presets · both alignments ·
+  Delete**. Before this it was a nameless "Row" with no toolbar at all.
+  ⚠️ **It carries its OWN id prefix, `hero-gp-`**, where a plain branch keeps `hero-bx-`
+  (`bannerBoxId` branches on `isGroup`; `isBannerBox` answers for both, `isBannerGroup` for the
+  group alone). The difference is not cosmetic: a plain branch is STRUCTURE a preset made and it goes
+  when its sections go, while a group is a THING the admin placed, occupying one of the banner's four
+  section slots. They answer different questions, so they get different names, different toolbars and
+  different layout — and putting that in the id keeps `toolbarCaps` and `nodeById` pure lookups
+  rather than giving either a dependency on the tree.
+  ⚠️ **The NAME is read out of the id** — it is built from the cards it holds, so `nodeById` looks
+  each leaf up in `PLACED` and answers "Action cards" / "KPI tiles" / "Cards" with no registry to
+  keep in step. Its `kind` is `'section'`, because that is what it is.
+  ⚠️ **It lays its cards out on a GRID, not a flex row** — the one thing it is asked is how many sit
+  across, and a wrapped card in a flex row keeps the width of its own words where a grid track gives
+  it an equal share. Default is every card on one line. The **Presets** popup is the SAME
+  `TilePresetPicker` the `x-actions` block uses, so one control answers one question everywhere.
+  ⚠️ **A grid needs its own EDGE rule.** `childEdges` answers for a single line (first cell takes
+  the left inset, last takes the right), which on a wrapped grid gave the second row's first card no
+  left inset and started the two rows 24px apart — measured, 105 against 81. `gridEdge(i)` reads the
+  cell's position in the GRID instead: column 0 touches the left, the last column the right, the
+  first row the top, the last row the bottom.
+  ⚠️ **It moves and deletes as ONE.** `removeBranch` lifts a whole branch out and `branchNode`
+  finds it, and `insertBeside` now takes a **NODE** rather than an id, so a dragged row is put back
+  beside the section you aimed at intact — the same reason `append` takes one. Delete clears both
+  stores in one pass (the leaves leave `rowExtras.hero`, the branch leaves the tree): the four cards
+  arrived together, so leaving three behind is not a state anybody asked for.
+  ⚠️ **No Add, no Copy, no move ARROWS, no resize handles.** Another card comes from the banner's own
+  "+", which knows the four-card cap; a copy of a row whose cards are the product's own four
+  destinations would be those destinations drawn twice; the arrows step a node among its siblings,
+  which a branch has no support for, and the grip reaches any edge of any section anyway; and the
+  banner sizes a row by WEIGHT, so a dragged `widthPct` would be a number nothing reads.
+  Verified in a browser: grid with 4 equal tracks, panel titled "Action cards", the five-button bar,
+  2-per-row wrapping to an aligned 2×2 (507px cards at x 105/632, y 365/463), Delete clearing all four
+  and handing the Quick Actions row back, and a real HTML5 drag onto the Text & Search section's top
+  edge moving all four together ("Moved into a new row").
+
 ## Parked features
 Four Support Portal features are BUILT-OR-PART-BUILT AND SWITCHED OFF, with their full context in
 [future-tasks.md](future-tasks.md): **AI** (rail item commented out in `SupportPortalBuilder`; the

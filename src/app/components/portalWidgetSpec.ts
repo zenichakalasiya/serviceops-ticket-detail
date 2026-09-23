@@ -1316,7 +1316,7 @@ export function structureSpecId(nodeId: string): string | undefined {
      and a `solid` border row) while every other element showed the current one. A router that
      matches on id SHAPE has to be changed in the same commit as the shape. */
   /* A banner row or column, matched before the section shapes — its id names the sections it holds. */
-  if (/^hero-bx-/.test(nodeId)) return 'banner_box';
+  if (/^hero-(bx|gp)-/.test(nodeId)) return 'banner_box';
   if (/^sec-\d+-b\d+$/.test(nodeId)) return 'column';
   if (/^sec-\d+$/.test(nodeId)) return 'section';
   return undefined;
