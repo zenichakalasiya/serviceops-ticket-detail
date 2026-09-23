@@ -538,6 +538,34 @@ export function Segmented<T extends string | number | boolean>({ value, options,
   options: { value: T; label?: string; icon?: ReactNode; title?: string }[];
   onChange: (v: T) => void;
 }) {
+  /* ⚠️ TWO treatments, and which one you get is decided by the OPTIONS rather than by the call site.
+     A strip of WORDS is a set of tabs — one of these is showing — so it takes the pill-on-a-track
+     the Theme panel's Primary / Secondary / Neutral already uses: a light track with the live one
+     lifted out of it in white. A strip of ICONS keeps the bordered buttons, because a bare glyph
+     floating on a tinted track has no edge of its own to be read by, and an icon row is usually a
+     property (align left) rather than a place you are in.
+     ⚠️ `every`, not `some`: one icon-only option among labelled ones still makes it an icon strip,
+     and the mixed case is the one that most needs a border to sit on. */
+  const tabs = options.every((o) => !!o.label);
+  if (tabs) {
+    return (
+      <div className="flex gap-1 rounded bg-[#F1F5F9] p-0.5">
+        {options.map((o) => {
+          const on = o.value === value;
+          return (
+            <button
+              key={String(o.value)}
+              onClick={() => onChange(o.value)}
+              title={o.title ?? o.label}
+              className={`flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded py-1.5 text-[12px] font-medium transition-colors ${
+                on ? 'bg-white text-[#364658] shadow-[0_1px_2px_rgba(16,24,40,0.06)]' : 'text-[#7B8FA5] hover:text-[#364658]'
+              }`}
+            >{o.icon}<span className="truncate">{o.label}</span></button>
+          );
+        })}
+      </div>
+    );
+  }
   return (
     <div className="flex gap-1">
       {options.map((o) => {

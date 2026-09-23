@@ -7,7 +7,7 @@ import {
   AlignLeft, AlignRight, AlignStartHorizontal, AlignStartVertical, StretchHorizontal, StretchVertical, ArrowDown, ArrowLeft, ArrowRight,
   ArrowUp, Baseline, Bold, Check, ChevronDown, ChevronRight, Columns2, Copy, GripHorizontal, GripVertical, Italic, Link2, Rows2,
   Braces, Highlighter, Maximize2, UnfoldVertical, Move, MoveHorizontal, MoveVertical, Plus, RemoveFormatting,
-  Replace, SquareDashed, Trash2, Underline, X, ImagePlus, Palette, LayoutDashboard, Columns3,
+  Replace, Square, SquareDashed, Trash2, Underline, X, ImagePlus, Palette, LayoutDashboard, Columns3,
 } from 'lucide-react';
 import { BannerFillEditor, BannerPresetPicker, TilePresetPicker } from './PortalBannerTools';
 import { bannerBoxId, flipRoot, groupOf, presetsFor } from './portalBannerLayout';
@@ -688,6 +688,77 @@ const BUTTON_STYLES: [string, string][] = [
   ['primary', 'Primary'], ['outline', 'Outline'], ['link', 'Link'], ['icon', 'Icon'],
 ];
 
+/* ── SHADOW, as four presets ───────────────────────────────────────────────────────────────────
+ *
+ * ⚠️ PRESETS, not the four controls the panel had. A shadow is chosen by looking at the block
+ * against the page behind it, and "outer, #0F172A at 12%, bottom" is a sentence nobody composes —
+ * they want it soft, or they want it to lift off the page. None / Soft / Medium / Strong says that
+ * in one click and leaves nothing to get wrong.
+ * ⚠️ They differ only in the COLOUR's opacity, so `shadowString` is unchanged and no new key had to
+ * be stored. A page that already carries a hand-set colour, an inner shadow or an off-centre
+ * position still RENDERS it — the presets simply cannot produce one any more.
+ * ⚠️ `shadowType: 'outer'` and `shadowPos: 'bottom'` are written EXPLICITLY on every preset, or a
+ * block that had once been given an inner shadow would keep it while the tile said "Soft". */
+const SHADOW_PRESETS: { key: string; label: string; color: string | null }[] = [
+  { key: 'none', label: 'None', color: null },
+  { key: 'soft', label: 'Soft', color: 'rgba(16,24,40,0.06)' },
+  { key: 'medium', label: 'Medium', color: 'rgba(16,24,40,0.12)' },
+  { key: 'strong', label: 'Strong', color: 'rgba(16,24,40,0.20)' },
+];
+
+function ShadowMenu({ id }: { id: string }) {
+  const { styles, setStyle } = useCanvas();
+  const [open, setOpen] = useState(false);
+  const own = styles[id] ?? {};
+  const current = own.shadowOn !== true
+    ? 'none'
+    : SHADOW_PRESETS.find((s) => s.color === String(own.shadowColor ?? ''))?.key ?? 'custom';
+  const pick = (s: (typeof SHADOW_PRESETS)[number]) => {
+    setStyle(id, s.color === null
+      ? { shadowOn: false }
+      : { shadowOn: true, shadowColor: s.color, shadowType: 'outer', shadowPos: 'bottom' });
+    setOpen(false);
+  };
+  return (
+    <div className="relative">
+      <button className={open ? btnOn : btn} data-tip="Shadow" onClick={() => setOpen((x) => !x)}>
+        <Square size={15} />
+      </button>
+      {open && (
+        <>
+          <span className="fixed inset-0 z-[60]" onClick={() => setOpen(false)} />
+          <div className="absolute left-0 top-[calc(100%+6px)] z-[61] w-[236px] rounded-lg border border-[#E5E7EB] bg-white p-3 shadow-[0_12px_16px_-4px_rgba(16,24,40,0.10),0_4px_6px_-2px_rgba(16,24,40,0.06)]">
+            <p className="mb-2 text-[12px] font-medium text-[#364658]">Shadow</p>
+            <div className="flex gap-2">
+              {SHADOW_PRESETS.map((s) => (
+                <button
+                  key={s.key}
+                  onClick={() => pick(s)}
+                  className="flex min-w-0 flex-1 flex-col items-center gap-1"
+                >
+                  {/* The tile IS the effect — a white card on the page's own grey, wearing the
+                      shadow it will apply. A swatch of grey would say nothing about a shadow. */}
+                  <span
+                    className={`flex h-[34px] w-full items-center justify-center rounded border-2 bg-[#F4F6FA] ${
+                      current === s.key ? 'border-[#3D8BD0]' : 'border-transparent'
+                    }`}
+                  >
+                    <span
+                      className="h-[18px] w-[26px] rounded-[3px] border border-[#E5E7EB] bg-white"
+                      style={s.color ? { boxShadow: `0 3px 8px 0 ${s.color}` } : undefined}
+                    />
+                  </span>
+                  <span className={`truncate text-[11px] ${current === s.key ? 'font-medium text-[#3D8BD0]' : 'text-[#64748B]'}`}>{s.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function ButtonStyleMenu({ id }: { id: string }) {
   const { cfg, setCfg } = useCanvas();
   const [open, setOpen] = useState(false);
@@ -1163,6 +1234,14 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
       {/* ⚠️ The button's STYLE, on the toolbar. It is the one thing about a button an admin changes
           more than once while looking at the page — the panel still owns everything else, so this is
           a shortcut to one field rather than a second place the value lives. */}
+      {/* ⚠️ SHADOW, as four presets behind ONE icon. It was four controls in the panel — a switch, a
+          colour, Outer/Inner and a 3×3 position — for an effect a support portal almost never wants,
+          and the one property of a block you judge by eye against the page behind it rather than by
+          reading a number. The tiles are not offered up front: the bar stays one glyph wide and the
+          choice opens on demand, the way Presets and the colour popup already work.
+          ⚠️ Not on a TEXT child. A shadow on a run of words is a box drawn round nothing the reader
+          can see — the rule the panel group already had. */}
+      {(kind !== 'text' || placed) && <ShadowMenu id={id} />}
       {placedType(id) === 'b-button' && <ButtonStyleMenu id={id} />}
       {/* The one thing you author on these without opening the panel. */}
       {(placedType(id) === 'b-accordion' || placedType(id) === 'c-faq') && (

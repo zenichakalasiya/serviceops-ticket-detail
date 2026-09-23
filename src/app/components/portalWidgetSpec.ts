@@ -660,7 +660,11 @@ export const WIDGET_SPECS: WidgetSpec[] = [
     gate: { kind: 'permission', setting: 'Access Service Catalog', section: 'Organization' },
     fields: [
       TITLE_FIELD,
-      { key: 'showDesc', label: 'Show description', control: 'toggle', group: 'Content' },
+      /* ⚠️ NO Show-description switch. The tile is a NAME over a CATEGORY — "Payroll Setup" over
+         "Finance" — and the category is what a requester scans a grid of services by, so a tile
+         without it is a list of names with the one thing that tells them apart switched off.
+         `showDesc` stays in `defaults` (true) and `ServiceTiles` still reads it, so a page that
+         stored `false` keeps the shape it has. */
       /* ⚠️ Its own GROUP, so it reads as a section under Content rather than as one more switch
          inside it — the tile's SHAPE is a different question from what the tile says.
          ⚠️ SHARED between the two service rows: the value is mirrored in `patchCfg`, so setting it
@@ -708,7 +712,11 @@ export const WIDGET_SPECS: WidgetSpec[] = [
        so nothing on the canvas moved. */
     fields: [
       TITLE_FIELD,
-      { key: 'showDesc', label: 'Show description', control: 'toggle', group: 'Content' },
+      /* ⚠️ NO Show-description switch. The tile is a NAME over a CATEGORY — "Payroll Setup" over
+         "Finance" — and the category is what a requester scans a grid of services by, so a tile
+         without it is a list of names with the one thing that tells them apart switched off.
+         `showDesc` stays in `defaults` (true) and `ServiceTiles` still reads it, so a page that
+         stored `false` keeps the shape it has. */
       /* ⚠️ Its own GROUP, so it reads as a section under Content rather than as one more switch
          inside it — the tile's SHAPE is a different question from what the tile says.
          ⚠️ SHARED between the two service rows: the value is mirrored in `patchCfg`, so setting it

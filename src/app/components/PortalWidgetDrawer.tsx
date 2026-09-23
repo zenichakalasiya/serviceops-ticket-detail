@@ -47,39 +47,6 @@ import { ACROSS_ROW, ACROSS_STACK, DOWN_ROW, DOWN_STACK, SectionPresets } from '
 import type { PresetId } from './PortalSectionLayout';
 import { BorderRow, RadiusRow, ShadowBlock, SizeRow } from './PortalBoxControls';
 
-/* ⚠️ The Shadow group, shared by BOTH panel models so it is one control everywhere. It writes the
-   STYLE store — the store `containerCss` paints on every widget's real card, placed or built-in —
-   never widget config, which only some renderers read. A text child gets none: a shadow on a run
-   of words is a box drawn round nothing the reader can see. */
-function ShadowGroup({ nodeId, styles, setStyle, open, onToggle }: {
-  nodeId: string; styles: PortalStyles; setStyle: (id: string, p: Partial<NodeStyle>) => void;
-  open: boolean; onToggle: () => void;
-}) {
-  /* ⚠️ Only a text CHILD — a heading, subtitle, link or label inside a widget. A placed Text element
-     is a widget of its own and gets the group like any other. */
-  if (/-(title|sub|subtitle|label|viewall|caption)$|-c[lv]\d+$|~/.test(nodeId)) return null;
-  const own = styles[nodeId] ?? {};
-  return (
-    <Group title="Shadow" open={open} onToggle={onToggle} bodyClass="pt-2">
-      {/* The group is already titled Shadow, so the switch says what it does rather than repeating it.
-          `pt-2` on the group body: the switch is the first row, so ShadowBlock's own top margin
-          collapses to 0 and the toggle sat flush against the group title. The SAME 8px every other
-          switch-led group takes (the action card's Arrow), so one rule covers both rather than two
-          numbers chosen a panel at a time. */}
-      <ShadowBlock
-        label="Add shadow"
-        value={{
-          on: own.shadowOn === true,
-          color: String(own.shadowColor ?? DEFAULT_SHADOW_COLOR),
-          type: 'outer',
-          pos: String(own.shadowPos ?? 'bottom'),
-        }}
-        /* Always OUTER — the Shadow type control is gone, so any change writes outer. */
-        onChange={(x) => setStyle(nodeId, { shadowOn: x.on, shadowColor: x.color, shadowType: 'outer', shadowPos: x.pos })}
-      />
-    </Group>
-  );
-}
 import { PortalTableContent } from './PortalTableContent';
 import { LineStylePicker } from './PortalLineStyles';
 import { IconFramePicker } from './PortalIconFrame';
@@ -515,12 +482,10 @@ function PanelBody({ spec, nodeId, cfg, renderField, openGroups, toggleGroup, st
           const open = !openGroups.includes(`shut:${a.id}`);
           return (
             <Fragment key={a.id}>
-            {a.spacing && (
-              <ShadowGroup
-                nodeId={nodeId} styles={styles} setStyle={setStyle}
-                open={!openGroups.includes('shut:__shadow')} onToggle={() => toggleGroup('shut:__shadow')}
-              />
-            )}
+            {/* ⚠️ SHADOW IS ON THE FLOATING TOOLBAR, not here. Four controls — a switch, a colour,
+                Outer/Inner and a 3×3 position — for an effect a support portal almost never wants,
+                and the one property of a block you judge by looking at it against the page behind
+                it. It is four preset tiles behind one icon on the bar now. */}
             <Group
               key={a.id}
               title={ACCORDION_TITLE[a.id]}
@@ -1885,12 +1850,6 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
                 packs-model widgets had padding buried inside the Style pack as a lone slider, so
                 "spacing" meant two different controls depending on which element you had selected.
                 One nested-box matrix, one place, everywhere. */}
-            {!selItem && (
-              <ShadowGroup
-                nodeId={nodeId} styles={styles} setStyle={setStyle}
-                open={openGroups.includes('__shadow')} onToggle={() => toggleGroup('__shadow')}
-              />
-            )}
             <Group
               title="Spacing"
               open={openGroups.includes('__spacing')}

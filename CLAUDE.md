@@ -1466,6 +1466,43 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   clean when it never checked anything. Grep the output for YOUR filenames rather than trusting an
   empty result.
 
+- **Support Portal — Shadow moved to the toolbar as PRESETS, and tabs became pills (23 Sep 2026).**
+  ⚠️ **Shadow left the panel entirely** (`ShadowGroup` deleted, both call sites gone) and is one icon
+  on the floating toolbar opening four tiles — **None · Soft · Medium · Strong**. It was four controls
+  (a switch, a colour with opacity, Outer/Inner, a 3×3 position) for an effect a support portal almost
+  never wants, and the one property of a block you judge by eye against the page behind it rather
+  than by reading a number. ⚠️ The tiles are **not** on the bar itself: the bar stays one glyph wide
+  and the choice opens on demand, the way Presets and the colour popup already work.
+  ⚠️ **The presets differ only in the COLOUR's opacity** (6% / 12% / 20% of `#101828`), so
+  `shadowString` is unchanged and no new key had to be stored. A page already carrying a hand-set
+  colour, an inner shadow or an off-centre position still RENDERS it — the presets simply cannot
+  produce one any more. ⚠️ Every preset writes `shadowType: 'outer'` and `shadowPos: 'bottom'`
+  EXPLICITLY, or a block once given an inner shadow would keep it while the tile said "Soft".
+  ⚠️ `ShadowMenu` is withheld from a text CHILD but kept on a placed Text (`kind !== 'text' || placed`)
+  — the rule the panel group already had: a shadow on a run of words inside a card is a box round
+  nothing, but a dropped Text element is a widget in its own right.
+  ⚠️ **`Segmented` now renders TWO ways, decided by the OPTIONS rather than by the call site.** A
+  strip whose options ALL carry a label is a set of tabs — one of these is showing — so it takes the
+  pill-on-a-track the Theme panel's Primary / Secondary / Neutral already used: `bg-[#F1F5F9] p-0.5`
+  with the live one lifted out in white and a 1px shadow. A strip with any icon-only option keeps the
+  bordered buttons, because a bare glyph on a tinted track has no edge of its own to be read by, and
+  an icon row is usually a property (align left) rather than a place you are in. That is one edit
+  reaching **40 segmented fields across 25 widgets** — every `control: 'segmented'` field in
+  `portalWidgetSpec` / `portalCollectionSpecs` / `portalStructureSpecs` — because they all go
+  through the one control. ⚠️ `every`, not `some`: one icon-only option among labelled ones still
+  makes it an icon strip, and the mixed case is the one that most needs a border to sit on.
+  ⚠️ **The two service rows lost their Show-description switch.** A tile is a NAME over a CATEGORY —
+  "Payroll Setup" over "Finance" — and the category is what a requester scans a grid of services by,
+  so a tile without it is a list of names with the one thing that tells them apart switched off.
+  `showDesc` stays `true` in `defaults` and `ServiceTiles` still reads it.
+  ⚠️ **The Action CARD has no such toggle** and never did — its second line is a **Subtitle** text
+  field, which is content rather than a switch, so there was nothing to remove there.
+  ⚠️ **Three ReferenceErrors in one session**, all invisible to `npm run build` and all caught by the
+  `pageerror` listener in a Playwright probe: `sectionKind`/`placedPredefined` used without being
+  destructured from `useCanvas()`, `node.kind` where the prop is `kind`, and `Square` used without
+  being imported from lucide. This is the failure mode the How-to-run section names, and a browser
+  probe is the only thing that finds it.
+
 ## Parked features
 Four Support Portal features are BUILT-OR-PART-BUILT AND SWITCHED OFF, with their full context in
 [future-tasks.md](future-tasks.md): **AI** (rail item commented out in `SupportPortalBuilder`; the
