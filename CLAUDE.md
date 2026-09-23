@@ -1268,6 +1268,35 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   correct card report itself as "Action Card" and looked exactly like lost config. Read the title's
   OWN node (`el-N-title`), and check a screenshot before believing a text diff.
 
+- **Support Portal — the palette row's hover "+" (23 Sep 2026).** Hovering any widget in the Widgets
+  library reveals a **+** at its right-hand end; clicking it adds that widget and **leaves the
+  library open**, so the next one is one more click. It REPLACED the "Add several at once" mode
+  rather than joining it — that mode's entire value was staying in the library across several adds,
+  and the "+" delivers it without a mode to enter, numbered circles to tick and a footer to commit.
+  Two ways of doing one thing, one of them with its own state to enter and leave, is how a click
+  lands somewhere nobody meant. `addElements` in the builder went with it (its only caller was the
+  `onAddMany` prop), and so did the `isBlank` gate — the "+" is on **every** page, because it is
+  the affordance for adding a widget and a template page adds widgets too.
+  ⚠️ **The "+" and the row do NOT do the same thing, and the difference is the panel.** Adding a
+  widget SELECTS it, and selecting takes the panel over with that widget's settings — so a row click
+  adds and opens what it added (one widget added deliberately is usually one you are about to edit),
+  while the "+" passes `keepOpen` and the builder puts the panel straight back to the library. It
+  does that with `setActive('add')` AFTER `addElement` in the same batch, which wins over the
+  `setActive(null)` that `select()` does on the way past. The new element is still selected, so the
+  canvas outline says what landed.
+  ⚠️ **"Each new widget row-wise" needs no new code** — `addElement` already ends at
+  `dropAtSeam(last, type)`, and consecutive "+" clicks each land in their own full-width section
+  because the previous add left a ONE-element section selected, which has no free column to fall
+  into. An aimed add (an empty column selected, a drop) still fills what you aimed at.
+  ⚠️ **The row is a `<div role="button">`, not a `<button>`** — a button inside a button is invalid
+  markup that browsers silently repair by pulling the inner one out. Enter and Space are wired by
+  hand for the same reason, and the "+" `stopPropagation`s or one press would add the widget twice.
+  ⚠️ The tick-and-disable treatment is UNCHANGED and still comes from `placedPredefined` (Data and
+  Actions, plus any element carrying an explicit `node`); the "+" is simply withheld from a row
+  that already carries a tick — the two answer the same question and share one slot.
+  ⚠️ **Testing trap:** "Search for elements" is a PLACEHOLDER, so `innerText` never contains it — a
+  probe testing "is the library open" that way reports `false` on a working panel. Match the input.
+
 ## Parked features
 Four Support Portal features are BUILT-OR-PART-BUILT AND SWITCHED OFF, with their full context in
 [future-tasks.md](future-tasks.md): **AI** (rail item commented out in `SupportPortalBuilder`; the

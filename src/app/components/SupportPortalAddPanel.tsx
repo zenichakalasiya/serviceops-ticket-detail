@@ -2,8 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
   Boxes, Check, ChevronsUpDown, ClipboardList, Download, GalleryHorizontal, Gauge, Heading, LayoutPanelLeft, PlayCircle,
-  HelpCircle, Image as ImageIcon, Images, KeyRound, LayoutGrid, LayoutTemplate, LifeBuoy, Link2, List, ListChecks, Mail,
-  Megaphone, Minus, MousePointerClick, MoveVertical, Network, PanelTop, Phone, Rows3, Search, Shapes, Share2,
+  HelpCircle, Image as ImageIcon, Images, KeyRound, LayoutGrid, LayoutTemplate, LifeBuoy, Link2, List, Mail,
+  Megaphone, Minus, MousePointerClick, MoveVertical, Network, PanelTop, Phone, Plus, Rows3, Search, Shapes, Share2,
   ShoppingCart, Smile, Square, Star, Table, Timer, Type, X, Zap,
 } from 'lucide-react';
 import {
@@ -100,8 +100,14 @@ const searchText = (e: PortalElement) => `${e.name} ${e.group} ${e.keywords ?? '
 
 interface Props {
   /** Places the element on the page. Click and drag are the same add — one lands it where the
-   *  builder decides, the other where you aimed. */
-  onAdd: (elementId: string) => void;
+   *  builder decides, the other where you aimed.
+   *
+   *  `keepOpen` is what the row's "+" passes. Adding a widget SELECTS it, and selecting takes the
+   *  panel over with that widget's settings — so building a page one widget at a time used to cost
+   *  a trip back to Widgets after every single add. The "+" says "another one of these, I am still
+   *  shopping", and the library stays where it is. Clicking the row itself still opens what it
+   *  added, because one widget added deliberately is usually one widget you are about to edit. */
+  onAdd: (elementId: string, keepOpen?: boolean) => void;
   /* Element ids of the PREDEFINED blocks the page is currently carrying.
    *
    * ⚠️ Passed IN, computed from live page state, never read from the catalogue. `onPage` says a
@@ -109,26 +115,14 @@ interface Props {
    * the moment somebody deletes one. A row that greys out has to stay in step with the page to be
    * truthful, and a static flag never quite does. */
   placed?: Set<string>;
-  /* Adds several at once, each in its own full-width row, in the order they were picked.
-   *
-   * ⚠️ Offered on a FROM-SCRATCH page only, which is why it arrives as an optional prop rather
-   * than as a mode the panel decides for itself. A page started from a template already has its
-   * shape — its widgets belong in the rows that template drew — so "give me six rows of cards" is
-   * an answer to a question only a blank page asks. The panel is handed the ability, never infers it. */
-  onAddMany?: (elementIds: string[]) => void;
 }
 
-export function SupportPortalAddPanel({ onAdd, placed, onAddMany }: Props) {
-  /* ⚠️ A MODE, entered deliberately and left as soon as it has done its job. It changes what a
-     click on a row DOES, so it has to be visible while it is on and must not outlive the batch —
-     a mode still running after the work is finished is how a click lands somewhere nobody meant. */
-  const [multi, setMulti] = useState(false);
-  /* ⚠️ An ARRAY, not a Set: the order you tick them in is the order they land on the page, and the
-     number on each ticked row is what says so before you commit. A Set could not answer that. */
-  const [picked, setPicked] = useState<string[]>([]);
-  const togglePick = (id: string) =>
-    setPicked((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
-  const leaveMulti = () => { setMulti(false); setPicked([]); };
+/* ⚠️ The "add several at once" MODE that used to live here is gone, and the per-row "+" replaced
+   it rather than joined it. The mode's whole value was staying in the library across several adds,
+   and the "+" delivers that without asking anybody to enter a mode, tick numbered circles and then
+   commit — one click, one widget, list still open. Two ways of doing one thing, one of them with
+   its own state to enter and leave, is how a click lands somewhere nobody meant. */
+export function SupportPortalAddPanel({ onAdd, placed }: Props) {
   const [query, setQuery] = useState('');
   /* ⚠️ The anchor is a MEASURED rect, not the element: the list scrolls under a fixed popover, so
      the card has to be placed against where the row is NOW, not where React last thought it was.
@@ -249,26 +243,6 @@ export function SupportPortalAddPanel({ onAdd, placed, onAddMany }: Props) {
             ><X size={14} /></button>
           )}
         </div>
-        {/* ⚠️ Under the search, not beside it: the field is 8px tall in a 340px panel and a second
-            control on that line leaves neither room to read. And it is a SENTENCE, not an icon —
-            "add several at once" is a way of working nobody goes looking for, so the row has to say
-            what it offers rather than wait to be recognised. */}
-        {onAddMany && !multi && (
-          <button
-            type="button"
-            onClick={() => setMulti(true)}
-            className="mt-2 flex w-full items-center gap-2 rounded border border-dashed border-[#D9E0EA] bg-white px-2.5 py-1.5 text-left transition-colors hover:border-[#3D8BD0] hover:bg-[#F8FBFF]"
-          >
-            <ListChecks size={14} className="flex-shrink-0 text-[#3D8BD0]" />
-            <span className="min-w-0 flex-1 truncate text-[12px] font-medium text-[#364658]">Add several at once</span>
-            <span className="flex-shrink-0 text-[11px] text-[#9AA5B4]">each in its own row</span>
-          </button>
-        )}
-        {onAddMany && multi && (
-          <p className="mt-2 rounded bg-[#EBF5FF] px-2.5 py-1.5 text-[11.5px] leading-[1.5] text-[#2d6ca0]">
-            Pick the widgets you want. They land one per row, in the order you pick them.
-          </p>
-        )}
       </div>
 
       {/* Group tabs — jump to a group without scrolling for it. Drag the strip sideways to reach
@@ -340,11 +314,20 @@ export function SupportPortalAddPanel({ onAdd, placed, onAddMany }: Props) {
                    narrower copy of that rule — and the narrower one won, which is why Announcements
                    never went grey however many were on the page. One rule, one place. */
                 const added = !!placed?.has(e.id);
-                /* 1-based, so the badge reads as a position rather than as an index. */
-                const pick = picked.indexOf(e.id) + 1;
                 return (
-                  <button
+                  /* ⚠️ A DIV with a button's role, not a <button>. The row carries its own "+", and
+                     a button inside a button is invalid markup that browsers silently repair by
+                     pulling the inner one out — so the row has to stop being one. Enter and Space
+                     are wired below to keep it a control for anyone not using a mouse. */
+                  <div
                     key={e.id}
+                    role="button"
+                    tabIndex={added ? -1 : 0}
+                    onKeyDown={(ev) => {
+                      if (added || (ev.key !== 'Enter' && ev.key !== ' ')) return;
+                      ev.preventDefault();
+                      onAdd(e.id);
+                    }}
                     draggable={!added}
                     /* ⚠️ `aria-disabled`, NOT `disabled`. A disabled button swallows every mouse
                        event in Chromium, so the thirteen predefined rows could never open their
@@ -359,7 +342,7 @@ export function SupportPortalAddPanel({ onAdd, placed, onAddMany }: Props) {
                       // A card floating beside the cursor while you aim a drop is in the way.
                       setPeek(null);
                     }}
-                    onClick={() => { if (added) return; if (multi) togglePick(e.id); else onAdd(e.id); }}
+                    onClick={() => { if (!added) onAdd(e.id); }}
                     onMouseEnter={(ev) => setPeek({ id: e.id, rect: ev.currentTarget.getBoundingClientRect() })}
                     onMouseLeave={() => setPeek((c) => (c?.id === e.id ? null : c))}
                     /* The reason is on the control, not in a toast after the click — you can read it
@@ -370,8 +353,6 @@ export function SupportPortalAddPanel({ onAdd, placed, onAddMany }: Props) {
                     className={`group/el flex w-full items-center gap-3 rounded border px-3 py-2.5 text-left transition-all ${
                       added
                         ? 'cursor-not-allowed border-[#EDF0F4] bg-[#FAFBFC]'
-                        : pick > 0
-                        ? 'cursor-pointer border-[#3D8BD0] bg-[#F5FAFF]'
                         : 'cursor-grab border-[#E5E7EB] bg-white hover:border-[#3D8BD0] hover:shadow-[0_1px_2px_rgba(16,24,40,0.04),0_2px_8px_rgba(16,24,40,0.06)] active:cursor-grabbing'
                     }`}
                   >
@@ -392,18 +373,22 @@ export function SupportPortalAddPanel({ onAdd, placed, onAddMany }: Props) {
                         <Check size={11} strokeWidth={3} />
                       </span>
                     )}
-                    {/* ⚠️ The badge carries its NUMBER, not a tick. Several widgets landing at once
-                        arrive in an order, and the order is the one thing a tick cannot tell you —
-                        so the mark that says "picked" is the same mark that says "third". */}
-                    {multi && !added && (
-                      <span
-                        aria-hidden
-                        className={`flex size-5 flex-shrink-0 items-center justify-center rounded-full border text-[10.5px] font-semibold transition-colors ${
-                          pick > 0 ? 'border-[#3D8BD0] bg-[#3D8BD0] text-white' : 'border-[#CBD5E1] bg-white text-transparent'
-                        }`}
-                      >{pick > 0 ? pick : 0}</span>
+                    {/* ⚠️ Hidden until the row is hovered, and it shares its slot with the tick —
+                        the two answer the same question ("can I add this?") and a row never needs
+                        both. It appears on keyboard focus too, or it would be a control only a
+                        mouse can reach. */}
+                    {!added && (
+                      <button
+                        type="button"
+                        /* ⚠️ The row is a control as well, so the "+" has to stop the click from
+                           reaching it — otherwise one press adds the widget twice. */
+                        onClick={(ev) => { ev.stopPropagation(); onAdd(e.id, true); }}
+                        title={`Add “${e.name}” and keep this list open`}
+                        aria-label={`Add ${e.name}`}
+                        className="flex size-6 flex-shrink-0 items-center justify-center rounded text-[#9AA6B6] opacity-0 transition-all hover:bg-[#EBF5FF] hover:text-[#3D8BD0] focus-visible:opacity-100 group-hover/el:opacity-100"
+                      ><Plus size={15} /></button>
                     )}
-                  </button>
+                  </div>
                 );
               })}
             </div>
@@ -413,32 +398,6 @@ export function SupportPortalAddPanel({ onAdd, placed, onAddMany }: Props) {
       {/* The glyph is handed DOWN rather than imported back up — this file already imports the
           preview, so reaching into its registry from there would be a cycle. One registry, one
           direction. */}
-      {/* ⚠️ A STICKY footer, not a button at the foot of the list. The catalogue is six groups long
-          and the thing you have just built — a list of picks — has to stay answerable without
-          scrolling back to it. */}
-      {multi && (
-        <div className="flex-shrink-0 border-t border-[#E5E7EB] bg-white px-4 py-3">
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              disabled={picked.length === 0}
-              /* ⚠️ Disabled WITH the reason on it, the rule every other cap in this builder follows. */
-              title={picked.length === 0 ? "Pick at least one widget" : undefined}
-              onClick={() => { onAddMany?.(picked); leaveMulti(); }}
-              className={`h-8 flex-1 rounded text-[13px] font-medium transition-colors ${
-                picked.length === 0
-                  ? 'cursor-not-allowed border border-[#EDF0F4] text-[#C3CBD6]'
-                  : 'bg-[#3D8BD0] text-white hover:bg-[#2d6ca0]'
-              }`}
-            >{picked.length === 0 ? "Add to page" : `Add ${picked.length} ${picked.length === 1 ? "widget" : "widgets"}`}</button>
-            <button
-              type="button"
-              onClick={leaveMulti}
-              className="h-8 rounded border border-[#DFE5ED] bg-white px-3 text-[13px] font-medium text-[#364658] transition-colors hover:bg-[#F5F7FA]"
-            >Cancel</button>
-          </div>
-        </div>
-      )}
       {peek && (
         <PortalElementPreview
           elementId={peek.id}

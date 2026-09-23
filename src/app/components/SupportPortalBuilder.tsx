@@ -1604,38 +1604,6 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     const last = blockOrder.filter((b) => !removed.includes(b)).slice(-1)[0] ?? 'hero';
     dropAtSeam(last, type);
   }, [content.quick, selectedId, sections, rowOrder, blockOrder, removed, placedPredefined, dropInColumn, dropInRow, dropAtSeam, select, patchCfg, applyBannerShape, appendToBanner]);
-  /* ⚠️ HERE, not beside `dropAtSeam` where it belongs by subject: it reads `blockOrder` and
-     `removed`, which are declared between the two. A `useCallback` evaluates its dependency array
-     during render, so up there it was a temporal-dead-zone crash — "Cannot access 'blockOrder'
-     before initialization" — which esbuild cannot see and which blanks the whole builder.
-  /* SEVERAL at once — the from-scratch page's way of getting off the ground.
-   *
-   * ⚠️ Building a blank page one widget at a time is not slow because of the clicks: adding one
-   * SELECTS it, which swaps the panel from the library to that widget's settings, so every
-   * addition costs a trip back to Widgets. Picking six and landing them together removes the trip
-   * rather than the click.
-   *
-   * ⚠️ ONE `setSections`, not six calls to `dropAtSeam`. Six would be six toasts, six selections
-   * and six separate renders of a page that is being built in one action — and the last selection
-   * would close the library the admin is still working in.
-   * ⚠️ Each lands in its OWN full-width section, in the order they were picked, which is what the
-   * numbers on the ticked rows promised. Anything cleverer — pairing them into columns, say —
-   * would be the builder arranging a page nobody asked it to arrange.
-   * ⚠️ Nothing is selected afterwards. The admin picked several, so there is no one thing they
-   * are now editing, and stealing the panel to show one of six would answer a question they did
-   * not ask. */
-  const addElements = useCallback((types: string[]) => {
-    if (!types.length) return;
-    const last = blockOrder.filter((b) => !removed.includes(b)).slice(-1)[0] ?? 'hero';
-    const made = types.map((type) => {
-      const section = sectionFromRows(`sec-${nextSectionId.current++}`, [[1]]);
-      section.root.el = makeElement(type, section.id);
-      return { afterId: last, section };
-    });
-    setSections((prev) => [...prev, ...made]);
-    toast.success(`${made.length} widgets added, one per row`);
-  }, [blockOrder, removed, makeElement]);
-
   /* Add the row's one external-link card.
    *
    * ⚠️ It appends to `content.quick` — a REAL fifth action card, not a placed element standing in
@@ -3274,7 +3242,22 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
             {/* A rail panel wins while one is open; otherwise the panel is the element editor,
                 falling back to the "select something" empty state. */}
             {panelKey === 'add' ? (
-              <div className="min-h-0 flex-1"><SupportPortalAddPanel onAdd={addElement} placed={placedPredefined} onAddMany={isBlank ? addElements : undefined} /></div>
+              <div className="min-h-0 flex-1">
+                <SupportPortalAddPanel
+                  onAdd={(type, keepOpen) => {
+                    addElement(type);
+                    /* ⚠️ `keepOpen` is the row's "+". The add still SELECTS what it placed — you
+                       want to see what landed, and the canvas outline is how — but the panel goes
+                       straight back to the library, because "+" means "another one" and a trip
+                       back to Widgets after every single add is exactly what the old bulk-pick
+                       mode existed to avoid.
+                       ⚠️ This runs AFTER `addElement` in the same batch, so it wins over the
+                       `setActive(null)` that `select()` does on the way past. */
+                    if (keepOpen) { setActive('add'); setCollapsed(false); }
+                  }}
+                  placed={placedPredefined}
+                />
+              </div>
             ) : active === 'theme' ? (
               <div className="flex min-h-0 flex-1 flex-col"><PortalThemePanel theme={theme} onChange={(patch) => setTheme((t) => ({ ...t, ...patch }))} /></div>
             ) : active === 'branding' ? (
