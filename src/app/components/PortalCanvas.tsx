@@ -1,4 +1,4 @@
-import { cloneElement, createContext, isValidElement, Children, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { cloneElement, createContext, isValidElement, Children, useContext, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { WIDGET_FOR_NODE, WIDGET_FOR_TYPE, specById } from './portalWidgetSpec';
 import type { ReactNode } from 'react';
@@ -712,6 +712,10 @@ const BUTTON_STYLES: [string, string][] = [
    three of the four presets differ by how far the shadow spreads rather than by where it falls. An
    even halo on all four sides says "shadow" and says nothing about a direction nobody picks. */
 function ShadowGlyph({ size = 15 }: { size?: number }) {
+  /* ⚠️ The colons are STRIPPED. `useId` returns `:r0:`, and a colon inside `url(#…)` is a fragment
+     identifier browsers are entitled to reject — the filter then silently does not apply and the
+     halo comes back as the hard plate this change exists to remove. */
+  const fid = `sh${useId().replace(/:/g, '')}`;
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
       {/* ⚠️ The FIGURE is the square, and it has to be the size every other glyph's figure is.
@@ -722,7 +726,23 @@ function ShadowGlyph({ size = 15 }: { size?: number }) {
           bleed around it.
           ⚠️ The halo is the one mark here that cannot be a stroke — a shadow is a soft mass, not an
           outline — so it is a filled rect at low opacity. */}
-      <rect x="0.5" y="0.5" width="23" height="23" rx="6" fill="currentColor" opacity="0.24" />
+      {/* ⚠️ BLURRED, and at nearly three times the opacity. A flat plate at 24% behind a square reads as
+          a second square in a lighter colour — the eye has no reason to call it a shadow, which is
+          what the glyph was being reported as. A shadow is a soft mass with no edge of its own, so the
+          halo is gaussian-blurred and the fringe that shows around the square is what names it.
+          ⚠️ The square and the glyph's own size are UNCHANGED: 4..20 inside a 24 viewBox at 15px, the
+          same figure as every other icon on the bar. Only the shadow changed.
+          ⚠️ The halo's RECT shrank (1.5..22.5 from 0.5..23.5) because the blur spreads it back out
+          past where it started — drawn at the old size it would have feathered well outside the
+          viewBox and been clipped to a hard edge, which is the one thing a shadow must not have.
+          ⚠️ The filter id comes from `useId`. Several toolbars render this glyph at once, and an id
+          repeated in one document is one filter that every copy points at. */}
+      <defs>
+        <filter id={fid} x="-60%" y="-60%" width="220%" height="220%">
+          <feGaussianBlur stdDeviation="1.3" />
+        </filter>
+      </defs>
+      <rect x="1.5" y="1.5" width="21" height="21" rx="6" fill="currentColor" opacity="0.7" filter={`url(#${fid})`} />
       <rect x="4" y="4" width="16" height="16" rx="4" fill="#FFFFFF" stroke="currentColor"
         strokeWidth="2" strokeLinejoin="round" />
     </svg>

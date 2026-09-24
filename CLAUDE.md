@@ -1624,7 +1624,17 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   glyph: `Square` is a shape and reads as one, and the two that do show an offset pair — `Copy` and
   `SquareStack` — already mean copy in this product, one of them on the very same toolbar. A shadow
   icon has to show the one thing a shadow IS: a shape, and the same shape spread behind it. Two
-  rects, the back one filled at 0.28 and CENTRED — an even halo on all four sides, not an offset.
+  rects, the back one CENTRED — an even halo on all four sides, not an offset.
+  ⚠️ **The halo is GAUSSIAN-BLURRED** (`feGaussianBlur` σ 1.3, fill at 0.7) as of 24 Sep 2026. Flat at
+  24% it read as a second square in a lighter colour — the eye has no reason to call that a shadow,
+  which is what the glyph kept being reported as. A shadow is a soft mass with no edge of its own, so
+  the fringe around the square is what names it. ⚠️ The SQUARE and the glyph's own size are unchanged
+  (4..20 in a 24 viewBox at 15px) — only the shadow did. ⚠️ The halo's rect SHRANK to 1.5..22.5,
+  because the blur spreads it back past where it started; drawn at the old 0.5..23.5 it feathered
+  outside the viewBox and was clipped to a hard edge, the one thing a shadow must not have.
+  ⚠️ The filter id comes from `useId()` **with the colons stripped** — several toolbars render this
+  glyph at once so the id cannot be a constant, and a colon inside `url(#…)` is a fragment identifier
+  a browser may reject, which silently drops the filter and brings the flat plate back.
   ⚠️ Offset down-right was the first drawing and it was wrong twice over: an offset pair is the
   picture `Copy` already owns, so at 15px the two were told apart only by a fill; and the icon
   stands for the whole control, where three of the four presets differ by how far the shadow
