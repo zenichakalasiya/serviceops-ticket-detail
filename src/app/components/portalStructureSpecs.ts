@@ -163,23 +163,13 @@ export const HERO_SPEC: WidgetSpec = {
     { key: 'overlayOn', label: 'Colour layer over the image', control: 'toggle', tab: 'style', group: 'Background', when: (c) => (c.bgKind ?? 'image') === 'image' && !!c.bannerImage },
     /* Solid (one colour, its opacity in the picker) or Gradient (type, angle and stops) — see OverlayLayerEditor. */
     { key: 'overlayLayer', label: '', control: 'overlayLayer', tab: 'style', group: 'Background', when: (c) => (c.bgKind ?? 'image') === 'image' && !!c.bannerImage && c.overlayOn !== false },
-    /* ── Where the heading, subheading and search sit — the same two choices the toolbar offers. */
-    {
-      key: 'contentAlign', label: 'Horizontal', control: 'segmented', tab: 'style', group: 'Alignment',
-      options: [{ value: 'left', label: 'Left' }, { value: 'center', label: 'Centre' }, { value: 'right', label: 'Right' }],
-    },
-    {
-      key: 'contentAlignY', label: 'Vertical', control: 'segmented', tab: 'style', group: 'Alignment',
-      options: [{ value: 'start', label: 'Top' }, { value: 'center', label: 'Middle' }, { value: 'end', label: 'Bottom' }],
-    },
-    /* ── Corners and border ─────────────────────────────────────────────────────────────────── */
-    { key: 'bannerRadius', label: 'Corner radius', control: 'slider', tab: 'style', group: 'Corners & border', min: 0, max: 40, unit: 'px' },
-    { key: 'bannerBorderWidth', label: 'Border width', control: 'slider', tab: 'style', group: 'Corners & border', min: 0, max: 8, unit: 'px' },
-    { key: 'bannerBorderColor', label: 'Border colour', control: 'color', tab: 'style', group: 'Corners & border', when: (c) => Number(c.bannerBorderWidth ?? 0) > 0 },
-    {
-      key: 'bannerBorderStyle', label: 'Border style', control: 'segmented', tab: 'style', group: 'Corners & border', when: (c) => Number(c.bannerBorderWidth ?? 0) > 0,
-      options: [{ value: 'solid', label: 'Solid' }, { value: 'dashed', label: 'Dashed' }, { value: 'dotted', label: 'Dotted' }],
-    },
+    /* ⚠️ NO Alignment group and NO Corners-&-border group. Both are on the banner's own floating
+       toolbar — the two align popups it always had, and now a Border and a Corner-radius button
+       beside them. A banner is the one block you never look away from while you are styling it,
+       so every one of these is judged by eye against the picture and the words inside it; a
+       slider in a panel is the copy you are not looking at, and it wins the last write.
+       Every key is unchanged and still read — `contentAlign`, `contentAlignY`, `bannerRadius`,
+       `bannerBorderWidth`, `bannerBorderColor`, `bannerBorderStyle` — so no banner moved. */
     /* ⚠️ NO Search group. Width and corner radius were the whole of it, and both are answered
        better elsewhere: the field's width is dragged with the Text & Search section it belongs to,
        and its radius is the theme's button radius — a portal whose search corners disagree with its
@@ -599,23 +589,10 @@ export const NAVBAR_SPEC: WidgetSpec = {
 export const BANNER_GROUP_SPEC: WidgetSpec = {
   id: 'banner_group', name: 'Group', group: 'Structure', reuse: 'single', family: 'flat',
   fields: [
-    {
-      key: 'dir', label: 'Direction', control: 'segmented', tab: 'style', group: 'Auto layout',
-      options: [{ value: 'column', label: 'Vertical' }, { value: 'row', label: 'Horizontal' }],
-    },
-    /* ⚠️ Gap is not a control any more — see the note in `GapBands`. Every section keeps its resting gap. */
-    {
-      key: 'align', label: 'Align items', control: 'segmented', tab: 'style', group: 'Auto layout',
-      options: (c) => [{ value: 'start', label: 'Start' }, { value: 'center', label: 'Centre' }, { value: 'end', label: 'End' },
-        ...(c.__textSection === true ? [{ value: 'stretch', label: 'Stretch' }] : [])],
-    },
-    /* The Text & Search section only: where its items sit DOWN the section. Stretch pins the words to the top and the
-       search to the bottom, and the space between them grows with the section. */
-    {
-      key: 'alignY', label: 'Vertical', control: 'segmented', tab: 'style', group: 'Auto layout',
-      when: (c) => c.__textSection === true,
-      options: [{ value: 'start', label: 'Top' }, { value: 'center', label: 'Middle' }, { value: 'end', label: 'Bottom' }, { value: 'stretch', label: 'Stretch' }],
-    },
+    /* ⚠️ NO Auto-layout group. Direction, Align items and Vertical are all on the section's own
+       floating toolbar — the same three controls, on the thing they arrange, where you can see the
+       result rather than predict it. Two copies of one setting means the one you are not looking
+       at wins the last write. Every key is still read. */
   ],
   packs: [],
   noDelete: true,

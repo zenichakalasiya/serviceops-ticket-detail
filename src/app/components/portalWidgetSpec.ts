@@ -1128,7 +1128,10 @@ export const WIDGET_SPECS: WidgetSpec[] = [
       /* The ICON that leads the title — a badge before the heading on a list, the glyph beside the
          number on a KPI. Above Title because it is read before it. "None" in the picker removes it. */
       /* ⚠️ The LIST only. A KPI is its number and what the number counts — no icon. */
-      { key: 'icon', label: 'Icon', control: 'icon', group: 'Content', when: (c) => c.display !== 'kpi' },
+      /* ⚠️ NO Icon field. The card's glyph is its own NODE on the canvas — click it and the shared
+         43-icon picker opens on the icon, which is the same edit made where you can see what it
+         sits beside. A second route through a panel two groups down is the one that goes stale.
+         `icon` is still read, so a card already carrying one keeps it. */
       { key: 'title', label: 'Title', control: 'text', group: 'Content' },
       /* ⚠️ The same Title row every other card carries — and this one is the admin's OWN card, which
          they named, so it has a better claim to the question than the fixed cards do. Withheld from

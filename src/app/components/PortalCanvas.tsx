@@ -922,7 +922,10 @@ function ColorMenu({ id }: { id: string }) {
   const ref = useRef<HTMLButtonElement>(null);
   const [at, setAt] = useState<DOMRect | null>(null);
   const viaCfg = fillsFromConfig(id);
-  const own = viaCfg ? (cfg?.(id) ?? {}) : (styles[id] ?? {});
+  /* One bag, read by key. The two stores have different TYPES but the same shape here, and a union
+     of them types every read as "not on one of these" — `Record` says what is actually true: this
+     reads keys out of whichever store owns this node. */
+  const own = (viaCfg ? cfg?.(id) : styles[id]) as Record<string, unknown> | undefined ?? {};
   const filled = viaCfg ? own.fill === 'color' : own.bgFill === 'color';
   /* ⚠️ An UNFILLED container opens the picker on opaque white, not on transparent. The picker keeps
      the alpha of the value it was handed, so opening on `rgba(255,255,255,0)` meant the first colour
@@ -2460,9 +2463,105 @@ function BannerToolbar() {
           </>
         )}
       </div>
+      {/* ⚠️ The banner's OWN border and corners, beside its colour — the same three questions every
+          other block answers on its bar, in the same order. They were a "Corners & border" group in
+          the panel, which is the copy you are not looking at while you are looking at the banner. */}
+      <BannerEdgeMenus />
       <span className="mx-0.5 h-4 w-px bg-[#E5E7EB]" />
       <button className="flex size-7 items-center justify-center rounded text-[#EF4444] transition-colors hover:bg-[#FEF3F2]" data-tip="Delete the banner" onClick={() => deleteNode('hero')}><Trash2 size={14} /></button>
     </div>
+  );
+}
+
+/* Border + Corner radius for the BANNER.
+ *
+ * ⚠️ Its own component rather than reusing `BorderMenu` / `RadiusMenu`: the banner keeps these under
+ * its own key names (`bannerBorderWidth`, `bannerBorderColor`, `bannerBorderStyle`, `bannerRadius`)
+ * in hero config, because a banner's border is painted on the BAND while every other block's is
+ * painted by `containerCss` from `borderWidth`/`radius`. Same controls, same popups, different keys
+ * — pretending otherwise would have written values the band never reads. */
+function BannerEdgeMenus() {
+  const { cfg, setCfg } = useCanvas();
+  const hero = cfg?.('hero') ?? {};
+  const [open, setOpen] = useState<'border' | 'radius' | null>(null);
+  const swatchRef = useRef<HTMLButtonElement>(null);
+  const [at, setAt] = useState<DOMRect | null>(null);
+  const width = Number(hero.bannerBorderWidth ?? 0);
+  const color = String(hero.bannerBorderColor ?? '#E5E7EB');
+  const stroke = String(hero.bannerBorderStyle ?? 'solid');
+  const radius = Number(hero.bannerRadius ?? 0);
+  const set = (patch: Record<string, unknown>) => setCfg?.('hero', patch);
+  return (
+    <>
+      <div className="relative">
+        <button className={open === 'border' ? btnOn : btn} data-tip="Border"
+          onClick={() => { setAt(null); setOpen((x) => (x === 'border' ? null : 'border')); }}>
+          <StrokeGlyph />
+        </button>
+        {open === 'border' && (
+          <>
+            <span className="fixed inset-0 z-[60]" onClick={() => { setOpen(null); setAt(null); }} />
+            <BarPop title="Border">
+              <p className="mb-1 text-[11px] text-[#7B8FA5]">Weight</p>
+              <div className="mb-3 flex items-center gap-2">
+                <input type="range" min={0} max={8} value={width}
+                  onChange={(e) => set({ bannerBorderWidth: Number(e.target.value) })} className={SLIDER} />
+                <span className="w-9 text-right text-[12px] tabular-nums text-[#364658]">{width}px</span>
+              </div>
+              {width === 0 && (
+                <p className="text-[11.5px] leading-[1.5] text-[#9AA6B6]">
+                  No border.{radius === 0 ? ' Square corners.' : ''}
+                </p>
+              )}
+              {width > 0 && (
+                <>
+                  <p className="mb-1 text-[11px] text-[#7B8FA5]">Style</p>
+                  <div className="mb-3 flex gap-1 rounded bg-[#F1F5F9] p-0.5">
+                    {BORDER_STYLES.map((s) => (
+                      <button key={s.value} onClick={() => set({ bannerBorderStyle: s.value })}
+                        className={`flex-1 rounded py-1.5 text-[12px] font-medium transition-colors ${
+                          stroke === s.value ? 'bg-white text-[#364658] shadow-[0_1px_2px_rgba(16,24,40,0.06)]' : 'text-[#7B8FA5] hover:text-[#364658]'
+                        }`}
+                      >{s.label}</button>
+                    ))}
+                  </div>
+                  <p className="mb-1 text-[11px] text-[#7B8FA5]">Colour</p>
+                  <button ref={swatchRef}
+                    onClick={() => setAt(at ? null : swatchRef.current!.getBoundingClientRect())}
+                    className="flex h-8 w-full items-center gap-2 rounded border border-[#DFE5ED] px-2 text-left text-[12px] text-[#364658] transition-colors hover:bg-[#F5F7FA]"
+                  >
+                    <span className="size-4 flex-shrink-0 rounded-[3px] border border-[#CBD5E1]" style={{ background: color }} />
+                    <span className="truncate">{color}</span>
+                  </button>
+                </>
+              )}
+            </BarPop>
+            {at && (
+              <PortalColorPicker value={color} anchor={at}
+                onChange={(v) => set({ bannerBorderColor: v })} onClose={() => setAt(null)} />
+            )}
+          </>
+        )}
+      </div>
+      <div className="relative">
+        <button className={open === 'radius' ? btnOn : btn} data-tip="Corner radius"
+          onClick={() => setOpen((x) => (x === 'radius' ? null : 'radius'))}>
+          <RadiusGlyph />
+        </button>
+        {open === 'radius' && (
+          <>
+            <span className="fixed inset-0 z-[60]" onClick={() => setOpen(null)} />
+            <BarPop w={220} title="Corner radius">
+              <div className="flex items-center gap-2">
+                <input type="range" min={0} max={40} value={radius}
+                  onChange={(e) => set({ bannerRadius: Number(e.target.value) })} className={SLIDER} />
+                <span className="w-9 text-right text-[12px] tabular-nums text-[#364658]">{radius}px</span>
+              </div>
+            </BarPop>
+          </>
+        )}
+      </div>
+    </>
   );
 }
 

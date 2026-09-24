@@ -1598,6 +1598,18 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   ⚠️ **The Border popup says "No border." at weight 0** (and adds "Square corners." when the radius
   is 0 too). One quiet line, no icon and no card: a popup that shrinks to a single slider reads as
   half-loaded, where a sentence says the state is one somebody chose.
+  ⚠️ **The BANNER's border and corners are on ITS toolbar too** (`BannerEdgeMenus`), with its
+  Alignment and Corners-&-border groups gone from the panel. ⚠️ It is its OWN component rather than
+  a reuse of `BorderMenu` / `RadiusMenu`: the banner keeps these under its own key names
+  (`bannerBorderWidth` / `bannerBorderColor` / `bannerBorderStyle` / `bannerRadius`) in hero config,
+  because a banner's border is painted on the BAND while every other block's comes from
+  `containerCss`. Same controls, same popups, different keys — sharing the component would have
+  written values the band never reads.
+  ⚠️ **The banner GROUP's Auto-layout trio is gone** (Direction · Align items · Vertical): all three
+  are on that section's own `GroupToolbar`, on the thing they arrange.
+  ⚠️ **The Custom Data Widget has no Icon field.** A card's glyph is its own NODE — click it and the
+  shared picker opens on the icon, which is the same edit made where you can see what it sits
+  beside. A second route through a panel two groups down is the one that goes stale.
   ⚠️ **A COLUMN has no Width slider.** Its width is dragged — the side handle trades width with the
   neighbour on that side so the row still adds up, where a slider could only set this column's own
   share and leave the panel and the handles disagreeing about what a row is.
