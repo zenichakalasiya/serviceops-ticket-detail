@@ -128,18 +128,14 @@ export const P1_Container: StylePack = {
     const set = (k, v) => p.setStyle(p.id, { [k]: v });
     return (
       <>
-        {field('bgFill', 'Fill', (v, setV) => (
-          <Segmented
-            value={v}
-            onChange={setV}
-            /* ⚠️ No Image fill. A background photograph behind a widget is not a fill, it is artwork —
-               it needs a crop, a focal point and a contrast guard to stay readable, none of which a
-               three-way segmented control can offer. Where a picture genuinely belongs (an action
-               card's icon slot, the banner) it has its own field that does all three. */
-            options={[{ value: 'none', label: 'None' }, { value: 'color', label: 'Colour' }]}
-          />
-        ))}
-        {fill === 'color' && colorField('bg', 'Background colour')}
+        {/* ⚠️ NO Fill and NO Background colour. Both moved to the floating toolbar's colour
+            button — a background is the one property of a box you pick by looking at it against the
+            page behind it, and two tabs over a colour field was three controls for one question.
+            ⚠️ "None" went with them rather than moving: transparent is a colour like any other now,
+            reached by dragging the picker's opacity to 0. A separate None is a second way to say one
+            value, and the one people press by accident when they meant white.
+            The keys are unchanged — `bgFill` and `bg`, still read by `containerCss` — so every
+            widget already carrying a background keeps it. */}
         {fill === 'image' && field('bgImage', 'Background image', (v, setV) => <UploadZone value={v} onChange={setV} />)}
         {fill === 'image' && field('bgOverlay', 'Overlay', (v, setV) => (
           <SliderRow value={v} onChange={setV} min={0} max={80} unit="%" />

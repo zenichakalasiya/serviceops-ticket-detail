@@ -859,9 +859,9 @@ export const WIDGET_SPECS: WidgetSpec[] = [
              card's icon slot — it has its own field that does all three properly.
              ⚠️ `bgImage` stays in `defaults` and the renderer still reads it, so anything already
              carrying one keeps drawing it; there is simply no longer a way to set one here. */
-            { key: 'fill', label: 'Fill', control: 'segmented',
-              options: [{ value: 'none', label: 'None' }, { value: 'color', label: 'Colour' }] },
-            { key: 'bg', label: 'Background colour', control: 'color', when: (c) => c.fill === 'color' },
+            /* ⚠️ Fill and Background colour moved to the floating toolbar's colour button — see the note
+               in the P1 pack. The keys are unchanged (`fill` / `bg`, painted by `fillCss`), so anything
+               already carrying a background keeps it; there is simply no longer a field here. */
             { key: 'borderWidth', label: 'Border', control: 'borderRow', when: (c) => c.fill !== 'none' },
             { key: 'radius', label: 'Corner radius', control: 'radius', when: (c) => c.fill !== 'none' },
             /* ⚠️ No Shadow control. The card already carries the one soft shadow the page's card

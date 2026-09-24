@@ -1352,6 +1352,22 @@ export const canAddBeside = (id: string): boolean => {
   return !!t && CAN_ADD_BESIDE.has(t);
 };
 
+/* Where a node's BACKGROUND is stored.
+ *
+ * ⚠️ TWO stores, and it is not a detail. A section, a built-in band and an action card keep their
+ * fill in widget CONFIG (`fill` / `bg`, painted by `fillCss`); everything else keeps it in the
+ * STYLE store (`bgFill` / `bg`, painted by `containerCss`). Writing the wrong one saves a value the
+ * canvas never reads — which is the exact fault `fillCss` was written to fix, when the built-in
+ * quick cards were reading the style store while their panel wrote config.
+ * ⚠️ The band list is the one `STRUCTURE_FOR_NODE` maps to the SECTION spec, because sharing that
+ * spec is the same thing as sharing its `fill` field. */
+const CONFIG_FILL_BANDS = new Set(['quick', 'work', 'work-main', 'work-rail', 'records']);
+export const fillsFromConfig = (id: string): boolean =>
+  /^sec-d+$/.test(id)
+  || CONFIG_FILL_BANDS.has(id)
+  /* The four fixed action cards and the two addable ones. */
+  || /^quick-[a-z]+$/.test(id)
+  || placedType(id) === 'x-action-card';
 export function toolbarCaps(id: string): ToolbarCaps {
   /* A block inside Contact Us: delete, split into a second column, and the two alignments. It is a
      line inside a card — there is nowhere to drag it to and nothing to duplicate it into. */

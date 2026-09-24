@@ -3795,6 +3795,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                   style={{
                     flex: '2 1 0%',
                     gap: secGapCss("work-main"),
+                    ...fillCss(wc('work-main')),
                     gridTemplateColumns: `repeat(${secCols("work-main", 2)}, minmax(0, 1fr))`,
                     /* ⚠️ `auto`, not `1fr`. Equal rows made every row as tall as the TALLEST one on
                        the grid — fine while all four cards were half-width lists of similar length,
@@ -3826,7 +3827,11 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                 <Sel
                   id="work-rail"
                   className="flex min-w-0 flex-col"
-                  style={{ flex: '1 1 0%', gap: secGapCss("work-rail") }}
+                  /* ⚠️ `fillCss` here too. Both work regions resolve to the SECTION spec, so both offer a
+                     background — and neither read one, so the control wrote a value nothing painted.
+                     That was invisible while the field sat in a panel nobody opened for a region;
+                     on the toolbar it is one click from every card in the rail. */
+                  style={{ flex: '1 1 0%', gap: secGapCss("work-rail"), ...fillCss(wc('work-rail')) }}
                 >
                   {rail.map((id, i) => {
                     /* Only the TOP card is pinned; everything under it keeps the rail's own rhythm.

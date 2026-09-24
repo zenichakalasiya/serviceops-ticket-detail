@@ -15,7 +15,7 @@ import type { BannerNode } from './portalBannerLayout';
 import { BANNER_GROUPS, bannerGroupGap } from './portalPageModel';
 // ArrowLeft stays in use by the card toolbar's "Move left".
 import { toast } from 'sonner';
-import { HEADING_SIZE, PORTAL_FONTS, SECTION_LAYOUTS, SPLITTABLE_BANDS, TEXT_STYLES, ZERO_BOX, COMPOSABLE, BANNER_BLOCKS, inBanner, dragIdOf, isContactChild, isServiceTile, boxInfo, canAddBeside, defaultAlignH, nodeById, paintsOwnShadow, paintsOwnSurface, toolbarCaps, nodePath, placedIn, placedType } from './portalPageModel';
+import { fillsFromConfig, HEADING_SIZE, PORTAL_FONTS, SECTION_LAYOUTS, SPLITTABLE_BANDS, TEXT_STYLES, ZERO_BOX, COMPOSABLE, BANNER_BLOCKS, inBanner, dragIdOf, isContactChild, isServiceTile, boxInfo, canAddBeside, defaultAlignH, nodeById, paintsOwnShadow, paintsOwnSurface, toolbarCaps, nodePath, placedIn, placedType } from './portalPageModel';
 import { DEFAULT_THEME } from './PortalThemePanel';
 import type { PortalTheme } from './PortalThemePanel';
 import { boxCss, containerCss } from './portalStyleResolver';
@@ -332,6 +332,8 @@ const MAX_OVERLAP = 120;
 const btnOn = 'flex size-7 items-center justify-center rounded bg-[#EBF5FF] text-[#3D8BD0]';
 /* A cap, not an absence: the button stays where it was and carries the reason on hover. */
 const btnOff = 'flex size-7 cursor-not-allowed items-center justify-center rounded text-[#C3CBD6]';
+/** The hairline that groups a toolbar — see the note at the LOOK group. */
+const Rule = () => <span className="mx-0.5 h-4 w-px flex-shrink-0 bg-[#E5E7EB]" />;
 
 /* One axis of alignment: a button showing what is set, and a popup of the four ways to set it.
    ⚠️ The trigger shows the CURRENT option's glyph, not a generic "align" symbol. A fixed icon would
@@ -702,6 +704,64 @@ function ShadowGlyph({ size = 15 }: { size?: number }) {
       <rect x="1" y="1" width="14" height="14" rx="3.5" fill="currentColor" opacity="0.28" />
       <rect x="4.15" y="4.15" width="7.7" height="7.7" rx="1.8" fill="#FFFFFF" stroke="currentColor" strokeWidth="1.3" />
     </svg>
+  );
+}
+
+/* ── The container's BACKGROUND, on the toolbar ────────────────────────────────────────────────
+ *
+ * ⚠️ It left the sidebar's Style group on all 30 panels that had it. Fill was two tabs — None and
+ * Colour — over a colour field, which is three controls for one question, and a background is the
+ * one property of a box you pick by looking at it against the page rather than by reading a hex.
+ * ⚠️ NO "None" tab. Transparent is a colour like any other now: drag the picker's opacity to 0.
+ * A separate None is a second way to express the same value, and the one people reach for by
+ * accident when they wanted white.
+ * ⚠️ TWO STORES, and which one a node uses is not a detail: sections, the built-in bands and the
+ * action cards keep their fill in widget CONFIG (`fill` / `bg`, read by `fillCss`), everything else
+ * in the STYLE store (`bgFill` / `bg`, read by `containerCss`). Writing the wrong one saves a value
+ * the canvas never looks at — the exact fault `fillCss` was written to fix. */
+function ColorMenu({ id }: { id: string }) {
+  const { styles, setStyle, cfg, setCfg } = useCanvas();
+  const ref = useRef<HTMLButtonElement>(null);
+  const [at, setAt] = useState<DOMRect | null>(null);
+  const viaCfg = fillsFromConfig(id);
+  const own = viaCfg ? (cfg?.(id) ?? {}) : (styles[id] ?? {});
+  const filled = viaCfg ? own.fill === 'color' : own.bgFill === 'color';
+  /* ⚠️ An UNFILLED container opens the picker on opaque white, not on transparent. The picker keeps
+     the alpha of the value it was handed, so opening on `rgba(255,255,255,0)` meant the first colour
+     anybody chose came out invisible — a hex typed in, a swatch pressed, and nothing on the canvas.
+     "No fill" is said by the chequered swatch on the button; the picker is where you pick a colour,
+     and transparency is reached by dragging its opacity down from something you can see. */
+  const value = filled ? String(own.bg ?? '#FFFFFF') : '#FFFFFF';
+  const write = (v: string) => {
+    if (viaCfg) setCfg?.(id, { fill: 'color', bg: v });
+    else setStyle(id, { bgFill: 'color', bg: v });
+  };
+  return (
+    <>
+      <button
+        ref={ref}
+        className={at ? btnOn : btn}
+        data-tip="Background colour"
+        onClick={() => setAt(at ? null : ref.current!.getBoundingClientRect())}
+      >
+        {/* The swatch IS the answer to "what colour is this?", so the button shows it rather than a
+            generic palette glyph. A chequer behind it is what makes transparent readable — an empty
+            white square and a white background are the same picture. */}
+        <span
+          className="size-[15px] rounded-[3px] border border-[#CBD5E1]"
+          style={{
+            backgroundColor: filled ? value : undefined,
+            backgroundImage: filled ? undefined
+              : 'linear-gradient(45deg,#E2E8F0 25%,transparent 25%,transparent 75%,#E2E8F0 75%),linear-gradient(45deg,#E2E8F0 25%,transparent 25%,transparent 75%,#E2E8F0 75%)',
+            backgroundSize: '6px 6px',
+            backgroundPosition: '0 0, 3px 3px',
+          }}
+        />
+      </button>
+      {at && (
+        <PortalColorPicker value={value} anchor={at} onChange={write} onClose={() => setAt(null)} />
+      )}
+    </>
   );
 }
 
@@ -1258,7 +1318,6 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
           choice opens on demand, the way Presets and the colour popup already work.
           ⚠️ Not on a TEXT child. A shadow on a run of words is a box drawn round nothing the reader
           can see — the rule the panel group already had. */}
-      {(kind !== 'text' || placed) && <ShadowMenu id={id} />}
       {placedType(id) === 'b-button' && <ButtonStyleMenu id={id} />}
       {/* The one thing you author on these without opening the panel. */}
       {(placedType(id) === 'b-accordion' || placedType(id) === 'c-faq') && (
@@ -1317,6 +1376,13 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
           already does per side, and its glyph said nothing about padding — so it read as an unknown
           action on a toolbar where every other button is a movement or a duplicate. Zeroing four
           sides is not common enough to earn a permanent seat next to Delete. */}
+      {/* ── LOOK ─────────────────────────────────────────────────────────────────────────────────
+          ⚠️ One group, fenced by rules: where the block sits, what colour it is and whether it
+          lifts off the page are all "what does this look like", where everything to the left is
+          "where does this go and how many are there". The three used to be scattered — alignment
+          at the end, shadow beside Copy, colour not on the bar at all — so the bar read as a list
+          of unrelated glyphs rather than as two answers with a line between them. */}
+      {(caps.alignH !== false || caps.alignV !== false || kind !== 'text' || placed) && <Rule />}
       {caps.alignH !== false && (
         <AlignAxis
           axis="h"
@@ -1337,6 +1403,12 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
           onPick={(v) => { setStyle(id, { alignY: v as never }); setAxis(null); }}
         />
       )}
+      {/* ⚠️ Not on a text CHILD, the same rule Shadow follows: a heading's colour is its TYPE colour,
+          set on the text toolbar over the words, and a background behind a run of words inside a
+          card is a box nobody asked for. A placed Text element is a widget and keeps both. */}
+      {(kind !== 'text' || placed) && <ColorMenu id={id} />}
+      {(kind !== 'text' || placed) && <ShadowMenu id={id} />}
+      {caps.remove !== false && <Rule />}
       {caps.remove !== false && (
         <button
           className="flex size-7 items-center justify-center rounded text-[#EF4444] transition-colors hover:bg-[#FEF3F2]"

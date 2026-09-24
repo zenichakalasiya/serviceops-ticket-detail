@@ -1540,6 +1540,39 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   placeholder (`getByPlaceholder('Support Portal Name')` / `'Support Portal URL'`) and the Company
   `<select>` by index.
 
+- **Support Portal — the container's BACKGROUND is on the toolbar, on all 30 panels (24 Sep 2026).**
+  Fill (None / Colour) + Background colour left the sidebar's Style group everywhere it appeared: two
+  tabs over a colour field is three controls for one question, and a background is the one property
+  of a box you pick by looking at it against the page behind it rather than by reading a hex.
+  ⚠️ **NO "None" tab.** Transparent is a colour like any other now — drag the picker's opacity to 0.
+  A separate None is a second way to express one value, and the one people press by accident when
+  they meant white. ⚠️ Which means an UNFILLED container must open the picker on **opaque white**, not
+  on `rgba(255,255,255,0)`: the picker keeps the alpha of the value it is handed, so opening on
+  transparent made the first colour anybody chose come out invisible. "No fill" is said by the
+  **chequered swatch on the button**, not by the value in the picker.
+  ⚠️ **TWO STORES, and the toolbar has to route between them.** `fillsFromConfig(id)` in
+  `portalPageModel`: a section (`sec-N`), the bands that share the SECTION spec (`quick`, `work`,
+  `work-main`, `work-rail`, `records`) and the action cards keep their fill in widget CONFIG
+  (`fill` / `bg`, painted by `fillCss`); everything else keeps it in the STYLE store (`bgFill` /
+  `bg`, painted by `containerCss`). Writing the wrong one saves a value the canvas never reads —
+  the exact fault `fillCss` was written to fix.
+  ⚠️ **`work-main` and `work-rail` never read their own fill.** Both resolve to the SECTION spec, so
+  both have always OFFERED a background, and neither painted one — invisible while the field sat in a
+  panel nobody opened for a region, obvious now it is one click from every card in the rail. They
+  spread `fillCss` like `quick` and `records` already did.
+  ⚠️ **The bar is grouped now**: `⠿ │ moves · add · copy │ align · colour · shadow │ delete`, with a
+  `Rule` hairline between. The three in the middle are all "what does this look like" where
+  everything left of them is "where does this go" — they used to be scattered (alignment at the end,
+  shadow beside Copy, colour not on the bar at all), so the row read as unrelated glyphs.
+  ⚠️ The colour button is withheld from a text CHILD, the same rule Shadow follows: a heading's colour
+  is its TYPE colour, set on the text toolbar over the words. A placed Text keeps both.
+  **The 30 panels**, for anyone auditing this later: 12 Data (My Open Requests · Pending Approvals ·
+  Most Read · My Assets · My CIs · Announcements · Contact Us · Favourite Services · Most Used
+  Services · Feedback · FAQ · FAQ items) · 10 Basic/Visual/Custom (Accordion · Card · Custom Card ·
+  Custom Card links · Custom Data Widget · List · Media Slider · Photo Gallery · Text with Image ·
+  Video) · 4 structure (Page · Row · Column · KPI) · 2 via `G1` (Data cards tile · Large/Small
+  Title) · plus Section and Action Card, which held their own inline copy.
+
 ## Parked features
 Four Support Portal features are BUILT-OR-PART-BUILT AND SWITCHED OFF, with their full context in
 [future-tasks.md](future-tasks.md): **AI** (rail item commented out in `SupportPortalBuilder`; the
