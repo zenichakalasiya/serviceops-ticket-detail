@@ -691,13 +691,16 @@ const BUTTON_STYLES: [string, string][] = [
 /* ⚠️ DRAWN, not borrowed from lucide. The set has no drop-shadow glyph: `Square` is a shape and read
    as one, and the two that do show an offset pair — `Copy` and `SquareStack` — already mean copy in
    this product, one of them on the very same toolbar. A shadow icon has to show the ONE thing a
-   shadow is: a shape, and the same shape displaced behind it. So it is two squares, the back one
-   filled at low opacity and offset down-right, exactly what the effect does to the block. */
+   shadow is: a shape, and the same shape spread behind it.
+   ⚠️ CENTRED, not offset down-right. An offset pair is the drawing `Copy` already owns, so at 15px
+   the two were told apart only by a fill — and the icon has to stand for the whole control, where
+   three of the four presets differ by how far the shadow spreads rather than by where it falls. An
+   even halo on all four sides says "shadow" and says nothing about a direction nobody picks. */
 function ShadowGlyph({ size = 15 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 16 16" fill="none" aria-hidden>
-      <rect x="5.4" y="5.4" width="9.2" height="9.2" rx="2" fill="currentColor" opacity="0.3" />
-      <rect x="1.4" y="1.4" width="9.2" height="9.2" rx="2" fill="#FFFFFF" stroke="currentColor" strokeWidth="1.3" />
+      <rect x="1" y="1" width="14" height="14" rx="3.5" fill="currentColor" opacity="0.28" />
+      <rect x="4.15" y="4.15" width="7.7" height="7.7" rx="1.8" fill="#FFFFFF" stroke="currentColor" strokeWidth="1.3" />
     </svg>
   );
 }

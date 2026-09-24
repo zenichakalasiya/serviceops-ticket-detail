@@ -1481,8 +1481,13 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   ⚠️ **The icon is DRAWN (`ShadowGlyph`), not borrowed from lucide.** The set has no drop-shadow
   glyph: `Square` is a shape and reads as one, and the two that do show an offset pair — `Copy` and
   `SquareStack` — already mean copy in this product, one of them on the very same toolbar. A shadow
-  icon has to show the one thing a shadow IS: a shape, and the same shape displaced behind it. Two
-  rects, the back one filled at 0.3 and offset down-right.
+  icon has to show the one thing a shadow IS: a shape, and the same shape spread behind it. Two
+  rects, the back one filled at 0.28 and CENTRED — an even halo on all four sides, not an offset.
+  ⚠️ Offset down-right was the first drawing and it was wrong twice over: an offset pair is the
+  picture `Copy` already owns, so at 15px the two were told apart only by a fill; and the icon
+  stands for the whole control, where three of the four presets differ by how far the shadow
+  SPREADS rather than by where it falls. A halo says shadow and says nothing about a direction
+  nobody picks.
   ⚠️ `ShadowMenu` is withheld from a text CHILD but kept on a placed Text (`kind !== 'text' || placed`)
   — the rule the panel group already had: a shadow on a run of words inside a card is a box round
   nothing, but a dropped Text element is a widget in its own right.
