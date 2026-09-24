@@ -7,7 +7,7 @@ import {
   AlignLeft, AlignRight, AlignStartHorizontal, AlignStartVertical, StretchHorizontal, StretchVertical, ArrowDown, ArrowLeft, ArrowRight,
   ArrowUp, Baseline, Bold, Check, ChevronDown, ChevronRight, Columns2, Copy, GripHorizontal, GripVertical, Italic, Link2, Rows2,
   Braces, Highlighter, Maximize2, UnfoldVertical, Move, MoveHorizontal, MoveVertical, Plus, RemoveFormatting,
-  PaintBucket, Replace, Square, SquareDashed, Trash2, Underline, X, ImagePlus, Palette, LayoutDashboard, Columns3,
+  PaintBucket, Replace, SquareDashed, Trash2, Underline, X, ImagePlus, Palette, LayoutDashboard, Columns3,
 } from 'lucide-react';
 import { BannerFillEditor, BannerPresetPicker, TilePresetPicker } from './PortalBannerTools';
 import { bannerBoxId, flipRoot, groupOf, presetsFor } from './portalBannerLayout';
@@ -701,11 +701,36 @@ const BUTTON_STYLES: [string, string][] = [
 function ShadowGlyph({ size = 15 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
-      {/* The halo is the one mark here that cannot be a stroke — a shadow is a soft mass, not an
-          outline — so it is a filled rect at low opacity, sized to lucide's own 2..22 box. */}
-      <rect x="2" y="2" width="20" height="20" rx="5" fill="currentColor" opacity="0.26" />
-      <rect x="7" y="7" width="10" height="10" rx="2.5" fill="#FFFFFF" stroke="currentColor"
+      {/* ⚠️ The FIGURE is the square, and it has to be the size every other glyph's figure is.
+          It was 10 units across inside a 20-unit halo — so the thing your eye reads as the icon was
+          42% of the box where lucide's Square is 75%, and the whole glyph looked smaller than its
+          neighbours however even the boxes were. The square now matches Square's own 3..21 box, and
+          the halo grew past it to stay a halo: the mark reads at full size and the shadow is the
+          bleed around it.
+          ⚠️ The halo is the one mark here that cannot be a stroke — a shadow is a soft mass, not an
+          outline — so it is a filled rect at low opacity. */}
+      <rect x="0.5" y="0.5" width="23" height="23" rx="6" fill="currentColor" opacity="0.24" />
+      <rect x="4" y="4" width="16" height="16" rx="4" fill="#FFFFFF" stroke="currentColor"
         strokeWidth="2" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+/* Border / stroke. ⚠️ A RING, not a plain square. lucide's `Square` is the shape itself and reads as
+   one — it said nothing about the edge, which is the only thing this button controls. Drawing the
+   outline as a band with real thickness is what a weight, a style and a colour are FOR, and it is
+   what tells this apart from the Shadow beside it (a soft halo) and the Radius beside that (one
+   corner). Filled with an even-odd knockout so the ring stays crisp at 15px, where a 3px stroke
+   would blur. */
+function StrokeGlyph({ size = 15 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden>
+      <path
+        fill="currentColor"
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M3 7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7Zm4-.5h10A1.5 1.5 0 0 1 18.5 8v8a1.5 1.5 0 0 1-1.5 1.5H7A1.5 1.5 0 0 1 5.5 16V8A1.5 1.5 0 0 1 7 6.5Z"
+      />
     </svg>
   );
 }
@@ -771,6 +796,9 @@ function BorderMenu({ id }: { id: string }) {
   const width = Number(own.borderWidth ?? 0);
   const color = String(own.borderColor ?? '#E5E7EB');
   const stroke = String(own.borderStyle ?? 'solid');
+  /* The corner radius is read here ONLY so the no-border line can mention square corners when
+     both are zero — the control itself is the next button along. */
+  const radius = Number(own.radius ?? 8);
   const write = (patch: Record<string, unknown>) => {
     if (viaCfg) setCfg?.(id, patch);
     else setStyle(id, patch as never);
@@ -778,7 +806,7 @@ function BorderMenu({ id }: { id: string }) {
   return (
     <div className="relative">
       <button className={open ? btnOn : btn} data-tip="Border" onClick={() => setOpen((x) => !x)}>
-        <Square size={15} />
+        <StrokeGlyph />
       </button>
       {open && (
         <>
@@ -797,7 +825,16 @@ function BorderMenu({ id }: { id: string }) {
             </div>
             {/* ⚠️ Style and colour are REMOVED at weight 0, not disabled — the §2.2 rule this builder
                 follows everywhere: absent and greyed mean different things, and a dashed-vs-dotted
-                choice over an edge that is not drawn is a control describing nothing. */}
+                choice over an edge that is not drawn is a control describing nothing.
+                ⚠️ A LINE takes their place rather than nothing at all. A popup that shrinks to one
+                slider on its own reads as half-loaded; one quiet sentence says the state is a state
+                somebody chose. It is the whole of the empty state — no icon, no card, no button —
+                because there is nothing to do here except move the slider above it. */}
+            {width === 0 && (
+              <p className="text-[11.5px] leading-[1.5] text-[#9AA6B6]">
+                No border.{radius === 0 ? ' Square corners.' : ''}
+              </p>
+            )}
             {width > 0 && (
               <>
                 <p className="mb-1 text-[11px] text-[#7B8FA5]">Style</p>

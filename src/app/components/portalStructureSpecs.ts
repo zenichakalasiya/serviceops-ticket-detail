@@ -354,10 +354,12 @@ export const COLUMN_SPEC: WidgetSpec = {
      a panel offering to size a placeholder is asking a question about nothing. Both come back the
      moment anything lands in it, and the drag handles set the width either way. */
   fields: [
-    {
-      key: 'width', label: 'Width', control: 'slider', tab: 'style', group: 'Column', min: 10, max: 90, unit: '%',
-      when: (c) => c.hasContent !== false,
-    },
+    /* ⚠️ NO Width slider. A column's width is DRAGGED — the eight selection handles set it, and the
+       side handle trades width with the neighbour on that side so the row still adds up. A slider
+       could only ever set this column's own share, leaving the panel and the handles disagreeing
+       about what a row is; and a width is judged against the column beside it, which is on the
+       canvas rather than in a list. `width` is still read, so a column already carrying one keeps
+       its size. */
     /* A box holding rows or columns of its own gets the same spacing pair as a section. */
     /* ⚠️ Gap is not a control any more — see the note in `GapBands`. Every section keeps its resting gap. */
     {

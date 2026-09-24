@@ -1586,6 +1586,21 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   ⚠️ **Corner radius is its OWN icon beside it, not a fourth row inside Border.** A corner is not an
   edge — you can round a box with no border at all — and putting it behind Border's weight gate
   would hide it exactly when it is the only one of the two that applies.
+  ⚠️ **An icon's FIGURE has to be the size every other figure is, not its BOX.** The shadow glyph
+  sat on the right grid and still looked small: its square was 10 units across inside a 20-unit
+  halo, so the thing the eye reads as the icon was 42% of the box where lucide's Square is 75%.
+  The square now matches Square's own box and the halo grew past it to stay a halo.
+  ⚠️ **Border is a RING (`StrokeGlyph`), not lucide's `Square`.** A plain square is the SHAPE and
+  reads as one — it said nothing about the edge, which is the only thing that button controls.
+  An outline with real thickness is what a weight, a style and a colour are FOR, and it is what
+  tells it apart from the Shadow beside it (a soft halo) and the Radius beside that (one corner).
+  Drawn as an even-odd knockout rather than a 3px stroke, which blurs at 15px.
+  ⚠️ **The Border popup says "No border." at weight 0** (and adds "Square corners." when the radius
+  is 0 too). One quiet line, no icon and no card: a popup that shrinks to a single slider reads as
+  half-loaded, where a sentence says the state is one somebody chose.
+  ⚠️ **A COLUMN has no Width slider.** Its width is dragged — the side handle trades width with the
+  neighbour on that side so the row still adds up, where a slider could only set this column's own
+  share and leave the panel and the handles disagreeing about what a row is.
   ⚠️ **EVERY toolbar glyph is on LUCIDE'S GRID — a 24×24 viewBox, 2px stroke, round caps — and
   that is the whole of why the bar looks even.** The drawn ones (radius, shadow) were on a 16
   viewBox, so at the same `size` prop the mark filled nearly the whole box while every lucide icon
