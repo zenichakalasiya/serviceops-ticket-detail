@@ -1575,7 +1575,10 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
 
 - **Support Portal — the STYLE SECTION IS GONE from every sidebar, and Gap is gone from the product
   (24 Sep 2026).** The whole of a block's look is on the floating toolbar now:
-  `⠿ │ moves · add · copy │ align · colour · border · radius · shadow │ delete`.
+  `⠿ │ moves · add · copy │ align · align │ colour · border · radius · shadow │ delete`.
+  ⚠️ THREE rules, FOUR groups — move it · place it · style it · remove it. Alignment has a fence
+  of its own because where a block SITS and what it LOOKS LIKE are two questions; run together
+  they made one row of eight glyphs with a rule only at each end, which groups nothing.
   ⚠️ **Border is one icon over three answers** — weight, style, colour — because they are three parts
   of one question (what does this edge look like) and an edge is judged against the page behind it.
   ⚠️ **Style and colour are REMOVED at weight 0**, not disabled: a dashed-vs-dotted choice over an

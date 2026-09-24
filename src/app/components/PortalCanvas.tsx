@@ -1561,6 +1561,11 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
       {/* ⚠️ Not on a text CHILD, the same rule Shadow follows: a heading's colour is its TYPE colour,
           set on the text toolbar over the words, and a background behind a run of words inside a
           card is a box nobody asked for. A placed Text element is a widget and keeps both. */}
+      {/* ⚠️ Alignment gets its own fence. WHERE a block sits and WHAT IT LOOKS LIKE are two
+          questions, and running them together made one long row of eight glyphs with a rule only at
+          each end — which groups nothing. Three fences, four groups: move it · place it · style it ·
+          remove it. */}
+      {(caps.alignH !== false || caps.alignV !== false) && (kind !== 'text' || placed) && !isButton && <Rule />}
       {/* ⚠️ A BUTTON is excluded from all three. It draws itself entirely from widget CONFIG —
           `cfg.fillColor`, `cfg.radius`, its own border — so these three, which write the STYLE
           store for a placed element, would have written values the button never reads. Its look is
