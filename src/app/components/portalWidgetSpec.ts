@@ -1228,9 +1228,9 @@ export const WIDGET_SPECS: WidgetSpec[] = [
       { key: 'link', label: 'On click, go to', control: 'text', tab: 'style', group: 'Action', help: 'Leave blank to make the image decorative.' },
       { key: 'newTab', label: 'Open in a new tab', control: 'toggle', tab: 'style', group: 'Action', when: (c) => !!c.link },
 
-      // ── Style — the image's own box, using the shared components ──
-      { key: 'borderWidth', label: 'Border', control: 'borderRow', tab: 'style', group: 'Style' },
-      { key: 'radius', label: 'Corner radius', control: 'radius', tab: 'style', group: 'Style' },
+      /* ⚠️ NO Style group. Border and Corner radius write `borderWidth` and `radius` — the very keys
+         the floating toolbar's own Border and Corner-radius buttons write — so the panel and the bar
+         were two controls over one value, and the loser was whichever you did not touch last. */
       /* ⚠️ No Shadow, and no Alignment accordion. Shadow was four controls for an effect a support
          portal almost never wants, in the same group as the border and radius that decide how the
          picture reads. Alignment moved the figure only — the card template now says where the

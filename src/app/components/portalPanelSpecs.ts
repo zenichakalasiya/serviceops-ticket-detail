@@ -188,8 +188,9 @@ export const ICON_SPEC: WidgetSpec = {
           { key: 'iconColor', label: 'Icon colour', control: 'color' },
           // Absent on the bare frame: there is no box to fill or outline.
           { key: 'containerFill', label: 'Background colour', control: 'color', when: (c) => c.frame !== 'none' },
-          { key: 'borderWidth', label: 'Border', control: 'borderRow', when: (c) => c.frame !== 'none' },
-          { key: 'radius', label: 'Corner radius', control: 'radius', when: (c) => c.frame === 'rounded-fill' },
+          /* ⚠️ Border and Corner radius are the TOOLBAR's — same keys, same node — so they are not
+             asked again here. `containerFill` stays: it is the FRAME's fill, a different box from
+             the element's own background, and the bar cannot reach it. */
         ],
       },
       { id: 'alignment', fields: alignmentFields },

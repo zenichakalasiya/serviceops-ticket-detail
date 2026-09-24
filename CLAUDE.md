@@ -1603,6 +1603,16 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   "is there anything to style", which went false for ~30 widgets the moment P1 was withheld — and
   took the **Spacing** matrix down with the heading, a control nobody asked to remove. Spacing lives
   inside Design and always applies, so it is what keeps the section alive.
+  ⚠️ **Three specs kept their OWN inline copy** and had to be found separately: the **Image**
+  element and the **Icon** element both declared `borderWidth` + `radius` in a Style group — the
+  very keys the toolbar writes, on the very same node — so the panel and the bar were two controls
+  over one value and the loser was whichever you did not touch last. Both removed.
+  ⚠️ **The BUTTON is the opposite case and must NOT be treated as a duplicate.** It draws itself
+  entirely from widget CONFIG (`cfg.fillColor`, `cfg.radius`), so its panel's Corner radius is the
+  only control that reaches it and the toolbar's three would have written to a store it never
+  reads. Colour, Border and Radius are withheld from a Button on the bar (`isButton`); its look is
+  the `ButtonStyleMenu` beside them. When auditing this, check WHICH STORE the renderer reads
+  before calling two controls a duplicate.
   ⚠️ **A removed field must NOT be left as a stub.** `TITLE_GAP_FIELD` and `TILE_GAP_FIELD` were
   first kept as placeholders carrying `when: () => false`, which reads as safe and is not: a call
   site that spreads a `when` of its own over the field REPLACES that guard. Two did — so the

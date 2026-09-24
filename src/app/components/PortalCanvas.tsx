@@ -1249,6 +1249,7 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
    * you can put HERE right now, so the row is gone rather than dead.
    * ⚠️ The BANNER is exempt end to end — `sixOnly` answers first with `BANNER_SIDE_WIDGETS`, and the
    * banner's sections have their own rules about what may sit on them. */
+  const isButton = placedType(id) === 'b-button';
   const swapType = swaps && swapTarget ? placedType(swapTarget) : undefined;
   const secKind = sectionKind?.(id) ?? 'empty';
   const allow = (e: PortalElement) => {
@@ -1570,9 +1571,14 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
       {/* ⚠️ Not on a text CHILD, the same rule Shadow follows: a heading's colour is its TYPE colour,
           set on the text toolbar over the words, and a background behind a run of words inside a
           card is a box nobody asked for. A placed Text element is a widget and keeps both. */}
-      {(kind !== 'text' || placed) && <ColorMenu id={id} />}
-      {(kind !== 'text' || placed) && <BorderMenu id={id} />}
-      {(kind !== 'text' || placed) && <RadiusMenu id={id} />}
+      {/* ⚠️ A BUTTON is excluded from all three. It draws itself entirely from widget CONFIG —
+          `cfg.fillColor`, `cfg.radius`, its own border — so these three, which write the STYLE
+          store for a placed element, would have written values the button never reads. Its look is
+          the `ButtonStyleMenu` two slots along and its own panel group, which are the controls that
+          actually reach it. An inert button on a toolbar is worse than no button. */}
+      {(kind !== 'text' || placed) && !isButton && <ColorMenu id={id} />}
+      {(kind !== 'text' || placed) && !isButton && <BorderMenu id={id} />}
+      {(kind !== 'text' || placed) && !isButton && <RadiusMenu id={id} />}
       {(kind !== 'text' || placed) && <ShadowMenu id={id} />}
       {caps.remove !== false && <Rule />}
       {caps.remove !== false && (
