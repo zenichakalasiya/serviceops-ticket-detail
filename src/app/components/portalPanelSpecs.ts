@@ -318,7 +318,10 @@ export const CARD_ICON_SPEC: WidgetSpec = {
     content: [{ key: 'icon', label: 'Icon', control: 'icon' }],
     /* The same Icon group a data card's badge gets — colour, background, radius, border — so an
        action card's icon is styled with the controls it is already recognised by. */
-    accordions: [{ id: 'icon', open: true, groups: ['G6'] }, { id: 'spacing', spacing: 'both' }],
+    /* ⚠️ NO Icon style group. Its four fields — the glyph's colour, the badge behind it, its
+       corners and its border — are one popup on the floating toolbar, on the badge itself. What is
+       left here is the one thing the bar cannot ask: WHICH glyph. */
+    accordions: [{ id: 'spacing', spacing: 'both' }],
   },
   fields: [], packs: [],
   defaults: {},
@@ -350,7 +353,7 @@ export const DATA_TILE_SPEC: WidgetSpec = {
        many there are across, the card decides what one looks like. */
     content: [{ key: 'cardTemplate', label: 'Card templates', control: 'templates' }],
     accordions: [
-      { id: 'icon', open: true, groups: ['G6'] },
+      /* ⚠️ The Icon group is on the toolbar — see the note on CARD_ICON_SPEC. */
       { id: 'style', open: true, groups: ['G1'] },
       { id: 'spacing', spacing: 'both' },
     ],

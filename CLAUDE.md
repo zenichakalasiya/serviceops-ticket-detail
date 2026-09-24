@@ -1598,6 +1598,20 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   ⚠️ **The Border popup says "No border." at weight 0** (and adds "Square corners." when the radius
   is 0 too). One quiet line, no icon and no card: a popup that shrinks to a single slider reads as
   half-loaded, where a sentence says the state is one somebody chose.
+  ⚠️ **The ICON BADGE's four fields are one popup on the bar** (`IconMenu`): the glyph's colour, the
+  badge behind it, its corners and its border. It shows on the TWO nodes that have a badge and
+  nowhere else — an action card's `-icon` (all five cards, plus any placed Action Card) and a data
+  card's `-tile` (My Assets · My CIs · Favourite Services · Most Used Services). The Icon group is
+  gone from `CARD_ICON_SPEC` and `DATA_TILE_SPEC`; what stays in the panel is the one thing the bar
+  cannot ask — WHICH glyph.
+  ⚠️ **The resting values are copied from `IconBoxBlock`, not defaulted to something tidy.** An
+  action card's icon rests on whatever the CARD already chose (a template can seed one), a service
+  tile on the grey badge, a record tile on white — so a popup opening on #F1F5F9 everywhere would
+  show three of them a colour they are not.
+  ⚠️ **An `-icon` node is excluded from Colour / Border / Radius**, the Button's rule in reverse:
+  those write `containerCss` keys onto the WRAPPER around the badge, a box that paints behind the
+  thing you are looking at. A `-tile` keeps all four, because there the card and the badge inside
+  it are two real boxes — which is also why this is a separate button rather than a retarget.
   ⚠️ **The BANNER's border and corners are on ITS toolbar too** (`BannerEdgeMenus`), with its
   Alignment and Corners-&-border groups gone from the panel. ⚠️ It is its OWN component rather than
   a reuse of `BorderMenu` / `RadiusMenu`: the banner keeps these under its own key names

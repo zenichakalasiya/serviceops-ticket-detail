@@ -905,6 +905,114 @@ function RadiusMenu({ id }: { id: string }) {
   );
 }
 
+/* A mark inside its badge — the one thing this button is about. ⚠️ A diamond rather than a dot: a
+   centred dot inside a square is a radio button, and a filled inner square is the Shadow glyph. */
+function IconBadgeGlyph({ size = 15 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <rect x="3" y="3" width="18" height="18" rx="4.5" stroke="currentColor" strokeWidth="2" />
+      <path d="M12 7.6l3.4 4.4-3.4 4.4-3.4-4.4z" fill="currentColor" />
+    </svg>
+  );
+}
+
+/* ── The ICON BADGE, on the toolbar ────────────────────────────────────────────────────────────
+ *
+ * ⚠️ Exactly the four fields the panel's Icon group had, in the order it had them: the glyph's
+ * colour, the badge behind it, its corners and its border. It appears on the two nodes that HAVE a
+ * badge — an action card's `-icon` and a data card's `-tile` — and nowhere else.
+ * ⚠️ The RESTING values are copied from `IconBoxBlock` rather than defaulted to something tidy. An
+ * action card's icon rests on whatever the CARD already chose (a template can seed one), a service
+ * tile on the grey badge, a record tile on white — so a popup that opened on #F1F5F9 everywhere
+ * would show three of them a colour they are not.
+ * ⚠️ These keys are painted by `iconBoxCss`, NOT `containerCss`. That is the whole reason this is a
+ * separate button from the Colour / Border / Radius three beside it: on a TILE those style the card
+ * and these style the badge inside it, which are two real boxes. */
+function IconMenu({ id }: { id: string }) {
+  const { styles, setStyle } = useCanvas();
+  const [open, setOpen] = useState(false);
+  const [at, setAt] = useState<{ rect: DOMRect; key: 'iconColor' | 'iconFill' | 'iconBorderColor' } | null>(null);
+  const glyphRef = useRef<HTMLButtonElement>(null);
+  const fillRef = useRef<HTMLButtonElement>(null);
+  const edgeRef = useRef<HTMLButtonElement>(null);
+  const own = styles[id] ?? {};
+  const card = /^(.+)-icon$/.exec(id)?.[1];
+  const cardStyle = card ? styles[card] ?? {} : {};
+  const service = /^(favourites|services)-tile$/.test(id);
+  const rest = card
+    ? { color: String(cardStyle.iconColor ?? '#475467'), bg: String(cardStyle.iconFill ?? '#F1F5F9'), radius: cardStyle.iconShape === 'circle' ? 999 : 4 }
+    : service ? { color: '#475467', bg: '#F1F5F9', radius: 8 }
+    : { color: '#5A6B80', bg: '#FFFFFF', radius: 6 };
+  const color = String(own.iconColor ?? rest.color);
+  const bg = String(own.iconFill ?? rest.bg);
+  const radius = Number(own.iconRadius ?? rest.radius);
+  const bw = Number(own.iconBorderWidth ?? 0);
+  const bc = String(own.iconBorderColor ?? '#E5E7EB');
+  const bs = String(own.iconBorderStyle ?? 'solid');
+  const set = (patch: Record<string, unknown>) => setStyle(id, patch as never);
+  const swatch = (ref: React.RefObject<HTMLButtonElement | null>, label: string, value: string, key: 'iconColor' | 'iconFill' | 'iconBorderColor') => (
+    <>
+      <p className="mb-1 text-[11px] text-[#7B8FA5]">{label}</p>
+      <button
+        ref={ref}
+        onClick={() => setAt(at?.key === key ? null : { rect: ref.current!.getBoundingClientRect(), key })}
+        className="mb-3 flex h-8 w-full items-center gap-2 rounded border border-[#DFE5ED] px-2 text-left text-[12px] text-[#364658] transition-colors hover:bg-[#F5F7FA]"
+      >
+        <span className="size-4 flex-shrink-0 rounded-[3px] border border-[#CBD5E1]" style={{ background: value }} />
+        <span className="truncate">{value}</span>
+      </button>
+    </>
+  );
+  return (
+    <div className="relative">
+      <button className={open ? btnOn : btn} data-tip="Icon" onClick={() => { setAt(null); setOpen((x) => !x); }}>
+        <IconBadgeGlyph />
+      </button>
+      {open && (
+        <>
+          <span className="fixed inset-0 z-[60]" onClick={() => { setOpen(false); setAt(null); }} />
+          <BarPop title="Icon">
+            {swatch(glyphRef, 'Icon colour', color, 'iconColor')}
+            {swatch(fillRef, 'Background', bg, 'iconFill')}
+            <p className="mb-1 text-[11px] text-[#7B8FA5]">Corner radius</p>
+            <div className="mb-3 flex items-center gap-2">
+              <input type="range" min={0} max={24} value={Math.min(24, radius)}
+                onChange={(e) => set({ iconRadius: Number(e.target.value) })} className={SLIDER} />
+              <span className="w-9 text-right text-[12px] tabular-nums text-[#364658]">{radius > 24 ? 'Round' : `${radius}px`}</span>
+            </div>
+            <p className="mb-1 text-[11px] text-[#7B8FA5]">Border</p>
+            <div className="mb-3 flex items-center gap-2">
+              <input type="range" min={0} max={6} value={bw}
+                onChange={(e) => set({ iconBorderWidth: Number(e.target.value) })} className={SLIDER} />
+              <span className="w-9 text-right text-[12px] tabular-nums text-[#364658]">{bw}px</span>
+            </div>
+            {/* The same quiet line the Border popup uses, for the same reason. */}
+            {bw === 0 && <p className="text-[11.5px] leading-[1.5] text-[#9AA6B6]">No border.</p>}
+            {bw > 0 && (
+              <>
+                <div className="mb-3 flex gap-1 rounded bg-[#F1F5F9] p-0.5">
+                  {BORDER_STYLES.map((s) => (
+                    <button key={s.value} onClick={() => set({ iconBorderStyle: s.value })}
+                      className={`flex-1 rounded py-1.5 text-[12px] font-medium transition-colors ${
+                        bs === s.value ? 'bg-white text-[#364658] shadow-[0_1px_2px_rgba(16,24,40,0.06)]' : 'text-[#7B8FA5] hover:text-[#364658]'
+                      }`}
+                    >{s.label}</button>
+                  ))}
+                </div>
+                {swatch(edgeRef, 'Border colour', bc, 'iconBorderColor')}
+              </>
+            )}
+          </BarPop>
+          {at && (
+            <PortalColorPicker value={at.key === 'iconColor' ? color : at.key === 'iconFill' ? bg : bc}
+              anchor={at.rect} onChange={(v) => set({ [at.key]: v })} onClose={() => setAt(null)} />
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 /* ── The container's BACKGROUND, on the toolbar ────────────────────────────────────────────────
  *
  * ⚠️ It left the sidebar's Style group on all 30 panels that had it. Fill was two tabs — None and
@@ -1280,6 +1388,11 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
    * ⚠️ The BANNER is exempt end to end — `sixOnly` answers first with `BANNER_SIDE_WIDGETS`, and the
    * banner's sections have their own rules about what may sit on them. */
   const isButton = placedType(id) === 'b-button';
+  /* The two nodes that HAVE a badge — an action card's icon and a data card's tile. `-icon` is the
+     badge itself, so the generic container buttons have nothing to act on there; `-tile` is the
+     card, which keeps them. */
+  const isIcon = /-icon$/.test(id);
+  const hasIconBox = isIcon || /-tile$/.test(id);
   const swapType = swaps && swapTarget ? placedType(swapTarget) : undefined;
   const secKind = sectionKind?.(id) ?? 'empty';
   const allow = (e: PortalElement) => {
@@ -1611,9 +1724,15 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
           store for a placed element, would have written values the button never reads. Its look is
           the `ButtonStyleMenu` two slots along and its own panel group, which are the controls that
           actually reach it. An inert button on a toolbar is worse than no button. */}
-      {(kind !== 'text' || placed) && !isButton && <ColorMenu id={id} />}
-      {(kind !== 'text' || placed) && !isButton && <BorderMenu id={id} />}
-      {(kind !== 'text' || placed) && !isButton && <RadiusMenu id={id} />}
+      {/* ⚠️ An ICON node is excluded from the three as well, and for the Button's reason in reverse:
+          there they would write `containerCss` keys onto the WRAPPER around the badge — a box that
+          paints behind the thing you are looking at and that no design reads as part of itself. The
+          badge's own colour, corners and border are in the Icon popup below.
+          A TILE keeps all four: there the card and the badge inside it are two real boxes. */}
+      {(kind !== 'text' || placed) && !isButton && !isIcon && <ColorMenu id={id} />}
+      {(kind !== 'text' || placed) && !isButton && !isIcon && <BorderMenu id={id} />}
+      {(kind !== 'text' || placed) && !isButton && !isIcon && <RadiusMenu id={id} />}
+      {hasIconBox && <IconMenu id={id} />}
       {(kind !== 'text' || placed) && <ShadowMenu id={id} />}
       {caps.remove !== false && <Rule />}
       {caps.remove !== false && (
