@@ -353,7 +353,12 @@ export const DATA_TILE_SPEC: WidgetSpec = {
        many there are across, the card decides what one looks like. */
     content: [{ key: 'cardTemplate', label: 'Card templates', control: 'templates' }],
     accordions: [
-      /* ⚠️ The Icon group is on the toolbar — see the note on CARD_ICON_SPEC. */
+      /* ⚠️ The Icon group STAYS HERE, where an action card's went to the toolbar. A `-tile` id is the
+         SAME on every tile in the block — that is what makes the four restyle together — and because
+         it repeats, `Sel` draws no toolbar, no handles and no name chip for it (they would paint once
+         per tile). So the toolbar is not a place this node has, and moving the group there would have
+         left the tile badges with no icon settings anywhere at all. */
+      { id: 'icon', groups: ['G6'] },
       { id: 'style', open: true, groups: ['G1'] },
       { id: 'spacing', spacing: 'both' },
     ],

@@ -7,7 +7,7 @@ import {
   AlignLeft, AlignRight, AlignStartHorizontal, AlignStartVertical, StretchHorizontal, StretchVertical, ArrowDown, ArrowLeft, ArrowRight,
   ArrowUp, Baseline, Bold, Check, ChevronDown, ChevronRight, Columns2, Copy, GripHorizontal, GripVertical, Italic, Link2, Rows2,
   Braces, Highlighter, Maximize2, UnfoldVertical, Move, MoveHorizontal, MoveVertical, Plus, RemoveFormatting,
-  PaintBucket, Replace, SquareDashed, Trash2, Underline, X, ImagePlus, Palette, LayoutDashboard, Columns3,
+  PaintBucket, Replace, SquareDashed, SquareRoundCorner, SquareSquare, Trash2, Underline, X, ImagePlus, Palette, LayoutDashboard, Columns3,
 } from 'lucide-react';
 import { BannerCountPicker, BannerFillEditor, BannerPresetPicker, TilePresetPicker } from './PortalBannerTools';
 import { bannerBoxId, flipRoot, groupOf, presetsFor } from './portalBannerLayout';
@@ -336,6 +336,17 @@ const btnOn = 'flex size-7 items-center justify-center rounded bg-[#EBF5FF] text
 const btnOff = 'flex size-7 cursor-not-allowed items-center justify-center rounded text-[#C3CBD6]';
 /** The hairline that groups a toolbar — see the note at the LOOK group. */
 const Rule = () => <span className="mx-0.5 h-4 w-px flex-shrink-0 bg-[#E5E7EB]" />;
+
+/* A control on the bar that is a WORD rather than a glyph.
+ *
+ * ⚠️ Some of these controls are not a property you can draw. A paint bucket, a corner and a halo
+ * each picture the thing they change; "Icon" pictures nothing — it is a SCOPE, "the settings of the
+ * badge inside this card", and every attempt at it came out as a square with something in it, which
+ * at 15px is the Border glyph and the Shadow glyph with a different filling. A scope is named, not
+ * drawn.
+ * ⚠️ They are FENCED as a group. A word loose among glyphs reads as a label on the bar rather than
+ * as one of its buttons — the divider is what makes it a control. */
+const textBtn = 'flex h-7 items-center gap-1 rounded px-2 text-[12px] font-medium text-[#364658] transition-colors hover:bg-[#F3F4F6]';
 
 /* One axis of alignment: a button showing what is set, and a popup of the four ways to set it.
    ⚠️ The trigger shows the CURRENT option's glyph, not a generic "align" symbol. A fixed icon would
@@ -718,25 +729,6 @@ function ShadowGlyph({ size = 15 }: { size?: number }) {
   );
 }
 
-/* Border / stroke. ⚠️ A RING, not a plain square. lucide's `Square` is the shape itself and reads as
-   one — it said nothing about the edge, which is the only thing this button controls. Drawing the
-   outline as a band with real thickness is what a weight, a style and a colour are FOR, and it is
-   what tells this apart from the Shadow beside it (a soft halo) and the Radius beside that (one
-   corner). Filled with an even-odd knockout so the ring stays crisp at 15px, where a 3px stroke
-   would blur. */
-function StrokeGlyph({ size = 15 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden>
-      <path
-        fill="currentColor"
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M3 7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7Zm4-.5h10A1.5 1.5 0 0 1 18.5 8v8a1.5 1.5 0 0 1-1.5 1.5H7A1.5 1.5 0 0 1 5.5 16V8A1.5 1.5 0 0 1 7 6.5Z"
-      />
-    </svg>
-  );
-}
-
 /* ── The drawn glyphs ──────────────────────────────────────────────────────────────────────────
  *
  * ⚠️ ALL OF THEM ARE ON LUCIDE'S GRID: a 24×24 viewBox, 2px stroke, round caps and joins, no fill.
@@ -744,21 +736,12 @@ function StrokeGlyph({ size = 15 }: { size?: number }) {
  * `size` prop the mark filled nearly the whole box while every lucide icon beside it draws inside
  * 24 with its own ~2px of air — two icons the same nominal size, one visibly bigger and heavier.
  * An icon set is a grid and a stroke weight before it is a set of pictures.
- * ⚠️ This is also why nothing is imported from outside: a glyph from another family, however good,
- * arrives on a different grid at a different weight, which is the problem rather than the fix.
- * Where lucide HAS the icon (Square for Border, PaintBucket for Colour) it is used as-is. */
-
-/* Corner radius. ⚠️ ONE corner, not a rounded square: the control is about how sharp a corner is,
-   and a full outline draws three corners that are not the point plus an edge that belongs to
-   Border. The bare rounded elbow is what every design tool uses for this. */
-function RadiusGlyph({ size = 15 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d="M4 20v-9a7 7 0 0 1 7-7h9" />
-    </svg>
-  );
-}
+ * ⚠️ This is also why nothing is imported from outside lucide: a glyph from another family,
+ * however good, arrives on a different grid at a different weight, which is the problem rather than
+ * the fix. Where lucide HAS the icon it is used as-is, and that now covers three of the four:
+ * `PaintBucket` for Colour, `SquareSquare` for Border — a square inside a square, which is what a
+ * weight, a style and a colour draw — and `SquareRoundCorner` for Corner radius. Only the shadow's
+ * halo is still drawn, because the set has no glyph for it. */
 
 /* A popup on the bar, sized and chromed like Presets and Shadow so the three read as one family. */
 function BarPop({ w = 236, title, children }: { w?: number; title: string; children: ReactNode }) {
@@ -808,7 +791,7 @@ function BorderMenu({ id }: { id: string }) {
   return (
     <div className="relative">
       <button className={open ? btnOn : btn} data-tip="Border" onClick={() => setOpen((x) => !x)}>
-        <StrokeGlyph />
+        <SquareSquare size={15} />
       </button>
       {open && (
         <>
@@ -886,7 +869,7 @@ function RadiusMenu({ id }: { id: string }) {
   return (
     <div className="relative">
       <button className={open ? btnOn : btn} data-tip="Corner radius" onClick={() => setOpen((x) => !x)}>
-        <RadiusGlyph />
+        <SquareRoundCorner size={15} />
       </button>
       {open && (
         <>
@@ -904,17 +887,6 @@ function RadiusMenu({ id }: { id: string }) {
         </>
       )}
     </div>
-  );
-}
-
-/* A mark inside its badge — the one thing this button is about. ⚠️ A diamond rather than a dot: a
-   centred dot inside a square is a radio button, and a filled inner square is the Shadow glyph. */
-function IconBadgeGlyph({ size = 15 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
-      <rect x="3" y="3" width="18" height="18" rx="4.5" stroke="currentColor" strokeWidth="2" />
-      <path d="M12 7.6l3.4 4.4-3.4 4.4-3.4-4.4z" fill="currentColor" />
-    </svg>
   );
 }
 
@@ -967,9 +939,11 @@ function IconMenu({ id }: { id: string }) {
   );
   return (
     <div className="relative">
-      <button className={open ? btnOn : btn} data-tip="Icon" onClick={() => { setAt(null); setOpen((x) => !x); }}>
-        <IconBadgeGlyph />
-      </button>
+      <button
+        className={`${textBtn} ${open ? 'bg-[#F3F4F6]' : ''}`}
+        data-tip="The glyph's colour, its badge, and the badge's corners and border"
+        onClick={() => { setAt(null); setOpen((x) => !x); }}
+      >Icon<ChevronDown size={12} className="text-[#9CA3AF]" /></button>
       {open && (
         <>
           <span className="fixed inset-0 z-[60]" onClick={() => { setOpen(false); setAt(null); }} />
@@ -1394,7 +1368,16 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
      badge itself, so the generic container buttons have nothing to act on there; `-tile` is the
      card, which keeps them. */
   const isIcon = /-icon$/.test(id);
-  const hasIconBox = isIcon || /-tile$/.test(id);
+  /* ⚠️ The ACTION CARD is offered it too, and writes its badge's node. `quick-incident` matches and
+     `quick-incident-icon` does not — `[a-z]+` takes no hyphen — and the bare `quick` row needs the
+     hyphen, so the row itself is out. A placed card is `x-action-card`. */
+  const isActionCard = placedType(id) === 'x-action-card' || /^quick-[a-z]+$/.test(id);
+  /* ⚠️ NOT a data card's `-tile`. That id repeats across every tile in the block, which is why `Sel`
+     draws no toolbar for it at all — so there is nothing here to hang this on, and its Icon group
+     stays in the panel (`DATA_TILE_SPEC`). Testing for it was dead code that read like coverage. */
+  const iconTarget = isIcon ? id : isActionCard ? `${id}-icon` : null;
+  const named = placedType(id) === 'b-button' || placedType(id) === 'b-accordion'
+    || placedType(id) === 'c-faq' || placedType(id) === 'v-image' || !!caps.extLink || !!iconTarget;
   const swapType = swaps && swapTarget ? placedType(swapTarget) : undefined;
   const secKind = sectionKind?.(id) ?? 'empty';
   const allow = (e: PortalElement) => {
@@ -1453,14 +1436,10 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
      selection, and delegation keeps the label a property of the button rather than of extra markup
      around it. It renders BELOW the bar — the toolbar already sits above the element, so anything
      above IT is the likeliest thing to be clipped at the top of the canvas. */
-  const [tip, setTip] = useState<{ label: string; x: number } | null>(null);
-  const readTip = (e: React.MouseEvent) => {
-    const el = (e.target as HTMLElement)?.closest?.('[data-tip]') as HTMLElement | null;
-    if (!el) { setTip(null); return; }
-    const label = el.getAttribute('data-tip');
-    if (!label) { setTip(null); return; }
-    setTip({ label, x: el.offsetLeft + el.offsetWidth / 2 });
-  };
+  /* ⚠️ The SHARED hook, not a fourth copy of it. This one had drifted — it still measured from
+     `offsetLeft`, so on this bar, where nearly every popup control sits in a `relative` wrapper of
+     its own, the tip appeared under the first button whatever you were pointing at. */
+  const { tip, setTip, readTip } = useToolbarTip();
 
   return (
     <div
@@ -1471,12 +1450,7 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
       data-portal-toolbar
       className="relative flex items-center gap-0.5 rounded border border-[#E5E7EB] bg-white px-1 py-1 shadow-[0_4px_6px_-2px_rgba(16,24,40,0.06),0_12px_16px_-4px_rgba(16,24,40,0.10)]"
     >
-      {tip && (
-        <span
-          style={{ left: tip.x }}
-          className="pointer-events-none absolute top-full z-[80] mt-1.5 max-w-[220px] -translate-x-1/2 whitespace-nowrap rounded bg-[#1F2937] px-2 py-1 text-[11px] leading-[16px] text-white shadow-[0_4px_10px_rgba(16,24,40,0.18)]"
-        >{tip.label}</span>
-      )}
+      <ToolbarTip tip={tip} />
       {/* The grip drags the element itself — pick it up here, drop it on a sibling to reorder. */}
       {caps.drag !== false && (
         <span
@@ -1628,12 +1602,6 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
           choice opens on demand, the way Presets and the colour popup already work.
           ⚠️ Not on a TEXT child. A shadow on a run of words is a box drawn round nothing the reader
           can see — the rule the panel group already had. */}
-      {placedType(id) === 'b-button' && <ButtonStyleMenu id={id} />}
-      {/* The one thing you author on these without opening the panel. */}
-      {(placedType(id) === 'b-accordion' || placedType(id) === 'c-faq') && (
-        <AddItemMenu id={id} type={placedType(id)!} />
-      )}
-      {placedType(id) === 'v-image' && <CaptionMenu id={id} />}
       {/* Cards laid out across — the SAME skeleton presets the panel shows, so the toolbar says what each
           choice looks like instead of offering bare numbers. */}
       {/* ⚠️ A GATHERED ROW gets the SAME control, and it is the same question: how many of these cards
@@ -1663,6 +1631,27 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
           </div>
         );
       })()}
+      {/* A layout block has no instance to clone, so the button is absent rather than greyed. */}
+      {caps.copy !== false && dupOk && (
+        <button className={btn} data-tip="Copy" onClick={() => duplicateNode(id)}><Copy size={14} /></button>
+      )}
+
+      {/* ── NAMED ──────────────────────────────────────────────────────────────
+          Every control on the bar that is a WORD, in ONE fenced group.
+          ⚠️ They were scattered through the glyph run — Button style and Add item between Replace and
+          Presets, External link beside Copy — so a word turned up mid-row with a glyph either side of
+          it and read as a label on the bar rather than as one of its buttons. A fence is what makes
+          the difference legible: these are the controls that cannot be pictured, so they are named.
+          ⚠️ Two kinds live here and they keep their own colours: a blue one with a plus DOES something
+          (adds an item, adds a card), a neutral one with a chevron OPENS something (a style, a scope).
+          The colour is the difference between an action and a menu, which the words alone do not say. */}
+      {named && <Rule />}
+      {placedType(id) === 'b-button' && <ButtonStyleMenu id={id} />}
+      {/* The one thing you author on these without opening the panel. */}
+      {(placedType(id) === 'b-accordion' || placedType(id) === 'c-faq') && (
+        <AddItemMenu id={id} type={placedType(id)!} />
+      )}
+      {placedType(id) === 'v-image' && <CaptionMenu id={id} />}
       {/* ⚠️ A LABELLED action, not a "+". The Quick Actions row takes exactly one thing and it is a
           specific card — a plus would promise the palette, which this row is fenced against, and an
           icon would have to be guessed at. The words are the whole point of it. */}
@@ -1673,10 +1662,11 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
           onClick={() => addLinkCard?.()}
         ><Plus size={13} /> External link</button>
       )}
-      {/* A layout block has no instance to clone, so the button is absent rather than greyed. */}
-      {caps.copy !== false && dupOk && (
-        <button className={btn} data-tip="Copy" onClick={() => duplicateNode(id)}><Copy size={14} /></button>
-      )}
+      {/* ⚠️ The ICON's four settings, shown on the CARD as well as on the badge itself. The badge is a
+          16px target inside a card, so reaching its colour meant knowing you could click it — and the
+          card is what an admin has selected when they decide the glyph is the wrong colour. It writes
+          the badge's own node either way (`${id}-icon`), so the two routes are one edit. */}
+      {iconTarget && <IconMenu id={iconTarget} />}
       {/* ⚠️ The banner's globe button is GONE. "Also use this background behind the whole page" put
           one block in charge of the page's background — a change you make while looking at the
           banner and then see everywhere else — and the page has its own background in Theme, which
@@ -1734,7 +1724,6 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
       {(kind !== 'text' || placed) && !isButton && !isIcon && <ColorMenu id={id} />}
       {(kind !== 'text' || placed) && !isButton && !isIcon && <BorderMenu id={id} />}
       {(kind !== 'text' || placed) && !isButton && !isIcon && <RadiusMenu id={id} />}
-      {hasIconBox && <IconMenu id={id} />}
       {(kind !== 'text' || placed) && <ShadowMenu id={id} />}
       {caps.remove !== false && <Rule />}
       {caps.remove !== false && (
@@ -2131,15 +2120,46 @@ function SelectionHandles({ id, elRef }: { id: string; elRef: React.RefObject<HT
    `title` — so half the floating toolbars in this builder answered on contact and half made you
    wait a second, on glyphs (A with a bar, Tx, the align set) that are considerably less obvious
    than move-left and delete. */
+type ToolbarTipState = { label: string; x: number; above: boolean };
+
+/* ⚠️ The x is measured from the BUTTON'S RECT against the BAR'S rect, never from `offsetLeft`.
+   `offsetLeft` is relative to the nearest positioned ancestor, and half these buttons sit inside a
+   `relative` wrapper of their own (every one that opens a popup) — so those all reported 0 and their
+   tip appeared under the FIRST control on the bar however far along the row you were pointing. A
+   tooltip that names one button while pointing at another is worse than none.
+   ⚠️ It is INSTANT by design, against the product's 700ms Radix default. That default is right for a
+   tooltip repeating a label you can already read; on a bar where every control is a glyph the tooltip
+   IS the label, and waiting for it is waiting to find out what you are pointing at. */
 function useToolbarTip() {
-  const [tip, setTip] = useState<{ label: string; x: number } | null>(null);
+  const [tip, setTip] = useState<ToolbarTipState | null>(null);
   const readTip = (e: React.MouseEvent) => {
     const el = (e.target as HTMLElement)?.closest?.('[data-tip]') as HTMLElement | null;
     const label = el?.getAttribute('data-tip');
     if (!el || !label) { setTip(null); return; }
-    setTip({ label, x: el.offsetLeft + el.offsetWidth / 2 });
+    const bar = el.closest('[data-portal-toolbar]') as HTMLElement | null;
+    const r = el.getBoundingClientRect();
+    const b = bar?.getBoundingClientRect();
+    /* Below the bar by default — it already sits above the element it belongs to, so the space under
+       it is the clear one. It flips above only when the viewport's floor is closer than the tip is
+       tall, which is the case for a toolbar drawn near the bottom of the canvas. */
+    setTip({ label, x: r.left + r.width / 2 - (b?.left ?? 0), above: r.bottom + 40 > window.innerHeight });
   };
   return { tip, setTip, readTip };
+}
+
+/** The one tooltip every floating toolbar draws — a caret under (or over) the exact control. */
+function ToolbarTip({ tip }: { tip: ToolbarTipState | null }) {
+  if (!tip) return null;
+  return (
+    <span
+      style={{ left: tip.x }}
+      className={`pointer-events-none absolute z-[80] max-w-[220px] -translate-x-1/2 whitespace-nowrap rounded bg-[#1F2937] px-2 py-1 text-[11px] leading-[16px] text-white shadow-[0_4px_10px_rgba(16,24,40,0.18)] ${tip.above ? 'bottom-full mb-1.5' : 'top-full mt-1.5'}`}
+    >
+      {tip.label}
+      {/* The caret is the whole point: it is what ties the words to one of nine identical-sized glyphs. */}
+      <span className={`absolute left-1/2 size-2 -translate-x-1/2 rotate-45 bg-[#1F2937] ${tip.above ? '-bottom-[3px]' : '-top-[3px]'}`} />
+    </span>
+  );
 }
 
 function TextToolbar({ id, editing = false }: { id: string; editing?: boolean }) {
@@ -2174,12 +2194,7 @@ function TextToolbar({ id, editing = false }: { id: string; editing?: boolean })
       data-portal-toolbar
       className="relative flex items-center gap-0.5 rounded border border-[#E5E7EB] bg-white px-1 py-1 shadow-[0_4px_6px_-2px_rgba(16,24,40,0.06),0_12px_16px_-4px_rgba(16,24,40,0.10)]"
     >
-      {tip && (
-        <span
-          style={{ left: tip.x }}
-          className="pointer-events-none absolute top-full z-[80] mt-1.5 max-w-[220px] -translate-x-1/2 whitespace-nowrap rounded bg-[#1F2937] px-2 py-1 text-[11px] leading-[16px] text-white shadow-[0_4px_10px_rgba(16,24,40,0.18)]"
-        >{tip.label}</span>
-      )}
+      <ToolbarTip tip={tip} />
       <span {...drag} className="flex size-7 cursor-grab items-center justify-center text-[#9CA3AF] active:cursor-grabbing"><GripVertical size={14} /></span>
       <span className="mx-0.5 h-4 w-px bg-[#E5E7EB]" />
 
@@ -2529,9 +2544,7 @@ function BannerToolbar() {
       onMouseLeave={() => setTip(null)}
       className="relative flex items-center gap-0.5 rounded border border-[#E5E7EB] bg-white px-1 py-1 shadow-[0_4px_6px_-2px_rgba(16,24,40,0.06),0_12px_16px_-4px_rgba(16,24,40,0.10)]"
     >
-      {tip && (
-        <span style={{ left: tip.x }} className="pointer-events-none absolute top-full z-[80] mt-1.5 max-w-[220px] -translate-x-1/2 whitespace-nowrap rounded bg-[#1F2937] px-2 py-1 text-[11px] leading-[16px] text-white shadow-[0_4px_10px_rgba(16,24,40,0.18)]">{tip.label}</span>
-      )}
+      <ToolbarTip tip={tip} />
       <AlignAxis axis="h" value={h} options={H} open={axis === 'h'} onToggle={() => { setFill(false); setAxis((a) => (a === 'h' ? null : 'h')); }} onPick={(x) => { setCfg?.('hero', { contentAlign: x }); setAxis(null); }} />
       <AlignAxis axis="v" value={vAlign} options={V} open={axis === 'v'} onToggle={() => { setFill(false); setAxis((a) => (a === 'v' ? null : 'v')); }} onPick={(x) => { setCfg?.('hero', { contentAlignY: x }); setAxis(null); }} />
       <span className="mx-0.5 h-4 w-px bg-[#E5E7EB]" />
@@ -2621,7 +2634,7 @@ function BannerEdgeMenus() {
       <div className="relative">
         <button className={open === 'border' ? btnOn : btn} data-tip="Border"
           onClick={() => { setAt(null); setOpen((x) => (x === 'border' ? null : 'border')); }}>
-          <StrokeGlyph />
+          <SquareSquare size={15} />
         </button>
         {open === 'border' && (
           <>
@@ -2671,7 +2684,7 @@ function BannerEdgeMenus() {
       <div className="relative">
         <button className={open === 'radius' ? btnOn : btn} data-tip="Corner radius"
           onClick={() => setOpen((x) => (x === 'radius' ? null : 'radius'))}>
-          <RadiusGlyph />
+          <SquareRoundCorner size={15} />
         </button>
         {open === 'radius' && (
           <>
@@ -2721,9 +2734,7 @@ function GroupToolbar({ id }: { id: string }) {
       onMouseLeave={() => setTip(null)}
       className="relative flex items-center gap-0.5 rounded border border-[#E5E7EB] bg-white px-1 py-1 shadow-[0_4px_6px_-2px_rgba(16,24,40,0.06),0_12px_16px_-4px_rgba(16,24,40,0.10)]"
     >
-      {tip && (
-        <span style={{ left: tip.x }} className="pointer-events-none absolute top-full z-[80] mt-1.5 max-w-[220px] -translate-x-1/2 whitespace-nowrap rounded bg-[#1F2937] px-2 py-1 text-[11px] leading-[16px] text-white shadow-[0_4px_10px_rgba(16,24,40,0.18)]">{tip.label}</span>
-      )}
+      <ToolbarTip tip={tip} />
       {textSection && (
         /* ⚠️ A GRIP, so the banner's words move the same way its widgets do — press and drag it onto another
            section's edge to make a column or a row there. Without one the Text & Search section was the one

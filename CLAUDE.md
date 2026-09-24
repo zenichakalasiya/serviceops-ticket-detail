@@ -1326,6 +1326,39 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   withdrawn from the Card-type tiles, so it landed in a shape nothing could offer and nothing could
   change it to. It takes the spec's default (`regular`) like every other Announcements.
 
+- **Support Portal — the toolbar's TOOLTIP, its NAMED group, and two lucide swaps (24 Sep 2026).**
+  ⚠️ **The tooltip was pointing at the wrong button, on every bar.** `useToolbarTip` measured
+  `el.offsetLeft`, which is relative to the nearest POSITIONED ancestor — and every control that opens
+  a popup sits in a `relative` wrapper of its own, so all of those reported 0 and their tip appeared
+  under the FIRST control on the bar however far along the row you were pointing. It measures the
+  button's rect against the BAR's rect now, and carries a **caret**, which is what ties the words to
+  one of nine same-sized glyphs. It is **instant** by design (against the product's 700ms Radix
+  default): that default is right for a tooltip repeating a label you can already read, and on a bar
+  where every control is a glyph the tooltip IS the label. Below the bar by default, flipping above
+  only when the viewport floor is nearer than the tip is tall. ⚠️ ONE `ToolbarTip` component now — the
+  markup was copy-pasted at four call sites and `ElementToolbar` had a fifth, drifted copy of the hook
+  itself, which is why the fault was invisible from any one of them.
+  ⚠️ **Border is lucide `SquareSquare` and Corner radius is lucide `SquareRoundCorner`** — the drawn
+  `StrokeGlyph` (an even-odd ring) and `RadiusGlyph` (a bare elbow) are deleted. Three of the four are
+  lucide's own now; only the shadow halo is still drawn, because the set has no glyph for it.
+  ⚠️ **Every WORD on the bar is one fenced group** (`named` in `ElementToolbar`, class `textBtn`):
+  Button style · Add item (Accordion + FAQ) · Add caption (Image) · External link · **Icon**. They were
+  scattered through the glyph run, so a word turned up mid-row with a glyph either side and read as a
+  label ON the bar rather than as one of its buttons. Two kinds live there and keep their own colours —
+  a **blue** one with a plus DOES something, a **neutral** one with a chevron OPENS something.
+  ⚠️ **The Icon badge's control is a WORD, not a glyph, and it is on the CARD as well as the badge.**
+  A paint bucket, a corner and a halo each picture what they change; "Icon" pictures nothing — it is a
+  SCOPE ("the settings of the badge inside this card"), and every drawing of it came out as a square
+  with something in it, which at 15px is the Border glyph and the Shadow glyph with a different
+  filling. An action card (`quick-*` or a placed `x-action-card`) now offers it and writes
+  `` `${id}-icon` ``, so the badge — a 16px target inside a card — no longer has to be found by
+  clicking it. `IconBadgeGlyph` is deleted.
+  ⚠️ **A data card's `-tile` keeps its Icon group in the PANEL** (`DATA_TILE_SPEC`, `G6` restored). That
+  id is the SAME on every tile in the block, which is why `Sel` draws no toolbar, handles or name chip
+  for it at all — so it has no bar to carry the control, and the 23 Sep move to the toolbar had left
+  those badges with no icon settings anywhere. Testing `-tile$` in `iconTarget` was dead code that read
+  like coverage; it is gone.
+
 - **Support Portal — a GATHERED ROW of cards is a section in its own right (23 Sep 2026).** The set of
   action cards (or KPI tiles) on the banner now reads as one thing: it is BOUNDED, it is named after
   what it holds, and it carries the bar a section should — **grip · Presets · both alignments ·
