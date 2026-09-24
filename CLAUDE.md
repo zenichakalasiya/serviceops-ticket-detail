@@ -1297,6 +1297,35 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   ⚠️ **Testing trap:** "Search for elements" is a PLACEHOLDER, so `innerText` never contains it — a
   probe testing "is the library open" that way reports `false` on a working panel. Match the input.
 
+- **Support Portal — the banner's "+" asks HOW MANY SECTIONS, not which widget (24 Sep 2026).** The
+  toolbar's Plus opens a three-tile picker — **2 · 3 · 4 sections** — and picking one lays the banner
+  out at its default arrangement for that count with an **empty cell** in every section nobody has
+  filled; each cell then carries the existing "Add to banner" popup (`BannerSlot`, the same
+  `BANNER_SIDE_WIDGETS` list). Choosing a widget first meant choosing it before there was anywhere for
+  it to go: it landed wherever `normalizeTree`'s append rule put it, the arrangement set changed
+  underneath it, and the layout had to be corrected afterwards. Same list, one click later, in the
+  order the admin is actually working in. The arrangement tiles are untouched and stay on the bar.
+  ⚠️ **The count is every section INCLUDING the words**, so it runs 2–4 and tops out at
+  `MAX_BANNER_SECTIONS` — the words alone are one section, two widgets beside them make three.
+  Counting only the widgets would put a "4" on a control whose own cap is four and mean five.
+  ⚠️ **It only ever ADDS.** A count below what the banner holds is DISABLED with the reason on the tile
+  (`SkeletonTile` gained a `blocked` prop), so `setBannerSections` never has to decide which of the
+  admin's filled sections it would delete.
+  ⚠️ **Nothing is selected afterwards** — the admin asked for a shape, not for one of its cells; the
+  cells are what to click next and they say so.
+  ⚠️ **`defaultTreeFor` (portalBannerLayout) is ONE FAMILY**: `two-cols` → `col-two-rows` →
+  `col-three-rows` — the words keep the left column and the widgets stack beside them at every count.
+  A default that moved the words each time you added a section would rearrange the page on the admin's
+  behalf, which is what the arrangement tiles are for. `col-three-rows` (`R(0, C(1,2,3))`) was ADDED to
+  `PRESET_SHAPES[4]` for this: a default outside the preset set is a layout with no tile lit and no way
+  back to it.
+  ⚠️ `ItemSkeleton` treats the BARE id `bn-slot` as an empty cell — the tiles preview a banner nobody
+  has built, so there is no placed element for `placedType` to look up.
+  ⚠️ Related, same pass: **Announcements no longer arrives on the banner as the image carousel.**
+  `seedBannerItem`'s `display: 'image'` outlived the card type it named — "Image with carousel" was
+  withdrawn from the Card-type tiles, so it landed in a shape nothing could offer and nothing could
+  change it to. It takes the spec's default (`regular`) like every other Announcements.
+
 - **Support Portal — a GATHERED ROW of cards is a section in its own right (23 Sep 2026).** The set of
   action cards (or KPI tiles) on the banner now reads as one thing: it is BOUNDED, it is named after
   what it holds, and it carries the bar a section should — **grip · Presets · both alignments ·

@@ -182,8 +182,27 @@ const PRESET_SHAPES: Record<number, { id: string; label: string; s: Shape }[]> =
     { id: 'two-cols-two-rows', label: 'Two columns, then two rows', s: C(R(0, 1), 2, 3) },
     { id: 'three-cols-row', label: 'Three columns, then a row', s: C(R(0, 1, 2), 3) },
     { id: 'split-col-row', label: 'Two columns — the second split — then a row', s: C(R(0, C(1, 2)), 3) },
+    { id: 'col-three-rows', label: 'A column, and three rows beside it', s: R(0, C(1, 2, 3)) },
   ],
 };
+
+/* The layout a banner LANDS on when the admin says how many sections they want.
+ *
+ * ⚠️ One family, not three unrelated picks: the words keep the left column and the widgets stack beside them,
+ * at two sections, at three and at four. A default that changed its mind about where the words go each time you
+ * added a section would rearrange the page on the admin's behalf, which is the thing the arrangement tiles are
+ * for. Stacked rows are the honest alternative and they are the first tile in every set — they are simply not
+ * what a banner is: the words and something beside them is the shape every reference portal opens with.
+ * ⚠️ Each one is a real member of `PRESET_SHAPES`, so the tile for it lights up in the arrangement popup and
+ * the admin can get back to it. A default outside the set is a layout with no way home. */
+const DEFAULT_PRESET: Record<number, string> = { 2: 'two-cols', 3: 'col-two-rows', 4: 'col-three-rows' };
+
+/** The default arrangement for a banner holding `units.length` sections — null when there is no set for it. */
+export function defaultTreeFor(units: BannerNode[]): BannerNode | null {
+  const shapes = PRESET_SHAPES[Math.min(Math.max(units.length, 2), 4)] ?? [];
+  const s = shapes.find((p) => p.id === DEFAULT_PRESET[Math.min(Math.max(units.length, 2), 4)])?.s;
+  return s ? fill(s, units) : null;
+}
 
 /** A branch holding a branch of the same direction is one branch — the repair `prune` makes, so a preset's
  *  tree is spelled exactly as the drawn tree will be and `activePreset` can match it. */

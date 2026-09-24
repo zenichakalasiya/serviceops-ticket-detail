@@ -17,7 +17,7 @@ import { useRef, useState } from 'react';
 import type { CSSProperties, MouseEvent as ReactMouseEvent, ReactNode } from 'react';
 import { ArrowLeftRight, Minus, Plus, RotateCw } from 'lucide-react';
 import { ColorField } from './PortalColorPicker';
-import { activePreset, presetsFor, tilePresets } from './portalBannerLayout';
+import { activePreset, defaultTreeFor, presetsFor, tilePresets, unitsOf } from './portalBannerLayout';
 import type { BannerNode } from './portalBannerLayout';
 import { placedType } from './portalPageModel';
 
@@ -203,8 +203,10 @@ function ItemSkeleton({ id, on }: { id: string; on: boolean }) {
       </span>
     );
   }
-  /* An empty cell is the one non-text section that is not a solid box — it is the absence of one. */
-  if ((placedType(id) ?? '') === 'bn-slot') {
+  /* An empty cell is the one non-text section that is not a solid box — it is the absence of one.
+     ⚠️ The bare id `bn-slot` is how a tile draws a cell that does not exist YET — the count picker
+     previews a banner nobody has built, so there is no placed element to look the type up on. */
+  if ((placedType(id) ?? id) === 'bn-slot') {
     return <span className={`min-h-[8px] min-w-0 flex-1 rounded-[3px] border border-dashed ${edge}`} />;
   }
   return <span className={`min-h-[8px] min-w-0 flex-1 rounded-[3px] ${on ? BOX_ON : BOX_OFF}`} />;
@@ -244,16 +246,23 @@ function PresetArt({ node, on }: { node: BannerNode; on: boolean }) {
 }
 
 /** The one tile both pickers are drawn in — the Card templates tile. */
-function SkeletonTile({ on, label, onPick, children, tall = false }: { on: boolean; label: string; onPick: () => void; children: ReactNode; tall?: boolean }) {
+function SkeletonTile({ on, label, onPick, children, tall = false, blocked }: {
+  on: boolean; label: string; onPick: () => void; children: ReactNode; tall?: boolean;
+  /* ⚠️ A tile that cannot apply stays VISIBLE and disabled, carrying the reason — the rule every
+     limit in this builder follows. Removing it would leave a picker whose options change as you
+     work, with nothing saying what happened to the one that was there a moment ago. */
+  blocked?: string | null;
+}) {
   return (
     <button
       type="button"
-      title={label}
+      title={blocked ?? label}
       aria-label={label}
       aria-pressed={on}
+      disabled={!!blocked}
       onMouseDown={(e) => e.stopPropagation()}
-      onClick={(e) => { e.stopPropagation(); onPick(); }}
-      className={`flex ${tall ? 'h-[88px]' : 'h-[64px]'} min-w-0 flex-1 overflow-hidden rounded-lg border-2 bg-white p-1.5 transition-colors ${on ? 'border-[#3D8BD0]' : 'border-[#E5E7EB] hover:border-[#C3CBD6]'}`}
+      onClick={(e) => { e.stopPropagation(); if (!blocked) onPick(); }}
+      className={`flex ${tall ? 'h-[88px]' : 'h-[64px]'} min-w-0 flex-1 overflow-hidden rounded-lg border-2 bg-white p-1.5 transition-colors ${blocked ? 'cursor-not-allowed border-[#E5E7EB] opacity-45' : on ? 'border-[#3D8BD0]' : 'border-[#E5E7EB] hover:border-[#C3CBD6]'}`}
     >{children}</button>
   );
 }
@@ -271,6 +280,40 @@ export function BannerPresetPicker({ tree, onPick }: { tree: BannerNode | null; 
           <PresetArt node={p.tree} on={on === p.id} />
         </SkeletonTile>
       ))}
+    </div>
+  );
+}
+
+/* ── How many sections the banner holds ─────────────────────────────────────────────────────────
+ *
+ * The banner's "+" asks for a COUNT, not a widget. Picking a widget first meant picking it before there
+ * was anywhere for it to go: it landed wherever the tree happened to put it, the arrangement set changed
+ * underneath, and the layout had to be corrected after the fact. Saying "three sections" first lays the
+ * banner out empty, and then each cell is filled by clicking the cell — which is the order the admin is
+ * actually working in, and it is why the widget popup now lives on the empty cell instead of here.
+ *
+ * ⚠️ The count is every section INCLUDING the words, so it runs 2–4 and tops out at `MAX_BANNER_SECTIONS`.
+ * A banner with the words alone is one section; adding two widgets makes three. Counting only the widgets
+ * would put a "4" tile on a control whose own cap is four and mean five.
+ * ⚠️ A count BELOW what the banner already holds is disabled, never offered — applying it would have to
+ * delete a section the admin filled, and a picker is not where work gets thrown away. */
+export function BannerCountPicker({ tree, onPick }: { tree: BannerNode | null; onPick: (n: number) => void }) {
+  const cur = unitsOf(tree).length;
+  return (
+    <div className="grid grid-cols-3 gap-2">
+      {[2, 3, 4].map((n) => {
+        /* The preview is the layout this tile APPLIES — the words, then the empty cells that will land. */
+        const art = defaultTreeFor(['hero-content', ...Array.from({ length: n - 1 }, () => 'bn-slot')]);
+        const blocked = n < cur ? `The banner already holds ${cur} sections — delete one to go back to ${n}` : null;
+        return (
+          <SkeletonTile key={n} tall on={n === cur} blocked={blocked} label={`${n} sections`} onPick={() => onPick(n)}>
+            <span className="flex min-h-0 w-full flex-col gap-1">
+              <span className="flex min-h-0 flex-1">{art && <PresetArt node={art} on={n === cur} />}</span>
+              <span className="text-[10px] leading-[12px] text-[#7B8FA5]">{n} sections</span>
+            </span>
+          </SkeletonTile>
+        );
+      })}
     </div>
   );
 }

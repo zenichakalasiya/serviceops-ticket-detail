@@ -41,7 +41,7 @@ import type { Box, BoxDir, CustomSection, NodeStyle, PlacedElement, PortalPageCo
 import { PORTAL_ELEMENTS, PORTAL_EMPTY_WIDGETS, PORTAL_TEMPLATES, bannerLayout, bannerShape, isPredefinedElement, isPredefinedType } from './supportPortalData';
 import type { ShapeNode } from './supportPortalData';
 import { toneVars } from './portalTone';
-import { MAX_BANNER_CARDS, MAX_BANNER_SECTIONS, addToGroup, appendGroup, branchNode, groupOf, insertAtEdge, insertBeside, isBannerBox, isBannerGroup, leavesOf, normalizeTree, removeBranch, removeLeaf, replaceLeaf, shiftLeaf, swapLeaves, unitsOf } from './portalBannerLayout';
+import { MAX_BANNER_CARDS, MAX_BANNER_SECTIONS, addToGroup, appendGroup, branchNode, defaultTreeFor, groupOf, insertAtEdge, insertBeside, isBannerBox, isBannerGroup, leavesOf, normalizeTree, removeBranch, removeLeaf, replaceLeaf, shiftLeaf, swapLeaves, unitsOf } from './portalBannerLayout';
 import type { BannerNode } from './portalBannerLayout';
 import { IconPopover } from './PortalIconPicker';
 import type { IconChoice } from './PortalIconPicker';
@@ -1017,7 +1017,11 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     /* ⚠️ No column count is seeded any more: on the banner it follows the SHAPE of the section the block
        landed in (see `bannerCols` in the preview) — all the way across a strip, stacked in a narrow column —
        and a stored '1' would freeze it as stacked wherever it was later moved. */
-    if (type === 'c-announcements') patchCfg(elId, { display: 'image' });
+    /* ⚠️ Announcements no longer arrives as the IMAGE CAROUSEL. That seed outlived the card type it
+       named: "Image with carousel" was withdrawn from the Card-type tiles, so an Announcements
+       dropped on the banner landed in a shape nothing could offer and nothing could change it to —
+       an upload zone over a dark strip, with no tile lit in its own panel. It takes the spec's
+       default (`regular`) like every other Announcements now. */
     /* ⚠️ The Custom Card arrives on the banner as QUICK LINKS — that is the name the "+" offered it
        under, so it has to land on the Links layout or the admin gets a picture-and-paragraph card
        they did not ask for. The three links themselves are the card's OWN defaults; only the layout,
@@ -1027,6 +1031,28 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
        empty string draws nothing and the field is still there to type into. */
     if (type === 'x-card') patchCfg(elId, { layout: 'links', title: 'Quick links', sub: '' });
   }
+
+  /** How many SECTIONS the banner holds — the words plus the widgets beside them.
+   *
+   * Picking a count lays the banner out at its default arrangement for that count with EMPTY cells in
+   * every section the admin has not filled, and each cell then asks what goes in it. That is the whole
+   * of the banner's "+": choosing a widget first put it somewhere before there was a somewhere, and the
+   * arrangement had to be corrected afterwards.
+   * ⚠️ It only ever ADDS. A count below what the banner holds is disabled in the picker, so nothing here
+   * has to decide which of the admin's filled sections it would have deleted. */
+  const setBannerSections = useCallback((n: number) => {
+    const units = unitsOf(heroTree());
+    const want = Math.max(2, Math.min(n, MAX_BANNER_SECTIONS));
+    if (want <= units.length) return;
+    const slots = Array.from({ length: want - units.length }, () => makeElement('bn-slot', 'hero'));
+    const tree = defaultTreeFor([...units, ...slots.map((s) => s.id)]);
+    if (!tree) return;
+    setRowExtras((prev) => ({ ...prev, hero: [...(prev.hero ?? []), ...slots] }));
+    patchCfg('hero', { bannerTree: tree });
+    /* ⚠️ Nothing is selected. The admin asked for a shape, not for one of the cells in it — selecting the
+       first would take the panel over with an empty slot's settings and say the wrong thing about what
+       just happened. The cells themselves are what to click next, and they say so. */
+  }, [makeElement, patchCfg]);
 
   /** The banner's + adders: an empty cell beside an item — a column to its left or right, a row above or below. */
   const addBannerCell = useCallback((anchorId: string, side: 'left' | 'right' | 'top' | 'bottom') => {
@@ -2791,7 +2817,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
 
   const canvasCtx = {
     selectedId, hoverId, select, setHover: setHoverId, styles, setStyle, setText, setCfg: patchCfg,
-    addBannerCell, heroTree, moveToBanner, dropIntoBanner,
+    addBannerCell, setBannerSections, heroTree, moveToBanner, dropIntoBanner,
     addSection, addBeside, splitBand, bandHosted, dropBeside, columnsFull, splitNode, setNodeDir, splitInfo, addLinkCard, dropInColumn, dropAtSeam, dropInRow,
     addSibling: addSiblingElement, cfg: cfgFor,
     moveNode, duplicateNode, deleteNode, canDuplicate, addInside, moveTo, moveToSeam, addChildBlock, splitChildBlock, fillChildBlock, areSiblings, replaceElement, pickIcon, applyPreset, placedPredefined, sectionKind,

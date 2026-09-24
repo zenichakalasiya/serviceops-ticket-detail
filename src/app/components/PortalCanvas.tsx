@@ -9,7 +9,7 @@ import {
   Braces, Highlighter, Maximize2, UnfoldVertical, Move, MoveHorizontal, MoveVertical, Plus, RemoveFormatting,
   PaintBucket, Replace, SquareDashed, Trash2, Underline, X, ImagePlus, Palette, LayoutDashboard, Columns3,
 } from 'lucide-react';
-import { BannerFillEditor, BannerPresetPicker, TilePresetPicker } from './PortalBannerTools';
+import { BannerCountPicker, BannerFillEditor, BannerPresetPicker, TilePresetPicker } from './PortalBannerTools';
 import { bannerBoxId, flipRoot, groupOf, presetsFor } from './portalBannerLayout';
 import type { BannerNode } from './portalBannerLayout';
 import { BANNER_GROUPS, bannerGroupGap } from './portalPageModel';
@@ -82,6 +82,8 @@ interface CanvasCtx {
   dropInRow: (rowId: string, elementType: string) => void;
   /** The banner: put an empty cell beside one of its items (left/right = a column, top/bottom = a row). */
   addBannerCell?: (anchorId: string, side: 'left' | 'right' | 'top' | 'bottom') => void;
+  /** The banner: how many SECTIONS it holds — lays it out at that count with empty cells to fill. */
+  setBannerSections?: (n: number) => void;
   /** The banner's arrangement as drawn — its item tree, repaired against what is on it. */
   heroTree?: () => BannerNode | null;
   /** Catalogue ids of the PREDEFINED widgets the page is already carrying — one instance each, so
@@ -2487,7 +2489,7 @@ export const BANNER_SIDE_WIDGETS: { type: string; label: string }[] = [
 ];
 
 function BannerToolbar() {
-  const { cfg, setCfg, deleteNode, dropInRow, heroTree, placedPredefined } = useCanvas();
+  const { cfg, setCfg, deleteNode, heroTree, setBannerSections } = useCanvas();
   const hero = cfg?.('hero') ?? {};
   const [axis, setAxis] = useState<'h' | 'v' | null>(null);
   const [adding, setAdding] = useState(false);
@@ -2550,18 +2552,22 @@ function BannerToolbar() {
         )}
       </div>
       )}
+      {/* ⚠️ The "+" asks HOW MANY SECTIONS, not which widget. A widget picked here had to land somewhere
+          before there was a somewhere — it went wherever the tree put it, the arrangement set changed
+          underneath it, and the layout was corrected after the fact. The count lays the banner out empty
+          first, and the widget popup moves to the cells, where the admin is pointing at the place they
+          mean. Same list, one click later, in the right order. */}
       <div ref={addRef} className="relative">
-        <button className={btn} data-tip="Add a widget to the banner" onClick={() => { setAxis(null); setFill(false); setLayout(false); setAdding((x) => !x); }}><Plus size={15} /></button>
+        <button className={adding ? btnOn : btn} data-tip="How many sections the banner holds" onClick={() => { setAxis(null); setFill(false); setLayout(false); setAdding((x) => !x); }}><Plus size={15} /></button>
         {adding && (
-          <ElementPicker
-            only={BANNER_SIDE_WIDGETS}
-            allow={notPlaced(placedPredefined)}
-            mode="add"
-            onPick={(t) => { setAdding(false); dropInRow('hero', t); }}
-            onClose={() => setAdding(false)}
-            anchorRef={addRef}
-            targetId="hero"
-          />
+          <>
+            <span className="fixed inset-0 z-[60]" onClick={() => setAdding(false)} />
+            <div className="absolute left-1/2 top-[calc(100%+6px)] z-[61] w-[300px] -translate-x-1/2 rounded-lg border border-[#E5E7EB] bg-white p-3 shadow-[0_12px_16px_-4px_rgba(16,24,40,0.10),0_4px_6px_-2px_rgba(16,24,40,0.06)]">
+              <p className="text-[12px] font-medium text-[#364658]">Sections</p>
+              <p className="mb-2 text-[11px] leading-[16px] text-[#7B8FA5]">The words and the widgets beside them. Pick how many, then click a cell to fill it.</p>
+              <BannerCountPicker tree={heroTree?.() ?? null} onPick={(n) => { setAdding(false); setBannerSections?.(n); }} />
+            </div>
+          </>
         )}
       </div>
       <button className={btn} data-tip={hero.bannerImage ? 'Replace the banner image' : 'Add a banner image'} onClick={() => fileRef.current?.click()}><ImagePlus size={15} /></button>
