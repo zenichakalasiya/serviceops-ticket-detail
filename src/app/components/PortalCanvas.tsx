@@ -7,7 +7,7 @@ import {
   AlignLeft, AlignRight, AlignStartHorizontal, AlignStartVertical, StretchHorizontal, StretchVertical, ArrowDown, ArrowLeft, ArrowRight,
   ArrowUp, Baseline, Bold, Check, ChevronDown, ChevronRight, Columns2, Copy, GripHorizontal, GripVertical, Italic, Link2, Rows2,
   Braces, Highlighter, Maximize2, UnfoldVertical, Move, MoveHorizontal, MoveVertical, Plus, RemoveFormatting,
-  Replace, SquareDashed, Trash2, Underline, X, ImagePlus, Palette, LayoutDashboard, Columns3,
+  PaintBucket, Replace, Square, SquareDashed, Trash2, Underline, X, ImagePlus, Palette, LayoutDashboard, Columns3,
 } from 'lucide-react';
 import { BannerFillEditor, BannerPresetPicker, TilePresetPicker } from './PortalBannerTools';
 import { bannerBoxId, flipRoot, groupOf, presetsFor } from './portalBannerLayout';
@@ -700,32 +700,35 @@ const BUTTON_STYLES: [string, string][] = [
    even halo on all four sides says "shadow" and says nothing about a direction nobody picks. */
 function ShadowGlyph({ size = 15 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" aria-hidden>
-      <rect x="1" y="1" width="14" height="14" rx="3.5" fill="currentColor" opacity="0.28" />
-      <rect x="4.15" y="4.15" width="7.7" height="7.7" rx="1.8" fill="#FFFFFF" stroke="currentColor" strokeWidth="1.3" />
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
+      {/* The halo is the one mark here that cannot be a stroke — a shadow is a soft mass, not an
+          outline — so it is a filled rect at low opacity, sized to lucide's own 2..22 box. */}
+      <rect x="2" y="2" width="20" height="20" rx="5" fill="currentColor" opacity="0.26" />
+      <rect x="7" y="7" width="10" height="10" rx="2.5" fill="#FFFFFF" stroke="currentColor"
+        strokeWidth="2" strokeLinejoin="round" />
     </svg>
   );
 }
 
-/* ⚠️ DRAWN, like the shadow glyph and for the same reason: lucide's `Square` is a shape, and a
-   border icon has to say "the EDGE of a box" rather than "a box". A thick outline with a hollow
-   middle is the one drawing that does. */
-function BorderGlyph({ size = 15 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" aria-hidden>
-      <rect x="1.9" y="1.9" width="12.2" height="12.2" rx="2.6" stroke="currentColor" strokeWidth="2.4" />
-    </svg>
-  );
-}
+/* ── The drawn glyphs ──────────────────────────────────────────────────────────────────────────
+ *
+ * ⚠️ ALL OF THEM ARE ON LUCIDE'S GRID: a 24×24 viewBox, 2px stroke, round caps and joins, no fill.
+ * That is the whole of why the bar now looks even. They were drawn on a 16 viewBox, so at the same
+ * `size` prop the mark filled nearly the whole box while every lucide icon beside it draws inside
+ * 24 with its own ~2px of air — two icons the same nominal size, one visibly bigger and heavier.
+ * An icon set is a grid and a stroke weight before it is a set of pictures.
+ * ⚠️ This is also why nothing is imported from outside: a glyph from another family, however good,
+ * arrives on a different grid at a different weight, which is the problem rather than the fix.
+ * Where lucide HAS the icon (Square for Border, PaintBucket for Colour) it is used as-is. */
 
-/* ⚠️ One CORNER, not a whole rounded square. The control is about how sharp the corners are, and a
-   full outline draws three corners that are not the point plus an edge that belongs to Border. */
+/* Corner radius. ⚠️ ONE corner, not a rounded square: the control is about how sharp a corner is,
+   and a full outline draws three corners that are not the point plus an edge that belongs to
+   Border. The bare rounded elbow is what every design tool uses for this. */
 function RadiusGlyph({ size = 15 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" aria-hidden>
-      <path d="M2.2 13.8V6.2A4 4 0 0 1 6.2 2.2h7.6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <circle cx="2.2" cy="13.8" r="1.25" fill="currentColor" />
-      <circle cx="13.8" cy="2.2" r="1.25" fill="currentColor" />
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M4 20v-9a7 7 0 0 1 7-7h9" />
     </svg>
   );
 }
@@ -775,7 +778,7 @@ function BorderMenu({ id }: { id: string }) {
   return (
     <div className="relative">
       <button className={open ? btnOn : btn} data-tip="Border" onClick={() => setOpen((x) => !x)}>
-        <BorderGlyph />
+        <Square size={15} />
       </button>
       {open && (
         <>
@@ -902,25 +905,12 @@ function ColorMenu({ id }: { id: string }) {
         data-tip="Background colour"
         onClick={() => setAt(at ? null : ref.current!.getBoundingClientRect())}
       >
-        {/* ⚠️ The PICKER's own glyph with the live colour under it, the shape the text-colour button
-            on this same bar already uses. A bare swatch said what the colour IS but not what the
-            button DOES — on a row of seven glyphs it read as a status light. The bar keeps the
-            answer to "what colour is this?" underneath, where it is a caption rather than the
-            control. A chequer is what makes "no fill" readable: an empty white square and a white
-            background are the same picture. */}
-        <span className="flex flex-col items-center gap-[2px] leading-none">
-          <Palette size={13} />
-          <span
-            className="h-[3px] w-[14px] rounded-[1px]"
-            style={{
-              backgroundColor: filled ? value : undefined,
-              backgroundImage: filled ? undefined
-                : 'linear-gradient(45deg,#E2E8F0 25%,transparent 25%,transparent 75%,#E2E8F0 75%),linear-gradient(45deg,#E2E8F0 25%,transparent 25%,transparent 75%,#E2E8F0 75%)',
-              backgroundSize: '4px 4px',
-              backgroundPosition: '0 0, 2px 2px',
-            }}
-          />
-        </span>
+        {/* ⚠️ ONE glyph, no swatch bar under it. The stacked pair was two rows inside a size-7
+            button, which read taller than every single glyph beside it — half of why the bar looked
+            uneven. A paint bucket is the SaaS convention for "fill this with a colour" and says what
+            the button does rather than what the value currently is; the value is in the picker, one
+            click away, where it can also be changed. */}
+        <PaintBucket size={15} />
       </button>
       {at && (
         <PortalColorPicker value={value} anchor={at} onChange={write} onClose={() => setAt(null)} />

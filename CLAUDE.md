@@ -1583,9 +1583,18 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   ⚠️ **Corner radius is its OWN icon beside it, not a fourth row inside Border.** A corner is not an
   edge — you can round a box with no border at all — and putting it behind Border's weight gate
   would hide it exactly when it is the only one of the two that applies.
-  ⚠️ **The background button is the PICKER's glyph with the live colour under it**, the shape the
-  text-colour button on the same bar already uses. A bare swatch said what the colour IS but not what
-  the button DOES; on a row of eight glyphs it read as a status light.
+  ⚠️ **EVERY toolbar glyph is on LUCIDE'S GRID — a 24×24 viewBox, 2px stroke, round caps — and
+  that is the whole of why the bar looks even.** The drawn ones (radius, shadow) were on a 16
+  viewBox, so at the same `size` prop the mark filled nearly the whole box while every lucide icon
+  beside it draws inside 24 with its own ~2px of air: two icons the same nominal size, one visibly
+  bigger and heavier. An icon set is a GRID and a STROKE WEIGHT before it is a set of pictures,
+  which is also why nothing is imported from another family — a glyph from elsewhere, however
+  good, arrives on a different grid at a different weight, and that IS the problem rather than the
+  fix. Where lucide has the icon it is used as-is: `Square` for Border, `PaintBucket` for Colour.
+  ⚠️ **The background button is ONE glyph, no swatch bar.** The stacked pair was two rows inside a
+  size-7 button, which read taller than every single glyph beside it — the other half of the
+  unevenness. A paint bucket says what the button DOES; the value is in the picker one click away,
+  where it can also be changed.
   ⚠️ **GAP IS NOT A CONTROL ANY MORE** — ~13 panel fields AND the pink `GapBands` strips, removed
   together. Every section keeps its resting gap. What is left for arranging two sections inside a
   parent is the alignment menu's **stretch**, which now means **space-between**: it spreads them to
