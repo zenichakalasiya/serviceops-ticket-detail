@@ -374,7 +374,7 @@ export const GALLERY_SPEC: WidgetSpec = {
       options: [{ value: 'grid', label: 'Grid' }, { value: 'masonry', label: 'Masonry' }, { value: 'justified', label: 'Justified' }],
     },
     { key: 'gridColumns', label: 'Columns', control: 'number', tab: 'style', group: 'Grid', min: 1, max: 6 },
-    { key: 'gridGap', label: 'Gap', control: 'slider', tab: 'style', group: 'Grid', min: 0, max: 32 },
+    /* ⚠️ Gap is not a control any more — see the note in `GapBands`. Every section keeps its resting gap. */
     {
       key: 'hoverEffect', label: 'Hover effect', control: 'segmented', tab: 'style', group: 'Hover',
       options: [{ value: 'none', label: 'None' }, { value: 'zoom', label: 'Zoom' }, { value: 'dim', label: 'Dim' }, { value: 'reveal', label: 'Reveal' }],

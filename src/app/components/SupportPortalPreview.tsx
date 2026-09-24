@@ -1999,9 +1999,29 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
      do NOTHING — which is why Content alignment looked dead however it was wired. Packing the row
      is therefore part of choosing an alignment that is not "fill", not a separate setting: the
      class goes on exactly when the chosen value needs room to move within. */
+  /* What a section's two axes are set to.
+   *
+   * ⚠️ TWO sources, legacy first. `distribute` / `valign` were the panel's Content-alignment pair,
+   * which is gone; the toolbar's two align buttons write `align` / `alignY` into the STYLE store.
+   * A section that stored the old keys keeps its layout, and everything set from now on comes from
+   * the bar — one reader, so the two can never disagree.
+   * ⚠️ MAIN axis, `stretch` means SPACE-BETWEEN. With Gap gone, spreading two sections to the
+   * parent's edges is the only way left to put room between them — so the option that used to mean
+   * "fill the row" now means "push them apart", which is the thing somebody reaching for it wants.
+   * On the CROSS axis stretch still means stretch, which is the flex default and is why it is
+   * expressed as `undefined`. */
+  const secAxis = (id: string, fallback: number, main: boolean): string => {
+    const rowAxis = secRowAxis(id, fallback);
+    const horizontal = rowAxis === main;
+    const legacy = horizontal ? wc(id).distribute : wc(id).valign;
+    const bar = horizontal ? styles[id]?.align : styles[id]?.alignY;
+    return String(legacy ?? bar ?? (main ? 'start' : 'stretch'));
+  };
+  /* A row whose cards carry `flex: 1 1` has no free space, so every main-axis value but the default
+     moved nothing. Packing the row is what gives `space-between` something to distribute. */
   const secPacked = (id: string, fallback: number) => {
     const rowAxis = secRowAxis(id, fallback);
-    return rowAxis && String(wc(id).distribute ?? 'start') !== 'start';
+    return rowAxis && secAxis(id, fallback, true) !== 'start';
   };
   /* ⚠️ Only on a ROW. A stacked section has one column per row, so there are no tracks to hold
      still and a grid would be the same layout described a harder way. */
@@ -2017,16 +2037,11 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
     /* Columns alignment — how the cards sit on the CROSS axis. `stretch` is the odd one out: it is
        the flex default the row already has, so it is expressed as `undefined` rather than a value. */
     flexDirection: secRowAxis(id, fallback) ? undefined : 'column',
-    alignItems: ({ start: 'flex-start', center: 'center', end: 'flex-end', stretch: undefined, between: undefined, around: undefined } as
-      Record<string, string | undefined>)[String(
-        secRowAxis(id, fallback) ? (wc(id).valign ?? 'stretch') : (wc(id).distribute ?? 'stretch'),
-      )],
-    /* Content alignment — how the cards distribute along the MAIN axis. Inert until now: the
-       control wrote the key and nothing read it. */
-    justifyContent: ({ start: 'flex-start', center: 'center', end: 'flex-end', between: 'space-between', around: 'space-around', stretch: undefined } as
-      Record<string, string | undefined>)[String(
-        secRowAxis(id, fallback) ? (wc(id).distribute ?? 'start') : (wc(id).valign ?? 'start'),
-      )],
+    alignItems: ({ start: 'flex-start', left: 'flex-start', center: 'center', end: 'flex-end', right: 'flex-end', stretch: undefined, between: undefined, around: undefined } as
+      Record<string, string | undefined>)[secAxis(id, fallback, false)],
+    /* ⚠️ `stretch` lands on space-between here — see the note on `secAxis`. */
+    justifyContent: ({ start: 'flex-start', left: 'flex-start', center: 'center', end: 'flex-end', right: 'flex-end', between: 'space-between', around: 'space-around', stretch: 'space-between' } as
+      Record<string, string | undefined>)[secAxis(id, fallback, true)],
     /* Size › Height. minHeight not height, so a band still grows when its content needs more room —
        a fixed height would clip the cards the moment someone raised the icon size. */
     minHeight: Number(wc(id).minHeight) || undefined,

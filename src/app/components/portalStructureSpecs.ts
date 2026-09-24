@@ -112,8 +112,8 @@ export const HERO_SPEC: WidgetSpec = {
     /* ⚠️ Every row here needs a SECOND section to mean anything — see `__bannerSections` in the builder —
        and each gap row needs that axis to exist. */
     { key: 'bannerTree', label: 'Arrangement', control: 'bannerPreset', tab: 'style', group: 'Layout presets', when: (c) => Number(c.__bannerSections ?? 1) > 1 },
-    { key: 'contentGap', label: 'Gap between columns', control: 'gapField', tab: 'style', group: 'Layout presets', when: (c) => Number(c.__bannerSections ?? 1) > 1 && c.__hasCols === true },
-    { key: 'contentGapY', label: 'Gap between rows', control: 'gapField', tab: 'style', group: 'Layout presets', when: (c) => Number(c.__bannerSections ?? 1) > 1 && c.__hasRows === true },
+    /* ⚠️ Gap is not a control any more — see the note in `GapBands`. Every section keeps its resting gap. */
+    /* ⚠️ Gap is not a control any more — see the note in `GapBands`. Every section keeps its resting gap. */
     {
       key: 'bannerSplit', label: 'Column widths', control: 'segmented', tab: 'style', group: 'Layout presets',
       when: (c) => c.__rootRow2 === true,
@@ -296,7 +296,7 @@ export const SECTION_SPEC: WidgetSpec = {
             ],
             info: 'Fill — dragging one column re-flows its siblings so the row always fills the section. Fixed — every column keeps its own width, and dragging one leaves the others exactly where they are.' },
           /* Figma's spacing pair: the gap between the section's columns and between its rows. */
-          { key: 'gapPair', label: 'Gap', control: 'gapPair' },
+          /* ⚠️ Gap is not a control any more — see the note in `GapBands`. Every section keeps its resting gap. */
           /* ⚠️ NO Content alignment, on ANY section — the cards row, the side rail, the work cards and
              every custom section alike. It was already withheld on the bands of data cards, and the
              reason given there turns out to be the reason everywhere: a section's columns FILL it.
@@ -322,8 +322,9 @@ export const SECTION_SPEC: WidgetSpec = {
           /* ⚠️ Fill and Background colour moved to the floating toolbar's colour button — see the note
              in the P1 pack. The keys are unchanged (`fill` / `bg`, painted by `fillCss`), so anything
              already carrying a background keeps it; there is simply no longer a field here. */
-          { key: 'borderWidth', label: 'Border', control: 'borderRow', when: (c) => c.fill !== 'none' },
-          { key: 'radius', label: 'Corner radius', control: 'radius', when: (c) => c.fill !== 'none' },
+          /* ⚠️ Border and Corner radius moved to the floating toolbar beside the colour button, which
+             empties this Style group the way it emptied P1. The keys are unchanged (`borderWidth`,
+             `borderColor`, `borderStyle`, `radius`, painted by `fillCss`). */
         ],
       },
       { id: 'spacing', spacing: 'both' },
@@ -358,7 +359,7 @@ export const COLUMN_SPEC: WidgetSpec = {
       when: (c) => c.hasContent !== false,
     },
     /* A box holding rows or columns of its own gets the same spacing pair as a section. */
-    { key: 'gapPair', label: 'Gap', control: 'gapPair', tab: 'style', group: 'Gap', when: (c) => c.__branch === true },
+    /* ⚠️ Gap is not a control any more — see the note in `GapBands`. Every section keeps its resting gap. */
     {
       key: 'blockAlign', label: 'Align the blocks inside', control: 'segmented', tab: 'style', group: 'Column',
       options: [{ value: 'start', label: 'Top' }, { value: 'center', label: 'Middle' }, { value: 'end', label: 'Bottom' }],
@@ -600,7 +601,7 @@ export const BANNER_GROUP_SPEC: WidgetSpec = {
       key: 'dir', label: 'Direction', control: 'segmented', tab: 'style', group: 'Auto layout',
       options: [{ value: 'column', label: 'Vertical' }, { value: 'row', label: 'Horizontal' }],
     },
-    { key: 'gap', label: 'Gap between items', control: 'gapField', tab: 'style', group: 'Auto layout' },
+    /* ⚠️ Gap is not a control any more — see the note in `GapBands`. Every section keeps its resting gap. */
     {
       key: 'align', label: 'Align items', control: 'segmented', tab: 'style', group: 'Auto layout',
       options: (c) => [{ value: 'start', label: 'Start' }, { value: 'center', label: 'Centre' }, { value: 'end', label: 'End' },
@@ -664,7 +665,8 @@ const COLUMNS_FIELD = {
  * panel's `gapPairX/Y`), so the pink strips on the canvas and this field are one setting. The old
  * `tileGap` is still READ as the fallback, so a block that already carries one does not move. */
 const TILE_GAP_FIELD = {
-  key: 'gapPair', label: 'Gap between cards', control: 'gapPair' as const, tab: 'style' as const, group: 'Columns',
+  /* ⚠️ Gap is not a control any more — see the note in `GapBands`. Every section keeps its resting gap. */
+  key: '__gapGone2', label: '', control: 'text' as const, when: () => false,
 };
 
 /* The portal's four action cards as ONE block. Each card stays its own node (select it to edit its

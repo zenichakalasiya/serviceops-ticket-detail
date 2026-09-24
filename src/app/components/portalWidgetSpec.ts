@@ -366,7 +366,8 @@ export const TITLE_PLACE_FIELD: WidgetField = {
  * block with the card's own padding between them, so there is no gap to set — a slider that moved nothing
  * would be the panel describing a distance that does not exist. */
 export const TITLE_GAP_FIELD: WidgetField = {
-  key: 'titleGap', label: 'Gap', control: 'gapField', tab: 'style', group: 'Title',
+  /* ⚠️ Gap is not a control any more — see the note in `GapBands`. Every section keeps its resting gap. */
+  key: '__gapGone', label: '', control: 'text', when: () => false,
   when: (c: Cfg) => String(c.titlePlace ?? 'inside') === 'outside',
 };
 
@@ -427,7 +428,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
          by its control whatever group it sits in, so both move to the group the other card blocks
          already use, and Presets and the Gap they decide stay in one accordion. */
       { key: '__tilePreset', label: 'Presets', control: 'tilePreset', tab: 'style', group: 'Columns' },
-      { key: 'gapPair', label: 'Gap between cards', control: 'gapPair', tab: 'style', group: 'Columns' },
+      /* ⚠️ Gap is not a control any more — see the note in `GapBands`. Every section keeps its resting gap. */
     ],
     packs: LIVE_CARD_PACKS, roles: LIST_CARD_ROLES,
     defaults: { ...listCardDefaults, title: 'My Assets', show: 5, showType: true },
@@ -449,7 +450,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
          by its control whatever group it sits in, so both move to the group the other card blocks
          already use, and Presets and the Gap they decide stay in one accordion. */
       { key: '__tilePreset', label: 'Presets', control: 'tilePreset', tab: 'style', group: 'Columns' },
-      { key: 'gapPair', label: 'Gap between cards', control: 'gapPair', tab: 'style', group: 'Columns' },
+      /* ⚠️ Gap is not a control any more — see the note in `GapBands`. Every section keeps its resting gap. */
     ],
     packs: LIVE_CARD_PACKS, roles: LIST_CARD_ROLES,
     defaults: { ...listCardDefaults, title: 'My CIs', show: 5, showType: true },
@@ -515,7 +516,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
       { key: 'ctaUrl', label: 'Button link', control: 'text', group: 'Action', when: (c) => String(c.layout ?? 'imageRight') !== 'links' && !!c.ctaLabel, placeholder: 'https://' },
       /* The space between the card's own parts — its words and its picture, or one link and the next.
          ⚠️ Its own group, never 'Layout': `groupsFor` drops every field in a group by that name. */
-      { key: 'cardGap', label: 'Gap', control: 'gapField', tab: 'style', group: 'Gap' },
+      /* ⚠️ Gap is not a control any more — see the note in `GapBands`. Every section keeps its resting gap. */
     ],
     collection: {
       key: 'links', group: 'Links', addLabel: 'Add link', max: 8, hideable: true,
@@ -681,7 +682,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
          renders nowhere and the panel looks unchanged. */
       TITLE_PLACE_FIELD,
       TITLE_GAP_FIELD,
-      { key: 'gapPair', label: 'Gap', control: 'gapPair', tab: 'style', group: 'Gap' },
+      /* ⚠️ Gap is not a control any more — see the note in `GapBands`. Every section keeps its resting gap. */
     ],
     packs: ['P1', 'P2'], roles: ['title', 'body', 'meta'],
     /* ⚠️ A WARN, not an info. This section can be on the page and invisible to most of the people
@@ -733,7 +734,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
          renders nowhere and the panel looks unchanged. */
       TITLE_PLACE_FIELD,
       TITLE_GAP_FIELD,
-      { key: 'gapPair', label: 'Gap', control: 'gapPair', tab: 'style', group: 'Gap' },
+      /* ⚠️ Gap is not a control any more — see the note in `GapBands`. Every section keeps its resting gap. */
     ],
     /* ⚠️ P4 and P6 are gone. P4 brought "Divider between items", which cannot mean anything here —
        these services are a GRID, and there is no gap between rows to rule. P6 brought an Icon group
@@ -862,8 +863,9 @@ export const WIDGET_SPECS: WidgetSpec[] = [
             /* ⚠️ Fill and Background colour moved to the floating toolbar's colour button — see the note
                in the P1 pack. The keys are unchanged (`fill` / `bg`, painted by `fillCss`), so anything
                already carrying a background keeps it; there is simply no longer a field here. */
-            { key: 'borderWidth', label: 'Border', control: 'borderRow', when: (c) => c.fill !== 'none' },
-            { key: 'radius', label: 'Corner radius', control: 'radius', when: (c) => c.fill !== 'none' },
+            /* ⚠️ Border and Corner radius moved to the floating toolbar beside the colour button, which
+               empties this Style group the way it emptied P1. The keys are unchanged (`borderWidth`,
+               `borderColor`, `borderStyle`, `radius`, painted by `fillCss`). */
             /* ⚠️ No Shadow control. The card already carries the one soft shadow the page's card
                language uses, and the toggle drove nothing on the canvas — an inert switch in the
                same accordion as the fill and border that DO work teaches people to distrust the

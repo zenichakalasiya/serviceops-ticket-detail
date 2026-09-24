@@ -477,7 +477,16 @@ function PanelBody({ spec, nodeId, cfg, renderField, openGroups, toggleGroup, st
             the P2 pack, but the panel model declares it a THIRD way — as an accordion — so it kept
             appearing on exactly the widgets that use that model. The eight drag handles set size;
             a slider that does the same thing is the second control this builder keeps growing. */}
-        {panel.accordions.filter((a) => a.id !== 'size').filter((a) => !a.when || a.when(cfg)).map((a) => {
+        {panel.accordions.filter((a) => a.id !== 'size').filter((a) => !a.when || a.when(cfg))
+          /* ⚠️ An accordion with NOTHING IN IT is dropped, not rendered empty. P1 lost its last
+             control when Fill, Border and Corner radius moved to the floating toolbar, so every
+             spec that names it was left with a "Style" heading that opened onto blank space — a
+             section promising settings it does not have. The test is the same one `visible` uses
+             for a field: what would actually draw. `spacing` and the icon/type groups still count,
+             so only the genuinely empty ones go. */
+          .filter((a) => visible(a.fields).length > 0 || !!a.spacing
+            || a.groups?.some((g) => g !== 'G1'))
+          .map((a) => {
           const key = `acc:${a.id}`;
           const open = !openGroups.includes(`shut:${a.id}`);
           return (
@@ -781,7 +790,18 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
      because that IS the setting that matters when there is nothing to show. */
   /* P2 IS the Size accordion in pack form and P4 IS Arrangement — dropping the groups without the
      packs would leave the same fields under a different title. */
-  const viewPacks = (viewPacks0 ?? []).filter((id) => id !== 'P2' && id !== 'P4');
+  /* ⚠️ SPACING keeps the Design section alive on its own. The gate used to be "is there anything
+     to style", and with P1 withheld that became false for about thirty widgets — which took the
+     padding-and-margin matrix down with the heading, a control nobody asked to remove. Spacing is
+     rendered inside Design and always applies, so it counts as something to style.
+     ⚠️ Declared ABOVE `viewPacks` would be a temporal-dead-zone crash; it reads it. */
+  /* ⚠️ P1 joins P2 and P4. It has nothing left to render — Fill, Background colour, Border and
+     Corner radius are all on the floating toolbar now — and a pack that draws nothing still draws
+     its "Style" HEADING, so thirty widgets were left with a section that opened onto blank space.
+     The pack itself stays (thirty specs name it) and so do all of its keys and readers; it simply
+     is not listed any more. */
+  const viewPacks = (viewPacks0 ?? []).filter((id) => id !== 'P1' && id !== 'P2' && id !== 'P4');
+  const hasDesign = true;
   const viewRoles = childSpec ? childSpec.roles : subField
     ? (collection?.subElements?.find((s) => s.key === subField.key)?.role
       ? [collection!.subElements!.find((s) => s.key === subField.key)!.role!] : ['body' as const])
@@ -1807,10 +1827,10 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
         {/* ⚠️ Design is dropped ENTIRELY — heading and body — when a widget has nothing to style.
             Gating only the heading left the shared Spacing block floating under Content, which reads
             as a content setting and is the one thing it is not. */}
-        {(groupsFor('style').length > 0 || (viewPacks ?? []).length > 0) && (
+        {hasDesign && (
           <SectionLabel action={<ExpandAll keys={[...groupsFor('style').map((g) => g.group), ...(viewPacks ?? []), '__spacing']} openGroups={openGroups} setOpen={setOpenGroups} />}>Design</SectionLabel>
         )}
-        {(groupsFor('style').length > 0 || (viewPacks ?? []).length > 0) && (
+        {hasDesign && (
           <>
             {/* Widget-specific styling first — it is what this widget is, before the generic packs. */}
             {/* ⚠️ A pack whose TITLE matches a spec group is rendered INSIDE that group rather than

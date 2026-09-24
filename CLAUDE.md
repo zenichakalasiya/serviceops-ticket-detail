@@ -1573,6 +1573,43 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   Video) · 4 structure (Page · Row · Column · KPI) · 2 via `G1` (Data cards tile · Large/Small
   Title) · plus Section and Action Card, which held their own inline copy.
 
+- **Support Portal — the STYLE SECTION IS GONE from every sidebar, and Gap is gone from the product
+  (24 Sep 2026).** The whole of a block's look is on the floating toolbar now:
+  `⠿ │ moves · add · copy │ align · colour · border · radius · shadow │ delete`.
+  ⚠️ **Border is one icon over three answers** — weight, style, colour — because they are three parts
+  of one question (what does this edge look like) and an edge is judged against the page behind it.
+  ⚠️ **Style and colour are REMOVED at weight 0**, not disabled: a dashed-vs-dotted choice over an
+  edge that is not drawn is a control describing nothing (§2.2's rule).
+  ⚠️ **Corner radius is its OWN icon beside it, not a fourth row inside Border.** A corner is not an
+  edge — you can round a box with no border at all — and putting it behind Border's weight gate
+  would hide it exactly when it is the only one of the two that applies.
+  ⚠️ **The background button is the PICKER's glyph with the live colour under it**, the shape the
+  text-colour button on the same bar already uses. A bare swatch said what the colour IS but not what
+  the button DOES; on a row of eight glyphs it read as a status light.
+  ⚠️ **GAP IS NOT A CONTROL ANY MORE** — ~13 panel fields AND the pink `GapBands` strips, removed
+  together. Every section keeps its resting gap. What is left for arranging two sections inside a
+  parent is the alignment menu's **stretch**, which now means **space-between**: it spreads them to
+  the parent's edges instead of filling them, so the space between the two IS the answer.
+  ⚠️ `secAxis(id, fallback, main)` is the ONE reader of a section's alignment, and it answers from
+  two sources — the legacy `distribute` / `valign` keys first, then the toolbar's `align` /
+  `alignY` in the style store. A section that stored the old panel's pair keeps its layout;
+  everything set from now on comes from the bar. `secPacked` reads through it too, which is what
+  gives `space-between` something to distribute (cards carrying `flex: 1 1` leave no free space).
+  ⚠️ **P1 renders nothing now, so it is FILTERED OUT of `viewPacks`** beside P2 and P4. A pack that
+  draws nothing still draws its "Style" HEADING, which left thirty widgets with a section opening
+  onto blank space. The accordion model got the same treatment — an accordion with no visible field,
+  no spacing and no non-G1 group is dropped rather than rendered empty.
+  ⚠️ **`hasDesign` is now a constant `true`, and that is deliberate.** The Design gate used to ask
+  "is there anything to style", which went false for ~30 widgets the moment P1 was withheld — and
+  took the **Spacing** matrix down with the heading, a control nobody asked to remove. Spacing lives
+  inside Design and always applies, so it is what keeps the section alive.
+  ⚠️ Every key and every reader is unchanged throughout — `containerCss` and `fillCss` still paint
+  `bgFill`/`bg`/`borderWidth`/`borderColor`/`borderStyle`/`radius`, and the gap keys are still
+  read — so no page already built moved. Restoring the gap strips is one line in `Sel`.
+  Verified: the bar reads Drag · Replace · Copy │ AlignH · AlignV · Background colour · Border ·
+  Corner radius · Shadow │ Delete; no Style, Fill, Border, Corner radius or Gap left in any panel;
+  Spacing still there; border weight 3 paints 3px and radius 24 paints 24px on the canvas.
+
 ## Parked features
 Four Support Portal features are BUILT-OR-PART-BUILT AND SWITCHED OFF, with their full context in
 [future-tasks.md](future-tasks.md): **AI** (rail item commented out in `SupportPortalBuilder`; the

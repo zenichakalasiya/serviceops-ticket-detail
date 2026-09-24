@@ -140,36 +140,13 @@ export const P1_Container: StylePack = {
         {fill === 'image' && field('bgOverlay', 'Overlay', (v, setV) => (
           <SliderRow value={v} onChange={setV} min={0} max={80} unit="%" />
         ), 'Darkens the artwork so text stays readable over it.')}
-        {/* The same border, radius and shadow controls every element gets — built once, not
-            re-cut per pack. */}
-        <BorderRow
-          width={Number(g('borderWidth') ?? 0)}
-          color={String(g('borderColor') ?? '#E5E7EB')}
-          sides={g('borderSides')}
-          onSides={(x) => set('borderSides', x)}
-          onWidth={(x) => set('borderWidth', x)}
-          onColor={(x) => set('borderColor', x)}
-          stroke={String(g('borderStyle') ?? 'solid')}
-          onStroke={(x) => set('borderStyle', x)}
-          /* The same pair the background colour gets — one rule for every colour in this pack. */
-          colorModes={{
-            mode: portalColorMode(),
-            light: String(resolveIn(p.styles, p.id, 'borderColor', 'light').value ?? '#E5E7EB'),
-            dark: String(resolveIn(p.styles, p.id, 'borderColor', 'dark').value ?? resolveIn(p.styles, p.id, 'borderColor', 'light').value ?? '#E5E7EB'),
-            onChange: (m, v) => set(modeKey(m, 'borderColor') as keyof NodeStyle, v),
-          }}
-        />
-        <RadiusRow
-          value={Number(g('radius') ?? 8)}
-          onChange={(x) => set('radius', x)}
-          corners={g('corners')}
-          onCorners={(c) => set('corners', c)}
-        />
-        {/* ⚠️ No ShadowBlock. It was four controls — on, colour, inner/outer, position — for an
-            effect almost nothing on a support portal wants, sitting in the same accordion as the
-            fill and the border that decide how a block actually reads. Removing it takes the whole
-            group from five questions to two. The keys stay on `NodeStyle`, so anything already
-            carrying a shadow keeps rendering it; there is simply no longer a control to add one. */}
+        {/* ⚠️ NOTHING IS LEFT IN P1, and that is the point: Fill, Background colour, Border,
+            Corner radius and Shadow are all on the floating toolbar now, so the Style accordion
+            has no questions left to ask and stops rendering on every widget that had it.
+            Every key is unchanged and every reader is unchanged — `containerCss` still paints
+            `bgFill` / `bg` / `borderWidth` / `borderColor` / `borderStyle` / `radius` — so a page
+            already carrying any of them looks exactly as it did. The pack is kept rather than
+            deleted because thirty specs name it, and an empty pack renders nothing. */}
       </>
     );
   },

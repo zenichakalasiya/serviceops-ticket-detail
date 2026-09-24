@@ -707,6 +707,164 @@ function ShadowGlyph({ size = 15 }: { size?: number }) {
   );
 }
 
+/* ⚠️ DRAWN, like the shadow glyph and for the same reason: lucide's `Square` is a shape, and a
+   border icon has to say "the EDGE of a box" rather than "a box". A thick outline with a hollow
+   middle is the one drawing that does. */
+function BorderGlyph({ size = 15 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" aria-hidden>
+      <rect x="1.9" y="1.9" width="12.2" height="12.2" rx="2.6" stroke="currentColor" strokeWidth="2.4" />
+    </svg>
+  );
+}
+
+/* ⚠️ One CORNER, not a whole rounded square. The control is about how sharp the corners are, and a
+   full outline draws three corners that are not the point plus an edge that belongs to Border. */
+function RadiusGlyph({ size = 15 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" aria-hidden>
+      <path d="M2.2 13.8V6.2A4 4 0 0 1 6.2 2.2h7.6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <circle cx="2.2" cy="13.8" r="1.25" fill="currentColor" />
+      <circle cx="13.8" cy="2.2" r="1.25" fill="currentColor" />
+    </svg>
+  );
+}
+
+/* A popup on the bar, sized and chromed like Presets and Shadow so the three read as one family. */
+function BarPop({ w = 236, title, children }: { w?: number; title: string; children: ReactNode }) {
+  return (
+    <div
+      className="absolute left-0 top-[calc(100%+6px)] z-[61] rounded-lg border border-[#E5E7EB] bg-white p-3 shadow-[0_12px_16px_-4px_rgba(16,24,40,0.10),0_4px_6px_-2px_rgba(16,24,40,0.06)]"
+      style={{ width: w }}
+    >
+      <p className="mb-2 text-[12px] font-medium text-[#364658]">{title}</p>
+      {children}
+    </div>
+  );
+}
+
+const SLIDER = 'h-1 flex-1 cursor-pointer appearance-none rounded-full bg-[#E5E7EB] accent-[#3D8BD0]';
+
+/* ── BORDER, on the toolbar ────────────────────────────────────────────────────────────────────
+ *
+ * ⚠️ Weight, style and colour behind ONE icon. They are three answers to one question — what the
+ * edge of this box looks like — and a box's edge is judged against the page behind it, which is
+ * where the canvas is and the sidebar is not.
+ * ⚠️ Same two-store routing as the background (`fillsFromConfig`), and the keys happen to be the
+ * same on both sides: `borderWidth`, `borderColor`, `borderStyle`. Only the store differs. */
+const BORDER_STYLES = [
+  { value: 'solid', label: 'Solid' },
+  { value: 'dashed', label: 'Dashed' },
+  { value: 'dotted', label: 'Dotted' },
+];
+
+function BorderMenu({ id }: { id: string }) {
+  const { styles, setStyle, cfg, setCfg } = useCanvas();
+  const [open, setOpen] = useState(false);
+  const swatchRef = useRef<HTMLButtonElement>(null);
+  const [at, setAt] = useState<DOMRect | null>(null);
+  const viaCfg = fillsFromConfig(id);
+  const own = (viaCfg ? cfg?.(id) : styles[id]) ?? {};
+  const width = Number(own.borderWidth ?? 0);
+  const color = String(own.borderColor ?? '#E5E7EB');
+  const stroke = String(own.borderStyle ?? 'solid');
+  const write = (patch: Record<string, unknown>) => {
+    if (viaCfg) setCfg?.(id, patch);
+    else setStyle(id, patch as never);
+  };
+  return (
+    <div className="relative">
+      <button className={open ? btnOn : btn} data-tip="Border" onClick={() => setOpen((x) => !x)}>
+        <BorderGlyph />
+      </button>
+      {open && (
+        <>
+          <span className="fixed inset-0 z-[60]" onClick={() => { setOpen(false); setAt(null); }} />
+          <BarPop title="Border">
+            {/* WEIGHT first: at 0 the other two describe nothing, so it is the question that decides
+                whether the rest are worth asking. */}
+            <p className="mb-1 text-[11px] text-[#7B8FA5]">Weight</p>
+            <div className="mb-3 flex items-center gap-2">
+              <input
+                type="range" min={0} max={8} value={width}
+                onChange={(e) => write({ borderWidth: Number(e.target.value) })}
+                className={SLIDER}
+              />
+              <span className="w-9 text-right text-[12px] tabular-nums text-[#364658]">{width}px</span>
+            </div>
+            {/* ⚠️ Style and colour are REMOVED at weight 0, not disabled — the §2.2 rule this builder
+                follows everywhere: absent and greyed mean different things, and a dashed-vs-dotted
+                choice over an edge that is not drawn is a control describing nothing. */}
+            {width > 0 && (
+              <>
+                <p className="mb-1 text-[11px] text-[#7B8FA5]">Style</p>
+                <div className="mb-3 flex gap-1 rounded bg-[#F1F5F9] p-0.5">
+                  {BORDER_STYLES.map((s) => (
+                    <button
+                      key={s.value}
+                      onClick={() => write({ borderStyle: s.value })}
+                      className={`flex-1 rounded py-1.5 text-[12px] font-medium transition-colors ${
+                        stroke === s.value ? 'bg-white text-[#364658] shadow-[0_1px_2px_rgba(16,24,40,0.06)]' : 'text-[#7B8FA5] hover:text-[#364658]'
+                      }`}
+                    >{s.label}</button>
+                  ))}
+                </div>
+                <p className="mb-1 text-[11px] text-[#7B8FA5]">Colour</p>
+                <button
+                  ref={swatchRef}
+                  onClick={() => setAt(at ? null : swatchRef.current!.getBoundingClientRect())}
+                  className="flex h-8 w-full items-center gap-2 rounded border border-[#DFE5ED] px-2 text-left text-[12px] text-[#364658] transition-colors hover:bg-[#F5F7FA]"
+                >
+                  <span className="size-4 flex-shrink-0 rounded-[3px] border border-[#CBD5E1]" style={{ background: color }} />
+                  <span className="truncate">{color}</span>
+                </button>
+              </>
+            )}
+          </BarPop>
+          {at && (
+            <PortalColorPicker value={color} anchor={at} onChange={(v) => write({ borderColor: v })} onClose={() => setAt(null)} />
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+/* ── CORNER RADIUS, beside it ──────────────────────────────────────────────────────────────────
+ * ⚠️ Its OWN icon rather than a fourth row inside Border. A corner is not an edge — you can round a
+ * box that has no border at all — and putting it under Border's weight gate would have hidden it
+ * exactly when it is the only one of the two that applies. */
+function RadiusMenu({ id }: { id: string }) {
+  const { styles, setStyle, cfg, setCfg } = useCanvas();
+  const [open, setOpen] = useState(false);
+  const viaCfg = fillsFromConfig(id);
+  const own = (viaCfg ? cfg?.(id) : styles[id]) ?? {};
+  const value = Number(own.radius ?? 8);
+  const write = (v: number) => (viaCfg ? setCfg?.(id, { radius: v }) : setStyle(id, { radius: v }));
+  return (
+    <div className="relative">
+      <button className={open ? btnOn : btn} data-tip="Corner radius" onClick={() => setOpen((x) => !x)}>
+        <RadiusGlyph />
+      </button>
+      {open && (
+        <>
+          <span className="fixed inset-0 z-[60]" onClick={() => setOpen(false)} />
+          <BarPop w={220} title="Corner radius">
+            <div className="flex items-center gap-2">
+              <input
+                type="range" min={0} max={32} value={value}
+                onChange={(e) => write(Number(e.target.value))}
+                className={SLIDER}
+              />
+              <span className="w-9 text-right text-[12px] tabular-nums text-[#364658]">{value}px</span>
+            </div>
+          </BarPop>
+        </>
+      )}
+    </div>
+  );
+}
+
 /* ── The container's BACKGROUND, on the toolbar ────────────────────────────────────────────────
  *
  * ⚠️ It left the sidebar's Style group on all 30 panels that had it. Fill was two tabs — None and
@@ -744,19 +902,25 @@ function ColorMenu({ id }: { id: string }) {
         data-tip="Background colour"
         onClick={() => setAt(at ? null : ref.current!.getBoundingClientRect())}
       >
-        {/* The swatch IS the answer to "what colour is this?", so the button shows it rather than a
-            generic palette glyph. A chequer behind it is what makes transparent readable — an empty
-            white square and a white background are the same picture. */}
-        <span
-          className="size-[15px] rounded-[3px] border border-[#CBD5E1]"
-          style={{
-            backgroundColor: filled ? value : undefined,
-            backgroundImage: filled ? undefined
-              : 'linear-gradient(45deg,#E2E8F0 25%,transparent 25%,transparent 75%,#E2E8F0 75%),linear-gradient(45deg,#E2E8F0 25%,transparent 25%,transparent 75%,#E2E8F0 75%)',
-            backgroundSize: '6px 6px',
-            backgroundPosition: '0 0, 3px 3px',
-          }}
-        />
+        {/* ⚠️ The PICKER's own glyph with the live colour under it, the shape the text-colour button
+            on this same bar already uses. A bare swatch said what the colour IS but not what the
+            button DOES — on a row of seven glyphs it read as a status light. The bar keeps the
+            answer to "what colour is this?" underneath, where it is a caption rather than the
+            control. A chequer is what makes "no fill" readable: an empty white square and a white
+            background are the same picture. */}
+        <span className="flex flex-col items-center gap-[2px] leading-none">
+          <Palette size={13} />
+          <span
+            className="h-[3px] w-[14px] rounded-[1px]"
+            style={{
+              backgroundColor: filled ? value : undefined,
+              backgroundImage: filled ? undefined
+                : 'linear-gradient(45deg,#E2E8F0 25%,transparent 25%,transparent 75%,#E2E8F0 75%),linear-gradient(45deg,#E2E8F0 25%,transparent 25%,transparent 75%,#E2E8F0 75%)',
+              backgroundSize: '4px 4px',
+              backgroundPosition: '0 0, 2px 2px',
+            }}
+          />
+        </span>
       </button>
       {at && (
         <PortalColorPicker value={value} anchor={at} onChange={write} onClose={() => setAt(null)} />
@@ -1407,6 +1571,8 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
           set on the text toolbar over the words, and a background behind a run of words inside a
           card is a box nobody asked for. A placed Text element is a widget and keeps both. */}
       {(kind !== 'text' || placed) && <ColorMenu id={id} />}
+      {(kind !== 'text' || placed) && <BorderMenu id={id} />}
+      {(kind !== 'text' || placed) && <RadiusMenu id={id} />}
       {(kind !== 'text' || placed) && <ShadowMenu id={id} />}
       {caps.remove !== false && <Rule />}
       {caps.remove !== false && (
@@ -3375,7 +3541,13 @@ export function Sel({ id, children, className = '', toolbarBelow = false, surfac
         <ColumnAdders columnId={id} filled onSide={(side) => addBannerCell?.(id, side)} />
       )}
       {/* Figma's pink gap bands: on a selected group, and on the banner once widgets sit beside its text. */}
-      {on && enabled && (BANNER_GROUPS.has(id) || id === 'hero' || GAP_BAND_NODES.has(id) || /^sec-\d+(-b\d+)?$/.test(id)) && !cropping && <GapBands id={id} host={ref} />}
+      {/* ⚠️ NO GAP BANDS. Gap stopped being a control at all — the pink strips went the same day the
+          ~13 panel fields did, so a section's spacing is now the design's rather than a number on
+          every block. What is left for arranging two sections inside a parent is the alignment
+          menu's STRETCH, which spreads them to the parent's edges (`space-between`) instead of
+          filling them; the space between the two IS the answer, and there is one way to set it.
+          `GapBands` and the `colGap` / `rowGap` / `gapX` / `gapY` keys all stay and are all still
+          READ, so every page keeps the spacing it has and restoring the strips is this one line. */}
 
       {/* ⚠️ A built-in band gets the SAME four handles an empty box does — that is the whole point
           of hosting it in a section tree. This branch covers only the FIRST split, while the band
