@@ -249,27 +249,30 @@ const Row = ({ on, onClick, children }: { on: boolean; onClick: () => void; chil
   >{children}</button>
 );
 
-/** The two things a style actually decides — the type and the button. No colour. */
-function StylePreview({ packId, buttonId, accent }: { packId: string; buttonId: string; accent: string }) {
+/* A theme, as its COLOUR and its TYPE and nothing else.
+ *
+ * ⚠️ The BUTTON left this card. It was here because a style decides a button shape as well as a
+ * typeface — true, and not what anybody is reading the card for. A row of eight cards each carrying
+ * a control-shaped thing that cannot be pressed is eight false affordances in a picker, and the
+ * shape it was reporting is the smallest of the three differences between two themes.
+ * ⚠️ The NOTE left with it. A line of prose under every card turned a picker you scan into a page you
+ * read, and doubled each row's height so only three themes fitted on screen at once. The name says
+ * which theme it is and the card shows what it looks like; a sentence explaining the choice is what
+ * you need when you cannot see the choice.
+ * ⚠️ COLOUR IS BACK, which reverses the note that used to sit here ("no swatch strip — the palette
+ * section below is the colour authority"). That argument holds against a STRIP of the palette's
+ * seventeen colours; it does not hold against the one colour the theme is built from, which is the
+ * first thing anybody tells two themes apart by. One solid rail, not a row of chips, so the card
+ * still says "this theme is teal" and not "here is a palette to edit". */
+function StylePreview({ packId, accent }: { packId: string; accent: string }) {
   const f = FONT_PACKS.find((x) => x.id === packId)!;
-  const b = BUTTON_STYLES.find((x) => x.id === buttonId)!;
-  const bare = b.id === 'outline';
-  const soft = b.id === 'soft';
   return (
-    <span className="flex items-center gap-2.5 rounded-md px-3 py-2.5" style={{ background: `${accent}1F` }}>
-      <span className="min-w-0 flex-1">
-        <span style={{ fontFamily: f.heading }} className="block truncate text-[15px] font-bold text-[#0F172A]">Heading</span>
+    <span className="flex items-stretch gap-2.5 overflow-hidden rounded-md" style={{ background: `${accent}1F` }}>
+      <span className="w-[3px] flex-shrink-0" style={{ background: accent }} />
+      <span className="min-w-0 flex-1 py-2 pr-3">
+        <span style={{ fontFamily: f.heading }} className="block truncate text-[14px] font-bold text-[#0F172A]">Heading</span>
         <span style={{ fontFamily: f.body }} className="block truncate text-[12px] text-[#7B8FA5]">Paragraph text</span>
       </span>
-      <span
-        style={{
-          borderRadius: b.radius,
-          background: bare ? 'transparent' : soft ? `${accent}26` : accent,
-          borderColor: accent,
-          color: bare || soft ? accent : '#FFFFFF',
-        }}
-        className={`inline-flex h-7 flex-shrink-0 items-center px-3 text-[12px] font-medium ${b.cls}`}
-      >Button</span>
     </span>
   );
 }
@@ -357,14 +360,12 @@ export function PortalThemePanel({ theme, onChange }: { theme: PortalTheme; onCh
           const acc = theme.mode === 'dark' ? p.primary[0].dark : p.primary[0].light;
           return (
             <Row key={st.id} on={style?.id === st.id} onClick={() => applyStyle(st)}>
-              {/* Name, then what it looks like, then why you would pick it — the order the question
-                  is actually asked in. */}
+              {/* The name, then what it looks like. Two things, in the order the question is asked. */}
               <span className="mb-1.5 flex items-center gap-1.5">
                 <span className="text-[13px] font-semibold text-[#364658]">{st.name}</span>
                 {style?.id === st.id && <Check size={13} className="text-[#3D8BD0]" />}
               </span>
-              <StylePreview packId={st.packId} buttonId={st.buttonId} accent={acc} />
-              <span className="mt-1.5 block text-[11px] leading-[1.5] text-[#9CA3AF]">{st.note}</span>
+              <StylePreview packId={st.packId} accent={acc} />
             </Row>
           );
         })}

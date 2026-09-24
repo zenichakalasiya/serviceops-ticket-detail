@@ -1359,6 +1359,22 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   those badges with no icon settings anywhere. Testing `-tile$` in `iconTarget` was dead code that read
   like coverage; it is gone.
 
+- **Support Portal — a THEME CARD is its colour and its type, and nothing else (24 Sep 2026).**
+  ⚠️ **The BUTTON left the card.** It was there because a style decides a button shape as well as a
+  typeface — true, and not what anybody reads the card for. Eight cards each carrying a control-shaped
+  thing that cannot be pressed is eight false affordances in a picker, and the shape it reported is the
+  smallest of the three differences between two themes. `buttonId` is still applied by `applyStyle`.
+  ⚠️ **The NOTE left with it.** A line of prose under every card turned a picker you scan into a page you
+  read and doubled each row's height. The name says which theme it is and the card shows what it looks
+  like; a sentence explaining the choice is what you need when you cannot see the choice. `note` stays on
+  `THEME_STYLES` — nothing renders it.
+  ⚠️ **COLOUR IS BACK, reversing the note that used to sit on `StylePreview`** ("no swatch strip — the
+  palette section below is the colour authority"). That argument holds against a STRIP of the palette's
+  seventeen colours; it does not hold against the ONE colour a theme is built from, which is the first
+  thing anybody tells two themes apart by. A solid 3px rail in the primary beside the accent wash — one
+  colour, not a row of chips, so the card says "this theme is teal" rather than "here is a palette to
+  edit". Verified: 8 cards, 109px each, no Button, no note.
+
 - **Support Portal — the banner's layout is ONE popup on ONE icon (`BannerLayoutPanel`, 24 Sep 2026).**
   The `+` and the Arrangement icon were two buttons for two halves of one decision: you pressed the `+`,
   picked a count from a grid of pictures, watched the popup close, then pressed the icon beside it to find
