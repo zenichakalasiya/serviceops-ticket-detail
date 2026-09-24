@@ -1904,5 +1904,5 @@ function RestingSpacing({ nodeId, style, onChange, only }: {
   nodeId: string; style: NodeStyle; onChange: (p: Partial<NodeStyle>) => void; only?: 'margin' | 'padding';
 }) {
   const resting = useRestingSpacing(nodeId, style);
-  return <SpacingMatrix style={style} onChange={onChange} only={only} resting={resting} />;
+  return <SpacingMatrix style={style} onChange={onChange} only={only} resting={resting} nodeId={nodeId} />;
 }

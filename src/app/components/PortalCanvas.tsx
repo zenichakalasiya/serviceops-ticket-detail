@@ -3383,10 +3383,15 @@ export function BannerSlot({ id }: { id: string }) {
   if (!enabled) return null;
   return (
     <div ref={ref} className="flex min-h-[88px] w-full items-center justify-center rounded-lg border border-dashed border-white/60 bg-white/10">
+      {/* ⚠️ A "+" and nothing else. The dashed cell already says the space is empty and waiting, so the
+          words repeated it at the weight of a primary CTA — and several empty cells put that sentence
+          on the banner three times over. The label lives on the hover instead. */}
       <button
         onClick={(e) => { e.stopPropagation(); setOpen((x) => !x); }}
-        className="flex h-8 items-center gap-1.5 rounded bg-white px-3 text-[12px] font-medium text-[#364658] shadow-sm transition-colors hover:text-[#3D8BD0]"
-      ><Plus size={14} /> Add to banner</button>
+        title="Add to banner"
+        aria-label="Add to banner"
+        className="flex size-8 items-center justify-center rounded bg-white text-[#3D8BD0] shadow-sm transition-colors hover:bg-[#EBF5FF]"
+      ><Plus size={16} /></button>
       {open && (
         <ElementPicker
           only={BANNER_SIDE_WIDGETS}

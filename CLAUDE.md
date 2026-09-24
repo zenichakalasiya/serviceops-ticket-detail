@@ -1359,6 +1359,35 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   those badges with no icon settings anywhere. Testing `-tile$` in `iconTarget` was dead code that read
   like coverage; it is gone.
 
+- **Support Portal — SPACING is one nested-box diagram, and the empty banner cell is a "+" (24 Sep 2026).**
+  `SpacingMatrix` is a box-model picture: **margin outside, padding inside, the element in the middle**,
+  all eight sides visible and editable at once — the shape Duda, Webflow, Framer and the browser's own
+  inspector all draw, which is what an admin arrives already knowing. It replaces four axis sliders under
+  two headings, where no value could be READ without dragging one.
+  ⚠️ **The NUMBERS are the targets, not the edges.** That is the whole difference from the FIRST matrix
+  this had (dropped because changing one side meant aiming at a hairline): every side is a 42px input —
+  click to type, drag sideways to scrub. ⚠️ A press becomes a scrub only after the pointer has travelled
+  **3px**; under that it is a plain click and the field takes focus, or a control that looks like a field
+  would refuse to be typed in. The `cursor-ew-resize` is the only hint that it drags, which is the cursor
+  every design tool uses for a scrubber and costs no pixels on a 26px control.
+  ⚠️ **Grey = the element's own resting value, dark = a number somebody set.** Unchanged in substance from
+  the slider version, but eight of them now, so `useRestingSpacing`'s limit is visible: it looks at the node
+  and ONE level in (`padBoxOf`), so a card whose padded box is deeper — `news`, whose face is two levels
+  down — reads 0 on all eight. Honest for margin, unhelpful for padding; widening the search risks
+  measuring an inner row instead, so it was left alone.
+  ⚠️ **Hovering a side lights that band on the canvas** (`SpacingHint`, portalled, `#FF24BD` at 25%) — the
+  SAME magenta the gap strips use, because this product already says "space you are setting" in that
+  colour. A band with no thickness draws as a 2px line rather than nothing: hovering "top" when the top is
+  0 is exactly when you need telling which edge that is. It needs `nodeId`, which `PortalWidgetDrawer`
+  passes and the legacy `PortalElementPanel` does not — the diagram is correct without it.
+  ⚠️ **The link ties OPPOSITE SIDES, not all four** (`marginLinked`/`paddingLinked`, one per ring). The two
+  axes carry different units — px up and down, % left and right — so copying 24 from a px side into a %
+  side would set a quarter of the parent's width. The head states the units once instead of eight times.
+  ⚠️ `only` still draws a single ring for an element with no inside (a divider, a shape).
+  ⚠️ **The banner's empty cell is a bare `+`** (32px, white, blue glyph, label on the hover) rather than an
+  "Add to banner" CTA. The dashed cell already says the space is empty and waiting, so the words repeated
+  it at the weight of a primary button — and three empty cells put that sentence on the banner three times.
+
 - **Support Portal — a GATHERED ROW of cards is a section in its own right (23 Sep 2026).** The set of
   action cards (or KPI tiles) on the banner now reads as one thing: it is BOUNDED, it is named after
   what it holds, and it carries the bar a section should — **grip · Presets · both alignments ·
