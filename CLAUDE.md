@@ -1603,6 +1603,12 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   "is there anything to style", which went false for ~30 widgets the moment P1 was withheld — and
   took the **Spacing** matrix down with the heading, a control nobody asked to remove. Spacing lives
   inside Design and always applies, so it is what keeps the section alive.
+  ⚠️ **A removed field must NOT be left as a stub.** `TITLE_GAP_FIELD` and `TILE_GAP_FIELD` were
+  first kept as placeholders carrying `when: () => false`, which reads as safe and is not: a call
+  site that spreads a `when` of its own over the field REPLACES that guard. Two did — so the
+  Announcements card and the Custom Data Widget drew an **unlabelled text box** the moment their
+  title was moved above the card. Both consts are deleted now, along with every reference. A field
+  nobody should ever see has to not exist.
   ⚠️ Every key and every reader is unchanged throughout — `containerCss` and `fillCss` still paint
   `bgFill`/`bg`/`borderWidth`/`borderColor`/`borderStyle`/`radius`, and the gap keys are still
   read — so no page already built moved. Restoring the gap strips is one line in `Sel`.

@@ -365,11 +365,12 @@ export const TITLE_PLACE_FIELD: WidgetField = {
  * ⚠️ REMOVED while the title is inside, not disabled: inside the card the heading and the rows are one
  * block with the card's own padding between them, so there is no gap to set — a slider that moved nothing
  * would be the panel describing a distance that does not exist. */
-export const TITLE_GAP_FIELD: WidgetField = {
-  /* ⚠️ Gap is not a control any more — see the note in `GapBands`. Every section keeps its resting gap. */
-  key: '__gapGone', label: '', control: 'text', when: () => false,
-  when: (c: Cfg) => String(c.titlePlace ?? 'inside') === 'outside',
-};
+/* ⚠️ TITLE_GAP_FIELD IS GONE, not stubbed. It was briefly left as a placeholder carrying
+ *  `when: () => false`, which reads as safe and is not: two call sites spread a `when` of their
+ *  own over it, and a spread REPLACES that guard — so the Announcements card and the Custom Data
+ *  Widget drew an unlabelled text box the moment their title was moved above the card. A field
+ *  nobody should see has to not exist.
+ *  The `titleGap` key stays in every `defaults` and is still read, so no card's spacing moved. */
 
 /* ── the registry ────────────────────────────────────────────────────────── */
 
@@ -391,7 +392,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
     gate: { kind: 'module', setting: 'Request module' },
     /* No fields at all — see the note above the registry. Title, Statuses, Rows to show and the two
        toggles are gone, and with them the Header group that `listCardStyleFields` contributed. */
-    fields: [TITLE_FIELD, TITLE_PLACE_FIELD, TITLE_GAP_FIELD],
+    fields: [TITLE_FIELD, TITLE_PLACE_FIELD],
     packs: LIVE_CARD_PACKS, roles: LIST_CARD_ROLES,
     /* ⚠️ FOUR rows and the two-line `meta` shape: the id and the subject on one line, the timestamp
        under it, the status holding the right edge. Five rows of three lines is a card that scrolls;
@@ -403,7 +404,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
   {
     id: 'pending_approvals', name: 'Pending Approvals', group: 'Data', reuse: 'single', family: 'flat',
     gate: { kind: 'permission', setting: 'Allow Requester To Access My Approvals', section: 'Organization' },
-    fields: [TITLE_FIELD, TITLE_PLACE_FIELD, TITLE_GAP_FIELD],
+    fields: [TITLE_FIELD, TITLE_PLACE_FIELD],
     packs: LIVE_CARD_PACKS, roles: LIST_CARD_ROLES,
     defaults: { ...listCardDefaults, title: 'Pending Approvals', show: 3, showRequester: true, showDate: true },
   },
@@ -421,7 +422,6 @@ export const WIDGET_SPECS: WidgetSpec[] = [
     fields: [
       TITLE_FIELD,
       TITLE_PLACE_FIELD,
-      TITLE_GAP_FIELD,
       /* ⚠️ Group 'Columns', not 'Layout'. `DROP_GROUPS` removes every Layout field from every panel,
          with ONE exception carved out by control type for the preset picker — so the Gap declared
          beside it rendered nowhere and the panel looked exactly as it had before. The preset is kept
@@ -443,7 +443,6 @@ export const WIDGET_SPECS: WidgetSpec[] = [
     fields: [
       TITLE_FIELD,
       TITLE_PLACE_FIELD,
-      TITLE_GAP_FIELD,
       /* ⚠️ Group 'Columns', not 'Layout'. `DROP_GROUPS` removes every Layout field from every panel,
          with ONE exception carved out by control type for the preset picker — so the Gap declared
          beside it rendered nowhere and the panel looked exactly as it had before. The preset is kept
@@ -475,7 +474,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
          a heading at all — both carousels draw their notices with no header — so asking where to put one is
          asking about something that is not there. A field whose `when` fails is REMOVED, not disabled. */
       { ...TITLE_PLACE_FIELD, when: (c: Cfg) => (c.display ?? 'regular') === 'regular' },
-      { ...TITLE_GAP_FIELD, when: (c: Cfg) => (c.display ?? 'regular') === 'regular' && String(c.titlePlace ?? 'inside') === 'outside' },
+
       /* Only the Regular card has a header, so only it asks for a title. */
       { ...TITLE_FIELD, when: (c) => (c.display ?? 'regular') === 'regular' },
       /* ⚠️ The image carousel's three settings — the photo, the band colour and the band's text
@@ -564,7 +563,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
   {
     id: 'most_read', name: 'Most Read', group: 'Data', reuse: 'single', family: 'flat',
     gate: { kind: 'permission', setting: 'Allow Requester To Access Knowledge', section: 'Organization' },
-    fields: [TITLE_FIELD, TITLE_PLACE_FIELD, TITLE_GAP_FIELD],
+    fields: [TITLE_FIELD, TITLE_PLACE_FIELD],
     packs: LIVE_CARD_PACKS, roles: LIST_CARD_ROLES,
     defaults: { ...listCardDefaults, title: 'Most Read Knowledge', show: 4, showCategory: true, showDate: true, rowLayout: 'stacked', dateFormat: 'short' },
   },
@@ -591,7 +590,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
        `fields`. With nothing left, the CONTENT section is dropped whole, which is the same panel
        the six other live-data widgets already have. */
     fields: [
-      TITLE_FIELD, TITLE_PLACE_FIELD, TITLE_GAP_FIELD,
+      TITLE_FIELD, TITLE_PLACE_FIELD,
       /* ⚠️ NO Contact-details row. Stacked / One line was a layout choice on a card whose whole
          content is two short values, and the product has one answer for it: the two lines stacked
          with their glyphs. `lineLayout` stays in `defaults` and the renderer still reads it, so a
@@ -681,7 +680,6 @@ export const WIDGET_SPECS: WidgetSpec[] = [
          is set on the canvas — with one exception carved out for the preset picker, so a Gap declared there
          renders nowhere and the panel looks unchanged. */
       TITLE_PLACE_FIELD,
-      TITLE_GAP_FIELD,
       /* ⚠️ Gap is not a control any more — see the note in `GapBands`. Every section keeps its resting gap. */
     ],
     packs: ['P1', 'P2'], roles: ['title', 'body', 'meta'],
@@ -733,7 +731,6 @@ export const WIDGET_SPECS: WidgetSpec[] = [
          is set on the canvas — with one exception carved out for the preset picker, so a Gap declared there
          renders nowhere and the panel looks unchanged. */
       TITLE_PLACE_FIELD,
-      TITLE_GAP_FIELD,
       /* ⚠️ Gap is not a control any more — see the note in `GapBands`. Every section keeps its resting gap. */
     ],
     /* ⚠️ P4 and P6 are gone. P4 brought "Divider between items", which cannot mean anything here —
@@ -1137,7 +1134,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
          they named, so it has a better claim to the question than the fixed cards do. Withheld from
          the KPI display, where the "title" is the caption under a number and has nowhere else to go. */
       { ...TITLE_PLACE_FIELD, when: (c: Cfg) => c.display !== 'kpi' },
-      { ...TITLE_GAP_FIELD, when: (c: Cfg) => c.display !== 'kpi' && String(c.titlePlace ?? 'inside') === 'outside' },
+
       /* ⚠️ NO one-line help under any field on this panel. "Which records this card lists" under a
          field labelled Module is the label again in a longer sentence, and a caption under every
          control turns four rows into a wall of grey text you learn to skip — which is where the one

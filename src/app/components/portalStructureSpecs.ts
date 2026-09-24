@@ -664,17 +664,16 @@ const COLUMNS_FIELD = {
  * ⚠️ Same control and same keys as every band and section on the page (`colGap` / `rowGap`, via the
  * panel's `gapPairX/Y`), so the pink strips on the canvas and this field are one setting. The old
  * `tileGap` is still READ as the fallback, so a block that already carries one does not move. */
-const TILE_GAP_FIELD = {
-  /* ⚠️ Gap is not a control any more — see the note in `GapBands`. Every section keeps its resting gap. */
-  key: '__gapGone2', label: '', control: 'text' as const, when: () => false,
-};
+/* ⚠️ TILE_GAP_FIELD is GONE, not stubbed — the same trap `TITLE_GAP_FIELD` fell into: a field left
+ *  behind with `when: () => false` is one spread away from coming back as an unlabelled box.
+ *  `colGap` / `rowGap` / `tileGap` are all still READ, so no block moved. */
 
 /* The portal's four action cards as ONE block. Each card stays its own node (select it to edit its
  * subtitle and icon); the block only decides how many sit across. ⚠️ Adding it MOVES the Quick Actions
  * row's cards into it rather than showing them twice — see `actionsMoved` in the preview. */
 export const ACTION_CARDS_SPEC: WidgetSpec = {
   id: 'action_cards', name: 'Action cards', group: 'Actions', reuse: 'single', family: 'flat',
-  fields: [COLUMNS_FIELD, TILE_GAP_FIELD],
+  fields: [COLUMNS_FIELD],
   packs: [],
   defaults: { cols: '4' },
 };
@@ -688,7 +687,7 @@ export const KPI_SEED = [
 /* A set of counters, laid out like the action cards. */
 export const KPI_GROUP_SPEC: WidgetSpec = {
   id: 'kpi_group', name: 'KPI tiles', group: 'Custom', reuse: 'many', family: 'collection',
-  fields: [COLUMNS_FIELD, TILE_GAP_FIELD],
+  fields: [COLUMNS_FIELD],
   packs: [],
   collection: {
     key: 'items', group: 'Tiles', addLabel: 'Add tile', max: 8,
