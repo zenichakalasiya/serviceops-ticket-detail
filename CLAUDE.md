@@ -1308,9 +1308,27 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   ⚠️ **The count is every section INCLUDING the words**, so it runs 2–4 and tops out at
   `MAX_BANNER_SECTIONS` — the words alone are one section, two widgets beside them make three.
   Counting only the widgets would put a "4" on a control whose own cap is four and mean five.
-  ⚠️ **It only ever ADDS.** A count below what the banner holds is DISABLED with the reason on the tile
-  (`SkeletonTile` gained a `blocked` prop), so `setBannerSections` never has to decide which of the
-  admin's filled sections it would delete.
+  ⚠️ **GOING DOWN works, and it asks only when it has to (24 Sep 2026).** A lower count used to be
+  disabled outright — the right answer to "delete something without asking" and the wrong answer to the
+  question, because two of the cases destroy nothing. **Empty cells go FIRST and silently**: a `bn-slot`
+  holds nothing, so a banner laid out at four and never filled goes back to two in one click, and asking
+  permission to delete nothing is what teaches people to dismiss dialogs. Only when FILLED sections must
+  go does the popup swap to a **"Remove N sections"** step listing them by name with checkboxes, a Cancel
+  and a red Remove. `setBannerSections(n, remove?)` takes the chosen ids and **does nothing without
+  enough of them** — it never picks a filled section on its own. The **Text & Search section is never a
+  candidate**, in the panel or the builder: a count control is not where a banner loses its words.
+  ⚠️ Once enough rows are picked the REST go quiet rather than the admin picking one too many and being
+  told afterwards; the picked ones stay live, so unpicking re-opens the list.
+  ⚠️ **ONE pass over both stores** (`rowExtras.hero` and the tree) — a loop calling `deleteNode` would be
+  N toasts, N renders and N reads of a tree being rewritten underneath it.
+  ⚠️ **The selection is cleared only when what was selected is what went.** A blanket `select(null)`
+  deselected the BANNER, whose toolbar is holding the popup you are working in, so the popup vanished
+  mid-edit and the count could not be followed by an arrangement.
+  ⚠️ Going down leaves the survivors arranged as they are (`removeLeaf`/`removeBranch` collapse
+  single-child branches); only going UP applies `defaultTreeFor`, because new empty cells have to land
+  somewhere. ⚠️ A row is named by the canvas's own `nodeById` (`nameOf` prop), so it reads as the outline
+  does — which means an `x-card` reads "Custom Card" here though the banner's "+" offered it as "Quick
+  links". Agreeing with the canvas beats agreeing with the add-picker; see the `x-card` note below.
   ⚠️ **Nothing is selected afterwards** — the admin asked for a shape, not for one of its cells; the
   cells are what to click next and they say so.
   ⚠️ **`defaultTreeFor` (portalBannerLayout) is ONE FAMILY**: `two-cols` → `col-two-rows` →

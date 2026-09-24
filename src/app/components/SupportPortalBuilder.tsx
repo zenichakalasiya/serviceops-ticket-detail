@@ -41,7 +41,7 @@ import type { Box, BoxDir, CustomSection, NodeStyle, PlacedElement, PortalPageCo
 import { PORTAL_ELEMENTS, PORTAL_EMPTY_WIDGETS, PORTAL_TEMPLATES, bannerLayout, bannerShape, isPredefinedElement, isPredefinedType } from './supportPortalData';
 import type { ShapeNode } from './supportPortalData';
 import { toneVars } from './portalTone';
-import { MAX_BANNER_CARDS, MAX_BANNER_SECTIONS, addToGroup, appendGroup, branchNode, defaultTreeFor, groupOf, insertAtEdge, insertBeside, isBannerBox, isBannerGroup, leavesOf, normalizeTree, removeBranch, removeLeaf, replaceLeaf, shiftLeaf, swapLeaves, unitsOf } from './portalBannerLayout';
+import { MAX_BANNER_CARDS, MAX_BANNER_SECTIONS, addToGroup, appendGroup, bannerBoxId, branchNode, defaultTreeFor, groupOf, insertAtEdge, insertBeside, isBannerBox, isBannerGroup, leavesOf, normalizeTree, removeBranch, removeLeaf, replaceLeaf, shiftLeaf, swapLeaves, TEXT_SECTION, unitsOf } from './portalBannerLayout';
 import type { BannerNode } from './portalBannerLayout';
 import { IconPopover } from './PortalIconPicker';
 import type { IconChoice } from './PortalIconPicker';
@@ -1040,19 +1040,63 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
    * arrangement had to be corrected afterwards.
    * ⚠️ It only ever ADDS. A count below what the banner holds is disabled in the picker, so nothing here
    * has to decide which of the admin's filled sections it would have deleted. */
-  const setBannerSections = useCallback((n: number) => {
+  const setBannerSections = useCallback((n: number, remove?: string[]) => {
     const units = unitsOf(heroTree());
     const want = Math.max(2, Math.min(n, MAX_BANNER_SECTIONS));
-    if (want <= units.length) return;
-    const slots = Array.from({ length: want - units.length }, () => makeElement('bn-slot', 'hero'));
-    const tree = defaultTreeFor([...units, ...slots.map((s) => s.id)]);
-    if (!tree) return;
-    setRowExtras((prev) => ({ ...prev, hero: [...(prev.hero ?? []), ...slots] }));
+    if (want === units.length) return;
+
+    if (want > units.length) {
+      const slots = Array.from({ length: want - units.length }, () => makeElement('bn-slot', 'hero'));
+      const tree = defaultTreeFor([...units, ...slots.map((s) => s.id)]);
+      if (!tree) return;
+      setRowExtras((prev) => ({ ...prev, hero: [...(prev.hero ?? []), ...slots] }));
+      patchCfg('hero', { bannerTree: tree });
+      /* ⚠️ Nothing is selected. The admin asked for a shape, not for one of the cells in it — selecting the
+         first would take the panel over with an empty slot's settings and say the wrong thing about what
+         just happened. The cells themselves are what to click next, and they say so. */
+      return;
+    }
+
+    /* ── GOING DOWN ──────────────────────────────────────────────────────────────────────────────
+     * It used to be refused: a lower count was disabled with "delete one to go back to 2", because
+     * applying it would have to decide which of the admin's sections to throw away. That is the right
+     * answer to "delete something without asking" and the wrong answer to the question, which is that
+     * two of the four cases destroy nothing at all.
+     *
+     * ⚠️ EMPTY CELLS GO FIRST, and silently. A `bn-slot` holds nothing, so removing one deletes nothing
+     * — asking permission to delete nothing is a dialog that teaches people to dismiss dialogs. A banner
+     * laid out at four and never filled therefore goes back to two with one click, which is the case
+     * this whole change is about.
+     * ⚠️ Only what is left after that is ASKED about, and the panel does the asking: `remove` arrives
+     * carrying the sections the admin chose. Without enough of them nothing happens — this never picks
+     * a filled section on its own.
+     * ⚠️ The TEXT & SEARCH section is never a candidate, here or in the panel. It is the banner's words;
+     * a count control is not where a banner loses them. */
+    const heroList = rowExtrasRef.current.hero ?? [];
+    const typeOf = (id: string) => heroList.find((e) => e.id === id)?.type;
+    const idOf = (u: BannerNode) => (typeof u === 'string' ? u : bannerBoxId(u));
+    const need = units.length - want;
+    const empties = units.filter((u) => typeof u === 'string' && u !== TEXT_SECTION && typeOf(u) === 'bn-slot').map(idOf);
+    const chosen = (remove ?? []).filter((id) => id !== TEXT_SECTION && !empties.includes(id));
+    const drop = [...empties, ...chosen].slice(0, need);
+    if (drop.length < need) return;
+
+    /* ONE pass over both stores. A loop calling `deleteNode` would be N toasts, N renders and N reads of
+       a tree that is being rewritten underneath it. */
+    let tree = heroTree();
+    const gone = new Set<string>();
+    for (const id of drop) {
+      const node = branchNode(tree, id);
+      if (node) { leavesOf(node).forEach((l) => gone.add(l)); tree = removeBranch(tree, id); }
+      else { gone.add(id); tree = removeLeaf(tree, id); }
+    }
+    setRowExtras((prev) => ({ ...prev, hero: (prev.hero ?? []).filter((e) => !gone.has(e.id)) }));
     patchCfg('hero', { bannerTree: tree });
-    /* ⚠️ Nothing is selected. The admin asked for a shape, not for one of the cells in it — selecting the
-       first would take the panel over with an empty slot's settings and say the wrong thing about what
-       just happened. The cells themselves are what to click next, and they say so. */
-  }, [makeElement, patchCfg]);
+    /* ⚠️ The selection is cleared ONLY when what was selected is what just went. A blanket `select(null)`
+       here deselected the BANNER — whose toolbar is holding the popup you are working in — so the popup
+       vanished mid-edit and the count you had just set could not be followed by an arrangement. */
+    if (selectedId && (gone.has(selectedId) || drop.includes(selectedId))) select(null);
+  }, [makeElement, patchCfg, select, selectedId]);
 
   /** The banner's + adders: an empty cell beside an item — a column to its left or right, a row above or below. */
   const addBannerCell = useCallback((anchorId: string, side: 'left' | 'right' | 'top' | 'bottom') => {

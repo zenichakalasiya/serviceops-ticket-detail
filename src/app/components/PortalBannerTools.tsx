@@ -15,9 +15,9 @@
 
 import { useRef, useState } from 'react';
 import type { CSSProperties, MouseEvent as ReactMouseEvent, ReactNode } from 'react';
-import { ArrowLeftRight, Minus, Plus, RotateCw } from 'lucide-react';
+import { ArrowLeftRight, Check, ChevronLeft, Minus, Plus, RotateCw } from 'lucide-react';
 import { ColorField } from './PortalColorPicker';
-import { activePreset, presetsFor, tilePresets, unitsOf } from './portalBannerLayout';
+import { activePreset, bannerBoxId, presetsFor, TEXT_SECTION, tilePresets, unitsOf } from './portalBannerLayout';
 import type { BannerNode } from './portalBannerLayout';
 import { placedType } from './portalPageModel';
 
@@ -300,33 +300,117 @@ export function BannerPresetPicker({ tree, onPick }: { tree: BannerNode | null; 
  * ⚠️ Picking a count re-renders the tiles under it, because the tiles read the live tree. That is the
  * whole point of the two being in one place: the layouts you are choosing between are the layouts for the
  * number you just set, in front of you, without a second popup. */
-export function BannerLayoutPanel({ tree, onCount, onPick }: {
+export function BannerLayoutPanel({ tree, onCount, onPick, nameOf }: {
   tree: BannerNode | null;
-  onCount: (n: number) => void;
+  onCount: (n: number, remove?: string[]) => void;
   onPick: (t: BannerNode) => void;
+  /* What a section is CALLED, answered by the canvas's own `nodeById` — one naming source, so a row
+     here reads exactly as the outline and the breadcrumb do. */
+  nameOf: (id: string) => string;
 }) {
-  const cur = unitsOf(tree).length;
+  const units = unitsOf(tree);
+  const cur = units.length;
   const presets = presetsFor(tree);
   const on = activePreset(tree);
+
+  /* ── Going DOWN ────────────────────────────────────────────────────────────────────────────────
+   * A lower count used to be disabled outright, on the grounds that applying it would decide which of
+   * the admin's sections to throw away. Two of the cases throw nothing away: an EMPTY CELL holds
+   * nothing, so a banner laid out at four and never filled goes back to two with one click, and no
+   * dialog — asking permission to delete nothing is what teaches people to dismiss dialogs.
+   * Only when filled sections have to go does it ask, and then it asks by NAME. */
+  const [asking, setAsking] = useState<number | null>(null);
+  const [picked, setPicked] = useState<string[]>([]);
+  const idOf = (u: BannerNode) => (typeof u === 'string' ? u : bannerBoxId(u));
+  const empty = (u: BannerNode) => typeof u === 'string' && placedType(u) === 'bn-slot';
+  const empties = units.filter(empty).length;
+  /* ⚠️ The words are never a candidate. A count control is not where a banner loses its heading. */
+  const removable = units.filter((u) => idOf(u) !== TEXT_SECTION && !empty(u));
+  const choose = asking === null ? 0 : Math.max(0, cur - asking - empties);
+
+  const want = (n: number) => {
+    if (n >= cur || cur - n <= empties) { onCount(n); return; }
+    setPicked([]);
+    setAsking(n);
+  };
+
+  if (asking !== null) {
+    return (
+      <div>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            title="Back"
+            onClick={(e) => { e.stopPropagation(); setAsking(null); }}
+            className="flex size-6 flex-shrink-0 items-center justify-center rounded text-[#9CA3AF] transition-colors hover:bg-[#F1F5F9] hover:text-[#364658]"
+          ><ChevronLeft size={15} /></button>
+          <span className="text-[12px] font-medium text-[#364658]">Remove {choose === 1 ? 'a section' : `${choose} sections`}</span>
+        </div>
+        <p className="mb-2 ml-[30px] text-[11px] leading-[16px] text-[#9CA3AF]">
+          {empties > 0
+            ? `Going to ${asking} takes ${cur - asking} off the banner. ${empties === 1 ? 'An empty cell goes' : `${empties} empty cells go`} on ${empties === 1 ? 'its' : 'their'} own — pick what else to remove.`
+            : `Going to ${asking} takes ${cur - asking} off the banner. Pick what to remove.`}
+        </p>
+        <div className="max-h-[220px] overflow-y-auto">
+          {removable.map((u) => {
+            const id = idOf(u);
+            const lit = picked.includes(id);
+            /* ⚠️ Once enough are picked the REST go quiet, rather than the admin picking a fourth and
+               being told afterwards. The chosen ones stay live, so unpicking re-opens the list. */
+            const full = picked.length >= choose && !lit;
+            return (
+              <button
+                key={id}
+                type="button"
+                disabled={full}
+                onClick={(e) => { e.stopPropagation(); setPicked((p) => (lit ? p.filter((x) => x !== id) : [...p, id])); }}
+                className={`mb-1 flex w-full items-center gap-2 rounded px-2 py-1.5 text-left transition-colors last:mb-0 ${
+                  lit ? 'bg-[#FEF3F2]' : full ? 'opacity-45' : 'hover:bg-[#F5F7FA]'
+                }`}
+              >
+                <span className={`flex size-4 flex-shrink-0 items-center justify-center rounded-[3px] border ${lit ? 'border-[#EF4444] bg-[#EF4444] text-white' : 'border-[#CBD5E1]'}`}>
+                  {lit && <Check size={11} />}
+                </span>
+                <span className="min-w-0 flex-1 truncate text-[12px] text-[#364658]">{nameOf(id)}</span>
+              </button>
+            );
+          })}
+        </div>
+        <div className="mt-2.5 flex justify-end gap-2 border-t border-[#EEF1F5] pt-2.5">
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setAsking(null); }}
+            className="h-7 rounded px-2.5 text-[12px] font-medium text-[#64748B] transition-colors hover:bg-[#F1F5F9]"
+          >Cancel</button>
+          <button
+            type="button"
+            disabled={picked.length < choose}
+            onClick={(e) => { e.stopPropagation(); onCount(asking, picked); setAsking(null); }}
+            className={`h-7 rounded px-2.5 text-[12px] font-medium text-white transition-colors ${
+              picked.length < choose ? 'cursor-not-allowed bg-[#FCA5A5]' : 'bg-[#EF4444] hover:bg-[#DC2626]'
+            }`}
+          >Remove</button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className="flex items-center justify-between gap-3">
         <span className="text-[12px] font-medium text-[#364658]">Sections</span>
         <span className="flex gap-0.5 rounded bg-[#F1F5F9] p-0.5">
           {[2, 3, 4].map((n) => {
-            const blocked = n < cur ? `The banner already holds ${cur} sections — delete one to go back to ${n}` : null;
             const lit = n === cur;
             return (
               <button
                 key={n}
                 type="button"
-                title={blocked ?? `${n} sections`}
+                title={`${n} sections`}
                 aria-pressed={lit}
-                disabled={!!blocked}
-                onClick={(e) => { e.stopPropagation(); if (!blocked) onCount(n); }}
+                onClick={(e) => { e.stopPropagation(); want(n); }}
                 className={`h-6 w-8 rounded text-[12px] font-medium tabular-nums transition-colors ${
-                  blocked ? 'cursor-not-allowed text-[#C3CBD6]'
-                    : lit ? 'bg-white text-[#364658] shadow-[0_1px_2px_rgba(16,24,40,0.06)]'
+                  lit ? 'bg-white text-[#364658] shadow-[0_1px_2px_rgba(16,24,40,0.06)]'
                     : 'text-[#7B8FA5] hover:text-[#364658]'
                 }`}
               >{n}</button>

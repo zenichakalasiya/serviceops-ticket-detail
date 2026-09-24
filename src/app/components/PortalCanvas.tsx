@@ -83,7 +83,7 @@ interface CanvasCtx {
   /** The banner: put an empty cell beside one of its items (left/right = a column, top/bottom = a row). */
   addBannerCell?: (anchorId: string, side: 'left' | 'right' | 'top' | 'bottom') => void;
   /** The banner: how many SECTIONS it holds — lays it out at that count with empty cells to fill. */
-  setBannerSections?: (n: number) => void;
+  setBannerSections?: (n: number, remove?: string[]) => void;
   /** The banner's arrangement as drawn — its item tree, repaired against what is on it. */
   heroTree?: () => BannerNode | null;
   /** Catalogue ids of the PREDEFINED widgets the page is already carrying — one instance each, so
@@ -2563,7 +2563,8 @@ function BannerToolbar() {
             <div className="absolute left-0 top-[calc(100%+6px)] z-[61] w-[320px] rounded-lg border border-[#E5E7EB] bg-white p-3 shadow-[0_12px_16px_-4px_rgba(16,24,40,0.10),0_4px_6px_-2px_rgba(16,24,40,0.06)]">
               <BannerLayoutPanel
                 tree={heroTree?.() ?? null}
-                onCount={(n) => setBannerSections?.(n)}
+                onCount={(n, remove) => setBannerSections?.(n, remove)}
+                nameOf={(id) => nodeById(id)?.name ?? 'Section'}
                 onPick={(t) => setCfg?.('hero', { bannerTree: t })}
               />
             </div>
