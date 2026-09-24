@@ -1359,6 +1359,23 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   those badges with no icon settings anywhere. Testing `-tile$` in `iconTarget` was dead code that read
   like coverage; it is gone.
 
+- **Support Portal — the banner's layout is ONE popup on ONE icon (`BannerLayoutPanel`, 24 Sep 2026).**
+  The `+` and the Arrangement icon were two buttons for two halves of one decision: you pressed the `+`,
+  picked a count from a grid of pictures, watched the popup close, then pressed the icon beside it to find
+  a SECOND grid of pictures for the count you had just chosen. They are one popup now — **Sections** on
+  top, **Arrangement** for that count directly under it — opened from the presets icon; the `+` is gone.
+  ⚠️ **The count is a SEGMENTED ROW, not tiles.** It used to draw the default layout for each count, which
+  is redundant the moment the arrangement tiles sit beneath it showing the layouts actually on offer. Two
+  grids of thumbnails in one popup is the thing this change exists to remove, so the count is reduced to
+  the number it is and the pictures are left to the control whose whole job is pictures.
+  ⚠️ **The popup STAYS OPEN on a count pick** and the tiles re-draw, because they read the live tree —
+  that is the whole point of the two being in one place. Verified: picking 3 lights 3, disables 2 with its
+  reason, lands two empty cells and re-renders four arrangement tiles with the applied default lit.
+  ⚠️ **The button is ALWAYS shown**, where the arrangement button used to be withheld at one section: it
+  carries the count now, and the count is the only thing you can do to a one-section banner — hiding the
+  button would hide the way out of that state. At one section the Arrangement half shows a quiet line.
+  ⚠️ `BannerCountPicker` and `SkeletonTile`'s `blocked` prop are gone with it (`blocked` had one caller).
+
 - **Support Portal — SPACING is one nested-box diagram, and the empty banner cell is a "+" (24 Sep 2026).**
   `SpacingMatrix` is a box-model picture: **margin outside, padding inside, the element in the middle**,
   all eight sides visible and editable at once — the shape Duda, Webflow, Framer and the browser's own

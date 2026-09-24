@@ -9,8 +9,8 @@ import {
   Braces, Highlighter, Maximize2, UnfoldVertical, Move, MoveHorizontal, MoveVertical, Plus, RemoveFormatting,
   PaintBucket, Replace, SquareDashed, SquareRoundCorner, SquareSquare, Trash2, Underline, X, ImagePlus, Palette, LayoutDashboard, Columns3,
 } from 'lucide-react';
-import { BannerCountPicker, BannerFillEditor, BannerPresetPicker, TilePresetPicker } from './PortalBannerTools';
-import { bannerBoxId, flipRoot, groupOf, presetsFor } from './portalBannerLayout';
+import { BannerFillEditor, BannerLayoutPanel, TilePresetPicker } from './PortalBannerTools';
+import { bannerBoxId, flipRoot, groupOf } from './portalBannerLayout';
 import type { BannerNode } from './portalBannerLayout';
 import { BANNER_GROUPS, bannerGroupGap } from './portalPageModel';
 // ArrowLeft stays in use by the card toolbar's "Move left".
@@ -2507,10 +2507,8 @@ function BannerToolbar() {
   const { cfg, setCfg, deleteNode, heroTree, setBannerSections } = useCanvas();
   const hero = cfg?.('hero') ?? {};
   const [axis, setAxis] = useState<'h' | 'v' | null>(null);
-  const [adding, setAdding] = useState(false);
   const [fill, setFill] = useState(false);
   const [layout, setLayout] = useState(false);
-  const addRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const { tip, setTip, readTip } = useToolbarTip();
   const alignH = String(hero.contentAlign ?? 'center');
@@ -2548,37 +2546,26 @@ function BannerToolbar() {
       <AlignAxis axis="h" value={h} options={H} open={axis === 'h'} onToggle={() => { setFill(false); setAxis((a) => (a === 'h' ? null : 'h')); }} onPick={(x) => { setCfg?.('hero', { contentAlign: x }); setAxis(null); }} />
       <AlignAxis axis="v" value={vAlign} options={V} open={axis === 'v'} onToggle={() => { setFill(false); setAxis((a) => (a === 'v' ? null : 'v')); }} onPick={(x) => { setCfg?.('hero', { contentAlignY: x }); setAxis(null); }} />
       <span className="mx-0.5 h-4 w-px bg-[#E5E7EB]" />
-      {/* ⚠️ Withheld while the banner holds ONE section. There is no arrangement of a single thing, so the
-          popup would open on the empty-state note — a control that exists to tell you it has nothing to offer.
-          It returns the moment a second section lands. */}
-      {(presetsFor(heroTree?.() ?? null).length > 0) && (
+      {/* ⚠️ ONE button for the banner's layout, where there were two.
+          The "+" asked how many sections and this one asked how they were arranged — so you opened a
+          popup, picked a count from a grid of pictures, watched it close, then opened the button beside
+          it to find a SECOND grid of pictures for the count you had just chosen. Two shelves of
+          thumbnails, one after the other, answering halves of one decision. They are one popup now:
+          the count on top, the arrangements for that count directly under it, re-drawn as you change it.
+          ⚠️ ALWAYS shown, where the arrangement button used to be withheld at one section. It carries the
+          count as well now, and the count is the only thing you can do to a one-section banner — hiding
+          the button would hide the way out of that state. */}
       <div className="relative">
-        <button className={layout ? btnOn : btn} data-tip="Arrange the banner's sections" onClick={() => { setAxis(null); setFill(false); setAdding(false); setLayout((x) => !x); }}><LayoutDashboard size={15} /></button>
+        <button className={layout ? btnOn : btn} data-tip="Sections, and how they are arranged" onClick={() => { setAxis(null); setFill(false); setLayout((x) => !x); }}><LayoutDashboard size={15} /></button>
         {layout && (
           <>
             <span className="fixed inset-0 z-[60]" onClick={() => setLayout(false)} />
-            <div className="absolute left-0 top-[calc(100%+6px)] z-[61] w-[300px] rounded-lg border border-[#E5E7EB] bg-white p-3 shadow-[0_12px_16px_-4px_rgba(16,24,40,0.10),0_4px_6px_-2px_rgba(16,24,40,0.06)]">
-              <p className="mb-2 text-[12px] font-medium text-[#364658]">Arrangement</p>
-              <BannerPresetPicker tree={heroTree?.() ?? null} onPick={(t) => setCfg?.('hero', { bannerTree: t })} />
-            </div>
-          </>
-        )}
-      </div>
-      )}
-      {/* ⚠️ The "+" asks HOW MANY SECTIONS, not which widget. A widget picked here had to land somewhere
-          before there was a somewhere — it went wherever the tree put it, the arrangement set changed
-          underneath it, and the layout was corrected after the fact. The count lays the banner out empty
-          first, and the widget popup moves to the cells, where the admin is pointing at the place they
-          mean. Same list, one click later, in the right order. */}
-      <div ref={addRef} className="relative">
-        <button className={adding ? btnOn : btn} data-tip="How many sections the banner holds" onClick={() => { setAxis(null); setFill(false); setLayout(false); setAdding((x) => !x); }}><Plus size={15} /></button>
-        {adding && (
-          <>
-            <span className="fixed inset-0 z-[60]" onClick={() => setAdding(false)} />
-            <div className="absolute left-1/2 top-[calc(100%+6px)] z-[61] w-[300px] -translate-x-1/2 rounded-lg border border-[#E5E7EB] bg-white p-3 shadow-[0_12px_16px_-4px_rgba(16,24,40,0.10),0_4px_6px_-2px_rgba(16,24,40,0.06)]">
-              <p className="text-[12px] font-medium text-[#364658]">Sections</p>
-              <p className="mb-2 text-[11px] leading-[16px] text-[#7B8FA5]">The words and the widgets beside them. Pick how many, then click a cell to fill it.</p>
-              <BannerCountPicker tree={heroTree?.() ?? null} onPick={(n) => { setAdding(false); setBannerSections?.(n); }} />
+            <div className="absolute left-0 top-[calc(100%+6px)] z-[61] w-[320px] rounded-lg border border-[#E5E7EB] bg-white p-3 shadow-[0_12px_16px_-4px_rgba(16,24,40,0.10),0_4px_6px_-2px_rgba(16,24,40,0.06)]">
+              <BannerLayoutPanel
+                tree={heroTree?.() ?? null}
+                onCount={(n) => setBannerSections?.(n)}
+                onPick={(t) => setCfg?.('hero', { bannerTree: t })}
+              />
             </div>
           </>
         )}
@@ -2586,7 +2573,7 @@ function BannerToolbar() {
       <button className={btn} data-tip={hero.bannerImage ? 'Replace the banner image' : 'Add a banner image'} onClick={() => fileRef.current?.click()}><ImagePlus size={15} /></button>
       <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { onFile(e.target.files?.[0]); e.target.value = ''; }} />
       <div className="relative">
-        <button className={fill ? btnOn : btn} data-tip="Banner colour — solid or gradient" onClick={() => { setAxis(null); setAdding(false); setFill((x) => !x); }}><Palette size={15} /></button>
+        <button className={fill ? btnOn : btn} data-tip="Banner colour — solid or gradient" onClick={() => { setAxis(null); setLayout(false); setFill((x) => !x); }}><Palette size={15} /></button>
         {fill && (
           <>
             <span className="fixed inset-0 z-[60]" onClick={() => setFill(false)} />

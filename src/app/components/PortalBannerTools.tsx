@@ -17,7 +17,7 @@ import { useRef, useState } from 'react';
 import type { CSSProperties, MouseEvent as ReactMouseEvent, ReactNode } from 'react';
 import { ArrowLeftRight, Minus, Plus, RotateCw } from 'lucide-react';
 import { ColorField } from './PortalColorPicker';
-import { activePreset, defaultTreeFor, presetsFor, tilePresets, unitsOf } from './portalBannerLayout';
+import { activePreset, presetsFor, tilePresets, unitsOf } from './portalBannerLayout';
 import type { BannerNode } from './portalBannerLayout';
 import { placedType } from './portalPageModel';
 
@@ -246,23 +246,18 @@ function PresetArt({ node, on }: { node: BannerNode; on: boolean }) {
 }
 
 /** The one tile both pickers are drawn in — the Card templates tile. */
-function SkeletonTile({ on, label, onPick, children, tall = false, blocked }: {
+function SkeletonTile({ on, label, onPick, children, tall = false }: {
   on: boolean; label: string; onPick: () => void; children: ReactNode; tall?: boolean;
-  /* ⚠️ A tile that cannot apply stays VISIBLE and disabled, carrying the reason — the rule every
-     limit in this builder follows. Removing it would leave a picker whose options change as you
-     work, with nothing saying what happened to the one that was there a moment ago. */
-  blocked?: string | null;
 }) {
   return (
     <button
       type="button"
-      title={blocked ?? label}
+      title={label}
       aria-label={label}
       aria-pressed={on}
-      disabled={!!blocked}
       onMouseDown={(e) => e.stopPropagation()}
-      onClick={(e) => { e.stopPropagation(); if (!blocked) onPick(); }}
-      className={`flex ${tall ? 'h-[88px]' : 'h-[64px]'} min-w-0 flex-1 overflow-hidden rounded-lg border-2 bg-white p-1.5 transition-colors ${blocked ? 'cursor-not-allowed border-[#E5E7EB] opacity-45' : on ? 'border-[#3D8BD0]' : 'border-[#E5E7EB] hover:border-[#C3CBD6]'}`}
+      onClick={(e) => { e.stopPropagation(); onPick(); }}
+      className={`flex ${tall ? 'h-[88px]' : 'h-[64px]'} min-w-0 flex-1 overflow-hidden rounded-lg border-2 bg-white p-1.5 transition-colors ${on ? 'border-[#3D8BD0]' : 'border-[#E5E7EB] hover:border-[#C3CBD6]'}`}
     >{children}</button>
   );
 }
@@ -284,36 +279,80 @@ export function BannerPresetPicker({ tree, onPick }: { tree: BannerNode | null; 
   );
 }
 
-/* ── How many sections the banner holds ─────────────────────────────────────────────────────────
+/* ── The banner's LAYOUT, in one popup ───────────────────────────────────────────
  *
- * The banner's "+" asks for a COUNT, not a widget. Picking a widget first meant picking it before there
- * was anywhere for it to go: it landed wherever the tree happened to put it, the arrangement set changed
- * underneath, and the layout had to be corrected after the fact. Saying "three sections" first lays the
- * banner out empty, and then each cell is filled by clicking the cell — which is the order the admin is
- * actually working in, and it is why the widget popup now lives on the empty cell instead of here.
+ * How many sections the banner holds, and how they are arranged — one question in two parts, so one
+ * control. They were two buttons on the bar, and the split made no sense in use: you pressed the "+",
+ * picked a count from a grid of pictures, the popup closed, and then you pressed the icon next to it to
+ * see a SECOND grid of pictures for the count you had just chosen. Two shelves of thumbnails, one after
+ * the other, answering halves of the same decision.
  *
+ * ⚠️ The count is a SEGMENTED ROW, not tiles. It used to draw the default layout for each count — real
+ * pictures, and redundant the moment the arrangement tiles sit directly beneath them showing the actual
+ * layouts on offer. Two grids of thumbnails in one popup is the thing this change exists to remove, so
+ * the count is reduced to the number it is and the pictures are left to the control whose whole job is
+ * pictures.
  * ⚠️ The count is every section INCLUDING the words, so it runs 2–4 and tops out at `MAX_BANNER_SECTIONS`.
  * A banner with the words alone is one section; adding two widgets makes three. Counting only the widgets
- * would put a "4" tile on a control whose own cap is four and mean five.
- * ⚠️ A count BELOW what the banner already holds is disabled, never offered — applying it would have to
- * delete a section the admin filled, and a picker is not where work gets thrown away. */
-export function BannerCountPicker({ tree, onPick }: { tree: BannerNode | null; onPick: (n: number) => void }) {
+ * would put a "4" on a control whose own cap is four and mean five.
+ * ⚠️ A count BELOW what the banner holds is DISABLED with the reason on it, never removed — applying it
+ * would have to delete a section somebody filled, and a picker is not where work gets thrown away.
+ * ⚠️ Picking a count re-renders the tiles under it, because the tiles read the live tree. That is the
+ * whole point of the two being in one place: the layouts you are choosing between are the layouts for the
+ * number you just set, in front of you, without a second popup. */
+export function BannerLayoutPanel({ tree, onCount, onPick }: {
+  tree: BannerNode | null;
+  onCount: (n: number) => void;
+  onPick: (t: BannerNode) => void;
+}) {
   const cur = unitsOf(tree).length;
+  const presets = presetsFor(tree);
+  const on = activePreset(tree);
   return (
-    <div className="grid grid-cols-3 gap-2">
-      {[2, 3, 4].map((n) => {
-        /* The preview is the layout this tile APPLIES — the words, then the empty cells that will land. */
-        const art = defaultTreeFor(['hero-content', ...Array.from({ length: n - 1 }, () => 'bn-slot')]);
-        const blocked = n < cur ? `The banner already holds ${cur} sections — delete one to go back to ${n}` : null;
-        return (
-          <SkeletonTile key={n} tall on={n === cur} blocked={blocked} label={`${n} sections`} onPick={() => onPick(n)}>
-            <span className="flex min-h-0 w-full flex-col gap-1">
-              <span className="flex min-h-0 flex-1">{art && <PresetArt node={art} on={n === cur} />}</span>
-              <span className="text-[10px] leading-[12px] text-[#7B8FA5]">{n} sections</span>
-            </span>
-          </SkeletonTile>
-        );
-      })}
+    <div>
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-[12px] font-medium text-[#364658]">Sections</span>
+        <span className="flex gap-0.5 rounded bg-[#F1F5F9] p-0.5">
+          {[2, 3, 4].map((n) => {
+            const blocked = n < cur ? `The banner already holds ${cur} sections — delete one to go back to ${n}` : null;
+            const lit = n === cur;
+            return (
+              <button
+                key={n}
+                type="button"
+                title={blocked ?? `${n} sections`}
+                aria-pressed={lit}
+                disabled={!!blocked}
+                onClick={(e) => { e.stopPropagation(); if (!blocked) onCount(n); }}
+                className={`h-6 w-8 rounded text-[12px] font-medium tabular-nums transition-colors ${
+                  blocked ? 'cursor-not-allowed text-[#C3CBD6]'
+                    : lit ? 'bg-white text-[#364658] shadow-[0_1px_2px_rgba(16,24,40,0.06)]'
+                    : 'text-[#7B8FA5] hover:text-[#364658]'
+                }`}
+              >{n}</button>
+            );
+          })}
+        </span>
+      </div>
+      {/* ⚠️ ONE line, and the actionable half of it. It also said "the words and the widgets beside
+          them" — a definition of a section, which the tiles below now draw, and which wrapped the line
+          in two and pushed the arrangements down the popup. */}
+      <p className="mt-1 text-[11px] leading-[16px] text-[#9CA3AF]">Click an empty cell on the banner to fill it.</p>
+
+      <div className="mt-2.5 border-t border-[#EEF1F5] pt-2.5">
+        <p className="mb-2 text-[12px] font-medium text-[#364658]">Arrangement</p>
+        {presets.length < 2
+          ? <p className="text-[11px] leading-[16px] text-[#9CA3AF]">Choose two or more sections to arrange them.</p>
+          : (
+            <div className="grid grid-cols-3 gap-2">
+              {presets.map((p) => (
+                <SkeletonTile key={p.id} tall on={on === p.id} label={p.label} onPick={() => onPick(p.tree)}>
+                  <PresetArt node={p.tree} on={on === p.id} />
+                </SkeletonTile>
+              ))}
+            </div>
+          )}
+      </div>
     </div>
   );
 }
