@@ -308,77 +308,18 @@ export function BannerPresetPicker({ tree, onPick }: { tree: BannerNode | null; 
  * ⚠️ Picking a count re-renders the tiles under it, because the tiles read the live tree. That is the
  * whole point of the two being in one place: the layouts you are choosing between are the layouts for the
  * number you just set, in front of you, without a second popup. */
-/* ── COLUMN WIDTHS ─────────────────────────────────────────────────────────────────
- *
- * ⚠️ DRAWN, not the labelled segmented row it was in the panel. It sits directly under a grid whose
- * whole point is that you can SEE a layout, and six ratios written as text under that is the same
- * mismatch that sent the section count back to pictures. Each tile draws the two columns at its ratio,
- * so the split is the picture rather than the caption.
- * ⚠️ AUTO draws the split the banner actually makes — the words about twice a compact block's share,
- * which is what `weight()` in the preview computes — rather than an empty tile or a 1:1. An option
- * that is the default has to show what the default looks like.
- * ⚠️ Shown only while the banner's ROOT is two columns. Anything else has no pair to divide, and a
- * ratio over three sections would be a control describing a shape that is not there. */
-const SPLITS: { id: string; label: string; a: number; b: number }[] = [
-  { id: 'auto', label: 'Auto', a: 2, b: 1.2 },
-  { id: '1:1', label: '1:1', a: 1, b: 1 },
-  { id: '2:1', label: '2:1', a: 2, b: 1 },
-  { id: '1:2', label: '1:2', a: 1, b: 2 },
-  { id: '3:1', label: '3:1', a: 3, b: 1 },
-  { id: '1:3', label: '1:3', a: 1, b: 3 },
-];
-
-/* ⚠️ SIX on ONE line. At four across it wrapped to a second row and took the height of a whole
-   arrangement tile for what is a secondary adjustment — the ratio is something you reach for once the
-   layout is right, so it gets one line at the foot of the popup rather than a grid of its own. Each card
-   is 26px tall with its label under it, which is the smallest a two-box drawing reads at. */
-function ColumnSplitPicker({ value, onPick }: { value: string; onPick: (v: string) => void }) {
-  return (
-    <div className="flex gap-1">
-      {SPLITS.map((sp) => {
-        const on = value === sp.id;
-        return (
-          <button
-            key={sp.id}
-            type="button"
-            title={sp.id === 'auto' ? 'Let the banner decide — the words take the room a card column does not' : `${sp.label} — the left column against the right`}
-            aria-label={`Column widths ${sp.label}`}
-            aria-pressed={on}
-            onMouseDown={(e) => e.stopPropagation()}
-            onClick={(e) => { e.stopPropagation(); onPick(sp.id); }}
-            className="min-w-0 flex-1"
-          >
-            <span className={`flex h-[26px] w-full items-stretch gap-[2px] rounded border bg-white p-[3px] transition-colors ${
-              on ? 'border-[#3D8BD0] ring-1 ring-[#3D8BD0]' : 'border-[#E5E7EB] hover:border-[#C3CBD6]'
-            }`}>
-              <span className={`rounded-[2px] ${on ? 'bg-[#BFD9F1]' : 'bg-[#E2E8F0]'}`} style={{ flex: sp.a }} />
-              <span className={`rounded-[2px] ${on ? 'bg-[#DCEAF8]' : 'bg-[#EEF2F6]'}`} style={{ flex: sp.b }} />
-            </span>
-            <span className={`mt-[3px] block truncate text-[9px] leading-[11px] ${on ? 'font-medium text-[#3D8BD0]' : 'text-[#9CA3AF]'}`}>{sp.label}</span>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-export function BannerLayoutPanel({ tree, onCount, onPick, nameOf, split, onSplit }: {
+export function BannerLayoutPanel({ tree, onCount, onPick, nameOf }: {
   tree: BannerNode | null;
   onCount: (n: number, remove?: string[]) => void;
   onPick: (t: BannerNode) => void;
   /* What a section is CALLED, answered by the canvas's own `nodeById` — one naming source, so a row
      here reads exactly as the outline and the breadcrumb do. */
   nameOf: (id: string) => string;
-  /** The banner's `bannerSplit`, and its writer. */
-  split: string;
-  onSplit: (v: string) => void;
 }) {
   const units = unitsOf(tree);
   const cur = units.length;
   const presets = presetsFor(tree);
   const on = activePreset(tree);
-  /* The banner's ROOT laid out as two columns — the only shape a left-against-right ratio describes. */
-  const rootRow2 = !!tree && typeof tree !== 'string' && tree.d === 'row' && tree.c.length === 2;
 
   /* ── Going DOWN ────────────────────────────────────────────────────────────────────────────────
    * A lower count used to be disabled outright, on the grounds that applying it would decide which of
@@ -520,12 +461,12 @@ export function BannerLayoutPanel({ tree, onCount, onPick, nameOf, split, onSpli
                 </SkeletonTile>
               )}
           </div>
-          {rootRow2 && (
-            <div className="mt-2.5 border-t border-[#EEF1F5] pt-2.5">
-              <p className="mb-2 text-[12px] font-medium text-[#364658]">Column widths</p>
-              <ColumnSplitPicker value={split} onPick={onSplit} />
-            </div>
-          )}
+          {/* ⚠️ COLUMN WIDTHS is gone from this popup, on request. The ratio between two columns is
+              already draggable on the canvas — the shared edge trades width between them — so a
+              six-tile picker of fixed ratios underneath the arrangement was a second, coarser answer
+              to a question the banner itself asks better, and it turned a popup about ARRANGEMENT
+              into a popup about two things. `bannerSplit` is untouched and still read by `weight()`,
+              so every banner keeps the ratio it has. */}
       </div>
     </div>
   );

@@ -1422,10 +1422,8 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   be big enough to tell one arrangement from another, and these are boxes. ⚠️ `PresetArt`'s row-band floor
   had to come down with them, 20px → 14px: a 62px tile leaves 50px of content, so a column of three gives
   each row 14, and a floor above its share is what clips the dashed cells’ top and bottom edges.
-  ⚠️ **Column widths is SIX small cards on ONE line** (26px tall, label under each). At four across it
-  wrapped and took an arrangement tile’s height for what is a secondary adjustment — a ratio is what you
-  reach for once the layout is right, so it gets one line at the foot rather than a grid of its own.
-  Verified: 6 tiles, 1 row, popup 320×298 at two sections and 320×211 at Default.
+  ⚠️ **Column widths was SIX small cards on ONE line at the foot of this popup — REMOVED 25 Sep**, see
+  the bullet below. Popup measured 320×185 at Default once it went.
   ⚠️ **The popup STAYS OPEN on a count pick** and the tiles re-draw, because they read the live tree —
   that is the whole point of the two being in one place. Verified: picking 3 lights 3, disables 2 with its
   reason, lands two empty cells and re-renders four arrangement tiles with the applied default lit.
@@ -1451,44 +1449,39 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   leaves `bgKind` alone — a banner with no picture and no colour chosen is a blank band, and the Colour
   button beside it is where that choice lives; clearing one thing must not silently answer a second
   question.
-  ⚠️ **Column widths is DRAWN** (`ColumnSplitPicker`) — six tiles that draw the two columns at their
-  ratio, four across under a hairline. It sits directly beneath a grid whose whole point is that you can
-  SEE a layout, and six ratios written as text under that is the mismatch that already sent the section
-  count back to pictures. **Auto draws the split the banner actually makes** (the words about twice a
-  compact block's share, which is what `weight()` computes) rather than a blank or a 1:1 — an option that
-  is the default has to show what the default looks like. Shown only while the banner's ROOT is two
-  columns; anything else has no pair to divide.
+  ⚠️ **Column widths was DRAWN here and is now GONE** (`ColumnSplitPicker`, removed 25 Sep — see the
+  bullet below). It was six tiles drawing the two columns at their ratio, which was the right treatment
+  for it and still the wrong place: the shared edge is draggable on the canvas, so this was a second,
+  coarser answer to a question the banner asks better. `bannerSplit` is still stored and still read.
   ⚠️ **Content STAYS in the panel** (Zeni's call): heading, sub-heading, show-search and the placeholder.
   The words are inline-editable on the canvas too, so it is two places for one value — kept because
   typing a long heading into a field beats typing it into the banner.
 
-- **⚠️ Support Portal — the ACTION CARDS' bar is DARK, and a bar's palette is CSS VARIABLES (25 Sep 2026).**
-  `#364658` is the toolbar's **SURFACE** now, with white glyphs — on the action cards and on their parent
-  Quick Actions row. It was the ink twice before and could not be seen either time, which is the lesson:
-  #64748B against #364658 on a 15px stroke is not a difference a reader can read, so a colour asked for on
-  a toolbar has to land on the surface. The **delete stays red** — it is the one control whose colour is
-  its meaning. Verified: bg `rgb(54,70,88)` and glyphs `rgb(255,255,255)` on `quick-incident` and
-  `quick`; `news` unchanged at white with `rgb(100,116,139)`.
-  ⚠️ **Every other bar stays white**, so the canvas carries two treatments. That is a difference a reader
-  has to attribute to something, and here it means "these are the product's four destinations". If a third
-  bar ever wants it, the rule has stopped being about action cards.
-  ⚠️ **The palette is CSS VARIABLES on the bar's shell** — `--bar-ink`, `--bar-ink-on`, `--bar-hover`,
-  `--bar-on-bg`, `--bar-on-ink`, `--bar-rule`, `--bar-surface`, `--bar-shadow` — and `btn`, `btnOn`,
-  `textBtn`, `Rule` and the grip all read `var(--bar-*, <the light value>)`. A bar re-declares eight
-  values and everything on it follows; a parallel set of dark classes would have to be threaded through
-  every control and would drift the first time one changed. The fallbacks mean a control rendered outside
-  a bar still has its old colours.
-  ⚠️ **`var()` does NOT work in an SVG presentation attribute** — `fill="var(--x)"` is silently ignored
-  and the literal fallback paints. The shadow glyph's inner square was white-on-white on the dark bar
-  until both its fills moved to `style={{ fill: … }}`.
-  ⚠️ **The shadow glyph's halo has its own variable**, not `currentColor`. On a dark bar the ink is white,
-  so a `currentColor` halo drew a white BLOOM — the opposite of a shadow. It is `#64748B` on the light bar
-  and `#0C141D` on the dark one: darker than its surface either way, which is what a shadow is.
-  ⚠️ **The TOOLTIP is `#364658` on every bar** (it was `#1F2937`). It belongs to the bar it hangs off, and
-  it is the one surface on a toolbar large enough to read a colour off.
+- **⚠️ Support Portal — EVERY floating toolbar is WHITE, and that is a DECISION, not a default (25 Sep 2026).**
+  The action cards' bar carried a dark `#364658` surface for one day. Asked to take every bar to
+  `#111C2C`, the question that settled it was the one Zeni raised: **the popups that open off a dark bar
+  are still white.** A bar's popup IS the bar opened, so it has to go dark with it — and inside those
+  popups sit colour swatches, image previews and skeleton tiles that are all pictures of a WHITE page,
+  every one of which then needs its own light card back. That is a dark chrome wrapped around light
+  content: two surfaces again, with more steps. Zeni's call: one surface, white, bar and popup alike.
+  `BAR_INK` is deleted and `ElementToolbar` takes the same `BAR` as everything else. Verified:
+  `quick-incident`, `quick`, `news`, `requests` and `hero` all `rgb(255,255,255)` with
+  `rgb(100,116,139)` ink.
+  ⚠️ **The `--bar-*` VARIABLES STAY** — `--bar-ink`, `--bar-ink-on`, `--bar-hover`, `--bar-on-bg`,
+  `--bar-on-ink`, `--bar-rule`, `--bar-surface`, `--bar-shadow`. Every control reads
+  `var(--bar-x, <the light value>)`, so the fallback IS the current design and they cost nothing; the
+  shadow glyph genuinely needs two of them to paint against whatever it sits on; and they are the whole
+  mechanism if a themed bar is ever wanted again — one declaration on the shell rather than a second set
+  of classes threaded through nine controls. What was removed is the second BAR, not the ability to have
+  one.
+  ⚠️ Two SVG facts learned while the dark bar existed, still true and still load-bearing: **`var()` is
+  silently ignored in an SVG presentation attribute** (`fill="var(--x)"` paints the literal fallback, so
+  both of `ShadowGlyph`'s fills are `style={{ fill: … }}`), and **a `currentColor` halo is a bloom on
+  any bar whose ink is light** — the halo therefore reads its own variable rather than the ink.
+  ⚠️ **The TOOLTIP is `#364658`** on every bar (it was `#1F2937`), which the revert did not undo: it
+  belongs to the bar it hangs off and is the one surface on a toolbar large enough to read a colour off.
   ⚠️ **No rule before the ALIGNMENTS.** Three fences on a bar of nine glyphs is a fence every two buttons,
   which groups nothing — and a NAMED group already separates placement from look wherever there is one.
-  Alignment sits with the colour, border, radius and shadow it is judged beside.
 
 - **Support Portal — a DATA TILE has a floating toolbar, and its Icon group moved onto it (25 Sep 2026).**
   `firstTile` — the "only the first of a shared id draws chrome" rule — was gated to `isServiceTile`, so
@@ -1561,6 +1554,45 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   because the blur spread past the 24 viewBox and was sliced to a hard edge — the one thing a shadow must
   not have. `overflow="visible"` on the svg is the real fix and is what let the rect go back out. At 15px
   the bleed is ~2px into a 28px button's own padding, so it never reaches a neighbour.
+
+- **Support Portal — the banner's BACKGROUND is ONE button with two tabs (25 Sep 2026).** It was two
+  buttons side by side on the banner's bar — a picture one and a colour one — each opening half of
+  "what is behind this banner". A banner has ONE background and it is either a picture or a colour:
+  that is a question with two answers, not two questions, and two glyphs for it meant reading both to
+  find out which one the banner was on. One **`PaintBucket`**, the same glyph every other element's
+  background uses, opening a popup whose first row is **Image · Colour**.
+  ⚠️ **It opens on the tab the banner is already using** (`bgKind === 'color'` → Colour, else Image), so
+  it answers the question before you touch anything.
+  ⚠️ **Switching tab is LOOKING, not choosing.** Nothing is written until you pick a picture or a colour
+  — `BannerFillEditor`'s `put` already stamps `bgKind: 'color'` on every write of its own and the file
+  picker stamps `'image'` — so a tab opened to see what was there cannot repaint the band.
+  ⚠️ **The colour layer appears ONLY once there IS a picture** (`!!hero.bannerImage`), which is the
+  honest gate: it is a wash laid BETWEEN an image and the words, so with no image under it there is
+  nothing for it to be between. It still arrives ON, because text on a photograph is readable by luck.
+  ⚠️ The tab strip is the product's **pill-on-a-track** (`bg-[#F1F5F9] p-0.5`, live tab lifted out in
+  white), deliberately NOT the bordered strip `BannerFillEditor`'s Solid/Gradient uses one level down —
+  two identical strips stacked read as one control that had grown a second row.
+  Verified: bar reads `… · Sections · Banner background — a picture or a colour · Border · Corner radius
+  · Delete`; the Image tab shows "Choose a picture" with no layer controls, and after an upload gains
+  "Replace image" + "Colour layer over the image" + the gradient editor; the Colour tab shows
+  Solid/Gradient + #3D8BD0.
+
+- **Support Portal — the fifth 4-section arrangement and the banner's Column widths are gone (25 Sep 2026).**
+  ⚠️ **`col-three-rows` left `PRESET_SHAPES[4]`** — "a column, and three rows beside it". At four
+  sections it put three widgets in a single narrow column beside the words, the one arrangement in the
+  set that gets thinner the more you give it. The 4-section set is four tiles now: Four rows · Two
+  columns then two rows · Three columns then a row · Two columns (second split) then a row.
+  ⚠️ **`DEFAULT_PRESET[4]` HAD to move with it**, to `split-col-row`. The note on that map already
+  says why — "a default outside the set is a layout with no way home" — and `col-three-rows` was the
+  default for four. `split-col-row` is the nearest thing left in the family: the words still hold a
+  left column with widgets stacked beside them, and the fourth takes a full-width row underneath rather
+  than making that column a third narrower. Verified: at 4 sections it is the lit tile.
+  ⚠️ **Column widths left the arrangement popup** (`ColumnSplitPicker` + `SPLITS` deleted, and
+  `BannerLayoutPanel` lost its `split`/`onSplit` props). The ratio between two columns is already
+  draggable on the canvas — the shared edge trades width between them — so six fixed ratios under the
+  arrangement grid were a second, coarser answer to a question the banner asks better, and they turned a
+  popup about ARRANGEMENT into a popup about two things. **`bannerSplit` is untouched and still read by
+  `weight()`**, so every banner keeps the ratio it has. Popup measured 320×185 at Default.
 
 - **Support Portal — the banner image’s colour layer is LINEAR only (25 Sep 2026).** The Linear/Radial
   select is gone from `OverlayLayerEditor`; the angle field and Rotate take its place and get the width.

@@ -331,39 +331,27 @@ function richify(n: ReactNode): ReactNode {
    a row of disabled controls until you pointed at one — and this bar is the whole of an element's
    styling, so there is no state in which its buttons are less available than each other. Hover is now
    the tint alone, which is enough once the mark is already at full strength. */
-/* ⚠️ NO resting colour. The glyph INHERITS from the bar it sits on (`BAR` below, or `BAR_INK` on the
-   action cards' one), so a toolbar can carry its own ink without every button on it being rewritten —
-   and a stray `text-` on this class would beat the inheritance and make that impossible. Hover is the
-   tint plus a step to full strength. */
+/* ⚠️ NO resting colour of its own. The glyph INHERITS from the bar it sits on (`BAR` below), so a
+   toolbar can carry its own ink without every button on it being rewritten — and a stray `text-` on
+   this class would beat the inheritance and make that impossible. Hover is the tint plus a step to
+   full strength. */
 const btn = 'flex size-7 items-center justify-center rounded text-[var(--bar-ink,#64748B)] transition-colors hover:bg-[var(--bar-hover,#F3F4F6)] hover:text-[var(--bar-ink-on,#364658)]';
 
 /* Every floating bar's shell. ⚠️ The INK lives here rather than on the buttons, which is what lets one
    bar differ from the rest. */
 const BAR = 'relative flex items-center gap-0.5 rounded border border-[#E5E7EB] bg-white px-1 py-1 shadow-[0_4px_6px_-2px_rgba(16,24,40,0.06),0_12px_16px_-4px_rgba(16,24,40,0.10)] [--bar-ink:#64748B] [--bar-ink-on:#364658] [--bar-hover:#F3F4F6] [--bar-on-bg:#EBF5FF] [--bar-on-ink:#3D8BD0] [--bar-rule:#E5E7EB] [--bar-surface:#FFFFFF] [--bar-shadow:#64748B]';
 
-/* ⚠️ The ACTION CARDS' bar and their parent row — a DARK bar, not a light one with darker glyphs.
-   That is what was asked for twice and could not be seen either time: #64748B against #364658 on a 15px
-   stroke is not a difference a reader can read, so the colour had to land on the SURFACE. White glyphs,
-   a white-at-12% hover, and the delete stays red — it is the one control whose colour is its meaning.
-   ⚠️ Every other bar stays white, so the canvas carries two treatments. That is a difference the reader
-   has to attribute to something, and here it means "these are the product's four destinations". Worth
-   watching: if a third bar ever wants it, the rule has stopped being about action cards.
-   ⚠️ The palette is CSS VARIABLES rather than a second set of button classes. `btn`, `btnOn`, `textBtn`
-   and the grip all read `var(--bar-*)`, so a bar re-declares five values and everything on it follows —
-   where a parallel set of dark classes would have to be threaded through every control on the bar and
-   would drift the first time one of them changed. */
-const BAR_INK = BAR
-  .replace('bg-white', 'bg-[#364658]')
-  .replace('border-[#E5E7EB]', 'border-[#2B3949]')
-  .replace('[--bar-ink:#64748B]', '[--bar-ink:#FFFFFF]')
-  .replace('[--bar-ink-on:#364658]', '[--bar-ink-on:#FFFFFF]')
-  .replace('[--bar-hover:#F3F4F6]', '[--bar-hover:rgba(255,255,255,0.12)]')
-  .replace('[--bar-on-bg:#EBF5FF]', '[--bar-on-bg:rgba(255,255,255,0.18)]')
-  .replace('[--bar-on-ink:#3D8BD0]', '[--bar-on-ink:#FFFFFF]')
-  .replace('[--bar-rule:#E5E7EB]', '[--bar-rule:rgba(255,255,255,0.22)]')
-  .replace('[--bar-surface:#FFFFFF]', '[--bar-surface:#364658]')
-  .replace('[--bar-shadow:#64748B]', '[--bar-shadow:#0C141D]');
-
+/* ⚠️ EVERY floating toolbar is WHITE, and so is every popup that opens off one. `BAR_INK` — the dark
+   `#364658` surface the action cards carried — is DELETED, and the answer it was part of is worth
+   keeping: a dark bar cannot be had on its own. Its popups are the bar opened, so they have to go dark
+   with it, and inside those popups sit colour swatches, image previews and skeleton tiles that are all
+   pictures of a WHITE page — every one of them needs its own light card back, which is a dark chrome
+   wrapped around light content, i.e. two surfaces again with more steps. Zeni's call: one surface.
+   ⚠️ The `--bar-*` VARIABLES stay. They cost nothing (every control reads `var(--bar-x, <the light
+   value>)`, so the fallback IS the current design), the shadow glyph genuinely needs two of them to
+   paint against whatever it sits on, and they are the whole mechanism if a themed bar is ever wanted
+   again — one declaration on the shell rather than a second set of classes threaded through nine
+   controls. What was removed is the second bar, not the ability to have one. */
 
 
 
@@ -1551,13 +1539,10 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
       onMouseMove={readTip}
       onMouseLeave={() => setTip(null)}
       data-portal-toolbar
-      /* ⚠️ The ACTION CARDS' bar is the one that carries #364658; every other bar rests at #64748B and
-         steps to it on hover. That is the scope Zeni asked for, and it is worth watching: two inks for
-         one control is a difference the reader has to attribute to something, and the only thing it
-         means here is "this is an action card", which the outline already says. */
-      /* ⚠️ The parent ROW as well as the cards. Selecting the row and selecting a card in it are one
-         move apart, and a bar that changed colour between the two would read as two different tools. */
-      className={isActionCard || id === 'quick' ? BAR_INK : BAR}
+      /* ⚠️ ONE class for every element, including the action cards and their row — they used to take a
+         dark `BAR_INK`. See the note on `BAR`: the bar's popups are the bar opened, so a dark bar is a
+         dark popup, and a dark popup is a light card round every swatch and preview inside it. */
+      className={BAR}
     >
       <ToolbarTip tip={tip} />
       {/* The grip drags the element itself — pick it up here, drop it on a sibling to reorder. */}
@@ -2623,9 +2608,13 @@ function BannerToolbar() {
   const { cfg, setCfg, deleteNode, heroTree, setBannerSections } = useCanvas();
   const hero = cfg?.('hero') ?? {};
   const [axis, setAxis] = useState<'h' | 'v' | null>(null);
-  const [fill, setFill] = useState(false);
   const [layout, setLayout] = useState(false);
-  const [img, setImg] = useState(false);
+  const [bgTab, setBgTab] = useState<'image' | 'color'>('image');
+  /* ⚠️ ONE background popup where there were two buttons — a picture one and a colour one, side by
+     side on the bar, each opening half of "what is behind this banner". A banner has ONE background
+     and it is either a picture or a colour, which is a question with two answers, not two questions.
+     `bg` is whether the popup is open; `bgTab` is which answer you are looking at. */
+  const [bg, setBg] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const { tip, setTip, readTip } = useToolbarTip();
   const alignH = String(hero.contentAlign ?? 'center');
@@ -2660,8 +2649,8 @@ function BannerToolbar() {
       className={BAR}
     >
       <ToolbarTip tip={tip} />
-      <AlignAxis axis="h" value={h} options={H} open={axis === 'h'} onToggle={() => { setFill(false); setAxis((a) => (a === 'h' ? null : 'h')); }} onPick={(x) => { setCfg?.('hero', { contentAlign: x }); setAxis(null); }} />
-      <AlignAxis axis="v" value={vAlign} options={V} open={axis === 'v'} onToggle={() => { setFill(false); setAxis((a) => (a === 'v' ? null : 'v')); }} onPick={(x) => { setCfg?.('hero', { contentAlignY: x }); setAxis(null); }} />
+      <AlignAxis axis="h" value={h} options={H} open={axis === 'h'} onToggle={() => { setBg(false); setAxis((a) => (a === 'h' ? null : 'h')); }} onPick={(x) => { setCfg?.('hero', { contentAlign: x }); setAxis(null); }} />
+      <AlignAxis axis="v" value={vAlign} options={V} open={axis === 'v'} onToggle={() => { setBg(false); setAxis((a) => (a === 'v' ? null : 'v')); }} onPick={(x) => { setCfg?.('hero', { contentAlignY: x }); setAxis(null); }} />
       <span className="mx-0.5 h-4 w-px bg-[#E5E7EB]" />
       {/* ⚠️ ONE button for the banner's layout, where there were two.
           The "+" asked how many sections and this one asked how they were arranged — so you opened a
@@ -2673,7 +2662,7 @@ function BannerToolbar() {
           count as well now, and the count is the only thing you can do to a one-section banner — hiding
           the button would hide the way out of that state. */}
       <div className="relative">
-        <button className={layout ? btnOn : btn} data-tip="Sections, and how they are arranged" onClick={() => { setAxis(null); setFill(false); setLayout((x) => !x); }}><LayoutDashboard size={15} /></button>
+        <button className={layout ? btnOn : btn} data-tip="Sections, and how they are arranged" onClick={() => { setAxis(null); setBg(false); setLayout((x) => !x); }}><LayoutDashboard size={15} /></button>
         {layout && (
           <>
             <span className="fixed inset-0 z-[60]" onClick={() => setLayout(false)} />
@@ -2682,95 +2671,113 @@ function BannerToolbar() {
                 tree={heroTree?.() ?? null}
                 onCount={(n, remove) => setBannerSections?.(n, remove)}
                 nameOf={(id) => nodeById(id)?.name ?? 'Section'}
-                split={String(hero.bannerSplit ?? 'auto')}
-                onSplit={(v) => setCfg?.('hero', { bannerSplit: v })}
                 onPick={(t) => setCfg?.('hero', { bannerTree: t })}
               />
             </div>
           </>
         )}
       </div>
-      {/* ⚠️ The picture AND the colour layer over it, in ONE popup. They were a file-picker on this
-          button and a Background group in the panel, which split the pair you always work on together:
-          you choose a photograph, and the very next thing you do is darken it enough to read the words.
-          Judging that in a sidebar means judging it from the copy you are not looking at. */}
+      {/* ── The banner's BACKGROUND — one button, two tabs ─────────────────────────────────────
+          ⚠️ It was TWO buttons side by side on the bar: a picture one and a colour one. A banner has
+          ONE background and it is either a picture or a colour — that is a question with two answers,
+          not two questions, and two glyphs for it meant reading both to find out which one the banner
+          was actually on. One paint-bucket, the same glyph every other element's background uses.
+          ⚠️ The popup OPENS on the tab the banner is already using, so it answers "what is behind this
+          banner" before you touch anything.
+          ⚠️ Switching tab is LOOKING, not choosing. Nothing is written until you pick a picture or a
+          colour — `BannerFillEditor` stamps `bgKind: 'color'` on every write of its own, and the file
+          picker stamps `'image'` — so a tab you opened to see what was there cannot repaint the band. */}
       <div className="relative">
         <button
-          className={img ? btnOn : btn}
-          data-tip={hero.bannerImage ? 'Banner image and the colour layer over it' : 'Add a banner image'}
-          onClick={() => { setAxis(null); setFill(false); setLayout(false); setImg((x) => !x); }}
-        ><ImagePlus size={15} /></button>
-        {img && (
+          className={bg ? btnOn : btn}
+          data-tip="Banner background — a picture or a colour"
+          onClick={() => {
+            setAxis(null); setLayout(false);
+            if (!bg) setBgTab(hero.bgKind === 'color' ? 'color' : 'image');
+            setBg((x) => !x);
+          }}
+        ><PaintBucket size={15} /></button>
+        {bg && (
           <>
-            <span className="fixed inset-0 z-[60]" onClick={() => setImg(false)} />
+            <span className="fixed inset-0 z-[60]" onClick={() => setBg(false)} />
+            {/* ⚠️ 320px with a scroll once it is tall. The Colour tab holds the SAME gradient editor the
+                panel does — four controls over a list of stops — and at 240px its type select read "L"
+                and every stop colour read "#…". The colour picker it opens is portalled to the body, so
+                this scroll box cannot clip it. */}
             <div className="absolute left-1/2 top-[calc(100%+6px)] z-[61] max-h-[min(70vh,560px)] w-[320px] -translate-x-1/2 overflow-y-auto rounded-lg border border-[#E5E7EB] bg-white p-3 shadow-[0_12px_16px_-4px_rgba(16,24,40,0.10),0_4px_6px_-2px_rgba(16,24,40,0.06)]">
-              <p className="mb-2 text-[12px] font-medium text-[#364658]">Banner image</p>
-              {hero.bannerImage ? (
-                <div className="mb-3">
-                  <span
-                    className="block h-[92px] w-full rounded border border-[#E5E7EB] bg-[#F8FAFC] bg-cover bg-center"
-                    style={{ backgroundImage: `url(${String(hero.bannerImage)})` }}
-                  />
-                  <div className="mt-1.5 flex gap-2">
+              {/* ⚠️ The pill-on-a-track the product uses for LABELLED tabs, deliberately not the bordered
+                  strip `BannerFillEditor`'s Solid/Gradient uses one level down — two identical strips
+                  stacked would read as one control that had grown a second row. */}
+              <div className="mb-3 flex rounded bg-[#F1F5F9] p-0.5">
+                {([['image', 'Image'], ['color', 'Colour']] as const).map(([k, label]) => (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => setBgTab(k)}
+                    className={`h-7 flex-1 rounded text-[12px] font-medium transition-colors ${
+                      bgTab === k ? 'bg-white text-[#364658] shadow-[0_1px_2px_rgba(16,24,40,0.10)]' : 'text-[#64748B] hover:text-[#364658]'
+                    }`}
+                  >{label}</button>
+                ))}
+              </div>
+              {bgTab === 'image' ? (
+                <>
+                  {hero.bannerImage ? (
+                    <div>
+                      <span
+                        className="block h-[92px] w-full rounded border border-[#E5E7EB] bg-[#F8FAFC] bg-cover bg-center"
+                        style={{ backgroundImage: `url(${String(hero.bannerImage)})` }}
+                      />
+                      <div className="mt-1.5 flex gap-2">
+                        <button
+                          className="h-7 flex-1 rounded border border-[#DFE5ED] text-[12px] font-medium text-[#364658] transition-colors hover:bg-[#F5F7FA]"
+                          onClick={() => fileRef.current?.click()}
+                        >Replace image</button>
+                        {/* ⚠️ Removing the picture leaves `bgKind` alone: a banner with no image and no
+                            colour chosen is a blank band, and the Colour tab beside this one is where
+                            that choice lives. Clearing one thing must not answer a second question. */}
+                        <button
+                          className="flex size-7 items-center justify-center rounded border border-[#DFE5ED] text-[#EF4444] transition-colors hover:bg-[#FEF3F2]"
+                          title="Remove the image"
+                          onClick={() => { setCfg?.('hero', { bannerImage: '' }); toast.success('Banner image removed'); }}
+                        ><Trash2 size={13} /></button>
+                      </div>
+                    </div>
+                  ) : (
                     <button
-                      className="h-7 flex-1 rounded border border-[#DFE5ED] text-[12px] font-medium text-[#364658] transition-colors hover:bg-[#F5F7FA]"
+                      className="flex h-[92px] w-full flex-col items-center justify-center gap-1 rounded border border-dashed border-[#CBD5E1] bg-[#F8FAFC] text-[12px] text-[#7B8FA5] transition-colors hover:border-[#3D8BD0] hover:text-[#3D8BD0]"
                       onClick={() => fileRef.current?.click()}
-                    >Replace image</button>
-                    {/* ⚠️ Removing the picture leaves `bgKind` alone: a banner with no image and no colour
-                        chosen is a blank band, and the Colour button beside this one is where that choice
-                        lives. Clearing one thing must not silently answer a second question. */}
-                    <button
-                      className="flex size-7 items-center justify-center rounded border border-[#DFE5ED] text-[#EF4444] transition-colors hover:bg-[#FEF3F2]"
-                      title="Remove the image"
-                      onClick={() => { setCfg?.('hero', { bannerImage: '' }); toast.success('Banner image removed'); }}
-                    ><Trash2 size={13} /></button>
-                  </div>
-                </div>
-              ) : (
-                <button
-                  className="mb-3 flex h-[92px] w-full flex-col items-center justify-center gap-1 rounded border border-dashed border-[#CBD5E1] bg-[#F8FAFC] text-[12px] text-[#7B8FA5] transition-colors hover:border-[#3D8BD0] hover:text-[#3D8BD0]"
-                  onClick={() => fileRef.current?.click()}
-                ><ImagePlus size={18} /> Choose a picture<span className="text-[11px] text-[#9CA3AF]">1600 × 400 works well</span></button>
-              )}
-              {/* ⚠️ ON by default the moment a banner has a picture: text laid straight onto a photograph
-                  is readable only by luck. It sits BETWEEN the image and the words. */}
-              {!!hero.bannerImage && (
-                <div className="border-t border-[#EEF1F5] pt-3">
-                  <label className="mb-2 flex cursor-pointer items-center justify-between gap-2">
-                    <span className="text-[12px] font-medium text-[#364658]">Colour layer over the image</span>
-                    <span
-                      onClick={() => setCfg?.('hero', { overlayOn: hero.overlayOn === false })}
-                      className={`relative h-[18px] w-8 flex-shrink-0 rounded-full transition-colors ${hero.overlayOn === false ? 'bg-[#CBD5E1]' : 'bg-[#3D8BD0]'}`}
-                    >
-                      <span className={`absolute top-[2px] size-[14px] rounded-full bg-white transition-all ${hero.overlayOn === false ? 'left-[2px]' : 'left-[16px]'}`} />
-                    </span>
-                  </label>
-                  {hero.overlayOn !== false && (
-                    <OverlayLayerEditor cfg={hero} setCfg={(patch) => setCfg?.('hero', patch)} />
+                    ><ImagePlus size={18} /> Choose a picture<span className="text-[11px] text-[#9CA3AF]">1600 × 400 works well</span></button>
                   )}
-                </div>
+                  {/* ⚠️ The colour layer appears ONLY once there IS a picture, which is Zeni's rule and
+                      the honest one: it is a wash laid BETWEEN an image and the words, so with no image
+                      under it there is nothing for it to be between. It arrives ON, because text laid
+                      straight onto a photograph is readable only by luck. */}
+                  {!!hero.bannerImage && (
+                    <div className="mt-3 border-t border-[#EEF1F5] pt-3">
+                      <label className="mb-2 flex cursor-pointer items-center justify-between gap-2">
+                        <span className="text-[12px] font-medium text-[#364658]">Colour layer over the image</span>
+                        <span
+                          onClick={() => setCfg?.('hero', { overlayOn: hero.overlayOn === false })}
+                          className={`relative h-[18px] w-8 flex-shrink-0 rounded-full transition-colors ${hero.overlayOn === false ? 'bg-[#CBD5E1]' : 'bg-[#3D8BD0]'}`}
+                        >
+                          <span className={`absolute top-[2px] size-[14px] rounded-full bg-white transition-all ${hero.overlayOn === false ? 'left-[2px]' : 'left-[16px]'}`} />
+                        </span>
+                      </label>
+                      {hero.overlayOn !== false && (
+                        <OverlayLayerEditor cfg={hero} setCfg={(patch) => setCfg?.('hero', patch)} />
+                      )}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <BannerFillEditor cfg={hero} setCfg={(patch) => setCfg?.('hero', patch)} />
               )}
             </div>
           </>
         )}
       </div>
       <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { onFile(e.target.files?.[0]); e.target.value = ''; }} />
-      <div className="relative">
-        <button className={fill ? btnOn : btn} data-tip="Banner colour — solid or gradient" onClick={() => { setAxis(null); setLayout(false); setFill((x) => !x); }}><Palette size={15} /></button>
-        {fill && (
-          <>
-            <span className="fixed inset-0 z-[60]" onClick={() => setFill(false)} />
-            {/* ⚠️ 320px, and a scroll once it is tall. This popup holds the SAME gradient editor the
-                panel does, and the editor is a row of four controls over a list of stops — at 240px
-                the type select read "L" and every stop colour read "#…", which is a control you have
-                to open to find out what it says. The colour picker it opens is portalled to the body,
-                so the scroll box cannot clip it. */}
-            <div className="absolute left-1/2 top-[calc(100%+6px)] z-[61] max-h-[min(70vh,540px)] w-[320px] -translate-x-1/2 overflow-y-auto rounded-lg border border-[#E5E7EB] bg-white p-3 shadow-[0_12px_16px_-4px_rgba(16,24,40,0.10),0_4px_6px_-2px_rgba(16,24,40,0.06)]">
-              <BannerFillEditor cfg={hero} setCfg={(patch) => setCfg?.('hero', patch)} />
-            </div>
-          </>
-        )}
-      </div>
       {/* ⚠️ The banner's OWN border and corners, beside its colour — the same three questions every
           other block answers on its bar, in the same order. They were a "Corners & border" group in
           the panel, which is the copy you are not looking at while you are looking at the banner. */}
@@ -3885,7 +3892,7 @@ export function Sel({ id, children, className = '', toolbarBelow = false, surfac
         /* Double-clicking the banner's BACKGROUND (not a word or a widget on it) crops its image. */
         if ((e.target as Element).closest('[data-node]')?.getAttribute('data-node') !== 'hero') return;
         const h = readCfg?.('hero') ?? {};
-        if (h.bgKind === 'color' || !h.bannerImage) { toast('Add a banner image to crop it — the image button on the banner toolbar'); return; }
+        if (h.bgKind === 'color' || !h.bannerImage) { toast('Add a banner image to crop it — the background button on the banner toolbar, Image tab'); return; }
         e.stopPropagation();
         select('hero');
         setCropping(true);

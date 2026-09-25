@@ -182,7 +182,9 @@ const PRESET_SHAPES: Record<number, { id: string; label: string; s: Shape }[]> =
     { id: 'two-cols-two-rows', label: 'Two columns, then two rows', s: C(R(0, 1), 2, 3) },
     { id: 'three-cols-row', label: 'Three columns, then a row', s: C(R(0, 1, 2), 3) },
     { id: 'split-col-row', label: 'Two columns — the second split — then a row', s: C(R(0, C(1, 2)), 3) },
-    { id: 'col-three-rows', label: 'A column, and three rows beside it', s: R(0, C(1, 2, 3)) },
+    /* ⚠️ `col-three-rows` — a column with three rows beside it — was the FIFTH tile here and is gone
+       on request. At four sections it put three widgets in a single narrow column beside the words,
+       which is the one arrangement in the set that gets thinner the more you give it. */
   ],
 };
 
@@ -194,8 +196,12 @@ const PRESET_SHAPES: Record<number, { id: string; label: string; s: Shape }[]> =
  * for. Stacked rows are the honest alternative and they are the first tile in every set — they are simply not
  * what a banner is: the words and something beside them is the shape every reference portal opens with.
  * ⚠️ Each one is a real member of `PRESET_SHAPES`, so the tile for it lights up in the arrangement popup and
- * the admin can get back to it. A default outside the set is a layout with no way home. */
-const DEFAULT_PRESET: Record<number, string> = { 2: 'two-cols', 3: 'col-two-rows', 4: 'col-three-rows' };
+ * the admin can get back to it. A default outside the set is a layout with no way home.
+ * ⚠️ Four sections lands on `split-col-row`, NOT `col-three-rows` — that shape left the set (see above),
+ * and a default has to move with it or the banner opens on a layout no tile is lit for. It is the nearest
+ * thing left in the family: the words still hold a left column with widgets stacked beside them, and the
+ * fourth takes a full-width row underneath rather than making that column a third narrower. */
+const DEFAULT_PRESET: Record<number, string> = { 2: 'two-cols', 3: 'col-two-rows', 4: 'split-col-row' };
 
 /** The default arrangement for a banner holding `units.length` sections — null when there is no set for it. */
 export function defaultTreeFor(units: BannerNode[]): BannerNode | null {
