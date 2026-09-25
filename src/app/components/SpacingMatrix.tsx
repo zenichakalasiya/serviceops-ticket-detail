@@ -14,12 +14,14 @@ import type { NodeStyle, SpacingBox } from './portalPageModel';
  * ⚠️ THE NUMBERS ARE THE TARGETS. Every side is a real 32px input — click it and type, or drag
  * sideways on it to scrub — so the smallest thing you have to hit is a field, not a hairline edge.
  *
- * ⚠️ An unset side shows what the element RESTS at, in grey. A section carries 24px either side from
- * its own classes, so printing 0 there said there was no space when there plainly was, and gave no
- * way to tell that typing 0 would remove it. Grey = the element's own; dark = a number somebody set.
+ * ⚠️ An unset side shows what the element RESTS at. A section carries 24px either side from its own
+ * classes, so printing 0 there said there was no space when there plainly was, and gave no way to tell
+ * that typing 0 would remove it. It used to be printed in GREY to say "nobody set this" — a true and
+ * secondary fact, told in the one way that also reads as "this field is disabled", which is how a panel
+ * of eight live inputs came to look switched off. Every value is at full strength now.
  *
- * ⚠️ Vertical sides are px and horizontal sides are %, the product's convention — stated once in the
- * head rather than repeated eight times, and carried on each field as its suffix. */
+ * ⚠️ EVERY SIDE IS px. Left and right were a percentage of the parent, so one control carried two
+ * scales and had to caption them; the unit now rides in each field's own divided cell. */
 
 type Ring = 'margin' | 'padding';
 type Side = keyof SpacingBox;
@@ -46,28 +48,26 @@ function padBoxOf(el: HTMLElement): HTMLElement {
   return flat ? ((el.firstElementChild as HTMLElement | null) ?? el) : el;
 }
 
-/** Measures an element's resting padding and margin off the canvas. Horizontal sides come back as a % of
- *  the parent's width — the unit those fields are in — and vertical sides in px. */
+/** Measures an element's resting padding and margin off the canvas — every side in px, the unit the
+ *  fields are in. (It used to convert the horizontal pair to a % of the parent, because that was the
+ *  unit they were stored in; nothing is a percentage any more.) */
 export function useRestingSpacing(nodeId: string, deps: unknown): { padding?: SpacingBox; margin?: SpacingBox } {
   const [box, setBox] = useState<{ padding?: SpacingBox; margin?: SpacingBox }>({});
   useLayoutEffect(() => {
     const measure = () => {
       const el = document.querySelector(`[data-node="${CSS.escape(nodeId)}"]`) as HTMLElement | null;
       if (!el) { setBox({}); return; }
-      const parentW = el.parentElement?.clientWidth || el.clientWidth || 1;
-      const pct = (px: number) => Math.round((px / parentW) * 1000) / 10;
+      const px = (v: string) => Math.round(parseFloat(v) || 0);
       /* The banner pads the items at its EDGES rather than itself, 24px on every side while unset. */
       if (nodeId === 'hero') {
-        const w = (el.querySelector('[data-banner-band]') as HTMLElement | null)?.clientWidth || el.clientWidth || 1;
-        const h = Math.round((24 / w) * 1000) / 10;
-        setBox({ padding: { top: 24, bottom: 24, left: h, right: h }, margin: { top: 0, bottom: 0, left: 0, right: 0 } });
+        setBox({ padding: { top: 24, bottom: 24, left: 24, right: 24 }, margin: { top: 0, bottom: 0, left: 0, right: 0 } });
         return;
       }
       const cs = getComputedStyle(el);
       const p = getComputedStyle(padBoxOf(el));
       setBox({
-        padding: { top: Math.round(parseFloat(p.paddingTop)), bottom: Math.round(parseFloat(p.paddingBottom)), left: pct(parseFloat(p.paddingLeft)), right: pct(parseFloat(p.paddingRight)) },
-        margin: { top: Math.round(parseFloat(cs.marginTop)), bottom: Math.round(parseFloat(cs.marginBottom)), left: pct(parseFloat(cs.marginLeft)), right: pct(parseFloat(cs.marginRight)) },
+        padding: { top: px(p.paddingTop), bottom: px(p.paddingBottom), left: px(p.paddingLeft), right: px(p.paddingRight) },
+        margin: { top: px(cs.marginTop), bottom: px(cs.marginBottom), left: px(cs.marginLeft), right: px(cs.marginRight) },
       });
     };
     measure();
@@ -78,8 +78,14 @@ export function useRestingSpacing(nodeId: string, deps: unknown): { padding?: Sp
 }
 
 const isH = (s: Side) => s === 'left' || s === 'right';
-const unitOf = (s: Side) => (isH(s) ? '%' : 'px');
-const maxOf = (s: Side) => (isH(s) ? 50 : 200);
+/* ⚠️ EVERY SIDE IS px. Left and right used to be a PERCENTAGE of the parent, which is why the panel
+   had to print its units in a caption and why one control carried two scales. An admin setting the room
+   inside a card is thinking in the same unit on all four sides, and a % that reads 3 while painting 32
+   pixels is a number that answers a question nobody asked. The switch reaches the nine places that
+   emitted the horizontal sides — see the px bullet in CLAUDE.md, including the banner templates, whose
+   authored percentages were converted at the width they were designed against. */
+const unitOf = (_s: Side) => 'px';
+const maxOf = (_s: Side) => 200;
 const AXES = { v: ['top', 'bottom'] as Side[], h: ['left', 'right'] as Side[] };
 
 /* ── The band the hovered side owns, drawn over the canvas ──────────────────────────────────────
@@ -135,8 +141,15 @@ function SpacingHint({ nodeId, ring, side }: { nodeId: string; ring: Ring; side:
  * ⚠️ Click to type, drag sideways to scrub, and the two do not fight: a press becomes a scrub only
  * after the pointer has travelled 3px. Under that it is a plain click and the field takes focus, or a
  * control that looks like a field would refuse to be typed in.
- * ⚠️ `lead` is the glyph INSIDE the box saying which side or axis it is, rather than a label beside
- * it — that is what lets a row of four stay one line of equal boxes at any sidebar width.
+* ⚠️ `lead` is the glyph INSIDE the box saying which side or axis it is, rather than a label beside
+ * it — that is what lets a row stay one line of equal boxes at any sidebar width.
+ * ⚠️ The UNIT is a divided cell on the right, not a word floating beside the number: the box then reads
+ * as two parts — the thing you type in, and the thing it is measured in — and the typing part gets the
+ * width, which is the part being used. A bare "24 px" centred in a box is one blob of grey text.
+ * ⚠️ The value is ALWAYS at full strength. It used to go grey whenever nobody had set that side, to say
+ * "this is the element's own" — true, secondary, and indistinguishable from a disabled field, which is
+ * how a panel of eight real inputs came to look switched off. The number is correct either way; the
+ * only thing the grey carried was who put it there.
  * ⚠️ Every box is `flex-1` or a grid cell, never a fixed width, so a row always fills the panel
  * however wide the admin has dragged it. */
 function SideField({ value, own, unit, max, lead, onSet, onHover, placeholder }: {
@@ -162,11 +175,11 @@ function SideField({ value, own, unit, max, lead, onSet, onHover, placeholder }:
   };
   return (
     <label
-      className="flex h-8 min-w-0 flex-1 items-center gap-1 rounded border border-[#DFE5ED] bg-white px-1.5 transition-colors focus-within:border-[#3D8BD0] hover:border-[#C3CBD6]"
+      className="flex h-8 min-w-0 flex-1 items-center overflow-hidden rounded border border-[#DFE5ED] bg-white transition-colors focus-within:border-[#3D8BD0] focus-within:ring-2 focus-within:ring-[#3D8BD0]/15 hover:border-[#C3CBD6]"
       onPointerEnter={() => onHover?.(true)}
       onPointerLeave={() => onHover?.(false)}
     >
-      {lead && <span className="flex-shrink-0 text-[#9CA3AF]">{lead}</span>}
+      {lead && <span className="flex flex-shrink-0 items-center pl-2 text-[#94A3B8]">{lead}</span>}
       <input
         ref={ref}
         value={typing ?? (value === null ? '' : String(value))}
@@ -176,11 +189,9 @@ function SideField({ value, own, unit, max, lead, onSet, onHover, placeholder }:
         onBlur={() => setTyping(null)}
         /* `ew-resize` is the whole hint that this number drags — the cursor every design tool uses for
            a scrubber, and it costs no pixels on a control this small. */
-        className={`w-full min-w-0 cursor-ew-resize bg-transparent text-center text-[12px] tabular-nums outline-none placeholder:text-[11px] placeholder:text-[#C3CBD6] focus:cursor-text ${
-          own ? 'font-medium text-[#364658]' : 'text-[#9CA3AF]'
-        }`}
+        className="w-full min-w-0 cursor-ew-resize bg-transparent px-2 text-[12.5px] font-medium tabular-nums text-[#364658] outline-none placeholder:text-[11px] placeholder:font-normal placeholder:text-[#B3BECC] focus:cursor-text"
       />
-      <span className="flex-shrink-0 text-[10px] text-[#B3BECC]">{unit}</span>
+      <span className="flex h-full flex-shrink-0 items-center border-l border-[#EEF1F5] bg-[#F8FAFC] px-1.5 text-[10px] font-medium text-[#94A3B8]">{unit}</span>
     </label>
   );
 }
@@ -297,6 +308,8 @@ export function SpacingMatrix({ style, onChange, only, resting, nodeId }: Props)
         >{open === r ? <ChevronUp size={14} /> : <ChevronDown size={14} />}</button>
       ))}
       {open === r ? (
+        /* ⚠️ No glyphs in here: a box above the plate IS the top, so an arrow inside it labels what its
+           position already says, and the width it costs is width the number wanted. */
         <div className="rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] p-2">
           <div className="flex">{field(r, 'top')}</div>
           <div className="mt-1.5 flex items-center gap-1.5">
@@ -322,7 +335,7 @@ export function SpacingMatrix({ style, onChange, only, resting, nodeId }: Props)
           <SideField
             value={pairOf(r, 'h')}
             own={ownSet(r, 'left') || ownSet(r, 'right')}
-            unit="%" max={50} placeholder="Mixed"
+            unit="px" max={200} placeholder="Mixed"
             lead={<MoveHorizontal size={11} />}
             onSet={(v) => setPair(r, 'h', v)}
             onHover={hover(r, 'left')}
@@ -339,11 +352,15 @@ export function SpacingMatrix({ style, onChange, only, resting, nodeId }: Props)
   const fourSides = (r: Ring) => (
     <div key={r} className="mt-3 first:mt-0">
       {head(r)}
-      <div className="grid grid-cols-4 gap-1">
+      {/* ⚠️ TOP beside BOTTOM, then LEFT beside RIGHT — not one row of ↑ → ↓ ←. The two chains in
+          the header above tie exactly these pairs, so a line per pair is the grouping those controls
+          already describe; across one row the sides a chain held were the first box and the third. It
+          also gives every field twice the width, which is where the number goes. */}
+      <div className="grid grid-cols-2 gap-1.5">
         {field(r, 'top', <ArrowUp size={11} />)}
-        {field(r, 'right', <ArrowRight size={11} />)}
         {field(r, 'bottom', <ArrowDown size={11} />)}
         {field(r, 'left', <ArrowLeft size={11} />)}
+        {field(r, 'right', <ArrowRight size={11} />)}
       </div>
     </div>
   );
@@ -365,7 +382,6 @@ export function SpacingMatrix({ style, onChange, only, resting, nodeId }: Props)
           >{label}</button>
         ))}
       </div>
-      <p className="mb-2 text-[11px] leading-[16px] text-[#9CA3AF]">Up and down in px · left and right in %</p>
       {rings.map((r) => (tab === 'two' ? twoFields(r) : fourSides(r)))}
       {nodeId && hint && <SpacingHint nodeId={nodeId} ring={hint.ring} side={hint.side} />}
     </div>

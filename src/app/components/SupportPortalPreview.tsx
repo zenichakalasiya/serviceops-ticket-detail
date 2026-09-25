@@ -824,8 +824,8 @@ function HeroSearch({ cfg, fallback, style }: {
     minHeight: own.height ?? 44,
     ...(p?.top !== undefined ? { paddingTop: p.top } : {}),
     ...(p?.bottom !== undefined ? { paddingBottom: p.bottom } : {}),
-    ...(p?.left !== undefined ? { paddingLeft: `${p.left}%` } : {}),
-    ...(p?.right !== undefined ? { paddingRight: `${p.right}%` } : {}),
+    ...(p?.left !== undefined ? { paddingLeft: p.left } : {}),
+    ...(p?.right !== undefined ? { paddingRight: p.right } : {}),
   };
   const [q, setQ] = useState('');
   const [open, setOpen] = useState(false);
@@ -1549,15 +1549,15 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
      are invisible; a shadow drawn twice is twice as dark — so the inner copy leaves it to the Sel. */
   const stInner = (id: string) => { const { boxShadow: _s, ...rest } = styleOf(styles, id); return rest; };
   /* A node's OWN padding and dragged height, for the elements that paint their own card and
-     therefore have to apply both themselves. Vertical is px, horizontal is %, as everywhere else. */
+     therefore have to apply both themselves. Every side is px, as everywhere else. */
   const padCss = (id: string): React.CSSProperties => {
     const pad = styles[id]?.padding;
     const h = styles[id]?.height;
     return {
       ...(pad?.top !== undefined ? { paddingTop: pad.top } : {}),
       ...(pad?.bottom !== undefined ? { paddingBottom: pad.bottom } : {}),
-      ...(pad?.left !== undefined ? { paddingLeft: `${pad.left}%` } : {}),
-      ...(pad?.right !== undefined ? { paddingRight: `${pad.right}%` } : {}),
+      ...(pad?.left !== undefined ? { paddingLeft: pad.left } : {}),
+      ...(pad?.right !== undefined ? { paddingRight: pad.right } : {}),
       ...(h !== undefined ? { minHeight: h } : {}),
     };
   };
@@ -3121,8 +3121,8 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
             const pad = styles.hero?.padding;
             const padT = pad?.top ?? 24;
             const padB = pad?.bottom ?? 24;
-            const padL = pad?.left !== undefined ? `${pad.left}cqw` : '24px';
-            const padR = pad?.right !== undefined ? `${pad.right}cqw` : '24px';
+            const padL = pad?.left !== undefined ? `${pad.left}px` : '24px';
+            const padR = pad?.right !== undefined ? `${pad.right}px` : '24px';
             const justifyY = ({ start: 'flex-start', end: 'flex-end' } as Record<string, string>)[String(heroNow.contentAlignY ?? 'center')] ?? 'center';
             const typeOf = (id: string) => heroExtras.find((x) => x.id === id)?.type ?? '';
             const compact = (n: BannerNode) => { const ids = leavesOf(n); return ids.length > 0 && ids.every((x) => COMPACT_BANNER_TYPES.has(typeOf(x))); };

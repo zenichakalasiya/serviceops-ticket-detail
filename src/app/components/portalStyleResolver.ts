@@ -420,8 +420,8 @@ export function containerCss(styles: PortalStyles, id: string): React.CSSPropert
        section removed its side gutters. Undefined here leaves that edge to whatever paints it. */
     if (pad.top !== undefined) css.paddingTop = `${pad.top}px`;
     if (pad.bottom !== undefined) css.paddingBottom = `${pad.bottom}px`;
-    if (pad.left !== undefined) css.paddingLeft = `${pad.left}%`;
-    if (pad.right !== undefined) css.paddingRight = `${pad.right}%`;
+    if (pad.left !== undefined) css.paddingLeft = `${pad.left}px`;
+    if (pad.right !== undefined) css.paddingRight = `${pad.right}px`;
   } else {
     const py = own?.padY;
     if (py !== undefined) { css.paddingTop = `${py}px`; css.paddingBottom = `${py}px`; }

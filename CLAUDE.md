@@ -1423,6 +1423,23 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   button would hide the way out of that state. At one section the Arrangement half shows a quiet line.
   ⚠️ `BannerCountPicker` and `SkeletonTile`'s `blocked` prop are gone with it (`blocked` had one caller).
 
+- **⚠️ Support Portal — EVERY SPACING SIDE IS px. There are no percentages left (25 Sep 2026).**
+  Left and right used to be a **percentage of the parent** while top and bottom were px, so one control
+  carried two scales and had to caption them, and a field reading `3` painted 32 pixels. The switch
+  reaches **nine emitters** — `PortalCanvas`'s margin pair and its two drag guides, `PortalPlacedElement`
+  (twice), `portalStyleResolver`, `SupportPortalPreview`'s search-box and `padCss`, and the banner's edge
+  cells, which used **`cqw`** so a % meant the same at any nesting depth.
+  ⚠️ **The RESIZE HANDLE wrote a horizontal margin as a %** too — its `pct(px, of)` helper is now
+  `Math.round(px)`, with the second argument kept so the four call sites still read as "this much, within
+  that". A handle writing % into a px key would have moved an element by a hundredth of what it dragged.
+  ⚠️ **The 25 BANNER TEMPLATES were authored in per cent** (`pad: { left: 3 }` = 3% of a ~1081px band).
+  Read as px that is 3 pixels, so every shipped banner's words would have jumped to its left edge. They
+  are converted at the width they were designed against — **2 → 22, 3 → 32, 4 → 43** — which lands each
+  within half a pixel of where it was. Verified in a browser: Atlas renders unchanged. What is lost is
+  that the inset no longer scales with the banner's width; that is the cost of a fixed unit, and it is
+  the unit the admin asked for.
+  ⚠️ `useRestingSpacing` no longer converts what it measures — it reports px on all four sides.
+
 - **Support Portal — SPACING is TWO designs behind a tab, for the admin to pick (25 Sep 2026).**
   `SpacingMatrix` shows **Two fields** and **Four sides** as a segmented pair. They are the same eight
   values through the same field and the same links; only the shape differs, so whichever is kept is a
@@ -1433,6 +1450,17 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   only revealed a border on hover: a number you can edit and a number you can only read are the same
   picture until you touch one. The drag-to-scrub survives (3px threshold, `cursor-ew-resize`), and every
   box is `flex-1` or a grid cell — never a fixed width — so a row fills the sidebar at any panel width.
+  ⚠️ **The box is DIVIDED**: the number takes the width and the unit sits in its own tinted cell behind a
+  hairline, so the field reads as the thing you type in and the thing it is measured in. A bare "24 px"
+  centred in a box is one blob of text.
+  ⚠️ **Every value is at FULL STRENGTH.** A side nobody had set used to print grey to say "this is the
+  element's own" — true, secondary, and told in the one way that also reads as *disabled*, which is how a
+  panel of eight live inputs came to look switched off. The number is correct either way; the only thing
+  the grey carried was who put it there.
+  ⚠️ **Four sides pairs its fields**: TOP beside BOTTOM, then LEFT beside RIGHT — not one row of ↑ → ↓ ←.
+  The two chains in the header tie exactly those pairs, so a line per pair is the grouping the controls
+  already describe; across one row the sides a chain held were the first box and the third. It also
+  doubles every field's width (measured 105px), which is where the number goes.
   ⚠️ **TWO links per ring, one per AXIS** (`marginLinkV`/`marginLinkH`, `paddingLinkV`/`paddingLinkH`),
   drawn in the ring's HEADER rather than between the fields they tie — in a row of four there is no
   "between", and in the box layout the two points a chain would want are already taken by fields. The

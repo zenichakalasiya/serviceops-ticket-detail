@@ -88,8 +88,8 @@ function Surface({ children, id }: { children: React.ReactNode; id: string }) {
   const inner: React.CSSProperties = {
     ...(pad?.top !== undefined ? { paddingTop: pad.top } : {}),
     ...(pad?.bottom !== undefined ? { paddingBottom: pad.bottom } : {}),
-    ...(pad?.left !== undefined ? { paddingLeft: `${pad.left}%` } : {}),
-    ...(pad?.right !== undefined ? { paddingRight: `${pad.right}%` } : {}),
+    ...(pad?.left !== undefined ? { paddingLeft: pad.left } : {}),
+    ...(pad?.right !== undefined ? { paddingRight: pad.right } : {}),
   };
   const css = { ...containerCss(styles ?? {}, id), ...inner };
   const cls = [
@@ -222,8 +222,8 @@ function specDrivenBody(type: string, cfg: Record<string, unknown> | undefined, 
           ...(() => { const pad = ownStyle?.padding; const h = ownStyle?.height; return {
             ...(pad?.top !== undefined ? { paddingTop: pad.top } : {}),
             ...(pad?.bottom !== undefined ? { paddingBottom: pad.bottom } : {}),
-            ...(pad?.left !== undefined ? { paddingLeft: `${pad.left}%` } : {}),
-            ...(pad?.right !== undefined ? { paddingRight: `${pad.right}%` } : {}),
+            ...(pad?.left !== undefined ? { paddingLeft: pad.left } : {}),
+            ...(pad?.right !== undefined ? { paddingRight: pad.right } : {}),
             ...(h !== undefined ? { minHeight: h } : {}),
           }; })(),
           /* No radius here — `rounded-lg` on the class list, exactly as the built-in quick cards

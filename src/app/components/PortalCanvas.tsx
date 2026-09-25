@@ -254,8 +254,8 @@ export function sizeOf(styles: PortalStyles, id: string): React.CSSProperties {
     /* ⚠️ Per side, and only where set — an unset side must not emit 0 and beat the class. */
     if (s.margin.top !== undefined) css.marginTop = `${s.margin.top}px`;
     if (s.margin.bottom !== undefined) css.marginBottom = `${s.margin.bottom}px`;
-    if (s.margin.left !== undefined) css.marginLeft = `${s.margin.left}%`;
-    if (s.margin.right !== undefined) css.marginRight = `${s.margin.right}%`;
+    if (s.margin.left !== undefined) css.marginLeft = `${s.margin.left}px`;
+    if (s.margin.right !== undefined) css.marginRight = `${s.margin.right}px`;
   }
   return css;
 }
@@ -1842,7 +1842,11 @@ function SelectionHandles({ id, elRef }: { id: string; elRef: React.RefObject<HT
            top edge does the same with its top margin — so nothing beside or below it moves either. */
         const west = d.corner.includes('w');
         const north = d.corner.includes('n');
-        const pct = (px: number, of: number) => Math.round((px / Math.max(of, 1)) * 1000) / 10;
+        /* ⚠️ px, not a percentage. It converted to a % of the parent because that was the unit a
+           horizontal margin was stored in; every side is px now, so the drag writes the number it
+           moved. The second argument is kept so the call sites still read as "this much, within
+           that", and is unused. */
+        const pct = (px: number, _of: number) => Math.round(px);
         const margin: SpacingBox = { ...d.margin };
         let marginTouched = false;
 
@@ -2096,8 +2100,8 @@ function SelectionHandles({ id, elRef }: { id: string; elRef: React.RefObject<HT
       )}
       {live?.kind === 'padX' && (
         <>
-          <span className="pointer-events-none absolute inset-y-0 w-[2px] bg-[#EC4899]" style={{ left: `${pad.left}%` }} />
-          <span className="pointer-events-none absolute inset-y-0 w-[2px] bg-[#EC4899]" style={{ right: `${pad.right}%` }} />
+          <span className="pointer-events-none absolute inset-y-0 w-[2px] bg-[#EC4899]" style={{ left: `${pad.left}px` }} />
+          <span className="pointer-events-none absolute inset-y-0 w-[2px] bg-[#EC4899]" style={{ right: `${pad.right}px` }} />
         </>
       )}
 
