@@ -304,7 +304,7 @@ export function SpacingMatrix({ style, onChange, only, resting, nodeId }: Props)
    * thing a non-designer gets from this control is which box is which edge, and four rows labelled
    * top / right / bottom / left is a list you have to read. */
   const twoFields = (r: Ring) => (
-    <div key={r} className="mt-3 first:mt-0">
+    <div key={r} className="mt-3">
       {head(r)}
       {apart(r) ? (
         /* ⚠️ No glyphs in here: a box above the plate IS the top, so an arrow inside it labels what its

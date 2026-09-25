@@ -654,7 +654,13 @@ export function layerGradientOf(cfg: Record<string, unknown>): LayerGradient {
   const side = bannerLayerSide(cfg);
   const from = String(cfg.overlayFrom ?? 'rgba(15, 23, 42, 0.85)');
   const to = String(cfg.overlayTo ?? 'rgba(15, 23, 42, 0)');
-  return { type: side === 'center' ? 'radial' : 'linear', angle: SIDE_ANGLE[side] ?? 90, stops: [{ pos: 0, color: from }, { pos: 100, color: to }] };
+  /* ⚠️ ALWAYS LINEAR. A centre-aligned banner used to derive a RADIAL layer — a pool of shade in the
+     middle of the picture — and radial is gone from the editor, so deriving one here would paint a shape
+     the control can no longer describe or undo. This is the ONE reader: `bannerLayerCss` paints through
+     it too, so the band and the editor cannot disagree about what is on the banner.
+     ⚠️ A page that stored `overlayGradient.type: 'radial'` while the option existed still renders radial
+     — the stored value is returned untouched above. Touching the editor rewrites it as linear. */
+  return { type: 'linear', angle: SIDE_ANGLE[side] ?? 90, stops: [{ pos: 0, color: from }, { pos: 100, color: to }] };
 }
 
 /** The banner's OWN gradient as stored, or the nine-tile side / start / end it used to be, turned
@@ -702,9 +708,15 @@ const CHECKER: CSSProperties = { backgroundImage: 'repeating-conic-gradient(#E5E
  * nothing you learned in one carried to the other.
  * ⚠️ It is a CONTROLLED component over `LayerGradient`. It stores nothing itself except which stop
  * is selected, so both callers keep owning their own config key. */
-export function GradientEditor({ value: g, onChange }: {
+export function GradientEditor({ value: g, onChange, linearOnly }: {
   value: LayerGradient;
   onChange: (next: LayerGradient) => void;
+  /* ⚠️ The colour layer over an IMAGE is linear only. A radial wash reads as a spotlight on the
+     photograph rather than as shade under the words, and the words sit along an edge — which is a
+     direction, and a direction is what a linear gradient is for. With one type there is no choice, so
+     the SELECT goes rather than becoming a one-option dropdown; the angle and Rotate stay, and they are
+     what the space is spent on. The banner's own colour keeps both types. */
+  linearOnly?: boolean;
 }) {
   const [active, setActive] = useState(0);
   const barRef = useRef<HTMLDivElement>(null);
@@ -740,17 +752,19 @@ export function GradientEditor({ value: g, onChange }: {
   return (
     <>
       <div className="flex items-center gap-2">
-        <select
-          value={g.type}
-          onChange={(e) => put({ ...g, type: e.target.value as LayerGradient['type'] })}
-          className="app-select h-8 min-w-0 flex-1 rounded border border-[#DFE5ED] bg-white px-2 text-[13px] text-[#364658] outline-none focus:border-[#3D8BD0]"
-          aria-label="Gradient type"
-        >
-          <option value="linear">Linear</option>
-          <option value="radial">Radial</option>
-        </select>
-        {g.type === 'linear' && (
-          <label className="flex h-8 w-[72px] items-center gap-1 rounded border border-[#DFE5ED] bg-white px-2 focus-within:border-[#3D8BD0]" title="Angle">
+        {!linearOnly && (
+          <select
+            value={g.type}
+            onChange={(e) => put({ ...g, type: e.target.value as LayerGradient['type'] })}
+            className="app-select h-8 min-w-0 flex-1 rounded border border-[#DFE5ED] bg-white px-2 text-[13px] text-[#364658] outline-none focus:border-[#3D8BD0]"
+            aria-label="Gradient type"
+          >
+            <option value="linear">Linear</option>
+            <option value="radial">Radial</option>
+          </select>
+        )}
+        {(linearOnly || g.type === 'linear') && (
+          <label className={`flex h-8 items-center gap-1 rounded border border-[#DFE5ED] bg-white px-2 focus-within:border-[#3D8BD0] ${linearOnly ? 'min-w-0 flex-1' : 'w-[72px]'}`} title="Angle">
             <input
               type="number"
               value={g.angle}
@@ -762,7 +776,7 @@ export function GradientEditor({ value: g, onChange }: {
           </label>
         )}
         <button type="button" title="Reverse" className={iconBtn} onClick={() => put({ ...g, stops: g.stops.map((s) => ({ ...s, pos: 100 - s.pos })) })}><ArrowLeftRight size={14} /></button>
-        {g.type === 'linear' && (
+        {(linearOnly || g.type === 'linear') && (
           <button type="button" title="Rotate 90°" className={iconBtn} onClick={() => put({ ...g, angle: (g.angle + 90) % 360 })}><RotateCw size={14} /></button>
         )}
       </div>
@@ -861,7 +875,7 @@ export function OverlayLayerEditor({ cfg, setCfg }: { cfg: Record<string, unknow
           <span className="mt-1.5 block text-[11px] leading-[16px] text-[#7B8FA5]">Lower the opacity in the picker to let more of the image show through.</span>
         </div>
       ) : (
-        <GradientEditor value={g} onChange={(next) => setCfg({ overlayMode: 'gradient', overlayGradient: next })} />
+        <GradientEditor linearOnly value={g} onChange={(next) => setCfg({ overlayMode: 'gradient', overlayGradient: { ...next, type: 'linear' } })} />
       )}
     </div>
   );

@@ -1474,6 +1474,24 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   belongs to the bar it hangs off, so it takes the bar’s colour — and it is the one surface on a toolbar
   large enough to READ a colour off, which is why changing the glyphs alone was a change nobody could see.
 
+- **Support Portal — the banner image’s colour layer is LINEAR only (25 Sep 2026).** The Linear/Radial
+  select is gone from `OverlayLayerEditor`; the angle field and Rotate take its place and get the width.
+  A radial wash reads as a spotlight on the photograph rather than as shade under the words — and the
+  words sit along an EDGE, which is a direction, and a direction is what a linear gradient is for.
+  ⚠️ `layerGradientOf` no longer DERIVES a radial either. A centre-aligned banner used to get one by
+  default (`overlaySide` falls back to the content alignment, and `center` meant radial), which would
+  have left most image banners painting a shape the control can no longer describe or undo. It is the ONE
+  reader — `bannerLayerCss` paints through it too — so the band and the editor cannot disagree.
+  ⚠️ A page that STORED `overlayGradient.type: 'radial'` while the option existed still renders radial,
+  because a stored value is returned untouched; the layer’s writer stamps `type: 'linear'`, so the first
+  touch of the editor rewrites it.
+  ⚠️ The BANNER’S OWN colour keeps both types (`BannerFillEditor` passes no `linearOnly`) — a flat
+  coloured band with a radial glow behind the words is a real design, and there is no photograph for it
+  to read as a spotlight on. Verified: no select in the image popup, Linear/Radial in the colour one.
+
+- **Support Portal — the Spacing section opens with 12px above PADDING (25 Sep 2026).** The ring wrapper
+  dropped its `first:mt-0`, so every ring carries the same `mt-3` and the first one is not pinned to the
+  drawer’s heading.
 - **⚠️ Support Portal — EVERY SPACING SIDE IS px. There are no percentages left (25 Sep 2026).**
   Left and right used to be a **percentage of the parent** while top and bottom were px, so one control
   carried two scales and had to caption them, and a field reading `3` painted 32 pixels. The switch
