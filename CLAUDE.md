@@ -1586,7 +1586,7 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   swatches 24→18px, Done/Cancel 32→28px, and the eyedropper is an icon beside the live colour instead
   of a full-width row under the buttons. `W`/`H` consts drive both its width and its viewport clamp.
 - **Support Portal — ONE slim slider, `MiniRange` (`PortalRange.tsx`, 25 Sep 2026).** A 3px track filled in
-  the accent up to the value and a 12px white thumb, styled once under `.portal-range` in `theme.css`. It
+  the accent up to the value and a 9px white thumb (was 12, shrunk on request), styled once under `.portal-range` in `theme.css`. It
   replaced the browser range input (`accent-[#3D8BD0]`, a 16px thumb on a heavy track that Chrome and Firefox
   draw differently). Used by every border-weight and corner-radius slider — the element, icon-badge and banner
   toolbar popups (the old `SLIDER` const is gone), `PortalBoxControls`’ shared `Track` + border row, and the

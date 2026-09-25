@@ -543,11 +543,11 @@ body[data-portal-dragging] [data-portal-toolbar] { pointer-events: none; opacity
 }
 
 /* Support Portal builder — the one slider (`MiniRange`, PortalRange.tsx). A 3px track filled up to
-   the value in the accent, and a 12px white thumb that sits ON the line rather than dwarfing it.
+   the value in the accent, and a 9px white thumb that sits ON the line rather than dwarfing it.
    The fill point comes from the element's own `--fill`, set from the value. */
 .portal-range {
   -webkit-appearance: none; appearance: none;
-  height: 12px; background: transparent; cursor: pointer; margin: 0;
+  height: 10px; background: transparent; cursor: pointer; margin: 0;
 }
 .portal-range:focus { outline: none; }
 .portal-range::-webkit-slider-runnable-track {
@@ -560,17 +560,17 @@ body[data-portal-dragging] [data-portal-toolbar] { pointer-events: none; opacity
 }
 .portal-range::-webkit-slider-thumb {
   -webkit-appearance: none; appearance: none;
-  width: 12px; height: 12px; margin-top: -4.5px; border-radius: 999px;
+  width: 9px; height: 9px; margin-top: -3px; border-radius: 999px;
   background: #fff; border: 0;
   box-shadow: 0 0 0 1px rgba(16, 24, 40, 0.12), 0 1px 3px rgba(16, 24, 40, 0.25);
   transition: transform 120ms ease, box-shadow 120ms ease;
 }
 .portal-range::-moz-range-thumb {
-  width: 12px; height: 12px; border-radius: 999px; background: #fff; border: 0;
+  width: 9px; height: 9px; border-radius: 999px; background: #fff; border: 0;
   box-shadow: 0 0 0 1px rgba(16, 24, 40, 0.12), 0 1px 3px rgba(16, 24, 40, 0.25);
 }
-.portal-range:hover::-webkit-slider-thumb { transform: scale(1.15); }
-.portal-range:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px rgba(61, 139, 208, 0.3), 0 1px 3px rgba(16, 24, 40, 0.25); }
+.portal-range:hover::-webkit-slider-thumb { transform: scale(1.2); }
+.portal-range:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 2px rgba(61, 139, 208, 0.3), 0 1px 2px rgba(16, 24, 40, 0.25); }
 
 /* Support Portal builder — a toolbar divider only ever SEPARATES. `Rule` (PortalCanvas) is tagged
    `tb-rule` and the hover tip `tb-tip`; a rule is hidden unless some real control comes before it,
