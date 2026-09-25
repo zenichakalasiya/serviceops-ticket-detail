@@ -75,16 +75,11 @@ function PortalCard({ p, url, href, isDefault, on, onToggle, onCustomize, onEdit
           <div className={label}>URL</div>
           <a href={href} title={`Open ${p.name}`} className="block truncate text-[12px] text-[#3D8BD0] hover:underline">{url}</a>
         </div>
-        <div className="min-w-0">
+        {/* ⚠️ No "Live version" field (removed 25 Sep 2026, Zeni's call) — the card says what state the
+            portal is in with its Published / Draft pill, and a second status line under it was noise. */}
+        <div className="col-span-2 min-w-0">
           <div className={label}>Last modified</div>
           <div className={value} title={`${relPortalStamp(p.modifiedAt)} by ${p.modifiedBy}`}>{relPortalStamp(p.modifiedAt)} by {p.modifiedBy}</div>
-        </div>
-        <div className="min-w-0">
-          <div className={label}>Live version</div>
-          {/* ⚠️ Only a PUBLISHED portal can be behind — a draft has no live copy to disagree with. */}
-          {published && p.dirty
-            ? <span className="mt-0.5 inline-block rounded-sm bg-[#FEF6E7] px-1.5 py-0.5 text-[11px] font-medium text-[#B54708]">Unpublished changes</span>
-            : <div className="inline-flex items-center gap-1.5 text-[12px] text-[#364658]"><span className={`size-2 rounded-full ${published ? 'bg-[#22A06B]' : 'bg-[#CBD5E1]'}`} />{published ? 'Up to date' : 'Not published'}</div>}
         </div>
       </div>
 

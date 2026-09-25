@@ -1653,8 +1653,8 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   described in *"the entry point, the two tabs, and the listing"*. A tenant keeps 3–4 portals, and a full-width
   table spent its width on one row. `PortalCard` (`AdminSupportPortalModule`) is the Patch module's card view
   (`PatchInstallationTab`): icon badge · Published/Draft pill (+ Default) over the blue NAME (click =
-  customise) · the Enabled switch top-right · hairline · a 2-col grid (URL full width, Last modified, Live
-  version = Up to date / Unpublished changes / Not published) · footer = ONE primary **Customise portal** plus
+  customise) · the Enabled switch top-right · hairline · URL and Last modified, each full width (the Live version
+  field was REMOVED on request — the Published/Draft pill already states the portal’s state) · footer = ONE primary **Customise portal** plus
   icon buttons Edit details · Preview · Settings · Copy · **Set as default** · Delete. Grid 1 → 2 (md) → 3 (xl);
   the default sorts first. `RowActions` (the table's Edit▾ menu) is gone, and so is Pagination on this page.
   ⚠️ **The default is STATE (`defaultId`), not `DEFAULT_PORTAL_PAGE.id`** — every rule that used the seed's id
