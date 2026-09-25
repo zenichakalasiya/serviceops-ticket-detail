@@ -327,9 +327,13 @@ const SPLITS: { id: string; label: string; a: number; b: number }[] = [
   { id: '1:3', label: '1:3', a: 1, b: 3 },
 ];
 
+/* ⚠️ SIX on ONE line. At four across it wrapped to a second row and took the height of a whole
+   arrangement tile for what is a secondary adjustment — the ratio is something you reach for once the
+   layout is right, so it gets one line at the foot of the popup rather than a grid of its own. Each card
+   is 26px tall with its label under it, which is the smallest a two-box drawing reads at. */
 function ColumnSplitPicker({ value, onPick }: { value: string; onPick: (v: string) => void }) {
   return (
-    <div className="grid grid-cols-4 gap-2">
+    <div className="flex gap-1">
       {SPLITS.map((sp) => {
         const on = value === sp.id;
         return (
@@ -341,15 +345,15 @@ function ColumnSplitPicker({ value, onPick }: { value: string; onPick: (v: strin
             aria-pressed={on}
             onMouseDown={(e) => e.stopPropagation()}
             onClick={(e) => { e.stopPropagation(); onPick(sp.id); }}
-            className="min-w-0"
+            className="min-w-0 flex-1"
           >
-            <span className={`flex h-[34px] w-full items-stretch gap-[3px] rounded-md border-2 bg-white p-1 transition-colors ${
-              on ? 'border-[#3D8BD0]' : 'border-[#E5E7EB] hover:border-[#C3CBD6]'
+            <span className={`flex h-[26px] w-full items-stretch gap-[2px] rounded border bg-white p-[3px] transition-colors ${
+              on ? 'border-[#3D8BD0] ring-1 ring-[#3D8BD0]' : 'border-[#E5E7EB] hover:border-[#C3CBD6]'
             }`}>
-              <span className={`rounded-[3px] ${on ? 'bg-[#BFD9F1]' : 'bg-[#E2E8F0]'}`} style={{ flex: sp.a }} />
-              <span className={`rounded-[3px] ${on ? 'bg-[#DCEAF8]' : 'bg-[#EEF2F6]'}`} style={{ flex: sp.b }} />
+              <span className={`rounded-[2px] ${on ? 'bg-[#BFD9F1]' : 'bg-[#E2E8F0]'}`} style={{ flex: sp.a }} />
+              <span className={`rounded-[2px] ${on ? 'bg-[#DCEAF8]' : 'bg-[#EEF2F6]'}`} style={{ flex: sp.b }} />
             </span>
-            <span className={`mt-1 block text-[10px] leading-[12px] ${on ? 'font-medium text-[#3D8BD0]' : 'text-[#7B8FA5]'}`}>{sp.label}</span>
+            <span className={`mt-[3px] block truncate text-[9px] leading-[11px] ${on ? 'font-medium text-[#3D8BD0]' : 'text-[#9CA3AF]'}`}>{sp.label}</span>
           </button>
         );
       })}
@@ -459,52 +463,61 @@ export function BannerLayoutPanel({ tree, onCount, onPick, nameOf, split, onSpli
 
   return (
     <div>
-      <p className="mb-2 text-[12px] font-medium text-[#364658]">Sections</p>
-      {/* ⚠️ TILES, not the numbers they were. This reverses the segmented row put here a day earlier,
-          and the argument that row was built on — "two grids of thumbnails in one popup, the count
-          pictures are redundant once the arrangements sit beneath them" — was answered by using it: a
-          number cannot show what the banner will look like, and the arrangements are NOT beneath it
-          until there are two sections to arrange, so at the moment you are choosing a count there is
-          nothing else on screen carrying a picture. The collision the row was avoiding only exists
-          after the decision it was in the way of.
-          ⚠️ They are the SHORT tile (64px) where the arrangements are the tall one (88px), and each
-          carries its number. Same drawing language, two different sizes and one of them labelled, so
-          the two grids read as "how many" and "which shape" rather than as one long shelf. */}
-      <div className="grid grid-cols-3 gap-2">
-        {[2, 3, 4].map((n) => {
-          /* The picture is the layout this tile APPLIES — the words, then the cells that will land.
-             It is true for a count in either direction because `setBannerSections` re-applies the
-             default after removing as well as after adding. */
-          const art = defaultTreeFor(['hero-content', ...Array.from({ length: n - 1 }, () => 'bn-slot')]);
-          return (
-            <SkeletonTile key={n} on={n === cur} label={`${n} sections`} onPick={() => want(n)}>
-              <span className="flex min-h-0 w-full flex-col gap-1">
-                <span className="flex min-h-0 flex-1">{art && <PresetArt node={art} on={n === cur} />}</span>
-                <span className={`text-[10px] font-medium leading-[12px] tabular-nums ${n === cur ? 'text-[#3D8BD0]' : 'text-[#7B8FA5]'}`}>{n}</span>
-              </span>
-            </SkeletonTile>
-          );
-        })}
+      {/* ⚠️ NUMBERS again, in a tab row — and this time the reason holds. The count went back to
+          pictures a day ago because the arrangements were not on screen while you chose one, so nothing
+          else carried a layout. They ARE on screen now: the Arrangement grid below shows a tile even at
+          one section, so the picture of what the banner looks like is always there, and the count can go
+          back to being the small question it is. The focus belongs on the arrangements.
+          ⚠️ DEFAULT is the banner with the words alone — one section, which the numbers could not say.
+          It is the way BACK: every other value adds cells, and without it a banner taken to four had no
+          route to the shape it started in short of deleting the sections by hand. */}
+      <div className="mb-1.5 flex items-center justify-between gap-3">
+        <span className="text-[12px] font-medium text-[#364658]">Sections</span>
+        <span className="flex gap-0.5 rounded bg-[#F1F5F9] p-0.5">
+          {([[1, 'Default'], [2, '2'], [3, '3'], [4, '4']] as const).map(([n, label]) => {
+            const lit = n === cur;
+            return (
+              <button
+                key={n}
+                type="button"
+                title={n === 1 ? 'Just the words — the banner it starts as' : `${n} sections`}
+                aria-label={n === 1 ? 'Default sections' : `${n} sections`}
+                aria-pressed={lit}
+                onClick={(e) => { e.stopPropagation(); want(n); }}
+                className={`h-6 rounded px-2 text-[11px] font-medium tabular-nums transition-colors ${
+                  lit ? 'bg-white text-[#364658] shadow-[0_1px_2px_rgba(16,24,40,0.06)]'
+                    : 'text-[#7B8FA5] hover:text-[#364658]'
+                }`}
+              >{label}</button>
+            );
+          })}
+        </span>
       </div>
       {/* ⚠️ ONE line, and the actionable half of it. It also said "the words and the widgets beside
           them" — a definition of a section, which the tiles below now draw, and which wrapped the line
           in two and pushed the arrangements down the popup. */}
       <p className="mt-1.5 text-[11px] leading-[16px] text-[#9CA3AF]">Click an empty cell on the banner to fill it.</p>
 
-      {/* ⚠️ The whole Arrangement block is ABSENT until there is something to arrange — heading, rule
-          and all — where it used to render its title over a line saying it had nothing to offer. A
-          section that exists only to explain its own emptiness is a section the reader has to get past
-          on every visit; and at one section the popup is now exactly one question, which is what it is
-          asking at that moment. */}
-      {presets.length >= 2 && (
-        <div className="mt-2.5 border-t border-[#EEF1F5] pt-2.5">
+      {/* ⚠️ It ALWAYS draws, and at one section it draws ONE tile: the words and the search, lit,
+          because that is the arrangement the banner is in. The block used to vanish below two sections,
+          on the argument that there is no arrangement of a single thing — true, and it left the popup
+          with no picture at all at the moment the count row had just been reduced to numbers. One tile
+          is also the way BACK: the default shape is a thing you can see and point at rather than a state
+          you have to reconstruct. */}
+      <div className="mt-2.5 border-t border-[#EEF1F5] pt-2.5">
           <p className="mb-2 text-[12px] font-medium text-[#364658]">Arrangement</p>
           <div className="grid grid-cols-3 gap-2">
-            {presets.map((p) => (
-              <SkeletonTile key={p.id} tall on={on === p.id} label={p.label} onPick={() => onPick(p.tree)}>
-                <PresetArt node={p.tree} on={on === p.id} />
-              </SkeletonTile>
-            ))}
+            {presets.length >= 2
+              ? presets.map((p) => (
+                <SkeletonTile key={p.id} tall on={on === p.id} label={p.label} onPick={() => onPick(p.tree)}>
+                  <PresetArt node={p.tree} on={on === p.id} />
+                </SkeletonTile>
+              ))
+              : tree && (
+                <SkeletonTile tall on label="The words and the search" onPick={() => onPick(tree)}>
+                  <PresetArt node={tree} on />
+                </SkeletonTile>
+              )}
           </div>
           {rootRow2 && (
             <div className="mt-2.5 border-t border-[#EEF1F5] pt-2.5">
@@ -512,8 +525,7 @@ export function BannerLayoutPanel({ tree, onCount, onPick, nameOf, split, onSpli
               <ColumnSplitPicker value={split} onPick={onSplit} />
             </div>
           )}
-        </div>
-      )}
+      </div>
     </div>
   );
 }

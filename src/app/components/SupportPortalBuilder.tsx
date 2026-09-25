@@ -1042,7 +1042,10 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
    * has to decide which of the admin's filled sections it would have deleted. */
   const setBannerSections = useCallback((n: number, remove?: string[]) => {
     const units = unitsOf(heroTree());
-    const want = Math.max(2, Math.min(n, MAX_BANNER_SECTIONS));
+    /* ⚠️ ONE is a real value — the banner with the words alone, which the popup offers as Default and
+       which is the only route back to the shape a banner starts in. It used to clamp at two, so every
+       widget added to a banner was a widget that could only be removed one at a time by hand. */
+    const want = Math.max(1, Math.min(n, MAX_BANNER_SECTIONS));
     if (want === units.length) return;
 
     if (want > units.length) {

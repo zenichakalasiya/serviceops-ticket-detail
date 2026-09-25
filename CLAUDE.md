@@ -1398,23 +1398,22 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   picked a count from a grid of pictures, watched the popup close, then pressed the icon beside it to find
   a SECOND grid of pictures for the count you had just chosen. They are one popup now — **Sections** on
   top, **Arrangement** for that count directly under it — opened from the presets icon; the `+` is gone.
-  ⚠️ **The count is TILES, and this reversed a same-week decision.** It was a segmented row of 2 · 3 · 4
-  for one day, on the argument that "two grids of thumbnails in one popup" is what the merge existed to
-  remove and the count pictures were redundant once the arrangements sat beneath them. Using it answered
-  that: **a number cannot show what the banner will look like**, which is the only question being asked at
-  that moment — and the arrangements are NOT beneath it until there are two sections, so while you are
-  choosing a count nothing else on screen carries a picture. The collision the row avoided only exists
-  after the decision the row was in the way of. The Sections tiles are the SHORT `SkeletonTile` (64px) and
-  each carries its number; the Arrangement tiles are the tall one (88px) and carry none — same drawing
-  language, two sizes, one of them labelled, so the grids read as "how many" and "which shape".
-  ⚠️ **The whole Arrangement block is ABSENT below two sections** — heading, rule and all — where it used
-  to render its title over a line saying it had nothing to offer. A section that exists to explain its own
-  emptiness is one the reader gets past on every visit, and at one section the popup is then exactly the
-  one question it is asking.
-  ⚠️ **Going DOWN re-applies the default too**, not just going up (`defaultTreeFor(unitsOf(tree))` after
-  the removal). Without it the survivors kept whatever shape the removal collapsed them into, so the count
-  tile was a picture of a layout you were not going to get. One rule: a count pick gives you that count in
-  its default arrangement, and the tiles underneath are how you change it.
+  ⚠️ **The count is a NUMERIC TAB ROW — Default · 2 · 3 · 4 — and it has now been both, twice.** It was
+  a segmented row, went to picture tiles because a number cannot show what the banner will look like,
+  and is a row again. The reason the tiles existed has gone: the Arrangement grid below now draws a tile
+  even at ONE section, so a picture of the banner is always on screen and the count can go back to being
+  the small question it is. The focus belongs on the arrangements.
+  ⚠️ **DEFAULT is one section — the words alone** — which the numbers could not say and which is the way
+  BACK: every other value adds cells, so without it a banner taken to four had no route to the shape it
+  starts in short of deleting sections by hand. `setBannerSections` clamps at 1, not 2.
+  ⚠️ **The Arrangement block ALWAYS draws.** Below two sections it shows ONE tile — the words and the
+  search, lit, because that IS the arrangement — where it used to vanish entirely on the argument that
+  there is no arrangement of a single thing. True, and it left the popup with no picture at all at the
+  moment the count row had just been reduced to numbers.
+  ⚠️ **Column widths is SIX small cards on ONE line** (26px tall, label under each). At four across it
+  wrapped and took an arrangement tile’s height for what is a secondary adjustment — a ratio is what you
+  reach for once the layout is right, so it gets one line at the foot rather than a grid of its own.
+  Verified: 6 tiles, 1 row, popup 320×298 at two sections and 320×211 at Default.
   ⚠️ **The popup STAYS OPEN on a count pick** and the tiles re-draw, because they read the live tree —
   that is the whole point of the two being in one place. Verified: picking 3 lights 3, disables 2 with its
   reason, lands two empty cells and re-renders four arrangement tiles with the applied default lit.
