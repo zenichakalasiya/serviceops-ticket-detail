@@ -2144,7 +2144,16 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
   };
 
   const card = (id: string, body: ReactNode, cols?: number, gap = 16, grow = 1, orderAt?: number, look?: { full?: boolean; bare?: boolean; fill?: boolean }) => {
-    if (removed.includes(id)) return null;
+    /* ⚠️ A REPLACED built-in card draws its replacement IN ITS OWN SLOT — same order, same share of
+       the row, same face. Appending it to the row instead put it beside a work band's main region
+       AND its rail, which squeezed every card in the band to a sliver. */
+    if (removed.includes(id)) {
+      const sub = Object.values(rowExtras ?? {}).flat().find((x) => x.replaces === id);
+      if (!sub) return null;
+      const subHome = rowOf(id);
+      const subOrder = orderAt ?? (subHome ? Math.max(0, (rowOrder[subHome] ?? []).indexOf(id)) : 0);
+      return cardInner(sub.id, <PortalPlacedElement item={sub} icon={icons?.[sub.id]} text={placedText?.[sub.id]} cfg={wc(sub.id)} />, cols, subOrder, gap, grow, look);
+    }
     /* ⚠️ Membership comes from `rowOf` — the STATIC map of which row a card belongs to — not from
        searching the live `rowOrder`. Deleting a fixed card takes it out of `rowOrder`, so a search
        of the live order finds no row for it and the guard below had nothing to test:
@@ -3900,7 +3909,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
               );
               })()}
 
-                {(rowExtras?.['work'] ?? []).map((el) => (
+                {(rowExtras?.['work'] ?? []).filter((el) => !el.replaces).map((el) => (
                   <Sel key={el.id} id={el.id} style={share(secCols("work", content.cols.work), secGap("work"), secGrow("work"))}>
                     <PortalPlacedElement item={el} icon={icons?.[el.id]} text={placedText?.[el.id]} cfg={wc(el.id)} />
                   </Sel>
@@ -3934,7 +3943,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                   : <EmptyCard nodeId="cis" title={String(wc('cis').title ?? content.cis.title)} cfg={wc('cis')} />,
                   secCols("records", content.cols.records), secGap("records"), secGrow("records"))}
 
-                {(rowExtras?.['records'] ?? []).map((el) => (
+                {(rowExtras?.['records'] ?? []).filter((el) => !el.replaces).map((el) => (
                   <Sel key={el.id} id={el.id} style={share(secCols("records", content.cols.records), secGap("records"), secGrow("records"))}>
                     <PortalPlacedElement item={el} icon={icons?.[el.id]} text={placedText?.[el.id]} cfg={wc(el.id)} />
                   </Sel>

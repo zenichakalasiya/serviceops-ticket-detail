@@ -1633,6 +1633,22 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   picker Light/Dark, banner background Image/Colour, both Solid/Gradient editors (they were bordered strips
   with a BLUE active fill — now the same pill), the banner section count, the three Border-style rows, the
   icon picker's two tab pairs and the section-layout preset tiles.
+- **Support Portal — EVERY widget has Replace, predefined ones included, and it swaps IN PLACE (25 Sep 2026).**
+  The built-in blocks — My Open Requests, Pending Approvals, My Assets, My CIs, Announcements, Most Read,
+  Contact Us, Favourite / Most Used Services (`BUILT_IN_REPLACEABLE` in `PortalCanvas`) — get their own
+  **"Replace this widget"** button (the `swapsInPlace` slot, so Contact Us keeps its "+" for blocks inside
+  it). The Quick Actions cards are deliberately NOT on the list: their row is `LOCKED_ROWS`.
+  ⚠️ **A PREDEFINED widget swaps for ANY widget** (Zeni's call): every predefined widget is already on the
+  default page, so the old same-class-only rule left the picker empty ("Every widget of this kind is
+  already on the page"). The picker offers every Basic / Visual / Custom widget plus any predefined one not
+  on the page; an ORDINARY widget still swaps only for its own kind (`allow`, `swapType`).
+  ⚠️ **The replacement takes the ORIGINAL'S SLOT.** `PlacedElement.replaces` names the built-in it stands
+  for; the builder's `replaceElement` puts the element in `rowExtras[row]` tagged that way, and the
+  preview's `card()` draws it in the removed card's own order, share and face (the trailing `rowExtras`
+  maps skip tagged ones). The first version went through `dropInRow`, which APPENDED it to the row — on the
+  work band that sat it beside the main region AND the rail and squeezed every card to a sliver.
+  A top-level BAND (Favourite / Most Used) becomes a one-column section anchored to the nearest band ABOVE
+  that is still showing — never to the hidden band, whose sections are hidden with it (`band()`).
 - **Support Portal — the fifth 4-section arrangement and the banner's Column widths are gone (25 Sep 2026).**
   ⚠️ **`col-three-rows` left `PRESET_SHAPES[4]`** — "a column, and three rows beside it". At four
   sections it put three widgets in a single narrow column beside the words, the one arrangement in the

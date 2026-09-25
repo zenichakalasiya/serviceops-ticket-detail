@@ -2807,8 +2807,31 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
        a promise a one-widget slot cannot keep. */
     const row = Object.keys(rowOrder).find((r) => rowOrder[r].includes(id));
     if (row) {
+      /* ⚠️ The replacement is tagged with the card it REPLACES, and the preview draws it in that
+         card's slot. `dropInRow` appended it to the row instead, which on the work band sat it
+         beside the main region AND the rail and squeezed every card there to a sliver. */
+      const made = { ...makeElement(type, row), replaces: id };
       setRemoved((prev) => (prev.includes(id) ? prev : [...prev, id]));
-      dropInRow(row, type);
+      setRowExtras((prev) => ({ ...prev, [row]: [...(prev[row] ?? []), made] }));
+      select(made.id);
+      toast.success(`Replaced with ${made.name}`);
+      return;
+    }
+    /* ⚠️ A top-level BAND (Favourite / Most Used Services) is not in a row, so it is swapped for a
+       one-column section in its place. ⚠️ The section is anchored to the nearest band ABOVE that is
+       still showing, never to the band being hidden: a band's seam and every section anchored under
+       it are drawn only while the band itself is (`band()` in the preview), so anchoring to it would
+       make the replacement vanish with the thing it replaced. */
+    if (blockOrder.includes(id)) {
+      const i = blockOrder.indexOf(id);
+      const anchor = [...blockOrder.slice(0, i)].reverse().find((b) => !removed.includes(b)) ?? 'hero';
+      const section = sectionFromRows(`sec-${nextSectionId.current++}`, [[1]]);
+      const el = makeElement(type, section.id);
+      section.root.el = el;
+      setRemoved((prev) => (prev.includes(id) ? prev : [...prev, id]));
+      setSections((prev) => [...prev, { afterId: anchor, section }]);
+      select(el.id);
+      toast.success(`Replaced with ${el.name}`);
       return;
     }
     const home = nodeById(id)?.parent ?? null;
@@ -2828,7 +2851,8 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
       )));
     } else {
       setRowExtras((prev) => (
-        prev[home] ? { ...prev, [home]: prev[home].map((e) => (e.id === id ? made : e)) } : prev
+        /* A replacement replaced again keeps the slot it was standing in. */
+        prev[home] ? { ...prev, [home]: prev[home].map((e) => (e.id === id ? { ...made, replaces: e.replaces } : e)) } : prev
       ));
       /* On the banner the replacement takes the replaced item's place in the arrangement. */
       if (home === 'hero') {
@@ -2838,7 +2862,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     }
     select(made.id);
     toast.success(`Replaced with ${made.name}`);
-  }, [makeElement, select, rowOrder, dropInRow]);
+  }, [makeElement, select, rowOrder, dropInRow, blockOrder, removed]);
 
   addElementRef.current = addElement;
   dropBesideRef.current = dropBeside;

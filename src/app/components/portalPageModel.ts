@@ -679,6 +679,9 @@ export interface PlacedElement {
   /** Catalogue id from PORTAL_ELEMENTS, e.g. `b-text`. */
   type: string;
   name: string;
+  /** The BUILT-IN card this element stands in for, when it arrived by Replace. It is drawn in that
+   *  card's own slot (the preview's `card()`), not appended to the row — see `replaceElement`. */
+  replaces?: string;
 }
 
 /* ── The section tree ─────────────────────────────────────────────────────

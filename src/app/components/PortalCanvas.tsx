@@ -367,6 +367,9 @@ const btnOff = 'flex size-7 cursor-not-allowed items-center justify-center round
    end. The conditions that decide what a bar shows are spread over a dozen caps, so asking each call
    site "was anything drawn before me?" is a question nobody can keep answering correctly; the rendered
    bar can answer it itself. */
+/** Built-in page blocks that can be swapped for another widget in place. */
+const BUILT_IN_REPLACEABLE = new Set(['requests', 'approvals', 'assets', 'cis', 'news', 'knowledge', 'contact', 'favourites', 'services']);
+
 const Rule = () => <span className="tb-rule mx-0.5 h-4 w-px flex-shrink-0 bg-[var(--bar-rule,#E5E7EB)]" />;
 
 /* A control on the bar that is a WORD rather than a glyph.
@@ -1462,8 +1465,10 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
        (words, a card, a counter and a picture on one band) — but "one to a page" is about the PAGE,
        so a predefined widget already placed is withheld there like anywhere else. */
     if (onHero || onBanner) return true;
-    /* Replacing: the same class as the thing being replaced. */
-    if (swapType) return pre === isPredefinedType(swapType);
+    /* Replacing. ⚠️ A PREDEFINED widget can be swapped for ANY widget (Zeni's call, 25 Sep 2026) —
+       every predefined widget is already on the default page, so a same-class-only list was empty and
+       Replace did nothing. An ordinary widget still swaps only for its own kind. */
+    if (swapType) return isPredefinedType(swapType) ? true : !pre;
     /* Adding: a section already holding an ordinary widget can only take more of those. An empty
        one takes either, and a section a predefined widget owns never reaches here (see below). */
     return secKind === 'other' ? !pre : true;
@@ -1526,7 +1531,18 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
    * a bar fences nothing off — it just draws a line, which on a row of small glyphs reads as a
    * disabled button. This is the same test the `named` fence below already makes. */
   const rowUp = onHero ? groupOf(heroTree?.() ?? null, id) : null;
-  const swapsInPlace = onHero && placed && !!childTypes?.length;
+  /* ⚠️ REPLACE is offered on EVERY widget, predefined ones included (25 Sep 2026). The built-in
+     blocks — My Open Requests, Pending Approvals, My Assets, My CIs, Announcements, Most Read,
+     Contact Us and the two service rows — used to have no Replace at all (`add: false`), so the only
+     way to swap one was Delete then add, which loses its place on the page. `replaceElement` in the
+     builder already knew how to swap a built-in (hide it, put the new widget where it was); the
+     button was simply never offered.
+     ⚠️ Its OWN button rather than the add-or-replace slot, for the Contact Us reason written above:
+     a card that also takes blocks INSIDE it keeps its "+" for that, and gains Replace beside it.
+     ⚠️ The Quick Actions cards are NOT on this list: their row is fenced (`LOCKED_ROWS`) to its four
+     destinations, so there is nothing a card there could honestly be replaced with. */
+  const builtInSwap = BUILT_IN_REPLACEABLE.has(id);
+  const swapsInPlace = (onHero && placed && !!childTypes?.length) || builtInSwap || (!onHero && placed && !!childTypes?.length);
   const hasStructure =
     caps.drag !== false
     || !!caps.splitItem
@@ -1641,8 +1657,10 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
           </button>
           {swapping && (
             <ElementPicker
-              only={BANNER_SIDE_WIDGETS}
-              allow={allow}
+              only={onHero ? BANNER_SIDE_WIDGETS : undefined}
+              /* A built-in block is PREDEFINED, so it swaps for ANY widget — ordinary ones, or a
+                 predefined one not already on the page. Same rule `allow` applies to a placed one. */
+              allow={builtInSwap ? (e) => !(isPredefinedElement(e) && placedPredefined?.has(e.id)) : allow}
               mode="replace"
               onPick={(type) => { setSwapping(false); replaceElement(id, type); }}
               onClose={() => setSwapping(false)}
