@@ -1419,7 +1419,7 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   moment the count row had just been reduced to numbers.
   ⚠️ **The arrangement tiles are 69×62 at FOUR across** (they were 96×88 at three). At the old size one
   tile filled a third of the popup and a four-section set ran to two tall rows — a thumbnail only has to
-  be big enough to tell one arrangement from another, and these are boxes. ⚠️ ’s row-band floor
+  be big enough to tell one arrangement from another, and these are boxes. ⚠️ `PresetArt`'s row-band floor
   had to come down with them, 20px → 14px: a 62px tile leaves 50px of content, so a column of three gives
   each row 14, and a floor above its share is what clips the dashed cells’ top and bottom edges.
   ⚠️ **Column widths is SIX small cards on ONE line** (26px tall, label under each). At four across it
