@@ -14,6 +14,7 @@ import { bannerBoxId, flipRoot, groupOf } from './portalBannerLayout';
 import type { BannerNode } from './portalBannerLayout';
 import { BANNER_GROUPS, bannerGroupGap } from './portalPageModel';
 import { toast } from 'sonner';
+import { MiniRange } from './PortalRange';
 import { fillsFromConfig, HEADING_SIZE, PORTAL_FONTS, SECTION_LAYOUTS, SPLITTABLE_BANDS, TEXT_STYLES, ZERO_BOX, COMPOSABLE, BANNER_BLOCKS, inBanner, dragIdOf, isContactChild, boxInfo, canAddBeside, defaultAlignH, nodeById, paintsOwnShadow, paintsOwnSurface, toolbarCaps, nodePath, placedIn, placedType } from './portalPageModel';
 import { DEFAULT_THEME } from './PortalThemePanel';
 import type { PortalTheme } from './PortalThemePanel';
@@ -817,7 +818,6 @@ function BarPop({ w = 236, title, children }: { w?: number; title: string; child
   );
 }
 
-const SLIDER = 'h-1 flex-1 cursor-pointer appearance-none rounded-full bg-[#E5E7EB] accent-[#3D8BD0]';
 
 /* ── BORDER, on the toolbar ────────────────────────────────────────────────────────────────────
  *
@@ -862,11 +862,7 @@ function BorderMenu({ id }: { id: string }) {
                 whether the rest are worth asking. */}
             <p className="mb-1 text-[11px] text-[#7B8FA5]">Weight</p>
             <div className="mb-3 flex items-center gap-2">
-              <input
-                type="range" min={0} max={8} value={width}
-                onChange={(e) => write({ borderWidth: Number(e.target.value) })}
-                className={SLIDER}
-              />
+              <MiniRange min={0} max={8} value={width} label="Border weight" onChange={(v) => write({ borderWidth: v })} />
               <span className="w-9 text-right text-[12px] tabular-nums text-[#364658]">{width}px</span>
             </div>
             {/* ⚠️ Style and colour are REMOVED at weight 0, not disabled — the §2.2 rule this builder
@@ -937,11 +933,7 @@ function RadiusMenu({ id }: { id: string }) {
           <span className="fixed inset-0 z-[60]" onClick={() => setOpen(false)} />
           <BarPop w={220} title="Corner radius">
             <div className="flex items-center gap-2">
-              <input
-                type="range" min={0} max={32} value={value}
-                onChange={(e) => write(Number(e.target.value))}
-                className={SLIDER}
-              />
+              <MiniRange min={0} max={32} value={value} label="Corner radius" onChange={(v) => write(v)} />
               <span className="w-9 text-right text-[12px] tabular-nums text-[#364658]">{value}px</span>
             </div>
           </BarPop>
@@ -1013,14 +1005,12 @@ function IconMenu({ id }: { id: string }) {
             {swatch(fillRef, 'Background', bg, 'iconFill')}
             <p className="mb-1 text-[11px] text-[#7B8FA5]">Corner radius</p>
             <div className="mb-3 flex items-center gap-2">
-              <input type="range" min={0} max={24} value={Math.min(24, radius)}
-                onChange={(e) => set({ iconRadius: Number(e.target.value) })} className={SLIDER} />
+              <MiniRange min={0} max={24} value={Math.min(24, radius)} label="Corner radius" onChange={(v) => set({ iconRadius: v })} />
               <span className="w-9 text-right text-[12px] tabular-nums text-[#364658]">{radius > 24 ? 'Round' : `${radius}px`}</span>
             </div>
             <p className="mb-1 text-[11px] text-[#7B8FA5]">Border</p>
             <div className="mb-3 flex items-center gap-2">
-              <input type="range" min={0} max={6} value={bw}
-                onChange={(e) => set({ iconBorderWidth: Number(e.target.value) })} className={SLIDER} />
+              <MiniRange min={0} max={6} value={bw} label="Border weight" onChange={(v) => set({ iconBorderWidth: v })} />
               <span className="w-9 text-right text-[12px] tabular-nums text-[#364658]">{bw}px</span>
             </div>
             {/* The same quiet line the Border popup uses, for the same reason. */}
@@ -2830,8 +2820,7 @@ function BannerEdgeMenus() {
             <BarPop title="Border">
               <p className="mb-1 text-[11px] text-[#7B8FA5]">Weight</p>
               <div className="mb-3 flex items-center gap-2">
-                <input type="range" min={0} max={8} value={width}
-                  onChange={(e) => set({ bannerBorderWidth: Number(e.target.value) })} className={SLIDER} />
+                <MiniRange min={0} max={8} value={width} label="Border weight" onChange={(v) => set({ bannerBorderWidth: v })} />
                 <span className="w-9 text-right text-[12px] tabular-nums text-[#364658]">{width}px</span>
               </div>
               {width === 0 && (
@@ -2879,8 +2868,7 @@ function BannerEdgeMenus() {
             <span className="fixed inset-0 z-[60]" onClick={() => setOpen(null)} />
             <BarPop w={220} title="Corner radius">
               <div className="flex items-center gap-2">
-                <input type="range" min={0} max={40} value={radius}
-                  onChange={(e) => set({ bannerRadius: Number(e.target.value) })} className={SLIDER} />
+                <MiniRange min={0} max={40} value={radius} label="Corner radius" onChange={(v) => set({ bannerRadius: v })} />
                 <span className="w-9 text-right text-[12px] tabular-nums text-[#364658]">{radius}px</span>
               </div>
             </BarPop>

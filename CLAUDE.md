@@ -1585,6 +1585,14 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   286×~470 to **224×332** with nothing removed: spectrum 150→108px, rails 14→10px, fields 32→24px,
   swatches 24→18px, Done/Cancel 32→28px, and the eyedropper is an icon beside the live colour instead
   of a full-width row under the buttons. `W`/`H` consts drive both its width and its viewport clamp.
+- **Support Portal — ONE slim slider, `MiniRange` (`PortalRange.tsx`, 25 Sep 2026).** A 3px track filled in
+  the accent up to the value and a 12px white thumb, styled once under `.portal-range` in `theme.css`. It
+  replaced the browser range input (`accent-[#3D8BD0]`, a 16px thumb on a heavy track that Chrome and Firefox
+  draw differently). Used by every border-weight and corner-radius slider — the element, icon-badge and banner
+  toolbar popups (the old `SLIDER` const is gone), `PortalBoxControls`’ shared `Track` + border row, and the
+  panel’s `SliderRow` — so every slider in the builder panels now has this look, not only those two.
+  ⚠️ The fill is a `--fill` CSS variable set from the value: a range input has no cross-browser progress
+  pseudo-element. `StepRail` (labelled stops) and the banner gap / element-panel sliders are still native.
 - **Support Portal — the fifth 4-section arrangement and the banner's Column widths are gone (25 Sep 2026).**
   ⚠️ **`col-three-rows` left `PRESET_SHAPES[4]`** — "a column, and three rows beside it". At four
   sections it put three widgets in a single narrow column beside the words, the one arrangement in the

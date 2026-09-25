@@ -10,6 +10,7 @@
 
 import { useState } from 'react';
 import type { ReactNode } from 'react';
+import { MiniRange } from './PortalRange';
 import { Info, Settings2 } from 'lucide-react';
 import { shadowString } from './portalStyleResolver';
 import { ColorField } from './PortalColorPicker';
@@ -41,11 +42,7 @@ function Track({ value, onChange, min, max, unit, units, onUnit }: {
 }) {
   return (
     <div className="flex items-center gap-2.5">
-      <input
-        type="range" min={min} max={max} value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="min-w-0 flex-1 accent-[#3D8BD0]"
-      />
+      <MiniRange min={min} max={max} value={value} onChange={onChange} />
       <span className="flex flex-shrink-0">
         <input
           type="number" min={min} max={max} value={value}
@@ -162,11 +159,7 @@ export function BorderRow({ width, color, sides, onWidth, onColor, onSides, colo
       ) : (
         /* Width, its number and the colour on ONE row — a border is one decision, not three. */
         <div className="flex items-center gap-2.5">
-          <input
-            type="range" min={0} max={12} value={width}
-            onChange={(e) => onWidth(Number(e.target.value))}
-            className="min-w-0 flex-1 accent-[#3D8BD0]"
-          />
+          <MiniRange min={0} max={12} value={width} label="Border weight" onChange={onWidth} />
           <span className="flex flex-shrink-0">
             <input
               type="number" min={0} max={12} value={width}

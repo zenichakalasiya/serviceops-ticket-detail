@@ -11,6 +11,7 @@
 
 import { useEffect, useId, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import { MiniRange } from './PortalRange';
 import {
   AlignCenter, AlignLeft, AlignRight, Bold, Check, ChevronDown, Eraser,
   IndentDecrease, IndentIncrease, Info, Italic, Link2, List, ListOrdered, Quote, Redo2, Strikethrough,
@@ -459,15 +460,7 @@ export function SliderRow({ value, onChange, min = 0, max = 100, step = 1, unit 
 }) {
   return (
     <div className="flex items-center gap-2.5">
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="min-w-0 flex-1 accent-[#3D8BD0]"
-      />
+      <MiniRange min={min} max={max} step={step} value={value} onChange={onChange} />
       <div className="relative w-[70px] flex-shrink-0">
         <input
           type="number"
