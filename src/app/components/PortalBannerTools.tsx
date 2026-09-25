@@ -110,11 +110,12 @@ export function BannerFillEditor({ cfg, setCfg, dense }: {
   const label = `${dense ? 'mb-1 text-[11.5px]' : 'mb-1.5 text-[12px]'} block font-medium text-[#364658]`;
   return (
     <div className={`flex flex-col ${dense ? 'gap-2' : 'gap-3'}`}>
-      <div className="flex rounded border border-[#DFE5ED] p-0.5">
+      <div className="pill-track">
         {(['solid', 'gradient'] as const).map((m) => (
           <button
             key={m}
             type="button"
+            aria-pressed={mode === m}
             onClick={() => put({ colorMode: m })}
             className={`${dense ? 'h-6 text-[11.5px]' : 'h-7 text-[12px]'} flex-1 rounded font-medium transition-colors ${mode === m ? 'bg-[#3D8BD0] text-white' : 'text-[#64748B] hover:bg-[#F5F7FA]'}`}
           >{m === 'solid' ? 'Solid' : 'Gradient'}</button>
@@ -418,7 +419,7 @@ export function BannerLayoutPanel({ tree, onCount, onPick, nameOf }: {
           route to the shape it started in short of deleting the sections by hand. */}
       <div className="mb-1.5 flex items-center justify-between gap-3">
         <span className="text-[12px] font-medium text-[#364658]">Sections</span>
-        <span className="flex gap-0.5 rounded bg-[#F1F5F9] p-0.5">
+        <span className="pill-track">
           {([[1, 'Default'], [2, '2'], [3, '3'], [4, '4']] as const).map(([n, label]) => {
             const lit = n === cur;
             return (
@@ -804,11 +805,12 @@ export function OverlayLayerEditor({ cfg, setCfg, dense }: { cfg: Record<string,
 
   return (
     <div className={`flex flex-col ${dense ? 'gap-2' : 'gap-3'}`}>
-      <div className="flex rounded border border-[#DFE5ED] p-0.5">
+      <div className="pill-track">
         {(['solid', 'gradient'] as const).map((m) => (
           <button
             key={m}
             type="button"
+            aria-pressed={mode === m}
             onClick={() => (m === 'solid' ? setCfg({ overlayMode: 'solid' }) : setCfg({ overlayMode: 'gradient', overlayGradient: g }))}
             className={`${dense ? 'h-6 text-[11.5px]' : 'h-7 text-[12px]'} flex-1 rounded font-medium transition-colors ${mode === m ? 'bg-[#3D8BD0] text-white' : 'text-[#64748B] hover:bg-[#F5F7FA]'}`}
           >{m === 'solid' ? 'Solid' : 'Gradient'}</button>

@@ -542,12 +542,13 @@ export function Segmented<T extends string | number | boolean>({ value, options,
   const tabs = options.every((o) => !!o.label);
   if (tabs) {
     return (
-      <div className="flex gap-1 rounded bg-[#F1F5F9] p-0.5">
+      <div className="pill-track">
         {options.map((o) => {
           const on = o.value === value;
           return (
             <button
               key={String(o.value)}
+              aria-pressed={on}
               onClick={() => onChange(o.value)}
               title={o.title ?? o.label}
               className={`flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded py-1.5 text-[12px] font-medium transition-colors ${

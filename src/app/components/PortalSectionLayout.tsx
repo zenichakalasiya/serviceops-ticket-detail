@@ -87,10 +87,11 @@ export function SectionPresets({ count, current, onPick }: {
 }) {
   const list = presetsFor(count);
   return (
-    <div className="flex items-center gap-1 rounded bg-[#F1F5F9] p-0.5">
+    <div className="pill-track">
       {list.map((p) => (
         <button
           key={p.id}
+          aria-pressed={current === p.id}
           onClick={() => onPick(p.id)}
           title={p.title}
           className={`flex h-7 flex-1 items-center justify-center rounded transition-colors ${

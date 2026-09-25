@@ -580,3 +580,27 @@ body[data-portal-dragging] [data-portal-toolbar] { pointer-events: none; opacity
 [data-portal-toolbar] > :not(.tb-rule):not(.tb-tip) ~ .tb-rule { display: block; }
 [data-portal-toolbar] > .tb-rule:has(+ .tb-rule),
 [data-portal-toolbar] > .tb-rule:last-child { display: none; }
+
+/* Support Portal builder — ONE tab strip, everywhere (from the Figma pill design, 25 Sep 2026).
+   A light-grey track holding its options; the chosen one is lifted out as a white pill with a soft
+   shadow and no border. Every strip in the builder takes `pill-track` on its container and marks its
+   chosen button with `aria-pressed="true"` — the attribute is what paints the pill, so the look and
+   the accessible state can never disagree. Unlayered, so it wins over the utility classes the
+   buttons still carry, and a strip's own margins stay on the container. */
+.pill-track {
+  display: flex; align-items: stretch; gap: 2px;
+  padding: 3px; border-radius: 8px; background: #EEF2F6;
+}
+.pill-track > button {
+  flex: 1 1 0; min-width: 0; height: 26px; padding: 0 10px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  border: 0; border-radius: 6px; background: transparent; box-shadow: none;
+  font-size: 12px; font-weight: 400; line-height: 16px; color: #364658;
+  transition: background-color 120ms ease, box-shadow 120ms ease;
+}
+.pill-track > button:hover { background: rgba(255, 255, 255, 0.55); }
+.pill-track > button[aria-pressed="true"] {
+  background: #FFFFFF; font-weight: 500;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.10), 0 1px 2px rgba(16, 24, 40, 0.06);
+}
+.pill-track > button:focus-visible { outline: 2px solid rgba(61, 139, 208, 0.45); outline-offset: 1px; }

@@ -316,7 +316,7 @@ export function ThemeModeToggle({ mode, onChange }: { mode: 'light' | 'dark'; on
      the button has no text node any more, so removing either would leave a control a screen reader
      announces as nothing at all. */
   return (
-    <span className="flex flex-shrink-0 items-center gap-0.5 rounded bg-[#F1F5F9] p-0.5">
+    <span className="pill-track flex-shrink-0">
       {([['light', Sun], ['dark', Moon]] as const).map(([m, Ic]) => (
         <button
           key={m}
@@ -462,10 +462,11 @@ export function PortalThemePanel({ theme, onChange }: { theme: PortalTheme; onCh
 
       {/* ⚠️ mt-3.5, not mt-2. The tabs sat almost on the heading, so the two read as one control and
           "COLOURS" looked like a label for the tab strip rather than the section head above it. */}
-      <div className="mt-3.5 flex gap-1 rounded bg-[#F1F5F9] p-0.5">
+      <div className="pill-track mt-3.5">
         {(['primary', 'secondary', 'neutral'] as Tab[]).map((t) => (
           <button
             key={t}
+            aria-pressed={tab === t}
             onClick={() => setTab(t)}
             className={`flex-1 rounded py-1 text-[12px] font-medium capitalize transition-colors ${
               tab === t ? 'bg-white text-[#364658] shadow-[0_1px_2px_rgba(16,24,40,0.06)]' : 'text-[#7B8FA5] hover:text-[#364658]'

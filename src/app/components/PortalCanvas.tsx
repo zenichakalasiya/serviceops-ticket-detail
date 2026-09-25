@@ -885,10 +885,11 @@ function BorderMenu({ id }: { id: string }) {
             {width > 0 && (
               <>
                 <p className="mb-1 text-[11px] text-[#7B8FA5]">Style</p>
-                <div className="mb-3 flex gap-1 rounded bg-[#F1F5F9] p-0.5">
+                <div className="pill-track mb-3">
                   {BORDER_STYLES.map((s) => (
                     <button
                       key={s.value}
+                      aria-pressed={stroke === s.value}
                       onClick={() => write({ borderStyle: s.value })}
                       className={`flex-1 rounded py-1.5 text-[12px] font-medium transition-colors ${
                         stroke === s.value ? 'bg-white text-[#364658] shadow-[0_1px_2px_rgba(16,24,40,0.06)]' : 'text-[#7B8FA5] hover:text-[#364658]'
@@ -1022,9 +1023,9 @@ function IconMenu({ id }: { id: string }) {
             {bw === 0 && <p className="text-[11.5px] leading-[1.5] text-[#9AA6B6]">No border.</p>}
             {bw > 0 && (
               <>
-                <div className="mb-3 flex gap-1 rounded bg-[#F1F5F9] p-0.5">
+                <div className="pill-track mb-3">
                   {BORDER_STYLES.map((s) => (
-                    <button key={s.value} onClick={() => set({ iconBorderStyle: s.value })}
+                    <button key={s.value} aria-pressed={bs === s.value} onClick={() => set({ iconBorderStyle: s.value })}
                       className={`flex-1 rounded py-1.5 text-[12px] font-medium transition-colors ${
                         bs === s.value ? 'bg-white text-[#364658] shadow-[0_1px_2px_rgba(16,24,40,0.06)]' : 'text-[#7B8FA5] hover:text-[#364658]'
                       }`}
@@ -2713,11 +2714,12 @@ function BannerToolbar() {
               {/* ⚠️ The pill-on-a-track the product uses for LABELLED tabs, deliberately not the bordered
                   strip `BannerFillEditor`'s Solid/Gradient uses one level down — two identical strips
                   stacked would read as one control that had grown a second row. */}
-              <div className="mb-2 flex rounded bg-[#F1F5F9] p-0.5">
+              <div className="pill-track mb-2">
                 {([['image', 'Image'], ['color', 'Colour']] as const).map(([k, label]) => (
                   <button
                     key={k}
                     type="button"
+                    aria-pressed={bgTab === k}
                     onClick={() => setBgTab(k)}
                     className={`h-6 flex-1 rounded text-[11.5px] font-medium transition-colors ${
                       bgTab === k ? 'bg-white text-[#364658] shadow-[0_1px_2px_rgba(16,24,40,0.10)]' : 'text-[#64748B] hover:text-[#364658]'
@@ -2835,9 +2837,9 @@ function BannerEdgeMenus() {
               {width > 0 && (
                 <>
                   <p className="mb-1 text-[11px] text-[#7B8FA5]">Style</p>
-                  <div className="mb-3 flex gap-1 rounded bg-[#F1F5F9] p-0.5">
+                  <div className="pill-track mb-3">
                     {BORDER_STYLES.map((s) => (
-                      <button key={s.value} onClick={() => set({ bannerBorderStyle: s.value })}
+                      <button key={s.value} aria-pressed={stroke === s.value} onClick={() => set({ bannerBorderStyle: s.value })}
                         className={`flex-1 rounded py-1.5 text-[12px] font-medium transition-colors ${
                           stroke === s.value ? 'bg-white text-[#364658] shadow-[0_1px_2px_rgba(16,24,40,0.06)]' : 'text-[#7B8FA5] hover:text-[#364658]'
                         }`}

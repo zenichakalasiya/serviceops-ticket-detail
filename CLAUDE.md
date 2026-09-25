@@ -1616,6 +1616,18 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   samples on the left at 13–14px / 11px, and `RowName` at the top RIGHT: 10.5px grey name, the theme’s accent
   dot BESIDE the name (not in the card body), and a tick when selected. Selection is the deeper fill + tick, never
   an outline. Rows are ~48px tall, about half what they were.
+- **Support Portal — ONE tab strip everywhere: the Figma pill (`.pill-track`, 25 Sep 2026).** From the Nodebase
+  Workflow Figma pill (node 296:14588; the file is not shared with the MCP account, so it was matched from a
+  screenshot): a `#EEF2F6` track, 3px padding, 8px radius, 32px tall; options 26px, 12px `#364658`; the chosen
+  one a WHITE 6px-radius pill with a soft shadow, weight 500, no border. Styled ONCE in `theme.css`, unlayered so
+  it beats the utilities the buttons still carry. ⚠️ **`aria-pressed="true"` is what paints the pill** — a strip
+  is `className="pill-track"` on the container plus `aria-pressed` on each button, so the look and the
+  accessible state cannot disagree. A new strip that forgets `aria-pressed` shows NO selection. ⚠️ Because the
+  track sets `display:flex` unlayered, a plain `hidden` utility on it no longer hides it — use `!hidden`.
+  Applied to all 14 strips: `Segmented` (labelled), Theme Primary/Secondary/Neutral + Light/Dark, the colour
+  picker Light/Dark, banner background Image/Colour, both Solid/Gradient editors (they were bordered strips
+  with a BLUE active fill — now the same pill), the banner section count, the three Border-style rows, the
+  icon picker's two tab pairs and the section-layout preset tiles.
 - **Support Portal — the fifth 4-section arrangement and the banner's Column widths are gone (25 Sep 2026).**
   ⚠️ **`col-three-rows` left `PRESET_SHAPES[4]`** — "a column, and three rows beside it". At four
   sections it put three widgets in a single narrow column beside the words, the one arrangement in the

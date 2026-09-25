@@ -193,10 +193,11 @@ export function IconPopover({ value, onPick, onClose, anchor, lead, iconsOnly }:
           Branding panel's section heads lost theirs. */}
       <div className="flex-shrink-0 p-3">
         {/* Two ways to fill one slot, named up front. */}
-        <div className={`mb-2.5 flex gap-1 rounded bg-[#F1F5F9] p-0.5 ${iconsOnly ? 'hidden' : ''}`}>
+        <div className={`pill-track mb-2.5 ${iconsOnly ? '!hidden' : ''}`}>
           {(['icon', 'image'] as const).map((m) => (
             <button
               key={m}
+              aria-pressed={mode === m}
               onClick={() => setMode(m)}
               className={`flex-1 rounded py-1 text-[12px] font-medium capitalize transition-colors ${
                 mode === m ? 'bg-white text-[#364658] shadow-[0_1px_2px_rgba(16,24,40,0.06)]' : 'text-[#7B8FA5] hover:text-[#364658]'
@@ -312,6 +313,7 @@ export function IconField({ value, onChange }: { value?: IconChoice; onChange: (
   const tabBtn = (id: 'image' | 'icon', label: string) => (
     <button
       key={id}
+      aria-pressed={tab === id}
       onClick={() => setTab(id)}
       className={`h-7 flex-1 rounded text-[12px] font-medium transition-colors ${
         tab === id ? 'bg-white text-[#364658] shadow-[0_1px_2px_rgba(16,24,40,0.06)]' : 'text-[#64748B] hover:text-[#364658]'
@@ -320,7 +322,7 @@ export function IconField({ value, onChange }: { value?: IconChoice; onChange: (
   );
   return (
     <div>
-      <div className="mb-2 flex items-center gap-1 rounded bg-[#F1F5F9] p-0.5">
+      <div className="pill-track mb-2">
         {tabBtn('image', 'Image')}
         {tabBtn('icon', 'Icon')}
       </div>

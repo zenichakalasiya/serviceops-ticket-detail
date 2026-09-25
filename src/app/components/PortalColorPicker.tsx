@@ -245,11 +245,12 @@ export function PortalColorPicker({ value, onChange, onClose, anchor, modeTab }:
       {/* ⚠️ ABOVE the spectrum, because it says which of two values everything below it is editing.
           Underneath, you would have picked a colour before being told where it was going. */}
       {modeTab && (
-        <div className="mb-2 flex items-center gap-0.5 rounded bg-[#F1F5F9] p-0.5">
+        <div className="pill-track mb-2">
           {(['light', 'dark'] as const).map((m) => (
             <button
               key={m}
               type="button"
+              aria-pressed={modeTab.value === m}
               onClick={() => modeTab.onChange(m)}
               className={`flex-1 rounded py-0.5 text-[12px] font-medium capitalize transition-colors ${
                 modeTab.value === m
