@@ -12,7 +12,7 @@
  *     page-level action.
  */
 
-import { useEffect, Fragment, useRef, useState } from 'react';
+import { useEffect, Fragment, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import {
@@ -678,8 +678,31 @@ export interface WidgetDrawerProps {
   onChangeBanner?: () => void;
 }
 
+/* ⚠️ NO ALIGNMENT IN ANY SIDEBAR (25 Sep 2026). Every block's alignment is on its floating toolbar —
+   the two AlignAxis popups, on the thing being placed, where the result can be seen as it is picked.
+   A second copy in the panel is the control you are NOT looking at, and whichever of the two was
+   touched last silently wins. Stripped HERE, at the drawer's one entry point, rather than out of the
+   dozen specs that declare one under half a dozen names (`align`, `textAlign`, `contentAlign`,
+   `blockAlign`, `ratingAlign`, `…AlignY`, and the section's `distribute` / `valign` controls) —
+   so a spec written tomorrow cannot bring one back by accident. The keys and their renderers are
+   untouched, so every block keeps the alignment it has. An accordion left with nothing in it is
+   dropped with it. */
+const isAlignField = (f: WidgetField) =>
+  /align/i.test(f.key) || f.control === 'distribute' || f.control === 'valign';
+function withoutAlignment(spec: WidgetSpec): WidgetSpec {
+  const panel = spec.panel && {
+    ...spec.panel,
+    content: spec.panel.content?.filter((f) => !isAlignField(f)),
+    accordions: spec.panel.accordions
+      .map((a) => (a.fields ? { ...a, fields: a.fields.filter((f) => !isAlignField(f)) } : a))
+      .filter((a) => (a.fields?.length ?? 0) > 0 || (a.groups?.length ?? 0) > 0 || !!a.spacing || !a.fields),
+  };
+  return { ...spec, fields: (spec.fields ?? []).filter((f) => !isAlignField(f)), ...(panel ? { panel } : {}) };
+}
+
 export function PortalWidgetDrawer(props: WidgetDrawerProps) {
-  const { nodeId, spec, cfg, setCfg, styles, setStyle, replaceStyle, onSelect, onReset, applyPreset, icon, setIcon, onAddLinkCard, onApplyBannerLayout, onApplyBannerShape, onChangeBanner } = props;
+  const { nodeId, spec: specIn, cfg, setCfg, styles, setStyle, replaceStyle, onSelect, onReset, applyPreset, icon, setIcon, onAddLinkCard, onApplyBannerLayout, onApplyBannerShape, onChangeBanner } = props;
+  const spec = useMemo(() => withoutAlignment(specIn), [specIn]);
   const node = nodeById(nodeId);
   const path = nodePath(nodeId);
   /* What arrives OPEN. ⚠️ CONTENT only — every DESIGN accordion starts collapsed.

@@ -1600,6 +1600,16 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   size. Measured: Colour/Gradient tab 224×272, Image tab 224×134, no horizontal overflow. ⚠️ Dense number
   inputs hide the browser spinner (`[appearance:textfield]`) — at 54px the reserved spinner space clipped
   "100" to "10".
+- **Support Portal — NO alignment in any sidebar, and no divider that fences nothing (25 Sep 2026).**
+  ⚠️ Alignment lives on the floating toolbar only. `withoutAlignment(spec)` in `PortalWidgetDrawer` strips it at
+  the drawer’s ONE entry point — every field whose key matches `/align/i` (`align`, `textAlign`, `contentAlign`,
+  `blockAlign`, `ratingAlign`, `…AlignY`) plus the `distribute` / `valign` controls, from `fields`,
+  `panel.content` and `panel.accordions` (an accordion left empty is dropped). Stripped there rather than out of
+  the dozen specs, so a new spec cannot bring one back; the keys and renderers are untouched, so nothing moves.
+  ⚠️ Every toolbar divider is now `<Rule />` (class `tb-rule`; the hover tip is `tb-tip`), and `theme.css` hides
+  a rule with no control before it, a rule followed by another, and a trailing rule — so a bar can never open on
+  a line whichever caps a node gets. Swept all 52 nodes of the default page: no bar starts, ends or doubles on a
+  divider, and no panel shows an alignment control.
 - **Support Portal — the fifth 4-section arrangement and the banner's Column widths are gone (25 Sep 2026).**
   ⚠️ **`col-three-rows` left `PRESET_SHAPES[4]`** — "a column, and three rows beside it". At four
   sections it put three widgets in a single narrow column beside the words, the one arrangement in the

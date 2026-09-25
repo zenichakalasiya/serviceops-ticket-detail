@@ -362,7 +362,12 @@ const btnOn = 'flex size-7 items-center justify-center rounded bg-[var(--bar-on-
 /* A cap, not an absence: the button stays where it was and carries the reason on hover. */
 const btnOff = 'flex size-7 cursor-not-allowed items-center justify-center rounded text-[#C3CBD6]';
 /** The hairline that groups a toolbar — see the note at the LOOK group. */
-const Rule = () => <span className="mx-0.5 h-4 w-px flex-shrink-0 bg-[var(--bar-rule,#E5E7EB)]" />;
+/* ⚠️ Tagged `tb-rule` so theme.css can hide a rule that fences NOTHING — one with no control before
+   it (the bar opened on a divider when an element had no grip and no moves), two in a row, or one at the
+   end. The conditions that decide what a bar shows are spread over a dozen caps, so asking each call
+   site "was anything drawn before me?" is a question nobody can keep answering correctly; the rendered
+   bar can answer it itself. */
+const Rule = () => <span className="tb-rule mx-0.5 h-4 w-px flex-shrink-0 bg-[var(--bar-rule,#E5E7EB)]" />;
 
 /* A control on the bar that is a WORD rather than a glyph.
  *
@@ -2255,7 +2260,7 @@ function ToolbarTip({ tip }: { tip: ToolbarTipState | null }) {
       /* ⚠️ #364658, the product's own ink, rather than the `#1F2937` every other dark tooltip uses. The
          tip belongs to the bar it hangs off, so it takes the bar's colour — and it is the one place on a
          toolbar big enough to READ a colour off, which is why a change to the glyphs alone was invisible. */
-      className={`pointer-events-none absolute z-[80] max-w-[220px] -translate-x-1/2 whitespace-nowrap rounded bg-[#364658] px-2 py-1 text-[11px] leading-[16px] text-white shadow-[0_4px_10px_rgba(16,24,40,0.18)] ${tip.above ? 'bottom-full mb-1.5' : 'top-full mt-1.5'}`}
+      className={`tb-tip pointer-events-none absolute z-[80] max-w-[220px] -translate-x-1/2 whitespace-nowrap rounded bg-[#364658] px-2 py-1 text-[11px] leading-[16px] text-white shadow-[0_4px_10px_rgba(16,24,40,0.18)] ${tip.above ? 'bottom-full mb-1.5' : 'top-full mt-1.5'}`}
     >
       {tip.label}
       {/* The caret is the whole point: it is what ties the words to one of nine identical-sized glyphs. */}
@@ -2298,13 +2303,13 @@ function TextToolbar({ id, editing = false }: { id: string; editing?: boolean })
     >
       <ToolbarTip tip={tip} />
       <span {...drag} className="flex size-7 cursor-grab items-center justify-center text-[var(--bar-ink,#9CA3AF)] opacity-70 active:cursor-grabbing"><GripVertical size={14} /></span>
-      <span className="mx-0.5 h-4 w-px bg-[#E5E7EB]" />
+      <Rule />
 
       <button className={tBtn(s.bold)} data-tip="Bold" onClick={() => inline(() => document.execCommand('bold'), () => setStyle(id, { bold: !s.bold }))}><Bold size={14} /></button>
       <button className={tBtn(s.italic)} data-tip="Italic" onClick={() => inline(() => document.execCommand('italic'), () => setStyle(id, { italic: !s.italic }))}><Italic size={14} /></button>
       <button className={tBtn(s.underline)} data-tip="Underline" onClick={() => inline(() => document.execCommand('underline'), () => setStyle(id, { underline: !s.underline }))}><Underline size={14} /></button>
 
-      <span className="mx-0.5 h-4 w-px bg-[#E5E7EB]" />
+      <Rule />
 
       {/* Theme style. The * is Duda's override marker — it means this text no longer follows the
           theme, which is the one thing that makes a theme panel trustworthy. */}
@@ -2343,7 +2348,7 @@ function TextToolbar({ id, editing = false }: { id: string; editing?: boolean })
         {[12, 13, 14, 15, 16, 18, 20, 24, 28, 32, 40, 48].map((n) => <option key={n} value={n}>{n}</option>)}
       </select>
 
-      <span className="mx-0.5 h-4 w-px bg-[#E5E7EB]" />
+      <Rule />
 
       {/* ⚠️ A BUTTON opening the product's picker, not a native `<input type="color">` overlaid at
           `absolute inset-0`. The UA stylesheet gives that input its own width, which beats the
@@ -2416,7 +2421,7 @@ function TextToolbar({ id, editing = false }: { id: string; editing?: boolean })
         })}
       ><RemoveFormatting size={14} /></button>
 
-      <span className="mx-0.5 h-4 w-px bg-[#E5E7EB]" />
+      <Rule />
 
       <button
         ref={linkRef}
@@ -2652,7 +2657,7 @@ function BannerToolbar() {
       <ToolbarTip tip={tip} />
       <AlignAxis axis="h" value={h} options={H} open={axis === 'h'} onToggle={() => { setBg(false); setAxis((a) => (a === 'h' ? null : 'h')); }} onPick={(x) => { setCfg?.('hero', { contentAlign: x }); setAxis(null); }} />
       <AlignAxis axis="v" value={vAlign} options={V} open={axis === 'v'} onToggle={() => { setBg(false); setAxis((a) => (a === 'v' ? null : 'v')); }} onPick={(x) => { setCfg?.('hero', { contentAlignY: x }); setAxis(null); }} />
-      <span className="mx-0.5 h-4 w-px bg-[#E5E7EB]" />
+      <Rule />
       {/* ⚠️ ONE button for the banner's layout, where there were two.
           The "+" asked how many sections and this one asked how they were arranged — so you opened a
           popup, picked a count from a grid of pictures, watched it close, then opened the button beside
@@ -2782,7 +2787,7 @@ function BannerToolbar() {
           other block answers on its bar, in the same order. They were a "Corners & border" group in
           the panel, which is the copy you are not looking at while you are looking at the banner. */}
       <BannerEdgeMenus />
-      <span className="mx-0.5 h-4 w-px bg-[#E5E7EB]" />
+      <Rule />
       <button className="flex size-7 items-center justify-center rounded text-[#EF4444] transition-colors hover:bg-[#FEF3F2]" data-tip="Delete the banner" onClick={() => deleteNode('hero')}><Trash2 size={14} /></button>
     </div>
   );
@@ -2923,7 +2928,7 @@ function GroupToolbar({ id }: { id: string }) {
       )}
       <button className={dir === 'column' ? btnOn : btn} data-tip="Vertical — items stack" aria-pressed={dir === 'column'} onClick={() => setDir('column')}><Rows2 size={15} /></button>
       <button className={dir === 'row' ? btnOn : btn} data-tip="Horizontal — items side by side" aria-pressed={dir === 'row'} onClick={() => setDir('row')}><Columns2 size={15} /></button>
-      <span className="mx-0.5 h-4 w-px bg-[#E5E7EB]" />
+      <Rule />
       {textSection ? (
         <>
           {/* Two axes, always both: where the items sit across the section, and down it. STRETCH on the vertical
@@ -3252,7 +3257,7 @@ function BannerCropper({ hostRef, onClose }: { hostRef: React.RefObject<HTMLDivE
         style={{ left: box.l + 8, top: box.t + 8 }}
       >
         <span className="px-2 text-[12px] text-[#7B8FA5]">Crop image</span>
-        <span className="mx-0.5 h-4 w-px bg-[#E5E7EB]" />
+        <Rule />
         <button className={barBtn} onClick={() => write({ scale: coverScale, x: 50, y: 50 })}>Fill banner</button>
         <button className={barBtn} onClick={() => write({ scale: containScale, x: 50, y: 50 })}>Fit whole image</button>
         <button className={barBtn} onClick={() => setCfg?.('hero', { bannerCrop: undefined })}>Reset</button>

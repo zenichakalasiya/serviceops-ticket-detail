@@ -571,3 +571,12 @@ body[data-portal-dragging] [data-portal-toolbar] { pointer-events: none; opacity
 }
 .portal-range:hover::-webkit-slider-thumb { transform: scale(1.15); }
 .portal-range:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px rgba(61, 139, 208, 0.3), 0 1px 3px rgba(16, 24, 40, 0.25); }
+
+/* Support Portal builder — a toolbar divider only ever SEPARATES. `Rule` (PortalCanvas) is tagged
+   `tb-rule` and the hover tip `tb-tip`; a rule is hidden unless some real control comes before it,
+   and hidden again when another rule follows it or it ends the bar. So a bar never opens on a line,
+   doubles one, or trails one, whichever of its controls a given element happens to get. */
+[data-portal-toolbar] > .tb-rule { display: none; }
+[data-portal-toolbar] > :not(.tb-rule):not(.tb-tip) ~ .tb-rule { display: block; }
+[data-portal-toolbar] > .tb-rule:has(+ .tb-rule),
+[data-portal-toolbar] > .tb-rule:last-child { display: none; }
