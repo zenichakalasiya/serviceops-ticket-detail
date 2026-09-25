@@ -2197,11 +2197,14 @@ function ToolbarTip({ tip }: { tip: ToolbarTipState | null }) {
   return (
     <span
       style={{ left: tip.x }}
-      className={`pointer-events-none absolute z-[80] max-w-[220px] -translate-x-1/2 whitespace-nowrap rounded bg-[#1F2937] px-2 py-1 text-[11px] leading-[16px] text-white shadow-[0_4px_10px_rgba(16,24,40,0.18)] ${tip.above ? 'bottom-full mb-1.5' : 'top-full mt-1.5'}`}
+      /* ⚠️ #364658, the product's own ink, rather than the `#1F2937` every other dark tooltip uses. The
+         tip belongs to the bar it hangs off, so it takes the bar's colour — and it is the one place on a
+         toolbar big enough to READ a colour off, which is why a change to the glyphs alone was invisible. */
+      className={`pointer-events-none absolute z-[80] max-w-[220px] -translate-x-1/2 whitespace-nowrap rounded bg-[#364658] px-2 py-1 text-[11px] leading-[16px] text-white shadow-[0_4px_10px_rgba(16,24,40,0.18)] ${tip.above ? 'bottom-full mb-1.5' : 'top-full mt-1.5'}`}
     >
       {tip.label}
       {/* The caret is the whole point: it is what ties the words to one of nine identical-sized glyphs. */}
-      <span className={`absolute left-1/2 size-2 -translate-x-1/2 rotate-45 bg-[#1F2937] ${tip.above ? '-bottom-[3px]' : '-top-[3px]'}`} />
+      <span className={`absolute left-1/2 size-2 -translate-x-1/2 rotate-45 bg-[#364658] ${tip.above ? '-bottom-[3px]' : '-top-[3px]'}`} />
     </span>
   );
 }

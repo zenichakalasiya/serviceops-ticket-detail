@@ -1,15 +1,14 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ChevronDown, ChevronUp, Link2, Link2Off, MoveHorizontal, MoveVertical } from 'lucide-react';
+import { Link2, Link2Off, MoveHorizontal, MoveVertical } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { NodeStyle, SpacingBox } from './portalPageModel';
 
 /* Padding and margin.
  *
- * ⚠️ TWO designs behind a tab, on purpose and for now — "Two fields" and "Four sides". They are the
- * same eight values through the same field and the same two links; only the shape differs. Whichever
- * is kept is therefore a deletion rather than a rewrite, and the one that goes takes no behaviour
- * with it.
+ * ⚠️ ONE design. It was two behind a tab — "Two fields" and "Four sides" — so the shape could be
+ * chosen from the real control rather than a sketch; Zeni picked this one and the other is deleted. They
+ * shared every write path, so its going took no behaviour with it.
  *
  * ⚠️ THE NUMBERS ARE THE TARGETS. Every side is a real 32px input — click it and type, or drag
  * sideways on it to scrub — so the smallest thing you have to hit is a field, not a hairline edge.
@@ -219,8 +218,6 @@ function LinkToggle({ axis, on, onToggle }: { axis: 'v' | 'h'; on: boolean; onTo
 }
 
 export function SpacingMatrix({ style, onChange, only, resting, nodeId }: Props) {
-  const [tab, setTab] = useState<'two' | 'sides'>('two');
-  const [open, setOpen] = useState<Ring | null>(null);
   const [hint, setHint] = useState<{ ring: Ring; side: Side } | null>(null);
 
   /* ⚠️ An EMPTY box, not ZERO_BOX. Merging over four zeros is what made one control write all four
@@ -290,24 +287,26 @@ export function SpacingMatrix({ style, onChange, only, resting, nodeId }: Props)
     </div>
   );
 
-  /* ── A — TWO FIELDS, the four sides on demand ───────────────────────────────────────────────────
+  /* ⚠️ THE LINK IS THE DISCLOSURE. There is no chevron: breaking a chain is already the statement that
+     this ring's sides are not all the same, so the four boxes appear then and only then, and tying both
+     chains folds them back to two. A chevron beside the chains was a second control for one idea — you
+     could open the four sides with both pairs still tied, which is four fields that behave like two, and
+     you could unlink a pair while the sides that no longer move together were hidden.
+     ⚠️ ANY chain broken opens the whole container, not just its own axis: the pair that is still tied
+     keeps moving together when you type in either of its boxes, so the four are always true. Splitting
+     the disclosure per axis would give a top and a bottom field beside a single "left and right" one,
+     which is a third shape for the reader to learn. */
+  const apart = (r: Ring) => !linked(r, 'v') || !linked(r, 'h');
+
+  /* ── TWO FIELDS, the four sides once a chain is broken ──────────────────────────────────────────
    * Two numbers on arrival instead of eight, which is what a linked pair of pairs already is. The
    * chevron opens the four, laid out WHERE THEY ARE around a plate rather than as a list: the one
    * thing a non-designer gets from this control is which box is which edge, and four rows labelled
    * top / right / bottom / left is a list you have to read. */
   const twoFields = (r: Ring) => (
     <div key={r} className="mt-3 first:mt-0">
-      {head(r, (
-        <button
-          type="button"
-          title={open === r ? 'Close the four sides' : 'Set each side on its own'}
-          onClick={(e) => { e.stopPropagation(); setOpen(open === r ? null : r); }}
-          className={`flex size-6 items-center justify-center rounded transition-colors ${
-            open === r ? 'bg-[#EBF5FF] text-[#3D8BD0]' : 'text-[#9CA3AF] hover:bg-[#F1F5F9] hover:text-[#364658]'
-          }`}
-        >{open === r ? <ChevronUp size={14} /> : <ChevronDown size={14} />}</button>
-      ))}
-      {open === r ? (
+      {head(r)}
+      {apart(r) ? (
         /* ⚠️ No glyphs in here: a box above the plate IS the top, so an arrow inside it labels what its
            position already says, and the width it costs is width the number wanted. */
         <div className="rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] p-2">
@@ -345,44 +344,9 @@ export function SpacingMatrix({ style, onChange, only, resting, nodeId }: Props)
     </div>
   );
 
-  /* ── B — FOUR LABELLED FIELDS ───────────────────────────────────────────────────────────────────
-   * One row of four, tagged ↑ → ↓ ← in reading order. The shortest of the two and the most explicit;
-   * what it trades away is the picture — an arrow in a box is a symbol you learn, where a box drawn
-   * around a plate is one you read. */
-  const fourSides = (r: Ring) => (
-    <div key={r} className="mt-3 first:mt-0">
-      {head(r)}
-      {/* ⚠️ TOP beside BOTTOM, then LEFT beside RIGHT — not one row of ↑ → ↓ ←. The two chains in
-          the header above tie exactly these pairs, so a line per pair is the grouping those controls
-          already describe; across one row the sides a chain held were the first box and the third. It
-          also gives every field twice the width, which is where the number goes. */}
-      <div className="grid grid-cols-2 gap-1.5">
-        {field(r, 'top', <ArrowUp size={11} />)}
-        {field(r, 'bottom', <ArrowDown size={11} />)}
-        {field(r, 'left', <ArrowLeft size={11} />)}
-        {field(r, 'right', <ArrowRight size={11} />)}
-      </div>
-    </div>
-  );
-
   return (
     <div>
-      {/* ⚠️ The product's own segmented treatment — a strip whose options ALL carry a label is a set of
-          tabs, so it takes the pill on a track rather than the bordered buttons an icon strip gets. */}
-      <div className="mb-2.5 flex gap-0.5 rounded bg-[#F1F5F9] p-0.5">
-        {([['two', 'Two fields'], ['sides', 'Four sides']] as const).map(([k, label]) => (
-          <button
-            key={k}
-            type="button"
-            aria-pressed={tab === k}
-            onClick={(e) => { e.stopPropagation(); setTab(k); }}
-            className={`h-6 flex-1 rounded text-[11px] font-medium transition-colors ${
-              tab === k ? 'bg-white text-[#364658] shadow-[0_1px_2px_rgba(16,24,40,0.06)]' : 'text-[#7B8FA5] hover:text-[#364658]'
-            }`}
-          >{label}</button>
-        ))}
-      </div>
-      {rings.map((r) => (tab === 'two' ? twoFields(r) : fourSides(r)))}
+      {rings.map(twoFields)}
       {nodeId && hint && <SpacingHint nodeId={nodeId} ring={hint.ring} side={hint.side} />}
     </div>
   );

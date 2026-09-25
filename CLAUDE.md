@@ -1451,7 +1451,7 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   The words are inline-editable on the canvas too, so it is two places for one value — kept because
   typing a long heading into a field beats typing it into the banner.
 
-- **⚠️ Support Portal — the ACTION CARDS' toolbar is the only one at `#364658` (25 Sep 2026).** Every
+- **⚠️ Support Portal — the ACTION CARDS' toolbar and EVERY tooltip are at `#364658` (25 Sep 2026).** Every
   other floating bar rests at `#64748B` and steps to `#364658` on hover, as they always did. The ink
   lives on the bar's shell (`BAR` / `BAR_INK` in `PortalCanvas`) and `btn` sets **no resting colour at
   all**, so it inherits — a stray `text-` on that class would beat the inheritance and make one bar
@@ -1459,6 +1459,9 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   reader has to attribute to something, and the only thing it means here is "this is an action card",
   which the selection outline already says. If a second bar ever wants it, the rule has stopped being
   about action cards and the two should merge.
+  ⚠️ **The TOOLTIP is `#364658` on every bar** (it was `#1F2937`, the product’s generic dark tip). The tip
+  belongs to the bar it hangs off, so it takes the bar’s colour — and it is the one surface on a toolbar
+  large enough to READ a colour off, which is why changing the glyphs alone was a change nobody could see.
 
 - **⚠️ Support Portal — EVERY SPACING SIDE IS px. There are no percentages left (25 Sep 2026).**
   Left and right used to be a **percentage of the parent** while top and bottom were px, so one control
@@ -1477,39 +1480,27 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   the unit the admin asked for.
   ⚠️ `useRestingSpacing` no longer converts what it measures — it reports px on all four sides.
 
-- **Support Portal — SPACING is TWO designs behind a tab, for the admin to pick (25 Sep 2026).**
-  `SpacingMatrix` shows **Two fields** and **Four sides** as a segmented pair. They are the same eight
-  values through the same field and the same links; only the shape differs, so whichever is kept is a
-  deletion rather than a rewrite and the one that goes takes no behaviour with it. **Two fields** opens
-  as ONE row per ring — an `↕ px` box and an `↔ %` box — with a chevron to the four sides laid out
-  around an Element plate; **Four sides** is one row of four tagged ↑ → ↓ ←.
-  ⚠️ **Every side is a real bordered INPUT** at the product's 32px height, where it was bare text that
-  only revealed a border on hover: a number you can edit and a number you can only read are the same
-  picture until you touch one. The drag-to-scrub survives (3px threshold, `cursor-ew-resize`), and every
-  box is `flex-1` or a grid cell — never a fixed width — so a row fills the sidebar at any panel width.
-  ⚠️ **The box is DIVIDED**: the number takes the width and the unit sits in its own tinted cell behind a
-  hairline, so the field reads as the thing you type in and the thing it is measured in. A bare "24 px"
-  centred in a box is one blob of text.
-  ⚠️ **Every value is at FULL STRENGTH.** A side nobody had set used to print grey to say "this is the
-  element's own" — true, secondary, and told in the one way that also reads as *disabled*, which is how a
-  panel of eight live inputs came to look switched off. The number is correct either way; the only thing
-  the grey carried was who put it there.
-  ⚠️ **Four sides pairs its fields**: TOP beside BOTTOM, then LEFT beside RIGHT — not one row of ↑ → ↓ ←.
-  The two chains in the header tie exactly those pairs, so a line per pair is the grouping the controls
-  already describe; across one row the sides a chain held were the first box and the third. It also
-  doubles every field's width (measured 105px), which is where the number goes.
-  ⚠️ **TWO links per ring, one per AXIS** (`marginLinkV`/`marginLinkH`, `paddingLinkV`/`paddingLinkH`),
-  drawn in the ring's HEADER rather than between the fields they tie — in a row of four there is no
-  "between", and in the box layout the two points a chain would want are already taken by fields. The
-  axis glyph beside each chain says which pair it holds. **Unset reads as LINKED**, both on: typing one
-  number and having both sides of that axis move is what almost every real edit wants, and an admin who
-  needs one side uneven breaks the chain deliberately. The old single `marginLinked`/`paddingLinked`
-  pair is unread and left on the type rather than deleted.
-  ⚠️ The two axes are NEVER written together — px up and down against % left and right, so copying 24
-  from one into the other would set a quarter of the parent's width. A collapsed pair whose sides
-  disagree reads **Mixed** rather than reporting one of the two as though they agreed.
-  ⚠️ The hover-lights-that-band behaviour and the grey resting values are unchanged, and
-  `useRestingSpacing` still looks only one level in — so a card whose padded box is deeper reads 0.
+- **Support Portal — SPACING is ONE control: two fields, and the LINK is the disclosure (25 Sep 2026).**
+  `SpacingMatrix` opens as ONE row per ring — an `↕ px` box and an `↔ px` box — and shows the four sides
+  the moment either chain is broken. Both tied folds it back to two.
+  ⚠️ **"Four sides" is DELETED.** It was the second of two designs behind a tab so the shape could be
+  chosen from the real control rather than a sketch; Zeni picked Two fields. They shared every write path,
+  so its going took no behaviour with it.
+  ⚠️ **There is NO chevron.** Breaking a chain already states that this ring’s sides are not all the same,
+  so it is the disclosure. A chevron beside the chains was a second control for one idea — you could open
+  the four sides with both pairs still tied (four fields behaving like two), and you could unlink a pair
+  while the sides that no longer moved together were hidden.
+  ⚠️ **ANY chain broken opens that ring’s whole container**, not just its own axis: the pair still tied
+  keeps moving together when you type in either box, so all four stay true. Splitting the disclosure per
+  axis would give a top and a bottom field beside a single “left and right” one — a third shape to learn.
+  Verified: both linked → 4 fields across the two rings; padding’s ↕ broken → 6; re-tied → 4.
+  ⚠️ **Every side is a real bordered INPUT** at the product’s 32px height, divided — the number takes the
+  width, the unit sits in its own tinted cell behind a hairline. Drag-to-scrub survives (3px threshold,
+  `cursor-ew-resize`), boxes are `flex-1` so a row fills the sidebar at any width, and **every value is at
+  full strength**: a side nobody set used to print grey, which is also how a disabled field looks.
+  ⚠️ **TWO links per ring, one per AXIS** (`marginLinkV/H`, `paddingLinkV/H`), in the ring’s header. Unset
+  reads as LINKED. The two axes are never written together.
+  ⚠️ The hover-lights-that-band behaviour is unchanged; `useRestingSpacing` still looks one level in.
 
 - **Support Portal — the box-model diagram, and the empty banner cell's "+" (24 Sep 2026).**
   ⚠️ **Superseded by the bullet above for the CONTROL's shape** — the nested diagram was one of the two
@@ -1543,10 +1534,6 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   "Add to banner" CTA. The dashed cell already says the space is empty and waiting, so the words repeated
   it at the weight of a primary button — and three empty cells put that sentence on the banner three times.
 
-  ⚠️ **The toolbar glyphs sit at #364658 at REST (25 Sep 2026)**, which is where the hover used to take
-  them. At #64748B a bar of glyphs read as a row of disabled controls until you pointed at one — and this
-  bar is the whole of an element styling, so no button on it is less available than another. Hover is the
-  tint alone now, which is enough once the mark is already at full strength. Delete stays red.
 
 - **Support Portal — a GATHERED ROW of cards is a section in its own right (23 Sep 2026).** The set of
   action cards (or KPI tiles) on the banner now reads as one thing: it is BOUNDED, it is named after
