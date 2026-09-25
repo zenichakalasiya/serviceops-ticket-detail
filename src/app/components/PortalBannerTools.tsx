@@ -217,7 +217,7 @@ function ItemSkeleton({ id, on }: { id: string; on: boolean }) {
    Two separate faults produced two wrong pictures on the way here. Stretched to the TILE, a section
    beside a line of text was a tall slab. Centred at their OWN heights instead, the two sections came
    out different heights and the row looked ragged. So the band takes ONE height — its tallest section,
-   floored at 20px so a row of short sections is still a band rather than a hairline — and every section
+   floored at 14px so a row of short sections is still a band rather than a hairline — and every section
    stretches to it, which is exactly what the banner does with a row of sections. `max-h-full` is what
    keeps a nested row inside its share. Stacked sections fill: between them they ARE the tile's height. */
 function PresetArt({ node, on }: { node: BannerNode; on: boolean }) {
@@ -235,11 +235,12 @@ function PresetArt({ node, on }: { node: BannerNode; on: boolean }) {
   if (node.d === 'row') {
     return (
       <span className="flex min-h-0 min-w-0 flex-1 flex-col justify-center">
-        {/* ⚠️ The band's floor is 20px, not 38. At 38 a row nested inside a column asked for more height
+        {/* ⚠️ The band's floor is 14px (was 38, then 20). At 38 a row nested inside a column asked for more height
             than its share — a tall tile gives a column of three about 22px each — so `max-h-full` capped
             it and the overflow cut the dashed boxes' horizontal edges off. The floor is only there so a
-            row of short sections still reads as a band rather than a hairline, and 20 does that. */}
-        <span className="flex max-h-full min-h-[20px] min-w-0 items-stretch gap-[4px]">
+            row of short sections still reads as a band rather than a hairline, and it has to come down
+            with the tile: a 62px tile leaves 50px of content, so a column of three gives each row 14. */}
+        <span className="flex max-h-full min-h-[14px] min-w-0 items-stretch gap-[4px]">
           {node.c.map((k, i) => <PresetArt key={i} node={k} on={on} />)}
         </span>
       </span>
@@ -264,7 +265,7 @@ function SkeletonTile({ on, label, onPick, children, tall = false }: {
       aria-pressed={on}
       onMouseDown={(e) => e.stopPropagation()}
       onClick={(e) => { e.stopPropagation(); onPick(); }}
-      className={`flex ${tall ? 'h-[88px]' : 'h-[64px]'} min-w-0 flex-1 overflow-hidden rounded-lg border-2 bg-white p-1.5 transition-colors ${on ? 'border-[#3D8BD0]' : 'border-[#E5E7EB] hover:border-[#C3CBD6]'}`}
+      className={`flex ${tall ? 'h-[62px]' : 'h-[56px]'} min-w-0 flex-1 overflow-hidden rounded-lg border-2 bg-white p-1.5 transition-colors ${on ? 'border-[#3D8BD0]' : 'border-[#E5E7EB] hover:border-[#C3CBD6]'}`}
     >{children}</button>
   );
 }
@@ -276,7 +277,7 @@ export function BannerPresetPicker({ tree, onPick }: { tree: BannerNode | null; 
     return <p className="text-[12px] leading-[18px] text-[#7B8FA5]">Add a widget to the banner to choose how its items are arranged.</p>;
   }
   return (
-    <div className="grid grid-cols-3 gap-2">
+    <div className="grid grid-cols-4 gap-1.5">
       {presets.map((p) => (
         <SkeletonTile key={p.id} tall on={on === p.id} label={p.label} onPick={() => onPick(p.tree)}>
           <PresetArt node={p.tree} on={on === p.id} />
@@ -506,7 +507,7 @@ export function BannerLayoutPanel({ tree, onCount, onPick, nameOf, split, onSpli
           you have to reconstruct. */}
       <div className="mt-2.5 border-t border-[#EEF1F5] pt-2.5">
           <p className="mb-2 text-[12px] font-medium text-[#364658]">Arrangement</p>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-4 gap-1.5">
             {presets.length >= 2
               ? presets.map((p) => (
                 <SkeletonTile key={p.id} tall on={on === p.id} label={p.label} onPick={() => onPick(p.tree)}>

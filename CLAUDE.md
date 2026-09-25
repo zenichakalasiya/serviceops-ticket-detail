@@ -1417,6 +1417,11 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   search, lit, because that IS the arrangement — where it used to vanish entirely on the argument that
   there is no arrangement of a single thing. True, and it left the popup with no picture at all at the
   moment the count row had just been reduced to numbers.
+  ⚠️ **The arrangement tiles are 69×62 at FOUR across** (they were 96×88 at three). At the old size one
+  tile filled a third of the popup and a four-section set ran to two tall rows — a thumbnail only has to
+  be big enough to tell one arrangement from another, and these are boxes. ⚠️ ’s row-band floor
+  had to come down with them, 20px → 14px: a 62px tile leaves 50px of content, so a column of three gives
+  each row 14, and a floor above its share is what clips the dashed cells’ top and bottom edges.
   ⚠️ **Column widths is SIX small cards on ONE line** (26px tall, label under each). At four across it
   wrapped and took an arrangement tile’s height for what is a secondary adjustment — a ratio is what you
   reach for once the layout is right, so it gets one line at the foot rather than a grid of its own.
