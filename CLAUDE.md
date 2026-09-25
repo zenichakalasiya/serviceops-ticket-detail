@@ -1659,8 +1659,13 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   the default sorts first. `RowActions` (the table's Edit▾ menu) is gone, and so is Pagination on this page.
   ⚠️ **The default is STATE (`defaultId`), not `DEFAULT_PORTAL_PAGE.id`** — every rule that used the seed's id
   (always-on, undeletable, the root URL) reads `defaultId` now. Setting a default also switches it ON.
-  ⚠️ **A Draft cannot become the default** — the star is disabled with the reason: requesters would land on
-  a page nobody has published. The default's own card hides the star.
+  ⚠️ **ONE portal is live at a time, and it is the default.** Publishing a portal that is NOT the default opens
+  `ConfirmPublish` ("Publish “X” and make it the default?"), which names the portal(s) that will move back to
+  Draft; **Publish and make default** (`publishAsDefault`) publishes it, makes it the default, switches it on and
+  sets every other published portal to Draft. Cancel leaves you in the builder with nothing changed. Publishing
+  the default itself goes straight through. The card's **star** asks the SAME question (so it is enabled on a
+  Draft — making a portal the default IS publishing it); one `publishDialog()` renders it for both routes,
+  from the builder's return and from the listing's `overlays`. The default's own card hides the star.
 - **Support Portal — Solid / Gradient are CHIP tabs (`.chip-tabs`), and pill icons never shrink (25 Sep 2026).**
   Both Solid/Gradient switches (`BannerFillEditor`, `OverlayLayerEditor`) left `.pill-track` for `.chip-tabs`: two
   separate outlined chips, the chosen one with a 1.5px PRIMARY border and label and a filled primary check
