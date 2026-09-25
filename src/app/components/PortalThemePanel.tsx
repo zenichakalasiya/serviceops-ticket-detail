@@ -250,52 +250,50 @@ function Dropdown({ label, value, children, open, onToggle }: {
  * in its own heading face, so the card is the evidence instead of a frame around it. The rail went
  * with the nesting: a solid dot says "this theme is teal" in one mark and does not need an edge of
  * the card to do it.
- * ⚠️ The border is 2px whether or not a row is chosen, transparent-ish when it is not, so nothing
- * changes size on the way to being selected — the one thing that makes a list of cards jump. */
-const ROW = 'mb-2 block w-full rounded-lg border-2 px-3 py-2.5 text-left transition-colors last:mb-0';
+ * (The rows have no border at all now — see the note on `ROW`.) */
+/* ⚠️ NO OUTLINE (25 Sep 2026). A row is its light fill and nothing else; a border round every card is
+   eight frames to read past before reaching the samples. The chosen row says so with a deeper fill of
+   its OWN tint plus a tick, not a product-blue outline, so it still reads as that theme.
+   ⚠️ The NAME sits top-RIGHT, small, and the samples take the left and the width: the samples are what
+   a row is compared by, the name only says which one it is. */
+const ROW = 'mb-1.5 flex w-full items-start gap-2 rounded-md px-2.5 py-2 text-left transition-colors last:mb-0';
+
+function RowName({ label, dot, on }: { label: string; dot?: string; on: boolean }) {
+  return (
+    <span className="flex max-w-[45%] flex-shrink-0 items-center gap-1 pt-0.5">
+      {dot && <span className="size-1.5 flex-shrink-0 rounded-full" style={{ background: dot }} />}
+      <span className="truncate text-[10.5px] font-medium leading-4 text-[#64748B]">{label}</span>
+      {on && <Check size={11} className="flex-shrink-0 text-[#3D8BD0]" />}
+    </span>
+  );
+}
 
 function ThemeRow({ name, packId, accent, on, onClick }: {
   name: string; packId: string; accent: string; on: boolean; onClick: () => void;
 }) {
   const f = FONT_PACKS.find((x) => x.id === packId)!;
   return (
-    <button
-      onClick={onClick}
-      className={ROW}
-      /* The tint and the border are the theme's own, so eight rows read as eight themes before a
-         single word is read. Only the SELECTED border leaves the palette — a chosen row has to say
-         so in the product's own blue, or "selected" becomes a different statement per theme. */
-      style={{ background: `${accent}1A`, borderColor: on ? '#3D8BD0' : `${accent}33` }}
-    >
-      <span className="mb-1.5 flex items-center gap-1.5">
-        <span className="size-2.5 flex-shrink-0 rounded-full" style={{ background: accent }} />
-        <span style={{ fontFamily: f.heading }} className="min-w-0 flex-1 truncate text-[13px] font-semibold text-[#0F172A]">{name}</span>
-        {on && <Check size={13} className="flex-shrink-0 text-[#3D8BD0]" />}
+    <button onClick={onClick} className={ROW} style={{ background: `${accent}${on ? '33' : '14'}` }}>
+      <span className="min-w-0 flex-1">
+        <span style={{ fontFamily: f.heading }} className="block truncate text-[13px] font-bold leading-tight text-[#0F172A]">Heading</span>
+        <span style={{ fontFamily: f.body }} className="mt-0.5 block truncate text-[11px] leading-tight text-[#64748B]">Paragraph text</span>
       </span>
-      <span style={{ fontFamily: f.heading }} className="block truncate text-[15px] font-bold leading-tight text-[#0F172A]">Heading</span>
-      <span style={{ fontFamily: f.body }} className="mt-0.5 block truncate text-[12px] leading-tight text-[#64748B]">Paragraph text</span>
+      <RowName label={name} dot={accent} on={on} />
     </button>
   );
 }
 
-/* ⚠️ The family's NAME is in the UI's own font, not in the family. On the theme rows the name is set
-   in the theme's face because the name IS part of the sample there; here the two lines beneath are
-   the sample, and a label set in the thing it labels stops reading as a label. */
+/* The family name is in the UI's own font, not in the family — the two lines beside it are the sample. */
 function FontRow({ face, on, onClick }: {
   face: { name: string; css: string; note: string }; on: boolean; onClick: () => void;
 }) {
   return (
-    <button
-      onClick={onClick}
-      className={`${ROW} bg-[#F8FAFC]`}
-      style={{ borderColor: on ? '#3D8BD0' : '#E8EDF3' }}
-    >
-      <span className="mb-1.5 flex items-center gap-1.5">
-        <span className="min-w-0 flex-1 truncate text-[12px] font-semibold text-[#364658]">{face.name}</span>
-        {on && <Check size={13} className="flex-shrink-0 text-[#3D8BD0]" />}
+    <button onClick={onClick} className={`${ROW} ${on ? 'bg-[#EBF5FF]' : 'bg-[#F5F7FA] hover:bg-[#EEF2F6]'}`}>
+      <span className="min-w-0 flex-1">
+        <span style={{ fontFamily: face.css }} className="block truncate text-[14px] font-semibold leading-tight text-[#0F172A]">Heading</span>
+        <span style={{ fontFamily: face.css }} className="mt-0.5 block truncate text-[11px] leading-tight text-[#64748B]">{face.note}</span>
       </span>
-      <span style={{ fontFamily: face.css }} className="block truncate text-[16px] font-semibold leading-tight text-[#0F172A]">Heading</span>
-      <span style={{ fontFamily: face.css }} className="mt-0.5 block truncate text-[12px] leading-tight text-[#64748B]">{face.note}</span>
+      <RowName label={face.name} on={on} />
     </button>
   );
 }

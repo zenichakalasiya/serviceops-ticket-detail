@@ -1610,6 +1610,12 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   a rule with no control before it, a rule followed by another, and a trailing rule — so a bar can never open on
   a line whichever caps a node gets. Swept all 52 nodes of the default page: no bar starts, ends or doubles on a
   divider, and no panel shows an alignment control.
+- **Support Portal — theme and font rows: NO outline, name top-right (25 Sep 2026).** Supersedes the "ONE SURFACE
+  each" bullet’s 2px border. A row (`ROW` in `PortalThemePanel`) is a light fill and nothing else — a theme’s own
+  accent at ~8% (~20% when chosen), a font’s `#F5F7FA` (`#EBF5FF` when chosen) — with the Heading / Paragraph
+  samples on the left at 13–14px / 11px, and `RowName` at the top RIGHT: 10.5px grey name, the theme’s accent
+  dot BESIDE the name (not in the card body), and a tick when selected. Selection is the deeper fill + tick, never
+  an outline. Rows are ~48px tall, about half what they were.
 - **Support Portal — the fifth 4-section arrangement and the banner's Column widths are gone (25 Sep 2026).**
   ⚠️ **`col-three-rows` left `PRESET_SHAPES[4]`** — "a column, and three rows beside it". At four
   sections it put three widgets in a single narrow column beside the words, the one arrangement in the
