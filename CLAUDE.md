@@ -1593,6 +1593,13 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   panel’s `SliderRow` — so every slider in the builder panels now has this look, not only those two.
   ⚠️ The fill is a `--fill` CSS variable set from the value: a range input has no cross-browser progress
   pseudo-element. `StepRail` (labelled stops) and the banner gap / element-panel sliders are still native.
+- **Support Portal — the banner BACKGROUND popup is the colour picker’s width, 224px (25 Sep 2026).** It was
+  320px. `BannerFillEditor`, `OverlayLayerEditor`, `GradientEditor` and `ColorField` take an opt-in
+  **`dense`** prop (28px controls, 12px text, a 20px stop bar with 14px handles, a 54px stop-position field,
+  no chevron on the colour field); only the toolbar popup passes it, so the panel’s copies keep the full
+  size. Measured: Colour/Gradient tab 224×272, Image tab 224×134, no horizontal overflow. ⚠️ Dense number
+  inputs hide the browser spinner (`[appearance:textfield]`) — at 54px the reserved spinner space clipped
+  "100" to "10".
 - **Support Portal — the fifth 4-section arrangement and the banner's Column widths are gone (25 Sep 2026).**
   ⚠️ **`col-three-rows` left `PRESET_SHAPES[4]`** — "a column, and three rows beside it". At four
   sections it put three widgets in a single narrow column beside the words, the one arrangement in the

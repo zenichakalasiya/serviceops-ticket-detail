@@ -434,9 +434,11 @@ export function ColorDot({ value, onChange, title, modes }: {
   );
 }
 
-export function ColorField({ value, onChange, modes, compact }: {
+export function ColorField({ value, onChange, modes, compact, dense }: {
   value: string;
   onChange: (v: string) => void;
+  /** 28px tall, 12px text, no chevron — for the toolbar popups that share the colour picker's 224px width. */
+  dense?: boolean;
   /** Swatch only — for a slot too narrow for the value and chevron (the Border row's 38px). */
   compact?: boolean;
   /* Both of this colour's values, so the picker offers a tab per mode — the same contract
@@ -470,12 +472,12 @@ export function ColorField({ value, onChange, modes, compact }: {
           setTab(modes?.mode ?? 'light');
           setAnchor(anchor ? null : btnRef.current!.getBoundingClientRect());
         }}
-        className={`flex h-9 w-full items-center gap-2 rounded border border-[#d1d5db] bg-white text-left transition-colors hover:border-[#3D8BD0] ${compact ? 'justify-center' : 'px-2'}`}
+        className={`flex w-full items-center rounded border border-[#d1d5db] bg-white text-left transition-colors hover:border-[#3D8BD0] ${dense ? 'h-7 gap-1.5' : 'h-9 gap-2'} ${compact ? 'justify-center' : dense ? 'px-1.5' : 'px-2'}`}
       >
-        <span className="size-5 flex-shrink-0 rounded border border-black/10" style={{ background: value }} />
+        <span className={`${dense ? 'size-4' : 'size-5'} flex-shrink-0 rounded border border-black/10`} style={{ background: value }} />
         {/* A colour with opacity reads as its hex and a percentage, the two things the picker edits — not as a raw rgba() string. */}
-        {!compact && <span className="min-w-0 flex-1 truncate text-[13px] text-[#364658]">{(() => { const p = parseColor(value); return p.opacity < 100 ? `${p.hex} · ${p.opacity}%` : (value || '').toUpperCase(); })()}</span>}
-        {!compact && <ChevronDown size={14} className="flex-shrink-0 text-[#9CA3AF]" />}
+        {!compact && <span className={`min-w-0 flex-1 truncate ${dense ? 'text-[12px]' : 'text-[13px]'} text-[#364658]`}>{(() => { const p = parseColor(value); return p.opacity < 100 ? `${p.hex} · ${p.opacity}%` : (value || '').toUpperCase(); })()}</span>}
+        {!compact && !dense && <ChevronDown size={14} className="flex-shrink-0 text-[#9CA3AF]" />}
       </button>
       {anchor && (
         <PortalColorPicker

@@ -2701,21 +2701,20 @@ function BannerToolbar() {
         {bg && (
           <>
             <span className="fixed inset-0 z-[60]" onClick={() => setBg(false)} />
-            {/* ⚠️ 320px with a scroll once it is tall. The Colour tab holds the SAME gradient editor the
-                panel does — four controls over a list of stops — and at 240px its type select read "L"
-                and every stop colour read "#…". The colour picker it opens is portalled to the body, so
-                this scroll box cannot clip it. */}
-            <div className="absolute left-1/2 top-[calc(100%+6px)] z-[61] max-h-[min(70vh,560px)] w-[320px] -translate-x-1/2 overflow-y-auto rounded-lg border border-[#E5E7EB] bg-white p-3 shadow-[0_12px_16px_-4px_rgba(16,24,40,0.10),0_4px_6px_-2px_rgba(16,24,40,0.06)]">
+            {/* ⚠️ 224px — the colour picker’s own width, so the popup and the picker it opens read as one size.
+                The editors take `dense` (28px controls, a thinner stop bar); the panel keeps the full size.
+                The colour picker is portalled to the body, so this scroll box cannot clip it. */}
+            <div className="absolute left-1/2 top-[calc(100%+6px)] z-[61] max-h-[min(70vh,520px)] w-[224px] -translate-x-1/2 overflow-y-auto rounded-lg border border-[#E5E7EB] bg-white p-2.5 shadow-[0_12px_16px_-4px_rgba(16,24,40,0.10),0_4px_6px_-2px_rgba(16,24,40,0.06)]">
               {/* ⚠️ The pill-on-a-track the product uses for LABELLED tabs, deliberately not the bordered
                   strip `BannerFillEditor`'s Solid/Gradient uses one level down — two identical strips
                   stacked would read as one control that had grown a second row. */}
-              <div className="mb-3 flex rounded bg-[#F1F5F9] p-0.5">
+              <div className="mb-2 flex rounded bg-[#F1F5F9] p-0.5">
                 {([['image', 'Image'], ['color', 'Colour']] as const).map(([k, label]) => (
                   <button
                     key={k}
                     type="button"
                     onClick={() => setBgTab(k)}
-                    className={`h-7 flex-1 rounded text-[12px] font-medium transition-colors ${
+                    className={`h-6 flex-1 rounded text-[11.5px] font-medium transition-colors ${
                       bgTab === k ? 'bg-white text-[#364658] shadow-[0_1px_2px_rgba(16,24,40,0.10)]' : 'text-[#64748B] hover:text-[#364658]'
                     }`}
                   >{label}</button>
@@ -2726,7 +2725,7 @@ function BannerToolbar() {
                   {hero.bannerImage ? (
                     <div>
                       <span
-                        className="block h-[92px] w-full rounded border border-[#E5E7EB] bg-[#F8FAFC] bg-cover bg-center"
+                        className="block h-[76px] w-full rounded border border-[#E5E7EB] bg-[#F8FAFC] bg-cover bg-center"
                         style={{ backgroundImage: `url(${String(hero.bannerImage)})` }}
                       />
                       <div className="mt-1.5 flex gap-2">
@@ -2746,7 +2745,7 @@ function BannerToolbar() {
                     </div>
                   ) : (
                     <button
-                      className="flex h-[92px] w-full flex-col items-center justify-center gap-1 rounded border border-dashed border-[#CBD5E1] bg-[#F8FAFC] text-[12px] text-[#7B8FA5] transition-colors hover:border-[#3D8BD0] hover:text-[#3D8BD0]"
+                      className="flex h-[76px] w-full flex-col items-center justify-center gap-1 rounded border border-dashed border-[#CBD5E1] bg-[#F8FAFC] text-[12px] text-[#7B8FA5] transition-colors hover:border-[#3D8BD0] hover:text-[#3D8BD0]"
                       onClick={() => fileRef.current?.click()}
                     ><ImagePlus size={18} /> Choose a picture<span className="text-[11px] text-[#9CA3AF]">1600 × 400 works well</span></button>
                   )}
@@ -2755,9 +2754,9 @@ function BannerToolbar() {
                       under it there is nothing for it to be between. It arrives ON, because text laid
                       straight onto a photograph is readable only by luck. */}
                   {!!hero.bannerImage && (
-                    <div className="mt-3 border-t border-[#EEF1F5] pt-3">
+                    <div className="-mx-2.5 mt-2.5 border-t border-[#EEF1F5] px-2.5 pt-2.5">
                       <label className="mb-2 flex cursor-pointer items-center justify-between gap-2">
-                        <span className="text-[12px] font-medium text-[#364658]">Colour layer over the image</span>
+                        <span className="text-[11.5px] font-medium text-[#364658]">Colour layer over image</span>
                         <span
                           onClick={() => setCfg?.('hero', { overlayOn: hero.overlayOn === false })}
                           className={`relative h-[18px] w-8 flex-shrink-0 rounded-full transition-colors ${hero.overlayOn === false ? 'bg-[#CBD5E1]' : 'bg-[#3D8BD0]'}`}
@@ -2766,13 +2765,13 @@ function BannerToolbar() {
                         </span>
                       </label>
                       {hero.overlayOn !== false && (
-                        <OverlayLayerEditor cfg={hero} setCfg={(patch) => setCfg?.('hero', patch)} />
+                        <OverlayLayerEditor dense cfg={hero} setCfg={(patch) => setCfg?.('hero', patch)} />
                       )}
                     </div>
                   )}
                 </>
               ) : (
-                <BannerFillEditor cfg={hero} setCfg={(patch) => setCfg?.('hero', patch)} />
+                <BannerFillEditor dense cfg={hero} setCfg={(patch) => setCfg?.('hero', patch)} />
               )}
             </div>
           </>
