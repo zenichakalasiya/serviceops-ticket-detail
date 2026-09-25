@@ -1661,6 +1661,15 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   (always-on, undeletable, the root URL) reads `defaultId` now. Setting a default also switches it ON.
   ⚠️ **A Draft cannot become the default** — the star is disabled with the reason: requesters would land on
   a page nobody has published. The default's own card hides the star.
+- **Support Portal — Solid / Gradient are CHIP tabs (`.chip-tabs`), and pill icons never shrink (25 Sep 2026).**
+  Both Solid/Gradient switches (`BannerFillEditor`, `OverlayLayerEditor`) left `.pill-track` for `.chip-tabs`: two
+  separate outlined chips, the chosen one with a 1.5px PRIMARY border and label and a filled primary check
+  (`.chip-check`) — the product's Manual / Query Based chips, recoloured from black to `#3D8BD0`. Same
+  `aria-pressed` rule as the pill. Every other tab strip stays a pill.
+  ⚠️ **The light/dark toggle's icons were drawn 8px WIDE**: the button was `size-7` (28px) and the pill CSS
+  gives 10px of side padding, leaving 8px, so the 16px svg flex-shrank to half its width. `theme.css` now pins
+  `.pill-track > button svg { flex-shrink: 0 }` and gives an icon-only option 6px padding; the toggle is
+  `w-9` with 16px icons. Check an icon's COMPUTED width, not its size prop, when one looks small.
 - **Support Portal — the fifth 4-section arrangement and the banner's Column widths are gone (25 Sep 2026).**
   ⚠️ **`col-three-rows` left `PRESET_SHAPES[4]`** — "a column, and three rows beside it". At four
   sections it put three widgets in a single narrow column beside the words, the one arrangement in the

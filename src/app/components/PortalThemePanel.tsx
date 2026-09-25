@@ -324,12 +324,12 @@ export function ThemeModeToggle({ mode, onChange }: { mode: 'light' | 'dark'; on
           title={m === 'light' ? 'Light mode' : 'Dark mode'}
           aria-label={m === 'light' ? 'Light mode' : 'Dark mode'}
           aria-pressed={mode === m}
-          className={`flex size-7 items-center justify-center rounded transition-colors ${
+          className={`flex h-7 w-9 items-center justify-center rounded transition-colors ${
             mode === m
               ? 'bg-[#3D8BD0] text-white shadow-[0_1px_2px_rgba(16,24,40,0.10)]'
               : 'text-[#7B8FA5] hover:text-[#364658]'
           }`}
-        ><Ic size={14} /></button>
+        ><Ic size={16} /></button>
       ))}
     </span>
   );

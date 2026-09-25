@@ -604,3 +604,29 @@ body[data-portal-dragging] [data-portal-toolbar] { pointer-events: none; opacity
   box-shadow: 0 1px 3px rgba(16, 24, 40, 0.10), 0 1px 2px rgba(16, 24, 40, 0.06);
 }
 .pill-track > button:focus-visible { outline: 2px solid rgba(61, 139, 208, 0.45); outline-offset: 1px; }
+
+/* Support Portal builder — CHIP tabs, for a choice between two MODES of one value (Solid / Gradient).
+   Two separate outlined chips rather than a track: the chosen one takes the primary colour on its
+   border and label and carries a filled check, so "which one is on" is stated by a mark as well as a
+   colour. Reference: the product's Manual / Query Based chips, recoloured from black to the primary.
+   Like `.pill-track`, `aria-pressed="true"` is what paints the chosen chip. */
+.chip-tabs { display: flex; gap: 8px; }
+.chip-tabs > button {
+  flex: 1 1 0; min-width: 0; height: 30px; padding: 0 10px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  border: 1px solid #E2E8F0; border-radius: 8px; background: #FFFFFF; box-shadow: none;
+  font-size: 12px; font-weight: 500; line-height: 16px; color: #64748B;
+  transition: border-color 120ms ease, color 120ms ease;
+}
+.chip-tabs > button:hover { border-color: #CBD5E1; color: #364658; }
+.chip-tabs > button[aria-pressed="true"] { border: 1.5px solid #3D8BD0; color: #3D8BD0; }
+.chip-tabs > button:focus-visible { outline: 2px solid rgba(61, 139, 208, 0.45); outline-offset: 1px; }
+.chip-check {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 14px; height: 14px; border-radius: 999px; background: #3D8BD0; color: #FFFFFF;
+}
+/* A glyph inside a pill never gives up its size to the button's padding — an icon-only option in a
+   narrow button was being squeezed to half its width (a 16px sun drawn 8px wide). Icon-only options
+   take less side padding than a word needs. */
+.pill-track > button svg { flex-shrink: 0; }
+.pill-track > button:has(> svg:only-child) { padding: 0 6px; }

@@ -110,7 +110,7 @@ export function BannerFillEditor({ cfg, setCfg, dense }: {
   const label = `${dense ? 'mb-1 text-[11.5px]' : 'mb-1.5 text-[12px]'} block font-medium text-[#364658]`;
   return (
     <div className={`flex flex-col ${dense ? 'gap-2' : 'gap-3'}`}>
-      <div className="pill-track">
+      <div className="chip-tabs">
         {(['solid', 'gradient'] as const).map((m) => (
           <button
             key={m}
@@ -118,7 +118,7 @@ export function BannerFillEditor({ cfg, setCfg, dense }: {
             aria-pressed={mode === m}
             onClick={() => put({ colorMode: m })}
             className={`${dense ? 'h-6 text-[11.5px]' : 'h-7 text-[12px]'} flex-1 rounded font-medium transition-colors ${mode === m ? 'bg-[#3D8BD0] text-white' : 'text-[#64748B] hover:bg-[#F5F7FA]'}`}
-          >{m === 'solid' ? 'Solid' : 'Gradient'}</button>
+          >{m === 'solid' ? 'Solid' : 'Gradient'}{mode === m && <span className="chip-check"><Check size={9} strokeWidth={3.5} /></span>}</button>
         ))}
       </div>
       {mode === 'solid' ? (
@@ -805,7 +805,7 @@ export function OverlayLayerEditor({ cfg, setCfg, dense }: { cfg: Record<string,
 
   return (
     <div className={`flex flex-col ${dense ? 'gap-2' : 'gap-3'}`}>
-      <div className="pill-track">
+      <div className="chip-tabs">
         {(['solid', 'gradient'] as const).map((m) => (
           <button
             key={m}
@@ -813,7 +813,7 @@ export function OverlayLayerEditor({ cfg, setCfg, dense }: { cfg: Record<string,
             aria-pressed={mode === m}
             onClick={() => (m === 'solid' ? setCfg({ overlayMode: 'solid' }) : setCfg({ overlayMode: 'gradient', overlayGradient: g }))}
             className={`${dense ? 'h-6 text-[11.5px]' : 'h-7 text-[12px]'} flex-1 rounded font-medium transition-colors ${mode === m ? 'bg-[#3D8BD0] text-white' : 'text-[#64748B] hover:bg-[#F5F7FA]'}`}
-          >{m === 'solid' ? 'Solid' : 'Gradient'}</button>
+          >{m === 'solid' ? 'Solid' : 'Gradient'}{mode === m && <span className="chip-check"><Check size={9} strokeWidth={3.5} /></span>}</button>
         ))}
       </div>
 
