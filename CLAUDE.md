@@ -1048,7 +1048,14 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   banner is on, and carries one line saying where the OTHER shape lives, since the rail keeps both
   and a picker that silently drops half the catalogue reads as a catalogue that shrank. ⚠️ The shape
   is read from the PAGE (`heroPlacement`, seeded to the panel as `__vertical`), not from a second
-  copy of the answer, so the picker cannot disagree with what is on screen. ⚠️ The two-step
+  copy of the answer, so the picker cannot disagree with what is on screen.
+  ⚠️ **In edit mode the shape's one-line description is DROPPED** (25 Sep 2026). It belongs to the ADD
+  flow, where the shape IS the choice being made and the words are how you tell a band across the top
+  from a column beside the page before you have seen either. Reached from the Banner layout field you are
+  changing the design of a banner you already have: the shape is settled, the heading has named it, and a
+  sentence describing what is on screen behind the dialog is a line to read past every time. The "For the
+  other shape, open Banners in the rail" line STAYS — that one carries something the reader cannot see.
+  ⚠️ The two-step
   Horizontal/Vertical dialog is still **first-add only** — `bannerStart` is one state
   (`'add' | 'edit' | null`) rather than two booleans that could both be true — and deleting the
   banner and adding it again brings the shape question back. Verified in a browser across all three

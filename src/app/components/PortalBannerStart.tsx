@@ -114,18 +114,26 @@ export function BannerStartDialog({ onPick, onClose, lockTo, activeId }: {
                 ? 'Add a banner'
                 : orientation === 'vertical' ? 'Vertical banners' : 'Horizontal banners'}
             </h2>
-            <p className="mt-0.5 text-[12.5px] leading-[1.5] text-[#7B8FA5]">
-              {orientation === null
-                ? 'A banner is the first thing a requester sees. Start by choosing where it sits on the page.'
-                : orientation === 'vertical'
-                ? 'A column beside the page. Every section moves into the space next to it, and the column stays put while that space scrolls.'
-                : 'A band across the top of the page, with every section below it.'}
-            </p>
+            {/* ⚠️ The shape's description is for the ADD flow only. There it is the choice being made —
+                a band across the top against a column beside the page — and the words are how you tell
+                the two apart before you have seen either. Reached from the Banner layout field you are
+                CHANGING the design of a banner you already have, so the shape is not in question, the
+                heading has already named it, and a sentence describing what is on screen behind the
+                dialog is a line to read past on every visit. */}
+            {!lockTo && (
+              <p className="mt-0.5 text-[12.5px] leading-[1.5] text-[#7B8FA5]">
+                {orientation === null
+                  ? 'A banner is the first thing a requester sees. Start by choosing where it sits on the page.'
+                  : orientation === 'vertical'
+                  ? 'A column beside the page. Every section moves into the space next to it, and the column stays put while that space scrolls.'
+                  : 'A band across the top of the page, with every section below it.'}
+              </p>
+            )}
             {/* ⚠️ Says where the OTHER shape lives rather than leaving it to be hunted for. This grid
                 is one shape because the page is already built around it; the rail keeps both, and a
                 picker that silently drops half the catalogue reads as a catalogue that shrank. */}
             {lockTo && (
-              <p className="mt-1 text-[12px] leading-[1.5] text-[#9AA5B4]">
+              <p className="mt-0.5 text-[12px] leading-[1.5] text-[#9AA5B4]">
                 Changing the design only. For the other shape, open <span className="font-medium text-[#7B8FA5]">Banners</span> in the rail.
               </p>
             )}
