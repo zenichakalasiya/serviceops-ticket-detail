@@ -43,20 +43,21 @@ function PortalCard({ p, url, href, isDefault, on, onToggle, onCustomize, onEdit
   const published = p.status === 'Published';
   return (
     <div className="flex flex-col rounded-xl border border-[#E5E7EB] bg-white p-4 transition-all hover:border-[#3D8BD0] hover:shadow-sm">
-      <div className="flex items-start gap-3">
-        <span className="relative flex size-10 flex-shrink-0 items-center justify-center rounded-lg bg-[#EAF3FB] text-[#3D8BD0]">
-          <MonitorSmartphone size={18} />
+      {/* ONE row: a small badge, the NAME, then its pills straight after it, the switch at the far end.
+          ⚠️ The badge is size-7 so its centre sits on the name's line; at size-10 it was taller than the
+          text beside it and the row read as two lines. The name truncates before the pills do. */}
+      <div className="flex items-center gap-2">
+        <span className="flex size-7 flex-shrink-0 items-center justify-center rounded-md bg-[#EAF3FB] text-[#3D8BD0]">
+          <MonitorSmartphone size={15} />
         </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className={`rounded-sm px-1.5 py-0.5 text-[11px] font-semibold ${published ? 'bg-[#ECFDF3] text-[#22A06B]' : 'bg-[#F1F5F9] text-[#64748B]'}`}>{p.status}</span>
-            {isDefault && <span className="rounded-sm bg-[#e8f4fd] px-1.5 py-0.5 text-[11px] font-semibold text-[#3D8BD0]">Default</span>}
-          </div>
+        <div className="flex min-w-0 flex-1 items-center gap-1.5">
           <button
             onClick={onCustomize}
             title={`Customise ${p.name}`}
-            className="mt-1 block max-w-full truncate text-left text-[13px] font-semibold text-[#3D8BD0] hover:underline"
+            className="min-w-0 truncate text-left text-[13px] font-semibold text-[#3D8BD0] hover:underline"
           >{p.name}</button>
+          <span className={`flex-shrink-0 rounded-sm px-1.5 py-0.5 text-[11px] font-semibold ${published ? 'bg-[#ECFDF3] text-[#22A06B]' : 'bg-[#F1F5F9] text-[#64748B]'}`}>{p.status}</span>
+          {isDefault && <span className="flex-shrink-0 rounded-sm bg-[#e8f4fd] px-1.5 py-0.5 text-[11px] font-semibold text-[#3D8BD0]">Default</span>}
         </div>
         <button
           role="switch"
@@ -64,7 +65,7 @@ function PortalCard({ p, url, href, isDefault, on, onToggle, onCustomize, onEdit
           disabled={isDefault}
           title={isDefault ? 'The default portal is always on — requesters have to land somewhere' : on ? 'Enabled — switch this portal off' : 'Disabled — switch this portal on'}
           onClick={onToggle}
-          className={`relative mt-0.5 inline-flex h-[18px] w-[34px] flex-shrink-0 items-center rounded-full transition-colors ${on ? 'bg-[#3D8BD0]' : 'bg-[#CBD5E1]'} ${isDefault ? 'cursor-not-allowed opacity-60' : ''}`}
+          className={`relative inline-flex h-[18px] w-[34px] flex-shrink-0 items-center rounded-full transition-colors ${on ? 'bg-[#3D8BD0]' : 'bg-[#CBD5E1]'} ${isDefault ? 'cursor-not-allowed opacity-60' : ''}`}
         >
           <span className={`inline-block size-[14px] rounded-full bg-white transition-transform ${on ? 'translate-x-[18px]' : 'translate-x-[2px]'}`} />
         </button>
