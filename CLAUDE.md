@@ -1462,17 +1462,44 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   The words are inline-editable on the canvas too, so it is two places for one value — kept because
   typing a long heading into a field beats typing it into the banner.
 
-- **⚠️ Support Portal — the ACTION CARDS' toolbar and EVERY tooltip are at `#364658` (25 Sep 2026).** Every
-  other floating bar rests at `#64748B` and steps to `#364658` on hover, as they always did. The ink
-  lives on the bar's shell (`BAR` / `BAR_INK` in `PortalCanvas`) and `btn` sets **no resting colour at
-  all**, so it inherits — a stray `text-` on that class would beat the inheritance and make one bar
-  differing from the rest impossible. ⚠️ Worth watching: two inks for one control is a difference a
-  reader has to attribute to something, and the only thing it means here is "this is an action card",
-  which the selection outline already says. If a second bar ever wants it, the rule has stopped being
-  about action cards and the two should merge.
-  ⚠️ **The TOOLTIP is `#364658` on every bar** (it was `#1F2937`, the product’s generic dark tip). The tip
-  belongs to the bar it hangs off, so it takes the bar’s colour — and it is the one surface on a toolbar
-  large enough to READ a colour off, which is why changing the glyphs alone was a change nobody could see.
+- **⚠️ Support Portal — the ACTION CARDS' bar is DARK, and a bar's palette is CSS VARIABLES (25 Sep 2026).**
+  `#364658` is the toolbar's **SURFACE** now, with white glyphs — on the action cards and on their parent
+  Quick Actions row. It was the ink twice before and could not be seen either time, which is the lesson:
+  #64748B against #364658 on a 15px stroke is not a difference a reader can read, so a colour asked for on
+  a toolbar has to land on the surface. The **delete stays red** — it is the one control whose colour is
+  its meaning. Verified: bg `rgb(54,70,88)` and glyphs `rgb(255,255,255)` on `quick-incident` and
+  `quick`; `news` unchanged at white with `rgb(100,116,139)`.
+  ⚠️ **Every other bar stays white**, so the canvas carries two treatments. That is a difference a reader
+  has to attribute to something, and here it means "these are the product's four destinations". If a third
+  bar ever wants it, the rule has stopped being about action cards.
+  ⚠️ **The palette is CSS VARIABLES on the bar's shell** — `--bar-ink`, `--bar-ink-on`, `--bar-hover`,
+  `--bar-on-bg`, `--bar-on-ink`, `--bar-rule`, `--bar-surface`, `--bar-shadow` — and `btn`, `btnOn`,
+  `textBtn`, `Rule` and the grip all read `var(--bar-*, <the light value>)`. A bar re-declares eight
+  values and everything on it follows; a parallel set of dark classes would have to be threaded through
+  every control and would drift the first time one changed. The fallbacks mean a control rendered outside
+  a bar still has its old colours.
+  ⚠️ **`var()` does NOT work in an SVG presentation attribute** — `fill="var(--x)"` is silently ignored
+  and the literal fallback paints. The shadow glyph's inner square was white-on-white on the dark bar
+  until both its fills moved to `style={{ fill: … }}`.
+  ⚠️ **The shadow glyph's halo has its own variable**, not `currentColor`. On a dark bar the ink is white,
+  so a `currentColor` halo drew a white BLOOM — the opposite of a shadow. It is `#64748B` on the light bar
+  and `#0C141D` on the dark one: darker than its surface either way, which is what a shadow is.
+  ⚠️ **The TOOLTIP is `#364658` on every bar** (it was `#1F2937`). It belongs to the bar it hangs off, and
+  it is the one surface on a toolbar large enough to read a colour off.
+  ⚠️ **No rule before the ALIGNMENTS.** Three fences on a bar of nine glyphs is a fence every two buttons,
+  which groups nothing — and a NAMED group already separates placement from look wherever there is one.
+  Alignment sits with the colour, border, radius and shadow it is judged beside.
+
+- **Support Portal — a DATA TILE has a floating toolbar, and its Icon group moved onto it (25 Sep 2026).**
+  `firstTile` — the "only the first of a shared id draws chrome" rule — was gated to `isServiceTile`, so
+  Favourite and Most Used Services had a bar while **My Assets and My CIs had none at all**: no alignment,
+  no fill, no border, no radius, no shadow, and no way to the icon. The gate is now every `-tile`.
+  ⚠️ With a bar to hang it on, `iconTarget` takes `-tile` back and `DATA_TILE_SPEC` loses its `G6`
+  accordion — the panel is Style + Spacing. A tile writes its OWN node (the icon keys live on the tile,
+  not on a child), which is what makes all four cards restyle together; an action card writes its badge's
+  `${id}-icon`. Verified: `assets-tile`, `cis-tile` and `favourites-tile` all carry Icon · aligns ·
+  colour · border · radius · shadow, the Icon popup opens with its four fields, and the panel shows
+  Spacing only.
 
 - **Support Portal — the banner image’s colour layer is LINEAR only (25 Sep 2026).** The Linear/Radial
   select is gone from `OverlayLayerEditor`; the angle field and Rotate take its place and get the width.

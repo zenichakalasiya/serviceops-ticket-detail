@@ -15,7 +15,7 @@ import type { BannerNode } from './portalBannerLayout';
 import { BANNER_GROUPS, bannerGroupGap } from './portalPageModel';
 // ArrowLeft stays in use by the card toolbar's "Move left".
 import { toast } from 'sonner';
-import { fillsFromConfig, HEADING_SIZE, PORTAL_FONTS, SECTION_LAYOUTS, SPLITTABLE_BANDS, TEXT_STYLES, ZERO_BOX, COMPOSABLE, BANNER_BLOCKS, inBanner, dragIdOf, isContactChild, isServiceTile, boxInfo, canAddBeside, defaultAlignH, nodeById, paintsOwnShadow, paintsOwnSurface, toolbarCaps, nodePath, placedIn, placedType } from './portalPageModel';
+import { fillsFromConfig, HEADING_SIZE, PORTAL_FONTS, SECTION_LAYOUTS, SPLITTABLE_BANDS, TEXT_STYLES, ZERO_BOX, COMPOSABLE, BANNER_BLOCKS, inBanner, dragIdOf, isContactChild, boxInfo, canAddBeside, defaultAlignH, nodeById, paintsOwnShadow, paintsOwnSurface, toolbarCaps, nodePath, placedIn, placedType } from './portalPageModel';
 import { DEFAULT_THEME } from './PortalThemePanel';
 import type { PortalTheme } from './PortalThemePanel';
 import { boxCss, containerCss } from './portalStyleResolver';
@@ -335,23 +335,46 @@ function richify(n: ReactNode): ReactNode {
    action cards' one), so a toolbar can carry its own ink without every button on it being rewritten —
    and a stray `text-` on this class would beat the inheritance and make that impossible. Hover is the
    tint plus a step to full strength. */
-const btn = 'flex size-7 items-center justify-center rounded transition-colors hover:bg-[#F3F4F6] hover:text-[#364658]';
+const btn = 'flex size-7 items-center justify-center rounded text-[var(--bar-ink,#64748B)] transition-colors hover:bg-[var(--bar-hover,#F3F4F6)] hover:text-[var(--bar-ink-on,#364658)]';
 
 /* Every floating bar's shell. ⚠️ The INK lives here rather than on the buttons, which is what lets one
    bar differ from the rest. */
-const BAR = 'relative flex items-center gap-0.5 rounded border border-[#E5E7EB] bg-white px-1 py-1 text-[#64748B] shadow-[0_4px_6px_-2px_rgba(16,24,40,0.06),0_12px_16px_-4px_rgba(16,24,40,0.10)]';
-/* ⚠️ The ACTION CARDS' bar only, at Zeni's request: #364658, where the hover takes every other bar.
-   Two inks for one control is a thing to keep an eye on — if a second bar ever wants it, the rule has
-   stopped being about action cards and the two should merge. */
-const BAR_INK = BAR.replace('text-[#64748B]', 'text-[#364658]');
+const BAR = 'relative flex items-center gap-0.5 rounded border border-[#E5E7EB] bg-white px-1 py-1 shadow-[0_4px_6px_-2px_rgba(16,24,40,0.06),0_12px_16px_-4px_rgba(16,24,40,0.10)] [--bar-ink:#64748B] [--bar-ink-on:#364658] [--bar-hover:#F3F4F6] [--bar-on-bg:#EBF5FF] [--bar-on-ink:#3D8BD0] [--bar-rule:#E5E7EB] [--bar-surface:#FFFFFF] [--bar-shadow:#64748B]';
+
+/* ⚠️ The ACTION CARDS' bar and their parent row — a DARK bar, not a light one with darker glyphs.
+   That is what was asked for twice and could not be seen either time: #64748B against #364658 on a 15px
+   stroke is not a difference a reader can read, so the colour had to land on the SURFACE. White glyphs,
+   a white-at-12% hover, and the delete stays red — it is the one control whose colour is its meaning.
+   ⚠️ Every other bar stays white, so the canvas carries two treatments. That is a difference the reader
+   has to attribute to something, and here it means "these are the product's four destinations". Worth
+   watching: if a third bar ever wants it, the rule has stopped being about action cards.
+   ⚠️ The palette is CSS VARIABLES rather than a second set of button classes. `btn`, `btnOn`, `textBtn`
+   and the grip all read `var(--bar-*)`, so a bar re-declares five values and everything on it follows —
+   where a parallel set of dark classes would have to be threaded through every control on the bar and
+   would drift the first time one of them changed. */
+const BAR_INK = BAR
+  .replace('bg-white', 'bg-[#364658]')
+  .replace('border-[#E5E7EB]', 'border-[#2B3949]')
+  .replace('[--bar-ink:#64748B]', '[--bar-ink:#FFFFFF]')
+  .replace('[--bar-ink-on:#364658]', '[--bar-ink-on:#FFFFFF]')
+  .replace('[--bar-hover:#F3F4F6]', '[--bar-hover:rgba(255,255,255,0.12)]')
+  .replace('[--bar-on-bg:#EBF5FF]', '[--bar-on-bg:rgba(255,255,255,0.18)]')
+  .replace('[--bar-on-ink:#3D8BD0]', '[--bar-on-ink:#FFFFFF]')
+  .replace('[--bar-rule:#E5E7EB]', '[--bar-rule:rgba(255,255,255,0.22)]')
+  .replace('[--bar-surface:#FFFFFF]', '[--bar-surface:#364658]')
+  .replace('[--bar-shadow:#64748B]', '[--bar-shadow:#0C141D]');
+
+
+
+
 /** How far an element may ride up over the one above it. */
 const MAX_OVERLAP = 120;
 
-const btnOn = 'flex size-7 items-center justify-center rounded bg-[#EBF5FF] text-[#3D8BD0]';
+const btnOn = 'flex size-7 items-center justify-center rounded bg-[var(--bar-on-bg,#EBF5FF)] text-[var(--bar-on-ink,#3D8BD0)]';
 /* A cap, not an absence: the button stays where it was and carries the reason on hover. */
 const btnOff = 'flex size-7 cursor-not-allowed items-center justify-center rounded text-[#C3CBD6]';
 /** The hairline that groups a toolbar — see the note at the LOOK group. */
-const Rule = () => <span className="mx-0.5 h-4 w-px flex-shrink-0 bg-[#E5E7EB]" />;
+const Rule = () => <span className="mx-0.5 h-4 w-px flex-shrink-0 bg-[var(--bar-rule,#E5E7EB)]" />;
 
 /* A control on the bar that is a WORD rather than a glyph.
  *
@@ -362,7 +385,7 @@ const Rule = () => <span className="mx-0.5 h-4 w-px flex-shrink-0 bg-[#E5E7EB]" 
  * drawn.
  * ⚠️ They are FENCED as a group. A word loose among glyphs reads as a label on the bar rather than
  * as one of its buttons — the divider is what makes it a control. */
-const textBtn = 'flex h-7 items-center gap-1 rounded px-2 text-[12px] font-medium text-[#364658] transition-colors hover:bg-[#F3F4F6]';
+const textBtn = 'flex h-7 items-center gap-1 rounded px-2 text-[12px] font-medium text-[var(--bar-ink-on,#364658)] transition-colors hover:bg-[var(--bar-hover,#F3F4F6)]';
 
 /* One axis of alignment: a button showing what is set, and a popup of the four ways to set it.
    ⚠️ The trigger shows the CURRENT option's glyph, not a generic "align" symbol. A fixed icon would
@@ -740,7 +763,10 @@ function ShadowGlyph({ size = 15 }: { size?: number }) {
           neighbours however even the boxes were. The square now matches Square's own 3..21 box, and
           the halo grew past it to stay a halo: the mark reads at full size and the shadow is the
           bleed around it.
-          ⚠️ The halo is the one mark here that cannot be a stroke — a shadow is a soft mass, not an
+          ⚠️ The inner square is filled with the BAR'S OWN SURFACE, through a STYLE rather than the SVG's
+          `fill` attribute: `var()` is CSS and a presentation attribute is not, so `fill="var(…)"` is
+          simply ignored and the square painted its literal fallback — white on white on the dark bar.
+       ⚠️ The halo is the one mark here that cannot be a stroke — a shadow is a soft mass, not an
           outline — so it is a filled rect at low opacity. */}
       {/* ⚠️ BLURRED, and at nearly three times the opacity. A flat plate at 24% behind a square reads as
           a second square in a lighter colour — the eye has no reason to call it a shadow, which is
@@ -758,8 +784,8 @@ function ShadowGlyph({ size = 15 }: { size?: number }) {
           <feGaussianBlur stdDeviation="1.3" />
         </filter>
       </defs>
-      <rect x="1.5" y="1.5" width="21" height="21" rx="6" fill="currentColor" opacity="0.7" filter={`url(#${fid})`} />
-      <rect x="4" y="4" width="16" height="16" rx="4" fill="#FFFFFF" stroke="currentColor"
+      <rect x="1.5" y="1.5" width="21" height="21" rx="6" style={{ fill: 'var(--bar-shadow, currentColor)' }} opacity="0.7" filter={`url(#${fid})`} />
+      <rect x="4" y="4" width="16" height="16" rx="4" style={{ fill: 'var(--bar-surface, #FFFFFF)' }} stroke="currentColor"
         strokeWidth="2" strokeLinejoin="round" />
     </svg>
   );
@@ -1411,7 +1437,13 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
   /* ⚠️ NOT a data card's `-tile`. That id repeats across every tile in the block, which is why `Sel`
      draws no toolbar for it at all — so there is nothing here to hang this on, and its Icon group
      stays in the panel (`DATA_TILE_SPEC`). Testing for it was dead code that read like coverage. */
-  const iconTarget = isIcon ? id : isActionCard ? `${id}-icon` : null;
+  /* ⚠️ A data card's `-tile` is BACK. It was excluded because that id repeats across every tile in the
+     block and `Sel` drew no toolbar for it — true then, and no longer: the FIRST tile carries one now, so
+     there is somewhere to hang this and the Icon group could leave the panel with the rest.
+     ⚠️ A tile writes its OWN node, where an action card writes its badge's: on a tile the icon keys live
+     on the tile itself, which is what makes all four cards restyle together — the thing the shared id is
+     for. */
+  const iconTarget = isIcon || /-tile$/.test(id) ? id : isActionCard ? `${id}-icon` : null;
   const named = placedType(id) === 'b-button' || placedType(id) === 'b-accordion'
     || placedType(id) === 'c-faq' || placedType(id) === 'v-image' || !!caps.extLink || !!iconTarget;
   const swapType = swaps && swapTarget ? placedType(swapTarget) : undefined;
@@ -1488,7 +1520,9 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
          steps to it on hover. That is the scope Zeni asked for, and it is worth watching: two inks for
          one control is a difference the reader has to attribute to something, and the only thing it
          means here is "this is an action card", which the outline already says. */
-      className={isActionCard ? BAR_INK : BAR}
+      /* ⚠️ The parent ROW as well as the cards. Selecting the row and selecting a card in it are one
+         move apart, and a bar that changed colour between the two would read as two different tools. */
+      className={isActionCard || id === 'quick' ? BAR_INK : BAR}
     >
       <ToolbarTip tip={tip} />
       {/* The grip drags the element itself — pick it up here, drop it on a sibling to reorder. */}
@@ -1496,7 +1530,7 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
         <span
           {...useNodeDragHandle(id)}
           data-tip="Drag to move"
-          className="flex size-7 cursor-grab items-center justify-center text-[#9CA3AF] active:cursor-grabbing"
+          className="flex size-7 cursor-grab items-center justify-center text-[var(--bar-ink,#9CA3AF)] opacity-70 active:cursor-grabbing"
         ><GripVertical size={14} /></span>
       )}
       {caps.splitItem && (
@@ -1750,7 +1784,10 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
           questions, and running them together made one long row of eight glyphs with a rule only at
           each end — which groups nothing. Three fences, four groups: move it · place it · style it ·
           remove it. */}
-      {(caps.alignH !== false || caps.alignV !== false) && (kind !== 'text' || placed) && !isButton && <Rule />}
+      {/* ⚠️ No rule before the alignments. Three fences on a bar of nine glyphs is a fence every two
+          buttons, which groups nothing — and the one that read least was this one, because a NAMED group
+          already separates placement from look wherever there is one. Alignment now sits with the
+          colour, border, radius and shadow it is judged beside. */}
       {/* ⚠️ A BUTTON is excluded from all three. It draws itself entirely from widget CONFIG —
           `cfg.fillColor`, `cfg.radius`, its own border — so these three, which write the STYLE
           store for a placed element, would have written values the button never reads. Its look is
@@ -2242,7 +2279,7 @@ function TextToolbar({ id, editing = false }: { id: string; editing?: boolean })
       className={BAR}
     >
       <ToolbarTip tip={tip} />
-      <span {...drag} className="flex size-7 cursor-grab items-center justify-center text-[#9CA3AF] active:cursor-grabbing"><GripVertical size={14} /></span>
+      <span {...drag} className="flex size-7 cursor-grab items-center justify-center text-[var(--bar-ink,#9CA3AF)] opacity-70 active:cursor-grabbing"><GripVertical size={14} /></span>
       <span className="mx-0.5 h-4 w-px bg-[#E5E7EB]" />
 
       <button className={tBtn(s.bold)} data-tip="Bold" onClick={() => inline(() => document.execCommand('bold'), () => setStyle(id, { bold: !s.bold }))}><Bold size={14} /></button>
@@ -3708,7 +3745,10 @@ export function Sel({ id, children, className = '', toolbarBelow = false, surfac
      ("Rendered fewer hooks than expected") and blank the whole canvas. */
   const [firstTile, setFirstTile] = useState(false);
   useEffect(() => {
-    if (!enabled || !/-tile$/.test(id) || !isServiceTile(id)) return;
+    /* ⚠️ EVERY `-tile`, not just the service rows. My Assets and My CIs are the same kind of node — one
+       id shared by four cards — and they were left out, so those two blocks had no floating toolbar at
+       all: no alignment, no fill, no border, no radius, no shadow and no way to the icon. */
+    if (!enabled || !/-tile$/.test(id)) return;
     setFirstTile(document.querySelector(`[data-node="${id}"]`) === ref.current);
   });
   if (!enabled || !node) return <div style={size} className={className}>{node?.kind === 'text' && !node.rich ? richify(body) : body}</div>;
