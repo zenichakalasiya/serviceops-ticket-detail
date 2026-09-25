@@ -996,6 +996,11 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   `useCallback` evaluates its dependency array during render, so beside `dropAtSeam` (where it
   belongs by subject) it was a temporal-dead-zone crash that blanked the whole builder while
   `npm run build` stayed green. A `pageerror` listener in the Playwright script is what caught it.
+- **Figma MCP is connected for this project** (added 25 Sep 2026 with
+  `claude mcp add --transport http figma https://mcp.figma.com/mcp`, stored in the `.claude-pro` profile's
+  local config). ⚠️ Figma's MCP tools need **EDITOR access to the file** — view access returns "you don't have
+  edit access". If a shared design link fails that way, ask for editor access or a "Duplicate to your drafts"
+  copy, or work from a pasted screenshot.
 - ⚠️ **You CAN drive the real app headlessly — this is how to verify UI work here.** `playwright-core`
   is already in the npx cache and Chrome is installed, so a plain node script can open the builder,
   click through it and screenshot every step:
