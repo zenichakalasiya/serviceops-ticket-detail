@@ -17,7 +17,7 @@ import { useRef, useState } from 'react';
 import type { CSSProperties, MouseEvent as ReactMouseEvent, ReactNode } from 'react';
 import { ArrowLeftRight, Check, ChevronLeft, Minus, Plus, RotateCw } from 'lucide-react';
 import { ColorField } from './PortalColorPicker';
-import { activePreset, bannerBoxId, presetsFor, TEXT_SECTION, tilePresets, unitsOf } from './portalBannerLayout';
+import { activePreset, bannerBoxId, defaultTreeFor, presetsFor, TEXT_SECTION, tilePresets, unitsOf } from './portalBannerLayout';
 import type { BannerNode } from './portalBannerLayout';
 import { placedType } from './portalPageModel';
 
@@ -397,46 +397,55 @@ export function BannerLayoutPanel({ tree, onCount, onPick, nameOf }: {
 
   return (
     <div>
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-[12px] font-medium text-[#364658]">Sections</span>
-        <span className="flex gap-0.5 rounded bg-[#F1F5F9] p-0.5">
-          {[2, 3, 4].map((n) => {
-            const lit = n === cur;
-            return (
-              <button
-                key={n}
-                type="button"
-                title={`${n} sections`}
-                aria-pressed={lit}
-                onClick={(e) => { e.stopPropagation(); want(n); }}
-                className={`h-6 w-8 rounded text-[12px] font-medium tabular-nums transition-colors ${
-                  lit ? 'bg-white text-[#364658] shadow-[0_1px_2px_rgba(16,24,40,0.06)]'
-                    : 'text-[#7B8FA5] hover:text-[#364658]'
-                }`}
-              >{n}</button>
-            );
-          })}
-        </span>
+      <p className="mb-2 text-[12px] font-medium text-[#364658]">Sections</p>
+      {/* ⚠️ TILES, not the numbers they were. This reverses the segmented row put here a day earlier,
+          and the argument that row was built on — "two grids of thumbnails in one popup, the count
+          pictures are redundant once the arrangements sit beneath them" — was answered by using it: a
+          number cannot show what the banner will look like, and the arrangements are NOT beneath it
+          until there are two sections to arrange, so at the moment you are choosing a count there is
+          nothing else on screen carrying a picture. The collision the row was avoiding only exists
+          after the decision it was in the way of.
+          ⚠️ They are the SHORT tile (64px) where the arrangements are the tall one (88px), and each
+          carries its number. Same drawing language, two different sizes and one of them labelled, so
+          the two grids read as "how many" and "which shape" rather than as one long shelf. */}
+      <div className="grid grid-cols-3 gap-2">
+        {[2, 3, 4].map((n) => {
+          /* The picture is the layout this tile APPLIES — the words, then the cells that will land.
+             It is true for a count in either direction because `setBannerSections` re-applies the
+             default after removing as well as after adding. */
+          const art = defaultTreeFor(['hero-content', ...Array.from({ length: n - 1 }, () => 'bn-slot')]);
+          return (
+            <SkeletonTile key={n} on={n === cur} label={`${n} sections`} onPick={() => want(n)}>
+              <span className="flex min-h-0 w-full flex-col gap-1">
+                <span className="flex min-h-0 flex-1">{art && <PresetArt node={art} on={n === cur} />}</span>
+                <span className={`text-[10px] font-medium leading-[12px] tabular-nums ${n === cur ? 'text-[#3D8BD0]' : 'text-[#7B8FA5]'}`}>{n}</span>
+              </span>
+            </SkeletonTile>
+          );
+        })}
       </div>
       {/* ⚠️ ONE line, and the actionable half of it. It also said "the words and the widgets beside
           them" — a definition of a section, which the tiles below now draw, and which wrapped the line
           in two and pushed the arrangements down the popup. */}
-      <p className="mt-1 text-[11px] leading-[16px] text-[#9CA3AF]">Click an empty cell on the banner to fill it.</p>
+      <p className="mt-1.5 text-[11px] leading-[16px] text-[#9CA3AF]">Click an empty cell on the banner to fill it.</p>
 
-      <div className="mt-2.5 border-t border-[#EEF1F5] pt-2.5">
-        <p className="mb-2 text-[12px] font-medium text-[#364658]">Arrangement</p>
-        {presets.length < 2
-          ? <p className="text-[11px] leading-[16px] text-[#9CA3AF]">Choose two or more sections to arrange them.</p>
-          : (
-            <div className="grid grid-cols-3 gap-2">
-              {presets.map((p) => (
-                <SkeletonTile key={p.id} tall on={on === p.id} label={p.label} onPick={() => onPick(p.tree)}>
-                  <PresetArt node={p.tree} on={on === p.id} />
-                </SkeletonTile>
-              ))}
-            </div>
-          )}
-      </div>
+      {/* ⚠️ The whole Arrangement block is ABSENT until there is something to arrange — heading, rule
+          and all — where it used to render its title over a line saying it had nothing to offer. A
+          section that exists only to explain its own emptiness is a section the reader has to get past
+          on every visit; and at one section the popup is now exactly one question, which is what it is
+          asking at that moment. */}
+      {presets.length >= 2 && (
+        <div className="mt-2.5 border-t border-[#EEF1F5] pt-2.5">
+          <p className="mb-2 text-[12px] font-medium text-[#364658]">Arrangement</p>
+          <div className="grid grid-cols-3 gap-2">
+            {presets.map((p) => (
+              <SkeletonTile key={p.id} tall on={on === p.id} label={p.label} onPick={() => onPick(p.tree)}>
+                <PresetArt node={p.tree} on={on === p.id} />
+              </SkeletonTile>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

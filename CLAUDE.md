@@ -1398,10 +1398,23 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   picked a count from a grid of pictures, watched the popup close, then pressed the icon beside it to find
   a SECOND grid of pictures for the count you had just chosen. They are one popup now — **Sections** on
   top, **Arrangement** for that count directly under it — opened from the presets icon; the `+` is gone.
-  ⚠️ **The count is a SEGMENTED ROW, not tiles.** It used to draw the default layout for each count, which
-  is redundant the moment the arrangement tiles sit beneath it showing the layouts actually on offer. Two
-  grids of thumbnails in one popup is the thing this change exists to remove, so the count is reduced to
-  the number it is and the pictures are left to the control whose whole job is pictures.
+  ⚠️ **The count is TILES, and this reversed a same-week decision.** It was a segmented row of 2 · 3 · 4
+  for one day, on the argument that "two grids of thumbnails in one popup" is what the merge existed to
+  remove and the count pictures were redundant once the arrangements sat beneath them. Using it answered
+  that: **a number cannot show what the banner will look like**, which is the only question being asked at
+  that moment — and the arrangements are NOT beneath it until there are two sections, so while you are
+  choosing a count nothing else on screen carries a picture. The collision the row avoided only exists
+  after the decision the row was in the way of. The Sections tiles are the SHORT `SkeletonTile` (64px) and
+  each carries its number; the Arrangement tiles are the tall one (88px) and carry none — same drawing
+  language, two sizes, one of them labelled, so the grids read as "how many" and "which shape".
+  ⚠️ **The whole Arrangement block is ABSENT below two sections** — heading, rule and all — where it used
+  to render its title over a line saying it had nothing to offer. A section that exists to explain its own
+  emptiness is one the reader gets past on every visit, and at one section the popup is then exactly the
+  one question it is asking.
+  ⚠️ **Going DOWN re-applies the default too**, not just going up (`defaultTreeFor(unitsOf(tree))` after
+  the removal). Without it the survivors kept whatever shape the removal collapsed them into, so the count
+  tile was a picture of a layout you were not going to get. One rule: a count pick gives you that count in
+  its default arrangement, and the tiles underneath are how you change it.
   ⚠️ **The popup STAYS OPEN on a count pick** and the tiles re-draw, because they read the live tree —
   that is the whole point of the two being in one place. Verified: picking 3 lights 3, disables 2 with its
   reason, lands two empty cells and re-renders four arrangement tiles with the applied default lit.

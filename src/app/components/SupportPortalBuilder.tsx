@@ -1090,6 +1090,12 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
       if (node) { leavesOf(node).forEach((l) => gone.add(l)); tree = removeBranch(tree, id); }
       else { gone.add(id); tree = removeLeaf(tree, id); }
     }
+    /* ⚠️ The DEFAULT arrangement is re-applied after removing, exactly as it is after adding. Without
+       it the survivors kept whatever shape the removal collapsed them into, which made the count tile
+       a picture of a layout you were not going to get — and the tile is the only thing on that control
+       saying what the banner will look like. One rule: picking a count gives you that count in its
+       default arrangement, and the Arrangement tiles underneath are how you change it. */
+    tree = defaultTreeFor(unitsOf(tree)) ?? tree;
     setRowExtras((prev) => ({ ...prev, hero: (prev.hero ?? []).filter((e) => !gone.has(e.id)) }));
     patchCfg('hero', { bannerTree: tree });
     /* ⚠️ The selection is cleared ONLY when what was selected is what just went. A blanket `select(null)`
