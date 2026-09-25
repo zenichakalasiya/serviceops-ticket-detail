@@ -756,7 +756,12 @@ function ShadowGlyph({ size = 15 }: { size?: number }) {
      halo comes back as the hard plate this change exists to remove. */
   const fid = `sh${useId().replace(/:/g, '')}`;
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
+    /* ⚠️ `overflow="visible"`. The halo is blurred, and a blur has no edge — drawn inside a 24 viewBox
+       that clips, its outer fringe was cut off square, which is the one thing a shadow must not have.
+       Letting it spread past the box is also what MAKES it bigger: the square is at 4..20, so there
+       were only four units of room either side and the halo could not grow without being clipped.
+       At 15px the bleed is ~2px into a 28px button's own padding, so it never reaches a neighbour. */
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" overflow="visible" aria-hidden>
       {/* ⚠️ The FIGURE is the square, and it has to be the size every other glyph's figure is.
           It was 10 units across inside a 20-unit halo — so the thing your eye reads as the icon was
           42% of the box where lucide's Square is 75%, and the whole glyph looked smaller than its
@@ -774,17 +779,24 @@ function ShadowGlyph({ size = 15 }: { size?: number }) {
           halo is gaussian-blurred and the fringe that shows around the square is what names it.
           ⚠️ The square and the glyph's own size are UNCHANGED: 4..20 inside a 24 viewBox at 15px, the
           same figure as every other icon on the bar. Only the shadow changed.
-          ⚠️ The halo's RECT shrank (1.5..22.5 from 0.5..23.5) because the blur spreads it back out
-          past where it started — drawn at the old size it would have feathered well outside the
-          viewBox and been clipped to a hard edge, which is the one thing a shadow must not have.
+          ⚠️ The halo's rect was once PULLED IN (to 1.5..22.5) because the blur spreads it back out
+          past where it started and the viewBox clipped the result to a hard edge. That fix is now
+          `overflow="visible"` on the svg instead, which is what let the halo go back out to 0.5..23.5
+          and take a wider blur with it — the clipping was the constraint, not the rect.
           ⚠️ The filter id comes from `useId`. Several toolbars render this glyph at once, and an id
           repeated in one document is one filter that every copy points at. */}
       <defs>
-        <filter id={fid} x="-60%" y="-60%" width="220%" height="220%">
-          <feGaussianBlur stdDeviation="1.3" />
+        <filter id={fid} x="-80%" y="-80%" width="260%" height="260%">
+          <feGaussianBlur stdDeviation="1.9" />
         </filter>
       </defs>
-      <rect x="1.5" y="1.5" width="21" height="21" rx="6" style={{ fill: 'var(--bar-shadow, currentColor)' }} opacity="0.7" filter={`url(#${fid})`} />
+      {/* ⚠️ The HALO grew and the square did not. The square is the figure — it has to stay the size
+          every other glyph's figure is, or the whole icon reads smaller than its neighbours however
+          even the buttons are. So the shadow got bigger the only way it can: it starts wider
+          (0.5..23.5, a full 3.5 units clear of the square on each side where it was 2.5) and blurs
+          further (1.9 from 1.3), with `overflow="visible"` above letting the soft tail finish
+          outside the viewBox instead of being sliced off at it. */}
+      <rect x="0.5" y="0.5" width="23" height="23" rx="7" style={{ fill: 'var(--bar-shadow, currentColor)' }} opacity="0.75" filter={`url(#${fid})`} />
       <rect x="4" y="4" width="16" height="16" rx="4" style={{ fill: 'var(--bar-surface, #FFFFFF)' }} stroke="currentColor"
         strokeWidth="2" strokeLinejoin="round" />
     </svg>
@@ -1509,6 +1521,29 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
      its own, the tip appeared under the first button whatever you were pointing at. */
   const { tip, setTip, readTip } = useToolbarTip();
 
+  /* ── The fence between WHERE IT GOES and WHAT GOES IN IT ──────────────────────────────────────
+   *
+   * Everything before it moves the element or splits the box it sits in; everything after it puts
+   * something there — add, replace, duplicate. They ran together as one undifferentiated glyph run,
+   * so on a section the Split sat against the "+" and on an element the move arrows did, and in both
+   * cases two unrelated ideas read as one group.
+   * ⚠️ It renders only when there is something on BOTH sides of it. A rule at the start or the end of
+   * a bar fences nothing off — it just draws a line, which on a row of small glyphs reads as a
+   * disabled button. This is the same test the `named` fence below already makes. */
+  const rowUp = onHero ? groupOf(heroTree?.() ?? null, id) : null;
+  const swapsInPlace = onHero && placed && !!childTypes?.length;
+  const hasStructure =
+    caps.drag !== false
+    || !!caps.splitItem
+    || (caps.move !== false && !span.alone && moves.some(([, , , atEdge]) => !atEdge))
+    || !!(split && !split.blocked);
+  const hasPlace =
+    composable
+    || !!rowUp
+    || swapsInPlace
+    || (caps.add !== false && !swapsInPlace && (canAdd || placed || kind === 'card'))
+    || (caps.copy !== false && dupOk);
+
   return (
     <div
       onClick={(e) => e.stopPropagation()}
@@ -1562,6 +1597,7 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
           onClick={() => splitNode(id)}
         >{split.dir === 'row' ? <Columns2 size={15} /> : <Rows2 size={15} />}</button>
       )}
+      {hasStructure && hasPlace && <Rule />}
       {/* ⚠️ "+" opens the list HERE rather than swapping the side panel to it. Sending you to
           another surface to pick, then back to the canvas to see the result, is three steps for one
           decision — and on a FILLED element the same gesture means swap, which is a change you want
@@ -1592,15 +1628,11 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
           and panel unreachable. The chip's step-up arrow was removed long ago (it was
           `pointer-events-none`, so it looked like a control and behaved like an illustration), so
           this is the one route up and it belongs on the bar rather than on a hover target. */}
-      {(() => {
-        const g = onHero ? groupOf(heroTree?.() ?? null, id) : null;
-        if (!g) return null;
-        return (
-          <button className={btn} data-tip="Select the row" onClick={() => select(bannerBoxId(g))}>
-            <SquareDashed size={15} />
-          </button>
-        );
-      })()}
+      {rowUp && (
+        <button className={btn} data-tip="Select the row" onClick={() => select(bannerBoxId(rowUp))}>
+          <SquareDashed size={15} />
+        </button>
+      )}
       {/* REPLACE, for a banner widget that is also a CONTAINER.
           ⚠️ Contact Us is the case: its spec declares `childTypes` (Button, Text, Icon), so the one
           add-or-replace slot below resolves to "Add a block inside" and the widget had no way to be
@@ -1610,7 +1642,7 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
           become something else.
           ⚠️ The list is `BANNER_SIDE_WIDGETS` — only what the banner accepts, the same list the
           builder's own gate enforces, so the picker can never offer something the drop would refuse. */}
-      {onHero && placed && !!childTypes?.length && (
+      {swapsInPlace && (
         <div ref={swapRef} className="relative">
           <button className={btn} data-tip="Replace this widget" onClick={() => setSwapping((v) => !v)}>
             <Replace size={15} />
@@ -1634,7 +1666,7 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
           card inside Contact Us is not something the card can hold, and the dedicated Replace button
           above already covers the action that is real here. On the PAGE the "+" stays: there the
           list is the card's own Button, Text and Icon blocks, which it genuinely takes. */}
-      {caps.add !== false && !(onHero && placed && !!childTypes?.length) && (canAdd || placed || kind === 'card') && (
+      {caps.add !== false && !swapsInPlace && (canAdd || placed || kind === 'card') && (
         <div ref={insideRef} className="relative">
           <button
             className={addBlocked ? btnOff : btn}

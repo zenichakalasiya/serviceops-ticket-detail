@@ -240,42 +240,72 @@ function Dropdown({ label, value, children, open, onToggle }: {
   );
 }
 
-const Row = ({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) => (
-  <button
-    onClick={onClick}
-    className={`mb-2.5 block w-full rounded-md border-2 p-3 text-left transition-colors last:mb-0 ${
-      on ? 'border-[#3D8BD0] bg-[#F5F9FD]' : 'border-transparent bg-[#F7F9FC] hover:bg-[#F1F5F9]'
-    }`}
-  >{children}</button>
-);
-
-/* A theme, as its COLOUR and its TYPE and nothing else.
+/* ── ONE SURFACE PER ROW, in both lists ───────────────────────────────────────
  *
- * ⚠️ The BUTTON left this card. It was here because a style decides a button shape as well as a
- * typeface — true, and not what anybody is reading the card for. A row of eight cards each carrying
- * a control-shaped thing that cannot be pressed is eight false affordances in a picker, and the
- * shape it was reporting is the smallest of the three differences between two themes.
- * ⚠️ The NOTE left with it. A line of prose under every card turned a picker you scan into a page you
- * read, and doubled each row's height so only three themes fitted on screen at once. The name says
- * which theme it is and the card shows what it looks like; a sentence explaining the choice is what
- * you need when you cannot see the choice.
- * ⚠️ COLOUR IS BACK, which reverses the note that used to sit here ("no swatch strip — the palette
- * section below is the colour authority"). That argument holds against a STRIP of the palette's
- * seventeen colours; it does not hold against the one colour the theme is built from, which is the
- * first thing anybody tells two themes apart by. One solid rail, not a row of chips, so the card
- * still says "this theme is teal" and not "here is a palette to edit". */
-function StylePreview({ packId, accent }: { packId: string; accent: string }) {
+ * ⚠️ Three boxes went to one. Each row was a white popup holding a grey card holding a tinted card,
+ * and in the theme list that innermost one also carried an accent RAIL down its left edge. Three
+ * nested surfaces to say one thing — what this theme looks like — where every layer after the first
+ * was chrome around a sample rather than the sample.
+ * ⚠️ The ROW IS THE SAMPLE now. A theme's row is painted in its own accent tint and its name is set
+ * in its own heading face, so the card is the evidence instead of a frame around it. The rail went
+ * with the nesting: a solid dot says "this theme is teal" in one mark and does not need an edge of
+ * the card to do it.
+ * ⚠️ The border is 2px whether or not a row is chosen, transparent-ish when it is not, so nothing
+ * changes size on the way to being selected — the one thing that makes a list of cards jump. */
+const ROW = 'mb-2 block w-full rounded-lg border-2 px-3 py-2.5 text-left transition-colors last:mb-0';
+
+function ThemeRow({ name, packId, accent, on, onClick }: {
+  name: string; packId: string; accent: string; on: boolean; onClick: () => void;
+}) {
   const f = FONT_PACKS.find((x) => x.id === packId)!;
   return (
-    <span className="flex items-stretch gap-2.5 overflow-hidden rounded-md" style={{ background: `${accent}1F` }}>
-      <span className="w-[3px] flex-shrink-0" style={{ background: accent }} />
-      <span className="min-w-0 flex-1 py-2 pr-3">
-        <span style={{ fontFamily: f.heading }} className="block truncate text-[14px] font-bold text-[#0F172A]">Heading</span>
-        <span style={{ fontFamily: f.body }} className="block truncate text-[12px] text-[#7B8FA5]">Paragraph text</span>
+    <button
+      onClick={onClick}
+      className={ROW}
+      /* The tint and the border are the theme's own, so eight rows read as eight themes before a
+         single word is read. Only the SELECTED border leaves the palette — a chosen row has to say
+         so in the product's own blue, or "selected" becomes a different statement per theme. */
+      style={{ background: `${accent}1A`, borderColor: on ? '#3D8BD0' : `${accent}33` }}
+    >
+      <span className="mb-1.5 flex items-center gap-1.5">
+        <span className="size-2.5 flex-shrink-0 rounded-full" style={{ background: accent }} />
+        <span style={{ fontFamily: f.heading }} className="min-w-0 flex-1 truncate text-[13px] font-semibold text-[#0F172A]">{name}</span>
+        {on && <Check size={13} className="flex-shrink-0 text-[#3D8BD0]" />}
       </span>
-    </span>
+      <span style={{ fontFamily: f.heading }} className="block truncate text-[15px] font-bold leading-tight text-[#0F172A]">Heading</span>
+      <span style={{ fontFamily: f.body }} className="mt-0.5 block truncate text-[12px] leading-tight text-[#64748B]">Paragraph text</span>
+    </button>
   );
 }
+
+/* ⚠️ The family's NAME is in the UI's own font, not in the family. On the theme rows the name is set
+   in the theme's face because the name IS part of the sample there; here the two lines beneath are
+   the sample, and a label set in the thing it labels stops reading as a label. */
+function FontRow({ face, on, onClick }: {
+  face: { name: string; css: string; note: string }; on: boolean; onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`${ROW} bg-[#F8FAFC]`}
+      style={{ borderColor: on ? '#3D8BD0' : '#E8EDF3' }}
+    >
+      <span className="mb-1.5 flex items-center gap-1.5">
+        <span className="min-w-0 flex-1 truncate text-[12px] font-semibold text-[#364658]">{face.name}</span>
+        {on && <Check size={13} className="flex-shrink-0 text-[#3D8BD0]" />}
+      </span>
+      <span style={{ fontFamily: face.css }} className="block truncate text-[16px] font-semibold leading-tight text-[#0F172A]">Heading</span>
+      <span style={{ fontFamily: face.css }} className="mt-0.5 block truncate text-[12px] leading-tight text-[#64748B]">{face.note}</span>
+    </button>
+  );
+}
+
+/* ⚠️ `StylePreview` — the tinted inner card with the accent RAIL — is gone, and `ThemeRow` above is
+ * what replaced it. Two of the arguments it carried still hold and have moved up there: the BUTTON
+ * and the NOTE stay off a theme card (a control-shaped thing that cannot be pressed is a false
+ * affordance, and a line of prose under every row turns a picker you scan into a page you read), and
+ * COLOUR stays ON it (the one colour a theme is built from is the first thing anybody tells two
+ * themes apart by — that is the dot, and now the card's own fill). What went is the nesting. */
 
 /** Light / dark, as one control. Exported because it renders on the panel's TITLE row — it governs
  *  every field below it, so it cannot belong to any one of them. */
@@ -312,7 +342,10 @@ export function ThemeModeToggle({ mode, onChange }: { mode: 'light' | 'dark'; on
 type Tab = 'primary' | 'secondary' | 'neutral';
 
 export function PortalThemePanel({ theme, onChange }: { theme: PortalTheme; onChange: (patch: Partial<PortalTheme>) => void }) {
-  const [openList, setOpenList] = useState<'style' | 'heading' | 'body' | null>(null);
+  /* ⚠️ `'font'`, not `'heading' | 'body'`. The two font fields became one and this union was left
+     naming the pair — so the type said the font list could never open, which esbuild does not check
+     and the panel therefore went on working. Pre-existing, found while flattening the rows. */
+  const [openList, setOpenList] = useState<'style' | 'font' | null>(null);
   const [tab, setTab] = useState<Tab>('primary');
   const style = styleOfTheme(theme);
   const pack = packOf(theme);
@@ -359,14 +392,14 @@ export function PortalThemePanel({ theme, onChange }: { theme: PortalTheme; onCh
           const p = PALETTES.find((x) => x.id === st.paletteId)!;
           const acc = theme.mode === 'dark' ? p.primary[0].dark : p.primary[0].light;
           return (
-            <Row key={st.id} on={style?.id === st.id} onClick={() => applyStyle(st)}>
-              {/* The name, then what it looks like. Two things, in the order the question is asked. */}
-              <span className="mb-1.5 flex items-center gap-1.5">
-                <span className="text-[13px] font-semibold text-[#364658]">{st.name}</span>
-                {style?.id === st.id && <Check size={13} className="text-[#3D8BD0]" />}
-              </span>
-              <StylePreview packId={st.packId} accent={acc} />
-            </Row>
+            <ThemeRow
+              key={st.id}
+              name={st.name}
+              packId={st.packId}
+              accent={acc}
+              on={style?.id === st.id}
+              onClick={() => applyStyle(st)}
+            />
           );
         })}
       </Dropdown>
@@ -380,11 +413,12 @@ export function PortalThemePanel({ theme, onChange }: { theme: PortalTheme; onCh
           looked identical while meaning different things — a portal typeset in two families is the
           exception, not the thing the control should be shaped around. One field, one answer.
 
-          ⚠️ Each row is a CARD showing the face doing BOTH jobs — a heading over a real sentence,
-          both set in that family — with the family's NAME outside the card to its right. The name
-          is the label and the card is the evidence, so keeping them apart means the sample is never
-          interrupted by a word set in the UI's own font. A list of fonts rendered in one font is a
-          list of words.
+          ⚠️ Each row is ONE card showing the face doing BOTH jobs — a heading over a real sentence,
+          both set in that family — under the family's NAME. The name used to sit OUTSIDE the card to
+          its right, on the argument that a label set in the thing it labels stops reading as a
+          label; that argument survives (the name is still in the UI's own font) but the second box
+          it needed did not. A list of fonts rendered in one font is a list of words, and the two
+          lines under the name are what stop this being one.
 
           ⚠️ The trigger names BOTH faces when a theme style has paired two. A style may still set a
           pairing, and a field claiming a single family while the page is set in two would be the
@@ -405,8 +439,9 @@ export function PortalThemePanel({ theme, onChange }: { theme: PortalTheme; onCh
                  something else would be reporting half the truth. */
               const on = !paired && f.id === hf.id;
               return (
-                <Row
+                <FontRow
                   key={f.id}
+                  face={f}
                   on={on}
                   onClick={() => {
                     /* ONE write for both roles. Two writes would render an impossible intermediate
@@ -415,24 +450,7 @@ export function PortalThemePanel({ theme, onChange }: { theme: PortalTheme; onCh
                     setOpenList(null);
                     toast.success(`${f.name} applied`);
                   }}
-                >
-                  <span className="flex items-center gap-2.5">
-                    <span className="min-w-0 flex-1 rounded-md border border-[#E5E7EB] bg-white px-3 py-2.5">
-                      <span
-                        style={{ fontFamily: f.css }}
-                        className="block truncate text-[16px] font-semibold leading-tight text-[#0F172A]"
-                      >Heading</span>
-                      <span
-                        style={{ fontFamily: f.css }}
-                        className="mt-1 block truncate text-[12px] leading-tight text-[#7B8FA5]"
-                      >{f.note}</span>
-                    </span>
-                    <span className="flex flex-shrink-0 items-center gap-1 text-[11px] font-medium text-[#7B8FA5]">
-                      {f.name}
-                      {on && <Check size={12} className="text-[#3D8BD0]" />}
-                    </span>
-                  </span>
-                </Row>
+                />
               );
             })}
           </Dropdown>

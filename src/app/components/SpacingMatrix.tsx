@@ -195,24 +195,29 @@ function SideField({ value, own, unit, max, lead, onSet, onHover, placeholder }:
   );
 }
 
-/** One axis's chain. ⚠️ It sits in the ring's HEADER, not between the two fields it ties: in a row of
- *  four there is no "between", and in the box layout the two points a chain would want are already
- *  taken by the fields. The axis glyph beside the chain is what says WHICH pair it holds. */
-function LinkToggle({ axis, on, onToggle }: { axis: 'v' | 'h'; on: boolean; onToggle: () => void }) {
-  const pair = axis === 'v' ? 'Top and bottom' : 'Left and right';
+/** The ring's ONE chain, at the top right of its header.
+ *
+ * ⚠️ It was TWO — one per axis, each with its own arrow glyph beside it. Two chains asked the admin
+ * to hold a distinction the control does not act on: breaking EITHER of them already opened all four
+ * sides (any chain broken means the ring's sides are not all the same), so the second button only
+ * ever changed which pair stayed tied inside a view you had reached with the first. One chain, one
+ * statement: the sides move together, or they do not.
+ * ⚠️ It is the ring's DISCLOSURE as well as its setting, which is why it sits on the header rather
+ * than between the fields — there is no "between" in a row of four, and in the box layout the two
+ * points a chain would want are already taken by boxes. */
+function LinkToggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
   return (
     <button
       type="button"
-      title={on ? `${pair} move together — click to set them apart` : `${pair} are separate — click to tie them`}
-      aria-label={`${pair} linked`}
+      title={on ? 'All sides move together — click to set them apart' : 'Sides are set one by one — click to tie them together'}
+      aria-label="Sides linked"
       aria-pressed={on}
       onClick={(e) => { e.stopPropagation(); onToggle(); }}
-      className={`flex h-6 items-center gap-0.5 rounded px-1 transition-colors ${
+      className={`flex size-6 items-center justify-center rounded transition-colors ${
         on ? 'bg-[#EBF5FF] text-[#3D8BD0]' : 'text-[#C3CBD6] hover:bg-[#F1F5F9] hover:text-[#64748B]'
       }`}
     >
-      {axis === 'v' ? <MoveVertical size={11} /> : <MoveHorizontal size={11} />}
-      {on ? <Link2 size={11} /> : <Link2Off size={11} />}
+      {on ? <Link2 size={12} /> : <Link2Off size={12} />}
     </button>
   );
 }
@@ -224,13 +229,20 @@ export function SpacingMatrix({ style, onChange, only, resting, nodeId }: Props)
      sides; merging over nothing leaves the sides you did not touch unset, so the element keeps the
      spacing it already had on those edges. */
   const boxOf = (r: Ring): SpacingBox => (r === 'margin' ? style.margin : style.padding) ?? {};
-  /* ⚠️ Unset reads as LINKED — both chains start on. Typing one number and having both sides of that
+  /* ⚠️ Unset reads as LINKED — the chain starts on. Typing one number and having both sides of that
      axis move is what almost every real edit wants, and an admin who needs one side uneven breaks the
      chain deliberately. */
-  const linked = (r: Ring, a: 'v' | 'h'): boolean =>
+  const axisLinked = (r: Ring, a: 'v' | 'h'): boolean =>
     (style as Record<string, unknown>)[`${r}Link${a === 'v' ? 'V' : 'H'}`] !== false;
-  const toggleLink = (r: Ring, a: 'v' | 'h') =>
-    onChange({ [`${r}Link${a === 'v' ? 'V' : 'H'}`]: !linked(r, a) } as Partial<NodeStyle>);
+  /* ⚠️ ONE chain over two stored keys. Both are still written — a node saved while the panel had two
+     toggles can be carrying them apart, and reading only one of the pair would silently drop the
+     other's state. `linked` therefore asks for BOTH, so a ring left half-tied by the old control
+     opens on its four sides rather than claiming to be linked and moving only one axis. */
+  const linked = (r: Ring): boolean => axisLinked(r, 'v') && axisLinked(r, 'h');
+  const toggleLink = (r: Ring) => {
+    const next = !linked(r);
+    onChange({ [`${r}LinkV`]: next, [`${r}LinkH`]: next } as Partial<NodeStyle>);
+  };
 
   const ownSet = (r: Ring, s: Side) => boxOf(r)[s] !== undefined;
   /** A side's value as the element really has it: the one set here, else what it rests at. */
@@ -252,7 +264,7 @@ export function SpacingMatrix({ style, onChange, only, resting, nodeId }: Props)
   const setSide = (r: Ring, side: Side, v: number) => {
     const box = boxOf(r);
     const a = isH(side) ? 'h' : 'v';
-    if (!linked(r, a)) { write(r, { ...box, [side]: v }); return; }
+    if (!axisLinked(r, a)) { write(r, { ...box, [side]: v }); return; }
     const [x, y] = AXES[a];
     write(r, { ...box, [x]: v, [y]: v });
   };
@@ -277,26 +289,21 @@ export function SpacingMatrix({ style, onChange, only, resting, nodeId }: Props)
     />
   );
 
-  /** The ring's name and its two chains — ONE header for both designs, so they cannot drift apart. */
+  /** The ring's name and its chain — ONE header for both views, so they cannot drift apart. */
   const head = (r: Ring, trailing?: ReactNode) => (
     <div className="mb-1.5 flex items-center gap-1">
       <span className="flex-1 text-[11px] font-semibold uppercase tracking-wider text-[#7B8FA5]">{r}</span>
-      <LinkToggle axis="v" on={linked(r, 'v')} onToggle={() => toggleLink(r, 'v')} />
-      <LinkToggle axis="h" on={linked(r, 'h')} onToggle={() => toggleLink(r, 'h')} />
+      <LinkToggle on={linked(r)} onToggle={() => toggleLink(r)} />
       {trailing}
     </div>
   );
 
-  /* ⚠️ THE LINK IS THE DISCLOSURE. There is no chevron: breaking a chain is already the statement that
-     this ring's sides are not all the same, so the four boxes appear then and only then, and tying both
-     chains folds them back to two. A chevron beside the chains was a second control for one idea — you
-     could open the four sides with both pairs still tied, which is four fields that behave like two, and
-     you could unlink a pair while the sides that no longer move together were hidden.
-     ⚠️ ANY chain broken opens the whole container, not just its own axis: the pair that is still tied
-     keeps moving together when you type in either of its boxes, so the four are always true. Splitting
-     the disclosure per axis would give a top and a bottom field beside a single "left and right" one,
-     which is a third shape for the reader to learn. */
-  const apart = (r: Ring) => !linked(r, 'v') || !linked(r, 'h');
+  /* ⚠️ THE LINK IS THE DISCLOSURE. There is no chevron: breaking the chain is already the statement
+     that this ring's sides are not all the same, so the four boxes appear then and only then, and
+     tying it folds them back to two. A chevron beside the chain was a second control for one idea —
+     you could open the four sides with the pairs still tied, which is four fields that behave like
+     two, and you could unlink while the sides that no longer move together were hidden. */
+  const apart = (r: Ring) => !linked(r);
 
   /* ── TWO FIELDS, the four sides once a chain is broken ──────────────────────────────────────────
    * Two numbers on arrival instead of eight, which is what a linked pair of pairs already is. The
