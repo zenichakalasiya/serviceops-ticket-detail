@@ -1423,6 +1423,43 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   button would hide the way out of that state. At one section the Arrangement half shows a quiet line.
   ⚠️ `BannerCountPicker` and `SkeletonTile`'s `blocked` prop are gone with it (`blocked` had one caller).
 
+- **Support Portal — the banner's PANEL keeps Content, Banner layout and Spacing. Everything else is on
+  the bar (25 Sep 2026).** Two groups left `HERO_SPEC`:
+  ⚠️ **Layout presets** (`bannerTree` + `bannerSplit`) — the arrangement tiles and the column ratio are
+  both in the toolbar's Sections popup now, which is where the section COUNT already was. Three parts of
+  one decision, and the panel held two of them a scroll away from the third.
+  ⚠️ **Background** — the Image/Colour choice, the picture, the fill editor and the colour layer. The bar
+  already had a colour button and an image button, so the panel was a second door to both rooms, and
+  every one of these is judged by eye against the band it paints: a gradient stop dragged in a sidebar is
+  the copy you are not looking at. Every key is unchanged and still read (`bgKind`, `bannerImage`,
+  `bannerColor`, `colorMode`, `bannerGradient`, `overlayOn`, `overlayMode`, `overlayColor`,
+  `overlayGradient`), so no banner moved.
+  ⚠️ **The image button now opens a POPUP, not a file dialog** — the picture (preview · Replace · remove)
+  AND the colour layer over it, together. Those are the pair you always work on at once: you choose a
+  photograph and the very next thing you do is darken it enough to read the words. ⚠️ Removing the image
+  leaves `bgKind` alone — a banner with no picture and no colour chosen is a blank band, and the Colour
+  button beside it is where that choice lives; clearing one thing must not silently answer a second
+  question.
+  ⚠️ **Column widths is DRAWN** (`ColumnSplitPicker`) — six tiles that draw the two columns at their
+  ratio, four across under a hairline. It sits directly beneath a grid whose whole point is that you can
+  SEE a layout, and six ratios written as text under that is the mismatch that already sent the section
+  count back to pictures. **Auto draws the split the banner actually makes** (the words about twice a
+  compact block's share, which is what `weight()` computes) rather than a blank or a 1:1 — an option that
+  is the default has to show what the default looks like. Shown only while the banner's ROOT is two
+  columns; anything else has no pair to divide.
+  ⚠️ **Content STAYS in the panel** (Zeni's call): heading, sub-heading, show-search and the placeholder.
+  The words are inline-editable on the canvas too, so it is two places for one value — kept because
+  typing a long heading into a field beats typing it into the banner.
+
+- **⚠️ Support Portal — the ACTION CARDS' toolbar is the only one at `#364658` (25 Sep 2026).** Every
+  other floating bar rests at `#64748B` and steps to `#364658` on hover, as they always did. The ink
+  lives on the bar's shell (`BAR` / `BAR_INK` in `PortalCanvas`) and `btn` sets **no resting colour at
+  all**, so it inherits — a stray `text-` on that class would beat the inheritance and make one bar
+  differing from the rest impossible. ⚠️ Worth watching: two inks for one control is a difference a
+  reader has to attribute to something, and the only thing it means here is "this is an action card",
+  which the selection outline already says. If a second bar ever wants it, the rule has stopped being
+  about action cards and the two should merge.
+
 - **⚠️ Support Portal — EVERY SPACING SIDE IS px. There are no percentages left (25 Sep 2026).**
   Left and right used to be a **percentage of the parent** while top and bottom were px, so one control
   carried two scales and had to caption them, and a field reading `3` painted 32 pixels. The switch

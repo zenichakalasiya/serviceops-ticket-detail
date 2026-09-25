@@ -111,37 +111,31 @@ export const HERO_SPEC: WidgetSpec = {
        with the number of items. The gap is the space between every item, down to 0 so two can meet. */
     /* ⚠️ Every row here needs a SECOND section to mean anything — see `__bannerSections` in the builder —
        and each gap row needs that axis to exist. */
-    { key: 'bannerTree', label: 'Arrangement', control: 'bannerPreset', tab: 'style', group: 'Layout presets', when: (c) => Number(c.__bannerSections ?? 1) > 1 },
+    /* ⚠️ NO Layout presets group. The arrangement tiles and the column-width ratio are BOTH on the
+       banner's own floating toolbar now, in the one popup that also sets how many sections there are
+       — three parts of one decision, and the panel held two of them a scroll away from the third.
+       `bannerTree` and `bannerSplit` are unchanged and still read; only this way in is gone. */
     /* ⚠️ Gap is not a control any more — see the note in `GapBands`. Every section keeps its resting gap. */
     /* ⚠️ Gap is not a control any more — see the note in `GapBands`. Every section keeps its resting gap. */
-    {
-      key: 'bannerSplit', label: 'Column widths', control: 'segmented', tab: 'style', group: 'Layout presets',
-      when: (c) => c.__rootRow2 === true,
-      options: [
-        { value: 'auto', label: 'Auto' }, { value: '1:1', label: '1:1' }, { value: '2:1', label: '2:1' },
-        { value: '1:2', label: '1:2' }, { value: '3:1', label: '3:1' }, { value: '1:3', label: '1:3' },
-      ],
-    },
+
     /* ⚠️ Background is TWO TABS — Image or Colour — with image the default, because a banner is a
        picture first and the colour is what you fall back to. It replaced Fill's None / Colour /
        Image: "None" was never a real answer for a band whose whole job is to be a backdrop, and
        having the choice in two places (here and the shared Style pack) meant the two could disagree
        about what the band was showing. */
     {
-      key: 'bgKind', label: 'Background', control: 'segmented', tab: 'style', group: 'Background',
-      options: [{ value: 'image', label: 'Image' }, { value: 'color', label: 'Colour' }],
+      /* ⚠️ The WHOLE Background group has gone to the toolbar: the Image/Colour choice, the picture
+         itself, the fill editor, and the colour layer over the image. Every one of them is judged by
+         eye against the band it paints — a gradient stop dragged in a panel is the copy you are not
+         looking at — and the bar already had a colour button and an image button, so the panel was
+         the second door to both rooms. The bar's image button opens the picture AND its colour layer
+         together, which is the pair you actually work on at once.
+         Keys unchanged and still read: `bgKind`, `bannerImage`, `bannerColor`, `colorMode`,
+         `bannerGradient`, `overlayOn`, `overlayMode`, `overlayColor`, `overlayGradient`. */
+      key: '__bgGone', label: '', control: 'text', tab: 'style', group: 'Background', when: () => false,
     },
-    {
-      /* ⚠️ 1600 × 400 — the band is full-width and about 200px tall, so this is a 2× asset that
-         stays sharp on a retina screen without being a photograph nobody needs. */
-      key: 'bannerImage', label: 'Banner image', control: 'bannerUpload', suggested: '1600 × 400', tab: 'style', group: 'Background',
-      when: (c) => (c.bgKind ?? 'image') === 'image',
-    },
-    {
-      /* Solid or Gradient, through the SAME editor the toolbar's colour popup opens. */
-      key: 'bannerColor', label: '', control: 'bannerFill', tab: 'style', group: 'Background',
-      when: (c) => c.bgKind === 'color',
-    },
+
+
     /* ⚠️ "Also use behind the whole page" is GONE, from the panel and from the canvas toolbar at the
        same time. It put one BLOCK in charge of the whole page's background — a change you make while
        looking at the banner and then find everywhere else — and the page already has its own
@@ -160,9 +154,9 @@ export const HERO_SPEC: WidgetSpec = {
        ⚠️ ON by default the moment a banner has a picture: text laid straight onto a photograph is
        readable only by luck. It sits BETWEEN the image and the words, strongest at the side the words
        are on, and fades out so the photograph still shows where there is nothing to read. */
-    { key: 'overlayOn', label: 'Colour layer over the image', control: 'toggle', tab: 'style', group: 'Background', when: (c) => (c.bgKind ?? 'image') === 'image' && !!c.bannerImage },
+
     /* Solid (one colour, its opacity in the picker) or Gradient (type, angle and stops) — see OverlayLayerEditor. */
-    { key: 'overlayLayer', label: '', control: 'overlayLayer', tab: 'style', group: 'Background', when: (c) => (c.bgKind ?? 'image') === 'image' && !!c.bannerImage && c.overlayOn !== false },
+
     /* ⚠️ NO Alignment group and NO Corners-&-border group. Both are on the banner's own floating
        toolbar — the two align popups it always had, and now a Border and a Corner-radius button
        beside them. A banner is the one block you never look away from while you are styling it,

@@ -9,7 +9,7 @@ import {
   Braces, Highlighter, Maximize2, UnfoldVertical, Move, MoveHorizontal, MoveVertical, Plus, RemoveFormatting,
   PaintBucket, Replace, SquareDashed, SquareRoundCorner, SquareSquare, Trash2, Underline, X, ImagePlus, Palette, LayoutDashboard, Columns3,
 } from 'lucide-react';
-import { BannerFillEditor, BannerLayoutPanel, TilePresetPicker } from './PortalBannerTools';
+import { BannerFillEditor, BannerLayoutPanel, OverlayLayerEditor, TilePresetPicker } from './PortalBannerTools';
 import { bannerBoxId, flipRoot, groupOf } from './portalBannerLayout';
 import type { BannerNode } from './portalBannerLayout';
 import { BANNER_GROUPS, bannerGroupGap } from './portalPageModel';
@@ -331,7 +331,19 @@ function richify(n: ReactNode): ReactNode {
    a row of disabled controls until you pointed at one — and this bar is the whole of an element's
    styling, so there is no state in which its buttons are less available than each other. Hover is now
    the tint alone, which is enough once the mark is already at full strength. */
-const btn = 'flex size-7 items-center justify-center rounded text-[#364658] transition-colors hover:bg-[#F3F4F6]';
+/* ⚠️ NO resting colour. The glyph INHERITS from the bar it sits on (`BAR` below, or `BAR_INK` on the
+   action cards' one), so a toolbar can carry its own ink without every button on it being rewritten —
+   and a stray `text-` on this class would beat the inheritance and make that impossible. Hover is the
+   tint plus a step to full strength. */
+const btn = 'flex size-7 items-center justify-center rounded transition-colors hover:bg-[#F3F4F6] hover:text-[#364658]';
+
+/* Every floating bar's shell. ⚠️ The INK lives here rather than on the buttons, which is what lets one
+   bar differ from the rest. */
+const BAR = 'relative flex items-center gap-0.5 rounded border border-[#E5E7EB] bg-white px-1 py-1 text-[#64748B] shadow-[0_4px_6px_-2px_rgba(16,24,40,0.06),0_12px_16px_-4px_rgba(16,24,40,0.10)]';
+/* ⚠️ The ACTION CARDS' bar only, at Zeni's request: #364658, where the hover takes every other bar.
+   Two inks for one control is a thing to keep an eye on — if a second bar ever wants it, the rule has
+   stopped being about action cards and the two should merge. */
+const BAR_INK = BAR.replace('text-[#64748B]', 'text-[#364658]');
 /** How far an element may ride up over the one above it. */
 const MAX_OVERLAP = 120;
 
@@ -1472,7 +1484,11 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
       onMouseMove={readTip}
       onMouseLeave={() => setTip(null)}
       data-portal-toolbar
-      className="relative flex items-center gap-0.5 rounded border border-[#E5E7EB] bg-white px-1 py-1 shadow-[0_4px_6px_-2px_rgba(16,24,40,0.06),0_12px_16px_-4px_rgba(16,24,40,0.10)]"
+      /* ⚠️ The ACTION CARDS' bar is the one that carries #364658; every other bar rests at #64748B and
+         steps to it on hover. That is the scope Zeni asked for, and it is worth watching: two inks for
+         one control is a difference the reader has to attribute to something, and the only thing it
+         means here is "this is an action card", which the outline already says. */
+      className={isActionCard ? BAR_INK : BAR}
     >
       <ToolbarTip tip={tip} />
       {/* The grip drags the element itself — pick it up here, drop it on a sibling to reorder. */}
@@ -2220,7 +2236,7 @@ function TextToolbar({ id, editing = false }: { id: string; editing?: boolean })
       onMouseMove={readTip}
       onMouseLeave={() => setTip(null)}
       data-portal-toolbar
-      className="relative flex items-center gap-0.5 rounded border border-[#E5E7EB] bg-white px-1 py-1 shadow-[0_4px_6px_-2px_rgba(16,24,40,0.06),0_12px_16px_-4px_rgba(16,24,40,0.10)]"
+      className={BAR}
     >
       <ToolbarTip tip={tip} />
       <span {...drag} className="flex size-7 cursor-grab items-center justify-center text-[#9CA3AF] active:cursor-grabbing"><GripVertical size={14} /></span>
@@ -2537,6 +2553,7 @@ function BannerToolbar() {
   const [axis, setAxis] = useState<'h' | 'v' | null>(null);
   const [fill, setFill] = useState(false);
   const [layout, setLayout] = useState(false);
+  const [img, setImg] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const { tip, setTip, readTip } = useToolbarTip();
   const alignH = String(hero.contentAlign ?? 'center');
@@ -2568,7 +2585,7 @@ function BannerToolbar() {
       onMouseOver={readTip}
       onMouseMove={readTip}
       onMouseLeave={() => setTip(null)}
-      className="relative flex items-center gap-0.5 rounded border border-[#E5E7EB] bg-white px-1 py-1 shadow-[0_4px_6px_-2px_rgba(16,24,40,0.06),0_12px_16px_-4px_rgba(16,24,40,0.10)]"
+      className={BAR}
     >
       <ToolbarTip tip={tip} />
       <AlignAxis axis="h" value={h} options={H} open={axis === 'h'} onToggle={() => { setFill(false); setAxis((a) => (a === 'h' ? null : 'h')); }} onPick={(x) => { setCfg?.('hero', { contentAlign: x }); setAxis(null); }} />
@@ -2593,13 +2610,78 @@ function BannerToolbar() {
                 tree={heroTree?.() ?? null}
                 onCount={(n, remove) => setBannerSections?.(n, remove)}
                 nameOf={(id) => nodeById(id)?.name ?? 'Section'}
+                split={String(hero.bannerSplit ?? 'auto')}
+                onSplit={(v) => setCfg?.('hero', { bannerSplit: v })}
                 onPick={(t) => setCfg?.('hero', { bannerTree: t })}
               />
             </div>
           </>
         )}
       </div>
-      <button className={btn} data-tip={hero.bannerImage ? 'Replace the banner image' : 'Add a banner image'} onClick={() => fileRef.current?.click()}><ImagePlus size={15} /></button>
+      {/* ⚠️ The picture AND the colour layer over it, in ONE popup. They were a file-picker on this
+          button and a Background group in the panel, which split the pair you always work on together:
+          you choose a photograph, and the very next thing you do is darken it enough to read the words.
+          Judging that in a sidebar means judging it from the copy you are not looking at. */}
+      <div className="relative">
+        <button
+          className={img ? btnOn : btn}
+          data-tip={hero.bannerImage ? 'Banner image and the colour layer over it' : 'Add a banner image'}
+          onClick={() => { setAxis(null); setFill(false); setLayout(false); setImg((x) => !x); }}
+        ><ImagePlus size={15} /></button>
+        {img && (
+          <>
+            <span className="fixed inset-0 z-[60]" onClick={() => setImg(false)} />
+            <div className="absolute left-1/2 top-[calc(100%+6px)] z-[61] max-h-[min(70vh,560px)] w-[320px] -translate-x-1/2 overflow-y-auto rounded-lg border border-[#E5E7EB] bg-white p-3 shadow-[0_12px_16px_-4px_rgba(16,24,40,0.10),0_4px_6px_-2px_rgba(16,24,40,0.06)]">
+              <p className="mb-2 text-[12px] font-medium text-[#364658]">Banner image</p>
+              {hero.bannerImage ? (
+                <div className="mb-3">
+                  <span
+                    className="block h-[92px] w-full rounded border border-[#E5E7EB] bg-[#F8FAFC] bg-cover bg-center"
+                    style={{ backgroundImage: `url(${String(hero.bannerImage)})` }}
+                  />
+                  <div className="mt-1.5 flex gap-2">
+                    <button
+                      className="h-7 flex-1 rounded border border-[#DFE5ED] text-[12px] font-medium text-[#364658] transition-colors hover:bg-[#F5F7FA]"
+                      onClick={() => fileRef.current?.click()}
+                    >Replace image</button>
+                    {/* ⚠️ Removing the picture leaves `bgKind` alone: a banner with no image and no colour
+                        chosen is a blank band, and the Colour button beside this one is where that choice
+                        lives. Clearing one thing must not silently answer a second question. */}
+                    <button
+                      className="flex size-7 items-center justify-center rounded border border-[#DFE5ED] text-[#EF4444] transition-colors hover:bg-[#FEF3F2]"
+                      title="Remove the image"
+                      onClick={() => { setCfg?.('hero', { bannerImage: '' }); toast.success('Banner image removed'); }}
+                    ><Trash2 size={13} /></button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  className="mb-3 flex h-[92px] w-full flex-col items-center justify-center gap-1 rounded border border-dashed border-[#CBD5E1] bg-[#F8FAFC] text-[12px] text-[#7B8FA5] transition-colors hover:border-[#3D8BD0] hover:text-[#3D8BD0]"
+                  onClick={() => fileRef.current?.click()}
+                ><ImagePlus size={18} /> Choose a picture<span className="text-[11px] text-[#9CA3AF]">1600 × 400 works well</span></button>
+              )}
+              {/* ⚠️ ON by default the moment a banner has a picture: text laid straight onto a photograph
+                  is readable only by luck. It sits BETWEEN the image and the words. */}
+              {!!hero.bannerImage && (
+                <div className="border-t border-[#EEF1F5] pt-3">
+                  <label className="mb-2 flex cursor-pointer items-center justify-between gap-2">
+                    <span className="text-[12px] font-medium text-[#364658]">Colour layer over the image</span>
+                    <span
+                      onClick={() => setCfg?.('hero', { overlayOn: hero.overlayOn === false })}
+                      className={`relative h-[18px] w-8 flex-shrink-0 rounded-full transition-colors ${hero.overlayOn === false ? 'bg-[#CBD5E1]' : 'bg-[#3D8BD0]'}`}
+                    >
+                      <span className={`absolute top-[2px] size-[14px] rounded-full bg-white transition-all ${hero.overlayOn === false ? 'left-[2px]' : 'left-[16px]'}`} />
+                    </span>
+                  </label>
+                  {hero.overlayOn !== false && (
+                    <OverlayLayerEditor cfg={hero} setCfg={(patch) => setCfg?.('hero', patch)} />
+                  )}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
       <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { onFile(e.target.files?.[0]); e.target.value = ''; }} />
       <div className="relative">
         <button className={fill ? btnOn : btn} data-tip="Banner colour — solid or gradient" onClick={() => { setAxis(null); setLayout(false); setFill((x) => !x); }}><Palette size={15} /></button>
@@ -2748,7 +2830,7 @@ function GroupToolbar({ id }: { id: string }) {
       onMouseOver={readTip}
       onMouseMove={readTip}
       onMouseLeave={() => setTip(null)}
-      className="relative flex items-center gap-0.5 rounded border border-[#E5E7EB] bg-white px-1 py-1 shadow-[0_4px_6px_-2px_rgba(16,24,40,0.06),0_12px_16px_-4px_rgba(16,24,40,0.10)]"
+      className={BAR}
     >
       <ToolbarTip tip={tip} />
       {textSection && (
