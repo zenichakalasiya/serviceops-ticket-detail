@@ -1649,6 +1649,18 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   work band that sat it beside the main region AND the rail and squeezed every card to a sliver.
   A top-level BAND (Favourite / Most Used) becomes a one-column section anchored to the nearest band ABOVE
   that is still showing — never to the hidden band, whose sections are hidden with it (`band()`).
+- **Support Portal — the LISTING is CARDS, and the default can be moved (25 Sep 2026).** Supersedes the table
+  described in *"the entry point, the two tabs, and the listing"*. A tenant keeps 3–4 portals, and a full-width
+  table spent its width on one row. `PortalCard` (`AdminSupportPortalModule`) is the Patch module's card view
+  (`PatchInstallationTab`): icon badge · Published/Draft pill (+ Default) over the blue NAME (click =
+  customise) · the Enabled switch top-right · hairline · a 2-col grid (URL full width, Last modified, Live
+  version = Up to date / Unpublished changes / Not published) · footer = ONE primary **Customise portal** plus
+  icon buttons Edit details · Preview · Settings · Copy · **Set as default** · Delete. Grid 1 → 2 (md) → 3 (xl);
+  the default sorts first. `RowActions` (the table's Edit▾ menu) is gone, and so is Pagination on this page.
+  ⚠️ **The default is STATE (`defaultId`), not `DEFAULT_PORTAL_PAGE.id`** — every rule that used the seed's id
+  (always-on, undeletable, the root URL) reads `defaultId` now. Setting a default also switches it ON.
+  ⚠️ **A Draft cannot become the default** — the star is disabled with the reason: requesters would land on
+  a page nobody has published. The default's own card hides the star.
 - **Support Portal — the fifth 4-section arrangement and the banner's Column widths are gone (25 Sep 2026).**
   ⚠️ **`col-three-rows` left `PRESET_SHAPES[4]`** — "a column, and three rows beside it". At four
   sections it put three widgets in a single narrow column beside the words, the one arrangement in the

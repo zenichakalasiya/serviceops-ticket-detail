@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import {
   ChevronDown, Copy, ExternalLink, LayoutTemplate, MonitorSmartphone, Pencil, PenLine, Plus,
-  Eye, Settings, SlidersHorizontal, Trash2, X,
+  Eye, Settings, SlidersHorizontal, Star, Trash2, X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { portalSlug } from '../routes';
@@ -18,100 +18,102 @@ import {
 } from './supportPortalData';
 import type { PortalPage, PortalTemplate } from './supportPortalData';
 
-/* One row's actions, as an icon rail — the same Action column every other listing in this product
-   uses (see `SoftwareLicensesTable`).
+/* One portal, as a CARD — the listing's only shape (25 Sep 2026).
  *
- * ⚠️ Edit is TWO things, so it is one icon with a menu rather than two icons. "Edit details" changes
- * what the portal IS — its name, its address, how people sign in — and "Customise portal" changes
- * what is ON it. They are both editing, they are never done at the same moment, and no pair of
- * glyphs tells those apart; a chevron on the pencil says there is a choice without spending a
- * second slot in the rail on it.
+ * ⚠️ A tenant keeps THREE OR FOUR portals, not hundreds, so a full-width table spent its whole width
+ * on one row and read as an empty page with a line in it. The card is the Patch module's card view
+ * (`PatchInstallationTab`): icon badge · pill over a blue name · hairline · a two-column label/value
+ * grid — so a portal is read the way an endpoint is, not as a new pattern to learn.
  *
- * ⚠️ Three kebab items did NOT survive the move, deliberately: Portal settings and Reset layout are
- * both reachable inside the builder (the rail's Settings item, and the theme panel's reset), and
- * Copy link duplicates the URL column, which is already a working link to the same place. An icon
- * for each would have been three glyphs standing for phrases no glyph says. */
-function RowActions({ isDefault, onEditDetails, onCustomize, onPreview, onSettings, onCopy, onDelete }: {
-  isDefault: boolean;
-  onEditDetails: () => void; onCustomize: () => void;
-  onPreview: () => void; onSettings: () => void; onCopy: () => void; onDelete: () => void;
+ * ⚠️ ONE primary action per card, and it is the reason anybody opens this page: Customise portal.
+ * The rest are icons beside it, in the order they are reached for — details, preview, settings, copy,
+ * default — with Delete last and red. Enabled is the switch in the header because it is a STATE you
+ * read at a glance, not an action you take.
+ * ⚠️ Disabled controls carry their REASON: the default portal cannot be switched off or deleted
+ * (requesters have to land somewhere), and a Draft cannot become the default (they would land on a
+ * page nobody has published). */
+function PortalCard({ p, url, href, isDefault, on, onToggle, onCustomize, onEditDetails, onPreview, onSettings, onCopy, onMakeDefault, onDelete }: {
+  p: PortalPage; url: string; href: string; isDefault: boolean; on: boolean;
+  onToggle: () => void; onCustomize: () => void; onEditDetails: () => void; onPreview: () => void;
+  onSettings: () => void; onCopy: () => void; onMakeDefault: () => void; onDelete: () => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  const btnRef = useRef<HTMLButtonElement>(null);
-  /* ⚠️ PORTALLED to the body with fixed positioning. The table sits in an `overflow-x-auto`
-     wrapper, so an absolutely-positioned menu inside it is clipped to the row — the first
-     build showed a 6px sliver of white under the button and nothing else. Measured on open and
-     re-measured on scroll/resize so it stays with its trigger. */
-  const [at, setAt] = useState<{ top: number; left: number } | null>(null);
-  const place = () => {
-    const r = btnRef.current?.getBoundingClientRect();
-    if (!r) return;
-    const W = 184;
-    setAt({ top: r.bottom + 4, left: Math.max(8, Math.min(r.left, window.innerWidth - W - 8)) });
-  };
-  useEffect(() => {
-    if (!open) return;
-    place();
-    const away = (e: MouseEvent) => {
-      if (ref.current?.contains(e.target as Node) || btnRef.current?.contains(e.target as Node)) return;
-      setOpen(false);
-    };
-    const key = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
-    document.addEventListener('mousedown', away);
-    document.addEventListener('keydown', key);
-    window.addEventListener('scroll', place, true);
-    window.addEventListener('resize', place);
-    return () => {
-      document.removeEventListener('mousedown', away);
-      document.removeEventListener('keydown', key);
-      window.removeEventListener('scroll', place, true);
-      window.removeEventListener('resize', place);
-    };
-  }, [open]);
-
-  const item = 'flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] text-[#364658] transition-colors hover:bg-[#F5F7FA]';
-  const run = (fn: () => void) => () => { setOpen(false); fn(); };
-  const icon = 'text-[#6B7280] transition-colors hover:text-[#3D8BD0]';
-
+  const icon = 'flex size-8 items-center justify-center rounded border border-[#DFE5ED] bg-white text-[#64748B] transition-colors hover:border-[#C3CBD6] hover:text-[#3D8BD0] disabled:cursor-not-allowed disabled:text-[#D7DDE5] disabled:hover:border-[#DFE5ED]';
+  const label = 'text-[11px] text-[#9CA3AF]';
+  const value = 'truncate text-[12px] text-[#364658]';
+  const published = p.status === 'Published';
   return (
-    /* gap-4, not the gap-3 the two-icon listings use: four targets in a row need more air between
-       them than two do, and the chevron on Edit already sits tight against its pencil. */
-    <div className="flex items-center gap-4">
-      <button
-        ref={btnRef}
-        onClick={() => setOpen((o) => !o)}
-        title="Edit"
-        className={`flex items-center gap-0.5 ${icon} ${open ? 'text-[#3D8BD0]' : ''}`}
-      ><Pencil size={15} /><ChevronDown size={11} /></button>
-      <button onClick={onPreview} title="Preview" className={icon}><Eye size={15} /></button>
-      {/* ⚠️ PER PORTAL, which is the whole reason it belongs on a row rather than anywhere else.
-          Settings used to sit on the builder's rail below Branding, and the rail is where you go
-          while ARRANGING a page — a nine-accordion permissions screen is not something you reach
-          for mid-layout. But what a requester may DO is a property of ONE portal, so a row is
-          exactly where it can say which portal it is about. */}
-      <button onClick={onSettings} title="Settings" className={icon}><Settings size={15} /></button>
-      {/* ⚠️ "Copy", not "Duplicate layout" — it copies the whole portal, details included, and then
-          asks for the details that cannot be shared (see the handler). */}
-      <button onClick={onCopy} title="Copy" className={icon}><Copy size={15} /></button>
-      <button
-        onClick={onDelete}
-        disabled={isDefault}
-        title={isDefault ? 'The default portal cannot be deleted — requesters have to land somewhere' : 'Delete'}
-        className={isDefault ? 'cursor-not-allowed text-[#D7DDE5]' : 'text-[#DC2626] transition-colors hover:text-[#b91c1c]'}
-      ><Trash2 size={15} /></button>
-
-      {open && at && createPortal(
-        <div
-          ref={ref}
-          style={{ position: 'fixed', top: at.top, left: at.left }}
-          className="z-[10000] w-[184px] overflow-hidden rounded-md border border-[#E5E7EB] bg-white py-1 shadow-lg"
+    <div className="flex flex-col rounded-xl border border-[#E5E7EB] bg-white p-4 transition-all hover:border-[#3D8BD0] hover:shadow-sm">
+      <div className="flex items-start gap-3">
+        <span className="relative flex size-10 flex-shrink-0 items-center justify-center rounded-lg bg-[#EAF3FB] text-[#3D8BD0]">
+          <MonitorSmartphone size={18} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className={`rounded-sm px-1.5 py-0.5 text-[11px] font-semibold ${published ? 'bg-[#ECFDF3] text-[#22A06B]' : 'bg-[#F1F5F9] text-[#64748B]'}`}>{p.status}</span>
+            {isDefault && <span className="rounded-sm bg-[#e8f4fd] px-1.5 py-0.5 text-[11px] font-semibold text-[#3D8BD0]">Default</span>}
+          </div>
+          <button
+            onClick={onCustomize}
+            title={`Customise ${p.name}`}
+            className="mt-1 block max-w-full truncate text-left text-[13px] font-semibold text-[#3D8BD0] hover:underline"
+          >{p.name}</button>
+        </div>
+        <button
+          role="switch"
+          aria-checked={on}
+          disabled={isDefault}
+          title={isDefault ? 'The default portal is always on — requesters have to land somewhere' : on ? 'Enabled — switch this portal off' : 'Disabled — switch this portal on'}
+          onClick={onToggle}
+          className={`relative mt-0.5 inline-flex h-[18px] w-[34px] flex-shrink-0 items-center rounded-full transition-colors ${on ? 'bg-[#3D8BD0]' : 'bg-[#CBD5E1]'} ${isDefault ? 'cursor-not-allowed opacity-60' : ''}`}
         >
-          <button onClick={run(onEditDetails)} className={item}><SlidersHorizontal size={14} /> Edit details</button>
-          <button onClick={run(onCustomize)} className={item}><PenLine size={14} /> Customise portal</button>
-        </div>,
-        document.body,
-      )}
+          <span className={`inline-block size-[14px] rounded-full bg-white transition-transform ${on ? 'translate-x-[18px]' : 'translate-x-[2px]'}`} />
+        </button>
+      </div>
+
+      <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2.5 border-t border-[#F0F2F5] pt-3">
+        <div className="col-span-2 min-w-0">
+          <div className={label}>URL</div>
+          <a href={href} title={`Open ${p.name}`} className="block truncate text-[12px] text-[#3D8BD0] hover:underline">{url}</a>
+        </div>
+        <div className="min-w-0">
+          <div className={label}>Last modified</div>
+          <div className={value} title={`${relPortalStamp(p.modifiedAt)} by ${p.modifiedBy}`}>{relPortalStamp(p.modifiedAt)} by {p.modifiedBy}</div>
+        </div>
+        <div className="min-w-0">
+          <div className={label}>Live version</div>
+          {/* ⚠️ Only a PUBLISHED portal can be behind — a draft has no live copy to disagree with. */}
+          {published && p.dirty
+            ? <span className="mt-0.5 inline-block rounded-sm bg-[#FEF6E7] px-1.5 py-0.5 text-[11px] font-medium text-[#B54708]">Unpublished changes</span>
+            : <div className="inline-flex items-center gap-1.5 text-[12px] text-[#364658]"><span className={`size-2 rounded-full ${published ? 'bg-[#22A06B]' : 'bg-[#CBD5E1]'}`} />{published ? 'Up to date' : 'Not published'}</div>}
+        </div>
+      </div>
+
+      <div className="mt-4 flex items-center gap-1.5">
+        <button
+          onClick={onCustomize}
+          className="h-8 flex-1 rounded bg-[#e8f4fd] px-3 text-[12px] font-medium text-[#3D8BD0] transition-colors hover:bg-[#d0e8f9]"
+        >Customise portal</button>
+        <button onClick={onEditDetails} title="Edit details" aria-label="Edit details" className={icon}><SlidersHorizontal size={14} /></button>
+        <button onClick={onPreview} title="Preview" aria-label="Preview" className={icon}><Eye size={14} /></button>
+        <button onClick={onSettings} title="Settings" aria-label="Settings" className={icon}><Settings size={14} /></button>
+        <button onClick={onCopy} title="Copy" aria-label="Copy" className={icon}><Copy size={14} /></button>
+        {!isDefault && (
+          <button
+            onClick={onMakeDefault}
+            disabled={!published}
+            title={published ? 'Set as default — requesters land here' : 'Publish this portal before making it the default'}
+            aria-label="Set as default"
+            className={icon}
+          ><Star size={14} /></button>
+        )}
+        <button
+          onClick={onDelete}
+          disabled={isDefault}
+          title={isDefault ? 'The default portal cannot be deleted — requesters have to land somewhere' : 'Delete'}
+          aria-label="Delete"
+          className={`${icon} ${isDefault ? '' : 'hover:!border-[#FECACA] !text-[#DC2626]'}`}
+        ><Trash2 size={14} /></button>
+      </div>
     </div>
   );
 }
@@ -263,7 +265,9 @@ export function AdminSupportPortalModule({ onBuilder, openPortal, onOpenPortalCh
   const [openSettings, setOpenSettings] = useState(false);
   /* Which portals are switched on. Absent means ON — a portal you have never touched is live. */
   const [enabled, setEnabled] = useState<Record<string, boolean>>({});
-  const isOn = (p: PortalPage) => p.id === DEFAULT_PORTAL_PAGE.id || enabled[p.id] !== false;
+  /* Which portal requesters land on. State, not the seed's id: it can be moved to any PUBLISHED portal. */
+  const [defaultId, setDefaultId] = useState(DEFAULT_PORTAL_PAGE.id);
+  const isOn = (p: PortalPage) => p.id === defaultId || enabled[p.id] !== false;
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
 
@@ -479,7 +483,7 @@ export function AdminSupportPortalModule({ onBuilder, openPortal, onOpenPortalCh
        portal nobody has addressed yet — once Edit details has been saved, a listing that keeps
        showing a name-derived path is telling them the field they filled in did nothing. */
     if (p.url) return p.url;
-    if (p.id === DEFAULT_PORTAL_PAGE.id) return 'support.acme.com';
+    if (p.id === defaultId) return 'support.acme.com';
     const slug = p.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
     return 'support.acme.com/' + (slug || p.id.toLowerCase());
   };
@@ -671,113 +675,38 @@ export function AdminSupportPortalModule({ onBuilder, openPortal, onOpenPortalCh
     );
   }
 
-  // ── listing ───────────────────────────────────────────────────────────────
-  const rows = pages;
-  const totalPages = Math.ceil(rows.length / perPage) || 1;
-  const pageRows = rows.slice((page - 1) * perPage, page * perPage);
-
-
+  // ── listing ── cards, three to a row at most; a tenant keeps a handful of portals.
+  /* The default comes first — it is the one requesters land on, so it is the one read first. */
+  const rows = [...pages].sort((a, b) => Number(b.id === defaultId) - Number(a.id === defaultId));
 
   return (
     <>
       {shell(
-      <div className="px-4 pb-6">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[860px]">
-            <thead className="border-b border-[#e5e7eb]">
-              <tr>
-                {['Portal name', 'URL', 'Status', 'Enabled', 'Action'].map((h, i) => (
-                  <th key={h || i} className="whitespace-nowrap px-4 py-2.5 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#e5e7eb] bg-white">
-              {pageRows.length === 0 ? (
-                <tr><td colSpan={5} className="px-4 py-12 text-center text-[13px] text-[#9CA3AF]">
-                  No portals yet.
-                </td></tr>
-              ) : pageRows.map((p) => (
-                <tr key={p.id} className="transition-colors hover:bg-[#f9fafb]">
-                  {/* The NAME is the way in. The SPP-# pill was a handle nobody refers to a portal by. */}
-                  <td className="px-4 py-3">
-                    <button
-                      onClick={() => setEditingId(p.id)}
-                      className="inline-flex max-w-full items-center gap-2 text-left text-[13px] font-medium text-[#3D8BD0] hover:underline"
-                      title={p.name}
-                    >
-                      <span className="truncate">{p.name}</span>
-                      {p.id === DEFAULT_PORTAL_PAGE.id && (
-                        <span className="shrink-0 rounded bg-[#E8F1FB] px-1.5 py-0.5 text-[11px] font-medium text-[#3D8BD0]">Default</span>
-                      )}
-                    </button>
-                  </td>
-                  <td className="whitespace-nowrap px-4 py-3">
-                    <a
-                      href={`#/admin/support-portal/${portalSlug(p.name, p.id)}`}
-                      title={`Open ${p.name}`}
-                      className="text-[13px] text-[#7B8FA5] hover:text-[#3D8BD0] hover:underline"
-                    >{portalUrl(p)}</a>
-                  </td>
-                  {/* ⚠️ Status is a SENTENCE, not a word: the pill says what state the portal is in,
-                      the line under it says who left it that way and when, and the amber chip warns
-                      that what is live is not what is saved. Split across three columns those stop
-                      being one story and the admin has to reassemble it. */}
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className={`rounded-sm px-2 py-0.5 text-[12px] font-medium ${
-                        p.status === 'Published' ? 'bg-[#ECFDF3] text-[#22A06B]' : 'bg-[#F1F5F9] text-[#64748B]'
-                      }`}>{p.status}</span>
-                      <span className="whitespace-nowrap text-[12px] text-[#7B8FA5]">{relPortalStamp(p.modifiedAt)} by {p.modifiedBy}</span>
-                      {p.status === 'Published' && p.dirty && (
-                        <span className="whitespace-nowrap rounded-sm bg-[#FEF6E7] px-2 py-0.5 text-[12px] font-medium text-[#B54708]">Unpublished changes</span>
-                      )}
-                    </div>
-                  </td>
-                  {/* ⚠️ The DEFAULT portal cannot be switched off — a requester has to land somewhere.
-                      Disabled with the reason on it rather than hidden, so the rule is legible. */}
-                  <td className="px-4 py-3">
-                    <button
-                      role="switch"
-                      aria-checked={isOn(p)}
-                      disabled={p.id === DEFAULT_PORTAL_PAGE.id}
-                      title={p.id === DEFAULT_PORTAL_PAGE.id
-                        ? 'The default portal is always on — requesters have to land somewhere'
-                        : isOn(p) ? 'Switch this portal off' : 'Switch this portal on'}
-                      onClick={() => setEnabled((e) => ({ ...e, [p.id]: !isOn(p) }))}
-                      className={`relative inline-flex h-[18px] w-[34px] items-center rounded-full transition-colors ${
-                        isOn(p) ? 'bg-[#3D8BD0]' : 'bg-[#CBD5E1]'
-                      } ${p.id === DEFAULT_PORTAL_PAGE.id ? 'cursor-not-allowed opacity-60' : ''}`}
-                    >
-                      <span className={`inline-block size-[14px] rounded-full bg-white transition-transform ${
-                        isOn(p) ? 'translate-x-[18px]' : 'translate-x-[2px]'
-                      }`} />
-                    </button>
-                  </td>
-                  <td className="px-4 py-3">
-                    <RowActions
-                      isDefault={p.id === DEFAULT_PORTAL_PAGE.id}
-                      onEditDetails={() => setDetailsId(p.id)}
-                      onCustomize={() => setEditingId(p.id)}
-                      onPreview={() => toast.success(`Opening ${p.name} in preview`)}
-                      onSettings={() => setSettingsId(p.id)}
-                      onCopy={() => copyPortal(p)}
-                      onDelete={() => setConfirmId(p.id)}
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <div className="px-4 pb-6 pt-5">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {rows.map((p) => (
+            <PortalCard
+              key={p.id}
+              p={p}
+              url={portalUrl(p)}
+              href={`#/admin/support-portal/${portalSlug(p.name, p.id)}`}
+              isDefault={p.id === defaultId}
+              on={isOn(p)}
+              onToggle={() => setEnabled((e) => ({ ...e, [p.id]: !isOn(p) }))}
+              onCustomize={() => setEditingId(p.id)}
+              onEditDetails={() => setDetailsId(p.id)}
+              onPreview={() => toast.success(`Opening ${p.name} in preview`)}
+              onSettings={() => setSettingsId(p.id)}
+              onCopy={() => copyPortal(p)}
+              onMakeDefault={() => {
+                setDefaultId(p.id);
+                setEnabled((e) => ({ ...e, [p.id]: true }));
+                toast.success(`“${p.name}” is now the default portal`);
+              }}
+              onDelete={() => setConfirmId(p.id)}
+            />
+          ))}
         </div>
-
-        <Pagination
-          currentPage={page}
-          totalPages={totalPages}
-          itemsPerPage={perPage}
-          totalItems={rows.length}
-          onPageChange={setPage}
-          onItemsPerPageChange={(n) => { setPerPage(n); setPage(1); }}
-        />
       </div>)}
       {overlays}
     </>
