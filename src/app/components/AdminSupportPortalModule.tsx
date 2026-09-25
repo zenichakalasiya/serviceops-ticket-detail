@@ -57,6 +57,16 @@ function PortalCard({ p, url, href, isDefault, on, onToggle, onCustomize, onEdit
             className="min-w-0 truncate text-left text-[13px] font-semibold text-[#3D8BD0] hover:underline"
           >{p.name}</button>
           <span className={`flex-shrink-0 rounded-sm px-1.5 py-0.5 text-[11px] font-semibold ${published ? 'bg-[#ECFDF3] text-[#22A06B]' : 'bg-[#F1F5F9] text-[#64748B]'}`}>{p.status}</span>
+          {/* ⚠️ A PUBLISHED portal saved as a draft stays live — Save as draft never unpublishes (see
+              `onSaveDraft`) — so it gains a second label rather than losing its first: Published says
+              what requesters see, Draft says there is saved work on top that is not live yet. A portal
+              that was never published is simply "Draft" in the pill before this one. */}
+          {published && p.dirty && (
+            <span
+              title="Saved as a draft — requesters still see the published version until you publish again"
+              className="flex-shrink-0 cursor-help rounded-sm bg-[#FEF6E7] px-1.5 py-0.5 text-[11px] font-semibold text-[#B54708]"
+            >Draft</span>
+          )}
           {isDefault && <span className="flex-shrink-0 rounded-sm bg-[#e8f4fd] px-1.5 py-0.5 text-[11px] font-semibold text-[#3D8BD0]">Default</span>}
         </div>
         <button
