@@ -502,7 +502,16 @@ export interface NodeStyle {
   padding?: SpacingBox;
   /** A text run's highlight — the background behind the words, not the block's fill. */
   textBg?: string;
-  /** Horizontal sides move together until this is broken — the matrix's link toggle. */
+  /* ⚠️ TWO links per ring, one per AXIS, and both default ON when unset — typing one number setting
+     both sides of that axis is what almost every real edit wants, and an admin who needs one side
+     uneven breaks that chain deliberately. The single `marginLinked`/`paddingLinked` pair below is
+     what these replaced; nothing reads them any more, and they are left in place so a page that
+     stored one is not a page carrying a key its own type denies. */
+  marginLinkV?: boolean;
+  marginLinkH?: boolean;
+  paddingLinkV?: boolean;
+  paddingLinkH?: boolean;
+  /** Superseded by the four above. Unread. */
   marginLinked?: boolean;
   paddingLinked?: boolean;
   /** Set by dragging a resize handle, in px. */

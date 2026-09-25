@@ -327,7 +327,11 @@ function richify(n: ReactNode): ReactNode {
 
 /* ── toolbars ────────────────────────────────────────────────────────────── */
 
-const btn = 'flex size-7 items-center justify-center rounded text-[#64748B] transition-colors hover:bg-[#F3F4F6] hover:text-[#364658]';
+/* ⚠️ `#364658` at REST, which is where the hover used to take it. At #64748B a bar of glyphs read as
+   a row of disabled controls until you pointed at one — and this bar is the whole of an element's
+   styling, so there is no state in which its buttons are less available than each other. Hover is now
+   the tint alone, which is enough once the mark is already at full strength. */
+const btn = 'flex size-7 items-center justify-center rounded text-[#364658] transition-colors hover:bg-[#F3F4F6]';
 /** How far an element may ride up over the one above it. */
 const MAX_OVERLAP = 120;
 

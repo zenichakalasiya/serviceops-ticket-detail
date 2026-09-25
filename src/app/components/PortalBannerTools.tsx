@@ -217,22 +217,29 @@ function ItemSkeleton({ id, on }: { id: string; on: boolean }) {
    Two separate faults produced two wrong pictures on the way here. Stretched to the TILE, a section
    beside a line of text was a tall slab. Centred at their OWN heights instead, the two sections came
    out different heights and the row looked ragged. So the band takes ONE height — its tallest section,
-   floored at 38px so a row of short sections is still a band rather than a hairline — and every section
+   floored at 20px so a row of short sections is still a band rather than a hairline — and every section
    stretches to it, which is exactly what the banner does with a row of sections. `max-h-full` is what
    keeps a nested row inside its share. Stacked sections fill: between them they ARE the tile's height. */
 function PresetArt({ node, on }: { node: BannerNode; on: boolean }) {
   if (typeof node === 'string') {
     const text = node === 'hero-content' || node === 'hero-copy' || node === 'hero-search';
+    /* ⚠️ NOT `overflow-hidden`. An empty cell is drawn as a DASHED BORDER, and a border clipped by a
+       hair is a border with no top and no bottom — which is exactly what these tiles were showing.
+       The tile itself clips, so nothing can escape the thumbnail; this level has no reason to. */
     return (
-      <span className={`flex min-h-0 min-w-0 flex-1 items-stretch overflow-hidden rounded-[3px] ${text ? `p-[3px] ${on ? CELL_ON : CELL_OFF}` : ''}`}>
+      <span className={`flex min-h-0 min-w-0 flex-1 items-stretch rounded-[3px] ${text ? `p-[3px] ${on ? CELL_ON : CELL_OFF}` : ''}`}>
         <ItemSkeleton id={node} on={on} />
       </span>
     );
   }
   if (node.d === 'row') {
     return (
-      <span className="flex min-h-0 min-w-0 flex-1 flex-col justify-center overflow-hidden">
-        <span className="flex max-h-full min-h-[38px] min-w-0 items-stretch gap-[4px]">
+      <span className="flex min-h-0 min-w-0 flex-1 flex-col justify-center">
+        {/* ⚠️ The band's floor is 20px, not 38. At 38 a row nested inside a column asked for more height
+            than its share — a tall tile gives a column of three about 22px each — so `max-h-full` capped
+            it and the overflow cut the dashed boxes' horizontal edges off. The floor is only there so a
+            row of short sections still reads as a band rather than a hairline, and 20 does that. */}
+        <span className="flex max-h-full min-h-[20px] min-w-0 items-stretch gap-[4px]">
           {node.c.map((k, i) => <PresetArt key={i} node={k} on={on} />)}
         </span>
       </span>

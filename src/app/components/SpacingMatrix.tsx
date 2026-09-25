@@ -1,19 +1,18 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Link2, Link2Off } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ChevronDown, ChevronUp, Link2, Link2Off, MoveHorizontal, MoveVertical } from 'lucide-react';
+import type { ReactNode } from 'react';
 import type { NodeStyle, SpacingBox } from './portalPageModel';
 
-/* Padding and margin, as ONE nested-box diagram.
+/* Padding and margin.
  *
- * ⚠️ Margin is the outer ring, padding the inner one, and the element sits in the middle — the box
- * model as every builder draws it (Duda, Webflow, Framer, and the browser's own inspector). One
- * picture answers what two stacked blocks of sliders could not: which of the two rings you are
- * setting, and what the other seven sides currently are.
+ * ⚠️ TWO designs behind a tab, on purpose and for now — "Two fields" and "Four sides". They are the
+ * same eight values through the same field and the same two links; only the shape differs. Whichever
+ * is kept is therefore a deletion rather than a rewrite, and the one that goes takes no behaviour
+ * with it.
  *
- * ⚠️ THE NUMBERS ARE THE TARGETS, not the edges. That is the whole difference from the first matrix
- * this replaced, which was dropped because changing one side meant aiming at a hairline. Every side
- * here is a real input — click it and type, or drag sideways on it to scrub — so the smallest thing
- * you have to hit is a 38px field.
+ * ⚠️ THE NUMBERS ARE THE TARGETS. Every side is a real 32px input — click it and type, or drag
+ * sideways on it to scrub — so the smallest thing you have to hit is a field, not a hairline edge.
  *
  * ⚠️ An unset side shows what the element RESTS at, in grey. A section carries 24px either side from
  * its own classes, so printing 0 there said there was no space when there plainly was, and gave no
@@ -35,7 +34,7 @@ interface Props {
   /* ⚠️ What the element ACTUALLY has on the sides nobody has set. See the grey/dark note above. */
   resting?: { padding?: SpacingBox; margin?: SpacingBox };
   /* The node on the canvas, so hovering a side can light that band. Optional: the legacy element
-     panel has no id to give, and the diagram is still correct without the highlight. */
+     panel has no id to give, and the fields are still correct without the highlight. */
   nodeId?: string;
 }
 
@@ -78,10 +77,10 @@ export function useRestingSpacing(nodeId: string, deps: unknown): { padding?: Sp
   return box;
 }
 
-const SIDES: Side[] = ['top', 'right', 'bottom', 'left'];
 const isH = (s: Side) => s === 'left' || s === 'right';
 const unitOf = (s: Side) => (isH(s) ? '%' : 'px');
 const maxOf = (s: Side) => (isH(s) ? 50 : 200);
+const AXES = { v: ['top', 'bottom'] as Side[], h: ['left', 'right'] as Side[] };
 
 /* ── The band the hovered side owns, drawn over the canvas ──────────────────────────────────────
  *
@@ -127,18 +126,28 @@ function SpacingHint({ nodeId, ring, side }: { nodeId: string; ring: Ring; side:
   );
 }
 
-/* One side. ⚠️ Click to type, drag sideways to scrub — and the two do not fight, because a press only
-   becomes a scrub once the pointer has actually travelled 3px. Under that it is a plain click and the
-   field takes focus, which is what a field that looks like a field has to do. */
-function SideField({ value, own, unit, max, onSet, onHover }: {
-  value: number; own: boolean; unit: string; max: number;
-  onSet: (v: number) => void; onHover: (on: boolean) => void;
+/* ── One side, as a real field ──────────────────────────────────────────────────────────────────
+ *
+ * ⚠️ It LOOKS like an input — a bordered box at the product's 32px control height — where it used to
+ * be bare text that only revealed a border on hover. A number you can edit and a number you can only
+ * read are the same picture until you touch one, and the admin reading this panel has no reason to
+ * touch anything to find out which it is.
+ * ⚠️ Click to type, drag sideways to scrub, and the two do not fight: a press becomes a scrub only
+ * after the pointer has travelled 3px. Under that it is a plain click and the field takes focus, or a
+ * control that looks like a field would refuse to be typed in.
+ * ⚠️ `lead` is the glyph INSIDE the box saying which side or axis it is, rather than a label beside
+ * it — that is what lets a row of four stay one line of equal boxes at any sidebar width.
+ * ⚠️ Every box is `flex-1` or a grid cell, never a fixed width, so a row always fills the panel
+ * however wide the admin has dragged it. */
+function SideField({ value, own, unit, max, lead, onSet, onHover, placeholder }: {
+  value: number | null; own: boolean; unit: string; max: number; lead?: ReactNode;
+  onSet: (v: number) => void; onHover?: (on: boolean) => void; placeholder?: string;
 }) {
   const ref = useRef<HTMLInputElement>(null);
   const [typing, setTyping] = useState<string | null>(null);
   const clamp = (n: number) => Math.max(0, Math.min(max, unit === '%' ? Math.round(n * 10) / 10 : Math.round(n)));
   const onDown = (e: React.PointerEvent) => {
-    const start = { x: e.clientX, v: value, moved: false };
+    const start = { x: e.clientX, v: value ?? 0, moved: false };
     const move = (ev: PointerEvent) => {
       const d = ev.clientX - start.x;
       if (!start.moved && Math.abs(d) < 3) return;
@@ -152,36 +161,69 @@ function SideField({ value, own, unit, max, onSet, onHover }: {
     window.addEventListener('pointerup', up);
   };
   return (
-    <span
-      className="relative flex-shrink-0"
-      onPointerEnter={() => onHover(true)}
-      onPointerLeave={() => onHover(false)}
+    <label
+      className="flex h-8 min-w-0 flex-1 items-center gap-1 rounded border border-[#DFE5ED] bg-white px-1.5 transition-colors focus-within:border-[#3D8BD0] hover:border-[#C3CBD6]"
+      onPointerEnter={() => onHover?.(true)}
+      onPointerLeave={() => onHover?.(false)}
     >
+      {lead && <span className="flex-shrink-0 text-[#9CA3AF]">{lead}</span>}
       <input
         ref={ref}
-        value={typing ?? String(value)}
+        value={typing ?? (value === null ? '' : String(value))}
+        placeholder={placeholder}
         onPointerDown={onDown}
-        onChange={(e) => { setTyping(e.target.value); const n = Number(e.target.value); if (Number.isFinite(n)) onSet(clamp(n)); }}
+        onChange={(e) => { setTyping(e.target.value); const n = Number(e.target.value); if (Number.isFinite(n) && e.target.value !== '') onSet(clamp(n)); }}
         onBlur={() => setTyping(null)}
-        /* `ew-resize` is the whole hint that this number is draggable — it is the cursor every design
-           tool uses for a scrubber, and it costs no pixels on a control this small. */
-        className={`h-[26px] w-[42px] cursor-ew-resize rounded border border-transparent bg-transparent pr-[13px] text-center text-[11px] tabular-nums outline-none transition-colors hover:border-[#DFE5ED] hover:bg-white focus:cursor-text focus:border-[#3D8BD0] focus:bg-white ${
+        /* `ew-resize` is the whole hint that this number drags — the cursor every design tool uses for
+           a scrubber, and it costs no pixels on a control this small. */
+        className={`w-full min-w-0 cursor-ew-resize bg-transparent text-center text-[12px] tabular-nums outline-none placeholder:text-[11px] placeholder:text-[#C3CBD6] focus:cursor-text ${
           own ? 'font-medium text-[#364658]' : 'text-[#9CA3AF]'
         }`}
       />
-      <span className="pointer-events-none absolute right-[4px] top-1/2 -translate-y-1/2 text-[9px] text-[#B3BECC]">{unit}</span>
-    </span>
+      <span className="flex-shrink-0 text-[10px] text-[#B3BECC]">{unit}</span>
+    </label>
+  );
+}
+
+/** One axis's chain. ⚠️ It sits in the ring's HEADER, not between the two fields it ties: in a row of
+ *  four there is no "between", and in the box layout the two points a chain would want are already
+ *  taken by the fields. The axis glyph beside the chain is what says WHICH pair it holds. */
+function LinkToggle({ axis, on, onToggle }: { axis: 'v' | 'h'; on: boolean; onToggle: () => void }) {
+  const pair = axis === 'v' ? 'Top and bottom' : 'Left and right';
+  return (
+    <button
+      type="button"
+      title={on ? `${pair} move together — click to set them apart` : `${pair} are separate — click to tie them`}
+      aria-label={`${pair} linked`}
+      aria-pressed={on}
+      onClick={(e) => { e.stopPropagation(); onToggle(); }}
+      className={`flex h-6 items-center gap-0.5 rounded px-1 transition-colors ${
+        on ? 'bg-[#EBF5FF] text-[#3D8BD0]' : 'text-[#C3CBD6] hover:bg-[#F1F5F9] hover:text-[#64748B]'
+      }`}
+    >
+      {axis === 'v' ? <MoveVertical size={11} /> : <MoveHorizontal size={11} />}
+      {on ? <Link2 size={11} /> : <Link2Off size={11} />}
+    </button>
   );
 }
 
 export function SpacingMatrix({ style, onChange, only, resting, nodeId }: Props) {
+  const [tab, setTab] = useState<'two' | 'sides'>('two');
+  const [open, setOpen] = useState<Ring | null>(null);
   const [hint, setHint] = useState<{ ring: Ring; side: Side } | null>(null);
 
   /* ⚠️ An EMPTY box, not ZERO_BOX. Merging over four zeros is what made one control write all four
      sides; merging over nothing leaves the sides you did not touch unset, so the element keeps the
      spacing it already had on those edges. */
   const boxOf = (r: Ring): SpacingBox => (r === 'margin' ? style.margin : style.padding) ?? {};
-  const linked = (r: Ring) => (r === 'margin' ? style.marginLinked : style.paddingLinked) ?? false;
+  /* ⚠️ Unset reads as LINKED — both chains start on. Typing one number and having both sides of that
+     axis move is what almost every real edit wants, and an admin who needs one side uneven breaks the
+     chain deliberately. */
+  const linked = (r: Ring, a: 'v' | 'h'): boolean =>
+    (style as Record<string, unknown>)[`${r}Link${a === 'v' ? 'V' : 'H'}`] !== false;
+  const toggleLink = (r: Ring, a: 'v' | 'h') =>
+    onChange({ [`${r}Link${a === 'v' ? 'V' : 'H'}`]: !linked(r, a) } as Partial<NodeStyle>);
+
   const ownSet = (r: Ring, s: Side) => boxOf(r)[s] !== undefined;
   /** A side's value as the element really has it: the one set here, else what it rests at. */
   const sideOf = (r: Ring, s: Side): number => {
@@ -190,76 +232,141 @@ export function SpacingMatrix({ style, onChange, only, resting, nodeId }: Props)
     const rest = resting?.[r]?.[s];
     return Number.isFinite(rest) ? Number(rest) : 0;
   };
+  /** The pair's value, or null when its two sides disagree — which is what the "Mixed" hint means. */
+  const pairOf = (r: Ring, a: 'v' | 'h'): number | null => {
+    const [x, y] = AXES[a];
+    return sideOf(r, x) === sideOf(r, y) ? sideOf(r, x) : null;
+  };
   const write = (r: Ring, next: SpacingBox) => onChange(r === 'margin' ? { margin: next } : { padding: next });
 
-  /* ⚠️ Linked writes all four, and the two axes carry DIFFERENT UNITS — so it writes the number to the
-     axis you typed it on and leaves the other axis alone in value but tied in intent. Copying 24 from a
-     px side into a % side would set a quarter of the parent's width. */
+  /* ⚠️ A linked axis writes BOTH of its sides, and the two axes are never written together: they carry
+     different units, so copying 24 from a px side into a % side would set a quarter of the parent. */
   const setSide = (r: Ring, side: Side, v: number) => {
     const box = boxOf(r);
-    if (!linked(r)) { write(r, { ...box, [side]: v }); return; }
-    const pair: Side[] = isH(side) ? ['left', 'right'] : ['top', 'bottom'];
-    write(r, { ...box, [pair[0]]: v, [pair[1]]: v });
+    const a = isH(side) ? 'h' : 'v';
+    if (!linked(r, a)) { write(r, { ...box, [side]: v }); return; }
+    const [x, y] = AXES[a];
+    write(r, { ...box, [x]: v, [y]: v });
+  };
+  const setPair = (r: Ring, a: 'v' | 'h', v: number) => {
+    const [x, y] = AXES[a];
+    write(r, { ...boxOf(r), [x]: v, [y]: v });
   };
 
-  const toggleLink = (r: Ring) =>
-    onChange(r === 'margin' ? { marginLinked: !linked(r) } : { paddingLinked: !linked(r) });
+  const rings: Ring[] = only === 'margin' ? ['margin'] : only === 'padding' ? ['padding'] : ['padding', 'margin'];
+  const hover = (r: Ring, s: Side) => (on: boolean) => setHint(on ? { ring: r, side: s } : null);
 
-  const field = (r: Ring, side: Side) => (
+  const field = (r: Ring, s: Side, lead?: ReactNode) => (
     <SideField
-      key={`${r}-${side}`}
-      value={sideOf(r, side)}
-      own={ownSet(r, side)}
-      unit={unitOf(side)}
-      max={maxOf(side)}
-      onSet={(v) => setSide(r, side, v)}
-      onHover={(on) => setHint(on ? { ring: r, side } : null)}
+      key={`${r}-${s}`}
+      value={sideOf(r, s)}
+      own={ownSet(r, s)}
+      unit={unitOf(s)}
+      max={maxOf(s)}
+      lead={lead}
+      onSet={(v) => setSide(r, s, v)}
+      onHover={hover(r, s)}
     />
   );
 
-  const ring = (r: Ring, children: React.ReactNode) => {
-    const on = linked(r);
-    return (
-      <div className={`rounded-lg p-1.5 ${r === 'margin' ? 'border border-dashed border-[#CBD5E1] bg-[#F8FAFC]' : 'border border-[#E2E8F0] bg-white'}`}>
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center">
-          <span className="text-[9px] font-semibold uppercase tracking-wider text-[#9CA3AF]">{r}</span>
-          {field(r, 'top')}
-          <span className="flex justify-end">
-            <button
-              onClick={() => toggleLink(r)}
-              title={on ? `Each side of the ${r} on its own` : `Tie the ${r}'s opposite sides together`}
-              className={`flex size-5 items-center justify-center rounded transition-colors ${
-                on ? 'bg-[#EBF5FF] text-[#3D8BD0]' : 'text-[#C3CBD6] hover:bg-[#F1F5F9] hover:text-[#64748B]'
-              }`}
-            >{on ? <Link2 size={12} /> : <Link2Off size={12} />}</button>
-          </span>
-        </div>
-        <div className="flex items-center gap-1">
-          {field(r, 'left')}
-          <span className="min-w-0 flex-1">{children}</span>
-          {field(r, 'right')}
-        </div>
-        <div className="flex justify-center">{field(r, 'bottom')}</div>
-      </div>
-    );
-  };
+  /** The ring's name and its two chains — ONE header for both designs, so they cannot drift apart. */
+  const head = (r: Ring, trailing?: ReactNode) => (
+    <div className="mb-1.5 flex items-center gap-1">
+      <span className="flex-1 text-[11px] font-semibold uppercase tracking-wider text-[#7B8FA5]">{r}</span>
+      <LinkToggle axis="v" on={linked(r, 'v')} onToggle={() => toggleLink(r, 'v')} />
+      <LinkToggle axis="h" on={linked(r, 'h')} onToggle={() => toggleLink(r, 'h')} />
+      {trailing}
+    </div>
+  );
 
-  /* The content box — what the two rings are measured from. No size on it: this control is about the
-     space around the element, and a width nobody can edit here would read as one more field. */
-  const plate = (
-    <span className="flex h-[26px] items-center justify-center rounded bg-[#EBF5FF] text-[9px] font-semibold uppercase tracking-wider text-[#3D8BD0]">
-      Element
-    </span>
+  /* ── A — TWO FIELDS, the four sides on demand ───────────────────────────────────────────────────
+   * Two numbers on arrival instead of eight, which is what a linked pair of pairs already is. The
+   * chevron opens the four, laid out WHERE THEY ARE around a plate rather than as a list: the one
+   * thing a non-designer gets from this control is which box is which edge, and four rows labelled
+   * top / right / bottom / left is a list you have to read. */
+  const twoFields = (r: Ring) => (
+    <div key={r} className="mt-3 first:mt-0">
+      {head(r, (
+        <button
+          type="button"
+          title={open === r ? 'Close the four sides' : 'Set each side on its own'}
+          onClick={(e) => { e.stopPropagation(); setOpen(open === r ? null : r); }}
+          className={`flex size-6 items-center justify-center rounded transition-colors ${
+            open === r ? 'bg-[#EBF5FF] text-[#3D8BD0]' : 'text-[#9CA3AF] hover:bg-[#F1F5F9] hover:text-[#364658]'
+          }`}
+        >{open === r ? <ChevronUp size={14} /> : <ChevronDown size={14} />}</button>
+      ))}
+      {open === r ? (
+        <div className="rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] p-2">
+          <div className="flex">{field(r, 'top')}</div>
+          <div className="mt-1.5 flex items-center gap-1.5">
+            {field(r, 'left')}
+            <span className="flex h-8 flex-1 items-center justify-center rounded bg-[#EBF5FF] text-[9px] font-semibold uppercase tracking-wider text-[#3D8BD0]">Element</span>
+            {field(r, 'right')}
+          </div>
+          <div className="mt-1.5 flex">{field(r, 'bottom')}</div>
+        </div>
+      ) : (
+        <div className="flex gap-1.5">
+          {/* ⚠️ These two write the PAIR whatever the chains say — they ARE the pair. A chain broken in
+              the open view leaves its sides uneven, and then the collapsed field reads "Mixed" rather
+              than picking one of the two to report as though they agreed. */}
+          <SideField
+            value={pairOf(r, 'v')}
+            own={ownSet(r, 'top') || ownSet(r, 'bottom')}
+            unit="px" max={200} placeholder="Mixed"
+            lead={<MoveVertical size={11} />}
+            onSet={(v) => setPair(r, 'v', v)}
+            onHover={hover(r, 'top')}
+          />
+          <SideField
+            value={pairOf(r, 'h')}
+            own={ownSet(r, 'left') || ownSet(r, 'right')}
+            unit="%" max={50} placeholder="Mixed"
+            lead={<MoveHorizontal size={11} />}
+            onSet={(v) => setPair(r, 'h', v)}
+            onHover={hover(r, 'left')}
+          />
+        </div>
+      )}
+    </div>
+  );
+
+  /* ── B — FOUR LABELLED FIELDS ───────────────────────────────────────────────────────────────────
+   * One row of four, tagged ↑ → ↓ ← in reading order. The shortest of the two and the most explicit;
+   * what it trades away is the picture — an arrow in a box is a symbol you learn, where a box drawn
+   * around a plate is one you read. */
+  const fourSides = (r: Ring) => (
+    <div key={r} className="mt-3 first:mt-0">
+      {head(r)}
+      <div className="grid grid-cols-4 gap-1">
+        {field(r, 'top', <ArrowUp size={11} />)}
+        {field(r, 'right', <ArrowRight size={11} />)}
+        {field(r, 'bottom', <ArrowDown size={11} />)}
+        {field(r, 'left', <ArrowLeft size={11} />)}
+      </div>
+    </div>
   );
 
   return (
     <div>
-      <p className="mb-2 flex items-center gap-1.5 text-[11px] text-[#9CA3AF]">
-        <span>Up and down in px</span><span className="text-[#DFE5ED]">·</span><span>left and right in %</span>
-      </p>
-      {only === 'padding' ? ring('padding', plate)
-        : only === 'margin' ? ring('margin', plate)
-        : ring('margin', ring('padding', plate))}
+      {/* ⚠️ The product's own segmented treatment — a strip whose options ALL carry a label is a set of
+          tabs, so it takes the pill on a track rather than the bordered buttons an icon strip gets. */}
+      <div className="mb-2.5 flex gap-0.5 rounded bg-[#F1F5F9] p-0.5">
+        {([['two', 'Two fields'], ['sides', 'Four sides']] as const).map(([k, label]) => (
+          <button
+            key={k}
+            type="button"
+            aria-pressed={tab === k}
+            onClick={(e) => { e.stopPropagation(); setTab(k); }}
+            className={`h-6 flex-1 rounded text-[11px] font-medium transition-colors ${
+              tab === k ? 'bg-white text-[#364658] shadow-[0_1px_2px_rgba(16,24,40,0.06)]' : 'text-[#7B8FA5] hover:text-[#364658]'
+            }`}
+          >{label}</button>
+        ))}
+      </div>
+      <p className="mb-2 text-[11px] leading-[16px] text-[#9CA3AF]">Up and down in px · left and right in %</p>
+      {rings.map((r) => (tab === 'two' ? twoFields(r) : fourSides(r)))}
       {nodeId && hint && <SpacingHint nodeId={nodeId} ring={hint.ring} side={hint.side} />}
     </div>
   );

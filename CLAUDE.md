@@ -1423,10 +1423,36 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   button would hide the way out of that state. At one section the Arrangement half shows a quiet line.
   ⚠️ `BannerCountPicker` and `SkeletonTile`'s `blocked` prop are gone with it (`blocked` had one caller).
 
-- **Support Portal — SPACING is one nested-box diagram, and the empty banner cell is a "+" (24 Sep 2026).**
-  `SpacingMatrix` is a box-model picture: **margin outside, padding inside, the element in the middle**,
+- **Support Portal — SPACING is TWO designs behind a tab, for the admin to pick (25 Sep 2026).**
+  `SpacingMatrix` shows **Two fields** and **Four sides** as a segmented pair. They are the same eight
+  values through the same field and the same links; only the shape differs, so whichever is kept is a
+  deletion rather than a rewrite and the one that goes takes no behaviour with it. **Two fields** opens
+  as ONE row per ring — an `↕ px` box and an `↔ %` box — with a chevron to the four sides laid out
+  around an Element plate; **Four sides** is one row of four tagged ↑ → ↓ ←.
+  ⚠️ **Every side is a real bordered INPUT** at the product's 32px height, where it was bare text that
+  only revealed a border on hover: a number you can edit and a number you can only read are the same
+  picture until you touch one. The drag-to-scrub survives (3px threshold, `cursor-ew-resize`), and every
+  box is `flex-1` or a grid cell — never a fixed width — so a row fills the sidebar at any panel width.
+  ⚠️ **TWO links per ring, one per AXIS** (`marginLinkV`/`marginLinkH`, `paddingLinkV`/`paddingLinkH`),
+  drawn in the ring's HEADER rather than between the fields they tie — in a row of four there is no
+  "between", and in the box layout the two points a chain would want are already taken by fields. The
+  axis glyph beside each chain says which pair it holds. **Unset reads as LINKED**, both on: typing one
+  number and having both sides of that axis move is what almost every real edit wants, and an admin who
+  needs one side uneven breaks the chain deliberately. The old single `marginLinked`/`paddingLinked`
+  pair is unread and left on the type rather than deleted.
+  ⚠️ The two axes are NEVER written together — px up and down against % left and right, so copying 24
+  from one into the other would set a quarter of the parent's width. A collapsed pair whose sides
+  disagree reads **Mixed** rather than reporting one of the two as though they agreed.
+  ⚠️ The hover-lights-that-band behaviour and the grey resting values are unchanged, and
+  `useRestingSpacing` still looks only one level in — so a card whose padded box is deeper reads 0.
+
+- **Support Portal — the box-model diagram, and the empty banner cell's "+" (24 Sep 2026).**
+  ⚠️ **Superseded by the bullet above for the CONTROL's shape** — the nested diagram was one of the two
+  designs and is not what shipped as the default; the notes on the field, the resting values and the
+  canvas hint all still hold. Kept for the reasoning.
+  `SpacingMatrix` was a box-model picture: **margin outside, padding inside, the element in the middle**,
   all eight sides visible and editable at once — the shape Duda, Webflow, Framer and the browser's own
-  inspector all draw, which is what an admin arrives already knowing. It replaces four axis sliders under
+  inspector all draw, which is what an admin arrives already knowing. It replaced four axis sliders under
   two headings, where no value could be READ without dragging one.
   ⚠️ **The NUMBERS are the targets, not the edges.** That is the whole difference from the FIRST matrix
   this had (dropped because changing one side meant aiming at a hairline): every side is a 42px input —
@@ -1451,6 +1477,11 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   ⚠️ **The banner's empty cell is a bare `+`** (32px, white, blue glyph, label on the hover) rather than an
   "Add to banner" CTA. The dashed cell already says the space is empty and waiting, so the words repeated
   it at the weight of a primary button — and three empty cells put that sentence on the banner three times.
+
+  ⚠️ **The toolbar glyphs sit at #364658 at REST (25 Sep 2026)**, which is where the hover used to take
+  them. At #64748B a bar of glyphs read as a row of disabled controls until you pointed at one — and this
+  bar is the whole of an element styling, so no button on it is less available than another. Hover is the
+  tint alone now, which is enough once the mark is already at full strength. Delete stays red.
 
 - **Support Portal — a GATHERED ROW of cards is a section in its own right (23 Sep 2026).** The set of
   action cards (or KPI tiles) on the banner now reads as one thing: it is BOUNDED, it is named after
