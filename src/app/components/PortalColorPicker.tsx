@@ -87,12 +87,12 @@ function Swatch({ color, on, onPick, none }: { color: string; on?: boolean; onPi
     <button
       onClick={onPick}
       title={none ? 'No colour' : color}
-      className={`relative size-6 flex-shrink-0 rounded-full border transition-transform hover:scale-110 ${
+      className={`relative size-[18px] flex-shrink-0 rounded-full border transition-transform hover:scale-110 ${
         on ? 'ring-2 ring-[#3D8BD0] ring-offset-1' : ''
       } ${color.toUpperCase() === '#FFFFFF' || none ? 'border-[#DFE5ED]' : 'border-black/10'}`}
       style={{ background: none ? '#fff' : color }}
     >
-      {none && <Ban size={13} className="absolute inset-0 m-auto text-[#DC2626]" />}
+      {none && <Ban size={11} className="absolute inset-0 m-auto text-[#DC2626]" />}
     </button>
   );
 }
@@ -216,9 +216,13 @@ export function PortalColorPicker({ value, onChange, onClose, anchor, modeTab }:
   /* Portalled and fixed. The design panel is an overflow-y-auto column, so an absolutely
      positioned popover inside it gets clipped the moment it is taller than the space below the
      field — which this one always is. */
-  const H = 560;
-  const top = Math.max(8, Math.min(anchor.bottom + 8, window.innerHeight - H - 8));
-  const left = Math.max(8, Math.min(anchor.right - 286, window.innerWidth - 294));
+  /* ⚠️ COMPACT on purpose (25 Sep 2026): it was 286 × ~470 — taller than most of the fields it
+     edits sit apart, so it covered the very block whose colour you were judging. Every part is
+     still here; each is simply the size it needs rather than the size a full-page picker uses. */
+  const W = 224;
+  const H = 360;
+  const top = Math.max(8, Math.min(anchor.bottom + 6, window.innerHeight - H - 8));
+  const left = Math.max(8, Math.min(anchor.right - W, window.innerWidth - W - 8));
 
   /* ── the popover ──────────────────────────────────────────────────────────
    *
@@ -235,19 +239,19 @@ export function PortalColorPicker({ value, onChange, onClose, anchor, modeTab }:
     <div
       ref={ref}
       data-portal-popover=""
-      style={{ top, left }}
-      className="fixed z-[10000] w-[286px] rounded-lg border border-[#E5E7EB] bg-white p-3.5 shadow-[0_12px_24px_-6px_rgba(16,24,40,0.18)]"
+      style={{ top, left, width: W }}
+      className="fixed z-[10000] rounded-lg border border-[#E5E7EB] bg-white p-2.5 shadow-[0_12px_24px_-6px_rgba(16,24,40,0.18)]"
     >
       {/* ⚠️ ABOVE the spectrum, because it says which of two values everything below it is editing.
           Underneath, you would have picked a colour before being told where it was going. */}
       {modeTab && (
-        <div className="mb-3 flex items-center gap-0.5 rounded bg-[#F1F5F9] p-0.5">
+        <div className="mb-2 flex items-center gap-0.5 rounded bg-[#F1F5F9] p-0.5">
           {(['light', 'dark'] as const).map((m) => (
             <button
               key={m}
               type="button"
               onClick={() => modeTab.onChange(m)}
-              className={`flex-1 rounded py-1 text-[12px] font-medium capitalize transition-colors ${
+              className={`flex-1 rounded py-0.5 text-[12px] font-medium capitalize transition-colors ${
                 modeTab.value === m
                   ? 'bg-white text-[#364658] shadow-[0_1px_2px_rgba(16,24,40,0.06)]'
                   : 'text-[#9CA3AF] hover:text-[#364658]'
@@ -260,53 +264,67 @@ export function PortalColorPicker({ value, onChange, onClose, anchor, modeTab }:
       <div
         ref={svRef}
         onMouseDown={pickSv}
-        className="relative h-[150px] w-full cursor-crosshair rounded"
+        className="relative h-[108px] w-full cursor-crosshair rounded"
         style={{ background: `linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, ${hsvToHex(hsv.h, 1, 1)})` }}
       >
         <span
-          className="pointer-events-none absolute size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow"
+          className="pointer-events-none absolute size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow"
           style={{ left: `${hsv.s * 100}%`, top: `${(1 - hsv.v) * 100}%`, background: hex }}
         />
       </div>
 
       {/* Hue and alpha rails, with the live colour beside them. */}
-      <div className="mt-2.5 flex gap-2">
+      <div className="mt-2 flex items-center gap-1.5">
         <div className="min-w-0 flex-1 space-y-1.5">
           <div
             ref={hueRef}
             onMouseDown={pickHueX}
-            className="relative h-3.5 w-full cursor-pointer rounded-sm"
+            className="relative h-2.5 w-full cursor-pointer rounded-sm"
             style={{ background: 'linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00)' }}
           >
             <span
-              className="pointer-events-none absolute top-1/2 h-[18px] w-[7px] -translate-x-1/2 -translate-y-1/2 rounded-[2px] border border-[#CBD5E1] bg-white shadow"
+              className="pointer-events-none absolute top-1/2 h-[14px] w-[6px] -translate-x-1/2 -translate-y-1/2 rounded-[2px] border border-[#CBD5E1] bg-white shadow"
               style={{ left: `${(hsv.h / 360) * 100}%` }}
             />
           </div>
           <div
             ref={alphaRef}
             onMouseDown={pickAlpha}
-            className="relative h-3.5 w-full cursor-pointer rounded-sm"
+            className="relative h-2.5 w-full cursor-pointer rounded-sm"
             style={{
               backgroundImage: `linear-gradient(to right, transparent, ${hex}), ${CHECKER}`,
               backgroundSize: 'auto, 8px 8px',
             }}
           >
             <span
-              className="pointer-events-none absolute top-1/2 h-[18px] w-[7px] -translate-x-1/2 -translate-y-1/2 rounded-[2px] border border-[#CBD5E1] bg-white shadow"
+              className="pointer-events-none absolute top-1/2 h-[14px] w-[6px] -translate-x-1/2 -translate-y-1/2 rounded-[2px] border border-[#CBD5E1] bg-white shadow"
               style={{ left: `${opacity}%` }}
             />
           </div>
         </div>
         <span
-          className="size-[38px] flex-shrink-0 rounded border border-black/10"
+          className="size-[26px] flex-shrink-0 rounded border border-black/10"
           style={{ background: hex }}
         />
+        {/* The eyedropper rides beside the live colour rather than taking a full-width row of its
+            own under the buttons — it is one glyph, and a row for it was a fifth of the height. */}
+        {hasEyedropper && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={eyedropper}
+                aria-label="Pick from screen"
+                className="flex size-[26px] flex-shrink-0 items-center justify-center rounded border border-[#DFE5ED] text-[#64748B] transition-colors hover:bg-[#F3F4F6] hover:text-[#364658]"
+              ><Pipette size={13} /></button>
+            </TooltipTrigger>
+            <TooltipContent side="top">Pick from screen</TooltipContent>
+          </Tooltip>
+        )}
       </div>
 
       {/* Hex · R · G · B · A — labels UNDER the fields, as in the reference: the value is what you
           read, the label only says which channel it belongs to. */}
-      <div className="mt-2.5 flex gap-1.5">
+      <div className="mt-2 flex gap-1">
         {([
           ['Hex', hex.replace('#', ''), (v: string) => {
             const next = '#' + v.replace(/[^0-9a-fA-F]/g, '').slice(0, 6);
@@ -328,40 +346,34 @@ export function PortalColorPicker({ value, onChange, onClose, anchor, modeTab }:
             <input
               value={val}
               onChange={(e) => on(e.target.value)}
-              className="h-8 w-full rounded border border-[#d1d5db] px-1.5 text-center text-[12px] text-[#364658] focus:border-[#3D8BD0] focus:outline-none focus:ring-1 focus:ring-[#3D8BD0]"
+              className="h-6 w-full rounded border border-[#d1d5db] px-0.5 text-center text-[11px] text-[#364658] focus:border-[#3D8BD0] focus:outline-none focus:ring-1 focus:ring-[#3D8BD0]"
             />
-            <span className="mt-0.5 block text-center text-[11px] text-[#9CA3AF]">{label}</span>
+            <span className="mt-px block text-center text-[10px] leading-3 text-[#9CA3AF]">{label}</span>
           </span>
         ))}
       </div>
 
-      <div className="-mx-3.5 my-3 h-px bg-[#E5E7EB]" />
+      <div className="-mx-2.5 my-2 h-px bg-[#E5E7EB]" />
 
       {/* Theme palette first, then the fixed presets — a portal should be built from its own
           colours, and the presets are the escape hatch rather than the starting point. */}
-      <div className="grid grid-cols-8 gap-1.5">
+      <div className="grid grid-cols-8 justify-items-center gap-y-1.5">
         {THEME_COLORS.map((c) => <Swatch key={c} color={c} on={c.toLowerCase() === hex.toLowerCase()} onPick={() => commit(c)} />)}
         {PRESETS.map((c) => <Swatch key={c} color={c} on={c.toLowerCase() === hex.toLowerCase()} onPick={() => commit(c)} />)}
         <Swatch color="transparent" none onPick={() => { onChange('transparent'); setHex('TRANSPARENT'); }} />
       </div>
 
-      <div className="mt-3.5 flex items-center justify-center gap-2">
+      <div className="mt-2.5 flex items-center justify-center gap-1.5">
         <button
           onClick={onClose}
-          className="inline-flex h-8 flex-1 items-center justify-center rounded bg-[#0EA5E9] px-4 text-[13px] font-medium text-white transition-colors hover:bg-[#0284C7]"
+          className="inline-flex h-7 flex-1 items-center justify-center rounded bg-[#0EA5E9] px-3 text-[12px] font-medium text-white transition-colors hover:bg-[#0284C7]"
         >Done</button>
         <button
           onClick={() => { onChange(opened.current); onClose(); }}
-          className="inline-flex h-8 flex-1 items-center justify-center rounded border border-[#DFE5ED] bg-white px-4 text-[13px] font-medium text-[#364658] transition-colors hover:bg-[#F5F7FA]"
+          className="inline-flex h-7 flex-1 items-center justify-center rounded border border-[#DFE5ED] bg-white px-3 text-[12px] font-medium text-[#364658] transition-colors hover:bg-[#F5F7FA]"
         >Cancel</button>
       </div>
 
-      {hasEyedropper && (
-        <button
-          onClick={eyedropper}
-          className="mt-2 flex h-8 w-full items-center justify-center gap-1.5 rounded text-[12px] font-medium text-[#64748B] transition-colors hover:bg-[#F3F4F6] hover:text-[#364658]"
-        ><Pipette size={14} /> Pick from screen</button>
-      )}
     </div>,
     document.body,
   );

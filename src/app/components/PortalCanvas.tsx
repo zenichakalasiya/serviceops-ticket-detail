@@ -4,8 +4,8 @@ import { WIDGET_FOR_NODE, WIDGET_FOR_TYPE, specById } from './portalWidgetSpec';
 import type { ReactNode } from 'react';
 import {
   AlignCenter, AlignCenterHorizontal, AlignCenterVertical, AlignEndHorizontal, AlignEndVertical,
-  AlignLeft, AlignRight, AlignStartHorizontal, AlignStartVertical, StretchHorizontal, StretchVertical, ArrowDown, ArrowLeft, ArrowRight,
-  ArrowUp, Baseline, Bold, Check, ChevronDown, ChevronRight, Columns2, Copy, GripHorizontal, GripVertical, Italic, Link2, Rows2,
+  AlignLeft, AlignRight, AlignStartHorizontal, AlignStartVertical, StretchHorizontal, StretchVertical,
+  ArrowDownToLine, ArrowLeftToLine, ArrowRightToLine, ArrowUpToLine, Baseline, Bold, Check, ChevronDown, ChevronRight, Columns2, Copy, GripHorizontal, GripVertical, Italic, Link2, Rows2,
   Braces, Highlighter, Maximize2, UnfoldVertical, Move, MoveHorizontal, MoveVertical, Plus, RemoveFormatting,
   PaintBucket, Replace, SquareDashed, SquareRoundCorner, SquareSquare, Trash2, Underline, X, ImagePlus, Palette, LayoutDashboard, Columns3,
 } from 'lucide-react';
@@ -13,7 +13,6 @@ import { BannerFillEditor, BannerLayoutPanel, OverlayLayerEditor, TilePresetPick
 import { bannerBoxId, flipRoot, groupOf } from './portalBannerLayout';
 import type { BannerNode } from './portalBannerLayout';
 import { BANNER_GROUPS, bannerGroupGap } from './portalPageModel';
-// ArrowLeft stays in use by the card toolbar's "Move left".
 import { toast } from 'sonner';
 import { fillsFromConfig, HEADING_SIZE, PORTAL_FONTS, SECTION_LAYOUTS, SPLITTABLE_BANDS, TEXT_STYLES, ZERO_BOX, COMPOSABLE, BANNER_BLOCKS, inBanner, dragIdOf, isContactChild, boxInfo, canAddBeside, defaultAlignH, nodeById, paintsOwnShadow, paintsOwnSurface, toolbarCaps, nodePath, placedIn, placedType } from './portalPageModel';
 import { DEFAULT_THEME } from './PortalThemePanel';
@@ -1365,14 +1364,26 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
   /* ⚠️ The edge move is DISABLED, not hidden, with the reason on it — a control that disappears on
      the first and last item of a row reads as a bug, and one that silently does nothing reads as a
      broken one. This is the rule the Split button already follows. */
+  /* ⚠️ The `…ToLine` arrows, not the plain ones. A bare arrow is a DIRECTION — it is the glyph for
+     "this points that way", which is what the alignment controls beside it use. These buttons move
+     a thing one place along a row, and the bar the arrow travels to is what says a place is being
+     taken rather than a direction indicated.
+     ⚠️ `ArrowRightToLine` IS `ArrowLeftToLine` mirrored — lucide draws the pair as exact reflections
+     about x=12 (the line goes 3 → 21, the head 13,6→7,12→13,18 becomes 11,18→17,12→11,6). So the
+     mirror Zeni asked for is the set's OWN drawing rather than a CSS `scaleX(-1)`, which would also
+     flip the stroke's caps and joins and put an off-grid glyph next to on-grid ones.
+     ⚠️ ALL FOUR, not just the horizontal pair. Only one of the two ever shows on a given bar — the
+     axis follows the parent — so the mismatch would never be visible side by side, and that is
+     exactly why it would have survived: the same button, meaning the same thing, drawn two ways
+     depending on which way its parent happens to lay out. */
   const moves: [string, ReactNode, 'prev' | 'next', boolean][] = horizontal
     ? [
-      ['Move left', <ArrowLeft key="l" size={15} />, 'prev', span.first],
-      ['Move right', <ArrowRight key="r" size={15} />, 'next', span.last],
+      ['Move left', <ArrowLeftToLine key="l" size={15} />, 'prev', span.first],
+      ['Move right', <ArrowRightToLine key="r" size={15} />, 'next', span.last],
     ]
     : [
-      ['Move down', <ArrowDown key="d" size={15} />, 'next', span.last],
-      ['Move up', <ArrowUp key="u" size={15} />, 'prev', span.first],
+      ['Move down', <ArrowDownToLine key="d" size={15} />, 'next', span.last],
+      ['Move up', <ArrowUpToLine key="u" size={15} />, 'prev', span.first],
     ];
 
   /* ⚠️ A CARD is not on this list any more. A widget occupies its slot completely — "add an element
