@@ -1675,6 +1675,14 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   gives 10px of side padding, leaving 8px, so the 16px svg flex-shrank to half its width. `theme.css` now pins
   `.pill-track > button svg { flex-shrink: 0 }` and gives an icon-only option 6px padding; the toggle is
   `w-9` with 16px icons. Check an icon's COMPUTED width, not its size prop, when one looks small.
+- **Support Portal — the card's switch IS the status (27 Sep 2026).** Supersedes every earlier note about an
+  "Enabled" flag or an always-on default. There is no `enabled` state any more: `isOn(p) = p.status === 'Published'`.
+  Switch ON a Draft → the same `ConfirmPublish` question as Publish (or, for the default itself, straight to
+  `publishAsDefault`); switch OFF → the portal becomes a Draft ("unpublished" toast). Because
+  `publishAsDefault` sets every OTHER published portal to Draft, their switches go off with their tags — the bug
+  was two cards both switched on with Published and Draft tags. The default's switch is no longer disabled; the
+  default can be switched off (it becomes a Draft that is still the default). Verified: publish portal 2 → it is
+  ON/Published/Default and the other is off/Draft; switch the draft on → confirm → they swap; switch off → both off.
 - **Support Portal — the fifth 4-section arrangement and the banner's Column widths are gone (25 Sep 2026).**
   ⚠️ **`col-three-rows` left `PRESET_SHAPES[4]`** — "a column, and three rows beside it". At four
   sections it put three widgets in a single narrow column beside the words, the one arrangement in the

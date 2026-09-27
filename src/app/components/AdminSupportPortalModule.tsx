@@ -62,10 +62,12 @@ function PortalCard({ p, url, href, isDefault, on, onToggle, onCustomize, onEdit
         <button
           role="switch"
           aria-checked={on}
-          disabled={isDefault}
-          title={isDefault ? 'The default portal is always on — requesters have to land somewhere' : on ? 'Enabled — switch this portal off' : 'Disabled — switch this portal on'}
+          /* ⚠️ The switch IS the status (27 Sep 2026): on = Published and live, off = Draft. It was a
+             separate "enabled" flag, so a Draft card could sit with its switch on beside the portal that
+             was actually live — two portals that both looked switched on with different tags. */
+          title={on ? 'Live — switch off to unpublish (it moves to Draft)' : 'Not live — switch on to publish it and make it the default'}
           onClick={onToggle}
-          className={`relative inline-flex h-[18px] w-[34px] flex-shrink-0 items-center rounded-full transition-colors ${on ? 'bg-[#3D8BD0]' : 'bg-[#CBD5E1]'} ${isDefault ? 'cursor-not-allowed opacity-60' : ''}`}
+          className={`relative inline-flex h-[18px] w-[34px] flex-shrink-0 items-center rounded-full transition-colors ${on ? 'bg-[#3D8BD0]' : 'bg-[#CBD5E1]'}`}
         >
           <span className={`inline-block size-[14px] rounded-full bg-white transition-transform ${on ? 'translate-x-[18px]' : 'translate-x-[2px]'}`} />
         </button>
@@ -295,10 +297,11 @@ export function AdminSupportPortalModule({ onBuilder, openPortal, onOpenPortalCh
      to the same portal later opens where a portal normally opens. */
   const [openSettings, setOpenSettings] = useState(false);
   /* Which portals are switched on. Absent means ON — a portal you have never touched is live. */
-  const [enabled, setEnabled] = useState<Record<string, boolean>>({});
+
   /* Which portal requesters land on. State, not the seed's id: it can be moved to any PUBLISHED portal. */
   const [defaultId, setDefaultId] = useState(DEFAULT_PORTAL_PAGE.id);
-  const isOn = (p: PortalPage) => p.id === defaultId || enabled[p.id] !== false;
+  /* On = live. There is no separate enabled flag — see the note on the card's switch. */
+  const isOn = (p: PortalPage) => p.status === 'Published';
   /* The portal waiting on the publish-and-make-default question, while its dialog is open. */
   const [publishAsk, setPublishAsk] = useState<string | null>(null);
   /* Publishes `id` as THE live portal: it becomes the default, and every other published portal goes
@@ -309,7 +312,6 @@ export function AdminSupportPortalModule({ onBuilder, openPortal, onOpenPortalCh
         : p.status === 'Published' ? { ...p, status: 'Draft', dirty: false } : p
     )));
     setDefaultId(id);
-    setEnabled((e) => ({ ...e, [id]: true }));
   };
   /* ONE dialog for both routes to it — Publish inside the builder and Set as default on a card —
      rendered by whichever of the two screens is showing. */
@@ -758,7 +760,16 @@ export function AdminSupportPortalModule({ onBuilder, openPortal, onOpenPortalCh
               href={`#/admin/support-portal/${portalSlug(p.name, p.id)}`}
               isDefault={p.id === defaultId}
               on={isOn(p)}
-              onToggle={() => setEnabled((e) => ({ ...e, [p.id]: !isOn(p) }))}
+              onToggle={() => {
+                /* On: the same publish-and-make-default question Publish asks. Off: unpublish to Draft. */
+                if (!isOn(p)) {
+                  /* Already the default: nothing to ask — publish it. */
+                  if (p.id === defaultId) { publishAsDefault(p.id); toast.success(`“${p.name}” is live again`); return; }
+                  setPublishAsk(p.id); return;
+                }
+                patch(p.id, { status: 'Draft', dirty: false });
+                toast.success(`“${p.name}” unpublished — it is a Draft and no longer live`);
+              }}
               onCustomize={() => setEditingId(p.id)}
               onEditDetails={() => setDetailsId(p.id)}
               onPreview={() => toast.success(`Opening ${p.name} in preview`)}
