@@ -1627,7 +1627,7 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   one a WHITE 6px-radius pill with a soft shadow, weight 500, no border. Styled ONCE in `theme.css`, unlayered so
   it beats the utilities the buttons still carry. ⚠️ **`aria-pressed="true"` is what paints the pill** — a strip
   is `className="pill-track"` on the container plus `aria-pressed` on each button, so the look and the
-  accessible state cannot disagree. A new strip that forgets `aria-pressed` shows NO selection. ⚠️ Because the
+  accessible state cannot disagree. A new strip that forgets `aria-pressed` shows NO selection. ⚠️ Options are `flex: 1 1 auto` + `min-width: max-content` + nowrap, NOT `flex: 1 1 0`: with a zero basis every option got an equal slice, so "Default" beside "2 3 4" (the banner section count) ran out of its pill. ⚠️ Because the
   track sets `display:flex` unlayered, a plain `hidden` utility on it no longer hides it — use `!hidden`.
   Applied to all 14 strips: `Segmented` (labelled), Theme Primary/Secondary/Neutral + Light/Dark, the colour
   picker Light/Dark, banner background Image/Colour, both Solid/Gradient editors (they were bordered strips

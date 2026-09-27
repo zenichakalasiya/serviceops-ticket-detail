@@ -592,7 +592,10 @@ body[data-portal-dragging] [data-portal-toolbar] { pointer-events: none; opacity
   padding: 3px; border-radius: 8px; background: #EEF2F6;
 }
 .pill-track > button {
-  flex: 1 1 0; min-width: 0; height: 26px; padding: 0 10px;
+  /* flex-basis AUTO, not 0: an option starts from its own label and only the SPARE space is shared.
+     With a 0 basis every option got an equal slice, so a longer word ("Default" beside "2 3 4")
+     ran out of its pill. nowrap keeps a label on one line. */
+  flex: 1 1 auto; min-width: max-content; white-space: nowrap; height: 26px; padding: 0 10px;
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   border: 0; border-radius: 6px; background: transparent; box-shadow: none;
   font-size: 12px; font-weight: 400; line-height: 16px; color: #364658;
