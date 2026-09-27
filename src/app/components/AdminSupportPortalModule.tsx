@@ -57,16 +57,6 @@ function PortalCard({ p, url, href, isDefault, on, onToggle, onCustomize, onEdit
             className="min-w-0 truncate text-left text-[13px] font-semibold text-[#3D8BD0] hover:underline"
           >{p.name}</button>
           <span className={`flex-shrink-0 rounded-sm px-1.5 py-0.5 text-[11px] font-semibold ${published ? 'bg-[#ECFDF3] text-[#22A06B]' : 'bg-[#F1F5F9] text-[#64748B]'}`}>{p.status}</span>
-          {/* ⚠️ A PUBLISHED portal saved as a draft stays live — Save as draft never unpublishes (see
-              `onSaveDraft`) — so it gains a second label rather than losing its first: Published says
-              what requesters see, Draft says there is saved work on top that is not live yet. A portal
-              that was never published is simply "Draft" in the pill before this one. */}
-          {published && p.dirty && (
-            <span
-              title="Saved as a draft — requesters still see the published version until you publish again"
-              className="flex-shrink-0 cursor-help rounded-sm bg-[#FEF6E7] px-1.5 py-0.5 text-[11px] font-semibold text-[#B54708]"
-            >Draft</span>
-          )}
           {isDefault && <span className="flex-shrink-0 rounded-sm bg-[#e8f4fd] px-1.5 py-0.5 text-[11px] font-semibold text-[#3D8BD0]">Default</span>}
         </div>
         <button
@@ -532,21 +522,16 @@ export function AdminSupportPortalModule({ onBuilder, openPortal, onOpenPortalCh
           toast.success(`“${editing.name}” is live on the support portal`);
         }}
         /* ── Save as draft ────────────────────────────────────────────────────────────────────
-           ⚠️ It does NOT unpublish a live portal. Saving your work and taking the portal away from
-           every requester using it are two entirely different acts, and one of them is not
-           something a Save button may do quietly. So a published page KEEPS its status and gains
-           the `dirty` flag — which is exactly what the listing's amber "Unpublished changes" chip
-           was built to report — while a page that has never been published stays a Draft.
-           ⚠️ It also does not leave the builder, unlike Publish. Publishing is the end of a piece
-           of work; saving a draft is a pause in the middle of one, and closing the page you are
-           still working on would be the wrong answer to "keep this for later". */
+           ⚠️ A portal is Published OR Draft, never both (Zeni's call, 27 Sep 2026). Save as draft on a
+           published portal therefore takes it OFF the air and makes it a Draft — the card shows one
+           status and it is the true one. The toast says so, because it changes what requesters see.
+           It does not leave the builder: saving a draft is a pause in a piece of work, not its end. */
         onSaveDraft={() => {
-          patch(editing.id, editing.status === 'Published' ? { dirty: true } : { status: 'Draft', dirty: false });
-          toast.success(
-            editing.status === 'Published'
-              ? `Saved. “${editing.name}” keeps showing the published version until you publish again`
-              : `“${editing.name}” saved as a draft`,
-          );
+          const wasLive = editing.status === 'Published';
+          patch(editing.id, { status: 'Draft', dirty: false });
+          toast.success(wasLive
+            ? `“${editing.name}” saved as a draft — it is no longer live until you publish it again`
+            : `“${editing.name}” saved as a draft`);
         }}
         onExit={() => setEditingId(null)}
       />
