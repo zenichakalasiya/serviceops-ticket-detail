@@ -1,70 +1,63 @@
-# Handoff — 2026-09-25 18:20
+# Handoff — 2026-09-27 22:27
 
 ## Read first
-All work is in the **Support Portal builder**. In `CLAUDE.md` › Key context, read the bullets dated
-**25 Sep 2026**, especially these (newest last):
+All work is in the **Support Portal** (Admin › Support Channels) — the builder and its listing page.
+In `CLAUDE.md` › Key context, read these bullets (dated 25–27 Sep 2026):
 
-1. *"ONE slim slider, `MiniRange`"* — every builder slider now shares one component.
-2. *"the banner BACKGROUND popup is the colour picker's width"* — the opt-in `dense` prop.
-3. *"NO alignment in any sidebar, and no divider that fences nothing"* — `withoutAlignment()` and the
-   `.tb-rule` CSS.
-4. *"theme and font rows: NO outline, name top-right"*.
-5. *"ONE tab strip everywhere: the Figma pill (`.pill-track`)"* — how every tab strip is now styled,
-   and the `aria-pressed` rule that paints it.
+1. *"the card's switch IS the status"* — the current publish model. It supersedes several earlier
+   notes about an "Enabled" flag, an always-on default and a second Draft pill.
+2. *"the LISTING is CARDS, and the default can be moved"* — the `PortalCard` layout and the
+   publish-and-make-default rules (`ConfirmPublish`, `publishAsDefault`, `defaultId`).
+3. *"EVERY widget has Replace, predefined ones included, and it swaps IN PLACE"*.
+4. *"Solid / Gradient are CHIP tabs"* and *"ONE tab strip everywhere: the Figma pill"*.
 
 ## What we worked on this session
-A run of visual-polish requests on the builder's controls: slimmer sliders, compact popups, alignment
-removed from sidebars, cleaner theme/font rows, and one shared tab-strip style taken from a Figma pill.
+Replace on every widget; the Support Portal listing rebuilt as cards; a clear one-live-portal publish
+model; and more control polish (chip tabs, pill sizing, the light/dark toggle icons).
 
 ## Completed
-- **Slim slider** (`PortalRange.tsx` `MiniRange` + `.portal-range` in `theme.css`): 3px track, blue fill
-  to the value, 9px white thumb. Used by every border / corner-radius slider (toolbar popups and panel)
-  and the panel's generic `SliderRow`.
-- **Banner background popup** is 224px wide like the colour picker; its editors take `dense`, the panel
-  copies stay full size.
-- **Alignment removed from every sidebar** — stripped once at the drawer entry (`withoutAlignment` in
-  `PortalWidgetDrawer`); it lives only on the floating toolbar.
-- **Toolbar dividers** never lead, trail or double up (`.tb-rule` CSS). Swept all 52 default-page nodes.
-- **Theme / font rows**: no outline, smaller rows, name + accent dot small at the top right, selected =
-  deeper fill + tick.
-- **Figma pill tab strips** (`.pill-track`) on all 14 tab strips — sidebar and popups — including the
-  two Solid/Gradient switches that used to be blue.
-- **Earlier today (other terminal, finished here):** move-left/right arrows are lucide
-  `ArrowLeftToLine` / `ArrowRightToLine`; the colour picker is 224×332 (was ~286×470).
-- Everything is committed and pushed to `main`.
+- **Replace on every widget** — the built-in blocks (My Open Requests, Approvals, Assets, CIs,
+  Announcements, Most Read, Contact Us, Favourite / Most Used Services) get "Replace this widget". A
+  predefined widget swaps for ANY widget; the replacement takes the original's exact slot.
+- **Portal listing = cards** (`PortalCard`): one header row (small icon · name · Published/Draft ·
+  Default · switch), URL + Last modified, and a footer with **Customise portal** plus icon actions.
+- **One portal live at a time, and it is the default.** Publishing (or starring, or switching on) a
+  non-default portal asks "Publish and make it the default?"; confirming moves the previously live
+  portal to Draft. **Save as draft unpublishes.** The card's **switch is the status** (on = Published).
+- **Builder's main button always says Publish** (it used to relabel itself "Save as draft").
+- **Solid / Gradient** in the colour popups are outlined chip tabs with a blue check.
+- **Pill tabs size to their labels** ("Default" no longer overflows); **light/dark icons** full size.
+- All committed and pushed to `main`.
 
 ## In progress
 Nothing mid-flight.
 
 ## Next steps
-1. Zeni to check the new pills, sliders and theme rows on `:5200` (hard refresh).
-2. **Get the Figma file shared as EDITOR** with the account the Figma MCP signed in as — then re-read
-   node `296:14588` and fine-tune the pill's exact sizes (they were measured from a screenshot).
-3. Decide whether the *Remove sections* list should say "Quick links" instead of "Custom Card".
-4. `useRestingSpacing` reads Announcements' spacing as 0 on every side — needs a real fix.
-5. Still open in `D:\Motadata\support-portal-templates`: `layouts/3h.html` (Concierge) card work and
-   the Most Read icon colour (`2b`).
+1. **Contact Us: "remove this"** — Zeni asked to remove something from the Contact Us card but the
+   screenshot never came through. Ask which part (heading, phone, email, icons, divider).
+2. Zeni to confirm the publish model feels right on `:5200` (hard refresh first).
+3. Figma pill sizes were measured from a screenshot — re-read node `296:14588` once the file is shared
+   with the Figma MCP account as an EDITOR.
+4. Carried over: the *Remove sections* list naming ("Custom Card" vs "Quick links");
+   `useRestingSpacing` reading Announcements as 0; the `support-portal-templates` repo items.
 
 ## Decisions made
-- **One shared style per control**, applied centrally rather than per call site: `MiniRange` for
-  sliders, `.pill-track` for tab strips, `withoutAlignment()` for the sidebar. That way a new spec
-  or strip can't drift from the rest.
-- **The selected pill is painted by `aria-pressed="true"`**, so the visual state and the accessible
-  state are the same thing.
-- **The sidebar slider restyle applies to ALL panel sliders**, not only border/radius, so one panel
-  never shows two slider styles. Zeni can ask to narrow it.
-- **The theme dot moved beside the name** (top right) rather than being dropped — reading of "title
-  with dot on the right side, remove the dot from the card". One-line change if the dot should go.
+- **A predefined widget can be replaced by ANY widget** (Zeni) — the same-class rule left the picker
+  empty on the default page. Ordinary widgets still swap only for their own kind.
+- **Quick Actions cards are not replaceable** — their row is locked to the product's four actions.
+- **A portal is Published OR Draft, never both; Save as draft unpublishes** (Zeni). So the default
+  portal can be a Draft, and then no portal is live until one is published.
+- **One live portal = the default.** Making a portal default IS publishing it, which is why the star
+  and the switch both open the same publish dialog.
+- **Set as default** was added because the brief mentioned it and nothing supported it.
 
 ## Gotchas & notes
-- **Figma MCP is installed** (`claude mcp add … figma`, stored in the `.claude-pro` profile) but the
-  Nodebase Workflow file returns *"you don't have edit access"* — Figma's MCP needs editor access.
-- **A second terminal's transcript** lives under `~/.claude/projects/…` (not `.claude-pro`); read big
-  ones with `tail -c`.
-- **Never quote an apostrophe inside a `node -e '…'` in Bash** — it ends the shell string. Write the
-  script to a file with the Write tool instead (the heredoc/backslash gotchas in CLAUDE.md are related).
-- **`.pill-track` is unlayered CSS**, so a plain `hidden` on the track won't hide it — use `!hidden`.
-- Commit named files only — never `git add -A` (untracked design sources live in the tree).
-- Pre-existing typecheck noise to ignore: `splitNode`/`splitInfo` on `CanvasCtx` (PortalCanvas),
-  the TS1117 duplicate key in `portalWidgetSpec.ts`, a `ToggleRow` prop error in `PortalWidgetDrawer`,
-  and a couple in `PortalControls` / `PortalBoxControls`.
+- **Replacement in place** needs `PlacedElement.replaces`: appending a replacement to a built-in row
+  (the old `dropInRow` route) squeezed the work band's cards to slivers.
+- **A hidden BAND hides everything anchored under it** (`band()`), so a replacement for Favourite /
+  Most Used Services is anchored to the nearest visible band above.
+- **Check an icon's COMPUTED width** when it looks small — a flex item was squeezing a 16px svg to 8px.
+- **The dev server can take >60s to serve the first page** after start; wait on `curl` before tests.
+- **`node -e '…'` breaks on an apostrophe or backtick** in the text — write scripts to files.
+- Commit named files only — never `git add -A`. Pre-existing typecheck noise listed in the previous
+  handoff still applies (`splitNode`/`splitInfo`, the `portalWidgetSpec.ts` TS1117, and a few others).
