@@ -3265,7 +3265,10 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
                       key={m}
                       onClick={() => {
                         setPubMenu(false);
-                        setPubMode(m);
+                        /* ⚠️ The big button STAYS "Publish" (27 Sep 2026). It used to take the face of the last row
+                           picked, so after one Save as draft it read "Save as draft" — and pressing it expecting
+                           to publish saved another draft, which looked exactly like the status not changing. A
+                           draft is saved from here; the button is always the live action. */
                         if (m === 'draft') onSaveDraft?.(); else onPublish();
                       }}
                       className="flex w-full items-center gap-2 rounded px-2.5 py-2 text-left text-[13px] font-medium text-[#364658] transition-colors hover:bg-[#F5F7FA]"
