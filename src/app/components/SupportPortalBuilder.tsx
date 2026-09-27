@@ -23,6 +23,7 @@ import { setPortalColorMode } from './portalStyleResolver';
 import type { PortalTheme } from './PortalThemePanel';
 import { PortalElementPanel } from './PortalElementPanel';
 import { CanvasProvider } from './PortalCanvas';
+import { PortalShortcuts } from './PortalShortcuts';
 import {
   BLOCK_ORDER_V2, ROW_ORDER_V2, RAIL_V2, MAIN_V2,
   DEFAULT_BLOCK_ORDER, DEFAULT_CONTENT, DEFAULT_ROW_ORDER, moveIn, nodeById, parseItemId,
@@ -2889,6 +2890,10 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
      ⚠️ Nothing is stored. With no auto-open there is no "have they seen it" to remember, and a flag
      nothing reads is state you have to keep correct forever in exchange for nothing. */
   const [tour, setTour] = useState(false);
+  /* The keyboard sheet, opened from the Help menu beside it and from `?`. Held HERE rather than in
+     `PortalShortcuts` because two surfaces open it and only one of them is the shortcut handler. */
+  const [keys, setKeys] = useState(false);
+  const [helpMenu, setHelpMenu] = useState(false);
   const [tourSeam, setTourSeam] = useState<string | null>(null);
   const endTour = useCallback(() => { setTour(false); setTourSeam(null); }, []);
 
@@ -3106,6 +3111,15 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
         <div className={`min-h-0 flex-1 overflow-y-auto ${themeClass}`} style={themeWrap}>
           {/* Preview must behave like the real portal — selection off. */}
           <CanvasProvider value={{ ...canvasCtx, enabled: false, selectedId: null, hoverId: null, select: () => {}, setHover: () => {} }}>
+            <PortalShortcuts
+              onRail={(i) => { setActive(RAIL[i]?.key ?? "add"); setCollapsed(false); }}
+              onHidePanel={() => setCollapsed(true)}
+              onPreview={() => setPreview(true)}
+              onExitPreview={() => setPreview(false)}
+              onSaveDraft={onSaveDraft}
+              open={keys}
+              onOpenChange={setKeys}
+            />
             <SupportPortalPreview accent={themeAccent} content={content} sections={sections} icons={icons} placedText={placedText} blockOrder={blockOrder} rowOrder={rowOrder} removed={removed} rowExtras={rowExtras} cfg={cfgFor} blank={page.start === 'blank'} rail={seed?.rail ?? (isV2 ? RAIL_V2 : undefined)} />
           </CanvasProvider>
         </div>
@@ -3170,17 +3184,38 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
               className={`${iconBtn} disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent`}
             ><Redo2 size={17} /></button>
           </TooltipTrigger><TooltipContent>{canRedo ? 'Redo (Ctrl+Shift+Z)' : 'Nothing to redo'}</TooltipContent></Tooltip>
-          {/* ⚠️ The ONLY way into the tour. Nothing opens it on arrival any more, so this is not a
-              way back to something — it is the entry point, and the reason it sits in the top bar
-              rather than in a menu.
-              ⚠️ A BUTTON, not a popover. The plan had it opening a small menu with the tour and a
-              keyboard-shortcuts sheet, but the builder has no shortcuts sheet, and a menu with one
-              real item is a second click in front of the only thing it offers. */}
-          <Tooltip><TooltipTrigger asChild>
-            <button onClick={() => setTour(true)} aria-label="Take the tour" className={iconBtn}>
-              <HelpCircle size={17} />
-            </button>
-          </TooltipTrigger><TooltipContent>Take the tour</TooltipContent></Tooltip>
+          {/* ⚠️ The ONLY way into the tour, and now also into the keyboard sheet — which is why it
+              is a MENU again. The comment that stood here said a menu with one real item is a second
+              click in front of the only thing it offers, and deferred the menu until a shortcuts
+              sheet existed. It exists, so there are two items and the menu earns its place.
+              ⚠️ Both are HELP — one shows you the surface, the other shows you the keys — so they
+              belong behind one glyph rather than taking two slots on a bar of eight. */}
+          <div className="relative">
+            <Tooltip><TooltipTrigger asChild>
+              <button onClick={() => setHelpMenu((v) => !v)} aria-label="Help" className={iconBtn}>
+                <HelpCircle size={17} />
+              </button>
+            </TooltipTrigger><TooltipContent>Help</TooltipContent></Tooltip>
+            {helpMenu && (
+              <>
+                <span className="fixed inset-0 z-[60]" onClick={() => setHelpMenu(false)} />
+                <div className="absolute right-0 top-[calc(100%+6px)] z-[61] w-[196px] rounded-lg border border-[#E5E7EB] bg-white p-1 shadow-[0_12px_16px_-4px_rgba(16,24,40,0.10),0_4px_6px_-2px_rgba(16,24,40,0.06)]">
+                  <button
+                    onClick={() => { setHelpMenu(false); setTour(true); }}
+                    className="flex w-full items-center rounded px-2.5 py-1.5 text-left text-[12.5px] text-[#364658] transition-colors hover:bg-[#F5F7FA]"
+                  >Take the tour</button>
+                  {/* The key is on the row, because a sheet that lists shortcuts should say its own. */}
+                  <button
+                    onClick={() => { setHelpMenu(false); setKeys(true); }}
+                    className="flex w-full items-center justify-between gap-2 rounded px-2.5 py-1.5 text-left text-[12.5px] text-[#364658] transition-colors hover:bg-[#F5F7FA]"
+                  >
+                    Keyboard shortcuts
+                    <kbd className="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded border border-[#DFE5ED] bg-[#F8FAFC] px-1 text-[10px] font-semibold text-[#64748B]">?</kbd>
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
 
           {/* ── Light / dark, for the whole canvas ──────────────────────────────────────────────
               ⚠️ It used to sit on the THEME panel's title row, which put it three clicks away from
@@ -3308,6 +3343,15 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
             style={themeWrap}
           >
             <CanvasProvider value={{ ...canvasCtx, enabled: true }}>
+              <PortalShortcuts
+                onRail={(i) => { setActive(RAIL[i]?.key ?? "add"); setCollapsed(false); }}
+                onHidePanel={() => setCollapsed(true)}
+                onPreview={() => setPreview(true)}
+                onExitPreview={() => setPreview(false)}
+                onSaveDraft={onSaveDraft}
+                open={keys}
+                onOpenChange={setKeys}
+              />
               <SupportPortalPreview accent={themeAccent} content={content} sections={sections} icons={icons} placedText={placedText} blockOrder={blockOrder} rowOrder={rowOrder} removed={removed} rowExtras={rowExtras} cfg={cfgFor} setCfg={patchCfg} blank={page.start === 'blank'} rail={seed?.rail ?? (isV2 ? RAIL_V2 : undefined)} pageImage={pageImg} />
             </CanvasProvider>
           </div>

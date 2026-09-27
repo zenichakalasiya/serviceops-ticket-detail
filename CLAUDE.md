@@ -1700,6 +1700,49 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   popup about ARRANGEMENT into a popup about two things. **`bannerSplit` is untouched and still read by
   `weight()`**, so every banner keeps the ratio it has. Popup measured 320×185 at Default.
 
+- **Support Portal — the builder has KEYBOARD SHORTCUTS, and a sheet that lists them
+  (`PortalShortcuts.tsx`, 27 Sep 2026).** Full table in **SHORTCUTS.md §5** — that file is the
+  source of truth; this bullet is the reasoning.
+  **One modifier, one class of action**, which is what lets somebody guess a key they have never
+  pressed: a **bare letter** presses a button on this widget's floating toolbar, a **bare arrow**
+  moves it, **Shift+arrow** resizes it, **Alt+arrow** changes what is selected, **Alt+digit** is
+  the builder's own chrome, **Ctrl** is the document verbs. The letters are ordered the way the
+  toolbar's own fences already group its buttons — move it · place it · style it · remove it — so
+  the sheet reads in the same order as the bar it describes.
+  ⚠️ **Every widget action is a CLICK on the real toolbar**, found by `data-tip`, not a second call
+  into the canvas context. The reason that matters: **a button exists only when its action is
+  legal** — a move arrow is absent at the end of a row and on the wrong axis, Replace where nothing
+  can be swapped, Copy on a widget with no instance to clone — so a key that cannot apply is a
+  no-op for free, with no second copy of the rules to keep in step. It is also the pattern
+  `DrawerShortcuts` already uses. A tip carrying a live value is matched on its PREFIX.
+  ⚠️ **`Alt` is free here ONLY because `DrawerShortcuts` opens with `if (!props.active) return`** —
+  a detail drawer has to exist and none does in Admin. Render a drawer over this surface and every
+  Alt binding collides.
+  ⚠️ **`/` and `Ctrl+K` are deliberately unbound** — `GlobalSearch` is mounted once by `App` and
+  answers on every page, this one included.
+  ⚠️ **PUBLISH HAS NO SHORTCUT**, on purpose: it changes what requesters see and can demote another
+  portal to Draft, the only action on this screen whose consequence is outside the page. `Ctrl+S`
+  (Save as draft) covers the reflex that reaches for a key.
+  ⚠️ **Bare arrows MOVE** (Zeni's call — what Figma, Webflow and Framer all train). The cost is real
+  and is stated on the sheet rather than left to be discovered: with a widget selected the canvas
+  cannot be arrow-scrolled, so `Esc` first.
+  ⚠️ **`Ctrl+D` is Duplicate and a bare `D` is Drop shadow.** They would have been one key apart
+  with no way to say which you meant. `Ctrl+D` is the browser's bookmark and `preventDefault()`
+  stops it — measured, no bookmark dialog — which also corrects SHORTCUTS.md's header, where
+  `Ctrl+D` was listed among the un-interceptable keys. It is not one.
+  ⚠️ **A TEXT node shows the TEXT toolbar**, so `B`/`O`/`C` find nothing on it and correctly do
+  nothing; `Alt+↑` reaches the frame first. This is the documented two-mode text model, not a bug.
+  ⚠️ Mounted in **BOTH** `CanvasProvider`s and gated on `enabled`, so Preview gets only `Esc` /
+  `Alt+P` to leave — one component rather than a second listener for a second surface.
+  **The top bar's HelpCircle is a MENU again** — *Take the tour* · *Keyboard shortcuts*. Its own
+  comment had deferred the menu ("a menu with one real item is a second click in front of the only
+  thing it offers") until a shortcuts sheet existed. It exists, so there are two items.
+  Verified in a browser: arrows reorder the Quick Actions row and back; `Alt+↑` selects the parent
+  and `Alt+→` a sibling; `Ctrl+D` takes sections 1→2 and `Delete` 2→1; ten `Shift+←` presses take a
+  section 1081→973px; all six style keys open their popup; `Alt+1..4` open the right rails, `Alt+0`
+  hides the panel, `Alt+P` enters Preview and `Esc` returns; the sheet opens from the menu and from
+  `?`, closes on `Esc`, and no label truncates.
+
 - **Support Portal — the banner image’s colour layer is LINEAR only (25 Sep 2026).** The Linear/Radial
   select is gone from `OverlayLayerEditor`; the angle field and Rotate take its place and get the width.
   A radial wash reads as a spotlight on the photograph rather than as shade under the words — and the
