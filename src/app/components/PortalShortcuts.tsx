@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { useCanvas } from './PortalCanvas';
 import { nodePath } from './portalPageModel';
+import { TOOLBAR_KEYS, tipsOf } from './portalShortcutKeys';
+import type { ToolbarAction } from './portalShortcutKeys';
 
 /* Support Portal builder — keyboard shortcuts, and the sheet that lists them.
  *
@@ -54,15 +56,21 @@ function press(...tips: string[]): boolean {
   return false;
 }
 
+/** Press the button for a named action, reading its prefixes from the shared map. */
+const act = (a: ToolbarAction) => press(...tipsOf(a));
+
 /* ⚠️ "Add a widget beside this one" and "Add a question" both begin "Add a ", and they are opposite
-   actions — beside it, versus inside it. The inside one is whatever `Add a …` is left once the
-   beside one is excluded, so a new collection's own wording needs no change here. */
+   actions — beside it, versus inside it. The inside one is whatever `Add a …` is left once the beside
+   one is EXCLUDED, which is the one case a plain prefix scan cannot express, so it is spelled out
+   here rather than in the map. `addBeside`'s own prefixes are what it excludes, so a change there
+   still reaches this. */
 function pressAddInside(): boolean {
   const t = bar();
   if (!t) return false;
+  const beside = tipsOf('addBeside');
   const hit = [...t.querySelectorAll<HTMLElement>('[data-tip]')].find((b) => {
     const tip = b.getAttribute('data-tip') || '';
-    return (tip.startsWith('Add a ') && !tip.startsWith('Add a widget beside')) || tip === 'Add a block inside';
+    return tipsOf('addInside').some((k) => tip.startsWith(k)) && !beside.some((k) => tip.startsWith(k));
   });
   if (!hit) return false;
   hit.click();
@@ -143,7 +151,7 @@ export function PortalShortcuts(props: PortalShortcutProps) {
          with no way to tell which you meant. Ctrl+D is the browser's bookmark, so it has to be
          prevented; every design tool takes it for the same reason. It presses the bar's own Copy,
          which is absent on a widget that has no instance to clone, so the limit needs no restating. */
-      if (mod && e.code === 'KeyD') { e.preventDefault(); if (selectedId) press('Copy'); return; }
+      if (mod && e.code === 'KeyD') { e.preventDefault(); if (selectedId) act('duplicate'); return; }
       /* Undo/redo already have their own handler in the builder — left alone here so there is one
          owner of the history stack rather than two listeners racing on the same keystroke. */
       if (mod) return;
@@ -203,29 +211,28 @@ export function PortalShortcuts(props: PortalShortcutProps) {
          Zeni's call, and it is what Figma, Webflow and Framer all train. Only the parent's own axis
          answers, because only that axis has a button on the bar — the same two arrows the toolbar
          shows. The cost is stated in the sheet: with something selected, Esc first to arrow-scroll. */
-      const ARROWS: Record<string, string[]> = {
-        ArrowLeft: ['Move left'], ArrowRight: ['Move right'],
-        ArrowUp: ['Move up'], ArrowDown: ['Move down'],
+      const ARROWS: Record<string, ToolbarAction> = {
+        ArrowLeft: 'moveLeft', ArrowRight: 'moveRight', ArrowUp: 'moveUp', ArrowDown: 'moveDown',
       };
-      if (ARROWS[e.code]) { if (press(...ARROWS[e.code])) e.preventDefault(); return; }
+      if (ARROWS[e.code]) { if (act(ARROWS[e.code])) e.preventDefault(); return; }
 
       /* ── Everything else is a letter on the bar ── */
       switch (e.code) {
         /* place */
-        case 'KeyA': e.preventDefault(); (e.shiftKey ? pressAddInside() : press('Add a widget beside this one', 'Add widget')); break;
-        case 'KeyR': e.preventDefault(); press('Replace this widget', 'Replace widget'); break;
-        case 'KeyS': e.preventDefault(); press('Split into '); break;
-        case 'KeyD': e.preventDefault(); press('Shadow'); break;
+        case 'KeyA': e.preventDefault(); (e.shiftKey ? pressAddInside() : act('addBeside')); break;
+        case 'KeyR': e.preventDefault(); act('replace'); break;
+        case 'KeyS': e.preventDefault(); act('split'); break;
+        case 'KeyD': e.preventDefault(); act('shadow'); break;
         case 'Enter': if (editWords(id)) e.preventDefault(); break;
-        case 'Delete': case 'Backspace': e.preventDefault(); press('Delete'); break;
+        case 'Delete': case 'Backspace': e.preventDefault(); act('remove'); break;
         /* style */
-        case 'KeyB': e.preventDefault(); press('Background colour', 'Banner background'); break;
-        case 'KeyO': e.preventDefault(); press('Border'); break;
-        case 'KeyC': e.preventDefault(); press('Corner radius'); break;
-        case 'KeyH': e.preventDefault(); press('Horizontal alignment'); break;
-        case 'KeyV': e.preventDefault(); press('Vertical alignment'); break;
-        case 'KeyI': e.preventDefault(); press("The glyph's colour"); break;
-        case 'KeyG': e.preventDefault(); press('Presets', 'Sections, and how they are arranged'); break;
+        case 'KeyB': e.preventDefault(); act('background'); break;
+        case 'KeyO': e.preventDefault(); act('border'); break;
+        case 'KeyC': e.preventDefault(); act('radius'); break;
+        case 'KeyH': e.preventDefault(); act('alignH'); break;
+        case 'KeyV': e.preventDefault(); act('alignV'); break;
+        case 'KeyI': e.preventDefault(); act('icon'); break;
+        case 'KeyG': e.preventDefault(); act('presets'); break;
         case 'KeyP': e.preventDefault(); openSpacing(); break;
         /* remove the selection itself — this also closes any popup the bar has open, because the
            bar is unmounted with it. One press, one meaning. */
@@ -246,39 +253,45 @@ export function PortalShortcuts(props: PortalShortcutProps) {
  * Two columns, grouped exactly as the scheme is — a reader who learns one group has learned what its
  * modifier means everywhere. Ctrl is written as Ctrl because this product's users are on Windows;
  * the handler answers to Cmd as well. */
+/* ⚠️ The keys come from the SAME map the handler presses through and the tooltip prints, so the
+   sheet cannot end up advertising a key that was changed in one of the other two. Rows the toolbar
+   has no button for — the Alt traversal, the Shift resize, the rail — are written out here, because
+   there is no button for them to drift from. */
+const k = (a: ToolbarAction) => [...TOOLBAR_KEYS[a].keys];
+
 const GROUPS: { title: string; note?: string; rows: [string[], string][] }[] = [
   { title: 'Select', note: 'Alt moves the selection', rows: [
     /* ⚠️ Short enough to fit the column. "Select the parent — the column, row or section" named the
        three things it reaches and then truncated at "or s…", which is a label that ends mid-word. */
-    [['Alt', '↑'], 'Select the parent'],
+    [k('selectRow'), 'Select the parent'],
     [['Alt', '↓'], 'Select the first thing inside'],
     [['Alt', '←'], 'Previous sibling'],
     [['Alt', '→'], 'Next sibling'],
     [['Esc'], 'Deselect, and close anything open'],
   ] },
   { title: 'Move and size', note: 'Only the parent’s own axis answers', rows: [
-    [['←', '→', '↑', '↓'], 'Move one place'],
+    [[...k('moveLeft'), ...k('moveRight'), ...k('moveUp'), ...k('moveDown')], 'Move one place'],
     [['Shift', '←', '→'], 'Narrower / wider'],
     [['Shift', '↑', '↓'], 'Shorter / taller'],
   ] },
   { title: 'Place', rows: [
-    [['A'], 'Add a widget beside this one'],
-    [['Shift', 'A'], 'Add an item inside it'],
-    [['R'], 'Replace this widget'],
-    [['Ctrl', 'D'], 'Duplicate'],
-    [['S'], 'Split into columns or rows'],
+    [k('addBeside'), 'Add a widget beside this one'],
+    [k('addInside'), 'Add an item inside it'],
+    [k('replace'), 'Replace this widget'],
+    [k('duplicate'), 'Duplicate'],
+    [k('split'), 'Split into columns or rows'],
     [['Enter'], 'Edit the words'],
-    [['Del'], 'Delete'],
+    [k('remove'), 'Delete'],
   ] },
   { title: 'Style', note: 'Each one opens its popup', rows: [
-    [['B'], 'Background colour'],
-    [['O'], 'Border'],
-    [['C'], 'Corner radius'],
-    [['D'], 'Drop shadow'],
-    [['H'], 'Horizontal alignment'],
-    [['V'], 'Vertical alignment'],
-    [['I'], 'Icon — cards and tiles'],
-    [['G'], 'Arrangement and presets'],
+    [k('background'), 'Background colour'],
+    [k('border'), 'Border'],
+    [k('radius'), 'Corner radius'],
+    [k('shadow'), 'Drop shadow'],
+    [k('alignH'), 'Horizontal alignment'],
+    [k('alignV'), 'Vertical alignment'],
+    [k('icon'), 'Icon — cards and tiles'],
+    [k('presets'), 'Arrangement and presets'],
     [['P'], 'Spacing'],
   ] },
   { title: 'The builder', rows: [
@@ -296,6 +309,31 @@ const GROUPS: { title: string; note?: string; rows: [string[], string][] }[] = [
     [['?'], 'This sheet'],
   ] },
 ];
+
+/** A label with its keys to the right of it, for the product's own dark Radix tooltips.
+ *
+ * ⚠️ The top bar's tooltips used to write the key into the sentence — `Undo (Ctrl+Z)`. That is the
+ * same fact in a second notation, and it reads as prose rather than as something you press; a cap
+ * beside the word is the shape every design tool uses, and it is the shape the floating toolbar now
+ * uses one surface away. Two tooltips on one screen should not describe a key two ways.
+ * ⚠️ Its own small component rather than `ToolbarTip`'s: that one owns a caret, a position and a
+ * colour, and none of those belong to a Radix tooltip that already has all three. What the two share
+ * is the cap, and the cap is four class names — copying it costs less than a prop that says which of
+ * two very different surfaces you are on. */
+export function TipKeys({ label, keys }: { label: string; keys: string[] }) {
+  return (
+    <span className="flex items-center gap-2">
+      {label}
+      <span className="flex items-center gap-1">
+        {keys.map((x, i) => (
+          <kbd key={i} className="inline-flex h-[16px] min-w-[16px] items-center justify-center rounded-[3px] border border-white/15 bg-white/[0.12] px-1 font-sans text-[10px] font-medium leading-none text-white/80">
+            {x}
+          </kbd>
+        ))}
+      </span>
+    </span>
+  );
+}
 
 function Kbd({ children }: { children: React.ReactNode }) {
   return (

@@ -230,6 +230,31 @@ chose, and these are exactly the properties judged by eye against the page behin
 
 Also reachable from the top bar's **Help** menu (*Take the tour* · *Keyboard shortcuts*).
 
+### Where the keys are written down
+
+**`src/app/components/portalShortcutKeys.ts`** — one map, three readers:
+
+| Reader | Uses it for |
+|---|---|
+| `ToolbarTip` (PortalCanvas) | printing the key caps on a tooltip |
+| `PortalShortcuts` handler | knowing which button a key presses (`act('background')`) |
+| `PortalShortcuts` sheet | the rows in the cheat sheet (`k('background')`) |
+
+⚠️ Add or rename a toolbar action **there**, not in the three call sites. Written separately they
+drift, and the drift is silent in the worst way: a tooltip goes on promising a key that no longer
+does anything.
+
+⚠️ `tips` are **prefixes**, and **declaration order is load-bearing** — `keysForTip` takes the first
+match. `Add a widget beside this one` sits above the bare `Add a ` so every other `Add a …` falls
+through to `Shift+A`.
+
+### Shortcuts are shown on the tooltips
+
+Every toolbar button's tooltip prints its keys to the right of the label, and the top bar's
+Undo / Redo / Help do the same (`TipKeys`). A button with no shortcut shows only its words.
+
+---
+
 ### How a widget action is actually performed
 
 Every widget shortcut is a **click on the real floating toolbar**, found by its `data-tip`,

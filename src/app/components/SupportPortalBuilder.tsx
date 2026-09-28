@@ -24,6 +24,7 @@ import type { PortalTheme } from './PortalThemePanel';
 import { PortalElementPanel } from './PortalElementPanel';
 import { CanvasProvider } from './PortalCanvas';
 import { PortalShortcuts } from './PortalShortcuts';
+import { TipKeys } from './PortalShortcuts';
 import {
   BLOCK_ORDER_V2, ROW_ORDER_V2, RAIL_V2, MAIN_V2,
   DEFAULT_BLOCK_ORDER, DEFAULT_CONTENT, DEFAULT_ROW_ORDER, moveIn, nodeById, parseItemId,
@@ -3176,14 +3177,14 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
               disabled={!canUndo}
               className={`${iconBtn} disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent`}
             ><Undo2 size={17} /></button>
-          </TooltipTrigger><TooltipContent>{canUndo ? 'Undo (Ctrl+Z)' : 'Nothing to undo'}</TooltipContent></Tooltip>
+          </TooltipTrigger><TooltipContent>{canUndo ? <TipKeys label="Undo" keys={['Ctrl', 'Z']} /> : 'Nothing to undo'}</TooltipContent></Tooltip>
           <Tooltip><TooltipTrigger asChild>
             <button
               onClick={redo}
               disabled={!canRedo}
               className={`${iconBtn} disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent`}
             ><Redo2 size={17} /></button>
-          </TooltipTrigger><TooltipContent>{canRedo ? 'Redo (Ctrl+Shift+Z)' : 'Nothing to redo'}</TooltipContent></Tooltip>
+          </TooltipTrigger><TooltipContent>{canRedo ? <TipKeys label="Redo" keys={['Ctrl', 'Shift', 'Z']} /> : 'Nothing to redo'}</TooltipContent></Tooltip>
           {/* ⚠️ The ONLY way into the tour, and now also into the keyboard sheet — which is why it
               is a MENU again. The comment that stood here said a menu with one real item is a second
               click in front of the only thing it offers, and deferred the menu until a shortcuts
@@ -3195,7 +3196,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
               <button onClick={() => setHelpMenu((v) => !v)} aria-label="Help" className={iconBtn}>
                 <HelpCircle size={17} />
               </button>
-            </TooltipTrigger><TooltipContent>Help</TooltipContent></Tooltip>
+            </TooltipTrigger><TooltipContent><TipKeys label="Help" keys={['?']} /></TooltipContent></Tooltip>
             {helpMenu && (
               <>
                 <span className="fixed inset-0 z-[60]" onClick={() => setHelpMenu(false)} />

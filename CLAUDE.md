@@ -1742,6 +1742,37 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   section 1081→973px; all six style keys open their popup; `Alt+1..4` open the right rails, `Alt+0`
   hides the panel, `Alt+P` enters Preview and `Esc` returns; the sheet opens from the menu and from
   `?`, closes on `Esc`, and no label truncates.
+  **Each shortcut is PRINTED ON ITS TOOLTIP** (28 Sep 2026) — the label, then its key caps to the
+  right, the way every design tool does it. A shortcut nobody can see is one only its author uses,
+  and the toolbar is where somebody is already looking when they wonder whether there is a faster
+  way. The floating tip gets `TipCap` and the top bar's Radix tooltips get `TipKeys`.
+  ⚠️ **`portalShortcutKeys.ts` is the ONE place a toolbar action's keys are written**, and it is its
+  own module because `PortalShortcuts` imports `useCanvas` from `PortalCanvas`, so `PortalCanvas`
+  importing back would be a cycle. All THREE readers go through it — the tooltip prints from it, the
+  handler presses through it (`act('background')`), and the sheet's rows read it (`k('background')`).
+  Written three times they would drift, and the drift is silent in the worst way: **a tooltip goes on
+  promising a key that no longer does anything.**
+  ⚠️ **`tips` are PREFIXES and their ORDER is load-bearing.** `keysForTip` takes the first match, which
+  is what separates the two Add buttons — `Add a widget beside this one` is declared above the bare
+  `Add a `, so a question, a slide or a link falls through to `Shift+A` and a new collection's own
+  wording needs no change. The one rule a prefix scan cannot express is add-INSIDE, which is "any
+  `Add a …` that is not the beside one", so `pressAddInside` spells it out — reading `addBeside`'s own
+  prefixes, so a change there still reaches it.
+  ⚠️ **The caps are NOT the sheet's `Kbd`.** That chip is `#F8FAFC` on white paper; on a `#364658`
+  tooltip it is a row of bright blocks that outshouts the words. The tooltip cap is the tooltip's own
+  surface lifted — `bg-white/12`, `border-white/15`, `text-white/80` — and deliberately NOT full
+  white, because the LABEL is what you came to read and the key is the footnote.
+  ⚠️ **The top bar stopped writing the key into the sentence.** `Undo (Ctrl+Z)` was the same fact in a
+  second notation, reading as prose rather than as something you press — and two tooltips one surface
+  apart should not describe a key two ways. `TipKeys` is its own small component rather than a prop on
+  `ToolbarTip`: that one owns a caret, a position and a colour, none of which belong to a Radix
+  tooltip that already has all three. What they share is four class names.
+  ⚠️ The floating tip lost its `max-w-[220px]`: with caps beside a label, the widest in the set (the
+  icon menu's) was overflowing its own box rather than wrapping, because the tip is `whitespace-nowrap`.
+  A tooltip that is one line is allowed to be as long as its line.
+  Verified: all 10 buttons on an action card's bar carry the right cap and `Drag to move` correctly
+  carries none; the top bar reads `Undo` + `Ctrl` `Z` and `Help` + `?`; the cap renders white-at-12%
+  over a dark tooltip on both surfaces.
 
 - **Support Portal — the banner image’s colour layer is LINEAR only (25 Sep 2026).** The Linear/Radial
   select is gone from `OverlayLayerEditor`; the angle field and Rotate take its place and get the width.

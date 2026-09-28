@@ -13,6 +13,7 @@ import { BannerFillEditor, BannerLayoutPanel, OverlayLayerEditor, TilePresetPick
 import { bannerBoxId, flipRoot, groupOf } from './portalBannerLayout';
 import type { BannerNode } from './portalBannerLayout';
 import { BANNER_GROUPS, bannerGroupGap } from './portalPageModel';
+import { keysForTip } from './portalShortcutKeys';
 import { toast } from 'sonner';
 import { MiniRange } from './PortalRange';
 import { fillsFromConfig, HEADING_SIZE, PORTAL_FONTS, SECTION_LAYOUTS, SPLITTABLE_BANDS, TEXT_STYLES, ZERO_BOX, COMPOSABLE, BANNER_BLOCKS, inBanner, dragIdOf, isContactChild, boxInfo, canAddBeside, defaultAlignH, nodeById, paintsOwnShadow, paintsOwnSurface, toolbarCaps, nodePath, placedIn, placedType } from './portalPageModel';
@@ -2270,18 +2271,44 @@ function useToolbarTip() {
   return { tip, setTip, readTip };
 }
 
+/** One key cap, on a dark tooltip.
+ *
+ * ⚠️ NOT the sheet's `Kbd`. That one is a light chip built for white paper — `#F8FAFC` on a `#364658`
+ * tooltip is a row of bright blocks that outshouts the words they belong to. These are the tooltip's
+ * own surface lifted a little, which is what a key looks like when the thing it sits on is dark.
+ * ⚠️ `text-white/80`, not white: the LABEL is what you came to read. A cap at full strength beside it
+ * reads as the more important of the two, which is backwards — the key is the footnote. */
+function TipCap({ children }: { children: ReactNode }) {
+  return (
+    <kbd className="inline-flex h-[16px] min-w-[16px] items-center justify-center rounded-[3px] border border-white/15 bg-white/[0.12] px-1 font-sans text-[10px] font-medium leading-none text-white/80">
+      {children}
+    </kbd>
+  );
+}
+
 /** The one tooltip every floating toolbar draws — a caret under (or over) the exact control. */
 function ToolbarTip({ tip }: { tip: ToolbarTipState | null }) {
   if (!tip) return null;
+  /* ⚠️ Read from `portalShortcutKeys`, the same entry `PortalShortcuts` presses the button through —
+     so a tooltip cannot promise a key that does nothing, which is the one way this feature fails
+     silently. A button with no shortcut simply has no caps. */
+  const keys = keysForTip(tip.label);
   return (
     <span
       style={{ left: tip.x }}
       /* ⚠️ #364658, the product's own ink, rather than the `#1F2937` every other dark tooltip uses. The
          tip belongs to the bar it hangs off, so it takes the bar's colour — and it is the one place on a
          toolbar big enough to READ a colour off, which is why a change to the glyphs alone was invisible. */
-      className={`tb-tip pointer-events-none absolute z-[80] max-w-[220px] -translate-x-1/2 whitespace-nowrap rounded bg-[#364658] px-2 py-1 text-[11px] leading-[16px] text-white shadow-[0_4px_10px_rgba(16,24,40,0.18)] ${tip.above ? 'bottom-full mb-1.5' : 'top-full mt-1.5'}`}
+      /* ⚠️ `max-w` is gone now that a tip can carry caps: the widest label in the set is the icon menu's
+         ("The glyph's colour, its badge, and the badge's corners and border"), and at 220px with
+         `whitespace-nowrap` it was already overflowing its own box rather than wrapping. A tooltip that
+         is one line is allowed to be as long as its line. */
+      className={`tb-tip pointer-events-none absolute z-[80] flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded bg-[#364658] px-2 py-1 text-[11px] leading-[16px] text-white shadow-[0_4px_10px_rgba(16,24,40,0.18)] ${tip.above ? 'bottom-full mb-1.5' : 'top-full mt-1.5'}`}
     >
       {tip.label}
+      {/* The keys sit to the RIGHT of the words, after a gap — the label is the sentence and the caps
+          are how you say it faster, which is the order you read them in. */}
+      {keys && <span className="flex items-center gap-1">{keys.map((k, i) => <TipCap key={i}>{k}</TipCap>)}</span>}
       {/* The caret is the whole point: it is what ties the words to one of nine identical-sized glyphs. */}
       <span className={`absolute left-1/2 size-2 -translate-x-1/2 rotate-45 bg-[#364658] ${tip.above ? '-bottom-[3px]' : '-top-[3px]'}`} />
     </span>
