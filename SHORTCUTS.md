@@ -193,6 +193,7 @@ cost is stated on the sheet: with a widget selected the canvas cannot be arrow-s
 
 | Shortcut | Action |
 |---|---|
+| `N` | **New section** — after the section holding the selection, or at the foot of the page when nothing is selected. Works with nothing selected. |
 | `A` | Add a widget beside this one |
 | `Shift` + `A` | Add an item **inside** it (Accordion, FAQ, any collection) |
 | `R` | Replace this widget |
@@ -224,11 +225,25 @@ chose, and these are exactly the properties judged by eye against the page behin
 | `Alt` + `1` … `4` | Widgets · Theme · Branding · Banners |
 | `Alt` + `0` | Hide the design panel |
 | `Alt` + `P` | Preview — and `Esc` or `Alt+P` back |
+| `Alt` + `L` | Light / dark — works in Preview too, so both themes can be checked as a requester sees them |
 | `Ctrl` + `S` | Save as draft |
 | `Ctrl` + `Z` / `Ctrl`+`Shift`+`Z` | Undo / Redo *(owned by `SupportPortalBuilder`, not this file)* |
 | `?` | Open the shortcuts sheet |
 
 Also reachable from the top bar's **Help** menu (*Take the tour* · *Keyboard shortcuts*).
+
+**The sheet is ordered by PRIORITY, not by modifier** (28 Sep 2026). Row 1 is *The builder*
+(Preview first) beside *Place* (in the order a page is built: new section → split → add a widget
+→ …); row 2 is *Select* and *Move and size* beside *Style* and *Document*. The journey it follows:
+**N** a section → **S** split it → **A** a widget → style it with the letters → **Alt+1…4** the
+rail → **Alt+P** Preview → **Esc** back. The builder's own keys live in `CHROME_KEYS`
+(`portalShortcutKeys.ts`) beside `TOOLBAR_KEYS`, so the sheet and every tooltip read one map.
+
+**Every control with a key shows it on an INSTANT tooltip** — Preview, Exit preview, the light/dark
+toggle, the four rail items (to the LEFT, over the canvas, not over the panel they open), Undo, Redo
+and Help. The product's 700ms default is right for a tooltip repeating a label you can already read;
+one that carries the only statement of a shortcut should answer the moment you point. The cap is a
+filled block with **no stroke**, 3px side padding, set 10px off the words.
 
 ### Inside an open popup
 

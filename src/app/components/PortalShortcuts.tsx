@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X } from 'lucide-react';
+import { Keyboard, X } from 'lucide-react';
 import { useCanvas } from './PortalCanvas';
 import { nodePath } from './portalPageModel';
-import { TOOLBAR_KEYS, tipsOf } from './portalShortcutKeys';
-import type { ToolbarAction } from './portalShortcutKeys';
+import { TOOLBAR_KEYS, chromeKeys, tipsOf } from './portalShortcutKeys';
+import type { ChromeAction, ToolbarAction } from './portalShortcutKeys';
 
 /* Support Portal builder — keyboard shortcuts, and the sheet that lists them.
  *
@@ -111,6 +111,11 @@ export interface PortalShortcutProps {
   /** Leaves preview; called only from the read-only one. */
   onExitPreview: () => void;
   onSaveDraft: () => void;
+  /** N — a new one-column section, after the section holding the selection, or at the foot of the
+   *  page when nothing is selected. The builder owns where "after" is; the key only asks. */
+  onAddSection: (fromId: string | null) => void;
+  /** Alt+L — flips the canvas between light and dark. */
+  onToggleMode: () => void;
   /** The sheet is opened from the top bar's Help menu as well as from `?`. */
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -132,6 +137,9 @@ export function PortalShortcuts(props: PortalShortcutProps) {
          Leaving it is the only thing to offer. */
       if (!enabled) {
         if (e.key === 'Escape' || (e.altKey && e.code === 'KeyP')) { e.preventDefault(); props.onExitPreview(); }
+        /* ⚠️ Light/dark answers in Preview as well — seeing the page as a requester sees it, in both
+           themes, is exactly what Preview is for, and leaving it to flip the theme defeats that. */
+        else if (e.altKey && e.code === 'KeyL') { e.preventDefault(); props.onToggleMode(); }
         return;
       }
 
@@ -141,6 +149,8 @@ export function PortalShortcuts(props: PortalShortcutProps) {
       if (e.altKey && !mod) {
         if (e.code === 'KeyP') { e.preventDefault(); props.onPreview(); return; }
         if (e.code === 'Digit0') { e.preventDefault(); props.onHidePanel(); return; }
+        /* CHROME_KEYS.mode */
+        if (e.code === 'KeyL') { e.preventDefault(); props.onToggleMode(); return; }
         const rail = ['Digit1', 'Digit2', 'Digit3', 'Digit4'].indexOf(e.code);
         if (rail >= 0) { e.preventDefault(); props.onRail(rail); return; }
       }
@@ -155,6 +165,10 @@ export function PortalShortcuts(props: PortalShortcutProps) {
       /* Undo/redo already have their own handler in the builder — left alone here so there is one
          owner of the history stack rather than two listeners racing on the same keystroke. */
       if (mod) return;
+
+      /* CHROME_KEYS.newSection — N, BEFORE the selection gate. It is the first step of building a
+         page, so it has to work on an empty one: with nothing selected it lands at the page's foot. */
+      if (e.code === 'KeyN' && !e.altKey && !e.shiftKey) { e.preventDefault(); props.onAddSection(selectedId); return; }
 
       if (!selectedId) return;
       const id = selectedId;
@@ -250,83 +264,108 @@ export function PortalShortcuts(props: PortalShortcutProps) {
 
 /* ── The sheet ───────────────────────────────────────────────────────────────────────────────────
  *
- * Two columns, grouped exactly as the scheme is — a reader who learns one group has learned what its
- * modifier means everywhere. Ctrl is written as Ctrl because this product's users are on Windows;
- * the handler answers to Cmd as well. */
+ * Two columns in two rows, ordered by PRIORITY — see `LAYOUT`. Each group still keeps to one modifier,
+ * so a reader who learns a group has learned what its modifier means everywhere. Ctrl is written as
+ * Ctrl because this product's users are on Windows; the handler answers to Cmd as well. */
 /* ⚠️ The keys come from the SAME map the handler presses through and the tooltip prints, so the
    sheet cannot end up advertising a key that was changed in one of the other two. Rows the toolbar
    has no button for — the Alt traversal, the Shift resize, the rail — are written out here, because
    there is no button for them to drift from. */
 const k = (a: ToolbarAction) => [...TOOLBAR_KEYS[a].keys];
+const ck = (a: ChromeAction) => chromeKeys(a);
+/** A combination — every key pressed together — written with `+` between them. */
+const combo = (keys: string[]) => keys.flatMap((x, i) => (i ? ['+', x] : [x]));
 
-const GROUPS: { title: string; note?: string; rows: [string[], string][] }[] = [
-  { title: 'Select', note: 'Alt moves the selection', rows: [
-    /* ⚠️ Short enough to fit the column. "Select the parent — the column, row or section" named the
-       three things it reaches and then truncated at "or s…", which is a label that ends mid-word. */
-    [k('selectRow'), 'Select the parent'],
-    [['Alt', '↓'], 'Select the first thing inside'],
-    [['Alt', '←'], 'Previous sibling'],
-    [['Alt', '→'], 'Next sibling'],
-    [['Esc'], 'Deselect, and close anything open'],
-  ] },
-  { title: 'Move and size', note: 'Only the parent’s own axis answers', rows: [
-    [[...k('moveLeft'), ...k('moveRight'), ...k('moveUp'), ...k('moveDown')], 'Move one place'],
-    [['Shift', '←', '→'], 'Narrower / wider'],
-    [['Shift', '↑', '↓'], 'Shorter / taller'],
-  ] },
-  { title: 'Place', rows: [
-    [k('addBeside'), 'Add a widget beside this one'],
-    [k('addInside'), 'Add an item inside it'],
-    [k('replace'), 'Replace this widget'],
-    [k('duplicate'), 'Duplicate'],
-    [k('split'), 'Split into columns or rows'],
-    [['Enter'], 'Edit the words'],
-    [k('remove'), 'Delete'],
-  ] },
-  { title: 'Style', note: 'Each one opens its popup', rows: [
-    [k('background'), 'Background colour'],
-    [k('border'), 'Border'],
-    [k('radius'), 'Corner radius'],
-    [k('shadow'), 'Drop shadow'],
-    [k('alignH'), 'Horizontal alignment'],
-    [k('alignV'), 'Vertical alignment'],
-    [k('icon'), 'Icon — cards and tiles'],
-    [k('presets'), 'Arrangement and presets'],
-    [['P'], 'Spacing'],
-  ] },
-  { title: 'The builder', rows: [
-    [['Alt', '1'], 'Widgets'],
-    [['Alt', '2'], 'Theme'],
-    [['Alt', '3'], 'Branding'],
-    [['Alt', '4'], 'Banners'],
-    [['Alt', '0'], 'Hide the design panel'],
-    [['Alt', 'P'], 'Preview — and back'],
-  ] },
-  { title: 'Document', rows: [
-    [['Ctrl', 'Z'], 'Undo'],
-    [['Ctrl', 'Shift', 'Z'], 'Redo'],
-    [['Ctrl', 'S'], 'Save as draft'],
-    [['?'], 'This sheet'],
-  ] },
+type Row = { keys: string[]; label: string; lead?: boolean };
+type Group = { title: string; note?: string; rows: Row[] };
+
+/* ── The sheet's content, in PRIORITY order ──────────────────────────────────────────────────────
+ *
+ * ⚠️ ORDERED BY THE JOURNEY, not by modifier (Zeni's call, 28 Sep 2026). It used to read the scheme
+ * back — Select, Move, Place, Style, Builder, Document — which is tidy to whoever wrote it and not the
+ * order anybody builds a page in. Row 1 is what you reach for FIRST and MOST: the builder's own keys
+ * (Preview above all) beside Place, whose rows run in the order a page is built — new section → split
+ * it → put a widget in → around it. Row 2 is what you reach for once something is on the page:
+ * selecting and moving it, then styling it, then the document verbs. */
+const BUILDER: Group = { title: 'The builder', rows: [
+  /* ⚠️ Preview FIRST and set in the label's strongest weight — the most-used key on this screen and
+     the one Zeni named as the most important, so it should be the first thing the eye lands on. */
+  { keys: combo(ck('preview')), label: 'Preview — and back', lead: true },
+  { keys: ck('exitPreview'), label: 'Leave preview' },
+  { keys: combo(ck('mode')), label: 'Light / dark' },
+  { keys: combo(ck('widgets')), label: 'Widgets' },
+  { keys: combo(ck('theme')), label: 'Theme' },
+  { keys: combo(ck('branding')), label: 'Branding' },
+  { keys: combo(ck('banners')), label: 'Banners' },
+  { keys: combo(ck('hidePanel')), label: 'Hide the design panel' },
+] };
+
+const PLACE: Group = { title: 'Place', note: 'In the order a page is built', rows: [
+  { keys: ck('newSection'), label: 'New section', lead: true },
+  { keys: k('split'), label: 'Split into columns or rows' },
+  { keys: k('addBeside'), label: 'Add a widget beside this one' },
+  { keys: combo(k('addInside')), label: 'Add an item inside it' },
+  { keys: k('replace'), label: 'Replace this widget' },
+  { keys: combo(k('duplicate')), label: 'Duplicate' },
+  { keys: ['Enter'], label: 'Edit the words' },
+  { keys: k('remove'), label: 'Delete' },
+] };
+
+const SELECT: Group = { title: 'Select', note: 'Alt changes what is selected', rows: [
+  /* Short enough to fit — "Select the parent — the column, row or section" truncated at "or s…". */
+  { keys: combo(k('selectRow')), label: 'Select the parent' },
+  { keys: ['Alt', '+', '↓'], label: 'Select the first thing inside' },
+  { keys: ['Alt', '+', '←', '/', '→'], label: 'Previous / next sibling' },
+  { keys: ['Esc'], label: 'Deselect, and close anything open' },
+] };
+
+const MOVE: Group = { title: 'Move and size', note: 'Only the parent’s own axis answers', rows: [
+  { keys: [...k('moveLeft'), ...k('moveRight'), ...k('moveUp'), ...k('moveDown')], label: 'Move one place' },
+  { keys: ['Shift', '+', '←', '/', '→'], label: 'Narrower / wider' },
+  { keys: ['Shift', '+', '↑', '/', '↓'], label: 'Shorter / taller' },
+] };
+
+const STYLE: Group = { title: 'Style', note: 'Each opens its popup — arrows walk it', rows: [
+  { keys: k('background'), label: 'Background colour' },
+  { keys: k('border'), label: 'Border' },
+  { keys: k('radius'), label: 'Corner radius' },
+  { keys: k('shadow'), label: 'Drop shadow' },
+  { keys: k('alignH'), label: 'Horizontal alignment' },
+  { keys: k('alignV'), label: 'Vertical alignment' },
+  { keys: k('icon'), label: 'Icon — cards and tiles' },
+  { keys: k('presets'), label: 'Arrangement and presets' },
+  { keys: ['P'], label: 'Spacing' },
+] };
+
+const DOCUMENT: Group = { title: 'Document', rows: [
+  { keys: combo(ck('undo')), label: 'Undo' },
+  { keys: combo(ck('redo')), label: 'Redo' },
+  { keys: combo(ck('saveDraft')), label: 'Save as draft' },
+  { keys: ck('help'), label: 'This sheet' },
+] };
+
+/** Rows of the sheet, top to bottom; each row is two columns, each column a stack of groups. */
+const LAYOUT: Group[][][] = [
+  [[BUILDER], [PLACE]],
+  [[SELECT, MOVE], [STYLE, DOCUMENT]],
 ];
 
 /** A label with its keys to the right of it, for the product's own dark Radix tooltips.
  *
  * ⚠️ The top bar's tooltips used to write the key into the sentence — `Undo (Ctrl+Z)`. That is the
  * same fact in a second notation, and it reads as prose rather than as something you press; a cap
- * beside the word is the shape every design tool uses, and it is the shape the floating toolbar now
- * uses one surface away. Two tooltips on one screen should not describe a key two ways.
- * ⚠️ Its own small component rather than `ToolbarTip`'s: that one owns a caret, a position and a
- * colour, and none of those belong to a Radix tooltip that already has all three. What the two share
- * is the cap, and the cap is four class names — copying it costs less than a prop that says which of
- * two very different surfaces you are on. */
+ * beside the word is the shape every design tool uses, and it is the shape the floating toolbar uses
+ * one surface away. Two tooltips on one screen should not describe a key two ways.
+ * ⚠️ The cap has NO STROKE (28 Sep 2026, from Zeni's reference): a filled block on the dark tooltip,
+ * tight around its letter, set 10px off the words. The 1px border and the looser padding made each cap
+ * a small bordered box in a row of them, which read as buttons inside a tooltip. */
 export function TipKeys({ label, keys }: { label: string; keys: string[] }) {
   return (
-    <span className="flex items-center gap-2">
+    <span className="flex items-center gap-2.5">
       {label}
       <span className="flex items-center gap-1">
         {keys.map((x, i) => (
-          <kbd key={i} className="inline-flex h-[16px] min-w-[16px] items-center justify-center rounded-[3px] border border-white/15 bg-white/[0.12] px-1 font-sans text-[10px] font-medium leading-none text-white/80">
+          <kbd key={i} className="inline-flex h-[16px] min-w-[16px] items-center justify-center rounded-[3px] bg-white/[0.16] px-[3px] font-sans text-[10px] font-medium leading-none text-white/90">
             {x}
           </kbd>
         ))}
@@ -335,6 +374,7 @@ export function TipKeys({ label, keys }: { label: string; keys: string[] }) {
   );
 }
 
+/* The ticket page's key cap, deliberately the same — one product, one way of drawing a key. */
 function Kbd({ children }: { children: React.ReactNode }) {
   return (
     <kbd className="inline-flex h-[20px] min-w-[20px] items-center justify-center rounded border border-[#DFE5ED] bg-[#F8FAFC] px-1.5 text-[10px] font-semibold text-[#364658] shadow-[0_1px_0_#DFE5ED]">
@@ -343,43 +383,70 @@ function Kbd({ children }: { children: React.ReactNode }) {
   );
 }
 
+function ShortcutRow({ keys, label, lead }: Row) {
+  return (
+    <div className="flex items-center justify-between gap-3 py-[3px]">
+      <span className="flex flex-shrink-0 items-center gap-1">
+        {keys.map((x, i) => (x === '+' || x === '/'
+          ? <span key={i} className="text-[10px] text-[#9CA3AF]">{x}</span>
+          : <Kbd key={i}>{x}</Kbd>))}
+      </span>
+      <span className={`min-w-0 flex-1 truncate text-right text-[12px] ${lead ? 'font-semibold text-[#1E293B]' : 'text-[#7B8FA5]'}`}>{label}</span>
+    </div>
+  );
+}
+
+function GroupBlock({ g, first }: { g: Group; first: boolean }) {
+  return (
+    <div className={first ? '' : 'mt-3 border-t border-[#F0F1F3] pt-2.5'}>
+      <div className="mb-1 flex items-baseline justify-between gap-2">
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-[#9CA3AF]">{g.title}</span>
+        {g.note && <span className="truncate text-[10.5px] text-[#B0BAC6]">{g.note}</span>}
+      </div>
+      {g.rows.map((r) => <ShortcutRow key={r.label} {...r} />)}
+    </div>
+  );
+}
+
 function Sheet({ onClose }: { onClose: () => void }) {
   return createPortal(
     <>
       <div className="fixed inset-0 z-[10050] bg-black/30" onClick={onClose} />
-      <div className="fixed left-1/2 top-1/2 z-[10051] max-h-[88vh] w-[680px] max-w-[94vw] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl border border-[#E5E7EB] bg-white shadow-2xl">
-        <div className="sticky top-0 flex items-center justify-between border-b border-[#EEF1F5] bg-white px-4 py-3">
-          <div>
-            <p className="text-[14px] font-semibold text-[#1E293B]">Keyboard shortcuts</p>
+      {/* ⚠️ The TICKET page's popup, widened to two columns — same title row with the keyboard glyph,
+          same small uppercase section heads, same caps joined by `+`. The builder has three times as
+          many keys, so one column would scroll for a screen and a half. */}
+      <div className="fixed left-1/2 top-1/2 z-[10051] flex max-h-[88vh] w-[760px] max-w-[94vw] -translate-x-1/2 -translate-y-1/2 flex-col rounded-xl border border-[#E5E7EB] bg-white shadow-2xl">
+        <div className="flex flex-shrink-0 items-start justify-between gap-3 border-b border-[#E5E7EB] px-5 py-3.5">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 text-[15px] font-semibold text-[#111827]">
+              <Keyboard size={17} className="text-[#3D8BD0]" /> Keyboard Shortcuts
+            </div>
             {/* The one sentence that makes the rest guessable. */}
-            <p className="mt-0.5 text-[11.5px] text-[#7B8FA5]">
-              A letter presses a button on the selected widget’s toolbar. Arrows move it, Shift resizes it, Alt changes what is selected.
+            <p className="mt-1 text-[11.5px] text-[#7B8FA5]">
+              Alt is the builder, a letter acts on what is selected, arrows move it, Shift resizes it, Ctrl is the document.
             </p>
           </div>
-          <button onClick={onClose} className="flex size-8 items-center justify-center rounded transition-colors hover:bg-[#F3F4F6]">
-            <X size={16} className="text-[#64748B]" />
+          <button onClick={onClose} aria-label="Close" className="flex size-8 flex-shrink-0 items-center justify-center rounded text-[#6B7280] transition-colors hover:bg-[#F3F4F6] hover:text-[#111827]">
+            <X size={18} />
           </button>
         </div>
-        <div className="grid grid-cols-2 gap-x-6 gap-y-4 p-4">
-          {GROUPS.map((g) => (
-            <div key={g.title}>
-              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-[#7B8FA5]">{g.title}</p>
-              {g.note && <p className="mb-1.5 text-[11px] text-[#9CA3AF]">{g.note}</p>}
-              {g.rows.map(([keys, label]) => (
-                <div key={label} className="flex items-center justify-between gap-3 py-[3px]">
-                  <span className="flex flex-shrink-0 items-center gap-1">
-                    {keys.map((k, i) => <Kbd key={i}>{k}</Kbd>)}
-                  </span>
-                  <span className="min-w-0 flex-1 truncate text-right text-[12px] text-[#64748B]">{label}</span>
+
+        <div className="min-h-0 flex-1 overflow-y-auto px-5">
+          {LAYOUT.map((row, ri) => (
+            <div key={ri} className={`grid grid-cols-2 gap-x-8 py-3.5 ${ri ? 'border-t border-[#E5E7EB]' : ''}`}>
+              {row.map((col, ci) => (
+                <div key={ci} className="min-w-0">
+                  {col.map((g, gi) => <GroupBlock key={g.title} g={g} first={gi === 0} />)}
                 </div>
               ))}
             </div>
           ))}
         </div>
+
         {/* ⚠️ Stated, not silently true. Both are real limits somebody will otherwise hit and report
-            as a bug: the canvas cannot be arrow-scrolled while a widget is selected, and Publish
-            has no key on purpose. */}
-        <p className="border-t border-[#EEF1F5] px-4 py-2.5 text-[11px] text-[#9CA3AF]">
+            as a bug: the canvas cannot be arrow-scrolled while a widget is selected, and Publish has
+            no key on purpose. */}
+        <p className="flex-shrink-0 border-t border-[#EEF1F5] px-5 py-2.5 text-[11px] text-[#9CA3AF]">
           Press <span className="font-medium text-[#64748B]">Esc</span> to deselect before arrow-scrolling the canvas.
           Publish has no shortcut — it changes what requesters see, so it keeps its button.
         </p>

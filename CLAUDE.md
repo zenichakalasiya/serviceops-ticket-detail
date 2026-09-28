@@ -1805,6 +1805,29 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   Verified: all 10 buttons on an action card's bar carry the right cap and `Drag to move` correctly
   carries none; the top bar reads `Undo` + `Ctrl` `Z` and `Help` + `?`; the cap renders white-at-12%
   over a dark tooltip on both surfaces.
+- **Support Portal — the shortcut sheet is ordered by PRIORITY, and two keys joined (28 Sep 2026).**
+  SHORTCUTS.md §5 is the table. The sheet (`Sheet` in `PortalShortcuts`) is the TICKET page's popup
+  (`DrawerShortcuts`) widened to two columns — keyboard-glyph title, small uppercase section heads,
+  caps joined by `+`, same `Kbd` — and laid out by `LAYOUT`: row 1 **The builder | Place**, row 2
+  **Select + Move and size | Style + Document**, so what you reach for first is read first. Preview
+  and New section lead their sections in bold. ⚠️ It used to read the SCHEME back (grouped by
+  modifier), which is tidy to its author and not the order anybody builds a page in.
+  **New keys:** `N` = new section (bound BEFORE the selection gate, so it works on an empty page;
+  `addSectionFromKey` in the builder puts it after the section holding the selection, else the band,
+  else after the last band still showing) and `Alt+L` = light/dark (also in Preview). ⚠️ Both are
+  plain arrows, not `useCallback` — a deps array evaluates during render and would hit the TDZ.
+  ⚠️ **`CHROME_KEYS`** (`portalShortcutKeys.ts`) now holds the builder's own keys beside
+  `TOOLBAR_KEYS`; the sheet and every tooltip read it, and the handler's bindings name the entry
+  they answer. **Instant tooltips** (`delayDuration={0}`) with `TipKeys` on Preview, Exit preview,
+  the mode toggle, the rail (side="left") and Undo/Redo/Help. ⚠️ **The tooltip cap has NO STROKE**
+  (Zeni's reference): `bg-white/[0.16]`, `px-[3px]`, 10px from the words — in BOTH `TipCap`
+  (floating toolbar) and `TipKeys` (Radix). The SHEET's light-surface `Kbd` keeps its border.
+  ⚠️ **Known conflicts, reported to Zeni and NOT yet changed:** `Alt+↑/↓` means "select parent /
+  first child" here and "switch right-panel group" on the ticket page; and `Alt+←/→` is the
+  browser's Back/Forward — the handler only prevents it when a sibling exists, so with no sibling (or
+  nothing selected) Alt+← is LIKELY to navigate away from the builder. ⚠️ UNVERIFIED: a Playwright
+  keypress (CDP) goes to the page and never reaches browser accelerators, so automation cannot show it
+  either way — press it by hand in Chrome to settle it. Awaiting Zeni's list (#68) and a decision.
 - **Support Portal — ARROWS WALK AN OPEN POPUP (`usePopupArrows.ts`, 28 Sep 2026).** A toolbar popup
   that is a set of options now answers to the arrows: **moving APPLIES**, Enter keeps and closes,
   Escape puts back what the popup opened with. Full table in **SHORTCUTS.md §5**.

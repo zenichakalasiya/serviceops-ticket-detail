@@ -2317,7 +2317,7 @@ function useToolbarTip() {
  * reads as the more important of the two, which is backwards — the key is the footnote. */
 function TipCap({ children }: { children: ReactNode }) {
   return (
-    <kbd className="inline-flex h-[16px] min-w-[16px] items-center justify-center rounded-[3px] border border-white/15 bg-white/[0.12] px-1 font-sans text-[10px] font-medium leading-none text-white/80">
+    <kbd className="inline-flex h-[16px] min-w-[16px] items-center justify-center rounded-[3px] bg-white/[0.16] px-[3px] font-sans text-[10px] font-medium leading-none text-white/90">
       {children}
     </kbd>
   );
@@ -2340,7 +2340,7 @@ function ToolbarTip({ tip }: { tip: ToolbarTipState | null }) {
          ("The glyph's colour, its badge, and the badge's corners and border"), and at 220px with
          `whitespace-nowrap` it was already overflowing its own box rather than wrapping. A tooltip that
          is one line is allowed to be as long as its line. */
-      className={`tb-tip pointer-events-none absolute z-[80] flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded bg-[#364658] px-2 py-1 text-[11px] leading-[16px] text-white shadow-[0_4px_10px_rgba(16,24,40,0.18)] ${tip.above ? 'bottom-full mb-1.5' : 'top-full mt-1.5'}`}
+      className={`tb-tip pointer-events-none absolute z-[80] flex -translate-x-1/2 items-center gap-2.5 whitespace-nowrap rounded bg-[#364658] px-2 py-1 text-[11px] leading-[16px] text-white shadow-[0_4px_10px_rgba(16,24,40,0.18)] ${tip.above ? 'bottom-full mb-1.5' : 'top-full mt-1.5'}`}
     >
       {tip.label}
       {/* The keys sit to the RIGHT of the words, after a gap — the label is the sentence and the caps

@@ -63,3 +63,32 @@ export function keysForTip(label: string): string[] | null {
   }
   return null;
 }
+
+/* ── The builder's OWN keys — the ones with no toolbar button to be found by ─────────────────────
+ *
+ * ⚠️ Beside `TOOLBAR_KEYS` for the same reason that map exists: the sheet and every tooltip that
+ * prints one of these keys read it from HERE, so a key changed in one place cannot go on being
+ * advertised in another. The handler in `PortalShortcuts` is the one place they are BOUND — it has to
+ * match `e.code`, which a label cannot give it — and each binding there names the entry it answers.
+ *
+ * ⚠️ They follow the scheme's one rule, so they can be guessed: Alt is the builder's chrome, a bare
+ * letter acts on the page, Ctrl is the document. `N` is a bare letter because a new section is PAGE
+ * content — it is the first step of building a page, and it works with nothing selected. */
+export const CHROME_KEYS = {
+  preview: ['Alt', 'P'],
+  exitPreview: ['Esc'],
+  mode: ['Alt', 'L'],
+  newSection: ['N'],
+  widgets: ['Alt', '1'],
+  theme: ['Alt', '2'],
+  branding: ['Alt', '3'],
+  banners: ['Alt', '4'],
+  hidePanel: ['Alt', '0'],
+  undo: ['Ctrl', 'Z'],
+  redo: ['Ctrl', 'Shift', 'Z'],
+  saveDraft: ['Ctrl', 'S'],
+  help: ['?'],
+} as const;
+
+export type ChromeAction = keyof typeof CHROME_KEYS;
+export const chromeKeys = (a: ChromeAction): string[] => [...CHROME_KEYS[a]];

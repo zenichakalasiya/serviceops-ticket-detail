@@ -25,6 +25,8 @@ import { PortalElementPanel } from './PortalElementPanel';
 import { CanvasProvider } from './PortalCanvas';
 import { PortalShortcuts } from './PortalShortcuts';
 import { TipKeys } from './PortalShortcuts';
+import { chromeKeys } from './portalShortcutKeys';
+import type { ChromeAction } from './portalShortcutKeys';
 import {
   BLOCK_ORDER_V2, ROW_ORDER_V2, RAIL_V2, MAIN_V2,
   DEFAULT_BLOCK_ORDER, DEFAULT_CONTENT, DEFAULT_ROW_ORDER, moveIn, nodeById, parseItemId,
@@ -39,7 +41,7 @@ import { PortalTourDock } from './PortalTourDock';
 import { PortalWidgetDrawer } from './PortalWidgetDrawer';
 import { WIDGET_FOR_NODE, WIDGET_FOR_TYPE, specById, structureSpecId } from './portalWidgetSpec';
 import type { Cfg, WidgetSpec } from './portalWidgetSpec';
-import { BANNER_GROUPS } from './portalPageModel';
+import { BANNER_GROUPS, nodePath } from './portalPageModel';
 import type { Box, BoxDir, CustomSection, NodeStyle, PlacedElement, PortalPageContent, PortalStyles } from './portalPageModel';
 import { PORTAL_ELEMENTS, PORTAL_EMPTY_WIDGETS, PORTAL_TEMPLATES, bannerLayout, bannerShape, isPredefinedElement, isPredefinedType } from './supportPortalData';
 import type { ShapeNode } from './supportPortalData';
@@ -2907,6 +2909,22 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
      somewhere else. Finishing brings it back. */
   const replayTour = useCallback(() => { setDock(false); setTour(true); }, []);
 
+  /* ── N: a new section, placed where the selection says ─────────────────────────────────────────
+     ⚠️ "After" is decided HERE because only the builder knows the page's bands and sections. It goes
+     after the SECTION holding the selection, else after the BAND holding it, else at the page's FOOT
+     — after the last band still showing, whose group the new section is appended to. A key that
+     dropped the section somewhere other than where you were working would teach you not to use it.
+     ⚠️ Plain arrows, not useCallback: a dependency array is evaluated during render, and these read
+     state declared all over this component — the temporal-dead-zone trap noted on `addElements`. */
+  const addSectionFromKey = (fromId: string | null) => {
+    const path = fromId ? nodePath(fromId).map((n) => n.id) : [];
+    const section = [...path].reverse().find((i) => /^sec-\d+$/.test(i));
+    const band = path.find((i) => blockOrder.includes(i));
+    const foot = [...blockOrder].reverse().find((b) => !removed.includes(b)) ?? blockOrder[blockOrder.length - 1];
+    addSection(section ?? band ?? foot, [[1]]);
+  };
+  const toggleMode = () => setTheme((t) => ({ ...t, mode: t.mode === 'dark' ? 'light' : 'dark' }));
+
   const canvasCtx = {
     selectedId, hoverId, select, setHover: setHoverId, styles, setStyle, setText, setCfg: patchCfg,
     addBannerCell, setBannerSections, heroTree, moveToBanner, dropIntoBanner,
@@ -3111,10 +3129,12 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
             <Eye size={16} className="text-[#3D8BD0]" />
             Previewing <span className="font-medium text-[#364658]">{page.name}</span> as a requester sees it
           </div>
+          <Tooltip delayDuration={0}><TooltipTrigger asChild>
           <button
             onClick={() => setPreview(false)}
             className="inline-flex h-8 items-center gap-1.5 rounded border border-[#DFE5ED] bg-white px-3.5 text-[13px] font-medium text-[#364658] transition-colors hover:bg-[#F5F7FA]"
           ><X size={14} /> Exit preview</button>
+          </TooltipTrigger><TooltipContent><TipKeys label="Back to editing" keys={chromeKeys('exitPreview')} /></TooltipContent></Tooltip>
         </div>
         )}
         <div className={`min-h-0 flex-1 overflow-y-auto ${themeClass}`} style={themeWrap}>
@@ -3126,6 +3146,8 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
               onPreview={() => setPreview(true)}
               onExitPreview={() => setPreview(false)}
               onSaveDraft={onSaveDraft}
+              onAddSection={addSectionFromKey}
+              onToggleMode={toggleMode}
               open={keys}
               onOpenChange={setKeys}
             />
@@ -3179,20 +3201,20 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
 
         <div className="ml-auto flex items-center gap-1">
           {/* Nothing has been edited yet, so these say so rather than clicking into nowhere. */}
-          <Tooltip><TooltipTrigger asChild>
+          <Tooltip delayDuration={0}><TooltipTrigger asChild>
             <button
               onClick={undo}
               disabled={!canUndo}
               className={`${iconBtn} disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent`}
             ><Undo2 size={17} /></button>
-          </TooltipTrigger><TooltipContent>{canUndo ? <TipKeys label="Undo" keys={['Ctrl', 'Z']} /> : 'Nothing to undo'}</TooltipContent></Tooltip>
-          <Tooltip><TooltipTrigger asChild>
+          </TooltipTrigger><TooltipContent>{canUndo ? <TipKeys label="Undo" keys={chromeKeys('undo')} /> : 'Nothing to undo'}</TooltipContent></Tooltip>
+          <Tooltip delayDuration={0}><TooltipTrigger asChild>
             <button
               onClick={redo}
               disabled={!canRedo}
               className={`${iconBtn} disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent`}
             ><Redo2 size={17} /></button>
-          </TooltipTrigger><TooltipContent>{canRedo ? <TipKeys label="Redo" keys={['Ctrl', 'Shift', 'Z']} /> : 'Nothing to redo'}</TooltipContent></Tooltip>
+          </TooltipTrigger><TooltipContent>{canRedo ? <TipKeys label="Redo" keys={chromeKeys('redo')} /> : 'Nothing to redo'}</TooltipContent></Tooltip>
           {/* ⚠️ The ONLY way into the tour, and now also into the keyboard sheet — which is why it
               is a MENU again. The comment that stood here said a menu with one real item is a second
               click in front of the only thing it offers, and deferred the menu until a shortcuts
@@ -3200,11 +3222,11 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
               ⚠️ Both are HELP — one shows you the surface, the other shows you the keys — so they
               belong behind one glyph rather than taking two slots on a bar of eight. */}
           <div className="relative">
-            <Tooltip><TooltipTrigger asChild>
+            <Tooltip delayDuration={0}><TooltipTrigger asChild>
               <button onClick={() => setHelpMenu((v) => !v)} aria-label="Help" className={iconBtn}>
                 <HelpCircle size={17} />
               </button>
-            </TooltipTrigger><TooltipContent><TipKeys label="Help" keys={['?']} /></TooltipContent></Tooltip>
+            </TooltipTrigger><TooltipContent><TipKeys label="Keyboard shortcuts" keys={chromeKeys('help')} /></TooltipContent></Tooltip>
             {helpMenu && (
               <>
                 <span className="fixed inset-0 z-[60]" onClick={() => setHelpMenu(false)} />
@@ -3244,7 +3266,9 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
           {/* ⚠️ `data-tour="mode"` pairs with `data-tour="publish"` for the tour's last step, whose
               hole is the UNION of the two — light/dark, Preview and Publish are one thought
               ("finish"), and they sit either side of Reset to default on the same row. */}
-          <span data-tour="mode" className="ml-1 mr-0.5"><ThemeModeToggle mode={theme.mode} onChange={(m) => setTheme((t) => ({ ...t, mode: m }))} /></span>
+          <Tooltip delayDuration={0}><TooltipTrigger asChild>
+            <span data-tour="mode" className="ml-1 mr-0.5"><ThemeModeToggle mode={theme.mode} onChange={(m) => setTheme((t) => ({ ...t, mode: m }))} /></span>
+          </TooltipTrigger><TooltipContent><TipKeys label="Light / dark" keys={chromeKeys('mode')} /></TooltipContent></Tooltip>
 
           {divider}
 
@@ -3264,10 +3288,12 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
               look at it as a requester, then hand it to them — so a spotlight on either alone tells
               half the story the last step is there to tell. */}
           <span data-tour="publish" className="ml-1 inline-flex h-8 items-center gap-1">
+          <Tooltip delayDuration={0}><TooltipTrigger asChild>
           <button
             onClick={() => setPreview(true)}
             className="inline-flex h-8 items-center rounded border border-[#DFE5ED] bg-white px-3 text-[13px] font-medium text-[#364658] transition-colors hover:bg-[#F5F7FA]"
           >Preview</button>
+          </TooltipTrigger><TooltipContent><TipKeys label="Preview as a requester" keys={chromeKeys('preview')} /></TooltipContent></Tooltip>
           {/* ── The primary action, and the one alternative to it ──────────────────────────────
               ⚠️ A SPLIT button, not two buttons side by side. Publishing and saving a draft are the
               same act — committing what is on the canvas — differing only in whether anybody else
@@ -3368,6 +3394,8 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
                 onPreview={() => setPreview(true)}
                 onExitPreview={() => setPreview(false)}
                 onSaveDraft={onSaveDraft}
+                onAddSection={addSectionFromKey}
+                onToggleMode={toggleMode}
                 open={keys}
                 onOpenChange={setKeys}
               />
@@ -3543,9 +3571,14 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
           {RAIL.map((r) => {
             const on = active === r.key && !collapsed;
             const ai = r.key === 'ai';
+            /* ⚠️ The rail's captions already name each place, so the tooltip exists for the KEY — which
+               is why it is instant, and why it sits to the LEFT, over the canvas, rather than on top
+               of the panel the button is about to open. */
+            const railKey: Partial<Record<RailKey, ChromeAction>> = { add: 'widgets', theme: 'theme', branding: 'branding', banners: 'banners' };
+            const rk = railKey[r.key];
             return (
+              <Tooltip key={r.key} delayDuration={0}><TooltipTrigger asChild>
               <button
-                key={r.key}
                 onClick={() => openPanel(r.key)}
                 className={`flex w-[60px] flex-col items-center gap-1.5 rounded py-2 transition-all ${
                   ai ? 'mt-auto border' : ''
@@ -3562,6 +3595,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
                 {r.icon(on)}
                 <span className="text-[11px] font-medium leading-none">{r.label}</span>
               </button>
+              </TooltipTrigger>{rk && <TooltipContent side="left"><TipKeys label={r.label} keys={chromeKeys(rk)} /></TooltipContent>}</Tooltip>
             );
           })}
         </div>
