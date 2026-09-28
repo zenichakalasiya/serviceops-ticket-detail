@@ -646,14 +646,6 @@ body[data-portal-dragging] [data-portal-toolbar] { pointer-events: none; opacity
 }
 .pt-step { animation: pt-step 1.8s ease-in-out infinite; }
 
-@keyframes pt-fly {
-  0%, 8%   { transform: translate(0, 0) scale(1); opacity: 0; }
-  16%      { transform: translate(0, 0) scale(1); opacity: 1; }
-  60%      { transform: translate(-198px, 50px) scale(4.2, 2.1); opacity: 1; }
-  74%, 100%{ transform: translate(-198px, 50px) scale(4.2, 2.1); opacity: 0; }
-}
-.pt-fly { animation: pt-fly 3.2s cubic-bezier(0.4, 0, 0.2, 1) infinite; transform-origin: 214px 66px; }
-
 @keyframes pt-pulse {
   0%, 100% { opacity: 1; }
   50%      { opacity: 0.35; }
@@ -695,13 +687,51 @@ body[data-portal-dragging] [data-portal-toolbar] { pointer-events: none; opacity
 }
 .pt-mode { animation: pt-mode 3.6s ease-in-out infinite; }
 
+/* The spotlight's step 2: a library row lifts out and lands on the page as a CARD.
+   ⚠️ The ghost only TRANSLATES — it replaced `pt-fly`, which scaled the row 4.2 × 2.1 to fill the slot
+   and stretched its stroke and insides into a smeared pill. A row that has been zoomed is not a widget
+   that has been placed, so the two are now two drawings, and the card appears as the ghost arrives. */
+@keyframes pt-ghost {
+  0%, 10%   { transform: translate(0, 0); opacity: 0; }
+  18%       { transform: translate(0, 0); opacity: 1; }
+  54%       { transform: translate(-124px, 57px); opacity: 1; }
+  62%, 100% { transform: translate(-124px, 57px); opacity: 0; }
+}
+.pt-ghost { animation: pt-ghost 3.4s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+
+@keyframes pt-land {
+  0%, 54%   { opacity: 0; }
+  62%, 92%  { opacity: 1; }
+  100%      { opacity: 0; }
+}
+.pt-land { animation: pt-land 3.4s ease-out infinite; }
+
+/* The dashed drop target is the INVERSE of the card: visible while the ghost travels, gone while the
+   card sits in it. Left showing, its dashes ran under the card's own border as a faint second edge. */
+@keyframes pt-target {
+  0%, 54%   { opacity: 0.6; }
+  62%, 92%  { opacity: 0; }
+  100%      { opacity: 0.6; }
+}
+.pt-target { animation: pt-target 3.4s ease-out infinite; }
+
+/* A press: the ring a click leaves, expanding and fading from under the pointer. */
+@keyframes pt-click {
+  0%   { r: 2px; opacity: 0.9; }
+  100% { r: 9px; opacity: 0; }
+}
+.pt-click { animation: pt-click 0.9s ease-out infinite; }
+
 @media (prefers-reduced-motion: reduce) {
-  .pt-step, .pt-fly, .pt-pulse, .pt-fade, .pt-tint, .pt-flip, .pt-knob, .pt-mode {
+  .pt-step, .pt-ghost, .pt-land, .pt-target, .pt-click, .pt-pulse, .pt-fade, .pt-tint, .pt-flip, .pt-knob, .pt-mode {
     animation: none;
   }
-  /* Without the animation the flown row would sit invisible at its start, so it is shown where it
-     LANDS — the picture still says "this row ends up on the page", it just does not travel. */
-  .pt-fly { opacity: 1; transform: translate(-198px, 50px) scale(4.2, 2.1); }
+  /* With nothing moving, the picture has to show where the story ENDS rather than where it starts:
+     the ghost is hidden and the card it becomes is shown, so the step still says "a widget lands
+     here", it just does not travel. */
+  .pt-ghost { opacity: 0; }
+  .pt-land { opacity: 1; }
+  .pt-target { opacity: 0; }
   .pt-mode { opacity: 0; }
 }
 

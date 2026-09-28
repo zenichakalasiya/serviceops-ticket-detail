@@ -2344,6 +2344,52 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   really is selected with its toolbar visible on step 3; the dock opens on Done at 300×285, its chips
   scrub, and Minimise leaves the "Editor basics" pill.
   **Version 2 is NOT built** — Zeni described only version 1.
+- **Support Portal — the tour DOCK plays a STORY, not the four beats (28 Sep 2026).** Supersedes the
+  dock half of the bullet above ("the dock's recap is the same component running all four beats").
+  The spotlight and the dock do DIFFERENT JOBS: the four cards point at WHERE things are on this
+  screen; the dock shows what DOING something looks like, which a spotlight cannot, because it can
+  only light a region that already exists. So the dock is `TourStory` (`PortalTourArt.tsx`), a
+  17-frame story on a BLANK canvas in five chapters — **Add · Select · Arrange · Style · Publish**:
+  drag a widget in from the library → select it (outline + floating toolbar + the panel swapping to
+  its settings) → the `+` adders → a second column → drag the shared edge while the neighbour gives
+  way → colour picker → shadow presets → padding/margin in the panel's Spacing → Add section →
+  Publish, with a green tick. ⚠️ It starts from a BLANK page on purpose: on the default page a dropped
+  widget is one card among a dozen and the eye cannot find what just happened.
+  ⚠️ **One miniature still, now two uses** — `TourStory` draws the SAME editor at the SAME geometry
+  (`R`) as the four spotlight cards, and both draw a placed widget with ONE `WidgetCard`, so the
+  principle the old bullet stated (never make the reader learn the layout twice) survives.
+  ⚠️ **FRAMES ARE DATA** (`STORY: StoryFrame[]` — card state, selection, lit toolbar button, open
+  popup, panel kind, pointer position, click) and ONE renderer draws them; CSS transitions carry the
+  ghost, the pointer and the resized card between frames. Seventeen keyframe animations would be
+  seventeen things to keep in step; this is seventeen rows of a table.
+  ⚠️ **The story must NOT remount between frames** — no `key` on `TourStory`. Transitions need the
+  SAME DOM nodes changing values; keying by frame turns every move into a cut.
+  ⚠️ **Every toolbar action shown is real, in the bar's real order** — add-a-column, drag the shared
+  edge, colour, shadow — and spacing is shown in the PANEL because that is where it lives. A tour
+  that invents a gesture teaches somebody to look for a button that is not there. The Arrange caption
+  says "a row BELOW", not "above and below", because the picture only has a below adder (the toolbar
+  occupies the top) — the words must match the drawing.
+  ⚠️ **ONE CLOCK** drives the frame advance AND the chapter progress bar: a single rAF loop
+  accumulates elapsed time, advances from it and writes the bar's width from it. A timeout plus a CSS
+  bar sharing a duration drift the moment somebody pauses. The bar is written through a REF, never
+  state — re-rendering the dock at 60fps to move one bar would redraw the whole story each time.
+  ⚠️ **A chapter chip PLAYS that chapter and HOLDS at its end** (`holdAfter`), rather than pausing on
+  its first frame — "jump and pause" froze on the drag without the drop. Play from a held last frame
+  starts the NEXT chapter rather than re-holding the same one.
+  ⚠️ **The dock's controls live in a HEADER ROW, not over the picture.** They floated on its top-right
+  corner — exactly where the miniature's Publish button is — so the final frame, the one the story
+  builds to, had the button, the pointer and the tick hidden under Minimise/Close. Verified with
+  `elementFromPoint` that the SVG itself is now the top element there.
+  ⚠️ **The caption has a 52px floor** — narration runs one or two lines, and a 40px floor let a
+  two-line caption push the chip row down so the transport jumped between frames. Measured: the chip
+  row sits at ONE y across all five chapters now. Dock is 340×362.
+  **Step 2's landed widget is DRAWN as a card** (`pt-ghost` + `pt-land` + `pt-target` in
+  `theme.css`). It used to be the library row scaled 4.2×2.1 (`pt-fly`, deleted), which stretched
+  its stroke and insides into a smeared pill — a row that has been zoomed is not a widget that has
+  been placed. The ghost now only TRANSLATES at its own size, the card fades in as it arrives, and the
+  dashed drop target fades OUT (it ran under the card's border as a faint second edge otherwise).
+  Under `prefers-reduced-motion` the ghost is hidden and the landed card shown — the still has to
+  show where the story ENDS.
 
 ## Parked features
 Four Support Portal features are BUILT-OR-PART-BUILT AND SWITCHED OFF, with their full context in
