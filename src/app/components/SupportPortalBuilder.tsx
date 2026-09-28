@@ -35,6 +35,7 @@ import {
   BANNER_BLOCK_TYPES, SINGLE_BANNER_BLOCKS, mintBox,
 } from './portalPageModel';
 import { PortalBuilderTour } from './PortalBuilderTour';
+import { PortalTourDock } from './PortalTourDock';
 import { PortalWidgetDrawer } from './PortalWidgetDrawer';
 import { WIDGET_FOR_NODE, WIDGET_FOR_TYPE, specById, structureSpecId } from './portalWidgetSpec';
 import type { Cfg, WidgetSpec } from './portalWidgetSpec';
@@ -2895,8 +2896,16 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
      `PortalShortcuts` because two surfaces open it and only one of them is the shortcut handler. */
   const [keys, setKeys] = useState(false);
   const [helpMenu, setHelpMenu] = useState(false);
-  const [tourSeam, setTourSeam] = useState<string | null>(null);
-  const endTour = useCallback(() => { setTour(false); setTourSeam(null); }, []);
+  /* ⚠️ The DOCK is what the tour BECOMES, so finishing opens it and skipping does not — somebody who
+     dismissed the tour on card one should not be told the same thing twice by a second surface. It
+     is also what the Help menu's "Editor basics" re-opens, which is the only way back to a card that
+     otherwise appears once. */
+  const [dock, setDock] = useState(false);
+  const endTour = useCallback(() => setTour(false), []);
+  /* ⚠️ Replaying from the dock CLOSES the dock: the tour dims the page and the dock would sit on top
+     of that dim, putting a bright card in the corner of a screen that is telling you to look
+     somewhere else. Finishing brings it back. */
+  const replayTour = useCallback(() => { setDock(false); setTour(true); }, []);
 
   const canvasCtx = {
     selectedId, hoverId, select, setHover: setHoverId, styles, setStyle, setText, setCfg: patchCfg,
@@ -2904,7 +2913,6 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     addSection, addBeside, splitBand, bandHosted, dropBeside, columnsFull, splitNode, setNodeDir, splitInfo, addLinkCard, dropInColumn, dropAtSeam, dropInRow,
     addSibling: addSiblingElement, cfg: cfgFor,
     moveNode, duplicateNode, deleteNode, canDuplicate, addInside, moveTo, moveToSeam, addChildBlock, splitChildBlock, fillChildBlock, areSiblings, replaceElement, pickIcon, applyPreset, placedPredefined, sectionKind,
-    tourSeam,
     /* The text toolbar names the theme fonts, so it needs the live theme. */
     theme,
   };
@@ -3202,9 +3210,16 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
                 <span className="fixed inset-0 z-[60]" onClick={() => setHelpMenu(false)} />
                 <div className="absolute right-0 top-[calc(100%+6px)] z-[61] w-[196px] rounded-lg border border-[#E5E7EB] bg-white p-1 shadow-[0_12px_16px_-4px_rgba(16,24,40,0.10),0_4px_6px_-2px_rgba(16,24,40,0.06)]">
                   <button
-                    onClick={() => { setHelpMenu(false); setTour(true); }}
+                    onClick={() => { setHelpMenu(false); setDock(false); setTour(true); }}
                     className="flex w-full items-center rounded px-2.5 py-1.5 text-left text-[12.5px] text-[#364658] transition-colors hover:bg-[#F5F7FA]"
                   >Take the tour</button>
+                  {/* ⚠️ The dock's ONLY way back. It opens once, when the tour ends, and closing it
+                      is meant to be final — so without a row here the recap would be a surface an
+                      admin could lose permanently by pressing the ✕ they were offered. */}
+                  <button
+                    onClick={() => { setHelpMenu(false); setTour(false); setDock(true); }}
+                    className="flex w-full items-center rounded px-2.5 py-1.5 text-left text-[12.5px] text-[#364658] transition-colors hover:bg-[#F5F7FA]"
+                  >Editor basics</button>
                   {/* The key is on the row, because a sheet that lists shortcuts should say its own. */}
                   <button
                     onClick={() => { setHelpMenu(false); setKeys(true); }}
@@ -3226,7 +3241,10 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
               and back. Beside undo/redo it belongs to the canvas, which is what it changes.
               ⚠️ Same component and same state as before, so the Theme panel's palette and every
               style picker's Light/Dark tabs still read the mode from one place. */}
-          <span className="ml-1 mr-0.5"><ThemeModeToggle mode={theme.mode} onChange={(m) => setTheme((t) => ({ ...t, mode: m }))} /></span>
+          {/* ⚠️ `data-tour="mode"` pairs with `data-tour="publish"` for the tour's last step, whose
+              hole is the UNION of the two — light/dark, Preview and Publish are one thought
+              ("finish"), and they sit either side of Reset to default on the same row. */}
+          <span data-tour="mode" className="ml-1 mr-0.5"><ThemeModeToggle mode={theme.mode} onChange={(m) => setTheme((t) => ({ ...t, mode: m }))} /></span>
 
           {divider}
 
@@ -3555,12 +3573,17 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
           being viewed as a requester would be pointing at controls that are no longer there. */}
       {tour && (
         <PortalBuilderTour
-          selectedId={selectedId}
           onSelect={select}
-          onSeamHold={setTourSeam}
+          /* The steps about the library and the toolbar have to OPEN the library and SELECT a block
+             — neither exists to point at otherwise. */
+          onRail={(k) => { setActive(k); setCollapsed(false); }}
           onDone={endTour}
+          onFinish={() => setDock(true)}
         />
       )}
+      {/* ⚠️ OUTSIDE the tour's own condition: the dock is not a step of the tour, it is what is left
+          once the tour has gone, and it stays up while the admin works. */}
+      {dock && !tour && <PortalTourDock onReplay={replayTour} onClose={() => setDock(false)} />}
       {layoutConfirm}
       {bannerStart && (
         <BannerStartDialog

@@ -633,3 +633,80 @@ body[data-portal-dragging] [data-portal-toolbar] { pointer-events: none; opacity
    take less side padding than a word needs. */
 .pill-track > button svg { flex-shrink: 0; }
 .pill-track > button:has(> svg:only-child) { padding: 0 6px; }
+
+/* ── The support-portal tour's moving pictures (`PortalTourArt.tsx`) ──────────────────────────
+   ⚠️ CSS keyframes, not a video file: nothing to load, nothing to buffer, crisp at any zoom, and
+   it cannot go stale the way a recorded screen does the next time the builder's chrome changes.
+   Every rule is prefixed `pt-` so it cannot collide with the portal's own `.portal-*` rules.
+   ⚠️ All of them respect `prefers-reduced-motion` at the foot of this block — a card that explains
+   a screen must not be the one thing on it that moves for somebody who asked for stillness. */
+@keyframes pt-step {
+  0%, 100% { opacity: 0.35; r: 4.5px; }
+  12%, 28% { opacity: 1; r: 5.5px; }
+}
+.pt-step { animation: pt-step 1.8s ease-in-out infinite; }
+
+@keyframes pt-fly {
+  0%, 8%   { transform: translate(0, 0) scale(1); opacity: 0; }
+  16%      { transform: translate(0, 0) scale(1); opacity: 1; }
+  60%      { transform: translate(-198px, 50px) scale(4.2, 2.1); opacity: 1; }
+  74%, 100%{ transform: translate(-198px, 50px) scale(4.2, 2.1); opacity: 0; }
+}
+.pt-fly { animation: pt-fly 3.2s cubic-bezier(0.4, 0, 0.2, 1) infinite; transform-origin: 214px 66px; }
+
+@keyframes pt-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.35; }
+}
+.pt-pulse { animation: pt-pulse 1.4s ease-in-out infinite; }
+
+@keyframes pt-fade {
+  0%   { opacity: 0; }
+  14%  { opacity: 1; }
+  100% { opacity: 1; }
+}
+.pt-fade { animation: pt-fade 0.9s ease-out both; }
+
+@keyframes pt-tint {
+  0%, 45%  { fill: #DCEAF7; }
+  60%, 95% { fill: #C7DFF4; }
+}
+.pt-tint { animation: pt-tint 2.8s ease-in-out infinite; }
+
+/* The light/dark toggle: the track fills, the knob travels, and on the recap the whole page
+   follows — the switch changes the CANVAS, so a knob moving over an unchanged page says the
+   opposite of what the step is about. */
+@keyframes pt-flip {
+  0%, 45%  { fill: #E2E8F0; }
+  55%, 100%{ fill: #3D8BD0; }
+}
+.pt-flip { animation: pt-flip 3.6s ease-in-out infinite; }
+
+@keyframes pt-knob {
+  0%, 45%  { transform: translateX(-5px); }
+  55%, 100%{ transform: translateX(0); }
+}
+.pt-knob { animation: pt-knob 3.6s ease-in-out infinite; }
+
+@keyframes pt-mode {
+  0%, 46%   { opacity: 0; }
+  56%, 88%  { opacity: 0.55; }
+  98%, 100% { opacity: 0; }
+}
+.pt-mode { animation: pt-mode 3.6s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pt-step, .pt-fly, .pt-pulse, .pt-fade, .pt-tint, .pt-flip, .pt-knob, .pt-mode {
+    animation: none;
+  }
+  /* Without the animation the flown row would sit invisible at its start, so it is shown where it
+     LANDS — the picture still says "this row ends up on the page", it just does not travel. */
+  .pt-fly { opacity: 1; transform: translate(-198px, 50px) scale(4.2, 2.1); }
+  .pt-mode { opacity: 0; }
+}
+
+/* The dock's beat timer. Its duration is set inline from the same `DWELL` the loop advances on, so
+   the bar cannot finish early or late — one number, two readers. */
+@keyframes pt-progress { from { width: 0%; } to { width: 100%; } }
+.pt-progress { animation: pt-progress linear forwards; }
+@media (prefers-reduced-motion: reduce) { .pt-progress { animation: none; width: 100%; } }

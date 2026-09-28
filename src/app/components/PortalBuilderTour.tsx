@@ -1,122 +1,113 @@
 import { useState, useEffect, useRef, useCallback, useLayoutEffect } from 'react';
+import { TourArt, type TourBeat } from './PortalTourArt';
 
 /**
- * The first-run guide for the Support Portal builder.
+ * The guided tour of the Support Portal builder — version 1 of the two Zeni asked for.
  *
- * ⚠️ The CARD is the ticket detail page's tour card, deliberately unchanged — same #1F2937
- * surface, same 400px, same 16/14px type, same white primary button, same "n/N" counter, same
- * arrow, same black/60 + 4px-blur overlay with an SVG-masked spotlight and the blue glow ring.
- * A second tour that looked like a different product's tour would teach the admin that this
- * screen is not quite part of ServiceOps, which is the opposite of what a first run is for.
+ * ⚠️ THE CARD CARRIES A PICTURE NOW, and that is the whole change of shape: media panel → title →
+ * one short line → `n of N` beside Close / Next, the form every product tour uses (Canva, Claude,
+ * Intercom) and the one Zeni's two references share. The old card was four lines of prose with a
+ * counter under them, which asked somebody to READ their way through a screen they could not yet
+ * picture. A tour of a visual editor that shows nothing is a manual.
  *
- * ⚠️ It is a SEPARATE COMPONENT rather than a generalisation of `TicketDetailsOnboarding`. That
- * file is live on thirteen drawers and V1 TicketDrawer is final; refactoring it to serve two
- * callers would put a working feature at risk to save a file. What is copied is the recipe.
+ * ⚠️ IT MOVES THE SURFACE UNDERNEATH IT. Step 2 opens the Widgets panel and step 3 selects the
+ * banner, because the two things those steps are about — a library of widgets, and a floating
+ * toolbar — do not EXIST until something opens or something is selected. A spotlight on a closed
+ * panel is a spotlight on a 72px strip of icons. This deliberately reverses the old tour's "the
+ * tour never selects behind your back", which was written about its one interactive step, where the
+ * point was that YOU perform the gesture. Here the point is that you SEE the result.
  *
- * ⚠️ What could NOT be copied is the positioning. The ticket tour hardcodes its offsets
- * (`-100`, `-200`, `-420`) with no flipping and no clamping, which is fine inside a wide drawer
- * and broken here: the rail is hard against the right edge and the top bar against the top, so
- * a card placed by those numbers lands off-screen. `place()` below measures the real card and
- * flips, then clamps.
+ * ⚠️ A step may point at SEVERAL anchors and the hole is their union — the last step is about
+ * finishing, and finishing is the light/dark switch, Preview and Publish, which sit either side of
+ * Reset to default on the same row. One rect over the lot says "this end of the bar"; two separate
+ * steps would have split one thought across two cards.
  *
- * ⚠️ It does NOT auto-open, and stores nothing. It ran once per admin on first entry and is now
- * reached only from the ? in the top bar — so there is no "have they seen it" to remember, and the
- * localStorage key went with the behaviour that needed it. A flag nothing reads is a state you have
- * to keep correct forever in exchange for nothing.
+ * ⚠️ Finishing hands over to the DOCK (`PortalTourDock`); SKIPPING does not. Somebody who read four
+ * cards gets the summary they can keep; somebody who dismissed the tour on card one is told, twice,
+ * about a thing they just said they did not want.
+ *
+ * ⚠️ Placement is MEASURED and flipped, never a fixed offset. The rail is hard against the right
+ * edge and the bar against the top, which is exactly where the ticket tour's hardcoded `-100` /
+ * `-420` put a card off-screen. `place()` flips to the opposite side when this one cannot hold the
+ * card, then clamps inside the viewport.
  */
 
 type Pos = 'top' | 'bottom' | 'left' | 'right' | 'center';
+type RailKey = 'add' | 'theme' | 'branding' | 'banners';
 
 interface Step {
   id: string;
   title: string;
   description: string;
-  /** A `data-tour` value, or 'first-block' — resolved against the page at runtime. */
-  target?: string;
+  /** The picture that plays above the words. */
+  beat: TourBeat;
+  /** One `data-tour` value, or several — the hole becomes their union. */
+  target?: string | string[];
   position: Pos;
   padding?: number;
-  /** Extra room ABOVE the target — the floating toolbar sits outside the element it belongs to. */
+  /** Extra room ABOVE the target, for a toolbar that sits outside the element it belongs to. */
   padTop?: number;
-  /** The one step you DO rather than watch: the overlay stops swallowing clicks. */
-  interactive?: boolean;
-  /** Holds the first seam open, since it is a hover affordance and would not be there to point at. */
-  seam?: boolean;
+  /** Open this rail panel before measuring — the step is about what the panel holds. */
+  rail?: RailKey;
+  /** Select this node before measuring — the step is about what selection produces. */
+  select?: string;
 }
 
-/* ⚠️ Six steps that teach the MODEL, not the button names. An admin who has only ever used forms
-   arrives believing three things that are wrong here — the right side is a form, settings live in
-   one place, and they might break the live portal — and until those break nothing else lands. So:
-   permission first, then click→panel, then what the panel is, then where new things come from,
-   then the one affordance nobody can see, then how to ship. */
+/* ⚠️ FOUR STEPS, in the order Zeni set: where things come FROM (rail), what they come OUT of
+   (panel), what you do to them ONCE PLACED (canvas + toolbar), and how you finish (top bar). It is
+   the order somebody actually builds a page in, so each card is the answer to the question the last
+   one leaves you with. Every line is ONE sentence — the picture carries the rest. */
 const STEPS: Step[] = [
-  /* ⚠️ There is no welcome card. It said what this screen is and that nothing is live until you
-     publish — true, and both are things a person reads past to reach the tour they asked for. The
-     publish half survives as the last step, where it is an instruction rather than a preamble.
-     ⚠️ And the tour now opens from the ? rather than on arrival, so the first thing it says no
-     longer has to introduce itself: you already chose it. */
-  {
-    id: 'select',
-    title: 'Click a block to edit it',
-    description:
-      'Every part of this page can be selected. Try this row — a toolbar appears above it for moving, duplicating and deleting, and the panel on the right becomes its settings.',
-    /* ⚠️ The Quick Actions row, not the banner. Selecting the banner produces a panel and little
-       else; selecting a row you can act on produces the floating toolbar too, so one click shows
-       both halves of what selection gets you. */
-    target: 'quick',
-    position: 'right',
-    padding: 10,
-    /* Room for the toolbar, which sits 44px ABOVE the element it belongs to — left out of the hole
-       it appears dimmed, which reads as something that is not part of what you just did. */
-    padTop: 58,
-    interactive: true,
-  },
-  {
-    id: 'panel',
-    title: 'Content is what it says. Design is how it looks.',
-    description:
-      'Whatever you select, its settings open here under these two tabs. Every change shows on the page as you make it.',
-    target: 'panel',
-    position: 'left',
-    padding: 0,
-  },
   {
     id: 'rail',
-    title: 'New blocks come from here',
+    title: 'Everything starts on the right',
     description:
-      'Widgets adds things to the page. Theme sets the colours and fonts for all of it. Branding holds your logo and portal address.',
+      'Widgets adds blocks, Theme sets the colours and fonts, Branding holds your logo, and Banners swaps the header.',
+    beat: 'rail',
     target: 'rail',
     position: 'left',
     padding: 0,
   },
   {
-    id: 'seam',
-    title: 'Add a section anywhere',
+    id: 'panel',
+    title: 'Drag a widget in, or just click it',
     description:
-      'Hover between two blocks and a blue line appears. That’s where a new section goes — drop a widget into it, or split it into rows and columns.',
-    target: 'seam',
+      'The panel beside the rail is your library. Drop a widget anywhere on the page, or click it to drop it in its own row.',
+    beat: 'panel',
+    target: 'panel',
+    position: 'left',
+    padding: 0,
+    rail: 'add',
+  },
+  {
+    id: 'canvas',
+    title: 'Click anything to edit it',
+    description:
+      'A toolbar appears on whatever you select — move it, restyle it, remove it — and the panel becomes its settings.',
+    beat: 'canvas',
+    target: 'hero',
     position: 'right',
     padding: 8,
-    seam: true,
+    select: 'hero',
   },
   {
     id: 'publish',
     title: 'Nothing is live until you publish',
     description:
-      'Preview shows the page exactly as a requester sees it. Publish makes it theirs. Until then everything you do is saved as a draft.',
-    target: 'publish',
+      'Switch the canvas between light and dark, preview the page exactly as a requester sees it, then publish when it is ready.',
+    beat: 'publish',
+    target: ['mode', 'publish'],
     position: 'bottom',
-    padding: 6,
+    padding: 8,
   },
 ];
 
-/** The card's own size, used before the first measurement lands. */
-const CARD_W = 400;
+const CARD_W = 320;
 const GAP = 16;
 const EDGE = 12;
 
-/** ⚠️ Resolved against the LIVE page, never hardcoded: a page started from scratch has no card to
- *  point at, and a step aimed at nothing is worse than a step that isn't there. Prefers a block
- *  big enough to read as a block. */
+/** ⚠️ Resolved against the LIVE page: a page started from scratch may carry no banner at all, and a
+ *  step aimed at nothing is worse than a step that isn't there. */
 function firstBlock(): HTMLElement | null {
   const canvas = document.querySelector('[data-portal-canvas]');
   if (!canvas) return null;
@@ -127,17 +118,28 @@ function firstBlock(): HTMLElement | null {
   }) ?? nodes[0] ?? null;
 }
 
-function resolveTarget(step: Step): HTMLElement | null {
-  if (!step.target) return null;
-  if (step.target === 'first-block') return firstBlock();
+function one(name: string): HTMLElement | null {
   /* ⚠️ `data-tour` first, then `data-node`. The canvas already labels every block it renders, so a
-     step can aim at one by its own name without a second anchor being added for the tour's benefit —
+     step can aim at one by its own name without a second anchor being added for the tour's sake —
      and two anchors on one element is two things to keep in step. */
-  return document.querySelector<HTMLElement>(`[data-tour="${step.target}"]`)
-    ?? document.querySelector<HTMLElement>(`[data-node="${step.target}"]`)
-    /* A page built from scratch may not carry this block at all; a step aimed at nothing is worse
-       than a step that isn't there, so it falls back to whatever the page does have. */
-    ?? (step.interactive ? firstBlock() : null);
+  return document.querySelector<HTMLElement>(`[data-tour="${name}"]`)
+    ?? document.querySelector<HTMLElement>(`[data-node="${name}"]`);
+}
+
+/** The union of every anchor a step names, so one hole can cover a group. */
+function resolveRect(step: Step): DOMRect | null {
+  const names = step.target ? (Array.isArray(step.target) ? step.target : [step.target]) : [];
+  const els = names.map(one).filter((e): e is HTMLElement => !!e);
+  if (!els.length) {
+    const fallback = step.select ? firstBlock() : null;
+    return fallback?.getBoundingClientRect() ?? null;
+  }
+  const rects = els.map((e) => e.getBoundingClientRect());
+  const left = Math.min(...rects.map((r) => r.left));
+  const top = Math.min(...rects.map((r) => r.top));
+  const right = Math.max(...rects.map((r) => r.right));
+  const bottom = Math.max(...rects.map((r) => r.bottom));
+  return new DOMRect(left, top, right - left, bottom - top);
 }
 
 /** Preferred placement, flipped when it will not fit, then clamped inside the viewport. */
@@ -149,9 +151,6 @@ function place(rect: DOMRect, pos: Pos, w: number, h: number) {
     return { top: Math.max(EDGE, vh / 2 - h / 2), left: Math.max(EDGE, vw / 2 - w / 2), pos };
   }
 
-  /* Flip to the opposite side when this one cannot hold the card — the rail sits hard against the
-     right edge and the top bar against the top, which is exactly where the ticket tour's fixed
-     offsets put the card off-screen. */
   let side = pos;
   if (side === 'right' && rect.right + GAP + w > vw - EDGE) side = 'left';
   else if (side === 'left' && rect.left - GAP - w < EDGE) side = 'right';
@@ -176,113 +175,86 @@ function place(rect: DOMRect, pos: Pos, w: number, h: number) {
 }
 
 export function PortalBuilderTour({
-  selectedId,
   onSelect,
-  onSeamHold,
+  onRail,
   onDone,
+  onFinish,
 }: {
-  selectedId: string | null;
-  /** Used only by "Show me" on the interactive step — the tour never selects behind your back. */
+  /** Selects a node, so the step about selection has something selected to point at. */
   onSelect: (id: string) => void;
-  /** Holds one seam open for the step that is about it; cleared on every other step. */
-  onSeamHold: (afterId: string | null) => void;
+  /** Opens a rail panel, so the step about the library has the library open. */
+  onRail: (key: RailKey) => void;
+  /** Leaving by any route — Skip, Escape, or the last Next. */
   onDone: () => void;
+  /** Reaching the END. Only this hands over to the dock. */
+  onFinish: () => void;
 }) {
   const [i, setI] = useState(0);
   const [rect, setRect] = useState<DOMRect | null>(null);
   const [box, setBox] = useState({ top: 0, left: 0, pos: 'center' as Pos });
   const [fading, setFading] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
-  /* The selection as the interactive step BEGAN. Advancing on "selectedId is truthy" would skip
-     the step whenever something was already selected when the tour reached it. */
-  const selAtStart = useRef<string | null>(null);
 
   const step = STEPS[i];
 
-  /* ── the seam this step is about, held open while the card is on screen ── */
+  /* ── put the surface in the state this step is about, BEFORE it is measured ── */
   useEffect(() => {
-    if (!step.seam) { onSeamHold(null); return; }
-    const el = document.querySelector<HTMLElement>('[data-tour="seam"]');
-    onSeamHold(el?.dataset.seamAfter ?? null);
-    return () => onSeamHold(null);
-  }, [step.seam, i, onSeamHold]);
+    if (step.rail) onRail(step.rail);
+    if (step.select) onSelect(step.select);
+  }, [i]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── measure the target, then the card, then place it ── */
   const measure = useCallback(() => {
-    const el = resolveTarget(step);
-    if (el) {
-      const r = el.getBoundingClientRect();
-      /* Off-screen targets are scrolled to before they are pointed at — the canvas is long and a
-         spotlight on something below the fold is a dimmed screen with no hole in it. */
-      if (r.top < 80 || r.bottom > window.innerHeight - 40) {
-        el.scrollIntoView({ block: 'center', behavior: 'auto' });
-        setRect(el.getBoundingClientRect());
-      } else {
-        setRect(r);
-      }
+    const r = resolveRect(step);
+    if (!r) { setRect(null); return; }
+    /* The canvas is long; a spotlight on something below the fold is a dimmed screen with no hole
+       in it, so an off-screen target is scrolled to before it is pointed at. */
+    if (r.top < 80 || r.bottom > window.innerHeight - 40) {
+      const el = one(Array.isArray(step.target) ? step.target[0] : step.target ?? '');
+      el?.scrollIntoView({ block: 'center', behavior: 'auto' });
+      setRect(resolveRect(step));
     } else {
-      setRect(null);
+      setRect(r);
     }
   }, [step]);
 
   useEffect(() => {
-    measure();
+    /* ⚠️ Measured on the NEXT frame. Steps 2 and 3 have just asked the builder to open a panel or
+       select a block, and neither has rendered yet — measured in the same tick the hole lands on
+       where the panel used to be. */
+    const id = requestAnimationFrame(measure);
     window.addEventListener('resize', measure);
     /* `true` — the canvas scrolls in its own box, not on the window. */
     window.addEventListener('scroll', measure, true);
     return () => {
+      cancelAnimationFrame(id);
       window.removeEventListener('resize', measure);
       window.removeEventListener('scroll', measure, true);
     };
   }, [measure]);
 
-  /* ⚠️ Placement runs in a LAYOUT effect against the card's REAL height. The ticket tour assumes
-     200px and centres by subtracting 100, so a two-line step and a five-line step sit in different
-     places relative to what they point at; here the copy varies enough that it shows. */
+  /* ⚠️ Placement runs in a LAYOUT effect against the card's REAL height — the copy varies enough
+     between steps that assuming one would visibly misalign the arrow. */
   useLayoutEffect(() => {
-    const h = cardRef.current?.offsetHeight ?? 180;
+    const h = cardRef.current?.offsetHeight ?? 300;
     const w = cardRef.current?.offsetWidth ?? CARD_W;
     setBox(rect ? place(rect, step.position, w, h) : place(new DOMRect(0, 0, 0, 0), 'center', w, h));
   }, [rect, step, i]);
 
-  /* ── the interactive step advances on a real selection ── */
-  useEffect(() => {
-    if (!step.interactive) return;
-    selAtStart.current = selectedId;
-  }, [i, step.interactive]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    if (!step.interactive) return;
-    if (selectedId && selectedId !== selAtStart.current) {
-      /* ⚠️ Long enough to SEE what the click produced. At 420ms the toolbar and the panel both
-         appeared and the card moved on in the same glance, so the step demonstrated something
-         nobody had time to look at. */
-      const t = setTimeout(() => go(1), 1100);
-      return () => clearTimeout(t);
-    }
-  }, [selectedId, step.interactive]); // eslint-disable-line react-hooks/exhaustive-deps
-
   const go = (d: number) => {
     const next = i + d;
-    if (next >= STEPS.length) { onSeamHold(null); onDone(); return; }
+    if (next >= STEPS.length) { onFinish(); onDone(); return; }
     if (next < 0) return;
     setFading(true);
-    setTimeout(() => { setI(next); setFading(false); }, 220);
+    setTimeout(() => { setI(next); setFading(false); }, 200);
   };
 
-  const showMe = () => {
-    const el = resolveTarget(step);
-    const id = el?.getAttribute('data-node');
-    if (id) onSelect(id);
-    else go(1);
-  };
-
-  /* Escape leaves the tour — the same as Skip, and the key everybody tries first. */
+  /* Escape leaves the tour — the same as Close, and the key everybody tries first. */
   useEffect(() => {
-    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') { onSeamHold(null); onDone(); } };
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') onDone(); };
     document.addEventListener('keydown', esc);
     return () => document.removeEventListener('keydown', esc);
-  }, [onDone, onSeamHold]);
+  }, [onDone]);
 
   const pad = step.padding ?? 12;
   const padT = step.padTop ?? pad;
@@ -293,23 +265,20 @@ export function PortalBuilderTour({
 
   /* The arrow tracks the TARGET's centre, not the card's — the card is clamped at the viewport
      edges, so a fixed 50% arrow ends up pointing at empty space beside what it is about. */
-  const cardH = cardRef.current?.offsetHeight ?? 180;
+  const cardH = cardRef.current?.offsetHeight ?? 300;
   const cardW = cardRef.current?.offsetWidth ?? CARD_W;
-  const arrowTop = rect ? Math.min(Math.max(rect.top + rect.height / 2 - box.top, 22), cardH - 22) : cardH / 2;
-  const arrowLeft = rect ? Math.min(Math.max(rect.left + rect.width / 2 - box.left, 26), cardW - 26) : cardW / 2;
+  const arrowTop = rect ? Math.min(Math.max(rect.top + rect.height / 2 - box.top, 24), cardH - 24) : cardH / 2;
+  const arrowLeft = rect ? Math.min(Math.max(rect.left + rect.width / 2 - box.left, 28), cardW - 28) : cardW / 2;
 
   return (
     /* ⚠️ The ROOT passes clicks through; the overlay inside it does the blocking. A transparent
-       `fixed inset-0` still hit-tests across the whole screen, so with the root left interactive the
-       interactive step swallowed the very click it was asking for — the overlay's own
-       `pointer-events-none` never got a say, because the div above it had already taken the event.
-       The ticket tour has the same root and never noticed: it blocks on every step by design. */
-    <div className="pointer-events-none fixed inset-0 z-[10500]">
+       `fixed inset-0` still hit-tests across the whole screen, so with the root left interactive it
+       would swallow every click on the page beneath. */
+    <div data-portal-tour className="pointer-events-none fixed inset-0 z-[10500]">
       {/* ⚠️ A REAL viewport, not `width: 0; height: 0`. The mask's own rect is sized `100%`, and a
-          percentage inside a zero-sized SVG resolves to zero — so the white "keep this" rect had no
-          area, the whole overlay was masked away, and the tour ran with no dim at all: a spotlight
-          ring around a page that was never darkened. Copied straight from the ticket tour, where
-          the same two zeroes are still in place. */}
+          percentage inside a zero-sized SVG resolves to zero — so the white "keep this" rect would
+          have no area, the whole overlay would be masked away, and the tour would run with a
+          spotlight ring around a page that was never dimmed. */}
       <svg className="pointer-events-none absolute inset-0 h-full w-full">
         <defs>
           <mask id="portal-tour-mask">
@@ -319,13 +288,8 @@ export function PortalBuilderTour({
         </defs>
       </svg>
 
-      {/* ⚠️ Click-through on the interactive step and only there. The whole point of that step is
-          that you perform the gesture yourself; an overlay that swallows the click would leave the
-          card asking for something the screen refuses to accept. */}
       <div
-        className={`absolute inset-0 bg-black/60 backdrop-blur-[4px] transition-all duration-300 ${
-          step.interactive ? 'pointer-events-none' : 'pointer-events-auto'
-        }`}
+        className="pointer-events-auto absolute inset-0 bg-black/60 backdrop-blur-[3px] transition-all duration-300"
         style={{ mask: 'url(#portal-tour-mask)', WebkitMask: 'url(#portal-tour-mask)' }}
       />
 
@@ -335,7 +299,7 @@ export function PortalBuilderTour({
           style={{
             top: hole.y, left: hole.x, width: hole.w, height: hole.h,
             boxShadow:
-              '0 0 0 3px rgba(61, 139, 208, 0.8), 0 0 40px rgba(61, 139, 208, 0.4), 0 20px 60px rgba(0, 0, 0, 0.5)',
+              '0 0 0 2px rgba(61, 139, 208, 0.9), 0 0 32px rgba(61, 139, 208, 0.35), 0 20px 60px rgba(0, 0, 0, 0.45)',
             opacity: fading ? 0 : 1,
             zIndex: 2,
           }}
@@ -344,61 +308,65 @@ export function PortalBuilderTour({
 
       <div
         ref={cardRef}
-        className="pointer-events-auto absolute w-[400px] rounded-2xl bg-[#1F2937] shadow-2xl transition-all duration-300"
+        data-portal-tour-card
+        className="pointer-events-auto absolute w-[320px] rounded-2xl bg-[#1F2937] shadow-[0_24px_48px_-12px_rgba(0,0,0,0.55)] transition-all duration-300"
         style={{
           top: box.top, left: box.left, zIndex: 3,
           opacity: fading ? 0 : 1,
-          transform: fading ? 'scale(0.95)' : 'scale(1)',
+          transform: fading ? 'scale(0.97)' : 'scale(1)',
         }}
       >
+        {/* ⚠️ The card must NOT be `overflow-hidden`. The four arrows are children hanging off its
+            edges at -10px, so clipping the card silently removes every one of them — the card still
+            looks right, it just stops pointing at anything. The media panel does its own clipping. */}
         {box.pos === 'right' && (
-          <div className="absolute -left-3 w-0" style={{ top: arrowTop - 12, borderTop: '12px solid transparent', borderBottom: '12px solid transparent', borderRight: '12px solid #1F2937' }} />
+          <div className="absolute -left-2.5 w-0" style={{ top: arrowTop - 10, borderTop: '10px solid transparent', borderBottom: '10px solid transparent', borderRight: '10px solid #1F2937' }} />
         )}
         {box.pos === 'left' && (
-          <div className="absolute -right-3 w-0" style={{ top: arrowTop - 12, borderTop: '12px solid transparent', borderBottom: '12px solid transparent', borderLeft: '12px solid #1F2937' }} />
+          <div className="absolute -right-2.5 w-0" style={{ top: arrowTop - 10, borderTop: '10px solid transparent', borderBottom: '10px solid transparent', borderLeft: '10px solid #1F2937' }} />
         )}
         {box.pos === 'bottom' && (
-          <div className="absolute -top-3 h-0" style={{ left: arrowLeft - 12, borderLeft: '12px solid transparent', borderRight: '12px solid transparent', borderBottom: '12px solid #1F2937' }} />
+          <div className="absolute -top-2.5 h-0" style={{ left: arrowLeft - 10, borderLeft: '10px solid transparent', borderRight: '10px solid transparent', borderBottom: '10px solid #1F2937' }} />
         )}
         {box.pos === 'top' && (
-          <div className="absolute -bottom-3 h-0" style={{ left: arrowLeft - 12, borderLeft: '12px solid transparent', borderRight: '12px solid transparent', borderTop: '12px solid #1F2937' }} />
+          <div className="absolute -bottom-2.5 h-0" style={{ left: arrowLeft - 10, borderLeft: '10px solid transparent', borderRight: '10px solid transparent', borderTop: '10px solid #1F2937' }} />
         )}
 
-        <div className="px-6 pb-4 pt-6">
-          <h3 className="mb-3 text-[16px] font-semibold leading-tight text-white">{step.title}</h3>
-          <p className="text-[14px] leading-relaxed text-white/80">{step.description}</p>
-
-          {/* ⚠️ The interactive step's escape hatch. An interactive step with no way past it is a
-              dead end for anyone who does not click where it asks — and "advance anyway" would
-              teach nothing, so this performs the selection and lets the next step explain what
-              just happened. */}
-          {step.interactive && (
-            <button
-              onClick={showMe}
-              className="mt-4 text-[13px] font-medium text-white/70 underline underline-offset-2 transition-colors hover:text-white"
-            >Show me</button>
-          )}
+        {/* ⚠️ The picture is INSET, not full-bleed. Flush to the card's edges it reads as the card's
+            own background and the words underneath look like a caption; inset, it reads as a screen
+            being shown to you, which is what it is. */}
+        <div className="px-4 pt-4">
+          <div className="h-[160px] overflow-hidden rounded-lg bg-[#F1F5F9]">
+            {/* Keyed by step so each beat's animations restart rather than continuing mid-cycle. */}
+            <TourArt key={step.id} beat={step.beat} />
+          </div>
         </div>
 
-        <div className="flex items-center justify-between px-6 pb-6">
-          <div className="text-[13px] font-medium text-white/60">{i + 1}/{STEPS.length}</div>
-          <div className="flex items-center gap-3">
-            {/* Skip is on every step, not only the first — somebody who has seen enough should not
-                have to reach the end to stop. */}
+        <div className="px-5 pb-1 pt-4">
+          <h3 className="text-[15.5px] font-semibold leading-tight text-white">{step.title}</h3>
+          <p className="mt-1.5 text-[13px] leading-[1.5] text-white/70">{step.description}</p>
+        </div>
+
+        <div className="flex items-center justify-between px-5 pb-4 pt-3">
+          <div className="text-[12px] font-medium text-white/45">{i + 1} of {STEPS.length}</div>
+          <div className="flex items-center gap-2">
+            {/* ⚠️ Close is on EVERY step, not only the first — somebody who has seen enough should
+                not have to reach the end to stop. Once there IS a Back, Close steps aside for it
+                and becomes the quietest of the three. */}
             <button
-              onClick={() => { onSeamHold(null); onDone(); }}
-              className="px-2 py-2 text-[13px] font-medium text-white/60 transition-colors hover:text-white"
-            >Skip</button>
+              onClick={onDone}
+              className="rounded px-3 py-1.5 text-[12.5px] font-medium text-white/60 transition-colors hover:bg-white/10 hover:text-white"
+            >Close</button>
             {i > 0 && (
               <button
                 onClick={() => go(-1)}
-                className="px-4 py-2 text-[13px] font-medium text-white/80 transition-colors hover:text-white"
+                className="rounded border border-white/20 px-3 py-1.5 text-[12.5px] font-medium text-white/85 transition-colors hover:bg-white/10"
               >Back</button>
             )}
             <button
               onClick={() => go(1)}
-              className="rounded bg-white px-5 py-2 text-[13px] font-semibold text-[#1F2937] transition-colors hover:bg-white/90"
-            >{last ? 'Start editing' : 'Next'}</button>
+              className="rounded bg-white px-4 py-1.5 text-[12.5px] font-semibold text-[#1F2937] transition-colors hover:bg-white/90"
+            >{last ? 'Done' : 'Next'}</button>
           </div>
         </div>
       </div>

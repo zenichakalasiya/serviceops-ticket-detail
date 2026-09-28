@@ -2292,6 +2292,59 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   Corner radius · Shadow │ Delete; no Style, Fill, Border, Corner radius or Gap left in any panel;
   Spacing still there; border weight 3 paints 3px and radius 24 paints 24px on the canvas.
 
+- **Support Portal — the TOUR, version 1: four spotlight steps that hand over to a corner dock
+  (`PortalBuilderTour.tsx` + `PortalTourArt.tsx` + `PortalTourDock.tsx`, 28 Sep 2026).** Reached from
+  the top bar's ? → *Take the tour*; the dock is re-openable from the same menu's *Editor basics*.
+  ⚠️ **THE CARD CARRIES A PICTURE**, which is the whole change of shape from the Sept 2 tour: media
+  panel → title → one short line → `n of N` beside Close / Back / Next, the form Zeni's two
+  references share. Four lines of prose about a screen somebody cannot yet picture is a manual.
+  ⚠️ **ONE DRAWING, FOUR BEATS.** Every step renders the SAME miniature of this editor — top bar,
+  canvas, panel, rail — and lights the region it is about while a small action plays inside it. Four
+  unrelated illustrations would make the reader re-learn the layout on every card; one wireframe
+  means each step says "that part, there" about a picture they read on step one. It is also what
+  lets the dock's recap be the same component running all four beats rather than a fifth drawing
+  that could drift from the other four.
+  ⚠️ **NOT A VIDEO.** SVG + CSS keyframes (in `theme.css`, prefixed `pt-`, all honouring
+  `prefers-reduced-motion`): nothing to load, nothing to buffer, crisp at any zoom, and it cannot go
+  stale the way a recorded screen does the next time the builder's chrome changes.
+  ⚠️ **The media panel is LIGHT on a dark card**, because the thing it is a picture of is light. A
+  dark wireframe on a dark card reads as decoration ON the card; a light one reads as a screen.
+  ⚠️ **THE TOUR MOVES THE SURFACE UNDERNEATH IT** — step 2 opens the Widgets panel (`onRail`), step 3
+  selects the banner (`onSelect`), because a library and a floating toolbar do not EXIST until
+  something is open or selected: a spotlight on a closed panel is a spotlight on a 72px strip of
+  icons. This deliberately reverses the old tour's "never selects behind your back", which was about
+  its one INTERACTIVE step, where the point was that you perform the gesture.
+  ⚠️ Measurement therefore runs on the NEXT FRAME (`requestAnimationFrame`) — the builder has just
+  been asked to open a panel and has not rendered, so a same-tick measure lands the hole where the
+  panel used to be.
+  ⚠️ **A step may name SEVERAL anchors and the hole is their UNION.** The last step is about
+  finishing, and finishing is light/dark, Preview and Publish, which sit either side of Reset to
+  default on one row — so `data-tour="mode"` was added beside the existing `data-tour="publish"`.
+  Two separate steps would have split one thought across two cards.
+  ⚠️ **The card must NOT be `overflow-hidden`.** Its four arrows are children hanging off its edges
+  at −10px, so clipping the card silently removes every one of them — the card still looks right, it
+  just stops pointing at anything. The media panel does its own clipping.
+  ⚠️ **FINISHING hands over to the dock; SKIPPING does not.** Somebody who read four cards gets the
+  summary they can keep; somebody who dismissed the tour on card one should not be told the same
+  thing twice by a second surface. Replaying from the dock closes the dock — the tour dims the page,
+  and a bright card in the corner of a dimmed screen is pulling against the thing it is pointing at.
+  ⚠️ **The dock's loop has a TRANSPORT**, which is what makes it a recap rather than an ornament:
+  four LABELLED chips (a dot says "there are four"; a word says which one you are about to see), a
+  play/pause, and a progress bar whose duration is set inline from the same `DWELL` the loop
+  advances on. Picking a beat PAUSES — you clicked it to look at it, and a picture that moves on four
+  seconds later is answering somebody else's question. Its caption line has a `min-h` floor, or the
+  card and everything under it jump every time the loop advances.
+  ⚠️ **It COLLAPSES to a pill**, not only closes: the corner of the canvas is space the admin is
+  working in, but a card that can only be dismissed forever makes "out of my way for a minute" and
+  "I am done with this" the same button.
+  ⚠️ `tourSeam` left the builder with the seam step. The MECHANISM stays in `PortalCanvas` (an
+  optional prop, unset = no seam held), so a future step can hold a seam open again.
+  Verified in a browser across all four steps: holes land on the rail (72px), the panel (340px), the
+  banner and the union of mode→publish (432×48); the panel really is open on step 2 and the banner
+  really is selected with its toolbar visible on step 3; the dock opens on Done at 300×285, its chips
+  scrub, and Minimise leaves the "Editor basics" pill.
+  **Version 2 is NOT built** — Zeni described only version 1.
+
 ## Parked features
 Four Support Portal features are BUILT-OR-PART-BUILT AND SWITCHED OFF, with their full context in
 [future-tasks.md](future-tasks.md): **AI** (rail item commented out in `SupportPortalBuilder`; the
