@@ -1773,6 +1773,42 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   Verified: all 10 buttons on an action card's bar carry the right cap and `Drag to move` correctly
   carries none; the top bar reads `Undo` + `Ctrl` `Z` and `Help` + `?`; the cap renders white-at-12%
   over a dark tooltip on both surfaces.
+- **Support Portal — ARROWS WALK AN OPEN POPUP (`usePopupArrows.ts`, 28 Sep 2026).** A toolbar popup
+  that is a set of options now answers to the arrows: **moving APPLIES**, Enter keeps and closes,
+  Escape puts back what the popup opened with. Full table in **SHORTCUTS.md §5**.
+  ⚠️ **THERE IS NO CURSOR, and that is the design.** The highlight you see IS the value — the caller
+  works out `at` from its own value, the hook calls `onMove`, the value changes and `at` follows. It
+  removes the whole class of bug where a cursor and a value disagree about which option is chosen.
+  ⚠️ **CAPTURE PHASE + `stopPropagation`.** `PortalShortcuts` listens for the same arrows on the
+  window to MOVE the selected widget, so without this the arrow that walks a popup also reorders the
+  page behind it. Verified: the Quick Actions row does not move while an alignment popup is open.
+  ⚠️ **CROSSING A ROW ONLY MOVES — found by testing, not by reading.** The hook carries the column
+  when the row changes, which is right for a grid and wrong for two strips holding unrelated values:
+  `↓` from *Colour* (column 1) landed on column 1 of `Solid|Gradient` and silently turned a solid
+  banner into a gradient. Both two-row popups now compare the row first and return.
+  ⚠️ **ORIENTATION IS THE CALLER'S.** `rows: [4]` is a row of four answering to ←→; `rows: [1,1,1,1]`
+  is a vertical list answering to ↑↓ (Button style). The hook never guesses an axis.
+  ⚠️ **It CLAMPS, never wraps** — the product's own move arrows are simply absent at the edge of a
+  row, so "nothing further that way" is already what an arrow means here.
+  ⚠️ **NO DEPENDENCY ARRAY** on the effect: `at` changes on every apply and the handler closes over
+  it, so a memoised listener would keep moving from where the popup opened.
+  ⚠️ **`useOpenValue` captures DURING the render that opens the popup**, not in an effect — an effect
+  runs after paint, so a first arrow press in the same frame would restore the value it had just set.
+  ⚠️ **`AlignAxis` now closes ITSELF.** All seven call sites used to end `onPick` with their own
+  `setOpen(false)` — the same line seven times — and the keyboard needs the two separated anyway,
+  because an arrow applies WITHOUT closing where a click does both. `onPick` is apply-only now.
+  `TilePresetPicker` took the same split via optional `open`/`onClose`, which stay undefined in the
+  PANEL so the hook is inert there and a click closes nothing.
+  ⚠️ **`Sections & arrangement` is the one popup where Escape only CLOSES.** Its two rows make
+  structural edits, so a restore would have to re-create deleted sections — undo is the honest way
+  back. Everywhere else Escape restores.
+  ⚠️ **NOT wired, and each for its own reason:** the sliders (arrows there already mean "change the
+  number"), the searchable lists (search is their way in), and **Add item / Add to banner** — those
+  two ADD a widget rather than set a value, so applying as you arrow would add and delete things on
+  the way past. They need highlight-then-Enter, a different mechanism, and it is not built.
+  Verified: alignment walks left→centre→right live with the popup open and the row behind unmoved,
+  Enter keeps, Escape returns to the value at open; Shadow walks None→Soft→Medium and restores; the
+  banner background goes Image →Colour ↓(no change) →Gradient ↑(no change), Escape closes.
 
 - **Support Portal — the banner image’s colour layer is LINEAR only (25 Sep 2026).** The Linear/Radial
   select is gone from `OverlayLayerEditor`; the angle field and Rotate take its place and get the width.

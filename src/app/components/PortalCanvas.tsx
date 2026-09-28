@@ -14,6 +14,7 @@ import { bannerBoxId, flipRoot, groupOf } from './portalBannerLayout';
 import type { BannerNode } from './portalBannerLayout';
 import { BANNER_GROUPS, bannerGroupGap } from './portalPageModel';
 import { keysForTip } from './portalShortcutKeys';
+import { usePopupArrows, useOpenValue } from './usePopupArrows';
 import { toast } from 'sonner';
 import { MiniRange } from './PortalRange';
 import { fillsFromConfig, HEADING_SIZE, PORTAL_FONTS, SECTION_LAYOUTS, SPLITTABLE_BANDS, TEXT_STYLES, ZERO_BOX, COMPOSABLE, BANNER_BLOCKS, inBanner, dragIdOf, isContactChild, boxInfo, canAddBeside, defaultAlignH, nodeById, paintsOwnShadow, paintsOwnSurface, toolbarCaps, nodePath, placedIn, placedType } from './portalPageModel';
@@ -396,6 +397,19 @@ function AlignAxis({ axis, value, options, open, onToggle, onPick }: {
   onPick: (v: string) => void;
 }) {
   const current = options.find(([v]) => v === value) ?? options[0];
+  /* ⚠️ THE POPUP CLOSES ITSELF now. Every one of the seven call sites used to end its `onPick` with
+     its own `setOpen(false)` — the same line written seven times — and the keyboard needs the two
+     separated anyway, because an arrow APPLIES without closing where a click does both. `onPick` is
+     now apply-only and the close is here, which is also the one place that knows the popup exists. */
+  const held = useOpenValue(open, value);
+  usePopupArrows({
+    open,
+    rows: [options.length],
+    at: [0, Math.max(0, options.findIndex(([v]) => v === value))],
+    onMove: (_r, c) => onPick(options[c][0]),
+    onEnter: onToggle,
+    onEscape: () => { onPick(held.current); onToggle(); },
+  });
   return (
     <div className="relative">
       <button
@@ -415,7 +429,7 @@ function AlignAxis({ axis, value, options, open, onToggle, onPick }: {
                 key={v}
                 className={value === v ? btnOn : btn}
                 data-tip={label}
-                onClick={() => onPick(v)}
+                onClick={() => { onPick(v); onToggle(); }}
               >{ic}</button>
             ))}
           </div>
@@ -1129,12 +1143,24 @@ function ShadowMenu({ id }: { id: string }) {
   const current = own.shadowOn !== true
     ? 'none'
     : SHADOW_PRESETS.find((s) => s.color === String(own.shadowColor ?? ''))?.key ?? 'custom';
-  const pick = (s: (typeof SHADOW_PRESETS)[number]) => {
-    setStyle(id, s.color === null
-      ? { shadowOn: false }
-      : { shadowOn: true, shadowColor: s.color, shadowType: 'outer', shadowPos: 'bottom' });
-    setOpen(false);
-  };
+  const apply = (s: (typeof SHADOW_PRESETS)[number]) => setStyle(id, s.color === null
+    ? { shadowOn: false }
+    : { shadowOn: true, shadowColor: s.color, shadowType: 'outer', shadowPos: 'bottom' });
+  const pick = (s: (typeof SHADOW_PRESETS)[number]) => { apply(s); setOpen(false); };
+  /* ⚠️ Escape restores the four STORED KEYS, not the preset name. A page can carry a hand-set inner
+     shadow the presets cannot express (`current` reads 'custom' there) — restoring by preset would
+     quietly flatten it into one of the four on the way out of a look nobody kept. */
+  const held = useOpenValue(open, {
+    shadowOn: own.shadowOn, shadowColor: own.shadowColor, shadowType: own.shadowType, shadowPos: own.shadowPos,
+  });
+  usePopupArrows({
+    open,
+    rows: [SHADOW_PRESETS.length],
+    at: [0, Math.max(0, SHADOW_PRESETS.findIndex((s) => s.key === current))],
+    onMove: (_r, c) => apply(SHADOW_PRESETS[c]),
+    onEnter: () => setOpen(false),
+    onEscape: () => { setStyle(id, held.current as never); setOpen(false); },
+  });
   return (
     <div className="relative">
       <button className={open ? btnOn : btn} data-tip="Shadow" onClick={() => setOpen((x) => !x)}>
@@ -1180,6 +1206,17 @@ function ButtonStyleMenu({ id }: { id: string }) {
   const [open, setOpen] = useState(false);
   const current = String(cfg?.(id)?.style ?? 'primary');
   const label = BUTTON_STYLES.find(([v]) => v === current)?.[1] ?? 'Primary';
+  /* ⚠️ `rows` is one-per-row, not one row of four — this popup is a vertical LIST, so it answers to
+     up and down. The hook takes the shape from whoever knows it rather than guessing an axis. */
+  const held = useOpenValue(open, current);
+  usePopupArrows({
+    open,
+    rows: BUTTON_STYLES.map(() => 1),
+    at: [Math.max(0, BUTTON_STYLES.findIndex(([v]) => v === current)), 0],
+    onMove: (r) => setCfg(id, { style: BUTTON_STYLES[r][0] }),
+    onEnter: () => setOpen(false),
+    onEscape: () => { setCfg(id, { style: held.current }); setOpen(false); },
+  });
   return (
     <div className="relative">
       <button
@@ -1741,7 +1778,7 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
                 <span className="fixed inset-0 z-[60]" onClick={() => setColsOpen(false)} />
                 <div className="absolute left-0 top-[calc(100%+6px)] z-[61] rounded-lg border border-[#E5E7EB] bg-white p-3 shadow-[0_12px_16px_-4px_rgba(16,24,40,0.10),0_4px_6px_-2px_rgba(16,24,40,0.06)]" style={{ width: Math.min(4, count) * 80 + 24 }}>
                   <p className="mb-2 text-[12px] font-medium text-[#364658]">Presets</p>
-                  <TilePresetPicker count={count} value={cols} onChange={(c) => { setCfg?.(id, { cols: String(c) }); setColsOpen(false); }} />
+                  <TilePresetPicker count={count} value={cols} open={colsOpen} onClose={() => setColsOpen(false)} onChange={(c) => setCfg?.(id, { cols: String(c) })} />
                 </div>
               </>
             )}
@@ -1807,7 +1844,7 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
           options={H_OPTS}
           open={axis === 'h'}
           onToggle={() => setAxis((a) => (a === 'h' ? null : 'h'))}
-          onPick={(v) => { setStyle(id, { align: v as never }); setAxis(null); }}
+          onPick={(v) => setStyle(id, { align: v as never })}
         />
       )}
       {caps.alignV !== false && (
@@ -1817,7 +1854,7 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
           options={V_OPTS}
           open={axis === 'v'}
           onToggle={() => setAxis((a) => (a === 'v' ? null : 'v'))}
-          onPick={(v) => { setStyle(id, { alignY: v as never }); setAxis(null); }}
+          onPick={(v) => setStyle(id, { alignY: v as never })}
         />
       )}
       {/* ⚠️ Not on a text CHILD, the same rule Shadow follows: a heading's colour is its TYPE colour,
@@ -2662,11 +2699,44 @@ function BannerToolbar() {
   const [axis, setAxis] = useState<'h' | 'v' | null>(null);
   const [layout, setLayout] = useState(false);
   const [bgTab, setBgTab] = useState<'image' | 'color'>('image');
+  /* ⚠️ WHICH ROW the keyboard is on — the one piece of cursor this popup needs. Everywhere else the
+     highlight IS the value, so no cursor exists; here there are two strips (Image|Colour over
+     Solid|Gradient) and two values, and nothing in either of them says which one an arrow should
+     move along. The COLUMN is still the value — only the row is remembered. */
+  const [bgRow, setBgRow] = useState(0);
   /* ⚠️ ONE background popup where there were two buttons — a picture one and a colour one, side by
      side on the bar, each opening half of "what is behind this banner". A banner has ONE background
      and it is either a picture or a colour, which is a question with two answers, not two questions.
      `bg` is whether the popup is open; `bgTab` is which answer you are looking at. */
   const [bg, setBg] = useState(false);
+  /* The background popup's two strips, as one shape: Image|Colour, and — only while the Colour tab
+     is showing — Solid|Gradient under it. `rows` shrinking to one entry is what stops ↓ reaching a
+     strip that is not on screen. */
+  const bgMode = String(hero.colorMode ?? 'solid');
+  const heldBg = useOpenValue(bg, { tab: bgTab, mode: bgMode });
+  usePopupArrows({
+    open: bg,
+    rows: bgTab === 'color' ? [2, 2] : [2],
+    at: [bgRow, bgRow === 0 ? (bgTab === 'color' ? 1 : 0) : (bgMode === 'gradient' ? 1 : 0)],
+    onMove: (r, c) => {
+      /* ⚠️ CROSSING A ROW IS NAVIGATION, NOT A CHOICE. The hook carries the column when it changes
+         row — right for a grid, wrong here, where the two strips hold unrelated values: ↓ from
+         `Colour` (column 1) landed on column 1 of the mode strip and silently turned a solid banner
+         into a gradient. Moving between strips now only moves; the next ←→ is what picks. */
+      if (r !== bgRow) { setBgRow(r); return; }
+      if (r === 0) setBgTab(c === 1 ? 'color' : 'image');
+      /* ⚠️ Writing `colorMode` also stamps `bgKind: 'color'` through `BannerFillEditor`'s own rule —
+         so moving onto Solid or Gradient is a real choice of a coloured banner, exactly as clicking
+         the same chip is. Nothing here writes a key the editor would not have written. */
+      else setCfg?.('hero', { bgKind: 'color', colorMode: c === 1 ? 'gradient' : 'solid' });
+    },
+    onEnter: () => setBg(false),
+    onEscape: () => {
+      setBgTab(heldBg.current.tab);
+      if (heldBg.current.mode !== bgMode) setCfg?.('hero', { colorMode: heldBg.current.mode });
+      setBg(false);
+    },
+  });
   const fileRef = useRef<HTMLInputElement>(null);
   const { tip, setTip, readTip } = useToolbarTip();
   const alignH = String(hero.contentAlign ?? 'center');
@@ -2701,8 +2771,8 @@ function BannerToolbar() {
       className={BAR}
     >
       <ToolbarTip tip={tip} />
-      <AlignAxis axis="h" value={h} options={H} open={axis === 'h'} onToggle={() => { setBg(false); setAxis((a) => (a === 'h' ? null : 'h')); }} onPick={(x) => { setCfg?.('hero', { contentAlign: x }); setAxis(null); }} />
-      <AlignAxis axis="v" value={vAlign} options={V} open={axis === 'v'} onToggle={() => { setBg(false); setAxis((a) => (a === 'v' ? null : 'v')); }} onPick={(x) => { setCfg?.('hero', { contentAlignY: x }); setAxis(null); }} />
+      <AlignAxis axis="h" value={h} options={H} open={axis === 'h'} onToggle={() => { setBg(false); setAxis((a) => (a === 'h' ? null : 'h')); }} onPick={(x) => setCfg?.('hero', { contentAlign: x })} />
+      <AlignAxis axis="v" value={vAlign} options={V} open={axis === 'v'} onToggle={() => { setBg(false); setAxis((a) => (a === 'v' ? null : 'v')); }} onPick={(x) => setCfg?.('hero', { contentAlignY: x })} />
       <Rule />
       {/* ⚠️ ONE button for the banner's layout, where there were two.
           The "+" asked how many sections and this one asked how they were arranged — so you opened a
@@ -2723,6 +2793,7 @@ function BannerToolbar() {
                 tree={heroTree?.() ?? null}
                 onCount={(n, remove) => setBannerSections?.(n, remove)}
                 nameOf={(id) => nodeById(id)?.name ?? 'Section'}
+                onClose={() => setLayout(false)}
                 onPick={(t) => setCfg?.('hero', { bannerTree: t })}
               />
             </div>
@@ -2746,6 +2817,9 @@ function BannerToolbar() {
           onClick={() => {
             setAxis(null); setLayout(false);
             if (!bg) setBgTab(hero.bgKind === 'color' ? 'color' : 'image');
+            /* The keyboard starts on the tab strip every time it opens — a row remembered from the
+               last visit would put the first arrow somewhere nobody is looking. */
+            if (!bg) setBgRow(0);
             setBg((x) => !x);
           }}
         ><PaintBucket size={15} /></button>
@@ -2981,13 +3055,13 @@ function GroupToolbar({ id }: { id: string }) {
           {/* Two axes, always both: where the items sit across the section, and down it. STRETCH on the vertical
               axis pins the words to the top and the search to the bottom; on the horizontal one (side by side) it
               spreads them to the two edges. */}
-          <AlignAxis axis="h" value={String(c.align ?? align)} open={open} onToggle={() => { setOpenY(false); setOpen((x) => !x); }} onPick={(x) => { setCfg?.(id, { align: x }); setOpen(false); }}
+          <AlignAxis axis="h" value={String(c.align ?? align)} open={open} onToggle={() => { setOpenY(false); setOpen((x) => !x); }} onPick={(x) => setCfg?.(id, { align: x })}
             options={[['start', 'Left', <AlignStartVertical key="l" size={15} />], ['center', 'Centre', <AlignCenterVertical key="c" size={15} />], ['end', 'Right', <AlignEndVertical key="r" size={15} />], ['stretch', dir === 'row' ? 'Spread to both edges' : 'Stretch across', <StretchHorizontal key="s" size={15} />]] as [string, string, ReactNode][]} />
-          <AlignAxis axis="v" value={String(c.alignY ?? cfg?.('hero')?.contentAlignY ?? 'center')} open={openY} onToggle={() => { setOpen(false); setOpenY((x) => !x); }} onPick={(x) => { setCfg?.(id, { alignY: x }); setOpenY(false); }}
+          <AlignAxis axis="v" value={String(c.alignY ?? cfg?.('hero')?.contentAlignY ?? 'center')} open={openY} onToggle={() => { setOpen(false); setOpenY((x) => !x); }} onPick={(x) => setCfg?.(id, { alignY: x })}
             options={[['start', 'Top', <AlignStartHorizontal key="t" size={15} />], ['center', 'Middle', <AlignCenterHorizontal key="m" size={15} />], ['end', 'Bottom', <AlignEndHorizontal key="b" size={15} />], ['stretch', 'Stretch — words top, search bottom', <StretchVertical key="s" size={15} />]] as [string, string, ReactNode][]} />
         </>
       ) : (
-        <AlignAxis axis={dir === 'row' ? 'v' : 'h'} value={align} options={A} open={open} onToggle={() => setOpen((x) => !x)} onPick={(x) => { setCfg?.(id, { align: x }); setOpen(false); }} />
+        <AlignAxis axis={dir === 'row' ? 'v' : 'h'} value={align} options={A} open={open} onToggle={() => setOpen((x) => !x)} onPick={(x) => setCfg?.(id, { align: x })} />
       )}
     </div>
   );

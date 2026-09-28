@@ -230,6 +230,45 @@ chose, and these are exactly the properties judged by eye against the page behin
 
 Also reachable from the top bar's **Help** menu (*Take the tour* · *Keyboard shortcuts*).
 
+### Inside an open popup
+
+A toolbar popup that is a set of OPTIONS answers to the arrows. **Moving applies**, so the highlight
+you see is the value itself; **Enter** closes and keeps it; **Escape** puts back what the popup
+opened with and closes.
+
+| Shortcut | Action |
+|---|---|
+| `←` `→` | Move along the row you are on |
+| `↑` `↓` | Cross between rows — a tab strip and the grid under it |
+| `Enter` | Keep and close |
+| `Escape` | Restore what it opened with, and close |
+
+Wired, via `usePopupArrows`: **Horizontal / Vertical alignment** (element bar, banner bar, banner
+groups), **Direction**, **Shadow**, **Button style**, **Presets**, **Banner background**
+(`Image|Colour` over `Solid|Gradient`), **Sections & arrangement**.
+
+⚠️ **Crossing a row only MOVES.** The hook carries the column when the row changes — right for a
+grid, wrong where two strips hold unrelated values: `↓` from *Colour* (column 1) landed on column 1
+of the mode strip and silently turned a solid banner into a gradient. Both two-row popups compare
+the row first and return.
+
+⚠️ **The capture phase is what makes this safe.** `PortalShortcuts` listens for the same arrows to
+MOVE the selected widget, so the popup's handler runs on capture and stops propagation — otherwise
+the arrow that walks a popup also reorders the page behind it.
+
+⚠️ **Not wired, deliberately:** the sliders (Border weight, Corner radius — arrows there already mean
+"change the number"), the searchable lists (Add / Replace widget, the icon grid — both have a search
+box as their way in), and the two ACTION lists (**Add item**, **Add to banner**). Those last two add
+a widget rather than set a value, so applying as you arrow would add and delete things on the way
+past; they need a highlight-then-Enter model, which is a different mechanism.
+
+⚠️ **`Sections & arrangement` is the one popup where Escape only CLOSES.** Both its rows make
+structural edits — a count adds or removes sections, an arrangement rewrites the tree — so "put back
+what it was" would have to re-create deleted sections, which a key cannot promise. Undo is the way
+back, and it is the thing that actually holds the old state.
+
+---
+
 ### Where the keys are written down
 
 **`src/app/components/portalShortcutKeys.ts`** — one map, three readers:

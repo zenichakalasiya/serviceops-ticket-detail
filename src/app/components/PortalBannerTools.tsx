@@ -20,6 +20,7 @@ import { ColorField } from './PortalColorPicker';
 import { activePreset, bannerBoxId, defaultTreeFor, presetsFor, TEXT_SECTION, tilePresets, unitsOf } from './portalBannerLayout';
 import type { BannerNode } from './portalBannerLayout';
 import { placedType } from './portalPageModel';
+import { usePopupArrows, useOpenValue } from './usePopupArrows';
 
 /** Figma's gap field: the direction glyph, the number, and a slider — one value, typed or dragged. */
 export function GapField({ value, onChange, dir = 'column' }: { value: number; onChange: (v: number) => void; dir?: string }) {
@@ -312,13 +313,15 @@ export function BannerPresetPicker({ tree, onPick }: { tree: BannerNode | null; 
  * ⚠️ Picking a count re-renders the tiles under it, because the tiles read the live tree. That is the
  * whole point of the two being in one place: the layouts you are choosing between are the layouts for the
  * number you just set, in front of you, without a second popup. */
-export function BannerLayoutPanel({ tree, onCount, onPick, nameOf }: {
+export function BannerLayoutPanel({ tree, onCount, onPick, nameOf, onClose }: {
   tree: BannerNode | null;
   onCount: (n: number, remove?: string[]) => void;
   onPick: (t: BannerNode) => void;
   /* What a section is CALLED, answered by the canvas's own `nodeById` — one naming source, so a row
      here reads exactly as the outline and the breadcrumb do. */
   nameOf: (id: string) => string;
+  /** Enter and Escape both close the popup — the toolbar owns whether it is open. */
+  onClose?: () => void;
 }) {
   const units = unitsOf(tree);
   const cur = units.length;
@@ -345,6 +348,33 @@ export function BannerLayoutPanel({ tree, onCount, onPick, nameOf }: {
     setPicked([]);
     setAsking(n);
   };
+
+  /* ── Arrows over the two strips ───────────────────────────────────────────────────────────────
+   * Row 0 is the count (Default · 2 · 3 · 4), row 1 the arrangement tiles. ←→ walks one, ↑↓ crosses
+   * between them, which is where they sit on screen.
+   * ⚠️ INERT while `asking` — that step is a list of sections to DELETE with a red confirm, and an
+   * arrow that ticked a row there would be a keystroke away from throwing work out.
+   * ⚠️ ESCAPE ONLY CLOSES HERE, against the rule every other popup follows. Both of these rows make
+   * STRUCTURAL edits — a count adds or removes sections, an arrangement rewrites the tree — so
+   * "put back what it was" would have to re-create sections that were deleted, and a key cannot
+   * promise that. Undo is the way back, and it is the thing that actually holds the old state. */
+  const [row, setRow] = useState(0);
+  const open = asking === null;
+  usePopupArrows({
+    open,
+    rows: [4, Math.max(1, presets.length)],
+    at: [row, row === 0 ? (cur <= 1 ? 0 : Math.min(3, cur - 1)) : Math.max(0, presets.findIndex((p) => p.id === on))],
+    onMove: (r, c) => {
+      /* Crossing between the count strip and the arrangement tiles only MOVES — see the same note in
+         the banner's background popup. Carrying the column here would re-lay-out the banner on the
+         way past, which is the most expensive thing either row can do. */
+      if (r !== row) { setRow(r); return; }
+      if (r === 0) want(c === 0 ? 1 : c + 1);
+      else if (presets[c]) onPick(presets[c].tree);
+    },
+    onEnter: () => onClose?.(),
+    onEscape: () => onClose?.(),
+  });
 
   if (asking !== null) {
     return (
@@ -487,17 +517,32 @@ export function BannerLayoutPanel({ tree, onCount, onPick, nameOf }: {
    wide, and a badge with a label line inside a bordered box at 17px is three marks fighting over a
    space that holds one. Boxes in the right shape are what lets someone picture the layout, which is
    all the tile is for. */
-export function TilePresetPicker({ count, value, onChange }: {
+export function TilePresetPicker({ count, value, onChange, open, onClose }: {
   count: number; value: number; onChange: (cols: number) => void;
+  /* ⚠️ Only the TOOLBAR use is a popup. In the panel this is an ordinary row of tiles, so `open` is
+     left undefined, the arrow hook is inert, and a click does not try to close anything. The hook
+     has to be CALLED either way — it cannot sit behind a condition — which is why it lives here
+     rather than at the popup's own call site, an IIFE inside the toolbar's JSX. */
+  open?: boolean; onClose?: () => void;
 }) {
   const n = Math.max(1, count);
+  const presets = tilePresets(n);
+  const held = useOpenValue(!!open, value);
+  usePopupArrows({
+    open: !!open,
+    rows: [presets.length],
+    at: [0, Math.max(0, presets.findIndex((p) => p.cols === Math.min(value, Math.min(n, 4))))],
+    onMove: (_r, c) => onChange(presets[c].cols),
+    onEnter: () => onClose?.(),
+    onEscape: () => { onChange(held.current); onClose?.(); },
+  });
   return (
     <div className="flex gap-2">
-      {tilePresets(n).map((p) => {
+      {presets.map((p) => {
         const on = Math.min(value, Math.min(n, 4)) === p.cols;
         const rows = Math.ceil(n / p.cols);
         return (
-          <SkeletonTile key={p.cols} on={on} label={p.label} onPick={() => onChange(p.cols)}>
+          <SkeletonTile key={p.cols} on={on} label={p.label} onPick={() => { onChange(p.cols); onClose?.(); }}>
             {/* ⚠️ A FIXED row height, centred in the tile. Stretched to fill the tile, three tiles in one row came out
                 as three tall vertical bars — nothing like the short, wide cards they stand for.
                 ⚠️ PADDING of its own, on top of the tile's. The cards used to start 6px from the tile's
