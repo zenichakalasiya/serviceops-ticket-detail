@@ -35,7 +35,9 @@ const THUMB_SRC_W = 1180;
    does not use — a picture wrong in the one way a picture is meant to be right. */
 const THUMB_ACCENT = swatchesOf(DEFAULT_THEME)[3];
 
-function PortalThumb() {
+/* ⚠️ EXPORTED for the listing card, which shows the SAME picture of the default portal this tile does —
+   the real page, scaled, rather than a second drawing of it that could drift from the first. */
+export function PortalThumb() {
   const box = useRef<HTMLSpanElement>(null);
   const [scale, setScale] = useState(0);
   /* Measured, because the tile's width is the grid's to decide and it changes with the dialog. A
@@ -94,15 +96,17 @@ const input = 'h-9 w-full rounded border border-[#d1d5db] px-2.5 text-[13px] tex
 const Req = () => <span className="text-[#EF4444]"> *</span>;
 
 /** The five things a portal is, asked once and reused by Create and by Edit details. */
-export function PortalDetailsFields({ value, onChange }: {
+export function PortalDetailsFields({ value, onChange, stacked }: {
   value: PortalDetails; onChange: (next: PortalDetails) => void;
+  /** One column — for the side panel, which is read top to bottom and too narrow to pair fields well. */
+  stacked?: boolean;
 }) {
   const set = (k: keyof PortalDetails, v: string | boolean) => onChange({ ...value, [k]: v });
   return (
     <>
       {/* Two columns, as in the product: what the portal IS on the left, who it belongs to and how
           people sign in on the right. */}
-      <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+      <div className={stacked ? 'grid grid-cols-1 gap-y-4' : 'grid grid-cols-2 gap-x-6 gap-y-4'}>
         <div>
           <label className={label}>Support Portal Name<Req /></label>
           <input className={input} value={value.name} onChange={(e) => set('name', e.target.value)} placeholder="Support Portal Name" />
@@ -153,28 +157,46 @@ export const detailsReady = (d: PortalDetails) => !!(d.name.trim() && d.company.
  * ⚠️ It opens IMMEDIATELY after a Copy. A duplicate inherits everything including the URL, and two
  * portals cannot answer on one address — so rather than creating a quiet conflict and waiting for
  * someone to find it, the copy asks for the details that have to differ at the moment it is made. */
-export function EditPortalDetailsModal({ title, initial, onClose, onSave }: {
+export function EditPortalDetailsModal({ title, subtitle, initial, onClose, onSave }: {
   title: string;
+  /** The portal's name, under the title — a panel opened from one card among several has to say
+   *  which card, or every portal's details panel looks identical. */
+  subtitle?: string;
   initial: PortalDetails;
   onClose: () => void;
   onSave: (d: PortalDetails) => void;
 }) {
   const [d, setD] = useState<PortalDetails>(initial);
   const ready = detailsReady(d);
+  /* Escape closes, as every side panel in this module does. */
+  useEffect(() => {
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', esc);
+    return () => document.removeEventListener('keydown', esc);
+  }, [onClose]);
   return createPortal(
-    <div className="fixed inset-0 z-[10000] flex items-start justify-center bg-[#0F172A]/40 p-6 pt-[10vh]">
-      {/* ⚠️ The SAME width as the create dialog — `min(1240px, 100vw-48px)`. They ask the identical five
-          questions, so a narrower box made Edit details read as a different, smaller form: the fields
-          moved, the two columns changed width, and the same five answers wrapped differently in each.
-          Height is NOT shared: create is two steps and reserves room for the template grid, while this
-          is one short form and would be mostly empty at 980px. */}
-      <div className="flex w-[min(1240px,calc(100vw-48px))] flex-col overflow-hidden rounded-lg bg-white shadow-[0_24px_48px_-12px_rgba(16,24,40,0.25)]">
-        <div className="flex items-center gap-3 border-b border-[#E5E7EB] px-5 py-3.5">
-          <h2 className="flex-1 text-[16px] font-semibold text-[#364658]">{title}</h2>
-          <button onClick={onClose} className="flex size-8 items-center justify-center rounded text-[#64748B] transition-colors hover:bg-[#F3F4F6]"><X size={18} /></button>
+    /* ⚠️ A SIDE PANEL, not a centred dialog (Zeni's call, 28 Sep 2026). Editing a portal's details
+       happens FROM the listing, and a panel keeps the card you opened it from in view on the left —
+       a centred dialog covered the very thing it was editing. It is the SAME 560px right-hand shape
+       the Settings panel beside it already uses, so the module has one side-panel language, and the
+       fields STACK because a panel is read top to bottom and too narrow to pair them well.
+       ⚠️ It no longer shares the create dialog's width. That rule held while both were centred
+       dialogs asking the same five questions; a side panel is a different container, and the
+       questions — `PortalDetailsFields`, one component — are still the same in both. */
+    <div className="fixed inset-0 z-[10000] flex justify-end bg-[#0F172A]/40" onMouseDown={onClose}>
+      <div
+        className="flex h-full w-[560px] max-w-[92vw] flex-col bg-white shadow-[0_0_40px_rgba(16,24,40,0.18)]"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        <div className="flex flex-shrink-0 items-start gap-3 border-b border-[#E5E7EB] px-5 py-3.5">
+          <div className="min-w-0 flex-1">
+            <h2 className="text-[15px] font-semibold text-[#364658]">{title}</h2>
+            {subtitle && <p className="mt-0.5 truncate text-[12px] text-[#7B8FA5]">{subtitle}</p>}
+          </div>
+          <button onClick={onClose} aria-label="Close" className="flex size-8 items-center justify-center rounded text-[#64748B] transition-colors hover:bg-[#F3F4F6]"><X size={16} /></button>
         </div>
-        <div className="px-5 py-5"><PortalDetailsFields value={d} onChange={setD} /></div>
-        <div className="flex justify-end gap-2 border-t border-[#E5E7EB] px-5 py-3">
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5"><PortalDetailsFields value={d} onChange={setD} stacked /></div>
+        <div className="flex flex-shrink-0 justify-end gap-2 border-t border-[#E5E7EB] px-5 py-3">
           <button onClick={onClose} className="inline-flex h-9 items-center rounded border border-[#DFE5ED] bg-white px-4 text-[13px] font-medium text-[#364658] transition-colors hover:bg-[#F5F7FA]">Cancel</button>
           <button
             onClick={() => ready && onSave(d)}

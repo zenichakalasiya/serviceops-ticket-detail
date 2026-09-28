@@ -1666,6 +1666,38 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   the default itself goes straight through. The card's **star** asks the SAME question (so it is enabled on a
   Draft — making a portal the default IS publishing it); one `publishDialog()` renders it for both routes,
   from the builder's return and from the listing's `overlays`. The default's own card hides the star.
+- **Support Portal — the listing card is WIDE, with a PICTURE of the portal (28 Sep 2026, from Zeni's
+  reference).** Supersedes the card SHAPE in the bullet above (icon badge, three-up grid, a primary
+  Customise button in the footer); the rules about status, default and publish all still hold.
+  `PortalCard` is one full-width row: a **220×124 thumbnail** on the left, the name + Published/Draft +
+  Default pills on the title row, and under it the URL (link), a meta line — company · "Signs in with
+  <provider or ServiceOps login>" · audience — and "Last modified … by …" pinned to the foot.
+  ⚠️ **The thumbnail is the portal, per portal** (`thumbFor(p)`): the default design shows
+  **`PortalThumb`** — the REAL `SupportPortalPreview` scaled to its box, now EXPORTED from
+  `CreateSupportPortalModal` so the listing and the create dialog's Default tile show the same image
+  from one component; a portal started from a TEMPLATE (`start === 'template'`) shows that template's
+  `TemplateArt`; one built from SCRATCH shows `BlankThumb`. The same picture on every card would be
+  a picture of a page most of them are not. The thumbnail and the name both open the editor.
+  ⚠️ **EVERY action is at the TOP RIGHT, in one cluster**: Edit ▾ · Preview · Settings · Copy ·
+  Set as default · Delete, then a hairline, then the status switch (a state you read, fenced from the
+  actions you take). The big "Customise portal" footer button is GONE — the name, the picture and the
+  Edit menu all open the editor.
+  ⚠️ **Edit is ONE icon with a chevron** (`EditMenu`) opening **Edit details** ("Name, company, address
+  and sign-on") and **Edit support portal** ("Open it in the editor") — two kinds of editing, never
+  done in the same moment. The menu is PORTALLED and fixed from the button's rect, re-measured on
+  scroll/resize, because the listing scrolls in its own pane and an absolute menu inside a scroll box
+  is clipped (the old row kebab rendered as a 6px sliver). 272px wide so its descriptions hold one line.
+  ⚠️ **Edit details is a RIGHT SIDE PANEL now, not a centred dialog** (`EditPortalDetailsModal` keeps
+  its name, gains a `subtitle` = the portal's name). It is the SAME 560px full-height shape the
+  Settings panel beside it uses, so the module has one side-panel language, and a panel keeps the card
+  you opened it from in view where a centred dialog covered it. The fields STACK
+  (`PortalDetailsFields stacked`) — a panel is read top to bottom and too narrow to pair them well;
+  the create dialog still shows them two-up. ⚠️ This REVERSES the earlier rule that Edit details shares
+  the create dialog's width: that held while both were centred dialogs. What they still share is the
+  one fields component. Escape and a click on the scrim close it. It is also what opens after a Copy.
+  Verified: thumbnail 220×124 rendering the live page at scale 0.18; actions on the title row at the
+  right; menu shows both items; the panel sits at x=880 w=560 full height with stacked fields; Escape
+  closes it; Edit support portal opens the editor; no page errors.
 - **Support Portal — Solid / Gradient are CHIP tabs (`.chip-tabs`), and pill icons never shrink (25 Sep 2026).**
   Both Solid/Gradient switches (`BannerFillEditor`, `OverlayLayerEditor`) left `.pill-track` for `.chip-tabs`: two
   separate outlined chips, the chosen one with a 1.5px PRIMARY border and label and a filled primary check

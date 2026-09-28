@@ -7,112 +7,236 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { portalSlug } from '../routes';
-import { CreateSupportPortalModal, EditPortalDetailsModal } from './CreateSupportPortalModal';
+import { CreateSupportPortalModal, EditPortalDetailsModal, PortalThumb } from './CreateSupportPortalModal';
 import { AdminSupportPortalSettings } from './AdminSupportPortalSettings';
 import type { PortalDetails } from './CreateSupportPortalModal';
 import { Pagination } from './Pagination';
 import { SupportPortalBuilder } from './SupportPortalBuilder';
-import { SupportPortalTemplateGallery } from './SupportPortalTemplateGallery';
+import { SupportPortalTemplateGallery, TemplateArt } from './SupportPortalTemplateGallery';
 import {
   DEFAULT_PORTAL_PAGE, SECOND_PORTAL_PAGE, PORTAL_TEMPLATES, VISIBLE_TEMPLATES, formatPortalStamp, nextPageId, relPortalStamp, uniquePageName,
 } from './supportPortalData';
 import type { PortalPage, PortalTemplate } from './supportPortalData';
 
-/* One portal, as a CARD — the listing's only shape (25 Sep 2026).
+/* One portal, as a WIDE CARD with a picture of it (28 Sep 2026, from Zeni's reference).
  *
- * ⚠️ A tenant keeps THREE OR FOUR portals, not hundreds, so a full-width table spent its whole width
- * on one row and read as an empty page with a line in it. The card is the Patch module's card view
- * (`PatchInstallationTab`): icon badge · pill over a blue name · hairline · a two-column label/value
- * grid — so a portal is read the way an endpoint is, not as a new pattern to learn.
+ * ⚠️ The PICTURE is the portal itself, not an icon for it. A name like "Support Portal - 2" says
+ * nothing about what requesters will see, and a tenant's handful of portals are told apart by how
+ * they LOOK. The default design shows `PortalThumb` — the real page, scaled, the same image the
+ * create dialog's Default tile shows — a portal started from a TEMPLATE shows that template's own art,
+ * and one built from SCRATCH shows a blank page. The same thumbnail on every card would be a picture
+ * of a page most of them are not.
  *
- * ⚠️ ONE primary action per card, and it is the reason anybody opens this page: Customise portal.
- * The rest are icons beside it, in the order they are reached for — details, preview, settings, copy,
- * default — with Delete last and red. Enabled is the switch in the header because it is a STATE you
- * read at a glance, not an action you take.
- * ⚠️ Disabled controls carry their REASON: the default portal cannot be switched off or deleted
- * (requesters have to land somewhere), and a Draft cannot become the default (they would land on a
- * page nobody has published). */
+ * ⚠️ ONE ROW per card, full width. It was a three-up grid of tall cards, which held a picture badly:
+ * a thumbnail wide enough to read left no room beside it for the name and the details, which is the
+ * reason the reference is laid out on its side.
+ *
+ * ⚠️ EVERY action is at the TOP RIGHT, beside the name, in one cluster — so it is the same distance
+ * from the thing it acts on on every card, and the body below is left to say what the portal IS.
+ * There is no big "Customise portal" button any more: the NAME and the PICTURE both open the editor,
+ * and the Edit menu offers it too.
+ *
+ * ⚠️ EDIT IS ONE ICON WITH TWO MEANINGS behind a chevron — Edit details (what the portal IS: name,
+ * company, address, sign-on) and Edit support portal (what is ON it). Both are editing, never in the
+ * same moment, and no pair of glyphs separates them; the chevron says there is a choice without
+ * spending a second slot on it.
+ *
+ * ⚠️ The switch is the STATUS (27 Sep 2026) — on = Published and live, off = Draft — so it sits after
+ * a hairline at the end of the cluster: a state you read, fenced from the actions you take.
+ * ⚠️ Disabled controls carry their REASON: the default portal cannot be deleted. */
+
+type PortalThumbKind = { kind: 'default' } | { kind: 'template'; template: PortalTemplate } | { kind: 'blank' };
+
+function thumbFor(p: PortalPage): PortalThumbKind {
+  if (p.start === 'blank') return { kind: 'blank' };
+  const t = p.start === 'template' ? PORTAL_TEMPLATES.find((x) => x.name === p.source) : undefined;
+  return t ? { kind: 'template', template: t } : { kind: 'default' };
+}
+
+/** A from-scratch portal: a white page with the empty-state invitation the editor opens on. */
+function BlankThumb() {
+  return (
+    <span className="flex size-full flex-col items-center justify-center gap-1.5 bg-white">
+      <span className="flex size-7 items-center justify-center rounded-md border border-dashed border-[#CBD5E1] text-[#94A3B8]"><Plus size={13} /></span>
+      <span className="text-[10.5px] text-[#94A3B8]">Blank page</span>
+    </span>
+  );
+}
+
+/* The Edit menu: its own component because it owns a portalled, measured popover. */
+function EditMenu({ onDetails, onCustomize }: { onDetails: () => void; onCustomize: () => void }) {
+  const [open, setOpen] = useState(false);
+  const btn = useRef<HTMLButtonElement>(null);
+  const menu = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ top: number; right: number } | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    /* ⚠️ PORTALLED and fixed, placed from the button's rect. The listing scrolls in its own pane, and
+       an absolutely-positioned menu inside a scroll box is clipped at its edge — the trap the old
+       row kebab fell into, which rendered as a 6px sliver. Re-measured on scroll and resize. */
+    const place = () => {
+      const r = btn.current?.getBoundingClientRect();
+      if (r) setPos({ top: r.bottom + 6, right: window.innerWidth - r.right });
+    };
+    place();
+    const away = (e: MouseEvent) => {
+      const t = e.target as Node;
+      if (btn.current?.contains(t) || menu.current?.contains(t)) return;
+      setOpen(false);
+    };
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    window.addEventListener('scroll', place, true);
+    window.addEventListener('resize', place);
+    document.addEventListener('mousedown', away);
+    document.addEventListener('keydown', esc);
+    return () => {
+      window.removeEventListener('scroll', place, true);
+      window.removeEventListener('resize', place);
+      document.removeEventListener('mousedown', away);
+      document.removeEventListener('keydown', esc);
+    };
+  }, [open]);
+
+  const row = 'flex w-full items-start gap-2.5 rounded px-2.5 py-2 text-left transition-colors hover:bg-[#F5F7FA]';
+  return (
+    <>
+      <button
+        ref={btn}
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        title="Edit"
+        className={`flex h-8 items-center gap-0.5 rounded border px-2 transition-colors ${
+          open ? 'border-[#3D8BD0] bg-[#EAF3FB] text-[#3D8BD0]' : 'border-[#DFE5ED] bg-white text-[#64748B] hover:border-[#C3CBD6] hover:text-[#3D8BD0]'
+        }`}
+      >
+        <Pencil size={14} />
+        <ChevronDown size={12} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && pos && createPortal(
+        <div
+          ref={menu}
+          role="menu"
+          style={{ top: pos.top, right: pos.right }}
+          className="fixed z-[10001] w-[272px] rounded-lg border border-[#E5E7EB] bg-white p-1 shadow-[0_12px_16px_-4px_rgba(16,24,40,0.10),0_4px_6px_-2px_rgba(16,24,40,0.06)]"
+        >
+          <button role="menuitem" onClick={() => { setOpen(false); onDetails(); }} className={row}>
+            <SlidersHorizontal size={14} className="mt-0.5 flex-shrink-0 text-[#64748B]" />
+            <span>
+              <span className="block text-[13px] font-medium text-[#364658]">Edit details</span>
+              <span className="block text-[11.5px] text-[#7B8FA5]">Name, company, address and sign-on</span>
+            </span>
+          </button>
+          <button role="menuitem" onClick={() => { setOpen(false); onCustomize(); }} className={row}>
+            <PenLine size={14} className="mt-0.5 flex-shrink-0 text-[#64748B]" />
+            <span>
+              <span className="block text-[13px] font-medium text-[#364658]">Edit support portal</span>
+              <span className="block text-[11.5px] text-[#7B8FA5]">Open it in the editor</span>
+            </span>
+          </button>
+        </div>,
+        document.body,
+      )}
+    </>
+  );
+}
+
 function PortalCard({ p, url, href, isDefault, on, onToggle, onCustomize, onEditDetails, onPreview, onSettings, onCopy, onMakeDefault, onDelete }: {
   p: PortalPage; url: string; href: string; isDefault: boolean; on: boolean;
   onToggle: () => void; onCustomize: () => void; onEditDetails: () => void; onPreview: () => void;
   onSettings: () => void; onCopy: () => void; onMakeDefault: () => void; onDelete: () => void;
 }) {
   const icon = 'flex size-8 items-center justify-center rounded border border-[#DFE5ED] bg-white text-[#64748B] transition-colors hover:border-[#C3CBD6] hover:text-[#3D8BD0] disabled:cursor-not-allowed disabled:text-[#D7DDE5] disabled:hover:border-[#DFE5ED]';
-  const label = 'text-[11px] text-[#9CA3AF]';
-  const value = 'truncate text-[12px] text-[#364658]';
   const published = p.status === 'Published';
+  const thumb = thumbFor(p);
+  /* How requesters sign in, in words — the provider's name, or the product's own login. */
+  const signOn = !p.idp || p.idp.startsWith('None') ? 'ServiceOps login' : p.idp;
   return (
-    <div className="flex flex-col rounded-xl border border-[#E5E7EB] bg-white p-4 transition-all hover:border-[#3D8BD0] hover:shadow-sm">
-      {/* ONE row: a small badge, the NAME, then its pills straight after it, the switch at the far end.
-          ⚠️ The badge is size-7 so its centre sits on the name's line; at size-10 it was taller than the
-          text beside it and the row read as two lines. The name truncates before the pills do. */}
-      <div className="flex items-center gap-2">
-        <span className="flex size-7 flex-shrink-0 items-center justify-center rounded-md bg-[#EAF3FB] text-[#3D8BD0]">
-          <MonitorSmartphone size={15} />
-        </span>
-        <div className="flex min-w-0 flex-1 items-center gap-1.5">
-          <button
-            onClick={onCustomize}
-            title={`Customise ${p.name}`}
-            className="min-w-0 truncate text-left text-[13px] font-semibold text-[#3D8BD0] hover:underline"
-          >{p.name}</button>
-          <span className={`flex-shrink-0 rounded-sm px-1.5 py-0.5 text-[11px] font-semibold ${published ? 'bg-[#ECFDF3] text-[#22A06B]' : 'bg-[#F1F5F9] text-[#64748B]'}`}>{p.status}</span>
-          {isDefault && <span className="flex-shrink-0 rounded-sm bg-[#e8f4fd] px-1.5 py-0.5 text-[11px] font-semibold text-[#3D8BD0]">Default</span>}
+    <div className="flex gap-4 rounded-xl border border-[#E5E7EB] bg-white p-3 transition-all hover:border-[#C9D6E3] hover:shadow-[0_4px_12px_-4px_rgba(16,24,40,0.08)]">
+      {/* The picture opens the editor, like the name: both are "this portal". */}
+      <button
+        onClick={onCustomize}
+        title={`Edit ${p.name}`}
+        className="relative h-[124px] w-[220px] flex-shrink-0 overflow-hidden rounded-lg border border-[#E5E7EB] bg-[#F4F6FA] transition-colors hover:border-[#3D8BD0]"
+      >
+        {thumb.kind === 'default' && <PortalThumb />}
+        {thumb.kind === 'template' && <TemplateArt layout={thumb.template.layout} accent={thumb.template.accent} />}
+        {thumb.kind === 'blank' && <BlankThumb />}
+      </button>
+
+      <div className="flex min-w-0 flex-1 flex-col py-1">
+        {/* ── the title row: the name and its pills, and every action at the far right ── */}
+        <div className="flex items-start gap-3">
+          <div className="flex min-w-0 flex-1 items-center gap-2 pt-1">
+            <button
+              onClick={onCustomize}
+              title={`Edit ${p.name}`}
+              className="min-w-0 truncate text-left text-[15px] font-semibold text-[#1F2937] transition-colors hover:text-[#3D8BD0]"
+            >{p.name}</button>
+            <span className={`flex-shrink-0 rounded-sm px-1.5 py-0.5 text-[11px] font-semibold ${published ? 'bg-[#ECFDF3] text-[#22A06B]' : 'bg-[#F1F5F9] text-[#64748B]'}`}>{p.status}</span>
+            {isDefault && <span className="flex-shrink-0 rounded-sm bg-[#e8f4fd] px-1.5 py-0.5 text-[11px] font-semibold text-[#3D8BD0]">Default</span>}
+          </div>
+
+          <div className="flex flex-shrink-0 items-center gap-1.5">
+            <EditMenu onDetails={onEditDetails} onCustomize={onCustomize} />
+            <button onClick={onPreview} title="Preview" aria-label="Preview" className={icon}><Eye size={14} /></button>
+            <button onClick={onSettings} title="Settings" aria-label="Settings" className={icon}><Settings size={14} /></button>
+            <button onClick={onCopy} title="Copy" aria-label="Copy" className={icon}><Copy size={14} /></button>
+            {!isDefault && (
+              <button
+                onClick={onMakeDefault}
+                /* ⚠️ Enabled on a DRAFT too: one portal is live at a time and it is the default, so
+                   making a portal the default IS publishing it — the star asks the same
+                   publish-and-make-default question the builder's Publish does. */
+                title="Publish and make default — requesters land here"
+                aria-label="Set as default"
+                className={icon}
+              ><Star size={14} /></button>
+            )}
+            <button
+              onClick={onDelete}
+              disabled={isDefault}
+              title={isDefault ? 'The default portal cannot be deleted — requesters have to land somewhere' : 'Delete'}
+              aria-label="Delete"
+              className={`${icon} ${isDefault ? '' : 'hover:!border-[#FECACA] !text-[#DC2626]'}`}
+            ><Trash2 size={14} /></button>
+            <span className="mx-1 h-5 w-px bg-[#E5E7EB]" aria-hidden />
+            <button
+              role="switch"
+              aria-checked={on}
+              /* ⚠️ The switch IS the status (27 Sep 2026): on = Published and live, off = Draft. */
+              title={on ? 'Live — switch off to unpublish (it moves to Draft)' : 'Not live — switch on to publish it and make it the default'}
+              onClick={onToggle}
+              className={`relative inline-flex h-[18px] w-[34px] flex-shrink-0 items-center rounded-full transition-colors ${on ? 'bg-[#3D8BD0]' : 'bg-[#CBD5E1]'}`}
+            >
+              <span className={`inline-block size-[14px] rounded-full bg-white transition-transform ${on ? 'translate-x-[18px]' : 'translate-x-[2px]'}`} />
+            </button>
+          </div>
         </div>
-        <button
-          role="switch"
-          aria-checked={on}
-          /* ⚠️ The switch IS the status (27 Sep 2026): on = Published and live, off = Draft. It was a
-             separate "enabled" flag, so a Draft card could sit with its switch on beside the portal that
-             was actually live — two portals that both looked switched on with different tags. */
-          title={on ? 'Live — switch off to unpublish (it moves to Draft)' : 'Not live — switch on to publish it and make it the default'}
-          onClick={onToggle}
-          className={`relative inline-flex h-[18px] w-[34px] flex-shrink-0 items-center rounded-full transition-colors ${on ? 'bg-[#3D8BD0]' : 'bg-[#CBD5E1]'}`}
+
+        {/* ── the details, under the title: where it answers, whose it is, how people get in ── */}
+        <a
+          href={href}
+          title={`Open ${p.name}`}
+          className="mt-1.5 inline-flex max-w-full items-center gap-1 self-start text-[12.5px] text-[#3D8BD0] hover:underline"
         >
-          <span className={`inline-block size-[14px] rounded-full bg-white transition-transform ${on ? 'translate-x-[18px]' : 'translate-x-[2px]'}`} />
-        </button>
-      </div>
+          <span className="truncate">{url}</span>
+          <ExternalLink size={11} className="flex-shrink-0" />
+        </a>
+        <p className="mt-1.5 truncate text-[12.5px] text-[#64748B]">
+          {p.company ?? 'No company'}
+          <span className="mx-1.5 text-[#CBD5E1]">·</span>
+          Signs in with {signOn}
+          <span className="mx-1.5 text-[#CBD5E1]">·</span>
+          {p.audience ?? 'All requesters'}
+        </p>
 
-      <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2.5 border-t border-[#F0F2F5] pt-3">
-        <div className="col-span-2 min-w-0">
-          <div className={label}>URL</div>
-          <a href={href} title={`Open ${p.name}`} className="block truncate text-[12px] text-[#3D8BD0] hover:underline">{url}</a>
-        </div>
-        {/* ⚠️ No "Live version" field (removed 25 Sep 2026, Zeni's call) — the card says what state the
-            portal is in with its Published / Draft pill, and a second status line under it was noise. */}
-        <div className="col-span-2 min-w-0">
-          <div className={label}>Last modified</div>
-          <div className={value} title={`${relPortalStamp(p.modifiedAt)} by ${p.modifiedBy}`}>{relPortalStamp(p.modifiedAt)} by {p.modifiedBy}</div>
-        </div>
-      </div>
-
-      <div className="mt-4 flex items-center gap-1.5">
-        <button
-          onClick={onCustomize}
-          className="h-8 flex-1 rounded bg-[#e8f4fd] px-3 text-[12px] font-medium text-[#3D8BD0] transition-colors hover:bg-[#d0e8f9]"
-        >Customise portal</button>
-        <button onClick={onEditDetails} title="Edit details" aria-label="Edit details" className={icon}><SlidersHorizontal size={14} /></button>
-        <button onClick={onPreview} title="Preview" aria-label="Preview" className={icon}><Eye size={14} /></button>
-        <button onClick={onSettings} title="Settings" aria-label="Settings" className={icon}><Settings size={14} /></button>
-        <button onClick={onCopy} title="Copy" aria-label="Copy" className={icon}><Copy size={14} /></button>
-        {!isDefault && (
-          <button
-            onClick={onMakeDefault}
-            /* ⚠️ Enabled on a DRAFT too: one portal is live at a time and it is the default, so making a
-               portal the default IS publishing it — the star opens the same publish-and-make-default
-               question the builder's Publish does. */
-            title="Publish and make default — requesters land here"
-            aria-label="Set as default"
-            className={icon}
-          ><Star size={14} /></button>
-        )}
-        <button
-          onClick={onDelete}
-          disabled={isDefault}
-          title={isDefault ? 'The default portal cannot be deleted — requesters have to land somewhere' : 'Delete'}
-          aria-label="Delete"
-          className={`${icon} ${isDefault ? '' : 'hover:!border-[#FECACA] !text-[#DC2626]'}`}
-        ><Trash2 size={14} /></button>
+        {/* ⚠️ At the FOOT, where the reference keeps its tag: the stamp is the least-asked question on
+            the card, and pinning it to the bottom lets the details above it breathe. */}
+        <p className="mt-auto pt-2 text-[11.5px] text-[#9CA3AF]" title={p.modifiedAt}>
+          Last modified {relPortalStamp(p.modifiedAt)} by {p.modifiedBy}
+        </p>
       </div>
     </div>
   );
@@ -629,7 +753,8 @@ export function AdminSupportPortalModule({ onBuilder, openPortal, onOpenPortalCh
         if (!target) return null;
         return (
           <EditPortalDetailsModal
-            title={`Edit details — ${target.name}`}
+            title="Edit details"
+            subtitle={target.name}
             initial={{
               name: target.name,
               company: target.company ?? '',
@@ -743,7 +868,7 @@ export function AdminSupportPortalModule({ onBuilder, openPortal, onOpenPortalCh
     );
   }
 
-  // ── listing ── cards, three to a row at most; a tenant keeps a handful of portals.
+  // ── listing ── one wide card per portal, its picture on the left; a tenant keeps a handful.
   /* The default comes first — it is the one requesters land on, so it is the one read first. */
   const rows = [...pages].sort((a, b) => Number(b.id === defaultId) - Number(a.id === defaultId));
 
@@ -751,7 +876,7 @@ export function AdminSupportPortalModule({ onBuilder, openPortal, onOpenPortalCh
     <>
       {shell(
       <div className="px-4 pb-6 pt-5">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="flex flex-col gap-3">
           {rows.map((p) => (
             <PortalCard
               key={p.id}
