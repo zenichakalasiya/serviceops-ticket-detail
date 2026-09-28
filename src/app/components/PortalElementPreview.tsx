@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { ReactNode } from 'react';
 
@@ -558,7 +558,17 @@ const FALLBACK: Preview = {
   ),
 };
 
-const CARD_W = 320;
+/* ⚠️ COMPACT (Zeni's call, 28 Sep 2026): 240px wide, a 72px sketch, then the name and ONE summary
+   clamped to two lines. At 320px with a two-sentence reason and a note the card was taller than the
+   row group it described — a hover answers "what is this?" at a glance, and the second sentence
+   (`helps`) and the `note` are still on each entry for whenever a longer form is wanted.
+   The sketches are drawn at their original width (`ART_W`) and SCALED into the stage, never
+   redrawn: every sketch was checked against its renderer at that size, and a second, smaller set of
+   drawings is thirty-odd more chances for one to drift from the element it pictures. */
+const CARD_W = 240;
+const ART_W = 288;
+const STAGE_H = 72;
+const STAGE_PAD = 18;
 
 export function PortalElementPreview({ elementId, name, icon, anchor }: {
   elementId: string;
@@ -571,6 +581,16 @@ export function PortalElementPreview({ elementId, name, icon, anchor }: {
   const preview = PREVIEWS[elementId] ?? FALLBACK;
   const ref = useRef<HTMLDivElement>(null);
   const [top, setTop] = useState(anchor.top);
+  const artRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(0.75);
+
+  /* Fit the sketch to the stage on BOTH axes: width always shrinks by the same factor, and a tall
+     sketch (a table, a gallery) shrinks further so it is seen whole rather than cut off at 72px. */
+  useLayoutEffect(() => {
+    const h = artRef.current?.offsetHeight ?? STAGE_H;
+    const room = STAGE_H - STAGE_PAD;
+    setScale(Math.min((CARD_W - 24) / ART_W, room / h));
+  }, [elementId]);
 
   /* ⚠️ Measured AFTER render and clamped to the viewport. The card's height depends on which sketch
      it holds and how long the reason is, so a fixed estimate puts short ones too low and clips tall
@@ -594,13 +614,18 @@ export function PortalElementPreview({ elementId, name, icon, anchor }: {
           way the canvas frames a selection. Elements that draw their own card draw it INSIDE this
           frame; the Basic ones sit straight on it, which is the difference the page itself makes. */}
       <div
-        className="px-4 py-4"
+        className="relative flex items-center justify-center overflow-hidden"
         style={{
+          height: STAGE_H,
           backgroundImage: 'radial-gradient(circle, #3A3A3E 1px, transparent 1px)',
           backgroundSize: '10px 10px',
         }}
       >
-        <div className="w-full rounded-lg border border-white/[0.10] bg-[#232326] px-3.5 py-3">
+        <div
+          ref={artRef}
+          className="flex-shrink-0 rounded-lg border border-white/[0.10] bg-[#232326] px-3.5 py-3"
+          style={{ width: ART_W, transform: `scale(${scale})`, transformOrigin: 'center' }}
+        >
           {preview.art(icon)}
         </div>
       </div>
@@ -608,14 +633,9 @@ export function PortalElementPreview({ elementId, name, icon, anchor }: {
       {/* ⚠️ The NAME is repeated here even though the row it came from is still on screen. By the
           time the card has opened the pointer is on the card, and a description with no subject at
           the top of it reads as a caption for the sketch rather than for the element. */}
-      <div className="px-4 pb-3.5 pt-3">
-        <p className="text-[12px] font-semibold leading-[1.5] text-white/90">{name}</p>
-        <p className="mt-1 text-[12px] leading-[1.5] text-white/70">{preview.what}</p>
-        <p className="mt-1 text-[12px] leading-[1.5] text-white/45">{preview.helps}</p>
-        {/* A rule above it, so a condition never reads as a third sentence of description. */}
-        {preview.note && (
-          <p className="mt-2 border-t border-white/[0.10] pt-2 text-[11px] leading-[1.45] text-white/40">{preview.note}</p>
-        )}
+      <div className="px-3 pb-2.5 pt-2">
+        <p className="truncate text-[12px] font-semibold leading-[1.5] text-white/90">{name}</p>
+        <p className="mt-0.5 line-clamp-2 text-[11.5px] leading-[1.45] text-white/65">{preview.what}</p>
       </div>
     </div>,
     document.body,
