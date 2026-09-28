@@ -564,11 +564,19 @@ const FALLBACK: Preview = {
    (`helps`) and the `note` are still on each entry for whenever a longer form is wanted.
    The sketches are drawn at their original width (`ART_W`) and SCALED into the stage, never
    redrawn: every sketch was checked against its renderer at that size, and a second, smaller set of
-   drawings is thirty-odd more chances for one to drift from the element it pictures. */
+   drawings is thirty-odd more chances for one to drift from the element it pictures.
+   ⚠️ The stage is SQUARISH with the SAME 12px on all four sides of the sketch (Zeni, 28 Sep 2026).
+   A 72px strip left the sketch floating in wide side margins; now the frame takes the card's full
+   width less 12px a side, and it is at least `ART_MIN_H` tall with its drawing centred inside, so a
+   one-row sketch still reads as a block rather than a sliver. The spacing is the UPPER part's only —
+   the text below keeps its own padding. */
 const CARD_W = 240;
 const ART_W = 288;
-const STAGE_H = 72;
-const STAGE_PAD = 18;
+const STAGE_PAD = 12;
+/** The frame's minimum height at native size — 176 × 0.75 = 132px on the card. */
+const ART_MIN_H = 176;
+/** A sketch taller than this (on the card) shrinks further rather than growing the card. */
+const ART_MAX_H = 170;
 
 export function PortalElementPreview({ elementId, name, icon, anchor }: {
   elementId: string;
@@ -582,14 +590,14 @@ export function PortalElementPreview({ elementId, name, icon, anchor }: {
   const ref = useRef<HTMLDivElement>(null);
   const [top, setTop] = useState(anchor.top);
   const artRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(0.75);
+  const [fit, setFit] = useState({ scale: (CARD_W - STAGE_PAD * 2) / ART_W, h: ART_MIN_H });
 
-  /* Fit the sketch to the stage on BOTH axes: width always shrinks by the same factor, and a tall
-     sketch (a table, a gallery) shrinks further so it is seen whole rather than cut off at 72px. */
+  /* The frame fills the width less the padding; its scaled height is measured so the stage wraps it
+     with the same padding top and bottom. A very tall sketch shrinks further instead of growing. */
   useLayoutEffect(() => {
-    const h = artRef.current?.offsetHeight ?? STAGE_H;
-    const room = STAGE_H - STAGE_PAD;
-    setScale(Math.min((CARD_W - 24) / ART_W, room / h));
+    const h = artRef.current?.offsetHeight ?? ART_MIN_H;
+    const byWidth = (CARD_W - STAGE_PAD * 2) / ART_W;
+    setFit({ scale: Math.min(byWidth, ART_MAX_H / h), h });
   }, [elementId]);
 
   /* ⚠️ Measured AFTER render and clamped to the viewport. The card's height depends on which sketch
@@ -614,19 +622,22 @@ export function PortalElementPreview({ elementId, name, icon, anchor }: {
           way the canvas frames a selection. Elements that draw their own card draw it INSIDE this
           frame; the Basic ones sit straight on it, which is the difference the page itself makes. */}
       <div
-        className="relative flex items-center justify-center overflow-hidden"
+        className="flex justify-center"
         style={{
-          height: STAGE_H,
+          padding: STAGE_PAD,
           backgroundImage: 'radial-gradient(circle, #3A3A3E 1px, transparent 1px)',
           backgroundSize: '10px 10px',
         }}
       >
-        <div
-          ref={artRef}
-          className="flex-shrink-0 rounded-lg border border-white/[0.10] bg-[#232326] px-3.5 py-3"
-          style={{ width: ART_W, transform: `scale(${scale})`, transformOrigin: 'center' }}
-        >
-          {preview.art(icon)}
+        {/* A transform does not change layout size, so this box holds the SCALED size for it. */}
+        <div style={{ width: ART_W * fit.scale, height: fit.h * fit.scale }}>
+          <div
+            ref={artRef}
+            className="flex flex-col justify-center rounded-lg border border-white/[0.10] bg-[#232326] px-3.5 py-3"
+            style={{ width: ART_W, minHeight: ART_MIN_H, transform: `scale(${fit.scale})`, transformOrigin: 'top left' }}
+          >
+            {preview.art(icon)}
+          </div>
         </div>
       </div>
 
