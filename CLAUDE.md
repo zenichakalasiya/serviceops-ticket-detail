@@ -2399,6 +2399,30 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   really is selected with its toolbar visible on step 3; the dock opens on Done at 300×285, its chips
   scrub, and Minimise leaves the "Editor basics" pill.
   **Version 2 is NOT built** — Zeni described only version 1.
+- **Support Portal — the tour dock is an ILLUSTRATED CAROUSEL (`PortalTourScenes.tsx`, 28 Sep 2026).**
+  Supersedes the dock half of the "dock plays a STORY" bullet below. Zeni chose, from the Miro "what's
+  new" carousel she shared: **one illustrated scene per chapter** — Add · Select · Arrange · Style ·
+  Publish — each on its own coloured ground (`TOUR_CHAPTERS[].ground`/`blob`) with REAL WORDS ("My Open
+  Requests", "INC-32 VPN not connecting", "Portal published"), and a cursor with a name tag, **"You"**,
+  doing every action. ⚠️ Scenes, not a miniature: the old story drew the whole editor in grey bars at
+  postage-stamp size, a wireframe of a wireframe. The dock is **Previous · dots · Next: ‹name›** (last
+  slide: **Watch again**); the chapter-tab strip, play/pause and progress bar are gone.
+  ⚠️ **It AUTO-PLAYS UNTIL YOU TAKE OVER** (`driven`): unattended it runs all five chapters (~17s);
+  once you press Previous, Next or a dot, the chosen chapter LOOPS like a GIF until you move. A picture
+  that walks off while you are still looking is what made the old one feel slow.
+  ⚠️ **Frames are still data and there is still one renderer per scene** (`SCENE_FRAMES`,
+  `SCENES[ch]`); the scene does NOT remount within a chapter, so transitions carry the ghost, the cursor
+  and the resized card — it DOES remount between chapters, and the `Cursor` sits outside it so it glides
+  across the seam. Timings are written at the pace they PLAY (no scaling factor).
+  ⚠️ The cursor must aim at a button's CENTRE — the toolbar sits at (30,42) and its glyph centres are at
+  `x + [9,22,33,44,57,68,79,92]`, `y + 7`; aimed between glyphs, "You" looked like it had missed.
+  ⚠️ On a TINTED card the pills, badge and icon square turn WHITE — the tint (#EEF4FF) is the same blue
+  as the pills (#EAF3FB), so they vanished. New keyframes `pt-slide` / `pt-pop` / `pt-burst` in
+  `theme.css`, all under `prefers-reduced-motion`. The old dock story was DELETED from
+  `PortalTourArt.tsx`, which now holds only the four spotlight steps' pictures; "Take the tour" left
+  the dock (the Help menu has it), so the dock's `onReplay` prop is accepted but unused.
+  Verified: auto-play titles change at 0 · 3.4 · 7.5 · 10.0 · 14.4s; a dot press holds its chapter
+  past its own length; Previous is disabled on Add; every Next names its chapter; no page errors.
 - **Support Portal — the tour is PORTALLED to the body, and it hands the selection back (28 Sep 2026).** ⚠️ Rendered inside the builder, the tour lived in the builder shell's own stacking layer (`fixed … z-[9000]`), so its z-10500 only counted INSIDE that shell; the floating toolbar is portalled to the body at z-9999 and painted over the whole shell, blur and all — on step 4 the banner's toolbar was measured as the topmost element on screen. `createPortal(…, document.body)` puts the tour above every toolbar; on the banner step the toolbar still shows because it sits inside the spotlight's hole. ⚠️ A step with no `select` now CLEARS the selection (`select(null)` does not stand the rail panel down, so step 2's library stays open), and the tour restores whatever was selected when it opened (`selected` prop, captured once). Verified: toolbars on screen per step = 0 · 0 · 1 · 0, and the prior selection is back after Done. **The story plays at `PACE = 0.55`** of its rest timings (33.4s → 18.4s; Zeni found it too slow): one factor over `STORY_AT_REST` so the rhythm between scenes is kept, with the glides cut to match (`T` 340ms, `GLIDE` 700ms) so a move still finishes inside the frame that makes it.
 - **Support Portal — the tour DOCK plays a STORY, not the four beats (28 Sep 2026).** Supersedes the
   dock half of the bullet above ("the dock's recap is the same component running all four beats").
