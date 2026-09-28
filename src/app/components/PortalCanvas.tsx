@@ -1,3 +1,5 @@
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
+import { TipKeys } from './PortalTipKeys';
 import { cloneElement, createContext, isValidElement, Children, useContext, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { WIDGET_FOR_NODE, WIDGET_FOR_TYPE, specById } from './portalWidgetSpec';
@@ -13,7 +15,7 @@ import { BannerFillEditor, BannerLayoutPanel, OverlayLayerEditor, TilePresetPick
 import { bannerBoxId, flipRoot, groupOf } from './portalBannerLayout';
 import type { BannerNode } from './portalBannerLayout';
 import { BANNER_GROUPS, bannerGroupGap } from './portalPageModel';
-import { keysForTip } from './portalShortcutKeys';
+import { keysForTip, chromeKeys } from './portalShortcutKeys';
 import { usePopupArrows, useOpenValue } from './usePopupArrows';
 import { toast } from 'sonner';
 import { MiniRange } from './PortalRange';
@@ -2340,7 +2342,7 @@ function ToolbarTip({ tip }: { tip: ToolbarTipState | null }) {
          ("The glyph's colour, its badge, and the badge's corners and border"), and at 220px with
          `whitespace-nowrap` it was already overflowing its own box rather than wrapping. A tooltip that
          is one line is allowed to be as long as its line. */
-      className={`tb-tip pointer-events-none absolute z-[80] flex -translate-x-1/2 items-center gap-2.5 whitespace-nowrap rounded bg-[#364658] px-2 py-1 text-[11px] leading-[16px] text-white shadow-[0_4px_10px_rgba(16,24,40,0.18)] ${tip.above ? 'bottom-full mb-1.5' : 'top-full mt-1.5'}`}
+      className={`tb-tip pointer-events-none absolute z-[80] flex -translate-x-1/2 items-center gap-3 whitespace-nowrap rounded bg-[#364658] py-1 ${keys ? 'pl-2 pr-[7px]' : 'px-2'} text-[11px] leading-[16px] text-white shadow-[0_4px_10px_rgba(16,24,40,0.18)] ${tip.above ? 'bottom-full mb-1.5' : 'top-full mt-1.5'}`}
     >
       {tip.label}
       {/* The keys sit to the RIGHT of the words, after a gap — the label is the sentence and the caps
@@ -3618,10 +3620,14 @@ export function AddSectionSeam({ afterId }: { afterId: string }) {
            gesture that resizes a section was the least visible thing on the canvas. Pairing it with
            the button people already aim at makes both reachable from the same place. */
         <span className="absolute left-1/2 top-1/2 z-10 inline-flex -translate-x-1/2 -translate-y-1/2 items-center gap-1">
+          {/* ⚠️ INSTANT, with the key: N adds a section from the keyboard, and this pill is where somebody
+              adding one is already looking — so it is the place to say so. */}
+          <Tooltip delayDuration={0}><TooltipTrigger asChild>
           <button
             onClick={() => setPicking((p) => !p)}
             className="inline-flex h-7 items-center rounded-full bg-[#3D8BD0] px-3.5 text-[12px] font-medium text-white shadow-sm transition-colors hover:bg-[#2d6ca0]"
           >+ Add Section</button>
+          </TooltipTrigger><TooltipContent><TipKeys label="Add a section" keys={chromeKeys('newSection')} /></TooltipContent></Tooltip>
           <span
             onMouseDown={beginResize}
             data-tip="Drag to stretch the section above"

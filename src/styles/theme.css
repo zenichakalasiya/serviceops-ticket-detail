@@ -767,3 +767,8 @@ body[data-portal-dragging] [data-portal-toolbar] { pointer-events: none; opacity
 @keyframes pt-progress { from { width: 0%; } to { width: 100%; } }
 .pt-progress { animation: pt-progress linear forwards; }
 @media (prefers-reduced-motion: reduce) { .pt-progress { animation: none; width: 100%; } }
+
+/* A tooltip carrying key caps (`TipKeys`) shows 11px after the last cap, one less than the 12 before the
+   words — Zeni's call, 28 Sep 2026. The rule says 10 because the tooltip carries a pixel of slack past
+   its content (measured: 10 here = 11 on screen). Unlayered, so it beats the `px-3` on TooltipContent. */
+[data-slot='tooltip-content']:has(> .tip-keys) { padding-right: 10px; }

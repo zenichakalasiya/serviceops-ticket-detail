@@ -2471,6 +2471,20 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   Under `prefers-reduced-motion` the ghost is hidden and the landed card shown — the still has to
   show where the story ENDS.
 
+- **⚠️ The product's Radix tooltip is `z-[10200]`, not `z-50` (`ui/tooltip.tsx`, 28 Sep 2026).** It is
+  portalled to the BODY, so it competes with every full-screen layer — and the Support Portal builder is
+  `z-[9000]`. At z-50 every tooltip opened inside the builder (the rail's Widgets/Theme/Branding/Banners,
+  most of the top bar) rendered UNDERNEATH it: open, opaque, correctly placed and invisible. ⚠️ A DOM check
+  does not catch this — test with `elementFromPoint` at the tooltip's centre. It sits above the drawers
+  (9999) and dialogs (10000–10051) and below the tour's spotlight (10500).
+  **`TipKeys` moved to `PortalTipKeys.tsx`** (re-exported from `PortalShortcuts`) so the canvas can use it
+  without an import cycle — which is what gave the **"+ Add Section" pill** its instant tooltip with **N**.
+  Words sit 12px off the caps (`gap-3`, floating toolbar tip too), and a tooltip carrying caps shows 11px
+  after the last cap: `.tip-keys` in theme.css sets 10px, because the tooltip carries a pixel of slack past
+  its content (a negative margin never changed its measured width). The shortcut sheet reads **label left,
+  keys right**. The portal card's name / URL / details are ONE group, 8px apart — the action cluster hangs
+  into the title row's margin (`-my-[5px]`) so 32px buttons no longer set the row's height.
+
 ## Parked features
 Four Support Portal features are BUILT-OR-PART-BUILT AND SWITCHED OFF, with their full context in
 [future-tasks.md](future-tasks.md): **AI** (rail item commented out in `SupportPortalBuilder`; the

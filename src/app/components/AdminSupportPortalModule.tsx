@@ -166,9 +166,15 @@ function PortalCard({ p, url, href, isDefault, on, onToggle, onCustomize, onEdit
       </button>
 
       <div className="flex min-w-0 flex-1 flex-col py-1">
+        {/* ⚠️ ONE GROUP of three lines — name, address, details — with the SAME 8px between each
+            (Zeni's call, 28 Sep 2026). The actions used to set the title row's height: 32px buttons
+            beside a 22px name pushed the address 10px further from the name than the details sat from
+            the address, so the three read as a heading and a separate pair. The action cluster now
+            hangs into the row's margin (-my-[5px]) and the row is as tall as its words. */}
+        <div className="flex flex-col gap-2">
         {/* ── the title row: the name and its pills, and every action at the far right ── */}
-        <div className="flex items-start gap-3">
-          <div className="flex min-w-0 flex-1 items-center gap-2 pt-1">
+        <div className="flex items-center gap-3">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
             <button
               onClick={onCustomize}
               title={`Edit ${p.name}`}
@@ -178,7 +184,7 @@ function PortalCard({ p, url, href, isDefault, on, onToggle, onCustomize, onEdit
             {isDefault && <span className="flex-shrink-0 rounded-sm bg-[#e8f4fd] px-1.5 py-0.5 text-[11px] font-semibold text-[#3D8BD0]">Default</span>}
           </div>
 
-          <div className="flex flex-shrink-0 items-center gap-1.5">
+          <div className="-my-[5px] flex flex-shrink-0 items-center gap-1.5">
             <EditMenu onDetails={onEditDetails} onCustomize={onCustomize} />
             <button onClick={onPreview} title="Preview" aria-label="Preview" className={icon}><Eye size={14} /></button>
             <button onClick={onSettings} title="Settings" aria-label="Settings" className={icon}><Settings size={14} /></button>
@@ -219,18 +225,19 @@ function PortalCard({ p, url, href, isDefault, on, onToggle, onCustomize, onEdit
         <a
           href={href}
           title={`Open ${p.name}`}
-          className="mt-1.5 inline-flex max-w-full items-center gap-1 self-start text-[12.5px] text-[#3D8BD0] hover:underline"
+          className="inline-flex max-w-full items-center gap-1 self-start text-[12.5px] text-[#3D8BD0] hover:underline"
         >
           <span className="truncate">{url}</span>
           <ExternalLink size={11} className="flex-shrink-0" />
         </a>
-        <p className="mt-1.5 truncate text-[12.5px] text-[#64748B]">
+        <p className="truncate text-[12.5px] text-[#64748B]">
           {p.company ?? 'No company'}
           <span className="mx-1.5 text-[#CBD5E1]">·</span>
           Signs in with {signOn}
           <span className="mx-1.5 text-[#CBD5E1]">·</span>
           {p.audience ?? 'All requesters'}
         </p>
+        </div>
 
         {/* ⚠️ At the FOOT, where the reference keeps its tag: the stamp is the least-asked question on
             the card, and pinning it to the bottom lets the details above it breathe. */}

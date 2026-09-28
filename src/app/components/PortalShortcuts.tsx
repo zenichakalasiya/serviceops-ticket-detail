@@ -350,29 +350,9 @@ const LAYOUT: Group[][][] = [
   [[SELECT, MOVE], [STYLE, DOCUMENT]],
 ];
 
-/** A label with its keys to the right of it, for the product's own dark Radix tooltips.
- *
- * ⚠️ The top bar's tooltips used to write the key into the sentence — `Undo (Ctrl+Z)`. That is the
- * same fact in a second notation, and it reads as prose rather than as something you press; a cap
- * beside the word is the shape every design tool uses, and it is the shape the floating toolbar uses
- * one surface away. Two tooltips on one screen should not describe a key two ways.
- * ⚠️ The cap has NO STROKE (28 Sep 2026, from Zeni's reference): a filled block on the dark tooltip,
- * tight around its letter, set 10px off the words. The 1px border and the looser padding made each cap
- * a small bordered box in a row of them, which read as buttons inside a tooltip. */
-export function TipKeys({ label, keys }: { label: string; keys: string[] }) {
-  return (
-    <span className="flex items-center gap-2.5">
-      {label}
-      <span className="flex items-center gap-1">
-        {keys.map((x, i) => (
-          <kbd key={i} className="inline-flex h-[16px] min-w-[16px] items-center justify-center rounded-[3px] bg-white/[0.16] px-[3px] font-sans text-[10px] font-medium leading-none text-white/90">
-            {x}
-          </kbd>
-        ))}
-      </span>
-    </span>
-  );
-}
+/* `TipKeys` lives in `PortalTipKeys.tsx` so the canvas can use it without an import cycle; re-exported
+   here so every existing `import { TipKeys } from './PortalShortcuts'` keeps working. */
+export { TipKeys } from './PortalTipKeys';
 
 /* The ticket page's key cap, deliberately the same — one product, one way of drawing a key. */
 function Kbd({ children }: { children: React.ReactNode }) {
@@ -385,13 +365,16 @@ function Kbd({ children }: { children: React.ReactNode }) {
 
 function ShortcutRow({ keys, label, lead }: Row) {
   return (
+    /* ⚠️ The LABEL leads and the KEYS close the row (Zeni's call, 28 Sep 2026). A reader scans a sheet
+       for the THING they want to do, then reads off its key — so the words go where the eye starts, and
+       the caps line up down the right edge where they can be compared column by column. */
     <div className="flex items-center justify-between gap-3 py-[3px]">
+      <span className={`min-w-0 flex-1 truncate text-[12px] ${lead ? 'font-semibold text-[#1E293B]' : 'text-[#64748B]'}`}>{label}</span>
       <span className="flex flex-shrink-0 items-center gap-1">
         {keys.map((x, i) => (x === '+' || x === '/'
           ? <span key={i} className="text-[10px] text-[#9CA3AF]">{x}</span>
           : <Kbd key={i}>{x}</Kbd>))}
       </span>
-      <span className={`min-w-0 flex-1 truncate text-right text-[12px] ${lead ? 'font-semibold text-[#1E293B]' : 'text-[#7B8FA5]'}`}>{label}</span>
     </div>
   );
 }
