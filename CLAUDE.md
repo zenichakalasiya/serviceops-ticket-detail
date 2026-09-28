@@ -273,9 +273,9 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
 - **Support Portal — the element hover card is COMPACT (28 Sep 2026, Zeni's pick).** Supersedes the
   size and the text of the bullet above: **240px wide, a 72px sketch stage, then the name and ONE
   summary (`what`) clamped to two lines**. The sketch stage is SQUARISH (Zeni, same day): the frame is
-  the card's width less **12px on all four sides** (`STAGE_PAD`), at least 176px tall at native size
-  (132 on the card, `ART_MIN_H`) with its drawing centred, so the upper part is ~240×156 and the card
-  ~240×211–227. The text part keeps its own padding. The second sentence (`helps`) and the `note` are still on
+  the card's width less **12px on all four sides** (`STAGE_PAD`), at least 149px tall at native size
+  (~112 on the card, `ART_MIN_H` — first 176, then 10px taken off the top and the bottom on request),
+  with its drawing centred, so the upper part is ~240×136 and the card ~240×190–207. The text part keeps its own padding. The second sentence (`helps`) and the `note` are still on
   every `PREVIEWS` entry and simply not rendered. ⚠️ The sketches are NOT redrawn: each is laid out at
   its original width (`ART_W` 288) and SCALED to fit the stage on both axes (`useLayoutEffect` measures
   it), so a tall one (Table) shrinks further rather than being cut off. Every sketch measured inside its

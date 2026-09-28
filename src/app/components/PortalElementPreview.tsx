@@ -573,8 +573,8 @@ const FALLBACK: Preview = {
 const CARD_W = 240;
 const ART_W = 288;
 const STAGE_PAD = 12;
-/** The frame's minimum height at native size — 176 × 0.75 = 132px on the card. */
-const ART_MIN_H = 176;
+/** The frame's minimum height at native size — 149 × 0.75 ≈ 112px on the card (20px shorter than the first squarish pass: 10px off the top and bottom, per Zeni). */
+const ART_MIN_H = 149;
 /** A sketch taller than this (on the card) shrinks further rather than growing the card. */
 const ART_MAX_H = 170;
 
