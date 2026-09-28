@@ -20,6 +20,7 @@ import { ColorField } from './PortalColorPicker';
 import { activePreset, bannerBoxId, defaultTreeFor, presetsFor, TEXT_SECTION, tilePresets, unitsOf } from './portalBannerLayout';
 import type { BannerNode } from './portalBannerLayout';
 import { placedType } from './portalPageModel';
+import { portalColorMode } from './portalStyleResolver';
 import { usePopupArrows, useOpenValue } from './usePopupArrows';
 
 /** Figma's gap field: the direction glyph, the number, and a slider — one value, typed or dragged. */
@@ -96,6 +97,22 @@ export function SideGrid({ value, onChange, from = '#0F172A', to = 'rgba(15,23,4
   );
 }
 
+/* A banner colour's LIGHT / DARK pair for `ColorField`'s tabs. `cfg` is the builder's RESOLVED config,
+   which in dark mode has already promoted `dark:<key>` onto the bare key and stashed the light value
+   under `light:<key>` — so light reads that first, exactly as the widget drawer's colour fields do.
+   ⚠️ The GRADIENT stops have no pair: a gradient is one stored object, and a dark copy of it would
+   drift the moment a stop is added or removed on the light one. */
+function cfgPair(cfg: Record<string, unknown>, key: string, fallback: string, write: (patch: Record<string, unknown>) => void) {
+  const light = String(cfg[`light:${key}`] ?? cfg[key] ?? fallback);
+  const dark = String(cfg[`dark:${key}`] ?? light);
+  return {
+    mode: portalColorMode(),
+    light,
+    dark,
+    onChange: (m: 'light' | 'dark', v: string) => write({ [m === 'dark' ? `dark:${key}` : key]: v }),
+  };
+}
+
 /** Solid or Gradient — the banner's colour, as the toolbar popup and the panel both edit it. */
 export function BannerFillEditor({ cfg, setCfg, dense }: {
   cfg: Record<string, unknown>;
@@ -125,7 +142,12 @@ export function BannerFillEditor({ cfg, setCfg, dense }: {
       {mode === 'solid' ? (
         <div>
           <span className={label}>Colour</span>
-          <ColorField dense={dense} value={c1} onChange={(v) => put({ bannerColor: v, colorMode: 'solid' })} />
+          <ColorField
+            dense={dense}
+            value={c1}
+            onChange={(v) => put({ bannerColor: v, colorMode: 'solid' })}
+            modes={cfgPair(cfg, 'bannerColor', '#3D8BD0', (patch) => put({ ...patch, colorMode: 'solid' }))}
+          />
         </div>
       ) : (
         /* ⚠️ The SAME editor the image tab's colour layer uses. The nine-tile "strongest at" grid
@@ -865,7 +887,12 @@ export function OverlayLayerEditor({ cfg, setCfg, dense }: { cfg: Record<string,
       {mode === 'solid' ? (
         <div>
           <span className={label}>Layer colour</span>
-          <ColorField dense={dense} value={String(cfg.overlayColor ?? 'rgba(15, 23, 42, 0.5)')} onChange={(v) => setCfg({ overlayMode: 'solid', overlayColor: v })} />
+          <ColorField
+            dense={dense}
+            value={String(cfg.overlayColor ?? 'rgba(15, 23, 42, 0.5)')}
+            onChange={(v) => setCfg({ overlayMode: 'solid', overlayColor: v })}
+            modes={cfgPair(cfg, 'overlayColor', 'rgba(15, 23, 42, 0.5)', (patch) => setCfg({ ...patch, overlayMode: 'solid' }))}
+          />
           <span className="mt-1.5 block text-[11px] leading-[16px] text-[#7B8FA5]">Lower the opacity in the picker to let more of the image show through.</span>
         </div>
       ) : (

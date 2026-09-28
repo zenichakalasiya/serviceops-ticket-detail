@@ -22,11 +22,11 @@ import { MiniRange } from './PortalRange';
 import { fillsFromConfig, HEADING_SIZE, PORTAL_FONTS, SECTION_LAYOUTS, SPLITTABLE_BANDS, TEXT_STYLES, ZERO_BOX, COMPOSABLE, BANNER_BLOCKS, inBanner, dragIdOf, isContactChild, boxInfo, canAddBeside, defaultAlignH, nodeById, paintsOwnShadow, paintsOwnSurface, toolbarCaps, nodePath, placedIn, placedType } from './portalPageModel';
 import { DEFAULT_THEME } from './PortalThemePanel';
 import type { PortalTheme } from './PortalThemePanel';
-import { boxCss, containerCss } from './portalStyleResolver';
+import { boxCss, containerCss, portalColorMode } from './portalStyleResolver';
 import { PORTAL_ELEMENTS, PORTAL_ELEMENT_GROUPS, isPredefinedElement, isPredefinedType } from './supportPortalData';
 import type { PortalElement } from './supportPortalData';
 import { elementIcon } from './SupportPortalAddPanel';
-import { PortalColorPicker } from './PortalColorPicker';
+import { PortalColorPicker, type ColorPair } from './PortalColorPicker';
 import type { BoxDir, NodeStyle, PortalStyles, SpacingBox } from './portalPageModel';
 
 /* Canvas selection layer.
@@ -857,6 +857,25 @@ const BORDER_STYLES = [
   { value: 'dotted', label: 'Dotted' },
 ];
 
+/* A colour's LIGHT / DARK pair, read and written exactly as the panel's pickers do: light is the
+   bare key, dark is `dark:<key>`. Works on BOTH stores — the style store holds the raw pair, and the
+   builder's resolved config (`cfg(id)`) has already promoted the dark value onto the bare key while
+   the portal is dark, stashing the light one under `light:<key>`, which is why that is read first.
+   `extra` rides along with every write (the fill switch a background colour needs). */
+function colorPair(
+  own: Record<string, unknown>,
+  key: string,
+  fallback: string,
+  write: (patch: Record<string, unknown>) => void,
+  extra?: Record<string, unknown>,
+): ColorPair {
+  const light = String(own[`light:${key}`] ?? own[key] ?? fallback);
+  const dark = String(own[`dark:${key}`] ?? light);
+  return { light, dark, onChange: (m, v) => write({ ...extra, [m === 'dark' ? `dark:${key}` : key]: v }) };
+}
+/** The half of a pair the canvas is showing now — what a toolbar swatch should display. */
+const shownOf = (p: ColorPair) => (portalColorMode() === 'dark' ? p.dark : p.light);
+
 function BorderMenu({ id }: { id: string }) {
   const { styles, setStyle, cfg, setCfg } = useCanvas();
   const [open, setOpen] = useState(false);
@@ -865,7 +884,6 @@ function BorderMenu({ id }: { id: string }) {
   const viaCfg = fillsFromConfig(id);
   const own = (viaCfg ? cfg?.(id) : styles[id]) ?? {};
   const width = Number(own.borderWidth ?? 0);
-  const color = String(own.borderColor ?? '#E5E7EB');
   const stroke = String(own.borderStyle ?? 'solid');
   /* The corner radius is read here ONLY so the no-border line can mention square corners when
      both are zero — the control itself is the next button along. */
@@ -874,6 +892,8 @@ function BorderMenu({ id }: { id: string }) {
     if (viaCfg) setCfg?.(id, patch);
     else setStyle(id, patch as never);
   };
+  const colorP = colorPair(own as Record<string, unknown>, 'borderColor', '#E5E7EB', write);
+  const color = shownOf(colorP);
   return (
     <div className="relative">
       <button className={open ? btnOn : btn} data-tip="Border" onClick={() => setOpen((x) => !x)}>
@@ -930,7 +950,7 @@ function BorderMenu({ id }: { id: string }) {
             )}
           </BarPop>
           {at && (
-            <PortalColorPicker value={color} anchor={at} onChange={(v) => write({ borderColor: v })} onClose={() => setAt(null)} />
+            <PortalColorPicker value={color} pair={colorP} anchor={at} onChange={(v) => write({ borderColor: v })} onClose={() => setAt(null)} />
           )}
         </>
       )}
@@ -996,13 +1016,18 @@ function IconMenu({ id }: { id: string }) {
     ? { color: String(cardStyle.iconColor ?? '#475467'), bg: String(cardStyle.iconFill ?? '#F1F5F9'), radius: cardStyle.iconShape === 'circle' ? 999 : 4 }
     : service ? { color: '#475467', bg: '#F1F5F9', radius: 8 }
     : { color: '#5A6B80', bg: '#FFFFFF', radius: 6 };
-  const color = String(own.iconColor ?? rest.color);
-  const bg = String(own.iconFill ?? rest.bg);
   const radius = Number(own.iconRadius ?? rest.radius);
   const bw = Number(own.iconBorderWidth ?? 0);
-  const bc = String(own.iconBorderColor ?? '#E5E7EB');
   const bs = String(own.iconBorderStyle ?? 'solid');
   const set = (patch: Record<string, unknown>) => setStyle(id, patch as never);
+  const pairs = {
+    iconColor: colorPair(own as Record<string, unknown>, 'iconColor', rest.color, set),
+    iconFill: colorPair(own as Record<string, unknown>, 'iconFill', rest.bg, set),
+    iconBorderColor: colorPair(own as Record<string, unknown>, 'iconBorderColor', '#E5E7EB', set),
+  };
+  const color = shownOf(pairs.iconColor);
+  const bg = shownOf(pairs.iconFill);
+  const bc = shownOf(pairs.iconBorderColor);
   const swatch = (ref: React.RefObject<HTMLButtonElement | null>, label: string, value: string, key: 'iconColor' | 'iconFill' | 'iconBorderColor') => (
     <>
       <p className="mb-1 text-[11px] text-[#7B8FA5]">{label}</p>
@@ -1057,8 +1082,8 @@ function IconMenu({ id }: { id: string }) {
             )}
           </BarPop>
           {at && (
-            <PortalColorPicker value={at.key === 'iconColor' ? color : at.key === 'iconFill' ? bg : bc}
-              anchor={at.rect} onChange={(v) => set({ [at.key]: v })} onClose={() => setAt(null)} />
+            <PortalColorPicker key={at.key} value={at.key === 'iconColor' ? color : at.key === 'iconFill' ? bg : bc}
+              pair={pairs[at.key]} anchor={at.rect} onChange={(v) => set({ [at.key]: v })} onClose={() => setAt(null)} />
           )}
         </>
       )}
@@ -1098,6 +1123,9 @@ function ColorMenu({ id }: { id: string }) {
     if (viaCfg) setCfg?.(id, { fill: 'color', bg: v });
     else setStyle(id, { bgFill: 'color', bg: v });
   };
+  const put = (patch: Record<string, unknown>) => (viaCfg ? setCfg?.(id, patch) : setStyle(id, patch as never));
+  /* Unfilled, BOTH tabs open on opaque white — the reason in the note above holds per mode. */
+  const fillP = colorPair(filled ? own : {}, 'bg', '#FFFFFF', put, viaCfg ? { fill: 'color' } : { bgFill: 'color' });
   return (
     <>
       <button
@@ -1114,7 +1142,7 @@ function ColorMenu({ id }: { id: string }) {
         <PaintBucket size={15} />
       </button>
       {at && (
-        <PortalColorPicker value={value} anchor={at} onChange={write} onClose={() => setAt(null)} />
+        <PortalColorPicker value={value} pair={fillP} anchor={at} onChange={write} onClose={() => setAt(null)} />
       )}
     </>
   );
@@ -2370,7 +2398,14 @@ function TextToolbar({ id, editing = false }: { id: string; editing?: boolean })
   const s: NodeStyle = styles[id] ?? {};
   const tBtn = (on?: boolean) => (on ? btnOn : btn);
   const sel = 'h-7 cursor-pointer rounded border border-[#E5E7EB] bg-white px-1.5 text-[12px] text-[#364658] outline-none hover:border-[#3D8BD0]';
-  const color = s.color ?? '#364658';
+  const setWhole = (patch: Record<string, unknown>) => setStyle(id, patch as never);
+  const colorP = colorPair(s as Record<string, unknown>, 'color', '#364658', setWhole);
+  const hiliteP = colorPair(s as Record<string, unknown>, 'textBg', '#FDE68A', setWhole);
+  const color = shownOf(colorP);
+  /* ⚠️ No Light / Dark tabs while WORDS are selected: those colours become inline markup inside the
+     text, and markup has no dark half — offering the tab would promise a second value nothing could
+     store. Colouring the whole text goes to the style store, which has both. */
+  const wordsSelected = editing && hasInlineSelection(id);
   /* ⚠️ Selected words win: while you are editing with words selected, a control formats THOSE words;
      otherwise it formats the whole text, as it always has. */
   const inline = (run: (host: HTMLElement) => void, whole: () => void) => { if (!(editing && applyInline(id, run))) whole(); };
@@ -2455,6 +2490,7 @@ function TextToolbar({ id, editing = false }: { id: string; editing?: boolean })
       {pickColor && (
         <PortalColorPicker
           value={color}
+          pair={wordsSelected ? undefined : colorP}
           anchor={pickColor}
           onChange={(v) => inline(() => document.execCommand('foreColor', false, v), () => setStyle(id, { color: v }))}
           onClose={() => setPickColor(null)}
@@ -2482,6 +2518,7 @@ function TextToolbar({ id, editing = false }: { id: string; editing?: boolean })
       {pickHilite && (
         <PortalColorPicker
           value={s.textBg ?? '#FDE68A'}
+          pair={wordsSelected ? undefined : hiliteP}
           anchor={pickHilite}
           onChange={(v) => inline(() => document.execCommand('hiliteColor', false, v), () => setStyle(id, { textBg: v }))}
           onClose={() => setPickHilite(null)}
@@ -2930,10 +2967,11 @@ function BannerEdgeMenus() {
   const swatchRef = useRef<HTMLButtonElement>(null);
   const [at, setAt] = useState<DOMRect | null>(null);
   const width = Number(hero.bannerBorderWidth ?? 0);
-  const color = String(hero.bannerBorderColor ?? '#E5E7EB');
   const stroke = String(hero.bannerBorderStyle ?? 'solid');
   const radius = Number(hero.bannerRadius ?? 0);
   const set = (patch: Record<string, unknown>) => setCfg?.('hero', patch);
+  const colorP = colorPair(hero as Record<string, unknown>, 'bannerBorderColor', '#E5E7EB', set);
+  const color = shownOf(colorP);
   return (
     <>
       <div className="relative">
@@ -2979,7 +3017,7 @@ function BannerEdgeMenus() {
               )}
             </BarPop>
             {at && (
-              <PortalColorPicker value={color} anchor={at}
+              <PortalColorPicker value={color} pair={colorP} anchor={at}
                 onChange={(v) => set({ bannerBorderColor: v })} onClose={() => setAt(null)} />
             )}
           </>

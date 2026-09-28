@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Ban, ChevronDown, Info, Pipette } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
+import { portalColorMode } from './portalStyleResolver';
 
 /* Colour picker.
  *
@@ -99,7 +100,47 @@ function Swatch({ color, on, onPick, none }: { color: string; on?: boolean; onPi
 
 /* ── picker ──────────────────────────────────────────────────────────────── */
 
-export function PortalColorPicker({ value, onChange, onClose, anchor, modeTab }: {
+/** A colour's two values — one for the light portal, one for the dark — and where each is written. */
+export interface ColorPair {
+  light: string;
+  dark: string;
+  onChange: (mode: 'light' | 'dark', v: string) => void;
+  /** The tab to open on. Omitted, it is the portal's current mode — which is what every caller wants. */
+  mode?: 'light' | 'dark';
+}
+
+/* The picker, with the Light / Dark pair handled INSIDE it (28 Sep 2026).
+ *
+ * ⚠️ Pass `pair` and the picker draws the Light · Dark tabs, edits whichever one is showing, and
+ * OPENS ON THE PORTAL'S CURRENT MODE — so with the global theme on Dark the Dark tab is already
+ * selected. It is read from `portalColorMode()` when the popover mounts, i.e. every time it opens,
+ * never remembered: the rule you are designing in is the portal's, not the last popover's.
+ * ⚠️ The floating toolbar's pickers used to open with a single value and no tabs, so a colour set
+ * there could only ever be set for whichever mode the canvas happened to be showing — the fault the
+ * panel's `ColorField` fixed long ago. Owning the tab here, rather than in each caller, is what lets
+ * every toolbar button get it from one prop.
+ * ⚠️ Cancel restores BOTH halves to what the popover opened with. The body's own Cancel only knew
+ * one value, so after switching tab it would have written the light colour into the dark slot. */
+export function PortalColorPicker({ pair, ...rest }: PickerProps & { pair?: ColorPair }) {
+  const [tab, setTab] = useState<'light' | 'dark'>(() => pair?.mode ?? portalColorMode());
+  const opened = useRef(pair ? { light: pair.light, dark: pair.dark } : null);
+  if (!pair) return <PickerBody {...rest} />;
+  return (
+    <PickerBody
+      {...rest}
+      value={tab === 'dark' ? pair.dark : pair.light}
+      onChange={(v) => pair.onChange(tab, v)}
+      modeTab={{ value: tab, onChange: setTab }}
+      onCancel={() => {
+        const o = opened.current!;
+        if (o.light !== pair.light) pair.onChange('light', o.light);
+        if (o.dark !== pair.dark) pair.onChange('dark', o.dark);
+      }}
+    />
+  );
+}
+
+type PickerProps = {
   value: string;
   onChange: (hex: string) => void;
   onClose: () => void;
@@ -107,7 +148,11 @@ export function PortalColorPicker({ value, onChange, onClose, anchor, modeTab }:
   anchor: DOMRect;
   /** Light / dark, for a swatch that has one of each. See the note on `ColorDot`. */
   modeTab?: { value: 'light' | 'dark'; onChange: (m: 'light' | 'dark') => void };
-}) {
+  /** Replaces Cancel's single-value restore — the pair wrapper restores both halves. */
+  onCancel?: () => void;
+};
+
+function PickerBody({ value, onChange, onClose, anchor, modeTab, onCancel }: PickerProps) {
   /* ⚠️ No Saved list. A portal is built from its THEME palette, and a per-browser set of saved
      swatches is a second palette that nobody else on the team can see — it quietly competes with
      the one place colour is supposed to be defined. Recent stays because it is a shortcut back to
@@ -370,7 +415,7 @@ export function PortalColorPicker({ value, onChange, onClose, anchor, modeTab }:
           className="inline-flex h-7 flex-1 items-center justify-center rounded bg-[#0EA5E9] px-3 text-[12px] font-medium text-white transition-colors hover:bg-[#0284C7]"
         >Done</button>
         <button
-          onClick={() => { onChange(opened.current); onClose(); }}
+          onClick={() => { if (onCancel) onCancel(); else onChange(opened.current); onClose(); }}
           className="inline-flex h-7 flex-1 items-center justify-center rounded border border-[#DFE5ED] bg-white px-3 text-[12px] font-medium text-[#364658] transition-colors hover:bg-[#F5F7FA]"
         >Cancel</button>
       </div>
@@ -403,16 +448,11 @@ export function ColorDot({ value, onChange, title, modes }: {
   };
 }) {
   const [anchor, setAnchor] = useState<DOMRect | null>(null);
-  /* ⚠️ Seeded from the THEME's mode every time the picker opens, never remembered. The rule you
-     asked for is that the tab follows the switcher — a tab that remembered its last position would
-     start disagreeing with the panel the second time you opened it. */
-  const [tab, setTab] = useState<'light' | 'dark'>(modes?.mode ?? 'light');
+  /* ⚠️ The tab is the PICKER's now (the `pair` prop), seeded from the theme's mode every time it
+     opens and never remembered — a tab that remembered its last position would start disagreeing
+     with the panel the second time you opened it. */
   const btnRef = useRef<HTMLButtonElement>(null);
-  const open = () => {
-    setTab(modes?.mode ?? 'light');
-    setAnchor(anchor ? null : btnRef.current!.getBoundingClientRect());
-  };
-  const shown = modes ? (tab === 'dark' ? modes.dark : modes.light) : value;
+  const open = () => setAnchor(anchor ? null : btnRef.current!.getBoundingClientRect());
   return (
     <>
       <button
@@ -423,13 +463,7 @@ export function ColorDot({ value, onChange, title, modes }: {
         style={{ background: value }}
       />
       {anchor && (
-        <PortalColorPicker
-          value={shown}
-          onChange={(v) => (modes ? modes.onChange(tab, v) : onChange(v))}
-          anchor={anchor}
-          onClose={() => setAnchor(null)}
-          modeTab={modes ? { value: tab, onChange: setTab } : undefined}
-        />
+        <PortalColorPicker value={value} onChange={onChange} pair={modes} anchor={anchor} onClose={() => setAnchor(null)} />
       )}
     </>
   );
@@ -459,20 +493,14 @@ export function ColorField({ value, onChange, modes, compact, dense }: {
   };
 }) {
   const [anchor, setAnchor] = useState<DOMRect | null>(null);
-  /* ⚠️ Seeded from the portal's mode every time the picker opens, never remembered — the rule the
-     Theme panel's dot already follows. A tab that remembered its last position would start
-     disagreeing with the canvas the second time you opened it. */
-  const [tab, setTab] = useState<'light' | 'dark'>(modes?.mode ?? 'light');
+  /* ⚠️ The tab is the PICKER's (`pair`), seeded from the portal's mode every time it opens and never
+     remembered — the rule the Theme panel's dot follows too. */
   const btnRef = useRef<HTMLButtonElement>(null);
-  const shown = modes ? (tab === 'dark' ? modes.dark : modes.light) : value;
   return (
     <div className="relative">
       <button
         ref={btnRef}
-        onClick={() => {
-          setTab(modes?.mode ?? 'light');
-          setAnchor(anchor ? null : btnRef.current!.getBoundingClientRect());
-        }}
+        onClick={() => setAnchor(anchor ? null : btnRef.current!.getBoundingClientRect())}
         className={`flex w-full items-center rounded border border-[#d1d5db] bg-white text-left transition-colors hover:border-[#3D8BD0] ${dense ? 'h-7 gap-1.5' : 'h-9 gap-2'} ${compact ? 'justify-center' : dense ? 'px-1.5' : 'px-2'}`}
       >
         <span className={`${dense ? 'size-4' : 'size-5'} flex-shrink-0 rounded border border-black/10`} style={{ background: value }} />
@@ -481,13 +509,7 @@ export function ColorField({ value, onChange, modes, compact, dense }: {
         {!compact && !dense && <ChevronDown size={14} className="flex-shrink-0 text-[#9CA3AF]" />}
       </button>
       {anchor && (
-        <PortalColorPicker
-          value={shown}
-          onChange={(v) => (modes ? modes.onChange(tab, v) : onChange(v))}
-          anchor={anchor}
-          onClose={() => setAnchor(null)}
-          modeTab={modes ? { value: tab, onChange: setTab } : undefined}
-        />
+        <PortalColorPicker value={value} onChange={onChange} pair={modes} anchor={anchor} onClose={() => setAnchor(null)} />
       )}
     </div>
   );
