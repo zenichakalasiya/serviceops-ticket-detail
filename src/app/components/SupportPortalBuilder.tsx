@@ -37,7 +37,7 @@ import {
   BANNER_BLOCK_TYPES, SINGLE_BANNER_BLOCKS, mintBox,
 } from './portalPageModel';
 import { PortalBuilderTour } from './PortalBuilderTour';
-import { PortalTourDock } from './PortalTourDock';
+import { PortalTourDock, DockGlyph } from './PortalTourDock';
 import { PortalWidgetDrawer } from './PortalWidgetDrawer';
 import { WIDGET_FOR_NODE, WIDGET_FOR_TYPE, specById, structureSpecId } from './portalWidgetSpec';
 import type { Cfg, WidgetSpec } from './portalWidgetSpec';
@@ -2903,6 +2903,8 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
      is also what the Help menu's "Editor basics" re-opens, which is the only way back to a card that
      otherwise appears once. */
   const [dock, setDock] = useState(false);
+  /* Closed at least once → it waits at the foot of the right rail until reopened. */
+  const [dockParked, setDockParked] = useState(false);
   const endTour = useCallback(() => setTour(false), []);
   /* ⚠️ Replaying from the dock CLOSES the dock: the tour dims the page and the dock would sit on top
      of that dim, putting a bright card in the corner of a screen that is telling you to look
@@ -3598,6 +3600,21 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
               </TooltipTrigger>{rk && <TooltipContent side="left"><TipKeys label={r.label} keys={chromeKeys(rk)} /></TooltipContent>}</Tooltip>
             );
           })}
+          {/* ⚠️ The closed dock, PARKED at the foot of the rail in the dock's own colour and glyph, so it
+              reads as the same card folded away rather than as a fifth panel. Hidden while the dock is
+              open — one thing, one place at a time. */}
+          {dockParked && !dock && (
+            <Tooltip delayDuration={0}><TooltipTrigger asChild>
+              <button
+                data-portal-dock="parked"
+                onClick={() => { setTour(false); setDock(true); }}
+                className="mt-auto flex w-[60px] flex-col items-center gap-1.5 rounded bg-[#1F2937] py-2 text-white shadow-[0_6px_14px_-6px_rgba(0,0,0,0.45)] transition-colors hover:bg-[#2B3645]"
+              >
+                <DockGlyph size={18} />
+                <span className="text-[11px] font-medium leading-none">Basics</span>
+              </button>
+            </TooltipTrigger><TooltipContent side="left">Editor basics</TooltipContent></Tooltip>
+          )}
         </div>
       </div>
 
@@ -3618,7 +3635,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
       )}
       {/* ⚠️ OUTSIDE the tour's own condition: the dock is not a step of the tour, it is what is left
           once the tour has gone, and it stays up while the admin works. */}
-      {dock && !tour && <PortalTourDock onReplay={replayTour} onClose={() => setDock(false)} />}
+      {dock && !tour && <PortalTourDock onReplay={replayTour} onClose={() => { setDock(false); setDockParked(true); }} />}
       {layoutConfirm}
       {bannerStart && (
         <BannerStartDialog

@@ -1726,7 +1726,13 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
      ⚠️ Drawn from the FAVOURITES band and the services band then renders nothing — the same
      render-in-one-place rule `railHome` follows, and the only way to guarantee the page cannot
      carry either section twice. */
-  const browseSplit = String(pageCfg.browseLook ?? 'stacked') === 'split';
+  /* ⚠️ SPLIT IS THE DEFAULT now (Zeni, 28 Sep 2026) — every page draws the two rows side by side,
+     half each; a template can still ask for `browseLook: 'stacked'`.
+     ⚠️ Only while BOTH rows are on the page. The split row is drawn from the favourites band, so with
+     Favourite Services deleted it would have taken Most Used Services off the page with it; and with
+     Most Used gone, Favourites would sit at half width beside nothing. One row alone is a full band. */
+  const hasBand = (id: string) => blockOrder.includes(id) && !removed.includes(id);
+  const browseSplit = String(pageCfg.browseLook ?? 'split') === 'split' && hasBand('favourites') && hasBand('services');
   /* ⚠️ A new page ARCHETYPE, not a banner variant: the hero stops being a band across the top and
      becomes a full-height column beside everything else. The page then divides once — the rail is
      what you DO (identity, search, the actions), the right column is what you HAVE.
@@ -3629,14 +3635,16 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                   className={`flex flex-wrap items-stretch ${SECTION_PAD}`}
                   style={{ order: slot("favourites"), gap: secGapCss('favourites') }}
                 >
+                  {/* ⚠️ TWO tiles across, not four. At half width four tiles are ~98px each and the
+                      service names ran into one another; a 2×2 grid gives each name room. It is a
+                      DEFAULT spread under the widget's config, so a column count the admin picked
+                      (config, or the style store, which the renderer reads first) still wins. */}
                   <Sel id="favourites" className="min-w-[300px] flex-1" style={fillCss(wc('favourites'))}>
-                    <FavouriteServicesRender nodeId="favourites" cfg={servicesChips ? { tileLook: 'chips', ...wc('favourites') } : wc('favourites')} />
+                    <FavouriteServicesRender nodeId="favourites" cfg={{ columns: 2, ...(servicesChips ? { tileLook: 'chips' } : {}), ...wc('favourites') }} />
                   </Sel>
-                  {blockOrder.includes('services') && !removed.includes('services') && (
-                    <Sel id="services" className="min-w-[300px] flex-1" style={fillCss(wc('services'))}>
-                      <FeaturedServicesRender nodeId="services" cfg={servicesChips ? { tileLook: 'chips', ...wc('services') } : wc('services')} />
-                    </Sel>
-                  )}
+                  <Sel id="services" className="min-w-[300px] flex-1" style={fillCss(wc('services'))}>
+                    <FeaturedServicesRender nodeId="services" cfg={{ columns: 2, ...(servicesChips ? { tileLook: 'chips' } : {}), ...wc('services') }} />
+                  </Sel>
                 </div>
               ) : (
               hostBand("favourites",

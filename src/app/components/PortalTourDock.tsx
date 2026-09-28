@@ -1,5 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, ChevronUp, ChevronRight, ChevronLeft, RotateCcw } from 'lucide-react';
+import { X, ChevronRight, ChevronLeft, RotateCcw, CirclePlay } from 'lucide-react';
+
+/** The dock's glyph — on its header and on the rail button it parks into, so the two read as one thing. */
+export const DockGlyph = CirclePlay;
 import { TourScene, SCENE_FRAMES, TOUR_CHAPTERS, sceneStart, sceneEnd } from './PortalTourScenes';
 
 /**
@@ -24,13 +27,15 @@ import { TourScene, SCENE_FRAMES, TOUR_CHAPTERS, sceneStart, sceneEnd } from './
  * carry the cursor, the ghost and the resized card. It DOES remount between chapters, deliberately:
  * each chapter is its own picture. The cursor sits outside the scene, so it glides across that seam.
  *
- * ⚠️ IT COLLAPSES TO A PILL rather than only closing: the corner of the canvas is space the admin is
- * working in, and "out of my way for a minute" is not "I am done with this". No overlay, no blocking.
+ * ⚠️ CLOSING PARKS IT IN THE RIGHT RAIL rather than dismissing it: "out of my way for a minute" is
+ * not "I am done with this", and the rail is where the builder's other places already live. It
+ * replaced a pill in the canvas's bottom-right corner, which sat over the page being built.
  */
 
 export function PortalTourDock({ onClose }: { onReplay?: () => void; onClose: () => void }) {
   const [at, setAt] = useState(0);
-  const [open, setOpen] = useState(true);
+  /* Always open while mounted — closing unmounts it and parks it in the rail (see the header row). */
+  const open = true;
   /* Whether the person has taken over. Until they do, the story advances on its own. */
   const [driven, setDriven] = useState(false);
   const elapsed = useRef(0);
@@ -66,29 +71,17 @@ export function PortalTourDock({ onClose }: { onReplay?: () => void; onClose: ()
     setAt(sceneStart(Math.max(0, Math.min(last, c))));
   };
 
-  if (!open) {
-    return (
-      <button
-        data-portal-dock="collapsed"
-        onClick={() => setOpen(true)}
-        className="fixed bottom-5 right-5 z-[9000] inline-flex h-10 items-center gap-2 rounded-full bg-[#1F2937] pl-3.5 pr-4 text-[12.5px] font-medium text-white shadow-[0_12px_28px_-8px_rgba(0,0,0,0.5)] transition-transform hover:scale-[1.02]"
-      >
-        <ChevronUp size={15} className="text-white/70" />
-        Editor basics
-      </button>
-    );
-  }
-
   return (
     <div data-portal-dock className="fixed bottom-5 right-5 z-[9000] w-[360px] overflow-hidden rounded-2xl bg-[#1F2937] shadow-[0_24px_48px_-12px_rgba(0,0,0,0.55)]">
       {/* ⚠️ The controls sit in a HEADER ROW, not over the picture — a scene is composed edge to edge,
           and a button floating on it covers whatever that scene put in its corner. */}
       <div className="flex items-center gap-2 px-4 pb-2 pt-3">
-        <span className="flex-1 text-[12px] font-medium text-white/55">Editor basics</span>
-        <button onClick={() => setOpen(false)} title="Minimise" className="inline-flex size-6 items-center justify-center rounded text-white/60 transition-colors hover:bg-white/10 hover:text-white">
-          <ChevronUp size={14} className="rotate-180" />
-        </button>
-        <button onClick={onClose} title="Close" className="inline-flex size-6 items-center justify-center rounded text-white/60 transition-colors hover:bg-white/10 hover:text-white">
+        <span className="flex flex-1 items-center gap-1.5 text-[12px] font-medium text-white/55"><DockGlyph size={14} />Editor basics</span>
+        {/* ⚠️ ONE way to put it away (Zeni, 28 Sep 2026). Closing parks it at the foot of the right
+            rail, in this card's own colour and glyph, and pressing that brings it back. The old
+            Minimise pill was a second "away" state in a second place — the bottom-right corner of
+            the canvas, over the page being built — so it went. */}
+        <button onClick={onClose} title="Close — it waits at the bottom of the right rail" className="inline-flex size-6 items-center justify-center rounded text-white/60 transition-colors hover:bg-white/10 hover:text-white">
           <X size={14} />
         </button>
       </div>
