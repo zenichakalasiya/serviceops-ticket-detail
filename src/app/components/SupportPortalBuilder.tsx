@@ -3607,6 +3607,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
           being viewed as a requester would be pointing at controls that are no longer there. */}
       {tour && (
         <PortalBuilderTour
+          selected={selectedId}
           onSelect={select}
           /* The steps about the library and the toolbar have to OPEN the library and SELECT a block
              — neither exists to point at otherwise. */

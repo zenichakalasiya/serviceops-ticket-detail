@@ -45,10 +45,10 @@ function WidgetCard({ x, y, w, h, fill = PAPER, pad = 0 }: { x: number; y: numbe
   const iw = Math.max(8, w - 12 - pad * 2);
   return (
     <g>
-      <rect x={x} y={y} width={w} height={h} rx="3" fill={fill} stroke="#E2E8F0" strokeWidth="0.75" style={{ transition: 'all 600ms cubic-bezier(0.4,0,0.2,1)' }} />
-      <rect x={ix} y={y + 6 + pad} width={Math.min(iw, 34)} height="4" rx="2" fill={ACCENT} opacity="0.85" style={{ transition: 'all 600ms cubic-bezier(0.4,0,0.2,1)' }} />
-      <rect x={ix} y={y + 15 + pad} width={iw} height="3" rx="1.5" fill={INK} style={{ transition: 'all 600ms cubic-bezier(0.4,0,0.2,1)' }} />
-      <rect x={ix} y={y + 22 + pad} width={iw * 0.7} height="3" rx="1.5" fill={INK} style={{ transition: 'all 600ms cubic-bezier(0.4,0,0.2,1)' }} />
+      <rect x={x} y={y} width={w} height={h} rx="3" fill={fill} stroke="#E2E8F0" strokeWidth="0.75" style={{ transition: T }} />
+      <rect x={ix} y={y + 6 + pad} width={Math.min(iw, 34)} height="4" rx="2" fill={ACCENT} opacity="0.85" style={{ transition: T }} />
+      <rect x={ix} y={y + 15 + pad} width={iw} height="3" rx="1.5" fill={INK} style={{ transition: T }} />
+      <rect x={ix} y={y + 22 + pad} width={iw * 0.7} height="3" rx="1.5" fill={INK} style={{ transition: T }} />
     </g>
   );
 }
@@ -209,7 +209,7 @@ export const STORY_CHAPTERS = ['Add', 'Select', 'Arrange', 'Style', 'Publish'] a
 const CARD = { x: 22, y: 60, h: 46, full: 172, split: 104 };
 const GHOST_START: [number, number] = [214, 66];
 
-export const STORY: StoryFrame[] = [
+const STORY_AT_REST: StoryFrame[] = [
   /* ── Add ─────────────────────────────────────────────────────────────────────────────── */
   { ch: 0, ms: 1600, cap: 'Start from a blank page.', card: 'none', panel: 'library', cursor: [232, 72] },
   { ch: 0, ms: 1500, cap: 'Drag a widget in from the library…', card: 'ghost', ghost: [0, 0], panel: 'library', cursor: [232, 72], click: true },
@@ -238,10 +238,20 @@ export const STORY: StoryFrame[] = [
   { ch: 4, ms: 2600, cap: 'Publish when it’s ready — requesters see it straight away.', card: 'placed', split: true, w: 128, fill: '#EAF3FB', shadow: true, pad: true, section2: true, publish: true, panel: 'library', cursor: [261, 19], click: true },
 ];
 
+/* ⚠️ ONE PACE for the whole story (28 Sep 2026, Zeni: "too slow, I got frustrated watching it").
+   The frames above are written at a readable-but-slow rest pace; the story plays them at PACE of that,
+   so the rhythm between scenes is kept and the whole thing is sped up by changing one number rather
+   than seventeen. The glides below (`GLIDE`, `T`) are cut by the same factor so a move still finishes
+   inside the frame that makes it. */
+const PACE = 0.55;
+export const STORY: StoryFrame[] = STORY_AT_REST.map((f) => ({ ...f, ms: Math.round(f.ms * PACE) }));
+
 export const chapterStart = (ch: number) => STORY.findIndex((f) => f.ch === ch);
 export const chapterMs = (ch: number) => STORY.filter((f) => f.ch === ch).reduce((s, f) => s + f.ms, 0);
 
-const T = 'all 600ms cubic-bezier(0.4,0,0.2,1)';
+const T = 'all 340ms cubic-bezier(0.4,0,0.2,1)';
+/** How long the ghost and the pointer take to travel — shorter than the shortest frame that moves them. */
+const GLIDE = 'transform 700ms cubic-bezier(0.4,0,0.2,1)';
 
 function StoryPanelBody({ kind }: { kind: StoryPanel }) {
   if (kind === 'library') {
@@ -434,7 +444,7 @@ export function TourStory({ frame }: { frame: StoryFrame }) {
 
         {/* ── the dragged ghost: it only ever TRANSLATES, so it never draws stretched ─────── */}
         {f.card === 'ghost' && (
-          <g style={{ transform: `translate(${f.ghost?.[0] ?? 0}px, ${f.ghost?.[1] ?? 0}px)`, transition: 'transform 1300ms cubic-bezier(0.4,0,0.2,1)' }}>
+          <g style={{ transform: `translate(${f.ghost?.[0] ?? 0}px, ${f.ghost?.[1] ?? 0}px)`, transition: GLIDE }}>
             <rect x={GHOST_START[0]} y={GHOST_START[1]} width="36" height="11" rx="2.5" fill={PAPER} stroke={ACCENT} strokeWidth="1" filter="url(#pt-story-shadow)" />
             <rect x={GHOST_START[0] + 3} y={GHOST_START[1] + 2.5} width="6" height="6" rx="1.5" fill={ACCENT} />
             <rect x={GHOST_START[0] + 13} y={GHOST_START[1] + 4} width="16" height="3" rx="1.5" fill={INK} />
@@ -443,7 +453,7 @@ export function TourStory({ frame }: { frame: StoryFrame }) {
 
         {/* ── the pointer, last, so it sits over everything it is doing ──────────────────── */}
         {f.cursor && (
-          <g style={{ transform: `translate(${f.cursor[0]}px, ${f.cursor[1]}px)`, transition: 'transform 1300ms cubic-bezier(0.4,0,0.2,1)' }}>
+          <g style={{ transform: `translate(${f.cursor[0]}px, ${f.cursor[1]}px)`, transition: GLIDE }}>
             {f.click && <circle cx="0" cy="0" r="6" fill="none" stroke={ACCENT} strokeWidth="1" className="pt-click" />}
             <path d="M0 0 L0 11 L3 8.2 L5.2 12.8 L7 12 L4.9 7.6 L9 7.4 Z" fill="#0F172A" stroke={PAPER} strokeWidth="0.9" strokeLinejoin="round" />
           </g>

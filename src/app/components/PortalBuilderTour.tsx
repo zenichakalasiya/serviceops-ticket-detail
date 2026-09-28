@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { TourArt, type TourBeat } from './PortalTourArt';
 
 /**
@@ -175,13 +176,16 @@ function place(rect: DOMRect, pos: Pos, w: number, h: number) {
 }
 
 export function PortalBuilderTour({
+  selected,
   onSelect,
   onRail,
   onDone,
   onFinish,
 }: {
-  /** Selects a node, so the step about selection has something selected to point at. */
-  onSelect: (id: string) => void;
+  /** What was selected when the tour opened — put back when it closes. */
+  selected: string | null;
+  /** Selects a node (or clears the selection), so the step about selection has something selected. */
+  onSelect: (id: string | null) => void;
   /** Opens a rail panel, so the step about the library has the library open. */
   onRail: (key: RailKey) => void;
   /** Leaving by any route — Skip, Escape, or the last Next. */
@@ -197,11 +201,21 @@ export function PortalBuilderTour({
 
   const step = STEPS[i];
 
-  /* ── put the surface in the state this step is about, BEFORE it is measured ── */
+  /* ── put the surface in the state this step is about, BEFORE it is measured ──
+     ⚠️ A step that does not SELECT anything CLEARS the selection. Step 3 selects the banner to show
+     its toolbar; left selected, that toolbar went on standing over steps 1, 2 and 4, pointing at a
+     banner the card was no longer talking about. Deselecting does not close the rail panel —
+     `select(null)` only stands the panel down for a real id — so step 2's library stays open. */
   useEffect(() => {
     if (step.rail) onRail(step.rail);
-    if (step.select) onSelect(step.select);
+    onSelect(step.select ?? null);
   }, [i]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* ⚠️ The tour borrowed the selection, so it gives it back: whatever was selected when it opened is
+     selected again when it closes, by any route. A guide that leaves the page in a different state
+     from the one it found is one the admin has to tidy up after. */
+  const startSel = useRef(selected);
+  useEffect(() => () => onSelect(startSel.current), []); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── measure the target, then the card, then place it ── */
   const measure = useCallback(() => {
@@ -270,7 +284,13 @@ export function PortalBuilderTour({
   const arrowTop = rect ? Math.min(Math.max(rect.top + rect.height / 2 - box.top, 24), cardH - 24) : cardH / 2;
   const arrowLeft = rect ? Math.min(Math.max(rect.left + rect.width / 2 - box.left, 28), cardW - 28) : cardW / 2;
 
-  return (
+  /* ⚠️ PORTALLED TO THE BODY. Rendered inside the builder, the tour lived in the builder shell's own
+     stacking layer (`fixed … z-[9000]`), so its z-10500 only counted INSIDE that shell — and the
+     floating toolbar, which is portalled to the body at z-9999, painted over the whole shell, the
+     tour's blur included. On step 4 the banner's toolbar was the topmost thing on screen. On the body
+     the tour outranks every toolbar; on the banner step the toolbar still shows, because it sits
+     inside the spotlight's hole. */
+  return createPortal(
     /* ⚠️ The ROOT passes clicks through; the overlay inside it does the blocking. A transparent
        `fixed inset-0` still hit-tests across the whole screen, so with the root left interactive it
        would swallow every click on the page beneath. */
@@ -370,6 +390,7 @@ export function PortalBuilderTour({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
