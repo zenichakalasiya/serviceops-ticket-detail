@@ -1386,7 +1386,11 @@ export function toolbarCaps(id: string): ToolbarCaps {
   if (isContactChild(id)) return { move: false, add: false, copy: false, drag: false, splitItem: true };
   /* The service tiles are ONE node shared by every tile, so the bar is alignment only — moving, copying
      or deleting "the tile" would mean every tile at once. */
-  if (isServiceTile(id)) return { move: false, add: false, copy: false, drag: false, remove: false };
+  /* ⚠️ NO ALIGNMENT on a predefined card or anything inside one (Zeni, 29 Sep 2026): the data in them is
+     laid out by the product, so an alignment control there either moved nothing or moved a tile out of
+     its grid cell. That covers the data tiles of every card (`-tile`), the Quick Actions cards and their
+     badges, the two service rows, the live cards and a placed predefined widget. */
+  if (isServiceTile(id) || /-tile$/.test(id)) return { move: false, add: false, copy: false, drag: false, remove: false, alignH: false, alignV: false };
   /* A banner ROW or COLUMN. It holds sections and lays them out: the two alignments are the whole of
      what it decides here.
      ⚠️ No Add, Copy, Delete or drag. A row is made by a preset or by dropping a section on an edge
@@ -1416,10 +1420,10 @@ export function toolbarCaps(id: string): ToolbarCaps {
   if (id === 'quick') return { add: false, copy: false, alignV: false, extLink: false };
   /* An action card. Its content belongs to the product, so Replace cannot be honoured; moving it
      along the row is the whole of what an admin decides here. */
-  if (/^quick-/.test(id)) return { add: false };
+  if (/^quick-/.test(id)) return { add: false, alignH: false, alignV: false };
   /* Favourite / Most Used services — a full-width band: nothing to swap it with, nothing to copy it
      into, and no vertical alignment inside a block as tall as its own content. */
-  if (id === 'favourites' || id === 'services') return { add: false, copy: false, alignV: false };
+  if (id === 'favourites' || id === 'services') return { add: false, copy: false, alignH: false, alignV: false };
   /* The band holding every predefined widget. It arranges its two regions and nothing else. */
   if (id === 'work') return { add: false, copy: false, alignH: false, alignV: false };
   /* Those regions. They hold widgets in an order the admin sets by moving the WIDGETS — a region
@@ -1454,7 +1458,7 @@ export function toolbarCaps(id: string): ToolbarCaps {
      to prevent, and a second copy of a live card is not a second card, it is the same query drawn
      twice. The built-in blocks were already covered by `LIVE_WIDGETS` above; this is the same rule
      for the same widget dropped as an element. */
-  if (t && isPredefinedType(t)) return { copy: false };
+  if (t && isPredefinedType(t)) return { copy: false, alignH: false, alignV: false };
   /* ⚠️ `l-divider` joins them for the same reason and one of its own: a rule fills the column it is
      dropped into, so neither axis had a position to report — and its sidebar Alignment accordion
      was removed for exactly that, so leaving the toolbar pair would have kept a second copy of a

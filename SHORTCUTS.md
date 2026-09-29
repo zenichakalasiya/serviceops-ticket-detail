@@ -207,12 +207,12 @@ cost is stated on the sheet: with a widget selected the canvas cannot be arrow-s
 | Shortcut | Action |
 |---|---|
 | `B` | Background colour |
-| `O` | Border (**o**utline) |
-| `C` | Corner radius |
-| `D` | **D**rop shadow |
-| `H` / `V` | Horizontal / vertical alignment |
-| `I` | Icon — action cards and data tiles |
+| `H` / `V` | Horizontal / vertical alignment (where the element has it) |
 | `G` | Arrangement and presets |
+
+`O`, `C`, `D` and `I` (Border, Corner radius, Shadow, Icon) were removed on 29 Sep 2026: those four
+left the floating toolbar for the sidebar's Design section, and the keys only ever pressed the
+toolbar's own buttons.
 | `P` | Spacing (opens the panel's matrix and scrolls to it) |
 
 None of these cycles a value. Cycling a colour or a shadow by keypress lands a value nobody

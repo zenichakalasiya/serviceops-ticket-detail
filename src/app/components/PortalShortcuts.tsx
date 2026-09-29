@@ -236,16 +236,14 @@ export function PortalShortcuts(props: PortalShortcutProps) {
         case 'KeyA': e.preventDefault(); (e.shiftKey ? pressAddInside() : act('addBeside')); break;
         case 'KeyR': e.preventDefault(); act('replace'); break;
         case 'KeyS': e.preventDefault(); act('split'); break;
-        case 'KeyD': e.preventDefault(); act('shadow'); break;
         case 'Enter': if (editWords(id)) e.preventDefault(); break;
         case 'Delete': case 'Backspace': e.preventDefault(); act('remove'); break;
         /* style */
         case 'KeyB': e.preventDefault(); act('background'); break;
-        case 'KeyO': e.preventDefault(); act('border'); break;
-        case 'KeyC': e.preventDefault(); act('radius'); break;
+        /* ⚠️ O, C, D and I are gone: Border, Corner radius, Shadow and Icon left the floating toolbar
+           for the sidebar (29 Sep 2026), and these keys only ever pressed the toolbar's own buttons. */
         case 'KeyH': e.preventDefault(); act('alignH'); break;
         case 'KeyV': e.preventDefault(); act('alignV'); break;
-        case 'KeyI': e.preventDefault(); act('icon'); break;
         case 'KeyG': e.preventDefault(); act('presets'); break;
         case 'KeyP': e.preventDefault(); openSpacing(); break;
         /* remove the selection itself — this also closes any popup the bar has open, because the
@@ -327,12 +325,8 @@ const MOVE: Group = { title: 'Move and size', note: 'Only the parent’s own axi
 
 const STYLE: Group = { title: 'Style', note: 'Each opens its popup — arrows walk it', rows: [
   { keys: k('background'), label: 'Background colour' },
-  { keys: k('border'), label: 'Border' },
-  { keys: k('radius'), label: 'Corner radius' },
-  { keys: k('shadow'), label: 'Drop shadow' },
   { keys: k('alignH'), label: 'Horizontal alignment' },
   { keys: k('alignV'), label: 'Vertical alignment' },
-  { keys: k('icon'), label: 'Icon — cards and tiles' },
   { keys: k('presets'), label: 'Arrangement and presets' },
   { keys: ['P'], label: 'Spacing' },
 ] };

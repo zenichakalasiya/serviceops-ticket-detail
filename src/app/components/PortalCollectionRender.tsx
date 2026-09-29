@@ -1301,7 +1301,7 @@ function ServiceTiles({ nodeId, items, showDesc, tpl = 'top', cols, chips, look,
             /* ⚠️ WHITE on the plain tile (Zeni, 29 Sep 2026): the tile itself is the light-grey data-tile
                fill now, so a tinted badge on it was a third shade of the same pale colour; a white badge
                reads as the icon's own surface. The action look keeps its toned badge. */
-            <span style={{ backgroundColor: action ? TONE.soft : '#FFFFFF', color: TONE.ink, ...iconBoxCss(styles, `${nodeId}-tile`) }} className="flex size-9 flex-shrink-0 items-center justify-center rounded-lg">
+            <span style={{ backgroundColor: '#FFFFFF', color: TONE.ink, ...iconBoxCss(styles, `${nodeId}-tile`) }} className="flex size-9 flex-shrink-0 items-center justify-center rounded-lg">
               <ShoppingCart size={18} strokeWidth={1.7} />
             </span>
           )}

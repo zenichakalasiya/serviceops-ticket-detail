@@ -1523,8 +1523,10 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
      on the tile itself, which is what makes all four cards restyle together — the thing the shared id is
      for. */
   const iconTarget = isIcon || /-tile$/.test(id) ? id : isActionCard ? `${id}-icon` : null;
+  /* `iconTarget` no longer counts: the Icon popup left the bar (it is in the sidebar). */
+  void iconTarget;
   const named = placedType(id) === 'b-button' || placedType(id) === 'b-accordion'
-    || placedType(id) === 'c-faq' || placedType(id) === 'v-image' || !!caps.extLink || !!iconTarget;
+    || placedType(id) === 'c-faq' || placedType(id) === 'v-image' || !!caps.extLink;
   const swapType = swaps && swapTarget ? placedType(swapTarget) : undefined;
   const secKind = sectionKind?.(id) ?? 'empty';
   const allow = (e: PortalElement) => {
@@ -1851,7 +1853,10 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
           16px target inside a card, so reaching its colour meant knowing you could click it — and the
           card is what an admin has selected when they decide the glyph is the wrong colour. It writes
           the badge's own node either way (`${id}-icon`), so the two routes are one edit. */}
-      {iconTarget && <IconMenu id={iconTarget} />}
+      {/* ⚠️ ICON, BORDER, CORNER RADIUS and SHADOW left the floating toolbar (Zeni, 29 Sep 2026) — every
+          one of them is in the sidebar's Design section now (`DesignQuickSections`), and a bar carrying
+          the same four popups was two places for one value. The menus themselves stay in this file,
+          unused, so bringing one back is one line. Background colour, alignment and every action stay. */}
       {/* ⚠️ The banner's globe button is GONE. "Also use this background behind the whole page" put
           one block in charge of the page's background — a change you make while looking at the
           banner and then see everywhere else — and the page has its own background in Theme, which
@@ -1910,9 +1915,7 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
           badge's own colour, corners and border are in the Icon popup below.
           A TILE keeps all four: there the card and the badge inside it are two real boxes. */}
       {(kind !== 'text' || placed) && !isButton && !isIcon && <ColorMenu id={id} />}
-      {(kind !== 'text' || placed) && !isButton && !isIcon && <BorderMenu id={id} />}
-      {(kind !== 'text' || placed) && !isButton && !isIcon && <RadiusMenu id={id} />}
-      {(kind !== 'text' || placed) && <ShadowMenu id={id} />}
+
       {caps.remove !== false && <Rule />}
       {caps.remove !== false && (
         <button
@@ -3023,7 +3026,7 @@ function BannerToolbar() {
       {/* ⚠️ The banner's OWN border and corners, beside its colour — the same three questions every
           other block answers on its bar, in the same order. They were a "Corners & border" group in
           the panel, which is the copy you are not looking at while you are looking at the banner. */}
-      <BannerEdgeMenus />
+      {/* The banner's Border and Corner radius are in the sidebar's Design section now. */}
       <Rule />
       <button className="flex size-7 items-center justify-center rounded text-[#EF4444] transition-colors hover:bg-[#FEF3F2]" data-tip="Delete the banner" onClick={() => deleteNode('hero')}><Trash2 size={14} /></button>
     </div>

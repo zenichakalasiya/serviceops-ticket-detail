@@ -306,6 +306,20 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   Services deleted it would have taken Most Used off the page too. ⚠️ In the split row each grid defaults
   to **2 columns** (`{ columns: 2, ...wc(id) }`) — four tiles at half width were 98px and the names ran into
   each other; an admin's own column count still wins (style store, then config).
+- **Support Portal — the floating toolbar is SLIMMER; styling lives in the sidebar (29 Sep 2026, Zeni).**
+  ⚠️ **Border, Corner radius, Shadow and Icon are OFF the floating toolbar** (and Border / Corner radius off
+  the banner's bar) — they are the sidebar's Design groups now (`DesignQuickSections`). The menus
+  (`BorderMenu`, `RadiusMenu`, `ShadowMenu`, `IconMenu`, `BannerEdgeMenus`) stay in `PortalCanvas`, unused, so
+  one line brings any back. The bar keeps Background colour, alignment (where allowed) and every action.
+  Their shortcuts `O` `C` `D` `I` were removed from the handler, the sheet and SHORTCUTS.md.
+  ⚠️ **No alignment on predefined cards** (`toolbarCaps`): every `-tile`, the Quick Actions cards (`quick-*`),
+  the two service rows and a placed predefined widget return `alignH/alignV: false` — the product lays
+  out their data. Both surfaces read `toolbarCaps`, so it went from toolbar AND sidebar at once.
+  **Layout vs Card templates:** the white card (Favourite / Most Used Services, My Assets, My CIs) shows
+  **Layout** (the tile presets — My Assets / My CIs' group was renamed from "Columns"); the inner data
+  tiles show **Card templates** (`DATA_TILE_SPEC`). The service rows' white card no longer carries Card
+  templates; the tile writes the same `cardTemplate` key on the widget. The Quick Actions row is unchanged.
+  Service tile icon badges are white in BOTH tile looks (the action look used a toned badge).
 - **Support Portal — a PARENT's handles set the gap between its children (29 Sep 2026, Zeni).**
   On an added section or box holding other sections (`sec-N`, `sec-N-bM`) and on the built-in bands
   (`GAP_DRAG_BANDS`: quick · work · work-main · work-rail · records — NOT the two service rows, which are

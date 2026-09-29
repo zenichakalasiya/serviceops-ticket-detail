@@ -427,7 +427,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
          beside it rendered nowhere and the panel looked exactly as it had before. The preset is kept
          by its control whatever group it sits in, so both move to the group the other card blocks
          already use, and Presets and the Gap they decide stay in one accordion. */
-      { key: '__tilePreset', label: 'Presets', control: 'tilePreset', tab: 'style', group: 'Columns' },
+      { key: '__tilePreset', label: 'Presets', control: 'tilePreset', tab: 'style', group: 'Layout' }, /* 'Layout', like the service rows (Zeni, 29 Sep 2026) — the preset survives DROP_GROUPS by its control. */
       /* ⚠️ Gap is not a control any more — see the note in `GapBands`. Every section keeps its resting gap. */
     ],
     packs: LIVE_CARD_PACKS, roles: LIST_CARD_ROLES,
@@ -448,7 +448,7 @@ export const WIDGET_SPECS: WidgetSpec[] = [
          beside it rendered nowhere and the panel looked exactly as it had before. The preset is kept
          by its control whatever group it sits in, so both move to the group the other card blocks
          already use, and Presets and the Gap they decide stay in one accordion. */
-      { key: '__tilePreset', label: 'Presets', control: 'tilePreset', tab: 'style', group: 'Columns' },
+      { key: '__tilePreset', label: 'Presets', control: 'tilePreset', tab: 'style', group: 'Layout' }, /* 'Layout', like the service rows (Zeni, 29 Sep 2026) — the preset survives DROP_GROUPS by its control. */
       /* ⚠️ Gap is not a control any more — see the note in `GapBands`. Every section keeps its resting gap. */
     ],
     packs: LIVE_CARD_PACKS, roles: LIST_CARD_ROLES,
@@ -670,7 +670,10 @@ export const WIDGET_SPECS: WidgetSpec[] = [
          ⚠️ SHARED between the two service rows: the value is mirrored in `patchCfg`, so setting it
          on either sets it on both. Two grids of the same kind of thing, stacked one above the
          other, disagreeing about their own shape is a difference that means nothing. */
-      { key: 'cardTemplate', label: '', control: 'templates', group: 'Card templates' },
+      /* ⚠️ CARD TEMPLATES are on the inner TILES only (Zeni, 29 Sep 2026) — they describe one card, so they
+         belong to the card you select, not to the white card around the grid. The tiles write the same
+         `cardTemplate` key on this widget (`ownerOf` strips `-tile`), so nothing moved. LAYOUT is the
+         white card's: how many tiles sit across. */
       { key: '__tilePreset', label: 'Presets', control: 'tilePreset', tab: 'style', group: 'Layout' },
       /* ⚠️ The GAP between its tiles. It was taken out with the rest of this widget's grid controls and
          has come back on request: a row of cards whose spacing cannot be changed is the one band on the
@@ -721,7 +724,10 @@ export const WIDGET_SPECS: WidgetSpec[] = [
          ⚠️ SHARED between the two service rows: the value is mirrored in `patchCfg`, so setting it
          on either sets it on both. Two grids of the same kind of thing, stacked one above the
          other, disagreeing about their own shape is a difference that means nothing. */
-      { key: 'cardTemplate', label: '', control: 'templates', group: 'Card templates' },
+      /* ⚠️ CARD TEMPLATES are on the inner TILES only (Zeni, 29 Sep 2026) — they describe one card, so they
+         belong to the card you select, not to the white card around the grid. The tiles write the same
+         `cardTemplate` key on this widget (`ownerOf` strips `-tile`), so nothing moved. LAYOUT is the
+         white card's: how many tiles sit across. */
       { key: '__tilePreset', label: 'Presets', control: 'tilePreset', tab: 'style', group: 'Layout' },
       /* ⚠️ The GAP between its tiles — back on request. A row of cards whose spacing cannot be changed
          is the one band on the page that is not the admin's, and this row and Favourite Services were the
