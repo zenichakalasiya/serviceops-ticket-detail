@@ -691,10 +691,10 @@ export const WIDGET_SPECS: WidgetSpec[] = [
       { tone: 'warn', text: 'This section only appears once a requester has added favourites. Anyone with none sees nothing here — the tiles below are examples.' },
       { tone: 'info', text: 'The services this requester has pinned. Shows up to four — a shortcut that runs longer than that is a catalogue.' },
     ],
-    /* ⚠️ `titlePlace: 'outside'` — these two rows are the only ones whose heading has always been on the
-       page rather than in a card, so their default is today's look while every other card defaults to
-       inside. It is the difference the Title control now lets an admin settle either way. */
-    defaults: { titlePlace: 'outside', title: 'Favourite Services', showDesc: true, cardTemplate: 'top' },
+    /* ⚠️ `titlePlace: 'inside'` (Zeni, 29 Sep 2026) — like every other data card: the heading sits in a
+       white card, and the service tiles inside it take the light-grey data-tile fill (#F6F9FC). These
+       two rows used to be the one exception, heading on the page; "Above the card" still offers that. */
+    defaults: { titlePlace: 'inside', title: 'Favourite Services', showDesc: true, cardTemplate: 'top' },
   },
 
   /* ─────────── §7.8 Featured Services ─────────── */
@@ -745,8 +745,8 @@ export const WIDGET_SPECS: WidgetSpec[] = [
     /* ⚠️ showDesc now ships TRUE. The tile was redesigned around a two-line block — name over
        category — so leaving it off rendered half a design: four cards whose lower half was empty
        beside a Favourite Services grid that filled it. It is still the one control here. */
-    /* ⚠️ `titlePlace: 'outside'` — see the note on Favourite Services. */
-    defaults: { titlePlace: 'outside', title: 'Most Used Services', show: 4, showDesc: true, showBrowse: true, browseLabel: 'Browse catalog', cardTemplate: 'top' },
+    /* ⚠️ `titlePlace: 'inside'` — see the note on Favourite Services. */
+    defaults: { titlePlace: 'inside', title: 'Most Used Services', show: 4, showDesc: true, showBrowse: true, browseLabel: 'Browse catalog', cardTemplate: 'top' },
   },
 
   /* ─────────── §7.10 Action cards ─────────── */

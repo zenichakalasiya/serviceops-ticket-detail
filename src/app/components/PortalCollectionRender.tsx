@@ -1274,7 +1274,11 @@ function ServiceTiles({ nodeId, items, showDesc, tpl = 'top', cols, chips, look,
           id={`${nodeId}-tile`}
           /* A lone last tile spans the row — what the Three-across preset tile draws. */
           style={{ ...((cols ?? 0) > 1 && i === arr.length - 1 && arr.length % (cols ?? 1) === 1 ? { gridColumn: '1 / -1' } : {}), ...tileAlign(styles[nodeId + '-tile'], top) }}
-          className={`flex min-w-0 rounded-lg border border-[#E5E7EB] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)] ${
+          /* ⚠️ The light-grey DATA-TILE fill (#F6F9FC), not white: the tiles sit inside a white card now,
+             and white on white would leave only a hairline to tell a tile from its card. No shadow for
+             the same reason — a tile is a region of the card, not a card lifted off it. A colour the
+             admin picks for the tiles still wins (the style store paints over this class). */
+          className={`flex min-w-0 rounded-lg border border-[#E5E7EB] bg-[#F6F9FC] ${
             action ? 'gap-3 px-3.5 py-3' : 'gap-2 px-3 py-4'
           } ${
             top ? 'flex-col items-center text-center' : tpl === 'right' ? 'flex-row-reverse items-center' : 'items-center'
@@ -1319,12 +1323,11 @@ function ServiceTiles({ nodeId, items, showDesc, tpl = 'top', cols, chips, look,
 /** §7.8's sibling — the requester's own pinned services. Same tile, different list. */
 export function FavouriteServicesRender({ nodeId, cfg }: { nodeId: string; cfg: Cfg }) {
   const { styles } = useCanvas();
-  /* ⚠️ These two rows are the ONLY ones whose heading has always been on the page rather than in a card,
-     which is exactly the difference the Title control now lets an admin settle either way — so their
-     default is `outside` (today's look) where every other card defaults to `inside`. */
-  const inside = String(cfg.titlePlace ?? 'outside') === 'inside';
+  /* Inside a white card by default, like every other data card (29 Sep 2026); "Above the card" puts the
+     heading back on the page. */
+  const inside = String(cfg.titlePlace ?? 'inside') === 'inside';
   return (
-    <div className={`@container min-w-0${inside ? ' rounded-xl border border-[#E5E7EB] bg-white p-4' : ''}`}>
+    <div className={`@container min-w-0${inside ? ' rounded-xl border border-[#E5E7EB] bg-white px-4 pb-4 pt-3.5' : ''}`}>
       <WidgetTitle nodeId={nodeId} text={cfg.title ?? 'Favourite Services'} />
       <ServiceTiles nodeId={nodeId} items={FAVOURITE_SERVICES} showDesc={cfg.showDesc !== false} tpl={String(cfg.cardTemplate ?? 'top')} cols={Number(chosen(styles, nodeId, 'columns') ?? cfg.columns) || undefined} chips={cfg.tileLook === 'chips'} look={String(cfg.tileLook ?? '')} gap={{ x: Number(cfg.colGap ?? 12), y: Number(cfg.rowGap ?? cfg.colGap ?? 12) }} />
     </div>
@@ -1345,9 +1348,9 @@ export function FeaturedServicesRender({ nodeId, cfg }: { nodeId: string; cfg: C
      one question is how a card ends up with a position set for an icon it does not have. */
   const tpl = String(cfg.cardTemplate ?? 'left');
 
-  const inside = String(cfg.titlePlace ?? 'outside') === 'inside';
+  const inside = String(cfg.titlePlace ?? 'inside') === 'inside';
   return (
-    <div className={`@container min-w-0${inside ? ' rounded-xl border border-[#E5E7EB] bg-white p-4' : ''}`}>
+    <div className={`@container min-w-0${inside ? ' rounded-xl border border-[#E5E7EB] bg-white px-4 pb-4 pt-3.5' : ''}`}>
       <div className="mb-3 flex items-center gap-2">
         {/* ⚠️ This widget draws its own heading rather than using WidgetTitle, because the heading
             and the browse link share a row. That is also why it was missed: the one fix that gave

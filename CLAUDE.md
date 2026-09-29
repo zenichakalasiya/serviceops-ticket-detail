@@ -306,6 +306,13 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   Services deleted it would have taken Most Used off the page too. ⚠️ In the split row each grid defaults
   to **2 columns** (`{ columns: 2, ...wc(id) }`) — four tiles at half width were 98px and the names ran into
   each other; an admin's own column count still wins (style store, then config).
+- **Support Portal — the two service rows are WHITE CARDS with their title inside (29 Sep 2026).**
+  `titlePlace` defaults to `'inside'` for Favourite and Most Used Services too (spec defaults AND the two
+  renderers' fallbacks), so each is a white card like every other data card — 14px radius, 1px #E5E7EB,
+  same left/right edges and 16px gap as the cards below. Its tiles take the light-grey **data-tile fill
+  `#F6F9FC`** with no shadow (white on white left only a hairline between tile and card). "Above the
+  card" still puts the heading back on the page. The inner card is `px-4 pb-4 pt-3.5`, matching the
+  title's top inset to the other cards'.
 - **Support Portal — closing the tour dock PARKS it in the right rail (28 Sep 2026).** The dock's ✕ unmounts
   it and sets `dockParked`; a dark `#1F2937` **"Basics"** button with the dock's glyph (`DockGlyph` =
   lucide `CirclePlay`, exported from `PortalTourDock` and also shown in the dock's header) sits at the foot
