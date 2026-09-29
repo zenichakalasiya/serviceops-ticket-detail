@@ -1,26 +1,25 @@
 /**
- * The dock's video — five ILLUSTRATED SCENES, one per chapter (28 Sep 2026, Zeni's pick, from the Miro
- * "what's new" carousel she shared).
+ * The dock's video — the editor told as ONE story on illustrated scenes (29 Sep 2026, Zeni's script).
  *
- * ⚠️ SCENES, NOT A MINIATURE. The previous story drew the whole editor at postage-stamp size in grey
- * bars and animated one region of it; at 300px that read as a wireframe of a wireframe. Each chapter
- * is now its own COMPOSED picture on its own coloured ground — only the pieces that chapter is about,
- * drawn large enough to carry REAL WORDS ("My Open Requests", "INC-32 VPN not connecting", "Publish").
- * The words are what make it read as this product rather than as a diagram of one.
+ * The story: an EMPTY section · drag **Action Card** in from the sidebar → the four action cards land ·
+ * select the parent SECTION (its floating toolbar + the sidebar swaps to the section's settings, Layout
+ * open and the rest collapsed) · colour it from the toolbar's colour picker · select ONE card (its own
+ * toolbar + the sidebar swaps again, Card templates and Alignment) and run its actions quickly — Card
+ * templates, Alignment, Move · stretch the section by its side handle · Publish.
  *
- * ⚠️ A NAMED CURSOR ("You") does every action, the multiplayer-cursor language of the reference. A bare
- * arrow is a pointer; an arrow with a name is somebody doing something, and a tour is about doing.
+ * ⚠️ THE SIDEBAR IS ALWAYS THERE, as it is in the editor: it starts on the Widgets list and REPLACES its
+ * content with whatever is selected — one group expanded, the others collapsed.
  *
- * ⚠️ FRAMES ARE STILL DATA and there is still ONE renderer per scene: a frame is a state (where the ghost
- * is, whether the card is selected, which popup is open), and CSS transitions carry the motion between
- * states. The scene must NOT remount between frames — transitions need the same nodes changing value.
+ * ⚠️ ONE SCENE COMPONENT for the whole editor part of the story (chapters 0–4), so React never remounts
+ * it between chapters and every move — the ghost, the cursor, a card changing shape or swapping places,
+ * the section stretching — is a CSS transition between two states. Publish is its own picture.
  *
- * ⚠️ Every action shown is one the builder really has: drag a widget from the library, select it for
- * its toolbar and panel, split and drag the shared edge, colour and shadow from the toolbar, spacing in
- * the PANEL, and Publish in the top bar. A tour that invents a gesture teaches somebody to look for a
- * button that is not there.
+ * ⚠️ The toolbar glyphs are drawn after the REAL lucide icons the bar uses (grip, …ToLine arrows,
+ * LayoutGrid, LayoutTemplate, AlignStartVertical, PaintBucket, Trash), in the bar's real groups — a tour
+ * that shows a button the editor does not have teaches somebody to look for it.
  *
- * ⚠️ Every Tailwind class is literal, and every colour is written out — nothing is built by interpolation.
+ * ⚠️ FRAMES ARE DATA: a frame is a state, and CSS transitions carry the motion. Every colour is written
+ * out and every class is literal.
  */
 
 const BLUE = '#3D8BD0';
@@ -36,17 +35,20 @@ export interface TourChapter { name: string; title: string; desc: string; ground
 
 export const TOUR_CHAPTERS: TourChapter[] = [
   { name: 'Add', title: 'Start with a widget',
-    desc: 'Drag a widget from the library onto the page — or click one to drop it in its own row.',
+    desc: 'Drag a widget from the sidebar into a section — Action Card brings its four cards with it.',
     ground: '#EEF2FF', blob: '#E0E7FF' },
-  { name: 'Select', title: 'Click anything to edit it',
-    desc: 'A toolbar appears on whatever you select, and the panel becomes its settings.',
+  { name: 'Section', title: 'Select the section',
+    desc: 'Its toolbar appears, and the sidebar becomes the section’s settings — Layout open, the rest folded.',
     ground: '#ECFDF5', blob: '#D1FAE5' },
-  { name: 'Arrange', title: 'Arrange it your way',
-    desc: 'Split a section into columns, then drag the shared edge — the neighbour gives way.',
-    ground: '#FFF7ED', blob: '#FFEDD5' },
-  { name: 'Style', title: 'Style it from the toolbar',
-    desc: 'Background, border, corners and shadow sit on the toolbar. Spacing lives in the panel.',
+  { name: 'Colour', title: 'Colour it from the toolbar',
+    desc: 'The paint bucket opens the colour picker — pick a swatch or drag the spectrum.',
     ground: '#FDF2F8', blob: '#FCE7F3' },
+  { name: 'Card', title: 'Then shape one card',
+    desc: 'Select a card for its own toolbar: change its template, align it, move it along the row.',
+    ground: '#FFF7ED', blob: '#FFEDD5' },
+  { name: 'Stretch', title: 'Stretch the section',
+    desc: 'Drag a side handle — the cards reflow to the new width.',
+    ground: '#FEFCE8', blob: '#FEF9C3' },
   { name: 'Publish', title: 'Preview, then publish',
     desc: 'Check it as a requester sees it, in light and in dark, then publish when it’s ready.',
     ground: '#EFF6FF', blob: '#DBEAFE' },
@@ -59,53 +61,102 @@ export interface SceneFrame {
   cur?: [number, number];
   /** A press — the ring a click leaves under the pointer. */
   press?: boolean;
-  // Add
-  ghost?: 'off' | 'lift' | 'fly';
+  /** The Action Card row lifted out of the sidebar, and where it is on its way. */
+  ghost?: 'lift' | 'fly';
+  /** The four cards are on the page. */
   placed?: boolean;
-  // Select
-  sel?: boolean;
-  bar?: boolean;
-  panel?: boolean;
-  // Arrange
-  split?: boolean;
-  /** The first column's width while split — the shared edge being dragged. */
-  w?: number;
-  lit?: number;
-  // Style
-  pop?: 'colour' | 'shadow';
+  /** What the sidebar is showing. */
+  panel?: 'widgets' | 'section' | 'card';
+  selSec?: boolean;
+  selCard?: boolean;
+  /** Which floating toolbar is up. */
+  bar?: 'section' | 'card';
+  /** The toolbar button being pressed. */
+  lit?: Glyph;
+  /** A popup open off the toolbar. */
+  pop?: 'colour' | 'templates' | 'align';
+  /** The section's new background. */
   tint?: boolean;
-  shadow?: boolean;
-  spacing?: boolean;
+  /** New Incident's template and alignment. */
+  tpl?: 'left' | 'top';
+  align?: 'left' | 'center' | 'right';
+  /** New Incident has moved one place right. */
+  swapped?: boolean;
+  /** The section's width while it is stretched. */
+  sw?: number;
   // Publish
   pressed?: boolean;
   published?: boolean;
 }
 
-/* ⚠️ Written at the pace it should PLAY — the previous story was authored slow and scaled down, and a
-   scene that is short by design is easier to tune than one that is long by accident. */
+/* The page's geometry — one place, so every frame agrees about where the section and its cards are. */
+const SEC_X = 22;
+const SEC_Y = 50;
+const SEC_W = 178;
+const SEC_H = 68;
+const CARD_H = 28;
+const GAP = 5;
+const cardW = (sw: number) => (sw - 8 - GAP) / 2;
+/** Where card slot `i` (0–3, two to a row) sits for a section `sw` wide. */
+const slot = (i: number, sw: number): [number, number] => [SEC_X + 4 + (i % 2) * (cardW(sw) + GAP), SEC_Y + 4 + Math.floor(i / 2) * (CARD_H + 4)];
+
+/* Toolbars: glyph POSITIONS computed from the bar's real groups, so the cursor can aim at a button's
+   centre (aimed between glyphs, "You" looks like it missed). */
+type Glyph = 'grip' | 'right' | 'down' | 'layout' | 'templates' | 'align' | 'alignC' | 'alignR' | 'bucket' | 'trash';
+const SECTION_BAR: Glyph[][] = [['grip'], ['down', 'layout'], ['bucket'], ['trash']];
+const CARD_BAR: Glyph[][] = [['grip'], ['right'], ['templates', 'align'], ['bucket'], ['trash']];
+function barLayout(groups: Glyph[][]) {
+  const at: Partial<Record<Glyph, number>> = {};
+  const rules: number[] = [];
+  let x = 4;
+  groups.forEach((g, gi) => {
+    if (gi) { rules.push(x + 3); x += 6; }
+    g.forEach((k) => { at[k] = x + 5.5; x += 11; });
+  });
+  return { at, rules, w: x + 4 };
+}
+const SB = barLayout(SECTION_BAR);
+const CB = barLayout(CARD_BAR);
+const BAR_Y = 36;
+/** A toolbar button's centre, for the cursor. */
+const secBtn = (k: Glyph): [number, number] => [SEC_X + (SB.at[k] ?? 0), BAR_Y + 7];
+const cardBtn = (cx: number, k: Glyph): [number, number] => [cx + (CB.at[k] ?? 0), BAR_Y + 7];
+
+const [C0X] = slot(0, SEC_W);
+const [C1X] = slot(1, SEC_W);
+
+/* ⚠️ Written at the pace it should PLAY. */
 export const SCENE_FRAMES: SceneFrame[] = [
-  /* Add */
-  { ch: 0, ms: 800, cur: [262, 64], ghost: 'off' },
-  { ch: 0, ms: 600, cur: [262, 64], ghost: 'lift', press: true },
-  { ch: 0, ms: 900, cur: [118, 92], ghost: 'fly' },
-  { ch: 0, ms: 1400, cur: [118, 92], placed: true },
-  /* Select */
-  { ch: 1, ms: 700, cur: [150, 112], placed: true },
-  { ch: 1, ms: 700, cur: [150, 112], placed: true, sel: true, press: true },
-  { ch: 1, ms: 1700, cur: [150, 112], placed: true, sel: true, bar: true, panel: true },
-  /* Arrange */
-  { ch: 2, ms: 800, cur: [63, 49], placed: true, sel: true, bar: true, lit: 2, press: true },
-  { ch: 2, ms: 900, cur: [118, 100], placed: true, sel: true, bar: true, split: true, w: 84 },
-  { ch: 2, ms: 1500, cur: [150, 100], placed: true, sel: true, bar: true, split: true, w: 116 },
-  /* Style */
-  { ch: 3, ms: 900, cur: [87, 49], placed: true, sel: true, bar: true, lit: 4, pop: 'colour', press: true },
-  { ch: 3, ms: 900, cur: [82, 100], placed: true, sel: true, bar: true, lit: 4, pop: 'colour', tint: true, press: true },
-  { ch: 3, ms: 1000, cur: [109, 49], placed: true, sel: true, bar: true, lit: 6, pop: 'shadow', tint: true, shadow: true, press: true },
-  { ch: 3, ms: 1400, cur: [240, 84], placed: true, sel: true, tint: true, shadow: true, spacing: true, panel: true },
+  /* Add — the sidebar is the Widgets list; Action Card is dragged into the empty section */
+  { ch: 0, ms: 800, cur: [258, 53], panel: 'widgets' },
+  { ch: 0, ms: 600, cur: [258, 53], panel: 'widgets', ghost: 'lift', press: true },
+  { ch: 0, ms: 900, cur: [110, 84], panel: 'widgets', ghost: 'fly' },
+  { ch: 0, ms: 1500, cur: [110, 84], panel: 'widgets', placed: true },
+  /* Section — select the parent row */
+  { ch: 1, ms: 700, cur: [111, 52], panel: 'widgets', placed: true },
+  { ch: 1, ms: 600, cur: [111, 52], panel: 'section', placed: true, selSec: true, press: true },
+  { ch: 1, ms: 1700, cur: [111, 52], panel: 'section', placed: true, selSec: true, bar: 'section' },
+  /* Colour — the paint bucket opens the colour picker */
+  { ch: 2, ms: 800, cur: secBtn('bucket'), panel: 'section', placed: true, selSec: true, bar: 'section', lit: 'bucket', pop: 'colour', press: true },
+  { ch: 2, ms: 900, cur: [76, 97], panel: 'section', placed: true, selSec: true, bar: 'section', lit: 'bucket', pop: 'colour', tint: true, press: true },
+  { ch: 2, ms: 900, cur: [76, 97], panel: 'section', placed: true, selSec: true, bar: 'section', tint: true },
+  /* Card — select New Incident, then its template, its alignment, and move it */
+  { ch: 3, ms: 600, cur: [48, 66], panel: 'section', placed: true, tint: true },
+  { ch: 3, ms: 900, cur: [48, 66], panel: 'card', placed: true, tint: true, selCard: true, bar: 'card', press: true },
+  { ch: 3, ms: 800, cur: cardBtn(C0X, 'templates'), panel: 'card', placed: true, tint: true, selCard: true, bar: 'card', lit: 'templates', pop: 'templates', press: true },
+  { ch: 3, ms: 900, cur: [C0X + 56.5, 63], panel: 'card', placed: true, tint: true, selCard: true, bar: 'card', lit: 'templates', pop: 'templates', tpl: 'top', press: true },
+  { ch: 3, ms: 800, cur: cardBtn(C0X, 'align'), panel: 'card', placed: true, tint: true, selCard: true, bar: 'card', lit: 'align', pop: 'align', tpl: 'top', press: true },
+  { ch: 3, ms: 900, cur: [C0X + 76, 62], panel: 'card', placed: true, tint: true, selCard: true, bar: 'card', lit: 'align', pop: 'align', tpl: 'top', align: 'right', press: true },
+  { ch: 3, ms: 800, cur: cardBtn(C0X, 'right'), panel: 'card', placed: true, tint: true, selCard: true, bar: 'card', lit: 'right', tpl: 'top', align: 'right', press: true },
+  { ch: 3, ms: 1300, cur: cardBtn(C1X, 'right'), panel: 'card', placed: true, tint: true, selCard: true, bar: 'card', tpl: 'top', align: 'right', swapped: true },
+  /* Stretch — the section's side handle */
+  { ch: 4, ms: 700, cur: [SEC_X + SEC_W, SEC_Y + SEC_H / 2], panel: 'section', placed: true, tint: true, selSec: true, tpl: 'top', align: 'right', swapped: true, press: true },
+  { ch: 4, ms: 1300, cur: [SEC_X + 152, SEC_Y + SEC_H / 2], panel: 'section', placed: true, tint: true, selSec: true, tpl: 'top', align: 'right', swapped: true, sw: 152 },
+  { ch: 4, ms: 1000, cur: [SEC_X + SEC_W, SEC_Y + SEC_H / 2], panel: 'section', placed: true, tint: true, selSec: true, tpl: 'top', align: 'right', swapped: true },
   /* Publish */
-  { ch: 4, ms: 900, cur: [276, 31] },
-  { ch: 4, ms: 500, cur: [276, 31], pressed: true, press: true },
-  { ch: 4, ms: 1800, cur: [276, 31], published: true },
+  { ch: 5, ms: 900, cur: [276, 31] },
+  { ch: 5, ms: 500, cur: [276, 31], pressed: true, press: true },
+  { ch: 5, ms: 1800, cur: [276, 31], published: true },
 ];
 
 export const sceneStart = (ch: number) => SCENE_FRAMES.findIndex((f) => f.ch === ch);
@@ -144,9 +195,9 @@ function Defs() {
 function Ground({ c }: { c: TourChapter }) {
   return (
     <>
-      <rect x="0" y="0" width="320" height="180" fill={c.ground} />
-      <circle cx="292" cy="10" r="64" fill={c.blob} />
-      <circle cx="18" cy="176" r="46" fill={c.blob} />
+      <rect x="0" y="0" width="320" height="180" fill={c.ground} style={{ transition: T }} />
+      <circle cx="292" cy="10" r="64" fill={c.blob} style={{ transition: T }} />
+      <circle cx="18" cy="176" r="46" fill={c.blob} style={{ transition: T }} />
     </>
   );
 }
@@ -171,7 +222,7 @@ function Cursor({ at, press }: { at?: [number, number]; press?: boolean }) {
 }
 
 /** The page the scenes build on: a white card with a thin title strip. */
-function Page({ x = 16, y = 22, w = 190, h = 138 }: { x?: number; y?: number; w?: number; h?: number }) {
+function Page({ x = 14, y = 22, w = 194, h = 138 }: { x?: number; y?: number; w?: number; h?: number }) {
   return (
     <g filter="url(#ts-card)">
       <rect x={x} y={y} width={w} height={h} rx="8" fill={PAPER} />
@@ -183,226 +234,304 @@ function Page({ x = 16, y = 22, w = 190, h = 138 }: { x?: number; y?: number; w?
   );
 }
 
-/** The widget the story builds with — "My Open Requests" with two real rows. */
-function RequestsCard({ x, y, w, tint, shadow, pad }: { x: number; y: number; w: number; tint?: boolean; shadow?: boolean; pad?: boolean }) {
-  const p = pad ? 5 : 0;
-  const rows: [string, string, string][] = [['INC-32', 'VPN not connecting', '#F59E0B'], ['INC-35', 'New laptop request', '#10B981']];
+/* ── the action cards ─────────────────────────────────────────────────────────────────────────── */
+
+const CARDS: { name: string; sub: string; c: string }[] = [
+  { name: 'New Incident', sub: 'Report an issue', c: '#EF4444' },
+  { name: 'Request Service', sub: 'Browse services', c: BLUE },
+  { name: 'AD Self Service', sub: 'Reset password', c: '#F59E0B' },
+  { name: 'Knowledge', sub: 'Browse articles', c: '#10B981' },
+];
+
+/** One action card — icon LEFT, or icon TOP aligned left / centre / right, as the card's template says. */
+function ActionCard({ x, y, w, card, tpl = 'left', align = 'left' }: {
+  x: number; y: number; w: number; card: typeof CARDS[number]; tpl?: 'left' | 'top'; align?: 'left' | 'center' | 'right';
+}) {
+  const top = tpl === 'top';
+  const ax = align === 'right' ? x + w - 5 : align === 'center' ? x + w / 2 : x + 5;
+  const anchor = align === 'right' ? 'end' : align === 'center' ? 'middle' : 'start';
+  const badgeX = top ? (align === 'right' ? ax - 9 : align === 'center' ? ax - 4.5 : ax) : x + 5;
+  const badgeY = top ? y + 3.5 : y + 8;
+  const badge = top ? 9 : 12;
   return (
-    <g filter={shadow ? 'url(#ts-lift)' : undefined}>
-      <rect x={x} y={y} width={w} height="62" rx="6" fill={tint ? '#EEF4FF' : PAPER} stroke={LINE} strokeWidth="0.8" style={{ transition: T }} />
-      <g style={{ transform: `translate(${p}px, ${p * 0.6}px)`, transition: T }}>
-        <rect x={x + 7} y={y + 7} width="10" height="10" rx="2.5" fill={tint ? PAPER : '#EAF3FB'} style={{ transition: T }} />
-        <rect x={x + 9.6} y={y + 10} width="4.8" height="4" rx="1" fill={BLUE} />
-        <Txt x={x + 21} y={y + 14.2} s={6.6} w={600}>My Open Requests</Txt>
-        <rect x={x + 83} y={y + 8.5} width="10" height="7" rx="3.5" fill={tint ? PAPER : '#F1F5F9'} style={{ transition: T }} />
-        <Txt x={x + 88} y={y + 13.6} s={5} w={600} c={MUTED} anchor="middle">8</Txt>
-        {rows.map(([id, sub, dot], i) => (
-          <g key={id}>
-            <rect x={x + 7} y={y + 24 + i * 16} width="20" height="8" rx="2" fill={tint ? PAPER : '#EAF3FB'} style={{ transition: T }} />
-            <Txt x={x + 17} y={y + 29.8 + i * 16} s={4.8} w={600} c={BLUE} anchor="middle">{id}</Txt>
-            <Txt x={x + 31} y={y + 30 + i * 16} s={5.6} c={INK}>{sub}</Txt>
-            <circle cx={x + w - 10 - p * 2} cy={y + 28 + i * 16} r="2.2" fill={dot} style={{ transition: T }} />
-          </g>
-        ))}
+    <g>
+      <rect x={x} y={y} width={w} height={CARD_H} rx="4" fill={PAPER} stroke={LINE} strokeWidth="0.7" style={{ transition: T }} />
+      <g style={{ transition: T }}>
+        <rect x={badgeX} y={badgeY} width={badge} height={badge} rx="2.5" fill={card.c} opacity="0.14" style={{ transition: T }} />
+        <rect x={badgeX + badge / 2 - 2.2} y={badgeY + badge / 2 - 2.2} width="4.4" height="4.4" rx="1.1" fill={card.c} style={{ transition: T }} />
       </g>
+      {top ? (
+        <>
+          <Txt x={ax} y={y + 19} s={5} w={600} anchor={anchor}>{card.name}</Txt>
+          <Txt x={ax} y={y + 25} s={3.8} c={MUTED} anchor={anchor}>{card.sub}</Txt>
+        </>
+      ) : (
+        <>
+          <Txt x={x + 21} y={y + 12.6} s={5.4} w={600}>{card.name}</Txt>
+          <Txt x={x + 21} y={y + 19.6} s={4.2} c={MUTED}>{card.sub}</Txt>
+        </>
+      )}
     </g>
   );
 }
 
-/** The floating toolbar: seven real-shaped glyphs, grouped move · place · style · remove. */
-function Toolbar({ x, y, lit }: { x: number; y: number; lit?: number }) {
-  const glyph = (i: number, cx: number, cy: number) => {
-    const c = lit === i ? BLUE : '#64748B';
-    switch (i) {
-      case 0: return <g>{[[-1.6, -2], [1.6, -2], [-1.6, 0], [1.6, 0], [-1.6, 2], [1.6, 2]].map(([dx, dy], k) => <circle key={k} cx={cx + dx} cy={cy + dy} r="0.7" fill={c} />)}</g>;
-      case 1: return <path d={`M${cx - 3} ${cy} h6 M${cx + 1} ${cy - 2.2} l2 2.2 l-2 2.2`} stroke={c} strokeWidth="1" fill="none" strokeLinecap="round" />;
-      case 2: return <g><rect x={cx - 3.2} y={cy - 2.6} width="6.4" height="5.2" rx="0.8" stroke={c} strokeWidth="0.9" fill="none" /><line x1={cx} x2={cx} y1={cy - 2.6} y2={cy + 2.6} stroke={c} strokeWidth="0.9" /></g>;
-      case 3: return <path d={`M${cx} ${cy - 3} v6 M${cx - 3} ${cy} h6`} stroke={c} strokeWidth="1" strokeLinecap="round" />;
-      case 4: return <path d={`M${cx - 2.6} ${cy + 0.4} l2.2 -3 l2.6 2.4 l-2.2 3 z M${cx + 2.6} ${cy + 1.6} q0.6 1.2 0 1.8 q-0.6 -0.6 0 -1.8`} stroke={c} strokeWidth="0.9" fill="none" strokeLinejoin="round" />;
-      case 5: return <rect x={cx - 3} y={cy - 3} width="6" height="6" rx="1.4" stroke={c} strokeWidth="0.9" fill="none" />;
-      case 6: return <g><rect x={cx - 3.6} y={cy - 3.6} width="7.2" height="7.2" rx="1.8" fill={c} opacity="0.18" /><rect x={cx - 2.6} y={cy - 2.6} width="5.2" height="5.2" rx="1" stroke={c} strokeWidth="0.9" fill="none" /></g>;
-      default: return <path d={`M${cx - 2.4} ${cy - 1.8} h4.8 M${cx - 1.8} ${cy - 1.8} l0.4 4.2 h2.8 l0.4 -4.2`} stroke="#EF4444" strokeWidth="0.9" fill="none" strokeLinecap="round" />;
-    }
-  };
-  const xs = [9, 22, 33, 44, 57, 68, 79, 92];
+/* ── the floating toolbar, after the real icons ───────────────────────────────────────────────── */
+
+function glyph(k: Glyph, cx: number, cy: number, c: string) {
+  const s = { stroke: c, strokeWidth: 0.9, fill: 'none', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
+  switch (k) {
+    case 'grip': return <g>{[[-1.6, -2.2], [1.6, -2.2], [-1.6, 0], [1.6, 0], [-1.6, 2.2], [1.6, 2.2]].map(([dx, dy], i) => <circle key={i} cx={cx + dx} cy={cy + dy} r="0.7" fill={c} />)}</g>;
+    /* ArrowRightToLine */
+    case 'right': return <g><path d={`M${cx - 3} ${cy} h4.6 M${cx - 0.2} ${cy - 2.2} l2.2 2.2 l-2.2 2.2`} {...s} /><path d={`M${cx + 3.2} ${cy - 3} v6`} {...s} /></g>;
+    /* ArrowDownToLine */
+    case 'down': return <g><path d={`M${cx} ${cy - 3} v4.6 M${cx - 2.2} ${cy - 0.2} l2.2 2.2 l2.2 -2.2`} {...s} /><path d={`M${cx - 3} ${cy + 3.2} h6`} {...s} /></g>;
+    /* LayoutGrid */
+    case 'layout': return <g>{[[-3.1, -3.1], [0.5, -3.1], [-3.1, 0.5], [0.5, 0.5]].map(([dx, dy], i) => <rect key={i} x={cx + dx} y={cy + dy} width="2.6" height="2.6" rx="0.5" {...s} />)}</g>;
+    /* LayoutTemplate */
+    case 'templates': return <g><rect x={cx - 3.2} y={cy - 3.2} width="6.4" height="2.4" rx="0.5" {...s} /><rect x={cx - 3.2} y={cy + 0.4} width="2.8" height="2.8" rx="0.5" {...s} /><path d={`M${cx + 1} ${cy + 0.9} h2.2 M${cx + 1} ${cy + 2.7} h2.2`} {...s} /></g>;
+    /* AlignStartVertical */
+    case 'align': return <g><path d={`M${cx - 3.2} ${cy - 3.4} v6.8`} {...s} /><rect x={cx - 1.8} y={cy - 2.6} width="4.8" height="1.9" rx="0.5" {...s} /><rect x={cx - 1.8} y={cy + 0.7} width="3" height="1.9" rx="0.5" {...s} /></g>;
+    /* AlignCenterVertical */
+    case 'alignC': return <g><path d={`M${cx} ${cy - 3.4} v6.8`} {...s} /><rect x={cx - 2.6} y={cy - 2.6} width="5.2" height="1.9" rx="0.5" {...s} /><rect x={cx - 1.7} y={cy + 0.7} width="3.4" height="1.9" rx="0.5" {...s} /></g>;
+    /* AlignEndVertical */
+    case 'alignR': return <g><path d={`M${cx + 3.2} ${cy - 3.4} v6.8`} {...s} /><rect x={cx - 3} y={cy - 2.6} width="4.8" height="1.9" rx="0.5" {...s} /><rect x={cx - 1.2} y={cy + 0.7} width="3" height="1.9" rx="0.5" {...s} /></g>;
+    /* PaintBucket */
+    case 'bucket': return <path d={`M${cx - 2.6} ${cy + 0.4} l2.2 -3 l2.6 2.4 l-2.2 3 z M${cx + 2.6} ${cy + 1.6} q0.6 1.2 0 1.8 q-0.6 -0.6 0 -1.8`} {...s} />;
+    /* Trash2 */
+    default: return <path d={`M${cx - 2.6} ${cy - 1.8} h5.2 M${cx - 1.9} ${cy - 1.8} l0.4 4.6 h3 l0.4 -4.6 M${cx - 0.9} ${cy - 1.8} v-0.9 h1.8 v0.9`} {...s} stroke="#EF4444" />;
+  }
+}
+
+function Bar({ x, kind, lit, align }: { x: number; kind: 'section' | 'card'; lit?: Glyph; align?: 'left' | 'center' | 'right' }) {
+  /* The alignment button shows the CURRENT alignment, as the real one does. */
+  const shown = (k: Glyph): Glyph => (k === 'align' ? (align === 'center' ? 'alignC' : align === 'right' ? 'alignR' : 'align') : k);
+  const L = kind === 'section' ? SB : CB;
+  const groups = kind === 'section' ? SECTION_BAR : CARD_BAR;
   return (
-    <g className="pt-fade" filter="url(#ts-card)">
-      <rect x={x} y={y} width="101" height="14" rx="4" fill={PAPER} stroke={LINE} strokeWidth="0.6" />
-      {[16, 51, 86].map((dx) => <line key={dx} x1={x + dx} x2={x + dx} y1={y + 3.5} y2={y + 10.5} stroke={LINE} strokeWidth="0.6" />)}
-      {xs.map((dx, i) => (
-        <g key={i}>
-          {lit === i && <rect x={x + dx - 4.6} y={y + 2.4} width="9.2" height="9.2" rx="2" fill="#EAF3FB" />}
-          {glyph(i, x + dx, y + 7)}
+    <g className="pt-fade" filter="url(#ts-card)" style={{ transform: `translate(${x}px, 0px)`, transition: GLIDE }}>
+      <rect x="0" y={BAR_Y} width={L.w} height="14" rx="4" fill={PAPER} stroke={LINE} strokeWidth="0.6" />
+      {L.rules.map((rx) => <line key={rx} x1={rx} x2={rx} y1={BAR_Y + 3.5} y2={BAR_Y + 10.5} stroke={LINE} strokeWidth="0.6" />)}
+      {groups.flat().map((k) => (
+        <g key={k}>
+          {lit === k && <rect x={(L.at[k] ?? 0) - 4.6} y={BAR_Y + 2.4} width="9.2" height="9.2" rx="2" fill="#EAF3FB" />}
+          {glyph(shown(k), L.at[k] ?? 0, BAR_Y + 7, lit === k ? BLUE : '#64748B')}
         </g>
       ))}
     </g>
   );
 }
 
-/* ── the five scenes ──────────────────────────────────────────────────────────────────────────── */
+/* ── the sidebar: always there, its content follows the selection ─────────────────────────────── */
 
-function AddScene({ f }: { f: SceneFrame }) {
-  const lib: [string, string][] = [['My Open Requests', BLUE], ['Announcements', '#F59E0B'], ['Knowledge', '#10B981'], ['Contact Us', '#8B5CF6']];
+const SIDE_X = 216;
+function Chevron({ x, y, open }: { x: number; y: number; open?: boolean }) {
+  return <path d={open ? `M${x - 1.8} ${y - 0.8} l1.8 1.8 l1.8 -1.8` : `M${x - 0.8} ${y - 1.8} l1.8 1.8 l-1.8 1.8`} stroke="#9CA3AF" strokeWidth="0.8" fill="none" strokeLinecap="round" />;
+}
+/** A collapsed accordion row — the look of every folded group in the real panel. */
+function Folded({ y, label }: { y: number; label: string }) {
   return (
-    <>
-      <Page />
-      {!f.placed && (
-        <g className="pt-fade">
-          <rect x="30" y="56" width="162" height="60" rx="6" fill="none" stroke="#CBD5E1" strokeWidth="1" strokeDasharray="3 2.5" />
-          <Txt x={111} y={90} s={6.4} w={500} c={MUTED} anchor="middle">Drop a widget here</Txt>
-        </g>
-      )}
-      {f.placed && <g className="pt-fade"><RequestsCard x={30} y={56} w={162} /></g>}
-
-      {/* the library */}
-      <g filter="url(#ts-card)">
-        <rect x="216" y="22" width="90" height="138" rx="8" fill={PAPER} />
-        <Txt x={226} y={38} s={7} w={600}>Widgets</Txt>
-        {lib.map(([name, c], i) => (
-          <g key={name}>
-            <rect x="222" y={48 + i * 22} width="78" height="17" rx="4" fill={i === 0 && f.ghost !== 'off' && !f.placed ? '#EEF2FF' : '#F8FAFC'} />
-            <rect x="226" y={52 + i * 22} width="9" height="9" rx="2" fill={c} opacity="0.9" />
-            <Txt x={239} y={58.6 + i * 22} s={5.4} w={500}>{name}</Txt>
-          </g>
-        ))}
-      </g>
-
-      {/* ⚠️ The ghost only TRANSLATES — it keeps the row's size all the way across, so nothing is ever
-          drawn stretched, and it is gone the frame the card appears. */}
-      {(f.ghost === 'lift' || f.ghost === 'fly') && (
-        <g filter="url(#ts-lift)" style={{ transform: `translate(${f.ghost === 'fly' ? -142 : 0}px, ${f.ghost === 'fly' ? 26 : 0}px)`, transition: GLIDE }}>
-          <rect x="222" y="48" width="78" height="17" rx="4" fill={PAPER} stroke={BLUE} strokeWidth="1" />
-          <rect x="226" y="52" width="9" height="9" rx="2" fill={BLUE} />
-          <Txt x={239} y={58.6} s={5.4} w={600}>My Open Requests</Txt>
-        </g>
-      )}
-    </>
+    <g>
+      <line x1={SIDE_X} x2={SIDE_X + 90} y1={y - 7} y2={y - 7} stroke="#EEF2F6" strokeWidth="0.6" />
+      <Txt x={SIDE_X + 8} y={y} s={5} w={500}>{label}</Txt>
+      <Chevron x={SIDE_X + 82} y={y - 1.6} />
+    </g>
   );
 }
 
-function SelectScene({ f }: { f: SceneFrame }) {
+function Sidebar({ f }: { f: SceneFrame }) {
+  const panel = f.panel ?? 'widgets';
+  const lib: [string, string][] = [['Action Card', '#EF4444'], ['My Open Requests', BLUE], ['Announcements', '#F59E0B'], ['Knowledge', '#10B981'], ['Contact Us', '#8B5CF6']];
   return (
-    <>
-      <Page />
-      <RequestsCard x={30} y={62} w={162} />
-      {f.sel && (
-        <g className="pt-fade">
-          <rect x="28.5" y="60.5" width="165" height="65" rx="7" fill="none" stroke={BLUE} strokeWidth="1.4" />
-          {/* the name chip — an outline on white, as the builder draws it */}
-          <rect x="30" y="129" width="56" height="10" rx="3" fill={PAPER} stroke={BLUE} strokeWidth="0.7" />
-          <Txt x={58} y={135.8} s={5} w={600} c={BLUE} anchor="middle">My Open Requests</Txt>
-        </g>
-      )}
-      {f.bar && <Toolbar x={30} y={42} />}
-      {f.panel && (
-        <g className="pt-slide" filter="url(#ts-card)">
-          <rect x="216" y="22" width="90" height="138" rx="8" fill={PAPER} />
-          <Txt x={225} y={37} s={6.6} w={600}>My Open Requests</Txt>
-          <Txt x={225} y={45} s={5} c={MUTED}>Settings</Txt>
-          {[['Title', 'My Open Requests'], ['Rows to show', '4']].map(([k, v], i) => (
-            <g key={k}>
-              <Txt x={225} y={60 + i * 26} s={5} c={MUTED}>{k}</Txt>
-              <rect x="224" y={63 + i * 26} width="74" height="12" rx="2.5" fill={PAPER} stroke="#DFE5ED" strokeWidth="0.7" />
-              <Txt x={228} y={71 + i * 26} s={5.4}>{v}</Txt>
+    <g filter="url(#ts-card)">
+      <rect x={SIDE_X} y="22" width="90" height="138" rx="8" fill={PAPER} />
+      {panel === 'widgets' && (
+        <g key="w" className="pt-fade">
+          <Txt x={SIDE_X + 8} y={36} s={7} w={600}>Widgets</Txt>
+          {lib.map(([name, c], i) => (
+            <g key={name}>
+              <rect x={SIDE_X + 5} y={44 + i * 19} width="80" height="16" rx="4" fill={i === 0 && f.ghost ? '#EEF2FF' : '#F8FAFC'} stroke={i === 0 && f.ghost ? BLUE : 'none'} strokeWidth="0.8" />
+              <rect x={SIDE_X + 9} y={48 + i * 19} width="8" height="8" rx="2" fill={c} opacity="0.9" />
+              <Txt x={SIDE_X + 21} y={54 + i * 19} s={5.2} w={500}>{name}</Txt>
             </g>
           ))}
-          <Txt x={225} y={122} s={5} c={MUTED}>Show status</Txt>
-          <rect x="283" y="116.5" width="15" height="8" rx="4" fill={BLUE} />
-          <circle cx="294" cy="120.5" r="3" fill={PAPER} />
         </g>
       )}
-    </>
+      {panel === 'section' && (
+        <g key="s" className="pt-slide">
+          <Txt x={SIDE_X + 8} y={35} s={6.4} w={600}>Quick Actions</Txt>
+          <Txt x={SIDE_X + 8} y={42} s={4.4} c={MUTED}>Section</Txt>
+          <Txt x={SIDE_X + 8} y={53} s={4} w={600} c="#7B8FA5">DESIGN</Txt>
+          {/* Layout — the ONE open group */}
+          <Txt x={SIDE_X + 8} y={63} s={5} w={600}>Layout</Txt>
+          <Chevron x={SIDE_X + 82} y={61.4} open />
+          {[0, 1, 2, 3].map((i) => {
+            const on = i === 1;
+            const tx = SIDE_X + 8 + i * 19;
+            return (
+              <g key={i}>
+                <rect x={tx} y="67" width="16" height="12" rx="2" fill={on ? '#EAF3FB' : '#F8FAFC'} stroke={on ? BLUE : '#E2E8F0'} strokeWidth={on ? 0.9 : 0.6} />
+                {i === 0 && [0, 1, 2, 3].map((k) => <rect key={k} x={tx + 2 + k * 3.1} y="70" width="2.4" height="6" rx="0.5" fill="#CBD5E1" />)}
+                {i === 1 && [0, 1, 2, 3].map((k) => <rect key={k} x={tx + 2.5 + (k % 2) * 5.8} y={69.5 + Math.floor(k / 2) * 3.8} width="5" height="3" rx="0.5" fill={on ? '#93C5FD' : '#CBD5E1'} />)}
+                {i === 2 && [0, 1, 2].map((k) => <rect key={k} x={tx + 2 + k * 4.2} y="70" width="3.4" height="6" rx="0.5" fill="#CBD5E1" />)}
+                {i === 3 && [0, 1, 2].map((k) => <rect key={k} x={tx + 2.5} y={69.5 + k * 2.6} width="11" height="1.8" rx="0.4" fill="#CBD5E1" />)}
+              </g>
+            );
+          })}
+          <Folded y={94} label="Background" />
+          <Folded y={107} label="Border & corners" />
+          <Folded y={120} label="Shadow" />
+          <Folded y={133} label="Spacing" />
+        </g>
+      )}
+      {panel === 'card' && (
+        <g key="c" className="pt-slide">
+          <Txt x={SIDE_X + 8} y={35} s={6.4} w={600}>New Incident</Txt>
+          <Txt x={SIDE_X + 8} y={45} s={4} w={600} c="#7B8FA5">CONTENT</Txt>
+          <Txt x={SIDE_X + 8} y={52} s={4.4} c={MUTED}>Card templates</Txt>
+          {[0, 1, 2, 3].map((i) => {
+            const on = (f.tpl === 'top' ? 1 : 0) === i;
+            const tx = SIDE_X + 8 + i * 19;
+            return (
+              <g key={i}>
+                <rect x={tx} y="55" width="16" height="12" rx="2" fill={on ? '#EAF3FB' : '#F8FAFC'} stroke={on ? BLUE : '#E2E8F0'} strokeWidth={on ? 0.9 : 0.6} style={{ transition: T }} />
+                {i === 0 && <><rect x={tx + 2.5} y="59" width="3.5" height="3.5" rx="0.8" fill="#93C5FD" /><rect x={tx + 7} y="59.5" width="6" height="1.2" rx="0.5" fill="#CBD5E1" /><rect x={tx + 7} y="61.6" width="4" height="1" rx="0.5" fill="#E2E8F0" /></>}
+                {i === 1 && <><rect x={tx + 6.2} y="57.5" width="3.5" height="3.5" rx="0.8" fill="#93C5FD" /><rect x={tx + 4.5} y="62.5" width="7" height="1.2" rx="0.5" fill="#CBD5E1" /></>}
+                {i === 2 && <><rect x={tx + 10} y="59" width="3.5" height="3.5" rx="0.8" fill="#93C5FD" /><rect x={tx + 2.5} y="59.5" width="6" height="1.2" rx="0.5" fill="#CBD5E1" /></>}
+                {i === 3 && <rect x={tx + 3} y="60" width="10" height="1.2" rx="0.5" fill="#CBD5E1" />}
+              </g>
+            );
+          })}
+          <Txt x={SIDE_X + 8} y={78} s={4} w={600} c="#7B8FA5">DESIGN</Txt>
+          {/* Alignment — the ONE open group, three boxes, horizontal only */}
+          <Txt x={SIDE_X + 8} y={87} s={5} w={600}>Alignment</Txt>
+          <Chevron x={SIDE_X + 82} y={85.4} open />
+          {(['left', 'center', 'right'] as const).map((a, i) => {
+            const on = (f.align ?? 'left') === a;
+            const bx = SIDE_X + 8 + i * 25.5;
+            return (
+              <g key={a}>
+                <rect x={bx} y="91" width="23" height="10" rx="2" fill={on ? '#EAF3FB' : PAPER} stroke={on ? BLUE : '#DFE5ED'} strokeWidth="0.7" style={{ transition: T }} />
+                {glyph(a === 'center' ? 'alignC' : a === 'right' ? 'alignR' : 'align', bx + 11.5, 96, on ? BLUE : '#64748B')}
+              </g>
+            );
+          })}
+          <Folded y={115} label="Background" />
+          <Folded y={127} label="Border & corners" />
+          <Folded y={139} label="Shadow" />
+          <Folded y={151} label="Spacing" />
+        </g>
+      )}
+    </g>
   );
 }
 
-function ArrangeScene({ f }: { f: SceneFrame }) {
-  const w = f.split ? (f.w ?? 84) : 162;
-  const sibX = 30 + w + 6;
-  const sibW = 162 - w - 6;
-  return (
-    <>
-      <Page />
-      <RequestsCard x={30} y={62} w={w} />
-      <rect x="28.5" y="60.5" width={w + 3} height="65" rx="7" fill="none" stroke={BLUE} strokeWidth="1.4" style={{ transition: T }} />
-      {f.split && (
-        <g className="pt-fade">
-          <rect x={sibX} y="62" width={sibW} height="62" rx="6" fill="none" stroke="#CBD5E1" strokeWidth="1" strokeDasharray="3 2.5" style={{ transition: T }} />
-          <Txt x={sibX + sibW / 2} y={96} s={9} w={300} c="#94A3B8" anchor="middle">+</Txt>
-          {/* the shared edge, lit while it is dragged */}
-          <rect x={30 + w + 1} y="85" width="4" height="16" rx="2" fill={BLUE} className="pt-pulse" style={{ transition: T }} />
-          {f.w && f.w > 90 && (
-            <g className="pt-fade">
-              <rect x={30 + w - 44} y="136" width="58" height="12" rx="6" fill={INK} />
-              <Txt x={30 + w - 15} y={143.8} s={5.4} w={500} c={PAPER} anchor="middle">Drag to resize</Txt>
-            </g>
-          )}
-        </g>
-      )}
-      {f.bar && <Toolbar x={30} y={42} lit={f.lit} />}
-      {/* a second page element for scale, so the section reads as one of several */}
-      <g filter="url(#ts-card)">
-        <rect x="216" y="22" width="90" height="138" rx="8" fill={PAPER} />
-        <Txt x={225} y={37} s={6.6} w={600}>Section</Txt>
-        <Txt x={225} y={45} s={5} c={MUTED}>Layout</Txt>
-        {[0, 1, 2].map((i) => (
-          <g key={i}>
-            <rect x={224 + i * 26} y="54" width="22" height="16" rx="3" fill={i === 1 && f.split ? '#EAF3FB' : '#F8FAFC'} stroke={i === 1 && f.split ? BLUE : '#E2E8F0'} strokeWidth="0.8" />
-            {Array.from({ length: i + 1 }).map((_, k) => (
-              <rect key={k} x={226 + i * 26 + k * (18 / (i + 1))} y="57" width={18 / (i + 1) - 1.5} height="10" rx="1" fill={i === 1 && f.split ? '#BFDBFE' : '#E2E8F0'} />
-            ))}
-          </g>
-        ))}
-      </g>
-    </>
-  );
-}
+/* ── the editor story (chapters 0–4) ──────────────────────────────────────────────────────────── */
 
-function StyleScene({ f }: { f: SceneFrame }) {
+function EditorScene({ f }: { f: SceneFrame }) {
+  const sw = f.sw ?? SEC_W;
+  const cw = cardW(sw);
+  /* New Incident sits in slot 1 once it has moved right; Request Service takes slot 0. */
+  const order = f.swapped ? [1, 0, 2, 3] : [0, 1, 2, 3];
+  const selSlot = f.swapped ? 1 : 0;
+  const [selX, selY] = slot(selSlot, sw);
   const swatches = ['#EEF4FF', '#FEF3C7', '#DCFCE7', '#FCE7F3', '#F1F5F9'];
   return (
     <>
       <Page />
-      <RequestsCard x={30} y={62} w={162} tint={f.tint} shadow={f.shadow} pad={f.spacing} />
-      {f.sel && <rect x="28.5" y="60.5" width="165" height="65" rx="7" fill="none" stroke={BLUE} strokeWidth="1.4" />}
-      {f.bar && <Toolbar x={30} y={42} lit={f.lit} />}
+      {/* the section */}
+      <rect
+        x={SEC_X} y={SEC_Y} width={sw} height={SEC_H} rx="5"
+        fill={f.placed ? (f.tint ? '#EEF4FF' : '#F8FAFC') : 'none'}
+        stroke={f.placed ? 'none' : '#CBD5E1'} strokeWidth="1" strokeDasharray={f.placed ? undefined : '3 2.5'}
+        style={{ transition: T }}
+      />
+      {!f.placed && <Txt x={SEC_X + sw / 2} y={SEC_Y + SEC_H / 2 + 2} s={6.2} w={500} c={MUTED} anchor="middle">Drop a widget here</Txt>}
+      {f.placed && (
+        <g className="pt-pop">
+          {CARDS.map((card, ci) => {
+            const i = order.indexOf(ci);
+            const [x, y] = slot(i, sw);
+            const mine = ci === 0;
+            return (
+              <g key={card.name} style={{ transform: 'translate(0px, 0px)', transition: GLIDE }}>
+                <ActionCard x={x} y={y} w={cw} card={card} tpl={mine ? f.tpl : 'left'} align={mine ? f.align : 'left'} />
+              </g>
+            );
+          })}
+        </g>
+      )}
 
+      {/* selection */}
+      {f.selSec && (
+        <g className="pt-fade">
+          <rect x={SEC_X - 1.5} y={SEC_Y - 1.5} width={sw + 3} height={SEC_H + 3} rx="6" fill="none" stroke={BLUE} strokeWidth="1.3" style={{ transition: T }} />
+          <rect x={SEC_X} y={SEC_Y + SEC_H + 4} width="46" height="9" rx="3" fill={PAPER} stroke={BLUE} strokeWidth="0.7" />
+          <Txt x={SEC_X + 23} y={SEC_Y + SEC_H + 10.2} s={4.6} w={600} c={BLUE} anchor="middle">Quick Actions</Txt>
+          {/* the side handles — the one on the right is what the Stretch chapter drags */}
+          {[SEC_X - 1.5, SEC_X + sw + 1.5].map((hx) => (
+            <rect key={hx} x={hx - 2} y={SEC_Y + SEC_H / 2 - 2} width="4" height="4" rx="0.8" fill={PAPER} stroke={BLUE} strokeWidth="0.8" style={{ transition: T }} />
+          ))}
+        </g>
+      )}
+      {f.selCard && (
+        <rect x={selX - 1.2} y={selY - 1.2} width={cw + 2.4} height={CARD_H + 2.4} rx="4.6" fill="none" stroke={BLUE} strokeWidth="1.3" className="pt-fade" style={{ transition: T }} />
+      )}
+      {f.sw && f.sw < SEC_W && (
+        <g className="pt-fade">
+          <rect x={SEC_X + sw - 30} y={SEC_Y + SEC_H + 16} width="58" height="11" rx="5.5" fill={INK} />
+          <Txt x={SEC_X + sw - 1} y={SEC_Y + SEC_H + 23.4} s={5.2} w={500} c={PAPER} anchor="middle">Drag to resize</Txt>
+        </g>
+      )}
+
+      {/* the floating toolbars */}
+      {f.bar === 'section' && <Bar x={SEC_X} kind="section" lit={f.lit} />}
+      {f.bar === 'card' && <Bar x={selX} kind="card" lit={f.lit} align={f.align} />}
+
+      {/* popups off the toolbar */}
       {f.pop === 'colour' && (
         <g className="pt-fade" filter="url(#ts-lift)">
-          <rect x="72" y="60" width="68" height="54" rx="5" fill={PAPER} />
-          <rect x="77" y="65" width="58" height="24" rx="3" fill="url(#ts-spectrum)" />
+          <rect x="66" y="56" width="68" height="54" rx="5" fill={PAPER} />
+          <rect x="71" y="61" width="58" height="24" rx="3" fill="url(#ts-spectrum)" />
           {swatches.map((c, i) => (
-            <rect key={c} x={77 + i * 11.8} y="95" width="9.6" height="9.6" rx="2" fill={c} stroke={i === 0 && f.tint ? BLUE : '#E2E8F0'} strokeWidth={i === 0 && f.tint ? 1.3 : 0.6} />
+            <rect key={c} x={71 + i * 11.8} y="92" width="9.6" height="9.6" rx="2" fill={c} stroke={i === 0 && f.tint ? BLUE : '#E2E8F0'} strokeWidth={i === 0 && f.tint ? 1.3 : 0.6} />
           ))}
         </g>
       )}
-      {f.pop === 'shadow' && (
+      {f.pop === 'templates' && (
         <g className="pt-fade" filter="url(#ts-lift)">
-          <rect x="86" y="60" width="88" height="34" rx="5" fill={PAPER} />
-          {['None', 'Soft', 'Medium', 'Strong'].map((n, i) => (
-            <g key={n}>
-              <rect x={90 + i * 21} y="64" width="18" height="16" rx="2.5" fill={i === 2 ? '#EAF3FB' : '#F8FAFC'} stroke={i === 2 ? BLUE : '#E2E8F0'} strokeWidth={i === 2 ? 1 : 0.6} />
-              <Txt x={99 + i * 21} y={89} s={4.4} w={500} c={i === 2 ? BLUE : MUTED} anchor="middle">{n}</Txt>
-            </g>
-          ))}
+          <rect x={selX + 30} y="53" width="70" height="20" rx="4" fill={PAPER} />
+          {[0, 1, 2, 3].map((i) => {
+            const on = (f.tpl === 'top' ? 1 : 0) === i;
+            return <rect key={i} x={selX + 34 + i * 16} y="57" width="13" height="12" rx="2" fill={on ? '#EAF3FB' : '#F8FAFC'} stroke={on ? BLUE : '#E2E8F0'} strokeWidth={on ? 0.9 : 0.6} style={{ transition: T }} />;
+          })}
+          <rect x={selX + 38.5} y="60" width="3.5" height="3.5" rx="0.8" fill="#93C5FD" />
+          <rect x={selX + 54.5} y="59" width="3.5" height="3.5" rx="0.8" fill="#93C5FD" />
+        </g>
+      )}
+      {f.pop === 'align' && (
+        <g className="pt-fade" filter="url(#ts-lift)">
+          <rect x={selX + 41} y="53" width="44" height="18" rx="4" fill={PAPER} />
+          {(['left', 'center', 'right'] as const).map((a, i) => {
+            const on = (f.align ?? 'left') === a;
+            return (
+              <g key={a}>
+                <rect x={selX + 44 + i * 13.3} y="56" width="11" height="12" rx="2" fill={on ? '#EAF3FB' : PAPER} style={{ transition: T }} />
+                {glyph(a === 'center' ? 'alignC' : a === 'right' ? 'alignR' : 'align', selX + 49.5 + i * 13.3, 62, on ? BLUE : '#64748B')}
+              </g>
+            );
+          })}
         </g>
       )}
 
-      {/* ⚠️ Spacing is in the PANEL, drawn as the panel draws it — margin outside, padding inside. */}
-      {f.panel && (
-        <g className="pt-slide" filter="url(#ts-card)">
-          <rect x="216" y="22" width="90" height="138" rx="8" fill={PAPER} />
-          <Txt x={225} y={37} s={6.6} w={600}>Spacing</Txt>
-          <rect x="224" y="46" width="74" height="54" rx="4" fill="none" stroke="#CBD5E1" strokeWidth="0.8" strokeDasharray="2 1.6" />
-          <Txt x={228} y={53} s={4.4} c={MUTED}>MARGIN</Txt>
-          <rect x="234" y="58" width="54" height="34" rx="3" fill="#EEF4FF" stroke={BLUE} strokeWidth="0.9" className="pt-pulse" />
-          <Txt x={238} y={65} s={4.4} c={BLUE}>PADDING</Txt>
-          <rect x="248" y="70" width="26" height="14" rx="2" fill={PAPER} stroke="#E2E8F0" strokeWidth="0.6" />
-          {['16 px', '24 px'].map((v, i) => (
-            <g key={v}>
-              <rect x={224 + i * 38} y="110" width="36" height="13" rx="2.5" fill={PAPER} stroke="#DFE5ED" strokeWidth="0.7" />
-              <Txt x={242 + i * 38} y={118.6} s={5.4} w={500} anchor="middle">{v}</Txt>
-            </g>
-          ))}
+      <Sidebar f={f} />
+
+      {/* ⚠️ The ghost only TRANSLATES — it keeps the row's size all the way across, and is gone the frame
+          the cards appear. */}
+      {(f.ghost === 'lift' || f.ghost === 'fly') && (
+        <g filter="url(#ts-lift)" style={{ transform: `translate(${f.ghost === 'fly' ? -154 : 0}px, ${f.ghost === 'fly' ? 30 : 0}px)`, transition: GLIDE }}>
+          <rect x={SIDE_X + 5} y="44" width="80" height="16" rx="4" fill={PAPER} stroke={BLUE} strokeWidth="1" />
+          <rect x={SIDE_X + 9} y="48" width="8" height="8" rx="2" fill="#EF4444" />
+          <Txt x={SIDE_X + 21} y={54} s={5.2} w={600}>Action Card</Txt>
         </g>
       )}
     </>
@@ -434,12 +563,12 @@ function PublishScene({ f }: { f: SceneFrame }) {
         <Txt x={160} y={78} s={9} w={700} c={PAPER} anchor="middle">Welcome to Support Portal</Txt>
         <rect x="100" y="86" width="120" height="13" rx="3" fill={PAPER} opacity="0.95" />
         <Txt x={106} y={94.4} s={5.4} c="#94A3B8">How can we help you?</Txt>
-        {[['New Incident', '#EF4444'], ['Request Service', BLUE], ['Knowledge', '#10B981']].map(([n, c], i) => (
-          <g key={n}>
-            <rect x={20 + i * 94} y="118" width="88" height="38" rx="5" fill={PAPER} stroke={LINE} strokeWidth="0.8" />
-            <rect x={26 + i * 94} y="126" width="12" height="12" rx="3" fill={c} opacity="0.14" />
-            <rect x={29 + i * 94} y="129" width="6" height="6" rx="1.5" fill={c} />
-            <Txt x={42 + i * 94} y={134} s={5.8} w={600}>{n}</Txt>
+        {CARDS.map((card, i) => (
+          <g key={card.name}>
+            <rect x={20 + i * 70.5} y="118" width="66" height="38" rx="5" fill={PAPER} stroke={LINE} strokeWidth="0.8" />
+            <rect x={25 + i * 70.5} y="126" width="11" height="11" rx="3" fill={card.c} opacity="0.14" />
+            <rect x={28 + i * 70.5} y="129" width="5" height="5" rx="1.3" fill={card.c} />
+            <Txt x={39 + i * 70.5} y={133.6} s={5} w={600}>{card.name}</Txt>
           </g>
         ))}
       </g>
@@ -460,7 +589,8 @@ function PublishScene({ f }: { f: SceneFrame }) {
   );
 }
 
-const SCENES = [AddScene, SelectScene, ArrangeScene, StyleScene, PublishScene];
+/* ⚠️ Chapters 0–4 share ONE component, so the editor never remounts between them. */
+const SCENES = [EditorScene, EditorScene, EditorScene, EditorScene, EditorScene, PublishScene];
 
 export function TourScene({ frame }: { frame: SceneFrame }) {
   const c = TOUR_CHAPTERS[frame.ch];
