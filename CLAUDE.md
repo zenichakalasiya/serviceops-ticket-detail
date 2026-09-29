@@ -310,7 +310,7 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   `titlePlace` defaults to `'inside'` for Favourite and Most Used Services too (spec defaults AND the two
   renderers' fallbacks), so each is a white card like every other data card — 14px radius, 1px #E5E7EB,
   same left/right edges and 16px gap as the cards below. Its tiles take the light-grey **data-tile fill
-  `#F6F9FC`** with no shadow (white on white left only a hairline between tile and card). "Above the
+  `#F6F9FC`** with no shadow and NO STROKE (white on white left only a hairline between tile and card; with the grey fill the hairline was a second edge saying the same thing). A toolbar border still draws. "Above the
   card" still puts the heading back on the page. The inner card is `px-4 pb-4 pt-3.5`, matching the
   title's top inset to the other cards'.
 - **Support Portal — closing the tour dock PARKS it in the right rail (28 Sep 2026).** The dock's ✕ unmounts

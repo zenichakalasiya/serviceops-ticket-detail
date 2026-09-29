@@ -1278,7 +1278,10 @@ function ServiceTiles({ nodeId, items, showDesc, tpl = 'top', cols, chips, look,
              and white on white would leave only a hairline to tell a tile from its card. No shadow for
              the same reason — a tile is a region of the card, not a card lifted off it. A colour the
              admin picks for the tiles still wins (the style store paints over this class). */
-          className={`flex min-w-0 rounded-lg border border-[#E5E7EB] bg-[#F6F9FC] ${
+          /* ⚠️ NO STROKE (29 Sep 2026): the grey fill already separates a tile from the white card, so a
+             hairline around it was a second edge saying the same thing. A border the admin sets from the
+             toolbar still draws — `containerCss` writes its own width and style. */
+          className={`flex min-w-0 rounded-lg bg-[#F6F9FC] ${
             action ? 'gap-3 px-3.5 py-3' : 'gap-2 px-3 py-4'
           } ${
             top ? 'flex-col items-center text-center' : tpl === 'right' ? 'flex-row-reverse items-center' : 'items-center'
