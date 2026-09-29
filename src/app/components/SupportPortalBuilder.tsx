@@ -3665,7 +3665,9 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
             <button
               data-portal-dock="parked"
               onClick={() => { setTour(false); setDock((v) => !v); }}
-              className={`flex w-[60px] flex-col items-center gap-1.5 rounded py-2 text-white shadow-[0_6px_14px_-6px_rgba(0,0,0,0.45)] transition-colors ${dock ? 'bg-[#3D8BD0] hover:bg-[#2D6CA0]' : 'bg-[#1F2937] hover:bg-[#2B3645]'}`}
+              /* ⚠️ A SOFT tint, not the dark block it was (Zeni, 29 Sep 2026): it is a help surface, not the
+                 loudest thing on the rail. 56px wide inside the 72px rail, so it has air on both sides. */
+              className={`flex w-[56px] flex-col items-center gap-1.5 rounded py-2 transition-colors ${dock ? 'bg-[#EBF5FF] text-[#3D8BD0]' : 'bg-[#F1F5F9] text-[#475467] hover:bg-[#E8EDF3] hover:text-[#364658]'}`}
             >
               <DockGlyph size={18} />
               <span className="text-[11px] font-medium leading-none">Basics</span>
