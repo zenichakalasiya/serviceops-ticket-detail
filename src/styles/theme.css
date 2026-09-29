@@ -783,3 +783,8 @@ body[data-portal-dragging] [data-portal-toolbar] { pointer-events: none; opacity
 .card-align [data-card-line] { justify-content: var(--card-justify, flex-start); }
 .card-align [data-card-col] { align-items: var(--card-justify, flex-start); }
 .card-align * { text-align: inherit !important; }
+
+/* ── A column's horizontal STRETCH (ColumnBody, data-col-stretch) ──
+   The widget fills its column: a button spans edge to edge, and a widget dragged narrower fills again. */
+[data-col-stretch] > [data-node] { width: 100% !important; max-width: 100% !important; }
+[data-col-stretch] .portal-btn { width: 100%; }

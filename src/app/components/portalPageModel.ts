@@ -154,6 +154,27 @@ export const registerBox = (id: string, parentDir: BoxDir, depth: number, parent
 };
 export const boxInfo = (id: string) => BOXES[id];
 
+/* ── A COLUMN aligns what it holds (Zeni, 29 Sep 2026) ──────────────────────────────────────────
+ * An added section's boxes (`sec-N`, `sec-N-bM`) store `align` (left / center / right / stretch) and
+ * `alignY` (start / center / end / stretch) in the style store, and the widgets inside FOLLOW them —
+ * the widget itself has no alignment. A nested box without its own value takes the nearest
+ * ancestor's, per axis, which is what lets one choice on a column reach every widget stacked in it.
+ * Default: top-left. */
+export const isSectionBox = (id: string): boolean => /^sec-\d+(-b\d+)?$/.test(id);
+export function colAlign(styles: Record<string, { align?: string; alignY?: string } | undefined>, id: string): { h?: string; v?: string } {
+  let h: string | undefined;
+  let v: string | undefined;
+  let cur: string | undefined = id;
+  for (let guard = 0; cur && guard < 12; guard++) {
+    const s = styles[cur];
+    if (h === undefined && s?.align) h = s.align;
+    if (v === undefined && s?.alignY) v = s.alignY;
+    if (h !== undefined && v !== undefined) break;
+    cur = BOXES[cur]?.parent ?? (/^sec-\d+-b\d+$/.test(cur) ? cur.replace(/-b\d+$/, '') : undefined);
+  }
+  return { h, v };
+}
+
 /** The element sitting inside this container, if one is. A column holds at most one. */
 export const placedIn = (parentId: string) => Object.keys(PLACED).find((k) => PLACED[k].parent === parentId) ?? null;
 
@@ -1531,6 +1552,10 @@ export function toolbarCaps(id: string): ToolbarCaps {
      for the same widget dropped as an element. */
   if (t === 'x-action-card') return { copy: false };
   if (t && isPredefinedType(t)) return { copy: false, alignH: false, alignV: false };
+  /* ⚠️ A widget inside an added section's COLUMN has no alignment of its own (Zeni, 29 Sep 2026): the
+     COLUMN aligns what it holds — one control for everything stacked in it — so the widget's toolbar
+     and sidebar carry none. See `colAlign`. The banner keeps its own per-widget placement. */
+  if (/^sec-\d+/.test(PLACED[id]?.parent ?? '')) return { alignH: false, alignV: false };
   /* ⚠️ `l-divider` joins them for the same reason and one of its own: a rule fills the column it is
      dropped into, so neither axis had a position to report — and its sidebar Alignment accordion
      was removed for exactly that, so leaving the toolbar pair would have kept a second copy of a

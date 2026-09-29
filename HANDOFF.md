@@ -53,12 +53,12 @@ design controls mirrored into the sidebar. Ended mid-way through an alignment au
   words now follow. Text / Button / Image / Media Slider / Custom Card sidebar changes and the Logo position
   field — see the CLAUDE.md bullet "data cards align HORIZONTALLY in every template".
 
-## Alignment model — Zeni's answers (29 Sep), NOT built yet
+## Alignment model — Zeni's answers (29 Sep) — BUILT, see CLAUDE.md "a COLUMN aligns what it holds"
 1. A widget that fills its column gets alignment only when it is NARROWER than the column.
 2. Text: Left/Centre/Right align the lines inside the text box; the box hugs its text.
 3. Vertical appears whenever the cell has spare height (dragged taller OR a taller neighbour).
 4. ONE alignment per column (or grouped sub-section), not one per stacked widget.
-5. "Stretch" question still open — re-ask in plain words.
+5. Stretch: H = fill the column (Button, a narrowed widget, an image); V = spread stacked widgets top-to-bottom.
 6. KPI = a display of the Custom Data Widget; not coming back to the palette on its own. Text with Image stays hidden.
 7. Keep the data-card tile alignment.
 

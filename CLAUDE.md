@@ -306,6 +306,28 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   Services deleted it would have taken Most Used off the page too. ⚠️ In the split row each grid defaults
   to **2 columns** (`{ columns: 2, ...wc(id) }`) — four tiles at half width were 98px and the names ran into
   each other; an admin's own column count still wins (style store, then config).
+- **Support Portal — a COLUMN aligns what it holds; widgets have no alignment of their own (29 Sep 2026, Zeni).**
+  In an added section, alignment lives on the BOX (`sec-N` root or `sec-N-bM`), stored as `align` /
+  `alignY` in the style store, and the individual widgets inside follow it. ⚠️ **A widget whose PLACED
+  parent is a section box gets no alignment at all** (`toolbarCaps`, via `PLACED[id].parent`) — toolbar and
+  sidebar — the column is the one control for everything stacked in it. The banner keeps its per-widget
+  placement. **`colAlign(styles, id)`** (portalPageModel) walks up the boxes per axis, so a choice on a
+  stacked column reaches every widget in it. **Default is TOP-LEFT** — a filled cell used to centre its
+  widget vertically whatever was picked (`blockAlign`, no longer read). **Rendering** (`SupportPortalPreview`):
+  `ColumnBody` sets `align-items` / `justify-content` from `colAlign` and `--col-text-align`, which the
+  Text widget's `text-align` falls back to (its lines align; the box hugs the text); a STACKED branch
+  (`BoxChildren`, `dir: column`) is `h-full` and takes the vertical value as `justify-content`, with
+  **vertical Stretch = `space-between`** (first widget to the top, last to the bottom). **Horizontal Stretch**
+  = `data-col-stretch` → the widget fills the column (theme.css; the Button carries `.portal-btn`).
+  **What is offered is MEASURED** (`useColumnAlign` in PortalCanvas, ResizeObserver + a re-measure on
+  every style change), predefined data widgets never counting: **Horizontal** once something can move
+  sideways (text, a hugging widget, or a widget dragged NARROWER than its column); **Stretch (H)** for a
+  Button or a narrowed widget; **Vertical** once the column has SPARE HEIGHT (dragged taller or a taller
+  neighbour); **Stretch (V)** for two or more stacked widgets. A value already chosen keeps its control so
+  it can be undone. Section boxes are in `sizeOf`'s `alignsInside`, so a box's own alignment never moves
+  the box itself. Verified: Text Centre → text-align centre; Button Right/Stretch → 0/686 then full 873px;
+  a taller section offers Vertical and Bottom drops the button 64px; an image dragged narrower offers
+  H + Stretch and centres (44/44); a stacked Text + Button offers V Stretch and spreads them to the edges.
 - **Support Portal — data cards align HORIZONTALLY in every template; sidebar trims (29 Sep 2026, Zeni).**
   Supersedes the axis rule in the bullet below: `cardAlignAxis` now always answers `'h'`, so action cards
   and the Favourite / Most Used / My Assets / My CIs tiles show Left · Centre · Right only, in every card

@@ -163,7 +163,9 @@ function specDrivenBody(type: string, cfg: Record<string, unknown> | undefined, 
              element's style (`align`), which `sizeOf` only acts on for `stretch` — so a Text block, already
              full width, moved nothing for Left / Centre / Right. Stretch means justified text. The old
              `cfg.textAlign` (nothing writes it any more) is the fallback so older pages keep their look. */
-          textAlign: (textAlignOf(ownStyle?.align) ?? cfg.textAlign) as never,
+          /* ⚠️ Inside an added section the COLUMN decides (`--col-text-align`, set by ColumnBody); the old
+             per-widget value still wins where one was stored, and `cfg.textAlign` is the last fallback. */
+          textAlign: (textAlignOf(ownStyle?.align) ?? `var(--col-text-align, ${String(cfg.textAlign ?? 'left')})`) as never,
           columnCount: cfg.textCols === '2' ? 2 : undefined,
           fontFamily: cfg.font === 'Inherit from theme' ? undefined : (cfg.font as string),
           fontWeight: ({ Light: 300, Normal: 400, Medium: 500, Semibold: 600, Bold: 700 } as Record<string, number>)[String(cfg.weight ?? 'Normal')],
@@ -306,7 +308,7 @@ function specDrivenBody(type: string, cfg: Record<string, unknown> | undefined, 
        `[&>*]` reaches ONE level and this button is a grandchild of it. The element that draws the
        button is the only one that can make the button tall. */
     const draggedH = ownStyle?.height !== undefined;
-    const common = `inline-flex max-w-full items-center justify-center gap-2 break-words text-center font-medium ${BTN_SIZE[String(cfg.size ?? 'md')]} ${cfg.fullWidth || dragged ? 'w-full' : ''} ${draggedH ? 'h-full' : ''}`;
+    const common = `portal-btn inline-flex max-w-full items-center justify-center gap-2 break-words text-center font-medium ${BTN_SIZE[String(cfg.size ?? 'md')]} ${cfg.fullWidth || dragged ? 'w-full' : ''} ${draggedH ? 'h-full' : ''}`;
     /* ⚠️ The fallback is the THEME's variable, not a literal: an untouched button has to follow the
        theme's button style, while one that set its own radius keeps it. A hard 6 made every button
        opt out of the theme by default. */

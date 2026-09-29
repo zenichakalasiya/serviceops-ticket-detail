@@ -23,7 +23,7 @@ import { keysForTip, chromeKeys } from './portalShortcutKeys';
 import { usePopupArrows, useOpenValue } from './usePopupArrows';
 import { toast } from 'sonner';
 import { MiniRange } from './PortalRange';
-import { fillsFromConfig, HEADING_SIZE, PORTAL_FONTS, SECTION_LAYOUTS, SPLITTABLE_BANDS, TEXT_STYLES, ZERO_BOX, COMPOSABLE, BANNER_BLOCKS, inBanner, dragIdOf, isContactChild, boxInfo, canAddBeside, defaultAlignH, nodeById, paintsOwnShadow, isAlignCard, cardTemplateOf, cardAlignAxis, cardAlignDefault, measuredTileCols, presetForCols, paintsOwnSurface, toolbarCaps, nodePath, placedIn, placedType } from './portalPageModel';
+import { fillsFromConfig, HEADING_SIZE, PORTAL_FONTS, SECTION_LAYOUTS, SPLITTABLE_BANDS, TEXT_STYLES, ZERO_BOX, COMPOSABLE, BANNER_BLOCKS, inBanner, dragIdOf, isContactChild, boxInfo, canAddBeside, defaultAlignH, nodeById, paintsOwnShadow, isSectionBox, colAlign, HUGS_CONTENT as HUGS, isAlignCard, cardTemplateOf, cardAlignAxis, cardAlignDefault, measuredTileCols, presetForCols, paintsOwnSurface, toolbarCaps, nodePath, placedIn, placedType } from './portalPageModel';
 import { DEFAULT_THEME } from './PortalThemePanel';
 import type { PortalTheme } from './PortalThemePanel';
 import { boxCss, containerCss, portalColorMode } from './portalStyleResolver';
@@ -256,7 +256,7 @@ export function sizeOf(styles: PortalStyles, id: string): React.CSSProperties {
      KPI read their own align/alignY and place their content with it — moving the wrapper as well
      would shrink a tile out of its grid cell. */
   /* A widget on the BANNER is placed by its cell (see the arranged banner), so its alignment is not applied to itself. */
-  const alignsInside = /-tile$/.test(id) || /^quick-[a-z]+$/.test(id) || placedType(id) === 'x-action-card' || isContactChild(id) || placedType(id) === 'c-records' || (/^el-\d+$/.test(id) && nodeById(id)?.parent === 'hero');
+  const alignsInside = isSectionBox(id) || /-tile$/.test(id) || /^quick-[a-z]+$/.test(id) || placedType(id) === 'x-action-card' || isContactChild(id) || placedType(id) === 'c-records' || (/^el-\d+$/.test(id) && nodeById(id)?.parent === 'hero');
   if (s.alignY !== undefined && !alignsInside) {
     css.alignSelf = ({ start: 'flex-start', center: 'center', end: 'flex-end', stretch: 'stretch' } as const)[s.alignY];
   }
@@ -1242,6 +1242,66 @@ function ShadowMenu({ id }: { id: string }) {
  * The same control the panel's Layout group draws, so the two cannot disagree. A white card lays out
  * its four data cards by COLUMN COUNT (the style store's `columns`, §7.8); the Quick Actions row is a
  * band and takes the section preset, through the same `applyPreset` the panel calls. */
+/* ── What a COLUMN's alignment can offer, MEASURED (Zeni, 29 Sep 2026) ─────────────────────────────
+ * An added section's box aligns the individual widgets it holds (Text, Button, Image, Custom Card,
+ * Custom Data Widget…). Predefined data widgets never count. Read off the canvas, because every rule
+ * is about what is on screen:
+ *  · Horizontal — something in it can move sideways: text (its lines), a hugging widget (a Button),
+ *    or a widget dragged NARROWER than its column. A full-width widget alone has nothing to move.
+ *  · Stretch (horizontal) — a Button, or a widget narrower than its column: "fill the width".
+ *  · Vertical — the column has SPARE HEIGHT (dragged taller, or a taller neighbour in the row).
+ *  · Stretch (vertical) — two or more widgets stacked: first to the top, last to the bottom.
+ * A value already chosen keeps its control, so a choice can always be undone. */
+export function useColumnAlign(id: string | null) {
+  const { styles } = useCanvas();
+  const [info, setInfo] = useState({ h: false, v: false, stretchH: false, stretchV: false });
+  useLayoutEffect(() => {
+    if (!id) return;
+    const el = document.querySelector(`[data-node="${id}"]`) as HTMLElement | null;
+    if (!el) return;
+    const TEXTS = new Set(['b-text', 'b-large-title', 'b-small-title']);
+    const measure = () => {
+      const widgets = ([...el.querySelectorAll('[data-node]')] as HTMLElement[]).filter((w) => {
+        const wid = w.dataset.node ?? '';
+        if (!/^el-\d+$/.test(wid)) return false;
+        const t = placedType(wid);
+        return !!t && !isPredefinedType(t);
+      });
+      const own = colAlign(styles as never, id);
+      if (!widgets.length) {
+        setInfo((p) => (p.h || p.v || p.stretchH || p.stretchV ? { h: false, v: false, stretchH: false, stretchV: false } : p));
+        return;
+      }
+      let h = false;
+      let stretchH = false;
+      for (const w of widgets) {
+        const t = placedType(w.dataset.node!) ?? '';
+        const cell = w.parentElement?.getBoundingClientRect();
+        const narrow = !!cell && w.getBoundingClientRect().width < cell.width - 2;
+        if (TEXTS.has(t) || HUGS.has(t) || narrow) h = true;
+        if (t === 'b-button' || (narrow && !TEXTS.has(t))) stretchH = true;
+      }
+      if (own.h) { h = true; if (own.h === 'stretch') stretchH = true; }
+      const box = ([...el.children] as HTMLElement[]).find((c) => getComputedStyle(c).position !== 'absolute') ?? el;
+      const tops = widgets.map((w) => w.getBoundingClientRect().top);
+      const bottoms = widgets.map((w) => w.getBoundingClientRect().bottom);
+      const span = Math.max(...bottoms) - Math.min(...tops);
+      let v = box.getBoundingClientRect().height - span > 4;
+      if (own.v) v = true;
+      const stacked = new Set(tops.map((t) => Math.round(t))).size >= 2;
+      const stretchV = v && stacked;
+      const next = { h, v, stretchH: h && stretchH, stretchV };
+      setInfo((p) => (p.h === next.h && p.v === next.v && p.stretchH === next.stretchH && p.stretchV === next.stretchV ? p : next));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    el.querySelectorAll('[data-node]').forEach((c) => ro.observe(c));
+    return () => ro.disconnect();
+  }, [id, styles]);
+  return id ? info : null;
+}
+
 /** Escape closes a toolbar popup, the way every other one on the bar closes. */
 function useEscapeClose(open: boolean, close: () => void) {
   useEffect(() => {
@@ -1514,6 +1574,7 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
   const [adding, setAdding] = useState(false);
   const [swapping, setSwapping] = useState(false);
   const [axis, setAxis] = useState<'h' | 'v' | null>(null);
+  const colInfo = useColumnAlign(isSectionBox(id) ? id : null);
   /* A Custom Data Widget drawn as a KPI takes both alignments — it places its number and title inside itself. The list form keeps none. */
   const kpi = placedType(id) === 'c-records' && cfg?.(id)?.display === 'kpi';
   const caps = kpi ? { ...toolbarCaps(id), alignH: undefined, alignV: undefined } : toolbarCaps(id);
@@ -1663,9 +1724,10 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
   const alignCard = isAlignCard(id);
   const cardTpl = alignCard ? cardTemplateOf(id, cfg) : '';
   const cardAxis = alignCard ? cardAlignAxis(cardTpl) : null;
-  const showH = caps.alignH !== false && cardAxis !== 'v';
-  const showV = caps.alignV !== false && cardAxis !== 'h';
-  const alignH = String(styles[id]?.align ?? (alignCard ? cardAlignDefault(cardTpl, id) : defaultAlignH(id)));
+  const col = colInfo;
+  const showH = caps.alignH !== false && cardAxis !== 'v' && (!col || col.h);
+  const showV = caps.alignV !== false && cardAxis !== 'h' && (!col || col.v);
+  const alignH = String(styles[id]?.align ?? (alignCard ? cardAlignDefault(cardTpl, id) : col ? 'left' : defaultAlignH(id)));
   const alignV = String(styles[id]?.alignY ?? (alignCard ? cardAlignDefault(cardTpl, id) : 'start'));
   const H_OPTS_ALL: [string, string, ReactNode][] = [
     ['left', 'Left', <AlignStartVertical key="l" size={15} />],
@@ -1679,8 +1741,8 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
     ['end', 'Bottom', <AlignEndHorizontal key="b" size={15} />],
     ['stretch', 'Stretch', <StretchVertical key="s" size={15} />],
   ];
-  const H_OPTS = alignCard ? H_OPTS_ALL.slice(0, 3) : H_OPTS_ALL;
-  const V_OPTS = alignCard ? V_OPTS_ALL.slice(0, 3) : V_OPTS_ALL;
+  const H_OPTS = alignCard || (col && !col.stretchH) ? H_OPTS_ALL.slice(0, 3) : H_OPTS_ALL;
+  const V_OPTS = alignCard || (col && !col.stretchV) ? V_OPTS_ALL.slice(0, 3) : V_OPTS_ALL;
   /* The Layout and Card-templates buttons (Zeni, 29 Sep 2026): the white parent cards and the Quick
      Actions row get Layout; the cards inside them get Card templates. */
   const layoutOwner = ['favourites', 'services', 'assets', 'cis', 'quick'].includes(id)
@@ -4617,6 +4679,7 @@ export function DesignQuickSections({ id, part }: { id: string; part?: 'lead' | 
   };
   const fileRef = useRef<HTMLInputElement>(null);
   const [bgTab, setBgTab] = useState<'image' | 'color' | null>(null);
+  const colInfo = useColumnAlign(isSectionBox(id) ? id : null);
 
   const node = nodeById(id);
   if (!node || id === 'rail' || /^header/.test(id)) return null;
@@ -4808,19 +4871,19 @@ export function DesignQuickSections({ id, part }: { id: string; part?: 'lead' | 
   const alignCard = isAlignCard(id);
   const cardTpl = alignCard ? cardTemplateOf(id, cfg) : '';
   const cardAxis = alignCard ? cardAlignAxis(cardTpl) : null;
-  const showH = caps.alignH !== false && cardAxis !== 'v';
-  const showV = caps.alignV !== false && cardAxis !== 'h';
+  const showH = caps.alignH !== false && cardAxis !== 'v' && (!colInfo || colInfo.h);
+  const showV = caps.alignV !== false && cardAxis !== 'h' && (!colInfo || colInfo.v);
   if (showH || showV) {
     sections.push(g('align', 'Alignment', (
       <>
         {showH && (
           <Field label="Horizontal">
-            <Segmented value={String(styles[id]?.align ?? (alignCard ? cardAlignDefault(cardTpl, id) : defaultAlignH(id)))} options={alignCard ? ALIGN_H_OPTS.slice(0, 3) : ALIGN_H_OPTS} onChange={(v) => setStyle(id, { align: v as never })} />
+            <Segmented value={String(styles[id]?.align ?? (alignCard ? cardAlignDefault(cardTpl, id) : colInfo ? 'left' : defaultAlignH(id)))} options={alignCard || (colInfo && !colInfo.stretchH) ? ALIGN_H_OPTS.slice(0, 3) : ALIGN_H_OPTS} onChange={(v) => setStyle(id, { align: v as never })} />
           </Field>
         )}
         {showV && (
           <Field label="Vertical">
-            <Segmented value={String(styles[id]?.alignY ?? (alignCard ? cardAlignDefault(cardTpl, id) : 'start'))} options={alignCard ? ALIGN_V_OPTS.slice(0, 3) : ALIGN_V_OPTS} onChange={(v) => setStyle(id, { alignY: v as never })} />
+            <Segmented value={String(styles[id]?.alignY ?? (alignCard ? cardAlignDefault(cardTpl, id) : 'start'))} options={alignCard || (colInfo && !colInfo.stretchV) ? ALIGN_V_OPTS.slice(0, 3) : ALIGN_V_OPTS} onChange={(v) => setStyle(id, { alignY: v as never })} />
           </Field>
         )}
       </>

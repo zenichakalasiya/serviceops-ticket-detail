@@ -16,7 +16,7 @@ import {
   PORTAL_APPROVALS, PORTAL_ARTICLES, PORTAL_ARTICLE_TOTAL, PORTAL_OPEN_REQUESTS, PORTAL_OPEN_REQUEST_TOTAL, statusTone,
 } from './supportPortalData';
 import { AddSectionSeam, BannerSlot, ColumnAdders, MOVE_MIME, Sel, draggedElement, draggedNode, styleOf, useCanvas } from './PortalCanvas';
-import { HUGS_CONTENT, bannerGroupGap, cardAlignClass, cardAlignCss, inBanner } from './portalPageModel';
+import { HUGS_CONTENT, bannerGroupGap, cardAlignClass, cardAlignCss, colAlign, inBanner } from './portalPageModel';
 import { bannerGradientOf, bannerLayerCss, gradientCss } from './PortalBannerTools';
 import type { BannerDecor } from './portalBannerTemplates';
 import { ImagePlus } from 'lucide-react';
@@ -340,6 +340,17 @@ function ColumnBody({ id, item, band, live, dir, icons, placedText, cfg }: { id:
    * ⚠️ HALF for a column and a fixed band for a row, because the two are different promises: a new
    * column takes a share of the width, while a new row takes as much height as its content needs
    * and cannot be known before it lands. */
+  /* ⚠️ The COLUMN's alignment places what it holds (colAlign walks up the boxes, per axis). Default is
+     TOP-LEFT: a filled cell used to centre its widget vertically whatever anyone picked. */
+  const ca = colAlign(styles as never, id);
+  const inSection = /^sec-\d+/.test(id);
+  const X: Record<string, string> = { left: 'flex-start', center: 'center', right: 'flex-end', stretch: 'stretch' };
+  const Y: Record<string, string> = { start: 'flex-start', center: 'center', end: 'flex-end' };
+  const placeStyle: React.CSSProperties = full && item && inSection ? {
+    alignItems: X[ca.h ?? 'left'] ?? 'flex-start',
+    justifyContent: Y[ca.v ?? 'start'] ?? 'flex-start',
+    ['--col-text-align' as string]: ca.h && ca.h !== 'stretch' ? ca.h : 'left',
+  } : {};
   const reserve = over && zone && zone !== 'in' ? zone : null;
   const sideways = reserve === 'left' || reserve === 'right';
   const gap: React.CSSProperties = !reserve ? {}
@@ -434,7 +445,8 @@ function ColumnBody({ id, item, band, live, dir, icons, placedText, cfg }: { id:
         e.dataTransfer.setData(MOVE_MIME, item.id);
         e.dataTransfer.effectAllowed = 'move';
       } : undefined}
-      style={{ ...gap, transition: 'padding 130ms ease' }}
+      style={{ ...gap, ...placeStyle, transition: 'padding 130ms ease' }}
+      data-col-stretch={full && item && inSection && ca.h === 'stretch' ? '' : undefined}
     >
       {/* ⚠️ The element gets its OWN Sel. Without one the column was the innermost selectable thing,
           so clicking a collection widget selected the column — and with items now selectable inside
@@ -634,6 +646,12 @@ function BoxChildren({ box, resize, icons, placedText, cfg }: {
   const weights = kids.map((c) => c.weight);
   /* The gap between these children: the columns' gap along a row, the rows' gap down a column. */
   const gapCfg = cfg?.(box.id) ?? {};
+  /* ⚠️ A STACKED column (dir: column) places its rows with its own vertical alignment — Stretch pushes the
+     first to the top and the last to the bottom with the space between them. It fills its cell so the
+     spare height exists to distribute. A row of columns leaves this to each column's own cell. */
+  const { styles: stylesForAlign } = useCanvas();
+  const stackV = box.dir === 'column' && /^sec-\d+/.test(box.id) ? colAlign(stylesForAlign as never, box.id).v : undefined;
+  const stackJustify = stackV ? ({ start: 'flex-start', center: 'center', end: 'flex-end', stretch: 'space-between' } as Record<string, string>)[stackV] : undefined;
   const boxGap = box.dir === 'row' ? Number(gapCfg.__gapX ?? BOX_GAP) : Number(gapCfg.__gapY ?? BOX_GAP);
   const { dropBeside } = useCanvas();
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -703,11 +721,11 @@ function BoxChildren({ box, resize, icons, placedText, cfg }: {
       ref={wrapRef}
       {...gapHandlers}
       data-width-root
-      className="relative flex min-w-0"
+      className={`relative flex min-w-0 ${box.dir === 'column' ? 'h-full' : ''}`}
       /* `dir` IS `flex-direction`. That is the whole of the behaviour setting: a row lays its
          children left-to-right so each reads as a column, a column stacks them so each reads as a
          row. Flipping it moves nothing and destroys nothing. */
-      style={{ flexDirection: box.dir, gap: boxGap, alignItems: box.dir === 'row' ? 'stretch' : undefined }}
+      style={{ flexDirection: box.dir, gap: boxGap, alignItems: box.dir === 'row' ? 'stretch' : undefined, justifyContent: stackJustify }}
       data-dir={box.dir}
       data-gap-parent={box.id}
     >
