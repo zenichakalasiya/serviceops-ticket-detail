@@ -67,7 +67,8 @@ export function Field({ label, help, info, children, action, divider, tight }: {
 export interface DesignGroupsApi {
   isOpen: (key: string) => boolean;
   toggle: (key: string) => void;
-  report: (keys: string[]) => void;
+  /** Which groups a part drew — reported per part, since the lead and look halves render separately. */
+  report: (part: string, keys: string[]) => void;
 }
 export const DesignGroupsCtx = createContext<DesignGroupsApi | null>(null);
 

@@ -4477,7 +4477,12 @@ const ALIGN_V_OPTS = [
   { value: 'stretch', icon: <StretchVertical size={15} />, title: 'Stretch' },
 ];
 
-export function DesignQuickSections({ id }: { id: string }) {
+/* ⚠️ Two PARTS, so the drawer can put the layout questions ABOVE Background (Zeni, 29 Sep 2026):
+   'lead' = how the block is arranged (the banner's Sections & arrangement, a card row's Presets, a banner
+   group's Layout); 'look' = everything else (Background, Border & corners, Shadow, Icon, Alignment…).
+   Omitted, both draw — the order they always had. */
+const LEAD_GROUPS = new Set(['sections', 'presets', 'layout']);
+export function DesignQuickSections({ id, part }: { id: string; part?: 'lead' | 'look' }) {
   const ctx = useCanvas();
   const { styles, setStyle, cfg, setCfg, heroTree, setBannerSections } = ctx;
   /* ⚠️ Open state is the DRAWER's, through `DesignGroupsCtx` — so Expand all / Collapse all on the
@@ -4487,8 +4492,9 @@ export function DesignQuickSections({ id }: { id: string }) {
   const [shut, setShut] = useState<string[]>([]);
   const drawn = useRef<string[]>([]);
   drawn.current = [];
-  useEffect(() => { dg?.report(drawn.current.map((k) => `q:${k}`)); });
+  useEffect(() => { dg?.report(part ?? 'all', drawn.current.map((k) => `q:${k}`)); });
   const g = (key: string, title: string, children: ReactNode) => {
+    if (part && (part === 'lead') !== LEAD_GROUPS.has(key)) return null;
     drawn.current.push(key);
     const open = dg ? dg.isOpen(`q:${key}`) : !shut.includes(key);
     const toggle = () => (dg ? dg.toggle(`q:${key}`) : setShut((s) => (s.includes(key) ? s.filter((x) => x !== key) : [...s, key])));
@@ -4714,6 +4720,7 @@ export function DesignQuickSections({ id }: { id: string }) {
 /** Whether `DesignQuickSections` draws anything for this node — the same early returns, so a panel can
  *  decide whether its Design heading has something under it without rendering to find out. */
 export function hasDesignQuick(id: string): boolean {
+  /* (Either part may still draw nothing for a given node; the drawer only needs to know whether ANY might.) */
   const node = nodeById(id);
   if (!node || id === 'rail' || /^header/.test(id)) return false;
   if (id === 'hero' || BANNER_GROUPS.has(id)) return true;

@@ -306,6 +306,16 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   Services deleted it would have taken Most Used off the page too. ⚠️ In the split row each grid defaults
   to **2 columns** (`{ columns: 2, ...wc(id) }`) — four tiles at half width were 98px and the names ran into
   each other; an admin's own column count still wins (style store, then config).
+- **Support Portal — Design's ORDER: layout first, then look (29 Sep 2026, Zeni; being tuned widget by widget).**
+  Every Design section opens with the questions about the block's SHAPE, then its look: spec groups in
+  `LEAD_SPEC_GROUPS` (**Banner**, **Layout**, **Card templates**) and the accordion model's `layout` accordion →
+  the toolbar's LEAD sections (`LEAD_GROUPS` in `DesignQuickSections`: the banner's **Sections & arrangement**,
+  a card row's **Presets**, a banner group's **Layout**) → the toolbar's LOOK sections (Background, Border &
+  corners, Shadow, Icon, Alignment) → the remaining spec groups → Spacing → Title. `quickDesign` is now a
+  FUNCTION of the part (`'lead' | 'look'`), called twice by `PortalWidgetDrawer` (both panel models) and
+  `PortalElementPanel`; the two halves report their drawn groups separately (`DesignGroupsApi.report(part,
+  keys)`), so Expand all / Collapse all still counts all of them. Banner now reads: Banner · Sections &
+  arrangement · Background · Border & corners · Alignment · Spacing.
 - **Support Portal — the floating toolbar is SLIMMER; styling lives in the sidebar (29 Sep 2026, Zeni).**
   ⚠️ **Border, Corner radius, Shadow and Icon are OFF the floating toolbar** (and Border / Corner radius off
   the banner's bar) — they are the sidebar's Design groups now (`DesignQuickSections`). The menus

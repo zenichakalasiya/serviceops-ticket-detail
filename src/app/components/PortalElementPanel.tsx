@@ -33,7 +33,7 @@ interface Props {
   placedText: Record<string, { title?: string; desc?: string }>;
   setPlacedText: (id: string, patch: { title?: string; desc?: string }) => void;
   /** The floating toolbar's design controls for this node, drawn at the top of Style. */
-  quickDesign?: ReactNode;
+  quickDesign?: (part: 'lead' | 'look') => ReactNode;
 }
 
 /* ── shared field chrome ─────────────────────────────────────────────────── */
@@ -372,7 +372,8 @@ export function PortalElementPanel({ nodeId, content, setContent, styles, setSty
           >Style</SectionHead>
 
           {/* The floating toolbar's own controls, first — the same ones the toolbar offers this node. */}
-          {quickDesign}
+          {quickDesign?.('lead')}
+          {quickDesign?.('look')}
 
           {/* ⚠️ The Layout drawer is gone. Its only row was Alignment, and the floating toolbar over
               the selected words carries left / centre / right where you can see them act — a second

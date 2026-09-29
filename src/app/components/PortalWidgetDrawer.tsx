@@ -383,7 +383,7 @@ const OverrideDot = () => (
 );
 
 function PanelBody({ spec, nodeId, cfg, renderField, openGroups, toggleGroup, setOpenGroups, quickShut = [], styles, setStyle, replaceStyle, collectionSlot, hasCollection, quickDesign }: {
-  quickDesign?: ReactNode;
+  quickDesign?: (part: 'lead' | 'look') => ReactNode;
   setOpenGroups: (next: string[]) => void;
   /** The toolbar sections' shut-markers, so Expand all reaches them too. */
   quickShut?: string[];
@@ -492,13 +492,14 @@ function PanelBody({ spec, nodeId, cfg, renderField, openGroups, toggleGroup, se
         />
       )}>Design</SectionLabel>
       <div>
-        {/* The toolbar's own controls FIRST — background, border & corners, shadow, then the rest. */}
-        {quickDesign}
+        {/* ⚠️ ORDER (Zeni, 29 Sep 2026): the LAYOUT accordion and the toolbar's layout controls first,
+            then the toolbar's look controls (Background, Border & corners, Shadow…), then the rest. */}
         {/* ⚠️ `size` is dropped here as well. Size already left as a field group (DROP_GROUPS) and as
             the P2 pack, but the panel model declares it a THIRD way — as an accordion — so it kept
             appearing on exactly the widgets that use that model. The eight drag handles set size;
             a slider that does the same thing is the second control this builder keeps growing. */}
-        {panel.accordions.filter((a) => a.id !== 'size').filter((a) => !a.when || a.when(cfg))
+        {(() => {
+        const list = panel.accordions.filter((a) => a.id !== 'size').filter((a) => !a.when || a.when(cfg))
           /* ⚠️ An accordion with NOTHING IN IT is dropped, not rendered empty. P1 lost its last
              control when Fill, Border and Corner radius moved to the floating toolbar, so every
              spec that names it was left with a "Style" heading that opened onto blank space — a
@@ -506,8 +507,8 @@ function PanelBody({ spec, nodeId, cfg, renderField, openGroups, toggleGroup, se
              for a field: what would actually draw. `spacing` and the icon/type groups still count,
              so only the genuinely empty ones go. */
           .filter((a) => visible(a.fields).length > 0 || !!a.spacing
-            || a.groups?.some((g) => g !== 'G1'))
-          .map((a) => {
+            || a.groups?.some((g) => g !== 'G1'));
+        const accordion = (a: typeof list[number]) => {
           const key = `acc:${a.id}`;
           const open = !openGroups.includes(`shut:${a.id}`);
           return (
@@ -546,7 +547,16 @@ function PanelBody({ spec, nodeId, cfg, renderField, openGroups, toggleGroup, se
             </Group>
             </Fragment>
           );
-        })}
+        };
+        return (
+          <>
+            {list.filter((a) => a.id === 'layout').map(accordion)}
+            {quickDesign?.('lead')}
+            {quickDesign?.('look')}
+            {list.filter((a) => a.id !== 'layout').map(accordion)}
+          </>
+        );
+        })()}
       </div>
       </>
       )}
@@ -602,6 +612,8 @@ const NODE_ICON: Record<string, ReactNode> = {
 const DROP_GROUPS = new Set(['Layout', 'Size', 'Arrangement']);
 /* The card's Title placement group — drawn LAST in Design, after Spacing (Zeni, 29 Sep 2026). */
 const TITLE_GROUP = 'Title';
+/* The spec groups that answer "what shape is this block" — drawn FIRST in Design, above Background. */
+const LEAD_SPEC_GROUPS = new Set(['Banner', 'Layout', 'Card templates']);
 /* The one group that always sinks to the foot of Design. It describes what a widget does when it
    has nothing to show — a rare, conditional state — so it must not sit between the fill and the
    spacing you are actually reading, and it can never be the FIRST accordion. */
@@ -705,7 +717,7 @@ export interface WidgetDrawerProps {
   onChangeBanner?: () => void;
   /* The floating toolbar's design controls for this node (`DesignQuickSections`), built by the
      builder INSIDE the canvas context and drawn at the top of Design. Null when the node has none. */
-  quickDesign?: ReactNode;
+  quickDesign?: (part: 'lead' | 'look') => ReactNode;
 }
 
 /* ⚠️ NO ALIGNMENT IN ANY SIDEBAR (25 Sep 2026). Every block's alignment is on its floating toolbar —
@@ -784,12 +796,13 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
   const toggleGroup = (g: string) =>
     setOpenGroups(openGroups.includes(g) ? openGroups.filter((x) => x !== g) : [...openGroups, g]);
   /* The toolbar sections showing right now, as they report themselves — what Expand all counts. */
-  const [quickKeys, setQuickKeys] = useState<string[]>([]);
+  const [quickParts, setQuickParts] = useState<Record<string, string[]>>({});
+  const quickKeys = Object.values(quickParts).flat();
   const quickShut = quickKeys.map((k) => `shut:${k}`);
   const designGroups: DesignGroupsApi = {
     isOpen: (k) => !openGroups.includes(`shut:${k}`),
     toggle: (k) => toggleGroup(`shut:${k}`),
-    report: (keys) => setQuickKeys((prev) => (prev.join('|') === keys.join('|') ? prev : keys)),
+    report: (part, keys) => setQuickParts((prev) => ((prev[part] ?? []).join('|') === keys.join('|') ? prev : { ...prev, [part]: keys })),
   };
 
   if (!node) return null;
@@ -1714,6 +1727,21 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
     || !!(col && (!col.when || col.when(cfg)))
     || !!(selItem && collection?.isTableRow));
 
+  /* One Design group from the spec, with any pack whose title matches it merged inside. Used twice — the
+     layout groups above Background, the rest below — so both halves render a group the same way. */
+  const renderStyleGroup = ({ group, fields }: { group: string; fields: WidgetField[] }) => {
+    const merged = (viewPacks ?? []).filter((pk) => ALL_PACKS[pk]?.title === group);
+    return (
+      <Group key={group} title={group} open={openGroups.includes(group)} onToggle={() => toggleGroup(group)}>
+        {fields.map(renderField)}
+        {merged.map((pk) => {
+          const P = ALL_PACKS[pk];
+          return <P.Render key={pk} {...packProps} />;
+        })}
+      </Group>
+    );
+  };
+
   return (
     <DesignGroupsCtx.Provider value={designGroups}>
     <div className="flex h-full flex-col">
@@ -1897,26 +1925,19 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
         )}
         {hasDesign && (
           <>
-            {/* The toolbar's own controls FIRST — background, border & corners, shadow, then the rest. */}
-            {quickDesign}
+            {/* ⚠️ ORDER (Zeni, 29 Sep 2026): the LAYOUT questions first — the banner's Banner layout and
+                Sections & arrangement, a card's Layout and Card templates — then Background and the rest
+                of the look. What shape a block is decides everything below it. */}
+            {groupsFor('style').filter(({ group }) => LEAD_SPEC_GROUPS.has(group)).map(renderStyleGroup)}
+            {quickDesign?.('lead')}
+            {quickDesign?.('look')}
             {/* Widget-specific styling first — it is what this widget is, before the generic packs. */}
             {/* ⚠️ A pack whose TITLE matches a spec group is rendered INSIDE that group rather than
                 beside it. Row layout is a content-config field but belongs under Arrangement with
                 the gap and the dividers; without this merge the panel showed two sections both
                 called "Arrangement", which is worse than either placement. */}
             {/* ⚠️ TITLE is drawn LAST (after Spacing), not here — Zeni, 29 Sep 2026. */}
-            {groupsFor('style').filter(({ group }) => group !== TITLE_GROUP).map(({ group, fields }) => {
-              const merged = (viewPacks ?? []).filter((pk) => ALL_PACKS[pk]?.title === group);
-              return (
-                <Group key={group} title={group} open={openGroups.includes(group)} onToggle={() => toggleGroup(group)}>
-                  {fields.map(renderField)}
-                  {merged.map((pk) => {
-                    const P = ALL_PACKS[pk];
-                    return <P.Render key={pk} {...packProps} />;
-                  })}
-                </Group>
-              );
-            })}
+            {groupsFor('style').filter(({ group }) => group !== TITLE_GROUP && !LEAD_SPEC_GROUPS.has(group)).map(renderStyleGroup)}
             {(viewPacks ?? []).map((pk) => {
               const pack = ALL_PACKS[pk];
               // Already drawn inside the spec group that shares its title.

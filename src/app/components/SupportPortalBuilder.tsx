@@ -3540,11 +3540,11 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
                   onDelete={() => deleteNode(selectedId)}
                   onOpenSetting={(section, card) =>
                     toast.success(`This lives in Admin › ${section}${card ? ` › ${card}` : ''}`)}
-                  quickDesign={selectedId && hasDesignQuick(selectedId) ? (
+                  quickDesign={selectedId && hasDesignQuick(selectedId) ? (part: 'lead' | 'look') => (
                     /* The toolbar's design controls, in the sidebar too (29 Sep 2026). Rendered inside the
                        REAL canvas context — the sidebar itself sits outside it — so every control reads and
                        writes exactly what the floating toolbar does. */
-                    <CanvasProvider value={{ ...canvasCtx, enabled: true }}><DesignQuickSections id={selectedId} /></CanvasProvider>
+                    <CanvasProvider value={{ ...canvasCtx, enabled: true }}><DesignQuickSections id={selectedId} part={part} /></CanvasProvider>
                   ) : undefined}
                 />
               </div>
@@ -3561,11 +3561,11 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
                   setIcon={(id, c) => setIcons((p) => ({ ...p, [id]: c }))}
                   placedText={placedText}
                   setPlacedText={(id, patch) => setPlacedText((p) => ({ ...p, [id]: { ...p[id], ...patch } }))}
-                  quickDesign={selectedId && hasDesignQuick(selectedId) ? (
+                  quickDesign={selectedId && hasDesignQuick(selectedId) ? (part: 'lead' | 'look') => (
                     /* The toolbar's design controls, in the sidebar too (29 Sep 2026). Rendered inside the
                        REAL canvas context — the sidebar itself sits outside it — so every control reads and
                        writes exactly what the floating toolbar does. */
-                    <CanvasProvider value={{ ...canvasCtx, enabled: true }}><DesignQuickSections id={selectedId} /></CanvasProvider>
+                    <CanvasProvider value={{ ...canvasCtx, enabled: true }}><DesignQuickSections id={selectedId} part={part} /></CanvasProvider>
                   ) : undefined}
                 />
               </div>
