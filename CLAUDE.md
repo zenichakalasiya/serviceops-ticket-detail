@@ -306,6 +306,7 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   Services deleted it would have taken Most Used off the page too. ⚠️ In the split row each grid defaults
   to **2 columns** (`{ columns: 2, ...wc(id) }`) — four tiles at half width were 98px and the names ran into
   each other; an admin's own column count still wins (style store, then config).
+- **Support Portal — the Custom Data Widget's KPI display has NO Card templates (29 Sep 2026, Zeni).** Its Design opens with **Alignment** (H + V on the toolbar and sidebar, placing the number and title inside the card). The `kpiLayout` field left the spec; the key is still read, so a KPI that stored one keeps it.
 - **Support Portal — the default page's predefined cards are two REAL SECTIONS (29 Sep 2026, Zeni).**
   The work band (left region + right rail, each with its own move arrows) is gone from the DEFAULT portal
   (`predefinedRows` = v2, no template seed, not blank). `defaultPredefinedSections()` (portalPageModel)

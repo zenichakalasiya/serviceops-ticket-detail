@@ -1158,9 +1158,8 @@ export const WIDGET_SPECS: WidgetSpec[] = [
          value the page already answers by being looked at. The key stays in `defaults` and the
          renderer still reads it as the floor, so no card on any page changed. */
       { key: 'filter', label: 'Filter', control: 'recordFilter', group: 'Content' },
-      /* How the number and its title sit together — on the KPI tab only. Where the pair sits inside the
-         card is the floating toolbar's H/V alignment. */
-      { key: 'kpiLayout', label: '', control: 'kpiLayout', group: 'Card templates', when: (c) => c.display === 'kpi' },
+      /* ⚠️ The KPI display has NO Card templates (Zeni, 29 Sep 2026) — Alignment is its one layout
+         control. The `kpiLayout` key is still read by the renderer, so a KPI that stored one keeps it. */
     ],
     /* The same Style the trimmed live cards keep. ⚠️ No P8: you asked for the empty state My CIs
        has, which is the product's — not one an admin writes per card. */
