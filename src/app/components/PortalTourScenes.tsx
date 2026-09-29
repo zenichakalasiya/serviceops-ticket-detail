@@ -22,6 +22,13 @@
  * out and every class is literal.
  */
 
+import {
+  AlignCenterVertical, AlignEndVertical, AlignStartVertical, ArrowDownToLine, ArrowRightToLine, ChevronDown, ChevronRight,
+  GripVertical, Headset, KeyRound, LayoutGrid, LayoutTemplate, Lightbulb, Megaphone, PaintBucket, Plus, ShoppingCart,
+  SquareMousePointer, Ticket, Trash2,
+} from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+
 const BLUE = '#3D8BD0';
 const INK = '#1E293B';
 const MUTED = '#64748B';
@@ -108,19 +115,21 @@ const CARD_BAR: Glyph[][] = [['grip'], ['right'], ['templates', 'align'], ['buck
 function barLayout(groups: Glyph[][]) {
   const at: Partial<Record<Glyph, number>> = {};
   const rules: number[] = [];
-  let x = 4;
+  /* ⚠️ Compact, like the real bar: 9-unit buttons, a 5-unit gap holding each rule. */
+  let x = 3;
   groups.forEach((g, gi) => {
-    if (gi) { rules.push(x + 3); x += 6; }
-    g.forEach((k) => { at[k] = x + 5.5; x += 11; });
+    if (gi) { rules.push(x + 2.5); x += 5; }
+    g.forEach((k) => { at[k] = x + 4.5; x += 9; });
   });
-  return { at, rules, w: x + 4 };
+  return { at, rules, w: x + 3 };
 }
 const SB = barLayout(SECTION_BAR);
 const CB = barLayout(CARD_BAR);
-const BAR_Y = 36;
+const BAR_Y = 38;
+const BAR_H = 12;
 /** A toolbar button's centre, for the cursor. */
-const secBtn = (k: Glyph): [number, number] => [SEC_X + (SB.at[k] ?? 0), BAR_Y + 7];
-const cardBtn = (cx: number, k: Glyph): [number, number] => [cx + (CB.at[k] ?? 0), BAR_Y + 7];
+const secBtn = (k: Glyph): [number, number] => [SEC_X + (SB.at[k] ?? 0), BAR_Y + BAR_H / 2];
+const cardBtn = (cx: number, k: Glyph): [number, number] => [cx + (CB.at[k] ?? 0), BAR_Y + BAR_H / 2];
 
 const [C0X] = slot(0, SEC_W);
 const [C1X] = slot(1, SEC_W);
@@ -151,8 +160,9 @@ export const SCENE_FRAMES: SceneFrame[] = [
   { ch: 3, ms: 1300, cur: cardBtn(C1X, 'right'), panel: 'card', placed: true, tint: true, selCard: true, bar: 'card', tpl: 'top', align: 'right', swapped: true },
   /* Stretch — the section's side handle */
   { ch: 4, ms: 700, cur: [SEC_X + SEC_W, SEC_Y + SEC_H / 2], panel: 'section', placed: true, tint: true, selSec: true, tpl: 'top', align: 'right', swapped: true, press: true },
-  { ch: 4, ms: 1300, cur: [SEC_X + 152, SEC_Y + SEC_H / 2], panel: 'section', placed: true, tint: true, selSec: true, tpl: 'top', align: 'right', swapped: true, sw: 152 },
-  { ch: 4, ms: 1000, cur: [SEC_X + SEC_W, SEC_Y + SEC_H / 2], panel: 'section', placed: true, tint: true, selSec: true, tpl: 'top', align: 'right', swapped: true },
+  /* ⚠️ The freed space OPENS AS AN EMPTY COLUMN on the right (dashed, with its +) — what dragging a side handle really leaves. */
+  { ch: 4, ms: 1300, cur: [SEC_X + 128, SEC_Y + SEC_H / 2], panel: 'section', placed: true, tint: true, selSec: true, tpl: 'top', align: 'right', swapped: true, sw: 128 },
+  { ch: 4, ms: 1500, cur: [SEC_X + 128, SEC_Y + SEC_H / 2], panel: 'section', placed: true, tint: true, selSec: true, tpl: 'top', align: 'right', swapped: true, sw: 128 },
   /* Publish */
   { ch: 5, ms: 900, cur: [276, 31] },
   { ch: 5, ms: 500, cur: [276, 31], pressed: true, press: true },
@@ -236,11 +246,19 @@ function Page({ x = 14, y = 22, w = 194, h = 138 }: { x?: number; y?: number; w?
 
 /* ── the action cards ─────────────────────────────────────────────────────────────────────────── */
 
-const CARDS: { name: string; sub: string; c: string }[] = [
-  { name: 'New Incident', sub: 'Report an issue', c: '#EF4444' },
-  { name: 'Request Service', sub: 'Browse services', c: BLUE },
-  { name: 'AD Self Service', sub: 'Reset password', c: '#F59E0B' },
-  { name: 'Knowledge', sub: 'Browse articles', c: '#10B981' },
+/* ⚠️ EVERY icon in the video is a real LUCIDE icon (Zeni, 29 Sep 2026), drawn small with a thin stroke:
+   the hand-drawn glyphs read heavy and blurry. A lucide component renders its own <svg> (24-unit
+   viewBox) and nests inside this scene's 320 × 180 one at `size` units, so a 1.6 stroke in its own space
+   draws a ~0.35-unit line here — the product's own thin line at video scale. */
+function Ico({ I, cx, cy, s = 5, c = '#64748B', w = 1.7 }: { I: LucideIcon; cx: number; cy: number; s?: number; c?: string; w?: number }) {
+  return <I x={cx - s / 2} y={cy - s / 2} size={s} color={c} strokeWidth={w} />;
+}
+
+const CARDS: { name: string; sub: string; c: string; I: LucideIcon }[] = [
+  { name: 'New Incident', sub: 'Report an issue', c: '#EF4444', I: Ticket },
+  { name: 'Request Service', sub: 'Browse services', c: BLUE, I: ShoppingCart },
+  { name: 'AD Self Service', sub: 'Reset password', c: '#F59E0B', I: KeyRound },
+  { name: 'Knowledge', sub: 'Browse articles', c: '#10B981', I: Lightbulb },
 ];
 
 /** One action card — icon LEFT, or icon TOP aligned left / centre / right, as the card's template says. */
@@ -253,13 +271,15 @@ function ActionCard({ x, y, w, card, tpl = 'left', align = 'left' }: {
   const badgeX = top ? (align === 'right' ? ax - 9 : align === 'center' ? ax - 4.5 : ax) : x + 5;
   const badgeY = top ? y + 3.5 : y + 8;
   const badge = top ? 9 : 12;
+  /* The words are CLIPPED to the card, as the product truncates them — a narrow card must not spill. */
+  const clip = `ac-${card.name.replace(/[^a-z]/gi, '')}`;
   return (
     <g>
+      <clipPath id={clip}><rect x={x + 2} y={y} width={Math.max(0, w - 4)} height={CARD_H} /></clipPath>
       <rect x={x} y={y} width={w} height={CARD_H} rx="4" fill={PAPER} stroke={LINE} strokeWidth="0.7" style={{ transition: T }} />
-      <g style={{ transition: T }}>
-        <rect x={badgeX} y={badgeY} width={badge} height={badge} rx="2.5" fill={card.c} opacity="0.14" style={{ transition: T }} />
-        <rect x={badgeX + badge / 2 - 2.2} y={badgeY + badge / 2 - 2.2} width="4.4" height="4.4" rx="1.1" fill={card.c} style={{ transition: T }} />
-      </g>
+      <rect x={badgeX} y={badgeY} width={badge} height={badge} rx="2.5" fill={card.c} opacity="0.12" style={{ transition: T }} />
+      <Ico I={card.I} cx={badgeX + badge / 2} cy={badgeY + badge / 2} s={top ? 5 : 6.2} c={card.c} />
+      <g clipPath={`url(#${clip})`}>
       {top ? (
         <>
           <Txt x={ax} y={y + 19} s={5} w={600} anchor={anchor}>{card.name}</Txt>
@@ -271,35 +291,20 @@ function ActionCard({ x, y, w, card, tpl = 'left', align = 'left' }: {
           <Txt x={x + 21} y={y + 19.6} s={4.2} c={MUTED}>{card.sub}</Txt>
         </>
       )}
+      </g>
     </g>
   );
 }
 
 /* ── the floating toolbar, after the real icons ───────────────────────────────────────────────── */
 
+/** A toolbar glyph — the lucide icon the real bar uses for that button. */
+const GLYPH: Record<Glyph, LucideIcon> = {
+  grip: GripVertical, right: ArrowRightToLine, down: ArrowDownToLine, layout: LayoutGrid, templates: LayoutTemplate,
+  align: AlignStartVertical, alignC: AlignCenterVertical, alignR: AlignEndVertical, bucket: PaintBucket, trash: Trash2,
+};
 function glyph(k: Glyph, cx: number, cy: number, c: string) {
-  const s = { stroke: c, strokeWidth: 0.9, fill: 'none', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
-  switch (k) {
-    case 'grip': return <g>{[[-1.6, -2.2], [1.6, -2.2], [-1.6, 0], [1.6, 0], [-1.6, 2.2], [1.6, 2.2]].map(([dx, dy], i) => <circle key={i} cx={cx + dx} cy={cy + dy} r="0.7" fill={c} />)}</g>;
-    /* ArrowRightToLine */
-    case 'right': return <g><path d={`M${cx - 3} ${cy} h4.6 M${cx - 0.2} ${cy - 2.2} l2.2 2.2 l-2.2 2.2`} {...s} /><path d={`M${cx + 3.2} ${cy - 3} v6`} {...s} /></g>;
-    /* ArrowDownToLine */
-    case 'down': return <g><path d={`M${cx} ${cy - 3} v4.6 M${cx - 2.2} ${cy - 0.2} l2.2 2.2 l2.2 -2.2`} {...s} /><path d={`M${cx - 3} ${cy + 3.2} h6`} {...s} /></g>;
-    /* LayoutGrid */
-    case 'layout': return <g>{[[-3.1, -3.1], [0.5, -3.1], [-3.1, 0.5], [0.5, 0.5]].map(([dx, dy], i) => <rect key={i} x={cx + dx} y={cy + dy} width="2.6" height="2.6" rx="0.5" {...s} />)}</g>;
-    /* LayoutTemplate */
-    case 'templates': return <g><rect x={cx - 3.2} y={cy - 3.2} width="6.4" height="2.4" rx="0.5" {...s} /><rect x={cx - 3.2} y={cy + 0.4} width="2.8" height="2.8" rx="0.5" {...s} /><path d={`M${cx + 1} ${cy + 0.9} h2.2 M${cx + 1} ${cy + 2.7} h2.2`} {...s} /></g>;
-    /* AlignStartVertical */
-    case 'align': return <g><path d={`M${cx - 3.2} ${cy - 3.4} v6.8`} {...s} /><rect x={cx - 1.8} y={cy - 2.6} width="4.8" height="1.9" rx="0.5" {...s} /><rect x={cx - 1.8} y={cy + 0.7} width="3" height="1.9" rx="0.5" {...s} /></g>;
-    /* AlignCenterVertical */
-    case 'alignC': return <g><path d={`M${cx} ${cy - 3.4} v6.8`} {...s} /><rect x={cx - 2.6} y={cy - 2.6} width="5.2" height="1.9" rx="0.5" {...s} /><rect x={cx - 1.7} y={cy + 0.7} width="3.4" height="1.9" rx="0.5" {...s} /></g>;
-    /* AlignEndVertical */
-    case 'alignR': return <g><path d={`M${cx + 3.2} ${cy - 3.4} v6.8`} {...s} /><rect x={cx - 3} y={cy - 2.6} width="4.8" height="1.9" rx="0.5" {...s} /><rect x={cx - 1.2} y={cy + 0.7} width="3" height="1.9" rx="0.5" {...s} /></g>;
-    /* PaintBucket */
-    case 'bucket': return <path d={`M${cx - 2.6} ${cy + 0.4} l2.2 -3 l2.6 2.4 l-2.2 3 z M${cx + 2.6} ${cy + 1.6} q0.6 1.2 0 1.8 q-0.6 -0.6 0 -1.8`} {...s} />;
-    /* Trash2 */
-    default: return <path d={`M${cx - 2.6} ${cy - 1.8} h5.2 M${cx - 1.9} ${cy - 1.8} l0.4 4.6 h3 l0.4 -4.6 M${cx - 0.9} ${cy - 1.8} v-0.9 h1.8 v0.9`} {...s} stroke="#EF4444" />;
-  }
+  return <Ico I={GLYPH[k]} cx={cx} cy={cy} s={5} c={k === 'trash' ? '#EF4444' : c} />;
 }
 
 function Bar({ x, kind, lit, align }: { x: number; kind: 'section' | 'card'; lit?: Glyph; align?: 'left' | 'center' | 'right' }) {
@@ -309,12 +314,12 @@ function Bar({ x, kind, lit, align }: { x: number; kind: 'section' | 'card'; lit
   const groups = kind === 'section' ? SECTION_BAR : CARD_BAR;
   return (
     <g className="pt-fade" filter="url(#ts-card)" style={{ transform: `translate(${x}px, 0px)`, transition: GLIDE }}>
-      <rect x="0" y={BAR_Y} width={L.w} height="14" rx="4" fill={PAPER} stroke={LINE} strokeWidth="0.6" />
-      {L.rules.map((rx) => <line key={rx} x1={rx} x2={rx} y1={BAR_Y + 3.5} y2={BAR_Y + 10.5} stroke={LINE} strokeWidth="0.6" />)}
+      <rect x="0" y={BAR_Y} width={L.w} height={BAR_H} rx="3.5" fill={PAPER} stroke={LINE} strokeWidth="0.5" />
+      {L.rules.map((rx) => <line key={rx} x1={rx} x2={rx} y1={BAR_Y + 3} y2={BAR_Y + BAR_H - 3} stroke={LINE} strokeWidth="0.5" />)}
       {groups.flat().map((k) => (
         <g key={k}>
-          {lit === k && <rect x={(L.at[k] ?? 0) - 4.6} y={BAR_Y + 2.4} width="9.2" height="9.2" rx="2" fill="#EAF3FB" />}
-          {glyph(shown(k), L.at[k] ?? 0, BAR_Y + 7, lit === k ? BLUE : '#64748B')}
+          {lit === k && <rect x={(L.at[k] ?? 0) - 3.8} y={BAR_Y + 2.2} width="7.6" height="7.6" rx="1.6" fill="#EAF3FB" />}
+          {glyph(shown(k), L.at[k] ?? 0, BAR_Y + BAR_H / 2, lit === k ? BLUE : '#64748B')}
         </g>
       ))}
     </g>
@@ -325,7 +330,7 @@ function Bar({ x, kind, lit, align }: { x: number; kind: 'section' | 'card'; lit
 
 const SIDE_X = 216;
 function Chevron({ x, y, open }: { x: number; y: number; open?: boolean }) {
-  return <path d={open ? `M${x - 1.8} ${y - 0.8} l1.8 1.8 l1.8 -1.8` : `M${x - 0.8} ${y - 1.8} l1.8 1.8 l-1.8 1.8`} stroke="#9CA3AF" strokeWidth="0.8" fill="none" strokeLinecap="round" />;
+  return <Ico I={open ? ChevronDown : ChevronRight} cx={x} cy={y} s={4.6} c="#9CA3AF" />;
 }
 /** A collapsed accordion row — the look of every folded group in the real panel. */
 function Folded({ y, label }: { y: number; label: string }) {
@@ -340,17 +345,18 @@ function Folded({ y, label }: { y: number; label: string }) {
 
 function Sidebar({ f }: { f: SceneFrame }) {
   const panel = f.panel ?? 'widgets';
-  const lib: [string, string][] = [['Action Card', '#EF4444'], ['My Open Requests', BLUE], ['Announcements', '#F59E0B'], ['Knowledge', '#10B981'], ['Contact Us', '#8B5CF6']];
+  const lib: [string, string, LucideIcon][] = [['Action Card', '#EF4444', SquareMousePointer], ['My Open Requests', BLUE, Ticket], ['Announcements', '#F59E0B', Megaphone], ['Knowledge', '#10B981', Lightbulb], ['Contact Us', '#8B5CF6', Headset]];
   return (
     <g filter="url(#ts-card)">
       <rect x={SIDE_X} y="22" width="90" height="138" rx="8" fill={PAPER} />
       {panel === 'widgets' && (
         <g key="w" className="pt-fade">
           <Txt x={SIDE_X + 8} y={36} s={7} w={600}>Widgets</Txt>
-          {lib.map(([name, c], i) => (
+          {lib.map(([name, c, I], i) => (
             <g key={name}>
               <rect x={SIDE_X + 5} y={44 + i * 19} width="80" height="16" rx="4" fill={i === 0 && f.ghost ? '#EEF2FF' : '#F8FAFC'} stroke={i === 0 && f.ghost ? BLUE : 'none'} strokeWidth="0.8" />
-              <rect x={SIDE_X + 9} y={48 + i * 19} width="8" height="8" rx="2" fill={c} opacity="0.9" />
+              <rect x={SIDE_X + 9} y={48 + i * 19} width="8" height="8" rx="2" fill={c} opacity="0.12" />
+              <Ico I={I} cx={SIDE_X + 13} cy={52 + i * 19} s={5} c={c} />
               <Txt x={SIDE_X + 21} y={54 + i * 19} s={5.2} w={500}>{name}</Txt>
             </g>
           ))}
@@ -476,8 +482,11 @@ function EditorScene({ f }: { f: SceneFrame }) {
       {f.selCard && (
         <rect x={selX - 1.2} y={selY - 1.2} width={cw + 2.4} height={CARD_H + 2.4} rx="4.6" fill="none" stroke={BLUE} strokeWidth="1.3" className="pt-fade" style={{ transition: T }} />
       )}
+      {/* ⚠️ The space a stretch frees OPENS AS AN EMPTY COLUMN, dashed with its + — the offer to fill it. */}
       {f.sw && f.sw < SEC_W && (
         <g className="pt-fade">
+          <rect x={SEC_X + sw + 6} y={SEC_Y} width={SEC_W - sw - 6} height={SEC_H} rx="5" fill="none" stroke="#CBD5E1" strokeWidth="0.9" strokeDasharray="3 2.5" />
+          <Ico I={Plus} cx={SEC_X + sw + 6 + (SEC_W - sw - 6) / 2} cy={SEC_Y + SEC_H / 2} s={7} c="#94A3B8" w={1.6} />
           <rect x={SEC_X + sw - 30} y={SEC_Y + SEC_H + 16} width="58" height="11" rx="5.5" fill={INK} />
           <Txt x={SEC_X + sw - 1} y={SEC_Y + SEC_H + 23.4} s={5.2} w={500} c={PAPER} anchor="middle">Drag to resize</Txt>
         </g>
@@ -530,7 +539,8 @@ function EditorScene({ f }: { f: SceneFrame }) {
       {(f.ghost === 'lift' || f.ghost === 'fly') && (
         <g filter="url(#ts-lift)" style={{ transform: `translate(${f.ghost === 'fly' ? -154 : 0}px, ${f.ghost === 'fly' ? 30 : 0}px)`, transition: GLIDE }}>
           <rect x={SIDE_X + 5} y="44" width="80" height="16" rx="4" fill={PAPER} stroke={BLUE} strokeWidth="1" />
-          <rect x={SIDE_X + 9} y="48" width="8" height="8" rx="2" fill="#EF4444" />
+          <rect x={SIDE_X + 9} y="48" width="8" height="8" rx="2" fill="#EF4444" opacity="0.12" />
+          <Ico I={SquareMousePointer} cx={SIDE_X + 13} cy={52} s={5} c="#EF4444" />
           <Txt x={SIDE_X + 21} y={54} s={5.2} w={600}>Action Card</Txt>
         </g>
       )}
@@ -566,8 +576,8 @@ function PublishScene({ f }: { f: SceneFrame }) {
         {CARDS.map((card, i) => (
           <g key={card.name}>
             <rect x={20 + i * 70.5} y="118" width="66" height="38" rx="5" fill={PAPER} stroke={LINE} strokeWidth="0.8" />
-            <rect x={25 + i * 70.5} y="126" width="11" height="11" rx="3" fill={card.c} opacity="0.14" />
-            <rect x={28 + i * 70.5} y="129" width="5" height="5" rx="1.3" fill={card.c} />
+            <rect x={25 + i * 70.5} y="126" width="11" height="11" rx="3" fill={card.c} opacity="0.12" />
+            <Ico I={card.I} cx={30.5 + i * 70.5} cy={131.5} s={5.6} c={card.c} />
             <Txt x={39 + i * 70.5} y={133.6} s={5} w={600}>{card.name}</Txt>
           </g>
         ))}
