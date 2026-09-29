@@ -473,9 +473,16 @@ export function BannerLayoutPanel({ tree, onCount, onPick, nameOf, onClose, keys
           ⚠️ DEFAULT is the banner with the words alone — one section, which the numbers could not say.
           It is the way BACK: every other value adds cells, and without it a banner taken to four had no
           route to the shape it started in short of deleting the sections by hand. */}
-      <div className="mb-1.5 flex items-center justify-between gap-3">
-        <span className="text-[12px] font-medium text-[#364658]">Sections</span>
-        <span className="pill-track">
+      {/* ⚠️ The title and its one-liner are ONE block on the left, with the tabs centred against the
+          pair (Zeni, 29 Sep 2026). With the line underneath the whole row, the tabs lined up with the
+          title alone and the hint hung below them as a third thing. */}
+      <div className="flex items-center justify-between gap-3">
+        <span className="min-w-0">
+          <span className="block text-[12px] font-medium text-[#364658]">Sections</span>
+          {/* ONE line, and the actionable half of it — the tiles below already draw what a section is. */}
+          <span className="mt-0.5 block text-[11px] leading-[16px] text-[#9CA3AF]">Click an empty cell on the banner to fill it.</span>
+        </span>
+        <span className="pill-track flex-shrink-0">
           {([[1, 'Default'], [2, '2'], [3, '3'], [4, '4']] as const).map(([n, label]) => {
             const lit = n === cur;
             return (
@@ -495,10 +502,6 @@ export function BannerLayoutPanel({ tree, onCount, onPick, nameOf, onClose, keys
           })}
         </span>
       </div>
-      {/* ⚠️ ONE line, and the actionable half of it. It also said "the words and the widgets beside
-          them" — a definition of a section, which the tiles below now draw, and which wrapped the line
-          in two and pushed the arrangements down the popup. */}
-      <p className="mt-1.5 text-[11px] leading-[16px] text-[#9CA3AF]">Click an empty cell on the banner to fill it.</p>
 
       {/* ⚠️ It ALWAYS draws, and at one section it draws ONE tile: the words and the search, lit,
           because that is the arrangement the banner is in. The block used to vanish below two sections,
@@ -506,7 +509,9 @@ export function BannerLayoutPanel({ tree, onCount, onPick, nameOf, onClose, keys
           with no picture at all at the moment the count row had just been reduced to numbers. One tile
           is also the way BACK: the default shape is a thing you can see and point at rather than a state
           you have to reconstruct. */}
-      <div className="mt-2.5 border-t border-[#EEF1F5] pt-2.5">
+      {/* ⚠️ NO divider — space alone separates Sections from Arrangement (Zeni, 29 Sep 2026). The gap is
+          16px, the same step one field sits off the next everywhere in the panel. */}
+      <div className="mt-4">
           <p className="mb-2 text-[12px] font-medium text-[#364658]">Arrangement</p>
           <div className="grid grid-cols-4 gap-1.5">
             {presets.length >= 2
