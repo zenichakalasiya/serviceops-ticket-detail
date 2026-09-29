@@ -148,6 +148,9 @@ function specDrivenBody(type: string, cfg: Record<string, unknown> | undefined, 
     <Sel id={`${nodeId}-${part}`} {...rest}>{children}</Sel>;
 
   if (type === 'b-text') {
+    /** The toolbar's horizontal alignment as text alignment — Stretch is justified text. */
+    const textAlignOf = (a: unknown) =>
+      a === 'stretch' ? 'justify' : a === 'left' || a === 'center' || a === 'right' ? a : undefined;
     const html = String(cfg.html ?? '');
     if (!html) return null;
     return (
@@ -156,7 +159,11 @@ function specDrivenBody(type: string, cfg: Record<string, unknown> | undefined, 
       <div
         className={ownStyle?.height !== undefined ? 'h-full' : undefined}
         style={{
-          textAlign: cfg.textAlign as never,
+          /* ⚠️ The toolbar's / sidebar's HORIZONTAL alignment is the words' alignment. It is stored on the
+             element's style (`align`), which `sizeOf` only acts on for `stretch` — so a Text block, already
+             full width, moved nothing for Left / Centre / Right. Stretch means justified text. The old
+             `cfg.textAlign` (nothing writes it any more) is the fallback so older pages keep their look. */
+          textAlign: (textAlignOf(ownStyle?.align) ?? cfg.textAlign) as never,
           columnCount: cfg.textCols === '2' ? 2 : undefined,
           fontFamily: cfg.font === 'Inherit from theme' ? undefined : (cfg.font as string),
           fontWeight: ({ Light: 300, Normal: 400, Medium: 500, Semibold: 600, Bold: 700 } as Record<string, number>)[String(cfg.weight ?? 'Normal')],

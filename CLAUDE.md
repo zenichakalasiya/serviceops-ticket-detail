@@ -306,6 +306,33 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   Services deleted it would have taken Most Used off the page too. ⚠️ In the split row each grid defaults
   to **2 columns** (`{ columns: 2, ...wc(id) }`) — four tiles at half width were 98px and the names ran into
   each other; an admin's own column count still wins (style store, then config).
+- **Support Portal — a PARENT's handles set the gap between its children (29 Sep 2026, Zeni).**
+  On an added section or box holding other sections (`sec-N`, `sec-N-bM`) and on the built-in bands
+  (`GAP_DRAG_BANDS`: quick · work · work-main · work-rail · records — NOT the two service rows, which are
+  cards), `SelectionHandles` re-routes two drags: the **side handles** change the section's width AND its
+  column gap together — the width change is split across the gaps, so the columns keep their width until
+  the gap reaches 0, then they narrow — and the **bottom handle** changes the ROW gap (min 0; the section's
+  height follows its content). A section with only one child, and the predefined cards, keep the ordinary
+  resize. `measureGaps(el, id)` MEASURES the gaps off the rendered children (every laid-out child, since
+  bands wrap each card in an order div; and the container is the `data-gap-parent` that actually lays out
+  more than one thing — Quick Actions carries the marker twice). Writes go to the SAME keys the old gap
+  strips used: a section/band via `gapPairX`/`gapPairY` (redirected by `patchCfg`), a box via
+  `gapX`/`gapY`. While dragging, `<GapBands forceLit />` lights the gaps pink with their values and a
+  badge reads e.g. "6px column gap". Verified: 3 columns, side −40px → width −40, gaps 16→0; Quick Actions
+  −30px → gaps 16→6 with cards still 206px; 2×2 bottom +30 → row gap 46, −200 → 0; a single-cell section
+  still grows its height.
+- **Support Portal — ALIGNMENT: what works, and the Text gap (29 Sep 2026; see HANDOFF.md for the live list).**
+  The "Stretch" option is drawn with lucide `StretchHorizontal` / `StretchVertical` (both toolbars + the
+  sidebar), not a bare ↔ arrow, so the glyph pictures the result. ⚠️ **A placed Text ignores the toolbar's
+  horizontal alignment**: `b-text` (`PortalPlacedElement`) reads `cfg.textAlign`, which nothing writes any
+  more, while the toolbar/sidebar write `styles[id].align` — and `sizeOf` only acts on `align: 'stretch'`.
+  FIXED 29 Sep 2026: `textAlignOf(ownStyle.align)` feeds `textAlign` (Stretch → justify), with `cfg.textAlign`
+  as the fallback for older pages. ⚠️ **Vertical alignment moves nothing on a box exactly as
+  tall as its content** (most cards, tiles and bands at rest): there is no spare height to place it in. The
+  banner's own H/V (`contentAlign`/`contentAlignY`) are ignored once the banner is arranged as a tree.
+  Audit scripts: `D:/Motadata/tour-shots/probe-align.mjs` and `probe-align2.mjs` (select each node, try every
+  option from the sidebar, compare a position signature). Don't edit source while one runs — HMR reloads the
+  page. Service tiles' icon badge is **white** (`#FFFFFF`) on the grey tile.
 - **Support Portal — the floating toolbar's DESIGN controls are ALSO in the sidebar (29 Sep 2026, Zeni's manager).**
   ⚠️ This REVERSES the "style lives on the toolbar only / NO alignment in any sidebar" decisions for the
   toolbar's own controls: every one of them EXCEPT drag, move, replace, delete and the add actions (+,

@@ -1,63 +1,96 @@
-# Handoff — 2026-09-27 22:27
+# Handoff — 2026-09-29 16:15
 
 ## Read first
-All work is in the **Support Portal** (Admin › Support Channels) — the builder and its listing page.
-In `CLAUDE.md` › Key context, read these bullets (dated 25–27 Sep 2026):
+All work is in the **Support Portal** builder (Admin › Support Channels) and its listing.
+**Start with the ALIGNMENT work below — it is the priority (Zeni) and it is half done.**
+In `CLAUDE.md` › Key context, read these bullets (dated 28–29 Sep 2026):
 
-1. *"the card's switch IS the status"* — the current publish model. It supersedes several earlier
-   notes about an "Enabled" flag, an always-on default and a second Draft pill.
-2. *"the LISTING is CARDS, and the default can be moved"* — the `PortalCard` layout and the
-   publish-and-make-default rules (`ConfirmPublish`, `publishAsDefault`, `defaultId`).
-3. *"EVERY widget has Replace, predefined ones included, and it swaps IN PLACE"*.
-4. *"Solid / Gradient are CHIP tabs"* and *"ONE tab strip everywhere: the Figma pill"*.
+1. *"the floating toolbar's DESIGN controls are ALSO in the sidebar"* — `DesignQuickSections`,
+   `hasDesignQuick`, `DesignGroupsCtx`. It reverses the older "styling/alignment on the toolbar only".
+2. *"EVERY colour picker has Light · Dark tabs and opens on the portal's mode"* — `ColorPair`,
+   `colorPair()` / `shownOf()`.
+3. *"the two service rows are WHITE CARDS with their title inside"* and *"Favourite and Most Used
+   Services share ONE row by default"*.
+4. *"closing the tour dock PARKS it in the right rail"*.
 
 ## What we worked on this session
-Replace on every widget; the Support Portal listing rebuilt as cards; a clear one-live-portal publish
-model; and more control polish (chip tabs, pill sizing, the light/dark toggle icons).
+Tooltip layering and shortcut polish, the tour dock's resting place, the two service rows'
+layout and look, Light/Dark tabs in every colour picker, and — the big one — the toolbar's
+design controls mirrored into the sidebar. Ended mid-way through an alignment audit.
 
-## Completed
-- **Replace on every widget** — the built-in blocks (My Open Requests, Approvals, Assets, CIs,
-  Announcements, Most Read, Contact Us, Favourite / Most Used Services) get "Replace this widget". A
-  predefined widget swaps for ANY widget; the replacement takes the original's exact slot.
-- **Portal listing = cards** (`PortalCard`): one header row (small icon · name · Published/Draft ·
-  Default · switch), URL + Last modified, and a footer with **Customise portal** plus icon actions.
-- **One portal live at a time, and it is the default.** Publishing (or starring, or switching on) a
-  non-default portal asks "Publish and make it the default?"; confirming moves the previously live
-  portal to Draft. **Save as draft unpublishes.** The card's **switch is the status** (on = Published).
-- **Builder's main button always says Publish** (it used to relabel itself "Save as draft").
-- **Solid / Gradient** in the colour popups are outlined chip tabs with a blue check.
-- **Pill tabs size to their labels** ("Default" no longer overflows); **light/dark icons** full size.
-- All committed and pushed to `main`.
+## Completed (all pushed to `main`)
+- Builder tooltips draw above the editor (`z-[10200]`); shortcut sheet labels left / keys right;
+  "+ Add Section" has an instant tooltip with **N**; `TipKeys` moved to `PortalTipKeys.tsx`.
+- Portal listing card: name / URL / details 4px apart (`gap-1`).
+- Widget hover card: 240px, square-ish 136px sketch stage, name + one-line summary.
+- Every colour picker has Light / Dark tabs, opening on the portal's current mode; Cancel restores both.
+- Favourite + Most Used Services: side by side (default `browseLook: 'split'`), white cards with the
+  title inside, 2×2 tiles on `#F6F9FC`, no tile stroke.
+- Closing the tour dock parks a dark **Basics** button at the bottom of the right rail.
+- **Toolbar design controls also in the sidebar** (top of Design): Background · Border & corners
+  (style as a dropdown, radius merged) · Shadow cards · Icon · Alignment · Presets · Button style;
+  banner and banner-group variants. Text children get none (Zeni's choice).
+- Expand all / Collapse all now reaches every Design group; the card's **Title** group is last.
 
-## In progress
-Nothing mid-flight.
+## Also done after the first hand-off (29 Sep, later)
+- Banner Sections header: title + hint beside the tabs, no divider (commit ea7c90b).
+- **A parent section's handles set its gaps** — side handles: width + column gap together; bottom: row gap
+  (min 0). See the CLAUDE.md bullet "a PARENT's handles set the gap between its children".
+- The three files below were COMMITTED with that change, and the **Text alignment fix is done**
+  (`textAlignOf` in `PortalPlacedElement.tsx`); white service badges verified `rgb(255,255,255)`.
+
+## In progress — ALIGNMENT (do this first)
+Zeni asked for three things; **three files are edited but NOT committed**:
+`PortalCanvas.tsx`, `PortalCollectionRender.tsx`, `PortalStylePacks.tsx`.
+
+1. **Clearer alignment icons** — DONE, uncommitted: the "Stretch" option now uses lucide
+   `StretchHorizontal` / `StretchVertical` (was a bare ↔ arrow) in `ElementToolbar`'s `H_OPTS`/`V_OPTS`
+   and the sidebar's `ALIGN_H_OPTS`/`ALIGN_V_OPTS`. Zeni also said "focused to show what alignment is
+   applied" — confirm with her whether the icon change is enough or the trigger should look lit.
+2. **Service tile icons white** — DONE, uncommitted: badge background `#FFFFFF` in `ServiceTiles`
+   (`PortalCollectionRender.tsx`), and the resting value in `IconMenu`, `DesignQuickSections` and
+   `IconBoxBlock` changed from `#F1F5F9` to `#FFFFFF`.
+3. **Text horizontal alignment** — DONE (see above). Was: Root cause found: the placed Text (`b-text` in
+   `PortalPlacedElement.tsx` ~line 159) sets `textAlign` from `cfg.textAlign`, which no control
+   writes any more; the toolbar/sidebar write `styles[id].align`, which `sizeOf` only uses for
+   `stretch`. Fix: `textAlign: ownStyle?.align` (left/center/right; map `stretch` → `justify`),
+   falling back to `cfg.textAlign`.
+4. **Audit every widget's H/V alignment and give Zeni the list** — HALF DONE.
+   Scripts: `D:/Motadata/tour-shots/probe-align.mjs` (default page) and `probe-align2.mjs` (blank page +
+   every library widget). ⚠️ `probe-align2` is NOT reliable yet: its "+ on each palette row" loop only
+   ever added 5 widgets (4 data cards), so Text, Image, Button, Card etc. were never audited — fix the add
+   loop (e.g. click each row's "+" by its `data-tip`/aria, re-querying rows after every add) before
+   trusting it. Results so far, default page:
+   - **Banner (`hero`)**: H and V both do nothing (the arranged banner ignores `contentAlign`/`contentAlignY`).
+   - **Text & Search (`hero-content`)**: H works; V does nothing.
+   - **Quick Actions cards + their icons, service tiles, My Assets/My CIs tiles**: H works; V does nothing.
+   - **Favourite / Most Used Services, Assets/CIs tiles**: Right and Stretch look identical.
+   - **Placed data cards (My Open Requests, Approvals, Assets, CIs)**: H partial (Right = Stretch); V does nothing.
+   V "does nothing" mostly because the box is exactly as tall as its content — there is no spare height
+   to move within. Report that honestly rather than calling it broken; ask Zeni whether V should be
+   hidden where it cannot act.
+   ⚠️ Don't edit files while an audit runs — Vite reloads the page and the run loses its widgets.
 
 ## Next steps
-1. **Contact Us: "remove this"** — Zeni asked to remove something from the Contact Us card but the
-   screenshot never came through. Ask which part (heading, phone, email, icons, divider).
-2. Zeni to confirm the publish model feels right on `:5200` (hard refresh first).
-3. Figma pill sizes were measured from a screenshot — re-read node `296:14588` once the file is shared
-   with the Figma MCP account as an EDITOR.
-4. Carried over: the *Remove sections* list naming ("Custom Card" vs "Quick links");
-   `useRestingSpacing` reading Announcements as 0; the `support-portal-templates` repo items.
+1. Finish the alignment items above, verify in the browser, commit the three files + the Text fix.
+2. Send Zeni the full alignment list (H/V per widget, working / partial / does nothing).
+3. Carried over: Contact Us "remove this" (ask which part); Figma pill node `296:14588` needs editor
+   access; the review list of what overwhelms non-designers (15 points) and the one-go styling
+   options (style kit + look presets + S/M/L spacing recommended) await Zeni's choice.
 
 ## Decisions made
-- **A predefined widget can be replaced by ANY widget** (Zeni) — the same-class rule left the picker
-  empty on the default page. Ordinary widgets still swap only for their own kind.
-- **Quick Actions cards are not replaceable** — their row is locked to the product's four actions.
-- **A portal is Published OR Draft, never both; Save as draft unpublishes** (Zeni). So the default
-  portal can be a Draft, and then no portal is live until one is published.
-- **One live portal = the default.** Making a portal default IS publishing it, which is why the star
-  and the switch both open the same publish dialog.
-- **Set as default** was added because the brief mentioned it and nothing supported it.
+- **Toolbar design controls live in BOTH places** (Zeni's manager): sidebar + toolbar read/write the
+  same keys; drag/move/replace/delete/add stay toolbar-only; text children get no sidebar sections.
+- **Border & corners** is one sidebar group, no tabs, style as a dropdown; **Shadow** keeps its cards.
+- **Service rows** default to side-by-side, title inside a white card, grey tiles without a stroke.
+- **Closing the dock parks it in the rail**; the separate minimise pill was removed.
+- **Gradient stops have no light/dark pair** — one stored object would drift.
 
 ## Gotchas & notes
-- **Replacement in place** needs `PlacedElement.replaces`: appending a replacement to a built-in row
-  (the old `dropInRow` route) squeezed the work band's cards to slivers.
-- **A hidden BAND hides everything anchored under it** (`band()`), so a replacement for Favourite /
-  Most Used Services is anchored to the nearest visible band above.
-- **Check an icon's COMPUTED width** when it looks small — a flex item was squeezing a 16px svg to 8px.
-- **The dev server can take >60s to serve the first page** after start; wait on `curl` before tests.
-- **`node -e '…'` breaks on an apostrophe or backtick** in the text — write scripts to files.
-- Commit named files only — never `git add -A`. Pre-existing typecheck noise listed in the previous
-  handoff still applies (`splitNode`/`splitInfo`, the `portalWidgetSpec.ts` TS1117, and a few others).
+- **The typecheck bails on `CatalogItemDetailsModal.tsx`** when `SupportPortalBuilder.tsx` is in the
+  file list — typecheck the other files without it, or it looks clean when it checked nothing.
+- **React writes a bare `data-portal-dock` as `"true"`**, not `""`.
+- **Alt+1 toggles the Widgets panel** — a script pressing it before each row closes the panel.
+- Another terminal may be working in this repo: commit named files only, never `git add -A`.
+- Pre-existing typecheck noise: `splitNode`/`splitInfo` (PortalCanvas ~1415), `PortalControls` 49/519,
+  `PortalWidgetDrawer` ~1492, the `portalWidgetSpec.ts` TS1117.

@@ -359,7 +359,7 @@ export function IconBoxBlock(p: PackProps) {
   const rest = card
     ? { color: String(cardStyle.iconColor ?? '#475467'), bg: String(cardStyle.iconFill ?? '#F1F5F9'), radius: cardStyle.iconShape === 'circle' ? 999 : 4 }
     : service
-    ? { color: '#475467', bg: '#F1F5F9', radius: 8 }
+    ? { color: '#475467', bg: '#FFFFFF', radius: 8 }
     : { color: '#5A6B80', bg: '#FFFFFF', radius: 6 };
   const set = (patch: Partial<NodeStyle>) => p.setStyle(p.id, patch);
   const pair = (key: 'iconColor' | 'iconFill' | 'iconBorderColor', fallback: string) => ({

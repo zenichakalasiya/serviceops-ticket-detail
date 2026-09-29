@@ -8,7 +8,7 @@ import {
   AlignCenter, AlignCenterHorizontal, AlignCenterVertical, AlignEndHorizontal, AlignEndVertical,
   AlignLeft, AlignRight, AlignStartHorizontal, AlignStartVertical, StretchHorizontal, StretchVertical,
   ArrowDownToLine, ArrowLeftToLine, ArrowRightToLine, ArrowUpToLine, Baseline, Bold, Check, ChevronDown, ChevronRight, Columns2, Copy, GripHorizontal, GripVertical, Italic, Link2, Rows2,
-  Braces, Highlighter, Maximize2, UnfoldVertical, Move, MoveHorizontal, MoveVertical, Plus, RemoveFormatting,
+  Braces, Highlighter, Maximize2, UnfoldVertical, Move, Plus, RemoveFormatting,
   PaintBucket, Replace, SquareDashed, SquareRoundCorner, SquareSquare, Trash2, Underline, X, ImagePlus, Palette, LayoutDashboard, Columns3,
 } from 'lucide-react';
 import { BannerFillEditor, BannerLayoutPanel, OverlayLayerEditor, TilePresetPicker } from './PortalBannerTools';
@@ -1015,7 +1015,7 @@ function IconMenu({ id }: { id: string }) {
   const service = /^(favourites|services)-tile$/.test(id);
   const rest = card
     ? { color: String(cardStyle.iconColor ?? '#475467'), bg: String(cardStyle.iconFill ?? '#F1F5F9'), radius: cardStyle.iconShape === 'circle' ? 999 : 4 }
-    : service ? { color: '#475467', bg: '#F1F5F9', radius: 8 }
+    : service ? { color: '#475467', bg: '#FFFFFF', radius: 8 }
     : { color: '#5A6B80', bg: '#FFFFFF', radius: 6 };
   const radius = Number(own.iconRadius ?? rest.radius);
   const bw = Number(own.iconBorderWidth ?? 0);
@@ -1567,13 +1567,13 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
     ['left', 'Left', <AlignStartVertical key="l" size={15} />],
     ['center', 'Centre', <AlignCenterVertical key="c" size={15} />],
     ['right', 'Right', <AlignEndVertical key="r" size={15} />],
-    ['stretch', 'Stretch', <MoveHorizontal key="s" size={15} />],
+    ['stretch', 'Stretch', <StretchHorizontal key="s" size={15} />],
   ];
   const V_OPTS: [string, string, ReactNode][] = [
     ['start', 'Top', <AlignStartHorizontal key="t" size={15} />],
     ['center', 'Middle', <AlignCenterHorizontal key="m" size={15} />],
     ['end', 'Bottom', <AlignEndHorizontal key="b" size={15} />],
-    ['stretch', 'Stretch', <MoveVertical key="s" size={15} />],
+    ['stretch', 'Stretch', <StretchVertical key="s" size={15} />],
   ];
 
   /* ⚠️ INSTANT tooltips, and `data-tip` rather than `title`. A native title waits about a second
@@ -1942,11 +1942,56 @@ const MIN_BANNER_H = 260;
 /** The floor a south / north drag may take this node to. */
 const minHeightFor = (id: string) => (id === 'hero' ? MIN_BANNER_H : 24);
 
+/* ── A PARENT's handles set the GAP between its children (Zeni, 29 Sep 2026) ─────────────────────
+ * On a section (or box) that holds other sections, and on the built-in bands, the side handles change
+ * the section's WIDTH and the gap between its columns TOGETHER — the change goes into the gaps, so the
+ * columns keep their width until the gap reaches 0 — and the bottom handle changes the gap between its
+ * stacked ROWS (min 0), the section's height then following its content. A section holding ONE thing
+ * keeps the ordinary resize, and so do the predefined cards themselves (the two service rows are cards,
+ * so they are not on the list).
+ * ⚠️ The gaps are MEASURED off the rendered children, never read from config: wrapping, grids and
+ * nested boxes all decide where the space really is, and the pink bands are measured the same way. */
+const GAP_DRAG_BANDS = new Set(['quick', 'work', 'work-main', 'work-rail', 'records']);
+const isGapParent = (id: string) => /^sec-\d+(-b\d+)?$/.test(id) || GAP_DRAG_BANDS.has(id);
+/** The children of a parent, grouped into visual rows, and the gaps between them as they are drawn now. */
+function measureGaps(el: HTMLElement, id: string) {
+  /* ⚠️ EVERY laid-out child, not only ones carrying `data-node`: a built-in band draws each card inside a
+     wrapper (the order/share div), so its direct children are wrappers and a `data-node` filter found none.
+     Anything positioned out of the flow — a seam, an adder, a drop line — is not a member of the row. */
+  const laidOut = (b: HTMLElement) => Array.from(b.children).filter((k): k is HTMLElement => {
+    if (!(k instanceof HTMLElement)) return false;
+    const pos = getComputedStyle(k).position;
+    const r = k.getBoundingClientRect();
+    return pos !== 'absolute' && pos !== 'fixed' && r.width > 0 && r.height > 0;
+  });
+  /* ⚠️ A band can carry the marker TWICE — the Quick Actions `Sel` and the row inside it both say
+     `data-gap-parent="quick"` — and the outer one holds a single child (the row). The container is the
+     one that actually lays out more than one thing. */
+  const all = [...(el.matches(`[data-gap-parent="${id}"]`) ? [el] : []), ...Array.from(el.querySelectorAll<HTMLElement>(`[data-gap-parent="${id}"]`))];
+  const box = all.find((b) => laidOut(b).length > 1) ?? all[0];
+  if (!box) return null;
+  const kids = laidOut(box).map((k) => k.getBoundingClientRect());
+  const rows: DOMRect[][] = [];
+  for (const r of kids.sort((a, b) => a.top - b.top || a.left - b.left)) {
+    const line = rows.find((row) => Math.abs(row[0].top - r.top) < 3);
+    if (line) line.push(r); else rows.push([r]);
+  }
+  rows.forEach((row) => row.sort((a, b) => a.left - b.left));
+  const wide = rows.find((row) => row.length > 1);
+  const gapsX = Math.max(0, ...rows.map((row) => row.length - 1));
+  const gapX = wide ? Math.max(0, Math.round(wide[1].left - wide[0].right)) : 0;
+  const gapsY = Math.max(0, rows.length - 1);
+  const gapY = rows.length > 1 ? Math.max(0, Math.round(rows[1][0].top - Math.max(...rows[0].map((r) => r.bottom)))) : 0;
+  return { gapsX, gapX, gapsY, gapY };
+}
+
 function SelectionHandles({ id, elRef }: { id: string; elRef: React.RefObject<HTMLDivElement | null> }) {
-  const { styles, setStyle } = useCanvas();
-  const [live, setLive] = useState<{ kind: 'size' | 'padY' | 'padX' | 'gap'; label: string } | null>(null);
+  const { styles, setStyle, setCfg } = useCanvas();
+  const [live, setLive] = useState<{ kind: 'size' | 'padY' | 'padX' | 'gap' | 'gapX' | 'gapY'; label: string } | null>(null);
   const drag = useRef<{
-    kind: 'size' | 'padY' | 'padX' | 'gap'; corner: string; x: number; y: number;
+    /** The two gap drags a PARENT's handles make — see `isGapParent`. */
+    g0?: number; gn?: number;
+    kind: 'size' | 'padY' | 'padX' | 'gap' | 'gapX' | 'gapY'; corner: string; x: number; y: number;
     w: number; h: number; pad: SpacingBox; gap: number; parentW: number;
     /** How tall this element may become before it outgrows the section holding it. */
     maxH: number;
@@ -1976,6 +2021,29 @@ function SelectionHandles({ id, elRef }: { id: string; elRef: React.RefObject<HT
       if (!d) return;
       const dx = e.clientX - d.x;
       const dy = e.clientY - d.y;
+
+      /* A PARENT: width and column gap move together; the bottom edge sets the row gap. */
+      if (d.kind === 'gapX' || d.kind === 'gapY') {
+        /* Sections and bands go through the panel's own keys (`patchCfg` redirects them, and on a
+           section also clears the boxes inside); a box inside a section writes its own gap. */
+        const own = /^sec-\d+-b\d+$/.test(id);
+        if (d.kind === 'gapY') {
+          const v = Math.max(0, Math.min(200, Math.round((d.g0 ?? 0) + dy / Math.max(1, d.gn ?? 1))));
+          setCfg?.(id, own ? { gapY: v } : { gapPairY: v });
+          setLive({ kind: 'gapY', label: `${v}px row gap` });
+          return;
+        }
+        const west = d.corner.includes('w');
+        const maxW = west ? d.w + d.ml : d.contentW - d.ml;
+        const w = Math.max(MIN_COL, Math.min(maxW, d.w + (west ? -dx : dx)));
+        const v = Math.max(0, Math.min(200, Math.round((d.g0 ?? 0) + (w - d.w) / Math.max(1, d.gn ?? 1))));
+        const patch: Partial<NodeStyle> = { widthPct: Math.round((w / Math.max(1, d.contentW)) * 10000) / 100, flex: undefined, width: undefined };
+        if (west) patch.margin = { ...d.margin, left: Math.round(Math.max(0, d.ml + (d.w - w))) };
+        setStyle(id, patch);
+        setCfg?.(id, own ? { gapX: v } : { gapPairX: v });
+        setLive({ kind: 'gapX', label: `${v}px column gap` });
+        return;
+      }
 
       if (d.kind === 'size') {
         const patch: Partial<NodeStyle> = {};
@@ -2117,7 +2185,7 @@ function SelectionHandles({ id, elRef }: { id: string; elRef: React.RefObject<HT
     window.addEventListener('mousemove', move);
     window.addEventListener('mouseup', up);
     return () => { window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', up); };
-  }, [id, setStyle]);
+  }, [id, setStyle, setCfg]);
 
   const begin = (e: React.MouseEvent, kind: 'size' | 'padY' | 'padX' | 'gap', corner = '') => {
     e.preventDefault();
@@ -2212,6 +2280,12 @@ function SelectionHandles({ id, elRef }: { id: string; elRef: React.RefObject<HT
         };
       })(),
     };
+    /* A PARENT's side handles and bottom handle set its gaps rather than resizing it alone. */
+    if (kind === 'size' && isGapParent(id) && (corner === 'e' || corner === 'w' || corner === 's')) {
+      const m = measureGaps(el, id);
+      if (m && corner === 's' && m.gapsY > 0) Object.assign(drag.current, { kind: 'gapY', g0: m.gapY, gn: m.gapsY });
+      else if (m && corner !== 's' && m.gapsX > 0) Object.assign(drag.current, { kind: 'gapX', g0: m.gapX, gn: m.gapsX });
+    }
     document.body.style.userSelect = 'none';
     document.body.style.cursor = kind === 'padY' || kind === 'gap' ? 'ns-resize'
       : kind === 'padX' ? 'ew-resize'
@@ -2269,6 +2343,8 @@ function SelectionHandles({ id, elRef }: { id: string; elRef: React.RefObject<HT
         </>
       )}
 
+      {/* The gaps being set, lit pink while you drag them. */}
+      {(live?.kind === 'gapX' || live?.kind === 'gapY') && <GapBands id={id} host={elRef} forceLit />}
       {corners.map(([c, cls]) => (
         <span key={c} onMouseDown={(e) => begin(e, 'size', c)} className={`${sq} ${cls} pointer-events-auto`} />
       ))}
@@ -3120,7 +3196,7 @@ const GAP_PINK = '#FF24BD';
    children, so a band that does not say which box arranges them simply has no strips. */
 export const GAP_BAND_NODES = new Set(['quick', 'favourites', 'services', 'work', 'work-main', 'work-rail', 'records']);
 
-function GapBands({ id, host }: { id: string; host: React.RefObject<HTMLDivElement | null> }) {
+function GapBands({ id, host, forceLit = false }: { id: string; host: React.RefObject<HTMLDivElement | null>; forceLit?: boolean }) {
   const { cfg, setCfg } = useCanvas();
   const c = cfg?.(id) ?? {};
   /* On an ARRANGED banner the bands are the arrangement's, and they edit the Content group's gap. */
@@ -3255,7 +3331,7 @@ function GapBands({ id, host }: { id: string; host: React.RefObject<HTMLDivEleme
   return (
     <>
       {bands.map((b, i) => {
-        const lit = drag || hot === i;
+        const lit = forceLit || drag || hot === i;
         const dir = b.dir;
         /* A zero gap still needs something to grab — the hit area never shrinks below 8px. */
         const hitW = dir === 'row' ? Math.max(b.w, 8) : b.w;
@@ -4389,13 +4465,13 @@ const ALIGN_H_OPTS = [
   { value: 'left', icon: <AlignStartVertical size={15} />, title: 'Left' },
   { value: 'center', icon: <AlignCenterVertical size={15} />, title: 'Centre' },
   { value: 'right', icon: <AlignEndVertical size={15} />, title: 'Right' },
-  { value: 'stretch', icon: <MoveHorizontal size={15} />, title: 'Stretch' },
+  { value: 'stretch', icon: <StretchHorizontal size={15} />, title: 'Stretch' },
 ];
 const ALIGN_V_OPTS = [
   { value: 'start', icon: <AlignStartHorizontal size={15} />, title: 'Top' },
   { value: 'center', icon: <AlignCenterHorizontal size={15} />, title: 'Middle' },
   { value: 'end', icon: <AlignEndHorizontal size={15} />, title: 'Bottom' },
-  { value: 'stretch', icon: <MoveVertical size={15} />, title: 'Stretch' },
+  { value: 'stretch', icon: <StretchVertical size={15} />, title: 'Stretch' },
 ];
 
 export function DesignQuickSections({ id }: { id: string }) {
@@ -4578,7 +4654,7 @@ export function DesignQuickSections({ id }: { id: string }) {
     const service = /^(favourites|services)-tile$/.test(iconTarget);
     const rest = card
       ? { color: String(cardStyle.iconColor ?? '#475467'), bg: String(cardStyle.iconFill ?? '#F1F5F9'), radius: cardStyle.iconShape === 'circle' ? 999 : 4 }
-      : service ? { color: '#475467', bg: '#F1F5F9', radius: 8 } : { color: '#5A6B80', bg: '#FFFFFF', radius: 6 };
+      : service ? { color: '#475467', bg: '#FFFFFF', radius: 8 } : { color: '#5A6B80', bg: '#FFFFFF', radius: 6 };
     const setI = (patch: Record<string, unknown>) => setStyle(iconTarget, patch as never);
     const r = Number(io.iconRadius ?? rest.radius);
     const bw = Number(io.iconBorderWidth ?? 0);
