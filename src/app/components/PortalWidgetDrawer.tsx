@@ -381,7 +381,8 @@ const OverrideDot = () => (
   <span title="Something in here is set away from the default" className="size-1.5 flex-shrink-0 rounded-full bg-[#F58518]" />
 );
 
-function PanelBody({ spec, nodeId, cfg, renderField, openGroups, toggleGroup, styles, setStyle, replaceStyle, collectionSlot, hasCollection }: {
+function PanelBody({ spec, nodeId, cfg, renderField, openGroups, toggleGroup, styles, setStyle, replaceStyle, collectionSlot, hasCollection, quickDesign }: {
+  quickDesign?: ReactNode;
   spec: WidgetSpec; nodeId: string; cfg: Cfg;
   renderField: (f: WidgetField) => ReactNode;
   openGroups: string[]; toggleGroup: (g: string) => void;
@@ -417,7 +418,7 @@ function PanelBody({ spec, nodeId, cfg, renderField, openGroups, toggleGroup, st
      eyebrow with nothing beneath it.
      ⚠️ `size` is filtered out of the render, so it is filtered out of the test too — counting it
      would keep the eyebrow for a widget whose only accordion is one the panel never draws. */
-  const hasDesignSection = panel.accordions
+  const hasDesignSection = !!quickDesign || panel.accordions
     .filter((a) => a.id !== 'size')
     .some((a) => !a.when || a.when(cfg));
 
@@ -473,6 +474,8 @@ function PanelBody({ spec, nodeId, cfg, renderField, openGroups, toggleGroup, st
       <>
       <SectionLabel>Design</SectionLabel>
       <div>
+        {/* The toolbar's own controls FIRST — background, border & corners, shadow, then the rest. */}
+        {quickDesign}
         {/* ⚠️ `size` is dropped here as well. Size already left as a field group (DROP_GROUPS) and as
             the P2 pack, but the panel model declares it a THIRD way — as an accordion — so it kept
             appearing on exactly the widgets that use that model. The eight drag handles set size;
@@ -676,6 +679,9 @@ export interface WidgetDrawerProps {
   onApplyBannerShape?: (id: string) => void;
   /** Opens the layout picker for the banner already on the page, locked to its shape. */
   onChangeBanner?: () => void;
+  /* The floating toolbar's design controls for this node (`DesignQuickSections`), built by the
+     builder INSIDE the canvas context and drawn at the top of Design. Null when the node has none. */
+  quickDesign?: ReactNode;
 }
 
 /* ⚠️ NO ALIGNMENT IN ANY SIDEBAR (25 Sep 2026). Every block's alignment is on its floating toolbar —
@@ -701,7 +707,7 @@ function withoutAlignment(spec: WidgetSpec): WidgetSpec {
 }
 
 export function PortalWidgetDrawer(props: WidgetDrawerProps) {
-  const { nodeId, spec: specIn, cfg, setCfg, styles, setStyle, replaceStyle, onSelect, onReset, applyPreset, icon, setIcon, onAddLinkCard, onApplyBannerLayout, onApplyBannerShape, onChangeBanner } = props;
+  const { nodeId, spec: specIn, cfg, setCfg, styles, setStyle, replaceStyle, onSelect, onReset, applyPreset, icon, setIcon, onAddLinkCard, onApplyBannerLayout, onApplyBannerShape, onChangeBanner, quickDesign } = props;
   const spec = useMemo(() => withoutAlignment(specIn), [specIn]);
   const node = nodeById(nodeId);
   const path = nodePath(nodeId);
@@ -1759,6 +1765,7 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
             replaceStyle={replaceStyle}
             collectionSlot={collectionBlock}
             hasCollection={!!(col && (!col.when || col.when(cfg)))}
+            quickDesign={quickDesign}
           />
         ) : (
         <>
@@ -1855,6 +1862,8 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
         )}
         {hasDesign && (
           <>
+            {/* The toolbar's own controls FIRST — background, border & corners, shadow, then the rest. */}
+            {quickDesign}
             {/* Widget-specific styling first — it is what this widget is, before the generic packs. */}
             {/* ⚠️ A pack whose TITLE matches a spec group is rendered INSIDE that group rather than
                 beside it. Row layout is a content-config field but belongs under Arrangement with

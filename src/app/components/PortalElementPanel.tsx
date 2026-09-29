@@ -32,6 +32,8 @@ interface Props {
   setIcon: (id: string, c?: IconChoice) => void;
   placedText: Record<string, { title?: string; desc?: string }>;
   setPlacedText: (id: string, patch: { title?: string; desc?: string }) => void;
+  /** The floating toolbar's design controls for this node, drawn at the top of Style. */
+  quickDesign?: ReactNode;
 }
 
 /* ── shared field chrome ─────────────────────────────────────────────────── */
@@ -103,7 +105,7 @@ const TEXT_BINDING: Record<string, [keyof PortalPageContent, string]> = {
   'knowledge-title': ['knowledge', 'title'],
 };
 
-export function PortalElementPanel({ nodeId, content, setContent, styles, setStyle, onSelect, icons, setIcon, placedText, setPlacedText }: Props) {
+export function PortalElementPanel({ nodeId, content, setContent, styles, setStyle, onSelect, icons, setIcon, placedText, setPlacedText, quickDesign }: Props) {
   const node = nodeById(nodeId);
   const path = nodePath(nodeId);
   const [openDrawers, setOpenDrawers] = useState<string[]>(['Layout']);
@@ -368,6 +370,9 @@ export function PortalElementPanel({ nodeId, content, setContent, styles, setSty
               >{allOpen ? 'Collapse all' : 'Expand all'}</button>
             )}
           >Style</SectionHead>
+
+          {/* The floating toolbar's own controls, first — the same ones the toolbar offers this node. */}
+          {quickDesign}
 
           {/* ⚠️ The Layout drawer is gone. Its only row was Alignment, and the floating toolbar over
               the selected words carries left / centre / right where you can see them act — a second

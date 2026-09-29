@@ -22,7 +22,7 @@ import { PortalThemePanel, DEFAULT_THEME, buttonOf, packOf, paletteOf, swatchesO
 import { setPortalColorMode } from './portalStyleResolver';
 import type { PortalTheme } from './PortalThemePanel';
 import { PortalElementPanel } from './PortalElementPanel';
-import { CanvasProvider } from './PortalCanvas';
+import { CanvasProvider, DesignQuickSections, hasDesignQuick } from './PortalCanvas';
 import { PortalShortcuts } from './PortalShortcuts';
 import { TipKeys } from './PortalShortcuts';
 import { chromeKeys } from './portalShortcutKeys';
@@ -3540,6 +3540,12 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
                   onDelete={() => deleteNode(selectedId)}
                   onOpenSetting={(section, card) =>
                     toast.success(`This lives in Admin › ${section}${card ? ` › ${card}` : ''}`)}
+                  quickDesign={selectedId && hasDesignQuick(selectedId) ? (
+                    /* The toolbar's design controls, in the sidebar too (29 Sep 2026). Rendered inside the
+                       REAL canvas context — the sidebar itself sits outside it — so every control reads and
+                       writes exactly what the floating toolbar does. */
+                    <CanvasProvider value={{ ...canvasCtx, enabled: true }}><DesignQuickSections id={selectedId} /></CanvasProvider>
+                  ) : undefined}
                 />
               </div>
             ) : selectedId ? (
@@ -3555,6 +3561,12 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
                   setIcon={(id, c) => setIcons((p) => ({ ...p, [id]: c }))}
                   placedText={placedText}
                   setPlacedText={(id, patch) => setPlacedText((p) => ({ ...p, [id]: { ...p[id], ...patch } }))}
+                  quickDesign={selectedId && hasDesignQuick(selectedId) ? (
+                    /* The toolbar's design controls, in the sidebar too (29 Sep 2026). Rendered inside the
+                       REAL canvas context — the sidebar itself sits outside it — so every control reads and
+                       writes exactly what the floating toolbar does. */
+                    <CanvasProvider value={{ ...canvasCtx, enabled: true }}><DesignQuickSections id={selectedId} /></CanvasProvider>
+                  ) : undefined}
                 />
               </div>
             ) : (

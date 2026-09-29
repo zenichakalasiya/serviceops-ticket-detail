@@ -26,7 +26,8 @@ import { boxCss, containerCss, portalColorMode } from './portalStyleResolver';
 import { PORTAL_ELEMENTS, PORTAL_ELEMENT_GROUPS, isPredefinedElement, isPredefinedType } from './supportPortalData';
 import type { PortalElement } from './supportPortalData';
 import { elementIcon } from './SupportPortalAddPanel';
-import { PortalColorPicker, type ColorPair } from './PortalColorPicker';
+import { PortalColorPicker, ColorField, type ColorPair } from './PortalColorPicker';
+import { Field, Group, Segmented, SelectField, ToggleRow } from './PortalControls';
 import type { BoxDir, NodeStyle, PortalStyles, SpacingBox } from './portalPageModel';
 
 /* Canvas selection layer.
@@ -4291,4 +4292,340 @@ export function Sel({ id, children, className = '', toolbarBelow = false, surfac
       ) : node.kind === 'text' && !node.rich ? richify(body) : body}
     </div>
   );
+}
+
+/* ══ THE TOOLBAR'S DESIGN CONTROLS, IN THE SIDEBAR ═══════════════════════════════════════════════
+ *
+ * (29 Sep 2026, Zeni's manager.) Every styling and layout control the floating toolbar offers for the
+ * selected node — except drag, move, replace, delete and the "add" actions — is ALSO drawn at the top
+ * of the sidebar's Design section, as ordinary panel groups. Nothing else in the sidebar changed.
+ *
+ * ⚠️ ONE set of rules, not two. Which controls a node gets is decided exactly as `ElementToolbar`,
+ * `BannerToolbar` and `GroupToolbar` decide it (`toolbarCaps`, the button / icon / text exclusions,
+ * the tile-preset types), and every control writes the SAME keys through the SAME context — so the
+ * toolbar and the sidebar are two views of one value and cannot drift. Change a rule in the toolbar,
+ * change it here.
+ * ⚠️ The colour fields are `ColorField`, which opens the SAME `PortalColorPicker` at the same size,
+ * with the Light / Dark pair — so the picker is identical whichever surface you opened it from.
+ * ⚠️ Border is NOT tabs here: Weight, then Style as a dropdown, then Colour, each its own field — and
+ * Corner radius is merged into the same group, since both are "the edge of this box".
+ * ⚠️ Rendered inside the real canvas context by the builder (the sidebar itself sits outside it). */
+
+function SliderField({ label, min, max, value, onChange, unit = 'px', display }: {
+  label: string; min: number; max: number; value: number; onChange: (v: number) => void; unit?: string; display?: string;
+}) {
+  return (
+    <Field label={label}>
+      <div className="flex items-center gap-2">
+        <MiniRange min={min} max={max} value={Math.min(max, value)} label={label} onChange={onChange} />
+        <span className="w-12 text-right text-[12px] tabular-nums text-[#364658]">{display ?? `${value}${unit}`}</span>
+      </div>
+    </Field>
+  );
+}
+
+/** A colour field on a light/dark pair, opening the shared picker. */
+function PairColor({ label, pair }: { label: string; pair: ColorPair }) {
+  return (
+    <Field label={label}>
+      <ColorField value={shownOf(pair)} onChange={(v) => pair.onChange(portalColorMode(), v)} modes={{ ...pair, mode: portalColorMode() }} />
+    </Field>
+  );
+}
+
+/** Border weight · style (dropdown) · colour, then corner radius — the toolbar's Border + Corner radius popups, merged. */
+function EdgeFields({ own, keys, write, radiusMax = 32, radiusRest = 8 }: {
+  own: Record<string, unknown>;
+  keys: { width: string; style: string; color: string; radius: string };
+  write: (patch: Record<string, unknown>) => void;
+  radiusMax?: number;
+  radiusRest?: number;
+}) {
+  const width = Number(own[keys.width] ?? 0);
+  const style = String(own[keys.style] ?? 'solid');
+  const radius = Number(own[keys.radius] ?? radiusRest);
+  return (
+    <>
+      <SliderField label="Border weight" min={0} max={8} value={width} onChange={(v) => write({ [keys.width]: v })} />
+      {/* Style and colour only once there IS a border — the toolbar's §2.2 rule: a dashed-vs-dotted
+          choice over an edge that is not drawn is a control describing nothing. */}
+      {width > 0 && (
+        <>
+          <Field label="Border style">
+            <SelectField value={style} options={BORDER_STYLES.map((s) => ({ value: s.value, label: s.label }))} onChange={(v) => write({ [keys.style]: v })} />
+          </Field>
+          <PairColor label="Border colour" pair={colorPair(own, keys.color, '#E5E7EB', write)} />
+        </>
+      )}
+      <SliderField label="Corner radius" min={0} max={radiusMax} value={radius} onChange={(v) => write({ [keys.radius]: v })} />
+    </>
+  );
+}
+
+/** The four shadow presets as cards — the toolbar's Shadow popup, laid out across the panel. */
+function ShadowCards({ id }: { id: string }) {
+  const { styles, setStyle } = useCanvas();
+  const own = styles[id] ?? {};
+  const current = own.shadowOn !== true ? 'none' : SHADOW_PRESETS.find((s) => s.color === String(own.shadowColor ?? ''))?.key ?? 'custom';
+  return (
+    <div className="grid grid-cols-4 gap-2">
+      {SHADOW_PRESETS.map((s) => (
+        <button
+          key={s.key}
+          onClick={() => setStyle(id, s.color === null ? { shadowOn: false } : { shadowOn: true, shadowColor: s.color, shadowType: 'outer', shadowPos: 'bottom' })}
+          className="flex min-w-0 flex-col items-center gap-1"
+        >
+          <span className={`flex h-[44px] w-full items-center justify-center rounded border-2 bg-[#F4F6FA] ${current === s.key ? 'border-[#3D8BD0]' : 'border-transparent hover:border-[#DFE5ED]'}`}>
+            <span className="h-[20px] w-[30px] rounded-[3px] border border-[#E5E7EB] bg-white" style={s.color ? { boxShadow: `0 3px 8px 0 ${s.color}` } : undefined} />
+          </span>
+          <span className={`truncate text-[11px] ${current === s.key ? 'font-medium text-[#3D8BD0]' : 'text-[#64748B]'}`}>{s.label}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+const ALIGN_H_OPTS = [
+  { value: 'left', icon: <AlignStartVertical size={15} />, title: 'Left' },
+  { value: 'center', icon: <AlignCenterVertical size={15} />, title: 'Centre' },
+  { value: 'right', icon: <AlignEndVertical size={15} />, title: 'Right' },
+  { value: 'stretch', icon: <MoveHorizontal size={15} />, title: 'Stretch' },
+];
+const ALIGN_V_OPTS = [
+  { value: 'start', icon: <AlignStartHorizontal size={15} />, title: 'Top' },
+  { value: 'center', icon: <AlignCenterHorizontal size={15} />, title: 'Middle' },
+  { value: 'end', icon: <AlignEndHorizontal size={15} />, title: 'Bottom' },
+  { value: 'stretch', icon: <MoveVertical size={15} />, title: 'Stretch' },
+];
+
+export function DesignQuickSections({ id }: { id: string }) {
+  const ctx = useCanvas();
+  const { styles, setStyle, cfg, setCfg, heroTree, setBannerSections } = ctx;
+  /* Open state is per GROUP and survives moving between nodes, like the drawer's own groups. */
+  const [shut, setShut] = useState<string[]>([]);
+  const g = (key: string, title: string, children: ReactNode) => (
+    <Group key={key} title={title} open={!shut.includes(key)} onToggle={() => setShut((s) => (s.includes(key) ? s.filter((x) => x !== key) : [...s, key]))}>
+      {children}
+    </Group>
+  );
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [bgTab, setBgTab] = useState<'image' | 'color' | null>(null);
+
+  const node = nodeById(id);
+  if (!node || id === 'rail' || /^header/.test(id)) return null;
+
+  /* ── The BANNER: BannerToolbar's controls ── */
+  if (id === 'hero') {
+    const hero = (cfg?.('hero') ?? {}) as Record<string, unknown>;
+    const set = (patch: Record<string, unknown>) => setCfg?.('hero', patch);
+    const tab = bgTab ?? (hero.bgKind === 'color' ? 'color' : 'image');
+    const onFile = (file: File | undefined) => {
+      if (!file) return;
+      if (!/^image\//.test(file.type)) { toast.error('Choose an image file — PNG, JPG, SVG or WebP'); return; }
+      if (file.size > 5 * 1024 * 1024) { toast.error('That image is over 5 MB — choose a smaller one'); return; }
+      const r = new FileReader();
+      r.onload = () => { set({ bgKind: 'image', bannerImage: String(r.result), overlayOn: hero.overlayOn ?? true }); toast.success('Banner image added'); };
+      r.readAsDataURL(file);
+    };
+    const h = String(hero.contentAlign ?? 'center');
+    return (
+      <>
+        {g('bg', 'Background', (
+          <>
+            <Segmented value={tab} options={[{ value: 'image', label: 'Image' }, { value: 'color', label: 'Colour' }]} onChange={(v) => setBgTab(v as 'image' | 'color')} />
+            <div className="mt-3">
+              {tab === 'image' ? (
+                <>
+                  {hero.bannerImage ? (
+                    <div>
+                      <span className="block h-[88px] w-full rounded border border-[#E5E7EB] bg-[#F8FAFC] bg-cover bg-center" style={{ backgroundImage: `url(${String(hero.bannerImage)})` }} />
+                      <div className="mt-2 flex gap-2">
+                        <button className="h-8 flex-1 rounded border border-[#DFE5ED] text-[12px] font-medium text-[#364658] transition-colors hover:bg-[#F5F7FA]" onClick={() => fileRef.current?.click()}>Replace image</button>
+                        <button className="flex size-8 items-center justify-center rounded border border-[#DFE5ED] text-[#EF4444] transition-colors hover:bg-[#FEF3F2]" title="Remove the image" onClick={() => { set({ bannerImage: '' }); toast.success('Banner image removed'); }}><Trash2 size={14} /></button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button className="flex h-[88px] w-full flex-col items-center justify-center gap-1 rounded border border-dashed border-[#CBD5E1] bg-[#F8FAFC] text-[12px] text-[#7B8FA5] transition-colors hover:border-[#3D8BD0] hover:text-[#3D8BD0]" onClick={() => fileRef.current?.click()}>
+                      <ImagePlus size={18} /> Choose a picture<span className="text-[11px] text-[#9CA3AF]">1600 × 400 works well</span>
+                    </button>
+                  )}
+                  {!!hero.bannerImage && (
+                    <div className="mt-3">
+                      <ToggleRow label="Colour layer over image" on={hero.overlayOn !== false} onChange={(v) => set({ overlayOn: v })} />
+                      {hero.overlayOn !== false && <div className="mt-3"><OverlayLayerEditor cfg={hero} setCfg={set} /></div>}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <BannerFillEditor cfg={hero} setCfg={set} />
+              )}
+            </div>
+            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { onFile(e.target.files?.[0]); e.target.value = ''; }} />
+          </>
+        ))}
+        {g('edge', 'Border & corners', (
+          <EdgeFields own={hero} write={set} radiusMax={40} radiusRest={0}
+            keys={{ width: 'bannerBorderWidth', style: 'bannerBorderStyle', color: 'bannerBorderColor', radius: 'bannerRadius' }} />
+        ))}
+        {g('align', 'Alignment', (
+          <>
+            <Field label="Horizontal">
+              <Segmented value={h.includes('left') ? 'left' : h.includes('right') ? 'right' : 'center'} options={ALIGN_H_OPTS.slice(0, 3)} onChange={(v) => set({ contentAlign: v })} />
+            </Field>
+            <Field label="Vertical">
+              <Segmented value={String(hero.contentAlignY ?? 'center')} options={ALIGN_V_OPTS.slice(0, 3)} onChange={(v) => set({ contentAlignY: v })} />
+            </Field>
+          </>
+        ))}
+        {g('sections', 'Sections & arrangement', (
+          <BannerLayoutPanel
+            tree={heroTree?.() ?? null}
+            onCount={(n, remove) => setBannerSections?.(n, remove)}
+            nameOf={(x) => nodeById(x)?.name ?? 'Section'}
+            onClose={() => {}}
+            onPick={(t) => set({ bannerTree: t })}
+          />
+        ))}
+      </>
+    );
+  }
+
+  /* ── A banner GROUP (Text & Search, Text): GroupToolbar's controls ── */
+  if (BANNER_GROUPS.has(id)) {
+    const c = (cfg?.(id) ?? {}) as Record<string, unknown>;
+    const dir = String(c.dir ?? 'column');
+    const hero = (cfg?.('hero') ?? {}) as Record<string, unknown>;
+    const bandA = String(hero.contentAlign ?? 'center');
+    const align = String(c.align ?? (bandA.includes('left') ? 'start' : bandA.includes('right') ? 'end' : 'center'));
+    const textSection = id === 'hero-content';
+    const across = [
+      { value: 'start', icon: <AlignStartVertical size={15} />, title: 'Left' },
+      { value: 'center', icon: <AlignCenterVertical size={15} />, title: 'Centre' },
+      { value: 'end', icon: <AlignEndVertical size={15} />, title: 'Right' },
+    ];
+    const down = [
+      { value: 'start', icon: <AlignStartHorizontal size={15} />, title: 'Top' },
+      { value: 'center', icon: <AlignCenterHorizontal size={15} />, title: 'Middle' },
+      { value: 'end', icon: <AlignEndHorizontal size={15} />, title: 'Bottom' },
+    ];
+    return g('layout', 'Layout', (
+      <>
+        <Field label="Direction">
+          <Segmented value={dir} options={[{ value: 'column', label: 'Stacked', icon: <Rows2 size={14} /> }, { value: 'row', label: 'Side by side', icon: <Columns2 size={14} /> }]} onChange={(v) => setCfg?.(id, { dir: v })} />
+        </Field>
+        {textSection ? (
+          <>
+            <Field label="Horizontal">
+              <Segmented value={String(c.align ?? align)} options={[...across, { value: 'stretch', icon: <StretchHorizontal size={15} />, title: dir === 'row' ? 'Spread to both edges' : 'Stretch across' }]} onChange={(v) => setCfg?.(id, { align: v })} />
+            </Field>
+            <Field label="Vertical">
+              <Segmented value={String(c.alignY ?? hero.contentAlignY ?? 'center')} options={[...down, { value: 'stretch', icon: <StretchVertical size={15} />, title: 'Stretch — words top, search bottom' }]} onChange={(v) => setCfg?.(id, { alignY: v })} />
+            </Field>
+          </>
+        ) : (
+          <Field label={dir === 'row' ? 'Vertical' : 'Horizontal'}>
+            <Segmented value={align} options={dir === 'row' ? down : across} onChange={(v) => setCfg?.(id, { align: v })} />
+          </Field>
+        )}
+      </>
+    ));
+  }
+
+  /* ── A TEXT child: its own text toolbar only (Zeni: containers only) ── */
+  const placed = /^el-[0-9]+$/.test(id);
+  if (node.kind === 'text' && !placed && !isContactChild(id)) return null;
+
+  /* ── Everything else: ElementToolbar's rules ── */
+  const kind = node.kind;
+  const kpi = placedType(id) === 'c-records' && cfg?.(id)?.display === 'kpi';
+  const caps = kpi ? { ...toolbarCaps(id), alignH: undefined, alignV: undefined } : toolbarCaps(id);
+  const isButton = placedType(id) === 'b-button';
+  const isIcon = /-icon$/.test(id);
+  const isActionCard = placedType(id) === 'x-action-card' || /^quick-[a-z]+$/.test(id);
+  const iconTarget = isIcon || /-tile$/.test(id) ? id : isActionCard ? `${id}-icon` : null;
+  const boxLook = (kind !== 'text' || placed) && !isButton && !isIcon;
+  const viaCfg = fillsFromConfig(id);
+  const own = ((viaCfg ? cfg?.(id) : styles[id]) ?? {}) as Record<string, unknown>;
+  const write = (patch: Record<string, unknown>) => (viaCfg ? setCfg?.(id, patch) : setStyle(id, patch as never));
+  const filled = viaCfg ? own.fill === 'color' : own.bgFill === 'color';
+  const tiles = placedType(id) === 'x-actions' || placedType(id) === 'x-kpis' || /^hero-gp-/.test(id);
+
+  const sections: ReactNode[] = [];
+  if (boxLook) {
+    sections.push(g('bg', 'Background', (
+      <PairColor label="Background colour" pair={colorPair(filled ? own : {}, 'bg', '#FFFFFF', write, viaCfg ? { fill: 'color' } : { bgFill: 'color' })} />
+    )));
+    sections.push(g('edge', 'Border & corners', (
+      <EdgeFields own={own} write={write} keys={{ width: 'borderWidth', style: 'borderStyle', color: 'borderColor', radius: 'radius' }} />
+    )));
+  }
+  if (kind !== 'text' || placed) sections.push(g('shadow', 'Shadow', <ShadowCards id={id} />));
+  if (iconTarget) {
+    const io = (styles[iconTarget] ?? {}) as Record<string, unknown>;
+    const card = /^(.+)-icon$/.exec(iconTarget)?.[1];
+    const cardStyle = (card ? styles[card] ?? {} : {}) as Record<string, unknown>;
+    const service = /^(favourites|services)-tile$/.test(iconTarget);
+    const rest = card
+      ? { color: String(cardStyle.iconColor ?? '#475467'), bg: String(cardStyle.iconFill ?? '#F1F5F9'), radius: cardStyle.iconShape === 'circle' ? 999 : 4 }
+      : service ? { color: '#475467', bg: '#F1F5F9', radius: 8 } : { color: '#5A6B80', bg: '#FFFFFF', radius: 6 };
+    const setI = (patch: Record<string, unknown>) => setStyle(iconTarget, patch as never);
+    const r = Number(io.iconRadius ?? rest.radius);
+    const bw = Number(io.iconBorderWidth ?? 0);
+    sections.push(g('icon', 'Icon', (
+      <>
+        <PairColor label="Icon colour" pair={colorPair(io, 'iconColor', rest.color, setI)} />
+        <PairColor label="Icon background" pair={colorPair(io, 'iconFill', rest.bg, setI)} />
+        <SliderField label="Corner radius" min={0} max={24} value={Math.min(24, r)} display={r > 24 ? 'Round' : `${r}px`} onChange={(v) => setI({ iconRadius: v })} />
+        <SliderField label="Border weight" min={0} max={6} value={bw} onChange={(v) => setI({ iconBorderWidth: v })} />
+        {bw > 0 && (
+          <>
+            <Field label="Border style">
+              <SelectField value={String(io.iconBorderStyle ?? 'solid')} options={BORDER_STYLES.map((s) => ({ value: s.value, label: s.label }))} onChange={(v) => setI({ iconBorderStyle: v })} />
+            </Field>
+            <PairColor label="Border colour" pair={colorPair(io, 'iconBorderColor', '#E5E7EB', setI)} />
+          </>
+        )}
+      </>
+    )));
+  }
+  if (caps.alignH !== false || caps.alignV !== false) {
+    sections.push(g('align', 'Alignment', (
+      <>
+        {caps.alignH !== false && (
+          <Field label="Horizontal">
+            <Segmented value={String(styles[id]?.align ?? defaultAlignH(id))} options={ALIGN_H_OPTS} onChange={(v) => setStyle(id, { align: v as never })} />
+          </Field>
+        )}
+        {caps.alignV !== false && (
+          <Field label="Vertical">
+            <Segmented value={String(styles[id]?.alignY ?? 'start')} options={ALIGN_V_OPTS} onChange={(v) => setStyle(id, { alignY: v as never })} />
+          </Field>
+        )}
+      </>
+    )));
+  }
+  if (tiles) {
+    const oc = (cfg?.(id) ?? {}) as Record<string, unknown>;
+    const count = /^hero-gp-/.test(id)
+      ? id.slice(8).split('|').length
+      : Array.isArray(oc.items) ? (oc.items as { hidden?: boolean }[]).filter((it) => !it.hidden).length : Number(oc.__tileCount ?? 4);
+    sections.push(g('presets', 'Presets', (
+      <TilePresetPicker count={count} value={Number(oc.cols ?? Math.min(count, 4))} onChange={(c) => setCfg?.(id, { cols: String(c) })} />
+    )));
+  }
+  if (isButton) {
+    sections.push(g('button', 'Button style', (
+      <SelectField value={String(cfg?.(id)?.style ?? 'primary')} options={BUTTON_STYLES.map(([v, l]) => ({ value: v, label: l }))} onChange={(v) => setCfg?.(id, { style: v })} />
+    )));
+  }
+  return sections.length ? <>{sections}</> : null;
+}
+
+/** Whether `DesignQuickSections` draws anything for this node — the same early returns, so a panel can
+ *  decide whether its Design heading has something under it without rendering to find out. */
+export function hasDesignQuick(id: string): boolean {
+  const node = nodeById(id);
+  if (!node || id === 'rail' || /^header/.test(id)) return false;
+  if (id === 'hero' || BANNER_GROUPS.has(id)) return true;
+  return !(node.kind === 'text' && !/^el-[0-9]+$/.test(id) && !isContactChild(id));
 }

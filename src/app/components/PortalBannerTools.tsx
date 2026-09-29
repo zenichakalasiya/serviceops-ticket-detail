@@ -335,7 +335,11 @@ export function BannerPresetPicker({ tree, onPick }: { tree: BannerNode | null; 
  * ⚠️ Picking a count re-renders the tiles under it, because the tiles read the live tree. That is the
  * whole point of the two being in one place: the layouts you are choosing between are the layouts for the
  * number you just set, in front of you, without a second popup. */
-export function BannerLayoutPanel({ tree, onCount, onPick, nameOf, onClose }: {
+export function BannerLayoutPanel({ tree, onCount, onPick, nameOf, onClose, keys = true }: {
+  /* ⚠️ False in the SIDEBAR copy. As a popup it owns the arrow keys while it is open; laid out in the
+     panel it is always mounted, and owning them there would take the canvas's move-with-arrows away
+     for as long as the banner is selected. */
+  keys?: boolean;
   tree: BannerNode | null;
   onCount: (n: number, remove?: string[]) => void;
   onPick: (t: BannerNode) => void;
@@ -381,7 +385,7 @@ export function BannerLayoutPanel({ tree, onCount, onPick, nameOf, onClose }: {
    * "put back what it was" would have to re-create sections that were deleted, and a key cannot
    * promise that. Undo is the way back, and it is the thing that actually holds the old state. */
   const [row, setRow] = useState(0);
-  const open = asking === null;
+  const open = keys && asking === null;
   usePopupArrows({
     open,
     rows: [4, Math.max(1, presets.length)],

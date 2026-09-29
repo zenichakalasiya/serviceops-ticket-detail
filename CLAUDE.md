@@ -306,6 +306,31 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   Services deleted it would have taken Most Used off the page too. ⚠️ In the split row each grid defaults
   to **2 columns** (`{ columns: 2, ...wc(id) }`) — four tiles at half width were 98px and the names ran into
   each other; an admin's own column count still wins (style store, then config).
+- **Support Portal — the floating toolbar's DESIGN controls are ALSO in the sidebar (29 Sep 2026, Zeni's manager).**
+  ⚠️ This REVERSES the "style lives on the toolbar only / NO alignment in any sidebar" decisions for the
+  toolbar's own controls: every one of them EXCEPT drag, move, replace, delete and the add actions (+,
+  Add item, Add caption, External link, Copy, Split, Select the row) now also appears at the TOP of the
+  sidebar's Design section, as ordinary `Group`s — nothing else in the sidebar changed.
+  **`DesignQuickSections({ id })`** (end of `PortalCanvas.tsx`) applies the SAME rules the bars use —
+  `toolbarCaps`, the Button / `-icon` / text exclusions, the KPI-alignment rule, the tile-preset types —
+  and writes the SAME keys through the SAME context, so sidebar and toolbar are two views of one value.
+  **Change a toolbar rule, change it there too.** Routing mirrors `Sel`: `hero` → Background (Image /
+  Colour tabs, image + colour layer, `BannerFillEditor`) · Border & corners (banner keys) · Alignment ·
+  Sections & arrangement; a `BANNER_GROUPS` id → Layout (direction + alignments); a text CHILD →
+  nothing (Zeni: containers only; a placed Text keeps its sections); everything else → Background ·
+  Border & corners · Shadow · Icon · Alignment · Presets · Button style, each only where the bar has it.
+  **Border & corners** is one group, no tabs: Border weight slider → Border style DROPDOWN → Border colour
+  (both only while weight > 0) → Corner radius slider. **Shadow** = the same four preset cards.
+  Colours use `ColorField` → the same `PortalColorPicker` with the Light/Dark pair. The builder passes it
+  as **`quickDesign`** to `PortalWidgetDrawer` (both panel models, right under the Design label, and it
+  makes the Design section show on its own) and `PortalElementPanel` (under Style), rendered inside
+  `<CanvasProvider value={{ ...canvasCtx, enabled: true }}>` because the sidebar sits outside the canvas
+  context. **`hasDesignQuick(id)`** gates it so a text child gets no empty Design heading.
+  ⚠️ `BannerLayoutPanel` gained `keys` (default true): the sidebar copy passes `keys={false}`, or its
+  always-mounted arrow hook would take the canvas's move-with-arrows away while the banner is selected.
+  Verified in a browser: a 3px border set in the sidebar paints on the card AND reads 3px in the toolbar
+  popup; the Medium shadow card paints; requests / action card / banner / Quick Actions band / text
+  child / Text & Search each show exactly the toolbar's controls; no page errors.
 - **Support Portal — the two service rows are WHITE CARDS with their title inside (29 Sep 2026).**
   `titlePlace` defaults to `'inside'` for Favourite and Most Used Services too (spec defaults AND the two
   renderers' fallbacks), so each is a white card like every other data card — 14px radius, 1px #E5E7EB,
