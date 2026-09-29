@@ -41,7 +41,7 @@ import { PortalTourDock, DockGlyph } from './PortalTourDock';
 import { PortalWidgetDrawer } from './PortalWidgetDrawer';
 import { WIDGET_FOR_NODE, WIDGET_FOR_TYPE, specById, structureSpecId } from './portalWidgetSpec';
 import type { Cfg, WidgetSpec } from './portalWidgetSpec';
-import { BANNER_GROUPS, nodePath } from './portalPageModel';
+import { BANNER_GROUPS, nodePath, defaultPredefinedSections, PREDEFINED_ROW_BLOCK_ORDER } from './portalPageModel';
 import type { Box, BoxDir, CustomSection, NodeStyle, PlacedElement, PortalPageContent, PortalStyles } from './portalPageModel';
 import { PORTAL_ELEMENTS, PORTAL_EMPTY_WIDGETS, PORTAL_TEMPLATES, bannerLayout, bannerShape, isPredefinedElement, isPredefinedType } from './supportPortalData';
 import type { ShapeNode } from './supportPortalData';
@@ -196,6 +196,43 @@ export const LINK_CARD_ID = 'quick-link';
    that now reads it — safe only because a callback body runs after the component has, which is
    exactly the kind of ordering that breaks the day somebody adds it to a dependency array. */
 const GATHERING = ['x-action-card', 'x-kpi'];
+type SectionEntry = { afterId: string; section: CustomSection };
+
+/* ── Predefined cards and custom widgets never share a section (Zeni, 29 Sep 2026) ──────────────
+ * A drop that would put a predefined card (My Open Requests, My Assets…) into a section of custom
+ * widgets, or the other way round, is REFUSED with the reason — the same rule the pickers already
+ * follow when adding. The widget being moved is left out of the count, so moving a card within its
+ * own section is never refused. */
+function mixRefusal(list: SectionEntry[], boxId: string, type: string, movingId?: string): string | null {
+  const secId = sectionIdOfBox(boxId);
+  const sec = list.find((s) => s.section.id === secId)?.section;
+  if (!sec || sec.banner) return null;
+  const others = sectionElements(sec).filter((e) => e.id !== movingId);
+  if (!others.length) return null;
+  const targetPre = others.some((e) => isPredefinedType(e.type));
+  const movingPre = isPredefinedType(type);
+  if (targetPre === movingPre) return null;
+  return movingPre
+    ? 'Predefined cards only go into a section of predefined cards — drop it between two sections to give it its own'
+    : 'This section holds predefined cards — custom widgets go into a section of their own';
+}
+
+/* After a widget LEAVES a section: its emptied box goes (so the neighbours reflow), and a section left
+   with nothing in it is removed, so a move never leaves a blank gap on the page. A section that hosts
+   a built-in band or the banner is never removed this way. */
+function pruneSource(list: SectionEntry[], secId: string | null, boxId: string | null): SectionEntry[] {
+  if (!secId) return list;
+  return list.flatMap((s) => {
+    if (s.section.id !== secId) return [s];
+    let section = s.section;
+    if (boxId && parentOfBox(section.root, boxId)) section = removeBox(section, boxId);
+    if (!section.band && !section.banner && !sectionElements(section).length && !JSON.stringify(section.root).includes('"band"')) return [];
+    return [{ ...s, section }];
+  });
+}
+
+/** Catalogue id → display name, for seeding placed elements. */
+const ELEMENT_NAMES: Record<string, string> = Object.fromEntries(PORTAL_ELEMENTS.map((e) => [e.id, e.name]));
 
 const HERO_LAYOUT_KEYS = [
   'heading', 'sub', 'note', 'bgKind', 'bannerStyle', 'bannerColor', 'bannerImage',
@@ -237,6 +274,10 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
   /* Started from scratch rather than from a template or the default. Read in one place so the
      palette, the canvas and the empty state cannot disagree about whether the page has anything. */
   const isBlank = page.start === 'blank';
+  /* ⚠️ The DEFAULT page (v2, not blank, not from a template) draws its predefined cards as two real
+     SECTIONS rather than the old work band — see `defaultPredefinedSections`. Templates keep their
+     bands untouched, because a template's seed describes its own page. */
+  const predefinedRows = isV2 && !seed && !isBlank;
 
   const [width, setWidth] = useState(MIN_W);
   const [collapsed, setCollapsed] = useState(false);
@@ -834,17 +875,20 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
        ⚠️ Keyed on the SEED, not on this one template — every seeded template has the same claim to
        describing its own page, and Search Spotlight was carrying the gallery for the same reason. */
     if (page.start === 'blank' || seed) return [];
+    const pre = predefinedRows ? defaultPredefinedSections(ELEMENT_NAMES) : [];
+    const preEls = pre.reduce((n, x) => n + sectionElements(x.section).length, 0);
     const pool = PORTAL_ELEMENTS.filter((e) => !e.onPage && !e.hidden);
-    return pool.map((def, i) => {
-      const id = `sec-${i + 1}`;
+    return [...pre, ...pool.map((def, i) => {
+      /* Numbered past the predefined rows, so no id is minted twice. */
+      const id = `sec-${pre.length + i + 1}`;
       const section = sectionFromRows(id, [[1]]);
-      const inst: PlacedElement = { id: `el-${i + 1}`, type: def.id, name: def.name };
+      const inst: PlacedElement = { id: `el-${preEls + i + 1}`, type: def.id, name: def.name };
       /* ⚠️ An unsplit section IS its own single cell, so the element goes on the ROOT box and its
          parent is the section id. There is no separate column to put it in until something splits. */
       section.root.el = inst;
       registerPlaced(inst.id, inst.name, inst.type, id);
       return { afterId: 'records', section };
-    });
+    })];
   });
   sectionsRef.current = sections;
   /* ⚠️ Every box re-registers whenever the trees change. `nodeById` used to read a column straight
@@ -1152,7 +1196,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
   };
 
   const dropInColumn = useCallback((columnId: string, type: string) => {
-    const refused = bannerRefusal(columnId, type);
+    const refused = bannerRefusal(columnId, type) ?? mixRefusal(sectionsRef.current, columnId, type);
     if (refused) { toast.error(refused); return; }
     const sectionId = sectionIdOfBox(columnId);
     const el = makeElement(type, columnId);
@@ -1278,7 +1322,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
      the page's own and every edit behaves exactly as it did. */
   /* ⚠️ The seed wins over the layout default, and the layout default wins over v1. A template that
      says nothing about the bands falls through to exactly what it would have got. */
-  const [blockOrder, setBlockOrder] = useState<string[]>(() => seed?.blockOrder ?? (isV2 ? BLOCK_ORDER_V2 : DEFAULT_BLOCK_ORDER));
+  const [blockOrder, setBlockOrder] = useState<string[]>(() => seed?.blockOrder ?? (predefinedRows ? PREDEFINED_ROW_BLOCK_ORDER : isV2 ? BLOCK_ORDER_V2 : DEFAULT_BLOCK_ORDER));
   /* ⚠️ MERGED over the defaults, not replaced. A seed names only the rows it rearranges; `records`
      is still consulted by `rowOf` even when the band is not on the page, and a seed that replaced
      the map wholesale would leave those cards unable to move — with nothing on screen saying why. */
@@ -1312,7 +1356,13 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
        greyed out with a tick on a page carrying nothing. What a blank page HAS is whatever has since
        been dropped into it, which is the `types` set below. */
     if (!isBlank) {
-      Object.values(rowOrder).forEach((ids) => ids.forEach((id) => { if (!removed.includes(id)) nodes.add(id); }));
+      /* ⚠️ On the default page the predefined cards are PLACED elements (`predefinedRows`), so the work
+         and records lists describe a band that is not drawn — counting them would tick a card that has
+         been deleted. Only the Quick Actions list still describes a band on that page. */
+      Object.entries(rowOrder).forEach(([row, ids]) => {
+        if (predefinedRows && row !== 'quick') return;
+        ids.forEach((id) => { if (!removed.includes(id)) nodes.add(id); });
+      });
       content.quick.forEach((q) => nodes.add(q.id));
     }
     /* ⚠️ Top-level BANDS too, not just cards inside a row. Favourite Services and Most Used Services
@@ -1459,11 +1509,12 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     setContent(DEFAULT_CONTENT);
     setStyles({});
     setWidgetCfg({});
-    setSections([]);
+    /* The default page resets to its two predefined-card sections, not to the old work band. */
+    setSections(predefinedRows ? defaultPredefinedSections(ELEMENT_NAMES) : []);
     setIcons({});
     setPlacedText({});
     setRowExtras({});
-    setBlockOrder(DEFAULT_BLOCK_ORDER);
+    setBlockOrder(predefinedRows ? PREDEFINED_ROW_BLOCK_ORDER : DEFAULT_BLOCK_ORDER);
     setRowOrder(DEFAULT_ROW_ORDER);
     setRemoved([]);
     setSelectedId(null);
@@ -2079,7 +2130,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
      overwriting — dropping onto a filled column used to be the one gesture that could destroy work,
      and a swap is what you meant by dragging one thing onto another anyway. */
   const relocateElement = useCallback((id: string, destCol: string) => {
-    const refusedMove = bannerRefusal(destCol, placedType(id) ?? '', id);
+    const refusedMove = bannerRefusal(destCol, placedType(id) ?? '', id) ?? mixRefusal(sectionsRef.current, destCol, placedType(id) ?? '', id);
     if (refusedMove) { toast.error(refusedMove); return; }
     const destSec = sectionIdOfBox(destCol);
     let occupant: PlacedElement | null = null;
@@ -2106,6 +2157,10 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
         sec.section.id === srcSec ? { ...sec, section: setBoxEl(sec.section, sourceCol!, occupant!) } : sec
       )));
       registerPlaced(occupant.id, occupant.name, occupant.type, sourceCol);
+    } else if (sourceCol) {
+      /* Nothing swapped back in: the emptied box goes, and an emptied section with it. */
+      const src = sourceCol as string;
+      setSections((prev) => pruneSource(prev, sectionIdOfBox(src), src));
     }
     select(id);
     toast.success(occupant ? 'Swapped places' : `${moving.name} moved`);
@@ -2130,7 +2185,8 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     payload: { type: string } | { move: string },
     side: 'left' | 'right' | 'above' | 'below',
   ) => {
-    const refusedDrop = bannerRefusal(boxId, 'move' in payload ? placedType(payload.move) ?? '' : payload.type, 'move' in payload ? payload.move : undefined);
+    const refusedDrop = bannerRefusal(boxId, 'move' in payload ? placedType(payload.move) ?? '' : payload.type, 'move' in payload ? payload.move : undefined)
+      ?? mixRefusal(sectionsRef.current, boxId, 'move' in payload ? placedType(payload.move) ?? '' : payload.type, 'move' in payload ? payload.move : undefined);
     if (refusedDrop) { toast.error(refusedDrop); return; }
     const sectionId = sectionIdOfBox(boxId);
     const current = sectionsRef.current.find((s) => s.section.id === sectionId)?.section;
@@ -2164,13 +2220,15 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     if ('move' in payload && !within) {
       const moved = detachElement(payload.move);
       if (!moved) return;
-      setSections((prev) => prev.map((s) => {
+      /* ⚠️ The source is pruned in the SAME write: its emptied box goes and, if nothing is left, the
+         whole section does — a move must not leave a blank gap behind it. */
+      setSections((prev) => pruneSource(prev.map((s) => {
         if (s.section.id !== sectionId) return s;
         const made = addNeighbourAt(s.section, boxId, dir, before);
         if (!made.id) return s;
         registerPlaced(moved.id, moved.name, moved.type, made.id);
         return { ...s, section: setBoxEl(made.section, made.id, moved) };
-      }));
+      }), srcSection, srcBox));
       select(moved.id);
       toast.success(dir === 'row' ? `${moved.name} moved into a new column` : `${moved.name} moved into a new row`);
       return;

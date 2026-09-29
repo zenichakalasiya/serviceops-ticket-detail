@@ -1,4 +1,4 @@
-# Handoff — 2026-09-29 21:00
+# Handoff — 2026-09-29 23:30
 
 ## Read first
 All work is in the **Support Portal** builder (Admin › Support Channels) and its listing.
@@ -61,6 +61,12 @@ design controls mirrored into the sidebar. Ended mid-way through an alignment au
 5. Stretch: H = fill the column (Button, a narrowed widget, an image); V = spread stacked widgets top-to-bottom.
 6. KPI = a display of the Custom Data Widget; not coming back to the palette on its own. Text with Image stays hidden.
 7. Keep the data-card tile alignment.
+
+## Done last — predefined cards as two real sections (29 Sep, night)
+- Default page: row 1 (Requests · Approvals · Announcements, equal) and row 2 (Assets over CIs | Most Read over
+  Contact, 2:1) are ordinary sections; sections move up/down, columns left/right, stacked cards up/down.
+- Drops: predefined ↔ custom mixing refused with a reason; a section emptied by a move is removed.
+- See CLAUDE.md "the default page's predefined cards are two REAL SECTIONS".
 
 ## In progress
 Nothing mid-flight. The per-widget alignment audit list for Zeni (probe-align2 add loop unreliable)

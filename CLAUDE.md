@@ -306,6 +306,26 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   Services deleted it would have taken Most Used off the page too. ⚠️ In the split row each grid defaults
   to **2 columns** (`{ columns: 2, ...wc(id) }`) — four tiles at half width were 98px and the names ran into
   each other; an admin's own column count still wins (style store, then config).
+- **Support Portal — the default page's predefined cards are two REAL SECTIONS (29 Sep 2026, Zeni).**
+  The work band (left region + right rail, each with its own move arrows) is gone from the DEFAULT portal
+  (`predefinedRows` = v2, no template seed, not blank). `defaultPredefinedSections()` (portalPageModel)
+  seeds two ordinary section trees anchored after `services`, with the cards as PLACED predefined
+  elements (same renderer as the old blocks): **sec-1** = My Open Requests · Pending Approvals ·
+  Announcements, three equal columns; **sec-2** = two columns at 2 : 1, My Assets over My CIs | Most
+  Read over Contact Us. `PREDEFINED_ROW_BLOCK_ORDER` drops `work`; Reset to default re-seeds both.
+  Templates keep their bands. **Moves** are the section tree's own: a section moves up/down, a column
+  moves left/right in its row, stacked widgets swap up/down — the same everywhere, custom sections
+  included. A predefined card FILLS its cell's height (`flex-1` on its Sel) so a row of cards stays level.
+  **Drag rules:** `mixRefusal()` refuses a predefined card into a section of custom widgets and the
+  other way round, with the reason (in `dropBeside`, `relocateElement`, `dropInColumn`); `pruneSource()`
+  removes the emptied box and a section left with NOTHING in it after a move, in the same write.
+  ⚠️ Two latent bugs fixed on the way: the **work band was never gated on `blockOrder`** (it drew
+  whatever the list said — now `band("work", …)` like every band; every template lists `work`, so none
+  moved), and with the two service rows **split**, sections anchored after `services` were **never drawn**
+  (`after('services')` only ran when not split). ⚠️ The palette's "already on the page" tick counts only the
+  Quick Actions list on this page — the work/records lists describe a band that is not drawn.
+  ⚠️ Headless HTML5 drags in Playwright land out of order (a drop fires on the NEXT drag); verify drop logic
+  by dispatching `dragover` + `drop` DragEvents carrying `text/portal-move` on the target cell.
 - **Support Portal — a COLUMN aligns what it holds; widgets have no alignment of their own (29 Sep 2026, Zeni).**
   In an added section, alignment lives on the BOX (`sec-N` root or `sec-N-bM`), stored as `align` /
   `alignY` in the style store, and the individual widgets inside follow it. ⚠️ **A widget whose PLACED

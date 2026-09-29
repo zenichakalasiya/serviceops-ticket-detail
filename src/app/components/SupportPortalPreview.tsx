@@ -21,7 +21,7 @@ import { bannerGradientOf, bannerLayerCss, gradientCss } from './PortalBannerToo
 import type { BannerDecor } from './portalBannerTemplates';
 import { ImagePlus } from 'lucide-react';
 import { PAGE_ID, chosen, iconBoxCss, roleStyle } from './portalStyleResolver';
-import { bannerLayout } from './supportPortalData';
+import { bannerLayout, isPredefinedType } from './supportPortalData';
 import { shadowCss } from './PortalBoxControls';
 import { PlacedBlockRenderers, PortalPlacedElement } from './PortalPlacedElement';
 import { TONE } from './portalTone';
@@ -476,7 +476,8 @@ function ColumnBody({ id, item, band, live, dir, icons, placedText, cfg }: { id:
           {item.type === 'bn-heading' || item.type === 'bn-subheading' || item.type === 'bn-search' ? (
             <div className="w-full">{item.type === 'bn-heading' ? bannerParts.heading : item.type === 'bn-subheading' ? bannerParts.subheading : bannerParts.search}</div>
           ) : (
-            <Sel id={item.id} className={HUGS_CONTENT.has(item.type) ? 'w-fit max-w-full' : 'w-full'}>
+            <Sel id={item.id} className={HUGS_CONTENT.has(item.type) ? 'w-fit max-w-full' : isPredefinedType(item.type) ? 'flex w-full flex-1 flex-col [&>*]:flex-1' : 'w-full'}>
+              {/* A PREDEFINED card fills its cell's height, so cards side by side stay equal — the old work band's look. */}
               <PortalPlacedElement item={item} icon={icons?.[item.id]} text={placedText?.[item.id]} cfg={cfg?.(item.id)} />
             </Sel>
           )}
@@ -3674,6 +3675,9 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
               )
             ))}
             {band('favourites', after('favourites'))}
+            {/* ⚠️ With the two service rows SPLIT into one row, the services band never draws its own
+                `after`, so sections anchored after it were silently invisible. Drawn here instead. */}
+            {browseSplit && band('services', after('services'))}
 
             {/* ⚠️ Renders NOTHING while the browse row is split — the favourites band above draws
                 both. Returning null here rather than dropping the band from `blockOrder` keeps
@@ -3709,7 +3713,9 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
 
             {/* ── Work row ── */}
             {/* ── Work row ── one section, three cards, full width. */}
-            {hostBand("work",
+            {/* ⚠️ GATED like every other band: the default page has no work band (its cards are two real
+                sections), and ungated this drew the band whatever the block order said. */}
+            {band("work", hostBand("work",
             <Sel id="work" className={SECTION_PAD} style={{ order: slot("work"), ...fillCss(wc('work')) }}>
               <RowDrop rowId="work" resize={secResize("work")} className={`flex flex-wrap${secPacked("work", 3) ? " portal-row-packed" : ""}`} style={{ gap: secGapCss("work"), ...secBox("work", 3), ...rowFits(inRow("work"), "work"), ...secGrid("work", 3) }}>
               {(() => {
@@ -3943,7 +3949,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                 ))}
               </RowDrop>
             </Sel>
-            )}
+            ))}
 
             {after('work')}
 

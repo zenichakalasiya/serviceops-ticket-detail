@@ -781,6 +781,41 @@ export function mintBox(section: { id: string; next: number }, dir: BoxDir, weig
   return { id: `${section.id}-b${section.next++}`, dir, weight };
 }
 
+/* ── The default page's predefined cards, as two REAL sections (Zeni, 29 Sep 2026) ─────────────────
+ * They used to live in one built-in band split into a left region (Requests, Approvals, Assets, CIs)
+ * and a right rail (Announcements, Most Read, Contact Us), whose two regions carried move arrows of
+ * their own. They are now ordinary section trees, so they follow the SAME rules as every custom
+ * section: a section moves up / down, a column moves left / right inside its row, and widgets stacked
+ * in a column swap up / down.
+ *  · Row 1 — three equal columns: My Open Requests · Pending Approvals · Announcements.
+ *  · Row 2 — two columns at 2 : 1: My Assets over My CIs | Most Read Knowledge over Contact Us.
+ * The cards are PLACED predefined elements, drawn by the same renderer as the old band blocks.
+ * `startEl` is the first element number to use, so the ids never collide with anything seeded after. */
+export const PREDEFINED_ROW_BLOCK_ORDER = ['quick', 'favourites', 'services'];
+export function defaultPredefinedSections(names: Record<string, string>, startEl = 1): { afterId: string; section: CustomSection }[] {
+  let n = startEl;
+  const el = (type: string): PlacedElement => ({ id: `el-${n++}`, type, name: names[type] ?? type });
+  const leaf = (sec: CustomSection, type: string, weight = 1): Box => ({ ...mintBox(sec, 'column', weight), el: el(type) });
+
+  const a: CustomSection = { id: 'sec-1', root: { id: 'sec-1', dir: 'row', weight: 1 }, next: 1 };
+  a.root.children = [leaf(a, 'c-requests'), leaf(a, 'c-approvals'), leaf(a, 'c-announcements')];
+
+  const b: CustomSection = { id: 'sec-2', root: { id: 'sec-2', dir: 'row', weight: 1 }, next: 1 };
+  const left: Box = { ...mintBox(b, 'column', 2) };
+  const right: Box = { ...mintBox(b, 'column', 1) };
+  left.children = [leaf(b, 'c-assets'), leaf(b, 'c-cis')];
+  right.children = [leaf(b, 'c-knowledge'), leaf(b, 'c-contact')];
+  b.root.children = [left, right];
+
+  /* Every leaf registers its element under the box that holds it, so `nodeById` can describe it. */
+  const reg = (box: Box) => {
+    if (box.el) registerPlaced(box.el.id, box.el.name, box.el.type, box.id);
+    box.children?.forEach(reg);
+  };
+  reg(a.root); reg(b.root);
+  return [{ afterId: 'services', section: a }, { afterId: 'services', section: b }];
+}
+
 /** Depth cap, counted BELOW the section: Section > Column > Row > Column > Row. */
 export const MAX_BOX_DEPTH = 4;
 /** Columns in one row. */
