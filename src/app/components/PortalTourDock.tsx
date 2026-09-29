@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, ChevronRight, ChevronLeft, RotateCcw, CirclePlay } from 'lucide-react';
+import { X, ChevronRight, ChevronLeft, RotateCcw, CirclePlay, Maximize2, Minimize2 } from 'lucide-react';
 
 /** The dock's glyph — on its header and on the rail button it parks into, so the two read as one thing. */
 export const DockGlyph = CirclePlay;
@@ -39,6 +39,16 @@ export function PortalTourDock({ onClose }: { onReplay?: () => void; onClose: ()
   /* Whether the person has taken over. Until they do, the story advances on its own. */
   const [driven, setDriven] = useState(false);
   const elapsed = useRef(0);
+  /* ⚠️ FULL SCREEN (Zeni, 29 Sep 2026): the same card, large, in the middle of the screen over a dimmed
+     page — the scene is an SVG on a 320 × 180 viewBox, so it scales without redrawing anything. Esc or
+     the shrink button brings it back to the corner. */
+  const [big, setBig] = useState(false);
+  useEffect(() => {
+    if (!big) return;
+    const on = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.stopPropagation(); setBig(false); } };
+    window.addEventListener('keydown', on, true);
+    return () => window.removeEventListener('keydown', on, true);
+  }, [big]);
 
   const frame = SCENE_FRAMES[at];
   const ch = frame.ch;
@@ -71,8 +81,16 @@ export function PortalTourDock({ onClose }: { onReplay?: () => void; onClose: ()
     setAt(sceneStart(Math.max(0, Math.min(last, c))));
   };
 
-  return (
-    <div data-portal-dock className="fixed bottom-5 right-5 z-[9000] w-[360px] overflow-hidden rounded-2xl bg-[#1F2937] shadow-[0_24px_48px_-12px_rgba(0,0,0,0.55)]">
+  const card = (
+    <div
+      data-portal-dock
+      onClick={(e) => e.stopPropagation()}
+      className={`overflow-hidden rounded-2xl bg-[#1F2937] shadow-[0_24px_48px_-12px_rgba(0,0,0,0.55)] ${
+        /* ⚠️ `right-[92px]`, clear of the 72px right rail: the rail's Basics button lives at its foot,
+           and a card over it could not be closed by pressing the button that opened it. */
+        big ? 'w-[min(960px,calc(100vw-64px))]' : 'fixed bottom-5 right-[92px] z-[9000] w-[360px]'
+      }`}
+    >
       {/* ⚠️ The controls sit in a HEADER ROW, not over the picture — a scene is composed edge to edge,
           and a button floating on it covers whatever that scene put in its corner. */}
       <div className="flex items-center gap-2 px-4 pb-2 pt-3">
@@ -81,6 +99,12 @@ export function PortalTourDock({ onClose }: { onReplay?: () => void; onClose: ()
             rail, in this card's own colour and glyph, and pressing that brings it back. The old
             Minimise pill was a second "away" state in a second place — the bottom-right corner of
             the canvas, over the page being built — so it went. */}
+        <button
+          onClick={() => setBig((v) => !v)}
+          title={big ? 'Exit full screen' : 'Full screen'}
+          aria-label={big ? 'Exit full screen' : 'Full screen'}
+          className="inline-flex size-6 items-center justify-center rounded text-white/60 transition-colors hover:bg-white/10 hover:text-white"
+        >{big ? <Minimize2 size={13} /> : <Maximize2 size={13} />}</button>
         <button onClick={onClose} title="Close — it waits at the bottom of the right rail" className="inline-flex size-6 items-center justify-center rounded text-white/60 transition-colors hover:bg-white/10 hover:text-white">
           <X size={14} />
         </button>
@@ -130,4 +154,7 @@ export function PortalTourDock({ onClose }: { onReplay?: () => void; onClose: ()
       </div>
     </div>
   );
+  return big ? (
+    <div className="fixed inset-0 z-[10100] flex items-center justify-center bg-black/55 p-8" onClick={() => setBig(false)}>{card}</div>
+  ) : card;
 }

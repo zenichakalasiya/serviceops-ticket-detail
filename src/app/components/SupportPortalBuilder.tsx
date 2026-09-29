@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
-  ArrowLeft, ArrowRight, Check, ChevronDown, ChevronLeft, Eye, HelpCircle, RotateCcw,
+  ArrowLeft, ArrowRight, Check, ChevronDown, ChevronLeft, Eye, HelpCircle, Keyboard, RotateCcw,
   Palette, PanelRight, Paintbrush, Pencil, Plus, Redo2, Undo2, X, LayoutPanelTop,
 } from 'lucide-react';
 import { PortalBannersPanel } from './PortalBannersPanel';
@@ -3281,39 +3281,13 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
               sheet existed. It exists, so there are two items and the menu earns its place.
               ⚠️ Both are HELP — one shows you the surface, the other shows you the keys — so they
               belong behind one glyph rather than taking two slots on a bar of eight. */}
-          <div className="relative">
-            <Tooltip delayDuration={0}><TooltipTrigger asChild>
-              <button onClick={() => setHelpMenu((v) => !v)} aria-label="Help" className={iconBtn}>
-                <HelpCircle size={17} />
-              </button>
-            </TooltipTrigger><TooltipContent><TipKeys label="Keyboard shortcuts" keys={chromeKeys('help')} /></TooltipContent></Tooltip>
-            {helpMenu && (
-              <>
-                <span className="fixed inset-0 z-[60]" onClick={() => setHelpMenu(false)} />
-                <div className="absolute right-0 top-[calc(100%+6px)] z-[61] w-[196px] rounded-lg border border-[#E5E7EB] bg-white p-1 shadow-[0_12px_16px_-4px_rgba(16,24,40,0.10),0_4px_6px_-2px_rgba(16,24,40,0.06)]">
-                  <button
-                    onClick={() => { setHelpMenu(false); setDock(false); setTour(true); }}
-                    className="flex w-full items-center rounded px-2.5 py-1.5 text-left text-[12.5px] text-[#364658] transition-colors hover:bg-[#F5F7FA]"
-                  >Take the tour</button>
-                  {/* ⚠️ The dock's ONLY way back. It opens once, when the tour ends, and closing it
-                      is meant to be final — so without a row here the recap would be a surface an
-                      admin could lose permanently by pressing the ✕ they were offered. */}
-                  <button
-                    onClick={() => { setHelpMenu(false); setTour(false); setDock(true); }}
-                    className="flex w-full items-center rounded px-2.5 py-1.5 text-left text-[12.5px] text-[#364658] transition-colors hover:bg-[#F5F7FA]"
-                  >Editor basics</button>
-                  {/* The key is on the row, because a sheet that lists shortcuts should say its own. */}
-                  <button
-                    onClick={() => { setHelpMenu(false); setKeys(true); }}
-                    className="flex w-full items-center justify-between gap-2 rounded px-2.5 py-1.5 text-left text-[12.5px] text-[#364658] transition-colors hover:bg-[#F5F7FA]"
-                  >
-                    Keyboard shortcuts
-                    <kbd className="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded border border-[#DFE5ED] bg-[#F8FAFC] px-1 text-[10px] font-semibold text-[#64748B]">?</kbd>
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
+          {/* ⚠️ The ? is the TOUR, and only the tour (Zeni, 29 Sep 2026). The keyboard sheet and the Editor
+              basics video left its menu for the foot of the right rail, where they are always one click. */}
+          <Tooltip delayDuration={0}><TooltipTrigger asChild>
+            <button onClick={() => { setDock(false); setTour(true); }} aria-label="Take the tour" className={iconBtn}>
+              <HelpCircle size={17} />
+            </button>
+          </TooltipTrigger><TooltipContent>Take the tour</TooltipContent></Tooltip>
 
           {/* ── Light / dark, for the whole canvas ──────────────────────────────────────────────
               ⚠️ It used to sit on the THEME panel's title row, which put it three clicks away from
@@ -3673,18 +3647,28 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
           {/* ⚠️ The closed dock, PARKED at the foot of the rail in the dock's own colour and glyph, so it
               reads as the same card folded away rather than as a fifth panel. Hidden while the dock is
               open — one thing, one place at a time. */}
-          {dockParked && !dock && (
-            <Tooltip delayDuration={0}><TooltipTrigger asChild>
-              <button
-                data-portal-dock="parked"
-                onClick={() => { setTour(false); setDock(true); }}
-                className="mt-auto flex w-[60px] flex-col items-center gap-1.5 rounded bg-[#1F2937] py-2 text-white shadow-[0_6px_14px_-6px_rgba(0,0,0,0.45)] transition-colors hover:bg-[#2B3645]"
-              >
-                <DockGlyph size={18} />
-                <span className="text-[11px] font-medium leading-none">Basics</span>
-              </button>
-            </TooltipTrigger><TooltipContent side="left">Editor basics</TooltipContent></Tooltip>
-          )}
+          {/* ── The rail's FOOT (Zeni, 29 Sep 2026): Keyboard shortcuts, and last the Editor basics video.
+              Both are always here — they used to live in the ? menu, and the video appeared on the rail
+              only after its card had been closed once. */}
+          <Tooltip delayDuration={0}><TooltipTrigger asChild>
+            <button
+              onClick={() => setKeys((v) => !v)}
+              className={`mt-auto flex w-[60px] flex-col items-center gap-1.5 rounded py-2 transition-all ${keys ? 'bg-[#EBF5FF] text-[#3D8BD0]' : 'text-[#64748B] hover:bg-[#F5F7FA] hover:text-[#364658]'}`}
+            >
+              <Keyboard size={18} />
+              <span className="text-[11px] font-medium leading-none">Shortcuts</span>
+            </button>
+          </TooltipTrigger><TooltipContent side="left"><TipKeys label="Keyboard shortcuts" keys={chromeKeys('help')} /></TooltipContent></Tooltip>
+          <Tooltip delayDuration={0}><TooltipTrigger asChild>
+            <button
+              data-portal-dock="parked"
+              onClick={() => { setTour(false); setDock((v) => !v); }}
+              className={`flex w-[60px] flex-col items-center gap-1.5 rounded py-2 text-white shadow-[0_6px_14px_-6px_rgba(0,0,0,0.45)] transition-colors ${dock ? 'bg-[#3D8BD0] hover:bg-[#2D6CA0]' : 'bg-[#1F2937] hover:bg-[#2B3645]'}`}
+            >
+              <DockGlyph size={18} />
+              <span className="text-[11px] font-medium leading-none">Basics</span>
+            </button>
+          </TooltipTrigger><TooltipContent side="left">Editor basics</TooltipContent></Tooltip>
         </div>
       </div>
 
@@ -3705,7 +3689,7 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
       )}
       {/* ⚠️ OUTSIDE the tour's own condition: the dock is not a step of the tour, it is what is left
           once the tour has gone, and it stays up while the admin works. */}
-      {dock && !tour && <PortalTourDock onReplay={replayTour} onClose={() => { setDock(false); setDockParked(true); }} />}
+      {dock && !tour && <PortalTourDock onReplay={replayTour} onClose={() => setDock(false)} />}
       {layoutConfirm}
       {bannerStart && (
         <BannerStartDialog
