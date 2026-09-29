@@ -506,10 +506,11 @@ export const WIDGET_SPECS: WidgetSpec[] = [
   {
     id: 'custom_card', name: 'Custom Card', group: 'Content', reuse: 'many', family: 'collection',
     fields: [
-      { key: 'layout', label: '', control: 'cardLayout', group: 'Card layout' },
       { key: 'title', label: 'Heading', control: 'text', group: 'Content' },
       { key: 'sub', label: 'Subtext', control: 'textarea', group: 'Content' },
       { key: 'image', label: 'Image', control: 'upload', group: 'Content', suggested: '800 × 600', when: (c) => String(c.layout ?? 'imageRight') !== 'links' && String(c.layout ?? 'imageRight') !== 'text' },
+      /* ⚠️ Card layout comes AFTER the Content group, below the Image (Zeni, 29 Sep 2026). */
+      { key: 'layout', label: '', control: 'cardLayout', group: 'Card layout' },
       /* The button is OPTIONAL everywhere it can appear — an empty label draws nothing. */
       { key: 'ctaLabel', label: 'Button label', control: 'text', group: 'Action', when: (c) => String(c.layout ?? 'imageRight') !== 'links', placeholder: 'Contact us' },
       { key: 'ctaUrl', label: 'Button link', control: 'text', group: 'Action', when: (c) => String(c.layout ?? 'imageRight') !== 'links' && !!c.ctaLabel, placeholder: 'https://' },
@@ -994,7 +995,6 @@ export const WIDGET_SPECS: WidgetSpec[] = [
        * on every page looks exactly as it did. The `designTab` gates went with the tab that set
        * them: with nothing writing that key, `(c.designTab ?? 'style') === 'style'` was a condition
        * that could only ever be true. */
-      { key: 'fullWidth', label: 'Full width', control: 'toggle', tab: 'style', group: 'Button' },
       { key: 'radius', label: 'Corner radius', control: 'slider', tab: 'style', group: 'Button', min: 0, max: 24 },
       { key: 'fillColor', label: 'Fill colour', control: 'color', tab: 'style', group: 'Button', when: (c) => c.style !== 'link' },
       { key: 'borderColor', label: 'Border colour', control: 'color', tab: 'style', group: 'Button', when: (c) => c.style === 'outline' },
@@ -1081,18 +1081,9 @@ export const WIDGET_SPECS: WidgetSpec[] = [
       /* ⚠️ These style the WHOLE block, and that is the division of labour: the toolbar styles what
          you selected, these style everything. Both are needed — the toolbar cannot express "this
          paragraph is 18px Poppins" without you selecting all of it first, every time you edit. */
-      { key: 'font', label: 'Font', control: 'select', tab: 'style', group: 'Text style',
-        options: ['Inherit from theme', 'Inter', 'Poppins', 'Roboto', 'Source Sans 3', 'Merriweather', 'IBM Plex Mono'] },
-      { key: 'weight', label: 'Font weight', control: 'select', tab: 'style', group: 'Text style',
-        options: ['Light', 'Normal', 'Medium', 'Semibold', 'Bold'] },
-      { key: 'size', label: 'Font size', control: 'sliderUnit', tab: 'style', group: 'Text style', min: 10, max: 48, unit: 'px' },
-      { key: 'color', label: 'Font colour', control: 'color', tab: 'style', group: 'Text style' },
-      { key: 'lineHeight', label: 'Line height', control: 'slider', tab: 'style', group: 'Text style', min: 100, max: 220 },
-      { key: 'letterSpacing', label: 'Letter spacing', control: 'slider', tab: 'style', group: 'Text style', min: -2, max: 8 },
-      {
-        key: 'textCols', label: 'Column count', control: 'segmented', tab: 'style', group: 'Text style',
-        options: [{ value: '1', label: '1' }, { value: '2', label: '2' }],
-      },
+      /* ⚠️ The Text style group is GONE from the sidebar (Zeni, 29 Sep 2026): font, weight, size, colour,
+         line height, letter spacing and columns. The words are styled on the canvas's text toolbar.
+         Every key stays in `defaults` and is still read, so no text on any page changes. */
       {
         key: 'textAlign', label: 'Alignment', control: 'segmented', tab: 'style', group: 'Alignment',
         options: [{ value: 'left', label: 'Left' }, { value: 'center', label: 'Centre' }, { value: 'right', label: 'Right' }, { value: 'justify', label: 'Justify' }],
@@ -1230,7 +1221,8 @@ export const WIDGET_SPECS: WidgetSpec[] = [
          Image element with no image is not a variant of an image, it is a Text element under the
          wrong name, with alt text and a crop still on screen describing nothing. Anyone who wants
          only words already has the Text element. */
-      { key: 'template', label: 'Card templates', control: 'templates', group: 'Content', options: ['left', 'top', 'right'] },
+      { key: 'template', label: 'Card templates', control: 'templates', group: 'Content', options: ['left', 'top', 'right'],
+        when: (c) => String(c.caption ?? '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim() !== '' },
       /* ⚠️ Link is the image's ACTION, not its content. Where a click goes is neither what the
          element shows nor how it looks — the same reason the action cards keep their destination in
          a section of its own rather than buried among titles. */

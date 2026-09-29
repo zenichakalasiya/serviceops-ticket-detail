@@ -18,6 +18,7 @@ import { createPortal } from 'react-dom';
 import {
   ChevronLeft, ChevronRight, Copy, EyeOff, Layers, List, MoreVertical, PanelLeft, RotateCcw,
   Info, Link2, Rows3, Search as SearchIcon, Square, Table as TableIcon, Trash2, Type as TypeIcon,
+  AlignStartVertical, AlignCenterVertical, AlignEndVertical, AlignStartHorizontal, AlignCenterHorizontal, AlignEndHorizontal,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -183,25 +184,26 @@ const ALIGN_ICON: Record<string, ReactNode> = {
   stretch: <AlignGlyph kind="stretch" />,
 };
 
+/* ⚠️ The SAME control every other sidebar alignment uses (Zeni, 29 Sep 2026): a full-width row of three
+   separate bordered boxes with lucide's Align… glyphs — `DesignQuickSections`' Alignment group. It used
+   to be a small joined strip of hand-drawn glyphs, so the logo's position read as a different control. */
+const ALIGN_LUCIDE: Record<string, Record<string, ReactNode>> = {
+  x: { left: <AlignStartVertical size={15} />, start: <AlignStartVertical size={15} />, center: <AlignCenterVertical size={15} />, right: <AlignEndVertical size={15} />, end: <AlignEndVertical size={15} /> },
+  y: { top: <AlignStartHorizontal size={15} />, start: <AlignStartHorizontal size={15} />, middle: <AlignCenterHorizontal size={15} />, center: <AlignCenterHorizontal size={15} />, bottom: <AlignEndHorizontal size={15} />, end: <AlignEndHorizontal size={15} /> },
+};
 function AlignRow({ value, options, onChange, axis = 'x' }: {
   value: string; options: { value: string; label: string }[]; onChange: (v: string) => void; axis?: 'x' | 'y';
 }) {
   return (
-    <div className="inline-flex overflow-hidden rounded border border-[#DFE5ED]">
-      {options.map((o, i) => {
-        const on = value === o.value;
-        return (
-          <button
-            key={o.value}
-            onClick={() => onChange(o.value)}
-            title={o.label}
-            className={`flex h-8 w-9 items-center justify-center transition-colors ${
-              i > 0 ? 'border-l border-[#DFE5ED]' : ''
-            } ${on ? 'bg-[#EBF5FF] text-[#3D8BD0]' : 'bg-white text-[#64748B] hover:bg-[#F5F7FA]'}`}
-          ><AlignGlyph kind={ALIGN_KIND[o.value] ?? 'start'} axis={axis} /></button>
-        );
-      })}
-    </div>
+    <Segmented
+      value={value}
+      options={options.map((o) => ({
+        value: o.value,
+        title: o.label,
+        icon: ALIGN_LUCIDE[axis][o.value] ?? <AlignGlyph kind={ALIGN_KIND[o.value] ?? 'start'} axis={axis} />,
+      }))}
+      onChange={onChange}
+    />
   );
 }
 
@@ -613,7 +615,8 @@ const DROP_GROUPS = new Set(['Layout', 'Size', 'Arrangement']);
 /* The card's Title placement group — drawn LAST in Design, after Spacing (Zeni, 29 Sep 2026). */
 const TITLE_GROUP = 'Title';
 /* The spec groups that answer "what shape is this block" — drawn FIRST in Design, above Background. */
-const LEAD_SPEC_GROUPS = new Set(['Banner', 'Layout', 'Card templates']);
+/* ⚠️ 'Button' leads too: a Button's Design opens with its own Button group, then Alignment (Zeni, 29 Sep 2026). */
+const LEAD_SPEC_GROUPS = new Set(['Banner', 'Layout', 'Card templates', 'Button']);
 /* The one group that always sinks to the foot of Design. It describes what a widget does when it
    has nothing to show — a rare, conditional state — so it must not sit between the fill and the
    spacing you are actually reading, and it can never be the FIRST accordion. */

@@ -306,6 +306,25 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   Services deleted it would have taken Most Used off the page too. ⚠️ In the split row each grid defaults
   to **2 columns** (`{ columns: 2, ...wc(id) }`) — four tiles at half width were 98px and the names ran into
   each other; an admin's own column count still wins (style store, then config).
+- **Support Portal — data cards align HORIZONTALLY in every template; sidebar trims (29 Sep 2026, Zeni).**
+  Supersedes the axis rule in the bullet below: `cardAlignAxis` now always answers `'h'`, so action cards
+  and the Favourite / Most Used / My Assets / My CIs tiles show Left · Centre · Right only, in every card
+  template, and never a vertical control. `cardAlignCss` moves a column template's items with
+  `align-items` and a row template's group with `justify-content` (mirrored for Icon right, whose row
+  runs reversed), and sets `--card-justify`. **`cardAlignClass` → `.card-align`** (theme.css) makes the
+  children `flex: 0 1 auto` (⚠️ not just grow 0 — the text column is `flex-1`, basis 0, and collapsed to
+  nothing so its words spilled out of the card), makes `[data-card-line]` / `[data-card-col]` follow
+  `--card-justify`, and forces `text-align: inherit`. ⚠️ **The Icon-top bug:** `quickCardEl` forced
+  inline `text-align: center` on the title and subtitle whenever the template was Icon top, so the card
+  moved and the words did not; `centre` is now false once the card has an `align` of its own. A card whose
+  text is truncated (a side-by-side action card) correctly moves nothing: its words already fill it.
+  **Sidebar:** Text lost its **Text style** group (keys stay in defaults); Button opens with its **Button**
+  group then Alignment (`'Button'` added to `LEAD_SPEC_GROUPS`), lost **Full width** and the sidebar
+  **Button style** select (still on the toolbar); Image's **Card templates** shows only once the caption has
+  text; Media Slider lost its **Slide** group; Custom Card's **Card layout** moved below Content (after the
+  Image). **`AlignRow`** (the drawer's alignment segmented, now used only by the top bar's **Logo
+  position**) is the same full-width row of three bordered boxes with lucide's Align… glyphs as every other
+  sidebar alignment field.
 - **Support Portal — a DATA CARD aligns on the axis its CARD TEMPLATE leaves free (29 Sep 2026, Zeni).**
   Action cards (`quick-*`, a placed `x-action-card`) and the data tiles of Favourite Services, Most
   Used Services, My Assets and My CIs (`<card>-tile`) have alignment again — ONE axis, three options,

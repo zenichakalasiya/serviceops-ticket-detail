@@ -18,7 +18,7 @@ import { ImageUploadZone } from './PortalControls';
 /* The Table is a module of its own — a spreadsheet-grade editor is a different kind of thing from
    the read-only renderers in this file, and it owns its data model, its handles and its menus. */
 import { PortalTable } from './PortalTable';
-import { cardAlignCss, hasFixedTitle, hasFixedViewAll, itemNodeId, registerItemName, subNodeId } from './portalPageModel';
+import { cardAlignClass, cardAlignCss, hasFixedTitle, hasFixedViewAll, itemNodeId, registerItemName, subNodeId } from './portalPageModel';
 import { CarouselArrows, CarouselDots, CarouselNav, CarouselTrack, useCarousel } from './PortalCarousel';
 import { LineMark } from './PortalLineStyles';
 import type { LineStyle } from './PortalLineStyles';
@@ -1269,7 +1269,7 @@ function ServiceTiles({ nodeId, items, showDesc, tpl = 'top', cols, chips, look,
           /* ⚠️ NO STROKE (29 Sep 2026): the grey fill already separates a tile from the white card, so a
              hairline around it was a second edge saying the same thing. A border the admin sets from the
              toolbar still draws — `containerCss` writes its own width and style. */
-          className={`flex min-w-0 rounded-lg bg-[#F6F9FC] ${
+          className={`flex min-w-0 rounded-lg bg-[#F6F9FC] ${cardAlignClass(styles[nodeId + '-tile'])} ${
             action ? 'gap-3 px-3.5 py-3' : 'gap-2 px-3 py-4'
           } ${
             top ? 'flex-col items-center text-center' : tpl === 'right' ? 'flex-row-reverse items-center' : 'items-center'

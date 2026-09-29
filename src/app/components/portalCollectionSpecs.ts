@@ -282,8 +282,8 @@ export const SLIDER_SPEC: WidgetSpec = {
        In Image with data every slide brings its own, so a second image here would be a picture the
        carousel never shows. */
     { key: 'bgImage', label: 'Background image', control: 'upload', group: 'Carousel type', when: (c) => c.slideMode === 'data' },
-    { key: 'slideMaxWidth', label: 'Content max width', control: 'slider', tab: 'style', group: 'Slide', min: 30, max: 100, unit: '%' },
-    { key: 'slideOverlay', label: 'Text-over-media overlay', control: 'slider', tab: 'style', group: 'Slide', min: 0, max: 80, unit: '%' },
+    /* ⚠️ The Slide group (content max width, text-over-media overlay) left the sidebar (Zeni, 29 Sep
+       2026). Both keys stay in `defaults` and `SliderRender` still reads them. */
   ],
   /* ⚠️ NO P5 Media. Its seven keys — ratio, fit, focal, shape, mediaRadius, mediaOverlay and
      captionPos — are ALL inert on a slider: `SliderRender` hard-codes 16:9, `object-cover` and

@@ -4826,7 +4826,9 @@ export function DesignQuickSections({ id, part }: { id: string; part?: 'lead' | 
       </>
     )));
   }
-  if (isButton) {
+  /* ⚠️ No Button style section in the SIDEBAR (Zeni, 29 Sep 2026) — the toolbar's Button style menu is
+     where it is chosen; the sidebar opens with the Button group instead. */
+  if (isButton && false) {
     sections.push(g('button', 'Button style', (
       <SelectField value={String(cfg?.(id)?.style ?? 'primary')} options={BUTTON_STYLES.map(([v, l]) => ({ value: v, label: l }))} onChange={(v) => setCfg?.(id, { style: v })} />
     )));

@@ -1,4 +1,4 @@
-# Handoff — 2026-09-29 19:30
+# Handoff — 2026-09-29 21:00
 
 ## Read first
 All work is in the **Support Portal** builder (Admin › Support Channels) and its listing.
@@ -47,6 +47,20 @@ design controls mirrored into the sidebar. Ended mid-way through an alignment au
 - The Layout preset now lights what the canvas draws (was "four across" over a 2 × 2).
 - Verified in the browser (`tour-shots/probe-cardalign*.mjs`). See the CLAUDE.md bullet
   "a DATA CARD aligns on the axis its CARD TEMPLATE leaves free".
+
+## Done last — horizontal-only card alignment + sidebar trims (29 Sep, late)
+- Data cards (action cards + the four data-card tiles) align Left/Centre/Right in every template; the Icon-top
+  words now follow. Text / Button / Image / Media Slider / Custom Card sidebar changes and the Logo position
+  field — see the CLAUDE.md bullet "data cards align HORIZONTALLY in every template".
+
+## Alignment model — Zeni's answers (29 Sep), NOT built yet
+1. A widget that fills its column gets alignment only when it is NARROWER than the column.
+2. Text: Left/Centre/Right align the lines inside the text box; the box hugs its text.
+3. Vertical appears whenever the cell has spare height (dragged taller OR a taller neighbour).
+4. ONE alignment per column (or grouped sub-section), not one per stacked widget.
+5. "Stretch" question still open — re-ask in plain words.
+6. KPI = a display of the Custom Data Widget; not coming back to the palette on its own. Text with Image stays hidden.
+7. Keep the data-card tile alignment.
 
 ## In progress
 Nothing mid-flight. The per-widget alignment audit list for Zeni (probe-align2 add loop unreliable)

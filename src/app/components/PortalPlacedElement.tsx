@@ -8,7 +8,7 @@ import { colsTemplate } from './portalBannerLayout';
 export const PlacedBlockRenderers = createContext<Record<string, (id: string) => ReactNode>>({});
 import { Image as ImageIcon, PlayCircle, Search, Star } from 'lucide-react';
 import { PORTAL_APPROVALS, PORTAL_ARTICLES, PORTAL_ELEMENTS, PORTAL_OPEN_REQUESTS } from './supportPortalData';
-import { ACTION_TYPES, cardAlignCss, fillCss, paintsOwnSurface, renderSpec } from './portalPageModel';
+import { ACTION_TYPES, cardAlignClass, cardAlignCss, fillCss, paintsOwnSurface, renderSpec } from './portalPageModel';
 import type { PlacedElement } from './portalPageModel';
 import { COLLECTION_RENDERERS } from './PortalCollectionRender';
 import { ImageUploadZone } from './PortalControls';
@@ -246,7 +246,7 @@ function specDrivenBody(type: string, cfg: Record<string, unknown> | undefined, 
         }}
         className={`flex h-full gap-3 rounded-lg p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_4px_12px_rgba(16,24,40,0.06)] ${
           top ? 'flex-col' : iconRight ? 'flex-row-reverse items-center' : 'items-center'
-        } ${centre ? 'items-center text-center' : ''}`}
+        } ${centre ? 'items-center text-center' : ''} ${cardAlignClass(ownStyle)}`}
       >
         {/* ⚠️ The icon is its own LAYER and opens the picker in place, exactly as the built-in
             quick-action cards do. On a placed card it was the one part you could see and not touch:

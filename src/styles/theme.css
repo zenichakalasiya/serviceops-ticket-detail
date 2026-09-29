@@ -772,3 +772,14 @@ body[data-portal-dragging] [data-portal-toolbar] { pointer-events: none; opacity
    words — Zeni's call, 28 Sep 2026. The rule says 10 because the tooltip carries a pixel of slack past
    its content (measured: 10 here = 11 on screen). Unlayered, so it beats the `px-3` on TooltipContent. */
 [data-slot='tooltip-content']:has(> .tip-keys) { padding-right: 10px; }
+
+/* ── A data card's own horizontal alignment (cardAlignCss / cardAlignClass) ──
+   The text column stops GROWING, so in a side-by-side template the icon and the words move across
+   the card as one group; nested flex lines (a record tile's id · type row) follow the same side;
+   and no child may pin its own text-align over the card's. */
+/* ⚠️ `flex: 0 1 auto`, not just grow 0: the text column is `flex-1` (basis 0), so without the auto
+   basis it collapsed to zero width and its words spilled out of the card. */
+.card-align > * { flex: 0 1 auto !important; }
+.card-align [data-card-line] { justify-content: var(--card-justify, flex-start); }
+.card-align [data-card-col] { align-items: var(--card-justify, flex-start); }
+.card-align * { text-align: inherit !important; }

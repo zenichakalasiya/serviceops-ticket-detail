@@ -16,7 +16,7 @@ import {
   PORTAL_APPROVALS, PORTAL_ARTICLES, PORTAL_ARTICLE_TOTAL, PORTAL_OPEN_REQUESTS, PORTAL_OPEN_REQUEST_TOTAL, statusTone,
 } from './supportPortalData';
 import { AddSectionSeam, BannerSlot, ColumnAdders, MOVE_MIME, Sel, draggedElement, draggedNode, styleOf, useCanvas } from './PortalCanvas';
-import { HUGS_CONTENT, bannerGroupGap, cardAlignCss, inBanner } from './portalPageModel';
+import { HUGS_CONTENT, bannerGroupGap, cardAlignClass, cardAlignCss, inBanner } from './portalPageModel';
 import { bannerGradientOf, bannerLayerCss, gradientCss } from './PortalBannerTools';
 import type { BannerDecor } from './portalBannerTemplates';
 import { ImagePlus } from 'lucide-react';
@@ -2507,7 +2507,8 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
              chose" from "chose start", so any card carrying a left-ish value quietly
              out-voted the template it was told to follow — and the result looked like the
              icon had fallen out of the row rather than like an arrangement anyone picked. */
-          const centre = top || tileActions || c.contentAlign === 'center';
+          const ownAlign = styles[a.id]?.align;
+          const centre = !ownAlign && (top || tileActions || c.contentAlign === 'center');
           // P6: the icon's size, colour and container are style; WHICH icon is content.
           const iconSize = chosen(styles, a.id, 'iconSize') ?? (opts?.row ? 18 : 22);
           const iconColor = chosen(styles, a.id, 'iconColor');
@@ -2547,7 +2548,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                     : 'rounded-lg border border-[#E5E7EB] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04),0_4px_12px_rgba(16,24,40,0.06)]'
                 } ${
                   top ? 'flex-col' : stackedLeft ? 'flex-col justify-between' : iconRight ? 'flex-row-reverse items-center' : 'items-center'
-                } ${centre ? 'items-center text-center' : ''}`}
+                } ${centre ? 'items-center text-center' : ''} ${cardAlignClass(styles[a.id])}`}
               >
                 {/* The ADMIN's corner arrow — off unless the card's panel asks for it.
                     ⚠️ ALWAYS the top-right corner, whatever the card's template. A row of four cards
@@ -4103,7 +4104,7 @@ function RecordTiles({ nodeId, titleFallback, cfg, rows, total, icon, headIcon }
                a class would be beaten by nothing and a theme default must always yield to a choice.
                The white icon badge below stays white: the tile is the tinted thing now, and the
                badge has to be a step away from whatever it sits on. */
-            <Sel key={r.id} id={`${nodeId}-tile`} style={{ backgroundColor: TONE.wash, ...(tileCols > 1 && i === shown.length - 1 && shown.length % tileCols === 1 ? { gridColumn: '1 / -1' } : null), ...cardAlignCss(styles[`${nodeId}-tile`], tileTpl) }} className={`flex min-w-0 gap-2.5 rounded-lg p-3 ${
+            <Sel key={r.id} id={`${nodeId}-tile`} style={{ backgroundColor: TONE.wash, ...(tileCols > 1 && i === shown.length - 1 && shown.length % tileCols === 1 ? { gridColumn: '1 / -1' } : null), ...cardAlignCss(styles[`${nodeId}-tile`], tileTpl) }} className={`flex min-w-0 gap-2.5 rounded-lg p-3 ${cardAlignClass(styles[`${nodeId}-tile`])} ${
               tileTpl === 'top' ? 'flex-col items-center text-center' : tileTpl === 'right' ? 'flex-row-reverse items-start' : 'items-start'
             }`}>
               {tileTpl !== 'none' && (
@@ -4118,9 +4119,9 @@ function RecordTiles({ nodeId, titleFallback, cfg, rows, total, icon, headIcon }
                   and the type are the same rank as each other and a dot between them says so in a
                   line instead of a column — which also holds the tile to two lines whatever the
                   words are, so four of them stay the same height. */}
-              <span className="flex min-w-0 flex-1 flex-col">
+              <span data-card-col className="flex min-w-0 flex-1 flex-col">
                 <span style={roleStyle(styles, nodeId, 'body')} className="truncate text-[13px] font-medium leading-snug text-[#364658]">{r.name}</span>
-                <span className="mt-1 flex min-w-0 items-center gap-1.5">
+                <span data-card-line className="mt-1 flex min-w-0 items-center gap-1.5">
                   {cfg.showId !== false && (
                     <span style={{ backgroundColor: TONE.soft, color: TONE.ink }} className="flex-shrink-0 truncate whitespace-nowrap rounded-sm px-1.5 py-0.5 text-[11px] font-medium">{r.id}</span>
                   )}

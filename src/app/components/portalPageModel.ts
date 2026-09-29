@@ -1312,28 +1312,34 @@ export function cardTemplateOf(id: string, cfg?: (id: string) => Record<string, 
   if (placedType(id) === 'x-action-card') return String(c.cardTemplate ?? (c.iconPos === 'top' ? 'top' : 'left'));
   return String(c.cardTemplate ?? cfg?.('quick')?.cardTemplate ?? c.iconPos ?? 'left');
 }
-/** 'h' = Left / Centre / Right; 'v' = Top / Middle / Bottom. */
-export const cardAlignAxis = (tpl: string): 'h' | 'v' => (tpl === 'left' || tpl === 'right' ? 'v' : 'h');
+/** 'h' = Left / Centre / Right; 'v' = Top / Middle / Bottom.
+ *  ⚠️ ALWAYS 'h' now (Zeni, 29 Sep 2026): a data card aligns HORIZONTALLY in every template — the
+ *  icon and the words move together across the card. Vertical never had spare height to act on in a
+ *  row of equal cards. Kept as a function so the toolbar and the sidebar still ask one place. */
+export const cardAlignAxis = (_tpl: string): 'h' | 'v' => 'h';
 /** What the card shows when nobody has chosen — the arrangement the template already draws. */
-export const cardAlignDefault = (tpl: string, id = ''): string =>
-  cardAlignAxis(tpl) === 'v'
-    /* A record tile (My Assets / My CIs) hangs its words from the TOP; everything else centres them. */
-    ? (/-tile$/.test(id) && !isServiceTile(id) ? 'start' : 'center')
-    : tpl === 'top' ? 'center' : 'left';
+export const cardAlignDefault = (tpl: string, _id = ''): string => (tpl === 'top' ? 'center' : 'left');
+/** Class a card carries while it has an alignment of its own: it stops the text column GROWING (so
+ *  the icon + words move as one group in a side-by-side template) and makes nested lines follow
+ *  `--card-justify` (theme.css, `.card-align`). */
+export const cardAlignClass = (s: { align?: string } | undefined): string =>
+  s?.align && s.align !== 'stretch' ? 'card-align' : '';
 /** The card's own alignment as CSS on the card's flex box. Unset → nothing, so the template's own
- *  arrangement stands. `stacked` = the box is a column (Icon top / stacked left). */
+ *  arrangement stands. A column template (Icon top / stacked left) moves its items with
+ *  `align-items`; a row template (Icon left / right / Text only) moves the group with
+ *  `justify-content` — mirrored for Icon right, whose row runs reversed. */
 export function cardAlignCss(s: { align?: string; alignY?: string } | undefined, tpl: string): CSSProperties {
-  if (!s) return {};
-  const flex = (v: string) => (v === 'left' || v === 'start' ? 'flex-start' : v === 'right' || v === 'end' ? 'flex-end' : 'center');
-  if (cardAlignAxis(tpl) === 'v') {
-    return s.alignY && s.alignY !== 'stretch' ? { alignItems: flex(s.alignY) } : {};
-  }
-  if (!s.align || s.align === 'stretch') return {};
+  if (!s?.align || s.align === 'stretch') return {};
+  const a = s.align;
+  const flex = (v: string) => (v === 'left' ? 'flex-start' : v === 'right' ? 'flex-end' : 'center');
   const stacked = tpl === 'top' || tpl === 'stackedLeft';
+  /* `flex-row-reverse` puts flex-start on the RIGHT, so the two ends swap for Icon right. */
+  const rowValue = tpl === 'right' ? (a === 'left' ? 'flex-end' : a === 'right' ? 'flex-start' : 'center') : flex(a);
   return {
-    ...(stacked ? { alignItems: flex(s.align) } : { justifyContent: flex(s.align) }),
-    textAlign: s.align === 'right' ? 'right' : s.align === 'center' ? 'center' : 'left',
-  };
+    ...(stacked ? { alignItems: flex(a) } : { justifyContent: rowValue }),
+    textAlign: a === 'right' ? 'right' : a === 'center' ? 'center' : 'left',
+    ['--card-justify' as string]: flex(a),
+  } as CSSProperties;
 }
 
 /** How many data tiles a white card is ACTUALLY showing across, read off the canvas — the Layout
