@@ -31,8 +31,9 @@ import { ALL_PACKS, IconBoxBlock, packBadge } from './PortalStylePacks';
 import {
   ALIGN_OPTIONS, Badge, ChipEditor, Chips, Field, GridPicker, Group, LogoPair, Note, NumberField, RichText,
   SelectField, Segmented, SliderRow, StepRail, TextField, ToggleRow, UploadZone, VideoSource,
-  MultiSelect,
+  MultiSelect, DesignGroupsCtx,
 } from './PortalControls';
+import type { DesignGroupsApi } from './PortalControls';
 import { PortalItemList } from './PortalItemList';
 import { RecordFilterField } from './PortalRecordFilter';
 import type { RecordFilter } from './portalRecordFilters';
@@ -381,8 +382,11 @@ const OverrideDot = () => (
   <span title="Something in here is set away from the default" className="size-1.5 flex-shrink-0 rounded-full bg-[#F58518]" />
 );
 
-function PanelBody({ spec, nodeId, cfg, renderField, openGroups, toggleGroup, styles, setStyle, replaceStyle, collectionSlot, hasCollection, quickDesign }: {
+function PanelBody({ spec, nodeId, cfg, renderField, openGroups, toggleGroup, setOpenGroups, quickShut = [], styles, setStyle, replaceStyle, collectionSlot, hasCollection, quickDesign }: {
   quickDesign?: ReactNode;
+  setOpenGroups: (next: string[]) => void;
+  /** The toolbar sections' shut-markers, so Expand all reaches them too. */
+  quickShut?: string[];
   spec: WidgetSpec; nodeId: string; cfg: Cfg;
   renderField: (f: WidgetField) => ReactNode;
   openGroups: string[]; toggleGroup: (g: string) => void;
@@ -472,7 +476,21 @@ function PanelBody({ spec, nodeId, cfg, renderField, openGroups, toggleGroup, st
 
       {hasDesignSection && (
       <>
-      <SectionLabel>Design</SectionLabel>
+      <SectionLabel action={(
+        /* ⚠️ This model had no Expand all on Design at all. Its accordions are open unless shut, the
+           same convention as the toolbar's sections, so both go in as shut-markers. */
+        <ExpandAll
+          keys={[]}
+          shutKeys={[
+            ...panel.accordions.filter((a) => a.id !== 'size').filter((a) => !a.when || a.when(cfg))
+              .filter((a) => visible(a.fields).length > 0 || !!a.spacing || a.groups?.some((g) => g !== 'G1'))
+              .map((a) => `shut:${a.id}`),
+            ...(quickDesign ? quickShut : []),
+          ]}
+          openGroups={openGroups}
+          setOpen={setOpenGroups}
+        />
+      )}>Design</SectionLabel>
       <div>
         {/* The toolbar's own controls FIRST — background, border & corners, shadow, then the rest. */}
         {quickDesign}
@@ -553,16 +571,20 @@ const SectionLabel = ({ children, action }: { children: ReactNode; action?: Reac
 );
 
 /** Expand all / Collapse all for one section's accordions. Says which it will do, not which it did. */
-function ExpandAll({ keys, openGroups, setOpen }: {
-  keys: string[]; openGroups: string[]; setOpen: (next: string[]) => void;
+/* ⚠️ Two kinds of key, because the drawer stores two kinds of group: most are OPEN while their key is
+   in the list (`keys`), but the accordion model and the toolbar's sections are open UNLESS a
+   `shut:<key>` marker is there (`shutKeys`, passed as the full marker). One button has to flip both,
+   or Collapse all left every default-open group standing — which is what "it does not work" was. */
+function ExpandAll({ keys, shutKeys = [], openGroups, setOpen }: {
+  keys: string[]; shutKeys?: string[]; openGroups: string[]; setOpen: (next: string[]) => void;
 }) {
-  if (keys.length < 2) return null;
-  const allOpen = keys.every((k) => openGroups.includes(k));
+  if (keys.length + shutKeys.length < 2) return null;
+  const allOpen = keys.every((k) => openGroups.includes(k)) && shutKeys.every((k) => !openGroups.includes(k));
   return (
     <button
       onClick={() => setOpen(allOpen
-        ? openGroups.filter((k) => !keys.includes(k))
-        : [...new Set([...openGroups, ...keys])])}
+        ? [...new Set([...openGroups.filter((k) => !keys.includes(k)), ...shutKeys])]
+        : [...new Set([...openGroups.filter((k) => !shutKeys.includes(k)), ...keys])])}
       className="text-[11px] font-medium normal-case tracking-normal text-[#3D8BD0] hover:underline"
     >{allOpen ? 'Collapse all' : 'Expand all'}</button>
   );
@@ -578,6 +600,8 @@ const NODE_ICON: Record<string, ReactNode> = {
  * far above where they used to be declared — a `const` read before its declaration in the same
  * scope is a temporal dead zone, which in this file arrives as a blank page rather than an error. */
 const DROP_GROUPS = new Set(['Layout', 'Size', 'Arrangement']);
+/* The card's Title placement group — drawn LAST in Design, after Spacing (Zeni, 29 Sep 2026). */
+const TITLE_GROUP = 'Title';
 /* The one group that always sinks to the foot of Design. It describes what a widget does when it
    has nothing to show — a rare, conditional state — so it must not sit between the fill and the
    spacing you are actually reading, and it can never be the FIRST accordion. */
@@ -759,6 +783,14 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
   const setOpenGroups = (next: string[]) => { GROUP_MEMORY[spec.id] = next; setOpenGroupsState(next); };
   const toggleGroup = (g: string) =>
     setOpenGroups(openGroups.includes(g) ? openGroups.filter((x) => x !== g) : [...openGroups, g]);
+  /* The toolbar sections showing right now, as they report themselves — what Expand all counts. */
+  const [quickKeys, setQuickKeys] = useState<string[]>([]);
+  const quickShut = quickKeys.map((k) => `shut:${k}`);
+  const designGroups: DesignGroupsApi = {
+    isOpen: (k) => !openGroups.includes(`shut:${k}`),
+    toggle: (k) => toggleGroup(`shut:${k}`),
+    report: (keys) => setQuickKeys((prev) => (prev.join('|') === keys.join('|') ? prev : keys)),
+  };
 
   if (!node) return null;
 
@@ -1683,6 +1715,7 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
     || !!(selItem && collection?.isTableRow));
 
   return (
+    <DesignGroupsCtx.Provider value={designGroups}>
     <div className="flex h-full flex-col">
       {/* ── header ── */}
       <div className="flex-shrink-0 border-b border-[#F0F2F5] px-4 pb-0 pt-3">
@@ -1760,6 +1793,8 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
             renderField={renderField}
             openGroups={openGroups}
             toggleGroup={toggleGroup}
+            setOpenGroups={setOpenGroups}
+            quickShut={quickShut}
             styles={styles}
             setStyle={setStyle}
             replaceStyle={replaceStyle}
@@ -1858,7 +1893,7 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
             Gating only the heading left the shared Spacing block floating under Content, which reads
             as a content setting and is the one thing it is not. */}
         {hasDesign && (
-          <SectionLabel action={<ExpandAll keys={[...groupsFor('style').map((g) => g.group), ...(viewPacks ?? []), '__spacing']} openGroups={openGroups} setOpen={setOpenGroups} />}>Design</SectionLabel>
+          <SectionLabel action={<ExpandAll keys={[...groupsFor('style').map((g) => g.group), ...(viewPacks ?? []), '__spacing']} shutKeys={quickDesign ? quickShut : []} openGroups={openGroups} setOpen={setOpenGroups} />}>Design</SectionLabel>
         )}
         {hasDesign && (
           <>
@@ -1869,7 +1904,8 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
                 beside it. Row layout is a content-config field but belongs under Arrangement with
                 the gap and the dividers; without this merge the panel showed two sections both
                 called "Arrangement", which is worse than either placement. */}
-            {groupsFor('style').map(({ group, fields }) => {
+            {/* ⚠️ TITLE is drawn LAST (after Spacing), not here — Zeni, 29 Sep 2026. */}
+            {groupsFor('style').filter(({ group }) => group !== TITLE_GROUP).map(({ group, fields }) => {
               const merged = (viewPacks ?? []).filter((pk) => ALL_PACKS[pk]?.title === group);
               return (
                 <Group key={group} title={group} open={openGroups.includes(group)} onToggle={() => toggleGroup(group)}>
@@ -1921,6 +1957,16 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
                 <ALL_PACKS.P8.Render {...packProps} />
               </Group>
             )}
+            {/* The card's TITLE placement, last of all. */}
+            {groupsFor('style').filter(({ group }) => group === TITLE_GROUP).map(({ group, fields }) => (
+              <Group key={group} title={group} open={openGroups.includes(group)} onToggle={() => toggleGroup(group)}>
+                {fields.map(renderField)}
+                {(viewPacks ?? []).filter((pk) => ALL_PACKS[pk]?.title === group).map((pk) => {
+                  const P = ALL_PACKS[pk];
+                  return <P.Render key={pk} {...packProps} />;
+                })}
+              </Group>
+            ))}
           </>
         )}
         </>
@@ -1928,6 +1974,7 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
       </div>
 
     </div>
+    </DesignGroupsCtx.Provider>
   );
 }
 

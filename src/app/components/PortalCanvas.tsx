@@ -27,7 +27,7 @@ import { PORTAL_ELEMENTS, PORTAL_ELEMENT_GROUPS, isPredefinedElement, isPredefin
 import type { PortalElement } from './supportPortalData';
 import { elementIcon } from './SupportPortalAddPanel';
 import { PortalColorPicker, ColorField, type ColorPair } from './PortalColorPicker';
-import { Field, Group, Segmented, SelectField, ToggleRow } from './PortalControls';
+import { DesignGroupsCtx, Field, Group, Segmented, SelectField, ToggleRow } from './PortalControls';
 import type { BoxDir, NodeStyle, PortalStyles, SpacingBox } from './portalPageModel';
 
 /* Canvas selection layer.
@@ -4401,13 +4401,24 @@ const ALIGN_V_OPTS = [
 export function DesignQuickSections({ id }: { id: string }) {
   const ctx = useCanvas();
   const { styles, setStyle, cfg, setCfg, heroTree, setBannerSections } = ctx;
-  /* Open state is per GROUP and survives moving between nodes, like the drawer's own groups. */
+  /* ⚠️ Open state is the DRAWER's, through `DesignGroupsCtx` — so Expand all / Collapse all on the
+     Design heading reaches these groups like any other. Every group drawn is REPORTED back after the
+     render, which is what that button counts. The local fallback only applies outside a drawer. */
+  const dg = useContext(DesignGroupsCtx);
   const [shut, setShut] = useState<string[]>([]);
-  const g = (key: string, title: string, children: ReactNode) => (
-    <Group key={key} title={title} open={!shut.includes(key)} onToggle={() => setShut((s) => (s.includes(key) ? s.filter((x) => x !== key) : [...s, key]))}>
-      {children}
-    </Group>
-  );
+  const drawn = useRef<string[]>([]);
+  drawn.current = [];
+  useEffect(() => { dg?.report(drawn.current.map((k) => `q:${k}`)); });
+  const g = (key: string, title: string, children: ReactNode) => {
+    drawn.current.push(key);
+    const open = dg ? dg.isOpen(`q:${key}`) : !shut.includes(key);
+    const toggle = () => (dg ? dg.toggle(`q:${key}`) : setShut((s) => (s.includes(key) ? s.filter((x) => x !== key) : [...s, key])));
+    return (
+      <Group key={key} title={title} open={open} onToggle={toggle}>
+        {children}
+      </Group>
+    );
+  };
   const fileRef = useRef<HTMLInputElement>(null);
   const [bgTab, setBgTab] = useState<'image' | 'color' | null>(null);
 

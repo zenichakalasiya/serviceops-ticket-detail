@@ -328,6 +328,14 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   context. **`hasDesignQuick(id)`** gates it so a text child gets no empty Design heading.
   ⚠️ `BannerLayoutPanel` gained `keys` (default true): the sidebar copy passes `keys={false}`, or its
   always-mounted arrow hook would take the canvas's move-with-arrows away while the banner is selected.
+  ⚠️ **Expand all / Collapse all reaches these groups** through **`DesignGroupsCtx`** (`PortalControls`):
+  the drawer provides it, `DesignQuickSections` reads/toggles the DRAWER's `openGroups` (keys `q:<group>`,
+  default open, stored as `shut:q:<group>`) and REPORTS which groups it drew after each render, which is
+  exactly what the button counts. `ExpandAll` now takes `keys` (open-while-present, the packs model)
+  AND `shutKeys` (open-unless-present, the accordion model and these) and flips both in one press — before
+  this, Collapse all left every default-open group standing. The accordion model's Design heading had NO
+  Expand all at all; it has one now. The card's **Title** group is drawn LAST in Design, after Spacing
+  (`TITLE_GROUP`).
   Verified in a browser: a 3px border set in the sidebar paints on the card AND reads 3px in the toolbar
   popup; the Medium shadow card paints; requests / action card / banner / Quick Actions band / text
   child / Text & Search each show exactly the toolbar's controls; no page errors.

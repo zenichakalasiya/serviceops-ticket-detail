@@ -9,7 +9,7 @@
  * `rounded` radius, the #3D8BD0 focus ring, `.app-select`. Nothing new was invented.
  */
 
-import { useEffect, useId, useRef, useState } from 'react';
+import { createContext, useEffect, useId, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { MiniRange } from './PortalRange';
 import {
@@ -56,6 +56,20 @@ export function Field({ label, help, info, children, action, divider, tight }: {
     </div>
   );
 }
+
+/* ── The Design section's open/closed state, shared with the toolbar's sections ──────────────
+ *
+ * ⚠️ The toolbar's design controls in the sidebar (`DesignQuickSections`) are built OUTSIDE the drawer
+ * and handed in, so they kept their own open state — which is why Expand all / Collapse all never
+ * reached them. The drawer provides this; the sections read and toggle the drawer's own state through
+ * it, and REPORT which of them are showing so the Expand-all button counts exactly those.
+ * Keys are the group's name (`q:bg`, `q:edge` …); they default OPEN, stored as `shut:<key>`. */
+export interface DesignGroupsApi {
+  isOpen: (key: string) => boolean;
+  toggle: (key: string) => void;
+  report: (keys: string[]) => void;
+}
+export const DesignGroupsCtx = createContext<DesignGroupsApi | null>(null);
 
 /* ── Group — collapsible, INDEPENDENT (spec §2.1) ─────────────────────────
  *
