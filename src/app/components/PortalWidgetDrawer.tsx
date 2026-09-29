@@ -43,7 +43,7 @@ import { BannerFillEditor, BannerPresetPicker, GapField, GapPair, OverlayLayerEd
 import { SCRATCH_BANNER_ID, bannerTemplate } from './portalBannerTemplates';
 import { BannerMiniPreview } from './PortalBannersPanel';
 import type { BannerNode } from './portalBannerLayout';
-import { bannerGroupGap } from './portalPageModel';
+import { bannerGroupGap, measuredTileCols, presetForCols } from './portalPageModel';
 import { ACROSS_ROW, ACROSS_STACK, DOWN_ROW, DOWN_STACK, SectionPresets } from './PortalSectionLayout';
 import type { PresetId } from './PortalSectionLayout';
 import { BorderRow, RadiusRow, ShadowBlock, SizeRow } from './PortalBoxControls';
@@ -1335,10 +1335,10 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
          service tiles one per service, so the lit tile states what the canvas is actually showing. */
       case 'tilePreset': {
         const TILE_COUNT = 4;
-        const own = Number(styles[nodeId]?.columns ?? viewCfg.columns) || 0;
-        const recordTiles = nodeId === 'assets' || nodeId === 'cis';
-        const current: PresetId = own === 1 ? 'stack' : own === 2 ? 'grid' : own === 3 ? 'three'
-          : own >= 4 ? 'cols' : recordTiles ? 'grid' : 'cols';
+        /* ⚠️ Unset, the lit preset is what the canvas is DRAWING (measuredTileCols) — the split service
+           row is 2 × 2 by default, and a guess from config lit "four across" over it. */
+        const own = Number(styles[nodeId]?.columns) || 0;
+        const current: PresetId = presetForCols(own || measuredTileCols(nodeId) || TILE_COUNT);
         return (
           <SectionPresets
             count={TILE_COUNT}

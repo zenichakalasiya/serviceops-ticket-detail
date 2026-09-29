@@ -10,7 +10,11 @@ import {
   ArrowDownToLine, ArrowLeftToLine, ArrowRightToLine, ArrowUpToLine, Baseline, Bold, Check, ChevronDown, ChevronRight, Columns2, Copy, GripHorizontal, GripVertical, Italic, Link2, Rows2,
   Braces, Highlighter, Maximize2, UnfoldVertical, Move, Plus, RemoveFormatting,
   PaintBucket, Replace, SquareDashed, SquareRoundCorner, SquareSquare, Trash2, Underline, X, ImagePlus, Palette, LayoutDashboard, Columns3,
+  LayoutGrid, LayoutTemplate,
 } from 'lucide-react';
+import { SectionPresets } from './PortalSectionLayout';
+import type { PresetId } from './PortalSectionLayout';
+import { TemplatePicker } from './PortalSectionControls';
 import { BannerFillEditor, BannerLayoutPanel, OverlayLayerEditor, TilePresetPicker } from './PortalBannerTools';
 import { bannerBoxId, flipRoot, groupOf } from './portalBannerLayout';
 import type { BannerNode } from './portalBannerLayout';
@@ -19,7 +23,7 @@ import { keysForTip, chromeKeys } from './portalShortcutKeys';
 import { usePopupArrows, useOpenValue } from './usePopupArrows';
 import { toast } from 'sonner';
 import { MiniRange } from './PortalRange';
-import { fillsFromConfig, HEADING_SIZE, PORTAL_FONTS, SECTION_LAYOUTS, SPLITTABLE_BANDS, TEXT_STYLES, ZERO_BOX, COMPOSABLE, BANNER_BLOCKS, inBanner, dragIdOf, isContactChild, boxInfo, canAddBeside, defaultAlignH, nodeById, paintsOwnShadow, paintsOwnSurface, toolbarCaps, nodePath, placedIn, placedType } from './portalPageModel';
+import { fillsFromConfig, HEADING_SIZE, PORTAL_FONTS, SECTION_LAYOUTS, SPLITTABLE_BANDS, TEXT_STYLES, ZERO_BOX, COMPOSABLE, BANNER_BLOCKS, inBanner, dragIdOf, isContactChild, boxInfo, canAddBeside, defaultAlignH, nodeById, paintsOwnShadow, isAlignCard, cardTemplateOf, cardAlignAxis, cardAlignDefault, measuredTileCols, presetForCols, paintsOwnSurface, toolbarCaps, nodePath, placedIn, placedType } from './portalPageModel';
 import { DEFAULT_THEME } from './PortalThemePanel';
 import type { PortalTheme } from './PortalThemePanel';
 import { boxCss, containerCss, portalColorMode } from './portalStyleResolver';
@@ -126,6 +130,8 @@ interface CanvasCtx {
   /* Reads a widget's resolved config — the toolbar's button-style menu needs to show what is set,
      and a control that cannot read its own value can only ever guess which option to light. */
   cfg?: (id: string) => Record<string, unknown>;
+  /** A section's (or band's) Layout preset — the same call the panel's preset row makes. */
+  applyPreset?: (sectionId: string, preset: PresetId) => void;
   /** Adds one of the six in the slot beside an element. */
   addSibling?: (elementId: string, type: string) => void;
   /* The live theme. ⚠️ Only the text toolbar's font picker reads it, and it reads it to NAME the two
@@ -250,7 +256,7 @@ export function sizeOf(styles: PortalStyles, id: string): React.CSSProperties {
      KPI read their own align/alignY and place their content with it — moving the wrapper as well
      would shrink a tile out of its grid cell. */
   /* A widget on the BANNER is placed by its cell (see the arranged banner), so its alignment is not applied to itself. */
-  const alignsInside = /-tile$/.test(id) || isContactChild(id) || placedType(id) === 'c-records' || (/^el-\d+$/.test(id) && nodeById(id)?.parent === 'hero');
+  const alignsInside = /-tile$/.test(id) || /^quick-[a-z]+$/.test(id) || placedType(id) === 'x-action-card' || isContactChild(id) || placedType(id) === 'c-records' || (/^el-\d+$/.test(id) && nodeById(id)?.parent === 'hero');
   if (s.alignY !== undefined && !alignsInside) {
     css.alignSelf = ({ start: 'flex-start', center: 'center', end: 'flex-end', stretch: 'stretch' } as const)[s.alignY];
   }
@@ -1232,6 +1238,95 @@ function ShadowMenu({ id }: { id: string }) {
   );
 }
 
+/* ── Layout — the white parent card's (and the Quick Actions row's) presets, as a popup ─────────────
+ * The same control the panel's Layout group draws, so the two cannot disagree. A white card lays out
+ * its four data cards by COLUMN COUNT (the style store's `columns`, §7.8); the Quick Actions row is a
+ * band and takes the section preset, through the same `applyPreset` the panel calls. */
+/** Escape closes a toolbar popup, the way every other one on the bar closes. */
+function useEscapeClose(open: boolean, close: () => void) {
+  useEffect(() => {
+    if (!open) return;
+    const on = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.stopPropagation(); close(); } };
+    window.addEventListener('keydown', on, true);
+    return () => window.removeEventListener('keydown', on, true);
+  });
+}
+
+function LayoutMenu({ id }: { id: string }) {
+  const { styles, setStyle, cfg, applyPreset } = useCanvas();
+  const [open, setOpen] = useState(false);
+  useEscapeClose(open, () => setOpen(false));
+  const band = id === 'quick';
+  const c = cfg?.(id) ?? {};
+  let count = 4;
+  let current: PresetId;
+  let pick: (p: PresetId) => void;
+  if (band) {
+    count = Number(c.__count ?? 4);
+    current = (c.__preset as PresetId) ?? 'cols';
+    pick = (p) => applyPreset?.(id, p);
+  } else {
+    const own = Number(styles[id]?.columns) || 0;
+    current = presetForCols(own || measuredTileCols(id) || 4);
+    pick = (p) => setStyle(id, { columns: p === 'stack' ? 1 : p === 'grid' ? 2 : p === 'three' ? 3 : 4 } as never);
+  }
+  return (
+    <div className="relative">
+      <button
+        className={open ? btnOn : btn}
+        data-tip="Layout"
+        onClick={() => setOpen((v) => !v)}
+      ><LayoutGrid size={15} /></button>
+      {open && (
+        <>
+          <span className="fixed inset-0 z-[60]" onClick={() => setOpen(false)} />
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="absolute left-1/2 top-[calc(100%+8px)] z-[61] w-[240px] -translate-x-1/2 rounded-lg border border-[#E5E7EB] bg-white p-3 shadow-[0_12px_16px_-4px_rgba(16,24,40,0.10),0_4px_6px_-2px_rgba(16,24,40,0.06)]"
+          >
+            <p className="mb-2 text-[12px] font-medium text-[#364658]">Layout</p>
+            <SectionPresets count={count} current={current} onPick={pick} />
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/* ── Card templates — where a data card's icon sits, as a popup ───────────────────────────────────
+ * A data tile writes its WIDGET's `cardTemplate` (every tile in the card shares one), an action card
+ * its own — the same keys the panel's Card templates row writes. Changing it can move the card's free
+ * axis, which is why the alignment button beside it re-reads the template every render. */
+function CardTemplateMenu({ id }: { id: string }) {
+  const { cfg, setCfg } = useCanvas();
+  const [open, setOpen] = useState(false);
+  useEscapeClose(open, () => setOpen(false));
+  const tile = /^(.+)-tile$/.exec(id);
+  const owner = tile ? tile[1] : id;
+  const value = cardTemplateOf(id, cfg);
+  return (
+    <div className="relative">
+      <button
+        className={open ? btnOn : btn}
+        data-tip="Card templates"
+        onClick={() => setOpen((v) => !v)}
+      ><LayoutTemplate size={15} /></button>
+      {open && (
+        <>
+          <span className="fixed inset-0 z-[60]" onClick={() => setOpen(false)} />
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="absolute left-1/2 top-[calc(100%+8px)] z-[61] w-[300px] -translate-x-1/2 rounded-lg border border-[#E5E7EB] bg-white p-3 shadow-[0_12px_16px_-4px_rgba(16,24,40,0.10),0_4px_6px_-2px_rgba(16,24,40,0.06)]"
+          >
+            <p className="mb-2 text-[12px] font-medium text-[#364658]">Card templates</p>
+            <TemplatePicker value={value} onChange={(v) => setCfg(owner, { cardTemplate: v })} />
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function ButtonStyleMenu({ id }: { id: string }) {
   const { cfg, setCfg } = useCanvas();
   const [open, setOpen] = useState(false);
@@ -1563,20 +1658,34 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
      down?"); laying all six out flat makes one row of near-identical glyphs where the pairing is
      invisible, and doubles a toolbar that already competes for width. The axis button shows the
      option currently set, so the bar still answers both questions at a glance. */
-  const alignH = String(styles[id]?.align ?? defaultAlignH(id));
-  const alignV = String(styles[id]?.alignY ?? 'start');
-  const H_OPTS: [string, string, ReactNode][] = [
+  /* ⚠️ A data CARD aligns on ONE axis — the one its card template leaves free (cardAlignAxis) — and
+     without Stretch: its content is a badge and two lines of words, which have nothing to stretch to. */
+  const alignCard = isAlignCard(id);
+  const cardTpl = alignCard ? cardTemplateOf(id, cfg) : '';
+  const cardAxis = alignCard ? cardAlignAxis(cardTpl) : null;
+  const showH = caps.alignH !== false && cardAxis !== 'v';
+  const showV = caps.alignV !== false && cardAxis !== 'h';
+  const alignH = String(styles[id]?.align ?? (alignCard ? cardAlignDefault(cardTpl, id) : defaultAlignH(id)));
+  const alignV = String(styles[id]?.alignY ?? (alignCard ? cardAlignDefault(cardTpl, id) : 'start'));
+  const H_OPTS_ALL: [string, string, ReactNode][] = [
     ['left', 'Left', <AlignStartVertical key="l" size={15} />],
     ['center', 'Centre', <AlignCenterVertical key="c" size={15} />],
     ['right', 'Right', <AlignEndVertical key="r" size={15} />],
     ['stretch', 'Stretch', <StretchHorizontal key="s" size={15} />],
   ];
-  const V_OPTS: [string, string, ReactNode][] = [
+  const V_OPTS_ALL: [string, string, ReactNode][] = [
     ['start', 'Top', <AlignStartHorizontal key="t" size={15} />],
     ['center', 'Middle', <AlignCenterHorizontal key="m" size={15} />],
     ['end', 'Bottom', <AlignEndHorizontal key="b" size={15} />],
     ['stretch', 'Stretch', <StretchVertical key="s" size={15} />],
   ];
+  const H_OPTS = alignCard ? H_OPTS_ALL.slice(0, 3) : H_OPTS_ALL;
+  const V_OPTS = alignCard ? V_OPTS_ALL.slice(0, 3) : V_OPTS_ALL;
+  /* The Layout and Card-templates buttons (Zeni, 29 Sep 2026): the white parent cards and the Quick
+     Actions row get Layout; the cards inside them get Card templates. */
+  const layoutOwner = ['favourites', 'services', 'assets', 'cis', 'quick'].includes(id)
+    || /^c-(favourites|services|assets|cis)$/.test(placedType(id) ?? '');
+  const templateCard = alignCard;
 
   /* ⚠️ INSTANT tooltips, and `data-tip` rather than `title`. A native title waits about a second
      before it appears, which on a row of seven unlabelled glyphs means you either already know what
@@ -1872,8 +1981,10 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
           "where does this go and how many are there". The three used to be scattered — alignment
           at the end, shadow beside Copy, colour not on the bar at all — so the bar read as a list
           of unrelated glyphs rather than as two answers with a line between them. */}
-      {(caps.alignH !== false || caps.alignV !== false || kind !== 'text' || placed) && <Rule />}
-      {caps.alignH !== false && (
+      {(showH || showV || layoutOwner || templateCard || kind !== 'text' || placed) && <Rule />}
+      {layoutOwner && <LayoutMenu id={id} />}
+      {templateCard && <CardTemplateMenu id={id} />}
+      {showH && (
         <AlignAxis
           axis="h"
           value={alignH}
@@ -1883,7 +1994,7 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
           onPick={(v) => setStyle(id, { align: v as never })}
         />
       )}
-      {caps.alignV !== false && (
+      {showV && (
         <AlignAxis
           axis="v"
           value={alignV}
@@ -4481,7 +4592,7 @@ const ALIGN_V_OPTS = [
    'lead' = how the block is arranged (the banner's Sections & arrangement, a card row's Presets, a banner
    group's Layout); 'look' = everything else (Background, Border & corners, Shadow, Icon, Alignment…).
    Omitted, both draw — the order they always had. */
-const LEAD_GROUPS = new Set(['sections', 'presets', 'layout']);
+const LEAD_GROUPS = new Set(['sections', 'presets', 'layout', 'align']);
 export function DesignQuickSections({ id, part }: { id: string; part?: 'lead' | 'look' }) {
   const ctx = useCanvas();
   const { styles, setStyle, cfg, setCfg, heroTree, setBannerSections } = ctx;
@@ -4684,22 +4795,6 @@ export function DesignQuickSections({ id, part }: { id: string; part?: 'lead' | 
       </>
     )));
   }
-  if (caps.alignH !== false || caps.alignV !== false) {
-    sections.push(g('align', 'Alignment', (
-      <>
-        {caps.alignH !== false && (
-          <Field label="Horizontal">
-            <Segmented value={String(styles[id]?.align ?? defaultAlignH(id))} options={ALIGN_H_OPTS} onChange={(v) => setStyle(id, { align: v as never })} />
-          </Field>
-        )}
-        {caps.alignV !== false && (
-          <Field label="Vertical">
-            <Segmented value={String(styles[id]?.alignY ?? 'start')} options={ALIGN_V_OPTS} onChange={(v) => setStyle(id, { alignY: v as never })} />
-          </Field>
-        )}
-      </>
-    )));
-  }
   if (tiles) {
     const oc = (cfg?.(id) ?? {}) as Record<string, unknown>;
     const count = /^hero-gp-/.test(id)
@@ -4707,6 +4802,28 @@ export function DesignQuickSections({ id, part }: { id: string; part?: 'lead' | 
       : Array.isArray(oc.items) ? (oc.items as { hidden?: boolean }[]).filter((it) => !it.hidden).length : Number(oc.__tileCount ?? 4);
     sections.push(g('presets', 'Presets', (
       <TilePresetPicker count={count} value={Number(oc.cols ?? Math.min(count, 4))} onChange={(c) => setCfg?.(id, { cols: String(c) })} />
+    )));
+  }
+  /* A data CARD: one axis, the one its template leaves free, and no Stretch (see ElementToolbar). */
+  const alignCard = isAlignCard(id);
+  const cardTpl = alignCard ? cardTemplateOf(id, cfg) : '';
+  const cardAxis = alignCard ? cardAlignAxis(cardTpl) : null;
+  const showH = caps.alignH !== false && cardAxis !== 'v';
+  const showV = caps.alignV !== false && cardAxis !== 'h';
+  if (showH || showV) {
+    sections.push(g('align', 'Alignment', (
+      <>
+        {showH && (
+          <Field label="Horizontal">
+            <Segmented value={String(styles[id]?.align ?? (alignCard ? cardAlignDefault(cardTpl, id) : defaultAlignH(id)))} options={alignCard ? ALIGN_H_OPTS.slice(0, 3) : ALIGN_H_OPTS} onChange={(v) => setStyle(id, { align: v as never })} />
+          </Field>
+        )}
+        {showV && (
+          <Field label="Vertical">
+            <Segmented value={String(styles[id]?.alignY ?? (alignCard ? cardAlignDefault(cardTpl, id) : 'start'))} options={alignCard ? ALIGN_V_OPTS.slice(0, 3) : ALIGN_V_OPTS} onChange={(v) => setStyle(id, { alignY: v as never })} />
+          </Field>
+        )}
+      </>
     )));
   }
   if (isButton) {

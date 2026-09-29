@@ -16,7 +16,7 @@ import {
   PORTAL_APPROVALS, PORTAL_ARTICLES, PORTAL_ARTICLE_TOTAL, PORTAL_OPEN_REQUESTS, PORTAL_OPEN_REQUEST_TOTAL, statusTone,
 } from './supportPortalData';
 import { AddSectionSeam, BannerSlot, ColumnAdders, MOVE_MIME, Sel, draggedElement, draggedNode, styleOf, useCanvas } from './PortalCanvas';
-import { HUGS_CONTENT, bannerGroupGap, inBanner } from './portalPageModel';
+import { HUGS_CONTENT, bannerGroupGap, cardAlignCss, inBanner } from './portalPageModel';
 import { bannerGradientOf, bannerLayerCss, gradientCss } from './PortalBannerTools';
 import type { BannerDecor } from './portalBannerTemplates';
 import { ImagePlus } from 'lucide-react';
@@ -2529,7 +2529,7 @@ export function SupportPortalPreview({ accent = '#0F172A', content = DEFAULT_CON
                    zero: setting a left inset silently removed the card's 16px top and
                    bottom. An inline side beats the class on its own edge and leaves the
                    other three resting where they were, which is what "set one side" means. */
-                style={{ ...st(a.id), ...fillCss(c), ...padCss(a.id), minHeight: Number(c.minHeight) || undefined }}
+                style={{ ...st(a.id), ...fillCss(c), ...padCss(a.id), minHeight: Number(c.minHeight) || undefined, ...cardAlignCss(styles[a.id], tpl) }}
                 /* ⚠️ The action cards follow the PAGE's card look too. Left on the hairline
                    treatment while the record cards below had gone borderless, the page ended
                    up with two card languages one band apart — which is the exact fault the
@@ -4103,7 +4103,7 @@ function RecordTiles({ nodeId, titleFallback, cfg, rows, total, icon, headIcon }
                a class would be beaten by nothing and a theme default must always yield to a choice.
                The white icon badge below stays white: the tile is the tinted thing now, and the
                badge has to be a step away from whatever it sits on. */
-            <Sel key={r.id} id={`${nodeId}-tile`} style={{ backgroundColor: TONE.wash, ...(tileCols > 1 && i === shown.length - 1 && shown.length % tileCols === 1 ? { gridColumn: '1 / -1' } : null) }} className={`flex min-w-0 gap-2.5 rounded-lg p-3 ${
+            <Sel key={r.id} id={`${nodeId}-tile`} style={{ backgroundColor: TONE.wash, ...(tileCols > 1 && i === shown.length - 1 && shown.length % tileCols === 1 ? { gridColumn: '1 / -1' } : null), ...cardAlignCss(styles[`${nodeId}-tile`], tileTpl) }} className={`flex min-w-0 gap-2.5 rounded-lg p-3 ${
               tileTpl === 'top' ? 'flex-col items-center text-center' : tileTpl === 'right' ? 'flex-row-reverse items-start' : 'items-start'
             }`}>
               {tileTpl !== 'none' && (

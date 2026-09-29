@@ -306,6 +306,28 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   Services deleted it would have taken Most Used off the page too. ⚠️ In the split row each grid defaults
   to **2 columns** (`{ columns: 2, ...wc(id) }`) — four tiles at half width were 98px and the names ran into
   each other; an admin's own column count still wins (style store, then config).
+- **Support Portal — a DATA CARD aligns on the axis its CARD TEMPLATE leaves free (29 Sep 2026, Zeni).**
+  Action cards (`quick-*`, a placed `x-action-card`) and the data tiles of Favourite Services, Most
+  Used Services, My Assets and My CIs (`<card>-tile`) have alignment again — ONE axis, three options,
+  no Stretch: **Icon top / Stacked / Text only → Left · Centre · Right; Icon left / Icon right → Top ·
+  Middle · Bottom.** The other axis has nothing to move. Helpers in `portalPageModel`: `isAlignCard`,
+  `cardTemplateOf(id, cfg)` (read the way each renderer reads it — a placed card never inherits the
+  Quick Actions row's template), `cardAlignAxis`, `cardAlignDefault` (a record tile rests at Top,
+  everything else Middle / its template's own H), and `cardAlignCss(style, tpl)`, which all four
+  renderers spread on the card's flex box (`ServiceTiles`, `RecordTiles`, `quickCardEl`, the placed
+  action card). The old `tileAlign` is gone. `sizeOf`'s `alignsInside` now includes action cards, so
+  the alignment moves the content, never the card. ⚠️ `toolbarCaps` only says a card MAY align; the
+  toolbar and `DesignQuickSections` both ask `cardAlignAxis` which axis to show, so switching the
+  template flips the control on the next render. The **Quick Actions row has NO alignment** now.
+  Sidebar: **Alignment is a LEAD group** (`LEAD_GROUPS` gained `'align'`), drawn after Presets and
+  above Background. **Two new toolbar popups:** `LayoutMenu` (lucide `LayoutGrid`) on the four white
+  cards (Favourite / Most Used / My Assets / My CIs) and the Quick Actions row — the SAME
+  `SectionPresets` the panel draws; a white card writes the style store's `columns`, the row calls
+  `applyPreset` (now declared on `CanvasCtx`). `CardTemplateMenu` (`LayoutTemplate`) on every data
+  card — `TemplatePicker`, writing the tile's OWNER `cardTemplate` or the action card's own. Both close
+  on Escape (`useEscapeClose`). ⚠️ **The lit Layout preset is MEASURED** when no column count is stored
+  (`measuredTileCols` + `presetForCols`, used by the toolbar AND the panel's `tilePreset` case): the
+  split service row is 2 × 2 by default and the old config guess lit "four across" over it.
 - **Support Portal — Design's ORDER: layout first, then look (29 Sep 2026, Zeni; being tuned widget by widget).**
   Every Design section opens with the questions about the block's SHAPE, then its look: spec groups in
   `LEAD_SPEC_GROUPS` (**Banner**, **Layout**, **Card templates**) and the accordion model's `layout` accordion →

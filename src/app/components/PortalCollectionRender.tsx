@@ -18,7 +18,7 @@ import { ImageUploadZone } from './PortalControls';
 /* The Table is a module of its own — a spreadsheet-grade editor is a different kind of thing from
    the read-only renderers in this file, and it owns its data model, its handles and its menus. */
 import { PortalTable } from './PortalTable';
-import { hasFixedTitle, hasFixedViewAll, itemNodeId, registerItemName, subNodeId } from './portalPageModel';
+import { cardAlignCss, hasFixedTitle, hasFixedViewAll, itemNodeId, registerItemName, subNodeId } from './portalPageModel';
 import { CarouselArrows, CarouselDots, CarouselNav, CarouselTrack, useCarousel } from './PortalCarousel';
 import { LineMark } from './PortalLineStyles';
 import type { LineStyle } from './PortalLineStyles';
@@ -1187,18 +1187,6 @@ const FEATURED_SERVICES = [
  * catalogue — at which point the requester is better served by the catalogue page itself. */
 const MAX_SERVICE_TILES = 4;
 
-/* Tile content alignment from the toolbar — undefined keys leave the template's own arrangement. */
-const tileAlign = (s: { align?: string; alignY?: string } | undefined, stacked: boolean): React.CSSProperties => {
-  if (!s || (s.align === undefined && s.alignY === undefined)) return {};
-  const h = s.align === 'left' ? 'flex-start' : s.align === 'right' ? 'flex-end' : s.align === 'stretch' ? 'stretch' : 'center';
-  const v = s.alignY === 'center' ? 'center' : s.alignY === 'end' ? 'flex-end' : 'flex-start';
-  const css: React.CSSProperties = stacked
-    ? { alignItems: s.align !== undefined ? h : undefined, justifyContent: s.alignY !== undefined ? v : undefined }
-    : { justifyContent: s.align !== undefined ? h : undefined, alignItems: s.alignY !== undefined ? v : undefined };
-  if (s.align !== undefined) css.textAlign = s.align === 'right' ? 'right' : s.align === 'left' || s.align === 'stretch' ? 'left' : 'center';
-  return css;
-};
-
 function ServiceTiles({ nodeId, items, showDesc, tpl = 'top', cols, chips, look, gap }: {
   nodeId: string; items: { id: string; name: string; desc: string }[]; showDesc: boolean;
   /* The resolved column count. Undefined means "one per service", which is what this grid always
@@ -1273,7 +1261,7 @@ function ServiceTiles({ nodeId, items, showDesc, tpl = 'top', cols, chips, look,
           key={s.id}
           id={`${nodeId}-tile`}
           /* A lone last tile spans the row — what the Three-across preset tile draws. */
-          style={{ ...((cols ?? 0) > 1 && i === arr.length - 1 && arr.length % (cols ?? 1) === 1 ? { gridColumn: '1 / -1' } : {}), ...tileAlign(styles[nodeId + '-tile'], top) }}
+          style={{ ...((cols ?? 0) > 1 && i === arr.length - 1 && arr.length % (cols ?? 1) === 1 ? { gridColumn: '1 / -1' } : {}), ...cardAlignCss(styles[nodeId + '-tile'], tpl) }}
           /* ⚠️ The light-grey DATA-TILE fill (#F6F9FC), not white: the tiles sit inside a white card now,
              and white on white would leave only a hairline to tell a tile from its card. No shadow for
              the same reason — a tile is a region of the card, not a card lifted off it. A colour the

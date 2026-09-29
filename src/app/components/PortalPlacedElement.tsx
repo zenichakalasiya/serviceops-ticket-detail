@@ -8,7 +8,7 @@ import { colsTemplate } from './portalBannerLayout';
 export const PlacedBlockRenderers = createContext<Record<string, (id: string) => ReactNode>>({});
 import { Image as ImageIcon, PlayCircle, Search, Star } from 'lucide-react';
 import { PORTAL_APPROVALS, PORTAL_ARTICLES, PORTAL_ELEMENTS, PORTAL_OPEN_REQUESTS } from './supportPortalData';
-import { ACTION_TYPES, fillCss, paintsOwnSurface, renderSpec } from './portalPageModel';
+import { ACTION_TYPES, cardAlignCss, fillCss, paintsOwnSurface, renderSpec } from './portalPageModel';
 import type { PlacedElement } from './portalPageModel';
 import { COLLECTION_RENDERERS } from './PortalCollectionRender';
 import { ImageUploadZone } from './PortalControls';
@@ -241,6 +241,8 @@ function specDrivenBody(type: string, cfg: Record<string, unknown> | undefined, 
           /* The Shadow group writes the STYLE store; Sel withholds it from the wrapper for this node. */
           ...(() => { const s = containerCss(styles ?? {}, nodeId).boxShadow; return s ? { boxShadow: s } : {}; })(),
           minHeight: Number(cfg.minHeight) || undefined,
+          /* The card's own alignment, on the axis its template leaves free (cardAlignAxis). */
+          ...cardAlignCss(ownStyle, tpl),
         }}
         className={`flex h-full gap-3 rounded-lg p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_4px_12px_rgba(16,24,40,0.06)] ${
           top ? 'flex-col' : iconRight ? 'flex-row-reverse items-center' : 'items-center'

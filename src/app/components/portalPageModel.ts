@@ -1290,6 +1290,66 @@ export const isServiceTile = (id: string): boolean => {
   return m[1] === 'favourites' || m[1] === 'services' || placedType(m[1]) === 'c-favourites' || placedType(m[1]) === 'c-services';
 };
 
+/* ── A data CARD aligns on the axis its template leaves free (Zeni, 29 Sep 2026) ──────────────────
+ * A card whose icon sits ABOVE its words (Icon top, and Text only, which stacks) has spare room
+ * ACROSS it, so it aligns Left / Centre / Right. A card whose icon sits BESIDE its words (Icon left,
+ * Icon right) has spare room DOWN it, so it aligns Top / Middle / Bottom. Offering both was offering
+ * an axis that had nothing to move.
+ * Covers the action cards (`quick-*`, a placed `x-action-card`) and the data tiles of Favourite
+ * Services, Most Used Services, My Assets and My CIs (`<card>-tile`). */
+export const isAlignCard = (id: string): boolean =>
+  /-tile$/.test(id) || /^quick-[a-z]+$/.test(id) || placedType(id) === 'x-action-card';
+/** The card template a card is wearing, read the way its renderer reads it. */
+export function cardTemplateOf(id: string, cfg?: (id: string) => Record<string, unknown>): string {
+  const tile = /^(.+)-tile$/.exec(id);
+  if (tile) {
+    const owner = tile[1];
+    const services = owner === 'favourites' || owner === 'services' || /^c-(favourites|services)$/.test(placedType(owner) ?? '');
+    return String(cfg?.(owner)?.cardTemplate ?? (services ? 'top' : 'left'));
+  }
+  const c = cfg?.(id) ?? {};
+  /* A PLACED card never inherits the Quick Actions row's template — it is not in that row. */
+  if (placedType(id) === 'x-action-card') return String(c.cardTemplate ?? (c.iconPos === 'top' ? 'top' : 'left'));
+  return String(c.cardTemplate ?? cfg?.('quick')?.cardTemplate ?? c.iconPos ?? 'left');
+}
+/** 'h' = Left / Centre / Right; 'v' = Top / Middle / Bottom. */
+export const cardAlignAxis = (tpl: string): 'h' | 'v' => (tpl === 'left' || tpl === 'right' ? 'v' : 'h');
+/** What the card shows when nobody has chosen — the arrangement the template already draws. */
+export const cardAlignDefault = (tpl: string, id = ''): string =>
+  cardAlignAxis(tpl) === 'v'
+    /* A record tile (My Assets / My CIs) hangs its words from the TOP; everything else centres them. */
+    ? (/-tile$/.test(id) && !isServiceTile(id) ? 'start' : 'center')
+    : tpl === 'top' ? 'center' : 'left';
+/** The card's own alignment as CSS on the card's flex box. Unset → nothing, so the template's own
+ *  arrangement stands. `stacked` = the box is a column (Icon top / stacked left). */
+export function cardAlignCss(s: { align?: string; alignY?: string } | undefined, tpl: string): CSSProperties {
+  if (!s) return {};
+  const flex = (v: string) => (v === 'left' || v === 'start' ? 'flex-start' : v === 'right' || v === 'end' ? 'flex-end' : 'center');
+  if (cardAlignAxis(tpl) === 'v') {
+    return s.alignY && s.alignY !== 'stretch' ? { alignItems: flex(s.alignY) } : {};
+  }
+  if (!s.align || s.align === 'stretch') return {};
+  const stacked = tpl === 'top' || tpl === 'stackedLeft';
+  return {
+    ...(stacked ? { alignItems: flex(s.align) } : { justifyContent: flex(s.align) }),
+    textAlign: s.align === 'right' ? 'right' : s.align === 'center' ? 'center' : 'left',
+  };
+}
+
+/** How many data tiles a white card is ACTUALLY showing across, read off the canvas — the Layout
+ *  preset's "which one is lit" when nobody has chosen. The split service row, a narrow column and the
+ *  record cards' own default all decide it, so a guess from config lit "four across" over a 2 × 2. */
+export function measuredTileCols(id: string): number {
+  if (typeof document === 'undefined') return 0;
+  const tiles = [...document.querySelectorAll(`[data-node="${id}-tile"]`)] as HTMLElement[];
+  if (!tiles.length) return 0;
+  const top = Math.round(tiles[0].getBoundingClientRect().top);
+  return tiles.filter((t) => Math.round(t.getBoundingClientRect().top) === top).length;
+}
+/** Columns → the preset that draws them. */
+export const presetForCols = (n: number): 'stack' | 'grid' | 'three' | 'cols' =>
+  n === 1 ? 'stack' : n === 2 ? 'grid' : n === 3 ? 'three' : 'cols';
+
 /** The four-card main region and the three-card rail. */
 const WORK_REGIONS = new Set(['work-main', 'work-rail']);
 /** Widgets the product owns: their content is fixed, so there is nothing to add or swap. */
@@ -1390,7 +1450,10 @@ export function toolbarCaps(id: string): ToolbarCaps {
      laid out by the product, so an alignment control there either moved nothing or moved a tile out of
      its grid cell. That covers the data tiles of every card (`-tile`), the Quick Actions cards and their
      badges, the two service rows, the live cards and a placed predefined widget. */
-  if (isServiceTile(id) || /-tile$/.test(id)) return { move: false, add: false, copy: false, drag: false, remove: false, alignH: false, alignV: false };
+  /* ⚠️ …EXCEPT a data CARD's own content (Zeni, 29 Sep 2026): a tile and an action card align what is
+     INSIDE them, on the one axis their card template leaves free — see `cardAlignAxis`. The toolbar and
+     the sidebar both ask that helper which of the two to show; the caps only say "a card may align". */
+  if (isServiceTile(id) || /-tile$/.test(id)) return { move: false, add: false, copy: false, drag: false, remove: false };
   /* A banner ROW or COLUMN. It holds sections and lays them out: the two alignments are the whole of
      what it decides here.
      ⚠️ No Add, Copy, Delete or drag. A row is made by a preset or by dropping a section on an edge
@@ -1417,10 +1480,12 @@ export function toolbarCaps(id: string): ToolbarCaps {
      toolbar carried the very same action — so removing one and keeping the other would have left
      the row with a second door onto the card that is no longer offered. The `extLink` capability,
      its toolbar button and `addLinkCard` all stay, so restoring the pair is two flags. */
-  if (id === 'quick') return { add: false, copy: false, alignV: false, extLink: false };
+  /* ⚠️ No alignment on the ROW either — each card aligns its own content now. */
+  if (id === 'quick') return { add: false, copy: false, alignH: false, alignV: false, extLink: false };
   /* An action card. Its content belongs to the product, so Replace cannot be honoured; moving it
      along the row is the whole of what an admin decides here. */
-  if (/^quick-/.test(id)) return { add: false, alignH: false, alignV: false };
+  if (/^quick-.+-icon$/.test(id)) return { add: false, alignH: false, alignV: false };
+  if (/^quick-/.test(id)) return { add: false };
   /* Favourite / Most Used services — a full-width band: nothing to swap it with, nothing to copy it
      into, and no vertical alignment inside a block as tall as its own content. */
   if (id === 'favourites' || id === 'services') return { add: false, copy: false, alignH: false, alignV: false };
@@ -1458,6 +1523,7 @@ export function toolbarCaps(id: string): ToolbarCaps {
      to prevent, and a second copy of a live card is not a second card, it is the same query drawn
      twice. The built-in blocks were already covered by `LIVE_WIDGETS` above; this is the same rule
      for the same widget dropped as an element. */
+  if (t === 'x-action-card') return { copy: false };
   if (t && isPredefinedType(t)) return { copy: false, alignH: false, alignV: false };
   /* ⚠️ `l-divider` joins them for the same reason and one of its own: a rule fills the column it is
      dropped into, so neither axis had a position to report — and its sidebar Alignment accordion

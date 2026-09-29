@@ -1,4 +1,4 @@
-# Handoff — 2026-09-29 16:15
+# Handoff — 2026-09-29 19:30
 
 ## Read first
 All work is in the **Support Portal** builder (Admin › Support Channels) and its listing.
@@ -39,40 +39,21 @@ design controls mirrored into the sidebar. Ended mid-way through an alignment au
 - The three files below were COMMITTED with that change, and the **Text alignment fix is done**
   (`textAlignOf` in `PortalPlacedElement.tsx`); white service badges verified `rgb(255,255,255)`.
 
-## In progress — ALIGNMENT (do this first)
-Zeni asked for three things; **three files are edited but NOT committed**:
-`PortalCanvas.tsx`, `PortalCollectionRender.tsx`, `PortalStylePacks.tsx`.
+## Done last — card alignment by template (29 Sep, evening)
+- Data cards (action cards + the tiles of Favourite / Most Used / My Assets / My CIs) align on ONE axis
+  picked by their card template (Icon top → Left/Centre/Right; Icon left/right → Top/Middle/Bottom),
+  in the toolbar and in the sidebar's first Design group. Quick Actions row: no alignment.
+- New toolbar buttons: **Layout** (four white cards + Quick Actions row) and **Card templates** (the cards).
+- The Layout preset now lights what the canvas draws (was "four across" over a 2 × 2).
+- Verified in the browser (`tour-shots/probe-cardalign*.mjs`). See the CLAUDE.md bullet
+  "a DATA CARD aligns on the axis its CARD TEMPLATE leaves free".
 
-1. **Clearer alignment icons** — DONE, uncommitted: the "Stretch" option now uses lucide
-   `StretchHorizontal` / `StretchVertical` (was a bare ↔ arrow) in `ElementToolbar`'s `H_OPTS`/`V_OPTS`
-   and the sidebar's `ALIGN_H_OPTS`/`ALIGN_V_OPTS`. Zeni also said "focused to show what alignment is
-   applied" — confirm with her whether the icon change is enough or the trigger should look lit.
-2. **Service tile icons white** — DONE, uncommitted: badge background `#FFFFFF` in `ServiceTiles`
-   (`PortalCollectionRender.tsx`), and the resting value in `IconMenu`, `DesignQuickSections` and
-   `IconBoxBlock` changed from `#F1F5F9` to `#FFFFFF`.
-3. **Text horizontal alignment** — DONE (see above). Was: Root cause found: the placed Text (`b-text` in
-   `PortalPlacedElement.tsx` ~line 159) sets `textAlign` from `cfg.textAlign`, which no control
-   writes any more; the toolbar/sidebar write `styles[id].align`, which `sizeOf` only uses for
-   `stretch`. Fix: `textAlign: ownStyle?.align` (left/center/right; map `stretch` → `justify`),
-   falling back to `cfg.textAlign`.
-4. **Audit every widget's H/V alignment and give Zeni the list** — HALF DONE.
-   Scripts: `D:/Motadata/tour-shots/probe-align.mjs` (default page) and `probe-align2.mjs` (blank page +
-   every library widget). ⚠️ `probe-align2` is NOT reliable yet: its "+ on each palette row" loop only
-   ever added 5 widgets (4 data cards), so Text, Image, Button, Card etc. were never audited — fix the add
-   loop (e.g. click each row's "+" by its `data-tip`/aria, re-querying rows after every add) before
-   trusting it. Results so far, default page:
-   - **Banner (`hero`)**: H and V both do nothing (the arranged banner ignores `contentAlign`/`contentAlignY`).
-   - **Text & Search (`hero-content`)**: H works; V does nothing.
-   - **Quick Actions cards + their icons, service tiles, My Assets/My CIs tiles**: H works; V does nothing.
-   - **Favourite / Most Used Services, Assets/CIs tiles**: Right and Stretch look identical.
-   - **Placed data cards (My Open Requests, Approvals, Assets, CIs)**: H partial (Right = Stretch); V does nothing.
-   V "does nothing" mostly because the box is exactly as tall as its content — there is no spare height
-   to move within. Report that honestly rather than calling it broken; ask Zeni whether V should be
-   hidden where it cannot act.
-   ⚠️ Don't edit files while an audit runs — Vite reloads the page and the run loses its widgets.
+## In progress
+Nothing mid-flight. The per-widget alignment audit list for Zeni (probe-align2 add loop unreliable)
+is still owed — see below.
 
 ## Next steps
-1. Finish the alignment items above, verify in the browser, commit the three files + the Text fix.
+1. Ask Zeni to review the new card alignment + Layout / Card-templates buttons.
 2. Send Zeni the full alignment list (H/V per widget, working / partial / does nothing).
 3. Carried over: Contact Us "remove this" (ask which part); Figma pill node `296:14588` needs editor
    access; the review list of what overwhelms non-designers (15 points) and the one-go styling
