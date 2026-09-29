@@ -85,7 +85,9 @@ const RAIL: { key: RailKey; label: string; icon: (on: boolean) => ReactNode }[] 
   { key: 'theme', label: 'Theme', icon: () => <Paintbrush size={18} /> },
   { key: 'branding', label: 'Branding', icon: () => <Palette size={18} /> },
   /* Every banner from the layout gallery, built with this editor — horizontal and vertical. */
-  { key: 'banners', label: 'Banners', icon: () => <LayoutPanelTop size={18} /> },
+  /* ⚠️ Banners is HIDDEN from the rail (Zeni, 29 Sep 2026). The panel and its code stay — a banner's
+     layout is still changed from the banner's own Banner layout field — so restoring it is this line:
+     { key: 'banners', label: 'Banners', icon: () => <LayoutPanelTop size={18} /> }, */
   /* ⚠️ Settings is OFF the rail (25 Aug 2026). It used to sit below Branding on the reasoning that
      what a requester may DO on this portal is a property of this portal — but the rail is where you
      go while you are ARRANGING a page, and a nine-accordion permissions screen is not a thing you

@@ -294,7 +294,7 @@ const BUILDER: Group = { title: 'The builder', rows: [
   { keys: combo(ck('widgets')), label: 'Widgets' },
   { keys: combo(ck('theme')), label: 'Theme' },
   { keys: combo(ck('branding')), label: 'Branding' },
-  { keys: combo(ck('banners')), label: 'Banners' },
+  /* Banners is hidden from the rail, so its key has nothing to open — off the sheet too. */
   { keys: combo(ck('hidePanel')), label: 'Hide the design panel' },
 ] };
 
