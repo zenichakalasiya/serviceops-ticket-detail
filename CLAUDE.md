@@ -2532,7 +2532,7 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   Words sit 12px off the caps (`gap-3`, floating toolbar tip too), and a tooltip carrying caps shows 11px
   after the last cap: `.tip-keys` in theme.css sets 10px, because the tooltip carries a pixel of slack past
   its content (a negative margin never changed its measured width). The shortcut sheet reads **label left,
-  keys right**. The portal card's name / URL / details are ONE group, 8px apart — the action cluster hangs
+  keys right**. The portal card's name / URL / details are ONE group, 4px apart (gap-1; was 8px) — the action cluster hangs
   into the title row's margin (`-my-[5px]`) so 32px buttons no longer set the row's height.
 
 ## Parked features

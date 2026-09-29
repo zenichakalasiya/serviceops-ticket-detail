@@ -166,12 +166,12 @@ function PortalCard({ p, url, href, isDefault, on, onToggle, onCustomize, onEdit
       </button>
 
       <div className="flex min-w-0 flex-1 flex-col py-1">
-        {/* ⚠️ ONE GROUP of three lines — name, address, details — with the SAME 8px between each
+        {/* ⚠️ ONE GROUP of three lines — name, address, details — with the SAME 4px between each (gap-1, 29 Sep 2026; it was 8)
             (Zeni's call, 28 Sep 2026). The actions used to set the title row's height: 32px buttons
             beside a 22px name pushed the address 10px further from the name than the details sat from
             the address, so the three read as a heading and a separate pair. The action cluster now
             hangs into the row's margin (-my-[5px]) and the row is as tall as its words. */}
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1">
         {/* ── the title row: the name and its pills, and every action at the far right ── */}
         <div className="flex items-center gap-3">
           <div className="flex min-w-0 flex-1 items-center gap-2">
