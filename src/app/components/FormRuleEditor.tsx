@@ -25,8 +25,8 @@ const VERSIONS: { id: EditorVersion; label: string; hint: string; fav?: boolean 
   { id: 'B2', fav: true, label: 'B2 · 3 steps', hint: 'Three steps: Rule details → Build the rule (conflicts beside it) → Review & save' },
   { id: 'C', fav: true, label: 'C · Linear', hint: 'A centred step-by-step flow — hover a line for its actions, hover a gap to add a step' },
   { id: 'E', fav: true, label: 'E · Flow', hint: 'The rule as a node pipeline; clashes branch off as red lines' },
-  { id: 'F', fav: true, label: 'F · Problems', hint: 'Full-width builder with a bottom Problems dock' },
   { id: 'I', fav: true, label: 'I · Details', hint: 'Rule logic in the centre; details and the rule check in a right panel' },
+  { id: 'F', label: 'F · Problems', hint: 'Full-width builder with a bottom Problems dock' },
   { id: 'B', label: 'B · Stepper', hint: 'One step at a time: Details → When → Check if → Then → Review' },
   { id: 'D', label: 'D · Field', hint: 'Click fields on the form preview to say what the rule does to them' },
   { id: 'G', label: 'G · Review', hint: 'Inline warnings while building; a review before it is saved' },
@@ -1109,7 +1109,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
             </div>
             <div className="min-h-0 flex-1">
               {tab === 'conflicts'
-                ? <FormRuleConflictReview conflicts={conflicts} rules={rules} fieldLabel={(id) => fieldById(id)?.label ?? id}
+                ? <FormRuleConflictReview conflicts={conflicts} rules={rules} currentExecution={draft.execution} fieldLabel={(id) => fieldById(id)?.label ?? id}
                     onOpenRule={(id) => { setReview(null); openOther(id); }}
                     onJump={(id) => { setReview(null); requestAnimationFrame(() => jumpTo(id)); }} />
                 : <FormRuleInsights {...railProps} bare only={tab} onJump={(id) => { setReview(null); requestAnimationFrame(() => jumpTo(id)); }} />}

@@ -61,7 +61,9 @@ function KindBar({ cs, h = 6 }: { cs: RuleConflict[]; h?: number }) {
 
 const countKinds = (cs: RuleConflict[]) => KINDS.map((k) => [k, cs.filter((c) => c.kind === k).length] as const).filter(([, n]) => n > 0);
 
-export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, onOpenRule }: {
+export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, onOpenRule, currentExecution }: {
+  /** When this rule executes — shown under its side of each pair. */
+  currentExecution?: string;
   conflicts: RuleConflict[];
   rules: FormRule[];
   fieldLabel: (id: string) => string;
@@ -126,6 +128,27 @@ export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, o
     );
   };
 
+  /** "Hides Category" → "Hides the category": the pair reads as a sentence about THIS field. */
+  const phrase = (text: string, fid: string) => {
+    const l = fieldLabel(fid);
+    return text.replace(l, 'the ' + l.toLowerCase());
+  };
+  /** One clash, as the reference: two plain cards side by side — current rule, conflicting rule. */
+  const pair = (x: RuleConflict, fid: string) => (
+    <div key={x.key} className="grid grid-cols-2 gap-2.5">
+      <div className="rounded-lg bg-white px-3.5 py-3">
+        <div className="text-[12px] font-medium text-[#3D8BD0]">Current Rule</div>
+        <div className="mt-1 text-[15px] font-medium leading-snug text-[#1D2A3E]">{phrase(x.mine, fid)}</div>
+        <div className="mt-2 text-[12px] text-[#98A2B3]">{currentExecution || x.scope}</div>
+      </div>
+      <div className="rounded-lg bg-white px-3.5 py-3">
+        <div className="text-[12px] font-medium text-[#F25C4E]">Conflicting Rule</div>
+        <div className="mt-1 text-[15px] font-medium leading-snug text-[#1D2A3E]">{phrase(x.theirs, fid)}</div>
+        <div className="mt-2 text-[12px] text-[#98A2B3]">{x.other.execution}</div>
+      </div>
+    </div>
+  );
+
   // ── left list ─────────────────────────────────────────────────────────────
   const leftList = mode === 'rule'
     ? byRule.map(({ rule, items }) => {
@@ -159,21 +182,19 @@ export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, o
             <button type="button" onClick={() => onOpenRule(entry.rule.id)} className="inline-flex flex-shrink-0 items-center gap-1 rounded-md px-2 py-1 text-[12px] font-medium text-[#3D8BD0] transition-colors hover:bg-[#EBF5FF]">Open rule <ArrowUpRight size={12} /></button>
           </div>
           {fields.map((fid) => {
-            const here = entry.items.filter((c) => c.fieldId === fid);
+            const here = entry.items.filter((x) => x.fieldId === fid);
             const alsoRules = rulesOf(byField.find((f) => f.fieldId === fid)?.items ?? []).filter((id) => id !== entry.rule.id);
             return (
-              <div key={fid} className={`overflow-hidden rounded-xl border bg-white transition-shadow ${focusField === fid ? 'border-[#3D8BD0] ring-2 ring-[#3D8BD0]/20' : 'border-[#E8EDF3]'}`}>
-                <div className="flex items-center gap-2.5 border-b border-[#F1F5F9] px-4 py-2.5">
-                  <FieldAvatar size={24} />
-                  <span className="text-[13px] font-medium text-[#364658]">{fieldLabel(fid)}</span>
-                  {here.length > 1 && <span className="text-[11px] text-[#98A2B3]">· {here.length} ways</span>}
+              <div key={fid} className={'rounded-xl bg-[#F4F6FA] p-3 transition-shadow ' + (focusField === fid ? 'ring-2 ring-[#3D8BD0]/30' : '')}>
+                <div className="mb-2.5 flex items-center gap-2 px-0.5">
+                  <span className="text-[14px] font-semibold text-[#1D2A3E]">{fieldLabel(fid)}</span>
                   {alsoRules.length > 0 && (
-                    <button type="button" onClick={() => goField(fid)} className="ml-auto inline-flex items-center gap-1 rounded-md px-2 py-1 text-[12px] font-medium text-[#3D8BD0] hover:bg-white">
-                      <Layers size={12} /> +{alsoRules.length} other rule{alsoRules.length > 1 ? 's' : ''} on {fieldLabel(fid)}
+                    <button type="button" onClick={() => goField(fid)} className="ml-auto text-[12px] text-[#3D8BD0] hover:underline">
+                      +{alsoRules.length} more rule{alsoRules.length > 1 ? 's' : ''}
                     </button>
                   )}
                 </div>
-                <div className="divide-y divide-[#F1F5F9]">{here.map((c) => faceOff(c, entry.rule.name))}</div>
+                <div className="flex flex-col gap-2.5">{here.map((x) => pair(x, fid))}</div>
               </div>
             );
           })}
@@ -204,27 +225,15 @@ export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, o
             </div>
           </div>
           {ruleIds.map((rid) => {
-            const here = entry.items.filter((c) => c.other.id === rid);
+            const here = entry.items.filter((x) => x.other.id === rid);
             const rule = here[0].other;
-            const otherFields = fieldsOf(byRule.find((r) => r.rule.id === rid)?.items ?? []).filter((f) => f !== entry.fieldId);
             return (
-              <div key={rid} className="overflow-hidden rounded-xl border border-[#E8EDF3] bg-white">
-                <div className="flex items-center gap-2.5 border-b border-[#F1F5F9] px-4 py-2.5">
-                  <RuleAvatar name={rule.name} size={24} />
-                  <span className="truncate text-[13px] font-medium text-[#364658]">{rule.name}</span>
-                  <span className="flex-shrink-0 rounded-full bg-white px-2 text-[11px] leading-5 text-[#64748B] ring-1 ring-[#E2E8F0]">Runs #{order(rid)}</span>
-                  {here.length > 1 && <span className="flex-shrink-0 text-[11px] text-[#98A2B3]">· {here.length} ways</span>}
-                  <button type="button" onClick={() => onOpenRule(rid)} className="ml-auto flex size-7 flex-shrink-0 items-center justify-center rounded-md text-[#3D8BD0] hover:bg-white" title="Open rule"><ArrowUpRight size={14} /></button>
+              <div key={rid} className="rounded-xl bg-[#F4F6FA] p-3">
+                <div className="mb-2.5 flex items-center gap-2 px-0.5">
+                  <span className="truncate text-[14px] font-semibold text-[#1D2A3E]">{rule.name}</span>
+                  <button type="button" onClick={() => onOpenRule(rid)} className="ml-auto flex-shrink-0 text-[12px] text-[#3D8BD0] hover:underline">Open rule</button>
                 </div>
-                {otherFields.length > 0 && (
-                  <div className="flex flex-wrap items-center gap-1.5 border-b border-[#F1F5F9] px-4 py-2 text-[11px] text-[#7B8FA5]">
-                    Also clashes on
-                    {otherFields.map((f) => (
-                      <button key={f} type="button" onClick={() => goRule(rid, f)} className="rounded-full bg-[#F1F5F9] px-2 text-[11px] font-medium leading-5 text-[#364658] transition-colors hover:bg-[#E2E8F0]">{fieldLabel(f)}</button>
-                    ))}
-                  </div>
-                )}
-                <div className="divide-y divide-[#F1F5F9]">{here.map((c) => faceOff(c, rule.name))}</div>
+                <div className="flex flex-col gap-2.5">{here.map((x) => pair(x, entry.fieldId))}</div>
               </div>
             );
           })}
