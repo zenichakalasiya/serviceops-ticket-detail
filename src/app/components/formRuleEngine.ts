@@ -48,8 +48,12 @@ export interface RuleConflict {
 
 export interface SimilarRule {
   rule: FormRule;
+  /** Actions both rules do. */
   common: string[];
+  /** Actions only the similar rule does. */
   others: string[];
+  /** This rule's actions the similar rule lacks — what extending it would take. */
+  missing: string[];
 }
 
 export interface TimelineEntry {
@@ -214,7 +218,8 @@ export function findSimilar(me: RuleShape, rules: FormRule[], fields: FormField[
       const eff = effectsOf(rule, fields);
       const common = eff.filter((e) => myEffects.some((m) => m.fieldId === e.fieldId && m.dim === e.dim && m.v === e.v)).map((e) => e.text);
       const others = eff.map((e) => e.text).filter((t) => !common.includes(t));
-      return { rule, common, others };
+      const missing = myEffects.filter((m) => !eff.some((x) => x.fieldId === m.fieldId && x.dim === m.dim && x.v === m.v)).map((m) => m.text);
+      return { rule, common, others, missing };
     })
     .sort((a, b) => b.common.length - a.common.length);
 }

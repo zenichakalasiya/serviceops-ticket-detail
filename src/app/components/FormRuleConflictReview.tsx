@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, ArrowLeftRight, ArrowUpRight, Ban, CornerDownRight, FileText, Grid3x3, Layers, RefreshCw, TextCursorInput } from 'lucide-react';
+import { AlertTriangle, ArrowLeftRight, ArrowUpRight, Ban, ChevronRight, CornerDownRight, Lightbulb, Search, FileText, Grid3x3, Layers, RefreshCw, TextCursorInput } from 'lucide-react';
 import type { FormRule } from './formRuleData';
 import type { ConflictKind, RuleConflict } from './formRuleEngine';
 
@@ -74,6 +74,8 @@ export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, o
   const [kinds, setKinds] = useState<ConflictKind[]>([]);
   const [sel, setSel] = useState<string | null>(null);
   const [focusField, setFocusField] = useState<string | null>(null);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [q, setQ] = useState('');
 
   const list = conflicts.filter((c) => !kinds.length || kinds.includes(c.kind));
   const byRule = useMemo(() => {
@@ -95,6 +97,9 @@ export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, o
     const ids = mode === 'field' ? byField.map((f) => f.fieldId) : byRule.map((r) => r.rule.id);
     if (!sel || !ids.includes(sel)) setSel(ids[0] ?? null);
   }, [mode, byRule, byField]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /** The clashes of whatever is selected — the resolution panel speaks about these first. */
+  const focusItems = mode === 'rule' ? list.filter((x) => x.other.id === sel) : mode === 'field' ? list.filter((x) => x.fieldId === sel) : [];
 
   const goRule = (ruleId: string, fieldId?: string) => { setMode('rule'); setSel(ruleId); setFocusField(fieldId ?? null); };
   const goField = (fieldId: string) => { setMode('field'); setSel(fieldId); setFocusField(null); };
@@ -160,6 +165,8 @@ export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, o
       return { id: fieldId, title: fieldLabel(fieldId), avatar: <FieldAvatar size={28} />, meta: `${nr} rule${nr > 1 ? 's' : ''} involved`, items, shape: nr > 1 ? `${nr} rules → 1 field` : null };
     });
 
+  const shownList = leftList.filter((it) => !q.trim() || it.title.toLowerCase().includes(q.trim().toLowerCase()));
+
   // ── right detail ──────────────────────────────────────────────────────────
   let detail: React.ReactNode = null;
   if (mode === 'rule' && sel) {
@@ -167,21 +174,12 @@ export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, o
     if (entry) {
       const fields = fieldsOf(entry.items);
       detail = (
-        <div className="flex flex-col gap-4">
-          <div className="flex items-start gap-3 pb-1">
-            <RuleAvatar name={entry.rule.name} size={32} />
-            <div className="min-w-0 flex-1">
-              <h3 className="truncate text-[14px] font-medium text-[#1D2A3E]">{entry.rule.name}</h3>
-              <div className="mt-1.5 flex flex-wrap gap-1.5">
-                {[`Runs #${order(entry.rule.id)}`, entry.rule.applies, entry.rule.execution, entry.rule.event].map((t) => (
-                  <span key={t} className="rounded-full bg-white px-2 text-[11px] leading-5 text-[#475467] ring-1 ring-[#E2E8F0]">{t}</span>
-                ))}
-              </div>
-              <p className="mt-2 text-[12px] text-[#64748B]">Clashes with this rule on <b className="font-semibold text-[#364658]">{fields.length} field{fields.length > 1 ? 's' : ''}</b> in <b className="font-semibold text-[#364658]">{entry.items.length} way{entry.items.length > 1 ? 's' : ''}</b>.</p>
-            </div>
+        <div className="flex flex-col gap-1">
+          <div className="-mt-1.5 flex h-8 items-center gap-3">
+            <h3 className="min-w-0 flex-1 truncate text-[15px] font-semibold text-[#1D2A3E]">{entry.rule.name}</h3>
             <button type="button" onClick={() => onOpenRule(entry.rule.id)} className="inline-flex flex-shrink-0 items-center gap-1 rounded-md px-2 py-1 text-[12px] font-medium text-[#3D8BD0] transition-colors hover:bg-[#EBF5FF]">Open rule <ArrowUpRight size={12} /></button>
           </div>
-          {fields.map((fid) => {
+          <div className="flex flex-col gap-4">{fields.map((fid) => {
             const here = entry.items.filter((x) => x.fieldId === fid);
             const alsoRules = rulesOf(byField.find((f) => f.fieldId === fid)?.items ?? []).filter((id) => id !== entry.rule.id);
             return (
@@ -197,7 +195,7 @@ export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, o
                 <div className="flex flex-col gap-2.5">{here.map((x) => pair(x, fid))}</div>
               </div>
             );
-          })}
+          })}</div>
         </div>
       );
     }
@@ -206,25 +204,9 @@ export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, o
     if (entry) {
       const ruleIds = rulesOf(entry.items).sort((a, b) => order(a) - order(b));
       detail = (
-        <div className="flex flex-col gap-4">
-          <div className="flex items-start gap-3 pb-1">
-            <FieldAvatar size={32} />
-            <div className="min-w-0 flex-1">
-              <h3 className="text-[14px] font-medium text-[#1D2A3E]">{fieldLabel(entry.fieldId)}</h3>
-              <p className="mt-1 text-[12px] text-[#64748B]"><b className="font-semibold text-[#364658]">{ruleIds.length} rule{ruleIds.length > 1 ? 's' : ''}</b> pull this field a different way. They run top to bottom — where values collide, the later rule wins.</p>
-              <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-                {ruleIds.map((rid, i) => (
-                  <span key={rid} className="inline-flex items-center gap-1.5">
-                    {i > 0 && <span className="text-[#CBD5E1]">→</span>}
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white py-0.5 pl-0.5 pr-2 text-[11px] text-[#364658] ring-1 ring-[#E2E8F0]">
-                      <RuleAvatar name={entry.items.find((c) => c.other.id === rid)!.other.name} size={18} />#{order(rid)}
-                    </span>
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-          {ruleIds.map((rid) => {
+        <div className="flex flex-col gap-1">
+          <h3 className="-mt-1.5 flex h-8 items-center text-[15px] font-semibold text-[#1D2A3E]">{fieldLabel(entry.fieldId)}</h3>
+          <div className="flex flex-col gap-4">{ruleIds.map((rid) => {
             const here = entry.items.filter((x) => x.other.id === rid);
             const rule = here[0].other;
             return (
@@ -236,7 +218,7 @@ export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, o
                 <div className="flex flex-col gap-2.5">{here.map((x) => pair(x, entry.fieldId))}</div>
               </div>
             );
-          })}
+          })}</div>
         </div>
       );
     }
@@ -244,7 +226,7 @@ export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, o
 
   // ── matrix ────────────────────────────────────────────────────────────────
   const matrix = (
-    <div className="min-h-0 flex-1 overflow-auto px-5 pb-5">
+    <div className="min-h-0 flex-1 overflow-auto px-3 pb-5">
       <div className="inline-block min-w-full overflow-hidden rounded-xl border border-[#E8EDF3] shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
         <table className="w-full border-separate border-spacing-0 text-[12px]">
           <thead>
@@ -294,81 +276,123 @@ export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, o
     return <div className="flex h-full items-center justify-center p-8 text-center text-[13px] text-[#7B8FA5]">No conflicts — no other rule leaves these fields in a different state.</div>;
   }
 
-  const nRulesAll = new Set(conflicts.map((x) => x.other.id)).size;
-  const nFieldsAll = new Set(conflicts.map((x) => x.fieldId)).size;
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      {/* KPI cards double as the kind filter — one row that says how big the problem is AND lets
-          you narrow it. "All" is a tab like the others, so there is always one selected. */}
-      <div className="mx-5 mb-4 grid flex-shrink-0 grid-cols-4 gap-3">
-        {([
-          { id: 'all' as const, label: 'All conflicts', n: conflicts.length, sub: nRulesAll + ' rules · ' + nFieldsAll + ' fields', fg: '#1D2A3E', tint: '#F1F5F9', icon: <AlertTriangle size={15} /> },
-          ...KINDS.map((k) => {
-            const n = conflicts.filter((c) => c.kind === k).length;
-            const sub = k === 'Blocking' ? (n ? 'Blocks saving the form' : 'Nothing blocks saving') : k === 'Override' ? 'Last rule to run wins' : 'Rules undo each other';
-            return { id: k, label: k, n, sub, fg: KIND[k].fg, tint: KIND[k].bg, icon: KIND[k].icon };
-          }),
-        ]).map((t) => {
-          const on = t.id === 'all' ? kinds.length === 0 : kinds.length === 1 && kinds[0] === t.id;
-          const off = t.id !== 'all' && t.n === 0;
-          return (
-            <button key={t.id} type="button" disabled={off} aria-pressed={on}
-              onClick={() => setKinds(t.id === 'all' ? [] : [t.id])}
-              className={'relative rounded-xl border bg-white px-3 py-2.5 text-left transition-all disabled:cursor-not-allowed disabled:opacity-50 ' + (on ? 'border-[#3D8BD0] shadow-[0_0_0_3px_rgba(61,139,208,0.12)]' : 'border-[#E8EDF3] hover:border-[#CBD5E1]')}>
-              <div className="flex items-center gap-2.5">
-                <span className="flex size-8 flex-shrink-0 items-center justify-center rounded-lg" style={{ color: t.fg, backgroundColor: t.tint }}>{t.icon}</span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-[12px] font-medium text-[#364658]">{t.label}</span>
-                  <span className="block truncate text-[11px] text-[#98A2B3]">{t.sub}</span>
-                </span>
-                <span className="flex-shrink-0 text-[20px] font-semibold tabular-nums" style={{ color: t.n ? t.fg : '#98A2B3' }}>{t.n}</span>
-              </div>
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="mx-5 mb-3 flex flex-shrink-0 items-center gap-3">
+      {/* One row: the view tabs on the left, the counts on the right. Each count is a small card —
+          number over its name, nothing else — and it is also the kind filter ("All" included). */}
+      <div className="mx-3 mb-3 flex flex-shrink-0 items-center gap-3">
         <div className="pill-track">
           <button type="button" aria-pressed={mode === 'rule'} onClick={() => setMode('rule')}><span className="inline-flex items-center gap-1.5"><FileText size={12} />By rule</span></button>
           <button type="button" aria-pressed={mode === 'field'} onClick={() => setMode('field')}><span className="inline-flex items-center gap-1.5"><Layers size={12} />By field</span></button>
           <button type="button" aria-pressed={mode === 'matrix'} onClick={() => setMode('matrix')}><span className="inline-flex items-center gap-1.5"><Grid3x3 size={12} />Matrix</span></button>
         </div>
-        <span className="text-[12px] text-[#7B8FA5]">
-          {mode === 'rule' ? 'Each rule, and every field it clashes with you on' : mode === 'field' ? 'Each field, and every rule that pulls it another way' : 'All rules against all fields at once'}
-        </span>
+        <div className="ml-auto flex gap-2">
+          {([
+            { id: 'all' as const, label: 'All conflicts', n: conflicts.length, fg: '#1D2A3E' },
+            ...KINDS.map((k) => ({ id: k, label: k, n: conflicts.filter((x) => x.kind === k).length, fg: KIND[k].fg })),
+          ]).map((t) => {
+            const on = t.id === 'all' ? kinds.length === 0 : kinds.length === 1 && kinds[0] === t.id;
+            const off = t.id !== 'all' && t.n === 0;
+            return (
+              <button key={t.id} type="button" disabled={off} aria-pressed={on} title={t.id === 'all' ? 'Show every conflict' : 'Show only ' + t.label}
+                onClick={() => setKinds(t.id === 'all' ? [] : [t.id])}
+                className={'w-[96px] rounded-lg border bg-white px-3 py-1.5 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-45 ' + (on ? 'border-[#3D8BD0] bg-[#F5F9FE]' : 'border-[#E8EDF3] hover:border-[#CBD5E1]')}>
+                <div className="text-[17px] font-semibold leading-6 tabular-nums" style={{ color: t.n ? t.fg : '#98A2B3' }}>{t.n}</div>
+                <div className="truncate text-[11px] text-[#7B8FA5]">{t.label}</div>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {mode === 'matrix' ? matrix : (
-        <div className="flex min-h-0 flex-1 border-t border-[#EEF2F6]">
-          <div className="w-[280px] flex-shrink-0 overflow-y-auto border-r border-[#EEF2F6] p-2">
-            <div className="px-2.5 pb-1.5 pt-1 text-[11px] font-medium text-[#98A2B3]">{leftList.length} {mode === 'rule' ? 'rule' : 'field'}{leftList.length === 1 ? '' : 's'}</div>
-            <div className="flex flex-col gap-0.5">
-              {leftList.map((it) => {
+        /* No divider lines: the list is its own soft grey panel, the detail sits beside it on white. */
+        <div className="flex min-h-0 flex-1 gap-4 px-3 pb-4">
+          <div className="flex w-[280px] flex-shrink-0 flex-col rounded-md bg-[#F4F6FA] p-2">
+            <div className="relative mb-2 flex-shrink-0">
+              <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#98A2B3]" />
+              <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={mode === 'rule' ? 'Search rules...' : 'Search fields...'}
+                className="h-8 w-full rounded-md border border-[#E2E8F0] bg-white pl-8 pr-2.5 text-[12px] text-[#364658] placeholder:text-[#98A2B3] focus:border-[#3D8BD0] focus:outline-none focus:ring-1 focus:ring-[#3D8BD0]" />
+            </div>
+            <div className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto">
+              {shownList.length === 0 && <div className="px-3 py-6 text-center text-[12px] text-[#98A2B3]">Nothing matches “{q}”</div>}
+              {shownList.map((it) => {
                 const on = sel === it.id;
                 return (
+                  /* The reference's list item: name, then "• N conflicts" — nothing else. */
                   <button key={it.id} type="button" onClick={() => { setSel(it.id); setFocusField(null); }}
-                    className={'group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors ' + (on ? 'bg-[#EEF5FC]' : 'hover:bg-[#F5F7FA]')}>
-                    {it.avatar}
-                    <span className="min-w-0 flex-1">
-                      <span className={'block truncate text-[13px] ' + (on ? 'font-semibold text-[#1D2A3E]' : 'font-medium text-[#364658]')}>{it.title}</span>
-                      <span className="mt-0.5 flex items-center gap-2 text-[11px] text-[#98A2B3]">
-                        <span className="truncate">{it.meta}</span>
-                        <span className="flex flex-shrink-0 items-center gap-1">
-                          {countKinds(it.items).map(([k]) => <span key={k} title={k} className="size-1.5 rounded-full" style={{ backgroundColor: KIND[k].bar }} />)}
-                        </span>
-                      </span>
+                    className={'block w-full rounded-md px-3 py-2.5 text-left transition-colors ' + (on ? 'bg-white shadow-[0_1px_2px_rgba(15,23,42,0.06)]' : 'hover:bg-white/60')}>
+                    <span className="block truncate text-[13px] font-semibold text-[#1D2A3E]">{it.title}</span>
+                    <span className="mt-1 flex items-center gap-1.5 text-[12px] text-[#7B8FA5]">
+                      <span className="size-1.5 rounded-full bg-[#F25C4E]" />
+                      {it.items.length} conflict{it.items.length === 1 ? '' : 's'}
                     </span>
-                    <span className={'flex-shrink-0 text-[12px] tabular-nums ' + (on ? 'font-semibold text-[#3D8BD0]' : 'text-[#98A2B3]')}>{it.items.length}</span>
                   </button>
                 );
               })}
             </div>
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto bg-white px-5 py-4">{detail}</div>
+          <div className="min-h-0 flex-1 overflow-y-auto bg-white">{detail}</div>
         </div>
       )}
+
+      {/* Resolution help — collapsed to one line; opens into steps plus fixes for the kinds present. */}
+      {helpOpen && (
+        <div className="max-h-[48%] flex-shrink-0 overflow-y-auto border-t border-[#EEF2F6] bg-[#FAFBFC] px-3 py-4">
+          <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-6">
+            <div>
+              <div className="mb-2.5 text-[13px] font-semibold text-[#1D2A3E]">Resolve a conflict in four steps</div>
+              <ol className="flex flex-col gap-2.5">
+                {RESOLVE_STEPS.map((s, i) => (
+                  <li key={s.title} className="flex gap-2.5">
+                    <span className="flex size-5 flex-shrink-0 items-center justify-center rounded-full bg-[#EBF5FF] text-[11px] font-semibold text-[#3D8BD0]">{i + 1}</span>
+                    <span className="min-w-0">
+                      <span className="block text-[13px] font-medium text-[#364658]">{s.title}</span>
+                      <span className="block text-[12px] leading-[1.55] text-[#7B8FA5]">{s.text}</span>
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+            <div>
+              <div className="mb-2.5 text-[13px] font-semibold text-[#1D2A3E]">{focusItems.length ? 'For what you are looking at' : 'By kind of conflict'}</div>
+              <div className="flex flex-col gap-2">
+                {(focusItems.length ? focusItems : list).reduce<RuleConflict[]>((acc, x) => (acc.some((y) => y.kind === x.kind && y.fieldId === x.fieldId) ? acc : [...acc, x]), []).slice(0, 6).map((x) => (
+                  <div key={x.key} className="rounded-lg bg-white px-3 py-2.5 ring-1 ring-[#EEF2F6]">
+                    <div className="flex items-center gap-1.5 text-[12px]">
+                      <span className="font-medium" style={{ color: KIND[x.kind].fg }}>{x.kind}</span>
+                      <span className="text-[#CBD5E1]">·</span>
+                      <span className="font-medium text-[#364658]">{fieldLabel(x.fieldId)}</span>
+                    </div>
+                    <p className="mt-1 text-[12px] leading-[1.55] text-[#64748B]">{fixFor(x)}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      <button type="button" onClick={() => setHelpOpen((o) => !o)}
+        className="flex flex-shrink-0 items-center gap-2 border-t border-[#EEF2F6] px-3 py-3 text-left text-[13px] text-[#364658] transition-colors hover:bg-[#F7F9FB]">
+        <Lightbulb size={15} className="text-[#F59E0B]" />
+        How do I resolve these conflicts?
+        <ChevronRight size={15} className={'text-[#98A2B3] transition-transform ' + (helpOpen ? '-rotate-90' : '')} />
+      </button>
     </div>
   );
 }
+
+const RESOLVE_STEPS = [
+  { title: 'Decide who owns the field', text: 'A field can end in only one state. Pick the rule whose behaviour you actually want.' },
+  { title: 'Remove the clashing action', text: 'Take the action out of the rule that should NOT decide it — here, or via Open rule.' },
+  { title: 'Or keep them apart with a condition', text: 'Add a condition so the two rules never match the same request (e.g. different priorities or categories).' },
+  { title: 'Or change the run order', text: 'For Opposite and Override the rule that runs last wins — drag it in the Form Rules list.' },
+];
+
+/** A concrete suggestion for one clash, in words. */
+const fixFor = (x: RuleConflict) => {
+  if (x.kind === 'Blocking') return `A mandatory field can't be hidden or read-only. Either drop "${x.theirs}" from ${x.other.name}, or change this rule so it doesn't block the field ("${x.mine}").`;
+  if (x.kind === 'Override') return `Both rules set a value. Keep only one "Set value", or move the rule with the value you want below the other so it runs last.`;
+  return `This rule says "${x.mine}", ${x.other.name} says "${x.theirs}". Keep one of them, or add a condition so both never run on the same request.`;
+};

@@ -1089,7 +1089,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
            rules, one pair clashing in several ways), so they get their own explorer. */
         <div className="fixed inset-0 z-[10050] flex items-center justify-center bg-black/30" onMouseDown={() => setReview(null)}>
           <div className="flex h-[min(700px,90vh)] w-[min(1100px,95vw)] flex-col overflow-hidden rounded-xl bg-white shadow-xl" onMouseDown={(e) => e.stopPropagation()}>
-            <div className="flex flex-shrink-0 items-start gap-3 px-5 pt-4">
+            <div className="flex flex-shrink-0 items-start gap-3 px-3 pt-3">
               <div className="min-w-0">
                 <h3 className="text-[15px] font-semibold text-[#364658]">{review === 'save' ? 'Review before saving' : 'Rule check'}</h3>
                 <p className="mt-0.5 text-[12px] text-[#64748B]">
@@ -1098,7 +1098,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
               </div>
               <button type="button" onClick={() => setReview(null)} title="Close" className="ml-auto flex size-8 flex-shrink-0 items-center justify-center rounded transition-colors hover:bg-[#F3F4F6]"><XIcon size={16} className="text-[#64748B]" /></button>
             </div>
-            <div className="mb-3 flex flex-shrink-0 gap-2.5 border-b border-[#DFE5ED] px-5">
+            <div className="mb-3 flex flex-shrink-0 gap-2.5 border-b border-[#DFE5ED] px-3">
               {([['conflicts', 'Conflicts', conflicts.length], ['similar', 'Similar rules', similar.length], ['order', 'Run order', null]] as const).map(([id, text, n]) => (
                 <button key={id} type="button" onClick={() => setTab(id)}
                   className={'flex items-center gap-1.5 whitespace-nowrap border-b-2 px-2 py-2.5 text-[13px] font-medium transition-colors ' + (tab === id ? 'border-[#3D8BD0] text-[#3D8BD0]' : 'border-transparent text-[#6b7280] hover:border-[#CBD5E1] hover:bg-[#F5F7FA] hover:text-[#364658]')}>
@@ -1115,7 +1115,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
                 : <FormRuleInsights {...railProps} bare only={tab} onJump={(id) => { setReview(null); requestAnimationFrame(() => jumpTo(id)); }} />}
             </div>
             {review === 'save' && (
-              <div className="flex flex-shrink-0 justify-end gap-2 border-t border-[#DFE5ED] px-5 py-3">
+              <div className="flex flex-shrink-0 justify-end gap-2 border-t border-[#DFE5ED] px-3 py-3">
                 <button type="button" onClick={() => setReview(null)} className="rounded-md border border-[#DFE5ED] bg-white px-3 py-1.5 text-[12px] font-medium text-[#364658] hover:bg-[#F9FAFB]">Go back and fix</button>
                 <button type="button" onClick={() => { setReview(null); save(true); }} className="rounded-md bg-[#3D8BD0] px-3 py-1.5 text-[12px] font-medium text-white hover:bg-[#3478B5]">Save anyway</button>
               </div>

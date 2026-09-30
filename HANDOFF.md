@@ -1,55 +1,56 @@
-# Handoff — 2026-09-30 21:35
+# Handoff — 2026-09-30 22:42
 
 ## Read first
 This session built **Request Form Management** (Admin › Request Management › Request Form / Request Form Rule).
-In `CLAUDE.md` read: the Structure bullet *"Request Form Management (Admin › Request Management)"* and the
-Key context bullets starting *"Request Form Management (Admin › Request Management) — `AdminRequestFormModule.tsx`"*
-(listing, editor, the ten layouts, the conflict engine, C · Linear, G's conflict review).
-Another session worked on the Support Portal the same day — its notes are kept below.
+In `CLAUDE.md` read the Structure bullet *"Request Form Management (Admin › Request Management)"* and the
+Key-context bullets starting *"Request Form Management (Admin › Request Management) — `AdminRequestFormModule.tsx`"*.
+They cover the listing, the full-page editor, the ten layouts, the conflict engine, C · Linear and G's conflict review.
+Another session worked on the Support Portal the same day; its notes are kept below.
 
 ## What we worked on this session
-Designed the form-rule flow from the live product's drawer into a full-page editor, then explored ten layouts
-for building a rule and surfacing conflicts / similar rules, and iterated on option G's conflict review.
+Moved the form-rule editor from a drawer to a full page, explored ten layouts for building a rule and surfacing
+conflicts / similar rules, then iterated heavily on **G's "Review before saving" dialog** (conflicts + similar rules).
 
 ## Completed
-- Admin nav: Request Management is a tree branch; `#/admin/request-form` and `#/admin/request-form-rules` routes.
-- Listing (Form Rules tab): edge-to-edge standard table, 16px cells, drag-to-reorder run order, measured
-  "N conflicts" pill, enable switch, duplicate/edit/delete. Form Builder tab (palette → canvas → properties).
-  Field Matrix tab (J) — fields × rules with red clash cells.
-- Admin module titles are 16px everywhere (Overview, OS Upgrade, Support Portal, BOM, Request Form).
-- Full-page rule editor matching the Figma section (node 1663:17995): When / Check if / Then blocks, condition
-  groups with And↻ connectors, per-row copy/delete, ON/OFF reverse toggle.
-- `formRuleEngine.ts`: conflicts (Opposite / Override / Blocking) with scope + condition-overlap checks,
-  similar rules, run order.
-- Layout switcher with favourites first: **A · Split, B2 · 3 steps, C · Linear, E · Flow, F · Problems,
-  I · Details**, then B · Stepper, D · Field, G · Review, H · Similar-first. All edit one draft.
-- C rebuilt twice from https://pranjalgupta-motadata.github.io/linear-workflow-builder/ — centred rail,
-  hover actions on the same line, "Add step here" between blocks, "What happens next" menu.
-- G's review dialog: KPI cards that double as kind filters, By rule / By field / Matrix, minimal list,
-  plain-text clash rows (cleaned up on request).
-- Seeds gained broad rules so a typical rule clashes with ~9 rules (for demoing G).
+- Admin nav: Request Management is a tree branch; `#/admin/request-form` and `#/admin/request-form-rules`.
+- Listing: edge-to-edge table, drag-to-reorder run order, measured "N conflicts" pill; Form Builder tab; Field Matrix tab (J).
+- Admin module titles are 16px everywhere.
+- Full-page rule editor matching the Figma form-rule section; `formRuleEngine.ts` (Opposite / Override / Blocking,
+  similar rules with common / others / missing, run order).
+- Layout switcher — favourites **A · Split, B2 · 3 steps, C · Linear, E · Flow, I · Details**; rejected (behind a
+  divider): F · Problems, B · Stepper, D · Field, G · Review, H · Similar-first.
+- C rebuilt from https://pranjalgupta-motadata.github.io/linear-workflow-builder/ (centred rail, hover actions, add-step menu).
+- G's review dialog, final state:
+  - 12px padding; one toolbar row: By rule / By field / Matrix tabs left, four small KPI filter cards right
+    (number over name).
+  - Left: 6px-rounded grey panel with search, list items = name + "• N conflicts", selected item white.
+  - Right: title top-aligned with the panel, 4px above the groups; each group is a grey panel of
+    Current Rule / Conflicting Rule card pairs (Zeni's reference).
+  - Footer "How do I resolve these conflicts?" expands into steps + concrete fixes.
+  - Similar rules tab: compact one-line list (chevron · name · Open) that expands into
+    Matches your rule ✓ / Only in this rule / Your actions it lacks +.
+- Seeds gained broad rules so a typical rule clashes with ~9 rules.
 
 ## In progress
-Nothing mid-flight. Everything above builds and was verified in a headless browser at 1300×768.
+Nothing mid-flight. Everything builds and was verified in a headless browser.
 
 ## Next steps
-- Zeni to pick the winning layout(s) from the favourites; retire the rest from the switcher.
-- "View similar rules" UX is still the older panel in most layouts — Zeni said similar rules would be a later task.
-- Apply G's conflict-review design to the other layouts' Rule check rail if it is chosen.
-- Rule details stay local state (prototype) — no persistence.
+- Zeni picks the final layout(s) from the favourites; retire the rest.
+- Decide whether G's conflict/similar design should replace the Rule check rail in the favourite layouts
+  (A, B2, C, E, I still use the older `FormRuleInsights` conflict tab).
+- Similar-rules flow ("add to this rule") — Zeni flagged it as a later task.
 
 ## Decisions made
-- Full page, not a drawer, for the editor (admin sidebar hides, product header stays).
-- Conflicts are a many-to-many LINK (this action → field → other rule → kind); views group by rule, by field, or matrix.
-- All editor layouts left-aligned (Zeni reversed the centring), except C, which is deliberately centred like the reference.
-- Save Rule stays product-blue, not the Figma's black.
+- Full-page editor, not a drawer. Save Rule stays product-blue.
+- Conflicts are a many-to-many link (action → field → other rule → kind), viewed by rule, by field or matrix.
+- Conflict detail cards show only the two actions + executions; kind lives in the KPI filters.
+- All editor layouts left-aligned except C (centred like the reference). Option F rejected.
 
 ## Gotchas & notes
-- Git Bash strips backslashes/backticks inside heredocs — write patch scripts to a file (see `D:/Motadata/tour-shots/formrule/*.cjs`).
-- Components declared inside a render function remount each render — inputs lose focus. Keep them module-level.
-- Tailwind never generates class names built by string concatenation — write them out literally.
-- A bare `<button>` does not inherit font-size in this app — always give text buttons an explicit `text-[Npx]`.
-- Browser probes: `D:/Motadata/tour-shots/formrule/probe*.mjs` (playwright-core via the npx cache).
+- Git Bash strips backslashes/backticks in heredocs — write patch/probe scripts to files (`D:/Motadata/tour-shots/formrule/`).
+- Components declared inside render remount every render (inputs lose focus) — keep them module-level.
+- Tailwind never generates concatenated class names; bare `<button>`s need an explicit `text-[Npx]`.
+- Browser probes: `D:/Motadata/tour-shots/formrule/probe*.mjs` (playwright-core from the npx cache).
 
 ---
 
