@@ -1,3 +1,60 @@
+# Handoff — 2026-09-30 21:35
+
+## Read first
+This session built **Request Form Management** (Admin › Request Management › Request Form / Request Form Rule).
+In `CLAUDE.md` read: the Structure bullet *"Request Form Management (Admin › Request Management)"* and the
+Key context bullets starting *"Request Form Management (Admin › Request Management) — `AdminRequestFormModule.tsx`"*
+(listing, editor, the ten layouts, the conflict engine, C · Linear, G's conflict review).
+Another session worked on the Support Portal the same day — its notes are kept below.
+
+## What we worked on this session
+Designed the form-rule flow from the live product's drawer into a full-page editor, then explored ten layouts
+for building a rule and surfacing conflicts / similar rules, and iterated on option G's conflict review.
+
+## Completed
+- Admin nav: Request Management is a tree branch; `#/admin/request-form` and `#/admin/request-form-rules` routes.
+- Listing (Form Rules tab): edge-to-edge standard table, 16px cells, drag-to-reorder run order, measured
+  "N conflicts" pill, enable switch, duplicate/edit/delete. Form Builder tab (palette → canvas → properties).
+  Field Matrix tab (J) — fields × rules with red clash cells.
+- Admin module titles are 16px everywhere (Overview, OS Upgrade, Support Portal, BOM, Request Form).
+- Full-page rule editor matching the Figma section (node 1663:17995): When / Check if / Then blocks, condition
+  groups with And↻ connectors, per-row copy/delete, ON/OFF reverse toggle.
+- `formRuleEngine.ts`: conflicts (Opposite / Override / Blocking) with scope + condition-overlap checks,
+  similar rules, run order.
+- Layout switcher with favourites first: **A · Split, B2 · 3 steps, C · Linear, E · Flow, F · Problems,
+  I · Details**, then B · Stepper, D · Field, G · Review, H · Similar-first. All edit one draft.
+- C rebuilt twice from https://pranjalgupta-motadata.github.io/linear-workflow-builder/ — centred rail,
+  hover actions on the same line, "Add step here" between blocks, "What happens next" menu.
+- G's review dialog: KPI cards that double as kind filters, By rule / By field / Matrix, minimal list,
+  plain-text clash rows (cleaned up on request).
+- Seeds gained broad rules so a typical rule clashes with ~9 rules (for demoing G).
+
+## In progress
+Nothing mid-flight. Everything above builds and was verified in a headless browser at 1300×768.
+
+## Next steps
+- Zeni to pick the winning layout(s) from the favourites; retire the rest from the switcher.
+- "View similar rules" UX is still the older panel in most layouts — Zeni said similar rules would be a later task.
+- Apply G's conflict-review design to the other layouts' Rule check rail if it is chosen.
+- Rule details stay local state (prototype) — no persistence.
+
+## Decisions made
+- Full page, not a drawer, for the editor (admin sidebar hides, product header stays).
+- Conflicts are a many-to-many LINK (this action → field → other rule → kind); views group by rule, by field, or matrix.
+- All editor layouts left-aligned (Zeni reversed the centring), except C, which is deliberately centred like the reference.
+- Save Rule stays product-blue, not the Figma's black.
+
+## Gotchas & notes
+- Git Bash strips backslashes/backticks inside heredocs — write patch scripts to a file (see `D:/Motadata/tour-shots/formrule/*.cjs`).
+- Components declared inside a render function remount each render — inputs lose focus. Keep them module-level.
+- Tailwind never generates class names built by string concatenation — write them out literally.
+- A bare `<button>` does not inherit font-size in this app — always give text buttons an explicit `text-[Npx]`.
+- Browser probes: `D:/Motadata/tour-shots/formrule/probe*.mjs` (playwright-core via the npx cache).
+
+---
+
+(Previous session below — Support Portal work from another session.)
+
 # Handoff — 2026-09-30
 
 ## Latest (30 Sep 2026, latest) — toolbar dividers

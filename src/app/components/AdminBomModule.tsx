@@ -50,7 +50,7 @@ function PageHead({ crumbs, onCrumb, title, subtitle }: {
           </span>
         ))}
       </div>
-      <h1 className="mt-1.5 text-[20px] font-semibold text-[#364658]">{title}</h1>
+      <h1 className="mt-1.5 text-[16px] font-semibold text-[#364658]">{title}</h1>
       <p className="mt-1 max-w-[760px] text-[13px] leading-[1.6] text-[#7B8FA5]">{subtitle}</p>
     </div>
   );

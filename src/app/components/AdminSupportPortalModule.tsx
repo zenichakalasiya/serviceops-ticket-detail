@@ -807,7 +807,7 @@ export function AdminSupportPortalModule({ onBuilder, openPortal, onOpenPortalCh
           became ONE destination showing the portals you have, so the head was still naming a mode
           the page no longer has. It also disagreed with every other name for this screen — the
           sidebar row, the Overview card and the route all say Support Portal. */}
-      <h1 className="text-[20px] font-semibold text-[#364658]">Support Portal</h1>
+      <h1 className="text-[16px] font-semibold text-[#364658]">Support Portal</h1>
       <p className="mt-1 text-[13px] leading-[1.6] text-[#7B8FA5]">
         Customize the layout and experience of your Support Portal.{' '}
         <button

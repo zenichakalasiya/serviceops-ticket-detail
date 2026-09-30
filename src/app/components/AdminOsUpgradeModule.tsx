@@ -245,7 +245,7 @@ export function AdminOsUpgradeModule() {
         {/* Page head — title, one line of purpose, docs. No breadcrumb: the nav already says
             where you are, and an admin listing is a destination, not a step in a trail. */}
         <div className="mb-5">
-          <h1 className="text-[20px] font-semibold text-[#364658]">OS Upgrade</h1>
+          <h1 className="text-[16px] font-semibold text-[#364658]">OS Upgrade</h1>
           <p className="mt-1 text-[13px] leading-[1.6] text-[#7B8FA5]">
             Upload the ISO file for upgrading the OS of the computers.{' '}
             {/* Explicit size — a bare button does NOT inherit the paragraph's font-size here. */}

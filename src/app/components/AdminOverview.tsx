@@ -43,7 +43,7 @@ export function AdminOverview({ openKeys, onToggle, query, onQuery, registerSect
         {/* Page head */}
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 className="text-[20px] font-semibold text-[#364658]">Overview</h1>
+            <h1 className="text-[16px] font-semibold text-[#364658]">Overview</h1>
             <p className="mt-1 text-[13px] text-[#7B8FA5]">
               Centralized hub to manage and configure all ITSM settings and modules.{' '}
               <button

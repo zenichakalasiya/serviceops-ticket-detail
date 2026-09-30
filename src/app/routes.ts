@@ -50,6 +50,8 @@ export interface AdminRoute {
 /* Only screens that actually exist. A section that is still a card grid has no slug, because a
  * URL promising a screen that isn't built is worse than no URL. */
 export const ADMIN_ROUTES: readonly AdminRoute[] = [
+  { slug: 'request-form', section: 'Request Management', card: 'Request Form' },
+  { slug: 'request-form-rules', section: 'Request Management', card: 'Request Form Rule' },
   { slug: 'os-upgrade', section: 'Patch Management', card: 'OS Upgrade' },
   { slug: 'support-portal', section: 'Support Channels', card: 'Support Portal' },
   { slug: 'bom-management', section: 'BOM Management' },
