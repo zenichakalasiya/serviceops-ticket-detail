@@ -1,9 +1,9 @@
 # Support Portal — parked features
 
-Five things that are **built or part-built and deliberately switched off**, so the work is not
+Six things that are **built or part-built and deliberately switched off**, so the work is not
 thrown away and nobody has to start from scratch when they come back. Four are features; the fifth
 (§5) is a UI recipe that was working well and was taken out of one surface for a reason that does
-not apply everywhere.
+not apply everywhere; the sixth (§6) is the toolbar's move arrows.
 
 Nothing here is a proposal. Every item names the files, the flag that hides it, the styling that is
 already decided, and the specific reason it was parked — so the next session can pick one up and
@@ -258,6 +258,54 @@ question the surface answers is *"which of these do I want"* — four button sty
 states — show them together and skip this entirely. That is exactly why the widget library stopped
 using it. Reach for the carousel when the variants are **the same thing over time** (states, steps,
 a progression), not **alternatives to choose between**.
+
+---
+
+## 6 · Move arrows on the floating toolbar — step a widget one place
+
+**Status:** fully built and working; switched off on 30 Sep 2026 (Zeni: "hide for now, we will
+bring it back if I want").
+**Hidden by:** `SHOW_MOVE_ARROWS = false` in `src/app/components/portalShortcutKeys.ts`. Set it to
+`true` and everything below returns at once — no other edit is needed.
+
+### What the concept is
+
+Every selected element on the canvas carried a pair of arrows on its floating toolbar that moved it
+**one place** among its siblings:
+
+- **Move left / Move right** (lucide `ArrowLeftToLine` / `ArrowRightToLine`) when the parent lays
+  its children out side by side — columns in a row, cards in the Quick Actions row.
+- **Move up / Move down** (`ArrowUpToLine` / `ArrowDownToLine`) when the parent stacks them —
+  sections on the page, widgets stacked in a column.
+- The **bare arrow keys** pressed the same buttons (`←` `→` `↑` `↓` with a widget selected), and the
+  shortcut sheet's *Move and size* group listed them as "Move one place".
+
+### What the flag gates
+
+| Piece | Where | With the flag off |
+|---|---|---|
+| The two arrow buttons | `ElementToolbar` in `PortalCanvas.tsx` — the `moves` list and its render | not drawn |
+| The fence rule before the "place" group | `hasStructure` in the same component | no longer counts the arrows, so no orphan divider |
+| Bare-arrow keys | `PortalShortcuts.tsx` → the `ARROWS` map | ignored, so an arrow scrolls the canvas as normal |
+| Shortcut-sheet row | `PortalShortcuts.tsx` → the `MOVE` group | group reads **Size** with only the Shift+arrow rows |
+
+Kept untouched and still used: `moveNode` in `SupportPortalBuilder`, `useSiblingSpan` (which axis,
+first/last), `TOOLBAR_KEYS.moveLeft/Right/Up/Down` in `portalShortcutKeys.ts`. **Drag (the grip)
+still moves anything anywhere**, so nothing became unreachable.
+
+### Decisions already made — do not re-litigate when it returns
+
+- **The `…ToLine` glyphs, not bare arrows.** A bare arrow means a direction, which is what the
+  alignment controls beside them use; the bar the arrow travels to says "take a place". The right
+  arrow is lucide's own mirror of the left, never a CSS `scaleX(-1)`.
+- **Only the parent's own axis is offered**, and the axis is MEASURED (`useSiblingSpan`), falling
+  back to the box's declared direction, then to the node kind.
+- **An impossible move is not rendered, never shown disabled** — at the first or last position that
+  arrow is absent, and an element with no siblings shows neither.
+- Bare arrows moving the selection is the Figma/Webflow/Framer habit Zeni chose; the cost (no
+  arrow-scrolling while something is selected — press Esc first) was stated on the sheet.
+- The Editor basics video (`PortalTourScenes.tsx`, the Card chapter) still shows a "Move right"
+  press. Leave it if the arrows are coming back; redraw that beat if they are gone for good.
 
 ---
 

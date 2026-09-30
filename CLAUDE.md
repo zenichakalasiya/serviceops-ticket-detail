@@ -2724,9 +2724,12 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   one pushed is the most specific. A new surface with keys = a registry entry + that one hook.
   ⚠️ `PortalShortcuts` keeps its `open`/`onOpenChange` props; asking it to open forwards to the
   global panel and resets.
+- **Support Portal — the toolbar MOVE ARROWS are PARKED (30 Sep 2026, Zeni).** `SHOW_MOVE_ARROWS = false` in
+  `portalShortcutKeys.ts` hides Move left/right (and up/down), their bare-arrow keys and the sheet row (the
+  sheet group reads **Size**). Drag still moves anything. Full concept + how to restore: future-tasks.md §6.
 
 ## Parked features
-Four Support Portal features are BUILT-OR-PART-BUILT AND SWITCHED OFF, with their full context in
+Support Portal features that are BUILT-OR-PART-BUILT (incl. §6, the toolbar move arrows) AND SWITCHED OFF, with their full context in
 [future-tasks.md](future-tasks.md): **AI** (rail item commented out in `SupportPortalBuilder`; the
 real ask is section-scoped AI, not portal-wide generation), **Advanced Tabs** (`l-tabs`, hidden —
 needs a collection spec, copy Accordion's), and **custom templates** (the gallery and the New-page

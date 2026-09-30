@@ -1,6 +1,11 @@
 # Handoff — 2026-09-30
 
-## Latest (30 Sep 2026) — the global Keyboard shortcuts panel — DONE, pushed
+## Latest (30 Sep 2026, later) — move arrows parked
+- The floating toolbar's Move left/right (and up/down) buttons, their arrow keys and the sheet row are hidden
+  by `SHOW_MOVE_ARROWS = false` (`portalShortcutKeys.ts`). Concept kept in future-tasks.md §6; flip the flag to restore.
+  Verified: no move buttons on an action card or the Quick Actions row, → no longer reorders, no page errors.
+
+## Earlier (30 Sep 2026) — the global Keyboard shortcuts panel — DONE, pushed
 - One right-side panel lists every shortcut in the product (`GlobalShortcutsPanel.tsx`), opened by the
   header keyboard icon, `?`, the builder rail's Shortcuts button and the drawer's rail keyboard button.
   **This page** opens focused on where you are; **All modules** covers every module by area; search

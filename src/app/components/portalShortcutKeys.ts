@@ -17,6 +17,12 @@
  * declared above the bare `Add a `, so anything else beginning `Add a …` — a question, a slide, a
  * link — falls through to Shift+A. A new collection's own wording needs no change here. */
 
+/** PARKED (30 Sep 2026, Zeni): the floating toolbar's MOVE arrows — left/right, and up/down on a
+ *  vertical parent — and the bare-arrow keys that press them. Switched off, not deleted: set this to
+ *  `true` and the buttons, the keys and the shortcut-sheet row all come back. See future-tasks.md §6.
+ *  Dragging (the grip) still moves anything anywhere. */
+export const SHOW_MOVE_ARROWS = false;
+
 export interface ToolbarKey {
   /** What the tooltip and the sheet print. Arrows and `Del` are written as the glyph, not the code. */
   keys: string[];

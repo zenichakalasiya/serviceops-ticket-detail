@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { openGlobalShortcuts } from './shortcutContext';
 import { useCanvas } from './PortalCanvas';
 import { nodePath } from './portalPageModel';
-import { TOOLBAR_KEYS, chromeKeys, tipsOf } from './portalShortcutKeys';
+import { TOOLBAR_KEYS, chromeKeys, tipsOf, SHOW_MOVE_ARROWS } from './portalShortcutKeys';
 import type { ChromeAction, ToolbarAction } from './portalShortcutKeys';
 
 /* Support Portal builder — keyboard shortcuts, and the sheet that lists them.
@@ -225,7 +225,8 @@ export function PortalShortcuts(props: PortalShortcutProps) {
       const ARROWS: Record<string, ToolbarAction> = {
         ArrowLeft: 'moveLeft', ArrowRight: 'moveRight', ArrowUp: 'moveUp', ArrowDown: 'moveDown',
       };
-      if (ARROWS[e.code]) { if (act(ARROWS[e.code])) e.preventDefault(); return; }
+      /* PARKED — see `SHOW_MOVE_ARROWS`. Off, a bare arrow is left to the browser (it scrolls). */
+      if (SHOW_MOVE_ARROWS && ARROWS[e.code]) { if (act(ARROWS[e.code])) e.preventDefault(); return; }
 
       /* ── Everything else is a letter on the bar ── */
       switch (e.code) {
@@ -315,8 +316,11 @@ const SELECT: Group = { title: 'Select', note: 'Alt changes what is selected', r
   { keys: ['Esc'], label: 'Deselect, and close anything open' },
 ] };
 
-const MOVE: Group = { title: 'Move and size', note: 'Only the parent’s own axis answers', rows: [
+const MOVE: Group = SHOW_MOVE_ARROWS ? { title: 'Move and size', note: 'Only the parent’s own axis answers', rows: [
   { keys: [...k('moveLeft'), ...k('moveRight'), ...k('moveUp'), ...k('moveDown')], label: 'Move one place' },
+  { keys: ['Shift', '+', '←', '/', '→'], label: 'Narrower / wider' },
+  { keys: ['Shift', '+', '↑', '/', '↓'], label: 'Shorter / taller' },
+] } : { title: 'Size', rows: [
   { keys: ['Shift', '+', '←', '/', '→'], label: 'Narrower / wider' },
   { keys: ['Shift', '+', '↑', '/', '↓'], label: 'Shorter / taller' },
 ] };

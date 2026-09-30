@@ -19,7 +19,7 @@ import { BannerFillEditor, BannerLayoutPanel, OverlayLayerEditor, TilePresetPick
 import { bannerBoxId, flipRoot, groupOf } from './portalBannerLayout';
 import type { BannerNode } from './portalBannerLayout';
 import { BANNER_GROUPS, bannerGroupGap } from './portalPageModel';
-import { keysForTip, chromeKeys } from './portalShortcutKeys';
+import { keysForTip, chromeKeys, SHOW_MOVE_ARROWS } from './portalShortcutKeys';
 import { usePopupArrows, useOpenValue } from './usePopupArrows';
 import { toast } from 'sonner';
 import { MiniRange } from './PortalRange';
@@ -1788,7 +1788,7 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
   const hasStructure =
     caps.drag !== false
     || !!caps.splitItem
-    || (caps.move !== false && !span.alone && moves.some(([, , , atEdge]) => !atEdge))
+    || (SHOW_MOVE_ARROWS && caps.move !== false && !span.alone && moves.some(([, , , atEdge]) => !atEdge))
     || !!(split && !split.blocked);
   const hasPlace =
     composable
@@ -1829,7 +1829,8 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
           looked the same whether or not you could act on it, and the reason was a tooltip nobody
           hovers a dead button to read. One rule now, everywhere: if it is on the bar, pressing it
           does something. */}
-      {caps.move !== false && !span.alone && moves
+      {/* PARKED — see `SHOW_MOVE_ARROWS` and future-tasks.md §6. */}
+      {SHOW_MOVE_ARROWS && caps.move !== false && !span.alone && moves
         .filter(([, , , atEdge]) => !atEdge)
         .map(([label, ic, dir]) => (
           <button key={label} className={btn} data-tip={label} onClick={() => moveNode(id, dir)}>{ic}</button>
