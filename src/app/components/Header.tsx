@@ -1,6 +1,7 @@
 import { Plus, Calendar, Bell, Settings, Keyboard, Info } from 'lucide-react';
 import svgPaths from "../../imports/svg-vmnsig04gh";
 import { GlobalSearchButton } from './GlobalSearch';
+import { openGlobalShortcuts } from './shortcutContext';
 
 /** Exported so the Support Portal preview renders the same mark the product header does. */
 export function MotadataLogo() {
@@ -154,7 +155,8 @@ export function Header({ selectedCount, onOpenAdmin }: HeaderProps) {
           <Settings size={18} strokeWidth={2} />
         </button>
         
-        <button className="flex h-[32px] w-[32px] items-center justify-center rounded text-[#6b7280] hover:bg-[#f3f4f6]">
+        {/* The GLOBAL Keyboard shortcuts panel — every module's keys, opened on the page you are on. */}
+        <button onClick={openGlobalShortcuts} title="Keyboard shortcuts (?)" aria-label="Keyboard shortcuts" className="flex h-[32px] w-[32px] items-center justify-center rounded text-[#6b7280] hover:bg-[#f3f4f6]">
           <Keyboard size={18} strokeWidth={2} />
         </button>
         

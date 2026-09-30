@@ -23,6 +23,38 @@ added, removed, or changed.
 
 ---
 
+## 0. The global Keyboard shortcuts panel (30 Sep 2026)
+
+**ONE place lists every shortcut in the product.** The per-surface sheets (the drawer's `?` popup
+and the portal builder's sheet) are gone; everything opens the same right-side panel
+(`GlobalShortcutsPanel.tsx`, mounted once in `App`).
+
+| Opens it | |
+|---|---|
+| The **keyboard icon** in the product header | |
+| `?` anywhere (not while typing) | toggles it |
+| The builder rail's **Shortcuts** button · the drawer right-rail keyboard button | |
+
+`Esc` clears the panel's search first, then closes it.
+
+- **Right side, no backdrop** — it does not block the page, so you can read a key and press it.
+- **This page** opens FOCUSED on where you are: the most specific surface on screen (an open drawer,
+  a map canvas, the portal builder) leads with a blue rail and a *You're here* pill, then the other
+  surfaces on screen, then **Global**. A list page with no keys of its own says so in one line and
+  focuses Global.
+- **All modules** lists every module grouped by area (General · Detail pages · Service desk ·
+  Assets · Configuration · Patch & vulnerability · Admin), collapsible, the current one expanded.
+  Modules with no keys still appear, marked *Global keys only*, so the map of the product is complete.
+- **Search** covers every module; results carry the module name.
+
+**Where it is written down:** `shortcutRegistry.ts` is the ONE list the panel reads. The drawer's
+rows (`DRAWER_SHORTCUT_SECTIONS`) and the builder's (`PORTAL_SHORTCUT_GROUPS`) are IMPORTED from
+the components that bind them; the three canvases' rows are written there from §2–§4.
+**"Where am I"** is `shortcutContext.ts`: a surface calls `useShortcutContext('<module id>')` while
+it is on screen, and the panel reads that stack (last pushed = most specific).
+
+---
+
 ## 1. Detail Drawer (all detail pages)
 
 Works in every detail drawer — Ticket, Problem, Change, Release, Hardware / Software /
@@ -49,7 +81,7 @@ Implemented once in **`src/app/components/DrawerShortcuts.tsx`**, mounted by
 | `Alt + N` | Add Note |
 | `Alt + A` | Expand / collapse the AI Summary card (Ticket / Problem / Change / Release) |
 | `Alt + O` | Open the 3-dot actions menu |
-| `Shift + ?` | Show the shortcuts cheat-sheet popup |
+| `Shift + ?` | Open the global Keyboard shortcuts panel, focused on the drawer (§0) |
 
 **Notes**
 - Open items *are* the records in the drawer-stack architecture, so **next/prev record**
@@ -228,7 +260,7 @@ chose, and these are exactly the properties judged by eye against the page behin
 | `Alt` + `L` | Light / dark — works in Preview too, so both themes can be checked as a requester sees them |
 | `Ctrl` + `S` | Save as draft |
 | `Ctrl` + `Z` / `Ctrl`+`Shift`+`Z` | Undo / Redo *(owned by `SupportPortalBuilder`, not this file)* |
-| `?` | Open the shortcuts sheet |
+| `?` | Open the global Keyboard shortcuts panel, focused on the builder (§0) |
 
 Also reachable from the top bar's **Help** menu (*Take the tour* · *Keyboard shortcuts*).
 
@@ -292,7 +324,7 @@ back, and it is the thing that actually holds the old state.
 |---|---|
 | `ToolbarTip` (PortalCanvas) | printing the key caps on a tooltip |
 | `PortalShortcuts` handler | knowing which button a key presses (`act('background')`) |
-| `PortalShortcuts` sheet | the rows in the cheat sheet (`k('background')`) |
+| `PORTAL_SHORTCUT_GROUPS` | the builder rows in the global panel (`k('background')`) |
 
 ⚠️ Add or rename a toolbar action **there**, not in the three call sites. Written separately they
 drift, and the drift is silent in the worst way: a tooltip goes on promising a key that no longer
@@ -341,6 +373,7 @@ When you add, change, or remove a shortcut:
    `PatchSupersededTab.tsx` for the Superseded map, or
    `DeploymentTopologyView.tsx` for the Deployment Topology canvas, or
    `PortalShortcuts.tsx` for the Support Portal builder).
-2. Update the in-app cheat-sheet (`SHORTCUTS` array in `DrawerShortcuts.tsx`, `GROUPS` in
-   `PortalShortcuts.tsx`, and/or the matching canvas shortcuts popup).
+2. Update the global panel: `DRAWER_SHORTCUT_SECTIONS` in `DrawerShortcuts.tsx`,
+   `PORTAL_SHORTCUT_GROUPS` in `PortalShortcuts.tsx`, or the canvas rows in `shortcutRegistry.ts`
+   (plus the matching canvas shortcuts popup). A NEW surface also calls `useShortcutContext(id)`.
 3. Update **this file**.

@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Keyboard, X } from 'lucide-react';
+import { useEffect } from 'react';
+import { openGlobalShortcuts, useShortcutContext } from './shortcutContext';
 
 /* Global keyboard shortcuts for the detail-drawer host. Mounted once by DrawerStackProvider.
  * Window/tab actions use the host's own state (passed in); in-drawer actions are triggered by
@@ -88,7 +88,9 @@ async function copyText(text: string) {
 
 /* Grouped like the Relationship-map shortcuts popup (section headers + keycaps, keys on the
  * left, label on the right). A key token is a keycap unless it's a `+` or `/` separator. */
-const SECTIONS: { title: string; rows: { keys: string[]; label: string }[] }[] = [
+/* ⚠️ EXPORTED for the global Keyboard shortcuts panel (`shortcutRegistry`), which lists these as the
+   'Detail pages' module — this drawer no longer draws a cheat sheet of its own (Zeni, 30 Sep 2026). */
+export const DRAWER_SHORTCUT_SECTIONS: { title: string; rows: { keys: string[]; label: string }[] }[] = [
   { title: 'Window', rows: [
     { keys: ['Alt', '+', 'M'], label: 'Minimize / restore drawer' },
     { keys: ['Alt', '+', 'F'], label: 'Toggle Small / Full view' },
@@ -116,33 +118,14 @@ const SECTIONS: { title: string; rows: { keys: string[]; label: string }[] }[] =
   ] },
 ];
 
-function Kbd({ children }: { children: React.ReactNode }) {
-  return (
-    <kbd className="inline-flex min-w-[20px] h-[20px] items-center justify-center rounded border border-[#DFE5ED] bg-[#F8FAFC] px-1.5 text-[10px] font-semibold text-[#364658] shadow-[0_1px_0_#DFE5ED]">
-      {children}
-    </kbd>
-  );
-}
-function ShortcutRow({ keys, label }: { keys: string[]; label: string }) {
-  return (
-    <div className="flex items-center justify-between gap-3 py-[3px]">
-      <span className="flex flex-shrink-0 items-center gap-1">
-        {keys.map((k, i) => (k === '+' || k === '/' ? <span key={i} className="text-[10px] text-[#9CA3AF]">{k}</span> : <Kbd key={i}>{k}</Kbd>))}
-      </span>
-      <span className="text-[12px] text-[#7B8FA5] text-right">{label}</span>
-    </div>
-  );
-}
-
 export function DrawerShortcuts(props: DrawerShortcutProps) {
-  const [showHelp, setShowHelp] = useState(false);
+  /* While a drawer is open (not minimized) it is where your focus is, so the global panel opens on it. */
+  useShortcutContext(props.active && !props.minimized ? 'drawer' : null);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (!props.active) return;
-      // '?' opens/closes the cheat-sheet (even from a field is fine — it's Shift+/).
-      if (e.key === '?') { e.preventDefault(); setShowHelp((v) => !v); return; }
-      if (showHelp && e.key === 'Escape') { e.preventDefault(); setShowHelp(false); return; }
+      /* `?` belongs to the GLOBAL panel now (GlobalShortcutsPanel), which opens on this drawer. */
       // Alt+I toggles the AI chat and must work even from INSIDE the chat's own input
       // (opening the chat auto-focuses it), so it bypasses the typing guard.
       if (e.altKey && e.code === 'KeyI' && !props.minimized) { e.preventDefault(); toggleAi(); return; }
@@ -176,43 +159,17 @@ export function DrawerShortcuts(props: DrawerShortcutProps) {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [props, showHelp]);
+  }, [props]);
 
-  // Auto-close the help popup when the drawer closes.
-  useEffect(() => { if (!props.active && showHelp) setShowHelp(false); }, [props.active, showHelp]);
 
   // Open the cheat-sheet when the right-rail Keyboard button dispatches this event (the button
   // lives in the properties-panel rail so it flows with the panel instead of a floating overlay).
   useEffect(() => {
-    const open = () => setShowHelp(true);
+    /* The ticket right rail's Keyboard button — it now opens the global panel, focused here. */
+    const open = () => openGlobalShortcuts();
     window.addEventListener('open-drawer-shortcuts', open);
     return () => window.removeEventListener('open-drawer-shortcuts', open);
   }, []);
 
-  return (
-    <>
-      {showHelp && (
-      <>
-      <div className="fixed inset-0 z-[10050] bg-black/30" onClick={() => setShowHelp(false)} />
-      <div className="fixed left-1/2 top-1/2 z-[10051] w-[400px] max-w-[92vw] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-[#E5E7EB] bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-[#E5E7EB] px-5 py-3.5">
-          <div className="flex items-center gap-2 text-[15px] font-semibold text-[#111827]">
-            <Keyboard size={17} className="text-[#3D8BD0]" /> Keyboard Shortcuts
-          </div>
-          <button onClick={() => setShowHelp(false)} className="flex size-8 flex-shrink-0 items-center justify-center rounded transition-colors hover:bg-[#F3F4F6] text-[#6B7280] hover:text-[#111827]"><X size={18} /></button>
-        </div>
-        <div className="max-h-[60vh] overflow-y-auto px-5 py-3">
-          {SECTIONS.map((section, si) => (
-            <div key={section.title}>
-              <div className={`${si === 0 ? 'pb-1' : 'mt-2.5 border-t border-[#F0F1F3] pt-2 pb-1'} text-[10px] font-semibold uppercase tracking-wider text-[#9CA3AF]`}>{section.title}</div>
-              {section.rows.map((r) => <ShortcutRow key={r.label} keys={r.keys} label={r.label} />)}
-            </div>
-          ))}
-        </div>
-        <div className="border-t border-[#F0F1F3] px-5 py-2.5 text-[11.5px] text-[#9CA3AF]">Shortcuts are disabled while typing in a field.</div>
-      </div>
-      </>
-      )}
-    </>
-  );
+  return null;
 }

@@ -1,4 +1,23 @@
-# Handoff — 2026-09-29 23:30
+# Handoff — 2026-09-30
+
+## Latest (30 Sep 2026) — the global Keyboard shortcuts panel — DONE, pushed
+- One right-side panel lists every shortcut in the product (`GlobalShortcutsPanel.tsx`), opened by the
+  header keyboard icon, `?`, the builder rail's Shortcuts button and the drawer's rail keyboard button.
+  **This page** opens focused on where you are; **All modules** covers every module by area; search
+  spans all. Researched against Jira / GitHub / Linear / Notion / Figma / monday first.
+- The drawer's `?` popup and the builder's sheet were REMOVED — both now open the global panel.
+- Verified in a browser: Hardware Assets list → note + Global focused; open drawer → "Detail pages"
+  focused; Relationship tab → "Relationship map" focused; builder → "Support Portal builder" focused;
+  search "minimap" → one hit; `?` toggles; Esc clears search, then closes; no page errors.
+- Read CLAUDE.md bullet *"ONE global Keyboard shortcuts panel"* and SHORTCUTS.md §0.
+- Earlier today: the Editor basics video was rebuilt (six chapters, lucide icons, compact toolbar,
+  empty column on stretch) and pushed.
+- **Next (optional):** list pages have no shortcuts of their own yet — if any get keys, add rows to
+  their (currently empty) registry entries and they'll show focused automatically.
+
+---
+
+(Previous session below.)
 
 ## Read first
 All work is in the **Support Portal** builder (Admin › Support Channels) and its listing.

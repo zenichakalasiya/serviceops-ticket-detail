@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { Keyboard, X } from 'lucide-react';
+import { useEffect } from 'react';
+import { openGlobalShortcuts } from './shortcutContext';
 import { useCanvas } from './PortalCanvas';
 import { nodePath } from './portalPageModel';
 import { TOOLBAR_KEYS, chromeKeys, tipsOf } from './portalShortcutKeys';
@@ -127,10 +126,8 @@ export function PortalShortcuts(props: PortalShortcutProps) {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      /* `?` is Shift+/ — it works from a field too, because it cannot be typed by accident into one
-         that is expecting words without Shift, and somebody reaching for help is usually stuck. */
-      if (e.key === '?') { e.preventDefault(); onOpenChange(!open); return; }
-      if (open && e.key === 'Escape') { e.preventDefault(); onOpenChange(false); return; }
+      /* ⚠️ `?` belongs to the GLOBAL Keyboard shortcuts panel now (Zeni, 30 Sep 2026) — it opens focused on
+         this builder. The builder has no sheet of its own. */
       if (isTyping(e.target)) return;
 
       /* PREVIEW is the one surface where almost nothing applies — there is no selection and no bar.
@@ -256,8 +253,9 @@ export function PortalShortcuts(props: PortalShortcutProps) {
     return () => window.removeEventListener('keydown', onKey);
   }, [enabled, selectedId, select, styles, setStyle, open, onOpenChange, props]);
 
-  if (!open) return null;
-  return <Sheet onClose={() => onOpenChange(false)} />;
+  /* The builder's rail Shortcuts button asks for the sheet — it is answered by the GLOBAL panel. */
+  useEffect(() => { if (open) { openGlobalShortcuts(); onOpenChange(false); } }, [open, onOpenChange]);
+  return null;
 }
 
 /* ── The sheet ───────────────────────────────────────────────────────────────────────────────────
@@ -335,100 +333,13 @@ const DOCUMENT: Group = { title: 'Document', rows: [
   { keys: combo(ck('undo')), label: 'Undo' },
   { keys: combo(ck('redo')), label: 'Redo' },
   { keys: combo(ck('saveDraft')), label: 'Save as draft' },
-  { keys: ck('help'), label: 'This sheet' },
+  { keys: ck('help'), label: 'Keyboard shortcuts' },
 ] };
 
-/** Rows of the sheet, top to bottom; each row is two columns, each column a stack of groups. */
-const LAYOUT: Group[][][] = [
-  [[BUILDER], [PLACE]],
-  [[SELECT, MOVE], [STYLE, DOCUMENT]],
-];
+/* ⚠️ EXPORTED for the global Keyboard shortcuts panel (`shortcutRegistry`), in PRIORITY order — the
+   builder's own sheet is gone; the global panel lists these as the 'Support Portal builder' module. */
+export const PORTAL_SHORTCUT_GROUPS: Group[] = [BUILDER, PLACE, SELECT, MOVE, STYLE, DOCUMENT];
 
 /* `TipKeys` lives in `PortalTipKeys.tsx` so the canvas can use it without an import cycle; re-exported
    here so every existing `import { TipKeys } from './PortalShortcuts'` keeps working. */
 export { TipKeys } from './PortalTipKeys';
-
-/* The ticket page's key cap, deliberately the same — one product, one way of drawing a key. */
-function Kbd({ children }: { children: React.ReactNode }) {
-  return (
-    <kbd className="inline-flex h-[20px] min-w-[20px] items-center justify-center rounded border border-[#DFE5ED] bg-[#F8FAFC] px-1.5 text-[10px] font-semibold text-[#364658] shadow-[0_1px_0_#DFE5ED]">
-      {children}
-    </kbd>
-  );
-}
-
-function ShortcutRow({ keys, label, lead }: Row) {
-  return (
-    /* ⚠️ The LABEL leads and the KEYS close the row (Zeni's call, 28 Sep 2026). A reader scans a sheet
-       for the THING they want to do, then reads off its key — so the words go where the eye starts, and
-       the caps line up down the right edge where they can be compared column by column. */
-    <div className="flex items-center justify-between gap-3 py-[3px]">
-      <span className={`min-w-0 flex-1 truncate text-[12px] ${lead ? 'font-semibold text-[#1E293B]' : 'text-[#64748B]'}`}>{label}</span>
-      <span className="flex flex-shrink-0 items-center gap-1">
-        {keys.map((x, i) => (x === '+' || x === '/'
-          ? <span key={i} className="text-[10px] text-[#9CA3AF]">{x}</span>
-          : <Kbd key={i}>{x}</Kbd>))}
-      </span>
-    </div>
-  );
-}
-
-function GroupBlock({ g, first }: { g: Group; first: boolean }) {
-  return (
-    <div className={first ? '' : 'mt-3 border-t border-[#F0F1F3] pt-2.5'}>
-      <div className="mb-1 flex items-baseline justify-between gap-2">
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-[#9CA3AF]">{g.title}</span>
-        {g.note && <span className="truncate text-[10.5px] text-[#B0BAC6]">{g.note}</span>}
-      </div>
-      {g.rows.map((r) => <ShortcutRow key={r.label} {...r} />)}
-    </div>
-  );
-}
-
-function Sheet({ onClose }: { onClose: () => void }) {
-  return createPortal(
-    <>
-      <div className="fixed inset-0 z-[10050] bg-black/30" onClick={onClose} />
-      {/* ⚠️ The TICKET page's popup, widened to two columns — same title row with the keyboard glyph,
-          same small uppercase section heads, same caps joined by `+`. The builder has three times as
-          many keys, so one column would scroll for a screen and a half. */}
-      <div className="fixed left-1/2 top-1/2 z-[10051] flex max-h-[88vh] w-[760px] max-w-[94vw] -translate-x-1/2 -translate-y-1/2 flex-col rounded-xl border border-[#E5E7EB] bg-white shadow-2xl">
-        <div className="flex flex-shrink-0 items-start justify-between gap-3 border-b border-[#E5E7EB] px-5 py-3.5">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 text-[15px] font-semibold text-[#111827]">
-              <Keyboard size={17} className="text-[#3D8BD0]" /> Keyboard Shortcuts
-            </div>
-            {/* The one sentence that makes the rest guessable. */}
-            <p className="mt-1 text-[11.5px] text-[#7B8FA5]">
-              Alt is the builder, a letter acts on what is selected, arrows move it, Shift resizes it, Ctrl is the document.
-            </p>
-          </div>
-          <button onClick={onClose} aria-label="Close" className="flex size-8 flex-shrink-0 items-center justify-center rounded text-[#6B7280] transition-colors hover:bg-[#F3F4F6] hover:text-[#111827]">
-            <X size={18} />
-          </button>
-        </div>
-
-        <div className="min-h-0 flex-1 overflow-y-auto px-5">
-          {LAYOUT.map((row, ri) => (
-            <div key={ri} className={`grid grid-cols-2 gap-x-8 py-3.5 ${ri ? 'border-t border-[#E5E7EB]' : ''}`}>
-              {row.map((col, ci) => (
-                <div key={ci} className="min-w-0">
-                  {col.map((g, gi) => <GroupBlock key={g.title} g={g} first={gi === 0} />)}
-                </div>
-              ))}
-            </div>
-          ))}
-        </div>
-
-        {/* ⚠️ Stated, not silently true. Both are real limits somebody will otherwise hit and report
-            as a bug: the canvas cannot be arrow-scrolled while a widget is selected, and Publish has
-            no key on purpose. */}
-        <p className="flex-shrink-0 border-t border-[#EEF1F5] px-5 py-2.5 text-[11px] text-[#9CA3AF]">
-          Press <span className="font-medium text-[#64748B]">Esc</span> to deselect before arrow-scrolling the canvas.
-          Publish has no shortcut — it changes what requesters see, so it keeps its button.
-        </p>
-      </div>
-    </>,
-    document.body,
-  );
-}

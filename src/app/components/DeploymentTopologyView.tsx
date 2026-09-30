@@ -22,6 +22,7 @@ import {
   MoveHorizontal, MoveVertical,
 } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
+import { useShortcutContext } from './shortcutContext';
 
 /* Deployment Topology View — the THIRD view of the Deployment tab (next to card/list).
  * A horizontal left→right React Flow canvas (Superseded-map recipe, transposed) showing how
@@ -912,6 +913,7 @@ function officeHasPatch(officeName: string, patchId: string) {
 }
 
 export function DeploymentTopologyView({ search = '', statusFilter = [], patchFilter = [], fullscreen = false }: { search?: string; statusFilter?: string[]; patchFilter?: string[]; fullscreen?: boolean }) {
+  useShortcutContext('deployment-topology');
   const [scenarioKey, setScenarioKey] = useState('s3');
   const [orient, setOrient] = useState<Orientation>('horizontal');
   const [showScenarioMenu, setShowScenarioMenu] = useState(false);

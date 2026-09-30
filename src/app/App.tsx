@@ -23,6 +23,7 @@ import { GlobalSearch } from './components/GlobalSearch';
 import { Toaster } from 'sonner';
 import { formatHash, parseHash, titleFor } from './routes';
 import type { Page, Route } from './routes';
+import { GlobalShortcutsPanel } from './components/GlobalShortcutsPanel';
 
 export default function App() {
   /* The URL is the source of truth for which screen is open — see routes.ts for why it lives in
@@ -100,6 +101,8 @@ export default function App() {
       {/* Mounted once, inside the drawer host, so search works on every page and can open any
           module's real detail drawer as a tab. */}
       <GlobalSearch activePage={activePage} onNavigate={navigate} />
+      {/* ONE Keyboard shortcuts panel for the whole product — header icon, `?`, and the builder's rail. */}
+      <GlobalShortcutsPanel page={activePage} />
       <Toaster position="top-right" />
     </DrawerStackProvider>
   );

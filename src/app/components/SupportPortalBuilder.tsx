@@ -51,6 +51,7 @@ import type { BannerNode } from './portalBannerLayout';
 import { IconPopover } from './PortalIconPicker';
 import type { IconChoice } from './PortalIconPicker';
 import type { PortalPage } from './supportPortalData';
+import { useShortcutContext } from './shortcutContext';
 
 /* Support Portal page builder.
  *
@@ -259,6 +260,8 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
      while the rail was undefined, so Announcements and Contact Us silently rendered nowhere.
      A seed is a fact about how this session STARTED. Reading it twice is what let it change. */
   const [layout] = useState<'v1' | 'v2'>(() => (page.layout === 'v2' ? 'v2' : 'v1'));
+  /* The global Keyboard shortcuts panel opens focused on the builder while it is open. */
+  useShortcutContext('portal-builder');
   const isV2 = layout === 'v2';
 
   /* ⚠️ The template a page was STARTED from, resolved once, for the same reason `layout` is: these

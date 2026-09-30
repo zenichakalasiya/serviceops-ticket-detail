@@ -20,6 +20,7 @@ import {
 import '@xyflow/react/dist/style.css';
 import { Search, X, Package, Layers, Plus, Minus, Maximize, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, ChevronsUpDown, ChevronsDownUp, Maximize2, Minimize2, Keyboard, Info } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
+import { useShortcutContext } from './shortcutContext';
 
 interface ChainPatch {
   kb: string;
@@ -687,6 +688,7 @@ function SupersededGraph({ patchId, patchName, q, expandAllSignal, collapseAllSi
 }
 
 export function PatchSupersededTab({ patchId, patchName }: PatchSupersededTabProps) {
+  useShortcutContext('superseded-map');
   const [search, setSearch] = useState('');
   // Expand/collapse-all signals + fullscreen (same pattern as the CMDB map toolbar).
   const [allExpanded, setAllExpanded] = useState(false);

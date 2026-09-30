@@ -27,6 +27,7 @@ import {
   Building2, List, AlertTriangle, ChevronRight,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
+import { useShortcutContext } from './shortcutContext';
 
 export type RelType = 'user' | 'software' | 'hardware' | 'asset' | 'department';
 export interface RelNodeInput { label: string; type: RelType; rel?: string }
@@ -1534,6 +1535,8 @@ function RelationshipGraphInner({ mode, nodes: data, typeMeta, centerName, cente
 }
 
 export function RelationshipGraph(props: RelationshipGraphProps) {
+  /* The global Keyboard shortcuts panel opens on this map while it is on screen (not the config preview). */
+  useShortcutContext(props.previewMode ? null : 'relationship-map');
   return (
     <ReactFlowProvider>
       <RelationshipGraphInner {...props} />

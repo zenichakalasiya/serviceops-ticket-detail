@@ -2706,6 +2706,24 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   its content (a negative margin never changed its measured width). The shortcut sheet reads **label left,
   keys right**. The portal card's name / URL / details are ONE group, 4px apart (gap-1; was 8px) — the action cluster hangs
   into the title row's margin (`-my-[5px]`) so 32px buttons no longer set the row's height.
+- **ONE global Keyboard shortcuts panel for the whole product (`GlobalShortcutsPanel.tsx` +
+  `shortcutRegistry.ts` + `shortcutContext.ts`, 30 Sep 2026).** Opened by the header's keyboard icon,
+  `?` anywhere (not while typing), the builder rail's Shortcuts button and the drawer's right-rail
+  keyboard button. It is a 440px RIGHT-SIDE panel with no backdrop (z-10060, so it sits above the
+  builder's z-9000), so you can read a key and press it. **This page** opens FOCUSED on where you
+  are — blue rail + *You're here* — then Global; **All modules** lists every module grouped by area,
+  including list pages with no keys ("Global keys only"); search spans them all. Full reference is
+  SHORTCUTS.md §0. ⚠️ **The per-surface sheets are GONE**: the drawer's `?` popup and the portal
+  builder's sheet were removed. `DrawerShortcuts` and `PortalShortcuts` still BIND every key and
+  now only EXPORT their rows (`DRAWER_SHORTCUT_SECTIONS`, `PORTAL_SHORTCUT_GROUPS`), which the
+  registry imports rather than copies — a copy is how a panel ends up advertising a key the handler
+  changed. The three canvases have no exported list, so their rows are written in the registry.
+  ⚠️ **"Where am I" is ANNOUNCED, not inferred**: a surface calls `useShortcutContext('<id>')`
+  while it is on screen (the drawer while open and not minimised; `RelationshipGraph` except its
+  config preview; `PatchSupersededTab`; `DeploymentTopologyView`; `SupportPortalBuilder`). The last
+  one pushed is the most specific. A new surface with keys = a registry entry + that one hook.
+  ⚠️ `PortalShortcuts` keeps its `open`/`onOpenChange` props; asking it to open forwards to the
+  global panel and resets.
 
 ## Parked features
 Four Support Portal features are BUILT-OR-PART-BUILT AND SWITCHED OFF, with their full context in
