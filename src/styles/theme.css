@@ -575,9 +575,11 @@ body[data-portal-dragging] [data-portal-toolbar] { pointer-events: none; opacity
 /* Support Portal builder — a toolbar divider only ever SEPARATES. `Rule` (PortalCanvas) is tagged
    `tb-rule` and the hover tip `tb-tip`; a rule is hidden unless some real control comes before it,
    and hidden again when another rule follows it or it ends the bar. So a bar never opens on a line,
-   doubles one, or trails one, whichever of its controls a given element happens to get. */
+   doubles one, or trails one, whichever of its controls a given element happens to get.
+   ⚠️ The drag GRIP (`tb-grip`) does not count as a control here (Zeni, 30 Sep 2026): the grip sits
+   flush against the first button, with no divider between them, on every widget's bar and the banner's. */
 [data-portal-toolbar] > .tb-rule { display: none; }
-[data-portal-toolbar] > :not(.tb-rule):not(.tb-tip) ~ .tb-rule { display: block; }
+[data-portal-toolbar] > :not(.tb-rule):not(.tb-tip):not(.tb-grip) ~ .tb-rule { display: block; }
 [data-portal-toolbar] > .tb-rule:has(+ .tb-rule),
 [data-portal-toolbar] > .tb-rule:last-child { display: none; }
 

@@ -1,6 +1,9 @@
 # Handoff — 2026-09-30
 
-## Latest (30 Sep 2026, later) — move arrows parked
+## Latest (30 Sep 2026, latest) — no divider after the drag grip
+- `tb-grip` on every toolbar grip + theme.css excludes it from the divider rule. 56 toolbars swept, 0 bad, no errors.
+
+## Earlier (30 Sep 2026, later) — move arrows parked
 - The floating toolbar's Move left/right (and up/down) buttons, their arrow keys and the sheet row are hidden
   by `SHOW_MOVE_ARROWS = false` (`portalShortcutKeys.ts`). Concept kept in future-tasks.md §6; flip the flag to restore.
   Verified: no move buttons on an action card or the Quick Actions row, → no longer reorders, no page errors.

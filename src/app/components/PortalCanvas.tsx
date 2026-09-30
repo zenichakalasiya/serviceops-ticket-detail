@@ -1815,7 +1815,7 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
         <span
           {...useNodeDragHandle(id)}
           data-tip="Drag to move"
-          className="flex size-7 cursor-grab items-center justify-center text-[var(--bar-ink,#9CA3AF)] opacity-70 active:cursor-grabbing"
+          className="tb-grip flex size-7 cursor-grab items-center justify-center text-[var(--bar-ink,#9CA3AF)] opacity-70 active:cursor-grabbing"
         ><GripVertical size={14} /></span>
       )}
       {caps.splitItem && (
@@ -2676,7 +2676,7 @@ function TextToolbar({ id, editing = false }: { id: string; editing?: boolean })
       className={BAR}
     >
       <ToolbarTip tip={tip} />
-      <span {...drag} className="flex size-7 cursor-grab items-center justify-center text-[var(--bar-ink,#9CA3AF)] opacity-70 active:cursor-grabbing"><GripVertical size={14} /></span>
+      <span {...drag} className="tb-grip flex size-7 cursor-grab items-center justify-center text-[var(--bar-ink,#9CA3AF)] opacity-70 active:cursor-grabbing"><GripVertical size={14} /></span>
       <Rule />
 
       <button className={tBtn(s.bold)} data-tip="Bold" onClick={() => inline(() => document.execCommand('bold'), () => setStyle(id, { bold: !s.bold }))}><Bold size={14} /></button>
@@ -3338,7 +3338,7 @@ function GroupToolbar({ id }: { id: string }) {
           draggable
           data-tip="Drag to move this section"
           onDragStart={(e) => { e.stopPropagation(); e.dataTransfer.setData(MOVE_MIME, id); e.dataTransfer.effectAllowed = 'move'; }}
-          className="flex size-7 cursor-grab items-center justify-center rounded text-[#94A3B8] transition-colors hover:bg-[#F3F4F6] hover:text-[#364658] active:cursor-grabbing"
+          className="tb-grip flex size-7 cursor-grab items-center justify-center rounded text-[#94A3B8] transition-colors hover:bg-[#F3F4F6] hover:text-[#364658] active:cursor-grabbing"
         ><GripVertical size={15} /></span>
       )}
       <button className={dir === 'column' ? btnOn : btn} data-tip="Vertical — items stack" aria-pressed={dir === 'column'} onClick={() => setDir('column')}><Rows2 size={15} /></button>
