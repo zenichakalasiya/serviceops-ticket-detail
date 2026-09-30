@@ -1,7 +1,7 @@
 # Handoff — 2026-09-30
 
-## Latest (30 Sep 2026, latest) — no divider after the drag grip
-- `tb-grip` on every toolbar grip + theme.css excludes it from the divider rule. 56 toolbars swept, 0 bad, no errors.
+## Latest (30 Sep 2026, latest) — toolbar dividers
+- Only the divider right after the drag grip remains; every other toolbar divider is hidden (theme.css, `tb-grip::after`). 56 bars swept, 0 bad.
 
 ## Earlier (30 Sep 2026, later) — move arrows parked
 - The floating toolbar's Move left/right (and up/down) buttons, their arrow keys and the sheet row are hidden
