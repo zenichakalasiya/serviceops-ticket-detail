@@ -1,5 +1,8 @@
 # Handoff — 2026-09-30 22:42
 
+## Latest (1 Oct 2026) — Widgets panel fold + drag-only rows
+- Placed predefined widgets fold into "✓ N on this page ▸" on each group title; rows drag only, the + adds. Divider before Delete on toolbars. Verified in a browser.
+
 ## Read first
 This session built **Request Form Management** (Admin › Request Management › Request Form / Request Form Rule).
 In `CLAUDE.md` read the Structure bullet *"Request Form Management (Admin › Request Management)"* and the

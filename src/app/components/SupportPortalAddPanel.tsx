@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
-  Boxes, Check, ChevronsUpDown, ClipboardList, Download, GalleryHorizontal, Gauge, Heading, LayoutPanelLeft, PlayCircle,
+  Boxes, Check, ChevronDown, ChevronRight, ChevronsUpDown, ClipboardList, Download, GalleryHorizontal, Gauge, Heading, LayoutPanelLeft, PlayCircle,
   HelpCircle, Image as ImageIcon, Images, KeyRound, LayoutGrid, LayoutTemplate, LifeBuoy, Link2, List, Mail,
   Megaphone, Minus, MousePointerClick, MoveVertical, Network, PanelTop, Phone, Plus, Rows3, Search, Shapes, Share2,
   ShoppingCart, Smile, Square, Star, Table, Timer, Type, X, Zap,
@@ -129,6 +129,13 @@ export function SupportPortalAddPanel({ onAdd, placed }: Props) {
      Hover state lives on the PANEL, not the row — only one preview may be open at a time, and no
      single row owns that fact. */
   const [peek, setPeek] = useState<{ id: string; rect: DOMRect } | null>(null);
+  /* Groups whose "N on this page" fold is open. ⚠️ PROGRESSIVE DISCLOSURE (Zeni, 1 Oct 2026): a
+     predefined widget already on the page cannot be added again, so it stops taking a full row in the
+     list — it folds into one count on the RIGHT of its group's title, and the rows you CAN add sit
+     together without scrolling past a wall of ticked ones. Folded from the first one placed, never
+     after some threshold, so the list behaves the same way on every page. */
+  const [openAdded, setOpenAdded] = useState<Set<string>>(new Set());
+  const toggleAdded = (g: string) => setOpenAdded((cur) => { const n = new Set(cur); if (n.has(g)) n.delete(g); else n.add(g); return n; });
 
   const q = query.trim().toLowerCase();
 
@@ -304,11 +311,38 @@ export function SupportPortalAddPanel({ onAdd, placed }: Props) {
              both scroll-to-group and the spy. Scoped per group, a header un-pins as its own group
              scrolls out and the next one takes over, which is the behaviour we wanted anyway. */
           <div key={group} ref={(el) => { groupRefs.current[group] = el; }}>
-            <h3 className="sticky top-0 z-10 bg-white pb-2 pt-3 text-[11px] font-semibold uppercase tracking-wider text-[#7B8FA5]">
-              {group}
+            <h3 className="sticky top-0 z-10 flex items-center justify-between bg-white pb-2 pt-3 text-[11px] font-semibold uppercase tracking-wider text-[#7B8FA5]">
+              <span>{group}</span>
+              {/* The fold. A search opens it on its own — you typed to find something, so a match
+                  must never be hidden behind a click. */}
+              {(() => {
+                const n = items.filter((e) => placed?.has(e.id)).length;
+                if (!n || q) return null;
+                const open = openAdded.has(group);
+                return (
+                  <button
+                    type="button"
+                    onClick={() => toggleAdded(group)}
+                    aria-expanded={open}
+                    title={open ? 'Hide the widgets already on this page' : 'Show the widgets already on this page'}
+                    className="flex items-center gap-1 rounded px-1 py-0.5 text-[11px] font-medium normal-case tracking-normal text-[#7B8FA5] transition-colors hover:bg-[#F5F7FA] hover:text-[#364658]"
+                  >
+                    <span className="flex size-3.5 items-center justify-center rounded-full bg-[#22C55E] text-white"><Check size={9} strokeWidth={3} /></span>
+                    {n} on this page
+                    {open ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+                  </button>
+                );
+              })()}
             </h3>
+            {!q && !openAdded.has(group) && items.every((e) => placed?.has(e.id)) && (
+              <p className="pb-1 text-[12px] text-[#9AA6B6]">Every {group} widget is on the page.</p>
+            )}
             <div className="space-y-2">
-              {items.map((e) => {
+              {/* Addable rows first, then — only while the fold is open, or while searching — the ones
+                  already on the page, so opening it never moves a row you were about to reach for. */}
+              {[...items.filter((e) => !placed?.has(e.id)), ...items.filter((e) => placed?.has(e.id))]
+                .filter((e) => q || !placed?.has(e.id) || openAdded.has(group))
+                .map((e) => {
                 /* ⚠️ The BUILDER decides what counts as predefined and what is currently on the
                    page; this only reads the answer. Testing `e.node` here as well was a second,
                    narrower copy of that rule — and the narrower one won, which is why Announcements
@@ -335,6 +369,9 @@ export function SupportPortalAddPanel({ onAdd, placed }: Props) {
                        most want explained. The click is guarded below instead, the tooltip still
                        carries the reason, and assistive tech is told the same thing. */
                     aria-disabled={added || undefined}
+                    /* ⚠️ INLINE, not `cursor-grab`: theme.css gives every [role="button"] a pointer, unlayered, which
+                       beats the utility class — the row read as "click me" when its body only drags. */
+                    style={{ cursor: added ? "not-allowed" : "grab" }}
                     onDragStart={(ev) => {
                       // The canvas reads this to know what was dropped.
                       ev.dataTransfer.setData('text/portal-element', e.id);
@@ -342,14 +379,17 @@ export function SupportPortalAddPanel({ onAdd, placed }: Props) {
                       // A card floating beside the cursor while you aim a drop is in the way.
                       setPeek(null);
                     }}
-                    onClick={() => { if (!added) onAdd(e.id); }}
+                    /* ⚠️ The row BODY drags and does nothing on a click (Zeni, 1 Oct 2026): a drag
+                       that misses by a pixel used to land as a click and drop the widget at the foot
+                       of the page. The hand cursor says "pick me up"; the "+" is the one click-to-add,
+                       with a pointer cursor of its own. Enter/Space still add, for the keyboard. */
                     onMouseEnter={(ev) => setPeek({ id: e.id, rect: ev.currentTarget.getBoundingClientRect() })}
                     onMouseLeave={() => setPeek((c) => (c?.id === e.id ? null : c))}
                     /* The reason is on the control, not in a toast after the click — you can read it
                        before you reach for it. */
                     title={added
                       ? `“${e.name}” is already on this page. Remove it from the page to add it again.`
-                      : `Click to add “${e.name}”, or drag it where you want it`}
+                      : `Drag “${e.name}” onto the page, or press + to add it`}
                     className={`group/el flex w-full items-center gap-3 rounded border px-3 py-2.5 text-left transition-all ${
                       added
                         ? 'cursor-not-allowed border-[#EDF0F4] bg-[#FAFBFC]'
@@ -383,12 +423,12 @@ export function SupportPortalAddPanel({ onAdd, placed }: Props) {
                         /* ⚠️ The row is a control as well, so the "+" has to stop the click from
                            reaching it — otherwise one press adds the widget twice. */
                         onClick={(ev) => { ev.stopPropagation(); onAdd(e.id, true); }}
-                        title={`Add “${e.name}” and keep this list open`}
+                        title="Add to page"
                         aria-label={`Add ${e.name}`}
                         /* ⚠️ On the design system's light grey (`#F1F5F9`) — the same fill the row's
                            own icon badge carries. Bare on white it read as a stray glyph rather than
                            as a control, and a "+" is the one thing on this row you press. */
-                        className="flex size-6 flex-shrink-0 items-center justify-center rounded bg-[#F1F5F9] text-[#64748B] opacity-0 transition-all hover:bg-[#EBF5FF] hover:text-[#3D8BD0] focus-visible:opacity-100 group-hover/el:opacity-100"
+                        className="flex size-6 flex-shrink-0 cursor-pointer items-center justify-center rounded bg-[#F1F5F9] text-[#64748B] opacity-0 transition-all hover:bg-[#EBF5FF] hover:text-[#3D8BD0] focus-visible:opacity-100 group-hover/el:opacity-100"
                       ><Plus size={15} /></button>
                     )}
                   </div>
