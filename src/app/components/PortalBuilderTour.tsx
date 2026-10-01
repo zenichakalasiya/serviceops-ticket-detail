@@ -63,7 +63,7 @@ const STEPS: Step[] = [
     id: 'rail',
     title: 'Everything starts on the right',
     description:
-      'Widgets adds blocks, Theme sets the colours and fonts, Branding holds your logo, and Banners swaps the header.',
+      'Everything you need is on the right. Use Widgets to add content, Theme to change colours and fonts, and Branding to update your portal details.',
     beat: 'rail',
     target: 'rail',
     position: 'left',
@@ -71,9 +71,9 @@ const STEPS: Step[] = [
   },
   {
     id: 'panel',
-    title: 'Drag a widget in, or just click it',
+    title: 'Add widgets',
     description:
-      'The panel beside the rail is your library. Drop a widget anywhere on the page, or click it to drop it in its own row.',
+      'Add widgets from the panel on the right. Drag a widget to where you want it, or click it to add it to the page.',
     beat: 'panel',
     target: 'panel',
     position: 'left',
@@ -82,9 +82,9 @@ const STEPS: Step[] = [
   },
   {
     id: 'canvas',
-    title: 'Click anything to edit it',
+    title: 'Edit anything',
     description:
-      'A toolbar appears on whatever you select — move it, restyle it, remove it — and the panel becomes its settings.',
+      'Click any part of the portal to edit it. Use the toolbar to move, resize, or remove it, and use the sidebar to change its settings.',
     beat: 'canvas',
     target: 'hero',
     position: 'right',
@@ -93,9 +93,9 @@ const STEPS: Step[] = [
   },
   {
     id: 'publish',
-    title: 'Nothing is live until you publish',
+    title: 'Preview and publish',
     description:
-      'Switch the canvas between light and dark, preview the page exactly as a requester sees it, then publish when it is ready.',
+      'Your changes stay in the editor until you publish them. Preview the portal in light or dark mode, check how it looks to requesters, and publish when it’s ready.',
     beat: 'publish',
     target: ['mode', 'publish'],
     position: 'bottom',

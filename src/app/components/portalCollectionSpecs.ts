@@ -263,7 +263,7 @@ export const SLIDER_SPEC: WidgetSpec = {
      media, and the gap between slides is the standard carousel gap. Every retired key stays in
      `defaults`, so a page that stored one still resolves. */
   fields: [
-    { key: 'title', label: 'Title', control: 'text', group: 'Content', help: 'Optional — hidden when blank.' },
+    { key: 'title', label: 'Title', control: 'text', group: 'Content' },
     /* ⚠️ The group is CAROUSEL TYPE, not "Navigation" — nothing here navigates anything; it is the
        same question the Announcements card asks under "Card type", and the two widgets should ask it
        in the same words. The options say what is IN each carousel; the word "carousel" sits in the
