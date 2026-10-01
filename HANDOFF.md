@@ -1,5 +1,9 @@
 # Handoff — 2026-09-30 22:42
 
+## Latest (1 Oct 2026) — tour step 3 shows the banner toolbar above the banner
+- While the tour is open (`body[data-portal-tour]`) `ToolbarSlot` puts the banner bar ABOVE the banner; step 3 targets ["hero", "hero-toolbar"] so the spotlight covers both. Back inside the banner once the tour closes. Verified in a browser.
+- Noticed, not fixed: Esc does not close the tour while the banner is selected (the Close button does).
+
 ## Latest (1 Oct 2026) — Widgets panel fold + drag-only rows
 - Placed predefined widgets fold into "✓ N on this page ▸" on each group title; rows drag only, the + adds. Divider before Delete on toolbars. Verified in a browser.
 

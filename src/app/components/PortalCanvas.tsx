@@ -3682,7 +3682,7 @@ function BannerCropper({ hostRef, onClose }: { hostRef: React.RefObject<HTMLDivE
   );
 }
 
-function ToolbarSlot({ toolbarBelow, children }: { toolbarBelow?: boolean | 'under'; children: ReactNode }) {
+function ToolbarSlot({ toolbarBelow, tourId, children }: { toolbarBelow?: boolean | 'under'; tourId?: string; children: ReactNode }) {
   const anchorRef = useRef<HTMLSpanElement>(null);
   const barRef = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
@@ -3721,7 +3721,12 @@ function ToolbarSlot({ toolbarBelow, children }: { toolbarBelow?: boolean | 'und
       const wantBelow = toolbarBelow === 'under' || above < box.top + GAP;
       /* `true` means JUST INSIDE the element's own top edge — the banner's promise. Above it the bar lands on
          the builder's own top bar, which is not part of the canvas at all. */
-      let top = toolbarBelow === true ? el.top + GAP : wantBelow ? below : above;
+      /* ⚠️ While the builder TOUR is open the banner's bar goes ABOVE the banner (Zeni, 1 Oct 2026): inside
+         the band it sat over the banner's own words, and the tour's spotlight is drawn round the banner
+         plus its bar, which reads as one thing only when the bar is outside it. Falls back to inside
+         when there is no room above. */
+      const touring = !!document.body.dataset.portalTour && above >= box.top + GAP;
+      let top = toolbarBelow === true && !touring ? el.top + GAP : wantBelow && !touring ? below : above;
 
       let left = el.left;
       if (left + b.width > box.right - GAP) left = box.right - GAP - b.width;
@@ -3765,6 +3770,7 @@ function ToolbarSlot({ toolbarBelow, children }: { toolbarBelow?: boolean | 'und
       {createPortal(
         <div
           ref={barRef}
+          data-tour={tourId}
           style={{ position: 'fixed', top: pos?.top ?? -9999, left: pos?.left ?? -9999 }}
           className="z-[9999]"
         >{children}</div>,
@@ -4452,7 +4458,7 @@ export function Sel({ id, children, className = '', toolbarBelow = false, surfac
           everything the bar contains. Every action on it (move, duplicate, align, delete) is either
           disabled or a lie over navigation the admin does not own. */}
       {on && enabled && id === 'hero' && !cropping && (
-        <ToolbarSlot toolbarBelow={toolbarBelow}><BannerToolbar /></ToolbarSlot>
+        <ToolbarSlot toolbarBelow={toolbarBelow} tourId="hero-toolbar"><BannerToolbar /></ToolbarSlot>
       )}
       {/* ⚠️ The banner's OWN four adders, on hovering the banner itself — left/right add a column at the
           banner's edge, top/bottom a row. Its items keep theirs, which add beside the item. */}

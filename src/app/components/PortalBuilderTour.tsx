@@ -86,7 +86,9 @@ const STEPS: Step[] = [
     description:
       'Click any part of the portal to edit it. Use the toolbar to move, resize, or remove it, and use the sidebar to change its settings.',
     beat: 'canvas',
-    target: 'hero',
+    /* The banner AND its floating toolbar — the bar is what this step is about, so it sits inside the
+       spotlight. While the tour is open the bar is drawn above the banner (see `ToolbarSlot`). */
+    target: ['hero', 'hero-toolbar'],
     position: 'right',
     padding: 8,
     select: 'hero',
@@ -135,7 +137,9 @@ function resolveRect(step: Step): DOMRect | null {
     const fallback = step.select ? firstBlock() : null;
     return fallback?.getBoundingClientRect() ?? null;
   }
-  const rects = els.map((e) => e.getBoundingClientRect());
+  /* A fixed toolbar not yet placed parks at -9999; counting it would stretch the hole off screen. */
+  const rects = els.map((e) => e.getBoundingClientRect()).filter((r) => r.width > 0 && r.top > -1000);
+  if (!rects.length) return null;
   const left = Math.min(...rects.map((r) => r.left));
   const top = Math.min(...rects.map((r) => r.top));
   const right = Math.max(...rects.map((r) => r.right));
@@ -214,6 +218,13 @@ export function PortalBuilderTour({
   /* ⚠️ The tour borrowed the selection, so it gives it back: whatever was selected when it opened is
      selected again when it closes, by any route. A guide that leaves the page in a different state
      from the one it found is one the admin has to tidy up after. */
+  /* Tells the canvas a tour is open (the banner's toolbar moves above the banner for it). Cleared on
+     close by any route, and a resize nudges every open toolbar to re-place itself. */
+  useEffect(() => {
+    document.body.dataset.portalTour = '1';
+    window.dispatchEvent(new Event('resize'));
+    return () => { delete document.body.dataset.portalTour; window.dispatchEvent(new Event('resize')); };
+  }, []);
   const startSel = useRef(selected);
   useEffect(() => () => onSelect(startSel.current), []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -237,11 +248,15 @@ export function PortalBuilderTour({
        select a block, and neither has rendered yet — measured in the same tick the hole lands on
        where the panel used to be. */
     const id = requestAnimationFrame(measure);
+    /* And once more a beat later: a floating toolbar places itself in a layout effect AFTER it mounts,
+       so on the step that selects the banner the bar is not where it lands on the first frame. */
+    const again = window.setTimeout(measure, 160);
     window.addEventListener('resize', measure);
     /* `true` — the canvas scrolls in its own box, not on the window. */
     window.addEventListener('scroll', measure, true);
     return () => {
       cancelAnimationFrame(id);
+      window.clearTimeout(again);
       window.removeEventListener('resize', measure);
       window.removeEventListener('scroll', measure, true);
     };
