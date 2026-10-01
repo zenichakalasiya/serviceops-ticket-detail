@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowUpRight, Check, ChevronRight, Copy, Plus, Search, X } from 'lucide-react';
+import { AlertTriangle, ArrowUpRight, Check, ChevronRight, Copy, Info, Plus, Search, X } from 'lucide-react';
 import type { FormField } from './formRuleData';
 import type { ConflictKind, RuleConflict, SimilarRule } from './formRuleEngine';
 import { conditionText } from './formRuleEngine';
@@ -34,42 +34,45 @@ export function RelatedSummaryCards({ ready, conflicts, similar, onOpenConflicts
       </div>
     );
   }
-  /* Stat card: a soft tint carries the meaning (red / amber), 6px corners; number top-left,
-     title on one line beside it, one summary line, the action at the foot. */
-  const card = (tone: string, empty: boolean) =>
-    (stack ? 'w-full' : 'min-w-[240px] flex-1') + ' group flex flex-col gap-2 rounded-md border px-4 pb-3 pt-3 text-left transition-[border-color,box-shadow] ' +
-    (empty ? 'cursor-default border-[#E5EAF0] bg-white' : 'hover:shadow-[0_2px_8px_rgba(15,23,42,0.06)] ' + tone);
-  const head = (n: number, label: string, color: string) => (
-    <span className="flex min-w-0 items-baseline gap-2">
-      <span className="text-[24px] font-semibold leading-none tabular-nums" style={{ color }}>{n}</span>
-      <span className="truncate whitespace-nowrap text-[13px] font-semibold text-[#1D2A3E]">{label}</span>
+  /* Summary card: a soft tint carries the meaning (red / amber), no border. Count and title on one line,
+     4px apart; a two-line summary 6px under them. The whole card is the button — on hover it lifts and an
+     arrow appears top-right, so it reads as clickable without a link line. */
+  const card = (tint: string, hover: string, empty: boolean) =>
+    (stack ? 'w-full' : 'min-w-[240px] flex-1') + ' group relative flex min-h-[104px] flex-col rounded-md px-4 py-3.5 text-left transition-[background-color,box-shadow] ' +
+    (empty ? 'cursor-default bg-[#F7F9FB]' : tint + ' ' + hover + ' hover:shadow-[0_2px_10px_rgba(15,23,42,0.08)]');
+  const head = (n: number, label: string, color: string, icon: React.ReactNode, iconBg: string) => (
+    <span className="flex min-w-0 items-center pr-6">
+      <span className="flex min-w-0 items-baseline gap-1">
+        <span className="text-[24px] font-semibold leading-none tabular-nums" style={{ color }}>{n}</span>
+        <span className="truncate whitespace-nowrap text-[14px] font-semibold" style={{ color }}>{label}</span>
+      </span>
     </span>
   );
-  const foot = (text: string, color: string) => (
-    <span className="mt-1 inline-flex items-center gap-1 text-[12px] font-medium" style={{ color }}>
-      {text} <ChevronRight size={13} className="transition-transform group-hover:translate-x-0.5" />
-    </span>
+  const arrow = (color: string) => (
+    <ArrowUpRight size={16} className="absolute right-3 top-3 opacity-0 transition-opacity group-hover:opacity-100" style={{ color }} />
   );
+  const summary = (text: React.ReactNode) => <span className="mt-2 line-clamp-2 text-[12px] leading-[1.5] text-[#64748B]">{text}</span>;
+  const kinds = KINDS.map((k) => { const n = conflicts.filter((x) => x.kind === k).length; return n ? n + ' ' + k : null; }).filter(Boolean).join(' · ');
   return (
-    <div className={stack ? 'flex flex-col gap-2.5' : 'flex flex-wrap gap-3'}>
+    <div className={stack ? 'flex flex-col gap-4' : 'flex flex-wrap gap-4'}>
       {!(onlyFound && conflicts.length === 0) && (
-        <button type="button" onClick={onOpenConflicts} disabled={conflicts.length === 0} className={card('border-[#FBDADA] bg-[#FEF6F6] hover:border-[#F3B4B4]', conflicts.length === 0)}>
-          {head(conflicts.length, conflicts.length ? `Conflict${conflicts.length === 1 ? '' : 's'} · ${nRules} rule${nRules === 1 ? '' : 's'}` : 'No conflicts', conflicts.length ? '#DC2626' : '#98A2B3')}
-          <span className="flex flex-wrap gap-x-2 text-[12px] text-[#64748B]">
-            {conflicts.length
-              ? KINDS.map((k) => { const n = conflicts.filter((x) => x.kind === k).length; return n ? <span key={k}><span className="font-semibold" style={{ color: KIND_FG[k] }}>{n}</span> {k}</span> : null; }).filter(Boolean).reduce<React.ReactNode[]>((acc, el, i) => (i ? [...acc, <span key={'s' + i} className="text-[#CBD5E1]">·</span>, el] : [el]), [])
-              : 'No other rule leaves these fields in a different state.'}
-          </span>
-          {conflicts.length > 0 && foot('Resolve conflicts', '#DC2626')}
+        <button type="button" onClick={onOpenConflicts} disabled={conflicts.length === 0} title={conflicts.length ? 'Resolve conflicts' : undefined}
+          className={card('bg-[#FEF4F4]', 'hover:bg-[#FDEBEB]', conflicts.length === 0)}>
+          {conflicts.length > 0 && arrow('#DC2626')}
+          {head(conflicts.length, conflicts.length === 1 ? 'Conflict' : conflicts.length ? 'Conflicts' : 'No conflicts', conflicts.length ? '#DC2626' : '#98A2B3', <AlertTriangle size={16} />, conflicts.length ? '#FDE2E2' : '#EEF2F6')}
+          {summary(conflicts.length
+            ? <>{kinds} with {nRules} rule{nRules === 1 ? '' : 's'}. Resolve them so the form ends up in one clear state.</>
+            : 'No other rule leaves these fields in a different state.')}
         </button>
       )}
       {!(onlyFound && similar.length === 0) && (
-        <button type="button" onClick={onOpenSimilar} disabled={similar.length === 0} className={card('border-[#F7E3AE] bg-[#FFFBEB] hover:border-[#F2CF73]', similar.length === 0)}>
-          {head(similar.length, similar.length ? `Similar rule${similar.length === 1 ? '' : 's'}` : 'No similar rules', similar.length ? '#B45309' : '#98A2B3')}
-          <span className="text-[12px] text-[#64748B]">
-            {similar.length ? 'Same trigger and conditions as your rule' : 'No other rule uses this trigger and these conditions.'}
-          </span>
-          {similar.length > 0 && foot('Review similar rules', '#B45309')}
+        <button type="button" onClick={onOpenSimilar} disabled={similar.length === 0} title={similar.length ? 'Review similar rules' : undefined}
+          className={card('bg-[#FFF9E8]', 'hover:bg-[#FFF3D1]', similar.length === 0)}>
+          {similar.length > 0 && arrow('#B45309')}
+          {head(similar.length, similar.length === 1 ? 'Similar rule' : similar.length ? 'Similar rules' : 'No similar rules', similar.length ? '#B45309' : '#98A2B3', <Copy size={15} />, similar.length ? '#FDEFC8' : '#EEF2F6')}
+          {summary(similar.length
+            ? 'Already use this trigger and conditions. Consider updating one instead of creating a new rule.'
+            : 'No other rule uses this trigger and these conditions.')}
         </button>
       )}
     </div>
@@ -113,7 +116,9 @@ export function RelatedSummaryChips({ ready, conflicts, similar, onOpenConflicts
 }
 
 /** The similar-rules sidebar body: which trigger each rule shares with yours, and how its actions compare. */
-export function SimilarRulesView({ similar, fields, draft, conditionLines, onOpenRule }: {
+export function SimilarRulesView({ similar, fields, draft, conditionLines, onOpenRule, myActions = [] }: {
+  /** This rule's actions, in words — shown in the common container. */
+  myActions?: string[];
   similar: SimilarRule[];
   fields: FormField[];
   /** This rule's trigger, to compare against. */
@@ -123,6 +128,8 @@ export function SimilarRulesView({ similar, fields, draft, conditionLines, onOpe
 }) {
   const [sel, setSel] = useState<string | null>(similar[0]?.rule.id ?? null);
   const [q, setQ] = useState('');
+  /** The shared trigger container starts folded: its title says what it is, the detail is one click away. */
+  const [commonOpen, setCommonOpen] = useState(false);
   const shown = similar.filter((s) => !q.trim() || s.rule.name.toLowerCase().includes(q.trim().toLowerCase()));
   useEffect(() => { if (!sel || !shown.some((s) => s.rule.id === sel)) setSel(shown[0]?.rule.id ?? null); }, [shown.map((s) => s.rule.id).join('|')]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -136,103 +143,116 @@ export function SimilarRulesView({ similar, fields, draft, conditionLines, onOpe
     );
   }
   const cur = similar.find((s) => s.rule.id === sel);
+  void fields;
 
-  /** One trigger line: theirs, and whether it is the same as yours. */
-  const line = (label: string, theirs: string, same: boolean) => (
-    <div key={label} className="flex items-start gap-3 py-2">
-      <span className="w-[110px] flex-shrink-0 text-[12px] text-[#7B8FA5]">{label}</span>
-      <span className="min-w-0 flex-1 text-[13px] text-[#1D2A3E]">{theirs || '—'}</span>
-      <span className={'inline-flex flex-shrink-0 items-center gap-1 rounded-full px-2 text-[11px] font-medium leading-5 ' + (same ? 'bg-[#ECFDF3] text-[#12B76A]' : 'bg-[#F1F5F9] text-[#64748B]')}>
-        {same ? <><Check size={11} strokeWidth={2.5} />Same as yours</> : 'Different'}
-      </span>
+  /* Every similar rule shares this trigger and these conditions with yours (that is what makes it
+     similar), so they are said ONCE, in a folded container, instead of repeated on every rule. */
+  const row = (label: string, value: React.ReactNode) => (
+    <div className="flex min-w-0 flex-col gap-0.5">
+      <span className="text-[12px] text-[#7B8FA5]">{label}</span>
+      <span className="text-[13px] font-medium text-[#364658]">{value}</span>
     </div>
   );
+  const common = (
+    <div className="mx-3 mb-3 flex-shrink-0 overflow-hidden rounded-lg border border-[#E8EDF3] bg-white">
+      <button type="button" onClick={() => setCommonOpen((o) => !o)} aria-expanded={commonOpen}
+        className="flex w-full items-center gap-2.5 px-4 py-3 text-left transition-colors hover:bg-[#F9FAFB]">
+        <ChevronRight size={15} className={'flex-shrink-0 text-[#7B8FA5] transition-transform ' + (commonOpen ? 'rotate-90' : '')} />
+        <span className="text-[13px] font-semibold text-[#1D2A3E]">Common trigger &amp; conditions</span>
+        <span className="text-[12px] text-[#98A2B3]">shared by your rule and all {similar.length} similar rule{similar.length === 1 ? '' : 's'}</span>
+      </button>
+      {commonOpen && (
+        <div className="flex flex-col gap-4 border-t border-[#EEF2F6] bg-[#F9FAFB] px-4 py-4">
+          <div className="grid grid-cols-3 gap-x-6 gap-y-4">
+            {row('Event', eventLabel(draft.event) || '—')}
+            {row('Execute on', draft.execution || '—')}
+            {row('Applies to', draft.applies || '—')}
+          </div>
+          {row('Conditions', conditionLines.length
+            ? <span className="mt-0.5 flex flex-wrap gap-1.5">{conditionLines.map((l) => <span key={l} className="rounded-md border border-[#E2E8F0] bg-white px-2 py-0.5 text-[12px] font-normal text-[#364658]">{l}</span>)}</span>
+            : 'Every matching event')}
+          {myActions.length > 0 && row('Your rule’s actions',
+            <span className="mt-0.5 flex flex-wrap gap-1.5">{myActions.map((l) => <span key={l} className="rounded-md bg-[#EBF5FF] px-2 py-0.5 text-[12px] font-normal text-[#2C6CA8]">{l}</span>)}</span>)}
+        </div>
+      )}
+    </div>
+  );
+
+  /** One group of actions: a quiet label, then the actions as lines with a leading mark. */
   const actionGroup = (title: string, hint: string, items: string[], icon: React.ReactNode, tone: string) => (
-    <div className="rounded-lg bg-[#F6F9FC] px-3.5 py-3">
+    <div className="rounded-lg bg-[#F6F9FC] px-4 py-3">
       <div className="flex items-baseline gap-2">
         <span className="text-[12px] font-semibold" style={{ color: tone }}>{title}</span>
         <span className="text-[11px] text-[#98A2B3]">{hint}</span>
         <span className="ml-auto text-[12px] font-medium tabular-nums text-[#64748B]">{items.length}</span>
       </div>
       {items.length > 0
-        ? <ul className="mt-2 flex flex-col gap-1">{items.map((t) => <li key={t} className="flex items-center gap-2 text-[13px] text-[#364658]">{icon}{t}</li>)}</ul>
+        ? <ul className="mt-2 flex flex-col gap-1.5">{items.map((t) => <li key={t} className="flex items-center gap-2 text-[13px] text-[#364658]">{icon}{t}</li>)}</ul>
         : <p className="mt-1.5 text-[12px] text-[#98A2B3]">None</p>}
     </div>
   );
 
-  const theirConds = cur ? cur.rule.groups.flatMap((g) => g.conditions).filter((c) => c.fieldId && c.op).map((c) => conditionText(c, fields)) : [];
-  const sameConds = theirConds.filter((t) => conditionLines.includes(t));
-
   const detail = cur && (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-4">
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-[15px] font-medium text-[#1D2A3E]">{cur.rule.name}</h3>
-          <p className="mt-0.5 text-[12px] text-[#7B8FA5]">{cur.rule.enabled ? 'Enabled' : 'Disabled'}</p>
+          <h3 className="truncate text-[15px] font-semibold leading-5 text-[#1D2A3E]">{cur.rule.name}</h3>
+          <p className="mt-0.5 text-[12px] text-[#7B8FA5]">{cur.rule.enabled ? 'Enabled' : 'Disabled'} · {cur.common.length} of your actions already here</p>
         </div>
         <button type="button" onClick={() => onOpenRule(cur.rule.id)}
           className="inline-flex flex-shrink-0 items-center gap-1 rounded-md bg-[#3D8BD0] px-3 py-1.5 text-[12px] font-medium text-white hover:bg-[#3478B5]">
           Update this rule <ArrowUpRight size={12} />
         </button>
       </div>
-
-      {/* The guidance, in one sentence. */}
-      <div className="flex items-start gap-2.5 rounded-lg border border-[#FDE68A] bg-[#FFFBEB] px-3.5 py-2.5">
-        <Copy size={15} className="mt-0.5 flex-shrink-0 text-[#B45309]" />
-        <p className="text-[12px] leading-[1.55] text-[#92400E]">
-          You have already configured <b>{cur.rule.name}</b> on this trigger{cur.common.length ? <> with <b>{cur.common.length}</b> of the same action{cur.common.length === 1 ? '' : 's'}</> : null}.
-          {cur.missing.length ? <> Adding your <b>{cur.missing.length}</b> new action{cur.missing.length === 1 ? '' : 's'} to it</> : ' Updating it'} keeps one rule to maintain instead of two.
-        </p>
-      </div>
-
-      <section>
-        <div className="mb-1 text-[13px] font-semibold text-[#1D2A3E]">Trigger</div>
-        <div className="divide-y divide-[#EEF2F6]">
-          {line('Event', eventLabel(cur.rule.event), cur.rule.event === draft.event)}
-          {line('Execute on', cur.rule.execution, cur.rule.execution === draft.execution)}
-          {line('Applies to', cur.rule.applies, cur.rule.applies === draft.applies)}
-          {line('Conditions', theirConds.length ? theirConds.join(' and ') : 'Every matching event', theirConds.length > 0 && sameConds.length === theirConds.length)}
-        </div>
-      </section>
-
-      <section className="flex flex-col gap-2.5">
-        <div className="text-[13px] font-semibold text-[#1D2A3E]">Actions</div>
-        {actionGroup('Same as yours', 'both rules do this', cur.common, <Check size={12} strokeWidth={2.5} className="flex-shrink-0 text-[#12B76A]" />, '#12B76A')}
-        {actionGroup('New in your rule', 'what updating it would add', cur.missing, <Plus size={12} strokeWidth={2.5} className="flex-shrink-0 text-[#3D8BD0]" />, '#3D8BD0')}
-        {actionGroup('Only in that rule', 'it already does this too', cur.others, <span className="size-1 flex-shrink-0 rounded-full bg-[#98A2B3]" />, '#64748B')}
-      </section>
+      {actionGroup('Matches your rule', 'it already does this', cur.common, <Check size={12} strokeWidth={2.5} className="flex-shrink-0 text-[#12B76A]" />, '#12B76A')}
+      {actionGroup('Its other actions', 'already in this rule, not in yours', cur.others, <span className="size-1.5 flex-shrink-0 rounded-full bg-[#98A2B3]" />, '#64748B')}
     </div>
   );
 
   return (
-    <div className="flex min-h-0 flex-1 gap-4 px-3 pb-4 pt-1">
-      <div className="flex w-[260px] flex-shrink-0 flex-col rounded-md bg-[#F4F6FA] p-2">
-        <div className="relative mb-2 flex-shrink-0">
-          <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#98A2B3]" />
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search rules..."
-            className="h-8 w-full rounded-md border border-[#E2E8F0] bg-white pl-8 pr-2.5 text-[12px] text-[#364658] placeholder:text-[#98A2B3] focus:border-[#3D8BD0] focus:outline-none focus:ring-1 focus:ring-[#3D8BD0]" />
-        </div>
-        <div className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto">
-          {shown.length === 0 && <div className="px-3 py-6 text-center text-[12px] text-[#98A2B3]">Nothing matches “{q}”</div>}
-          {shown.map((s) => (
-            <button key={s.rule.id} type="button" onClick={() => setSel(s.rule.id)}
-              className={'block w-full rounded-md px-3 py-2.5 text-left transition-colors ' + (sel === s.rule.id ? 'bg-white shadow-[0_1px_2px_rgba(15,23,42,0.06)]' : 'hover:bg-white/60')}>
-              <span className="block truncate text-[13px] font-semibold text-[#1D2A3E]">{s.rule.name}</span>
-              <span className="mt-1 flex items-center gap-1.5 text-[12px] text-[#7B8FA5]">
-                <span className="size-1.5 rounded-full bg-[#F59E0B]" />
-                {s.common.length} same · {s.missing.length} new
-              </span>
-            </button>
-          ))}
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="mx-3 mb-3 flex flex-shrink-0 items-start gap-3 rounded-lg border border-[#F7E3AE] bg-[#FFFAEB] px-4 py-3">
+        <AlertTriangle size={16} className="mt-0.5 flex-shrink-0 text-[#B45309]" />
+        <div className="min-w-0">
+          <div className="text-[14px] font-semibold text-[#93370D]">{similar.length} similar rule{similar.length === 1 ? '' : 's'} found</div>
+          <p className="mt-0.5 text-[12px] leading-[1.5] text-[#B54708]">These rules already do what your rule does. Merging one keeps the same behaviour without running it twice.</p>
         </div>
       </div>
-      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto pr-1">{detail}</div>
+      {common}
+      <div className="flex min-h-0 flex-1 gap-4 px-3 pb-3">
+        <div className="flex w-[260px] flex-shrink-0 flex-col rounded-md bg-[#F4F6FA] p-2">
+          <div className="relative mb-2 flex-shrink-0">
+            <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#98A2B3]" />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search rules..."
+              className="h-8 w-full rounded-md border border-[#E2E8F0] bg-white pl-8 pr-2.5 text-[12px] text-[#364658] placeholder:text-[#98A2B3] focus:border-[#3D8BD0] focus:outline-none focus:ring-1 focus:ring-[#3D8BD0]" />
+          </div>
+          <div className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto">
+            {shown.length === 0 && <div className="px-3 py-6 text-center text-[12px] text-[#98A2B3]">Nothing matches “{q}”</div>}
+            {shown.map((s) => (
+              <button key={s.rule.id} type="button" onClick={() => setSel(s.rule.id)}
+                className={'block w-full rounded-md px-3 py-2.5 text-left transition-colors ' + (sel === s.rule.id ? 'bg-white shadow-[0_1px_2px_rgba(15,23,42,0.06)]' : 'hover:bg-white/60')}>
+                <span className="block truncate text-[13px] font-semibold text-[#1D2A3E]">{s.rule.name}</span>
+                <span className="mt-1 flex items-center gap-1.5 text-[12px] text-[#7B8FA5]">
+                  <span className="size-1.5 rounded-full bg-[#F59E0B]" />
+                  {s.common.length} matching · {s.others.length} other
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="min-h-0 min-w-0 flex-1 overflow-y-auto pr-1">{detail}</div>
+      </div>
+      {/* The advice stays put at the foot while the rules scroll. */}
+      <div className="flex flex-shrink-0 items-start gap-2 border-t border-[#EEF2F6] bg-[#EFF6FD] px-4 py-2.5 text-[12px] leading-[1.55] text-[#1D3A5C]">
+        <Info size={14} className="mt-0.5 flex-shrink-0 text-[#3D8BD0]" />
+        <span>Instead of creating another rule, you can <b className="font-semibold">add your actions to one of these</b> — one rule doing the whole job is easier to find and maintain than two that overlap.</span>
+      </div>
     </div>
   );
 }
 
 /** Right sidebar shell shared by both. */
-export function RelatedDrawer({ title, sub, onClose, children, hideHead = false }: { title: string; sub: React.ReactNode; onClose: () => void; children: React.ReactNode; hideHead?: boolean }) {
+export function RelatedDrawer({ title, sub, onClose, children, hideHead = false }: { title: string; sub?: React.ReactNode; onClose: () => void; children: React.ReactNode; hideHead?: boolean }) {
   useEffect(() => {
     const k = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', k);
@@ -244,7 +264,7 @@ export function RelatedDrawer({ title, sub, onClose, children, hideHead = false 
         {!hideHead && <div className="flex flex-shrink-0 items-start gap-3 px-3 pb-3 pt-4">
           <div className="min-w-0 flex-1">
             <h3 className="text-[15px] font-semibold text-[#364658]">{title}</h3>
-            <p className="mt-0.5 text-[12px] text-[#64748B]">{sub}</p>
+            {sub && <p className="mt-0.5 text-[12px] text-[#64748B]">{sub}</p>}
           </div>
           <button type="button" onClick={onClose} title="Close" className="flex size-8 items-center justify-center rounded transition-colors hover:bg-[#F3F4F6]">
             <X size={16} className="text-[#64748B]" />

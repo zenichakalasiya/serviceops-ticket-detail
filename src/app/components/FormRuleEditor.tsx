@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { AlertTriangle, ArrowLeft, ArrowUpRight, Check, ChevronRight, ChevronsLeft, Copy, X as XIcon, ExternalLink, History, Plus, RefreshCcw, Split, Trash2, Users, Workflow, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -19,7 +19,7 @@ import { RelatedDrawer, RelatedSummaryCards, RelatedSummaryChips, SimilarRulesVi
 import { HoverCard, HoverCardContent, HoverCardTrigger } from './ui/hover-card';
 
 /** The four layouts being compared. They share ONE draft, so switching compares the same rule. */
-export type EditorVersion = 'A' | 'A2' | 'A3' | 'A3R' | 'B3' | 'S' | 'R' | 'B' | 'B2' | 'P' | 'C' | 'G2' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I';
+export type EditorVersion = 'A' | 'A2' | 'A3' | 'A3R' | 'B3' | 'S' | 'LS' | 'RC' | 'EG' | 'HF' | 'R' | 'B' | 'B2' | 'P' | 'C' | 'G2' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I';
 /** Only A · B · B2 · I are offered (Zeni, 1 Oct 2026); the rest stay built but hidden. */
 const VERSIONS: { id: EditorVersion; label: string; hint: string; fav?: boolean; show?: boolean }[] = [
   { id: 'A', show: true, fav: true, label: 'A · Split', hint: 'Builder + a resizable, collapsible Rule check rail' },
@@ -27,6 +27,10 @@ const VERSIONS: { id: EditorVersion; label: string; hint: string; fav?: boolean;
   { id: 'A3', show: true, label: 'A3 · Details left', hint: 'Rule details in a left sidebar with the summary cards under it; the builder in the centre' },
   { id: 'A3R', show: true, label: 'A3R · Details right', hint: 'A3 mirrored — Rule details and the summary cards in a right sidebar, so the panel opens from the same side' },
   { id: 'S', show: true, label: 'S · Header summary', hint: 'One centred column; the conflict and similar counts are chips beside Save in the header' },
+  { id: 'LS', show: true, label: 'LS · Live summary', hint: 'Build on the left; the right reads the rule back as a sentence, issues marked on the lines that cause them' },
+  { id: 'RC', show: true, label: 'RC · Checklist', hint: 'A “Ready to save?” checklist on the right: rule details, trigger, actions, conflicts and similar rules as one list' },
+  { id: 'EG', show: true, label: 'EG · Gutter', hint: 'Issue markers in a left gutter beside the rows that cause them, like error marks in a code editor' },
+  { id: 'HF', show: true, label: 'HF · Horizontal flow', hint: 'The rule as four columns left to right — Who · When · If · Then' },
   { id: 'R', show: true, label: 'R · Summary cards', hint: 'Two summary cards over the builder — conflicts to resolve, similar rules to consider; each number opens its own sidebar' },
   { id: 'A2', show: true, label: 'A2 · Who first', hint: 'Like A, but who the rule is for is its own step above the trigger' },
   { id: 'B2', show: true, fav: true, label: 'B2 · 2 steps', hint: 'Two steps across the top: Rule details → Build the rule, conflicts in the right sidebar' },
@@ -42,9 +46,10 @@ const VERSIONS: { id: EditorVersion; label: string; hint: string; fav?: boolean;
   { id: 'H', label: 'H · Similar-first', hint: 'Start from the trigger — extend an existing rule before creating one' },
 ];
 /** A hidden layout remembered from an earlier visit falls back to A. */
-const SHOWN: EditorVersion[] = ['A', 'A2', 'B', 'B2', 'I', 'P', 'R', 'B3', 'A3', 'A3R', 'S'];
+/** B3 is the chosen layout (Zeni, 1 Oct 2026); the others stay built but are hidden. Add ids back here to compare again. */
+const SHOWN: EditorVersion[] = ['B3'];
 /** The layouts whose conflict / similar checks open in the two summary sidebars. */
-const SUMMARY: EditorVersion[] = ['R', 'B3', 'A3', 'A3R', 'S'];
+const SUMMARY: EditorVersion[] = ['R', 'B3', 'A3', 'A3R', 'S', 'LS', 'RC', 'EG', 'HF'];
 const RAIL_MIN = 320;
 const RAIL_MAX = 560;
 const RAIL_DEFAULT = 420;
@@ -192,7 +197,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
   const [flashAction, setFlashAction] = useState<string | null>(null);
 
   // ── version + rail state ──────────────────────────────────────────────────
-  const [version, setVersionState] = useState<EditorVersion>(() => (SHOWN.includes(store.get('formRuleVersion') as EditorVersion) ? store.get('formRuleVersion') as EditorVersion : 'A'));
+  const [version, setVersionState] = useState<EditorVersion>(() => (SHOWN.includes(store.get('formRuleVersion') as EditorVersion) ? store.get('formRuleVersion') as EditorVersion : 'B3'));
   const setVersion = (v: EditorVersion) => { setVersionState(v); store.set('formRuleVersion', v); };
   const [railOpen, setRailOpenState] = useState(() => store.get('formRuleRailOpen') !== '0');
   const setRailOpen = (v: boolean) => { setRailOpenState(v); store.set('formRuleRailOpen', v ? '1' : '0'); };
@@ -218,6 +223,10 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
   const [pDetailsOpen, setPDetailsOpen] = useState(false);
   /** Version R: which sidebar a summary card opened. */
   const [relOpen, setRelOpen] = useState<null | 'conflicts' | 'similar'>(null);
+  /** R-family: open the conflicts sidebar straight on one field (from an action row's warning). */
+  const [relField, setRelField] = useState<string | null>(null);
+  /** RC: which checklist row is open for editing. */
+  const [rcOpen, setRcOpen] = useState<string | null>(null);
   /** R: the resolve-help page takes the sidebar's whole header while it is open. */
   const [relHelp, setRelHelp] = useState(false);
   /** Version F: the bottom Problems dock. */
@@ -376,6 +385,23 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
     return undefined;
   }, [conflicts.length, similar.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  /** EG: markers measured off the rendered rows, so they line up whatever the rows' heights. */
+  const gutterRef = useRef<HTMLDivElement>(null);
+  const [gutterMarks, setGutterMarks] = useState<{ key: string; top: number; kind: 'c' | 's'; n: number }[]>([]);
+  useLayoutEffect(() => {
+    const box = gutterRef.current;
+    if (version !== 'EG' || !box) { if (gutterMarks.length) setGutterMarks([]); return; }
+    const top0 = box.getBoundingClientRect().top - box.scrollTop;
+    const marks: { key: string; top: number; kind: 'c' | 's'; n: number }[] = [];
+    const sim = box.querySelector('[data-gutter="check"]');
+    if (sim && similar.length) marks.push({ key: 'sim', top: sim.getBoundingClientRect().top - top0, kind: 's', n: similar.length });
+    draft.actions.forEach((a) => {
+      const n = conflicts.filter((x) => x.actionId === a.id).length;
+      const el = box.querySelector('[data-action-row="' + a.id + '"]');
+      if (n && el) marks.push({ key: a.id, top: el.getBoundingClientRect().top - top0 + 4, kind: 'c', n });
+    });
+    if (JSON.stringify(marks) !== JSON.stringify(gutterMarks)) setGutterMarks(marks);
+  });
   const prevConflicts = useRef(0);
   useEffect(() => {
     if (conflicts.length > prevConflicts.current) { setITab('check'); setTab('conflicts'); }
@@ -648,8 +674,12 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
                           const target = single ? fieldById(act.fieldIds[0]) : undefined;
                           const clashes = conflicts.filter((x) => x.actionId === act.id);
                           const lit = hoverAction === act.id || flashAction === act.id;
+                          /* Summary layouts: the clash is said ON the row — the field is outlined and a warning sits beside it;
+                             hovering the warning offers the field-wise conflicts sidebar. */
+                          const rowWarn = clashes.length > 0 && SUMMARY.includes(version) && version !== 'EG';
+                          const clashFields = [...new Set(clashes.map((x) => x.fieldId))];
                           return (
-                            <div key={act.id} data-action-row={act.id} className={'-mx-1.5 w-[calc(100%+12px)] rounded-md px-1.5 py-1 transition-colors ' + (lit ? 'bg-[#FEF2F2] ring-1 ring-[#FCA5A5]' : '')}>
+                            <div key={act.id} data-action-row={act.id} className={'-mx-1.5 w-[calc(100%+12px)] rounded-md px-1.5 py-1 transition-colors ' + (lit ? 'bg-[#FEF2F2] ring-1 ring-[#FCA5A5]' : rowWarn ? 'bg-[#FEF3F2]' : '')}>
                             <div className="flex w-full items-center gap-1.5">
                               <div className="flex min-w-0 flex-1 items-center gap-2">
                                 <div className="w-[120px] flex-shrink-0">
@@ -657,7 +687,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
                                     options={ACTION_TYPES.map((t) => ({ value: t.value, label: t.value, hint: t.hint }))} menuWidth={260}
                                     onChange={([v]) => patchAction(act.id, { type: v as RuleAction['type'], fieldIds: v === 'Set value' ? act.fieldIds.slice(0, 1) : act.fieldIds, value: [] })} />
                                 </div>
-                                <div className={single ? 'w-[200px] flex-shrink-0' : 'min-w-0 flex-1'}>
+                                <div className={(single ? 'w-[200px] flex-shrink-0' : 'min-w-0 flex-1')}>
                                   <RuleSelect compact multi={!single} value={act.fieldIds} searchable invalid={bad && act.fieldIds.length === 0}
                                     placeholder={single ? 'Field to set' : 'Fields'}
                                     options={fields.filter((f) => !single || f.kind !== 'attachment').map((f) => ({ value: f.id, label: f.label, group: f.system ? 'System fields' : 'Custom fields' }))}
@@ -669,9 +699,35 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
                                   </div>
                                 )}
                               </div>
+                              {rowWarn && (
+                                <HoverCard openDelay={120} closeDelay={150}>
+                                  <HoverCardTrigger asChild>
+                                    <button type="button" onClick={() => { setRelField(clashFields[0]); setRelOpen('conflicts'); }} aria-label="Conflicts on this action"
+                                      className="flex size-7 flex-shrink-0 items-center justify-center rounded text-[#D92D20] transition-colors hover:bg-[#FEF2F2]">
+                                      <AlertTriangle size={16} />
+                                    </button>
+                                  </HoverCardTrigger>
+                                  <HoverCardContent side="top" align="end" className="z-[10050] w-[280px] p-3">
+                                    <div className="text-[13px] font-semibold text-[#B42318]">{clashes.length} conflict{clashes.length === 1 ? '' : 's'} on this action</div>
+                                    <ul className="mt-1.5 flex flex-col gap-1">
+                                      {clashFields.map((f) => (
+                                        <li key={f}>
+                                          <button type="button" onClick={() => { setRelField(f); setRelOpen('conflicts'); }}
+                                            className="flex w-full items-center gap-2 rounded px-1.5 py-1 text-left text-[12px] text-[#364658] transition-colors hover:bg-[#F5F7FA]">
+                                            <span className="size-1.5 flex-shrink-0 rounded-full bg-[#F04438]" />
+                                            <span className="min-w-0 flex-1 truncate">{fieldById(f)?.label ?? f}</span>
+                                            <span className="text-[11px] text-[#7B8FA5]">{clashes.filter((x) => x.fieldId === f).length} rule{clashes.filter((x) => x.fieldId === f).length === 1 ? '' : 's'}</span>
+                                            <ArrowUpRight size={12} className="text-[#3D8BD0]" />
+                                          </button>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </HoverCardContent>
+                                </HoverCard>
+                              )}
                               <RowTools copyTitle="Duplicate action" deleteTitle="Remove action" onCopy={() => copyAction(act.id)} onDelete={() => setActions((as) => as.filter((x) => x.id !== act.id))} />
                             </div>
-                            {clashes.length > 0 && (
+                            {clashes.length > 0 && version !== 'EG' && !SUMMARY.includes(version) && (
                               /* Said on the row that causes it; the detail is one click away in the rail. */
                               <div className="mt-1.5 flex flex-col gap-1 pl-1">
                                 {clashes.map((x) => (
@@ -821,16 +877,16 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
   const relDrawer = SUMMARY.includes(version) && relOpen && (
     relOpen === 'conflicts' ? (
       <RelatedDrawer title="Resolve conflicts"
-        sub={<>{conflicts.length} conflict{conflicts.length === 1 ? '' : 's'} with {new Set(conflicts.map((x) => x.other.id)).size} rule{new Set(conflicts.map((x) => x.other.id)).size === 1 ? '' : 's'} — see them by rule or by field.</>}
-        onClose={() => { setRelOpen(null); setRelHelp(false); }} hideHead={relHelp}>
-        <FormRuleConflictReview onHelpChange={setRelHelp} onClose={() => { setRelOpen(null); setRelHelp(false); }} conflicts={conflicts} rules={rules} currentExecution={draft.execution} fieldLabel={(id) => fieldById(id)?.label ?? id}
+        onClose={() => { setRelOpen(null); setRelHelp(false); setRelField(null); }} hideHead={relHelp}>
+        <FormRuleConflictReview key={relField ?? 'all'} sidebar initialMode={relField ? 'field' : 'rule'} initialSel={relField ?? undefined}
+          onHelpChange={setRelHelp} onClose={() => { setRelOpen(null); setRelHelp(false); setRelField(null); }} conflicts={conflicts} rules={rules} currentExecution={draft.execution} fieldLabel={(id) => fieldById(id)?.label ?? id}
           onJump={(id) => { setRelOpen(null); requestAnimationFrame(() => jumpTo(id)); }} onOpenRule={openOther} />
       </RelatedDrawer>
     ) : (
       <RelatedDrawer title="Similar rules"
-        sub={<>{similar.length} rule{similar.length === 1 ? '' : 's'} already run on this trigger. You may want to update one of them instead of creating a new rule.</>}
         onClose={() => setRelOpen(null)}>
         <SimilarRulesView similar={similar} fields={fields} conditionLines={conditionLines}
+          myActions={draft.actions.filter((a) => a.type && a.fieldIds.length).flatMap((a) => a.fieldIds.map((f) => actionText(a.type, fieldById(f)?.label ?? f, a.value.join(', '))))}
           draft={{ event: draft.event, execution: draft.execution, applies: draft.applies }} onOpenRule={openOther} />
       </RelatedDrawer>
     )
@@ -1020,30 +1076,47 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
   // ── B3 · B's steps in a wider column, the summary docked at its foot ──────
   const b3Body = (
     <div className="flex min-h-0 flex-1">
-      <nav className="flex w-[380px] flex-shrink-0 flex-col border-r border-[#DFE5ED] bg-[#FAFBFC]">
-        <div className="flex flex-col gap-1 p-3">
-          {STEPS.map((s, i) => (
-            <button key={s.label} type="button" onClick={() => setStep(i)}
-              className={`flex items-start gap-2.5 rounded-md px-2.5 py-2 text-left transition-colors ${step === i ? 'bg-white shadow-[0_1px_2px_rgba(15,23,42,0.08)]' : 'hover:bg-[#F1F5F9]'}`}>
-              <span className={`mt-px flex size-5 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${s.done && step !== i ? 'bg-[#89C540] text-white' : step === i ? 'bg-[#3D8BD0] text-white' : 'bg-[#E2E8F0] text-[#64748B]'}`}>
-                {s.done && step !== i ? <Check size={11} strokeWidth={3} /> : i + 1}
-              </span>
-              <span className="min-w-0">
-                <span className="block text-[12px] font-medium text-[#364658]">{s.label}</span>
-                <span className="block text-[11px] text-[#7B8FA5]">{s.hint}</span>
-              </span>
-            </button>
-          ))}
-        </div>
+      {/* B2's stepper, stood on end: badge + label pills joined by a connector, no panel behind them. */}
+      <nav className="flex w-[380px] flex-shrink-0 flex-col bg-white">
+        <ol className="flex flex-col gap-6 p-3">
+          {STEPS.map((s, i) => {
+            const on = step === i;
+            const done = s.done && !on;
+            return (
+              <li key={s.label} className="relative flex flex-col">
+                {/* The divider joins this step to the next. Beside a SELECTED card it stops 2px short of the card;
+                    an unselected card has no fill, so the line runs on through its empty padding to 2px from the badge.
+                    Geometry: badge = 10px padding + 1px + 24px (so its bottom is 35px down, its top 11px down); cards are 24px apart. */}
+                {i < STEPS.length - 1 && (
+                  <span className={`absolute left-[21.5px] z-10 w-px ${s.done ? 'bg-[#89C540]' : 'bg-[#DFE5ED]'}`}
+                    style={{ top: on ? 'calc(100% + 2px)' : 37, bottom: step === i + 1 ? -22 : -33 }} />
+                )}
+                <button type="button" onClick={() => setStep(i)}
+                  className={`flex w-full items-start gap-2.5 rounded-md p-2.5 text-left transition-colors ${on ? 'bg-[#EBF5FF]' : 'hover:bg-[#F5F7FA]'}`}>
+                  <span className={`mt-px flex size-6 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${done ? 'bg-[#89C540] text-white' : on ? 'bg-[#3D8BD0] text-white' : 'bg-[#E2E8F0] text-[#64748B]'}`}>
+                    {done ? <Check size={12} strokeWidth={3} /> : i + 1}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="flex items-center gap-2">
+                      <span className={`text-[13px] font-medium ${on ? 'text-[#3D8BD0]' : 'text-[#364658]'}`}>{s.label}</span>
+                      {i === 1 && ready && conflicts.length > 0 && <span className="rounded-sm bg-[#FEF2F2] px-1.5 text-[11px] font-semibold text-[#DC2626]">{conflicts.length}</span>}
+                    </span>
+                    <span className="block text-[11px] text-[#7B8FA5]">{s.hint}</span>
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ol>
         {/* Docked at the foot, and only once there is something to report. */}
         {hasFindings && (
-          <div className="mt-auto flex flex-col gap-2 border-t border-[#DFE5ED] p-3">
+          <div className="mt-auto flex flex-col gap-2 p-3">
             <span className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-[#7B8FA5]">Rule check</span>
             {stackedCards}
           </div>
         )}
       </nav>
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-y-auto [&>div]:mx-0">
         {step === 0 ? detailsStepEl(() => setStep(1)) : logicEl}
       </div>
     </div>
@@ -1057,7 +1130,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
       </div>
       {detailsFieldsNoWho}
       {hasFindings && (
-        <div className="flex flex-col gap-2 border-t border-[#DFE5ED] p-4">
+        <div className="mt-auto flex flex-col gap-2 border-t border-[#DFE5ED] p-4">
           <span className="text-[11px] font-medium uppercase tracking-wide text-[#7B8FA5]">Rule check</span>
           {stackedCards}
         </div>
@@ -1075,6 +1148,204 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
   );
   const a3Body = <div className="flex min-h-0 flex-1">{a3Side('left')}{centreWho}</div>;
   const a3rBody = <div className="flex min-h-0 flex-1">{centreWho}{a3Side('right')}</div>;
+
+  const cardsRow = <RelatedSummaryCards onlyFound ready={ready} conflicts={conflicts} similar={similar} onOpenConflicts={() => setRelOpen('conflicts')} onOpenSimilar={() => setRelOpen('similar')} />;
+  const logicWho = (
+    <div className="mx-auto flex max-w-[880px] flex-col gap-6 p-4 pb-8 pt-5">
+      {whoEl}
+      {whenEl}
+      {ready && (<>{checkEl}{thenEl}{advancedEl}</>)}
+    </div>
+  );
+
+  // ── LS · live summary: write on the left, read it back on the right ───────
+  const sentence = (
+    <div className="flex flex-col gap-2 text-[13px] leading-[1.6] text-[#364658]">
+      {!ready ? (
+        <p className="text-[#98A2B3]">Choose when the rule runs and the sentence starts here.</p>
+      ) : (<>
+        <p>
+          <b className="font-medium">{eventLabel(draft.event)}</b>, on <b className="font-medium">{draft.execution.replace(/^On /, '').toLowerCase()}</b>,
+          {' '}for <b className="font-medium">{(draft.applies || 'whoever it applies to').toLowerCase()}</b>
+          {conditionLines.length ? <>, if <b className="font-medium">{conditionLines.join(' and ')}</b></> : null}
+          {similar.length > 0 && <span title={similar.length + ' rules already use this trigger'} className="ml-1 rounded-sm bg-[#FFFBEB] px-1 text-[11px] font-medium text-[#B45309]">⧉ {similar.length} similar</span>}:
+        </p>
+        {draft.actions.filter((a) => a.type && a.fieldIds.length).length === 0
+          ? <p className="text-[#98A2B3]">…then add what it should do.</p>
+          : (
+            <ul className="flex flex-col gap-1">
+              {draft.actions.filter((a) => a.type && a.fieldIds.length).flatMap((a) => a.fieldIds.map((f) => {
+                const n = conflicts.filter((x) => x.actionId === a.id && x.fieldId === f).length;
+                return (
+                  <li key={a.id + f} className="flex items-start gap-2">
+                    <span className={'mt-[9px] size-1 flex-shrink-0 rounded-full ' + (n ? 'bg-[#DC2626]' : 'bg-[#98A2B3]')} />
+                    <span className="min-w-0 flex-1">{actionText(a.type, fieldById(f)?.label ?? f, a.value.join(', '))}</span>
+                    {n > 0 && <button type="button" onClick={() => setRelOpen('conflicts')} className="flex-shrink-0 rounded-sm bg-[#FEF2F2] px-1.5 text-[11px] font-medium text-[#DC2626] hover:underline">⚠ {n}</button>}
+                  </li>
+                );
+              }))}
+            </ul>
+          )}
+      </>)}
+    </div>
+  );
+  const lsBody = (
+    <div className="flex min-h-0 flex-1">
+      <div className="min-h-0 flex-1 overflow-y-auto">{logicWho}</div>
+      <aside className="flex w-[400px] flex-shrink-0 flex-col overflow-y-auto border-l border-[#DFE5ED] bg-[#FAFBFC]">
+        <div className="flex flex-col gap-1 px-5 pb-4 pt-5">
+          <span className="text-[11px] font-medium uppercase tracking-wide text-[#7B8FA5]">Rule summary</span>
+          <input value={draft.name} onChange={(e) => set({ name: e.target.value })} placeholder="Untitled rule"
+            className={`-mx-1.5 mt-1 rounded-md border border-transparent bg-transparent px-1.5 py-1 text-[17px] font-semibold text-[#1D2A3E] placeholder:text-[#C3CCD8] hover:border-[#E2E8F0] focus:border-[#3D8BD0] focus:bg-white focus:outline-none ${err('name') ? '!border-[#F25C4E]' : ''}`} />
+          <textarea value={draft.description} onChange={(e) => set({ description: e.target.value })} placeholder="Add a description" rows={2}
+            className="-mx-1.5 resize-none rounded-md border border-transparent bg-transparent px-1.5 py-1 text-[12px] leading-[1.55] text-[#64748B] placeholder:text-[#C3CCD8] hover:border-[#E2E8F0] focus:border-[#3D8BD0] focus:bg-white focus:outline-none" />
+          <div className="mt-1"><TagEditor tags={draft.tags} onChange={(tags) => set({ tags })} invalid={!!err('tags')} /></div>
+          {(err('name') || err('tags')) && <p className="text-[12px] text-[#F25C4E]">{err('name') || err('tags')}</p>}
+        </div>
+        <div className="border-t border-[#E8EDF3] px-5 py-4">{sentence}</div>
+        {ready && (conflicts.length > 0 || similar.length > 0) && (
+          <div className="mt-auto flex flex-col gap-2.5 border-t border-[#E8EDF3] px-5 py-4">
+            <RelatedSummaryCards onlyFound stack ready={ready} conflicts={conflicts} similar={similar} onOpenConflicts={() => setRelOpen('conflicts')} onOpenSimilar={() => setRelOpen('similar')} />
+          </div>
+        )}
+      </aside>
+    </div>
+  );
+
+  // ── RC · readiness checklist ──────────────────────────────────────────────
+  const [rcOpenKey, setRcOpenKey] = [rcOpen, setRcOpen];
+  const rcRows: { key: string; label: string; done: boolean; warn?: boolean; value: React.ReactNode; edit?: React.ReactNode; onGo?: () => void; action?: string }[] = [
+    { key: 'name', label: 'Name', done: !!draft.name.trim(), value: draft.name || 'Not set',
+      edit: <input autoFocus value={draft.name} onChange={(e) => set({ name: e.target.value })} placeholder="Rule name" className={inputCls} /> },
+    { key: 'who', label: 'Who it applies to', done: !!draft.applies, value: draft.applies || 'Not set',
+      edit: <RuleSelect value={draft.applies ? [draft.applies] : []} onChange={([v]) => set({ applies: v as FormRule['applies'] })} options={APPLIES_OPTIONS} placeholder="Choose people" /> },
+    { key: 'tags', label: 'Tags', done: draft.tags.length > 0, value: draft.tags.length ? draft.tags.join(', ') : 'None yet',
+      edit: <TagEditor tags={draft.tags} onChange={(tags) => set({ tags })} /> },
+    { key: 'trigger', label: 'Trigger', done: ready, value: ready ? eventLabel(draft.event) + ' · ' + draft.execution : 'Choose when it runs',
+      onGo: () => document.querySelector('[data-rc="when"]')?.scrollIntoView({ behavior: 'smooth', block: 'start' }) },
+    { key: 'actions', label: 'Actions', done: actionsDone, value: draft.actions.filter((a) => a.type).length ? draft.actions.filter((a) => a.type).length + ' action' + (draft.actions.filter((a) => a.type).length === 1 ? '' : 's') : 'None yet',
+      onGo: () => document.querySelector('[data-rc="then"]')?.scrollIntoView({ behavior: 'smooth', block: 'start' }) },
+    { key: 'conflicts', label: ready && conflicts.length ? conflicts.length + ' conflict' + (conflicts.length === 1 ? '' : 's') : 'No conflicts', done: ready && conflicts.length === 0,
+      value: ready ? (conflicts.length ? (['Blocking', 'Opposite', 'Override'] as const).map((k) => { const n = conflicts.filter((x) => x.kind === k).length; return n ? n + ' ' + k : null; }).filter(Boolean).join(' · ') : 'No other rule fights this one') : 'Checked once it has a trigger',
+      onGo: ready && conflicts.length ? () => setRelOpen('conflicts') : undefined, action: 'Fix' },
+    { key: 'similar', label: ready && similar.length ? similar.length + ' similar rule' + (similar.length === 1 ? '' : 's') : 'No similar rules', done: ready && similar.length === 0, warn: ready && similar.length > 0,
+      value: ready ? (similar.length ? 'Consider updating one instead' : 'This is a new rule') : 'Checked once it has a trigger',
+      onGo: ready && similar.length ? () => setRelOpen('similar') : undefined, action: 'Review' },
+  ];
+  const rcDone = rcRows.filter((r) => r.done).length;
+  const rcBody = (
+    <div className="flex min-h-0 flex-1">
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="mx-auto flex max-w-[880px] flex-col gap-6 p-4 pb-8 pt-5">
+          <div data-rc="when" className="scroll-mt-4">{whenEl}</div>
+          {ready && (<>{checkEl}<div data-rc="then" className="scroll-mt-4">{thenEl}</div>{advancedEl}</>)}
+        </div>
+      </div>
+      <aside className="flex w-[380px] flex-shrink-0 flex-col border-l border-[#DFE5ED] bg-white">
+        <div className="flex flex-shrink-0 items-center gap-3 px-5 pb-3 pt-5">
+          <span className="text-[14px] font-semibold text-[#1D2A3E]">Ready to save?</span>
+          <span className="ml-auto text-[12px] font-medium tabular-nums text-[#64748B]">{rcDone} / {rcRows.length}</span>
+        </div>
+        <div className="mx-5 mb-2 h-1 flex-shrink-0 overflow-hidden rounded-full bg-[#EEF2F6]">
+          <div className="h-full rounded-full bg-[#89C540] transition-[width]" style={{ width: (rcDone / rcRows.length) * 100 + '%' }} />
+        </div>
+        <ul className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
+          {rcRows.map((r) => {
+            const open = rcOpenKey === r.key && !!r.edit;
+            const bad = !r.done && (r.key === 'conflicts');
+            return (
+              <li key={r.key} className="border-b border-[#F1F5F9] last:border-b-0">
+                <button type="button" onClick={() => (r.edit ? setRcOpenKey(open ? null : r.key) : r.onGo?.())}
+                  className="flex w-full items-start gap-3 rounded-md px-2 py-2.5 text-left transition-colors hover:bg-[#F7F9FB]">
+                  <span className={'mt-0.5 flex size-5 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-bold ' + (r.done ? 'bg-[#ECFDF3] text-[#12B76A]' : bad ? 'bg-[#FEF2F2] text-[#DC2626]' : r.warn ? 'bg-[#FFFBEB] text-[#B45309]' : 'bg-[#F1F5F9] text-[#98A2B3]')}>
+                    {r.done ? <Check size={12} strokeWidth={3} /> : bad ? '!' : r.warn ? '!' : ''}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className={'block text-[13px] font-medium ' + (bad ? 'text-[#DC2626]' : r.warn ? 'text-[#B45309]' : 'text-[#1D2A3E]')}>{r.label}</span>
+                    <span className="block truncate text-[12px] text-[#7B8FA5]">{r.value}</span>
+                  </span>
+                  {r.onGo && r.action && <span className={'mt-0.5 flex flex-shrink-0 items-center gap-0.5 text-[12px] font-medium ' + (bad ? 'text-[#DC2626]' : 'text-[#B45309]')}>{r.action} <ChevronRight size={13} /></span>}
+                  {r.edit && <ChevronRight size={14} className={'mt-1 flex-shrink-0 text-[#98A2B3] transition-transform ' + (open ? 'rotate-90' : '')} />}
+                </button>
+                {open && <div className="px-2 pb-3 pl-10">{r.edit}</div>}
+              </li>
+            );
+          })}
+          <li className="px-2 pt-2">
+            <span className="text-[11px] text-[#98A2B3]">Description (optional)</span>
+            <textarea value={draft.description} onChange={(e) => set({ description: e.target.value })} placeholder="What this rule is for" className={`${inputCls} mt-1 h-14 resize-y py-1.5 leading-[1.4]`} />
+          </li>
+        </ul>
+        <div className="flex-shrink-0 border-t border-[#E8EDF3] p-4">
+          <button type="button" onClick={() => save()} className="h-9 w-full rounded-md bg-[#3D8BD0] text-[13px] font-medium text-white transition-colors hover:bg-[#3478B5]">
+            {rcDone === rcRows.length ? 'Save rule' : 'Save rule anyway'}
+          </button>
+        </div>
+      </aside>
+    </div>
+  );
+
+  // ── EG · editor gutter ────────────────────────────────────────────────────
+  const egBody = (
+    <div ref={gutterRef} className="relative min-h-0 flex-1 overflow-y-auto">
+      <div className="mx-auto flex max-w-[940px] flex-col gap-6 py-5 pb-8 pl-[60px] pr-4">
+        {ready && (conflicts.length > 0 || similar.length > 0) && cardsRow}
+        {detailsStep(false)}
+        {whoEl}
+        {whenEl}
+        {ready && (<><div data-gutter="check">{checkEl}</div>{thenEl}{advancedEl}</>)}
+      </div>
+      {/* The gutter: a marker beside every row that has an issue. */}
+      <div className="pointer-events-none absolute inset-y-0 left-0 right-0">
+        <div className="relative mx-auto h-full max-w-[940px]">
+          <div className="absolute bottom-0 left-[44px] top-0 w-px bg-[#EEF2F6]" />
+          {gutterMarks.map((m) => (
+            <button key={m.key} type="button" onClick={() => setRelOpen(m.kind === 'c' ? 'conflicts' : 'similar')}
+              title={m.kind === 'c' ? m.n + ' conflict' + (m.n === 1 ? '' : 's') + ' on this action' : m.n + ' similar rule' + (m.n === 1 ? '' : 's') + ' share this trigger'}
+              className={'pointer-events-auto absolute left-2 inline-flex h-5 min-w-[32px] items-center justify-center gap-0.5 rounded px-1 text-[11px] font-semibold tabular-nums transition-transform hover:scale-105 ' + (m.kind === 'c' ? 'bg-[#FEF2F2] text-[#DC2626] ring-1 ring-[#FECACA]' : 'bg-[#FFFBEB] text-[#B45309] ring-1 ring-[#FDE68A]')}
+              style={{ top: m.top }}>
+              {m.kind === 'c' ? '⚠' : '⧉'} {m.n}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  // ── HF · horizontal flow ──────────────────────────────────────────────────
+  /* The steps keep their own controls; their headings give way to the column heads. */
+  const hfCol = (label: string, tone: string, body: React.ReactNode, chip?: React.ReactNode) => (
+    <section className="flex min-h-0 min-w-0 flex-col rounded-lg border border-[#E8EDF3] bg-white">
+      <div className="flex flex-shrink-0 items-center gap-2 border-b border-[#EEF2F6] px-3 py-2.5">
+        <span className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: tone }}>{label}</span>
+        <span className="ml-auto">{chip}</span>
+      </div>
+      <div className="min-h-0 flex-1 overflow-y-auto p-3 [&_.grid-cols-2]:grid-cols-1 [&_.min-w-0.flex-1.items-center.gap-2]:flex-wrap [&_.min-w-0.flex-1.items-center.gap-2>.min-w-0.flex-1]:min-w-[160px] [&_section>div>h2]:hidden [&_section>span]:hidden">{body}</div>
+    </section>
+  );
+  const hfBody = (
+    <div className="flex min-h-0 flex-1 flex-col gap-3 bg-[#F6F8FB] p-4">
+      <div className="flex flex-shrink-0 flex-wrap items-center gap-3 rounded-lg border border-[#E8EDF3] bg-white px-4 py-3">
+        <input value={draft.name} onChange={(e) => set({ name: e.target.value })} placeholder="Rule name"
+          className={`h-8 min-w-[220px] flex-1 rounded-md border border-transparent bg-transparent px-2 text-[15px] font-semibold text-[#1D2A3E] placeholder:text-[#C3CCD8] hover:border-[#E2E8F0] focus:border-[#3D8BD0] focus:outline-none ${err('name') ? '!border-[#F25C4E]' : ''}`} />
+        <TagEditor tags={draft.tags} onChange={(tags) => set({ tags })} invalid={!!err('tags')} />
+        {ready && conflicts.length > 0 && (
+          <button type="button" onClick={() => setRelOpen('conflicts')} className="inline-flex h-7 items-center gap-1.5 rounded-md border border-[#FECACA] bg-[#FEF6F6] px-2.5 text-[12px] font-medium text-[#DC2626]"><span className="size-1.5 rounded-full bg-[#DC2626]" />{conflicts.length} conflicts</button>
+        )}
+        {ready && similar.length > 0 && (
+          <button type="button" onClick={() => setRelOpen('similar')} className="inline-flex h-7 items-center gap-1.5 rounded-md border border-[#FDE68A] bg-[#FFFBEB] px-2.5 text-[12px] font-medium text-[#B45309]"><span className="size-1.5 rounded-full bg-[#F59E0B]" />{similar.length} similar</button>
+        )}
+      </div>
+      <div className="grid min-h-0 flex-1 grid-cols-[minmax(170px,0.6fr)_minmax(200px,0.7fr)_minmax(480px,1.7fr)_minmax(480px,1.7fr)] gap-3 overflow-x-auto">
+        {hfCol('Who', '#7C5CC4', whoEl)}
+        {hfCol('When', '#3D8BD0', whenEl)}
+        {hfCol('If', '#F58518', ready ? checkEl : <p className="text-[12px] text-[#98A2B3]">Choose when it runs first.</p>,
+          ready && similar.length > 0 ? <button type="button" onClick={() => setRelOpen('similar')} className="rounded-sm bg-[#FFFBEB] px-1.5 text-[11px] font-medium text-[#B45309]">⧉ {similar.length} similar</button> : undefined)}
+        {hfCol('Then', '#89C540', ready ? <div className="flex flex-col gap-4">{thenEl}{advancedEl}</div> : <p className="text-[12px] text-[#98A2B3]">Choose when it runs first.</p>,
+          ready && conflicts.length > 0 ? <button type="button" onClick={() => setRelOpen('conflicts')} className="rounded-sm bg-[#FEF2F2] px-1.5 text-[11px] font-medium text-[#DC2626]">⚠ {conflicts.length}</button> : undefined)}
+      </div>
+    </div>
+  );
 
   // ── B2 · three steps ───────────────────────────────────────────────────────
   /* Details are a separate thought from logic; everything that makes up the logic — trigger,
@@ -1263,6 +1534,10 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
     version === 'B' ? stepperBody
       : version === 'R' ? relBody
       : version === 'B3' ? b3Body
+      : version === 'LS' ? lsBody
+      : version === 'RC' ? rcBody
+      : version === 'EG' ? egBody
+      : version === 'HF' ? hfBody
       : version === 'A3' ? a3Body
       : version === 'A3R' ? a3rBody
       : version === 'S' ? <div className="min-h-0 flex-1 overflow-y-auto">{builder}</div>
@@ -1297,7 +1572,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
     <div className="flex h-full min-h-0 flex-col bg-white">
       {/* Head — back, what this is, and the one line of help. */}
       <div className="flex flex-shrink-0 items-center gap-2 border-b border-[#DFE5ED] px-4 py-3">
-        <button type="button" onClick={leave} title="Back to form rules" className="-ml-1.5 flex size-[30px] items-center justify-center rounded-lg text-[#7B8FA5] transition-colors hover:bg-[#EEF2F6] hover:text-[#364658]">
+        <button type="button" onClick={leave} title="Back to form rules" className="-ml-1.5 -mt-[3px] flex size-[30px] flex-shrink-0 self-start items-center justify-center rounded-lg text-[#7B8FA5] transition-colors hover:bg-[#EEF2F6] hover:text-[#364658]">
           <ArrowLeft size={16} />
         </button>
         <div className="flex min-w-0 flex-col gap-0.5">
@@ -1313,14 +1588,14 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
         <div className="ml-auto flex flex-shrink-0 items-center gap-2.5">
           {version === 'S'
             ? <RelatedSummaryChips ready={ready} conflicts={conflicts} similar={similar} onOpenConflicts={() => setRelOpen('conflicts')} onOpenSimilar={() => setRelOpen('similar')} />
-            : statusChip}
+            : !SUMMARY.includes(version) && statusChip /* the summary layouts already show both counts as cards */}
           <button type="button" onClick={leave} className="rounded-md border border-[#DFE5ED] bg-white px-3 py-1.5 text-[12px] font-medium text-[#7B8FA5] transition-colors hover:bg-[#F9FAFB] hover:text-[#364658]">Cancel</button>
           <button type="button" onClick={() => save()} className="rounded-md bg-[#3D8BD0] px-3 py-1.5 text-[12px] font-medium text-white transition-colors hover:bg-[#3478B5]">Save Rule</button>
         </div>
       </div>
 
-      {/* Comparing layouts: every tab edits the same draft. */}
-      <div className="flex flex-shrink-0 items-center gap-2 overflow-x-auto border-b border-[#DFE5ED] bg-[#FAFBFC] px-4 py-1.5">
+      {/* Comparing layouts: every tab edits the same draft. Hidden once only one layout is offered. */}
+      {SHOWN.length > 1 && <div className="flex flex-shrink-0 items-center gap-2 overflow-x-auto border-b border-[#DFE5ED] bg-[#FAFBFC] px-4 py-1.5">
         <span className="flex-shrink-0 text-[11px] text-[#7B8FA5]">Layout</span>
         <div className="pill-track flex-shrink-0">
           {SHOWN.map((id) => VERSIONS.find((v) => v.id === id)!).map((v) => (
@@ -1328,7 +1603,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
           ))}
         </div>
         <span className="truncate text-[11px] text-[#7B8FA5]">{VERSIONS.find((v) => v.id === version)?.hint}</span>
-      </div>
+      </div>}
 
       {body}
       {introEl}

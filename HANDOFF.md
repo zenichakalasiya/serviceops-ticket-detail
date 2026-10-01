@@ -1,4 +1,37 @@
-# Handoff — 2026-10-01 16:50
+# Handoff — 2026-10-01 19:12
+
+## Latest (1 Oct 2026, evening) — Form Rules: B3 finalised and polished
+**Read first:** CLAUDE.md › Key context › the "Request Form Management" bullet — the "Four page-structure variants"
+and "B3 · Steps + summary (FINALISED…)" passages describe the current state.
+
+**Completed**
+- **B3 is the only layout** (`SHOWN = ['B3']`, default; the Layout bar hides when only one layout is offered).
+  Every other layout (A, A2, B, B2, I, P, R, A3, A3R, S, LS, RC, EG, HF) stays built and can be re-shown by adding
+  its id to `SHOWN`. K / N / Z were built and deleted.
+- B3 stepper: white column (no fill/borders), full-width step cards with 10px padding, number badge + label + hint,
+  active = blue pill, done = green tick, a divider under the badges with 2px gaps (stops short of a selected card,
+  runs through an unselected card's padding); main column left-aligned; Rule check cards docked at the foot.
+- Summary cards: tinted fill, no border/icon, count + title in the count colour, 2-line summary, 104px min height,
+  16px apart; whole card clickable with a hover lift + ↗.
+- Action rows: inline red clash lists removed; a conflicting row gets a light red fill + ⚠ button whose hover lists the
+  clashing fields — clicking opens the conflicts sidebar on By field for that field.
+- Conflicts sidebar: no subtitle/KPIs, red "N conflicts found" banner, no "+N more rules", hover-only Open rule in
+  By field, titles top-aligned with the left list.
+- Similar sidebar: amber banner, folded "Common trigger & conditions" container, per rule only "Matches your rule" and
+  "Its other actions", blue info line sticky at the foot.
+- Header: no conflicts/similar status chip in summary layouts; back arrow aligned with the title.
+- Also built (hidden now): LS · Live summary, RC · Checklist, EG · Gutter, HF · Horizontal flow.
+
+**Open / next**
+1. Zeni was asked what to change on the action-row ⚠ icon (image 90) — no answer yet.
+2. Confirm the similar-rules action groups reading (matches + its other actions; "New in your rule" dropped).
+3. Editor tabs for "Open rule" / "Update this rule" with a live "Resolved" state; merge behaviour for similar rules.
+
+**Gotchas**
+- CRLF in `FormRuleConflictReview.tsx` and parts of `FormRuleEditor.tsx`: patch scripts must try `\r\n`.
+- Never put backticks inside `node -e "…"` in Git Bash — write patch scripts with the Write tool.
+- Probes: `D:/Motadata/tour-shots/formrule/p50.mjs`–`p53.mjs` (B3 flow, sidebars, header measure).
+
 
 ## Latest (1 Oct 2026) — Form Rules: conflict / similar-rule UI and page-structure variants
 **Read first:** CLAUDE.md › Key context › the long *"Request Form Management (Admin › Request Management)"* bullet —

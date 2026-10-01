@@ -62,7 +62,12 @@ function KindBar({ cs, h = 6 }: { cs: RuleConflict[]; h?: number }) {
 
 const countKinds = (cs: RuleConflict[]) => KINDS.map((k) => [k, cs.filter((c) => c.kind === k).length] as const).filter(([, n]) => n > 0);
 
-export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, onOpenRule, currentExecution, accordion = false, onHelpChange, onClose }: {
+export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, onOpenRule, currentExecution, accordion = false, onHelpChange, onClose, sidebar = false, initialMode, initialSel }: {
+  /** The R-family sidebar: a 'N conflicts found' banner instead of the four KPI filter cards. */
+  sidebar?: boolean;
+  /** Open on this view / this rule or field (an action row's warning opens a field directly). */
+  initialMode?: 'rule' | 'field';
+  initialSel?: string;
   /** Told when the help page opens or closes — a host can then hand its whole header to it. */
   onHelpChange?: (open: boolean) => void;
   /** When the host gives up its header, the help page carries the close button. */
@@ -77,9 +82,9 @@ export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, o
   onJump: (actionId: string) => void;
   onOpenRule: (id: string) => void;
 }) {
-  const [mode, setMode] = useState<Mode>('rule');
+  const [mode, setMode] = useState<Mode>(initialMode ?? 'rule');
   const [kinds, setKinds] = useState<ConflictKind[]>([]);
-  const [sel, setSel] = useState<string | null>(null);
+  const [sel, setSel] = useState<string | null>(initialSel ?? null);
   const [focusField, setFocusField] = useState<string | null>(null);
   const [helpOpen, setHelpOpenState] = useState(false);
   const setHelpOpen = (o: boolean) => { setHelpOpenState(o); onHelpChange?.(o); };
@@ -189,8 +194,8 @@ export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, o
       const fields = fieldsOf(entry.items);
       detail = (
         <div className="flex flex-col gap-1">
-          <div className="sticky top-0 z-20 -mt-1.5 flex h-9 items-center gap-3 bg-white">
-            <h3 className="min-w-0 flex-1 truncate text-[15px] font-semibold text-[#1D2A3E]">{entry.rule.name}</h3>
+          <div className="sticky top-0 z-20 flex items-center gap-3 bg-white pb-2">
+            <h3 className="min-w-0 flex-1 truncate text-[15px] font-semibold leading-5 text-[#1D2A3E]">{entry.rule.name}</h3>
             <button type="button" onClick={() => onOpenRule(entry.rule.id)} className="inline-flex flex-shrink-0 items-center gap-1 rounded-md px-2 py-1 text-[12px] font-medium text-[#3D8BD0] transition-colors hover:bg-[#EBF5FF]">Open rule <ArrowUpRight size={12} /></button>
           </div>
           <div className="flex flex-col gap-4">{fields.map((fid) => {
@@ -198,13 +203,9 @@ export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, o
             const alsoRules = rulesOf(byField.find((f) => f.fieldId === fid)?.items ?? []).filter((id) => id !== entry.rule.id);
             return (
               <div key={fid} className={'rounded-xl bg-[#F4F6FA] p-3 transition-shadow ' + (focusField === fid ? 'ring-2 ring-[#3D8BD0]/30' : '')}>
-                <div className="sticky top-[30px] z-10 -mx-3 -mt-3 mb-0 flex items-center gap-2 rounded-t-xl bg-[#F4F6FA] px-3.5 pb-2.5 pt-3">
+                <div className="sticky top-[28px] z-10 -mx-3 -mt-3 mb-0 flex items-center gap-2 rounded-t-xl bg-[#F4F6FA] px-3.5 pb-2.5 pt-3">
                   <span className="text-[14px] font-semibold text-[#1D2A3E]">{fieldLabel(fid)}</span>
-                  {alsoRules.length > 0 && (
-                    <button type="button" onClick={() => goField(fid)} className="ml-auto text-[12px] text-[#3D8BD0] hover:underline">
-                      +{alsoRules.length} more rule{alsoRules.length > 1 ? 's' : ''}
-                    </button>
-                  )}
+
                 </div>
                 <div className="flex flex-col gap-2.5">{here.map((x) => pair(x, fid))}</div>
               </div>
@@ -219,15 +220,16 @@ export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, o
       const ruleIds = rulesOf(entry.items).sort((a, b) => order(a) - order(b));
       detail = (
         <div className="flex flex-col gap-1">
-          <h3 className="sticky top-0 z-20 -mt-1.5 flex h-9 items-center bg-white text-[15px] font-semibold text-[#1D2A3E]">{fieldLabel(entry.fieldId)}</h3>
+          <h3 className="sticky top-0 z-20 flex items-center bg-white pb-2 text-[15px] font-semibold leading-5 text-[#1D2A3E]">{fieldLabel(entry.fieldId)}</h3>
           <div className="flex flex-col gap-4">{ruleIds.map((rid) => {
             const here = entry.items.filter((x) => x.other.id === rid);
             const rule = here[0].other;
             return (
-              <div key={rid} className="rounded-xl bg-[#F4F6FA] p-3">
-                <div className="sticky top-[30px] z-10 -mx-3 -mt-3 mb-0 flex items-center gap-2 rounded-t-xl bg-[#F4F6FA] px-3.5 pb-2.5 pt-3">
+              <div key={rid} className="group/rc rounded-xl bg-[#F4F6FA] p-3">
+                <div className="sticky top-[28px] z-10 -mx-3 -mt-3 mb-0 flex items-center gap-2 rounded-t-xl bg-[#F4F6FA] px-3.5 pb-2.5 pt-3">
                   <span className="truncate text-[14px] font-semibold text-[#1D2A3E]">{rule.name}</span>
-                  <button type="button" onClick={() => onOpenRule(rid)} className="ml-auto flex-shrink-0 text-[12px] text-[#3D8BD0] hover:underline">Open rule</button>
+                  {/* Shown on hover of the card, top-right, so a list of rules stays quiet until you reach for one. */}
+                  <button type="button" onClick={() => onOpenRule(rid)} className="ml-auto inline-flex flex-shrink-0 items-center gap-1 text-[12px] font-medium text-[#3D8BD0] opacity-0 transition-opacity hover:underline focus:opacity-100 group-hover/rc:opacity-100">Open rule <ArrowUpRight size={12} /></button>
                 </div>
                 <div className="flex flex-col gap-2.5">{here.map((x) => pair(x, entry.fieldId))}</div>
               </div>
@@ -355,12 +357,21 @@ export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, o
     <div className="@container flex h-full min-h-0 flex-col">
       {/* One row: the view tabs on the left, the counts on the right. Each count is a small card —
           number over its name, nothing else — and it is also the kind filter ("All" included). */}
+      {sidebar && (
+        <div className="mx-3 mb-3 flex flex-shrink-0 items-start gap-3 rounded-lg border border-[#FBD5D5] bg-[#FEF4F4] px-4 py-3">
+          <AlertTriangle size={16} className="mt-0.5 flex-shrink-0 text-[#D92D20]" />
+          <div className="min-w-0">
+            <div className="text-[14px] font-semibold text-[#B42318]">{conflicts.length} conflict{conflicts.length === 1 ? '' : 's'} found</div>
+            <p className="mt-0.5 text-[12px] leading-[1.5] text-[#C2413A]">A field can only end up in one state. Resolve these to avoid unexpected behaviour in the form.</p>
+          </div>
+        </div>
+      )}
       <div className="mx-3 mb-3 flex flex-shrink-0 flex-wrap items-center gap-3">
         <div className="pill-track">
           <button type="button" aria-pressed={mode === 'rule'} onClick={() => setMode('rule')}><span className="inline-flex items-center gap-1.5"><FileText size={12} />By rule</span></button>
           <button type="button" aria-pressed={mode === 'field'} onClick={() => setMode('field')}><span className="inline-flex items-center gap-1.5"><Layers size={12} />By field</span></button>
         </div>
-        <div className="grid w-full grid-cols-4 gap-2 @[640px]:ml-auto @[640px]:flex @[640px]:w-auto">
+        {!sidebar && <div className="grid w-full grid-cols-4 gap-2 @[640px]:ml-auto @[640px]:flex @[640px]:w-auto">
           {([
             { id: 'all' as const, label: 'All conflicts', n: conflicts.length, fg: '#1D2A3E' },
             ...KINDS.map((k) => ({ id: k, label: k, n: conflicts.filter((x) => x.kind === k).length, fg: KIND[k].fg })),
@@ -376,7 +387,7 @@ export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, o
               </button>
             );
           })}
-        </div>
+        </div>}
       </div>
 
       {accordion ? accordionView : (
