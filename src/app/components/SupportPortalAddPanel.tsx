@@ -334,9 +334,9 @@ export function SupportPortalAddPanel({ onAdd, placed }: Props) {
               })()}
             </h3>
             {!q && !openAdded.has(group) && items.every((e) => placed?.has(e.id)) && (
-              /* A dashed placeholder the size of one row, so a finished group keeps the list's rhythm
-                 instead of trailing a loose sentence under its title (Zeni, 1 Oct 2026). */
-              <div className="mb-2 flex h-[54px] items-center justify-center rounded border border-dashed border-[#D7DEE7] text-[12px] text-[#9AA6B6]">All added to the page</div>
+              /* One quiet line under the title (Zeni, 1 Oct 2026) — a row-sized dashed box was too heavy for
+                 "nothing to add here". */
+              <p className="-mt-0.5 mb-2 text-[12px] leading-[18px] text-[#9AA6B6]">All added to the page</p>
             )}
             <div className="space-y-2">
               {/* Addable rows first, then — only while the fold is open, or while searching — the ones
