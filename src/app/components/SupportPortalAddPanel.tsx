@@ -327,7 +327,6 @@ export function SupportPortalAddPanel({ onAdd, placed }: Props) {
                     title={open ? 'Hide the widgets already on this page' : 'Show the widgets already on this page'}
                     className="flex items-center gap-1 rounded px-1 py-0.5 text-[11px] font-medium normal-case tracking-normal text-[#7B8FA5] transition-colors hover:bg-[#F5F7FA] hover:text-[#364658]"
                   >
-                    <span className="flex size-3.5 items-center justify-center rounded-full bg-[#22C55E] text-white"><Check size={9} strokeWidth={3} /></span>
                     {n} on this page
                     {open ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
                   </button>
@@ -335,7 +334,9 @@ export function SupportPortalAddPanel({ onAdd, placed }: Props) {
               })()}
             </h3>
             {!q && !openAdded.has(group) && items.every((e) => placed?.has(e.id)) && (
-              <p className="pb-1 text-[12px] text-[#9AA6B6]">Every {group} widget is on the page.</p>
+              /* A dashed placeholder the size of one row, so a finished group keeps the list's rhythm
+                 instead of trailing a loose sentence under its title (Zeni, 1 Oct 2026). */
+              <div className="mb-2 flex h-[54px] items-center justify-center rounded border border-dashed border-[#D7DEE7] text-[12px] text-[#9AA6B6]">All added to the page</div>
             )}
             <div className="space-y-2">
               {/* Addable rows first, then — only while the fold is open, or while searching — the ones
