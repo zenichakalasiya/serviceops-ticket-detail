@@ -573,11 +573,17 @@ body[data-portal-dragging] [data-portal-toolbar] { pointer-events: none; opacity
 .portal-range:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 2px rgba(61, 139, 208, 0.3), 0 1px 2px rgba(16, 24, 40, 0.25); }
 
 /* Support Portal builder — floating toolbar dividers (Zeni, 30 Sep 2026): ONE divider, right after the drag
-   GRIP, and none anywhere else. Every `Rule` (`tb-rule`) between the other buttons is hidden; the grip
+   GRIP and one before DELETE, and none anywhere else. Every `Rule` (`tb-rule`) between the other buttons is hidden; the grip
    (`tb-grip`) draws its own divider on its right edge, so it shows on every bar that has a grip — widgets,
    text, the banner's Text & Search section — whatever buttons follow it. Bars with no grip have no divider.
    To bring the group dividers back, delete the first rule below. */
 [data-portal-toolbar] > .tb-rule { display: none; }
+/* …except the one fencing DELETE off from everything else (Zeni, 1 Oct 2026): a destructive action sits apart. */
+[data-portal-toolbar] > .tb-rule:has(+ [data-tip^="Delete"]) { display: block; }
+/* Never two lines in a row: a grip directly before that rule already draws its own. */
+[data-portal-toolbar] > .tb-grip + .tb-rule,
+[data-portal-toolbar] > .tb-grip + .tb-rule + .tb-rule,
+[data-portal-toolbar] > .tb-grip + .tb-rule + .tb-rule + .tb-rule { display: none; }
 [data-portal-toolbar] > .tb-grip:not(:last-child) { position: relative; margin-right: 5px; }
 [data-portal-toolbar] > .tb-grip:not(:last-child)::after {
   content: ""; position: absolute; right: -3px; top: 50%; width: 1px; height: 16px;
