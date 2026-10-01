@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { ArrowUpRight, Check, ChevronRight, ChevronsRight, CornerDownRight, History, ListOrdered, Plus, Split, X } from 'lucide-react';
+import { FormRuleConflictReview } from './FormRuleConflictReview';
+import type { FormRule } from './formRuleData';
 import type { ConflictKind, RuleConflict, SimilarRule, TimelineEntry } from './formRuleEngine';
 import { EVENT_OPTIONS } from './formRuleData';
 
@@ -21,7 +23,7 @@ export function KindPill({ kind }: { kind: ConflictKind }) {
 }
 
 /** Two rule cards that line up, joined by a green check — "these rules agree". */
-function NoConflictsArt() {
+export function NoConflictsArt() {
   return (
     <svg width="148" height="96" viewBox="0 0 148 96" fill="none" aria-hidden>
       <ellipse cx="74" cy="88" rx="54" ry="5" fill="#EEF2F6" />
@@ -44,6 +46,57 @@ function NoConflictsArt() {
   );
 }
 
+/** A rule card with its double stacked behind it, and a magnifier over the two —
+ *  "we looked for a rule that already does this". Same card vocabulary as NoConflictsArt. */
+export function SimilarRulesArt() {
+  return (
+    <svg width="148" height="96" viewBox="0 0 148 96" fill="none" aria-hidden>
+      <ellipse cx="74" cy="88" rx="54" ry="5" fill="#EEF2F6" />
+      <rect x="40" y="10" width="64" height="52" rx="8" fill="#F9FAFB" stroke="#DFE5ED" />
+      <rect x="50" y="21" width="30" height="5" rx="2.5" fill="#E2E8F0" />
+      <rect x="50" y="32" width="44" height="4" rx="2" fill="#F1F5F9" />
+      <rect x="28" y="22" width="64" height="52" rx="8" fill="#fff" stroke="#DFE5ED" />
+      <rect x="38" y="33" width="30" height="5" rx="2.5" fill="#CBD5E1" />
+      <rect x="38" y="44" width="44" height="4" rx="2" fill="#EEF2F6" />
+      <rect x="38" y="53" width="36" height="4" rx="2" fill="#EEF2F6" />
+      <rect x="38" y="62" width="18" height="6" rx="3" fill="#FFF4E5" />
+      <circle cx="100" cy="54" r="14" fill="#FFFBEB" stroke="#F59E0B" strokeWidth="2.4" />
+      <path d="M94 54h12M100 48v12" stroke="#FBBF24" strokeWidth="1.6" strokeLinecap="round" opacity=".55" />
+      <path d="M110 64l9 9" stroke="#F59E0B" strokeWidth="3.2" strokeLinecap="round" />
+      <circle cx="122" cy="16" r="2.5" fill="#F59E0B" opacity=".45" />
+      <circle cx="16" cy="40" r="2" fill="#3D8BD0" opacity=".35" />
+      <path d="M126 32h8M130 28v8" stroke="#CBD5E1" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/** Three rules on the run-order rail, numbered top to bottom; this rule is the blue one, and the
+ *  arrow says which way they run. Same card vocabulary as the other two illustrations. */
+function RunOrderArt() {
+  const row = (y: number, n: number, self: boolean) => (
+    <g key={n}>
+      <circle cx="34" cy={y + 9} r="8" fill={self ? '#3D8BD0' : '#EEF2F6'} stroke="#fff" strokeWidth="2" />
+      <text x="34" y={y + 12.5} textAnchor="middle" fontSize="9" fontWeight="600" fill={self ? '#fff' : '#64748B'} fontFamily="Inter, sans-serif">{n}</text>
+      <rect x="48" y={y} width="72" height="18" rx="5" fill={self ? '#F5F9FD' : '#fff'} stroke={self ? '#CFE3F5' : '#DFE5ED'} />
+      <rect x="56" y={y + 7} width={self ? 34 : 28} height="4" rx="2" fill={self ? '#9CC4E8' : '#CBD5E1'} />
+      <rect x={self ? 94 : 88} y={y + 7} width="18" height="4" rx="2" fill={self ? '#E2EDF5' : '#EEF2F6'} />
+    </g>
+  );
+  return (
+    <svg width="148" height="96" viewBox="0 0 148 96" fill="none" aria-hidden>
+      <ellipse cx="74" cy="88" rx="54" ry="5" fill="#EEF2F6" />
+      <path d="M34 18v50" stroke="#DFE5ED" strokeWidth="2" />
+      {row(9, 1, false)}
+      {row(33, 2, true)}
+      {row(57, 3, false)}
+      <path d="M132 22v40" stroke="#CBD5E1" strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M128 57l4 5 4-5" stroke="#CBD5E1" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="14" cy="24" r="2" fill="#3D8BD0" opacity=".35" />
+      <circle cx="138" cy="12" r="2.5" fill="#89C540" opacity=".45" />
+    </svg>
+  );
+}
+
 function Empty({ art, title, text }: { art?: React.ReactNode; title: string; text: string }) {
   return (
     <div className="flex flex-col items-center px-6 py-10 text-center">
@@ -56,8 +109,14 @@ function Empty({ art, title, text }: { art?: React.ReactNode; title: string; tex
 
 export function FormRuleInsights({
   ready, hasActions, conflicts, similar, timeline, tab, onTab, triggerChips, conditionLines, fieldLabel,
-  onJump, onHover, onOpenRule, onCollapse, onCloseDialog, bare = false, hideHead = false, only,
+  onJump, onHover, onOpenRule, onCollapse, onCloseDialog, bare = false, hideHead = false, only, rules = [], pillTabs = false, noTitleIcon = false,
 }: {
+  /** Drop the list glyph before "Rule check". */
+  noTitleIcon?: boolean;
+  /** The ticket Relations tab's bordered pills instead of underline tabs — for a panel that already has a tab row above. */
+  pillTabs?: boolean;
+  /** Every rule, in run order — the conflict list numbers and names them. */
+  rules?: FormRule[];
   /** Show just this tab's content, no header or tab strip — the host has its own tabs. */
   only?: InsightTab;
   /** Drop the "Rule check" title row — the host already names it (the Problems dock). */
@@ -82,11 +141,7 @@ export function FormRuleInsights({
   onHover: (actionId: string | null) => void;
   onOpenRule: (id: string) => void;
 }) {
-  const [groupBy, setGroupBy] = useState<'rule' | 'field'>('rule');
   if (only) tab = only;
-
-  const byRule = conflicts.reduce<Record<string, RuleConflict[]>>((m, c) => ((m[c.other.id] ||= []).push(c), m), {});
-  const byField = conflicts.reduce<Record<string, RuleConflict[]>>((m, c) => ((m[c.fieldId] ||= []).push(c), m), {});
 
   const tabs: [InsightTab, string, number | null][] = [
     ['conflicts', 'Conflicts', conflicts.length],
@@ -94,85 +149,18 @@ export function FormRuleInsights({
     ['order', 'Run order', null],
   ];
 
-  /** One conflict, as a diff: this rule's action beside theirs. */
-  const diff = (c: RuleConflict, head: 'field' | 'rule') => (
-    <div
-      key={c.key}
-      onMouseEnter={() => onHover(c.actionId)}
-      onMouseLeave={() => onHover(null)}
-      className="rounded-lg border border-[#EEF2F6] bg-white p-3.5 transition-colors hover:border-[#FCA5A5]"
-    >
-      <div className="mb-3 flex items-center gap-2">
-        <span className="truncate text-[12px] font-medium text-[#364658]">{head === 'field' ? fieldLabel(c.fieldId) : c.other.name}</span>
-        <KindPill kind={c.kind} />
-        <button type="button" onClick={() => onJump(c.actionId)} className="ml-auto inline-flex flex-shrink-0 items-center gap-0.5 text-[11px] font-medium text-[#3D8BD0] hover:underline">
-          <CornerDownRight size={11} /> Jump to row
-        </button>
-      </div>
-      <div className="grid grid-cols-2 gap-2.5">
-        <div className="rounded-md bg-[#F5F9FD] px-3 py-2.5">
-          <div className="mb-1 text-[10px] font-medium text-[#3D8BD0]">This rule</div>
-          <div className="text-[12px] text-[#364658]">{c.mine}</div>
-        </div>
-        <div className="rounded-md bg-[#FEF6F6] px-3 py-2.5">
-          <div className="mb-1 truncate text-[10px] font-medium text-[#DC2626]">{c.other.name}</div>
-          <div className="text-[12px] text-[#364658]">{c.theirs}</div>
-        </div>
-      </div>
-      <div className="mt-3.5 flex flex-col gap-2 border-t border-[#EEF2F6] pt-3">
-        <p className="text-[11px] leading-[1.6] text-[#7B8FA5]">{c.scope} · {c.why}</p>
-        <p className="text-[11px] font-medium leading-[1.6] text-[#364658]">{c.outcome}</p>
-      </div>
-    </div>
-  );
-
   let body: React.ReactNode;
   if (!ready) {
-    body = <Empty title="Rule check starts with the trigger" text="Choose when the rule runs. Conflicts, similar rules and run order appear here as you build." />;
+    body = <Empty art={tab === 'conflicts' ? <NoConflictsArt /> : tab === 'similar' ? <SimilarRulesArt /> : <RunOrderArt />}
+      title="Rule check starts with the trigger" text="Choose when the rule runs. Conflicts, similar rules and run order appear here as you build." />;
   } else if (tab === 'conflicts') {
     body = conflicts.length === 0 ? (
       <Empty art={<NoConflictsArt />} title="No conflicts in this rule"
         text={hasActions ? 'No other rule changes these fields in a different way. The form ends up in one clear state.' : 'Add an action — this is where any clash with another rule shows up.'} />
-    ) : (
-      <div className="flex flex-col gap-3 p-4">
-        <div className="rounded-md border border-[#FECDD3] bg-[#FFF1F2] px-3 py-2">
-          <div className="text-[12px] font-medium text-[#BE123C]">{conflicts.length} conflict{conflicts.length > 1 ? 's' : ''} with {Object.keys(byRule).length} rule{Object.keys(byRule).length > 1 ? 's' : ''}</div>
-          <p className="text-[11px] text-[#BE123C]/80">A field can end up in only one state. Resolve these so the form behaves predictably.</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[11px] text-[#7B8FA5]">Group by</span>
-          <div className="pill-track">
-            <button type="button" aria-pressed={groupBy === 'rule'} onClick={() => setGroupBy('rule')}>Rule</button>
-            <button type="button" aria-pressed={groupBy === 'field'} onClick={() => setGroupBy('field')}>Field</button>
-          </div>
-        </div>
-        {groupBy === 'rule'
-          ? Object.values(byRule).map((cs) => (
-            <div key={cs[0].other.id} className="rounded-lg bg-[#F9FAFB] p-3">
-              <div className="mb-3 flex items-center gap-2 px-0.5">
-                <span className="truncate text-[12px] font-semibold text-[#364658]">{cs[0].other.name}</span>
-                <span className="flex-shrink-0 text-[11px] text-[#7B8FA5]">{cs.length} conflict{cs.length > 1 ? 's' : ''}</span>
-                <button type="button" onClick={() => onOpenRule(cs[0].other.id)} className="ml-auto inline-flex flex-shrink-0 items-center gap-0.5 text-[11px] font-medium text-[#3D8BD0] hover:underline">
-                  Open rule <ArrowUpRight size={11} />
-                </button>
-              </div>
-              <div className="flex flex-col gap-2.5">{cs.map((c) => diff(c, 'field'))}</div>
-            </div>
-          ))
-          : Object.entries(byField).map(([fid, cs]) => (
-            <div key={fid} className="rounded-lg bg-[#F9FAFB] p-3">
-              <div className="mb-3 flex items-center gap-2 px-0.5">
-                <span className="text-[12px] font-semibold text-[#364658]">{fieldLabel(fid)}</span>
-                <span className="text-[11px] text-[#7B8FA5]">{cs.length} conflict{cs.length > 1 ? 's' : ''}</span>
-              </div>
-              <div className="flex flex-col gap-2.5">{cs.map((c) => diff(c, 'rule'))}</div>
-            </div>
-          ))}
-      </div>
-    );
+    ) : null;
   } else if (tab === 'similar') {
     body = similar.length === 0 ? (
-      <Empty title={conditionLines.length ? 'No similar rules' : 'Add a condition to compare'}
+      <Empty art={<SimilarRulesArt />} title={conditionLines.length ? 'No similar rules' : 'Add a condition to compare'}
         text={conditionLines.length ? 'No other rule uses this trigger and these conditions. This rule is not a duplicate.' : 'Similar rules are ones that already use the same trigger and conditions. Add a condition and they show here.'} />
     ) : (
       <div className="flex flex-col gap-3 p-3">
@@ -195,7 +183,7 @@ export function FormRuleInsights({
     );
   } else {
     body = timeline.length <= 1 ? (
-      <Empty title={hasActions ? 'No other rule touches these fields' : 'Add an action to see the run order'}
+      <Empty art={<RunOrderArt />} title={hasActions ? 'No other rule touches these fields' : 'Add an action to see the run order'}
         text={hasActions ? 'Only this rule changes these fields, so it decides them on its own.' : 'Rules run top to bottom. This view lines up every rule that touches the same fields.'} />
     ) : (
       <div className="p-4">
@@ -231,7 +219,7 @@ export function FormRuleInsights({
   return (
     <aside className={`flex h-full min-h-0 flex-col bg-white ${bare ? '' : 'border-l border-[#DFE5ED]'}`}>
       {!hideHead && !only && <div className="flex flex-shrink-0 items-center gap-2 px-4 pt-3">
-        <ListOrdered size={14} className="text-[#7B8FA5]" />
+        {!noTitleIcon && <ListOrdered size={14} className="text-[#7B8FA5]" />}
         <span className="text-[13px] font-medium text-[#364658]">Rule check</span>
         <span className="text-[11px] text-[#7B8FA5]">· updates as you build</span>
         {onCollapse && (
@@ -241,7 +229,16 @@ export function FormRuleInsights({
           <button type="button" onClick={onCloseDialog} title="Close" className="ml-auto flex size-8 items-center justify-center rounded transition-colors hover:bg-[#F3F4F6]"><X size={16} className="text-[#64748B]" /></button>
         )}
       </div>}
-      {!only && <div className="flex flex-shrink-0 gap-2.5 border-b border-[#DFE5ED] px-4">
+      {!only && pillTabs && <div className="flex flex-shrink-0 flex-wrap gap-2 px-4 pt-3">
+        {tabs.map(([id, text, n]) => (
+          <button key={id} type="button" onClick={() => onTab(id)}
+            className={`inline-flex items-center gap-1.5 rounded border px-2.5 py-1.5 text-[13px] font-medium transition-colors ${tab === id ? 'border-[#3D8BD0] bg-[#EBF5FF] text-[#3D8BD0]' : 'border-[#DFE5ED] bg-white text-[#364658] hover:border-[#3D8BD0] hover:bg-[#F5F7FA]'}`}>
+            {text}
+            {n !== null && ready && <span className={`inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[11px] font-semibold ${tab === id ? 'bg-[#3D8BD0] text-white' : 'bg-[#EEF2F6] text-[#64748B]'}`}>{n}</span>}
+          </button>
+        ))}
+      </div>}
+      {!only && !pillTabs && <div className="flex flex-shrink-0 gap-2.5 border-b border-[#DFE5ED] px-4">
         {tabs.map(([id, text, n]) => (
           <button
             key={id}
@@ -256,7 +253,12 @@ export function FormRuleInsights({
           </button>
         ))}
       </div>}
-      <div className="min-h-0 flex-1 overflow-y-auto">{body}</div>
+      {ready && tab === 'conflicts' && conflicts.length > 0
+        ? <div className="flex min-h-0 flex-1 flex-col pt-3">
+            <FormRuleConflictReview accordion conflicts={conflicts} rules={rules} fieldLabel={fieldLabel}
+              onJump={onJump} onOpenRule={onOpenRule} currentExecution={triggerChips.execution} />
+          </div>
+        : <div className="min-h-0 flex-1 overflow-y-auto">{body}</div>}
     </aside>
   );
 }

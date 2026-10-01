@@ -1,4 +1,54 @@
-# Handoff — 2026-09-30 22:42
+# Handoff — 2026-10-01 16:50
+
+## Latest (1 Oct 2026) — Form Rules: conflict / similar-rule UI and page-structure variants
+**Read first:** CLAUDE.md › Key context › the long *"Request Form Management (Admin › Request Management)"* bullet —
+the 1 Oct additions sit inside it (G2, Layout bar, B/B2 two steps, P, A2, I tabs, R summary cards, the four
+structure variants, stat cards, the "Resolving conflicts" page).
+
+**Completed this session**
+- **G2 · Review list** (later folded into the Rule check): every rule/field is an accordion with a light `#F6F9FC`
+  36px header (no bottom stroke), ⚠ "n conflicts" + Open rule on the right, sticky header + sticky field sub-headers,
+  pair cards `#F6F9FC` at 80%. The Rule check's Conflicts tab IS this list in all layouts.
+- **Layout bar** now shows only: A · A2 · B · B2 · I · P · R · B3 · A3 · A3R · S (the rest stay built but hidden;
+  K / N / Z were built and then REMOVED on request).
+- **A** — Rule details in a grey Step panel. **A2 · Who first** — Rule details (name + tags side by side, description
+  under) → Who → When…. **B / B2** — two steps (Rule details → Build the rule), one frame so nothing moves between
+  steps, Rule check rail on both steps, Next under the tags, no stroke on the selected step. **I** — Who step in the
+  centre, right pane = tabs Rule details · Rule check (auto-switches to Rule check when a conflict appears), pill
+  sub-tabs like the ticket Relations tab, same width as P. **P · Name first** — popup (name / description / tags) on
+  Create, rule centred with Who on top, title = rule name, Rule check title has no icon.
+- Every content column is centred (`mx-auto max-w-[880px]`). No footer bar — Cancel / Save / status chip sit top-right
+  of the header.
+- Empty-state illustrations for all three Rule check tabs (Conflicts, Similar rules, Run order).
+- **R · Summary cards** + **B3 · Steps + summary**, **A3 · Details left**, **A3R · Details right**, **S · Header summary**:
+  conflicts and similar rules are separate jobs. Stat cards (tinted fill, 6px corners, number top-left, title on one
+  line, per-kind breakdown, Resolve › / Review › foot) appear only once something is found; each opens its own
+  960px sidebar — *Resolve conflicts* (G's split view, By rule / By field) or *Similar rules* (trigger compared line
+  by line, actions split Same as yours / New in your rule / Only in that rule, Update this rule). S shows the counts
+  as header chips with a hover breakdown. A3 / A3R / B3 sidebars are 380px.
+- "How do I resolve these conflicts?" now opens a full **Resolving conflicts** page (back arrow, six numbered ways);
+  in R-family sidebars it takes over the whole header.
+- Published artifact comparing three combined approaches (now partly superseded by the "two separate jobs" decision):
+  https://claude.ai/artifact/NBA1tLmCEtH3J3JXG338Ty
+
+**Decisions**
+- Conflicts and similar rules are never mixed in one list — a conflict is resolved in its own flow, a similar rule is
+  guidance ("update that rule instead").
+- Summary cards show only once something is found. Card summary = per-kind breakdown only.
+- "Open rule" / "Update this rule" keep today's behaviour for now.
+
+**Next steps**
+1. Zeni to pick favourite page structures (R, B3, A3, A3R, S); hide the rest from the Layout bar.
+2. Open a related rule in an editor tab beside the draft, with a live "Resolved" state when it is fixed there.
+3. Decide what "Add my actions to this rule" does (merge vs open pre-filled).
+4. Update or retire the approaches artifact to match the two-jobs direction.
+
+**Gotchas**
+- `FormRuleConflictReview.tsx` (and parts of `FormRuleEditor.tsx`) have CRLF line endings — multi-line string patches
+  must also try `\r\n`.
+- Probe scripts live in `D:/Motadata/tour-shots/formrule/` (`probe25.mjs` builds a conflicting rule; `p41-*.mjs` per layout).
+- Git Bash heredocs strip backslashes — write patch scripts with the Write tool.
+
 
 ## Latest (1 Oct 2026) — tour step 3 shows the banner toolbar above the banner
 - While the tour is open (`body[data-portal-tour]`) `ToolbarSlot` puts the banner bar ABOVE the banner; step 3 targets ["hero", "hero-toolbar"] so the spotlight covers both. Back inside the banner once the tour closes. Verified in a browser.

@@ -1,18 +1,19 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, ArrowLeftRight, ArrowUpRight, Ban, ChevronRight, CornerDownRight, Lightbulb, Search, FileText, Grid3x3, Layers, RefreshCw, TextCursorInput } from 'lucide-react';
+import { X } from 'lucide-react';
+import { AlertTriangle, ArrowLeftRight, ArrowUpRight, Ban, ChevronLeft, ChevronRight, CornerDownRight, Lightbulb, Search, FileText, Layers, RefreshCw, TextCursorInput } from 'lucide-react';
 import type { FormRule } from './formRuleData';
 import type { ConflictKind, RuleConflict } from './formRuleEngine';
 
 /* G · Conflict review. A conflict is a LINK: this rule's action → a field → another rule → a kind.
  * Those links form many-to-many shapes — one rule clashing on several fields, one field fought
  * over by several rules, one rule+field pair clashing in more than one way — so the review shows
- * them three ways (by rule · by field · matrix), each cross-linked to the others.
+ * them two ways (by rule · by field), each cross-linked to the other.
  *
  * Visual language: every clash is a face-off — this rule's action on the left, the other rule's
  * on the right, the KIND between them as an icon medallion — with the consequence underneath as a
  * callout. Rules get a colour avatar so the same rule is recognisable across all three views. */
 
-type Mode = 'rule' | 'field' | 'matrix';
+type Mode = 'rule' | 'field';
 const KINDS: ConflictKind[] = ['Opposite', 'Override', 'Blocking'];
 
 const KIND: Record<ConflictKind, { fg: string; bg: string; ring: string; bar: string; icon: React.ReactNode; hint: string }> = {
@@ -61,7 +62,13 @@ function KindBar({ cs, h = 6 }: { cs: RuleConflict[]; h?: number }) {
 
 const countKinds = (cs: RuleConflict[]) => KINDS.map((k) => [k, cs.filter((c) => c.kind === k).length] as const).filter(([, n]) => n > 0);
 
-export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, onOpenRule, currentExecution }: {
+export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, onOpenRule, currentExecution, accordion = false, onHelpChange, onClose }: {
+  /** Told when the help page opens or closes — a host can then hand its whole header to it. */
+  onHelpChange?: (open: boolean) => void;
+  /** When the host gives up its header, the help page carries the close button. */
+  onClose?: () => void;
+  /** G2: no side panel — every rule (or field) is an accordion in one scrolling list. */
+  accordion?: boolean;
   /** When this rule executes — shown under its side of each pair. */
   currentExecution?: string;
   conflicts: RuleConflict[];
@@ -74,8 +81,11 @@ export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, o
   const [kinds, setKinds] = useState<ConflictKind[]>([]);
   const [sel, setSel] = useState<string | null>(null);
   const [focusField, setFocusField] = useState<string | null>(null);
-  const [helpOpen, setHelpOpen] = useState(false);
+  const [helpOpen, setHelpOpenState] = useState(false);
+  const setHelpOpen = (o: boolean) => { setHelpOpenState(o); onHelpChange?.(o); };
   const [q, setQ] = useState('');
+  /** G2: which accordions are open; null = the first one, until the admin opens or closes any. */
+  const [openIds, setOpenIds] = useState<string[] | null>(null);
 
   const list = conflicts.filter((c) => !kinds.length || kinds.includes(c.kind));
   const byRule = useMemo(() => {
@@ -100,6 +110,8 @@ export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, o
 
   /** The clashes of whatever is selected — the resolution panel speaks about these first. */
   const focusItems = mode === 'rule' ? list.filter((x) => x.other.id === sel) : mode === 'field' ? list.filter((x) => x.fieldId === sel) : [];
+
+  useEffect(() => { setOpenIds(null); }, [mode]);
 
   const goRule = (ruleId: string, fieldId?: string) => { setMode('rule'); setSel(ruleId); setFocusField(fieldId ?? null); };
   const goField = (fieldId: string) => { setMode('field'); setSel(fieldId); setFocusField(null); };
@@ -139,14 +151,16 @@ export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, o
     return text.replace(l, 'the ' + l.toLowerCase());
   };
   /** One clash, as the reference: two plain cards side by side — current rule, conflicting rule. */
+  /* G2 has no grey group panel behind the pair, so each card carries its own fill + outline. */
+  const card = accordion ? 'rounded-lg bg-[#F6F9FC]/80 px-3.5 py-3' : 'rounded-lg bg-white px-3.5 py-3';
   const pair = (x: RuleConflict, fid: string) => (
-    <div key={x.key} className="grid grid-cols-2 gap-2.5">
-      <div className="rounded-lg bg-white px-3.5 py-3">
+    <div key={x.key} className="grid grid-cols-1 gap-2.5 @[520px]:grid-cols-2">
+      <div className={card}>
         <div className="text-[12px] font-medium text-[#3D8BD0]">Current Rule</div>
         <div className="mt-1 text-[15px] font-medium leading-snug text-[#1D2A3E]">{phrase(x.mine, fid)}</div>
         <div className="mt-2 text-[12px] text-[#98A2B3]">{currentExecution || x.scope}</div>
       </div>
-      <div className="rounded-lg bg-white px-3.5 py-3">
+      <div className={card}>
         <div className="text-[12px] font-medium text-[#F25C4E]">Conflicting Rule</div>
         <div className="mt-1 text-[15px] font-medium leading-snug text-[#1D2A3E]">{phrase(x.theirs, fid)}</div>
         <div className="mt-2 text-[12px] text-[#98A2B3]">{x.other.execution}</div>
@@ -175,7 +189,7 @@ export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, o
       const fields = fieldsOf(entry.items);
       detail = (
         <div className="flex flex-col gap-1">
-          <div className="-mt-1.5 flex h-8 items-center gap-3">
+          <div className="sticky top-0 z-20 -mt-1.5 flex h-9 items-center gap-3 bg-white">
             <h3 className="min-w-0 flex-1 truncate text-[15px] font-semibold text-[#1D2A3E]">{entry.rule.name}</h3>
             <button type="button" onClick={() => onOpenRule(entry.rule.id)} className="inline-flex flex-shrink-0 items-center gap-1 rounded-md px-2 py-1 text-[12px] font-medium text-[#3D8BD0] transition-colors hover:bg-[#EBF5FF]">Open rule <ArrowUpRight size={12} /></button>
           </div>
@@ -184,7 +198,7 @@ export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, o
             const alsoRules = rulesOf(byField.find((f) => f.fieldId === fid)?.items ?? []).filter((id) => id !== entry.rule.id);
             return (
               <div key={fid} className={'rounded-xl bg-[#F4F6FA] p-3 transition-shadow ' + (focusField === fid ? 'ring-2 ring-[#3D8BD0]/30' : '')}>
-                <div className="mb-2.5 flex items-center gap-2 px-0.5">
+                <div className="sticky top-[30px] z-10 -mx-3 -mt-3 mb-0 flex items-center gap-2 rounded-t-xl bg-[#F4F6FA] px-3.5 pb-2.5 pt-3">
                   <span className="text-[14px] font-semibold text-[#1D2A3E]">{fieldLabel(fid)}</span>
                   {alsoRules.length > 0 && (
                     <button type="button" onClick={() => goField(fid)} className="ml-auto text-[12px] text-[#3D8BD0] hover:underline">
@@ -205,13 +219,13 @@ export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, o
       const ruleIds = rulesOf(entry.items).sort((a, b) => order(a) - order(b));
       detail = (
         <div className="flex flex-col gap-1">
-          <h3 className="-mt-1.5 flex h-8 items-center text-[15px] font-semibold text-[#1D2A3E]">{fieldLabel(entry.fieldId)}</h3>
+          <h3 className="sticky top-0 z-20 -mt-1.5 flex h-9 items-center bg-white text-[15px] font-semibold text-[#1D2A3E]">{fieldLabel(entry.fieldId)}</h3>
           <div className="flex flex-col gap-4">{ruleIds.map((rid) => {
             const here = entry.items.filter((x) => x.other.id === rid);
             const rule = here[0].other;
             return (
               <div key={rid} className="rounded-xl bg-[#F4F6FA] p-3">
-                <div className="mb-2.5 flex items-center gap-2 px-0.5">
+                <div className="sticky top-[30px] z-10 -mx-3 -mt-3 mb-0 flex items-center gap-2 rounded-t-xl bg-[#F4F6FA] px-3.5 pb-2.5 pt-3">
                   <span className="truncate text-[14px] font-semibold text-[#1D2A3E]">{rule.name}</span>
                   <button type="button" onClick={() => onOpenRule(rid)} className="ml-auto flex-shrink-0 text-[12px] text-[#3D8BD0] hover:underline">Open rule</button>
                 </div>
@@ -224,53 +238,113 @@ export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, o
     }
   }
 
-  // ── matrix ────────────────────────────────────────────────────────────────
-  const matrix = (
-    <div className="min-h-0 flex-1 overflow-auto px-3 pb-5">
-      <div className="inline-block min-w-full overflow-hidden rounded-xl border border-[#E8EDF3] shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-        <table className="w-full border-separate border-spacing-0 text-[12px]">
-          <thead>
-            <tr>
-              <th className="sticky left-0 top-0 z-20 min-w-[250px] border-b border-r border-[#EEF2F6] bg-[#FAFBFC] px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-[#7B8FA5]">Rule ↓ · Field →</th>
-              {byField.map(({ fieldId, items }) => (
-                <th key={fieldId} className="sticky top-0 z-10 min-w-[140px] border-b border-r border-[#EEF2F6] bg-[#FAFBFC] px-3 py-2.5 text-left">
-                  <button type="button" onClick={() => goField(fieldId)} className="text-[12px] font-semibold text-[#1D2A3E] hover:text-[#3D8BD0]">{fieldLabel(fieldId)}</button>
-                  <div className="mt-1 w-16"><KindBar cs={items} h={4} /></div>
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {byRule.map(({ rule, items }) => (
-              <tr key={rule.id} className="group">
-                <td className="sticky left-0 z-10 border-b border-r border-[#EEF2F6] bg-white px-4 py-2.5 group-hover:bg-[#FAFBFC]">
-                  <button type="button" onClick={() => goRule(rule.id)} className="flex items-center gap-2.5 text-left">
-                    <RuleAvatar name={rule.name} size={26} />
-                    <span className="min-w-0">
-                      <span className="block truncate text-[12px] font-medium text-[#1D2A3E] hover:text-[#3D8BD0]">{rule.name}</span>
-                      <span className="block text-[11px] text-[#98A2B3]">Runs #{order(rule.id)} · {items.length} conflict{items.length > 1 ? 's' : ''}</span>
-                    </span>
-                  </button>
-                </td>
-                {byField.map(({ fieldId }) => {
-                  const cs = items.filter((c) => c.fieldId === fieldId);
-                  const top = cs[0] ? KIND[cs[0].kind] : null;
-                  return (
-                    <td key={fieldId} onClick={() => cs.length && goRule(rule.id, fieldId)}
-                      className={`border-b border-r border-[#EEF2F6] px-2.5 py-2 transition-colors ${cs.length ? 'cursor-pointer' : 'group-hover:bg-[#FAFBFC]'}`}
-                      style={top ? { backgroundColor: top.bg } : undefined}>
-                      {cs.length ? <div className="flex flex-wrap gap-1">{countKinds(cs).map(([k, n]) => <KindChip key={k} kind={k} n={n} />)}</div> : <span className="block text-center text-[#E2E8F0]">—</span>}
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+
+  // ── G2 · accordions instead of a side panel ───────────────────────────────
+  /* Each rule (or field) is an outlined container with a light blue-grey header. Headers are
+     sticky: an open accordion's header pins to the top while its content scrolls, and the
+     sub-headers inside pin just below it, each pushed away by the next. */
+  const isOpen = (id: string) => (openIds === null ? id === shownList[0]?.id : openIds.includes(id));
+  const toggle = (id: string) => setOpenIds((cur) => {
+    const base = cur ?? (shownList[0] ? [shownList[0].id] : []);
+    return base.includes(id) ? base.filter((x) => x !== id) : [...base, id];
+  });
+  const subGroup = (key: string, title: React.ReactNode, right: React.ReactNode, body: React.ReactNode) => (
+    <div key={key}>
+      {/* No panel behind the group — the header is white so it still covers rows scrolling under it. */}
+      <div className="sticky top-[36px] z-10 flex items-center gap-2 bg-white pb-2 pt-1">
+        <span className="min-w-0 truncate text-[13px] font-semibold text-[#1D2A3E]">{title}</span>
+        {right}
       </div>
-      <p className="mt-3 text-[12px] leading-[1.6] text-[#7B8FA5]">A row lit in several columns is one rule clashing on many fields; a column lit in several rows is one field fought over by many rules; a cell with two chips is one rule clashing two ways on one field. Click any cell for the face-off.</p>
+      <div className="flex flex-col gap-2.5">{body}</div>
     </div>
   );
+  const accordionView = (
+    <div className="flex min-h-0 flex-1 flex-col px-3 pb-4">
+      <div className="relative mb-3 w-full flex-shrink-0 @[640px]:w-[280px]">
+        <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#98A2B3]" />
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={mode === 'rule' ? 'Search rules...' : 'Search fields...'}
+          className="h-8 w-full rounded-md border border-[#E2E8F0] bg-white pl-8 pr-2.5 text-[12px] text-[#364658] placeholder:text-[#98A2B3] focus:border-[#3D8BD0] focus:outline-none focus:ring-1 focus:ring-[#3D8BD0]" />
+      </div>
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        {shownList.length === 0 && <div className="py-10 text-center text-[12px] text-[#98A2B3]">Nothing matches “{q}”</div>}
+        <div className="flex flex-col gap-3">
+          {shownList.map((it) => {
+            const open = isOpen(it.id);
+            const n = it.items.length;
+            let body: React.ReactNode = null;
+            if (open && mode === 'rule') {
+              body = fieldsOf(it.items).map((fid) => subGroup(fid, fieldLabel(fid), null,
+                it.items.filter((x) => x.fieldId === fid).map((x) => pair(x, fid))));
+            } else if (open) {
+              body = rulesOf(it.items).sort((a, b) => order(a) - order(b)).map((rid) => {
+                const here = it.items.filter((x) => x.other.id === rid);
+                return subGroup(rid, here[0].other.name,
+                  <button type="button" onClick={() => onOpenRule(rid)} className="ml-auto flex-shrink-0 text-[12px] text-[#3D8BD0] hover:underline">Open rule</button>,
+                  here.map((x) => pair(x, it.id)));
+              });
+            }
+            return (
+              /* No overflow-hidden here — it would stop the headers inside from sticking. */
+              <div key={it.id} className="rounded-lg border border-[#DFE5ED] bg-white">
+                <div role="button" tabIndex={0} onClick={() => toggle(it.id)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(it.id); } }}
+                  className={'sticky top-0 z-20 flex h-9 cursor-pointer items-center gap-2.5 bg-[#F6F9FC] px-3 transition-colors hover:bg-[#EEF3F8] ' + (open ? 'rounded-t-lg' : 'rounded-lg')}>
+                  <ChevronRight size={15} className={'flex-shrink-0 text-[#64748B] transition-transform ' + (open ? 'rotate-90' : '')} />
+                  <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-[#1D2A3E]">{it.title}</span>
+                  <span className="inline-flex flex-shrink-0 items-center gap-1 text-[12px] font-medium text-[#DC2626]">
+                    <AlertTriangle size={13} /> {n} conflict{n === 1 ? '' : 's'}
+                  </span>
+                  {mode === 'rule' && (
+                    <button type="button" onClick={(e) => { e.stopPropagation(); onOpenRule(it.id); }}
+                      className="ml-2 inline-flex flex-shrink-0 items-center gap-0.5 text-[12px] font-medium text-[#3D8BD0] hover:underline">
+                      Open rule <ArrowUpRight size={12} />
+                    </button>
+                  )}
+                </div>
+                {open && <div className="flex flex-col gap-3 rounded-b-lg p-3">{body}</div>}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+
+  /* "How do I resolve these conflicts?" is a page of its own: it replaces the review (with a way
+     back), because reading six ways to resolve a clash beside a list of clashes leaves room for neither. */
+  if (helpOpen) {
+    return (
+      <div className="flex h-full min-h-0 flex-col">
+        <div className={'flex flex-shrink-0 items-center gap-2 border-b border-[#EEF2F6] px-3 pb-3 ' + (onClose ? 'pt-3' : '')}>
+          <button type="button" onClick={() => setHelpOpen(false)} title="Back to the conflicts"
+            className="flex size-8 items-center justify-center rounded transition-colors hover:bg-[#F3F4F6]">
+            <ChevronLeft size={16} className="text-[#64748B]" />
+          </button>
+          <h3 className="min-w-0 flex-1 text-[15px] font-semibold text-[#1D2A3E]">Resolving conflicts</h3>
+          {onClose && (
+            <button type="button" onClick={onClose} title="Close" className="flex size-8 items-center justify-center rounded transition-colors hover:bg-[#F3F4F6]"><X size={16} className="text-[#64748B]" /></button>
+          )}
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-4 pt-3">
+          <p className="max-w-[720px] text-[13px] leading-[1.6] text-[#64748B]">
+            A conflict happens when two rules act on the same field in opposite ways and both run at the same time.
+            These are the usual ways to sort one out — you rarely need more than one of them.
+          </p>
+          <ol className="mt-4 flex flex-col gap-3">
+            {RESOLVE_STEPS.map((s, i) => (
+              <li key={s.title} className="flex gap-3 rounded-lg border border-[#E8EDF3] bg-white px-4 py-3.5">
+                <span className="flex size-6 flex-shrink-0 items-center justify-center rounded-full bg-[#EBF5FF] text-[12px] font-semibold text-[#3D8BD0]">{i + 1}</span>
+                <span className="min-w-0">
+                  <span className="block text-[14px] font-semibold text-[#1D2A3E]">{s.title}</span>
+                  <span className="mt-1 block text-[13px] leading-[1.6] text-[#64748B]">{s.text}</span>
+                </span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </div>
+    );
+  }
 
   if (!conflicts.length) {
     return <div className="flex h-full items-center justify-center p-8 text-center text-[13px] text-[#7B8FA5]">No conflicts — no other rule leaves these fields in a different state.</div>;
@@ -278,16 +352,15 @@ export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, o
 
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div className="@container flex h-full min-h-0 flex-col">
       {/* One row: the view tabs on the left, the counts on the right. Each count is a small card —
           number over its name, nothing else — and it is also the kind filter ("All" included). */}
-      <div className="mx-3 mb-3 flex flex-shrink-0 items-center gap-3">
+      <div className="mx-3 mb-3 flex flex-shrink-0 flex-wrap items-center gap-3">
         <div className="pill-track">
           <button type="button" aria-pressed={mode === 'rule'} onClick={() => setMode('rule')}><span className="inline-flex items-center gap-1.5"><FileText size={12} />By rule</span></button>
           <button type="button" aria-pressed={mode === 'field'} onClick={() => setMode('field')}><span className="inline-flex items-center gap-1.5"><Layers size={12} />By field</span></button>
-          <button type="button" aria-pressed={mode === 'matrix'} onClick={() => setMode('matrix')}><span className="inline-flex items-center gap-1.5"><Grid3x3 size={12} />Matrix</span></button>
         </div>
-        <div className="ml-auto flex gap-2">
+        <div className="grid w-full grid-cols-4 gap-2 @[640px]:ml-auto @[640px]:flex @[640px]:w-auto">
           {([
             { id: 'all' as const, label: 'All conflicts', n: conflicts.length, fg: '#1D2A3E' },
             ...KINDS.map((k) => ({ id: k, label: k, n: conflicts.filter((x) => x.kind === k).length, fg: KIND[k].fg })),
@@ -297,16 +370,16 @@ export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, o
             return (
               <button key={t.id} type="button" disabled={off} aria-pressed={on} title={t.id === 'all' ? 'Show every conflict' : 'Show only ' + t.label}
                 onClick={() => setKinds(t.id === 'all' ? [] : [t.id])}
-                className={'w-[96px] rounded-lg border bg-white px-3 py-1.5 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-45 ' + (on ? 'border-[#3D8BD0] bg-[#F5F9FE]' : 'border-[#E8EDF3] hover:border-[#CBD5E1]')}>
+                className={'min-w-0 @[640px]:w-[96px] rounded-lg border bg-white px-3 py-1.5 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-45 ' + (on ? 'border-[#3D8BD0] bg-[#F5F9FE]' : 'border-[#E8EDF3] hover:border-[#CBD5E1]')}>
                 <div className="text-[17px] font-semibold leading-6 tabular-nums" style={{ color: t.n ? t.fg : '#98A2B3' }}>{t.n}</div>
-                <div className="truncate text-[11px] text-[#7B8FA5]">{t.label}</div>
+                <div className="truncate text-[11px] text-[#7B8FA5]">{t.id === 'all' ? <><span className="@[640px]:hidden">All</span><span className="hidden @[640px]:inline">All conflicts</span></> : t.label}</div>
               </button>
             );
           })}
         </div>
       </div>
 
-      {mode === 'matrix' ? matrix : (
+      {accordion ? accordionView : (
         /* No divider lines: the list is its own soft grey panel, the detail sits beside it on white. */
         <div className="flex min-h-0 flex-1 gap-4 px-3 pb-4">
           <div className="flex w-[280px] flex-shrink-0 flex-col rounded-md bg-[#F4F6FA] p-2">
@@ -337,62 +410,22 @@ export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, o
         </div>
       )}
 
-      {/* Resolution help — collapsed to one line; opens into steps plus fixes for the kinds present. */}
-      {helpOpen && (
-        <div className="max-h-[48%] flex-shrink-0 overflow-y-auto border-t border-[#EEF2F6] bg-[#FAFBFC] px-3 py-4">
-          <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-6">
-            <div>
-              <div className="mb-2.5 text-[13px] font-semibold text-[#1D2A3E]">Resolve a conflict in four steps</div>
-              <ol className="flex flex-col gap-2.5">
-                {RESOLVE_STEPS.map((s, i) => (
-                  <li key={s.title} className="flex gap-2.5">
-                    <span className="flex size-5 flex-shrink-0 items-center justify-center rounded-full bg-[#EBF5FF] text-[11px] font-semibold text-[#3D8BD0]">{i + 1}</span>
-                    <span className="min-w-0">
-                      <span className="block text-[13px] font-medium text-[#364658]">{s.title}</span>
-                      <span className="block text-[12px] leading-[1.55] text-[#7B8FA5]">{s.text}</span>
-                    </span>
-                  </li>
-                ))}
-              </ol>
-            </div>
-            <div>
-              <div className="mb-2.5 text-[13px] font-semibold text-[#1D2A3E]">{focusItems.length ? 'For what you are looking at' : 'By kind of conflict'}</div>
-              <div className="flex flex-col gap-2">
-                {(focusItems.length ? focusItems : list).reduce<RuleConflict[]>((acc, x) => (acc.some((y) => y.kind === x.kind && y.fieldId === x.fieldId) ? acc : [...acc, x]), []).slice(0, 6).map((x) => (
-                  <div key={x.key} className="rounded-lg bg-white px-3 py-2.5 ring-1 ring-[#EEF2F6]">
-                    <div className="flex items-center gap-1.5 text-[12px]">
-                      <span className="font-medium" style={{ color: KIND[x.kind].fg }}>{x.kind}</span>
-                      <span className="text-[#CBD5E1]">·</span>
-                      <span className="font-medium text-[#364658]">{fieldLabel(x.fieldId)}</span>
-                    </div>
-                    <p className="mt-1 text-[12px] leading-[1.55] text-[#64748B]">{fixFor(x)}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-      <button type="button" onClick={() => setHelpOpen((o) => !o)}
+      <button type="button" onClick={() => setHelpOpen(true)}
         className="flex flex-shrink-0 items-center gap-2 border-t border-[#EEF2F6] px-3 py-3 text-left text-[13px] text-[#364658] transition-colors hover:bg-[#F7F9FB]">
         <Lightbulb size={15} className="text-[#F59E0B]" />
         How do I resolve these conflicts?
-        <ChevronRight size={15} className={'text-[#98A2B3] transition-transform ' + (helpOpen ? '-rotate-90' : '')} />
+        <ChevronRight size={15} className="text-[#98A2B3]" />
       </button>
     </div>
   );
 }
 
 const RESOLVE_STEPS = [
-  { title: 'Decide who owns the field', text: 'A field can end in only one state. Pick the rule whose behaviour you actually want.' },
-  { title: 'Remove the clashing action', text: 'Take the action out of the rule that should NOT decide it — here, or via Open rule.' },
-  { title: 'Or keep them apart with a condition', text: 'Add a condition so the two rules never match the same request (e.g. different priorities or categories).' },
-  { title: 'Or change the run order', text: 'For Opposite and Override the rule that runs last wins — drag it in the Form Rules list.' },
+  { title: 'Decide which rule should win', text: 'If two rules do opposite things to the same field, keep the action on the rule that matches your intent and remove it from the other. Left alone, whichever rule runs last wins — and that may not be the one you want.' },
+  { title: 'Narrow the conditions so both can’t fire', text: 'A conflict only matters when both rules run on the same request. Add a condition to one of them so their conditions no longer overlap.' },
+  { title: 'Separate them by when they run', text: 'Two rules can’t collide if one runs On Create and the other On Edit. Check the Execute on setting before changing anything else.' },
+  { title: 'Separate them by who they apply to', text: 'A rule for Requesters only and a rule for Technicians only can safely do opposite things to the same field, because they never run for the same person.' },
+  { title: 'Merge them into one rule', text: 'If both rules watch the same condition, add your action to the existing rule instead of keeping a second one. Use a block to handle each case inside a single rule.' },
+  { title: 'Change the run order', text: 'For Opposite and Override conflicts the rule that runs last wins. Drag the rule you want to decide the field below the other in the Form Rules list.' },
 ];
 
-/** A concrete suggestion for one clash, in words. */
-const fixFor = (x: RuleConflict) => {
-  if (x.kind === 'Blocking') return `A mandatory field can't be hidden or read-only. Either drop "${x.theirs}" from ${x.other.name}, or change this rule so it doesn't block the field ("${x.mine}").`;
-  if (x.kind === 'Override') return `Both rules set a value. Keep only one "Set value", or move the rule with the value you want below the other so it runs last.`;
-  return `This rule says "${x.mine}", ${x.other.name} says "${x.theirs}". Keep one of them, or add a condition so both never run on the same request.`;
-};

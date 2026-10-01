@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, ArrowLeft, ArrowUpRight, Check, ChevronRight, ChevronsLeft, Copy, X as XIcon, ExternalLink, History, Plus, RefreshCcw, Split, Trash2, Workflow } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, ArrowUpRight, Check, ChevronRight, ChevronsLeft, Copy, X as XIcon, ExternalLink, History, Plus, RefreshCcw, Split, Trash2, Users, Workflow, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   ACTION_TYPES, APPLIES_OPTIONS, EVENT_OPTIONS, EXECUTION_OPTIONS, NO_VALUE, PEOPLE,
@@ -15,23 +15,36 @@ import { FormRuleFieldView } from './FormRuleFieldView';
 import { FormRuleFlowView } from './FormRuleFlowView';
 import { FormRuleLinearView } from './FormRuleLinearView';
 import { FormRuleConflictReview } from './FormRuleConflictReview';
+import { RelatedDrawer, RelatedSummaryCards, RelatedSummaryChips, SimilarRulesView } from './FormRuleRelatedView';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from './ui/hover-card';
 
 /** The four layouts being compared. They share ONE draft, so switching compares the same rule. */
-export type EditorVersion = 'A' | 'B' | 'B2' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I';
-/** Favourites (Zeni, 30 Sep 2026) lead the switcher; the rest follow a divider. */
-const VERSIONS: { id: EditorVersion; label: string; hint: string; fav?: boolean }[] = [
-  { id: 'A', fav: true, label: 'A · Split', hint: 'Builder + a resizable, collapsible Rule check rail' },
-  { id: 'B2', fav: true, label: 'B2 · 3 steps', hint: 'Three steps: Rule details → Build the rule (conflicts beside it) → Review & save' },
+export type EditorVersion = 'A' | 'A2' | 'A3' | 'A3R' | 'B3' | 'S' | 'R' | 'B' | 'B2' | 'P' | 'C' | 'G2' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I';
+/** Only A · B · B2 · I are offered (Zeni, 1 Oct 2026); the rest stay built but hidden. */
+const VERSIONS: { id: EditorVersion; label: string; hint: string; fav?: boolean; show?: boolean }[] = [
+  { id: 'A', show: true, fav: true, label: 'A · Split', hint: 'Builder + a resizable, collapsible Rule check rail' },
+  { id: 'B3', show: true, label: 'B3 · Steps + summary', hint: 'B’s two steps in a wider left column, with conflict / similar cards docked at its foot once something is found' },
+  { id: 'A3', show: true, label: 'A3 · Details left', hint: 'Rule details in a left sidebar with the summary cards under it; the builder in the centre' },
+  { id: 'A3R', show: true, label: 'A3R · Details right', hint: 'A3 mirrored — Rule details and the summary cards in a right sidebar, so the panel opens from the same side' },
+  { id: 'S', show: true, label: 'S · Header summary', hint: 'One centred column; the conflict and similar counts are chips beside Save in the header' },
+  { id: 'R', show: true, label: 'R · Summary cards', hint: 'Two summary cards over the builder — conflicts to resolve, similar rules to consider; each number opens its own sidebar' },
+  { id: 'A2', show: true, label: 'A2 · Who first', hint: 'Like A, but who the rule is for is its own step above the trigger' },
+  { id: 'B2', show: true, fav: true, label: 'B2 · 2 steps', hint: 'Two steps across the top: Rule details → Build the rule, conflicts in the right sidebar' },
+  { id: 'P', show: true, label: 'P · Name first', hint: 'A popup asks the name, description and tags; the rule is built in the centre, details fold into the right sidebar' },
   { id: 'C', fav: true, label: 'C · Linear', hint: 'A centred step-by-step flow — hover a line for its actions, hover a gap to add a step' },
   { id: 'E', fav: true, label: 'E · Flow', hint: 'The rule as a node pipeline; clashes branch off as red lines' },
-  { id: 'I', fav: true, label: 'I · Details', hint: 'Rule logic in the centre; details and the rule check in a right panel' },
+  { id: 'I', show: true, fav: true, label: 'I · Details', hint: 'Rule logic in the centre; details and the rule check in a right panel' },
   { id: 'F', label: 'F · Problems', hint: 'Full-width builder with a bottom Problems dock' },
-  { id: 'B', label: 'B · Stepper', hint: 'One step at a time: Details → When → Check if → Then → Review' },
+  { id: 'B', show: true, label: 'B · Stepper', hint: 'Two steps down the left: Rule details → Build the rule, conflicts in the right sidebar' },
   { id: 'D', label: 'D · Field', hint: 'Click fields on the form preview to say what the rule does to them' },
   { id: 'G', label: 'G · Review', hint: 'Inline warnings while building; a review before it is saved' },
+  { id: 'G2', label: 'G2 · Review list', hint: 'Like G, but the review is one list of expandable rules — no side panel' },
   { id: 'H', label: 'H · Similar-first', hint: 'Start from the trigger — extend an existing rule before creating one' },
 ];
+/** A hidden layout remembered from an earlier visit falls back to A. */
+const SHOWN: EditorVersion[] = ['A', 'A2', 'B', 'B2', 'I', 'P', 'R', 'B3', 'A3', 'A3R', 'S'];
+/** The layouts whose conflict / similar checks open in the two summary sidebars. */
+const SUMMARY: EditorVersion[] = ['R', 'B3', 'A3', 'A3R', 'S'];
 const RAIL_MIN = 320;
 const RAIL_MAX = 560;
 const RAIL_DEFAULT = 420;
@@ -179,7 +192,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
   const [flashAction, setFlashAction] = useState<string | null>(null);
 
   // ── version + rail state ──────────────────────────────────────────────────
-  const [version, setVersionState] = useState<EditorVersion>(() => (store.get('formRuleVersion') as EditorVersion) || 'A');
+  const [version, setVersionState] = useState<EditorVersion>(() => (SHOWN.includes(store.get('formRuleVersion') as EditorVersion) ? store.get('formRuleVersion') as EditorVersion : 'A'));
   const setVersion = (v: EditorVersion) => { setVersionState(v); store.set('formRuleVersion', v); };
   const [railOpen, setRailOpenState] = useState(() => store.get('formRuleRailOpen') !== '0');
   const setRailOpen = (v: boolean) => { setRailOpenState(v); store.set('formRuleRailOpen', v ? '1' : '0'); };
@@ -192,12 +205,21 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
   const [hStarted, setHStarted] = useState(false);
   const [showDesc, setShowDesc] = useState(false);
   const [pulse, setPulse] = useState(false);
-  /** Version I: the Rule details section of the right panel can fold to give the rule check room. */
+  /** Version I: the right panel is two tabs — Rule details · Rule check. */
   const [detailsOpen, setDetailsOpen] = useState(true);
+  const [iTab, setITab] = useState<'details' | 'check'>('details');
   /** Version B: which step is showing. */
   const [step, setStep] = useState(0);
   /** Version B2: 0 details · 1 build · 2 review. */
   const [step3, setStep3] = useState(0);
+  /** Version P: a NEW rule opens on the name popup; the sidebar's Rule details start folded. */
+  const [introDone, setIntroDone] = useState(!!rule);
+  const [introTried, setIntroTried] = useState(false);
+  const [pDetailsOpen, setPDetailsOpen] = useState(false);
+  /** Version R: which sidebar a summary card opened. */
+  const [relOpen, setRelOpen] = useState<null | 'conflicts' | 'similar'>(null);
+  /** R: the resolve-help page takes the sidebar's whole header while it is open. */
+  const [relHelp, setRelHelp] = useState(false);
   /** Version F: the bottom Problems dock. */
   const [dockOpen, setDockOpen] = useState(true);
   const [dockH, setDockH] = useState(() => Math.round(Math.min(300, Math.max(180, window.innerHeight * 0.3))));
@@ -274,7 +296,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
       return;
     }
     /* Version G: nothing interrupts the build — the full picture arrives once, as the admin commits. */
-    if (!force && version === 'G' && (conflicts.length > 0 || similar.length > 0)) { setReview('save'); return; }
+    if (!force && (version === 'G' || version === 'G2') && (conflicts.length > 0 || similar.length > 0)) { setReview('save'); return; }
     onSave({ ...draft, applies: draft.applies as FormRule['applies'], event: draft.event as FormRule['event'], execution: draft.execution as FormRule['execution'] });
   };
   const leave = () => (dirty ? setConfirmLeave('list') : onCancel());
@@ -354,6 +376,12 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
     return undefined;
   }, [conflicts.length, similar.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const prevConflicts = useRef(0);
+  useEffect(() => {
+    if (conflicts.length > prevConflicts.current) { setITab('check'); setTab('conflicts'); }
+    prevConflicts.current = conflicts.length;
+  }, [conflicts.length]);
+
   const startResize = (e: React.MouseEvent) => {
     e.preventDefault();
     const x0 = e.clientX;
@@ -375,17 +403,20 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
   /** Every "show me" link (inline Details, the similar banner, the footer chip) goes through here:
    *  each layout has its own home for the rule check. */
   const showCheck = (t: InsightTab) => {
-    if (version === 'A' || version === 'H') return openRail(t);
+    if (version === 'A' || version === 'A2' || version === 'H') return openRail(t);
     setTab(t);
-    if (version === 'I' || version === 'C') return;
+    if (version === 'I') return setITab('check');
+    if (version === 'C') return;
     if (version === 'F') return setDockOpen(true);
-    if (version === 'B') return setStep(4);
-    if (version === 'B2') return step3 === 0 ? setStep3(1) : undefined;
+    if (version === 'P') return;
+    if (SUMMARY.includes(version)) return setRelOpen(t === 'similar' ? 'similar' : 'conflicts');
+    if (version === 'B') return setStep(1);
+    if (version === 'B2') return setStep3(1);
     setReview('view');
   };
   const reviewSimilar = () => showCheck('similar');
 
-  const similarBanner = similar.length > 0 && !(version === 'H' && !rule && !hStarted) && (
+  const similarBanner = similar.length > 0 && !SUMMARY.includes(version) && !(version === 'H' && !rule && !hStarted) && (
     /* Said where the duplicate is made: the moment these conditions match another rule's. */
     <div className="flex items-center gap-2.5 rounded-md border border-[#FDE68A] bg-[#FFFBEB] px-3 py-2">
       <span className="size-1.5 flex-shrink-0 rounded-full bg-[#FBBF24]" />
@@ -407,6 +438,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
     onJump: jumpTo,
     onHover: setHoverAction,
     onOpenRule: openOther,
+    rules,
   };
 
   // ── the builder, as pieces every version can reuse ────────────────────────
@@ -462,6 +494,61 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
             </Step>
 
   </>);
+  /** WHO — a step like When, so the column starts on the same icon rail. */
+  const whoEl = (
+    <Step icon={<Users size={12} />} tone="#7C5CC4" badge="#ECE6F7" lead="Who" rest="this rule applies to">
+      <Panel>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="mb-0.5 block text-[12px] text-[#7B8FA5]">Select Rule Applicable for <span className="text-[#F25C4E]">*</span></label>
+            <RuleSelect value={draft.applies ? [draft.applies] : []} onChange={([v]) => set({ applies: v as FormRule['applies'] })} options={APPLIES_OPTIONS} placeholder="Choose people" invalid={!!err('applies')} />
+            <ErrorText>{err('applies')}</ErrorText>
+          </div>
+        </div>
+      </Panel>
+    </Step>
+  );
+  /** The rule's identity as a step: heading on the icon rail, fields in a grey panel. Without
+   *  "applies to" when the layout gives that its own Who step. */
+  const detailsStep = (withApplies: boolean, after?: React.ReactNode) => (
+    <Step icon={<FileText size={12} />} tone="#64748B" badge="#EEF2F6" lead="Rule details" rest={withApplies ? '— its name, who it is for and its tags' : '— its name, description and tags'}>
+      <Panel>
+        <div className="flex flex-col gap-4">
+          <div className={withApplies ? 'grid grid-cols-2 gap-4' : 'grid grid-cols-2 gap-4'}>
+            <div>
+              <label className="mb-0.5 block text-[12px] text-[#7B8FA5]">Rule name <span className="text-[#F25C4E]">*</span></label>
+              <input value={draft.name} onChange={(e) => set({ name: e.target.value })} placeholder="Rule name" className={`${inputCls} ${err('name') ? '!border-[#F25C4E]' : ''}`} />
+              <ErrorText>{err('name')}</ErrorText>
+            </div>
+            {!withApplies && (
+              <div>
+                <label className="mb-0.5 block text-[12px] text-[#7B8FA5]">Tags <span className="text-[#F25C4E]">*</span></label>
+                <div className="flex min-h-8 items-center"><TagEditor tags={draft.tags} onChange={(tags) => set({ tags })} invalid={!!err('tags')} /></div>
+                <ErrorText>{err('tags')}</ErrorText>
+              </div>
+            )}
+            {withApplies && (
+              <div>
+                <label className="mb-0.5 block text-[12px] text-[#7B8FA5]">Select Rule Applicable for <span className="text-[#F25C4E]">*</span></label>
+                <RuleSelect value={draft.applies ? [draft.applies] : []} onChange={([v]) => set({ applies: v as FormRule['applies'] })} options={APPLIES_OPTIONS} placeholder="Choose people" invalid={!!err('applies')} />
+                <ErrorText>{err('applies')}</ErrorText>
+              </div>
+            )}
+          </div>
+          <div>
+            <label className="mb-0.5 block text-[12px] text-[#7B8FA5]">Description</label>
+            <textarea value={draft.description} onChange={(e) => set({ description: e.target.value })} placeholder="Description" className={`${inputCls} h-16 resize-y bg-white py-1.5 leading-[1.36]`} />
+          </div>
+          {withApplies && <div>
+            <label className="mb-0.5 block text-[12px] text-[#7B8FA5]">Tags <span className="text-[#F25C4E]">*</span></label>
+            <TagEditor tags={draft.tags} onChange={(tags) => set({ tags })} invalid={!!err('tags')} />
+            <ErrorText>{err('tags')}</ErrorText>
+          </div>}
+        </div>
+      </Panel>
+      {after}
+    </Step>
+  );
   const checkEl = (<>
                 {/* CHECK IF */}
                 <Step icon={<Split size={14} className="rotate-180" />} tone="#F58518" badge="rgba(245,133,24,0.1)" lead="Check if" rest="these conditions match">
@@ -630,15 +717,13 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
   </>);
 
   /** The form keeps this width whether or not the rail is open — closing the rail gives the page
-   *  room, it does not stretch the fields, and it sits at the left edge, in line with the footer. */
+   *  room, it does not stretch the fields; the column is CENTRED in whatever space it has (1 Oct 2026). */
   const builder = (
-    <div className="max-w-[880px]">
-      {identityEl}
-      <div className="mx-4 border-t border-[#DFE5ED]" />
-      <div className="flex flex-col gap-6 p-4 pb-8 pt-5">
-        {whenEl}
-        {ready && (<>{checkEl}{thenEl}{advancedEl}</>)}
-      </div>
+    <div className="mx-auto flex max-w-[880px] flex-col gap-6 p-4 pb-8 pt-5">
+      {detailsStep(!['A2', 'R', 'S'].includes(version))}
+      {['A2', 'R', 'S'].includes(version) && whoEl}
+      {whenEl}
+      {ready && (<>{checkEl}{thenEl}{advancedEl}</>)}
     </div>
   );
 
@@ -687,6 +772,68 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
       )}
       {!railVisible && railStrip}
     </div>
+  );
+
+  /** A's resizable rail, for the layouts that keep the rule check beside the builder. */
+  const sideRail = (content: React.ReactNode) => (
+    <div className="relative flex flex-shrink-0 border-l border-[#DFE5ED]" style={{ width: railW }}>
+      <div
+        onMouseDown={startResize}
+        onDoubleClick={() => { setRailW(RAIL_DEFAULT); store.set('formRuleRailW', String(RAIL_DEFAULT)); }}
+        title="Drag to resize · double-click to reset"
+        className="group absolute -left-1 bottom-0 top-0 z-10 flex w-2 cursor-col-resize justify-center"
+      >
+        <span className="h-full w-0.5 transition-colors group-hover:bg-[#3D8BD0]" />
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col">{content}</div>
+    </div>
+  );
+  const logicEl = (
+    <div className="mx-auto flex max-w-[880px] flex-col gap-6 p-4 pb-8 pt-5">
+      {whenEl}
+      {ready && (<>{checkEl}{thenEl}{advancedEl}</>)}
+    </div>
+  );
+
+  const detailsStepEl = (next: () => void) => (
+    <div className="mx-auto flex max-w-[880px] flex-col gap-6 p-4 pb-8 pt-5">
+      {detailsStep(true, (
+        <div>
+          <button type="button" onClick={next} className="rounded-md bg-[#3D8BD0] px-3 py-1.5 text-[12px] font-medium text-white hover:bg-[#3478B5]">Next: Build the rule</button>
+        </div>
+      ))}
+    </div>
+  );
+
+  /* R: the two jobs stay apart — a conflict is resolved in its own sidebar (by rule / by field),
+     a similar rule is guidance in another. The cards ride at the top of the builder. */
+  const relBody = (
+    <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="sticky top-0 z-20 bg-white">
+        <div className="mx-auto max-w-[880px] px-4 pb-1 pt-4">
+          <RelatedSummaryCards ready={ready} conflicts={conflicts} similar={similar}
+            onOpenConflicts={() => setRelOpen('conflicts')} onOpenSimilar={() => setRelOpen('similar')} />
+        </div>
+      </div>
+      {builder}
+    </div>
+  );
+  const relDrawer = SUMMARY.includes(version) && relOpen && (
+    relOpen === 'conflicts' ? (
+      <RelatedDrawer title="Resolve conflicts"
+        sub={<>{conflicts.length} conflict{conflicts.length === 1 ? '' : 's'} with {new Set(conflicts.map((x) => x.other.id)).size} rule{new Set(conflicts.map((x) => x.other.id)).size === 1 ? '' : 's'} — see them by rule or by field.</>}
+        onClose={() => { setRelOpen(null); setRelHelp(false); }} hideHead={relHelp}>
+        <FormRuleConflictReview onHelpChange={setRelHelp} onClose={() => { setRelOpen(null); setRelHelp(false); }} conflicts={conflicts} rules={rules} currentExecution={draft.execution} fieldLabel={(id) => fieldById(id)?.label ?? id}
+          onJump={(id) => { setRelOpen(null); requestAnimationFrame(() => jumpTo(id)); }} onOpenRule={openOther} />
+      </RelatedDrawer>
+    ) : (
+      <RelatedDrawer title="Similar rules"
+        sub={<>{similar.length} rule{similar.length === 1 ? '' : 's'} already run on this trigger. You may want to update one of them instead of creating a new rule.</>}
+        onClose={() => setRelOpen(null)}>
+        <SimilarRulesView similar={similar} fields={fields} conditionLines={conditionLines}
+          draft={{ event: draft.event, execution: draft.execution, applies: draft.applies }} onOpenRule={openOther} />
+      </RelatedDrawer>
+    )
   );
 
   // ── H · start from the trigger ────────────────────────────────────────────
@@ -770,33 +917,49 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
           </div>
   );
 
-  const detailsPanel = (
-    <aside className="flex w-[380px] flex-shrink-0 flex-col border-l border-[#DFE5ED] bg-white">
-      <div className="flex-shrink-0">
-        <button
-          type="button"
-          onClick={() => setDetailsOpen((o) => !o)}
-          className="flex w-full items-center gap-2 px-4 py-3 text-left transition-colors hover:bg-[#F9FAFB]"
-        >
-          <span className="text-[13px] font-medium text-[#364658]">Rule details</span>
-          {!detailsOpen && draft.name && <span className="min-w-0 truncate text-[12px] text-[#7B8FA5]">· {draft.name}</span>}
-          {(err('name') || err('applies') || err('tags')) && <span className="size-1.5 flex-shrink-0 rounded-full bg-[#F25C4E]" title="Needs attention" />}
-          <ChevronRight size={16} className={`ml-auto flex-shrink-0 text-[#7B8FA5] transition-transform ${detailsOpen ? 'rotate-90' : ''}`} />
-        </button>
-        {detailsOpen && (
-          <div className="max-h-[46vh] overflow-y-auto">{detailsFields}</div>
-        )}
+  /** I's Rule details tab — "who it is for" moved into the centre as the Who step. */
+  const detailsFieldsNoWho = (
+    <div className="flex flex-col gap-3.5 px-4 pb-4 pt-1">
+      <div>
+        <FieldLabel required>Rule name</FieldLabel>
+        <input value={draft.name} onChange={(e) => set({ name: e.target.value })} placeholder="Rule name" className={`${inputCls} ${err('name') ? '!border-[#F25C4E]' : ''}`} />
+        <ErrorText>{err('name')}</ErrorText>
       </div>
-      <div className="min-h-0 flex-1 border-t border-[#DFE5ED]">
-        <FormRuleInsights {...railProps} bare />
+      <div>
+        <FieldLabel>Description</FieldLabel>
+        <textarea value={draft.description} onChange={(e) => set({ description: e.target.value })} placeholder="Description" className={`${inputCls} h-16 resize-y py-1.5 leading-[1.36]`} />
       </div>
-    </aside>
+      <div>
+        <FieldLabel required>Tags</FieldLabel>
+        <TagEditor tags={draft.tags} onChange={(tags) => set({ tags })} invalid={!!err('tags')} />
+        <ErrorText>{err('tags')}</ErrorText>
+      </div>
+    </div>
+  );
+  const detailsPanel = sideRail(
+    <>
+      {/* Two tabs, the product's inline tab treatment. A new conflict turns it to Rule check. */}
+      <div className="flex flex-shrink-0 gap-2.5 border-b border-[#DFE5ED] px-4">
+        {([['details', 'Rule details'], ['check', 'Rule check']] as const).map(([id, label]) => (
+          <button key={id} type="button" onClick={() => setITab(id)}
+            className={`flex items-center gap-1.5 whitespace-nowrap border-b-2 px-2 py-2.5 text-[13px] font-medium transition-colors ${iTab === id ? 'border-[#3D8BD0] text-[#3D8BD0]' : 'border-transparent text-[#6b7280] hover:border-[#CBD5E1] hover:bg-[#F5F7FA] hover:text-[#364658]'}`}>
+            {label}
+            {id === 'details' && (err('name') || err('tags')) && <span className="size-1.5 rounded-full bg-[#F25C4E]" title="Needs attention" />}
+            {id === 'check' && ready && conflicts.length > 0 && <span className="rounded-sm bg-[#FEF2F2] px-1.5 text-[11px] font-semibold text-[#DC2626]">{conflicts.length}</span>}
+          </button>
+        ))}
+      </div>
+      {iTab === 'details'
+        ? <div className="min-h-0 flex-1 overflow-y-auto pt-3">{detailsFieldsNoWho}</div>
+        : <div className="min-h-0 flex-1"><FormRuleInsights {...railProps} bare hideHead pillTabs /></div>}
+    </>
   );
 
   const panelBody = (
     <div className="flex min-h-0 flex-1">
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="flex max-w-[880px] flex-col gap-6 p-4 pb-8 pt-5">
+        <div className="mx-auto flex max-w-[880px] flex-col gap-6 p-4 pb-8 pt-5">
+          {whoEl}
           {whenEl}
           {ready && (<>{checkEl}{thenEl}{advancedEl}</>)}
         </div>
@@ -810,80 +973,108 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
   const actionsDone = draft.actions.length > 0 && !draft.actions.some(actionIncomplete);
   const STEPS = [
     { label: 'Rule details', hint: 'Name, who it is for, tags', done: detailsDone, locked: false },
-    { label: 'When', hint: 'Event and create / edit', done: ready, locked: false },
-    { label: 'Check if', hint: 'Optional conditions', done: ready && !draft.groups.some((g) => g.conditions.some(condIncomplete)), locked: !ready },
-    { label: 'Then', hint: 'What the rule does', done: actionsDone, locked: !ready },
-    { label: 'Review', hint: 'Conflicts and similar rules', done: false, locked: !ready },
+    { label: 'Build the rule', hint: 'When, conditions and actions', done: ready && actionsDone, locked: false },
   ];
   const summaryLines = [
     draft.event ? eventLabel(draft.event) + ' · ' + (draft.execution || '…') + ' · ' + (draft.applies || '…') : null,
     conditionLines.length ? 'If ' + conditionLines.join(' and ') : 'Runs on every matching event',
     ...draft.actions.filter((a) => a.type && a.fieldIds.length).map((a) => a.fieldIds.map((f) => actionText(a.type, fieldById(f)?.label ?? f, a.value.join(', '))).join(', ')),
   ].filter(Boolean) as string[];
-  const stepBody = [
-    <div key="d" className="-mx-4 -mt-5">{identityEl}</div>,
-    whenEl,
-    <div key="c" className="flex flex-col gap-4">{checkEl}
-      {similar.length > 0 && (
-        <div className="rounded-lg border border-[#FDE68A] bg-white p-3">
-          <div className="text-[12px] font-medium text-[#B45309]">Checkpoint — these rules already use this trigger</div>
-          <div className="mt-2 flex flex-col gap-1.5">
-            {similar.map((s) => (
-              <div key={s.rule.id} className="flex items-center gap-2 rounded-md bg-[#FFFBEB] px-2.5 py-1.5">
-                <span className="truncate text-[12px] text-[#364658]">{s.rule.name}</span>
-                <span className="text-[11px] text-[#92400E]">{s.common.length} in common</span>
-                <button type="button" onClick={() => openOther(s.rule.id)} className="ml-auto flex-shrink-0 text-[12px] font-medium text-[#3D8BD0] hover:underline">Open rule</button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>,
-    <div key="t" className="flex flex-col gap-6">{thenEl}{advancedEl}</div>,
-    <div key="r" className="flex flex-col gap-4">
-      <div className="rounded-lg bg-[#F9FAFB] p-4">
-        <div className="text-[13px] font-medium text-[#364658]">{draft.name || 'This rule'}</div>
-        <ul className="mt-2 space-y-1">{summaryLines.map((l) => <li key={l} className="text-[12px] text-[#64748B]">• {l}</li>)}</ul>
-      </div>
-      <div className="h-[460px] overflow-hidden rounded-lg border border-[#DFE5ED]"><FormRuleInsights {...railProps} bare /></div>
-    </div>,
-  ];
   const stepperBody = (
     <div className="flex min-h-0 flex-1">
       <nav className="flex w-[220px] flex-shrink-0 flex-col gap-1 border-r border-[#DFE5ED] bg-[#FAFBFC] p-3">
         {STEPS.map((s, i) => (
-          <button key={s.label} type="button" disabled={s.locked} onClick={() => setStep(i)}
-            title={s.locked ? 'Choose when the rule runs first' : undefined}
-            className={`flex items-start gap-2.5 rounded-md px-2.5 py-2 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-45 ${step === i ? 'bg-white shadow-[0_1px_2px_rgba(15,23,42,0.08)] ring-1 ring-[#DFE5ED]' : 'hover:bg-[#F1F5F9]'}`}>
-            <span className={`mt-px flex size-5 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${s.done ? 'bg-[#89C540] text-white' : step === i ? 'bg-[#3D8BD0] text-white' : 'bg-[#E2E8F0] text-[#64748B]'}`}>
-              {s.done ? <Check size={11} strokeWidth={3} /> : i + 1}
+          <button key={s.label} type="button" onClick={() => setStep(i)}
+            className={`flex items-start gap-2.5 rounded-md px-2.5 py-2 text-left transition-colors ${step === i ? 'bg-white shadow-[0_1px_2px_rgba(15,23,42,0.08)]' : 'hover:bg-[#F1F5F9]'}`}>
+            <span className={`mt-px flex size-5 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${s.done && step !== i ? 'bg-[#89C540] text-white' : step === i ? 'bg-[#3D8BD0] text-white' : 'bg-[#E2E8F0] text-[#64748B]'}`}>
+              {s.done && step !== i ? <Check size={11} strokeWidth={3} /> : i + 1}
             </span>
             <span className="min-w-0">
               <span className="block text-[12px] font-medium text-[#364658]">
                 {s.label}
-                {i === 4 && ready && conflicts.length > 0 && <span className="ml-1.5 rounded-sm bg-[#FEF2F2] px-1 text-[10px] text-[#DC2626]">{conflicts.length}</span>}
+                {i === 1 && ready && conflicts.length > 0 && <span className="ml-1.5 rounded-sm bg-[#FEF2F2] px-1 text-[10px] text-[#DC2626]">{conflicts.length}</span>}
               </span>
               <span className="block text-[11px] text-[#7B8FA5]">{s.hint}</span>
             </span>
           </button>
         ))}
       </nav>
+      {/* Both steps share one frame (column + rail), so switching step swaps the content in place
+          instead of re-centring it in a different width. */}
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="flex max-w-[880px] flex-col gap-6 p-4 pb-8 pt-5">
-          {stepBody[step]}
-          <div className="flex items-center gap-2">
-            {step > 0 && <button type="button" onClick={() => setStep(step - 1)} className="rounded-md border border-[#DFE5ED] bg-white px-3 py-1.5 text-[12px] font-medium text-[#364658] hover:bg-[#F9FAFB]">Back</button>}
-            {step < 4 && (
-              <button type="button" disabled={STEPS[step + 1].locked} onClick={() => setStep(step + 1)}
-                className="rounded-md bg-[#3D8BD0] px-3 py-1.5 text-[12px] font-medium text-white hover:bg-[#3478B5] disabled:cursor-not-allowed disabled:opacity-50">
-                Next: {STEPS[step + 1].label}
-              </button>
-            )}
-          </div>
+        {step === 0 ? (
+          detailsStepEl(() => setStep(1))
+        ) : logicEl}
+      </div>
+      {sideRail(<FormRuleInsights {...railProps} bare />)}
+    </div>
+  );
+
+  /** The cards, only once something is found, one per row for a narrow column. */
+  const stackedCards = (
+    <RelatedSummaryCards onlyFound stack ready={ready} conflicts={conflicts} similar={similar}
+      onOpenConflicts={() => setRelOpen('conflicts')} onOpenSimilar={() => setRelOpen('similar')} />
+  );
+  const hasFindings = ready && (conflicts.length > 0 || similar.length > 0);
+
+  // ── B3 · B's steps in a wider column, the summary docked at its foot ──────
+  const b3Body = (
+    <div className="flex min-h-0 flex-1">
+      <nav className="flex w-[380px] flex-shrink-0 flex-col border-r border-[#DFE5ED] bg-[#FAFBFC]">
+        <div className="flex flex-col gap-1 p-3">
+          {STEPS.map((s, i) => (
+            <button key={s.label} type="button" onClick={() => setStep(i)}
+              className={`flex items-start gap-2.5 rounded-md px-2.5 py-2 text-left transition-colors ${step === i ? 'bg-white shadow-[0_1px_2px_rgba(15,23,42,0.08)]' : 'hover:bg-[#F1F5F9]'}`}>
+              <span className={`mt-px flex size-5 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${s.done && step !== i ? 'bg-[#89C540] text-white' : step === i ? 'bg-[#3D8BD0] text-white' : 'bg-[#E2E8F0] text-[#64748B]'}`}>
+                {s.done && step !== i ? <Check size={11} strokeWidth={3} /> : i + 1}
+              </span>
+              <span className="min-w-0">
+                <span className="block text-[12px] font-medium text-[#364658]">{s.label}</span>
+                <span className="block text-[11px] text-[#7B8FA5]">{s.hint}</span>
+              </span>
+            </button>
+          ))}
         </div>
+        {/* Docked at the foot, and only once there is something to report. */}
+        {hasFindings && (
+          <div className="mt-auto flex flex-col gap-2 border-t border-[#DFE5ED] p-3">
+            <span className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-[#7B8FA5]">Rule check</span>
+            {stackedCards}
+          </div>
+        )}
+      </nav>
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        {step === 0 ? detailsStepEl(() => setStep(1)) : logicEl}
       </div>
     </div>
   );
+
+  // ── A3 / A3R · a details sidebar with the summary under it ─────────────────
+  const a3Side = (side: 'left' | 'right') => (
+    <aside className={`flex w-[380px] flex-shrink-0 flex-col overflow-y-auto bg-white ${side === 'left' ? 'border-r' : 'border-l'} border-[#DFE5ED]`}>
+      <div className="flex flex-shrink-0 items-center px-4 pb-1 pt-4">
+        <span className="text-[13px] font-semibold text-[#364658]">Rule details</span>
+      </div>
+      {detailsFieldsNoWho}
+      {hasFindings && (
+        <div className="flex flex-col gap-2 border-t border-[#DFE5ED] p-4">
+          <span className="text-[11px] font-medium uppercase tracking-wide text-[#7B8FA5]">Rule check</span>
+          {stackedCards}
+        </div>
+      )}
+    </aside>
+  );
+  const centreWho = (
+    <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="mx-auto flex max-w-[880px] flex-col gap-6 p-4 pb-8 pt-5">
+        {whoEl}
+        {whenEl}
+        {ready && (<>{checkEl}{thenEl}{advancedEl}</>)}
+      </div>
+    </div>
+  );
+  const a3Body = <div className="flex min-h-0 flex-1">{a3Side('left')}{centreWho}</div>;
+  const a3rBody = <div className="flex min-h-0 flex-1">{centreWho}{a3Side('right')}</div>;
 
   // ── B2 · three steps ───────────────────────────────────────────────────────
   /* Details are a separate thought from logic; everything that makes up the logic — trigger,
@@ -892,7 +1083,6 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
   const B2_STEPS = [
     { label: 'Rule details', done: detailsDone, locked: false },
     { label: 'Build the rule', done: ready && actionsDone, locked: false },
-    { label: 'Review & save', done: false, locked: !ready },
   ];
   const b2Bar = (
     <div className="flex flex-shrink-0 items-center gap-3 border-b border-[#DFE5ED] px-4 py-2.5">
@@ -911,42 +1101,101 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
       ))}
       <div className="ml-auto flex items-center gap-2">
         {step3 > 0 && <button type="button" onClick={() => setStep3(step3 - 1)} className="rounded-md border border-[#DFE5ED] bg-white px-3 py-1.5 text-[12px] font-medium text-[#364658] hover:bg-[#F9FAFB]">Back</button>}
-        {step3 < 2 && (
-          <button type="button" disabled={B2_STEPS[step3 + 1].locked} onClick={() => setStep3(step3 + 1)}
-            className="rounded-md bg-[#3D8BD0] px-3 py-1.5 text-[12px] font-medium text-white hover:bg-[#3478B5] disabled:cursor-not-allowed disabled:opacity-50">
-            Next: {B2_STEPS[step3 + 1].label}
-          </button>
-        )}
       </div>
     </div>
   );
   const b2Body = (
     <div className="flex min-h-0 flex-1 flex-col">
       {b2Bar}
-      {step3 === 0 && <div className="min-h-0 flex-1 overflow-y-auto"><div className="max-w-[880px]">{identityEl}</div></div>}
-      {step3 === 1 && (
-        <div className="flex min-h-0 flex-1">
-          <div className="min-h-0 flex-1 overflow-y-auto">
-            <div className="flex max-w-[880px] flex-col gap-6 p-4 pb-8 pt-5">
-              {whenEl}
-              {ready && (<>{checkEl}{thenEl}{advancedEl}</>)}
-            </div>
-          </div>
-          <div className="w-[400px] flex-shrink-0"><FormRuleInsights {...railProps} /></div>
-        </div>
-      )}
-      {step3 === 2 && (
+      <div className="flex min-h-0 flex-1">
         <div className="min-h-0 flex-1 overflow-y-auto">
-          <div className="flex max-w-[880px] flex-col gap-4 p-4 pt-5">
-            <div className="rounded-lg bg-[#F9FAFB] p-4">
-              <div className="text-[13px] font-medium text-[#364658]">{draft.name || 'This rule'}</div>
-              <div className="mt-0.5 text-[11px] text-[#7B8FA5]">{draft.applies || 'Who?'}{draft.tags.length ? ' · ' + draft.tags.join(', ') : ''}</div>
-              <ul className="mt-2 space-y-1">{summaryLines.map((l) => <li key={l} className="text-[12px] text-[#64748B]">• {l}</li>)}</ul>
-            </div>
-            <div className="h-[460px] overflow-hidden rounded-lg border border-[#DFE5ED]"><FormRuleInsights {...railProps} bare /></div>
+          {step3 === 0 ? (
+            detailsStepEl(() => setStep3(1))
+          ) : logicEl}
+        </div>
+        {sideRail(<FormRuleInsights {...railProps} bare />)}
+      </div>
+    </div>
+  );
+
+  // ── P · name first ───────────────────────────────────────────────────────
+  /* Who the rule is for decides what it may do, so it opens the rule in the centre; the rest of the
+     identity was answered in the popup and only needs a way back, folded in the sidebar. */
+  const pDetailsFields = (
+    <div className="flex flex-col gap-3.5 px-4 pb-4 pt-1">
+      <div>
+        <FieldLabel required>Rule name</FieldLabel>
+        <input value={draft.name} onChange={(e) => set({ name: e.target.value })} placeholder="Rule name" className={`${inputCls} ${err('name') ? '!border-[#F25C4E]' : ''}`} />
+        <ErrorText>{err('name')}</ErrorText>
+      </div>
+      <div>
+        <FieldLabel>Description</FieldLabel>
+        <textarea value={draft.description} onChange={(e) => set({ description: e.target.value })} placeholder="Description" className={`${inputCls} h-16 resize-y py-1.5 leading-[1.36]`} />
+      </div>
+      <div>
+        <FieldLabel required>Tags</FieldLabel>
+        <TagEditor tags={draft.tags} onChange={(tags) => set({ tags })} invalid={!!err('tags')} />
+        <ErrorText>{err('tags')}</ErrorText>
+      </div>
+    </div>
+  );
+  const pBody = (
+    <div className="flex min-h-0 flex-1">
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="mx-auto flex max-w-[880px] flex-col gap-6 p-4 pb-8 pt-5">
+          {whoEl}
+          {whenEl}
+          {ready && (<>{checkEl}{thenEl}{advancedEl}</>)}
+        </div>
+      </div>
+      {sideRail(<>
+        <div className="flex-shrink-0">
+          <button type="button" onClick={() => setPDetailsOpen((o) => !o)}
+            className="flex w-full items-center gap-2 px-4 py-3 text-left transition-colors hover:bg-[#F9FAFB]">
+            <span className="text-[13px] font-medium text-[#364658]">Rule details</span>
+            {!pDetailsOpen && draft.name && <span className="min-w-0 truncate text-[12px] text-[#7B8FA5]">· {draft.name}</span>}
+            {(err('name') || err('tags')) && <span className="size-1.5 flex-shrink-0 rounded-full bg-[#F25C4E]" title="Needs attention" />}
+            <ChevronRight size={16} className={`ml-auto flex-shrink-0 text-[#7B8FA5] transition-transform ${pDetailsOpen ? 'rotate-90' : ''}`} />
+          </button>
+          {pDetailsOpen && <div className="max-h-[46vh] overflow-y-auto">{pDetailsFields}</div>}
+        </div>
+        <div className="min-h-0 flex-1 border-t border-[#DFE5ED]"><FormRuleInsights {...railProps} bare noTitleIcon /></div>
+      </>)}
+    </div>
+  );
+  const introOk = !!draft.name.trim() && draft.tags.length > 0;
+  const introEl = version === 'P' && !introDone && (
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-[#0F172A]/40">
+      <div className="w-[min(520px,92vw)] rounded-xl bg-white shadow-xl">
+        <div className="flex items-start gap-3 border-b border-[#EEF2F6] px-5 py-4">
+          <div className="min-w-0 flex-1">
+            <h3 className="text-[15px] font-semibold text-[#364658]">Create a rule</h3>
+            <p className="mt-0.5 text-[12px] text-[#7B8FA5]">Name it first — you build what it does next.</p>
+          </div>
+          <button type="button" onClick={onCancel} title="Cancel" className="flex size-8 items-center justify-center rounded transition-colors hover:bg-[#F3F4F6]"><XIcon size={16} className="text-[#64748B]" /></button>
+        </div>
+        <div className="flex flex-col gap-4 px-5 py-4">
+          <div>
+            <FieldLabel required>Rule name</FieldLabel>
+            <input autoFocus value={draft.name} onChange={(e) => set({ name: e.target.value })} placeholder="Rule name" className={`${inputCls} ${introTried && !draft.name.trim() ? '!border-[#F25C4E]' : ''}`} />
+            <ErrorText>{introTried && !draft.name.trim() ? 'Give the rule a name' : ''}</ErrorText>
+          </div>
+          <div>
+            <FieldLabel>Description</FieldLabel>
+            <textarea value={draft.description} onChange={(e) => set({ description: e.target.value })} placeholder="Description" className={`${inputCls} h-20 resize-y py-1.5 leading-[1.36]`} />
+          </div>
+          <div>
+            <FieldLabel required>Tags</FieldLabel>
+            <TagEditor tags={draft.tags} onChange={(tags) => set({ tags })} invalid={introTried && draft.tags.length === 0} />
+            <ErrorText>{introTried && draft.tags.length === 0 ? 'Add at least one tag' : ''}</ErrorText>
           </div>
         </div>
-      )}
+        <div className="flex justify-end gap-2 border-t border-[#EEF2F6] px-5 py-3">
+          <button type="button" onClick={onCancel} className="rounded-md border border-[#DFE5ED] bg-white px-3 py-1.5 text-[12px] font-medium text-[#364658] hover:bg-[#F9FAFB]">Cancel</button>
+          <button type="button" onClick={() => { setIntroTried(true); if (introOk) setIntroDone(true); }}
+            className="rounded-md bg-[#3D8BD0] px-3 py-1.5 text-[12px] font-medium text-white hover:bg-[#3478B5]">Continue</button>
+        </div>
+      </div>
     </div>
   );
 
@@ -1012,13 +1261,19 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
 
   const body =
     version === 'B' ? stepperBody
+      : version === 'R' ? relBody
+      : version === 'B3' ? b3Body
+      : version === 'A3' ? a3Body
+      : version === 'A3R' ? a3rBody
+      : version === 'S' ? <div className="min-h-0 flex-1 overflow-y-auto">{builder}</div>
+      : version === 'P' ? pBody
       : version === 'B2' ? b2Body
       : version === 'D' ? fieldBody
         : version === 'E' ? flowBody
           : version === 'F' ? dockBody
             : version === 'I' ? panelBody
       : version === 'C' ? linearBody
-      : version === 'G' ? <div className="min-h-0 flex-1 overflow-y-auto">{builder}</div>
+      : version === 'G' || version === 'G2' ? <div className="min-h-0 flex-1 overflow-y-auto">{builder}</div>
         : version === 'H' && hStart ? startEl
           : splitBody;
 
@@ -1046,7 +1301,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
           <ArrowLeft size={16} />
         </button>
         <div className="flex min-w-0 flex-col gap-0.5">
-          <h1 className="truncate text-[16px] font-medium text-[#364658]">{rule ? 'Edit Rule' : 'Add Rule'}</h1>
+          <h1 className="truncate text-[16px] font-medium text-[#364658]">{version === 'P' && draft.name.trim() && introDone ? draft.name : rule ? 'Edit Rule' : 'Add Rule'}</h1>
           <p className="flex items-center gap-1 text-[11px] text-[#7B8FA5]">
             Automate this form - show, hide, require or set fields based on conditions you choose.
             <button type="button" onClick={() => toast.success('Opening the form rule documentation')} className="inline-flex items-center gap-1 text-[11px] text-[#3D8BD0] underline">
@@ -1054,19 +1309,21 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
             </button>
           </p>
         </div>
+        {/* The page's actions live with its title — no footer bar. The status chip rides with them. */}
+        <div className="ml-auto flex flex-shrink-0 items-center gap-2.5">
+          {version === 'S'
+            ? <RelatedSummaryChips ready={ready} conflicts={conflicts} similar={similar} onOpenConflicts={() => setRelOpen('conflicts')} onOpenSimilar={() => setRelOpen('similar')} />
+            : statusChip}
+          <button type="button" onClick={leave} className="rounded-md border border-[#DFE5ED] bg-white px-3 py-1.5 text-[12px] font-medium text-[#7B8FA5] transition-colors hover:bg-[#F9FAFB] hover:text-[#364658]">Cancel</button>
+          <button type="button" onClick={() => save()} className="rounded-md bg-[#3D8BD0] px-3 py-1.5 text-[12px] font-medium text-white transition-colors hover:bg-[#3478B5]">Save Rule</button>
+        </div>
       </div>
 
       {/* Comparing layouts: every tab edits the same draft. */}
       <div className="flex flex-shrink-0 items-center gap-2 overflow-x-auto border-b border-[#DFE5ED] bg-[#FAFBFC] px-4 py-1.5">
         <span className="flex-shrink-0 text-[11px] text-[#7B8FA5]">Layout</span>
         <div className="pill-track flex-shrink-0">
-          {VERSIONS.filter((v) => v.fav).map((v) => (
-            <button key={v.id} type="button" aria-pressed={version === v.id} title={v.hint} onClick={() => setVersion(v.id)}>{v.label}</button>
-          ))}
-        </div>
-        <span className="h-5 w-px flex-shrink-0 bg-[#DFE5ED]" />
-        <div className="pill-track flex-shrink-0 opacity-80">
-          {VERSIONS.filter((v) => !v.fav).map((v) => (
+          {SHOWN.map((id) => VERSIONS.find((v) => v.id === id)!).map((v) => (
             <button key={v.id} type="button" aria-pressed={version === v.id} title={v.hint} onClick={() => setVersion(v.id)}>{v.label}</button>
           ))}
         </div>
@@ -1074,21 +1331,14 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
       </div>
 
       {body}
+      {introEl}
+      {relDrawer}
 
-      {/* Footer */}
-      <div className="flex h-[54px] flex-shrink-0 items-center gap-2.5 border-t border-[#E2E8F0] px-4">
-        {statusChip}
-        <div className="ml-auto flex items-center gap-2.5">
-          <button type="button" onClick={leave} className="rounded-md border border-[#DFE5ED] bg-white px-3 py-1.5 text-[12px] font-medium text-[#7B8FA5] transition-colors hover:bg-[#F9FAFB] hover:text-[#364658]">Cancel</button>
-          <button type="button" onClick={() => save()} className="rounded-md bg-[#3D8BD0] px-3 py-1.5 text-[12px] font-medium text-white transition-colors hover:bg-[#3478B5]">Save Rule</button>
-        </div>
-      </div>
-
-      {review && version === 'G' && (
+      {review && (version === 'G' || version === 'G2') && (
         /* G's review: conflicts are many-to-many (one rule on many fields, one field under many
            rules, one pair clashing in several ways), so they get their own explorer. */
         <div className="fixed inset-0 z-[10050] flex items-center justify-center bg-black/30" onMouseDown={() => setReview(null)}>
-          <div className="flex h-[min(700px,90vh)] w-[min(1100px,95vw)] flex-col overflow-hidden rounded-xl bg-white shadow-xl" onMouseDown={(e) => e.stopPropagation()}>
+          <div className={'flex h-[min(700px,90vh)] ' + (version === 'G2' ? 'w-[min(860px,95vw)]' : 'w-[min(1100px,95vw)]') + ' flex-col overflow-hidden rounded-xl bg-white shadow-xl'} onMouseDown={(e) => e.stopPropagation()}>
             <div className="flex flex-shrink-0 items-start gap-3 px-3 pt-3">
               <div className="min-w-0">
                 <h3 className="text-[15px] font-semibold text-[#364658]">{review === 'save' ? 'Review before saving' : 'Rule check'}</h3>
@@ -1109,7 +1359,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
             </div>
             <div className="min-h-0 flex-1">
               {tab === 'conflicts'
-                ? <FormRuleConflictReview conflicts={conflicts} rules={rules} currentExecution={draft.execution} fieldLabel={(id) => fieldById(id)?.label ?? id}
+                ? <FormRuleConflictReview accordion={version === 'G2'} conflicts={conflicts} rules={rules} currentExecution={draft.execution} fieldLabel={(id) => fieldById(id)?.label ?? id}
                     onOpenRule={(id) => { setReview(null); openOther(id); }}
                     onJump={(id) => { setReview(null); requestAnimationFrame(() => jumpTo(id)); }} />
                 : <FormRuleInsights {...railProps} bare only={tab} onJump={(id) => { setReview(null); requestAnimationFrame(() => jumpTo(id)); }} />}
@@ -1124,7 +1374,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
         </div>
       )}
 
-      {review && version !== 'G' && (
+      {review && version !== 'G' && version !== 'G2' && (
         <div className="fixed inset-0 z-[10050] flex items-center justify-center bg-black/30" onMouseDown={() => setReview(null)}>
           <div className="flex h-[min(640px,86vh)] w-[min(760px,92vw)] flex-col overflow-hidden rounded-lg bg-white shadow-xl" onMouseDown={(e) => e.stopPropagation()}>
             {review === 'save' && (
