@@ -2737,12 +2737,33 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
 - **Support Portal — the Widgets panel FOLDS placed widgets, and a row DRAGS (1 Oct 2026, Zeni).** (1) A predefined
   widget already on the page no longer takes a row: each group's title carries "N on this page ›" (text + chevron, no tick) on its RIGHT,
   folded by default from the FIRST one placed (no threshold); opening it lists them greyed AFTER the addable rows, a
-  group with nothing left to add shows a dashed row-sized (54px) placeholder "All added to the page", and a SEARCH shows matches whatever
-  the fold says. (2) The row BODY only drags (hand cursor, no grip icon) — a click on it adds nothing, because a
+  group with nothing left to add shows ONE quiet line "All added to the page" under its title (the title drops
+  to `pb-1` in that case; a dashed row-sized box was tried and rejected as too heavy), and a SEARCH shows matches whatever
+  the fold says. (2) The row BODY only drags (open-hand cursor, no grip icon) — a click on it adds nothing, because a
   drag that missed by a pixel used to drop the widget at the foot of the page. The "+" is the one click-to-add
-  (pointer cursor, tooltip "Add to page", keeps the list open); Enter/Space on a row still add. ⚠️ The row's
-  cursor is an INLINE style: theme.css gives every [role=button] a pointer, unlayered, which beats `cursor-grab`.
-  Toolbars also show a divider before Delete (CSS `:has(+ [data-tip^="Delete"])`, never doubled after the grip).
+  (tooltip "Add to page", keeps the list open); Enter/Space on a row still add. ⚠️ The "+" button carries a
+  **5px transparent ZONE** (`-m-[5px] p-[5px]`, the visible 24px square is an inner span): inside it the cursor is
+  the NORMAL arrow (inline `cursor: default`) and a press there adds, never drags (`pressOnAdd` ref cancels the
+  row's dragstart). ⚠️ Both cursors are INLINE styles: theme.css gives every [role=button] and button a pointer,
+  unlayered, which beats Tailwind's `cursor-*` utilities.
+  Toolbars also show a divider before Delete (CSS `:has(+ [data-tip^="Delete"])`, never doubled after the grip —
+  `.tb-grip + .tb-rule (+ .tb-rule …)` stays hidden).
+- **Support Portal — the TOUR moves the banner's toolbar ABOVE the banner (1 Oct 2026, Zeni).** While the tour is
+  open it sets `document.body.dataset.portalTour`; `ToolbarSlot` reads it and places a `toolbarBelow` bar above
+  its element instead of inside (falls back inside when there is no room). The banner bar carries
+  `data-tour="hero-toolbar"` and step 3 targets `['hero', 'hero-toolbar']`, so the spotlight is their union.
+  `resolveRect` ignores the fixed bar's parked `-9999` position, and the tour re-measures 160ms after each step
+  because the bar places itself in a layout effect after mounting. ⚠️ Known, not fixed: Esc does not close the
+  tour while the banner is selected (Close does).
+- **Support Portal — copy & small controls (1–5 Oct 2026):** tour cards and the six Editor basics slides carry
+  Zeni's rewritten copy (`STEPS` in `PortalBuilderTour`, `TOUR_CHAPTERS` in `PortalTourScenes`). The Video widget
+  has ONE "Upload video" button and the hint "Upload an MP4 video up to 5 MB." (`VideoSource` + `VIDEO_MAX_MB`
+  in `PortalControls`; non-MP4 / oversize files get an inline red error; the link input is gone). The Media Slider's
+  Title field lost its "Optional — hidden when blank." help (the Photo Gallery's still has it).
+- **`NON-DESIGNER-ADMIN-UX.md`** (project root) — the 28 Sep review of what overwhelms a non-designer ITSM admin
+  in the builder (15 issues by impact) and the seven "style it in one go" approaches (recommended: page-wide
+  style kit + per-widget look presets + S/M/L spacing), with a status table of what has since changed. Read it
+  before designing a simpler builder for admins.
 
 ## Parked features
 Support Portal features that are BUILT-OR-PART-BUILT (incl. §6, the toolbar move arrows) AND SWITCHED OFF, with their full context in

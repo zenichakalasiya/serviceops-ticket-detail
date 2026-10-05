@@ -1,4 +1,61 @@
-# Handoff — 2026-10-05 11:30
+# Handoff — 2026-10-05 11:55
+
+> Two sessions share this file today. **This top part is the Support Portal builder session**; the
+> Form Rules session's notes follow unchanged below the divider.
+
+## Read first
+CLAUDE.md › Key context — the Support Portal bullets dated 30 Sep – 5 Oct: *ONE global Keyboard shortcuts
+panel*, *move arrows PARKED*, *ONE divider after the drag grip*, *Widgets panel FOLDS placed widgets*,
+*TOUR moves the banner's toolbar ABOVE*, *copy & small controls*, and the `NON-DESIGNER-ADMIN-UX.md` pointer.
+
+## What we worked on this session
+Builder polish for non-designer admins: one global shortcuts panel, a calmer floating toolbar, a Widgets
+panel that stops making you scroll past widgets already on the page, rewritten tour/Basics copy, and the
+saved UX review for designing a simpler admin builder.
+
+## Completed
+- **Global Keyboard shortcuts panel** (`GlobalShortcutsPanel` + `shortcutRegistry` + `shortcutContext`):
+  header icon, `?`, builder rail and drawer rail all open one right-side panel focused on where you are.
+- **Move arrows parked** behind `SHOW_MOVE_ARROWS = false` (`portalShortcutKeys.ts`); concept in
+  `future-tasks.md` §6.
+- **Toolbar dividers:** only one after the drag grip and one before Delete (theme.css; grips carry `tb-grip`).
+- **Widgets panel:** placed predefined widgets fold into "N on this page ›" on the group title; a finished
+  group shows one line "All added to the page" (`pb-1` under the title); rows drag only (open hand), the
+  "+" adds, with a 5px normal-arrow zone round it.
+- **Tour step 3** shows the banner's toolbar above the banner, inside the spotlight.
+- **Copy:** tour cards + six Editor basics slides; Video widget = one "Upload video" (MP4, 5 MB); Media
+  Slider title help removed.
+- **`NON-DESIGNER-ADMIN-UX.md`** saved: the 28 Sep review + the seven "one go" styling approaches.
+- All of the above verified in a browser and live on `main`.
+
+## In progress
+Nothing mid-flight in the builder.
+
+## Next steps
+- Decide which "one go" styling approach to build (see `NON-DESIGNER-ADMIN-UX.md` Part 2; recommended
+  style kit + look presets + S/M/L spacing).
+- Optional fixes Zeni has not asked for yet: Esc doesn't close the tour while the banner is selected; the
+  tour spotlight on step 3 also takes in a strip of the portal header beside the toolbar; the Editor
+  basics video still shows a "Move right" press (arrows are parked).
+- Photo Gallery's Title still has "Optional — hidden when blank." — ask whether it should go too.
+- Known conflicts still awaiting Zeni (from 28 Sep): `Alt+←/→` may navigate the browser back from the
+  builder; `Alt+↑/↓` means different things in the builder and the ticket drawer.
+
+## Decisions made
+- Shortcuts live in ONE global panel; the drawer and builder sheets were removed (Zeni: "only in global").
+- Widgets already on the page are folded from the FIRST one placed, not after a threshold — predictable.
+- Row body drags, the "+" adds — a slipped drag must never add a widget at the foot of the page.
+- Toolbar keeps a divider only after the grip and before Delete (destructive action fenced off).
+
+## Gotchas & notes
+- Cursors in the Widgets panel are INLINE styles — theme.css's unlayered `[role=button]`/`button` pointer
+  rule beats Tailwind `cursor-*` classes.
+- Another session works in this repo at the same time (Form Rules: `FormRule*.tsx`, `CLAUDE.md`,
+  `HANDOFF.md`). Commit only your own named files; never `git add -A`, never `git stash`.
+
+---
+
+## (Form Rules session) Handoff — 2026-10-05 11:30
 
 ## Latest (5 Oct 2026) — Form Rules: rule-check cards, one CTA, first-time intro
 **Read first:** CLAUDE.md › Structure › the Request Form Management bullet ("Rule-check polish (5 Oct 2026)")
