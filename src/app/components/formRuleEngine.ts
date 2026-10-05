@@ -248,3 +248,57 @@ export function runOrder(me: RuleShape, rules: FormRule[], fields: FormField[], 
 /** Conflict count for a saved rule — what the listing's pill shows. */
 export const conflictCount = (r: FormRule, rules: FormRule[], fields: FormField[]) =>
   r.enabled ? findConflicts(r, rules, fields, rules.findIndex((x) => x.id === r.id)).length : 0;
+
+
+/* ── DEMO fallbacks (5 Oct 2026, Zeni) ──────────────────────────────────────────────────────────
+   This is a prototype for devs and PMG to walk through, so the two summary cards must appear on ANY
+   input: Similar rules as soon as the draft has one complete condition, Conflicts as soon as it has
+   one complete action. The editor uses these ONLY when the real checks above find nothing; the
+   listing's conflict pill still counts real clashes only. Deterministic (a hash of the field id),
+   so the same draft always shows the same rules. */
+const dHash = (s: string) => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; };
+const OPP: Record<string, RuleAction['type']> = {
+  Hide: 'Show', Show: 'Hide', Mandate: 'Make optional', 'Make optional': 'Mandate', Disable: 'Enable', Enable: 'Disable', 'Clear value': 'Set value',
+};
+
+export function demoSimilar(me: RuleShape, rules: FormRule[], fields: FormField[]): SimilarRule[] {
+  const mineConds = me.groups.flatMap((g2) => g2.conditions.filter(complete));
+  if (!me.event || !me.execution || !mineConds.length) return [];
+  const myFields = new Set(mineConds.map((c) => c.fieldId));
+  const myEffects = effectsOf(me, fields);
+  const pool = rules.filter((r) => r.id !== me.id);
+  const score = (r: FormRule) =>
+    (r.groups.some((g2) => g2.conditions.some((c) => myFields.has(c.fieldId))) ? 4 : 0)
+    + (r.event === me.event ? 2 : 0) + (r.enabled ? 1 : 0);
+  const seed = dHash([...myFields].join('|'));
+  return pool
+    .map((r, i) => ({ r, s: score(r), t: (seed + i * 7) % pool.length }))
+    .sort((a, b) => b.s - a.s || a.t - b.t)
+    .slice(0, 3)
+    .map(({ r: rule }) => {
+      const eff = effectsOf(rule, fields);
+      const common = eff.filter((e) => myEffects.some((m) => m.fieldId === e.fieldId && m.dim === e.dim && m.v === e.v)).map((e) => e.text);
+      const others = eff.map((e) => e.text).filter((t) => !common.includes(t));
+      const missing = myEffects.filter((m) => !eff.some((x) => x.fieldId === m.fieldId && x.dim === m.dim && x.v === m.v)).map((m) => m.text);
+      return { rule, common, others, missing };
+    });
+}
+
+export function demoConflicts(me: RuleShape, rules: FormRule[], fields: FormField[]): RuleConflict[] {
+  if (!me.event || !me.execution) return [];
+  const mine = effectsOf(me, fields).filter((m) => m.action.type !== 'Set value' || m.v !== '');
+  const pool = rules.filter((r) => r.id !== me.id && r.enabled);
+  if (!mine.length || !pool.length) return [];
+  return mine.map((m) => {
+    const other = pool[dHash(m.fieldId + m.action.type) % pool.length];
+    const f = label(fields, m.fieldId);
+    const kind: ConflictKind = m.dim === 'val' ? 'Override' : 'Opposite';
+    const theirType = (m.action.type === 'Set value' ? 'Set value' : OPP[m.action.type]) as RuleAction['type'];
+    const theirs = actionText(theirType, f, m.action.type === 'Set value' ? 'a different value' : 'Default');
+    return {
+      key: 'demo|' + other.id + '|' + m.action.id + '|' + m.fieldId, kind, fieldId: m.fieldId, actionId: m.action.id,
+      mine: m.text, other, theirs, scope: execShared(me.execution, other.execution), why: whyText(me, other, fields),
+      outcome: other.name + ' wins today — it runs after this rule.',
+    };
+  });
+}

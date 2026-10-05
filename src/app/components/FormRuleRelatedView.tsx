@@ -80,19 +80,7 @@ export function RelatedSummaryCards({ ready, conflicts, similar, onOpenConflicts
   const kinds = KINDS.map((k) => { const n = conflicts.filter((x) => x.kind === k).length; return n ? n + ' ' + k : null; }).filter(Boolean).join(' · ');
   return (
     <div className={stack ? 'flex flex-col gap-4' : 'flex flex-wrap gap-4'}>
-      {!(onlyFound && conflicts.length === 0) && (
-        <div className={wrap}>
-          <button type="button" onClick={onOpenConflicts} disabled={conflicts.length === 0}
-            className={card('border-[#DC2626] bg-[#FEF4F4]', 'hover:bg-[#FDEBEB]', conflicts.length === 0)}>
-            {conflicts.length > 0 && corner('conflicts', '#DC2626')}
-            {head(conflicts.length, conflicts.length === 1 ? 'Conflict' : conflicts.length ? 'Conflicts' : 'No conflicts', conflicts.length ? '#DC2626' : '#98A2B3')}
-            {summary(conflicts.length
-              ? <>{kinds} with {nRules} rule{nRules === 1 ? '' : 's'}. Resolve them so the form ends up in one clear state.</>
-              : 'No other rule leaves these fields in a different state.', conflicts.length ? '#DC2626' : '#64748B')}
-          </button>
-          {intro === 'conflicts' && conflicts.length > 0 && onCloseIntro && <RuleCheckIntro key="c" kind="conflicts" side={introSide} align={introAlign} onClose={onCloseIntro} />}
-        </div>
-      )}
+      {/* Similar rules first (it appears first, on the first condition); Conflicts below it. */}
       {!(onlyFound && similar.length === 0) && (
         <div className={wrap}>
           <button type="button" onClick={onOpenSimilar} disabled={similar.length === 0}
@@ -104,6 +92,19 @@ export function RelatedSummaryCards({ ready, conflicts, similar, onOpenConflicts
               : 'No other rule uses this trigger and these conditions.', similar.length ? '#B45309' : '#64748B')}
           </button>
           {intro === 'similar' && similar.length > 0 && onCloseIntro && <RuleCheckIntro key="s" kind="similar" side={introSide} align={introAlign} onClose={onCloseIntro} />}
+        </div>
+      )}
+      {!(onlyFound && conflicts.length === 0) && (
+        <div className={wrap}>
+          <button type="button" onClick={onOpenConflicts} disabled={conflicts.length === 0}
+            className={card('border-[#DC2626] bg-[#FEF4F4]', 'hover:bg-[#FDEBEB]', conflicts.length === 0)}>
+            {conflicts.length > 0 && corner('conflicts', '#DC2626')}
+            {head(conflicts.length, conflicts.length === 1 ? 'Conflict' : conflicts.length ? 'Conflicts' : 'No conflicts', conflicts.length ? '#DC2626' : '#98A2B3')}
+            {summary(conflicts.length
+              ? <>{kinds} with {nRules} rule{nRules === 1 ? '' : 's'}. Resolve them so the form ends up in one clear state.</>
+              : 'No other rule leaves these fields in a different state.', conflicts.length ? '#DC2626' : '#64748B')}
+          </button>
+          {intro === 'conflicts' && conflicts.length > 0 && onCloseIntro && <RuleCheckIntro key="c" kind="conflicts" side={introSide} align={introAlign} onClose={onCloseIntro} />}
         </div>
       )}
     </div>

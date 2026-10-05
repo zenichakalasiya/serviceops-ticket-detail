@@ -107,7 +107,7 @@ export function AdminRequestFormModule({ tab, onTab, onEditor }: {
   const [editing, setEditing] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<FormRule | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
-  /** J · the field matrix is a view of the rules, not its own nav destination, so it is local state. */
+  /** J · the field matrix is a view of the rules, not its own nav destination, so it is local state. Its tab was REMOVED (5 Oct 2026, Zeni); the view stays built — add ['matrix', 'Field Matrix'] back to the tab list to restore it. */
   const [matrix, setMatrix] = useState(false);
   const view: RequestFormTab | 'matrix' = matrix ? 'matrix' : tab;
   const [overId, setOverId] = useState<string | null>(null);
@@ -184,15 +184,15 @@ export function AdminRequestFormModule({ tab, onTab, onEditor }: {
 
       {/* The product's inline tab strip — the one every detail page uses. */}
       <div className="mb-4 flex gap-2.5 border-b border-[#E5E7EB]">
-        {([['builder', 'Form Builder'], ['rules', 'Form Rules'], ['matrix', 'Field Matrix']] as const).map(([id, label]) => (
+        {([['builder', 'Form Builder'], ['rules', 'Form Rules']] as const).map(([id, label]) => (
           <button
             key={id}
             type="button"
-            onClick={() => { if (id === 'matrix') { setMatrix(true); return; } setMatrix(false); onTab(id); }}
+            onClick={() => { setMatrix(false); onTab(id); }}
             className={`flex items-center gap-1.5 whitespace-nowrap border-b-2 px-2 py-3 text-[14px] font-medium transition-colors ${view === id ? 'border-[#3D8BD0] text-[#3D8BD0]' : 'border-transparent text-[#6b7280] hover:border-[#CBD5E1] hover:bg-[#F5F7FA] hover:text-[#364658]'}`}
           >
             {label}
-            {id !== 'matrix' && <span className={`rounded-sm px-1.5 text-[11px] font-semibold ${view === id ? 'bg-[#EBF5FF] text-[#3D8BD0]' : 'bg-[#F1F5F9] text-[#64748B]'}`}>
+            {<span className={`rounded-sm px-1.5 text-[11px] font-semibold ${view === id ? 'bg-[#EBF5FF] text-[#3D8BD0]' : 'bg-[#F1F5F9] text-[#64748B]'}`}>
               {id === 'builder' ? fields.length : rules.length}
             </span>}
           </button>

@@ -1,4 +1,4 @@
-# Handoff — 2026-10-05 11:55
+# Handoff — 2026-10-05 13:55
 
 > Two sessions share this file today. **This top part is the Support Portal builder session**; the
 > Form Rules session's notes follow unchanged below the divider.
@@ -79,6 +79,10 @@ and Key context › Request Form Management (B3 passages).
 - B3 spacing: 16px on every outer side below the header divider (stepper + Rule check `p-4`, form `pt-4 pr-4 pb-4`), form 24px from the stepper rail.
 
 - Conflicts info popup now draws how a conflict happens (`ConflictArt`): Rule A "Hide · Status" and Rule B "Show · Status" action rows meeting at one red Status field with a clash mark; text says the same.
+
+- Field Matrix tab removed from the listing (view still built).
+- B3: "Select Rule Applicable for" moved into the When container as its 3rd field; Rule details = name, tags, description.
+- DEMO: any complete condition shows Similar rules, any complete action shows Conflicts (`demoSimilar`/`demoConflicts` in formRuleEngine, used only when the real checks find nothing). Similar card now sits above Conflicts. Probes: `p60.mjs` (random condition + Mandate Vendor), `p61.mjs` (Show Due By → demo conflict + sidebar).
 
 **Open / next**
 0. Asked Zeni: should the conflicts drawing also show a VALUE clash (Set Priority = High vs Low)? And are the 7–9px labels in the drawing readable, or should it grow/simplify?

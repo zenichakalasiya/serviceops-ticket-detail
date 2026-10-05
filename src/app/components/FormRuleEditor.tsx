@@ -8,7 +8,7 @@ import {
 import type { Condition, ConditionGroup, FormField, FormRule, RuleAction } from './formRuleData';
 import { ErrorText, FieldLabel, RuleSelect, StatusToggle, TagEditor, inputCls, rowInputCls } from './FormRuleControls';
 import type { SelectOption } from './FormRuleControls';
-import { actionText, conditionText, findConflicts, findSimilar, runOrder } from './formRuleEngine';
+import { actionText, conditionText, demoConflicts, demoSimilar, findConflicts, findSimilar, runOrder } from './formRuleEngine';
 import { FormRuleInsights, KIND_TONE, eventLabel } from './FormRuleInsights';
 import type { InsightTab } from './FormRuleInsights';
 import { FormRuleFieldView } from './FormRuleFieldView';
@@ -333,8 +333,10 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
   // ── rule check: measured live against the draft ───────────────────────────
   const selfIndex = rule ? rules.findIndex((r) => r.id === rule.id) : rules.length;
   const shape = { ...draft, id: rule?.id, name: draft.name || 'This rule' };
-  const conflicts = useMemo(() => findConflicts(shape, rules, fields, selfIndex), [draft, rules, fields]); // eslint-disable-line react-hooks/exhaustive-deps
-  const similar = useMemo(() => findSimilar(shape, rules, fields), [draft, rules, fields]); // eslint-disable-line react-hooks/exhaustive-deps
+  /* Real checks first; the DEMO fallbacks make sure any condition shows Similar rules and any
+     complete action shows Conflicts, so the prototype can be walked through with any input. */
+  const conflicts = useMemo(() => { const real = findConflicts(shape, rules, fields, selfIndex); return real.length ? real : demoConflicts(shape, rules, fields); }, [draft, rules, fields]); // eslint-disable-line react-hooks/exhaustive-deps
+  const similar = useMemo(() => { const real = findSimilar(shape, rules, fields); return real.length ? real : demoSimilar(shape, rules, fields); }, [draft, rules, fields]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!ready || relOpen) return;
     const fresh = conflicts.length && !introSeen.conflicts ? 'conflicts' : similar.length && !introSeen.similar ? 'similar' : null;
@@ -524,11 +526,14 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
           </div>
 
   </>);
+  /** B3 (and the hidden H layouts) ask who the rule is for beside WHEN it runs — the trigger, the
+      execution and the audience together say when this rule applies (5 Oct 2026). */
+  const appliesInWhen = ['B3', 'H1', 'H2', 'H3'].includes(version);
   const whenEl = (<>
             {/* WHEN */}
             <Step icon={<History size={12} />} tone="#3D8BD0" badge="#E2EDF5" lead="When" rest="this rule should run and when it should execute">
               <Panel>
-                <div className="grid grid-cols-2 gap-4">
+                <div className={appliesInWhen ? 'grid grid-cols-3 gap-4' : 'grid grid-cols-2 gap-4'}>
                   <div>
                     <label className="mb-0.5 block text-[12px] text-[#7B8FA5]">Select Rule Event <span className="text-[#F25C4E]">*</span></label>
                     <RuleSelect value={draft.event ? [draft.event] : []} onChange={([v]) => set({ event: v as FormRule['event'] })} options={EVENT_OPTIONS} placeholder="Choose an event" invalid={!!err('event')} />
@@ -539,6 +544,13 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
                     <RuleSelect value={draft.execution ? [draft.execution] : []} onChange={([v]) => set({ execution: v as FormRule['execution'] })} options={EXECUTION_OPTIONS} placeholder="Create, edit or both" invalid={!!err('execution')} />
                     <ErrorText>{err('execution')}</ErrorText>
                   </div>
+                  {appliesInWhen && (
+                    <div>
+                      <label className="mb-0.5 block text-[12px] text-[#7B8FA5]">Select Rule Applicable for <span className="text-[#F25C4E]">*</span></label>
+                      <RuleSelect value={draft.applies ? [draft.applies] : []} onChange={([v]) => set({ applies: v as FormRule['applies'] })} options={APPLIES_OPTIONS} placeholder="Choose people" invalid={!!err('applies')} />
+                      <ErrorText>{err('applies')}</ErrorText>
+                    </div>
+                  )}
                 </div>
               </Panel>
               {!ready && (
@@ -880,7 +892,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
 
   const detailsStepEl = (next: () => void) => (
     <div className="mx-auto flex max-w-[880px] flex-col gap-6 p-4 pb-8 pt-5">
-      {detailsStep(true, (
+      {detailsStep(!appliesInWhen, (
         <div>
           <button type="button" onClick={next} className="rounded-md bg-[#3D8BD0] px-3 py-1.5 text-[12px] font-medium text-white hover:bg-[#3478B5]">Next: Build the rule</button>
         </div>
@@ -1052,11 +1064,11 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
   );
 
   // ── B · guided stepper ────────────────────────────────────────────────────
-  const detailsDone = !!draft.name.trim() && !!draft.applies && draft.tags.length > 0;
+  const detailsDone = !!draft.name.trim() && (appliesInWhen || !!draft.applies) && draft.tags.length > 0;
   const actionsDone = draft.actions.length > 0 && !draft.actions.some(actionIncomplete);
   const STEPS = [
-    { label: 'Rule details', hint: 'Name, who it is for, tags', done: detailsDone, locked: false },
-    { label: 'Build the rule', hint: 'When, conditions and actions', done: ready && actionsDone, locked: false },
+    { label: 'Rule details', hint: appliesInWhen ? 'Name, description, tags' : 'Name, who it is for, tags', done: detailsDone, locked: false },
+    { label: 'Build the rule', hint: appliesInWhen ? 'When, who, conditions and actions' : 'When, conditions and actions', done: ready && actionsDone && (!appliesInWhen || !!draft.applies), locked: false },
   ];
   const summaryLines = [
     draft.event ? eventLabel(draft.event) + ' · ' + (draft.execution || '…') + ' · ' + (draft.applies || '…') : null,
