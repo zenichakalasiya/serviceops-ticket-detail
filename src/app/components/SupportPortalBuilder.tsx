@@ -3655,7 +3655,10 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
           {/* ── The rail's FOOT (Zeni, 29 Sep 2026): Keyboard shortcuts, and last the Editor basics video.
               Both are always here — they used to live in the ? menu, and the video appeared on the rail
               only after its card had been closed once. */}
-          <Tooltip delayDuration={0}><TooltipTrigger asChild>
+          {/* HIDDEN (Zeni, 5 Oct 2026): shortcuts live in the product's GLOBAL Keyboard shortcuts panel
+              (header keyboard icon, or `?`), so the rail no longer carries its own door to them.
+              Flip `false` to `true` to bring the button back. */}
+          {false && <Tooltip delayDuration={0}><TooltipTrigger asChild>
             <button
               onClick={() => setKeys((v) => !v)}
               className={`mt-auto flex w-[60px] flex-col items-center gap-1.5 rounded py-2 transition-all ${keys ? 'bg-[#EBF5FF] text-[#3D8BD0]' : 'text-[#64748B] hover:bg-[#F5F7FA] hover:text-[#364658]'}`}
@@ -3663,14 +3666,14 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
               <Keyboard size={18} />
               <span className="text-[11px] font-medium leading-none">Shortcuts</span>
             </button>
-          </TooltipTrigger><TooltipContent side="left"><TipKeys label="Keyboard shortcuts" keys={chromeKeys('help')} /></TooltipContent></Tooltip>
+          </TooltipTrigger><TooltipContent side="left"><TipKeys label="Keyboard shortcuts" keys={chromeKeys('help')} /></TooltipContent></Tooltip>}
           <Tooltip delayDuration={0}><TooltipTrigger asChild>
             <button
               data-portal-dock="parked"
               onClick={() => { setTour(false); setDock((v) => !v); }}
               /* ⚠️ A SOFT tint, not the dark block it was (Zeni, 29 Sep 2026): it is a help surface, not the
                  loudest thing on the rail. 56px wide inside the 72px rail, so it has air on both sides. */
-              className={`flex w-[56px] flex-col items-center gap-1.5 rounded py-2 transition-colors ${dock ? 'bg-[#EBF5FF] text-[#3D8BD0]' : 'bg-[#F1F5F9] text-[#475467] hover:bg-[#E8EDF3] hover:text-[#364658]'}`}
+              className={`mt-auto flex w-[56px] flex-col items-center gap-1.5 rounded py-2 transition-colors ${dock ? 'bg-[#EBF5FF] text-[#3D8BD0]' : 'bg-[#F1F5F9] text-[#475467] hover:bg-[#E8EDF3] hover:text-[#364658]'}`}
             >
               <DockGlyph size={18} />
               <span className="text-[11px] font-medium leading-none">Basics</span>

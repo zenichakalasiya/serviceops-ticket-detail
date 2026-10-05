@@ -2760,6 +2760,9 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   has ONE "Upload video" button and the hint "Upload an MP4 video up to 5 MB." (`VideoSource` + `VIDEO_MAX_MB`
   in `PortalControls`; non-MP4 / oversize files get an inline red error; the link input is gone). The Media Slider's
   Title field lost its "Optional — hidden when blank." help (the Photo Gallery's still has it).
+- **Support Portal — the builder rail has NO Shortcuts button (5 Oct 2026, Zeni).** The rail is Widgets · Theme ·
+  Branding, then Basics at its foot (now `mt-auto`). Shortcuts are reached from the product's GLOBAL panel
+  (header keyboard icon, or `?`). The button is wrapped in `{false && …}` in `SupportPortalBuilder`, so restoring it is one word.
 - **`NON-DESIGNER-ADMIN-UX.md`** (project root) — the 28 Sep review of what overwhelms a non-designer ITSM admin
   in the builder (15 issues by impact) and the seven "style it in one go" approaches (recommended: page-wide
   style kit + per-widget look presets + S/M/L spacing), with a status table of what has since changed. Read it
