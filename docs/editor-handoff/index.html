@@ -1,0 +1,590 @@
+<title>Support Portal Editor Spec</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+:root{
+  --bg:#F6F8FB; --paper:#FFFFFF; --ink:#1B2533; --ink-2:#4A5A6E; --ink-3:#5B6B7E;
+  --line:#E2E8F0; --soft:#EEF3F9; --accent:#2F7FC6; --accent-soft:#E6F0FA;
+  --ok:#15803D; --ok-soft:#E8F6EC; --warn:#B45309; --warn-soft:#FEF3E2; --no:#B42318; --no-soft:#FDECEA;
+  --key-bg:#F1F5F9; --key-line:#D5DEE8; --shadow:0 1px 2px rgba(16,24,40,.05),0 6px 16px rgba(16,24,40,.06);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0F1621; --paper:#151E2B; --ink:#E6ECF3; --ink-2:#B3C0CF; --ink-3:#8696A9;
+  --line:#263243; --soft:#1A2433; --accent:#6AAEEA; --accent-soft:#16304A;
+  --ok:#5BD08A; --ok-soft:#12301F; --warn:#F2B35A; --warn-soft:#33260F; --no:#F1897E; --no-soft:#3A1915;
+  --key-bg:#1E2938; --key-line:#33445A; --shadow:none; color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#0F1621; --paper:#151E2B; --ink:#E6ECF3; --ink-2:#B3C0CF; --ink-3:#8696A9;
+  --line:#263243; --soft:#1A2433; --accent:#6AAEEA; --accent-soft:#16304A;
+  --ok:#5BD08A; --ok-soft:#12301F; --warn:#F2B35A; --warn-soft:#33260F; --no:#F1897E; --no-soft:#3A1915;
+  --key-bg:#1E2938; --key-line:#33445A; --shadow:none; color-scheme:dark;}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.6 "IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;padding-inline:16px;padding-block:0}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:230px minmax(0,1fr);gap:40px;padding-block:32px 80px}
+@media (max-width:900px){.wrap{grid-template-columns:minmax(0,1fr)}nav.toc{position:static!important;max-height:none!important}}
+nav.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 24px);align-self:start;max-height:calc(100vh - 48px);overflow:auto;font-size:13px}
+nav.toc .brand{font-weight:700;font-size:15px;margin-bottom:4px}
+nav.toc .sub{color:var(--ink-3);font-size:12px;margin-bottom:16px}
+nav.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:2px;counter-reset:t}
+nav.toc a{display:block;color:var(--ink-2);text-decoration:none;padding:4px 8px;border-radius:6px}
+nav.toc a:hover{background:var(--soft);color:var(--ink)}
+nav.toc .grp{margin:14px 0 4px 8px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+main{min-width:0}
+header.hero{padding-bottom:20px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:600}
+h1{font-size:34px;line-height:1.15;margin:6px 0 10px;text-wrap:balance}
+h2{font-size:23px;line-height:1.25;margin:56px 0 6px;scroll-margin-top:20px;text-wrap:balance}
+h3{font-size:17px;margin:28px 0 6px}
+p{margin:8px 0;max-width:72ch}
+.lede{font-size:17px;color:var(--ink-2);max-width:68ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.chip{font-size:12px;padding:3px 10px;border-radius:99px;background:var(--soft);color:var(--ink-2)}
+ul,ol.steps{padding-left:20px;margin:8px 0;max-width:74ch}
+li{margin:4px 0}
+figure{margin:18px 0;background:var(--paper);border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:var(--shadow)}
+figure img{display:block;width:100%;height:auto}
+figcaption{font-size:13px;color:var(--ink-2);padding:10px 14px;border-top:1px solid var(--line)}
+.shot{position:relative}
+.pin{position:absolute;transform:translate(-50%,-50%);width:24px;height:24px;border-radius:50%;background:#C9282E;color:#fff;font:700 12px/24px "IBM Plex Sans",sans-serif;text-align:center;box-shadow:0 0 0 3px rgba(255,255,255,.9)}
+.legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:6px 20px;padding:12px 14px;border-top:1px solid var(--line);font-size:13.5px}
+.legend b{display:inline-flex;width:20px;height:20px;border-radius:50%;background:#C9282E;color:#fff;font-size:11px;align-items:center;justify-content:center;margin-right:8px;vertical-align:1px}
+.rule{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;padding:12px 16px;margin:14px 0;max-width:80ch}
+.rule.warn{border-left-color:var(--warn)}
+.rule .k{font-size:11px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;color:var(--accent);display:block;margin-bottom:2px}
+.rule.warn .k{color:var(--warn)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:10px;background:var(--paper)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-3);font-weight:600;background:var(--soft)}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:600;white-space:nowrap}
+kbd{font:500 12px "IBM Plex Mono",ui-monospace,monospace;background:var(--key-bg);border:1px solid var(--key-line);border-bottom-width:2px;border-radius:5px;padding:1px 6px;white-space:nowrap}
+.tag{display:inline-block;font-size:11px;font-weight:600;padding:1px 8px;border-radius:99px;vertical-align:1px}
+.tag.pre{background:var(--accent-soft);color:var(--accent)}
+.tag.rep{background:var(--ok-soft);color:var(--ok)}
+.tag.mock{background:var(--warn-soft);color:var(--warn)}
+.diagram{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:18px;margin:16px 0;overflow-x:auto}
+.diagram svg{display:block;max-width:100%;height:auto;margin:0 auto}
+.diagram .cap{font-size:13px;color:var(--ink-2);margin-top:10px;text-align:center}
+svg text{font-family:"IBM Plex Sans",system-ui,sans-serif}
+.s-box{fill:var(--paper);stroke:var(--line)}
+.s-soft{fill:var(--soft);stroke:var(--line)}
+.s-acc{fill:var(--accent-soft);stroke:var(--accent)}
+.s-txt{fill:var(--ink)} .s-txt2{fill:var(--ink-2)} .s-txt3{fill:var(--ink-3)}
+.s-line{stroke:var(--ink-3);fill:none}
+.s-red{fill:#C9282E}
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:12px 0}
+.flow span{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-size:13.5px}
+.flow i{color:var(--ink-3);font-style:normal}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+html{scroll-behavior:smooth}
+</style>
+
+<div class="wrap">
+<nav class="toc" aria-label="Contents">
+  <div class="brand">Support Portal Editor</div>
+  <div class="sub">Developer handoff · behaviour spec</div>
+  <ol>
+    <li class="grp">Start here</li>
+    <li><a href="#overview">What it is</a></li>
+    <li><a href="#model">The mental model</a></li>
+    <li class="grp">Admin listing</li>
+    <li><a href="#listing">Portal list</a></li>
+    <li><a href="#publish-rules">Published, Draft, Default</a></li>
+    <li><a href="#create">Create a portal</a></li>
+    <li><a href="#details">Edit details &amp; Settings</a></li>
+    <li class="grp">The editor</li>
+    <li><a href="#anatomy">Screen anatomy</a></li>
+    <li><a href="#start-points">Default vs blank page</a></li>
+    <li><a href="#select">Selecting things</a></li>
+    <li><a href="#toolbar">Floating toolbar</a></li>
+    <li><a href="#sidebar">Sidebar (settings)</a></li>
+    <li><a href="#layout">Sections &amp; layout</a></li>
+    <li><a href="#widgets-panel">Widgets panel</a></li>
+    <li><a href="#widgets">Widget reference</a></li>
+    <li><a href="#banner">The banner</a></li>
+    <li><a href="#text">Editing text</a></li>
+    <li><a href="#colour">Colour picker &amp; spacing</a></li>
+    <li><a href="#theme">Theme</a></li>
+    <li><a href="#branding">Branding</a></li>
+    <li><a href="#preview">Preview, draft, publish</a></li>
+    <li><a href="#undo">Undo, redo, reset</a></li>
+    <li><a href="#help">Tour &amp; Editor basics</a></li>
+    <li><a href="#keys">Keyboard shortcuts</a></li>
+    <li class="grp">Building it</li>
+    <li><a href="#production">Notes for production</a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="hero">
+  <div class="eyebrow">Motadata ServiceOps · Admin › Support Channels › Support Portal</div>
+  <h1>Support Portal Editor — how every part behaves</h1>
+  <p class="lede">This page describes what the admin sees and what each control does, so you can build the editor without asking. The prototype is the reference: every screenshot here is taken from it. Where the prototype fakes something (dummy data, no backend), it is marked <span class="tag mock">mock</span>.</p>
+  <div class="meta"><span class="chip">Audience: developers</span><span class="chip">Behaviour only — no code</span><span class="chip">As of 5 Oct 2026</span></div>
+</header>
+
+<!-- ───────────────────────── OVERVIEW ───────────────────────── -->
+<h2 id="overview">What it is</h2>
+<p>The Support Portal is the page a <b>requester</b> (an employee) lands on to raise incidents, request services, approve things and read knowledge. The <b>editor</b> lets an <b>ITSM admin</b> — usually not a designer — build and style that page visually, then publish it.</p>
+<p>An admin can keep several portals (for example one per company or department). Exactly one of them is live at a time: the <b>default</b> portal.</p>
+<div class="rule"><span class="k">Design principle</span>The admin is not a designer. Every control should say in plain words what it does, show its result straight away on the page, and never be shown in a state where pressing it does nothing.</div>
+
+<!-- ───────────────────────── MODEL ───────────────────────── -->
+<h2 id="model">The mental model</h2>
+<p>Everything on a portal page is one of four things, nested in this order:</p>
+<div class="diagram">
+<svg viewBox="0 0 760 300" width="760" role="img" aria-label="Page contains sections, sections contain columns or rows, those contain widgets">
+  <rect x="10" y="10" width="740" height="280" rx="12" class="s-soft"/>
+  <text x="26" y="34" font-size="13" font-weight="700" class="s-txt">PAGE</text>
+  <text x="74" y="34" font-size="12" class="s-txt3">the whole portal, top to bottom</text>
+  <rect x="26" y="48" width="708" height="58" rx="8" class="s-acc"/>
+  <text x="42" y="72" font-size="13" font-weight="700" class="s-txt">BANNER</text>
+  <text x="42" y="92" font-size="12" class="s-txt2">optional · heading, search, up to 4 sections of its own</text>
+  <rect x="26" y="118" width="708" height="160" rx="8" class="s-box"/>
+  <text x="42" y="140" font-size="13" font-weight="700" class="s-txt">SECTION</text>
+  <text x="112" y="140" font-size="12" class="s-txt3">a full-width row band · split it into columns and rows</text>
+  <rect x="42" y="152" width="320" height="112" rx="6" class="s-soft"/>
+  <text x="56" y="172" font-size="12" font-weight="700" class="s-txt">COLUMN</text>
+  <rect x="56" y="182" width="292" height="34" rx="5" class="s-box"/><text x="68" y="204" font-size="12" class="s-txt2">Widget · e.g. My Open Requests</text>
+  <rect x="56" y="222" width="292" height="34" rx="5" class="s-box"/><text x="68" y="244" font-size="12" class="s-txt2">Widget · stacked below</text>
+  <rect x="376" y="152" width="342" height="112" rx="6" class="s-soft"/>
+  <text x="390" y="172" font-size="12" font-weight="700" class="s-txt">COLUMN</text>
+  <rect x="390" y="182" width="314" height="74" rx="5" class="s-box"/><text x="402" y="224" font-size="12" class="s-txt2">Widget · e.g. Announcements</text>
+</svg>
+<div class="cap">A section is a box that can be split; a column (or row) is a box inside it; a widget sits in a box. The same box can be split again, up to 4 levels deep.</div>
+</div>
+<ul>
+  <li><b>Section</b> — a full-width band. Can hold one widget, or be split into columns or rows.</li>
+  <li><b>Column / Row</b> — a box inside a section. A box laid out side-by-side reads as columns; stacked, it reads as rows. Any box can be split again.</li>
+  <li><b>Widget</b> — the content: a data card, an action card, text, an image, a button…</li>
+  <li><b>Child parts</b> — some widgets have parts you can select on their own: a card's <i>title</i>, its <i>View all</i> link, its <i>icon</i>.</li>
+</ul>
+<div class="rule"><span class="k">Limits</span>Up to <b>4 columns in a row</b> and <b>4 levels of nesting</b> below a section. Stacked rows are not capped. When a limit is reached, the Split control is <b>removed</b> from the toolbar rather than shown disabled.</div>
+
+<!-- ───────────────────────── LISTING ───────────────────────── -->
+<h2 id="listing">Portal list</h2>
+<p>Admin › Support Channels › <b>Support Portal</b>. One card per portal, the default first.</p>
+<figure><img src="shots/01-listing.png" alt="Portal list with one card: thumbnail, name, Published and Default badges, URL, company, sign-in, audience, last modified, and action buttons"><figcaption>One card per portal. The thumbnail is a real miniature of that portal's page.</figcaption></figure>
+<div class="tbl"><table>
+<tr><th>Card part</th><th>Behaviour</th></tr>
+<tr><td>Thumbnail · Name</td><td>Both open the editor for that portal.</td></tr>
+<tr><td>Status badge</td><td><b>Published</b> or <b>Draft</b> — never both. <b>Default</b> badge on the one portal requesters land on.</td></tr>
+<tr><td>URL</td><td>Opens the live portal in a new tab. Default portal = root address (<code>support.acme.com</code>); others = a path under it (<code>support.acme.com/hr</code>).</td></tr>
+<tr><td>Meta line</td><td>Company · how requesters sign in (identity provider, or "ServiceOps login") · audience. Then "Last modified … by …".</td></tr>
+<tr><td>Edit ▾</td><td>Menu with two items: <b>Edit details</b> (name, company, URL, sign-on) and <b>Edit support portal</b> (opens the editor).</td></tr>
+<tr><td>Preview (eye)</td><td>Opens the portal as a requester sees it.</td></tr>
+<tr><td>Settings (gear)</td><td>Opens the portal's requester permissions panel (see below).</td></tr>
+<tr><td>Copy</td><td>Duplicates the whole portal (design and details) as a <b>Draft</b>, then immediately opens Edit details on the copy — two portals cannot share one URL, so the admin is asked to change it now.</td></tr>
+<tr><td>Set as default (star)</td><td>Makes this portal the live one. Same confirmation as publishing (see rules). Hidden on the default's own card.</td></tr>
+<tr><td>Delete</td><td>Deletes the portal. <b>Disabled on the default portal</b>, with the reason in its tooltip: requesters have to land somewhere.</td></tr>
+<tr><td>Switch</td><td>The switch <b>is</b> the status: on = Published, off = Draft. Switching on asks the same question as Publish.</td></tr>
+</table></div>
+<figure><img src="shots/02-edit-menu.png" alt="Edit menu open with Edit details and Edit support portal"><figcaption>Edit is one button with two kinds of editing behind it.</figcaption></figure>
+
+<h2 id="publish-rules">Published, Draft and Default</h2>
+<div class="rule"><span class="k">Core rule</span><b>Only one portal is live at a time, and it is the default.</b> Publishing any other portal makes it the default and moves every other published portal back to Draft.</div>
+<pre class="mermaid">
+stateDiagram-v2
+  direction LR
+  [*] --> Draft: Create / Copy
+  Draft --> Published_Default: Publish (or switch on)<br/>confirm if it is not the default
+  Published_Default --> Draft: Save as draft<br/>or switch off
+  Published_Default --> Draft2: another portal is published
+  state "Published + Default" as Published_Default
+  state "Draft (was live)" as Draft2
+</pre>
+<ul>
+  <li><b>Publish</b> on a portal that is not the default opens a confirmation: <i>"Publish “X” and make it the default?"</i>, naming the portal(s) that will go back to Draft. Choices: <b>Publish and make default</b> or <b>Cancel</b> (nothing changes).</li>
+  <li><b>Publish</b> on the default portal goes straight through.</li>
+  <li><b>Save as draft</b> on a published portal <b>unpublishes</b> it — the card shows Draft and the toast says it is no longer live.</li>
+  <li>The default can be switched off; it then becomes a Draft that is still the default.</li>
+</ul>
+
+<h2 id="create">Create a portal</h2>
+<p>The <b>Create support portal</b> button opens a two-step dialog.</p>
+<div class="grid2">
+<figure><img src="shots/05-create-step1.png" alt="Create dialog step 1 with portal details fields"><figcaption><b>Step 1 · Details</b> — Name*, Company*, URL*, Identity provider. Save is disabled until the required fields are filled.</figcaption></figure>
+<figure><img src="shots/06-create-step2.png" alt="Create dialog step 2: Start from scratch row and template grid with industry tags"><figcaption><b>Step 2 · Start</b> — one click picks a starting point: from scratch, the Default design, or a template.</figcaption></figure>
+</div>
+<ul>
+  <li>The portal is <b>created as a Draft the moment Step 1 is saved</b> (toast: "… created — choose how to start it"). Leaving the editor never loses work.</li>
+  <li>Going <b>Back</b> to step 1 and saving again <b>updates</b> the same draft (the button reads "Save changes") — it must never create a second portal.</li>
+  <li><b>Start from scratch</b> opens an empty page. <b>Default</b> (first tile, badged) is the standard ServiceOps layout. <b>Templates</b> are filterable by industry; each card shows up to two industry tags and a <i>+N</i> with the rest in a tooltip.</li>
+  <li>Portal names are unique; URLs are unique.</li>
+</ul>
+
+<h2 id="details">Edit details &amp; Settings</h2>
+<div class="grid2">
+<figure><img src="shots/03-edit-details.png" alt="Edit details right side panel"><figcaption><b>Edit details</b> — a right side panel with the same four fields as Step 1. Esc or clicking the dim area closes it.</figcaption></figure>
+<figure><img src="shots/04-portal-settings.png" alt="Settings side panel with Request group toggles"><figcaption><b>Settings</b> — what a requester may <i>do</i> on this portal.</figcaption></figure>
+</div>
+<p>Settings has nine collapsible groups in this order: <b>Request · Service Catalog · Change · Asset · CMDB · Knowledge · Approval · Digital Signature · User</b>. Request is open on arrival; the rest start collapsed.</p>
+<ul>
+  <li>Rows are switches, radio choices, numbers or chip selects.</li>
+  <li>A row that depends on another (e.g. <i>Grace Period</i> under "Allow requester to reopen") is <b>removed</b> when its parent is off — not greyed.</li>
+  <li><b>Search</b> matches row labels and opens every group that contains a match.</li>
+</ul>
+
+<!-- ───────────────────────── EDITOR ANATOMY ───────────────────────── -->
+<h2 id="anatomy">Editor — screen anatomy</h2>
+<p>The editor takes the whole screen. The admin navigation is hidden; the back arrow is the way out.</p>
+<figure>
+  <div class="shot">
+    <img src="shots/10-editor.png" alt="The editor: top bar, canvas, widgets panel and right rail">
+    <span class="pin" style="left:1.7%;top:14.2%">1</span>
+    <span class="pin" style="left:10%;top:14.2%">2</span>
+    <span class="pin" style="left:64.8%;top:14.2%">3</span>
+    <span class="pin" style="left:68.6%;top:14.2%">4</span>
+    <span class="pin" style="left:73%;top:14.2%">5</span>
+    <span class="pin" style="left:81.7%;top:14.2%">6</span>
+    <span class="pin" style="left:89%;top:14.2%">7</span>
+    <span class="pin" style="left:95%;top:14.2%">8</span>
+    <span class="pin" style="left:24%;top:72%">9</span>
+    <span class="pin" style="left:83%;top:42%">10</span>
+    <span class="pin" style="left:97.4%;top:24%">11</span>
+    <span class="pin" style="left:97.4%;top:90%">12</span>
+  </div>
+  <div class="legend">
+    <span><b>1</b>Back to the portal list</span>
+    <span><b>2</b>Portal name + status (Published / Draft)</span>
+    <span><b>3</b>Undo / Redo</span>
+    <span><b>4</b>Help — starts the guided tour</span>
+    <span><b>5</b>Light / Dark — which version of the portal you are designing</span>
+    <span><b>6</b>Reset to default — throws away the design</span>
+    <span><b>7</b>Preview — see it as a requester</span>
+    <span><b>8</b>Publish ▾ (menu: Save as draft)</span>
+    <span><b>9</b>Canvas — the real portal page, editable</span>
+    <span><b>10</b>Sidebar — the open panel (Widgets here)</span>
+    <span><b>11</b>Rail — Widgets · Theme · Branding</span>
+    <span><b>12</b>Basics — the Editor basics video</span>
+  </div>
+</figure>
+<div class="rule"><span class="k">Three places, one rule</span><b>Canvas</b> = see it and pick it. <b>Floating toolbar</b> (appears on the selected item) = quick actions on it. <b>Sidebar</b> = all of its settings. A rail item opens a panel; selecting something on the canvas swaps the sidebar to that thing's settings.</div>
+<ul>
+  <li>The sidebar can be dragged wider from its left edge (min 340px).</li>
+  <li>Clicking the lit rail item again closes the panel.</li>
+  <li>The canvas renders the portal exactly as requesters will see it, using real layout — not a screenshot — so it reflows when the sidebar is resized.</li>
+</ul>
+
+<h2 id="start-points">Default page vs blank page</h2>
+<div class="grid2">
+<figure><img src="shots/10-editor.png" alt="Default page"><figcaption><b>Default page</b> — Banner, the four Quick Actions cards, Favourite + Most Used Services side by side, then data cards (My Open Requests, Pending Approvals, Announcements, My Assets, My CIs, Most Read Knowledge, Contact Us).</figcaption></figure>
+<figure><img src="shots/07-blank-editor.png" alt="Blank page empty state with Add section button"><figcaption><b>From scratch</b> — "Your portal is empty" + <b>Add section</b>. The first section spans the page; its + handles split it.</figcaption></figure>
+</div>
+<p>On the default page the predefined cards are ordinary sections, so they move, split and restyle like anything the admin adds.</p>
+
+<!-- ───────────────────────── SELECT ───────────────────────── -->
+<h2 id="select">Selecting things</h2>
+<ul>
+  <li><b>Hover</b> shows a light outline and a small name chip ("My Open Requests", "Section").</li>
+  <li><b>Click</b> selects the <b>innermost</b> thing under the pointer: a blue outline, resize handles, the floating toolbar, and the sidebar switches to its settings.</li>
+  <li>To reach the thing <i>around</i> it (its column, its section), press <kbd>Alt</kbd>+<kbd>↑</kbd>; <kbd>Alt</kbd>+<kbd>↓</kbd> goes back in. <kbd>Esc</kbd> deselects.</li>
+  <li>Inside a row of gathered cards, a card's toolbar has <b>Select the row</b>.</li>
+  <li><b>Text</b> needs two clicks: the first selects its frame, the second puts the cursor in the words (see <a href="#text">Editing text</a>).</li>
+</ul>
+<figure><img src="shots/13-select-card.png" alt="New Incident card selected: outline, handles, floating toolbar above, sidebar with Content and Design"><figcaption>A selected card: outline + handles, the floating toolbar above it, and its settings in the sidebar.</figcaption></figure>
+
+<h3>Resize handles</h3>
+<ul>
+  <li><b>Width</b> is a percentage of the parent (5–100%), so it follows the parent when the page resizes. Dragging an edge moves only that edge; the opposite edge stays put.</li>
+  <li>Between two side-by-side boxes, dragging the shared edge trades width between them.</li>
+  <li><b>Height</b> is a real height; content that does not fit is clipped. The banner cannot go below 260px.</li>
+  <li><b>Top grip</b> drags the gap above the element (never below 0 — sections never overlap).</li>
+  <li>On a <b>section that holds several boxes</b>, the side handles change the gap between columns and the bottom handle the gap between rows; the gaps show in pink while dragging, with a value badge.</li>
+</ul>
+
+<!-- ───────────────────────── TOOLBAR ───────────────────────── -->
+<h2 id="toolbar">Floating toolbar</h2>
+<p>Appears just above whatever is selected (inside the top edge for the banner, which has no room above it). It is white, compact, and grouped:</p>
+<div class="diagram">
+<svg viewBox="0 0 720 150" width="720" role="img" aria-label="Toolbar groups: grip, divider, place actions, style actions, divider, delete">
+  <rect x="10" y="20" width="700" height="52" rx="10" class="s-box"/>
+  <g font-size="18" class="s-txt2">
+    <text x="30" y="53">⠿</text>
+    <line x1="60" y1="32" x2="60" y2="60" class="s-line"/>
+    <rect x="76" y="32" width="28" height="28" rx="6" class="s-soft"/><text x="83" y="52" font-size="15">＋</text>
+    <rect x="110" y="32" width="28" height="28" rx="6" class="s-soft"/><text x="116" y="52" font-size="14">⇄</text>
+    <rect x="144" y="32" width="28" height="28" rx="6" class="s-soft"/><text x="150" y="52" font-size="14">⧉</text>
+    <rect x="178" y="32" width="28" height="28" rx="6" class="s-soft"/><text x="184" y="52" font-size="14">▥</text>
+    <rect x="240" y="32" width="28" height="28" rx="6" class="s-soft"/><text x="246" y="52" font-size="14">≡</text>
+    <rect x="274" y="32" width="28" height="28" rx="6" class="s-soft"/><text x="280" y="52" font-size="14">⫼</text>
+    <rect x="308" y="32" width="28" height="28" rx="6" class="s-soft"/><text x="314" y="52" font-size="14">▦</text>
+    <rect x="342" y="32" width="28" height="28" rx="6" class="s-soft"/><text x="348" y="52" font-size="14">🪣</text>
+    <line x1="392" y1="32" x2="392" y2="60" class="s-line"/>
+    <rect x="406" y="32" width="28" height="28" rx="6" class="s-soft"/><text x="413" y="52" font-size="14" fill="#C9282E">🗑</text>
+  </g>
+  <g font-size="12" class="s-txt3">
+    <text x="18" y="96">Drag</text><text x="18" y="112">grip</text>
+    <text x="78" y="96">Place it: Add beside · Replace ·</text><text x="78" y="112">Copy · Split into columns/rows</text>
+    <text x="240" y="96">Style it: alignment · presets /</text><text x="240" y="112">layout · background colour</text>
+    <text x="404" y="96">Remove</text>
+  </g>
+  <text x="470" y="44" font-size="12" class="s-txt3">Dividers: only after the grip</text>
+  <text x="470" y="62" font-size="12" class="s-txt3">and before Delete.</text>
+</svg>
+<div class="cap">Order is always: move it · place it · style it · remove it. Which buttons appear depends on what is selected.</div>
+</div>
+<div class="rule"><span class="k">Rule</span><b>A button exists only when its action is possible.</b> Nothing on the toolbar is ever shown disabled — at a limit, or where an action does not apply, the button is simply not there.</div>
+<div class="tbl"><table>
+<tr><th>Button</th><th>Behaviour</th></tr>
+<tr><td>Drag grip</td><td>Pick up the element and drop it on another column, beside another element, or on a gap between sections. Dropping on an occupied column <b>swaps</b> the two (never overwrites).</td></tr>
+<tr><td>Add (＋)</td><td>On a section/column: opens the element picker on the canvas to put a widget inside. On a widget: adds another widget beside it.</td></tr>
+<tr><td>Replace</td><td>Swap this widget for another in the same place. A predefined widget can be swapped for any widget; an ordinary widget only for one of its own kind. Not offered on the four Quick Actions cards.</td></tr>
+<tr><td>Copy</td><td>Duplicates with all its content and styling, and selects the copy. <b>Not offered</b> on predefined widgets (one of each per page).</td></tr>
+<tr><td>Split</td><td>Turns a box into two side by side (columns) or stacked (rows), keeping its content in the first. Hidden at the 4-column / 4-level limit.</td></tr>
+<tr><td>Alignment</td><td>Popup of three positions (+ Stretch where it means something). Arrow keys walk the options live; <kbd>Enter</kbd> keeps, <kbd>Esc</kbd> restores.</td></tr>
+<tr><td>Layout / Presets</td><td>On a group of cards: how many per row (all in one row · 3 · 2 · stacked). On the banner: number of sections and their arrangement.</td></tr>
+<tr><td>Background colour</td><td>Opens the colour picker (Light/Dark tabs). Transparent = opacity 0.</td></tr>
+<tr><td>Delete</td><td>Removes it. Undoable. Fenced off from the rest by a divider.</td></tr>
+</table></div>
+<p><b>Not on the toolbar</b> (they live in the sidebar's Design section): border, corner radius, shadow, icon styling, spacing. The old "move one place" arrows are switched off.</p>
+<div class="grid2">
+<figure><img src="shots/14-select-section.png" alt="Section selected with its toolbar and sidebar"><figcaption>A selected section: its toolbar (grip, Split, Add, Copy, colour, Delete) and its Design settings.</figcaption></figure>
+<figure><img src="shots/19-colour-picker.png" alt="Background colour picker open from the toolbar"><figcaption>Background colour from the toolbar.</figcaption></figure>
+</div>
+
+<!-- ───────────────────────── SIDEBAR ───────────────────────── -->
+<h2 id="sidebar">Sidebar (settings of the selected thing)</h2>
+<p>Header: the element's icon and name, with a <b>Reset</b> (↺) on the right that returns <i>that element</i> to its default. Then up to two sections:</p>
+<ul>
+  <li><b>CONTENT</b> — what it says and shows: titles, text, links, which records to list, the items of a list. Edits show on the canvas immediately.</li>
+  <li><b>DESIGN</b> — how it looks, as collapsible groups. Order: shape first (Layout · Card templates · Banner), then look (Alignment · Background · Border &amp; corners · Shadow · Icon), then <b>Spacing</b>, then Title placement. <b>Expand all / Collapse all</b> on the Design heading. Groups open independently (more than one can be open).</li>
+</ul>
+<div class="grid2">
+<figure><img src="shots/13-select-card.png" alt="Card sidebar"><figcaption>An action card: Content (title, subtitle, icon, card template) then Design.</figcaption></figure>
+<figure><img src="shots/14-select-section.png" alt="Section sidebar"><figcaption>A section: Layout presets, Background, Border &amp; corners, Shadow presets (None · Soft · Medium · Strong), Spacing.</figcaption></figure>
+</div>
+<ul>
+  <li><b>Live-data widgets</b> (My Open Requests, Pending Approvals, My Assets, My CIs, Announcements, Most Read Knowledge) have <b>no Content section</b> — what they show is decided by the product, not the admin. They only have Design.</li>
+  <li>A setting that only applies in some state is <b>removed</b>, not greyed, when it does not apply (e.g. border colour only when border weight &gt; 0).</li>
+  <li>Changing a setting that invalidates another resets the other and says so in a toast.</li>
+</ul>
+
+<!-- ───────────────────────── LAYOUT ───────────────────────── -->
+<h2 id="layout">Sections &amp; layout</h2>
+<h3>Adding a section</h3>
+<ul>
+  <li>Hovering a section shows <b>+ Add Section</b> on its bottom edge; hovering the edge itself shows the blue line and a move grip. Shortcut <kbd>N</kbd>.</li>
+  <li>The new section is full width, directly below.</li>
+  <li>No section can be inserted between the banner and the Quick Actions row.</li>
+</ul>
+<figure><img src="shots/20-add-section-hover.png" alt="Add Section pill on a section's bottom edge with its tooltip"><figcaption>"+ Add Section" on the edge between two sections.</figcaption></figure>
+<h3>Splitting and adding columns</h3>
+<ul>
+  <li>An empty column shows a grey <b>+</b>. A selected column shows blue + adders on its left, right (add a column) or top/bottom (add a row), depending on how its parent is laid out.</li>
+  <li>Adding a column makes all columns in that row equal width again.</li>
+  <li><b>Layout presets</b> in a section's sidebar change its arrangement in one click (columns · grid · stacked; the set depends on how many items it holds).</li>
+  <li>Deleting the last item in a box removes the box; a branch left with one child collapses into it.</li>
+</ul>
+<h3>What can share a section</h3>
+<div class="rule"><span class="k">Rule</span><b>Predefined</b> widgets (Data and Actions groups) and <b>other</b> widgets (Basic, Visual, Custom) never mix in one section. A drop that would mix them is refused with a toast saying why.</div>
+
+<!-- ───────────────────────── WIDGETS PANEL ───────────────────────── -->
+<h2 id="widgets-panel">Widgets panel</h2>
+<div class="grid2">
+<figure><img src="shots/11-widgets-panel.png" alt="Widgets panel with folded Data and Actions groups"><figcaption>Placed widgets fold away: "11 on this page ›" and "All added to the page".</figcaption></figure>
+<figure><img src="shots/11b-widgets-unfolded.png" alt="Widgets panel with the Data group unfolded showing greyed placed widgets"><figcaption>Opening the fold lists placed widgets greyed with a tick, after the ones you can still add.</figcaption></figure>
+</div>
+<ul>
+  <li><b>Search</b> on top, then tabs that jump to groups: <b>Data · Actions · Basic · Visual · Custom</b>. The tab follows as you scroll.</li>
+  <li><b>Predefined widgets</b> (Data, Actions) can be on a page <b>once</b>. When placed, they leave the list and fold into <b>"N on this page ›"</b> on the right of their group title. A group with nothing left to add shows one line, "All added to the page". Searching always shows matches, folded or not.</li>
+  <li><b>Other widgets</b> can be added any number of times.</li>
+</ul>
+<h3>Adding a widget — two ways</h3>
+<div class="diagram">
+<svg viewBox="0 0 640 120" width="640" role="img" aria-label="Widget row: drag from icon and name with hand cursor; plain arrow elsewhere; click plus to add">
+  <rect x="10" y="20" width="620" height="56" rx="8" class="s-box"/>
+  <rect x="26" y="32" width="32" height="32" rx="6" class="s-soft"/><text x="36" y="54" font-size="15" class="s-txt2">T</text>
+  <text x="72" y="54" font-size="14" font-weight="600" class="s-txt">Text</text>
+  <rect x="20" y="28" width="96" height="40" rx="6" fill="none" stroke="#2F7FC6" stroke-dasharray="4 3"/>
+  <rect x="578" y="35" width="26" height="26" rx="5" class="s-soft"/><text x="585" y="54" font-size="15" class="s-txt2">＋</text>
+  <rect x="568" y="25" width="46" height="46" rx="8" fill="none" stroke="#C9282E" stroke-dasharray="4 3"/>
+  <text x="20" y="98" font-size="12" class="s-txt2">✋ Hand cursor over icon + name (+2px): drag onto the page</text>
+  <text x="260" y="114" font-size="12" class="s-txt3">↖ Normal arrow everywhere else on the row — a press here does nothing</text>
+  <text x="440" y="98" font-size="12" class="s-txt2">👆 + (and 5px around it): click to add</text>
+</svg>
+</div>
+<ul>
+  <li><b>Drag</b> from the widget's icon or name onto the page: onto an empty column, beside a widget (a blue line shows where), or onto the gap between two sections (creates a one-column section there). The panel stays open.</li>
+  <li><b>Click the +</b> to add it: it goes into the selected empty column if there is one, otherwise into a new full-width section at the end. The panel stays open, so several can be added in a row.</li>
+  <li>Clicking the row's empty area does nothing — a slipped drag must never add a widget by accident.</li>
+  <li><b>Hovering</b> a row opens a small preview card to its left: a sketch of the widget and one line about what it is for.</li>
+</ul>
+<figure><img src="shots/12-widget-preview.png" alt="Hover preview card next to the Text row"><figcaption>Hover preview — a sketch and a one-line summary.</figcaption></figure>
+
+<!-- ───────────────────────── WIDGET REFERENCE ───────────────────────── -->
+<h2 id="widgets">Widget reference</h2>
+<p><span class="tag pre">once per page</span> predefined · <span class="tag rep">repeatable</span> other · <span class="tag mock">mock</span> data is dummy in the prototype; production reads the logged-in requester's real records.</p>
+<div class="tbl"><table>
+<tr><th>Widget</th><th>Group</th><th>What it does</th><th>Admin can set</th></tr>
+<tr><td>My Open Requests</td><td><span class="tag pre">Data</span> <span class="tag mock">mock</span></td><td>The requester's open requests: ID, subject, date, status pill. Count badge = total; "View all".</td><td>Design only</td></tr>
+<tr><td>Pending Approvals</td><td><span class="tag pre">Data</span> <span class="tag mock">mock</span></td><td>Items waiting for the requester's approval with Approve / Reject / Refer back buttons on each row.</td><td>Design only</td></tr>
+<tr><td>My Assets</td><td><span class="tag pre">Data</span> <span class="tag mock">mock</span></td><td>The requester's assets as tiles (name, ID, type).</td><td>Design, tiles per row, card template</td></tr>
+<tr><td>My CIs</td><td><span class="tag pre">Data</span> <span class="tag mock">mock</span></td><td>The requester's configuration items as tiles; empty state "No Data Found".</td><td>Design, tiles per row, card template</td></tr>
+<tr><td>Announcements</td><td><span class="tag pre">Data</span> <span class="tag mock">mock</span></td><td>Dated notices (month over day). Regular list or carousel.</td><td>Card type, design</td></tr>
+<tr><td>Most Read Knowledge</td><td><span class="tag pre">Data</span> <span class="tag mock">mock</span></td><td>Top knowledge articles with ID, date and a tag.</td><td>Design only</td></tr>
+<tr><td>Contact Us</td><td><span class="tag pre">Data</span></td><td>Support phone and email.</td><td>The phone and email values</td></tr>
+<tr><td>Favourite Services</td><td><span class="tag pre">Data</span> <span class="tag mock">mock</span></td><td>The requester's starred catalogue services as tiles.</td><td>Tiles per row, gap, title inside/above the card</td></tr>
+<tr><td>Most Used Services</td><td><span class="tag pre">Data</span> <span class="tag mock">mock</span></td><td>Most requested services, with "Browse catalog". Sits beside Favourite Services when both are present.</td><td>Same as above</td></tr>
+<tr><td>Banner</td><td><span class="tag pre">Data</span></td><td>The top band: heading, sub-heading, search, and up to 4 sections. See <a href="#banner">The banner</a>.</td><td>Many — own section</td></tr>
+<tr><td>Search</td><td><span class="tag pre">Data</span></td><td>Turns on the banner's search bar. Refused (with reason) if there is no banner.</td><td>Placeholder text</td></tr>
+<tr><td>New Incident · Request Service · AD Self Service · Knowledge</td><td><span class="tag pre">Actions</span></td><td>The four Quick Actions cards. Each goes to a fixed product destination. Their row only ever holds these four (plus one optional external-link card).</td><td>Subtitle, icon, card template (icon left / top / right / none), design</td></tr>
+<tr><td>Text</td><td><span class="tag rep">Basic</span></td><td>A paragraph or heading, edited in place. Inline bold/italic/underline, colour, highlight, font, size, alignment, link.</td><td>Text style, spacing</td></tr>
+<tr><td>Button</td><td><span class="tag rep">Basic</span></td><td>A link button. Styles: filled · grey · outline · text link.</td><td>Label, link, new tab, style, radius</td></tr>
+<tr><td>Divider</td><td><span class="tag rep">Basic</span></td><td>A horizontal or vertical line.</td><td>Direction, weight, colour</td></tr>
+<tr><td>Table</td><td><span class="tag rep">Basic</span></td><td>Editable grid, up to 10 × 10. First row is the header. Row/column grips (shown on hover) drag to reorder and open a menu: insert, duplicate, delete, sort, merge across a row. Columns are always equal width.</td><td>Cells, header colour, borders</td></tr>
+<tr><td>Image</td><td><span class="tag rep">Visual</span></td><td>An uploaded picture with optional caption and link.</td><td>Image, alt text, caption, link, template</td></tr>
+<tr><td>Video</td><td><span class="tag rep">Visual</span></td><td>One <b>Upload video</b> button: MP4 only, up to 5 MB. Wrong type or size shows an inline red error.</td><td>The file</td></tr>
+<tr><td>Media Slider</td><td><span class="tag rep">Visual</span></td><td>A carousel of slides. Carousel type: data only, or image with data.</td><td>Slides (image, alt, title, text), title</td></tr>
+<tr><td>FAQ</td><td><span class="tag rep">Custom</span></td><td>Question/answer list; one answer open at a time; nothing open on arrival.</td><td>Questions and answers (edited in place in the list)</td></tr>
+<tr><td>Custom Data Widget</td><td><span class="tag rep">Custom</span></td><td>A list or KPI of records the admin chooses: module (Requests, Changes, Assets, CIs, Approvals, Knowledge) + a requester-scoped filter. Changing module clears the filter (toast says why).</td><td>Title, module, filter, display</td></tr>
+<tr><td>Custom Card</td><td><span class="tag rep">Custom</span></td><td>A promo/help card. Layouts: image right · image left · image on top · text only · links. The slots (heading, text, picture, button, links) stay when the layout changes.</td><td>Layout, content, links with icons</td></tr>
+</table></div>
+
+<!-- ───────────────────────── BANNER ───────────────────────── -->
+<h2 id="banner">The banner</h2>
+<div class="grid2">
+<figure><img src="shots/16-banner-selected.png" alt="Banner selected"><figcaption>Selected banner: toolbar inside its top edge; sidebar with Content (heading, sub-heading, search) and Design.</figcaption></figure>
+<figure><img src="shots/17-banner-sections.png" alt="Banner sections and arrangement popup"><figcaption><b>Sections &amp; arrangement</b> popup: count (Default · 2 · 3 · 4) and arrangement tiles for that count.</figcaption></figure>
+</div>
+<ul>
+  <li><b>Adding a banner</b> (from Widgets, when the page has none) asks the shape first — <b>Horizontal</b> (band across the top) or <b>Vertical</b> (a column beside the page) — then a layout, or Start from scratch.</li>
+  <li><b>Sections</b>: the heading + search block is always one section. Picking 2, 3 or 4 adds empty cells, each with a <b>+</b> to choose what goes there (Announcements, Contact Us, KPI, Action Card, Quick links, Image, Text). Going down removes empty cells silently; if filled ones must go, a "Remove N sections" step lists them with checkboxes.</li>
+  <li><b>Arrangement</b> tiles show where the sections sit (rows, columns, mixed). Widgets can also be dragged onto any edge of a banner section to make a new column or row there.</li>
+  <li><b>Action Card on the banner</b> brings the whole set of four cards as one row; the page's Quick Actions row then stands down. Deleting the row brings it back.</li>
+  <li><b>Background</b> (paint bucket): <b>Image</b> or <b>Colour</b> tabs. Colour is solid or gradient (any number of stops, angle). With an image, a colour layer (solid or linear gradient) sits between the picture and the words for readability. Double-click the banner to crop the image.</li>
+  <li><b>Height</b>: drag the bottom edge; minimum 260px.</li>
+  <li><b>Banner layout</b> in the sidebar shows the current layout and opens the same picker to change it.</li>
+  <li>A vertical banner can be pinned while the page scrolls; that only applies in Preview and on the live portal, never while editing.</li>
+</ul>
+<figure><img src="shots/18-banner-background.png" alt="Banner background popup"><figcaption>Banner background popup.</figcaption></figure>
+
+<!-- ───────────────────────── TEXT ───────────────────────── -->
+<h2 id="text">Editing text</h2>
+<figure><img src="shots/15-text-edit.png" alt="Banner heading selected with the text toolbar"><figcaption>A heading selected: the text toolbar (bold, italic, underline, style, font, size, colour, highlight, alignment, clear, link, placeholder).</figcaption></figure>
+<ul>
+  <li><b>First click</b> selects the text's frame. <b>Second click</b> (or <kbd>Enter</kbd>) puts the cursor in the words.</li>
+  <li>With words selected, toolbar formatting applies to <b>those words</b>; with just a cursor, to the whole text.</li>
+  <li>Using the toolbar or the colour picker does not end editing. Clicking anywhere else saves and ends it.</li>
+  <li>Headings and titles of cards are edited in place the same way, and also from the sidebar — both edit the same value.</li>
+</ul>
+
+<!-- ───────────────────────── COLOUR + SPACING ───────────────────────── -->
+<h2 id="colour">Colour picker &amp; spacing</h2>
+<div class="grid2">
+<div>
+<h3>Colour picker</h3>
+<ul>
+  <li>Spectrum, hue and opacity rails, Hex · R · G · B · A fields, theme swatches, eyedropper where the browser supports it.</li>
+  <li><b>Light / Dark tabs</b>: each colour has a light and a dark value; the picker opens on the mode the canvas is showing.</li>
+  <li>Changes apply live. <b>Done</b> keeps; <b>Cancel</b> restores the value it opened with (both modes).</li>
+  <li>"No colour" = opacity 0.</li>
+</ul>
+</div>
+<div>
+<h3>Spacing (Padding &amp; Margin)</h3>
+<ul>
+  <li>Each ring shows two fields: vertical (↕) and horizontal (↔), in px.</li>
+  <li>The chain icon links the sides. Breaking it opens all four sides of that ring.</li>
+  <li>Fields show the element's real resting value until set. Drag sideways on a field to scrub the value.</li>
+  <li>Hovering a field highlights that edge on the canvas in pink.</li>
+</ul>
+</div>
+</div>
+
+<!-- ───────────────────────── THEME ───────────────────────── -->
+<h2 id="theme">Theme</h2>
+<figure><img src="shots/21-theme.png" alt="Theme panel"><figcaption>Theme panel: Theme style, Fonts, Colours, Custom.</figcaption></figure>
+<ul>
+  <li><b>Theme style</b> — 8 themes, one per colour family (Clarity is the default ServiceOps blue). Each sets the primary colour, a font pairing and button shape. Applying one is a single change and clears custom overrides.</li>
+  <li><b>Fonts</b> — heading/body pairings, each shown in its own face.</li>
+  <li><b>Colours</b> — tabs <b>Primary · Secondary · Neutral</b>, with a Light/Dark switch. Only Primary changes between themes; Secondary is the status language (green = good, red = broken) and Neutral is the greys.</li>
+  <li><b>Custom</b> — page background, heading text, body text: overrides on top of the theme.</li>
+  <li>Tints across the page (badges, ID pills, tile fills) are <b>derived from the primary colour</b>, so changing it re-tints the whole page live.</li>
+  <li>The <b>light/dark toggle</b> in the top bar switches which version of the portal is being designed and previewed.</li>
+</ul>
+
+<!-- ───────────────────────── BRANDING ───────────────────────── -->
+<h2 id="branding">Branding</h2>
+<figure><img src="shots/22-branding.png" alt="Branding panel"><figcaption>Branding panel.</figcaption></figure>
+<ul>
+  <li>Portal name · Company (read-only) · Portal URL (read-only) · Support Portal title · Landing page for guest users · Sign-on (identity provider) · Contact shown on the portal (support email, phone).</li>
+  <li>The <b>logo</b> is edited by clicking it in the portal's top bar: upload (with a separate optional dark-mode logo, falling back to the light one).</li>
+</ul>
+
+<!-- ───────────────────────── PREVIEW / PUBLISH ───────────────────────── -->
+<h2 id="preview">Preview, Save as draft, Publish</h2>
+<figure><img src="shots/23-preview.png" alt="Preview mode with Exit preview bar"><figcaption>Preview: the page exactly as a requester sees it, with no editing chrome. <b>Exit preview</b> or <kbd>Esc</kbd> returns.</figcaption></figure>
+<ul>
+  <li>The big button is always <b>Publish</b>. Its ▾ menu holds <b>Save as draft</b>.</li>
+  <li>Publish and Save as draft follow the <a href="#publish-rules">Published / Draft / Default rules</a>, including the "make it the default?" confirmation.</li>
+  <li>Publish has no keyboard shortcut on purpose (it changes what every requester sees). <kbd>Ctrl</kbd>+<kbd>S</kbd> saves as draft.</li>
+</ul>
+<figure><img src="shots/24-publish-menu.png" alt="Publish split button menu"><figcaption>Publish ▾ menu.</figcaption></figure>
+
+<!-- ───────────────────────── UNDO ───────────────────────── -->
+<h2 id="undo">Undo, redo, reset</h2>
+<ul>
+  <li><b>Undo / Redo</b> (<kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>) step through every change to the page, whichever surface made it. Disabled, with a tooltip, when there is nothing to undo/redo. Ignored while typing in a field.</li>
+  <li><b>Reset to default</b> returns the whole page to its starting design.</li>
+  <li><b>Reset (↺)</b> in the sidebar header resets only the selected element.</li>
+</ul>
+<div class="rule warn"><span class="k">Known gap in the prototype</span>Undoing the delete of a <i>predefined</i> block (e.g. My Open Requests) does not bring it back. Production should restore it like any other change. Reset to default currently has no confirmation — production should ask.</div>
+
+<!-- ───────────────────────── HELP ───────────────────────── -->
+<h2 id="help">Guided tour &amp; Editor basics</h2>
+<div class="grid2">
+<figure><img src="shots/25b-tour-step3.png" alt="Tour step 3 spotlighting the banner and its toolbar"><figcaption><b>Tour</b> (Help ? in the top bar): 4 spotlight cards — the rail, Add widgets, Edit anything (banner + its toolbar), Preview and publish.</figcaption></figure>
+<figure><img src="shots/26-basics.png" alt="Editor basics video card"><figcaption><b>Editor basics</b> (Basics, bottom of the rail): a short animated video in 6 chapters — Add a widget · Select the section · Change the colour · Customize a card · Resize the section · Preview and publish.</figcaption></figure>
+</div>
+<ul>
+  <li>The tour selects/opens what each step talks about and restores the previous selection when it ends. Close, Back, Next; Esc closes.</li>
+  <li>Finishing the tour opens Editor basics; skipping it does not.</li>
+  <li>Editor basics auto-plays through all chapters; picking a chapter loops it until the admin moves on. It has a full-screen button.</li>
+</ul>
+
+<!-- ───────────────────────── KEYS ───────────────────────── -->
+<h2 id="keys">Keyboard shortcuts</h2>
+<figure><img src="shots/27-shortcuts.png" alt="Global keyboard shortcuts panel focused on the Support Portal builder"><figcaption>One product-wide <b>Keyboard shortcuts</b> panel (header keyboard icon or <kbd>?</kbd>), opened focused on the page you are on.</figcaption></figure>
+<p>No shortcut fires while typing in a field. Each toolbar tooltip shows its own key.</p>
+<div class="tbl"><table>
+<tr><th>Keys</th><th>Action</th></tr>
+<tr><td><kbd>Alt</kbd>+<kbd>P</kbd> · <kbd>Esc</kbd></td><td>Preview, and leave it</td></tr>
+<tr><td><kbd>Alt</kbd>+<kbd>L</kbd></td><td>Light / dark</td></tr>
+<tr><td><kbd>Alt</kbd>+<kbd>1</kbd> / <kbd>2</kbd> / <kbd>3</kbd> · <kbd>Alt</kbd>+<kbd>0</kbd></td><td>Open Widgets / Theme / Branding · hide the panel</td></tr>
+<tr><td><kbd>N</kbd></td><td>New section</td></tr>
+<tr><td><kbd>S</kbd></td><td>Split into columns or rows</td></tr>
+<tr><td><kbd>A</kbd> · <kbd>Shift</kbd>+<kbd>A</kbd></td><td>Add a widget beside · add an item inside</td></tr>
+<tr><td><kbd>R</kbd></td><td>Replace this widget</td></tr>
+<tr><td><kbd>Ctrl</kbd>+<kbd>D</kbd></td><td>Duplicate</td></tr>
+<tr><td><kbd>Enter</kbd></td><td>Edit the words</td></tr>
+<tr><td><kbd>Del</kbd></td><td>Delete</td></tr>
+<tr><td><kbd>Alt</kbd>+<kbd>↑</kbd> / <kbd>↓</kbd> · <kbd>Alt</kbd>+<kbd>←</kbd>/<kbd>→</kbd></td><td>Select parent / first child · previous / next sibling</td></tr>
+<tr><td><kbd>Esc</kbd></td><td>Deselect and close anything open</td></tr>
+<tr><td><kbd>Shift</kbd>+arrows</td><td>Narrower / wider · shorter / taller</td></tr>
+<tr><td><kbd>B</kbd> · <kbd>H</kbd> · <kbd>V</kbd> · <kbd>G</kbd> · <kbd>P</kbd></td><td>Background colour · horizontal / vertical alignment · arrangement &amp; presets · spacing</td></tr>
+<tr><td><kbd>Ctrl</kbd>+<kbd>Z</kbd> · <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd></td><td>Undo · Redo</td></tr>
+<tr><td><kbd>Ctrl</kbd>+<kbd>S</kbd></td><td>Save as draft</td></tr>
+<tr><td><kbd>?</kbd></td><td>Keyboard shortcuts panel</td></tr>
+</table></div>
+<p>Inside an open option popup (alignment, shadow, presets…), arrow keys move through the options and apply them live; <kbd>Enter</kbd> keeps, <kbd>Esc</kbd> puts back what it opened with.</p>
+
+<!-- ───────────────────────── PRODUCTION ───────────────────────── -->
+<h2 id="production">Notes for production</h2>
+<ul>
+  <li><b>All data is dummy</b> in the prototype <span class="tag mock">mock</span>. The live-data widgets must show the logged-in requester's real records, permission-filtered. Counts on badges are totals, not rows shown.</li>
+  <li><b>Save state</b>: the prototype keeps everything in the browser session. Production must persist each portal's design per light/dark mode, its details and its settings, and keep Draft vs Published versions separate.</li>
+  <li><b>Destinations</b> of the four Quick Actions cards and the "View all" links are product routes, not admin-editable.</li>
+  <li><b>URLs</b>: default portal at the root address; others as a path under it. Validate uniqueness of name and URL.</li>
+  <li><b>Uploads</b>: images (PNG/JPG/SVG/WebP), icons (SVG/PNG up to 512 KB), video (MP4 up to 5 MB). Enforce the same limits server-side.</li>
+  <li><b>Accessibility</b>: every action reachable by keyboard; text on images needs enough contrast.</li>
+  <li><b>Switched off in the prototype</b> (not part of this spec): toolbar move arrows, AI section builder, Advanced Tabs, Spacer, the Banners rail panel.</li>
+</ul>
+<p style="color:var(--ink-3);font-size:13px;margin-top:40px">Prototype: zenichakalasiya.github.io/serviceops-ticket-detail → Admin › Support Channels › Support Portal.</p>
+</main>
+</div>
