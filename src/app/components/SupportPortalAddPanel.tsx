@@ -134,6 +134,8 @@ export function SupportPortalAddPanel({ onAdd, placed }: Props) {
      list — it folds into one count on the RIGHT of its group's title, and the rows you CAN add sit
      together without scrolling past a wall of ticked ones. Folded from the first one placed, never
      after some threshold, so the list behaves the same way on every page. */
+  /** A press that STARTS on the "+" zone must never become a drag — it is a click on the button. */
+  const pressOnAdd = useRef(false);
   const [openAdded, setOpenAdded] = useState<Set<string>>(new Set());
   const toggleAdded = (g: string) => setOpenAdded((cur) => { const n = new Set(cur); if (n.has(g)) n.delete(g); else n.add(g); return n; });
 
@@ -374,6 +376,7 @@ export function SupportPortalAddPanel({ onAdd, placed }: Props) {
                        beats the utility class — the row read as "click me" when its body only drags. */
                     style={{ cursor: added ? "not-allowed" : "grab" }}
                     onDragStart={(ev) => {
+                      if (pressOnAdd.current) { ev.preventDefault(); return; }
                       // The canvas reads this to know what was dropped.
                       ev.dataTransfer.setData('text/portal-element', e.id);
                       ev.dataTransfer.effectAllowed = 'copy';
@@ -424,13 +427,24 @@ export function SupportPortalAddPanel({ onAdd, placed }: Props) {
                         /* ⚠️ The row is a control as well, so the "+" has to stop the click from
                            reaching it — otherwise one press adds the widget twice. */
                         onClick={(ev) => { ev.stopPropagation(); onAdd(e.id, true); }}
+                        onMouseDown={() => { pressOnAdd.current = true; }}
+                        onMouseUp={() => { pressOnAdd.current = false; }}
+                        onMouseLeave={() => { pressOnAdd.current = false; }}
                         title="Add to page"
                         aria-label={`Add ${e.name}`}
-                        /* ⚠️ On the design system's light grey (`#F1F5F9`) — the same fill the row's
-                           own icon badge carries. Bare on white it read as a stray glyph rather than
-                           as a control, and a "+" is the one thing on this row you press. */
-                        className="flex size-6 flex-shrink-0 cursor-pointer items-center justify-center rounded bg-[#F1F5F9] text-[#64748B] opacity-0 transition-all hover:bg-[#EBF5FF] hover:text-[#3D8BD0] focus-visible:opacity-100 group-hover/el:opacity-100"
-                      ><Plus size={15} /></button>
+                        /* ⚠️ A 5px ZONE round the "+" (Zeni, 5 Oct 2026): the button is the 24px square
+                           plus 5px of transparent padding on every side, pulled back with a matching
+                           negative margin so the row's layout does not move. Inside it the row's open
+                           hand turns into the NORMAL arrow — inline, since theme.css gives every button
+                           a pointer — so you can see you have left the drag area before you reach the
+                           "+", and a press anywhere in the zone adds, never drags. */
+                        style={{ cursor: 'default' }}
+                        className="group/add -m-[5px] flex flex-shrink-0 items-center justify-center p-[5px] opacity-0 transition-opacity focus-visible:opacity-100 group-hover/el:opacity-100"
+                      >
+                        {/* ⚠️ On the design system's light grey (`#F1F5F9`) — the same fill the row's
+                            own icon badge carries. Bare on white it read as a stray glyph. */}
+                        <span className="flex size-6 items-center justify-center rounded bg-[#F1F5F9] text-[#64748B] transition-colors group-hover/add:bg-[#EBF5FF] group-hover/add:text-[#3D8BD0]"><Plus size={15} /></span>
+                      </button>
                     )}
                   </div>
                 );
