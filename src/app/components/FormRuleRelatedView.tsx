@@ -115,18 +115,15 @@ export function RelatedSummaryCards({ ready, conflicts, similar, onOpenConflicts
  *  check that is running rather than a blank corner. */
 export function RuleCheckEmpty() {
   return (
-    <div className="flex items-center gap-3.5 rounded-md border border-dashed border-[#D7E9DA] bg-[#F7FCF8] p-4">
+    <div className="flex items-center gap-3 rounded-md border border-[#E5EAF0] bg-white p-4">
       <svg viewBox="0 0 48 48" className="size-12 flex-shrink-0" aria-hidden="true">
-        <circle cx="24" cy="24" r="22" fill="#E8F6EC" />
-        <path d="M24 11.5l10 3.6v7.6c0 6.6-4.2 11.6-10 13.8-5.8-2.2-10-7.2-10-13.8v-7.6z" fill="#FFFFFF" stroke="#4CAF6A" strokeWidth="1.6" strokeLinejoin="round" />
-        <path d="M19.3 24.2l3.4 3.3 6.2-6.6" fill="none" stroke="#4CAF6A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        <circle cx="38" cy="11" r="1.6" fill="#9ED3AC" />
-        <circle cx="9.5" cy="34" r="1.2" fill="#9ED3AC" />
-        <path d="M37.5 33.5v3.4M35.8 35.2h3.4" stroke="#9ED3AC" strokeWidth="1.2" strokeLinecap="round" />
+        <circle cx="24" cy="24" r="22" fill="#F4F6FA" />
+        <path d="M24 11.5l10 3.6v7.6c0 6.6-4.2 11.6-10 13.8-5.8-2.2-10-7.2-10-13.8v-7.6z" fill="#FFFFFF" stroke="#98A2B3" strokeWidth="1.6" strokeLinejoin="round" />
+        <path d="M19.3 24.2l3.4 3.3 6.2-6.6" fill="none" stroke="#3D8BD0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
       <div className="min-w-0">
-        <div className="text-[13px] font-semibold text-[#2F7A47]">All clear so far</div>
-        <p className="mt-0.5 text-[12px] leading-[1.5] text-[#5B6B7D]">No conflicts or similar rules. If this rule clashes with another, or one already does the same job, it shows up here.</p>
+        <div className="text-[13px] font-semibold text-[#1D2A3E]">All clear so far</div>
+        <p className="mt-0.5 text-[12px] leading-[1.5] text-[#64748B]">No conflicts or similar rules. If this rule clashes with another, or one already does the same job, it shows up here.</p>
       </div>
     </div>
   );
@@ -167,11 +164,15 @@ export function RuleCheckIntro({ kind, onClose, side = 'right', align = 'bottom'
       <div className="flex flex-col gap-3 p-4">
         <div>
           <div className="text-[14px] font-semibold text-[#1D2A3E]">{m.title}</div>
-          <p className="mt-1 text-[12px] leading-[1.5] text-[#64748B]">{m.text}</p>
-        </div>
-        <div className="flex gap-2.5 rounded-md px-3 py-2.5" style={{ background: m.tint }}>
-          <span className="mt-[5px] size-2 flex-shrink-0 rounded-full" style={{ background: m.color }} />
-          <span className="text-[12px] leading-[1.5] text-[#475467]">{m.todo}</span>
+          {/* Two plain points — what it is, then what to do — in the same secondary text; no tinted box. */}
+          <ul className="mt-1.5 flex flex-col gap-1.5">
+            {[m.text, m.todo].map((t) => (
+              <li key={t} className="flex gap-2 text-[12px] leading-[1.5] text-[#64748B]">
+                <span className="mt-[7px] size-1 flex-shrink-0 rounded-full bg-[#98A2B3]" />
+                <span>{t}</span>
+              </li>
+            ))}
+          </ul>
         </div>
         <div className="flex justify-end">
           <button type="button" onClick={onClose} className="inline-flex h-8 items-center rounded bg-[#3D8BD0] px-3 text-[12px] font-medium text-white transition-colors hover:bg-[#3478B5]">Got it</button>
@@ -348,8 +349,7 @@ export function SimilarRulesView({ similar, fields, draft, conditionLines, condi
   const groups: CondGroupView[] = conditionGroups ?? (conditionLines.length ? [{ join: 'And', conds: conditionLines.map((t) => ({ join: 'And' as const, text: t })) }] : []);
   const stepRow = (icon: React.ReactNode, tone: string, badge: string, lead: string, body: React.ReactNode) => (
     <div className="flex items-start gap-2.5">
-      <span className="mt-[3px] flex flex-shrink-0 items-center rounded-full p-1" style={{ backgroundColor: badge, color: tone }}>{icon}</span>
-      <span className="w-[54px] flex-shrink-0 pt-[3px] text-[12px] font-medium" style={{ color: tone }}>{lead}</span>
+      <span title={lead} aria-label={lead} className="mt-[3px] flex flex-shrink-0 items-center rounded-full p-1" style={{ backgroundColor: badge, color: tone }}>{icon}</span>
       <div className="min-w-0 flex-1">{body}</div>
     </div>
   );
