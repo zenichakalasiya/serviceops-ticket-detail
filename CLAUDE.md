@@ -2739,7 +2739,7 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   folded by default from the FIRST one placed (no threshold); opening it lists them greyed AFTER the addable rows, a
   group with nothing left to add shows ONE quiet line "All added to the page" under its title (the title drops
   to `pb-1` in that case; a dashed row-sized box was tried and rejected as too heavy), and a SEARCH shows matches whatever
-  the fold says. (2) The row BODY only drags (open-hand cursor, no grip icon) — a click on it adds nothing, because a
+  the fold says. (2) Only the ICON + NAME drag (`[data-grab]`, open hand, reaching 2px past the name — 5 Oct 2026); the rest of the row is the normal arrow and a press there does not drag; the "+" square shows the click cursor. A click on the row adds nothing, because a
   drag that missed by a pixel used to drop the widget at the foot of the page. The "+" is the one click-to-add
   (tooltip "Add to page", keeps the list open); Enter/Space on a row still add. ⚠️ The "+" button carries a
   **5px transparent ZONE** (`-m-[5px] p-[5px]`, the visible 24px square is an inner span): inside it the cursor is

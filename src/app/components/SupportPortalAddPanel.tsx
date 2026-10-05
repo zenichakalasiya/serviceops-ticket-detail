@@ -374,9 +374,13 @@ export function SupportPortalAddPanel({ onAdd, placed }: Props) {
                     aria-disabled={added || undefined}
                     /* ⚠️ INLINE, not `cursor-grab`: theme.css gives every [role="button"] a pointer, unlayered, which
                        beats the utility class — the row read as "click me" when its body only drags. */
-                    style={{ cursor: added ? "not-allowed" : "grab" }}
+                    style={{ cursor: added ? "not-allowed" : "default" }}
                     onDragStart={(ev) => {
                       if (pressOnAdd.current) { ev.preventDefault(); return; }
+                      /* Only the icon + name (the open-hand area) picks a widget up. A press on the
+                         row's empty space, where the cursor is the normal arrow, must not drag. */
+                      const from = document.elementFromPoint(ev.clientX, ev.clientY);
+                      if (ev.clientX && !from?.closest('[data-grab]')) { ev.preventDefault(); return; }
                       // The canvas reads this to know what was dropped.
                       ev.dataTransfer.setData('text/portal-element', e.id);
                       ev.dataTransfer.effectAllowed = 'copy';
@@ -400,15 +404,26 @@ export function SupportPortalAddPanel({ onAdd, placed }: Props) {
                         : 'cursor-grab border-[#E5E7EB] bg-white hover:border-[#3D8BD0] hover:shadow-[0_1px_2px_rgba(16,24,40,0.04),0_2px_8px_rgba(16,24,40,0.06)] active:cursor-grabbing'
                     }`}
                   >
+                    {/* ⚠️ THE GRAB AREA (Zeni, 5 Oct 2026): the open hand shows over the icon and the
+                        name only — the box hugs the name (no flex-1) and reaches 2px past it
+                        (`-m-[2px] p-[2px]`). The rest of the row is the normal arrow, and the "+" the
+                        click cursor, so the cursor says which of the two you are about to do. */}
+                    <span
+                      data-grab
+                      style={{ cursor: added ? 'not-allowed' : 'grab' }}
+                      className="-m-[2px] flex min-w-0 items-center gap-3 p-[2px]"
+                    >
                     {/* Icon and label share one colour in every state — they are one thing. */}
                     <span className={`flex size-8 flex-shrink-0 items-center justify-center rounded transition-colors ${
                       added ? 'bg-[#F1F5F9] text-[#B6BFCC]' : 'bg-[#F1F5F9] text-[#364658] group-hover/el:bg-[#EBF5FF] group-hover/el:text-[#3D8BD0]'
                     }`}>
                       {icon(e.icon)}
                     </span>
-                    <span className={`min-w-0 flex-1 truncate text-[13px] font-medium transition-colors ${
+                    <span className={`min-w-0 truncate text-[13px] font-medium transition-colors ${
                       added ? 'text-[#9AA6B6]' : 'text-[#364658] group-hover/el:text-[#3D8BD0]'
                     }`}>{e.name}</span>
+                    </span>
+                    <span className="flex-1" />
                     {/* ⚠️ A TICK on the right, not the word "Added". The row is already greyed and
                         already carries the reason on hover; a second label would be a third way of
                         saying one thing, in the narrowest column of the panel. */}
@@ -443,7 +458,7 @@ export function SupportPortalAddPanel({ onAdd, placed }: Props) {
                       >
                         {/* ⚠️ On the design system's light grey (`#F1F5F9`) — the same fill the row's
                             own icon badge carries. Bare on white it read as a stray glyph. */}
-                        <span className="flex size-6 items-center justify-center rounded bg-[#F1F5F9] text-[#64748B] transition-colors group-hover/add:bg-[#EBF5FF] group-hover/add:text-[#3D8BD0]"><Plus size={15} /></span>
+                        <span style={{ cursor: 'pointer' }} className="flex size-6 items-center justify-center rounded bg-[#F1F5F9] text-[#64748B] transition-colors group-hover/add:bg-[#EBF5FF] group-hover/add:text-[#3D8BD0]"><Plus size={15} /></span>
                       </button>
                     )}
                   </div>
