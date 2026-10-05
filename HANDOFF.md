@@ -1,4 +1,4 @@
-# Handoff — 2026-10-05 11:02
+# Handoff — 2026-10-05 11:30
 
 ## Latest (5 Oct 2026) — Form Rules: rule-check cards, one CTA, first-time intro
 **Read first:** CLAUDE.md › Structure › the Request Form Management bullet ("Rule-check polish (5 Oct 2026)")
@@ -21,7 +21,10 @@ and Key context › Request Form Management (B3 passages).
 - (later, 5 Oct) Built H1/H2/H3 (steps across the top, form left-aligned, cards top-right / bottom-right / floating) — then HIDDEN on request; **B3 is final** (`SHOWN = ['B3']`, no Layout bar). Info-popup "seen" flags are now per layout (`formRuleCheckIntroSeen:<layout>:<card>`); popups open left of right-side cards via `introSide`/`introAlign`.
 - B3 spacing: 16px on every outer side below the header divider (stepper + Rule check `p-4`, form `pt-4 pr-4 pb-4`), form 24px from the stepper rail.
 
+- Conflicts info popup now draws how a conflict happens (`ConflictArt`): Rule A "Hide · Status" and Rule B "Show · Status" action rows meeting at one red Status field with a clash mark; text says the same.
+
 **Open / next**
+0. Asked Zeni: should the conflicts drawing also show a VALUE clash (Set Priority = High vs Low)? And are the 7–9px labels in the drawing readable, or should it grow/simplify?
 1. Zeni was asked what to change on the action-row ⚠ icon (image 90) — no answer yet.
 2. Editor tabs for "Open rule" / "Update this rule" with a live "Resolved" state; merge behaviour for similar rules.
 

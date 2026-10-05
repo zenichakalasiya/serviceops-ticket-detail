@@ -118,7 +118,7 @@ const INTRO: Record<IntroKind, { color: string; tint: string; title: string; tex
   conflicts: {
     color: '#DC2626', tint: '#FEF4F4',
     title: 'This rule clashes with other rules',
-    text: 'Another rule leaves the same field in a different state — one hides it while another makes it mandatory, for example.',
+    text: 'Another rule’s action works on the same field in the opposite way — for example, this rule hides Status while that one shows it.',
     todo: 'Open the card to see each clash and fix it, so the form behaves one clear way.',
   },
   similar: {
@@ -141,7 +141,7 @@ export function RuleCheckIntro({ kind, onClose, side = 'right', align = 'bottom'
       {/* caret pointing back at its card */}
       <span className={'absolute size-3 rotate-45 bg-white ' + (side === 'left' ? '-right-[6px] border-r border-t border-[#E5EAF0] ' : '-left-[6px] border-b border-l border-[#E5EAF0] ') + (align === 'top' ? 'top-[52px]' : 'bottom-[52px]')} />
       <button type="button" onClick={onClose} aria-label="Close" className="absolute right-2 top-2 z-10 flex size-7 items-center justify-center rounded text-[#64748B] transition-colors hover:bg-white"><X size={15} /></button>
-      <div className="overflow-hidden rounded-t-xl bg-[#F4F6FA]"><RuleCheckArt conflicts={kind === 'conflicts'} similar={kind === 'similar'} /></div>
+      <div className="overflow-hidden rounded-t-xl bg-[#F4F6FA]">{kind === 'conflicts' ? <ConflictArt /> : <RuleCheckArt conflicts={false} similar />}</div>
       <div className="flex flex-col gap-3 p-4">
         <div>
           <div className="text-[14px] font-semibold text-[#1D2A3E]">{m.title}</div>
@@ -160,6 +160,45 @@ export function RuleCheckIntro({ kind, onClose, side = 'right', align = 'bottom'
 }
 
 /** Line art for the intro: a rule card at the centre, checked against the cards that came back. */
+/* How a conflict happens: two rules whose ACTION rows act on the SAME field in opposite ways —
+   one hides Status, the other shows it — so both lines meet at that one field and clash there. */
+function ConflictArt() {
+  const rule = (y: number, name: string, verb: string) => (
+    <g>
+      <rect x="14" y={y} width="150" height="42" rx="7" fill="#FFFFFF" stroke="#DCE3EC" />
+      <text x="24" y={y + 13} fontSize="7.5" fontWeight="600" fill="#7B8FA5">{name}</text>
+      <text x="56" y={y + 13} fontSize="7" fill="#A3B1C2">· Then</text>
+      {/* the action row: action type + the field it acts on */}
+      <rect x="22" y={y + 19} width="40" height="15" rx="3" fill="#FEF2F2" stroke="#F3B4B4" />
+      <text x="42" y={y + 29.5} fontSize="8" fontWeight="600" fill="#DC2626" textAnchor="middle">{verb}</text>
+      <rect x="67" y={y + 19} width="88" height="15" rx="3" fill="#EBF5FF" stroke="#BCD7F0" />
+      <text x="75" y={y + 29.5} fontSize="8" fontWeight="500" fill="#2C6CA8">Status</text>
+      <path d={`M141 ${y + 24.5}l3 3 3-3`} fill="none" stroke="#2C6CA8" strokeWidth="1" strokeLinecap="round" />
+    </g>
+  );
+  return (
+    <svg viewBox="0 0 300 112" className="block h-[112px] w-full" aria-hidden="true" fontFamily="inherit">
+      <defs>
+        <pattern id="cf-dots" width="12" height="12" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="#DCE3EC" /></pattern>
+      </defs>
+      <rect width="300" height="112" fill="url(#cf-dots)" />
+      {rule(10, 'Rule A', 'Hide')}
+      {rule(60, 'Rule B', 'Show')}
+      {/* both action rows point at the same field */}
+      <path d="M155 36.5 C 182 36.5, 184 56, 206 56" fill="none" stroke="#F3B4B4" strokeWidth="1.5" strokeDasharray="3 3" />
+      <path d="M155 86.5 C 182 86.5, 184 56, 206 56" fill="none" stroke="#F3B4B4" strokeWidth="1.5" strokeDasharray="3 3" />
+      {/* the field they fight over */}
+      <rect x="206" y="36" width="80" height="40" rx="7" fill="#FFFFFF" stroke="#DC2626" strokeWidth="1.2" />
+      <text x="216" y="51" fontSize="7" fill="#7B8FA5">Field</text>
+      <text x="216" y="65" fontSize="9.5" fontWeight="600" fill="#1D2A3E">Status</text>
+      {/* clash mark */}
+      <circle cx="284" cy="38" r="9" fill="#DC2626" stroke="#FFFFFF" strokeWidth="2" />
+      <path d="M284 33.5v5" stroke="#FFFFFF" strokeWidth="1.8" strokeLinecap="round" />
+      <circle cx="284" cy="41.6" r="1" fill="#FFFFFF" />
+    </svg>
+  );
+}
+
 function RuleCheckArt({ conflicts, similar }: { conflicts: boolean; similar: boolean }) {
   const red = conflicts, amb = similar;
   return (
