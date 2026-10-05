@@ -15,7 +15,13 @@ const KINDS: ConflictKind[] = ['Blocking', 'Opposite', 'Override'];
 const KIND_FG: Record<ConflictKind, string> = { Blocking: '#9F1239', Opposite: '#DC2626', Override: '#C2410C' };
 
 /** The two cards that sit at the top of the builder. */
-export function RelatedSummaryCards({ ready, conflicts, similar, onOpenConflicts, onOpenSimilar, onlyFound = false, stack = false }: {
+export type IntroKind = 'conflicts' | 'similar';
+export function RelatedSummaryCards({ ready, conflicts, similar, onOpenConflicts, onOpenSimilar, onlyFound = false, stack = false, intro = null, onInfo, onCloseIntro }: {
+  /** Which card's info popup is open beside it (one at a time). */
+  intro?: IntroKind | null;
+  /** The ⓘ on a card asks for its popup. Without it the card shows no ⓘ. */
+  onInfo?: (k: IntroKind) => void;
+  onCloseIntro?: () => void;
   /** Show a card only once it has something to report; nothing at all before that. */
   onlyFound?: boolean;
   /** One card per row, for a narrow sidebar. */
@@ -38,83 +44,108 @@ export function RelatedSummaryCards({ ready, conflicts, similar, onOpenConflicts
   /* Summary card: a soft tint carries the meaning (red / amber), no border. Count and title on one line,
      4px apart; a two-line summary 6px under them. The whole card is the button — on hover it lifts and an
      arrow appears top-right, so it reads as clickable without a link line. */
+  /* The width lives on a wrapper so a card's info popup can sit beside it as a SIBLING — a popup with
+     buttons cannot live inside the card, which is itself a button. */
+  const wrap = (stack ? 'w-full' : 'min-w-[240px] flex-1') + ' relative';
   const card = (tint: string, hover: string, empty: boolean) =>
-    (stack ? 'w-full' : 'min-w-[240px] flex-1') + ' group relative flex flex-col rounded-md border p-4 text-left transition-[background-color,box-shadow] ' +
+    'group relative flex w-full flex-col rounded-md border p-4 text-left transition-[background-color,box-shadow] ' +
     (empty ? 'cursor-default border-[#E5EAF0] bg-[#F7F9FB]' : tint + ' ' + hover + ' hover:shadow-[0_2px_10px_rgba(15,23,42,0.08)]');
-  const head = (n: number, label: string, color: string, icon: React.ReactNode, iconBg: string) => (
-    <span className="flex min-w-0 items-center pr-6">
+  const head = (n: number, label: string, color: string) => (
+    <span className="flex min-w-0 items-center pr-14">
       <span className="flex min-w-0 items-baseline gap-1">
         <span className="text-[24px] font-semibold leading-none tabular-nums" style={{ color }}>{n}</span>
         <span className="truncate whitespace-nowrap text-[14px] font-semibold" style={{ color }}>{label}</span>
       </span>
     </span>
   );
-  const arrow = (color: string) => (
-    <ArrowUpRight size={16} className="absolute right-4 top-4 opacity-0 transition-opacity group-hover:opacity-100" style={{ color }} />
+  /* Top-right: the ⓘ is always there; the ↗ appears beside it on hover. The ⓘ is a span with a button
+     role because the card around it is already a button. */
+  const corner = (k: IntroKind, color: string) => (
+    <span className="absolute right-3 top-3 flex items-center gap-1">
+      <ArrowUpRight size={16} className="opacity-0 transition-opacity group-hover:opacity-100" style={{ color }} />
+      {onInfo && (
+        <span role="button" tabIndex={0} aria-label="What is this?"
+          onClick={(e) => { e.stopPropagation(); intro === k ? onCloseIntro?.() : onInfo(k); }}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); intro === k ? onCloseIntro?.() : onInfo(k); } }}
+          className="flex size-6 items-center justify-center rounded transition-colors hover:bg-white/70" style={{ color }}>
+          <Info size={15} />
+        </span>
+      )}
+    </span>
   );
   const summary = (text: React.ReactNode, color: string) => <span className="mt-6 line-clamp-2 text-[12px] font-normal leading-[1.5]" style={{ color }}>{text}</span>;
   const kinds = KINDS.map((k) => { const n = conflicts.filter((x) => x.kind === k).length; return n ? n + ' ' + k : null; }).filter(Boolean).join(' · ');
   return (
     <div className={stack ? 'flex flex-col gap-4' : 'flex flex-wrap gap-4'}>
       {!(onlyFound && conflicts.length === 0) && (
-        <button type="button" onClick={onOpenConflicts} disabled={conflicts.length === 0} title={conflicts.length ? 'Resolve conflicts' : undefined}
-          className={card('border-[#DC2626] bg-[#FEF4F4]', 'hover:bg-[#FDEBEB]', conflicts.length === 0)}>
-          {conflicts.length > 0 && arrow('#DC2626')}
-          {head(conflicts.length, conflicts.length === 1 ? 'Conflict' : conflicts.length ? 'Conflicts' : 'No conflicts', conflicts.length ? '#DC2626' : '#98A2B3', <AlertTriangle size={16} />, conflicts.length ? '#FDE2E2' : '#EEF2F6')}
-          {summary(conflicts.length
-            ? <>{kinds} with {nRules} rule{nRules === 1 ? '' : 's'}. Resolve them so the form ends up in one clear state.</>
-            : 'No other rule leaves these fields in a different state.', conflicts.length ? '#DC2626' : '#64748B')}
-        </button>
+        <div className={wrap}>
+          <button type="button" onClick={onOpenConflicts} disabled={conflicts.length === 0}
+            className={card('border-[#DC2626] bg-[#FEF4F4]', 'hover:bg-[#FDEBEB]', conflicts.length === 0)}>
+            {conflicts.length > 0 && corner('conflicts', '#DC2626')}
+            {head(conflicts.length, conflicts.length === 1 ? 'Conflict' : conflicts.length ? 'Conflicts' : 'No conflicts', conflicts.length ? '#DC2626' : '#98A2B3')}
+            {summary(conflicts.length
+              ? <>{kinds} with {nRules} rule{nRules === 1 ? '' : 's'}. Resolve them so the form ends up in one clear state.</>
+              : 'No other rule leaves these fields in a different state.', conflicts.length ? '#DC2626' : '#64748B')}
+          </button>
+          {intro === 'conflicts' && conflicts.length > 0 && onCloseIntro && <RuleCheckIntro key="c" kind="conflicts" onClose={onCloseIntro} />}
+        </div>
       )}
       {!(onlyFound && similar.length === 0) && (
-        <button type="button" onClick={onOpenSimilar} disabled={similar.length === 0} title={similar.length ? 'Review similar rules' : undefined}
-          className={card('border-[#B45309] bg-[#FFF9E8]', 'hover:bg-[#FFF3D1]', similar.length === 0)}>
-          {similar.length > 0 && arrow('#B45309')}
-          {head(similar.length, similar.length === 1 ? 'Similar rule' : similar.length ? 'Similar rules' : 'No similar rules', similar.length ? '#B45309' : '#98A2B3', <Copy size={15} />, similar.length ? '#FDEFC8' : '#EEF2F6')}
-          {summary(similar.length
-            ? 'Already use this trigger and conditions. Consider updating one instead of creating a new rule.'
-            : 'No other rule uses this trigger and these conditions.', similar.length ? '#B45309' : '#64748B')}
-        </button>
+        <div className={wrap}>
+          <button type="button" onClick={onOpenSimilar} disabled={similar.length === 0}
+            className={card('border-[#B45309] bg-[#FFF9E8]', 'hover:bg-[#FFF3D1]', similar.length === 0)}>
+            {similar.length > 0 && corner('similar', '#B45309')}
+            {head(similar.length, similar.length === 1 ? 'Similar rule' : similar.length ? 'Similar rules' : 'No similar rules', similar.length ? '#B45309' : '#98A2B3')}
+            {summary(similar.length
+              ? 'Already use this trigger and conditions. Consider updating one instead of creating a new rule.'
+              : 'No other rule uses this trigger and these conditions.', similar.length ? '#B45309' : '#64748B')}
+          </button>
+          {intro === 'similar' && similar.length > 0 && onCloseIntro && <RuleCheckIntro key="s" kind="similar" onClose={onCloseIntro} />}
+        </div>
       )}
     </div>
   );
 }
 
-/* Shown ONCE, the first time a summary card appears: what the card(s) on screen mean and what
-   clicking one does. It explains only the cards that are actually there. */
+/* One card's info popup. It opens on its own the FIRST time that card appears (each card once, ever),
+   and again from the ⓘ on the card. Only one is open at a time — when the conflicts card turns up, its
+   popup replaces the similar-rules one. */
 export const RULE_CHECK_INTRO_KEY = 'formRuleCheckIntroSeen';
-export function RuleCheckIntro({ conflicts, similar, onClose }: { conflicts: number; similar: number; onClose: () => void }) {
+const INTRO: Record<IntroKind, { color: string; tint: string; title: string; text: string; todo: string }> = {
+  conflicts: {
+    color: '#DC2626', tint: '#FEF4F4',
+    title: 'This rule clashes with other rules',
+    text: 'Another rule leaves the same field in a different state — one hides it while another makes it mandatory, for example.',
+    todo: 'Open the card to see each clash and fix it, so the form behaves one clear way.',
+  },
+  similar: {
+    color: '#B45309', tint: '#FFF9E8',
+    title: 'Rules like this already exist',
+    text: 'Other rules already run on this trigger with these conditions.',
+    todo: 'Open the card to compare them — updating one is often better than adding another rule.',
+  },
+};
+export function RuleCheckIntro({ kind, onClose }: { kind: IntroKind; onClose: () => void }) {
   const [shown, setShown] = useState(false);
   useEffect(() => { const t = requestAnimationFrame(() => setShown(true)); return () => cancelAnimationFrame(t); }, []);
-  const both = conflicts > 0 && similar > 0;
-  const rows: { color: string; tint: string; title: string; text: string }[] = [];
-  if (conflicts > 0) rows.push({ color: '#DC2626', tint: '#FEF4F4', title: 'Conflicts', text: 'Another rule leaves the same field in a different state. Resolve them so the form behaves one clear way.' });
-  if (similar > 0) rows.push({ color: '#B45309', tint: '#FFF9E8', title: 'Similar rules', text: 'Other rules already use this trigger and conditions. Updating one is often better than adding another.' });
+  const m = INTRO[kind];
   return (
-    <div role="dialog" aria-label="Rule check"
-      className={'absolute bottom-3 left-[calc(100%+12px)] z-50 w-[320px] rounded-xl border border-[#E5EAF0] bg-white shadow-[0_12px_32px_rgba(15,23,42,0.14)] transition-[opacity,transform] duration-200 ease-out ' + (shown ? 'translate-x-0 opacity-100' : '-translate-x-2 opacity-0')}>
-      {/* caret pointing back at the cards */}
-      <span className="absolute -left-[6px] bottom-8 size-3 rotate-45 border-b border-l border-[#E5EAF0] bg-white" />
-      <button type="button" onClick={onClose} aria-label="Close" className="absolute right-2 top-2 z-10 flex size-7 items-center justify-center rounded text-[#64748B] transition-colors hover:bg-[#F3F4F6]"><X size={15} /></button>
-      <div className="overflow-hidden rounded-t-xl bg-[#F4F6FA]"><RuleCheckArt conflicts={conflicts > 0} similar={similar > 0} /></div>
+    <div role="dialog" aria-label={m.title}
+      className={'absolute bottom-0 left-[calc(100%+12px)] z-50 w-[300px] rounded-xl border border-[#E5EAF0] bg-white shadow-[0_12px_32px_rgba(15,23,42,0.14)] transition-[opacity,transform] duration-200 ease-out ' + (shown ? 'translate-x-0 opacity-100' : '-translate-x-2 opacity-0')}>
+      {/* caret pointing back at its card */}
+      <span className="absolute -left-[6px] bottom-[52px] size-3 rotate-45 border-b border-l border-[#E5EAF0] bg-white" />
+      <button type="button" onClick={onClose} aria-label="Close" className="absolute right-2 top-2 z-10 flex size-7 items-center justify-center rounded text-[#64748B] transition-colors hover:bg-white"><X size={15} /></button>
+      <div className="overflow-hidden rounded-t-xl bg-[#F4F6FA]"><RuleCheckArt conflicts={kind === 'conflicts'} similar={kind === 'similar'} /></div>
       <div className="flex flex-col gap-3 p-4">
         <div>
-          <div className="text-[14px] font-semibold text-[#1D2A3E]">{both ? 'Your rule check found something' : conflicts > 0 ? 'This rule clashes with others' : 'Rules like this already exist'}</div>
-          <p className="mt-1 text-[12px] leading-[1.5] text-[#64748B]">As you build, every rule is checked against the others. What it finds shows up here.</p>
+          <div className="text-[14px] font-semibold text-[#1D2A3E]">{m.title}</div>
+          <p className="mt-1 text-[12px] leading-[1.5] text-[#64748B]">{m.text}</p>
         </div>
-        <ul className="flex flex-col gap-2">
-          {rows.map((r) => (
-            <li key={r.title} className="flex gap-2.5 rounded-md px-3 py-2.5" style={{ background: r.tint }}>
-              <span className="mt-[5px] size-2 flex-shrink-0 rounded-full" style={{ background: r.color }} />
-              <span className="min-w-0">
-                <span className="block text-[12px] font-semibold" style={{ color: r.color }}>{r.title}</span>
-                <span className="block text-[12px] leading-[1.5] text-[#475467]">{r.text}</span>
-              </span>
-            </li>
-          ))}
-        </ul>
-        <div className="flex items-center justify-between gap-3">
-          <span className="text-[11px] text-[#7B8FA5]">Click a card to see the details.</span>
+        <div className="flex gap-2.5 rounded-md px-3 py-2.5" style={{ background: m.tint }}>
+          <span className="mt-[5px] size-2 flex-shrink-0 rounded-full" style={{ background: m.color }} />
+          <span className="text-[12px] leading-[1.5] text-[#475467]">{m.todo}</span>
+        </div>
+        <div className="flex justify-end">
           <button type="button" onClick={onClose} className="inline-flex h-8 items-center rounded bg-[#3D8BD0] px-3 text-[12px] font-medium text-white transition-colors hover:bg-[#3478B5]">Got it</button>
         </div>
       </div>

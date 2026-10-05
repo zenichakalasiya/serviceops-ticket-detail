@@ -1,4 +1,4 @@
-# Handoff — 2026-10-05 10:15
+# Handoff — 2026-10-05 10:37
 
 ## Latest (5 Oct 2026) — Form Rules: rule-check cards, one CTA, first-time intro
 **Read first:** CLAUDE.md › Structure › the Request Form Management bullet ("Rule-check polish (5 Oct 2026)")
@@ -16,14 +16,16 @@ and Key context › Request Form Management (B3 passages).
   (localStorage `formRuleCheckIntroSeen`); closes on Got it / X / opening a sidebar. No Escape handler
   on purpose (Escape closes dropdowns and was dismissing it unread).
 
+- (later, 5 Oct) Each summary card has its OWN info popup: shown beside that card the first time it appears (keys `formRuleCheckIntroSeen:conflicts` / `:similar`), one at a time (conflicts replaces similar), and re-opened from an ⓘ at the card's top-right (↗ beside it on hover).
+
 **Open / next**
 1. Zeni was asked what to change on the action-row ⚠ icon (image 90) — no answer yet.
 2. Editor tabs for "Open rule" / "Update this rule" with a live "Resolved" state; merge behaviour for similar rules.
 
 **Gotchas**
-- To see the intro again: `localStorage.removeItem('formRuleCheckIntroSeen')` and refresh.
+- To see the popups again: remove `formRuleCheckIntroSeen:conflicts` and `:similar` from localStorage and refresh.
 - CRLF in `FormRuleConflictReview.tsx`: patch scripts must try `\r\n`.
-- Probe: `D:/Motadata/tour-shots/formrule/p54.mjs` (intro + both sidebars; clicks Got it).
+- Probe: `D:/Motadata/tour-shots/formrule/p54.mjs` (both sidebars) and `p55.mjs` (per-card popups + ⓘ; use `:visible` — the cards exist twice in the DOM).
 
 ## Latest (1 Oct 2026, evening) — Form Rules: B3 finalised and polished
 **Read first:** CLAUDE.md › Key context › the "Request Form Management" bullet — the "Four page-structure variants"

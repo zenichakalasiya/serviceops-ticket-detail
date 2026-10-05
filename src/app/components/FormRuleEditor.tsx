@@ -15,7 +15,7 @@ import { FormRuleFieldView } from './FormRuleFieldView';
 import { FormRuleFlowView } from './FormRuleFlowView';
 import { FormRuleLinearView } from './FormRuleLinearView';
 import { FormRuleConflictReview } from './FormRuleConflictReview';
-import { RelatedDrawer, RelatedSummaryCards, RelatedSummaryChips, RuleCheckIntro, RULE_CHECK_INTRO_KEY, SimilarRulesView } from './FormRuleRelatedView';
+import { RelatedDrawer, RelatedSummaryCards, RelatedSummaryChips, RULE_CHECK_INTRO_KEY, SimilarRulesView } from './FormRuleRelatedView';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from './ui/hover-card';
 
 /** The four layouts being compared. They share ONE draft, so switching compares the same rule. */
@@ -224,9 +224,17 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
   /** Version R: which sidebar a summary card opened. */
   const [relOpen, setRelOpen] = useState<null | 'conflicts' | 'similar'>(null);
   /** The rule-check intro is shown once ever, the first time a summary card appears. */
-  const [introSeen, setIntroSeen] = useState(() => { try { return localStorage.getItem(RULE_CHECK_INTRO_KEY) === '1'; } catch { return false; } });
-  const closeIntro = useCallback(() => { setIntroSeen(true); try { localStorage.setItem(RULE_CHECK_INTRO_KEY, '1'); } catch { /* private mode */ } }, []);
-  useEffect(() => { if (relOpen && !introSeen) closeIntro(); }, [relOpen, introSeen, closeIntro]);
+  /* Each summary card's info popup opens on its own the first time THAT card appears (once ever per
+     card), and again from the card's ⓘ. One at a time: conflicts outranks similar rules, so its popup
+     replaces the similar one; if both arrive together, similar's waits until conflicts' is closed. */
+  const [intro, setIntro] = useState<null | 'conflicts' | 'similar'>(null);
+  const seenKey = (k: string) => RULE_CHECK_INTRO_KEY + ':' + k;
+  const [introSeen, setIntroSeen] = useState(() => {
+    const read = (k: string) => { try { return localStorage.getItem(seenKey(k)) === '1'; } catch { return false; } };
+    return { conflicts: read('conflicts'), similar: read('similar') };
+  });
+  const closeIntro = useCallback(() => setIntro(null), []);
+  useEffect(() => { if (relOpen) setIntro(null); }, [relOpen]);
   /** R-family: open the conflicts sidebar straight on one field (from an action row's warning). */
   const [relField, setRelField] = useState<string | null>(null);
   /** RC: which checklist row is open for editing. */
@@ -320,6 +328,14 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
   const shape = { ...draft, id: rule?.id, name: draft.name || 'This rule' };
   const conflicts = useMemo(() => findConflicts(shape, rules, fields, selfIndex), [draft, rules, fields]); // eslint-disable-line react-hooks/exhaustive-deps
   const similar = useMemo(() => findSimilar(shape, rules, fields), [draft, rules, fields]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!ready || relOpen) return;
+    const fresh = conflicts.length && !introSeen.conflicts ? 'conflicts' : similar.length && !introSeen.similar ? 'similar' : null;
+    if (!fresh || !(intro === null || (fresh === 'conflicts' && intro === 'similar'))) return;
+    setIntro(fresh);
+    setIntroSeen((s) => ({ ...s, [fresh]: true }));
+    try { localStorage.setItem(RULE_CHECK_INTRO_KEY + ':' + fresh, '1'); } catch { /* private mode */ }
+  }, [ready, relOpen, conflicts.length, similar.length, intro, introSeen]);
   const timeline = useMemo(() => runOrder(shape, rules, fields, conflicts, selfIndex), [draft, rules, fields, conflicts]); // eslint-disable-line react-hooks/exhaustive-deps
   const conditionLines = draft.groups.flatMap((g) => g.conditions).filter((x) => x.fieldId && x.op).map((x) => conditionText(x, fields));
 
@@ -1073,6 +1089,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
   /** The cards, only once something is found, one per row for a narrow column. */
   const stackedCards = (
     <RelatedSummaryCards onlyFound stack ready={ready} conflicts={conflicts} similar={similar}
+      intro={intro} onInfo={setIntro} onCloseIntro={closeIntro}
       onOpenConflicts={() => setRelOpen('conflicts')} onOpenSimilar={() => setRelOpen('similar')} />
   );
   const hasFindings = ready && (conflicts.length > 0 || similar.length > 0);
@@ -1117,7 +1134,6 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
           <div className="relative mt-auto flex flex-col gap-2 p-3">
             <span className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-[#7B8FA5]">Rule check</span>
             {stackedCards}
-            {!introSeen && <RuleCheckIntro conflicts={conflicts.length} similar={similar.length} onClose={closeIntro} />}
           </div>
         )}
       </nav>
