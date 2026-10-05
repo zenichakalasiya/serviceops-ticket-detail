@@ -1,4 +1,29 @@
-# Handoff — 2026-10-01 19:12
+# Handoff — 2026-10-05 10:15
+
+## Latest (5 Oct 2026) — Form Rules: rule-check cards, one CTA, first-time intro
+**Read first:** CLAUDE.md › Structure › the Request Form Management bullet ("Rule-check polish (5 Oct 2026)")
+and Key context › Request Form Management (B3 passages).
+
+**Completed**
+- Summary cards (Rule check): 16px padding on all four sides, no min-height; a 24px gap between the
+  count/title row and the summary is what makes them tall. Title + summary in the count colour, regular
+  weight, 1px border in the same colour.
+- Similar-rules sidebar: each list row reads "N actions match the current rule".
+- ONE CTA style for both sidebars: `RULE_CTA` (exported from `FormRuleConflictReview`) used by
+  "Open rule" (conflicts, By rule header + By field hover) and "Update this rule" (similar).
+- First-time intro popup `RuleCheckIntro` (FormRuleRelatedView): slides in beside the docked cards the
+  first time any summary card appears; line-art illustration; explains only the cards shown; once ever
+  (localStorage `formRuleCheckIntroSeen`); closes on Got it / X / opening a sidebar. No Escape handler
+  on purpose (Escape closes dropdowns and was dismissing it unread).
+
+**Open / next**
+1. Zeni was asked what to change on the action-row ⚠ icon (image 90) — no answer yet.
+2. Editor tabs for "Open rule" / "Update this rule" with a live "Resolved" state; merge behaviour for similar rules.
+
+**Gotchas**
+- To see the intro again: `localStorage.removeItem('formRuleCheckIntroSeen')` and refresh.
+- CRLF in `FormRuleConflictReview.tsx`: patch scripts must try `\r\n`.
+- Probe: `D:/Motadata/tour-shots/formrule/p54.mjs` (intro + both sidebars; clicks Got it).
 
 ## Latest (1 Oct 2026, evening) — Form Rules: B3 finalised and polished
 **Read first:** CLAUDE.md › Key context › the "Request Form Management" bullet — the "Four page-structure variants"

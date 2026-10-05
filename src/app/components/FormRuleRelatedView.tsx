@@ -4,6 +4,7 @@ import type { FormField } from './formRuleData';
 import type { ConflictKind, RuleConflict, SimilarRule } from './formRuleEngine';
 import { conditionText } from './formRuleEngine';
 import { SimilarRulesArt, eventLabel } from './FormRuleInsights';
+import { RULE_CTA } from './FormRuleConflictReview';
 
 /* R · Related rules. Conflicts and similar rules are two DIFFERENT jobs: a conflict is something to
  * resolve (you go into that flow and fix it), a similar rule is guidance (you probably meant to
@@ -38,8 +39,8 @@ export function RelatedSummaryCards({ ready, conflicts, similar, onOpenConflicts
      4px apart; a two-line summary 6px under them. The whole card is the button — on hover it lifts and an
      arrow appears top-right, so it reads as clickable without a link line. */
   const card = (tint: string, hover: string, empty: boolean) =>
-    (stack ? 'w-full' : 'min-w-[240px] flex-1') + ' group relative flex min-h-[104px] flex-col rounded-md px-4 py-3.5 text-left transition-[background-color,box-shadow] ' +
-    (empty ? 'cursor-default bg-[#F7F9FB]' : tint + ' ' + hover + ' hover:shadow-[0_2px_10px_rgba(15,23,42,0.08)]');
+    (stack ? 'w-full' : 'min-w-[240px] flex-1') + ' group relative flex flex-col rounded-md border p-4 text-left transition-[background-color,box-shadow] ' +
+    (empty ? 'cursor-default border-[#E5EAF0] bg-[#F7F9FB]' : tint + ' ' + hover + ' hover:shadow-[0_2px_10px_rgba(15,23,42,0.08)]');
   const head = (n: number, label: string, color: string, icon: React.ReactNode, iconBg: string) => (
     <span className="flex min-w-0 items-center pr-6">
       <span className="flex min-w-0 items-baseline gap-1">
@@ -49,33 +50,119 @@ export function RelatedSummaryCards({ ready, conflicts, similar, onOpenConflicts
     </span>
   );
   const arrow = (color: string) => (
-    <ArrowUpRight size={16} className="absolute right-3 top-3 opacity-0 transition-opacity group-hover:opacity-100" style={{ color }} />
+    <ArrowUpRight size={16} className="absolute right-4 top-4 opacity-0 transition-opacity group-hover:opacity-100" style={{ color }} />
   );
-  const summary = (text: React.ReactNode) => <span className="mt-2 line-clamp-2 text-[12px] leading-[1.5] text-[#64748B]">{text}</span>;
+  const summary = (text: React.ReactNode, color: string) => <span className="mt-6 line-clamp-2 text-[12px] font-normal leading-[1.5]" style={{ color }}>{text}</span>;
   const kinds = KINDS.map((k) => { const n = conflicts.filter((x) => x.kind === k).length; return n ? n + ' ' + k : null; }).filter(Boolean).join(' · ');
   return (
     <div className={stack ? 'flex flex-col gap-4' : 'flex flex-wrap gap-4'}>
       {!(onlyFound && conflicts.length === 0) && (
         <button type="button" onClick={onOpenConflicts} disabled={conflicts.length === 0} title={conflicts.length ? 'Resolve conflicts' : undefined}
-          className={card('bg-[#FEF4F4]', 'hover:bg-[#FDEBEB]', conflicts.length === 0)}>
+          className={card('border-[#DC2626] bg-[#FEF4F4]', 'hover:bg-[#FDEBEB]', conflicts.length === 0)}>
           {conflicts.length > 0 && arrow('#DC2626')}
           {head(conflicts.length, conflicts.length === 1 ? 'Conflict' : conflicts.length ? 'Conflicts' : 'No conflicts', conflicts.length ? '#DC2626' : '#98A2B3', <AlertTriangle size={16} />, conflicts.length ? '#FDE2E2' : '#EEF2F6')}
           {summary(conflicts.length
             ? <>{kinds} with {nRules} rule{nRules === 1 ? '' : 's'}. Resolve them so the form ends up in one clear state.</>
-            : 'No other rule leaves these fields in a different state.')}
+            : 'No other rule leaves these fields in a different state.', conflicts.length ? '#DC2626' : '#64748B')}
         </button>
       )}
       {!(onlyFound && similar.length === 0) && (
         <button type="button" onClick={onOpenSimilar} disabled={similar.length === 0} title={similar.length ? 'Review similar rules' : undefined}
-          className={card('bg-[#FFF9E8]', 'hover:bg-[#FFF3D1]', similar.length === 0)}>
+          className={card('border-[#B45309] bg-[#FFF9E8]', 'hover:bg-[#FFF3D1]', similar.length === 0)}>
           {similar.length > 0 && arrow('#B45309')}
           {head(similar.length, similar.length === 1 ? 'Similar rule' : similar.length ? 'Similar rules' : 'No similar rules', similar.length ? '#B45309' : '#98A2B3', <Copy size={15} />, similar.length ? '#FDEFC8' : '#EEF2F6')}
           {summary(similar.length
             ? 'Already use this trigger and conditions. Consider updating one instead of creating a new rule.'
-            : 'No other rule uses this trigger and these conditions.')}
+            : 'No other rule uses this trigger and these conditions.', similar.length ? '#B45309' : '#64748B')}
         </button>
       )}
     </div>
+  );
+}
+
+/* Shown ONCE, the first time a summary card appears: what the card(s) on screen mean and what
+   clicking one does. It explains only the cards that are actually there. */
+export const RULE_CHECK_INTRO_KEY = 'formRuleCheckIntroSeen';
+export function RuleCheckIntro({ conflicts, similar, onClose }: { conflicts: number; similar: number; onClose: () => void }) {
+  const [shown, setShown] = useState(false);
+  useEffect(() => { const t = requestAnimationFrame(() => setShown(true)); return () => cancelAnimationFrame(t); }, []);
+  const both = conflicts > 0 && similar > 0;
+  const rows: { color: string; tint: string; title: string; text: string }[] = [];
+  if (conflicts > 0) rows.push({ color: '#DC2626', tint: '#FEF4F4', title: 'Conflicts', text: 'Another rule leaves the same field in a different state. Resolve them so the form behaves one clear way.' });
+  if (similar > 0) rows.push({ color: '#B45309', tint: '#FFF9E8', title: 'Similar rules', text: 'Other rules already use this trigger and conditions. Updating one is often better than adding another.' });
+  return (
+    <div role="dialog" aria-label="Rule check"
+      className={'absolute bottom-3 left-[calc(100%+12px)] z-50 w-[320px] rounded-xl border border-[#E5EAF0] bg-white shadow-[0_12px_32px_rgba(15,23,42,0.14)] transition-[opacity,transform] duration-200 ease-out ' + (shown ? 'translate-x-0 opacity-100' : '-translate-x-2 opacity-0')}>
+      {/* caret pointing back at the cards */}
+      <span className="absolute -left-[6px] bottom-8 size-3 rotate-45 border-b border-l border-[#E5EAF0] bg-white" />
+      <button type="button" onClick={onClose} aria-label="Close" className="absolute right-2 top-2 z-10 flex size-7 items-center justify-center rounded text-[#64748B] transition-colors hover:bg-[#F3F4F6]"><X size={15} /></button>
+      <div className="overflow-hidden rounded-t-xl bg-[#F4F6FA]"><RuleCheckArt conflicts={conflicts > 0} similar={similar > 0} /></div>
+      <div className="flex flex-col gap-3 p-4">
+        <div>
+          <div className="text-[14px] font-semibold text-[#1D2A3E]">{both ? 'Your rule check found something' : conflicts > 0 ? 'This rule clashes with others' : 'Rules like this already exist'}</div>
+          <p className="mt-1 text-[12px] leading-[1.5] text-[#64748B]">As you build, every rule is checked against the others. What it finds shows up here.</p>
+        </div>
+        <ul className="flex flex-col gap-2">
+          {rows.map((r) => (
+            <li key={r.title} className="flex gap-2.5 rounded-md px-3 py-2.5" style={{ background: r.tint }}>
+              <span className="mt-[5px] size-2 flex-shrink-0 rounded-full" style={{ background: r.color }} />
+              <span className="min-w-0">
+                <span className="block text-[12px] font-semibold" style={{ color: r.color }}>{r.title}</span>
+                <span className="block text-[12px] leading-[1.5] text-[#475467]">{r.text}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-[11px] text-[#7B8FA5]">Click a card to see the details.</span>
+          <button type="button" onClick={onClose} className="inline-flex h-8 items-center rounded bg-[#3D8BD0] px-3 text-[12px] font-medium text-white transition-colors hover:bg-[#3478B5]">Got it</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Line art for the intro: a rule card at the centre, checked against the cards that came back. */
+function RuleCheckArt({ conflicts, similar }: { conflicts: boolean; similar: boolean }) {
+  const red = conflicts, amb = similar;
+  return (
+    <svg viewBox="0 0 320 112" className="block h-[112px] w-full" aria-hidden="true">
+      <defs>
+        <pattern id="rc-dots" width="12" height="12" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="#DCE3EC" /></pattern>
+      </defs>
+      <rect width="320" height="112" fill="url(#rc-dots)" />
+      {/* your rule */}
+      <g>
+        <rect x="40" y="30" width="96" height="56" rx="8" fill="#FFFFFF" stroke="#BCD7F0" />
+        <rect x="52" y="42" width="20" height="20" rx="5" fill="#EBF5FF" />
+        <path d="M57 52.5l3 3 6-6" fill="none" stroke="#3D8BD0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <rect x="78" y="45" width="44" height="5" rx="2.5" fill="#CBD5E1" />
+        <rect x="78" y="55" width="30" height="4" rx="2" fill="#E2E8F0" />
+        <rect x="52" y="70" width="70" height="4" rx="2" fill="#E2E8F0" />
+      </g>
+      {/* connectors */}
+      {red && <path d="M136 50 C 160 50, 162 34, 186 34" fill="none" stroke="#F3B4B4" strokeWidth="1.5" strokeDasharray="3 3" />}
+      {amb && <path d={red ? 'M136 66 C 160 66, 162 80, 186 80' : 'M136 58 C 160 58, 162 58, 186 58'} fill="none" stroke="#F2D48A" strokeWidth="1.5" strokeDasharray="3 3" />}
+      {/* conflict card */}
+      {red && (
+        <g>
+          <rect x="186" y={amb ? 16 : 30} width="96" height={amb ? 36 : 56} rx="7" fill="#FEF4F4" stroke="#DC2626" />
+          <path d={amb ? 'M203 26l6 11h-12z' : 'M203 47l7 13h-14z'} fill="none" stroke="#DC2626" strokeWidth="1.6" strokeLinejoin="round" />
+          <rect x="218" y={amb ? 28 : 46} width="48" height="5" rx="2.5" fill="#F3B4B4" />
+          {!amb && <rect x="218" y="56" width="32" height="4" rx="2" fill="#F8D4D4" />}
+        </g>
+      )}
+      {/* similar card */}
+      {amb && (
+        <g>
+          <rect x="186" y={red ? 62 : 30} width="96" height={red ? 36 : 56} rx="7" fill="#FFF9E8" stroke="#B45309" />
+          <rect x={196} y={red ? 71 : 45} width="12" height="14" rx="2.5" fill="none" stroke="#B45309" strokeWidth="1.5" />
+          <rect x={200} y={red ? 75 : 49} width="12" height="14" rx="2.5" fill="#FFF9E8" stroke="#B45309" strokeWidth="1.5" />
+          <rect x="218" y={red ? 75 : 48} width="48" height="5" rx="2.5" fill="#F2D48A" />
+          {!red && <rect x="218" y="58" width="32" height="4" rx="2" fill="#F8E6B8" />}
+        </g>
+      )}
+    </svg>
   );
 }
 
@@ -200,8 +287,8 @@ export function SimilarRulesView({ similar, fields, draft, conditionLines, onOpe
           <p className="mt-0.5 text-[12px] text-[#7B8FA5]">{cur.rule.enabled ? 'Enabled' : 'Disabled'} · {cur.common.length} of your actions already here</p>
         </div>
         <button type="button" onClick={() => onOpenRule(cur.rule.id)}
-          className="inline-flex flex-shrink-0 items-center gap-1 rounded-md bg-[#3D8BD0] px-3 py-1.5 text-[12px] font-medium text-white hover:bg-[#3478B5]">
-          Update this rule <ArrowUpRight size={12} />
+          className={RULE_CTA}>
+          Update this rule <ArrowUpRight size={13} />
         </button>
       </div>
       {actionGroup('Matches your rule', 'it already does this', cur.common, <Check size={12} strokeWidth={2.5} className="flex-shrink-0 text-[#12B76A]" />, '#12B76A')}
@@ -234,7 +321,7 @@ export function SimilarRulesView({ similar, fields, draft, conditionLines, onOpe
                 <span className="block truncate text-[13px] font-semibold text-[#1D2A3E]">{s.rule.name}</span>
                 <span className="mt-1 flex items-center gap-1.5 text-[12px] text-[#7B8FA5]">
                   <span className="size-1.5 rounded-full bg-[#F59E0B]" />
-                  {s.common.length} matching · {s.others.length} other
+                  {s.common.length} action{s.common.length === 1 ? '' : 's'} match{s.common.length === 1 ? 'es' : ''} the current rule
                 </span>
               </button>
             ))}

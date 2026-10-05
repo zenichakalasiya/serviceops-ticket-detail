@@ -4,6 +4,10 @@ import { AlertTriangle, ArrowLeftRight, ArrowUpRight, Ban, ChevronLeft, ChevronR
 import type { FormRule } from './formRuleData';
 import type { ConflictKind, RuleConflict } from './formRuleEngine';
 
+/** The one "go to that rule" button, used by BOTH sidebars (Open rule here, Update this rule in
+    similar rules) so the two read as the same kind of action. */
+export const RULE_CTA = 'inline-flex h-8 flex-shrink-0 items-center gap-1.5 rounded bg-[#3D8BD0] px-3 text-[12px] font-medium text-white transition-colors hover:bg-[#3478B5]';
+
 /* G · Conflict review. A conflict is a LINK: this rule's action → a field → another rule → a kind.
  * Those links form many-to-many shapes — one rule clashing on several fields, one field fought
  * over by several rules, one rule+field pair clashing in more than one way — so the review shows
@@ -196,7 +200,7 @@ export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, o
         <div className="flex flex-col gap-1">
           <div className="sticky top-0 z-20 flex items-center gap-3 bg-white pb-2">
             <h3 className="min-w-0 flex-1 truncate text-[15px] font-semibold leading-5 text-[#1D2A3E]">{entry.rule.name}</h3>
-            <button type="button" onClick={() => onOpenRule(entry.rule.id)} className="inline-flex flex-shrink-0 items-center gap-1 rounded-md px-2 py-1 text-[12px] font-medium text-[#3D8BD0] transition-colors hover:bg-[#EBF5FF]">Open rule <ArrowUpRight size={12} /></button>
+            <button type="button" onClick={() => onOpenRule(entry.rule.id)} className={RULE_CTA}>Open rule <ArrowUpRight size={13} /></button>
           </div>
           <div className="flex flex-col gap-4">{fields.map((fid) => {
             const here = entry.items.filter((x) => x.fieldId === fid);
@@ -229,7 +233,7 @@ export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, o
                 <div className="sticky top-[28px] z-10 -mx-3 -mt-3 mb-0 flex items-center gap-2 rounded-t-xl bg-[#F4F6FA] px-3.5 pb-2.5 pt-3">
                   <span className="truncate text-[14px] font-semibold text-[#1D2A3E]">{rule.name}</span>
                   {/* Shown on hover of the card, top-right, so a list of rules stays quiet until you reach for one. */}
-                  <button type="button" onClick={() => onOpenRule(rid)} className="ml-auto inline-flex flex-shrink-0 items-center gap-1 text-[12px] font-medium text-[#3D8BD0] opacity-0 transition-opacity hover:underline focus:opacity-100 group-hover/rc:opacity-100">Open rule <ArrowUpRight size={12} /></button>
+                  <button type="button" onClick={() => onOpenRule(rid)} className={RULE_CTA + ' ml-auto -my-1 opacity-0 focus:opacity-100 group-hover/rc:opacity-100'}>Open rule <ArrowUpRight size={13} /></button>
                 </div>
                 <div className="flex flex-col gap-2.5">{here.map((x) => pair(x, entry.fieldId))}</div>
               </div>

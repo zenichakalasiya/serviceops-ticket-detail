@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { AlertTriangle, ArrowLeft, ArrowUpRight, Check, ChevronRight, ChevronsLeft, Copy, X as XIcon, ExternalLink, History, Plus, RefreshCcw, Split, Trash2, Users, Workflow, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -15,7 +15,7 @@ import { FormRuleFieldView } from './FormRuleFieldView';
 import { FormRuleFlowView } from './FormRuleFlowView';
 import { FormRuleLinearView } from './FormRuleLinearView';
 import { FormRuleConflictReview } from './FormRuleConflictReview';
-import { RelatedDrawer, RelatedSummaryCards, RelatedSummaryChips, SimilarRulesView } from './FormRuleRelatedView';
+import { RelatedDrawer, RelatedSummaryCards, RelatedSummaryChips, RuleCheckIntro, RULE_CHECK_INTRO_KEY, SimilarRulesView } from './FormRuleRelatedView';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from './ui/hover-card';
 
 /** The four layouts being compared. They share ONE draft, so switching compares the same rule. */
@@ -223,6 +223,10 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
   const [pDetailsOpen, setPDetailsOpen] = useState(false);
   /** Version R: which sidebar a summary card opened. */
   const [relOpen, setRelOpen] = useState<null | 'conflicts' | 'similar'>(null);
+  /** The rule-check intro is shown once ever, the first time a summary card appears. */
+  const [introSeen, setIntroSeen] = useState(() => { try { return localStorage.getItem(RULE_CHECK_INTRO_KEY) === '1'; } catch { return false; } });
+  const closeIntro = useCallback(() => { setIntroSeen(true); try { localStorage.setItem(RULE_CHECK_INTRO_KEY, '1'); } catch { /* private mode */ } }, []);
+  useEffect(() => { if (relOpen && !introSeen) closeIntro(); }, [relOpen, introSeen, closeIntro]);
   /** R-family: open the conflicts sidebar straight on one field (from an action row's warning). */
   const [relField, setRelField] = useState<string | null>(null);
   /** RC: which checklist row is open for editing. */
@@ -1110,9 +1114,10 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
         </ol>
         {/* Docked at the foot, and only once there is something to report. */}
         {hasFindings && (
-          <div className="mt-auto flex flex-col gap-2 p-3">
+          <div className="relative mt-auto flex flex-col gap-2 p-3">
             <span className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-[#7B8FA5]">Rule check</span>
             {stackedCards}
+            {!introSeen && <RuleCheckIntro conflicts={conflicts.length} similar={similar.length} onClose={closeIntro} />}
           </div>
         )}
       </nav>
