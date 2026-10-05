@@ -19,10 +19,13 @@ import { RelatedDrawer, RelatedSummaryCards, RelatedSummaryChips, RULE_CHECK_INT
 import { HoverCard, HoverCardContent, HoverCardTrigger } from './ui/hover-card';
 
 /** The four layouts being compared. They share ONE draft, so switching compares the same rule. */
-export type EditorVersion = 'A' | 'A2' | 'A3' | 'A3R' | 'B3' | 'S' | 'LS' | 'RC' | 'EG' | 'HF' | 'R' | 'B' | 'B2' | 'P' | 'C' | 'G2' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I';
+export type EditorVersion = 'H1' | 'H2' | 'H3' | 'A' | 'A2' | 'A3' | 'A3R' | 'B3' | 'S' | 'LS' | 'RC' | 'EG' | 'HF' | 'R' | 'B' | 'B2' | 'P' | 'C' | 'G2' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I';
 /** Only A · B · B2 · I are offered (Zeni, 1 Oct 2026); the rest stay built but hidden. */
 const VERSIONS: { id: EditorVersion; label: string; hint: string; fav?: boolean; show?: boolean }[] = [
   { id: 'A', show: true, fav: true, label: 'A · Split', hint: 'Builder + a resizable, collapsible Rule check rail' },
+  { id: 'H1', show: true, label: 'H1 · Steps across · cards top right', hint: 'The two steps across the top, the form left-aligned under them, the summary cards in a right column at the top' },
+  { id: 'H2', show: true, label: 'H2 · Steps across · cards bottom right', hint: 'Like H1, but the summary cards dock at the foot of the right column' },
+  { id: 'H3', show: true, label: 'H3 · Steps across · floating cards', hint: 'Like H1 with no right column — the cards float in the bottom-right corner over the page' },
   { id: 'B3', show: true, label: 'B3 · Steps + summary', hint: 'B’s two steps in a wider left column, with conflict / similar cards docked at its foot once something is found' },
   { id: 'A3', show: true, label: 'A3 · Details left', hint: 'Rule details in a left sidebar with the summary cards under it; the builder in the centre' },
   { id: 'A3R', show: true, label: 'A3R · Details right', hint: 'A3 mirrored — Rule details and the summary cards in a right sidebar, so the panel opens from the same side' },
@@ -49,7 +52,7 @@ const VERSIONS: { id: EditorVersion; label: string; hint: string; fav?: boolean;
 /** B3 is the chosen layout (Zeni, 1 Oct 2026); the others stay built but are hidden. Add ids back here to compare again. */
 const SHOWN: EditorVersion[] = ['B3'];
 /** The layouts whose conflict / similar checks open in the two summary sidebars. */
-const SUMMARY: EditorVersion[] = ['R', 'B3', 'A3', 'A3R', 'S', 'LS', 'RC', 'EG', 'HF'];
+const SUMMARY: EditorVersion[] = ['H1', 'H2', 'H3', 'R', 'B3', 'A3', 'A3R', 'S', 'LS', 'RC', 'EG', 'HF'];
 const RAIL_MIN = 320;
 const RAIL_MAX = 560;
 const RAIL_DEFAULT = 420;
@@ -228,11 +231,15 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
      card), and again from the card's ⓘ. One at a time: conflicts outranks similar rules, so its popup
      replaces the similar one; if both arrive together, similar's waits until conflicts' is closed. */
   const [intro, setIntro] = useState<null | 'conflicts' | 'similar'>(null);
-  const seenKey = (k: string) => RULE_CHECK_INTRO_KEY + ':' + k;
-  const [introSeen, setIntroSeen] = useState(() => {
-    const read = (k: string) => { try { return localStorage.getItem(seenKey(k)) === '1'; } catch { return false; } };
+  /* 'Seen' is remembered PER LAYOUT while layouts are being compared, so trying H1 after B3 still
+     shows H1's own first-time popups beside its own cards. */
+  const seenKey = (v: string, k: string) => RULE_CHECK_INTRO_KEY + ':' + v + ':' + k;
+  const readSeen = (v: string) => {
+    const read = (k: string) => { try { return localStorage.getItem(seenKey(v, k)) === '1'; } catch { return false; } };
     return { conflicts: read('conflicts'), similar: read('similar') };
-  });
+  };
+  const [introSeen, setIntroSeen] = useState(() => readSeen(version));
+  useEffect(() => { setIntro(null); setIntroSeen(readSeen(version)); }, [version]); // eslint-disable-line react-hooks/exhaustive-deps
   const closeIntro = useCallback(() => setIntro(null), []);
   useEffect(() => { if (relOpen) setIntro(null); }, [relOpen]);
   /** R-family: open the conflicts sidebar straight on one field (from an action row's warning). */
@@ -334,8 +341,8 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
     if (!fresh || !(intro === null || (fresh === 'conflicts' && intro === 'similar'))) return;
     setIntro(fresh);
     setIntroSeen((s) => ({ ...s, [fresh]: true }));
-    try { localStorage.setItem(RULE_CHECK_INTRO_KEY + ':' + fresh, '1'); } catch { /* private mode */ }
-  }, [ready, relOpen, conflicts.length, similar.length, intro, introSeen]);
+    try { localStorage.setItem(seenKey(version, fresh), '1'); } catch { /* private mode */ }
+  }, [ready, relOpen, conflicts.length, similar.length, intro, introSeen, version]);
   const timeline = useMemo(() => runOrder(shape, rules, fields, conflicts, selfIndex), [draft, rules, fields, conflicts]); // eslint-disable-line react-hooks/exhaustive-deps
   const conditionLines = draft.groups.flatMap((g) => g.conditions).filter((x) => x.fieldId && x.op).map((x) => conditionText(x, fields));
 
@@ -1099,7 +1106,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
     <div className="flex min-h-0 flex-1">
       {/* B2's stepper, stood on end: badge + label pills joined by a connector, no panel behind them. */}
       <nav className="flex w-[380px] flex-shrink-0 flex-col bg-white">
-        <ol className="flex flex-col gap-6 p-3">
+        <ol className="flex flex-col gap-6 p-4">
           {STEPS.map((s, i) => {
             const on = step === i;
             const done = s.done && !on;
@@ -1131,15 +1138,80 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
         </ol>
         {/* Docked at the foot, and only once there is something to report. */}
         {hasFindings && (
-          <div className="relative mt-auto flex flex-col gap-2 p-3">
+          <div className="relative mt-auto flex flex-col gap-2 p-4">
             <span className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-[#7B8FA5]">Rule check</span>
             {stackedCards}
           </div>
         )}
       </nav>
-      <div className="min-h-0 flex-1 overflow-y-auto [&>div]:mx-0">
+      <div className="min-h-0 flex-1 overflow-y-auto [&>div]:mx-0 [&>div]:pb-4 [&>div]:pl-6 [&>div]:pr-4 [&>div]:pt-4">
         {step === 0 ? detailsStepEl(() => setStep(1)) : logicEl}
       </div>
+    </div>
+  );
+
+  // ── H1 / H2 / H3 · the steps across the top, the form left-aligned under them ──
+  /* The stepper and the form share ONE left edge (24px), so the steps read as the form's own heading.
+     Only where the summary cards live changes between the three. */
+  const hsStepper = (
+    <ol className="flex flex-shrink-0 items-center gap-3 px-6 pb-2 pt-4">
+      {STEPS.map((s, i) => {
+        const on = step === i;
+        const done = s.done && !on;
+        return (
+          <li key={s.label} className="flex items-center gap-3">
+            {i > 0 && <span className={`h-px w-10 ${STEPS[i - 1].done ? 'bg-[#89C540]' : 'bg-[#DFE5ED]'}`} />}
+            <button type="button" onClick={() => setStep(i)}
+              className={`flex items-start gap-2.5 rounded-md p-2.5 text-left transition-colors ${on ? 'bg-[#EBF5FF]' : 'hover:bg-[#F5F7FA]'}`}>
+              <span className={`mt-px flex size-6 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${done ? 'bg-[#89C540] text-white' : on ? 'bg-[#3D8BD0] text-white' : 'bg-[#E2E8F0] text-[#64748B]'}`}>
+                {done ? <Check size={12} strokeWidth={3} /> : i + 1}
+              </span>
+              <span className="min-w-0">
+                <span className="flex items-center gap-2">
+                  <span className={`whitespace-nowrap text-[13px] font-medium ${on ? 'text-[#3D8BD0]' : 'text-[#364658]'}`}>{s.label}</span>
+                  {i === 1 && ready && conflicts.length > 0 && <span className="rounded-sm bg-[#FEF2F2] px-1.5 text-[11px] font-semibold text-[#DC2626]">{conflicts.length}</span>}
+                </span>
+                <span className="block whitespace-nowrap text-[11px] text-[#7B8FA5]">{s.hint}</span>
+              </span>
+            </button>
+          </li>
+        );
+      })}
+    </ol>
+  );
+  /* The step's own content, left-aligned at the stepper's edge: the shared column drops its centring
+     and its 16px side padding becomes 24px (the stepper starts at 24px; its cards then pad 10px). */
+  const hsMain = (
+    <div className="min-h-0 flex-1 overflow-y-auto [&>div]:mx-0 [&>div]:px-6">
+      {step === 0 ? detailsStepEl(() => setStep(1)) : logicEl}
+    </div>
+  );
+  const hsCards = (side: 'left' | 'right', align: 'top' | 'bottom') => (
+    <RelatedSummaryCards onlyFound stack ready={ready} conflicts={conflicts} similar={similar}
+      intro={intro} onInfo={setIntro} onCloseIntro={closeIntro} introSide={side} introAlign={align}
+      onOpenConflicts={() => setRelOpen('conflicts')} onOpenSimilar={() => setRelOpen('similar')} />
+  );
+  const hsLabel = <span className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-[#7B8FA5]">Rule check</span>;
+  const hsBody = (where: 'top' | 'bottom' | 'float') => (
+    <div className="relative flex min-h-0 flex-1">
+      <div className="flex min-w-0 flex-1 flex-col">
+        {hsStepper}
+        {hsMain}
+      </div>
+      {where !== 'float' && hasFindings && (
+        <aside className="flex w-[340px] flex-shrink-0 flex-col bg-white">
+          <div className={`relative flex flex-col gap-2 p-6 ${where === 'bottom' ? 'mt-auto' : ''}`}>
+            {hsLabel}
+            {hsCards('left', where)}
+          </div>
+        </aside>
+      )}
+      {where === 'float' && hasFindings && (
+        <div className="absolute bottom-6 right-6 z-30 flex w-[300px] flex-col gap-2 rounded-xl border border-[#E5EAF0] bg-white/95 p-3 shadow-[0_12px_32px_rgba(15,23,42,0.12)] backdrop-blur">
+          {hsLabel}
+          {hsCards('left', 'bottom')}
+        </div>
+      )}
     </div>
   );
 
@@ -1555,6 +1627,9 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
     version === 'B' ? stepperBody
       : version === 'R' ? relBody
       : version === 'B3' ? b3Body
+      : version === 'H1' ? hsBody('top')
+      : version === 'H2' ? hsBody('bottom')
+      : version === 'H3' ? hsBody('float')
       : version === 'LS' ? lsBody
       : version === 'RC' ? rcBody
       : version === 'EG' ? egBody

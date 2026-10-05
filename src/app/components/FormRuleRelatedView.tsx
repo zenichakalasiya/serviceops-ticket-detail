@@ -16,7 +16,10 @@ const KIND_FG: Record<ConflictKind, string> = { Blocking: '#9F1239', Opposite: '
 
 /** The two cards that sit at the top of the builder. */
 export type IntroKind = 'conflicts' | 'similar';
-export function RelatedSummaryCards({ ready, conflicts, similar, onOpenConflicts, onOpenSimilar, onlyFound = false, stack = false, intro = null, onInfo, onCloseIntro }: {
+export function RelatedSummaryCards({ ready, conflicts, similar, onOpenConflicts, onOpenSimilar, onlyFound = false, stack = false, intro = null, onInfo, onCloseIntro, introSide = 'right', introAlign = 'bottom' }: {
+  /** Where a card's info popup opens: beside the card on this side, lined up with this edge. */
+  introSide?: 'left' | 'right';
+  introAlign?: 'top' | 'bottom';
   /** Which card's info popup is open beside it (one at a time). */
   intro?: IntroKind | null;
   /** The ⓘ on a card asks for its popup. Without it the card shows no ⓘ. */
@@ -87,7 +90,7 @@ export function RelatedSummaryCards({ ready, conflicts, similar, onOpenConflicts
               ? <>{kinds} with {nRules} rule{nRules === 1 ? '' : 's'}. Resolve them so the form ends up in one clear state.</>
               : 'No other rule leaves these fields in a different state.', conflicts.length ? '#DC2626' : '#64748B')}
           </button>
-          {intro === 'conflicts' && conflicts.length > 0 && onCloseIntro && <RuleCheckIntro key="c" kind="conflicts" onClose={onCloseIntro} />}
+          {intro === 'conflicts' && conflicts.length > 0 && onCloseIntro && <RuleCheckIntro key="c" kind="conflicts" side={introSide} align={introAlign} onClose={onCloseIntro} />}
         </div>
       )}
       {!(onlyFound && similar.length === 0) && (
@@ -100,7 +103,7 @@ export function RelatedSummaryCards({ ready, conflicts, similar, onOpenConflicts
               ? 'Already use this trigger and conditions. Consider updating one instead of creating a new rule.'
               : 'No other rule uses this trigger and these conditions.', similar.length ? '#B45309' : '#64748B')}
           </button>
-          {intro === 'similar' && similar.length > 0 && onCloseIntro && <RuleCheckIntro key="s" kind="similar" onClose={onCloseIntro} />}
+          {intro === 'similar' && similar.length > 0 && onCloseIntro && <RuleCheckIntro key="s" kind="similar" side={introSide} align={introAlign} onClose={onCloseIntro} />}
         </div>
       )}
     </div>
@@ -125,15 +128,18 @@ const INTRO: Record<IntroKind, { color: string; tint: string; title: string; tex
     todo: 'Open the card to compare them — updating one is often better than adding another rule.',
   },
 };
-export function RuleCheckIntro({ kind, onClose }: { kind: IntroKind; onClose: () => void }) {
+export function RuleCheckIntro({ kind, onClose, side = 'right', align = 'bottom' }: { kind: IntroKind; onClose: () => void; side?: 'left' | 'right'; align?: 'top' | 'bottom' }) {
   const [shown, setShown] = useState(false);
   useEffect(() => { const t = requestAnimationFrame(() => setShown(true)); return () => cancelAnimationFrame(t); }, []);
   const m = INTRO[kind];
   return (
     <div role="dialog" aria-label={m.title}
-      className={'absolute bottom-0 left-[calc(100%+12px)] z-50 w-[300px] rounded-xl border border-[#E5EAF0] bg-white shadow-[0_12px_32px_rgba(15,23,42,0.14)] transition-[opacity,transform] duration-200 ease-out ' + (shown ? 'translate-x-0 opacity-100' : '-translate-x-2 opacity-0')}>
+      className={'absolute z-50 w-[300px] rounded-xl border border-[#E5EAF0] bg-white shadow-[0_12px_32px_rgba(15,23,42,0.14)] transition-[opacity,transform] duration-200 ease-out '
+        + (align === 'top' ? 'top-0 ' : 'bottom-0 ')
+        + (side === 'left' ? 'right-[calc(100%+12px)] ' + (shown ? 'translate-x-0 opacity-100' : 'translate-x-2 opacity-0')
+          : 'left-[calc(100%+12px)] ' + (shown ? 'translate-x-0 opacity-100' : '-translate-x-2 opacity-0'))}>
       {/* caret pointing back at its card */}
-      <span className="absolute -left-[6px] bottom-[52px] size-3 rotate-45 border-b border-l border-[#E5EAF0] bg-white" />
+      <span className={'absolute size-3 rotate-45 bg-white ' + (side === 'left' ? '-right-[6px] border-r border-t border-[#E5EAF0] ' : '-left-[6px] border-b border-l border-[#E5EAF0] ') + (align === 'top' ? 'top-[52px]' : 'bottom-[52px]')} />
       <button type="button" onClick={onClose} aria-label="Close" className="absolute right-2 top-2 z-10 flex size-7 items-center justify-center rounded text-[#64748B] transition-colors hover:bg-white"><X size={15} /></button>
       <div className="overflow-hidden rounded-t-xl bg-[#F4F6FA]"><RuleCheckArt conflicts={kind === 'conflicts'} similar={kind === 'similar'} /></div>
       <div className="flex flex-col gap-3 p-4">

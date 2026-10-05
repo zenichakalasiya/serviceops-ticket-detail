@@ -1,4 +1,4 @@
-# Handoff — 2026-10-05 10:37
+# Handoff — 2026-10-05 11:02
 
 ## Latest (5 Oct 2026) — Form Rules: rule-check cards, one CTA, first-time intro
 **Read first:** CLAUDE.md › Structure › the Request Form Management bullet ("Rule-check polish (5 Oct 2026)")
@@ -18,12 +18,15 @@ and Key context › Request Form Management (B3 passages).
 
 - (later, 5 Oct) Each summary card has its OWN info popup: shown beside that card the first time it appears (keys `formRuleCheckIntroSeen:conflicts` / `:similar`), one at a time (conflicts replaces similar), and re-opened from an ⓘ at the card's top-right (↗ beside it on hover).
 
+- (later, 5 Oct) Built H1/H2/H3 (steps across the top, form left-aligned, cards top-right / bottom-right / floating) — then HIDDEN on request; **B3 is final** (`SHOWN = ['B3']`, no Layout bar). Info-popup "seen" flags are now per layout (`formRuleCheckIntroSeen:<layout>:<card>`); popups open left of right-side cards via `introSide`/`introAlign`.
+- B3 spacing: 16px on every outer side below the header divider (stepper + Rule check `p-4`, form `pt-4 pr-4 pb-4`), form 24px from the stepper rail.
+
 **Open / next**
 1. Zeni was asked what to change on the action-row ⚠ icon (image 90) — no answer yet.
 2. Editor tabs for "Open rule" / "Update this rule" with a live "Resolved" state; merge behaviour for similar rules.
 
 **Gotchas**
-- To see the popups again: remove `formRuleCheckIntroSeen:conflicts` and `:similar` from localStorage and refresh.
+- To see the popups again: remove the `formRuleCheckIntroSeen:B3:conflicts` / `:B3:similar` keys from localStorage and refresh.
 - CRLF in `FormRuleConflictReview.tsx`: patch scripts must try `\r\n`.
 - Probe: `D:/Motadata/tour-shots/formrule/p54.mjs` (both sidebars) and `p55.mjs` (per-card popups + ⓘ; use `:visible` — the cards exist twice in the DOM).
 
