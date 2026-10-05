@@ -32,7 +32,7 @@ export interface AdminCard {
  * scrolls the Overview, exactly as before. Expansion is opt-in per section rather than automatic
  * for all 24, because a section only earns its own nav branch once its modules are real screens.
  */
-export const SIDEBAR_TREE: string[] = ['Request Management', 'BOM Management', 'Patch Management', 'Organization', 'Support Channels'];
+export const SIDEBAR_TREE: string[] = ['Request Management', 'BOM Management', 'Patch Management', 'Organization', 'Support Channels', 'User Survey'];
 
 export const isTreeSection = (title: string) => SIDEBAR_TREE.includes(title);
 

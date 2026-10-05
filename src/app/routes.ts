@@ -54,6 +54,7 @@ export const ADMIN_ROUTES: readonly AdminRoute[] = [
   { slug: 'request-form-rules', section: 'Request Management', card: 'Request Form Rule' },
   { slug: 'os-upgrade', section: 'Patch Management', card: 'OS Upgrade' },
   { slug: 'support-portal', section: 'Support Channels', card: 'Support Portal' },
+  { slug: 'user-surveys', section: 'User Survey', card: 'User Surveys' },
   { slug: 'bom-management', section: 'BOM Management' },
   { slug: 'bom-licensing', section: 'BOM Management', card: 'BOM Licensing' },
   { slug: 'bom-scheduler', section: 'BOM Management', card: 'BOM Scheduler' },

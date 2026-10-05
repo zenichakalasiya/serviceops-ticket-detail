@@ -1,7 +1,53 @@
-# Handoff — 2026-10-05 13:55
+# Handoff — 2026-10-05 14:11
 
-> Two sessions share this file today. **This top part is the Support Portal builder session**; the
-> Form Rules session's notes follow unchanged below the divider.
+> Three sessions share this file today. **This top part is the User Surveys / Import Emails session**;
+> the Support Portal builder and Form Rules sessions' notes follow unchanged below the divider.
+
+## Read first (User Surveys session)
+CLAUDE.md › Structure › *User Surveys (Admin › User Survey)* and Key context › *User Surveys — listing +
+Import Emails (5 Oct 2026)*.
+
+## What we worked on this session
+Redesigned the old User Surveys admin listing in the new design system, and redesigned its **Import
+Emails** side panel (the real goal of the session), per Zeni's flow: title + one-liner bound together,
+quiet sample link, Select CSV, a capacity warning under it, the file, and an overflow error.
+
+## Completed
+- `AdminUserSurveyModule.tsx` — listing at `#/admin/user-surveys` (nav tree + `CARD_MODULES` + route
+  wired). 7 saved views from the old product, search, Refresh, Import, Create User Survey, 23 realistic
+  mock surveys.
+- `ImportEmailsPanel.tsx` — 2-step panel (Upload file → Map fields), CSV/Excel tabs, real CSV parsing,
+  preview modal, plain capacity warning (500 − manual), red skipped-rows error, Map Email/Name step.
+- Sample files `public/samples/survey-emails-200/450/500.csv`; the "Download sample CSV" link serves the
+  500-row one.
+- Verified in Chrome (Playwright): all views filter correctly, 450-row file shows warning + "last 70
+  skipped" error, 200-row file shows warning only, sample downloads 500 rows, no page errors.
+
+## In progress
+Nothing mid-flight.
+
+## Next steps
+- Confirm with Zeni: the real name of the "Live" status; whether Import should live inside a survey's
+  audience screen (then `manualCount` becomes the survey's real count, not the demo 120).
+- Whether the red skipped-rows error should also become a plain line like the warning.
+- Create User Survey, row click, and Schedule Survey still have no screens (toast placeholders).
+
+## Decisions made
+- Import = a separate secondary button beside the primary Create (Zeni).
+- Old view dropdown kept as a saved-view menu (Patch Deployment pattern) rather than scope tabs (Zeni).
+- Columns: ID, Name, Status, Start, End, Owner, Service Catalog — no Created Date / row actions (Zeni).
+- Capacity warning is plain text, no box, icon on the CTA's left edge (Zeni); sample link is a plain
+  text link, not an info callout (Zeni: too prominent).
+- Sample file = a full 500-row audience so uploading it back always demonstrates the overflow error.
+
+## Gotchas & notes
+- Expiring/Expired views use a fixed `TODAY` constant on purpose.
+- Excel files are mocked as 420 rows (no spreadsheet parser in the prototype).
+- Git Bash heredocs + `node -e` with template literals mangle quoting — use the Edit tool for JSX edits.
+
+---
+
+## Support Portal builder session
 
 ## Read first
 CLAUDE.md › Key context — the Support Portal bullets dated 30 Sep – 5 Oct: *ONE global Keyboard shortcuts
