@@ -73,20 +73,22 @@ export type RuleEvent = 'On Field Change' | 'On Form Load' | 'On Form Submit';
 export type RuleExecution = 'On Create' | 'On Edit' | 'On Create and Edit';
 
 /** What the admin reads in the editor, beside what the listing prints for the same value. */
-export const APPLIES_OPTIONS: { value: RuleApplies; label: string }[] = [
-  { value: 'Requesters', label: 'Requesters Only' },
-  { value: 'Technicians', label: 'Technicians Only' },
-  { value: 'Everyone', label: 'Everyone' },
+/** A hover tip on a dropdown option: what it means, and one example of a rule using it. */
+export interface OptionTip { desc: string; example: string }
+export const APPLIES_OPTIONS: { value: RuleApplies; label: string; tip: OptionTip }[] = [
+  { value: 'Requesters', label: 'Requesters Only', tip: { desc: 'Runs only for people raising requests from the self-service portal.', example: 'Hide Technician Group from requesters.' } },
+  { value: 'Technicians', label: 'Technicians Only', tip: { desc: 'Runs only for technicians working on requests in the technician portal.', example: 'Make Assignee mandatory for technicians.' } },
+  { value: 'Everyone', label: 'Everyone', tip: { desc: 'Runs for anyone who opens the form, no matter who they are.', example: 'Require Priority for everyone who opens the form.' } },
 ];
-export const EVENT_OPTIONS: { value: RuleEvent; label: string; hint: string }[] = [
-  { value: 'On Field Change', label: 'While the form is being filled', hint: 'Runs every time a watched field changes' },
-  { value: 'On Form Load', label: 'When the form opens', hint: 'Runs once, as the form is shown' },
-  { value: 'On Form Submit', label: 'When the form is submitted', hint: 'Runs as the requester or technician saves' },
+export const EVENT_OPTIONS: { value: RuleEvent; label: string; tip: OptionTip }[] = [
+  { value: 'On Field Change', label: 'While the form is being filled', tip: { desc: 'Runs every time a field the rule watches changes, while the form is open.', example: 'Show Vendor the moment Category is set to Hardware.' } },
+  { value: 'On Form Load', label: 'When the form opens', tip: { desc: 'Runs once, as the form is first shown.', example: 'Hide Department on every new request until it is needed.' } },
+  { value: 'On Form Submit', label: 'When the form is submitted', tip: { desc: 'Runs as the requester or technician saves the form.', example: 'Make Description mandatory when Priority is Urgent.' } },
 ];
-export const EXECUTION_OPTIONS: { value: RuleExecution; label: string }[] = [
-  { value: 'On Create', label: 'On Create' },
-  { value: 'On Edit', label: 'On Edit' },
-  { value: 'On Create and Edit', label: 'On Create and Edit' },
+export const EXECUTION_OPTIONS: { value: RuleExecution; label: string; tip: OptionTip }[] = [
+  { value: 'On Create', label: 'On Create', tip: { desc: 'Runs only while a new request is being raised.', example: 'Set Priority to Medium on every new request.' } },
+  { value: 'On Edit', label: 'On Edit', tip: { desc: 'Runs only when an existing request is opened and changed.', example: 'Lock Category once the request has been raised.' } },
+  { value: 'On Create and Edit', label: 'On Create and Edit', tip: { desc: 'Runs when a request is raised and every time it is edited.', example: 'Keep Urgency mandatory on new and existing requests.' } },
 ];
 
 export type Operator =

@@ -35,6 +35,8 @@ export interface SelectOption {
   avatar?: { initials: string; color: string };
   /** A group heading the option sits under. */
   group?: string;
+  /** Shown in a dark card beside the menu while the option is hovered — instead of a sub-line. */
+  tip?: { desc: string; example?: string };
 }
 
 /** A dropdown with the ticket page's menu. `multi` keeps the menu open and shows the first choice
@@ -68,6 +70,8 @@ export function RuleSelect({
   const btn = useRef<HTMLButtonElement>(null);
   const menu = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<{ left: number; top: number; width: number; up: boolean } | null>(null);
+  /** The hovered option's tip, placed beside the menu at that row's height. */
+  const [tip, setTip] = useState<{ o: SelectOption; y: number } | null>(null);
   const showSearch = searchable ?? options.length > 7;
 
   const place = () => {
@@ -99,7 +103,7 @@ export function RuleSelect({
       window.removeEventListener('resize', move);
     };
   }, [open]);
-  useEffect(() => { if (!open) setQ(''); }, [open]);
+  useEffect(() => { if (!open) { setQ(''); setTip(null); } }, [open]);
 
   const chosen = options.filter((o) => value.includes(o.value));
   const first = chosen[0];
@@ -199,6 +203,8 @@ export function RuleSelect({
                 <button
                   type="button"
                   onClick={() => pick(o.value)}
+                  onMouseEnter={(e) => setTip(o.tip ? { o, y: e.currentTarget.getBoundingClientRect().top } : null)}
+                  onMouseLeave={() => setTip(null)}
                   className={`flex w-full items-center gap-3 px-4 py-2 text-left transition-colors hover:bg-[#F9FAFB] ${on ? 'bg-[#F8FAFC]' : ''}`}
                 >
                   {multi && (
@@ -211,7 +217,7 @@ export function RuleSelect({
                   )}
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-[13px] text-[#364658]">{o.label}</span>
-                    {o.hint && <span className="block truncate text-[11px] text-[#7B8FA5]">{o.hint}</span>}
+                    {o.hint && !o.tip && <span className="block truncate text-[11px] text-[#7B8FA5]">{o.hint}</span>}
                   </span>
                   {!multi && on && <Check size={14} className="flex-shrink-0 text-[#3D8BD0]" />}
                 </button>
@@ -221,7 +227,30 @@ export function RuleSelect({
         </div>,
         document.body,
       )}
+      {open && pos && tip && tip.o.tip && createPortal(<OptionTipCard o={tip.o} y={tip.y} menuLeft={pos.left} menuWidth={pos.width} />, document.body)}
     </>
+  );
+}
+
+/** The hovered option's tip: a dark card beside the menu — the option's name, what it means in bold
+ *  white, and an Example set off by a rule. Left of the menu when there is room, otherwise right. */
+function OptionTipCard({ o, y, menuLeft, menuWidth }: { o: SelectOption; y: number; menuLeft: number; menuWidth: number }) {
+  const W = 340;
+  const left = menuLeft - W - 10 >= 8;
+  const x = left ? menuLeft - W - 10 : menuLeft + menuWidth + 10;
+  return (
+    <div style={{ left: x, top: Math.max(8, y - 6), width: W }}
+      className="pointer-events-none fixed z-[10070] rounded-lg bg-[#364658] px-3.5 py-3 text-white shadow-[0_8px_24px_rgba(15,23,42,0.22)]">
+      <span className={'absolute top-[18px] size-2.5 rotate-45 bg-[#364658] ' + (left ? '-right-[5px]' : '-left-[5px]')} />
+      <div className="text-[12px] text-[#C3CEDB]">{o.label}</div>
+      <div className="mt-0.5 text-[13px] font-semibold leading-[1.45]">{o.tip!.desc}</div>
+      {o.tip!.example && (
+        <div className="mt-2.5 border-l border-white/25 pl-2.5">
+          <div className="text-[12px] text-[#C3CEDB]">Example</div>
+          <div className="mt-0.5 text-[12px] leading-[1.45] text-white/90">{o.tip!.example}</div>
+        </div>
+      )}
+    </div>
   );
 }
 

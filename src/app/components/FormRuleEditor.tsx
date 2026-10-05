@@ -15,7 +15,7 @@ import { FormRuleFieldView } from './FormRuleFieldView';
 import { FormRuleFlowView } from './FormRuleFlowView';
 import { FormRuleLinearView } from './FormRuleLinearView';
 import { FormRuleConflictReview } from './FormRuleConflictReview';
-import { RelatedDrawer, RelatedSummaryCards, RelatedSummaryChips, RULE_CHECK_INTRO_KEY, SimilarRulesView } from './FormRuleRelatedView';
+import { RelatedDrawer, RelatedSummaryCards, RelatedSummaryChips, RULE_CHECK_INTRO_KEY, RuleCheckEmpty, SimilarRulesView } from './FormRuleRelatedView';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from './ui/hover-card';
 
 /** The four layouts being compared. They share ONE draft, so switching compares the same rule. */
@@ -925,6 +925,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
       <RelatedDrawer title="Similar rules"
         onClose={() => setRelOpen(null)}>
         <SimilarRulesView similar={similar} fields={fields} conditionLines={conditionLines}
+          conditionGroups={draft.groups.map((g) => ({ join: g.join, conds: g.conditions.filter((x) => x.fieldId && x.op).map((x) => ({ join: x.join, text: conditionText(x, fields) })) })).filter((g) => g.conds.length)}
           myActions={draft.actions.filter((a) => a.type && a.fieldIds.length).flatMap((a) => a.fieldIds.map((f) => actionText(a.type, fieldById(f)?.label ?? f, a.value.join(', '))))}
           draft={{ event: draft.event, execution: draft.execution, applies: draft.applies }} onOpenRule={openOther} />
       </RelatedDrawer>
@@ -1149,6 +1150,13 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
           })}
         </ol>
         {/* Docked at the foot, and only once there is something to report. */}
+        {/* Nothing found yet: an "all clear" state, so the corner reads as a check that is running. */}
+        {!hasFindings && (
+          <div className="mt-auto flex flex-col gap-2 p-4">
+            <span className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-[#7B8FA5]">Rule check</span>
+            <RuleCheckEmpty />
+          </div>
+        )}
         {hasFindings && (
           <div className="relative mt-auto flex flex-col gap-2 p-4">
             <span className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-[#7B8FA5]">Rule check</span>

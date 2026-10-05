@@ -6,7 +6,7 @@ import type { ConflictKind, RuleConflict } from './formRuleEngine';
 
 /** The one "go to that rule" button, used by BOTH sidebars (Open rule here, Update this rule in
     similar rules) so the two read as the same kind of action. */
-export const RULE_CTA = 'inline-flex h-8 flex-shrink-0 items-center gap-1.5 rounded bg-[#3D8BD0] px-3 text-[12px] font-medium text-white transition-colors hover:bg-[#3478B5]';
+export const RULE_CTA = 'inline-flex flex-shrink-0 items-center gap-1 text-[12px] font-medium text-[#3D8BD0] transition-colors hover:text-[#2C6CA8] hover:underline';
 
 /* G · Conflict review. A conflict is a LINK: this rule's action → a field → another rule → a kind.
  * Those links form many-to-many shapes — one rule clashing on several fields, one field fought

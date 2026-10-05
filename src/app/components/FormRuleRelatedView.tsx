@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { AlertTriangle, ArrowUpRight, Check, ChevronRight, Copy, Info, Plus, Search, X } from 'lucide-react';
+import { AlertTriangle, ArrowUpRight, Check, ChevronRight, Copy, History, Info, Plus, Search, Split, Workflow, X } from 'lucide-react';
 import type { FormField } from './formRuleData';
 import type { ConflictKind, RuleConflict, SimilarRule } from './formRuleEngine';
 import { conditionText } from './formRuleEngine';
@@ -53,30 +53,30 @@ export function RelatedSummaryCards({ ready, conflicts, similar, onOpenConflicts
   const card = (tint: string, hover: string, empty: boolean) =>
     'group relative flex w-full flex-col rounded-md border p-4 text-left transition-[background-color,box-shadow] ' +
     (empty ? 'cursor-default border-[#E5EAF0] bg-[#F7F9FB]' : tint + ' ' + hover + ' hover:shadow-[0_2px_10px_rgba(15,23,42,0.08)]');
-  const head = (n: number, label: string, color: string) => (
-    <span className="flex min-w-0 items-center pr-14">
+  const head = (n: number, label: string, color: string, info?: React.ReactNode) => (
+    <span className="flex min-w-0 items-center gap-1.5 pr-8">
       <span className="flex min-w-0 items-baseline gap-1">
         <span className="text-[24px] font-semibold leading-none tabular-nums" style={{ color }}>{n}</span>
         <span className="truncate whitespace-nowrap text-[14px] font-semibold" style={{ color }}>{label}</span>
       </span>
+      {info}
     </span>
   );
-  /* Top-right: the ⓘ is always there; the ↗ appears beside it on hover. The ⓘ is a span with a button
-     role because the card around it is already a button. */
-  const corner = (k: IntroKind, color: string) => (
-    <span className="absolute right-3 top-3 flex items-center gap-1">
-      <ArrowUpRight size={16} className="opacity-0 transition-opacity group-hover:opacity-100" style={{ color }} />
-      {onInfo && (
-        <span role="button" tabIndex={0} aria-label="What is this?"
-          onClick={(e) => { e.stopPropagation(); intro === k ? onCloseIntro?.() : onInfo(k); }}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); intro === k ? onCloseIntro?.() : onInfo(k); } }}
-          className="flex size-6 items-center justify-center rounded transition-colors hover:bg-white/70" style={{ color }}>
-          <Info size={15} />
-        </span>
-      )}
+  /* The ⓘ sits beside the title (a question about the title); the top-right corner belongs to the
+     hover ↗ (where clicking the card takes you). The ⓘ is a span with a button role because the card
+     around it is already a button. */
+  const corner = (_k: IntroKind, color: string) => (
+    <ArrowUpRight size={16} className="absolute right-4 top-4 opacity-0 transition-opacity group-hover:opacity-100" style={{ color }} />
+  );
+  const info = (k: IntroKind, color: string) => onInfo && (
+    <span role="button" tabIndex={0} aria-label="What is this?"
+      onClick={(e) => { e.stopPropagation(); intro === k ? onCloseIntro?.() : onInfo(k); }}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); intro === k ? onCloseIntro?.() : onInfo(k); } }}
+      className="flex size-5 flex-shrink-0 items-center justify-center rounded opacity-80 transition-[opacity,background-color] hover:bg-white/70 hover:opacity-100" style={{ color }}>
+      <Info size={14} />
     </span>
   );
-  const summary = (text: React.ReactNode, color: string) => <span className="mt-6 line-clamp-2 text-[12px] font-normal leading-[1.5]" style={{ color }}>{text}</span>;
+  const summary = (text: React.ReactNode, color: string) => <span className="mt-4 line-clamp-2 text-[12px] font-normal leading-[1.5]" style={{ color }}>{text}</span>;
   const kinds = KINDS.map((k) => { const n = conflicts.filter((x) => x.kind === k).length; return n ? n + ' ' + k : null; }).filter(Boolean).join(' · ');
   return (
     <div className={stack ? 'flex flex-col gap-4' : 'flex flex-wrap gap-4'}>
@@ -86,7 +86,7 @@ export function RelatedSummaryCards({ ready, conflicts, similar, onOpenConflicts
           <button type="button" onClick={onOpenSimilar} disabled={similar.length === 0}
             className={card('border-[#B45309] bg-[#FFF9E8]', 'hover:bg-[#FFF3D1]', similar.length === 0)}>
             {similar.length > 0 && corner('similar', '#B45309')}
-            {head(similar.length, similar.length === 1 ? 'Similar rule' : similar.length ? 'Similar rules' : 'No similar rules', similar.length ? '#B45309' : '#98A2B3')}
+            {head(similar.length, similar.length === 1 ? 'Similar rule' : similar.length ? 'Similar rules' : 'No similar rules', similar.length ? '#B45309' : '#98A2B3', similar.length > 0 && info('similar', '#B45309'))}
             {summary(similar.length
               ? 'Already use this trigger and conditions. Consider updating one instead of creating a new rule.'
               : 'No other rule uses this trigger and these conditions.', similar.length ? '#B45309' : '#64748B')}
@@ -99,7 +99,7 @@ export function RelatedSummaryCards({ ready, conflicts, similar, onOpenConflicts
           <button type="button" onClick={onOpenConflicts} disabled={conflicts.length === 0}
             className={card('border-[#DC2626] bg-[#FEF4F4]', 'hover:bg-[#FDEBEB]', conflicts.length === 0)}>
             {conflicts.length > 0 && corner('conflicts', '#DC2626')}
-            {head(conflicts.length, conflicts.length === 1 ? 'Conflict' : conflicts.length ? 'Conflicts' : 'No conflicts', conflicts.length ? '#DC2626' : '#98A2B3')}
+            {head(conflicts.length, conflicts.length === 1 ? 'Conflict' : conflicts.length ? 'Conflicts' : 'No conflicts', conflicts.length ? '#DC2626' : '#98A2B3', conflicts.length > 0 && info('conflicts', '#DC2626'))}
             {summary(conflicts.length
               ? <>{kinds} with {nRules} rule{nRules === 1 ? '' : 's'}. Resolve them so the form ends up in one clear state.</>
               : 'No other rule leaves these fields in a different state.', conflicts.length ? '#DC2626' : '#64748B')}
@@ -107,6 +107,27 @@ export function RelatedSummaryCards({ ready, conflicts, similar, onOpenConflicts
           {intro === 'conflicts' && conflicts.length > 0 && onCloseIntro && <RuleCheckIntro key="c" kind="conflicts" side={introSide} align={introAlign} onClose={onCloseIntro} />}
         </div>
       )}
+    </div>
+  );
+}
+
+/** Nothing to report yet: says where conflicts and similar rules WILL appear, so the space reads as a
+ *  check that is running rather than a blank corner. */
+export function RuleCheckEmpty() {
+  return (
+    <div className="flex items-center gap-3.5 rounded-md border border-dashed border-[#D7E9DA] bg-[#F7FCF8] p-4">
+      <svg viewBox="0 0 48 48" className="size-12 flex-shrink-0" aria-hidden="true">
+        <circle cx="24" cy="24" r="22" fill="#E8F6EC" />
+        <path d="M24 11.5l10 3.6v7.6c0 6.6-4.2 11.6-10 13.8-5.8-2.2-10-7.2-10-13.8v-7.6z" fill="#FFFFFF" stroke="#4CAF6A" strokeWidth="1.6" strokeLinejoin="round" />
+        <path d="M19.3 24.2l3.4 3.3 6.2-6.6" fill="none" stroke="#4CAF6A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="38" cy="11" r="1.6" fill="#9ED3AC" />
+        <circle cx="9.5" cy="34" r="1.2" fill="#9ED3AC" />
+        <path d="M37.5 33.5v3.4M35.8 35.2h3.4" stroke="#9ED3AC" strokeWidth="1.2" strokeLinecap="round" />
+      </svg>
+      <div className="min-w-0">
+        <div className="text-[13px] font-semibold text-[#2F7A47]">All clear so far</div>
+        <p className="mt-0.5 text-[12px] leading-[1.5] text-[#5B6B7D]">No conflicts or similar rules. If this rule clashes with another, or one already does the same job, it shows up here.</p>
+      </div>
     </div>
   );
 }
@@ -280,7 +301,10 @@ export function RelatedSummaryChips({ ready, conflicts, similar, onOpenConflicts
 }
 
 /** The similar-rules sidebar body: which trigger each rule shares with yours, and how its actions compare. */
-export function SimilarRulesView({ similar, fields, draft, conditionLines, onOpenRule, myActions = [] }: {
+export interface CondGroupView { join: 'And' | 'Or'; conds: { join: 'And' | 'Or'; text: string }[] }
+export function SimilarRulesView({ similar, fields, draft, conditionLines, conditionGroups, onOpenRule, myActions = [] }: {
+  /** The conditions as their groups — how they really combine. Falls back to one group of lines. */
+  conditionGroups?: CondGroupView[];
   /** This rule's actions, in words — shown in the common container. */
   myActions?: string[];
   similar: SimilarRule[];
@@ -317,26 +341,55 @@ export function SimilarRulesView({ similar, fields, draft, conditionLines, onOpe
       <span className="text-[13px] font-medium text-[#364658]">{value}</span>
     </div>
   );
+  /* The three things every similar rule shares with yours, each beside the SAME icon badge the builder
+     uses for When / Check if / Then, so they read as "your rule's When", not a new vocabulary. Values sit
+     inline on one row each; conditions stay in their GROUPS (white boxes joined by and/or), because a
+     flat list of chips hides how they combine. */
+  const groups: CondGroupView[] = conditionGroups ?? (conditionLines.length ? [{ join: 'And', conds: conditionLines.map((t) => ({ join: 'And' as const, text: t })) }] : []);
+  const stepRow = (icon: React.ReactNode, tone: string, badge: string, lead: string, body: React.ReactNode) => (
+    <div className="flex items-start gap-2.5">
+      <span className="mt-[3px] flex flex-shrink-0 items-center rounded-full p-1" style={{ backgroundColor: badge, color: tone }}>{icon}</span>
+      <span className="w-[54px] flex-shrink-0 pt-[3px] text-[12px] font-medium" style={{ color: tone }}>{lead}</span>
+      <div className="min-w-0 flex-1">{body}</div>
+    </div>
+  );
+  const joinWord = (j: 'And' | 'Or') => <span className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-[#98A2B3]">{j === 'Or' ? 'or' : 'and'}</span>;
   const common = (
     <div className="mx-3 mb-3 flex-shrink-0 overflow-hidden rounded-lg border border-[#E8EDF3] bg-white">
       <button type="button" onClick={() => setCommonOpen((o) => !o)} aria-expanded={commonOpen}
         className="flex w-full items-center gap-2.5 px-4 py-3 text-left transition-colors hover:bg-[#F9FAFB]">
         <ChevronRight size={15} className={'flex-shrink-0 text-[#7B8FA5] transition-transform ' + (commonOpen ? 'rotate-90' : '')} />
-        <span className="text-[13px] font-semibold text-[#1D2A3E]">Common trigger &amp; conditions</span>
+        <span className="text-[13px] font-semibold text-[#1D2A3E]">Common trigger, conditions &amp; actions</span>
         <span className="text-[12px] text-[#98A2B3]">shared by your rule and all {similar.length} similar rule{similar.length === 1 ? '' : 's'}</span>
       </button>
       {commonOpen && (
-        <div className="flex flex-col gap-4 border-t border-[#EEF2F6] bg-[#F9FAFB] px-4 py-4">
-          <div className="grid grid-cols-3 gap-x-6 gap-y-4">
-            {row('Event', eventLabel(draft.event) || '—')}
-            {row('Execute on', draft.execution || '—')}
-            {row('Applies to', draft.applies || '—')}
-          </div>
-          {row('Conditions', conditionLines.length
-            ? <span className="mt-0.5 flex flex-wrap gap-1.5">{conditionLines.map((l) => <span key={l} className="rounded-md border border-[#E2E8F0] bg-white px-2 py-0.5 text-[12px] font-normal text-[#364658]">{l}</span>)}</span>
-            : 'Every matching event')}
-          {myActions.length > 0 && row('Your rule’s actions',
-            <span className="mt-0.5 flex flex-wrap gap-1.5">{myActions.map((l) => <span key={l} className="rounded-md bg-[#EBF5FF] px-2 py-0.5 text-[12px] font-normal text-[#2C6CA8]">{l}</span>)}</span>)}
+        <div className="flex flex-col gap-2.5 border-t border-[#EEF2F6] bg-[#F9FAFB] px-4 py-3">
+          {stepRow(<History size={12} />, '#3D8BD0', '#E2EDF5', 'When',
+            /* The trigger's three parts, each its own value, split by hairline dividers. */
+            <span className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-[3px] text-[12px] text-[#364658]">
+              <span>{eventLabel(draft.event) || '—'}</span>
+              <span className="h-3.5 w-px bg-[#DFE5ED]" />
+              <span>{draft.execution || '—'}</span>
+              <span className="h-3.5 w-px bg-[#DFE5ED]" />
+              <span>{draft.applies || 'Anyone'}</span>
+            </span>)}
+          {stepRow(<Split size={12} className="rotate-180" />, '#F58518', 'rgba(245,133,24,0.1)', 'Check if',
+            groups.length
+              ? <span className="flex flex-wrap items-center gap-1.5">
+                  {groups.map((g, gi) => (
+                    <span key={gi} className="contents">
+                      {gi > 0 && <span className="rounded bg-[#FFF1E3] px-1.5 py-px text-[10px] font-semibold uppercase tracking-wide text-[#C2620E]">{g.join === 'Or' ? 'Or' : 'And'}</span>}
+                      <span className="inline-flex flex-wrap items-center gap-1 rounded-md border border-[#E2E8F0] bg-white px-2 py-1 text-[12px] text-[#364658]">
+                        {g.conds.map((x, ci) => <span key={ci} className="contents">{ci > 0 && joinWord(x.join)}<span>{x.text}</span></span>)}
+                      </span>
+                    </span>
+                  ))}
+                </span>
+              : <span className="pt-[3px] text-[12px] text-[#7B8FA5]">Every matching event</span>)}
+          {stepRow(<Workflow size={12} />, '#89C540', '#F3F9EC', 'Then',
+            myActions.length
+              ? <span className="flex flex-wrap gap-1.5">{myActions.map((l) => <span key={l} className="rounded-md bg-[#EBF5FF] px-2 py-1 text-[12px] text-[#2C6CA8]">{l}</span>)}</span>
+              : <span className="pt-[3px] text-[12px] text-[#7B8FA5]">No actions yet</span>)}
         </div>
       )}
     </div>

@@ -286,7 +286,7 @@ export function FormRuleLinearView({ api, side }: { api: LinearApi; side: React.
               <Badge kind="when" text="When" />
               <span>the form</span>
               <RuleSelect token={TONE.when} value={event ? [event] : []} onChange={([v]) => set({ event: v as FormRule['event'] })} invalid={!!errors.event} placeholder="is… (choose an event)"
-                options={EVENT_OPTIONS.map((o) => ({ value: o.value, label: EVENT_WORD[o.value], hint: o.hint }))} menuWidth={280} />
+                options={EVENT_OPTIONS.map((o) => ({ value: o.value, label: EVENT_WORD[o.value], hint: o.tip.desc }))} menuWidth={280} />
               <span>on</span>
               <RuleSelect token={TONE.when} value={execution ? [execution] : []} onChange={([v]) => set({ execution: v as FormRule['execution'] })} invalid={!!errors.execution} placeholder="create, edit or both"
                 options={EXECUTION_OPTIONS.map((o) => ({ value: o.value, label: EXEC_WORD[o.value], hint: o.label }))} menuWidth={260} />

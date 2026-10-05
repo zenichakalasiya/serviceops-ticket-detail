@@ -1,4 +1,4 @@
-# Handoff — 2026-10-05 14:11
+# Handoff — 2026-10-05 15:10
 
 > Three sessions share this file today. **This top part is the User Surveys / Import Emails session**;
 > the Support Portal builder and Form Rules sessions' notes follow unchanged below the divider.
@@ -129,6 +129,9 @@ and Key context › Request Form Management (B3 passages).
 - Field Matrix tab removed from the listing (view still built).
 - B3: "Select Rule Applicable for" moved into the When container as its 3rd field; Rule details = name, tags, description.
 - DEMO: any complete condition shows Similar rules, any complete action shows Conflicts (`demoSimilar`/`demoConflicts` in formRuleEngine, used only when the real checks find nothing). Similar card now sits above Conflicts. Probes: `p60.mjs` (random condition + Mandate Vendor), `p61.mjs` (Show Due By → demo conflict + sidebar).
+
+- Polish: hover tooltips (dark card: name, bold description, Example) on all options of the three When dropdowns; ⓘ beside the card titles, ↗ alone top-right, tighter title gap; Open rule / Update this rule are secondary text+arrow links everywhere; similar sidebar container = "Common trigger, conditions & actions" with the builder's When/Check if/Then badges, trigger parts split by dividers and conditions shown as groups; "All clear so far" empty state in the Rule check when nothing is found. Probe: `p62.mjs`.
+- I wrote the 9 option tip texts myself — Zeni to review the wording.
 
 **Open / next**
 0. Asked Zeni: should the conflicts drawing also show a VALUE clash (Set Priority = High vs Low)? And are the 7–9px labels in the drawing readable, or should it grow/simplify?
