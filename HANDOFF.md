@@ -1,4 +1,4 @@
-# Handoff — 2026-10-05 15:26
+# Handoff — 2026-10-05 15:30
 
 > Three sessions share this file today. **This top part is the User Surveys / Import Emails session**;
 > the Support Portal builder and Form Rules sessions' notes follow unchanged below the divider.
@@ -133,7 +133,7 @@ and Key context › Request Form Management (B3 passages).
 - Polish: hover tooltips (dark card: name, bold description, Example) on all options of the three When dropdowns; ⓘ beside the card titles, ↗ alone top-right, tighter title gap; Open rule / Update this rule are secondary text+arrow links everywhere; similar sidebar container = "Common trigger, conditions & actions" with the builder's When/Check if/Then badges, trigger parts split by dividers and conditions shown as groups; "All clear so far" empty state in the Rule check when nothing is found. Probe: `p62.mjs`.
 - I wrote the 9 option tip texts myself — Zeni to review the wording.
 
-- Info popups: the description + what-to-do are two plain grey bullet points (no tinted box). Common container rows lead with the step ICONS only (no When/Check if/Then words). "All clear so far" empty state is a white card, neutral grey, no green.
+- Info popups: the description + what-to-do are two plain grey bullet points (no tinted box). Common container rows lead with the step ICONS only (no When/Check if/Then words). "All clear so far" empty state is a white card, neutral grey, no green, icon top-left.
 
 **Open / next**
 0. Asked Zeni: should the conflicts drawing also show a VALUE clash (Set Priority = High vs Low)? And are the 7–9px labels in the drawing readable, or should it grow/simplify?

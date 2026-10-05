@@ -115,7 +115,7 @@ export function RelatedSummaryCards({ ready, conflicts, similar, onOpenConflicts
  *  check that is running rather than a blank corner. */
 export function RuleCheckEmpty() {
   return (
-    <div className="flex items-center gap-3 rounded-md border border-[#E5EAF0] bg-white p-4">
+    <div className="flex items-start gap-3 rounded-md border border-[#E5EAF0] bg-white p-4">
       <svg viewBox="0 0 48 48" className="size-12 flex-shrink-0" aria-hidden="true">
         <circle cx="24" cy="24" r="22" fill="#F4F6FA" />
         <path d="M24 11.5l10 3.6v7.6c0 6.6-4.2 11.6-10 13.8-5.8-2.2-10-7.2-10-13.8v-7.6z" fill="#FFFFFF" stroke="#98A2B3" strokeWidth="1.6" strokeLinejoin="round" />
