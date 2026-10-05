@@ -313,7 +313,7 @@ export function SupportPortalAddPanel({ onAdd, placed }: Props) {
              both scroll-to-group and the spy. Scoped per group, a header un-pins as its own group
              scrolls out and the next one takes over, which is the behaviour we wanted anyway. */
           <div key={group} ref={(el) => { groupRefs.current[group] = el; }}>
-            <h3 className="sticky top-0 z-10 flex items-center justify-between bg-white pb-2 pt-3 text-[11px] font-semibold uppercase tracking-wider text-[#7B8FA5]">
+            <h3 className={`sticky top-0 z-10 flex items-center justify-between bg-white ${!q && !openAdded.has(group) && items.every((e) => placed?.has(e.id)) ? 'pb-1' : 'pb-2'} pt-3 text-[11px] font-semibold uppercase tracking-wider text-[#7B8FA5]`}>
               <span>{group}</span>
               {/* The fold. A search opens it on its own — you typed to find something, so a match
                   must never be hidden behind a click. */}
@@ -338,7 +338,7 @@ export function SupportPortalAddPanel({ onAdd, placed }: Props) {
             {!q && !openAdded.has(group) && items.every((e) => placed?.has(e.id)) && (
               /* One quiet line under the title (Zeni, 1 Oct 2026) — a row-sized dashed box was too heavy for
                  "nothing to add here". */
-              <p className="-mt-0.5 mb-2 text-[12px] leading-[18px] text-[#9AA6B6]">All added to the page</p>
+              <p className="mb-2 text-[12px] leading-[18px] text-[#9AA6B6]">All added to the page</p>
             )}
             <div className="space-y-2">
               {/* Addable rows first, then — only while the fold is open, or while searching — the ones
