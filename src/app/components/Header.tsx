@@ -1,4 +1,5 @@
 import { Plus, Calendar, Bell, Settings, Keyboard, Info } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import svgPaths from "../../imports/svg-vmnsig04gh";
 import { GlobalSearchButton } from './GlobalSearch';
 import { openGlobalShortcuts } from './shortcutContext';
@@ -118,6 +119,30 @@ export function MotadataLogo() {
   );
 }
 
+/** V1 / V2 of the form-rule editor, beside the logo. Shown only on the form-rule screens. */
+function FormRuleUiSwitch() {
+  const [hash, setHash] = useState(() => location.hash);
+  const [v, setV] = useState(() => { try { return localStorage.getItem('formRuleUi') === 'v2' ? 'v2' : 'v1'; } catch { return 'v1'; } });
+  useEffect(() => {
+    const on = () => setHash(location.hash);
+    window.addEventListener('hashchange', on);
+    const t = window.setInterval(on, 500); // replaceState does not fire hashchange
+    return () => { window.removeEventListener('hashchange', on); window.clearInterval(t); };
+  }, []);
+  if (!hash.startsWith('#/admin/request-form')) return null;
+  const pick = (x: 'v1' | 'v2') => {
+    setV(x);
+    try { localStorage.setItem('formRuleUi', x); } catch { /* private mode */ }
+    window.dispatchEvent(new Event('form-rule-ui'));
+  };
+  return (
+    <div className="pill-track" title="Form rule editor version">
+      <button type="button" aria-pressed={v === 'v1'} onClick={() => pick('v1')}>V1</button>
+      <button type="button" aria-pressed={v === 'v2'} onClick={() => pick('v2')}>V2</button>
+    </div>
+  );
+}
+
 interface HeaderProps {
   selectedCount: number;
   /** Opens the Admin hub. Passed only where the gear should navigate. */
@@ -129,6 +154,7 @@ export function Header({ selectedCount, onOpenAdmin }: HeaderProps) {
     <header className="flex h-[56px] items-center justify-between border-b border-[#e5e7eb] bg-white px-6">
       <div className="flex items-center gap-4">
         <MotadataLogo />
+        <FormRuleUiSwitch />
       </div>
       
       <div className="flex items-center gap-2">

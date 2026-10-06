@@ -15,6 +15,7 @@ import { FormRuleFieldView } from './FormRuleFieldView';
 import { FormRuleFlowView } from './FormRuleFlowView';
 import { FormRuleLinearView } from './FormRuleLinearView';
 import { FormRuleConflictReview } from './FormRuleConflictReview';
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { RelatedDrawer, RelatedSummaryCards, RelatedSummaryChips, RULE_CHECK_INTRO_KEY, RuleCheckEmpty, SimilarRulesView } from './FormRuleRelatedView';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from './ui/hover-card';
 
@@ -53,7 +54,11 @@ const VERSIONS: { id: EditorVersion; label: string; hint: string; fav?: boolean;
 /* All the shortlisted layouts are offered again for comparison (6 Oct 2026, Zeni) — B3 first and still the default; the H1/H2/H3 steps-across variants stay hidden. */
 /* A is the FINAL layout (6 Oct 2026, Zeni): the builder with the Rule check rail open beside it by
    default. Every other layout stays built and hidden; add ids back here to compare again. */
-const SHOWN: EditorVersion[] = ['A'];
+const SHOWN: EditorVersion[] = ['A', 'B3'];
+/** V1 = A (the default), V2 = B3 (the previous final). Picked from the switch beside the Motadata
+    logo — not from a Layout bar — and remembered under this key. */
+export const FORM_RULE_UI_KEY = 'formRuleUi';
+const uiVersion = (): EditorVersion => { try { return localStorage.getItem(FORM_RULE_UI_KEY) === 'v2' ? 'B3' : 'A'; } catch { return 'A'; } };
 /** The layouts whose conflict / similar checks open in the two summary sidebars. */
 const SUMMARY: EditorVersion[] = ['H1', 'H2', 'H3', 'R', 'B3', 'A3', 'A3R', 'S', 'LS', 'RC', 'EG', 'HF'];
 const RAIL_MIN = 320;
@@ -205,7 +210,12 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
   const [flashAction, setFlashAction] = useState<string | null>(null);
 
   // ── version + rail state ──────────────────────────────────────────────────
-  const [version, setVersionState] = useState<EditorVersion>(() => (SHOWN.includes(store.get('formRuleVersion') as EditorVersion) ? store.get('formRuleVersion') as EditorVersion : 'A'));
+  const [version, setVersionState] = useState<EditorVersion>(uiVersion);
+  useEffect(() => {
+    const on = () => setVersionState(uiVersion());
+    window.addEventListener('form-rule-ui', on);
+    return () => window.removeEventListener('form-rule-ui', on);
+  }, []);
   const setVersion = (v: EditorVersion) => { setVersionState(v); store.set('formRuleVersion', v); };
   const [railOpen, setRailOpenState] = useState(() => store.get('formRuleRailOpen') !== '0');
   const setRailOpen = (v: boolean) => { setRailOpenState(v); store.set('formRuleRailOpen', v ? '1' : '0'); };
@@ -847,17 +857,29 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
     <span className={`min-w-[20px] rounded-full px-1.5 text-center text-[11px] font-semibold leading-5 ${n === 0 ? 'bg-[#EEF2F6] text-[#98A2B3]' : tone === 'red' ? 'bg-[#FEE2E2] text-[#DC2626]' : 'bg-[#FEF3C7] text-[#B45309]'}`}>{n}</span>
   );
 
+  /** A strip count with an instant tooltip naming the rules behind it. */
+  const stripTip = (title: string, names: string[], node: React.ReactNode) => (
+    names.length ? (
+      <Tooltip delayDuration={0}>
+        <TooltipTrigger asChild><span>{node}</span></TooltipTrigger>
+        <TooltipContent side="left" className="text-wrap">
+          <div className="mb-1 text-[11px] text-white/70">{title}</div>
+          <ul className="space-y-1 text-xs">{names.map((t) => <li key={t} className="flex items-start gap-2"><span className="mt-[5px] size-1.5 flex-shrink-0 rounded-full bg-white/70" />{t}</li>)}</ul>
+        </TooltipContent>
+      </Tooltip>
+    ) : <span>{node}</span>
+  );
   /** The folded rail: a slim strip with the counts, always one click from coming back. */
   const railStrip = (
     <button
       type="button"
       onClick={() => openRail()}
-      title="Open the rule check — conflicts and similar rules"
+      aria-label="Open the rule check — conflicts and similar rules"
       className={`flex w-9 flex-shrink-0 flex-col items-center gap-3 border-l border-[#DFE5ED] bg-[#F9FAFB] py-3 transition-colors hover:bg-[#F1F5F9] ${pulse ? 'animate-pulse' : ''}`}
     >
       <ChevronsLeft size={16} className="text-[#7B8FA5]" />
       <span className="rotate-180 text-[12px] font-medium text-[#364658] [writing-mode:vertical-rl]">Rule check</span>
-      {ready && (<><span title="Conflicts">{badge(conflicts.length, 'red')}</span><span title="Similar rules">{badge(similar.length, 'amber')}</span></>)}
+      {ready && (<>{stripTip('Conflicting rules', [...new Set(conflicts.map((x) => x.other.name))], badge(conflicts.length, 'red'))}{stripTip('Similar rules', similar.map((s) => s.rule.name), badge(similar.length, 'amber'))}</>)}
     </button>
   );
 
@@ -1724,7 +1746,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
       </div>
 
       {/* Comparing layouts: every tab edits the same draft. Hidden once only one layout is offered. */}
-      {SHOWN.length > 1 && <div className="flex flex-shrink-0 items-center gap-2 overflow-x-auto border-b border-[#DFE5ED] bg-[#FAFBFC] px-4 py-1.5">
+      {false && SHOWN.length > 1 && <div className="flex flex-shrink-0 items-center gap-2 overflow-x-auto border-b border-[#DFE5ED] bg-[#FAFBFC] px-4 py-1.5">
         <span className="flex-shrink-0 text-[11px] text-[#7B8FA5]">Layout</span>
         <div className="pill-track flex-shrink-0">
           {SHOWN.map((id) => VERSIONS.find((v) => v.id === id)!).map((v) => (

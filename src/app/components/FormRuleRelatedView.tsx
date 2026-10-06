@@ -148,18 +148,23 @@ const INTRO: Record<IntroKind, { color: string; tint: string; title: string; tex
     todo: 'Open the card to compare them — updating one is often better than adding another rule.',
   },
 };
-export function RuleCheckIntro({ kind, onClose, side = 'right', align = 'bottom' }: { kind: IntroKind; onClose: () => void; side?: 'left' | 'right'; align?: 'top' | 'bottom' }) {
+export function RuleCheckIntro({ kind, onClose, side = 'right', align = 'bottom', inset = false }: {
+  kind: IntroKind; onClose: () => void; side?: 'left' | 'right'; align?: 'top' | 'bottom';
+  /** Placed by its host (the rail's tab, bottom right) instead of beside a card — no caret. */
+  inset?: boolean;
+}) {
   const [shown, setShown] = useState(false);
   useEffect(() => { const t = requestAnimationFrame(() => setShown(true)); return () => cancelAnimationFrame(t); }, []);
   const m = INTRO[kind];
   return (
     <div role="dialog" aria-label={m.title}
-      className={'absolute z-50 w-[300px] rounded-xl border border-[#E5EAF0] bg-white shadow-[0_12px_32px_rgba(15,23,42,0.14)] transition-[opacity,transform] duration-200 ease-out '
-        + (align === 'top' ? 'top-0 ' : 'bottom-0 ')
-        + (side === 'left' ? 'right-[calc(100%+12px)] ' + (shown ? 'translate-x-0 opacity-100' : 'translate-x-2 opacity-0')
-          : 'left-[calc(100%+12px)] ' + (shown ? 'translate-x-0 opacity-100' : '-translate-x-2 opacity-0'))}>
+      className={'z-50 w-[300px] rounded-xl border border-[#E5EAF0] bg-white shadow-[0_12px_32px_rgba(15,23,42,0.14)] transition-[opacity,transform] duration-200 ease-out '
+        + (inset ? (shown ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0')
+          : 'absolute ' + (align === 'top' ? 'top-0 ' : 'bottom-0 ')
+            + (side === 'left' ? 'right-[calc(100%+12px)] ' + (shown ? 'translate-x-0 opacity-100' : 'translate-x-2 opacity-0')
+              : 'left-[calc(100%+12px)] ' + (shown ? 'translate-x-0 opacity-100' : '-translate-x-2 opacity-0')))}>
       {/* caret pointing back at its card */}
-      <span className={'absolute size-3 rotate-45 bg-white ' + (side === 'left' ? '-right-[6px] border-r border-t border-[#E5EAF0] ' : '-left-[6px] border-b border-l border-[#E5EAF0] ') + (align === 'top' ? 'top-[52px]' : 'bottom-[52px]')} />
+      {!inset && <span className={'absolute size-3 rotate-45 bg-white ' + (side === 'left' ? '-right-[6px] border-r border-t border-[#E5EAF0] ' : '-left-[6px] border-b border-l border-[#E5EAF0] ') + (align === 'top' ? 'top-[52px]' : 'bottom-[52px]')} />}
       <button type="button" onClick={onClose} aria-label="Close" className="absolute right-2 top-2 z-10 flex size-7 items-center justify-center rounded text-[#64748B] transition-colors hover:bg-white"><X size={15} /></button>
       <div className="overflow-hidden rounded-t-xl bg-[#F4F6FA]">{kind === 'conflicts' ? <ConflictArt /> : <RuleCheckArt conflicts={false} similar />}</div>
       <div className="flex flex-col gap-3 p-4">

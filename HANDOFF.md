@@ -1,4 +1,4 @@
-# Handoff — 2026-10-06 14:31
+# Handoff — 2026-10-06 16:55
 
 > Several sessions share this file. **This top part is the Support Portal builder session (5–6 Oct)**;
 > the other sessions' notes follow unchanged below the divider.
@@ -193,6 +193,7 @@ and Key context › Request Form Management (B3 passages).
 - **6 Oct: Option A is FINAL** (`SHOWN=['A']`): B3's Rule details + When (applies-to as 3rd field), no yellow strip, light-red action row + ⚠ that opens the rail on Conflicts › By field with that field opened/tinted/scrolled. Rail: tabs Conflicts · Similar rules (Run order gone); no KPIs, no per-card conflict tag; compact search beside By rule/By field; Open rule on hover only; single-border closed cards; sticky headers no longer leak at the corners. Similar tab: shared `CommonTriggerCard` (FormRuleCommon.tsx) + multi-open accordion cards.
 - 6 Oct: Open rule / Update this rule open the rule in a NEW TAB on its builder step (`#/admin/request-form-rules/<rule id>`, `Route.rule`); seed rule ids are now stable name slugs. Open question to Zeni: share rule edits across tabs (localStorage)?
 - 6 Oct: A's rail resizer removed; fixed at 560px (RAIL_MAX). Rail header is just "Rule check" (icon and "updates as you build" removed).
+- 6 Oct (later): V1 (A, default) / V2 (B3) switch beside the Motadata logo on the form-rule screens. A's rail: no title row (» on the tab row), ⓘ on the conflicts help bar + a similar-rules info footer with its own ⓘ (each opens its intro card at the tab's bottom right), similar cards hide empty groups and cap at 5 actions (+N more = tooltip on hover, expand on click; untested — no demo rule has >5), no "· disabled" tag, no bottom padding above the help bar; the FOLDED strip's counts show an instant dotted tooltip of the rule names.
 - Probes: `p63.mjs` (new-tab open), `p64–p66.mjs` (option A rail).
 
 **Open / next**

@@ -3,6 +3,8 @@ import { X } from 'lucide-react';
 import { AlertTriangle, ArrowLeftRight, ArrowUpRight, Ban, ChevronLeft, ChevronRight, CornerDownRight, Lightbulb, Search, FileText, Layers, RefreshCw, TextCursorInput } from 'lucide-react';
 import type { FormRule } from './formRuleData';
 import type { ConflictKind, RuleConflict } from './formRuleEngine';
+import { Info } from 'lucide-react';
+import { RuleCheckIntro } from './FormRuleRelatedView';
 
 /** The one "go to that rule" button, used by BOTH sidebars (Open rule here, Update this rule in
     similar rules) so the two read as the same kind of action. */
@@ -98,6 +100,8 @@ export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, o
   const [q, setQ] = useState('');
   /** G2: which accordions are open; null = the first one, until the admin opens or closes any. */
   const [openIds, setOpenIds] = useState<string[] | null>(null);
+  /** The "what is a conflict" card, from the ⓘ on the help bar (the rail only). */
+  const [infoOpen, setInfoOpen] = useState(false);
 
   const list = conflicts.filter((c) => !kinds.length || kinds.includes(c.kind));
   const byRule = useMemo(() => {
@@ -284,8 +288,11 @@ export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, o
     </div>
   );
   const accordionView = (
-    <div className="flex min-h-0 flex-1 flex-col px-3 pb-4">
-      <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto">
+    <div className="flex min-h-0 flex-1 flex-col px-3">
+      {/* 1px side padding: a pinned header reaches 1px past its card on each side to cover the card's
+          border, and without it the scroll box clipped the right edge. Bottom padding keeps the last
+          card clear of the help bar — removed on request (6 Oct 2026): the list runs right down to the bar. */}
+      <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto px-px">
         {shownList.length === 0 && <div className="py-10 text-center text-[12px] text-[#98A2B3]">Nothing matches “{q}”</div>}
         <div className="flex flex-col gap-3">
           {shownList.map((it) => {
@@ -376,7 +383,7 @@ export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, o
 
 
   return (
-    <div className="@container flex h-full min-h-0 flex-col">
+    <div className="@container relative flex h-full min-h-0 flex-col">
       {/* One row: the view tabs on the left, the counts on the right. Each count is a small card —
           number over its name, nothing else — and it is also the kind filter ("All" included). */}
       {sidebar && (
@@ -451,12 +458,23 @@ export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, o
         </div>
       )}
 
-      <button type="button" onClick={() => setHelpOpen(true)}
-        className="flex flex-shrink-0 items-center gap-2 border-t border-[#EEF2F6] px-3 py-3 text-left text-[13px] text-[#364658] transition-colors hover:bg-[#F7F9FB]">
-        <Lightbulb size={15} className="text-[#F59E0B]" />
-        How do I resolve these conflicts?
-        <ChevronRight size={15} className="text-[#98A2B3]" />
-      </button>
+      <div className="flex flex-shrink-0 items-center border-t border-[#EEF2F6]">
+        <button type="button" onClick={() => setHelpOpen(true)}
+          className="flex min-w-0 flex-1 items-center gap-2 px-3 py-3 text-left text-[13px] text-[#364658] transition-colors hover:bg-[#F7F9FB]">
+          <Lightbulb size={15} className="text-[#F59E0B]" />
+          How do I resolve these conflicts?
+          <ChevronRight size={15} className="text-[#98A2B3]" />
+        </button>
+        {accordion && (
+          <button type="button" onClick={() => setInfoOpen((o) => !o)} aria-label="What is a conflict?" title="What is a conflict?"
+            className={'mr-2 flex size-8 flex-shrink-0 items-center justify-center rounded transition-colors hover:bg-[#F3F4F6] ' + (infoOpen ? 'text-[#3D8BD0]' : 'text-[#7B8FA5]')}>
+            <Info size={16} />
+          </button>
+        )}
+      </div>
+      {accordion && infoOpen && (
+        <div className="absolute bottom-[54px] right-3 z-40"><RuleCheckIntro inset kind="conflicts" onClose={() => setInfoOpen(false)} /></div>
+      )}
     </div>
   );
 }

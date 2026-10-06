@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { ArrowUpRight, Check, ChevronRight, ChevronsRight, CornerDownRight, History, ListOrdered, Plus, Split, X } from 'lucide-react';
 import { FormRuleConflictReview } from './FormRuleConflictReview';
 import { CommonTriggerCard, type CondGroupView } from './FormRuleCommon';
+import { RuleCheckIntro } from './FormRuleRelatedView';
+import { Info } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import type { FormRule } from './formRuleData';
 import type { ConflictKind, RuleConflict, SimilarRule, TimelineEntry } from './formRuleEngine';
 import { EVENT_OPTIONS } from './formRuleData';
@@ -147,6 +150,8 @@ export function FormRuleInsights({
   onOpenRule: (id: string) => void;
 }) {
   if (only) tab = only;
+  /** The "what is a similar rule" card, from the ⓘ on the similar tab's footer. */
+  const [simInfo, setSimInfo] = useState(false);
 
   const tabs: [InsightTab, string, number | null][] = [
     ['conflicts', 'Conflicts', conflicts.length],
@@ -212,7 +217,7 @@ export function FormRuleInsights({
 
   return (
     <aside className={`flex h-full min-h-0 flex-col bg-white ${bare ? '' : 'border-l border-[#DFE5ED]'}`}>
-      {!hideHead && !only && <div className="flex flex-shrink-0 items-center gap-2 px-4 pt-3">
+      {!hideHead && !only && !onCollapse && <div className="flex flex-shrink-0 items-center gap-2 px-4 pt-3">
         {/* Title only — no list glyph, no "updates as you build" note (6 Oct 2026, Zeni). */}
         <span className="text-[13px] font-medium text-[#364658]">Rule check</span>
         {onCollapse && (
@@ -231,7 +236,7 @@ export function FormRuleInsights({
           </button>
         ))}
       </div>}
-      {!only && !pillTabs && <div className="flex flex-shrink-0 gap-2.5 border-b border-[#DFE5ED] px-4">
+      {!only && !pillTabs && <div className="flex flex-shrink-0 items-center gap-2.5 border-b border-[#DFE5ED] px-4">
         {tabs.map(([id, text, n]) => (
           <button
             key={id}
@@ -245,13 +250,31 @@ export function FormRuleInsights({
             )}
           </button>
         ))}
+        {/* The rail has no title row: its fold arrow sits on the tab row, at the right. */}
+        {onCollapse && (
+          <button type="button" onClick={onCollapse} title="Collapse the rule check" className="ml-auto flex size-7 items-center justify-center rounded-md text-[#7B8FA5] transition-colors hover:bg-[#EEF2F6] hover:text-[#364658]"><ChevronsRight size={16} /></button>
+        )}
       </div>}
       {ready && tab === 'conflicts' && conflicts.length > 0
         ? <div className="flex min-h-0 flex-1 flex-col pt-3">
             <FormRuleConflictReview accordion conflicts={conflicts} rules={rules} fieldLabel={fieldLabel}
               onJump={onJump} onOpenRule={onOpenRule} currentExecution={triggerChips.execution} focus={focus} />
           </div>
-        : <div className="min-h-0 flex-1 overflow-y-auto">{body}</div>}
+        : ready && tab === 'similar' && similar.length > 0
+          /* The list scrolls; the advice stays put at the foot with an ⓘ for "what is a similar rule". */
+          ? <div className="relative flex min-h-0 flex-1 flex-col">
+              <div className="min-h-0 flex-1 overflow-y-auto">{body}</div>
+              <div className="flex flex-shrink-0 items-center gap-2 border-t border-[#EEF2F6] bg-[#EFF6FD] py-2 pl-3 pr-2">
+                <Info size={14} className="flex-shrink-0 text-[#3D8BD0]" />
+                <span className="min-w-0 flex-1 text-[12px] leading-[1.5] text-[#1D3A5C]">Add your actions to one of these rules instead of creating another — one rule doing the whole job is easier to maintain.</span>
+                <button type="button" onClick={() => setSimInfo((o) => !o)} aria-label="What is a similar rule?" title="What is a similar rule?"
+                  className={'flex size-8 flex-shrink-0 items-center justify-center rounded transition-colors hover:bg-white/70 ' + (simInfo ? 'text-[#3D8BD0]' : 'text-[#7B8FA5]')}>
+                  <Info size={16} />
+                </button>
+              </div>
+              {simInfo && <div className="absolute bottom-[58px] right-3 z-40"><RuleCheckIntro inset kind="similar" onClose={() => setSimInfo(false)} /></div>}
+            </div>
+          : <div className="min-h-0 flex-1 overflow-y-auto">{body}</div>}
     </aside>
   );
 }
@@ -265,18 +288,41 @@ function SimilarList({ similar, onOpenRule }: { similar: SimilarRule[]; onOpenRu
      (the first starts open). */
   const [open, setOpen] = useState<string[]>(similar[0] ? [similar[0].rule.id] : []);
   const toggle = (id: string) => setOpen((o) => (o.includes(id) ? o.filter((x) => x !== id) : [...o, id]));
+  /** Groups whose "+N more" has been opened, keyed rule id + group. */
+  const [expanded, setExpanded] = useState<string[]>([]);
   return (
     <div className="flex flex-col gap-3">
       {similar.map((s) => {
         const on = open.includes(s.rule.id);
-        const group = (title: string, items: string[], icon: React.ReactNode) => (
-          <div>
-            <div className="mb-1 text-[11px] font-medium text-[#98A2B3]">{title}</div>
-            {items.length > 0
-              ? <ul className="space-y-1">{items.map((t) => <li key={t} className="flex items-center gap-2 text-[12px] text-[#364658]">{icon}{t}</li>)}</ul>
-              : <p className="text-[12px] text-[#98A2B3]">None</p>}
-          </div>
-        );
+        /* An empty group is not shown. Five actions show; the rest sit behind "+N more" — hover it for
+           the list in a tooltip, click it to open them in the card. */
+        const group = (key: string, title: string, items: string[], icon: React.ReactNode) => {
+          if (!items.length) return null;
+          const all = expanded.includes(s.rule.id + key);
+          const shown = all ? items : items.slice(0, 5);
+          const rest = items.slice(5);
+          return (
+            <div>
+              <div className="mb-1 text-[11px] font-medium text-[#98A2B3]">{title}</div>
+              <ul className="space-y-1">{shown.map((t) => <li key={t} className="flex items-center gap-2 text-[12px] text-[#364658]">{icon}{t}</li>)}</ul>
+              {rest.length > 0 && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button type="button" onClick={() => setExpanded((x) => (all ? x.filter((k) => k !== s.rule.id + key) : [...x, s.rule.id + key]))}
+                      className="mt-1 text-[12px] font-medium text-[#3D8BD0] hover:underline">
+                      {all ? 'Show less' : '+' + rest.length + ' more'}
+                    </button>
+                  </TooltipTrigger>
+                  {!all && (
+                    <TooltipContent side="right" className="text-wrap">
+                      <ul className="space-y-0.5 text-xs">{rest.map((t) => <li key={t}>{t}</li>)}</ul>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              )}
+            </div>
+          );
+        };
         return (
           <div key={s.rule.id} className="group/sim rounded-lg border border-[#DFE5ED] bg-white">
             <div role="button" tabIndex={0} onClick={() => toggle(s.rule.id)}
@@ -284,7 +330,7 @@ function SimilarList({ similar, onOpenRule }: { similar: SimilarRule[]; onOpenRu
               className={'flex h-9 cursor-pointer items-center gap-2.5 bg-[#F6F9FC] px-3 transition-colors hover:bg-[#EEF3F8] ' + (on ? 'rounded-t-lg border-b border-[#DFE5ED]' : 'rounded-lg')}>
               <ChevronRight size={15} className={'flex-shrink-0 text-[#64748B] transition-transform ' + (on ? 'rotate-90' : '')} />
               <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-[#1D2A3E]">
-                {s.rule.name}{!s.rule.enabled && <span className="ml-1.5 text-[11px] font-normal text-[#98A2B3]">· disabled</span>}
+                {s.rule.name}
               </span>
               <button type="button" onClick={(e) => { e.stopPropagation(); onOpenRule(s.rule.id); }}
                 className="inline-flex flex-shrink-0 items-center gap-0.5 text-[12px] font-medium text-[#3D8BD0] opacity-0 transition-opacity hover:underline focus:opacity-100 group-hover/sim:opacity-100">
@@ -293,8 +339,9 @@ function SimilarList({ similar, onOpenRule }: { similar: SimilarRule[]; onOpenRu
             </div>
             {on && (
               <div className="flex flex-col gap-3 p-3">
-                {group('Matches your rule', s.common, <Check size={12} strokeWidth={2.5} className="flex-shrink-0 text-[#12B76A]" />)}
-                {group('Its other actions', s.others, <span className="size-1 flex-shrink-0 rounded-full bg-[#98A2B3]" />)}
+                {group('c', 'Matches your rule', s.common, <Check size={12} strokeWidth={2.5} className="flex-shrink-0 text-[#12B76A]" />)}
+                {group('o', 'Its other actions', s.others, <span className="size-1 flex-shrink-0 rounded-full bg-[#98A2B3]" />)}
+                {!s.common.length && !s.others.length && <p className="text-[12px] text-[#98A2B3]">No actions to compare yet.</p>}
               </div>
             )}
           </div>
