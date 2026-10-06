@@ -865,16 +865,8 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
     <div className="relative flex min-h-0 flex-1">
       <div className="min-h-0 flex-1 overflow-y-auto">{builder}</div>
       {!narrow && railOpen && (
-        <div className="relative flex flex-shrink-0" style={{ width: railW }}>
-          {/* Drag to resize; double-click puts it back. */}
-          <div
-            onMouseDown={startResize}
-            onDoubleClick={() => { setRailW(RAIL_DEFAULT); store.set('formRuleRailW', String(RAIL_DEFAULT)); }}
-            title="Drag to resize · double-click to reset"
-            className="group absolute -left-1 bottom-0 top-0 z-10 flex w-2 cursor-col-resize justify-center"
-          >
-            <span className="h-full w-0.5 transition-colors group-hover:bg-[#3D8BD0]" />
-          </div>
+        /* A fixed rail at its widest (RAIL_MAX) — no resizer (6 Oct 2026, Zeni). It still folds to its edge strip. */
+        <div className="relative flex flex-shrink-0" style={{ width: RAIL_MAX }}>
           <div className="min-w-0 flex-1"><FormRuleInsights {...railProps} onCollapse={closeRail} /></div>
         </div>
       )}

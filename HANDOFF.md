@@ -1,4 +1,4 @@
-# Handoff — 2026-10-06 14:14
+# Handoff — 2026-10-06 14:26
 
 > Several sessions share this file. **This top part is the Support Portal builder session (5–6 Oct)**;
 > the other sessions' notes follow unchanged below the divider.
@@ -192,6 +192,7 @@ and Key context › Request Form Management (B3 passages).
 
 - **6 Oct: Option A is FINAL** (`SHOWN=['A']`): B3's Rule details + When (applies-to as 3rd field), no yellow strip, light-red action row + ⚠ that opens the rail on Conflicts › By field with that field opened/tinted/scrolled. Rail: tabs Conflicts · Similar rules (Run order gone); no KPIs, no per-card conflict tag; compact search beside By rule/By field; Open rule on hover only; single-border closed cards; sticky headers no longer leak at the corners. Similar tab: shared `CommonTriggerCard` (FormRuleCommon.tsx) + multi-open accordion cards.
 - 6 Oct: Open rule / Update this rule open the rule in a NEW TAB on its builder step (`#/admin/request-form-rules/<rule id>`, `Route.rule`); seed rule ids are now stable name slugs. Open question to Zeni: share rule edits across tabs (localStorage)?
+- 6 Oct: A's rail resizer removed; fixed at 560px (RAIL_MAX).
 - Probes: `p63.mjs` (new-tab open), `p64–p66.mjs` (option A rail).
 
 **Open / next**
