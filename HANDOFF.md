@@ -1,4 +1,4 @@
-# Handoff — 2026-10-06 10:59
+# Handoff — 2026-10-06 11:08
 
 > Several sessions share this file. **This top part is the Support Portal builder session (5–6 Oct)**;
 > the other sessions' notes follow unchanged below the divider.
@@ -19,11 +19,13 @@ page for rebuilding the Support Portal editor in the real product.
 - **Text formatting bar** now appears only when words are highlighted, floating above them. Partial selection =
   B I U · font · size · colours · clear · link; full selection adds text style, alignment, Placeholder. Grouped like
   the composer (style ▾ | B I U | font ▾ · AA ▾ | alignment popup | colours | clear · link | Placeholder).
-  Outline only: placed Text = drag · replace · copy · alignment · background · delete; text inside a widget =
-  alignment only (reads the real computed alignment).
+  Outline only: placed Text = drag · replace · copy · alignment · background · delete; text inside an ordinary
+  widget (e.g. Custom Card title) = alignment only (reads the real computed alignment).
+- **No outline toolbar on text inside PREDEFINED widgets** (Data and Action cards, the banner heading/sub-heading —
+  `isPredefinedText(id)` in PortalCanvas). Only the bar on highlighted words, with the full agreed set.
 - **Developer handoff page** — `docs/editor-handoff/`, published at https://claude.ai/artifact/WnaaBozqivZhS4XjfURy4U
-  (private until Zeni shares it). Updated twice for the new text bar.
-- All verified in a browser and live on `main` (last code commit `182b9e3`).
+  (private until Zeni shares it). Kept in step with every text-bar change (now version 4).
+- All verified in a browser and live on `main` (last code commit `5c59f45`).
 
 ## In progress
 Nothing mid-flight.
@@ -39,6 +41,8 @@ Nothing mid-flight.
 - Text bar only on highlighted words; whole-text controls (style, alignment, placeholder) only when ALL words are
   highlighted — Zeni: "only applicable functionality based on text selection", no select-all-then-format.
 - Alignment uses the one shared AlignAxis button + popup everywhere; no Justify.
+- Predefined widgets' text (cards + banner) gets no outline toolbar — the card's own layout places it; its words are
+  still editable and formattable through the selection bar.
 - Composer-style grouping kept Font, Clear formatting, Link and Placeholder; lists were NOT added.
 - Handoff doc is behaviour-only, for the real product (not this prototype's code).
 
