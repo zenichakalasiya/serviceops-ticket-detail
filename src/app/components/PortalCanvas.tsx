@@ -8,7 +8,7 @@ import {
   AlignCenter, AlignCenterHorizontal, AlignCenterVertical, AlignEndHorizontal, AlignEndVertical,
   AlignLeft, AlignRight, AlignStartHorizontal, AlignStartVertical, StretchHorizontal, StretchVertical,
   ArrowDownToLine, ArrowLeftToLine, ArrowRightToLine, ArrowUpToLine, Baseline, Bold, Check, ChevronDown, ChevronRight, Columns2, Copy, GripHorizontal, GripVertical, Italic, Link2, Rows2,
-  Braces, Highlighter, Maximize2, UnfoldVertical, Move, Plus, RemoveFormatting,
+  Braces, Pencil, Highlighter, Maximize2, UnfoldVertical, Move, Plus, RemoveFormatting,
   PaintBucket, Replace, SquareDashed, SquareRoundCorner, SquareSquare, Trash2, Underline, X, ImagePlus, Palette, LayoutDashboard, Columns3,
   LayoutGrid, LayoutTemplate,
 } from 'lucide-react';
@@ -2727,12 +2727,25 @@ function TextAlignBar({ id }: { id: string }) {
   );
 }
 
+/* The size list the composer uses (Zeni, 6 Oct 2026). "Default" = the size the text style gives. */
+const TEXT_SIZES = [8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 72];
+/* Paragraph + three heading levels, each shown in the size it produces. */
+const TEXT_STYLE_MENU: [string, string, string][] = [
+  ['PAR', 'Paragraph', 'text-[13px]'],
+  ['H1', 'Heading 1', 'text-[18px] font-semibold'],
+  ['H2', 'Heading 2', 'text-[16px] font-semibold'],
+  ['H3', 'Heading 3', 'text-[14px] font-semibold'],
+];
+/** A thin divider between groups on the text bar (not a `tb-rule`, which the toolbar CSS hides). */
+const TextSep = () => <span className="mx-1 h-4 w-px flex-shrink-0 bg-[#E5E7EB]" aria-hidden />;
+
 function TextToolbar({ id, editing = false, scope = 'full' }: { id: string; editing?: boolean; scope?: 'partial' | 'full' }) {
   const full = scope === 'full';
-  const drag = useNodeDragHandle(id);
   const { tip, setTip, readTip } = useToolbarTip();
   const { styles, setStyle, setText } = useCanvas();
   const [pop, setPop] = useState<'link' | 'ph' | null>(null);
+  /* One dropdown open at a time: text style, font, size or alignment. */
+  const [menu, setMenu] = useState<'style' | 'font' | 'size' | 'align' | null>(null);
   /* The trigger's rect, captured on click — a fixed popover has to be told where its button is. */
   const [anchor, setAnchor] = useState<DOMRect | null>(null);
   const linkRef = useRef<HTMLButtonElement>(null);
@@ -2743,18 +2756,37 @@ function TextToolbar({ id, editing = false, scope = 'full' }: { id: string; edit
   const hiliteRef = useRef<HTMLButtonElement>(null);
   const s: NodeStyle = styles[id] ?? {};
   const tBtn = (on?: boolean) => (on ? btnOn : btn);
-  const sel = 'h-7 cursor-pointer rounded border border-[#E5E7EB] bg-white px-1.5 text-[12px] text-[#364658] outline-none hover:border-[#3D8BD0]';
   const setWhole = (patch: Record<string, unknown>) => setStyle(id, patch as never);
   const colorP = colorPair(s as Record<string, unknown>, 'color', '#364658', setWhole);
   const hiliteP = colorPair(s as Record<string, unknown>, 'textBg', '#FDE68A', setWhole);
   const color = shownOf(colorP);
   /* ⚠️ No Light / Dark tabs while WORDS are selected: those colours become inline markup inside the
-     text, and markup has no dark half — offering the tab would promise a second value nothing could
-     store. Colouring the whole text goes to the style store, which has both. */
+     text, and markup has no dark half. Colouring the whole text goes to the style store, which has both. */
   const wordsSelected = editing && hasInlineSelection(id);
-  /* ⚠️ Selected words win: while you are editing with words selected, a control formats THOSE words;
-     otherwise it formats the whole text, as it always has. */
+  /* Selected words win: a control formats THOSE words; otherwise it formats the whole text. */
   const inline = (run: (host: HTMLElement) => void, whole: () => void) => { if (!(editing && applyInline(id, run))) whole(); };
+
+  /* ── dropdown chrome, the composer's: a compact trigger with a chevron, a white list ABOVE the bar ── */
+  const trigger = (on: boolean, open: boolean) =>
+    `flex h-7 items-center gap-1 rounded px-1.5 transition-colors ${on ? 'bg-[#EAF2FB] text-[#3D8BD0]' : open ? 'bg-[#F3F4F6] text-[#364658]' : 'text-[#364658] hover:bg-[#F3F4F6]'}`;
+  const chev = (on: boolean) => <ChevronDown size={12} className={on ? 'text-[#3D8BD0]' : 'text-[#7B8FA5]'} />;
+  /* A list opens ABOVE the bar (the bar already sits above the words) unless there is no room there — then below. */
+  const [menuUp, setMenuUp] = useState(true);
+  const listCls = `absolute left-0 z-[61] rounded-lg border border-[#DFE5ED] bg-white py-1 shadow-lg ${menuUp ? 'bottom-full mb-1.5' : 'top-full mt-1.5'}`;
+  const itemCls = (on: boolean) => `flex w-full items-center gap-2 px-3 py-1.5 text-left text-[13px] text-[#364658] transition-colors ${on ? 'bg-[#F1F5F9] font-medium' : 'hover:bg-[#F9FAFB]'}`;
+  const toggle = (m: 'style' | 'font' | 'size' | 'align', e?: React.MouseEvent) => {
+    if (e) setMenuUp((e.currentTarget as HTMLElement).getBoundingClientRect().top > 310);
+    setMenu((cur) => (cur === m ? null : m));
+  };
+  /* Esc closes an open dropdown first (and only that — the selection and the edit stay). */
+  useEffect(() => {
+    if (!menu) return;
+    const k = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.stopPropagation(); e.preventDefault(); setMenu(null); } };
+    window.addEventListener('keydown', k, true);
+    return () => window.removeEventListener('keydown', k, true);
+  }, [menu]);
+  const curStyle = s.heading ?? 'PAR';
+  const curFont = PORTAL_FONTS.find((f) => f.id === s.font);
 
   return (
     <div
@@ -2767,63 +2799,122 @@ function TextToolbar({ id, editing = false, scope = 'full' }: { id: string; edit
       data-portal-toolbar
       className={BAR}
     >
-      <ToolbarTip tip={tip} />
+      {!menu && <ToolbarTip tip={tip} />}
+      {menu && <span className="fixed inset-0 z-[60]" onClick={() => setMenu(null)} />}
 
-      <Rule />
+      {/* ── Text style (whole text only) ── */}
+      {full && (
+        <>
+          <div className="relative z-[61]">
+            <button className={trigger(curStyle !== 'PAR', menu === 'style')} data-tip="Text style" onClick={(e) => toggle('style', e)}>
+              <span className="flex items-end gap-[2px]">
+                <span className="text-[13px] font-semibold leading-none">A</span>
+                <Pencil size={9} className={curStyle !== 'PAR' ? 'text-[#3D8BD0]' : 'text-[#7B8FA5]'} />
+              </span>
+              {chev(curStyle !== 'PAR')}
+            </button>
+            {menu === 'style' && (
+              <div className={`${listCls} w-[160px]`}>
+                {TEXT_STYLE_MENU.map(([v, label, cls]) => (
+                  <button key={v} className={itemCls(curStyle === v)} onClick={() => { setStyle(id, { heading: v, fontSize: undefined }); setMenu(null); }}>
+                    <span className={cls}>{label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <TextSep />
+        </>
+      )}
 
+      {/* ── Bold · Italic · Underline ── */}
       <button className={tBtn(s.bold)} data-tip="Bold" onClick={() => inline(() => document.execCommand('bold'), () => setStyle(id, { bold: !s.bold }))}><Bold size={14} /></button>
       <button className={tBtn(s.italic)} data-tip="Italic" onClick={() => inline(() => document.execCommand('italic'), () => setStyle(id, { italic: !s.italic }))}><Italic size={14} /></button>
       <button className={tBtn(s.underline)} data-tip="Underline" onClick={() => inline(() => document.execCommand('underline'), () => setStyle(id, { underline: !s.underline }))}><Underline size={14} /></button>
 
-      <Rule />
+      <TextSep />
 
-      {/* Theme style. The * is Duda's override marker — it means this text no longer follows the
-          theme, which is the one thing that makes a theme panel trustworthy. */}
+      {/* ── Font · Size ── */}
+      <div className="relative z-[61]">
+        <button className={`${trigger(!!curFont, menu === 'font')} max-w-[120px]`} data-tip="Font" onClick={(e) => toggle('font', e)}>
+          <span className="truncate text-[12px] font-medium" style={curFont ? { fontFamily: curFont.css } : undefined}>{curFont?.name ?? 'Default'}</span>
+          {chev(!!curFont)}
+        </button>
+        {menu === 'font' && (
+          <div className={`${listCls} w-[180px]`}>
+            <button className={itemCls(!curFont)} onClick={() => { inline((h) => wrapInline(h, 'fontFamily', 'inherit'), () => setStyle(id, { font: undefined })); setMenu(null); }}>Default</button>
+            {/* Each family is shown IN its own face — you choose a font by looking, not by its name. */}
+            {PORTAL_FONTS.map((f) => (
+              <button key={f.id} className={itemCls(s.font === f.id)} style={{ fontFamily: f.css }}
+                onClick={() => { inline((h) => wrapInline(h, 'fontFamily', f.css), () => setStyle(id, { font: f.id })); setMenu(null); }}>
+                {f.name}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+      <div className="relative z-[61]">
+        <button className={trigger(!!s.fontSize, menu === 'size')} data-tip="Font size" onClick={(e) => toggle('size', e)}>
+          <span className="text-[11px] font-semibold leading-none tracking-tight">AA</span>
+          {s.fontSize ? <span className="text-[11px]">{s.fontSize}</span> : null}
+          {chev(!!s.fontSize)}
+        </button>
+        {menu === 'size' && (
+          <div className={`${listCls} max-h-[280px] w-[100px] overflow-y-auto`}>
+            <button className={itemCls(!s.fontSize)} onClick={() => { inline((h) => wrapInline(h, 'fontSize', 'inherit'), () => setStyle(id, { fontSize: undefined })); setMenu(null); }}>Default</button>
+            {TEXT_SIZES.map((n) => (
+              <button key={n} className={itemCls(s.fontSize === n)} onClick={() => { inline((h) => wrapInline(h, 'fontSize', `${n}px`), () => setStyle(id, { fontSize: n })); setMenu(null); }}>{n}</button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── Alignment (whole text only) — the SAME button + popup every other bar uses ── */}
       {full && (
-      <select
-        value={s.heading ?? 'PAR'}
-        onChange={(e) => setStyle(id, { heading: e.target.value, fontSize: undefined })}
-        className={sel}
-      >
-        {TEXT_STYLES.map((t) => <option key={t} value={t}>{t}{s.fontSize ? '*' : ''}</option>)}
-      </select>
+        <>
+          <TextSep />
+          <AlignAxis
+            axis="h"
+            value={String(s.align ?? (() => {
+              const el = document.querySelector(`[data-node="${id}"] [data-inline-edit]`) ?? document.querySelector(`[data-node="${id}"]`);
+              const ta = el ? getComputedStyle(el).textAlign : '';
+              return ta === 'center' ? 'center' : ta === 'right' || ta === 'end' ? 'right' : 'left';
+            })())}
+            options={[
+              ['left', 'Left', <AlignLeft key="l" size={15} />],
+              ['center', 'Centre', <AlignCenter key="c" size={15} />],
+              ['right', 'Right', <AlignRight key="r" size={15} />],
+            ]}
+            open={menu === 'align'}
+            onToggle={() => toggle('align')}
+            onPick={(v) => setStyle(id, { align: v as never })}
+          />
+        </>
       )}
 
-      {/* ⚠️ A plain FONT-FAMILY picker over the six families in `PORTAL_FONTS`.
-          It used to offer the theme's two ROLES, so a bound text followed the theme when the theme
-          changed. Swapped on request for a direct picker — the trade being that a family chosen here
-          now stays put when the theme changes, which is what a direct picker always means.
-          ⚠️ Each option is rendered IN its own face, which is the whole reason a font picker is a
-          list rather than a text field: you choose by looking, not by recognising a name. That only
-          works because all six are loaded in fonts.css. */}
-      <select
-        value={s.font ?? ''}
-        onChange={(e) => { const fid = e.target.value; const css = PORTAL_FONTS.find((f) => f.id === fid)?.css; inline((h) => css && wrapInline(h, 'fontFamily', css), () => setStyle(id, { font: fid || undefined })); }}
-        className={`${sel} max-w-[136px]`}
-        title="Font"
+      <TextSep />
+
+      {/* ── Highlight · Text colour ── */}
+      <button
+        ref={hiliteRef}
+        className={tBtn(!!s.textBg)}
+        data-tip="Highlight colour"
+        onClick={() => setPickHilite(pickHilite ? null : hiliteRef.current!.getBoundingClientRect())}
       >
-        <option value="">Default</option>
-        {PORTAL_FONTS.map((f) => (
-          <option key={f.id} value={f.id} style={{ fontFamily: f.css }}>{f.name}</option>
-        ))}
-      </select>
-
-      <select
-        value={s.fontSize ?? HEADING_SIZE[s.heading ?? 'PAR']}
-        onChange={(e) => { const n = Number(e.target.value); inline((h) => wrapInline(h, 'fontSize', `${n}px`), () => setStyle(id, { fontSize: n })); }}
-        className={`${sel} w-[52px]`}
-      >
-        {[...new Set([12, 13, 14, 15, 16, 18, 20, 24, 28, 32, 40, 48, Number(s.fontSize ?? HEADING_SIZE[s.heading ?? 'PAR'])])].filter(Boolean).sort((a, b) => a - b).map((n) => <option key={n} value={n}>{n}</option>)}
-      </select>
-
-      <Rule />
-
-      {/* ⚠️ A BUTTON opening the product's picker, not a native `<input type="color">` overlaid at
-          `absolute inset-0`. The UA stylesheet gives that input its own width, which beats the
-          left/right pair of `inset-0` — so it spilled out of its 28px label and sat on top of the
-          alignment buttons beside it. That is why clicking "align left" opened a colour picker.
-          ⚠️ And the glyph is Canva's: an A with a bar UNDER it painted in the colour it will apply.
-          A neutral icon makes you open the control to find out what it is currently set to. */}
+        <span className="flex flex-col items-center gap-[2px] leading-none">
+          <Highlighter size={13} />
+          <span className="h-[3px] w-[14px] rounded-[1px] border border-[#E5E7EB]" style={{ background: s.textBg ?? 'transparent' }} />
+        </span>
+      </button>
+      {pickHilite && (
+        <PortalColorPicker
+          value={s.textBg ?? '#FDE68A'}
+          pair={wordsSelected ? undefined : hiliteP}
+          anchor={pickHilite}
+          onChange={(v) => inline(() => document.execCommand('hiliteColor', false, v), () => setStyle(id, { textBg: v }))}
+          onClose={() => setPickHilite(null)}
+        />
+      )}
       <button
         ref={colorRef}
         className={tBtn()}
@@ -2845,43 +2936,9 @@ function TextToolbar({ id, editing = false, scope = 'full' }: { id: string; edit
         />
       )}
 
-      {/* ⚠️ HIGHLIGHT, not a second text colour. The glyph is a marker over a filled bar — the same
-          shape every office editor uses — so the two colour buttons are told apart by what they
-          show rather than by their tooltips. The swatch under it is the CURRENT highlight, which is
-          what makes "is anything highlighted?" answerable without clicking. */}
-      <button
-        ref={hiliteRef}
-        className={tBtn(!!s.textBg)}
-        data-tip="Highlight colour"
-        onClick={() => setPickHilite(pickHilite ? null : hiliteRef.current!.getBoundingClientRect())}
-      >
-        <span className="flex flex-col items-center gap-[2px] leading-none">
-          <Highlighter size={13} />
-          <span
-            className="h-[3px] w-[14px] rounded-[1px] border border-[#E5E7EB]"
-            style={{ background: s.textBg ?? 'transparent' }}
-          />
-        </span>
-      </button>
-      {pickHilite && (
-        <PortalColorPicker
-          value={s.textBg ?? '#FDE68A'}
-          pair={wordsSelected ? undefined : hiliteP}
-          anchor={pickHilite}
-          onChange={(v) => inline(() => document.execCommand('hiliteColor', false, v), () => setStyle(id, { textBg: v }))}
-          onClose={() => setPickHilite(null)}
-        />
-      )}
+      <TextSep />
 
-      {full && ([['left', AlignLeft], ['center', AlignCenter], ['right', AlignRight]] as const).map(([a, Ic]) => (
-        <button key={a} className={tBtn(s.align === a)} data-tip={`Align ${a}`} onClick={() => setStyle(id, { align: a })}>
-          <Ic size={14} />
-        </button>
-      ))}
-      {/* ⚠️ CLEAR FORMATTING sits with the character toggles it undoes, not at the end of the bar.
-          It is the escape hatch for B / I / U / size / colour, so it belongs where those are — and it
-          DELETES those keys rather than writing new ones, which is what makes the text fall back to
-          the theme instead of to a hard-coded default that would drift from it. */}
+      {/* ── Clear formatting · Link ── */}
       <button
         className={tBtn()}
         data-tip="Clear formatting"
@@ -2890,9 +2947,6 @@ function TextToolbar({ id, editing = false, scope = 'full' }: { id: string; edit
           toast.success('Formatting cleared');
         })}
       ><RemoveFormatting size={14} /></button>
-
-      <Rule />
-
       <button
         ref={linkRef}
         className={pop === 'link' ? btnOn : btn}
@@ -2900,18 +2954,22 @@ function TextToolbar({ id, editing = false, scope = 'full' }: { id: string; edit
         onClick={() => { setAnchor(linkRef.current?.getBoundingClientRect() ?? null); setPop(pop === 'link' ? null : 'link'); }}
       ><Link2 size={14} /></button>
       {pop === 'link' && anchor && <LinkPopover anchor={anchor} onClose={() => setPop(null)} />}
-      {/* ⚠️ A LABELLED button, not a glyph. "Placeholder" is the one action here whose result is a
-          token rather than a visible change, so an icon alone would be a guess — and it is the
-          control a support-portal admin reaches for most, because a banner that greets someone by
-          name is much of the reason this text is editable at all. */}
-      {full && <button
-        ref={phRef}
-        className={`flex h-7 items-center gap-1 rounded px-2 text-[12px] font-medium transition-colors ${
-          pop === 'ph' ? 'bg-[#EBF5FF] text-[#3D8BD0]' : 'text-[#64748B] hover:bg-[#F3F4F6] hover:text-[#364658]'
-        }`}
-        onClick={() => { setAnchor(phRef.current?.getBoundingClientRect() ?? null); setPop(pop === 'ph' ? null : 'ph'); }}
-      ><Braces size={14} /> Placeholder</button>}
-      {pop === 'ph' && anchor && <PlaceholderPopover anchor={anchor} onPick={(t) => { setText(id, t); setPop(null); }} onClose={() => setPop(null)} />}
+
+      {/* ── Placeholder (whole text only) ── */}
+      {full && (
+        <>
+          <TextSep />
+          <button
+            ref={phRef}
+            className={`flex h-7 items-center gap-1 rounded px-2 text-[12px] font-medium transition-colors ${
+              pop === 'ph' ? 'bg-[#EBF5FF] text-[#3D8BD0]' : 'text-[#64748B] hover:bg-[#F3F4F6] hover:text-[#364658]'
+            }`}
+            data-tip="Insert a placeholder"
+            onClick={() => { setAnchor(phRef.current?.getBoundingClientRect() ?? null); setPop(pop === 'ph' ? null : 'ph'); }}
+          ><Braces size={14} /> Placeholder</button>
+          {pop === 'ph' && anchor && <PlaceholderPopover anchor={anchor} onPick={(t) => { setText(id, t); setPop(null); }} onClose={() => setPop(null)} />}
+        </>
+      )}
     </div>
   );
 }

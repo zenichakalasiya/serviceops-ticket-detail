@@ -2768,7 +2768,7 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   outline: `useWordSelection(id, editing)` (PortalCanvas) reports none / partial / full from the live selection, and
   `SelectionBar` portals `TextToolbar` just ABOVE the selection (below if no room), centred on it. PARTIAL = B · I · U ·
   font · size · text colour · highlight · clear · link; FULL (every word highlighted) adds Text style, alignment and
-  Placeholder (`scope` prop). The bar has no grip. Outline only / caret only: a placed Text (`el-N`) shows ElementToolbar =
+  Placeholder (`scope` prop). The bar has no grip. It is grouped like the composer's formatting row (6 Oct 2026): A✎ Text style ▾ (Paragraph/H1–H3, full only) | B I U | Font ▾ · AA size ▾ (Default, 8–72) | alignment = the shared AlignAxis button + popup (Left/Centre/Right, full only) | highlight · text colour | clear · link | Placeholder (full only); dividers are `TextSep` (not `tb-rule`, which the toolbar CSS hides); lists open above the bar unless there is no room; Esc closes an open list first. Outline only / caret only: a placed Text (`el-N`) shows ElementToolbar =
   drag · replace · copy · alignment · background · delete (its "add beside" + is withheld); a text CHILD (card title, banner
   heading) shows `TextAlignBar` = alignment only, whose resting value is read from the words' computed text-align.
   ⚠️ While focus is in the bar or a popover (a select, the hex field), the tracker KEEPS its last answer — otherwise the
