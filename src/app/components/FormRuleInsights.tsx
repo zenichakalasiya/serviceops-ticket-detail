@@ -213,9 +213,8 @@ export function FormRuleInsights({
   return (
     <aside className={`flex h-full min-h-0 flex-col bg-white ${bare ? '' : 'border-l border-[#DFE5ED]'}`}>
       {!hideHead && !only && <div className="flex flex-shrink-0 items-center gap-2 px-4 pt-3">
-        {!noTitleIcon && <ListOrdered size={14} className="text-[#7B8FA5]" />}
+        {/* Title only — no list glyph, no "updates as you build" note (6 Oct 2026, Zeni). */}
         <span className="text-[13px] font-medium text-[#364658]">Rule check</span>
-        <span className="text-[11px] text-[#7B8FA5]">· updates as you build</span>
         {onCollapse && (
           <button type="button" onClick={onCollapse} title="Collapse the rule check" className="ml-auto flex size-7 items-center justify-center rounded-md text-[#7B8FA5] transition-colors hover:bg-[#EEF2F6] hover:text-[#364658]"><ChevronsRight size={16} /></button>
         )}
