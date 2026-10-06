@@ -2764,6 +2764,16 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
 - **Support Portal — the builder rail has NO Shortcuts button (5 Oct 2026, Zeni).** The rail is Widgets · Theme ·
   Branding, then Basics at its foot (now `mt-auto`). Shortcuts are reached from the product's GLOBAL panel
   (header keyboard icon, or `?`). The button is wrapped in `{false && …}` in `SupportPortalBuilder`, so restoring it is one word.
+- **Support Portal — the text formatting bar follows the HIGHLIGHTED WORDS (6 Oct 2026, Zeni).** It no longer sits on the
+  outline: `useWordSelection(id, editing)` (PortalCanvas) reports none / partial / full from the live selection, and
+  `SelectionBar` portals `TextToolbar` just ABOVE the selection (below if no room), centred on it. PARTIAL = B · I · U ·
+  font · size · text colour · highlight · clear · link; FULL (every word highlighted) adds Text style, alignment and
+  Placeholder (`scope` prop). The bar has no grip. Outline only / caret only: a placed Text (`el-N`) shows ElementToolbar =
+  drag · replace · copy · alignment · background · delete (its "add beside" + is withheld); a text CHILD (card title, banner
+  heading) shows `TextAlignBar` = alignment only, whose resting value is read from the words' computed text-align.
+  ⚠️ While focus is in the bar or a popover (a select, the hex field), the tracker KEEPS its last answer — otherwise the
+  bar vanishes under the control being used. ⚠️ PortalCanvas.tsx is CRLF on disk now: multi-line string anchors in
+  sweep scripts must normalise line endings first.
 - **`NON-DESIGNER-ADMIN-UX.md`** (project root) — the 28 Sep review of what overwhelms a non-designer ITSM admin
   in the builder (15 issues by impact) and the seven "style it in one go" approaches (recommended: page-wide
   style kit + per-widget look presets + S/M/L spacing), with a status table of what has since changed. Read it

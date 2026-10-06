@@ -1635,7 +1635,8 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
   /* One of the six a section is composed from — see `COMPOSABLE`. These get BOTH actions: "+" puts
      another of the six in the slot BESIDE this one, Replace swaps this one. Everything else keeps
      the single Add-or-Replace slot it always had. */
-  const composable = canAddBeside(id);
+  /* A placed Text's outline toolbar is drag · replace · copy · alignment · background · delete only. */
+  const composable = canAddBeside(id) && placedType(id) !== 'b-text';
   /* ⚠️ ON THE BANNER both pickers offer the banner's curated blocks and nothing else — the same list
      the builder's gate enforces, so the list never offers something the drop would then refuse. */
   const onBanner = inBanner(id);
@@ -1725,7 +1726,8 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
   const cardTpl = alignCard ? cardTemplateOf(id, cfg) : '';
   const cardAxis = alignCard ? cardAlignAxis(cardTpl) : null;
   const col = colInfo;
-  const showH = caps.alignH !== false && cardAxis !== 'v' && (!col || col.h);
+  /* A placed Text always offers left / centre / right on its outline toolbar: it aligns its own words. */
+  const showH = placedType(id) === 'b-text' || (caps.alignH !== false && cardAxis !== 'v' && (!col || col.h));
   const showV = caps.alignV !== false && cardAxis !== 'h' && (!col || col.v);
   const alignH = String(styles[id]?.align ?? (alignCard ? cardAlignDefault(cardTpl, id) : col ? 'left' : defaultAlignH(id)));
   const alignV = String(styles[id]?.alignY ?? (alignCard ? cardAlignDefault(cardTpl, id) : 'start'));
@@ -1741,7 +1743,7 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
     ['end', 'Bottom', <AlignEndHorizontal key="b" size={15} />],
     ['stretch', 'Stretch', <StretchVertical key="s" size={15} />],
   ];
-  const H_OPTS = alignCard || (col && !col.stretchH) ? H_OPTS_ALL.slice(0, 3) : H_OPTS_ALL;
+  const H_OPTS = alignCard || placedType(id) === 'b-text' || (col && !col.stretchH) ? H_OPTS_ALL.slice(0, 3) : H_OPTS_ALL;
   const V_OPTS = alignCard || (col && !col.stretchV) ? V_OPTS_ALL.slice(0, 3) : V_OPTS_ALL;
   /* The Layout and Card-templates buttons (Zeni, 29 Sep 2026): the white parent cards and the Quick
      Actions row get Layout; the cards inside them get Card templates. */
@@ -2636,7 +2638,97 @@ function ToolbarTip({ tip }: { tip: ToolbarTipState | null }) {
   );
 }
 
-function TextToolbar({ id, editing = false }: { id: string; editing?: boolean }) {
+/* ── TEXT: the formatting bar follows the HIGHLIGHTED WORDS (Zeni, 6 Oct 2026) ─────────────────────
+ *
+ * The bar no longer sits on the text's outline. It appears only while words are highlighted inside the
+ * text, floating just above them, and what it offers depends on HOW MUCH is highlighted:
+ *   · some words  → Bold · Italic · Underline · Font · Size · Text colour · Highlight · Clear · Link
+ *   · all of it   → the same, plus Text style (Paragraph / H1–H3) · Alignment · Placeholder
+ * because style, alignment and a placeholder act on the whole text, and offering them on three words
+ * would promise a change to those words that they would then make to everything.
+ * Outline only (or a caret with nothing highlighted): a placed Text shows its element toolbar (drag ·
+ * replace · copy · alignment · background · delete); text that is part of a widget shows alignment only. */
+type WordSel = { kind: 'none' | 'partial' | 'full'; rect: DOMRect | null };
+function useWordSelection(id: string, active: boolean): WordSel {
+  const [state, setState] = useState<WordSel>({ kind: 'none', rect: null });
+  useEffect(() => {
+    if (!active) { setState({ kind: 'none', rect: null }); return; }
+    const read = () => {
+      const host = document.querySelector(`[data-inline-edit="${id}"]`) as HTMLElement | null;
+      const sel = window.getSelection();
+      if (!host || !sel || !sel.rangeCount) return;
+      const r = sel.getRangeAt(0);
+      /* Focus moved into the bar or a popover it opened (a select, a hex field): keep the last answer,
+         or the bar would vanish under the control being used. */
+      if (!host.contains(r.commonAncestorContainer)) return;
+      const picked = r.toString().replace(/\s+/g, ' ').trim();
+      if (r.collapsed || !picked) { setState({ kind: 'none', rect: null }); return; }
+      const all = (host.textContent ?? '').replace(/\s+/g, ' ').trim();
+      setState({ kind: picked === all ? 'full' : 'partial', rect: r.getBoundingClientRect() });
+    };
+    read();
+    document.addEventListener('selectionchange', read);
+    window.addEventListener('scroll', read, true);
+    window.addEventListener('resize', read);
+    return () => {
+      document.removeEventListener('selectionchange', read);
+      window.removeEventListener('scroll', read, true);
+      window.removeEventListener('resize', read);
+    };
+  }, [id, active]);
+  return state;
+}
+
+/** Places its bar just ABOVE the highlighted words (below them when there is no room), centred on them. */
+function SelectionBar({ rect, children }: { rect: DOMRect; children: ReactNode }) {
+  const barRef = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  useLayoutEffect(() => {
+    const b = barRef.current?.getBoundingClientRect();
+    if (!b) return;
+    let top = rect.top - b.height - 8;
+    if (top < 8) top = rect.bottom + 8;
+    const left = Math.max(8, Math.min(rect.left + rect.width / 2 - b.width / 2, window.innerWidth - b.width - 8));
+    setPos({ top, left });
+  }, [rect.top, rect.left, rect.width, rect.bottom]);
+  return createPortal(
+    <div ref={barRef} style={{ position: 'fixed', top: pos?.top ?? -9999, left: pos?.left ?? -9999 }} className="z-[9999]">{children}</div>,
+    document.body,
+  );
+}
+
+/** Text that is PART of a widget (a card title, the banner heading), outline selected: alignment only. */
+function TextAlignBar({ id }: { id: string }) {
+  const { styles, setStyle } = useCanvas();
+  const { tip, setTip, readTip } = useToolbarTip();
+  const [open, setOpen] = useState(false);
+  const opts: [string, string, ReactNode][] = [
+    ['left', 'Left', <AlignLeft key="l" size={15} />],
+    ['center', 'Centre', <AlignCenter key="c" size={15} />],
+    ['right', 'Right', <AlignRight key="r" size={15} />],
+  ];
+  return (
+    <div data-portal-toolbar className={BAR} onClick={(e) => e.stopPropagation()} onMouseOver={readTip} onMouseMove={readTip} onMouseLeave={() => setTip(null)}>
+      <ToolbarTip tip={tip} />
+      <AlignAxis
+        axis="h"
+        value={String(styles[id]?.align ?? (() => {
+          /* Nothing stored: read what the words ACTUALLY do, or a centred heading reports "left". */
+          const el = document.querySelector(`[data-node="${id}"] [data-inline-edit]`) ?? document.querySelector(`[data-node="${id}"]`);
+          const ta = el ? getComputedStyle(el).textAlign : '';
+          return ta === 'center' ? 'center' : ta === 'right' || ta === 'end' ? 'right' : 'left';
+        })())}
+        options={opts}
+        open={open}
+        onToggle={() => setOpen((o) => !o)}
+        onPick={(v) => setStyle(id, { align: v as never })}
+      />
+    </div>
+  );
+}
+
+function TextToolbar({ id, editing = false, scope = 'full' }: { id: string; editing?: boolean; scope?: 'partial' | 'full' }) {
+  const full = scope === 'full';
   const drag = useNodeDragHandle(id);
   const { tip, setTip, readTip } = useToolbarTip();
   const { styles, setStyle, setText } = useCanvas();
@@ -2676,7 +2768,7 @@ function TextToolbar({ id, editing = false }: { id: string; editing?: boolean })
       className={BAR}
     >
       <ToolbarTip tip={tip} />
-      <span {...drag} className="tb-grip flex size-7 cursor-grab items-center justify-center text-[var(--bar-ink,#9CA3AF)] opacity-70 active:cursor-grabbing"><GripVertical size={14} /></span>
+
       <Rule />
 
       <button className={tBtn(s.bold)} data-tip="Bold" onClick={() => inline(() => document.execCommand('bold'), () => setStyle(id, { bold: !s.bold }))}><Bold size={14} /></button>
@@ -2687,6 +2779,7 @@ function TextToolbar({ id, editing = false }: { id: string; editing?: boolean })
 
       {/* Theme style. The * is Duda's override marker — it means this text no longer follows the
           theme, which is the one thing that makes a theme panel trustworthy. */}
+      {full && (
       <select
         value={s.heading ?? 'PAR'}
         onChange={(e) => setStyle(id, { heading: e.target.value, fontSize: undefined })}
@@ -2694,6 +2787,7 @@ function TextToolbar({ id, editing = false }: { id: string; editing?: boolean })
       >
         {TEXT_STYLES.map((t) => <option key={t} value={t}>{t}{s.fontSize ? '*' : ''}</option>)}
       </select>
+      )}
 
       {/* ⚠️ A plain FONT-FAMILY picker over the six families in `PORTAL_FONTS`.
           It used to offer the theme's two ROLES, so a bound text followed the theme when the theme
@@ -2719,7 +2813,7 @@ function TextToolbar({ id, editing = false }: { id: string; editing?: boolean })
         onChange={(e) => { const n = Number(e.target.value); inline((h) => wrapInline(h, 'fontSize', `${n}px`), () => setStyle(id, { fontSize: n })); }}
         className={`${sel} w-[52px]`}
       >
-        {[12, 13, 14, 15, 16, 18, 20, 24, 28, 32, 40, 48].map((n) => <option key={n} value={n}>{n}</option>)}
+        {[...new Set([12, 13, 14, 15, 16, 18, 20, 24, 28, 32, 40, 48, Number(s.fontSize ?? HEADING_SIZE[s.heading ?? 'PAR'])])].filter(Boolean).sort((a, b) => a - b).map((n) => <option key={n} value={n}>{n}</option>)}
       </select>
 
       <Rule />
@@ -2779,7 +2873,7 @@ function TextToolbar({ id, editing = false }: { id: string; editing?: boolean })
         />
       )}
 
-      {([['left', AlignLeft], ['center', AlignCenter], ['right', AlignRight]] as const).map(([a, Ic]) => (
+      {full && ([['left', AlignLeft], ['center', AlignCenter], ['right', AlignRight]] as const).map(([a, Ic]) => (
         <button key={a} className={tBtn(s.align === a)} data-tip={`Align ${a}`} onClick={() => setStyle(id, { align: a })}>
           <Ic size={14} />
         </button>
@@ -2810,13 +2904,13 @@ function TextToolbar({ id, editing = false }: { id: string; editing?: boolean })
           token rather than a visible change, so an icon alone would be a guess — and it is the
           control a support-portal admin reaches for most, because a banner that greets someone by
           name is much of the reason this text is editable at all. */}
-      <button
+      {full && <button
         ref={phRef}
         className={`flex h-7 items-center gap-1 rounded px-2 text-[12px] font-medium transition-colors ${
           pop === 'ph' ? 'bg-[#EBF5FF] text-[#3D8BD0]' : 'text-[#64748B] hover:bg-[#F3F4F6] hover:text-[#364658]'
         }`}
         onClick={() => { setAnchor(phRef.current?.getBoundingClientRect() ?? null); setPop(pop === 'ph' ? null : 'ph'); }}
-      ><Braces size={14} /> Placeholder</button>
+      ><Braces size={14} /> Placeholder</button>}
       {pop === 'ph' && anchor && <PlaceholderPopover anchor={anchor} onPick={(t) => { setText(id, t); setPop(null); }} onClose={() => setPop(null)} />}
     </div>
   );
@@ -4124,6 +4218,7 @@ export function Sel({ id, children, className = '', toolbarBelow = false, surfac
   const editRef = useRef<HTMLDivElement>(null);
   const isOn = selectedId === id;
   useEffect(() => { if (!isOn) setEditing(false); }, [isOn]);
+  const words = useWordSelection(id, isOn && editing);
   /* Clicking anywhere that is not these words, their toolbar or a popover it opened ends the edit. */
   useEffect(() => {
     if (!editing) return;
@@ -4490,11 +4585,17 @@ export function Sel({ id, children, className = '', toolbarBelow = false, surfac
               of you before you had chosen any words to format. A text child has no element to move, so it
               keeps the text toolbar in both modes, formatting the whole line or just the selected words. */}
           {node.kind === 'text' && !isContactChild(id) ? (
-            /^el-[0-9]+$/.test(id) && !editing
-              ? <ElementToolbar id={id} kind={node.kind} name={node.name} />
-              : <TextToolbar id={id} editing={editing} />
+            words.kind !== 'none' ? null
+              : /^el-[0-9]+$/.test(id)
+                ? <ElementToolbar id={id} kind={node.kind} name={node.name} />
+                : <TextAlignBar id={id} />
           ) : <ElementToolbar id={id} kind={node.kind} name={node.name} />}
         </ToolbarSlot>
+      )}
+      {on && node.kind === 'text' && !isContactChild(id) && words.kind !== 'none' && words.rect && (
+        <SelectionBar rect={words.rect}>
+          <TextToolbar id={id} editing scope={words.kind} />
+        </SelectionBar>
       )}
 
       {/* ── Inline editing ──────────────────────────────────────────────────────

@@ -466,11 +466,16 @@ stateDiagram-v2
 
 <!-- ───────────────────────── TEXT ───────────────────────── -->
 <h2 id="text">Editing text</h2>
-<figure><img src="shots/15-text-edit.png" alt="Banner heading selected with the text toolbar"><figcaption>A heading selected: the text toolbar (bold, italic, underline, style, font, size, colour, highlight, alignment, clear, link, placeholder).</figcaption></figure>
+<div class="grid2">
+<figure><img src="shots/15b-text-partial.png" alt="One word highlighted with a short formatting bar above it"><figcaption><b>Some words highlighted</b> — Bold · Italic · Underline · Font · Size · Text colour · Highlight · Clear formatting · Link.</figcaption></figure>
+<figure><img src="shots/15-text-edit.png" alt="All words highlighted with the full formatting bar above"><figcaption><b>All the text highlighted</b> — the same, plus Text style (Paragraph / H1–H3) · Alignment · Placeholder.</figcaption></figure>
+</div>
 <ul>
-  <li><b>First click</b> selects the text's frame. <b>Second click</b> (or <kbd>Enter</kbd>) puts the cursor in the words.</li>
-  <li>With words selected, toolbar formatting applies to <b>those words</b>; with just a cursor, to the whole text.</li>
-  <li>Using the toolbar or the colour picker does not end editing. Clicking anywhere else saves and ends it.</li>
+  <li><b>First click</b> selects the text's outline. <b>Second click</b> (or <kbd>Enter</kbd>) puts the cursor in the words.</li>
+  <li><b>The formatting bar appears only while words are highlighted</b>, floating just above them, centred on the selection (below them if there is no room above). It disappears when nothing is highlighted.</li>
+  <li>What it offers depends on how much is highlighted: <b>some words</b> get the word controls only; <b>all of the text</b> also gets Text style, Alignment and Placeholder, because those change the whole text.</li>
+  <li><b>Outline only</b> (or a cursor with nothing highlighted): a placed <b>Text widget</b> shows its element toolbar — Drag · Replace · Copy · Alignment · Background · Delete. Text that is <b>part of a widget</b> (a card title, the banner heading) shows <b>Alignment</b> only.</li>
+  <li>Using the bar or the colour picker does not end editing. Clicking anywhere else saves and ends it.</li>
   <li>Headings and titles of cards are edited in place the same way, and also from the sidebar — both edit the same value.</li>
 </ul>
 
