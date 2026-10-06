@@ -19,6 +19,8 @@ nav.toc .sub{color:var(--ink-3);font-size:12px;margin-bottom:16px}
 nav.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:2px;counter-reset:t}
 nav.toc a{display:block;color:var(--ink-2);text-decoration:none;padding:4px 8px;border-radius:6px}
 nav.toc a:hover{background:var(--soft);color:var(--ink)}
+nav.toc a{border-left:2px solid transparent;transition:background .15s,color .15s,border-color .15s}
+nav.toc a.active{background:var(--accent-soft);color:var(--accent);font-weight:600;border-left-color:var(--accent)}
 nav.toc .grp{margin:14px 0 4px 8px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
 main{min-width:0}
 header.hero{padding-bottom:8px;margin-bottom:0}
@@ -587,3 +589,34 @@ stateDiagram-v2
 <p style="color:var(--ink-3);font-size:13px;margin-top:40px">Prototype: zenichakalasiya.github.io/serviceops-ticket-detail → Admin › Support Channels › Support Portal.</p>
 </main>
 </div>
+<script>
+/* scroll-spy */
+(function () {
+  var links = Array.prototype.slice.call(document.querySelectorAll('nav.toc a[href^="#"]'));
+  var heads = links.map(function (a) { return document.getElementById(a.getAttribute('href').slice(1)); });
+  var toc = document.querySelector('nav.toc');
+  var current = null;
+  function update() {
+    var idx = 0;
+    var line = 120;
+    for (var i = 0; i < heads.length; i++) {
+      if (heads[i] && heads[i].getBoundingClientRect().top <= line) idx = i;
+    }
+    /* At the very bottom the last sections can never reach the line, so the last one wins. */
+    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4) idx = heads.length - 1;
+    var link = links[idx];
+    if (link === current) return;
+    if (current) current.classList.remove('active');
+    link.classList.add('active');
+    current = link;
+    /* Keep the highlighted name in view inside the contents panel, without moving the page. */
+    if (toc && toc.scrollHeight > toc.clientHeight) {
+      var r = link.getBoundingClientRect(), t = toc.getBoundingClientRect();
+      if (r.top < t.top + 40 || r.bottom > t.bottom - 40) toc.scrollTop += r.top - t.top - toc.clientHeight / 2;
+    }
+  }
+  window.addEventListener('scroll', update, { passive: true });
+  window.addEventListener('resize', update);
+  update();
+})();
+</script>
