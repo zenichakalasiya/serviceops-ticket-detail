@@ -1,4 +1,55 @@
-# Handoff — 2026-10-05 15:30
+# Handoff — 2026-10-06 10:59
+
+> Several sessions share this file. **This top part is the Support Portal builder session (5–6 Oct)**;
+> the other sessions' notes follow unchanged below the divider.
+
+## Read first
+CLAUDE.md › Key context — Support Portal bullets dated 5–6 Oct: *text formatting bar follows the HIGHLIGHTED WORDS*,
+*Widgets panel FOLDS placed widgets*, *rail has NO Shortcuts button*, and the *Developer handoff — docs/editor-handoff/* pointer.
+
+## What we worked on this session
+Builder polish (Widgets panel cursors, rail, text formatting bar) and a complete behaviour-only developer handoff
+page for rebuilding the Support Portal editor in the real product.
+
+## Completed
+- **Widgets panel cursors:** open hand only over a widget's icon + name (+2px); normal arrow elsewhere on the row;
+  click cursor on the "+"; a press outside the icon/name never starts a drag. "All added to the page" sits `pb-1`
+  under its group title.
+- **Rail:** the Shortcuts button is hidden (`{false && …}` in `SupportPortalBuilder`); shortcuts live in the global panel.
+- **Text formatting bar** now appears only when words are highlighted, floating above them. Partial selection =
+  B I U · font · size · colours · clear · link; full selection adds text style, alignment, Placeholder. Grouped like
+  the composer (style ▾ | B I U | font ▾ · AA ▾ | alignment popup | colours | clear · link | Placeholder).
+  Outline only: placed Text = drag · replace · copy · alignment · background · delete; text inside a widget =
+  alignment only (reads the real computed alignment).
+- **Developer handoff page** — `docs/editor-handoff/`, published at https://claude.ai/artifact/WnaaBozqivZhS4XjfURy4U
+  (private until Zeni shares it). Updated twice for the new text bar.
+- All verified in a browser and live on `main` (last code commit `182b9e3`).
+
+## In progress
+Nothing mid-flight.
+
+## Next steps
+- Zeni to share the handoff page with the developer (Share menu), or ask to host it publicly under `public/`.
+- Pre-existing bugs found, not fixed (ask Zeni): the banner heading's sidebar **Heading** field shows empty; the text
+  bar reports the banner heading as Paragraph / 15 though it renders larger (its size comes from elsewhere);
+  Esc doesn't close the tour while the banner is selected.
+- Still open from earlier: choose a "style it in one go" approach (`NON-DESIGNER-ADMIN-UX.md` Part 2).
+
+## Decisions made
+- Text bar only on highlighted words; whole-text controls (style, alignment, placeholder) only when ALL words are
+  highlighted — Zeni: "only applicable functionality based on text selection", no select-all-then-format.
+- Alignment uses the one shared AlignAxis button + popup everywhere; no Justify.
+- Composer-style grouping kept Font, Clear formatting, Link and Placeholder; lists were NOT added.
+- Handoff doc is behaviour-only, for the real product (not this prototype's code).
+
+## Gotchas & notes
+- `PortalCanvas.tsx` is CRLF on disk now — multi-line string anchors in sweep scripts must normalise line endings.
+- Git Bash strips backslashes in heredocs/`node -e`; write sweep scripts with the editor.
+- Other sessions edit `CLAUDE.md`/`HANDOFF.md` in parallel — commit only named files, never `git add -A` / `git stash`.
+
+---
+
+## (Previous) Handoff — 2026-10-05 15:30
 
 > Three sessions share this file today. **This top part is the User Surveys / Import Emails session**;
 > the Support Portal builder and Form Rules sessions' notes follow unchanged below the divider.

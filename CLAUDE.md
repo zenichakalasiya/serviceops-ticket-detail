@@ -2774,6 +2774,12 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   ⚠️ While focus is in the bar or a popover (a select, the hex field), the tracker KEEPS its last answer — otherwise the
   bar vanishes under the control being used. ⚠️ PortalCanvas.tsx is CRLF on disk now: multi-line string anchors in
   sweep scripts must normalise line endings first.
+- **Developer handoff for the Support Portal editor — `docs/editor-handoff/`** (`index.html` + `shots/`), published as
+  https://claude.ai/artifact/WnaaBozqivZhS4XjfURy4U (private; share from its Share menu). Behaviour-only spec for rebuilding
+  the editor in the real product: listing, create flow, Published/Draft/Default rules, every editor surface, widget reference,
+  banner, text editing, theme, branding, publish, undo, tour, shortcuts, production notes. ⚠️ Keep it in step with the UI —
+  when a builder behaviour changes, update its section (and screenshot) and republish the same file to keep the URL.
+  Screenshots are captured headlessly (see the Playwright note above); a re-capture script lives outside the repo.
 - **`NON-DESIGNER-ADMIN-UX.md`** (project root) — the 28 Sep review of what overwhelms a non-designer ITSM admin
   in the builder (15 issues by impact) and the seven "style it in one go" approaches (recommended: page-wide
   style kit + per-widget look presets + S/M/L spacing), with a status table of what has since changed. Read it
