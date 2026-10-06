@@ -2697,6 +2697,18 @@ function SelectionBar({ rect, children }: { rect: DOMRect; children: ReactNode }
   );
 }
 
+/** Text inside a PREDEFINED widget — a Data or Action card, or the banner — gets NO outline toolbar
+ *  (Zeni, 6 Oct 2026): its words can be edited and formatted through the bar on highlighted words, and
+ *  nothing else; the card's own layout decides where they sit. */
+function isPredefinedText(id: string): boolean {
+  const owner = id.replace(/~.*$/, '').replace(/-(title|subtitle|sub|label|viewall|caption)$/, '');
+  if (owner === 'hero' || /^hero-/.test(owner)) return true;
+  if (/^quick-/.test(owner)) return true;
+  const placed = placedType(owner);
+  if (placed) return isPredefinedType(placed);
+  return PORTAL_ELEMENTS.some((e) => e.node === owner && isPredefinedElement(e));
+}
+
 /** Text that is PART of a widget (a card title, the banner heading), outline selected: alignment only. */
 function TextAlignBar({ id }: { id: string }) {
   const { styles, setStyle } = useCanvas();
@@ -4646,7 +4658,7 @@ export function Sel({ id, children, className = '', toolbarBelow = false, surfac
             words.kind !== 'none' ? null
               : /^el-[0-9]+$/.test(id)
                 ? <ElementToolbar id={id} kind={node.kind} name={node.name} />
-                : <TextAlignBar id={id} />
+                : isPredefinedText(id) ? null : <TextAlignBar id={id} />
           ) : <ElementToolbar id={id} kind={node.kind} name={node.name} />}
         </ToolbarSlot>
       )}
