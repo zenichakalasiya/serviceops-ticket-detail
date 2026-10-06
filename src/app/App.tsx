@@ -94,6 +94,7 @@ export default function App() {
           onNavigate={navigate}
           moduleSlug={route.admin}
           portalSlug={route.portal}
+          ruleId={route.rule}
           onModuleChange={(slug) => go({ page: 'admin', admin: slug })}
           onPortalChange={(portal) => go({ page: 'admin', admin: 'support-portal', portal })}
         />

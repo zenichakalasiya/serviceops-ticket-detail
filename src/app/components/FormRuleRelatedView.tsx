@@ -5,6 +5,7 @@ import type { ConflictKind, RuleConflict, SimilarRule } from './formRuleEngine';
 import { conditionText } from './formRuleEngine';
 import { SimilarRulesArt, eventLabel } from './FormRuleInsights';
 import { RULE_CTA } from './FormRuleConflictReview';
+import { CommonTriggerCard, type CondGroupView } from './FormRuleCommon';
 
 /* R · Related rules. Conflicts and similar rules are two DIFFERENT jobs: a conflict is something to
  * resolve (you go into that flow and fix it), a similar rule is guidance (you probably meant to
@@ -302,7 +303,7 @@ export function RelatedSummaryChips({ ready, conflicts, similar, onOpenConflicts
 }
 
 /** The similar-rules sidebar body: which trigger each rule shares with yours, and how its actions compare. */
-export interface CondGroupView { join: 'And' | 'Or'; conds: { join: 'And' | 'Or'; text: string }[] }
+export type { CondGroupView };
 export function SimilarRulesView({ similar, fields, draft, conditionLines, conditionGroups, onOpenRule, myActions = [] }: {
   /** The conditions as their groups — how they really combine. Falls back to one group of lines. */
   conditionGroups?: CondGroupView[];
@@ -342,57 +343,10 @@ export function SimilarRulesView({ similar, fields, draft, conditionLines, condi
       <span className="text-[13px] font-medium text-[#364658]">{value}</span>
     </div>
   );
-  /* The three things every similar rule shares with yours, each beside the SAME icon badge the builder
-     uses for When / Check if / Then, so they read as "your rule's When", not a new vocabulary. Values sit
-     inline on one row each; conditions stay in their GROUPS (white boxes joined by and/or), because a
-     flat list of chips hides how they combine. */
   const groups: CondGroupView[] = conditionGroups ?? (conditionLines.length ? [{ join: 'And', conds: conditionLines.map((t) => ({ join: 'And' as const, text: t })) }] : []);
-  const stepRow = (icon: React.ReactNode, tone: string, badge: string, lead: string, body: React.ReactNode) => (
-    <div className="flex items-start gap-2.5">
-      <span title={lead} aria-label={lead} className="mt-[3px] flex flex-shrink-0 items-center rounded-full p-1" style={{ backgroundColor: badge, color: tone }}>{icon}</span>
-      <div className="min-w-0 flex-1">{body}</div>
-    </div>
-  );
-  const joinWord = (j: 'And' | 'Or') => <span className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-[#98A2B3]">{j === 'Or' ? 'or' : 'and'}</span>;
   const common = (
-    <div className="mx-3 mb-3 flex-shrink-0 overflow-hidden rounded-lg border border-[#E8EDF3] bg-white">
-      <button type="button" onClick={() => setCommonOpen((o) => !o)} aria-expanded={commonOpen}
-        className="flex w-full items-center gap-2.5 px-4 py-3 text-left transition-colors hover:bg-[#F9FAFB]">
-        <ChevronRight size={15} className={'flex-shrink-0 text-[#7B8FA5] transition-transform ' + (commonOpen ? 'rotate-90' : '')} />
-        <span className="text-[13px] font-semibold text-[#1D2A3E]">Common trigger, conditions &amp; actions</span>
-        <span className="text-[12px] text-[#98A2B3]">shared by your rule and all {similar.length} similar rule{similar.length === 1 ? '' : 's'}</span>
-      </button>
-      {commonOpen && (
-        <div className="flex flex-col gap-2.5 border-t border-[#EEF2F6] bg-[#F9FAFB] px-4 py-3">
-          {stepRow(<History size={12} />, '#3D8BD0', '#E2EDF5', 'When',
-            /* The trigger's three parts, each its own value, split by hairline dividers. */
-            <span className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-[3px] text-[12px] text-[#364658]">
-              <span>{eventLabel(draft.event) || '—'}</span>
-              <span className="h-3.5 w-px bg-[#DFE5ED]" />
-              <span>{draft.execution || '—'}</span>
-              <span className="h-3.5 w-px bg-[#DFE5ED]" />
-              <span>{draft.applies || 'Anyone'}</span>
-            </span>)}
-          {stepRow(<Split size={12} className="rotate-180" />, '#F58518', 'rgba(245,133,24,0.1)', 'Check if',
-            groups.length
-              ? <span className="flex flex-wrap items-center gap-1.5">
-                  {groups.map((g, gi) => (
-                    <span key={gi} className="contents">
-                      {gi > 0 && <span className="rounded bg-[#FFF1E3] px-1.5 py-px text-[10px] font-semibold uppercase tracking-wide text-[#C2620E]">{g.join === 'Or' ? 'Or' : 'And'}</span>}
-                      <span className="inline-flex flex-wrap items-center gap-1 rounded-md border border-[#E2E8F0] bg-white px-2 py-1 text-[12px] text-[#364658]">
-                        {g.conds.map((x, ci) => <span key={ci} className="contents">{ci > 0 && joinWord(x.join)}<span>{x.text}</span></span>)}
-                      </span>
-                    </span>
-                  ))}
-                </span>
-              : <span className="pt-[3px] text-[12px] text-[#7B8FA5]">Every matching event</span>)}
-          {stepRow(<Workflow size={12} />, '#89C540', '#F3F9EC', 'Then',
-            myActions.length
-              ? <span className="flex flex-wrap gap-1.5">{myActions.map((l) => <span key={l} className="rounded-md bg-[#EBF5FF] px-2 py-1 text-[12px] text-[#2C6CA8]">{l}</span>)}</span>
-              : <span className="pt-[3px] text-[12px] text-[#7B8FA5]">No actions yet</span>)}
-        </div>
-      )}
-    </div>
+    <CommonTriggerCard className="mx-3 mb-3" count={similar.length} eventText={eventLabel(draft.event)} execution={draft.execution}
+      applies={draft.applies} groups={groups} actions={myActions} />
   );
 
   /** One group of actions: a quiet label, then the actions as lines with a leading mark. */

@@ -53,10 +53,12 @@ interface AdminPageProps {
   onModuleChange?: (slug: string | undefined) => void;
   /** Which portal is open inside the Support Portal module, and a way to report a change back. */
   portalSlug?: string;
+  /** A form rule to open straight into its editor (from a deep link). */
+  ruleId?: string;
   onPortalChange?: (slug: string | undefined) => void;
 }
 
-export function AdminPage({ onNavigate, moduleSlug, onModuleChange, portalSlug, onPortalChange }: AdminPageProps) {
+export function AdminPage({ onNavigate, moduleSlug, onModuleChange, portalSlug, onPortalChange, ruleId }: AdminPageProps) {
   const [active, setActive] = useState('Overview');
   const [query, setQuery] = useState('');
   // Only the first section starts open, mirroring the live admin.
@@ -184,6 +186,7 @@ export function AdminPage({ onNavigate, moduleSlug, onModuleChange, portalSlug, 
                 tab={activeCard === 'Request Form' ? 'builder' : 'rules'}
                 onTab={(t) => select('Request Management', t === 'builder' ? 'Request Form' : 'Request Form Rule')}
                 onEditor={setBuilderOpen}
+                openRuleId={ruleId}
               />
             </div>
           ) : module === 'User Surveys' ? (

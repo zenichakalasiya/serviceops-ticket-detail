@@ -1,4 +1,4 @@
-# Handoff — 2026-10-06 11:08
+# Handoff — 2026-10-06 14:14
 
 > Several sessions share this file. **This top part is the Support Portal builder session (5–6 Oct)**;
 > the other sessions' notes follow unchanged below the divider.
@@ -189,6 +189,10 @@ and Key context › Request Form Management (B3 passages).
 - I wrote the 9 option tip texts myself — Zeni to review the wording.
 
 - Info popups: the description + what-to-do are two plain grey bullet points (no tinted box). Common container rows lead with the step ICONS only (no When/Check if/Then words). "All clear so far" empty state is a white card, neutral grey, no green, icon top-left.
+
+- **6 Oct: Option A is FINAL** (`SHOWN=['A']`): B3's Rule details + When (applies-to as 3rd field), no yellow strip, light-red action row + ⚠ that opens the rail on Conflicts › By field with that field opened/tinted/scrolled. Rail: tabs Conflicts · Similar rules (Run order gone); no KPIs, no per-card conflict tag; compact search beside By rule/By field; Open rule on hover only; single-border closed cards; sticky headers no longer leak at the corners. Similar tab: shared `CommonTriggerCard` (FormRuleCommon.tsx) + multi-open accordion cards.
+- 6 Oct: Open rule / Update this rule open the rule in a NEW TAB on its builder step (`#/admin/request-form-rules/<rule id>`, `Route.rule`); seed rule ids are now stable name slugs. Open question to Zeni: share rule edits across tabs (localStorage)?
+- Probes: `p63.mjs` (new-tab open), `p64–p66.mjs` (option A rail).
 
 **Open / next**
 0. Asked Zeni: should the conflicts drawing also show a VALUE clash (Set Priority = High vs Low)? And are the 7–9px labels in the drawing readable, or should it grow/simplify?

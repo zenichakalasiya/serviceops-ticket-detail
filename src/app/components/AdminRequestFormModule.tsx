@@ -89,7 +89,9 @@ function FilterPopover({ anchor, filters, onChange, onClose }: {
   );
 }
 
-export function AdminRequestFormModule({ tab, onTab, onEditor }: {
+export function AdminRequestFormModule({ tab, onTab, onEditor, openRuleId }: {
+  /** Open this rule's editor on arrival, on the Build step — a deep link from another tab. */
+  openRuleId?: string;
   tab: RequestFormTab;
   onTab: (t: RequestFormTab) => void;
   /** The editor takes the whole pane, so the admin sidebar stands down while it is open. */
@@ -104,7 +106,15 @@ export function AdminRequestFormModule({ tab, onTab, onEditor }: {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(25);
   /** 'new' = creating; a rule id = editing that rule; null = the listing. */
-  const [editing, setEditing] = useState<string | null>(null);
+  const [editing, setEditing] = useState<string | null>(() => (openRuleId && SEED_RULES.some((r) => r.id === openRuleId) ? openRuleId : null));
+  /** A rule reached by a deep link opens on step 2 (the rule builder); everything else on step 1. */
+  const [startStep, setStartStep] = useState(() => (openRuleId ? 1 : 0));
+  /* Once that editor closes, the address goes back to the listing so a refresh does not reopen it. */
+  const closeEditor = () => {
+    setEditing(null);
+    setStartStep(0);
+    if (/#\/admin\/request-form-rules\/./.test(location.hash)) history.replaceState(null, '', '#/admin/request-form-rules');
+  };
   const [pendingDelete, setPendingDelete] = useState<FormRule | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
   /** J · the field matrix is a view of the rules, not its own nav destination, so it is local state. Its tab was REMOVED (5 Oct 2026, Zeni); the view stays built — add ['matrix', 'Field Matrix'] back to the tab list to restore it. */
@@ -155,7 +165,8 @@ export function AdminRequestFormModule({ tab, onTab, onEditor }: {
         rules={rules}
         onOpenRule={(id) => setEditing(id)}
         fields={fields}
-        onCancel={() => setEditing(null)}
+        startStep={startStep}
+        onCancel={closeEditor}
         onSave={(data) => {
           if (current) {
             setRules((rs) => rs.map((r) => (r.id === current.id ? { ...r, ...data } : r)));
@@ -164,7 +175,7 @@ export function AdminRequestFormModule({ tab, onTab, onEditor }: {
             setRules((rs) => [...rs, { ...data, id: uid('rule'), createdAt: stamp(), enabled: true, conflicts: 0 }]);
             toast.success(`“${data.name}” created — it runs last, drag it up to run it earlier`);
           }
-          setEditing(null);
+          closeEditor();
         }}
       />
     );

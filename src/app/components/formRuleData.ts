@@ -178,7 +178,9 @@ const r = (
   name: string, execution: RuleExecution, applies: RuleApplies, event: RuleEvent, createdAt: string,
   extra: Partial<FormRule> = {},
 ): FormRule => ({
-  id: uid('rule'), name, description: '', applies, event, execution, tags: [], reverse: false, enabled: true,
+  /* STABLE id from the name, not uid(): a rule is opened in a new tab by its id, and the new tab
+     builds its seeds again — a clock-based id would never match across tabs. */
+  id: 'rule-' + name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''), name, description: '', applies, event, execution, tags: [], reverse: false, enabled: true,
   createdAt, conflicts: 0,
   groups: [g([{ join: 'And', fieldId: 'priority', op: 'is', value: ['High', 'Urgent'] }])],
   actions: [a('Mandate', ['assignee'])],

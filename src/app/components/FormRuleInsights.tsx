@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ArrowUpRight, Check, ChevronRight, ChevronsRight, CornerDownRight, History, ListOrdered, Plus, Split, X } from 'lucide-react';
 import { FormRuleConflictReview } from './FormRuleConflictReview';
+import { CommonTriggerCard, type CondGroupView } from './FormRuleCommon';
 import type { FormRule } from './formRuleData';
 import type { ConflictKind, RuleConflict, SimilarRule, TimelineEntry } from './formRuleEngine';
 import { EVENT_OPTIONS } from './formRuleData';
@@ -109,8 +110,12 @@ function Empty({ art, title, text }: { art?: React.ReactNode; title: string; tex
 
 export function FormRuleInsights({
   ready, hasActions, conflicts, similar, timeline, tab, onTab, triggerChips, conditionLines, fieldLabel,
-  onJump, onHover, onOpenRule, onCollapse, onCloseDialog, bare = false, hideHead = false, only, rules = [], pillTabs = false, noTitleIcon = false,
+  onJump, onHover, onOpenRule, onCollapse, onCloseDialog, bare = false, hideHead = false, only, rules = [], pillTabs = false, noTitleIcon = false, focus, common,
 }: {
+  /** Bring this field forward in the conflicts list (an action row's warning asked about it). */
+  focus?: { field: string; n: number } | null;
+  /** What every similar rule shares with this one — the Common trigger, conditions & actions card. */
+  common?: { applies: string; groups: CondGroupView[]; actions: string[] };
   /** Drop the list glyph before "Rule check". */
   noTitleIcon?: boolean;
   /** The ticket Relations tab's bordered pills instead of underline tabs — for a panel that already has a tab row above. */
@@ -146,7 +151,7 @@ export function FormRuleInsights({
   const tabs: [InsightTab, string, number | null][] = [
     ['conflicts', 'Conflicts', conflicts.length],
     ['similar', 'Similar rules', similar.length],
-    ['order', 'Run order', null],
+    /* Run order is withdrawn from the rail (6 Oct 2026, Zeni); its body below stays for the hidden layouts. */
   ];
 
   let body: React.ReactNode;
@@ -164,20 +169,9 @@ export function FormRuleInsights({
         text={conditionLines.length ? 'No other rule uses this trigger and these conditions. This rule is not a duplicate.' : 'Similar rules are ones that already use the same trigger and conditions. Add a condition and they show here.'} />
     ) : (
       <div className="flex flex-col gap-3 p-3">
-        <div className="rounded-md border border-[#FDE68A] bg-[#FFFBEB] px-3 py-2">
-          <div className="text-[12px] font-medium text-[#B45309]">{similar.length} rule{similar.length > 1 ? 's' : ''} already use this trigger</div>
-          <p className="text-[11px] text-[#B45309]/80">Adding your actions to one of them keeps the same behaviour without a second rule to maintain.</p>
-        </div>
-        <div className="rounded-lg bg-[#F9FAFB] p-3">
-          <div className="text-[11px] font-medium uppercase tracking-wide text-[#7B8FA5]">Shared trigger &amp; conditions</div>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            <span className="inline-flex items-center gap-1 rounded-full border border-[#DFE5ED] bg-white px-2 py-0.5 text-[11px] text-[#364658]"><History size={11} />{triggerChips.event}</span>
-            <span className="inline-flex items-center gap-1 rounded-full border border-[#DFE5ED] bg-white px-2 py-0.5 text-[11px] text-[#364658]">{triggerChips.execution}</span>
-          </div>
-          <ul className="mt-2 space-y-0.5">
-            {conditionLines.map((l) => <li key={l} className="flex items-center gap-1.5 text-[12px] text-[#364658]"><Split size={11} className="rotate-180 text-[#F58518]" />{l}</li>)}
-          </ul>
-        </div>
+        <CommonTriggerCard count={similar.length} eventText={triggerChips.event} execution={triggerChips.execution}
+          applies={common?.applies ?? ''} actions={common?.actions ?? []}
+          groups={common?.groups ?? (conditionLines.length ? [{ join: 'And', conds: conditionLines.map((t) => ({ join: 'And' as const, text: t })) }] : [])} />
         <SimilarList similar={similar} onOpenRule={onOpenRule} />
       </div>
     );
@@ -256,7 +250,7 @@ export function FormRuleInsights({
       {ready && tab === 'conflicts' && conflicts.length > 0
         ? <div className="flex min-h-0 flex-1 flex-col pt-3">
             <FormRuleConflictReview accordion conflicts={conflicts} rules={rules} fieldLabel={fieldLabel}
-              onJump={onJump} onOpenRule={onOpenRule} currentExecution={triggerChips.execution} />
+              onJump={onJump} onOpenRule={onOpenRule} currentExecution={triggerChips.execution} focus={focus} />
           </div>
         : <div className="min-h-0 flex-1 overflow-y-auto">{body}</div>}
     </aside>
@@ -268,40 +262,40 @@ export function FormRuleInsights({
  * Click the line to see the three groups as plain text — what matches, what only that rule does,
  * and what you would add to it. No pills: colour lives only in the small icon of each line. */
 function SimilarList({ similar, onOpenRule }: { similar: SimilarRule[]; onOpenRule: (id: string) => void }) {
-  const [open, setOpen] = useState<string | null>(similar[0]?.rule.id ?? null);
+  /* The conflicts list's accordion cards: one card per rule, a light header, any number open at once
+     (the first starts open). */
+  const [open, setOpen] = useState<string[]>(similar[0] ? [similar[0].rule.id] : []);
+  const toggle = (id: string) => setOpen((o) => (o.includes(id) ? o.filter((x) => x !== id) : [...o, id]));
   return (
-    <div className="overflow-hidden rounded-lg border border-[#EEF2F6] bg-white">
+    <div className="flex flex-col gap-3">
       {similar.map((s) => {
-        const mine = s.common.length + s.missing.length;
-        const on = open === s.rule.id;
-        const group = (title: string, items: string[], icon: React.ReactNode) => items.length > 0 && (
+        const on = open.includes(s.rule.id);
+        const group = (title: string, items: string[], icon: React.ReactNode) => (
           <div>
             <div className="mb-1 text-[11px] font-medium text-[#98A2B3]">{title}</div>
-            <ul className="space-y-1">
-              {items.map((t) => <li key={t} className="flex items-center gap-2 text-[12px] text-[#364658]">{icon}{t}</li>)}
-            </ul>
+            {items.length > 0
+              ? <ul className="space-y-1">{items.map((t) => <li key={t} className="flex items-center gap-2 text-[12px] text-[#364658]">{icon}{t}</li>)}</ul>
+              : <p className="text-[12px] text-[#98A2B3]">None</p>}
           </div>
         );
         return (
-          <div key={s.rule.id} className="border-b border-[#F1F5F9] last:border-b-0">
-            <div role="button" tabIndex={0} onClick={() => setOpen(on ? null : s.rule.id)}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(on ? null : s.rule.id); } }}
-              className={'flex cursor-pointer items-center px-3 py-2.5 transition-colors ' + (on ? 'bg-[#F7F9FB]' : 'hover:bg-[#FAFBFC]')}>
-              <ChevronRight size={14} className={'mr-2 flex-shrink-0 text-[#98A2B3] transition-transform ' + (on ? 'rotate-90' : '')} />
-              <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-[#1D2A3E]">
+          <div key={s.rule.id} className="group/sim rounded-lg border border-[#DFE5ED] bg-white">
+            <div role="button" tabIndex={0} onClick={() => toggle(s.rule.id)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(s.rule.id); } }}
+              className={'flex h-9 cursor-pointer items-center gap-2.5 bg-[#F6F9FC] px-3 transition-colors hover:bg-[#EEF3F8] ' + (on ? 'rounded-t-lg border-b border-[#DFE5ED]' : 'rounded-lg')}>
+              <ChevronRight size={15} className={'flex-shrink-0 text-[#64748B] transition-transform ' + (on ? 'rotate-90' : '')} />
+              <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-[#1D2A3E]">
                 {s.rule.name}{!s.rule.enabled && <span className="ml-1.5 text-[11px] font-normal text-[#98A2B3]">· disabled</span>}
               </span>
               <button type="button" onClick={(e) => { e.stopPropagation(); onOpenRule(s.rule.id); }}
-                className="inline-flex w-[72px] flex-shrink-0 items-center justify-end gap-0.5 text-[12px] font-medium text-[#3D8BD0] hover:underline">
-                Open <ArrowUpRight size={12} />
+                className="inline-flex flex-shrink-0 items-center gap-0.5 text-[12px] font-medium text-[#3D8BD0] opacity-0 transition-opacity hover:underline focus:opacity-100 group-hover/sim:opacity-100">
+                Open rule <ArrowUpRight size={12} />
               </button>
             </div>
             {on && (
-              <div className="grid grid-cols-3 gap-5 bg-[#F7F9FB] px-3 pb-3.5 pl-9 pt-1">
+              <div className="flex flex-col gap-3 p-3">
                 {group('Matches your rule', s.common, <Check size={12} strokeWidth={2.5} className="flex-shrink-0 text-[#12B76A]" />)}
-                {group('Only in this rule', s.others, <span className="size-1 flex-shrink-0 rounded-full bg-[#98A2B3]" />)}
-                {group('Your actions it lacks', s.missing, <Plus size={12} strokeWidth={2.5} className="flex-shrink-0 text-[#3D8BD0]" />)}
-                {mine === 0 && s.others.length === 0 && <p className="text-[12px] text-[#98A2B3]">No actions to compare yet.</p>}
+                {group('Its other actions', s.others, <span className="size-1 flex-shrink-0 rounded-full bg-[#98A2B3]" />)}
               </div>
             )}
           </div>

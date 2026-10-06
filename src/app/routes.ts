@@ -77,6 +77,9 @@ export interface Route {
      what it is rather than a generic `id`. A second module wanting one should widen this
      deliberately rather than inherit a name that stopped describing it. */
   portal?: string;
+  /** A form rule opened straight into its editor — #/admin/request-form-rules/<rule id>. The
+      conflict / similar sidebars open a rule this way, in a new tab. */
+  rule?: string;
 }
 
 /** The address of one portal, as a slug. Names are unique (see `uniquePageName`), so the slug is
@@ -96,11 +99,12 @@ export function parseHash(hash: string): Route {
   /* ⚠️ A third segment only means something for the one module that has records. Anywhere else it
      is ignored rather than rejected — a stray segment should still land you on the module, not on
      the default page with no explanation. */
-  return { page, admin: slug, portal: slug === 'support-portal' ? parts[2] : undefined };
+  return { page, admin: slug, portal: slug === 'support-portal' ? parts[2] : undefined, rule: slug === 'request-form-rules' ? parts[2] : undefined };
 }
 
 export function formatHash(route: Route): string {
   if (route.page === 'admin' && route.admin) {
+    if (route.rule) return `#/admin/${route.admin}/${route.rule}`;
     return route.portal ? `#/admin/${route.admin}/${route.portal}` : `#/admin/${route.admin}`;
   }
   return `#/${route.page}`;

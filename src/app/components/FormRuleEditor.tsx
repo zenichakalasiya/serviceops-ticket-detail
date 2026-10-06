@@ -50,7 +50,10 @@ const VERSIONS: { id: EditorVersion; label: string; hint: string; fav?: boolean;
 ];
 /** A hidden layout remembered from an earlier visit falls back to A. */
 /** B3 is the chosen layout (Zeni, 1 Oct 2026); the others stay built but are hidden. Add ids back here to compare again. */
-const SHOWN: EditorVersion[] = ['B3'];
+/* All the shortlisted layouts are offered again for comparison (6 Oct 2026, Zeni) — B3 first and still the default; the H1/H2/H3 steps-across variants stay hidden. */
+/* A is the FINAL layout (6 Oct 2026, Zeni): the builder with the Rule check rail open beside it by
+   default. Every other layout stays built and hidden; add ids back here to compare again. */
+const SHOWN: EditorVersion[] = ['A'];
 /** The layouts whose conflict / similar checks open in the two summary sidebars. */
 const SUMMARY: EditorVersion[] = ['H1', 'H2', 'H3', 'R', 'B3', 'A3', 'A3R', 'S', 'LS', 'RC', 'EG', 'HF'];
 const RAIL_MIN = 320;
@@ -179,7 +182,9 @@ function JoinToggle({ value, onChange }: { value: 'And' | 'Or'; onChange: (v: 'A
   );
 }
 
-export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRule }: {
+export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRule, startStep = 0 }: {
+  /** The step to open on — 1 lands straight on the rule builder (a rule opened from another tab). */
+  startStep?: number;
   /** The rule being edited, or undefined for a new one. */
   rule?: FormRule;
   /** Every saved rule, in run order — what conflicts and similar rules are measured against. */
@@ -200,7 +205,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
   const [flashAction, setFlashAction] = useState<string | null>(null);
 
   // ── version + rail state ──────────────────────────────────────────────────
-  const [version, setVersionState] = useState<EditorVersion>(() => (SHOWN.includes(store.get('formRuleVersion') as EditorVersion) ? store.get('formRuleVersion') as EditorVersion : 'B3'));
+  const [version, setVersionState] = useState<EditorVersion>(() => (SHOWN.includes(store.get('formRuleVersion') as EditorVersion) ? store.get('formRuleVersion') as EditorVersion : 'A'));
   const setVersion = (v: EditorVersion) => { setVersionState(v); store.set('formRuleVersion', v); };
   const [railOpen, setRailOpenState] = useState(() => store.get('formRuleRailOpen') !== '0');
   const setRailOpen = (v: boolean) => { setRailOpenState(v); store.set('formRuleRailOpen', v ? '1' : '0'); };
@@ -217,7 +222,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
   const [detailsOpen, setDetailsOpen] = useState(true);
   const [iTab, setITab] = useState<'details' | 'check'>('details');
   /** Version B: which step is showing. */
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(startStep);
   /** Version B2: 0 details · 1 build · 2 review. */
   const [step3, setStep3] = useState(0);
   /** Version P: a NEW rule opens on the name popup; the sidebar's Rule details start folded. */
@@ -328,7 +333,12 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
     onSave({ ...draft, applies: draft.applies as FormRule['applies'], event: draft.event as FormRule['event'], execution: draft.execution as FormRule['execution'] });
   };
   const leave = () => (dirty ? setConfirmLeave('list') : onCancel());
-  const openOther = (id: string) => (dirty ? setConfirmLeave(id) : onOpenRule(id));
+  /* Another rule (from the conflicts or similar-rules sidebar) opens in a NEW TAB, straight on its
+     rule builder — this draft stays exactly as it is, so there is nothing to discard. */
+  const openOther = (id: string) => {
+    window.open(location.pathname + location.search + '#/admin/request-form-rules/' + encodeURIComponent(id), '_blank', 'noopener');
+  };
+  void onOpenRule;
 
   // ── rule check: measured live against the draft ───────────────────────────
   const selfIndex = rule ? rules.findIndex((r) => r.id === rule.id) : rules.length;
@@ -470,8 +480,15 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
     setReview('view');
   };
   const reviewSimilar = () => showCheck('similar');
+  /** An action row's warning: A opens its rail on Conflicts with that FIELD brought forward and tinted;
+      the summary layouts open the conflicts sidebar on that field. */
+  const [railFocus, setRailFocus] = useState<{ field: string; n: number } | null>(null);
+  const focusConflict = (field: string) => {
+    if (version === 'A') { setTab('conflicts'); openRail('conflicts'); setRailFocus({ field, n: Date.now() }); return; }
+    setRelField(field); setRelOpen('conflicts');
+  };
 
-  const similarBanner = similar.length > 0 && !SUMMARY.includes(version) && !(version === 'H' && !rule && !hStarted) && (
+  const similarBanner = similar.length > 0 && !SUMMARY.includes(version) && version !== 'A' && !(version === 'H' && !rule && !hStarted) && (
     /* Said where the duplicate is made: the moment these conditions match another rule's. */
     <div className="flex items-center gap-2.5 rounded-md border border-[#FDE68A] bg-[#FFFBEB] px-3 py-2">
       <span className="size-1.5 flex-shrink-0 rounded-full bg-[#FBBF24]" />
@@ -483,7 +500,11 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
     </div>
   );
 
+  const commonGroups = draft.groups.map((g) => ({ join: g.join, conds: g.conditions.filter((x) => x.fieldId && x.op).map((x) => ({ join: x.join, text: conditionText(x, fields) })) })).filter((g) => g.conds.length);
+  const commonActions = draft.actions.filter((a) => a.type && a.fieldIds.length).flatMap((a) => a.fieldIds.map((f) => actionText(a.type, fieldById(f)?.label ?? f, a.value.join(', '))));
   const railProps = {
+    focus: railFocus,
+    common: { applies: APPLIES_OPTIONS.find((o) => o.value === draft.applies)?.label ?? '', groups: commonGroups, actions: commonActions },
     ready,
     hasActions: draft.actions.some((a) => a.type && a.fieldIds.length > 0),
     conflicts, similar, timeline, tab, onTab: setTab,
@@ -528,7 +549,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
   </>);
   /** B3 (and the hidden H layouts) ask who the rule is for beside WHEN it runs — the trigger, the
       execution and the audience together say when this rule applies (5 Oct 2026). */
-  const appliesInWhen = ['B3', 'H1', 'H2', 'H3'].includes(version);
+  const appliesInWhen = ['A', 'B3', 'H1', 'H2', 'H3'].includes(version);
   const whenEl = (<>
             {/* WHEN */}
             <Step icon={<History size={12} />} tone="#3D8BD0" badge="#E2EDF5" lead="When" rest="this rule should run and when it should execute">
@@ -715,7 +736,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
                           const lit = hoverAction === act.id || flashAction === act.id;
                           /* Summary layouts: the clash is said ON the row — the field is outlined and a warning sits beside it;
                              hovering the warning offers the field-wise conflicts sidebar. */
-                          const rowWarn = clashes.length > 0 && SUMMARY.includes(version) && version !== 'EG';
+                          const rowWarn = clashes.length > 0 && (SUMMARY.includes(version) || version === 'A') && version !== 'EG';
                           const clashFields = [...new Set(clashes.map((x) => x.fieldId))];
                           return (
                             <div key={act.id} data-action-row={act.id} className={'-mx-1.5 w-[calc(100%+12px)] rounded-md px-1.5 py-1 transition-colors ' + (lit ? 'bg-[#FEF2F2] ring-1 ring-[#FCA5A5]' : rowWarn ? 'bg-[#FEF3F2]' : '')}>
@@ -741,7 +762,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
                               {rowWarn && (
                                 <HoverCard openDelay={120} closeDelay={150}>
                                   <HoverCardTrigger asChild>
-                                    <button type="button" onClick={() => { setRelField(clashFields[0]); setRelOpen('conflicts'); }} aria-label="Conflicts on this action"
+                                    <button type="button" onClick={() => focusConflict(clashFields[0])} aria-label="Conflicts on this action"
                                       className="flex size-7 flex-shrink-0 items-center justify-center rounded text-[#D92D20] transition-colors hover:bg-[#FEF2F2]">
                                       <AlertTriangle size={16} />
                                     </button>
@@ -751,7 +772,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
                                     <ul className="mt-1.5 flex flex-col gap-1">
                                       {clashFields.map((f) => (
                                         <li key={f}>
-                                          <button type="button" onClick={() => { setRelField(f); setRelOpen('conflicts'); }}
+                                          <button type="button" onClick={() => focusConflict(f)}
                                             className="flex w-full items-center gap-2 rounded px-1.5 py-1 text-left text-[12px] text-[#364658] transition-colors hover:bg-[#F5F7FA]">
                                             <span className="size-1.5 flex-shrink-0 rounded-full bg-[#F04438]" />
                                             <span className="min-w-0 flex-1 truncate">{fieldById(f)?.label ?? f}</span>
@@ -766,7 +787,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
                               )}
                               <RowTools copyTitle="Duplicate action" deleteTitle="Remove action" onCopy={() => copyAction(act.id)} onDelete={() => setActions((as) => as.filter((x) => x.id !== act.id))} />
                             </div>
-                            {clashes.length > 0 && version !== 'EG' && !SUMMARY.includes(version) && (
+                            {clashes.length > 0 && version !== 'EG' && version !== 'A' && !SUMMARY.includes(version) && (
                               /* Said on the row that causes it; the detail is one click away in the rail. */
                               <div className="mt-1.5 flex flex-col gap-1 pl-1">
                                 {clashes.map((x) => (
@@ -815,7 +836,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
    *  room, it does not stretch the fields; the column is CENTRED in whatever space it has (1 Oct 2026). */
   const builder = (
     <div className="mx-auto flex max-w-[880px] flex-col gap-6 p-4 pb-8 pt-5">
-      {detailsStep(!['A2', 'R', 'S'].includes(version))}
+      {detailsStep(!appliesInWhen && !['A2', 'R', 'S'].includes(version))}
       {['A2', 'R', 'S'].includes(version) && whoEl}
       {whenEl}
       {ready && (<>{checkEl}{thenEl}{advancedEl}</>)}
@@ -1704,7 +1725,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
         <div className="ml-auto flex flex-shrink-0 items-center gap-2.5">
           {version === 'S'
             ? <RelatedSummaryChips ready={ready} conflicts={conflicts} similar={similar} onOpenConflicts={() => setRelOpen('conflicts')} onOpenSimilar={() => setRelOpen('similar')} />
-            : !SUMMARY.includes(version) && statusChip /* the summary layouts already show both counts as cards */}
+            : !SUMMARY.includes(version) && version !== 'A' && statusChip /* the summary layouts show the counts as cards; A's rail carries them on its tabs */}
           <button type="button" onClick={leave} className="rounded-md border border-[#DFE5ED] bg-white px-3 py-1.5 text-[12px] font-medium text-[#7B8FA5] transition-colors hover:bg-[#F9FAFB] hover:text-[#364658]">Cancel</button>
           <button type="button" onClick={() => save()} className="rounded-md bg-[#3D8BD0] px-3 py-1.5 text-[12px] font-medium text-white transition-colors hover:bg-[#3478B5]">Save Rule</button>
         </div>

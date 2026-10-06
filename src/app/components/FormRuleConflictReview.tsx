@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import { AlertTriangle, ArrowLeftRight, ArrowUpRight, Ban, ChevronLeft, ChevronRight, CornerDownRight, Lightbulb, Search, FileText, Layers, RefreshCw, TextCursorInput } from 'lucide-react';
 import type { FormRule } from './formRuleData';
@@ -66,7 +66,10 @@ function KindBar({ cs, h = 6 }: { cs: RuleConflict[]; h?: number }) {
 
 const countKinds = (cs: RuleConflict[]) => KINDS.map((k) => [k, cs.filter((c) => c.kind === k).length] as const).filter(([, n]) => n > 0);
 
-export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, onOpenRule, currentExecution, accordion = false, onHelpChange, onClose, sidebar = false, initialMode, initialSel }: {
+export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, onOpenRule, currentExecution, accordion = false, onHelpChange, onClose, sidebar = false, initialMode, initialSel, focus }: {
+  /** Bring this FIELD forward: switch to By field, open its accordion, tint it and scroll to it.
+      `n` changes on every request so asking for the same field twice still works. */
+  focus?: { field: string; n: number } | null;
   /** The R-family sidebar: a 'N conflicts found' banner instead of the four KPI filter cards. */
   sidebar?: boolean;
   /** Open on this view / this rule or field (an action row's warning opens a field directly). */
@@ -120,7 +123,23 @@ export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, o
   /** The clashes of whatever is selected — the resolution panel speaks about these first. */
   const focusItems = mode === 'rule' ? list.filter((x) => x.other.id === sel) : mode === 'field' ? list.filter((x) => x.fieldId === sel) : [];
 
-  useEffect(() => { setOpenIds(null); }, [mode]);
+  /** The field an action row's warning asked about — tinted light red in the list. */
+  const [lit, setLit] = useState<string | null>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  /* A mode change resets which accordions are open — unless a focus request is switching the mode,
+     in which case the field it asked for is the one left open. */
+  const pendingOpen = useRef<string | null>(null);
+  useEffect(() => { setOpenIds(pendingOpen.current ? [pendingOpen.current] : null); pendingOpen.current = null; }, [mode]);
+  useEffect(() => {
+    if (!focus) return;
+    if (mode !== 'field') pendingOpen.current = focus.field;
+    setMode('field');
+    setLit(focus.field);
+    setOpenIds([focus.field]);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      listRef.current?.querySelector(`[data-acc="${focus.field}"]`)?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    }));
+  }, [focus?.n]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const goRule = (ruleId: string, fieldId?: string) => { setMode('rule'); setSel(ruleId); setFocusField(fieldId ?? null); };
   const goField = (fieldId: string) => { setMode('field'); setSel(fieldId); setFocusField(null); };
@@ -255,7 +274,7 @@ export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, o
     return base.includes(id) ? base.filter((x) => x !== id) : [...base, id];
   });
   const subGroup = (key: string, title: React.ReactNode, right: React.ReactNode, body: React.ReactNode) => (
-    <div key={key}>
+    <div key={key} className="group/sg">
       {/* No panel behind the group — the header is white so it still covers rows scrolling under it. */}
       <div className="sticky top-[36px] z-10 flex items-center gap-2 bg-white pb-2 pt-1">
         <span className="min-w-0 truncate text-[13px] font-semibold text-[#1D2A3E]">{title}</span>
@@ -266,12 +285,7 @@ export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, o
   );
   const accordionView = (
     <div className="flex min-h-0 flex-1 flex-col px-3 pb-4">
-      <div className="relative mb-3 w-full flex-shrink-0 @[640px]:w-[280px]">
-        <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#98A2B3]" />
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={mode === 'rule' ? 'Search rules...' : 'Search fields...'}
-          className="h-8 w-full rounded-md border border-[#E2E8F0] bg-white pl-8 pr-2.5 text-[12px] text-[#364658] placeholder:text-[#98A2B3] focus:border-[#3D8BD0] focus:outline-none focus:ring-1 focus:ring-[#3D8BD0]" />
-      </div>
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto">
         {shownList.length === 0 && <div className="py-10 text-center text-[12px] text-[#98A2B3]">Nothing matches “{q}”</div>}
         <div className="flex flex-col gap-3">
           {shownList.map((it) => {
@@ -285,27 +299,31 @@ export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, o
               body = rulesOf(it.items).sort((a, b) => order(a) - order(b)).map((rid) => {
                 const here = it.items.filter((x) => x.other.id === rid);
                 return subGroup(rid, here[0].other.name,
-                  <button type="button" onClick={() => onOpenRule(rid)} className="ml-auto flex-shrink-0 text-[12px] text-[#3D8BD0] hover:underline">Open rule</button>,
+                  <button type="button" onClick={() => onOpenRule(rid)} className="ml-auto inline-flex flex-shrink-0 items-center gap-0.5 text-[12px] font-medium text-[#3D8BD0] opacity-0 transition-opacity hover:underline focus:opacity-100 group-hover/sg:opacity-100">Open rule <ArrowUpRight size={12} /></button>,
                   here.map((x) => pair(x, it.id)));
               });
             }
             return (
               /* No overflow-hidden here — it would stop the headers inside from sticking. */
-              <div key={it.id} className="rounded-lg border border-[#DFE5ED] bg-white">
-                <div role="button" tabIndex={0} onClick={() => toggle(it.id)}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(it.id); } }}
-                  className={'sticky top-0 z-20 flex h-9 cursor-pointer items-center gap-2.5 bg-[#F6F9FC] px-3 transition-colors hover:bg-[#EEF3F8] ' + (open ? 'rounded-t-lg' : 'rounded-lg')}>
+              <div key={it.id} data-acc={it.id} className={'group/acc scroll-mt-0 rounded-lg border bg-white ' + (!open ? 'border-transparent' : lit === it.id ? 'border-[#F7C6C2]' : 'border-[#DFE5ED]')}>
+                {/* The sticky header sits on a square WHITE band: while it is pinned, rows scroll under it,
+                    and the band fills its rounded corners so nothing shows through them. The border is
+                    drawn on the header itself so a pinned header still reads as a card's top edge. */}
+                <div className="sticky top-0 z-20 -mx-px -mt-px bg-white">
+                  <div role="button" tabIndex={0} onClick={() => toggle(it.id)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(it.id); } }}
+                    className={'flex h-9 cursor-pointer items-center gap-2.5 border px-3 transition-colors '
+                      + (lit === it.id ? 'border-[#F7C6C2] bg-[#FEF3F2] hover:bg-[#FDE8E6] ' : 'border-[#DFE5ED] bg-[#F6F9FC] hover:bg-[#EEF3F8] ')
+                      + (open ? 'rounded-t-lg' : 'rounded-lg')}>
                   <ChevronRight size={15} className={'flex-shrink-0 text-[#64748B] transition-transform ' + (open ? 'rotate-90' : '')} />
                   <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-[#1D2A3E]">{it.title}</span>
-                  <span className="inline-flex flex-shrink-0 items-center gap-1 text-[12px] font-medium text-[#DC2626]">
-                    <AlertTriangle size={13} /> {n} conflict{n === 1 ? '' : 's'}
-                  </span>
                   {mode === 'rule' && (
                     <button type="button" onClick={(e) => { e.stopPropagation(); onOpenRule(it.id); }}
-                      className="ml-2 inline-flex flex-shrink-0 items-center gap-0.5 text-[12px] font-medium text-[#3D8BD0] hover:underline">
+                      className="ml-2 inline-flex flex-shrink-0 items-center gap-0.5 text-[12px] font-medium text-[#3D8BD0] opacity-0 transition-opacity hover:underline focus:opacity-100 group-hover/acc:opacity-100">
                       Open rule <ArrowUpRight size={12} />
                     </button>
                   )}
+                  </div>
                 </div>
                 {open && <div className="flex flex-col gap-3 rounded-b-lg p-3">{body}</div>}
               </div>
@@ -370,12 +388,20 @@ export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, o
           </div>
         </div>
       )}
-      <div className="mx-3 mb-3 flex flex-shrink-0 flex-wrap items-center gap-3">
+      <div className={'mx-3 mb-3 flex flex-shrink-0 flex-wrap items-center ' + (accordion ? 'gap-2' : 'gap-3')}>
         <div className="pill-track">
           <button type="button" aria-pressed={mode === 'rule'} onClick={() => setMode('rule')}><span className="inline-flex items-center gap-1.5"><FileText size={12} />By rule</span></button>
           <button type="button" aria-pressed={mode === 'field'} onClick={() => setMode('field')}><span className="inline-flex items-center gap-1.5"><Layers size={12} />By field</span></button>
         </div>
-        {!sidebar && <div className="grid w-full grid-cols-4 gap-2 @[640px]:ml-auto @[640px]:flex @[640px]:w-auto">
+        {/* In the rail the search sits on the tabs' row — one line, not two. */}
+        {accordion && (
+          <div className="relative ml-auto w-[180px] flex-shrink-0">
+            <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#98A2B3]" />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={mode === 'rule' ? 'Search rules...' : 'Search fields...'}
+              className="h-8 w-full rounded-md border border-[#E2E8F0] bg-white pl-8 pr-2.5 text-[12px] text-[#364658] placeholder:text-[#98A2B3] focus:border-[#3D8BD0] focus:outline-none focus:ring-1 focus:ring-[#3D8BD0]" />
+          </div>
+        )}
+        {!sidebar && !accordion && <div className="grid w-full grid-cols-4 gap-2 @[640px]:ml-auto @[640px]:flex @[640px]:w-auto">
           {([
             { id: 'all' as const, label: 'All conflicts', n: conflicts.length, fg: '#1D2A3E' },
             ...KINDS.map((k) => ({ id: k, label: k, n: conflicts.filter((x) => x.kind === k).length, fg: KIND[k].fg })),
