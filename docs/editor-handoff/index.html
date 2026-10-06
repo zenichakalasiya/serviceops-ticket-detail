@@ -3,22 +3,12 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
 <style>
 :root{
-  --bg:#F6F8FB; --paper:#FFFFFF; --ink:#1B2533; --ink-2:#4A5A6E; --ink-3:#5B6B7E;
-  --line:#E2E8F0; --soft:#EEF3F9; --accent:#2F7FC6; --accent-soft:#E6F0FA;
-  --ok:#15803D; --ok-soft:#E8F6EC; --warn:#B45309; --warn-soft:#FEF3E2; --no:#B42318; --no-soft:#FDECEA;
-  --key-bg:#F1F5F9; --key-line:#D5DEE8; --shadow:0 1px 2px rgba(16,24,40,.05),0 6px 16px rgba(16,24,40,.06);
+  --bg:#FFFFFF; --paper:#FFFFFF; --ink:#1F2933; --ink-2:#4B5563; --ink-3:#6B7280;
+  --line:#ECEEF2; --soft:#F7F8FA; --accent:#2F6FB0; --accent-soft:#EEF4FB;
+  --ok:#1F7A45; --ok-soft:#EEF7F1; --warn:#9A5B12; --warn-soft:#FBF5EC; --no:#B42318; --no-soft:#FDF0EE;
+  --key-bg:#F6F7F9; --key-line:#E1E5EA; --shadow:none;
   color-scheme:light;
 }
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#0F1621; --paper:#151E2B; --ink:#E6ECF3; --ink-2:#B3C0CF; --ink-3:#8696A9;
-  --line:#263243; --soft:#1A2433; --accent:#6AAEEA; --accent-soft:#16304A;
-  --ok:#5BD08A; --ok-soft:#12301F; --warn:#F2B35A; --warn-soft:#33260F; --no:#F1897E; --no-soft:#3A1915;
-  --key-bg:#1E2938; --key-line:#33445A; --shadow:none; color-scheme:dark;}}
-:root[data-theme="dark"]{
-  --bg:#0F1621; --paper:#151E2B; --ink:#E6ECF3; --ink-2:#B3C0CF; --ink-3:#8696A9;
-  --line:#263243; --soft:#1A2433; --accent:#6AAEEA; --accent-soft:#16304A;
-  --ok:#5BD08A; --ok-soft:#12301F; --warn:#F2B35A; --warn-soft:#33260F; --no:#F1897E; --no-soft:#3A1915;
-  --key-bg:#1E2938; --key-line:#33445A; --shadow:none; color-scheme:dark;}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font:15px/1.6 "IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;padding-inline:16px;padding-block:0}
 .wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:230px minmax(0,1fr);gap:40px;padding-block:32px 80px}
@@ -31,10 +21,10 @@ nav.toc a{display:block;color:var(--ink-2);text-decoration:none;padding:4px 8px;
 nav.toc a:hover{background:var(--soft);color:var(--ink)}
 nav.toc .grp{margin:14px 0 4px 8px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
 main{min-width:0}
-header.hero{padding-bottom:20px;border-bottom:1px solid var(--line);margin-bottom:8px}
+header.hero{padding-bottom:8px;margin-bottom:0}
 .eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:600}
-h1{font-size:34px;line-height:1.15;margin:6px 0 10px;text-wrap:balance}
-h2{font-size:23px;line-height:1.25;margin:56px 0 6px;scroll-margin-top:20px;text-wrap:balance}
+h1{font-size:30px;line-height:1.2;margin:6px 0 10px;text-wrap:balance;font-weight:600}
+h2{font-size:21px;line-height:1.3;margin:52px 0 12px;padding-top:28px;border-top:1px solid var(--line);scroll-margin-top:20px;text-wrap:balance;font-weight:600}
 h3{font-size:17px;margin:28px 0 6px}
 p{margin:8px 0;max-width:72ch}
 .lede{font-size:17px;color:var(--ink-2);max-width:68ch}
@@ -42,22 +32,22 @@ p{margin:8px 0;max-width:72ch}
 .chip{font-size:12px;padding:3px 10px;border-radius:99px;background:var(--soft);color:var(--ink-2)}
 ul,ol.steps{padding-left:20px;margin:8px 0;max-width:74ch}
 li{margin:4px 0}
-figure{margin:18px 0;background:var(--paper);border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:var(--shadow)}
+figure{margin:16px 0;background:var(--paper);border:1px solid var(--line);border-radius:8px;overflow:hidden}
 figure img{display:block;width:100%;height:auto}
 figcaption{font-size:13px;color:var(--ink-2);padding:10px 14px;border-top:1px solid var(--line)}
 .shot{position:relative}
 .pin{position:absolute;transform:translate(-50%,-50%);width:24px;height:24px;border-radius:50%;background:#C9282E;color:#fff;font:700 12px/24px "IBM Plex Sans",sans-serif;text-align:center;box-shadow:0 0 0 3px rgba(255,255,255,.9)}
 .legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:6px 20px;padding:12px 14px;border-top:1px solid var(--line);font-size:13.5px}
 .legend b{display:inline-flex;width:20px;height:20px;border-radius:50%;background:#C9282E;color:#fff;font-size:11px;align-items:center;justify-content:center;margin-right:8px;vertical-align:1px}
-.rule{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;padding:12px 16px;margin:14px 0;max-width:80ch}
-.rule.warn{border-left-color:var(--warn)}
+.rule{background:var(--soft);border-radius:8px;padding:12px 16px;margin:14px 0;max-width:80ch}
+.rule.warn{background:var(--warn-soft)}
 .rule .k{font-size:11px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;color:var(--accent);display:block;margin-bottom:2px}
 .rule.warn .k{color:var(--warn)}
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
-.tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:10px;background:var(--paper)}
+.tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:8px;background:var(--paper)}
 table{border-collapse:collapse;width:100%;font-size:14px}
 th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
-th{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-3);font-weight:600;background:var(--soft)}
+th{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-3);font-weight:600;background:var(--paper)}
 tr:last-child td{border-bottom:0}
 td:first-child{font-weight:600;white-space:nowrap}
 kbd{font:500 12px "IBM Plex Mono",ui-monospace,monospace;background:var(--key-bg);border:1px solid var(--key-line);border-bottom-width:2px;border-radius:5px;padding:1px 6px;white-space:nowrap}
@@ -65,7 +55,7 @@ kbd{font:500 12px "IBM Plex Mono",ui-monospace,monospace;background:var(--key-bg
 .tag.pre{background:var(--accent-soft);color:var(--accent)}
 .tag.rep{background:var(--ok-soft);color:var(--ok)}
 .tag.mock{background:var(--warn-soft);color:var(--warn)}
-.diagram{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:18px;margin:16px 0;overflow-x:auto}
+.diagram{background:var(--soft);border-radius:8px;padding:18px;margin:16px 0;overflow-x:auto}
 .diagram svg{display:block;max-width:100%;height:auto;margin:0 auto}
 .diagram .cap{font-size:13px;color:var(--ink-2);margin-top:10px;text-align:center}
 svg text{font-family:"IBM Plex Sans",system-ui,sans-serif}
@@ -82,6 +72,10 @@ a{color:var(--accent)}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 html{scroll-behavior:smooth}
+ul.points{list-style:none;padding-left:0;margin:6px 0 10px;max-width:74ch;display:grid;gap:6px}
+ul.points li{position:relative;padding-left:18px;margin:0}
+ul.points li::before{content:"";position:absolute;left:4px;top:.72em;width:5px;height:5px;border-radius:50%;background:var(--accent)}
+main ul:not(.points){max-width:74ch}
 </style>
 
 <div class="wrap">
@@ -130,13 +124,13 @@ html{scroll-behavior:smooth}
 
 <!-- ───────────────────────── OVERVIEW ───────────────────────── -->
 <h2 id="overview">What it is</h2>
-<p>The Support Portal is the page a <b>requester</b> (an employee) lands on to raise incidents, request services, approve things and read knowledge. The <b>editor</b> lets an <b>ITSM admin</b> — usually not a designer — build and style that page visually, then publish it.</p>
-<p>An admin can keep several portals (for example one per company or department). Exactly one of them is live at a time: the <b>default</b> portal.</p>
+<ul class="points"><li>The Support Portal is the page a <b>requester</b> (an employee) lands on to raise incidents, request services, approve things and read knowledge. The <b>editor</b> lets an <b>ITSM admin</b> — usually not a designer — build and style that page visually, then publish it.</li>
+<li>An admin can keep several portals (for example one per company or department). Exactly one of them is live at a time: the <b>default</b> portal.</li></ul>
 <div class="rule"><span class="k">Design principle</span>The admin is not a designer. Every control should say in plain words what it does, show its result straight away on the page, and never be shown in a state where pressing it does nothing.</div>
 
 <!-- ───────────────────────── MODEL ───────────────────────── -->
 <h2 id="model">The mental model</h2>
-<p>Everything on a portal page is one of four things, nested in this order:</p>
+<ul class="points"><li>Everything on a portal page is one of four things, nested in this order:</li></ul>
 <div class="diagram">
 <svg viewBox="0 0 760 300" width="760" role="img" aria-label="Page contains sections, sections contain columns or rows, those contain widgets">
   <rect x="10" y="10" width="740" height="280" rx="12" class="s-soft"/>
@@ -168,7 +162,7 @@ html{scroll-behavior:smooth}
 
 <!-- ───────────────────────── LISTING ───────────────────────── -->
 <h2 id="listing">Portal list</h2>
-<p>Admin › Support Channels › <b>Support Portal</b>. One card per portal, the default first.</p>
+<ul class="points"><li>Admin › Support Channels › <b>Support Portal</b>. One card per portal, the default first.</li></ul>
 <figure><img src="shots/01-listing.png" alt="Portal list with one card: thumbnail, name, Published and Default badges, URL, company, sign-in, audience, last modified, and action buttons"><figcaption>One card per portal. The thumbnail is a real miniature of that portal's page.</figcaption></figure>
 <div class="tbl"><table>
 <tr><th>Card part</th><th>Behaviour</th></tr>
@@ -206,7 +200,7 @@ stateDiagram-v2
 </ul>
 
 <h2 id="create">Create a portal</h2>
-<p>The <b>Create support portal</b> button opens a two-step dialog.</p>
+<ul class="points"><li>The <b>Create support portal</b> button opens a two-step dialog.</li></ul>
 <div class="grid2">
 <figure><img src="shots/05-create-step1.png" alt="Create dialog step 1 with portal details fields"><figcaption><b>Step 1 · Details</b> — Name*, Company*, URL*, Identity provider. Save is disabled until the required fields are filled.</figcaption></figure>
 <figure><img src="shots/06-create-step2.png" alt="Create dialog step 2: Start from scratch row and template grid with industry tags"><figcaption><b>Step 2 · Start</b> — one click picks a starting point: from scratch, the Default design, or a template.</figcaption></figure>
@@ -223,7 +217,7 @@ stateDiagram-v2
 <figure><img src="shots/03-edit-details.png" alt="Edit details right side panel"><figcaption><b>Edit details</b> — a right side panel with the same four fields as Step 1. Esc or clicking the dim area closes it.</figcaption></figure>
 <figure><img src="shots/04-portal-settings.png" alt="Settings side panel with Request group toggles"><figcaption><b>Settings</b> — what a requester may <i>do</i> on this portal.</figcaption></figure>
 </div>
-<p>Settings has nine collapsible groups in this order: <b>Request · Service Catalog · Change · Asset · CMDB · Knowledge · Approval · Digital Signature · User</b>. Request is open on arrival; the rest start collapsed.</p>
+<ul class="points"><li>Settings has nine collapsible groups in this order: <b>Request · Service Catalog · Change · Asset · CMDB · Knowledge · Approval · Digital Signature · User</b>. Request is open on arrival; the rest start collapsed.</li></ul>
 <ul>
   <li>Rows are switches, radio choices, numbers or chip selects.</li>
   <li>A row that depends on another (e.g. <i>Grace Period</i> under "Allow requester to reopen") is <b>removed</b> when its parent is off — not greyed.</li>
@@ -232,7 +226,7 @@ stateDiagram-v2
 
 <!-- ───────────────────────── EDITOR ANATOMY ───────────────────────── -->
 <h2 id="anatomy">Editor — screen anatomy</h2>
-<p>The editor takes the whole screen. The admin navigation is hidden; the back arrow is the way out.</p>
+<ul class="points"><li>The editor takes the whole screen. The admin navigation is hidden; the back arrow is the way out.</li></ul>
 <figure>
   <div class="shot">
     <img src="shots/10-editor.png" alt="The editor: top bar, canvas, widgets panel and right rail">
@@ -276,7 +270,7 @@ stateDiagram-v2
 <figure><img src="shots/10-editor.png" alt="Default page"><figcaption><b>Default page</b> — Banner, the four Quick Actions cards, Favourite + Most Used Services side by side, then data cards (My Open Requests, Pending Approvals, Announcements, My Assets, My CIs, Most Read Knowledge, Contact Us).</figcaption></figure>
 <figure><img src="shots/07-blank-editor.png" alt="Blank page empty state with Add section button"><figcaption><b>From scratch</b> — "Your portal is empty" + <b>Add section</b>. The first section spans the page; its + handles split it.</figcaption></figure>
 </div>
-<p>On the default page the predefined cards are ordinary sections, so they move, split and restyle like anything the admin adds.</p>
+<ul class="points"><li>On the default page the predefined cards are ordinary sections, so they move, split and restyle like anything the admin adds.</li></ul>
 
 <!-- ───────────────────────── SELECT ───────────────────────── -->
 <h2 id="select">Selecting things</h2>
@@ -300,7 +294,7 @@ stateDiagram-v2
 
 <!-- ───────────────────────── TOOLBAR ───────────────────────── -->
 <h2 id="toolbar">Floating toolbar</h2>
-<p>Appears just above whatever is selected (inside the top edge for the banner, which has no room above it). It is white, compact, and grouped:</p>
+<ul class="points"><li>Appears just above whatever is selected (inside the top edge for the banner, which has no room above it). It is white, compact, and grouped:</li></ul>
 <div class="diagram">
 <svg viewBox="0 0 720 150" width="720" role="img" aria-label="Toolbar groups: grip, divider, place actions, style actions, divider, delete">
   <rect x="10" y="20" width="700" height="52" rx="10" class="s-box"/>
@@ -342,7 +336,7 @@ stateDiagram-v2
 <tr><td>Background colour</td><td>Opens the colour picker (Light/Dark tabs). Transparent = opacity 0.</td></tr>
 <tr><td>Delete</td><td>Removes it. Undoable. Fenced off from the rest by a divider.</td></tr>
 </table></div>
-<p><b>Not on the toolbar</b> (they live in the sidebar's Design section): border, corner radius, shadow, icon styling, spacing. The old "move one place" arrows are switched off.</p>
+<ul class="points"><li><b>Not on the toolbar</b> (they live in the sidebar's Design section): border, corner radius, shadow, icon styling, spacing. The old "move one place" arrows are switched off.</li></ul>
 <div class="grid2">
 <figure><img src="shots/14-select-section.png" alt="Section selected with its toolbar and sidebar"><figcaption>A selected section: its toolbar (grip, Split, Add, Copy, colour, Delete) and its Design settings.</figcaption></figure>
 <figure><img src="shots/19-colour-picker.png" alt="Background colour picker open from the toolbar"><figcaption>Background colour from the toolbar.</figcaption></figure>
@@ -350,7 +344,7 @@ stateDiagram-v2
 
 <!-- ───────────────────────── SIDEBAR ───────────────────────── -->
 <h2 id="sidebar">Sidebar (settings of the selected thing)</h2>
-<p>Header: the element's icon and name, with a <b>Reset</b> (↺) on the right that returns <i>that element</i> to its default. Then up to two sections:</p>
+<ul class="points"><li>Header: the element's icon and name, with a <b>Reset</b> (↺) on the right that returns <i>that element</i> to its default. Then up to two sections:</li></ul>
 <ul>
   <li><b>CONTENT</b> — what it says and shows: titles, text, links, which records to list, the items of a list. Edits show on the canvas immediately.</li>
   <li><b>DESIGN</b> — how it looks, as collapsible groups. Order: shape first (Layout · Card templates · Banner), then look (Alignment · Background · Border &amp; corners · Shadow · Icon), then <b>Spacing</b>, then Title placement. <b>Expand all / Collapse all</b> on the Design heading. Groups open independently (more than one can be open).</li>
@@ -419,7 +413,7 @@ stateDiagram-v2
 
 <!-- ───────────────────────── WIDGET REFERENCE ───────────────────────── -->
 <h2 id="widgets">Widget reference</h2>
-<p><span class="tag pre">once per page</span> predefined · <span class="tag rep">repeatable</span> other · <span class="tag mock">mock</span> data is dummy in the prototype; production reads the logged-in requester's real records.</p>
+<ul class="points"><li><span class="tag pre">once per page</span> predefined · <span class="tag rep">repeatable</span> other · <span class="tag mock">mock</span> data is dummy in the prototype; production reads the logged-in requester's real records.</li></ul>
 <div class="tbl"><table>
 <tr><th>Widget</th><th>Group</th><th>What it does</th><th>Admin can set</th></tr>
 <tr><td>My Open Requests</td><td><span class="tag pre">Data</span> <span class="tag mock">mock</span></td><td>The requester's open requests: ID, subject, date, status pill. Count badge = total; "View all".</td><td>Design only</td></tr>
@@ -556,7 +550,7 @@ stateDiagram-v2
 <!-- ───────────────────────── KEYS ───────────────────────── -->
 <h2 id="keys">Keyboard shortcuts</h2>
 <figure><img src="shots/27-shortcuts.png" alt="Global keyboard shortcuts panel focused on the Support Portal builder"><figcaption>One product-wide <b>Keyboard shortcuts</b> panel (header keyboard icon or <kbd>?</kbd>), opened focused on the page you are on.</figcaption></figure>
-<p>No shortcut fires while typing in a field. Each toolbar tooltip shows its own key.</p>
+<ul class="points"><li>No shortcut fires while typing in a field. Each toolbar tooltip shows its own key.</li></ul>
 <div class="tbl"><table>
 <tr><th>Keys</th><th>Action</th></tr>
 <tr><td><kbd>Alt</kbd>+<kbd>P</kbd> · <kbd>Esc</kbd></td><td>Preview, and leave it</td></tr>
@@ -577,7 +571,7 @@ stateDiagram-v2
 <tr><td><kbd>Ctrl</kbd>+<kbd>S</kbd></td><td>Save as draft</td></tr>
 <tr><td><kbd>?</kbd></td><td>Keyboard shortcuts panel</td></tr>
 </table></div>
-<p>Inside an open option popup (alignment, shadow, presets…), arrow keys move through the options and apply them live; <kbd>Enter</kbd> keeps, <kbd>Esc</kbd> puts back what it opened with.</p>
+<ul class="points"><li>Inside an open option popup (alignment, shadow, presets…), arrow keys move through the options and apply them live; <kbd>Enter</kbd> keeps, <kbd>Esc</kbd> puts back what it opened with.</li></ul>
 
 <!-- ───────────────────────── PRODUCTION ───────────────────────── -->
 <h2 id="production">Notes for production</h2>
