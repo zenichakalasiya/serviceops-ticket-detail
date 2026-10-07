@@ -1,7 +1,49 @@
-# Handoff — 2026-10-06 16:55
+# Handoff — 2026-10-07 14:43
 
-> Several sessions share this file. **This top part is the Support Portal builder session (5–6 Oct)**;
-> the other sessions' notes follow unchanged below the divider.
+> Several sessions share this file. **This top part is the Support Portal builder session (7 Oct)**;
+> the 5–6 Oct builder notes and the other sessions' notes follow unchanged below.
+
+## Read first
+CLAUDE.md › Key context — the Support Portal bullets *settings panels open with ONLY THE FIRST ACCORDION* and
+*Create Portal step 2 has NO industry filter* (both 7 Oct).
+
+## What we worked on this session
+Four PMG-style asks on the Support Portal: drop the industry filter from Create Portal step 2, check Most Used vs
+Favourite Services, make sure alignment + background are in the side panel, and open only the first accordion.
+
+## Completed
+- **Industry filter removed** from Create Portal step 2 (`CreateSupportPortalModal.tsx` — `IndustryFilter` deleted,
+  every visible template always shows; cards keep their industry tags). Handoff doc wording updated, republished (v7).
+- **First accordion open, rest closed** in every settings panel — `useFirstAccordionOpen` in `PortalControls.tsx`,
+  used by `PortalWidgetDrawer` and `PortalElementPanel`. Verified on banner, Quick Actions, action cards, service rows +
+  tiles, sections, columns and placed widgets.
+- **Alignment + background in the side panel:** already in place (DesignQuickSections) — checked across the same nodes;
+  Alignment appears only where the floating toolbar offers it. No code change.
+- **Most Used Services:** left as is — Zeni: it can look like Favourite Services.
+- Live on `main` (commit `4a0047e`).
+
+## In progress
+Nothing mid-flight.
+
+## Next steps
+- Same open items as 6 Oct below (banner Heading field empty in sidebar, text bar size readout, Esc in tour,
+  "one go" styling approach).
+
+## Decisions made
+- The first-open rule reads the RENDERED order of accordion headers (`data-acc` + `aria-expanded` on `Group` and the
+  legacy `Drawer`) and presses them, rather than guessing the first group from spec data — the panels mix five sources
+  with two open-state polarities. A widget type you have already tidied keeps your layout for the session.
+
+## Gotchas & notes
+- The pass must be armed from a PASSIVE effect: the drawer re-seeds its open state in its own mount effect, which
+  overwrote a layout-effect pass on the very first selection after opening the editor.
+- `toggleGroup` in `PortalWidgetDrawer` is now a functional update (several presses land in one batch).
+- Probe scripts: `D:/Motadata/tour-shots/probe-acc.mjs [node ids…]` prints toolbar align/colour buttons and the panel's
+  open/closed accordions; `probe-create.mjs` checks step 2.
+
+---
+
+## (Previous) Handoff — 2026-10-06 16:55 — Support Portal builder
 
 ## Read first
 CLAUDE.md › Key context — Support Portal bullets dated 5–6 Oct: *text formatting bar follows the HIGHLIGHTED WORDS*,
