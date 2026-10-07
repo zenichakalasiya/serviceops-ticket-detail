@@ -797,3 +797,21 @@ body[data-portal-dragging] [data-portal-toolbar] { pointer-events: none; opacity
    The widget fills its column: a button spans edge to edge, and a widget dragged narrower fills again. */
 [data-col-stretch] > [data-node] { width: 100% !important; max-width: 100% !important; }
 [data-col-stretch] .portal-btn { width: 100%; }
+
+/* Form Rule guide video — a slow dash running along a live connector (FormRuleGuide). */
+@keyframes fg-flow { to { stroke-dashoffset: -17; } }
+.fg-flow { animation: fg-flow 1.4s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .fg-flow { animation: none; opacity: 0; } }
+/* Form Rule guide: a click ring that plays ONCE, a "just added" ping, wires that draw themselves in,
+   links that fade in, and the right side sliding to the Rule check panel. */
+@keyframes fg-click { from { r: 2; opacity: 1; } to { r: 9; opacity: 0; } }
+.fg-click { animation: fg-click 520ms ease-out both; }
+@keyframes fg-ping { from { x: var(--x0); y: var(--y0); width: var(--w0); height: var(--h0); opacity: 0.9; } to { x: var(--x1); y: var(--y1); width: var(--w1); height: var(--h1); opacity: 0; } }
+.fg-ping { animation: fg-ping 900ms ease-out both; }
+@keyframes fg-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+.fg-draw { animation: fg-draw 520ms cubic-bezier(0.4,0,0.2,1) both; }
+@keyframes fg-fade-in { from { opacity: 0; } }
+.fg-fade-in { animation: fg-fade-in 500ms ease-out both; }
+@keyframes fg-slide { from { opacity: 0; transform: translateX(8px); } to { opacity: 1; transform: none; } }
+.fg-slide { animation: fg-slide 420ms cubic-bezier(0.4,0,0.2,1) both; }
+@media (prefers-reduced-motion: reduce) { .fg-click, .fg-ping, .fg-draw, .fg-fade-in, .fg-slide { animation: none; } .fg-ping, .fg-click { opacity: 0; } }

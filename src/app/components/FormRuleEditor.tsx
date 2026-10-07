@@ -16,6 +16,7 @@ import { FormRuleFlowView } from './FormRuleFlowView';
 import { FormRuleLinearView } from './FormRuleLinearView';
 import { FormRuleConflictReview } from './FormRuleConflictReview';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
+import { FORM_RULE_GUIDE_SEEN, FormRuleGuideDock, FormRuleHelpGuide } from './FormRuleGuide';
 import { RelatedDrawer, RelatedSummaryCards, RelatedSummaryChips, RULE_CHECK_INTRO_KEY, RuleCheckEmpty, SimilarRulesView } from './FormRuleRelatedView';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from './ui/hover-card';
 
@@ -205,7 +206,12 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
   const [tried, setTried] = useState(false);
   /** Where a confirmed leave goes: back to the list, or into another rule. */
   const [confirmLeave, setConfirmLeave] = useState<false | 'list' | string>(false);
-  const [tab, setTab] = useState<InsightTab>('conflicts');
+  /* V1 opens on the Help guide tab (other layouts have no guide and fall back to Conflicts). */
+  const [tab, setTab] = useState<InsightTab>('guide');
+  /** The "Rule builder basics" video: opens by itself the first time, then from Help guide › Watch guide. */
+  const [guideOpen, setGuideOpen] = useState(() => { try { return !localStorage.getItem(FORM_RULE_GUIDE_SEEN); } catch { return false; } });
+  const closeGuide = () => { setGuideOpen(false); try { localStorage.setItem(FORM_RULE_GUIDE_SEEN, '1'); } catch { /* private mode */ } };
+  const guideEl = <FormRuleHelpGuide onWatch={() => setGuideOpen(true)} />;
   const [hoverAction, setHoverAction] = useState<string | null>(null);
   const [flashAction, setFlashAction] = useState<string | null>(null);
 
@@ -889,18 +895,20 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
       {!narrow && railOpen && (
         /* A fixed rail at its widest (RAIL_MAX) — no resizer (6 Oct 2026, Zeni). It still folds to its edge strip. */
         <div className="relative flex flex-shrink-0" style={{ width: RAIL_MAX }}>
-          <div className="min-w-0 flex-1"><FormRuleInsights {...railProps} onCollapse={closeRail} /></div>
+          <div className="min-w-0 flex-1"><FormRuleInsights {...railProps} guide={version === 'A' ? guideEl : undefined} onCollapse={closeRail} /></div>
         </div>
       )}
       {narrow && overlayOpen && (
         <>
           <div className="absolute inset-0 z-20 bg-[#0F172A]/10" onClick={closeRail} />
           <div className="absolute bottom-0 right-0 top-0 z-30 shadow-[-8px_0_24px_rgba(15,23,42,0.12)]" style={{ width: Math.min(railW, 440) }}>
-            <FormRuleInsights {...railProps} onCollapse={closeRail} />
+            <FormRuleInsights {...railProps} guide={version === 'A' ? guideEl : undefined} onCollapse={closeRail} />
           </div>
         </>
       )}
       {!railVisible && railStrip}
+      {/* The guide video sits in the corner of the FORM, clear of the rail (or its folded strip). */}
+      {version === 'A' && guideOpen && <FormRuleGuideDock onClose={closeGuide} right={!narrow && railOpen ? RAIL_MAX + 20 : 56} />}
     </div>
   );
 

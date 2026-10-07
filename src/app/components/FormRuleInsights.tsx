@@ -13,7 +13,7 @@ import { EVENT_OPTIONS } from './formRuleData';
  * says "this row clashes" where the row is; this rail says with WHOM, how the two rules differ,
  * and who wins today. Three tabs: Conflicts · Similar rules · Run order. */
 
-export type InsightTab = 'conflicts' | 'similar' | 'order';
+export type InsightTab = 'guide' | 'conflicts' | 'similar' | 'order';
 
 export const KIND_TONE: Record<ConflictKind, { fg: string; bg: string; hint: string }> = {
   Opposite: { fg: '#DC2626', bg: '#FEF2F2', hint: 'The two rules do the reverse to this field' },
@@ -112,11 +112,13 @@ function Empty({ art, title, text }: { art?: React.ReactNode; title: string; tex
 }
 
 export function FormRuleInsights({
-  ready, hasActions, conflicts, similar, timeline, tab, onTab, triggerChips, conditionLines, fieldLabel,
+  ready, hasActions, conflicts, similar, timeline, tab, onTab, guide, triggerChips, conditionLines, fieldLabel,
   onJump, onHover, onOpenRule, onCollapse, onCloseDialog, bare = false, hideHead = false, only, rules = [], pillTabs = false, noTitleIcon = false, focus, common,
 }: {
   /** Bring this field forward in the conflicts list (an action row's warning asked about it). */
   focus?: { field: string; n: number } | null;
+  /** The Help guide tab's content — given only by V1 (A); the tab comes FIRST, before Conflicts. */
+  guide?: React.ReactNode;
   /** What every similar rule shares with this one — the Common trigger, conditions & actions card. */
   common?: { applies: string; groups: CondGroupView[]; actions: string[] };
   /** Drop the list glyph before "Rule check". */
@@ -150,17 +152,22 @@ export function FormRuleInsights({
   onOpenRule: (id: string) => void;
 }) {
   if (only) tab = only;
+  /* A host without a guide never shows its tab, so a stored 'guide' falls back to Conflicts. */
+  if (tab === 'guide' && !guide) tab = 'conflicts';
   /** The "what is a similar rule" card, from the ⓘ on the similar tab's footer. */
   const [simInfo, setSimInfo] = useState(false);
 
   const tabs: [InsightTab, string, number | null][] = [
+    ...(guide ? [['guide', 'Help guide', null] as [InsightTab, string, null]] : []),
     ['conflicts', 'Conflicts', conflicts.length],
     ['similar', 'Similar rules', similar.length],
     /* Run order is withdrawn from the rail (6 Oct 2026, Zeni); its body below stays for the hidden layouts. */
   ];
 
   let body: React.ReactNode;
-  if (!ready) {
+  if (tab === 'guide') {
+    body = guide;
+  } else if (!ready) {
     body = <Empty art={tab === 'conflicts' ? <NoConflictsArt /> : tab === 'similar' ? <SimilarRulesArt /> : <RunOrderArt />}
       title="Rule check starts with the trigger" text="Choose when the rule runs. Conflicts, similar rules and run order appear here as you build." />;
   } else if (tab === 'conflicts') {
@@ -266,7 +273,7 @@ export function FormRuleInsights({
               <div className="min-h-0 flex-1 overflow-y-auto">{body}</div>
               <div className="flex flex-shrink-0 items-center gap-2 border-t border-[#EEF2F6] bg-[#EFF6FD] py-2 pl-3 pr-2">
                 <Info size={14} className="flex-shrink-0 text-[#3D8BD0]" />
-                <span className="min-w-0 flex-1 text-[12px] leading-[1.5] text-[#1D3A5C]">Add your actions to one of these rules instead of creating another — one rule doing the whole job is easier to maintain.</span>
+                <span title="Add your actions to one of these rules instead of creating a new one." className="min-w-0 flex-1 truncate text-[12px] leading-[1.5] text-[#1D3A5C]">Add your actions to one of these rules instead of creating a new one.</span>
                 <button type="button" onClick={() => setSimInfo((o) => !o)} aria-label="What is a similar rule?" title="What is a similar rule?"
                   className={'flex size-8 flex-shrink-0 items-center justify-center rounded transition-colors hover:bg-white/70 ' + (simInfo ? 'text-[#3D8BD0]' : 'text-[#7B8FA5]')}>
                   <Info size={16} />
