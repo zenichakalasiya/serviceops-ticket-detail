@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import { useFirstAccordionOpen } from './PortalControls';
 import {
   AlignCenter, AlignLeft, AlignRight, ChevronDown, ChevronLeft, ChevronRight, Layers, Link2, List, PanelLeft,
   Plus, RotateCcw, Rows3, Search, Square, Trash2, Type,
@@ -81,7 +82,7 @@ const DRAWERS = ['Layout', 'Style', 'Spacing'] as const;
 function Drawer({ title, children, open, onToggle }: { title: string; children: ReactNode; open: boolean; onToggle: () => void }) {
   return (
     <div className="border-t border-[#F0F2F5] first:border-t-0">
-      <button onClick={onToggle} className="flex w-full items-center justify-between py-3 text-left">
+      <button onClick={onToggle} data-acc="" aria-expanded={open} className="flex w-full items-center justify-between py-3 text-left">
         <span className="text-[13px] font-medium text-[#364658]">{title}</span>
         <ChevronDown size={15} className={`text-[#9CA3AF] transition-transform ${open ? '' : '-rotate-90'}`} />
       </button>
@@ -111,6 +112,9 @@ export function PortalElementPanel({ nodeId, content, setContent, styles, setSty
   const [openDrawers, setOpenDrawers] = useState<string[]>(['Layout']);
   const toggleDrawer = (t: string) =>
     setOpenDrawers((o) => (o.includes(t) ? o.filter((x) => x !== t) : [...o, t]));
+
+  const rootRef = useRef<HTMLDivElement>(null);
+  useFirstAccordionOpen(rootRef, nodeId);
 
   if (!node) return null;
   const s: NodeStyle = styles[nodeId] ?? {};
@@ -330,7 +334,7 @@ export function PortalElementPanel({ nodeId, content, setContent, styles, setSty
   const allOpen = myDrawers.every((d) => openDrawers.includes(d));
 
   return (
-    <div className="flex h-full flex-col">
+    <div ref={rootRef} className="flex h-full flex-col">
       {/* Element header — icon, name, and what this panel edits.
           ⚠️ No breadcrumb and no back arrow — matching the widget drawer, so the two panels do not
           head themselves differently. Stepping up is clicking the parent on the canvas. */}

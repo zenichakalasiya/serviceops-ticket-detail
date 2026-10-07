@@ -29,7 +29,7 @@ import { DEFAULT_SHADOW_COLOR, PAGE_ID, hasOwn, portalColorMode, resolve } from 
 import { ContrastMeter, useBackdrop } from './PortalContrastMeter';
 import type { BackdropSpec } from './PortalContrastMeter';
 import { ALL_PACKS, IconBoxBlock, packBadge } from './PortalStylePacks';
-import {
+import { useFirstAccordionOpen,
   ALIGN_OPTIONS, Badge, ChipEditor, Chips, Field, GridPicker, Group, LogoPair, Note, NumberField, RichText,
   SelectField, Segmented, SliderRow, StepRail, TextField, ToggleRow, UploadZone, VideoSource,
   MultiSelect, DesignGroupsCtx,
@@ -796,8 +796,13 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [spec.id]);
   const setOpenGroups = (next: string[]) => { GROUP_MEMORY[spec.id] = next; setOpenGroupsState(next); };
+  /* ⚠️ FUNCTIONAL — `useFirstAccordionOpen` presses several headers in one batch. */
   const toggleGroup = (g: string) =>
-    setOpenGroups(openGroups.includes(g) ? openGroups.filter((x) => x !== g) : [...openGroups, g]);
+    setOpenGroupsState((prev) => {
+      const next = prev.includes(g) ? prev.filter((x) => x !== g) : [...prev, g];
+      GROUP_MEMORY[spec.id] = next;
+      return next;
+    });
   /* The toolbar sections showing right now, as they report themselves — what Expand all counts. */
   const [quickParts, setQuickParts] = useState<Record<string, string[]>>({});
   const quickKeys = Object.values(quickParts).flat();
@@ -807,6 +812,10 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
     toggle: (k) => toggleGroup(`shut:${k}`),
     report: (part, keys) => setQuickParts((prev) => ((prev[part] ?? []).join('|') === keys.join('|') ? prev : { ...prev, [part]: keys })),
   };
+  /* Only the first accordion arrives open — see `useFirstAccordionOpen`. A type you have already
+     opened and closed things on keeps the way you left it. */
+  const rootRef = useRef<HTMLDivElement>(null);
+  useFirstAccordionOpen(rootRef, spec.id, !!GROUP_MEMORY[spec.id]);
 
   if (!node) return null;
 
@@ -1747,7 +1756,7 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
 
   return (
     <DesignGroupsCtx.Provider value={designGroups}>
-    <div className="flex h-full flex-col">
+    <div ref={rootRef} className="flex h-full flex-col">
       {/* ── header ── */}
       <div className="flex-shrink-0 border-b border-[#F0F2F5] px-4 pb-0 pt-3">
         {/* ⚠️ No breadcrumb trail above the title. Stepping up to the parent survives as the back

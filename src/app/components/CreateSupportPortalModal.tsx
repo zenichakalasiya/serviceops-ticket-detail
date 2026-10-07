@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowLeft, Check, ChevronDown, ChevronRight, Eye, Filter, PenLine, X } from 'lucide-react';
-import { PORTAL_INDUSTRIES, VISIBLE_TEMPLATES, industriesOf, industryChip, industryName } from './supportPortalData';
+import { ArrowLeft, ChevronRight, Eye, PenLine, X } from 'lucide-react';
+import { VISIBLE_TEMPLATES, industriesOf, industryChip, industryName } from './supportPortalData';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import type { PortalTemplate } from './supportPortalData';
 import { TemplateArt } from './SupportPortalTemplateGallery';
@@ -318,83 +318,6 @@ function IndustryTags({ ids }: { ids: string[] }) {
   );
 }
 
-/* The gallery's filter: which INDUSTRIES a template has to be built for to be shown.
- *
- * ⚠️ The product's own Filter PILL and popup — the funnel, the label that reads "All" or
- * "Government +2", the chips for what is on, the checked rows, and Clear all / Done — the same
- * control the Deployment tab and the CMDB map already use. A second filter language on the one
- * screen that is choosing a starting point would be the thing an admin has to learn twice.
- * ⚠️ It REPLACED the category pills. Category is department scope, every visible template says
- * "IT Support", and a row of five pills where four return nothing is a control that teaches you not
- * to touch it. Industry is the axis these templates actually differ on.
- * ⚠️ MULTI-SELECT, matching OR: an admin shopping for a layout is usually in one vertical but will
- * happily look at a neighbouring one, and a single-select would make comparing two a round trip.
- * ⚠️ The DEFAULT tile ignores it — see the note on the grid. */
-function IndustryFilter({ value, onChange }: { value: string[]; onChange: (next: string[]) => void }) {
-  const [open, setOpen] = useState(false);
-  const on = value.length > 0;
-  const label = !on ? 'All industries'
-    : `${industryName(value[0])}${value.length > 1 ? ` +${value.length - 1}` : ''}`;
-  const toggle = (id: string) => onChange(value.includes(id) ? value.filter((x) => x !== id) : [...value, id]);
-  return (
-    <div className="relative">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        title="Filter templates by industry"
-        className={`inline-flex h-8 items-center gap-1.5 rounded border px-3 text-[13px] font-medium transition-colors ${on ? 'border-[#3D8BD0] bg-[#F0F8FF] text-[#3D8BD0]' : 'border-[#DFE5ED] text-[#364658] hover:bg-[#F3F4F6]'}`}
-      >
-        <Filter size={15} className={on ? 'text-[#3D8BD0]' : 'text-[#7B8FA5]'} />
-        <span className="max-w-[180px] truncate">{label}</span>
-        <ChevronDown size={14} className={`transition-transform ${open ? 'rotate-180' : ''} ${on ? 'text-[#3D8BD0]' : 'text-[#7B8FA5]'}`} />
-      </button>
-      {open && (
-        <>
-          {/* The click-away sheet the product's other filter popups use. */}
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full z-50 mt-1.5 w-[260px] rounded-lg border border-[#DFE5ED] bg-white shadow-lg">
-            {on && (
-              <div className="flex flex-wrap gap-1.5 border-b border-[#F0F2F5] p-2.5">
-                {value.map((id) => (
-                  <span key={id} className="inline-flex items-center gap-1 rounded bg-[#F1F5F9] px-2 py-0.5 text-[12px] text-[#364658]">
-                    {industryName(id)}
-                    <button onClick={() => toggle(id)} className="text-[#7B8FA5] hover:text-[#364658]"><X size={12} /></button>
-                  </span>
-                ))}
-              </div>
-            )}
-            <div className="max-h-[300px] overflow-y-auto py-1">
-              <button
-                onClick={() => onChange([])}
-                className={`flex w-full items-center justify-between px-3 py-2 text-left text-[13px] transition-colors ${!on ? 'bg-[#F1F5F9]' : 'hover:bg-[#F9FAFB]'}`}
-              >
-                <span className="text-[#364658]">All industries</span>
-                {!on && <Check size={15} className="flex-shrink-0 text-[#3D8BD0]" />}
-              </button>
-              {PORTAL_INDUSTRIES.map((i) => {
-                const lit = value.includes(i.id);
-                return (
-                  <button
-                    key={i.id}
-                    onClick={() => toggle(i.id)}
-                    className={`flex w-full items-center justify-between px-3 py-2 text-left text-[13px] transition-colors ${lit ? 'bg-[#F1F5F9]' : 'hover:bg-[#F9FAFB]'}`}
-                  >
-                    <span className="text-[#364658]">{i.name}</span>
-                    {lit && <Check size={15} className="flex-shrink-0 text-[#3D8BD0]" />}
-                  </button>
-                );
-              })}
-            </div>
-            <div className="flex items-center justify-between border-t border-[#F0F2F5] px-3 py-2">
-              <button onClick={() => onChange([])} className="text-[13px] font-medium text-[#3D8BD0] hover:underline">Clear all</button>
-              <button onClick={() => setOpen(false)} className="rounded bg-[#3D8BD0] px-3 py-1.5 text-[13px] font-medium text-white hover:bg-[#2d6ca0]">Done</button>
-            </div>
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-
 /* One template card: the drawn thumbnail, name and category — and on hover (or keyboard focus) a
    dimmed scrim over the thumbnail carrying the two things you can do with it. ⚠️ No click-anywhere
    action on the card: "look first" and "use it" are different intentions, and a whole-card click
@@ -434,7 +357,7 @@ function TemplateCard({ art, name, meta, badge, industries = [], onPreview, onUs
   );
 }
 
-export function CreateSupportPortalModal({ onClose, onSaveDetails, onScratch, onTemplate, onPreview, initialStep = 1, hidden, industry: industryProp, onIndustry }: {
+export function CreateSupportPortalModal({ onClose, onSaveDetails, onScratch, onTemplate, onPreview, initialStep = 1, hidden }: {
   onClose: () => void;
   /** Step 2 → look at this template full-page before choosing it. `null` = the Default portal. */
   onPreview?: (t: PortalTemplate | null) => void;
@@ -442,7 +365,7 @@ export function CreateSupportPortalModal({ onClose, onSaveDetails, onScratch, on
   initialStep?: 1 | 2;
   /** Kept mounted but out of sight while a preview covers the screen. */
   hidden?: boolean;
-  /** The chosen industries, owned by the caller so Back from a preview lands on the same filter. */
+  /** No longer used — the industry filter was removed (7 Oct 2026). Kept so callers still compile. */
   industry?: string[];
   onIndustry?: (next: string[]) => void;
   /** Step 1 → creates the portal as a Draft and unlocks step 2. */
@@ -457,9 +380,6 @@ export function CreateSupportPortalModal({ onClose, onSaveDetails, onScratch, on
   const [d, setD] = useState<PortalDetails>({
     name: '', company: '', url: '', idp: IDPS[0], ssoOnly: false,
   });
-  const [industryLocal, setIndustryLocal] = useState<string[]>([]);
-  const industry = industryProp ?? industryLocal;
-  const setIndustry = (next: string[]) => (onIndustry ? onIndustry(next) : setIndustryLocal(next));
 
   /* ⚠️ Save is DISABLED until the three required fields are filled, rather than validating after
      the click. A button that can only tell you what is wrong once you press it makes you press it
@@ -473,11 +393,9 @@ export function CreateSupportPortalModal({ onClose, onSaveDetails, onScratch, on
     setStep(2);
   };
 
-  /* ⚠️ OR, not AND: a template shown for "Healthcare" and "Education" matches either. Requiring
-     both would ask for a layout built for two verticals at once, which is not a thing anyone is
-     shopping for — and with six industries and five templates it would nearly always return
-     nothing. Empty selection means every template, the same rule the Record List's statuses follow. */
-  const templates = VISIBLE_TEMPLATES().filter((t) => industry.length === 0 || industriesOf(t).some((i) => industry.includes(i)));
+  /* Every visible template, always. The industry filter that sat beside "Start from a template" was
+     removed (Zeni, 7 Oct 2026); each card still names its industries. */
+  const templates = VISIBLE_TEMPLATES();
 
   return createPortal(
     <div hidden={hidden} className="fixed inset-0 z-[10000] flex items-center justify-center bg-[#0F172A]/40 p-6">
@@ -542,8 +460,7 @@ export function CreateSupportPortalModal({ onClose, onSaveDetails, onScratch, on
 
               <div className="mt-6 flex items-center gap-3">
                 <h3 className="text-[15px] font-semibold text-[#364658]">Start from a template</h3>
-                <span className="ml-auto flex-shrink-0"><IndustryFilter value={industry} onChange={setIndustry} /></span>
-              </div>
+                              </div>
 
               <div className="mt-4 grid grid-cols-2 gap-4 min-[1000px]:grid-cols-3">
                 {/* ⚠️ The DEFAULT is the grid's FIRST TILE, in every category. It used to sit in a

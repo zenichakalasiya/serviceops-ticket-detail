@@ -9,8 +9,8 @@
  * `rounded` radius, the #3D8BD0 focus ring, `.app-select`. Nothing new was invented.
  */
 
-import { createContext, useEffect, useId, useRef, useState } from 'react';
-import type { ReactNode } from 'react';
+import { createContext, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
+import type { ReactNode, RefObject } from 'react';
 import { MiniRange } from './PortalRange';
 import {
   AlignCenter, AlignLeft, AlignRight, Bold, Check, ChevronDown, Eraser,
@@ -95,6 +95,8 @@ export function Group({ title, open, onToggle, badge, children, bodyClass = '' }
     <div className="-mx-4 border-b border-[#E5E7EB] last:border-b-0">
       <button
         onClick={onToggle}
+        data-acc=""
+        aria-expanded={open}
         className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-[#F9FAFB]"
       >
         <span className="text-[13px] font-medium text-[#364658]">{title}</span>
@@ -112,6 +114,35 @@ export function Group({ title, open, onToggle, badge, children, bodyClass = '' }
       {open && <div className={`px-4 pb-4 ${bodyClass}`.trim()}>{children}</div>}
     </div>
   );
+}
+
+/* ── The FIRST accordion arrives open, every other one shut (Zeni, 7 Oct 2026) ──────────────
+ *
+ * One rule for every settings panel, whichever model built it. The panels assemble their groups from
+ * several sources (spec content groups, the collection, the toolbar's design sections, packs, the
+ * accordion model, Spacing), each with its own open-state store and its own polarity — so instead of
+ * guessing the first one from data, this reads the RENDERED order: every header marked `data-acc`
+ * carries `aria-expanded`, and the one at the top is opened while the rest are closed, by pressing
+ * them. Pressing goes through each group's own toggle, so every store stays the one source of truth.
+ * ⚠️ The toggles it presses must be FUNCTIONAL updates — several land in one batch.
+ * Runs once per `key` (the widget type / node), and not at all when `skip` (a remembered layout). */
+export function useFirstAccordionOpen(root: RefObject<HTMLElement | null>, key: string, skip = false) {
+  /* ⚠️ Armed from a PASSIVE effect, mount included — the drawer re-seeds its open state in a passive
+     effect of its own, and a pass made before that (on the mount render) was simply overwritten, which
+     left the first widget you selected arriving fully expanded. */
+  const [pending, setPending] = useState(false);
+  useEffect(() => {
+    if (!skip) setPending(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
+  useLayoutEffect(() => {
+    if (!pending) return;
+    setPending(false);
+    const heads = Array.from(root.current?.querySelectorAll<HTMLElement>('[data-acc]') ?? []);
+    heads.forEach((h, i) => {
+      if ((h.getAttribute('aria-expanded') === 'true') !== (i === 0)) h.click();
+    });
+  });
 }
 
 /* ── Badge (spec §3) ─────────────────────────────────────────────────────── */
