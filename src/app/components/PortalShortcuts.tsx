@@ -299,7 +299,7 @@ const BUILDER: Group = { title: 'The builder', rows: [
 
 const PLACE: Group = { title: 'Place', note: 'In the order a page is built', rows: [
   { keys: ck('newSection'), label: 'New section', lead: true },
-  { keys: k('split'), label: 'Split into columns or rows' },
+  { keys: k('split'), label: 'Split, or add a column or row' },
   { keys: k('addBeside'), label: 'Add a widget beside this one' },
   { keys: combo(k('addInside')), label: 'Add an item inside it' },
   { keys: k('replace'), label: 'Replace this widget' },

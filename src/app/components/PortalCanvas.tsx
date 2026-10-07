@@ -75,6 +75,8 @@ interface CanvasCtx {
   addChildBlock: (id: string, type: string) => void;
   /** Contact Us: put an empty slot beside this block on the same line. */
   splitChildBlock?: (id: string) => void;
+  splitNode?: (id: string, dir?: 'row' | 'column') => void;
+  splitInfo?: (id: string) => { dir: 'row' | 'column'; blocked: string | null; leaf: boolean; parentDir: 'row' | 'column' | null } | null;
   /** Contact Us: turn an empty slot into a Button, Text or Icon. */
   fillChildBlock?: (id: string, type: string) => void;
   /** The Quick Actions row's one addable card — see `toolbarCaps`. */
@@ -1312,6 +1314,32 @@ function useEscapeClose(open: boolean, close: () => void) {
   });
 }
 
+/* ── Split — divide an UNDIVIDED box into two, the way the user picks ─────────────────────────── */
+function SplitMenu({ tip, onPick }: { tip: string; onPick: (dir: 'row' | 'column') => void }) {
+  const [open, setOpen] = useState(false);
+  useEscapeClose(open, () => setOpen(false));
+  const item = 'flex h-8 w-full items-center gap-2.5 rounded px-2 text-left text-[13px] text-[#364658] transition-colors hover:bg-[#F5F7FA]';
+  return (
+    <div className="relative">
+      <button className={open ? btnOn : btn} data-tip={tip} onClick={() => setOpen((v) => !v)}>
+        <Columns2 size={15} />
+      </button>
+      {open && (
+        <>
+          <span className="fixed inset-0 z-[60]" onClick={() => setOpen(false)} />
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="absolute left-1/2 top-[calc(100%+8px)] z-[61] w-[200px] -translate-x-1/2 rounded-lg border border-[#E5E7EB] bg-white p-1 shadow-[0_12px_16px_-4px_rgba(16,24,40,0.10),0_4px_6px_-2px_rgba(16,24,40,0.06)]"
+          >
+            <button className={item} onClick={() => { setOpen(false); onPick('row'); }}><Columns2 size={15} className="text-[#64748B]" />Split into 2 columns</button>
+            <button className={item} onClick={() => { setOpen(false); onPick('column'); }}><Rows2 size={15} className="text-[#64748B]" />Split into 2 rows</button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function LayoutMenu({ id }: { id: string }) {
   const { styles, setStyle, cfg, applyPreset } = useCanvas();
   const [open, setOpen] = useState(false);
@@ -1843,11 +1871,22 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
           work out which way from the icon, and the answer depends on a setting two panels away.
           ⚠️ At the depth or column limit it stays VISIBLE and disabled with the reason on it —
           missing controls read as bugs, and a silent no-op reads as a broken one. */}
-      {split && !split.blocked && (
+      {/* ⚠️ 7 Oct 2026 (Zeni): SPLIT only ever means "divide this into two" and asks which way. Once a
+          box IS divided the button becomes Add column / Add row — adding a third part is not a split,
+          and the changed word is the feedback that the split happened. */}
+      {split && split.leaf && !split.blocked && (
+        <SplitMenu
+          tip={split.parentDir === 'row' ? 'Split this column' : split.parentDir === 'column' ? 'Split this row' : 'Split'}
+          onPick={(d) => splitNode?.(id, d)}
+        />
+      )}
+      {split && !split.leaf && (
         <button
           className={btn}
-          data-tip={split.dir === 'row' ? 'Split into columns' : 'Split into rows'}
-          onClick={() => splitNode(id)}
+          disabled={!!split.blocked}
+          style={split.blocked ? { opacity: 0.4, cursor: 'not-allowed' } : undefined}
+          data-tip={split.blocked ?? (split.dir === 'row' ? 'Add column' : 'Add row')}
+          onClick={() => { if (!split.blocked) splitNode?.(id); }}
         >{split.dir === 'row' ? <Columns2 size={15} /> : <Rows2 size={15} />}</button>
       )}
       {hasStructure && hasPlace && <Rule />}
@@ -4586,7 +4625,8 @@ export function Sel({ id, children, className = '', toolbarBelow = false, surfac
           dragged width would be a number nothing reads. A GATHERED ROW (`hero-gp-`) keeps them —
           its padding now sits on a wrapper outside it, so the node itself is free to take a width,
           a height and a top margin, and every one of those lands. */}
-      {on && !sharedTile && !/^hero-bx-/.test(id) && <SelectionHandles id={id} elRef={ref} />}
+      {/* No handles on the top bar or the left rail (7 Oct 2026, Zeni) — the product's own chrome is not resized. */}
+      {on && !sharedTile && !/^hero-bx-/.test(id) && id !== 'header' && id !== 'rail' && <SelectionHandles id={id} elRef={ref} />}
       {/* ⚠️ The banner's ITEMS get the four + adders the section boxes have, on hover — left/right put an
           empty cell beside the item as a column, top/bottom as a row. Hover, not selection, for the reason
           the box adders give: a selected item carries resize handles on these very edges. */}

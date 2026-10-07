@@ -1297,7 +1297,9 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
 
   /* Split — the ONE structural operation, identical at every level. A leaf becomes two, a branch
      grows one more child, and the direction is always the box's own. */
-  const splitNode = useCallback((boxId: string) => {
+  /* `dir` (7 Oct 2026): an UNDIVIDED box is split the way the user picked — columns or rows — from the
+     toolbar's Split menu. A divided box ignores it: there the button reads Add column / Add row. */
+  const splitNode = useCallback((boxId: string, dir?: BoxDir) => {
     const sectionId = sectionIdOfBox(boxId);
     /* ⚠️ Same fix as `addBeside` above, and the same bug: the reason was assigned inside the
        `setSections` updater and read on the line after it, which runs first. Split has been
@@ -1305,9 +1307,15 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
     const current = sectionsRef.current.find((s) => s.section.id === sectionId)?.section;
     const blocked = current ? splitBlockedBecause(current.root, boxId) : null;
     if (blocked) { toast.error(blocked); return; }
-    setSections((prev) => prev.map((s) => (
-      s.section.id === sectionId ? { ...s, section: splitBox(s.section, boxId) } : s
-    )));
+    const box = current ? findBox(current.root, boxId) : undefined;
+    const leaf = !!box && !isBranch(box);
+    const axis: BoxDir = leaf && dir ? dir : (box?.dir ?? 'row');
+    setSections((prev) => prev.map((s) => {
+      if (s.section.id !== sectionId) return s;
+      const base = leaf && dir ? setBoxDir(s.section, boxId, dir) : s.section;
+      return { ...s, section: splitBox(base, boxId) };
+    }));
+    toast.success(leaf ? (axis === 'row' ? 'Split into 2 columns' : 'Split into 2 rows') : (axis === 'row' ? 'Column added' : 'Row added'));
   }, []);
 
   /* Behaviour — the note's "how user wants to treat sec? row / column". ⚠️ Non-destructive by
@@ -2084,10 +2092,10 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
      ⚠️ Returns a REASON rather than a boolean, so the button can stay visible and disabled with the
      reason on it — the way every other cap in this product behaves. Null for anything that is not a
      box, which is how the toolbar knows not to offer Split at all. */
-  const splitInfo = useCallback((id: string): { dir: BoxDir; blocked: string | null } | null => {
+  const splitInfo = useCallback((id: string): { dir: BoxDir; blocked: string | null; leaf: boolean; parentDir: BoxDir | null } | null => {
     const sec = sectionsRef.current.find((s) => s.section.id === sectionIdOfBox(id))?.section;
     const box = sec ? findBox(sec.root, id) : undefined;
-    return box ? { dir: box.dir, blocked: splitBlockedBecause(sec!.root, id) } : null;
+    return box ? { dir: box.dir, blocked: splitBlockedBecause(sec!.root, id), leaf: !isBranch(box), parentDir: parentOfBox(sec!.root, id)?.dir ?? null } : null;
   }, []);
 
   /** Which ordered list an id lives in, so a drag knows what it can be dropped among. */

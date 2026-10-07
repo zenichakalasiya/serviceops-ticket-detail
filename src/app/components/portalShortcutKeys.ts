@@ -37,7 +37,7 @@ export const TOOLBAR_KEYS = {
   addInside: { keys: ['Shift', 'A'], tips: ['Add a ', 'Add a block inside'] },
   replace: { keys: ['R'], tips: ['Replace this widget', 'Replace widget'] },
   duplicate: { keys: ['Ctrl', 'D'], tips: ['Copy'] },
-  split: { keys: ['S'], tips: ['Split into '] },
+  split: { keys: ['S'], tips: ['Split', 'Add column', 'Add row'] },
   /* structure */
   selectRow: { keys: ['Alt', '↑'], tips: ['Select the row'] },
   moveLeft: { keys: ['←'], tips: ['Move left'] },
