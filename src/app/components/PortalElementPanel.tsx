@@ -515,14 +515,7 @@ function BorderControl({ style, onChange }: { style: NodeStyle; onChange: (p: Pa
           onChange={(e) => onChange({ borderWidth: Math.max(0, Math.min(12, Number(e.target.value) || 0)) })}
           className="h-9 w-[62px] flex-shrink-0 rounded border border-[#d1d5db] px-2 text-center text-[13px] text-[#364658] focus:border-[#3D8BD0] focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
         />
-        <select
-          aria-label="Border style"
-          value={style.borderStyle ?? 'solid'}
-          onChange={(e) => onChange({ borderStyle: e.target.value })}
-          className={`${inputCls} app-select w-[92px] flex-shrink-0`}
-        >
-          {['solid', 'dashed', 'dotted'].map((v) => <option key={v}>{v}</option>)}
-        </select>
+        {/* No Border style (7 Oct 2026, Zeni). */}
         <span className="min-w-0 flex-1">
           <ColorField value={style.borderColor ?? '#E5E7EB'} onChange={(v) => onChange({ borderColor: v })} />
         </span>

@@ -171,7 +171,7 @@ export function BorderRow({ width, color, sides, onWidth, onColor, onSides, colo
           <span className="w-[38px] flex-shrink-0"><ColorField compact value={color} onChange={onColor} modes={colorModes} /></span>
         </div>
       )}
-      {onStroke && (adv ? Math.max(s.top, s.right, s.bottom, s.left) : width) > 0 && (
+      {false && onStroke && (adv ? Math.max(s.top, s.right, s.bottom, s.left) : width) > 0 && (
         <div className="mt-2 flex items-center justify-between gap-3">
           <span className="text-[12px] font-normal text-[#7B8FA5]">Stroke</span>
           <span className="flex rounded border border-[#DFE5ED] bg-white p-0.5">

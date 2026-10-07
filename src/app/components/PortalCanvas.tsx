@@ -2090,7 +2090,8 @@ function ElementToolbar({ id, kind, name }: { id: string; kind: string; name: st
           paints behind the thing you are looking at and that no design reads as part of itself. The
           badge's own colour, corners and border are in the Icon popup below.
           A TILE keeps all four: there the card and the badge inside it are two real boxes. */}
-      {(kind !== 'text' || placed) && !isButton && !isIcon && <ColorMenu id={id} />}
+      {/* ⚠️ NO background button on the toolbar (7 Oct 2026, Zeni) — the colour lives in the sidepanel's Background group only. */}
+      {false && (kind !== 'text' || placed) && !isButton && !isIcon && <ColorMenu id={id} />}
 
       {caps.remove !== false && <Rule />}
       {caps.remove !== false && (
@@ -3267,7 +3268,8 @@ function BannerToolbar() {
           ⚠️ Switching tab is LOOKING, not choosing. Nothing is written until you pick a picture or a
           colour — `BannerFillEditor` stamps `bgKind: 'color'` on every write of its own, and the file
           picker stamps `'image'` — so a tab you opened to see what was there cannot repaint the band. */}
-      <div className="relative">
+      {/* ⚠️ Hidden (7 Oct 2026, Zeni): the banner's background is set in the sidepanel only. */}
+      <div className="relative" hidden>
         <button
           className={bg ? btnOn : btn}
           data-tip="Banner background — a picture or a colour"
@@ -4781,9 +4783,7 @@ function EdgeFields({ own, keys, write, radiusMax = 32, radiusRest = 8 }: {
           choice over an edge that is not drawn is a control describing nothing. */}
       {width > 0 && (
         <>
-          <Field label="Border style">
-            <SelectField value={style} options={BORDER_STYLES.map((s) => ({ value: s.value, label: s.label }))} onChange={(v) => write({ [keys.style]: v })} />
-          </Field>
+          {/* No Border style (7 Oct 2026, Zeni) — the stored style is still painted. */}
           <PairColor label="Border colour" pair={colorPair(own, keys.color, '#E5E7EB', write)} />
         </>
       )}
@@ -5027,9 +5027,6 @@ export function DesignQuickSections({ id, part }: { id: string; part?: 'lead' | 
         <SliderField label="Border weight" min={0} max={6} value={bw} onChange={(v) => setI({ iconBorderWidth: v })} />
         {bw > 0 && (
           <>
-            <Field label="Border style">
-              <SelectField value={String(io.iconBorderStyle ?? 'solid')} options={BORDER_STYLES.map((s) => ({ value: s.value, label: s.label }))} onChange={(v) => setI({ iconBorderStyle: v })} />
-            </Field>
             <PairColor label="Border colour" pair={colorPair(io, 'iconBorderColor', '#E5E7EB', setI)} />
           </>
         )}
