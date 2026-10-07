@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import {
   ChevronDown, Copy, ExternalLink, LayoutTemplate, MonitorSmartphone, Pencil, PenLine, Plus,
-  Eye, Settings, SlidersHorizontal, Star, Trash2, X,
+  Eye, Settings, SlidersHorizontal, Trash2, X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { portalSlug } from '../routes';
@@ -189,17 +189,8 @@ function PortalCard({ p, url, href, isDefault, on, onToggle, onCustomize, onEdit
             <button onClick={onPreview} title="Preview" aria-label="Preview" className={icon}><Eye size={14} /></button>
             <button onClick={onSettings} title="Settings" aria-label="Settings" className={icon}><Settings size={14} /></button>
             <button onClick={onCopy} title="Copy" aria-label="Copy" className={icon}><Copy size={14} /></button>
-            {!isDefault && (
-              <button
-                onClick={onMakeDefault}
-                /* ⚠️ Enabled on a DRAFT too: one portal is live at a time and it is the default, so
-                   making a portal the default IS publishing it — the star asks the same
-                   publish-and-make-default question the builder's Publish does. */
-                title="Publish and make default — requesters land here"
-                aria-label="Set as default"
-                className={icon}
-              ><Star size={14} /></button>
-            )}
+            {/* ⚠️ No "Set as default" star (Zeni, 7 Oct 2026): the status switch already publishes a portal
+                and makes it the default, so the star was a second door to the same room. */}
             <button
               onClick={onDelete}
               disabled={isDefault}
@@ -234,8 +225,6 @@ function PortalCard({ p, url, href, isDefault, on, onToggle, onCustomize, onEdit
           {p.company ?? 'No company'}
           <span className="mx-1.5 text-[#CBD5E1]">·</span>
           Signs in with {signOn}
-          <span className="mx-1.5 text-[#CBD5E1]">·</span>
-          {p.audience ?? 'All requesters'}
         </p>
         </div>
 
