@@ -1793,6 +1793,14 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
      already settled, so it skips the first question and offers that shape's layouts.
      ⚠️ ONE state, not two booleans: they are two modes of one dialog, and two flags can both be true. */
   const [bannerStart, setBannerStart] = useState<'add' | 'edit' | null>(null);
+  /* Reset to default throws away every edit on the page, so it asks first (7 Oct 2026, Zeni). */
+  const [resetAsk, setResetAsk] = useState(false);
+  useEffect(() => {
+    if (!resetAsk) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.stopPropagation(); setResetAsk(false); } };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, [resetAsk]);
 
 
   const runBannerLayout = useCallback((id: string) => {
@@ -3315,10 +3323,25 @@ export function SupportPortalBuilder({ page, accent, onRename, onPublish, onSave
               the page, so it must not sit in the same visual class as Preview, which throws away
               nothing — the weight is the warning. */}
           <button
-            onClick={resetPage}
+            onClick={() => setResetAsk(true)}
             title="Put every block, style and setting back to the page's default"
             className="ml-1 inline-flex h-8 items-center rounded border border-[#DFE5ED] bg-white px-3 text-[13px] font-medium text-[#364658] transition-colors hover:bg-[#F5F7FA]"
           >Reset to default</button>
+          {resetAsk && (
+            <div className="fixed inset-0 z-[10001] flex items-center justify-center bg-black/40 p-6" onMouseDown={(e) => { if (e.target === e.currentTarget) setResetAsk(false); }}>
+              <div role="dialog" aria-modal="true" className="w-[440px] max-w-full rounded-lg bg-white shadow-2xl">
+                <div className="flex items-start justify-between gap-4 px-5 pb-2 pt-4">
+                  <h2 className="text-[16px] font-semibold text-[#364658]">Reset this page to default?</h2>
+                  <button onClick={() => setResetAsk(false)} aria-label="Close" className="flex size-8 flex-shrink-0 items-center justify-center rounded text-[#64748B] transition-colors hover:bg-[#F3F4F6]"><X size={18} /></button>
+                </div>
+                <p className="px-5 pb-5 text-[13px] leading-[1.6] text-[#64748B]">Every block, style and setting you changed on this page goes back to the default. You can undo it with Ctrl+Z.</p>
+                <div className="flex justify-end gap-2 border-t border-[#e5e7eb] px-5 py-3">
+                  <button onClick={() => setResetAsk(false)} className="inline-flex h-8 items-center rounded border border-[#DFE5ED] bg-white px-3.5 text-[13px] font-medium text-[#364658] transition-colors hover:bg-[#F5F7FA]">Cancel</button>
+                  <button onClick={() => { setResetAsk(false); resetPage(); }} className="inline-flex h-8 items-center rounded bg-[#DC2626] px-3.5 text-[13px] font-medium text-white transition-colors hover:bg-[#B91C1C]">Reset to default</button>
+                </div>
+              </div>
+            </div>
+          )}
           {/* ⚠️ The same bordered secondary as Reset to default. It was the only bare-text control in a
               row of three, so the bar read as two buttons and a word rather than as a set of
               actions — and the least destructive of the three looked the least like something you

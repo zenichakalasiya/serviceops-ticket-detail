@@ -1503,7 +1503,7 @@ export const PORTAL_ELEMENTS: PortalElement[] = [
      Their `node` stays: it is what lets the palette see them on the page, since both are top-level
      BANDS rather than members of a row. */
   { id: 'c-favourites', name: 'Favourite Services', icon: 'services', group: 'Data', node: 'favourites', keywords: 'pinned starred saved shortcuts' },
-  { id: 'c-services', name: 'Most Used Services', icon: 'services', group: 'Data', node: 'services', keywords: 'catalog request service favourites featured' },
+  { id: 'c-services', name: 'Most Used Services', icon: 'services', group: 'Data', node: 'services', hidden: true /* removed 7 Oct 2026, Zeni */, keywords: 'catalog request service favourites featured' },
   /* Placed: the FAQ block already sits in the banner area of this portal, so the palette shows it
      as added rather than offering a second one. */
   { id: 'c-faq', name: 'FAQ', icon: 'faq', group: 'Custom', onPage: true, keywords: 'questions help answers' },

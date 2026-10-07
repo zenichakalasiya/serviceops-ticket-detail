@@ -291,6 +291,8 @@ export interface WidgetSpec {
   collection?: CollectionSpec;
   /** Structure and chrome cannot be removed — nothing in the palette could put them back. */
   noDelete?: boolean;
+  /** No DESIGN section at all — not even Spacing. The rail and the top bar (7 Oct 2026, Zeni). */
+  noDesign?: boolean;
   /** §8.1 — three kinds, and only one of them is the editor's to fix. */
   gate?: { kind: GateKind; setting: string; section?: string };
   fields: WidgetField[];

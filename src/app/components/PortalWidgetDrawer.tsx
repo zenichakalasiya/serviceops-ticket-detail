@@ -424,9 +424,9 @@ function PanelBody({ spec, nodeId, cfg, renderField, openGroups, toggleGroup, se
      eyebrow with nothing beneath it.
      ⚠️ `size` is filtered out of the render, so it is filtered out of the test too — counting it
      would keep the eyebrow for a widget whose only accordion is one the panel never draws. */
-  const hasDesignSection = !!quickDesign || panel.accordions
+  const hasDesignSection = !spec.noDesign && (!!quickDesign || panel.accordions
     .filter((a) => a.id !== 'size')
-    .some((a) => !a.when || a.when(cfg));
+    .some((a) => !a.when || a.when(cfg)));
 
   /** Has anything in this accordion moved off its default? Drives the orange dot. */
   const touched = (a: typeof panel.accordions[number]) => {
@@ -732,8 +732,11 @@ export interface WidgetDrawerProps {
    so a spec written tomorrow cannot bring one back by accident. The keys and their renderers are
    untouched, so every block keeps the alignment it has. An accordion left with nothing in it is
    dropped with it. */
+/* ⚠️ Also stripped here (7 Oct 2026, Zeni): a card's Title placement (inside / above the card) and an
+   action card's Corner arrow. Both keys stay stored and read, so no card moves. */
 const isAlignField = (f: WidgetField) =>
-  /align/i.test(f.key) || f.control === 'distribute' || f.control === 'valign';
+  /align/i.test(f.key) || f.control === 'distribute' || f.control === 'valign'
+  || f.key === 'titlePlace' || /^arrow/.test(f.key);
 function withoutAlignment(spec: WidgetSpec): WidgetSpec {
   const panel = spec.panel && {
     ...spec.panel,
@@ -887,7 +890,7 @@ export function PortalWidgetDrawer(props: WidgetDrawerProps) {
      The pack itself stays (thirty specs name it) and so do all of its keys and readers; it simply
      is not listed any more. */
   const viewPacks = (viewPacks0 ?? []).filter((id) => id !== 'P1' && id !== 'P2' && id !== 'P4');
-  const hasDesign = true;
+  const hasDesign = !spec.noDesign;
   const viewRoles = childSpec ? childSpec.roles : subField
     ? (collection?.subElements?.find((s) => s.key === subField.key)?.role
       ? [collection!.subElements!.find((s) => s.key === subField.key)!.role!] : ['body' as const])

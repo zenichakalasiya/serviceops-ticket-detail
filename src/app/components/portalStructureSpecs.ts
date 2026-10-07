@@ -447,7 +447,7 @@ export const HEADER_ACTIONS_SPEC: WidgetSpec = {
 };
 
 export const RAIL_SPEC: WidgetSpec = {
-  id: 'rail', name: 'Left rail', group: 'Chrome', reuse: 'single', family: 'collection',
+  id: 'rail', name: 'Left rail', group: 'Chrome', reuse: 'single', family: 'collection', noDesign: true,
   /* ⚠️ CONTENT only — no Design section at all. The rail is the product's own navigation: an admin
      who could set its width, icon size, active-item treatment and spacing could make the one control
      that appears on every screen of the portal look unlike the product it belongs to. The single
@@ -534,7 +534,7 @@ export const LOGO_SPEC: WidgetSpec = {
 };
 
 export const NAVBAR_SPEC: WidgetSpec = {
-  id: 'navbar', name: 'Top bar', group: 'Chrome', reuse: 'single', family: 'container',
+  id: 'navbar', name: 'Top bar', group: 'Chrome', reuse: 'single', family: 'container', noDesign: true,
   /* ⚠️ NO item list. The bar is two things, not ten: the logo, and the actions AS ONE BLOCK.
      Letting someone drag Bell between Home and Help is a freedom nobody wants and a bar nobody can
      read — the action cluster is a unit that belongs top-right. What IS worth arranging is where

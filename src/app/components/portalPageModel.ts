@@ -321,7 +321,8 @@ export interface PortalPageContent {
 /* ⚠️ Both service rows sit directly under Quick Actions. Everything a requester can START is then
    in the top third — the four action cards, their pinned services, the ones everyone asks for —
    and the lists of things already in flight follow underneath. */
-export const DEFAULT_BLOCK_ORDER = ['quick', 'favourites', 'services', 'work', 'records'];
+/* ⚠️ No `services` (Most Used Services) — removed 7 Oct 2026 (Zeni); Favourite Services takes its row alone. */
+export const DEFAULT_BLOCK_ORDER = ['quick', 'favourites', 'work', 'records'];
 
 /* ── v2: the live product's arrangement ──────────────────────────────────────
  *
@@ -342,7 +343,7 @@ export const DEFAULT_BLOCK_ORDER = ['quick', 'favourites', 'services', 'work', '
    the page were the two with the least in them. */
 /* Most Used Services sits directly under Favourite Services — the two rows answer "what can I ask for"
    together, pinned first and popular second. */
-export const BLOCK_ORDER_V2 = ['quick', 'favourites', 'services', 'work'];
+export const BLOCK_ORDER_V2 = ['quick', 'favourites', 'work'];
 
 export const ROW_ORDER_V2: Record<string, string[]> = {
   quick: ['quick-incident', 'quick-service', 'quick-ad', 'quick-knowledge'],
@@ -791,7 +792,7 @@ export function mintBox(section: { id: string; next: number }, dir: BoxDir, weig
  *  · Row 2 — two columns at 2 : 1: My Assets over My CIs | Most Read Knowledge over Contact Us.
  * The cards are PLACED predefined elements, drawn by the same renderer as the old band blocks.
  * `startEl` is the first element number to use, so the ids never collide with anything seeded after. */
-export const PREDEFINED_ROW_BLOCK_ORDER = ['quick', 'favourites', 'services'];
+export const PREDEFINED_ROW_BLOCK_ORDER = ['quick', 'favourites'];
 export function defaultPredefinedSections(names: Record<string, string>, startEl = 1): { afterId: string; section: CustomSection }[] {
   let n = startEl;
   const el = (type: string): PlacedElement => ({ id: `el-${n++}`, type, name: names[type] ?? type });
@@ -813,7 +814,7 @@ export function defaultPredefinedSections(names: Record<string, string>, startEl
     box.children?.forEach(reg);
   };
   reg(a.root); reg(b.root);
-  return [{ afterId: 'services', section: a }, { afterId: 'services', section: b }];
+  return [{ afterId: 'favourites', section: a }, { afterId: 'favourites', section: b }];
 }
 
 /** Depth cap, counted BELOW the section: Section > Column > Row > Column > Row. */
