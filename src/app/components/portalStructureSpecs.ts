@@ -424,7 +424,7 @@ const HEADER_ACTION_ITEMS = [
  * and one in a component's local state — is exactly the fault the bar used to carry: the icons
  * moved, nothing was saved, and reopening the page put them back. */
 export const HEADER_ACTIONS_SPEC: WidgetSpec = {
-  id: 'header_actions', name: 'Actions', group: 'Chrome', reuse: 'single', family: 'collection',
+  id: 'header_actions', name: 'Actions', group: 'Chrome', reuse: 'single', family: 'collection', noDesign: true,
   fields: [],
   packs: [],
   noDelete: true,
