@@ -74,11 +74,12 @@ function Row({ r }: { r: ShortcutRow }) {
 function GroupCard({ title, note, rows }: { title: string; note?: string; rows: ShortcutRow[] }) {
   return (
     <section className="mb-4 break-inside-avoid overflow-hidden rounded-lg border border-[#E9EDF2] bg-white">
-      <header className="flex items-baseline gap-2 border-b border-[#E9EDF2] bg-[#F8FAFC] px-3.5 py-2">
+      <header className="flex items-baseline gap-2 bg-[#F8FAFC] px-3.5 py-2">
         <h4 className="text-[12px] font-semibold text-[#1E293B]">{title}</h4>
         {note && <span className="min-w-0 truncate text-[11px] text-[#98A2B3]">{note}</span>}
       </header>
-      {rows.map((r) => <Row key={title + r.label} r={r} />)}
+      {/* No line under the header (Zeni, 8 Oct 2026) — wrapped so the first row's top hairline drops too. */}
+      <div>{rows.map((r) => <Row key={title + r.label} r={r} />)}</div>
     </section>
   );
 }
@@ -197,8 +198,8 @@ export function GlobalShortcutsPanel({ page }: { page: Page }) {
                   <button
                     key={m.id}
                     onClick={() => { setQ(''); setSel(m.id); }}
-                    className={`mb-0.5 flex w-full items-center gap-2.5 rounded-md px-2 py-[7px] text-left transition-colors ${
-                      active ? 'bg-white text-[#1E293B] shadow-[0_0_0_1px_#E5E9F0,0_1px_2px_rgba(16,24,40,0.06)]' : 'text-[#475467] hover:bg-[#F1F4F8]'
+                    className={`mb-0.5 flex w-full items-center gap-2.5 rounded px-2 py-[7px] text-left transition-colors ${
+                      active ? 'bg-[#EBF5FF] text-[#3D8BD0]' : 'text-[#475467] hover:bg-[#F1F4F8]'
                     }`}
                   >
                     <Icon size={15} className={`flex-shrink-0 ${active ? 'text-[#3D8BD0]' : 'text-[#7B8FA5]'}`} />
