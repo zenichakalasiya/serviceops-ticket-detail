@@ -20,7 +20,10 @@ import type { ShortcutGroup, ShortcutModule, ShortcutRow } from './shortcutRegis
  * It opens on the most specific place you are (an open drawer beats the list behind it, a canvas beats
  * its drawer, the builder beats Admin), else Global.
  *
- * ⚠️ SEARCH spans every module; results replace the right side, grouped by module.
+ * ⚠️ SEARCH spans every module and matches an action's words OR its keys ("ctrl f"). Results are ONE
+ * column with a sticky header per module (where you are first, then Global, then the rest), groups kept,
+ * matches highlighted. The left list stays: each module shows its match count, empty ones fade, and a
+ * click scopes the results to that module ("Showing: X ×" goes back to all).
  *
  * ⚠️ The left column ends with HELP links (Attio's pattern) — real Motadata pages, opening in a new tab.
  * They were checked live on 8 Oct 2026; there is no acceptable-use page on motadata.com, so Policies
@@ -47,26 +50,83 @@ const POLICY_LINKS = [
   { label: 'Legal', href: 'https://www.motadata.com/legal/' },
 ];
 
-function Kbd({ children }: { children: string }) {
+function Kbd({ children, hit }: { children: string; hit?: boolean }) {
   return (
-    <kbd className="inline-flex h-[22px] min-w-[22px] items-center justify-center rounded-[5px] border border-[#E2E8F0] bg-white px-1.5 font-sans text-[11px] font-medium text-[#364658] shadow-[0_1px_0_#E2E8F0]">
+    <kbd className={`inline-flex h-[22px] min-w-[22px] items-center justify-center rounded-[5px] border px-1.5 font-sans text-[11px] font-medium shadow-[0_1px_0_#E2E8F0] ${
+      hit ? 'border-[#F5C26B] bg-[#FEF0C7] text-[#1E293B]' : 'border-[#E2E8F0] bg-white text-[#364658]'
+    }`}>
       {children}
     </kbd>
   );
 }
-/** Caps sit side by side — no "+" between keys pressed together; "/" (either one) reads "or". */
-function Keys({ keys }: { keys: string[] }) {
+/* A "+" or "/" is a SEPARATOR only between two keys; at either end it is a key itself (Zoom is "+ / −"). */
+const isSep = (keys: string[], i: number, ch: string) => keys[i] === ch && i > 0 && i < keys.length - 1 && keys[i - 1] !== '/' && keys[i - 1] !== '+';
+
+/** Caps sit side by side — no "+" between keys pressed together; "/" (either one) reads "or".
+ *  `hit` = the caps a key search matched, tinted so it shows WHICH key it found. */
+function Keys({ keys, hit }: { keys: string[]; hit?: Set<number> }) {
   return (
     <span className="flex flex-shrink-0 items-center gap-1">
-      {keys.filter((k) => k !== '+').map((k, i, a) => (k === '/' && i > 0 && i < a.length - 1 ? <span key={i} className="px-0.5 text-[11px] text-[#98A2B3]">or</span> : <Kbd key={i}>{k}</Kbd>))}
+      {keys.map((k, i) => {
+        if (isSep(keys, i, '+')) return null;
+        if (isSep(keys, i, '/')) return <span key={i} className="px-0.5 text-[11px] text-[#98A2B3]">or</span>;
+        return <Kbd key={i} hit={hit?.has(i)}>{k}</Kbd>;
+      })}
     </span>
   );
 }
-function Row({ r }: { r: ShortcutRow }) {
+
+/* ── Search ───────────────────────────────────────────────────────────────────────────────
+ * A query matches a row's LABEL (substring) or its KEYS. Keys are read as alternatives ("1 / 2 / 3")
+ * of combos ("Ctrl + Shift + F"), and a key query matches WHOLE keys in order — "ctrl f" finds
+ * Ctrl + F but not Ctrl + Shift + F. "ctrl+f" and "Ctrl F" read the same; arrows can be typed as
+ * up / down / left / right. */
+const KEY_WORD: Record<string, string> = { '↑': 'up', '↓': 'down', '←': 'left', '→': 'right', '−': '-', escape: 'esc' };
+const keyWord = (k: string) => KEY_WORD[k] ?? KEY_WORD[k.toLowerCase()] ?? k.toLowerCase();
+function keyQuery(t: string): string[] {
+  const s0 = t.trim().toLowerCase();
+  if (!s0) return [];
+  if (s0 === '+') return ['+'];
+  return s0.split(/\s*\+\s*|\s+/).filter(Boolean).map(keyWord);
+}
+/** The caps that match the query, or null when the keys don't. */
+function keyHits(keys: string[], q: string[]): Set<number> | null {
+  if (!q.length) return null;
+  const alts: number[][] = [[]];
+  keys.forEach((_, i) => {
+    if (isSep(keys, i, '/')) alts.push([]);
+    else if (!isSep(keys, i, '+')) alts[alts.length - 1].push(i);
+  });
+  const hit = new Set<number>();
+  for (const a of alts) {
+    const words = a.map((i) => keyWord(keys[i]));
+    for (let st = 0; st + q.length <= words.length; st++) {
+      if (q.every((w, j) => words[st + j] === w)) q.forEach((_, j) => hit.add(a[st + j]));
+    }
+  }
+  return hit.size ? hit : null;
+}
+type Hit = { r: ShortcutRow; keyHit: Set<number> | null };
+/* A label matches where a WORD starts — "up" finds "Move up", not "group". Returns the index or -1. */
+function wordAt(text: string, q: string) {
+  if (!q) return -1;
+  const t = text.toLowerCase();
+  for (let i = t.indexOf(q); i >= 0; i = t.indexOf(q, i + 1)) {
+    if (i === 0 || !/[a-z0-9]/.test(t[i - 1])) return i;
+  }
+  return -1;
+}
+function Highlight({ text, q }: { text: string; q: string }) {
+  const i = wordAt(text, q);
+  if (i < 0) return <>{text}</>;
+  return <>{text.slice(0, i)}<mark className="rounded-[2px] bg-[#FEF0C7] px-px font-semibold text-[#1E293B]">{text.slice(i, i + q.length)}</mark>{text.slice(i + q.length)}</>;
+}
+
+function Row({ r, q, hit }: { r: ShortcutRow; q?: string; hit?: Set<number> | null }) {
   return (
     <div className="flex min-h-[38px] items-center justify-between gap-3 border-t border-[#F1F4F8] px-3.5 py-1.5 first:border-t-0">
-      <span className="min-w-0 text-[12.5px] leading-snug text-[#364658]">{r.label}</span>
-      <Keys keys={r.keys} />
+      <span className="min-w-0 text-[12.5px] leading-snug text-[#364658]">{q ? <Highlight text={r.label} q={q} /> : r.label}</span>
+      <Keys keys={r.keys} hit={hit ?? undefined} />
     </div>
   );
 }
@@ -95,6 +155,9 @@ export function GlobalShortcutsPanel({ page }: { page: Page }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
   const [sel, setSel] = useState<string>(GLOBAL_ID);
+  /* While searching, the left list SCOPES the results to one module (null = all of them). */
+  const [scope, setScope] = useState<string | null>(null);
+  useEffect(() => { if (!q.trim()) setScope(null); }, [q]);
   const [policiesOpen, setPoliciesOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
   const contexts = useShortcutContexts();
@@ -104,7 +167,7 @@ export function GlobalShortcutsPanel({ page }: { page: Page }) {
   const hereIds = useMemo(() => new Set([...contexts, page]), [contexts, page]);
   const focusedId = [...contexts, page].map(shortcutModule).find((m) => m && rowCount(m) > 0 && m.id !== GLOBAL_ID)?.id;
 
-  const show = () => { setOpen(true); setQ(''); setSel(focusedId ?? GLOBAL_ID); };
+  const show = () => { setOpen(true); setQ(''); setScope(null); setSel(focusedId ?? GLOBAL_ID); };
   const showRef = useRef(show);
   showRef.current = show;
 
@@ -142,14 +205,33 @@ export function GlobalShortcutsPanel({ page }: { page: Page }) {
 
   useEffect(() => { if (open) requestAnimationFrame(() => searchRef.current?.focus({ preventScroll: true })); }, [open]);
 
-  const results = useMemo(() => {
-    const t = q.trim().toLowerCase();
-    if (!t) return null;
-    return modules.map((m) => ({
-      m,
-      rows: m.groups.flatMap((g) => g.rows).filter((r) => r.label.toLowerCase().includes(t) || r.keys.join(' ').toLowerCase().includes(t) || m.name.toLowerCase().includes(t)),
-    })).filter((x) => x.rows.length);
-  }, [q, modules]);
+  const term = q.trim().toLowerCase();
+  /* Every module's matches, groups kept (Tabs, Records…), in reading order: where you are first (most
+     specific first), then Global, then the rest. */
+  const allResults = useMemo(() => {
+    if (!term) return null;
+    const kq = keyQuery(term);
+    const here: string[] = [...contexts, page];
+    const rank = (id: string) => { const i = here.indexOf(id); return i >= 0 ? i : id === GLOBAL_ID ? here.length : here.length + 1; };
+    return modules
+      .map((m, order) => {
+        const groups = m.groups
+          .map((g) => ({
+            title: g.title,
+            hits: g.rows.map((r): Hit | null => {
+              const keyHit = keyHits(r.keys, kq);
+              return wordAt(r.label, term) >= 0 || keyHit ? { r, keyHit } : null;
+            }).filter((h): h is Hit => !!h),
+          }))
+          .filter((g) => g.hits.length);
+        return { m, order, groups, count: groups.reduce((n, g) => n + g.hits.length, 0) };
+      })
+      .sort((a, b) => rank(a.m.id) - rank(b.m.id) || a.order - b.order);
+  }, [term, modules, contexts, page]);
+  const matched = allResults ? allResults.filter((x) => x.count) : null;
+  const results = matched && (scope ? matched.filter((x) => x.m.id === scope) : matched);
+  const countFor = (id: string) => allResults?.find((x) => x.m.id === id)?.count ?? 0;
+  const total = matched ? matched.reduce((n, x) => n + x.count, 0) : 0;
 
   if (!open) return null;
   const current = shortcutModule(sel) ?? shortcutModule(GLOBAL_ID)!;
@@ -178,7 +260,7 @@ export function GlobalShortcutsPanel({ page }: { page: Page }) {
               ref={searchRef}
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Search all shortcuts"
+              placeholder="Search actions or keys, e.g. ctrl f"
               className="min-w-0 flex-1 bg-transparent text-[12.5px] text-[#364658] outline-none placeholder:text-[#9CA3AF]"
             />
             {q && <button onClick={() => setQ('')} aria-label="Clear search" className="text-[#9CA3AF] hover:text-[#364658]"><X size={13} /></button>}
@@ -190,16 +272,21 @@ export function GlobalShortcutsPanel({ page }: { page: Page }) {
           {/* Left — modules, then help */}
           <nav className="flex w-[248px] flex-shrink-0 flex-col border-r border-[#EEF2F6] bg-[#FAFBFC]">
             <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
-              <div className="px-2 pb-1.5 text-[10.5px] font-semibold uppercase tracking-wider text-[#98A2B3]">Modules</div>
+              <div className="px-2 pb-1.5 text-[10.5px] font-semibold uppercase tracking-wider text-[#98A2B3]">{results ? 'Matches by module' : 'Modules'}</div>
               {modules.map((m) => {
                 const Icon = iconFor(m.id);
-                const active = !results && m.id === current.id;
+                const n = results ? countFor(m.id) : rowCount(m);
+                const active = results ? scope === m.id : m.id === current.id;
+                const none = !!results && n === 0;
                 return (
                   <button
                     key={m.id}
-                    onClick={() => { setQ(''); setSel(m.id); }}
+                    disabled={none}
+                    title={none ? `No match in ${m.name}` : undefined}
+                    /* Searching: a click scopes the results to this module (again = all). Otherwise it opens it. */
+                    onClick={() => { if (results) setScope((s) => (s === m.id ? null : m.id)); else setSel(m.id); }}
                     className={`mb-0.5 flex w-full items-center gap-2.5 rounded px-2 py-[7px] text-left transition-colors ${
-                      active ? 'bg-[#EBF5FF] text-[#3D8BD0]' : 'text-[#475467] hover:bg-[#F1F4F8]'
+                      active ? 'bg-[#EBF5FF] text-[#3D8BD0]' : none ? 'cursor-default text-[#475467] opacity-40' : 'text-[#475467] hover:bg-[#F1F4F8]'
                     }`}
                   >
                     <Icon size={15} className={`flex-shrink-0 ${active ? 'text-[#3D8BD0]' : 'text-[#7B8FA5]'}`} />
@@ -208,7 +295,7 @@ export function GlobalShortcutsPanel({ page }: { page: Page }) {
                       {/* A second line, not a tag beside the name — a tag cut "Support Portal builder" to "Support Portal …". */}
                       {hereIds.has(m.id) && m.id !== GLOBAL_ID && <span className="mt-px flex items-center gap-1 text-[10.5px] font-medium text-[#3D8BD0]"><span className="size-1.5 rounded-full bg-[#3D8BD0]" />You’re here</span>}
                     </span>
-                    <span className="flex-shrink-0 text-[11px] text-[#98A2B3]">{rowCount(m)}</span>
+                    <span className={`flex-shrink-0 text-[11px] ${results && n ? 'rounded-full bg-[#FEF0C7] px-1.5 font-semibold text-[#92400E]' : 'text-[#98A2B3]'}`}>{n}</span>
                   </button>
                 );
               })}
@@ -248,16 +335,47 @@ export function GlobalShortcutsPanel({ page }: { page: Page }) {
             {results ? (
               results.length ? (
                 <>
-                  <p className="mb-4 text-[12px] text-[#7B8FA5]">{results.reduce((n, r) => n + r.rows.length, 0)} shortcuts match “{q.trim()}”</p>
-                  <div className="gap-4 min-[900px]:columns-2">
-                    {results.map(({ m, rows }) => <GroupCard key={m.id} title={m.name} note={hereIds.has(m.id) && m.id !== GLOBAL_ID ? 'You’re here' : undefined} rows={rows} />)}
+                  <div className="mb-4 flex flex-wrap items-center gap-2 text-[12px] text-[#7B8FA5]">
+                    <span>
+                      {scope
+                        ? <>{results[0].count} of {total} {total === 1 ? 'result' : 'results'} for “{q.trim()}”</>
+                        : <>{total} {total === 1 ? 'result' : 'results'} for “{q.trim()}” in {matched!.length} {matched!.length === 1 ? 'module' : 'modules'}</>}
+                    </span>
+                    {scope && (
+                      <button onClick={() => setScope(null)} className="inline-flex h-6 items-center gap-1 rounded bg-[#EBF5FF] pl-2 pr-1 text-[11.5px] font-medium text-[#3D8BD0] hover:bg-[#DCEBFA]">
+                        Showing: {results[0].m.name}<X size={12} />
+                      </button>
+                    )}
                   </div>
+                  {/* ONE column, one section per module — a sticky header names the module every row
+                      under it belongs to, so a result is never read without its module. */}
+                  {results.map(({ m, groups, count }) => {
+                    const Icon = iconFor(m.id);
+                    return (
+                      <section key={m.id} className="mb-6">
+                        <header className="sticky -top-5 z-10 -mx-6 mb-2 flex items-center gap-2.5 border-b border-[#EEF2F6] bg-white px-6 py-2">
+                          <span className="flex size-7 flex-shrink-0 items-center justify-center rounded-md border border-[#E9EDF2] bg-white text-[#3D8BD0]"><Icon size={14} /></span>
+                          <h3 className="text-[13.5px] font-semibold text-[#111827]">{m.name}</h3>
+                          {hereIds.has(m.id) && m.id !== GLOBAL_ID && <span className="flex items-center gap-1 text-[11px] font-medium text-[#3D8BD0]"><span className="size-1.5 rounded-full bg-[#3D8BD0]" />You’re here</span>}
+                          <span className="ml-auto text-[11.5px] text-[#98A2B3]">{count} {count === 1 ? 'match' : 'matches'}</span>
+                        </header>
+                        {groups.map((g) => (
+                          <div key={g.title} className="mb-3">
+                            <div className="px-1 pb-1 text-[10.5px] font-semibold uppercase tracking-wider text-[#98A2B3]">{g.title}</div>
+                            <div className="overflow-hidden rounded-lg border border-[#E9EDF2] bg-white">
+                              {g.hits.map(({ r, keyHit }) => <Row key={r.label + r.keys.join('')} r={r} q={term} hit={keyHit} />)}
+                            </div>
+                          </div>
+                        ))}
+                      </section>
+                    );
+                  })}
                 </>
               ) : (
                 <div className="flex h-full flex-col items-center justify-center text-center">
                   <span className="flex size-10 items-center justify-center rounded-full bg-[#F1F5F9] text-[#98A2B3]"><Search size={18} /></span>
                   <p className="mt-3 text-[13px] font-medium text-[#364658]">No shortcut matches “{q.trim()}”</p>
-                  <p className="mt-1 text-[12px] text-[#7B8FA5]">Try a word from the action, like “select” or “search”.</p>
+                  <p className="mt-1 text-[12px] text-[#7B8FA5]">Try a word from the action, like “select”, or a key, like “ctrl f”.</p>
                 </div>
               )
             ) : (
