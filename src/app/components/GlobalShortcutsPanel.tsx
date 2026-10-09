@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ComponentType } from 'react';
 import {
   BookOpen, ChevronDown, ExternalLink, GitBranch, Globe, Keyboard, LayoutTemplate, Network, PanelRight,
-  Search, Shield, Sparkles, Workflow, X,
+  Search, Shield, Sparkles, Star, Workflow, X, XCircle,
 } from 'lucide-react';
 import type { Page } from '../routes';
 import { useShortcutContexts } from './shortcutContext';
@@ -151,8 +151,279 @@ function Groups({ groups }: { groups: ShortcutGroup[] }) {
   );
 }
 
+/* ── Two versions (Zeni, 9 Oct 2026) ─────────────────────────────────────────────────────────────
+ * V1 = the two-pane popup above. V2 = Notion's sheet: pill tabs over ONE scrolling list, the tab
+ * follows the scroll, search opens from an icon. A V1 | V2 pill in each header switches them, and the
+ * choice is remembered in this browser (`shortcutsUi`). */
+type ShortcutsUi = 'v1' | 'v2';
+const UI_KEY = 'shortcutsUi';
+const readUi = (): ShortcutsUi => { try { return localStorage.getItem(UI_KEY) === 'v2' ? 'v2' : 'v1'; } catch { return 'v1'; } };
+function UiSwitch({ ui, onChange }: { ui: ShortcutsUi; onChange: (v: ShortcutsUi) => void }) {
+  return (
+    <div className="pill-track flex-shrink-0" title="Compare the two designs">
+      {(['v1', 'v2'] as const).map((v) => (
+        <button key={v} aria-pressed={ui === v} onClick={() => onChange(v)}>{v.toUpperCase()}</button>
+      ))}
+    </div>
+  );
+}
+
+/* V2's key caps — Notion's: a soft grey fill, no border, monospace. */
+function SoftKeys({ keys, hit }: { keys: string[]; hit?: Set<number> | null }) {
+  return (
+    <span className="flex flex-shrink-0 items-center gap-1">
+      {keys.map((k, i) => {
+        if (isSep(keys, i, '+')) return null;
+        if (isSep(keys, i, '/')) return <span key={i} className="px-0.5 text-[11px] text-[#98A2B3]">or</span>;
+        return (
+          <kbd key={i} className={`inline-flex h-[22px] min-w-[22px] items-center justify-center rounded-[4px] px-1.5 font-mono text-[11.5px] ${
+            hit?.has(i) ? 'bg-[#FEF0C7] text-[#1E293B]' : 'bg-[#F1F4F8] text-[#4B5563]'
+          }`}>{k}</kbd>
+        );
+      })}
+    </span>
+  );
+}
+
+type Section = { id: string; name: string; icon: ComponentType<{ size?: number; className?: string }>; where?: string; here?: boolean;
+  groups: { title?: string; note?: string; hits: Hit[] }[] };
+
+/**
+ * V2 — Notion's keyboard-shortcuts sheet, in light. The title and the tab row stay pinned; everything
+ * below is ONE list (a big heading per module, a smaller one per group). A tab scrolls to its section and
+ * the scroll lights the tab. Tabs that do not fit go behind "more…". Search opens from the icon at the
+ * right: it filters the list in place, keeps the headings, and tabs with no match DISAPPEAR.
+ * ⚠️ Popular is a SHORTCUT list (copies of rows that live in their module), so it is left out of search
+ * results — otherwise every match in it would show twice.
+ */
+function NotionView({ modules, hereIds, focusedId, rank, ui, onUi, onClose }: {
+  modules: ShortcutModule[]; hereIds: Set<string>; focusedId?: string; rank: (id: string) => number;
+  ui: ShortcutsUi; onUi: (v: ShortcutsUi) => void; onClose: () => void;
+}) {
+  const [q, setQ] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [active, setActive] = useState('popular');
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [fit, setFit] = useState<number>(99);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const rowRef = useRef<HTMLDivElement>(null);
+  const measureRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const lockRef = useRef(0);
+  const term = q.trim().toLowerCase();
+
+  /* Where you are first, then Global, then the rest — the tab order and the list order. */
+  const ordered = useMemo(() => modules.map((m, i) => ({ m, i })).sort((a, b) => rank(a.m.id) - rank(b.m.id) || a.i - b.i).map((x) => x.m), [modules, rank]);
+
+  const sections: Section[] = useMemo(() => {
+    const kq = keyQuery(term);
+    const match = (r: ShortcutRow): Hit | null => {
+      if (!term) return { r, keyHit: null };
+      const keyHit = keyHits(r.keys, kq);
+      return wordAt(r.label, term) >= 0 || keyHit ? { r, keyHit } : null;
+    };
+    const out: Section[] = [];
+    const here = focusedId ? shortcutModule(focusedId) : undefined;
+    /* Popular = the lead keys of where you are (topped up to six from its first rows), then Global's.
+       On a page with no keys of its own it would be Global again, word for word — so it is left out. */
+    if (!term && here) {
+      const all = here.groups.flatMap((g) => g.rows);
+      const leads = all.filter((r) => r.lead);
+      const pick = [...leads, ...all.filter((r) => !r.lead)].slice(0, Math.max(6, leads.length));
+      const global = shortcutModule(GLOBAL_ID)?.groups.flatMap((g) => g.rows) ?? [];
+      out.push({ id: 'popular', name: 'Popular', icon: Star, where: `${here.name}, and keys that work everywhere`,
+        groups: [{ hits: [...pick, ...global].map((r) => ({ r, keyHit: null })) }] });
+    }
+    for (const m of ordered) {
+      const groups = m.groups
+        .map((g) => ({ title: g.title, note: g.note, hits: g.rows.map(match).filter((h): h is Hit => !!h) }))
+        .filter((g) => g.hits.length);
+      if (groups.length) out.push({ id: m.id, name: m.name, icon: iconFor(m.id), where: m.where, here: hereIds.has(m.id) && m.id !== GLOBAL_ID, groups });
+    }
+    return out;
+  }, [term, ordered, focusedId, hereIds]);
+
+  /* The lit tab must exist — a search can remove it. */
+  useEffect(() => { if (!sections.some((s) => s.id === active)) setActive(sections[0]?.id ?? 'popular'); }, [sections, active]);
+  useEffect(() => { scrollRef.current?.scrollTo({ top: 0 }); }, [term]);
+
+  /* How many tabs fit beside the search: measured off a hidden copy of the row. */
+  useEffect(() => {
+    const row = rowRef.current; const meas = measureRef.current;
+    if (!row || !meas) return;
+    const calc = () => {
+      const widths = [...meas.children].map((c) => (c as HTMLElement).offsetWidth + 4);
+      const avail = row.clientWidth - (searchOpen ? 276 : 44) - 8;
+      const total = widths.reduce((a, b) => a + b, 0);
+      if (total <= avail) { setFit(widths.length); return; }
+      let used = 84; let n = 0; // 84 = the "more…" button
+      while (n < widths.length && used + widths[n] <= avail) used += widths[n++];
+      setFit(Math.max(1, n));
+    };
+    calc();
+    const ro = new ResizeObserver(calc); ro.observe(row);
+    return () => ro.disconnect();
+  }, [sections, searchOpen]);
+
+  const shown = sections.slice(0, fit);
+  const hidden = sections.slice(fit);
+
+  /* Scroll spy — the section whose heading has passed the top. At the bottom, the last one. */
+  const onScroll = () => {
+    if (Date.now() < lockRef.current) return;
+    const sc = scrollRef.current; if (!sc) return;
+    const heads = [...sc.querySelectorAll<HTMLElement>('[data-sc-section]')];
+    let cur = heads[0]?.dataset.scSection;
+    for (const h of heads) if (h.offsetTop - sc.scrollTop <= 32) cur = h.dataset.scSection;
+    if (sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 2) cur = heads[heads.length - 1]?.dataset.scSection;
+    if (cur) setActive(cur);
+  };
+  const go = (id: string) => {
+    const sc = scrollRef.current;
+    const el = sc?.querySelector<HTMLElement>(`[data-sc-section="${id}"]`);
+    setActive(id); setMoreOpen(false);
+    if (sc && el) { lockRef.current = Date.now() + 600; sc.scrollTo({ top: el.offsetTop - 8, behavior: 'smooth' }); }
+  };
+
+  /* Esc: clear the search, then close it, then close the sheet. Capture phase so the panel's own
+     Escape (close) only runs when nothing here used the key. */
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      if (moreOpen) { setMoreOpen(false); } else if (q) { setQ(''); } else if (searchOpen) { setSearchOpen(false); } else return;
+      e.preventDefault(); e.stopPropagation();
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, [q, searchOpen, moreOpen]);
+  useEffect(() => { if (searchOpen) inputRef.current?.focus(); else dialogRef.current?.focus({ preventScroll: true }); }, [searchOpen]);
+  useEffect(() => {
+    if (!moreOpen) return;
+    const off = (e: MouseEvent) => { if (!(e.target as HTMLElement).closest('[data-sc-more]')) setMoreOpen(false); };
+    window.addEventListener('mousedown', off);
+    return () => window.removeEventListener('mousedown', off);
+  }, [moreOpen]);
+
+  const tabCls = (on: boolean) => `inline-flex h-8 flex-shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-2.5 text-[13px] transition-colors ${
+    on ? 'bg-[#EBF5FF] font-medium text-[#3D8BD0]' : 'text-[#64748B] hover:bg-[#F5F7FA] hover:text-[#1E293B]'
+  }`;
+  const tab = (s: Section, on: boolean, onClick?: () => void) => {
+    const Icon = s.icon;
+    return <button key={s.id} onClick={onClick} className={tabCls(on)}><Icon size={14} className="flex-shrink-0" />{s.name}</button>;
+  };
+  const total = term ? sections.reduce((n, s) => n + s.groups.reduce((k, g) => k + g.hits.length, 0), 0) : 0;
+
+  return (
+    <div
+      ref={dialogRef}
+      tabIndex={-1}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Keyboard shortcuts"
+      className="flex h-[min(720px,calc(100vh-48px))] w-[min(960px,calc(100vw-32px))] flex-col overflow-hidden rounded-xl bg-white shadow-[0_24px_64px_-12px_rgba(16,24,40,0.28)] outline-none"
+    >
+      {/* Pinned head — title, tabs, search */}
+      <div className="relative z-10 flex-shrink-0 px-10 pt-7">
+        <div className="flex items-center gap-3">
+          <h2 className="text-[26px] font-bold leading-tight text-[#111827]">Keyboard shortcuts</h2>
+          <div className="ml-auto flex items-center gap-2">
+            <UiSwitch ui={ui} onChange={onUi} />
+            <button onClick={onClose} aria-label="Close" className="flex size-8 items-center justify-center rounded text-[#6B7280] transition-colors hover:bg-[#F3F4F6] hover:text-[#111827]"><X size={18} /></button>
+          </div>
+        </div>
+
+        <div ref={rowRef} className="relative mt-4 flex items-center gap-1 pb-3">
+          {/* Hidden copy of every tab, only to measure how many fit. */}
+          <div ref={measureRef} aria-hidden className="pointer-events-none invisible absolute left-0 top-0 flex gap-1">
+            {sections.map((s) => tab(s, true))}
+          </div>
+          {shown.map((s) => tab(s, s.id === active, () => go(s.id)))}
+          {hidden.length > 0 && (
+            <div data-sc-more className="relative">
+              <button onClick={() => setMoreOpen((v) => !v)} className={tabCls(hidden.some((s) => s.id === active))}>more…</button>
+              {moreOpen && (
+                <div className="absolute left-0 top-full z-20 mt-1 w-[240px] rounded-lg border border-[#E5E7EB] bg-white p-1 shadow-[0_12px_32px_-8px_rgba(16,24,40,0.2)]">
+                  {hidden.map((s) => {
+                    const Icon = s.icon;
+                    return (
+                      <button key={s.id} onClick={() => go(s.id)} className={`flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-[13px] ${s.id === active ? 'bg-[#EBF5FF] font-medium text-[#3D8BD0]' : 'text-[#364658] hover:bg-[#F5F7FA]'}`}>
+                        <Icon size={14} className="flex-shrink-0" />{s.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="ml-auto flex-shrink-0">
+            {searchOpen ? (
+              <label className="flex h-9 w-[260px] items-center gap-2 rounded-md bg-[#F5F7FA] px-2.5 focus-within:ring-1 focus-within:ring-[#3D8BD0]">
+                <Search size={15} className="flex-shrink-0 text-[#7B8FA5]" />
+                <input ref={inputRef} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search…"
+                  className="min-w-0 flex-1 bg-transparent text-[13px] text-[#1E293B] outline-none placeholder:text-[#9CA3AF]" />
+                <button onClick={() => { if (q) { setQ(''); inputRef.current?.focus(); } else setSearchOpen(false); }}
+                  aria-label={q ? 'Clear search' : 'Close search'} className="flex-shrink-0 text-[#98A2B3] hover:text-[#364658]">
+                  <XCircle size={15} />
+                </button>
+              </label>
+            ) : (
+              <button onClick={() => setSearchOpen(true)} aria-label="Search shortcuts" className="flex size-9 items-center justify-center rounded-md text-[#64748B] transition-colors hover:bg-[#F5F7FA] hover:text-[#1E293B]"><Search size={17} /></button>
+            )}
+          </div>
+        </div>
+        {/* The list fades out under the pinned head. */}
+        <div className="pointer-events-none absolute inset-x-0 top-full h-5 bg-gradient-to-b from-white to-transparent" />
+      </div>
+
+      {/* One list */}
+      <div ref={scrollRef} onScroll={onScroll} className="relative min-h-0 flex-1 overflow-y-auto px-10 pb-10 pt-2">
+        {term && (
+          <p className="mb-1 text-[12px] text-[#7B8FA5]">
+            {total ? <>{total} {total === 1 ? 'result' : 'results'} for “{q.trim()}”</> : null}
+          </p>
+        )}
+        {sections.length ? sections.map((s) => (
+          <section key={s.id} data-sc-section={s.id} className="pt-6 first:pt-2">
+            <div className="flex items-baseline gap-2.5">
+              <h3 className="text-[22px] font-semibold leading-tight text-[#111827]">{s.name}</h3>
+              {s.here && <span className="flex items-center gap-1 text-[11.5px] font-medium text-[#3D8BD0]"><span className="size-1.5 rounded-full bg-[#3D8BD0]" />You’re here</span>}
+            </div>
+            {s.where && !term && <p className="mt-1 text-[12.5px] text-[#7B8FA5]">{s.where}</p>}
+            {s.groups.map((g, gi) => (
+              <div key={(g.title ?? '') + gi} className="mt-4">
+                {g.title && (
+                  <div className="flex items-baseline gap-2 pb-1">
+                    <h4 className="text-[15px] font-semibold text-[#1E293B]">{g.title}</h4>
+                    {g.note && <span className="text-[12px] text-[#98A2B3]">{g.note}</span>}
+                  </div>
+                )}
+                {g.hits.map(({ r, keyHit }) => (
+                  <div key={r.label + r.keys.join('')} className="flex min-h-[44px] items-center justify-between gap-4 border-b border-[#EEF2F6] py-2">
+                    <span className="min-w-0 text-[14px] text-[#364658]">{term ? <Highlight text={r.label} q={term} /> : r.label}</span>
+                    <SoftKeys keys={r.keys} hit={keyHit} />
+                  </div>
+                ))}
+              </div>
+            ))}
+          </section>
+        )) : (
+          <div className="flex h-full flex-col items-center justify-center text-center">
+            <span className="flex size-10 items-center justify-center rounded-full bg-[#F1F5F9] text-[#98A2B3]"><Search size={18} /></span>
+            <p className="mt-3 text-[13px] font-medium text-[#364658]">No shortcut matches “{q.trim()}”</p>
+            <p className="mt-1 text-[12px] text-[#7B8FA5]">Try a word from the action, like “select”, or a key, like “ctrl f”.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function GlobalShortcutsPanel({ page }: { page: Page }) {
   const [open, setOpen] = useState(false);
+  const [ui, setUiState] = useState<ShortcutsUi>(readUi);
+  const setUi = (v: ShortcutsUi) => { setUiState(v); try { localStorage.setItem(UI_KEY, v); } catch { /* private window */ } };
   const [q, setQ] = useState('');
   const [sel, setSel] = useState<string>(GLOBAL_ID);
   /* While searching, the left list SCOPES the results to one module (null = all of them). */
@@ -189,7 +460,7 @@ export function GlobalShortcutsPanel({ page }: { page: Page }) {
         e.preventDefault(); setOpen(false); return;
       }
       /* ↑ ↓ walk the module list while nothing is searched and no field is being typed in. */
-      if (!q && (!isTyping(e.target) || e.target === searchRef.current) && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+      if (ui === 'v1' && !q && (!isTyping(e.target) || e.target === searchRef.current) && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
         e.preventDefault();
         setSel((cur) => {
           const i = modules.findIndex((m) => m.id === cur);
@@ -201,7 +472,7 @@ export function GlobalShortcutsPanel({ page }: { page: Page }) {
     window.addEventListener('open-global-shortcuts', onOpen);
     window.addEventListener('keydown', onKey);
     return () => { window.removeEventListener('open-global-shortcuts', onOpen); window.removeEventListener('keydown', onKey); };
-  }, [open, q, modules]);
+  }, [open, q, modules, ui]);
 
   useEffect(() => { if (open) requestAnimationFrame(() => searchRef.current?.focus({ preventScroll: true })); }, [open]);
 
@@ -233,7 +504,19 @@ export function GlobalShortcutsPanel({ page }: { page: Page }) {
   const countFor = (id: string) => allResults?.find((x) => x.m.id === id)?.count ?? 0;
   const total = matched ? matched.reduce((n, x) => n + x.count, 0) : 0;
 
+  const rank = useMemo(() => {
+    const here: string[] = [...contexts, page];
+    return (id: string) => { const i = here.indexOf(id); return i >= 0 ? i : id === GLOBAL_ID ? here.length : here.length + 1; };
+  }, [contexts, page]);
+
   if (!open) return null;
+  if (ui === 'v2') {
+    return (
+      <div className="fixed inset-0 z-[10060] flex items-center justify-center bg-[rgba(16,24,40,0.32)] p-4" onMouseDown={(e) => { if (e.target === e.currentTarget) setOpen(false); }}>
+        <NotionView modules={modules} hereIds={hereIds} focusedId={focusedId} rank={rank} ui={ui} onUi={setUi} onClose={() => setOpen(false)} />
+      </div>
+    );
+  }
   const current = shortcutModule(sel) ?? shortcutModule(GLOBAL_ID)!;
   const CurIcon = iconFor(current.id);
 
@@ -265,6 +548,7 @@ export function GlobalShortcutsPanel({ page }: { page: Page }) {
             />
             {q && <button onClick={() => setQ('')} aria-label="Clear search" className="text-[#9CA3AF] hover:text-[#364658]"><X size={13} /></button>}
           </label>
+          <UiSwitch ui={ui} onChange={setUi} />
           <button onClick={() => setOpen(false)} aria-label="Close" className="flex size-8 flex-shrink-0 items-center justify-center rounded text-[#6B7280] transition-colors hover:bg-[#F3F4F6] hover:text-[#111827]"><X size={18} /></button>
         </header>
 
