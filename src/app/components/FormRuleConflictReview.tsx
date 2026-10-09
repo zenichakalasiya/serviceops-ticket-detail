@@ -68,7 +68,9 @@ function KindBar({ cs, h = 6 }: { cs: RuleConflict[]; h?: number }) {
 
 const countKinds = (cs: RuleConflict[]) => KINDS.map((k) => [k, cs.filter((c) => c.kind === k).length] as const).filter(([, n]) => n > 0);
 
-export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, onOpenRule, currentExecution, accordion = false, onHelpChange, onClose, sidebar = false, initialMode, initialSel, focus }: {
+export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, onOpenRule, currentExecution, accordion = false, onHelpChange, onClose, sidebar = false, resolveCard = false, initialMode, initialSel, focus }: {
+  /** V3: "How to resolve" is a prominent card at the TOP of the review, not the bar at its foot. */
+  resolveCard?: boolean;
   /** Bring this FIELD forward: switch to By field, open its accordion, tint it and scroll to it.
       `n` changes on every request so asking for the same field twice still works. */
   focus?: { field: string; n: number } | null;
@@ -395,6 +397,7 @@ export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, o
           </div>
         </div>
       )}
+      {resolveCard && <ResolveCard onReadMore={() => setHelpOpen(true)} />}
       <div className={'mx-3 mb-3 flex flex-shrink-0 flex-wrap items-center ' + (accordion ? 'gap-2' : 'gap-3')}>
         <div className="pill-track">
           <button type="button" aria-pressed={mode === 'rule'} onClick={() => setMode('rule')}><span className="inline-flex items-center gap-1.5"><FileText size={12} />By rule</span></button>
@@ -458,7 +461,7 @@ export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, o
         </div>
       )}
 
-      <div className="flex flex-shrink-0 items-center border-t border-[#EEF2F6]">
+      {!resolveCard && <div className="flex flex-shrink-0 items-center border-t border-[#EEF2F6]">
         <button type="button" onClick={() => setHelpOpen(true)}
           className="flex min-w-0 flex-1 items-center gap-2 px-3 py-3 text-left text-[13px] text-[#364658] transition-colors hover:bg-[#F7F9FB]">
           <Lightbulb size={15} className="text-[#F59E0B]" />
@@ -471,9 +474,57 @@ export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, o
             <Info size={16} />
           </button>
         )}
-      </div>
+      </div>}
       {accordion && infoOpen && (
         <div className="absolute bottom-[54px] right-3 z-40"><RuleCheckIntro inset kind="conflicts" onClose={() => setInfoOpen(false)} /></div>
+      )}
+    </div>
+  );
+}
+
+/** V3's "How to resolve" card: the six ways as numbered tiles, one picked and explained under them.
+ *  It folds to its title row (remembered), and "Read the full guide" opens the help page. */
+const RESOLVE_FOLD_KEY = 'formRuleResolveFolded';
+function ResolveCard({ onReadMore }: { onReadMore: () => void }) {
+  const [folded, setFoldedState] = useState(() => { try { return localStorage.getItem(RESOLVE_FOLD_KEY) === '1'; } catch { return false; } });
+  const setFolded = (f: boolean) => { setFoldedState(f); try { localStorage.setItem(RESOLVE_FOLD_KEY, f ? '1' : '0'); } catch { /* private mode */ } };
+  const [pick, setPick] = useState(0);
+  const s = RESOLVE_STEPS[pick];
+  return (
+    <div className="mx-3 mb-3 flex-shrink-0 rounded-lg border border-[#C9DDF1] bg-[#F3F8FD]">
+      <div className="flex items-center gap-3 px-3.5 py-2.5">
+        <span className="flex size-8 flex-shrink-0 items-center justify-center rounded-full bg-white shadow-sm"><Lightbulb size={16} className="text-[#F59E0B]" /></span>
+        <div className="min-w-0 flex-1">
+          <div className="text-[14px] font-semibold text-[#1D2A3E]">How to resolve these conflicts</div>
+          <div className="truncate text-[12px] text-[#64748B]">{folded ? RESOLVE_STEPS.length + ' ways to fix a conflict — most need only one.' : 'Pick the way that fits — most conflicts need only one of these.'}</div>
+        </div>
+        {!folded && (
+          <button type="button" onClick={onReadMore} className="flex-shrink-0 text-[12px] font-medium text-[#3D8BD0] hover:underline">Read the full guide</button>
+        )}
+        <button type="button" onClick={() => setFolded(!folded)} aria-expanded={!folded} title={folded ? 'Show the steps' : 'Hide the steps'}
+          className="flex size-8 flex-shrink-0 items-center justify-center rounded text-[#64748B] transition-colors hover:bg-white">
+          <ChevronRight size={16} className={'transition-transform ' + (folded ? 'rotate-90' : '-rotate-90')} />
+        </button>
+      </div>
+      {!folded && (
+        <div className="px-3.5 pb-3.5">
+          <div className="grid grid-cols-3 gap-2">
+            {RESOLVE_STEPS.map((x, i) => {
+              const on = i === pick;
+              return (
+                <button key={x.title} type="button" onClick={() => setPick(i)} aria-pressed={on}
+                  className={'flex items-start gap-2 rounded-md border px-2.5 py-2 text-left transition-colors ' + (on ? 'border-[#3D8BD0] bg-white shadow-[0_1px_3px_rgba(61,139,208,0.18)]' : 'border-[#DCE7F2] bg-white/70 hover:border-[#9FC3E6] hover:bg-white')}>
+                  <span className={'flex size-5 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ' + (on ? 'bg-[#3D8BD0] text-white' : 'bg-[#EBF5FF] text-[#3D8BD0]')}>{i + 1}</span>
+                  <span className={'min-w-0 text-[12.5px] leading-[1.4] ' + (on ? 'font-semibold text-[#1D2A3E]' : 'font-medium text-[#364658]')}>{x.title}</span>
+                </button>
+              );
+            })}
+          </div>
+          <div className="mt-2.5 flex gap-2.5 rounded-md bg-white px-3 py-2.5">
+            <span className="flex size-5 flex-shrink-0 items-center justify-center rounded-full bg-[#3D8BD0] text-[11px] font-semibold text-white">{pick + 1}</span>
+            <p className="min-w-0 text-[12.5px] leading-[1.6] text-[#475569]"><b className="font-semibold text-[#1D2A3E]">{s.title}.</b> {s.text}</p>
+          </div>
+        </div>
       )}
     </div>
   );

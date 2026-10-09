@@ -1,60 +1,65 @@
-# Handoff — 2026-10-07 17:06
+# Handoff — 2026-10-09 13:50
 
 ## Read first
-CLAUDE.md → **Structure › Request Form Management** bullet, especially the part headed
-**"Help guide + Rule builder basics (7 Oct 2026, Zeni, V1 only)"**. It covers everything built this
-session. The "How to run" typecheck command is how the touched files were checked.
+Start with CLAUDE.md → **Structure › Request Form Management**, from the part headed
+**"V3 (8 Oct 2026, Zeni)"** onward, including the **"SPLIT 9 Oct 2026"** paragraph.
+That paragraph is the current design of the help surfaces.
 
 ## What we worked on this session
-This session added two things to the Form Rule editor's V1 (layout A).
-
-1. **A Help guide tab.** It is the first tab in the Rule check rail and holds plain-language steps for ITSM admins.
-2. **The "Rule builder basics" video.** It is an Editor-basics-style card that plays on first visit. The real builder form fills in on the left, and a vertical "How it works" flow, marked as reference only, sits on the right.
+This session added a third version, **V3**, to the Form Rule editor and split its help into two levels:
+- **The module Help Card.** It sits in V3's right panel, follows Zeni's Figma "Help guide Card UI Inspiration", and keeps the content lighter.
+- **A global, module-wise Help guide popup.** It opens from the header ⓘ beside Keyboard shortcuts.
 
 ## Completed
-- **Similar rules footer:** the line now sits on one line (truncated).
-- **Help guide tab** (`FormRuleHelpGuide` in `src/app/components/FormRuleGuide.tsx`):
-  - an outlined secondary "Watch guide" card with a one-line subtext;
-  - six foldable steps, numbered only, with no icons and no colours (steps 1–3 open);
-  - a grey EXAMPLE box.
-- **Video dock** (`FormRuleGuideDock`):
-  - Behaviour:
-    - auto-plays until the user drives it;
-    - has dots, Previous / Next, Watch again, and full screen (Esc exits);
-    - opens by itself once (localStorage `formRuleGuideSeen`) and reopens from Watch guide;
-    - has six chapters: When · Check if · Then · Similar · Conflicts · Save.
-  - Scene and animation:
-    - The scene is SVG with frames as data, and it never remounts between frames.
-    - The cursor is smooth: it moves first, then clicks in the next frame, along a curved path.
-    - There are no connector lines; the step being filled is highlighted instead.
-    - Equal action field widths: Description shrinks only to make room for the ⚠.
-    - The Open rule CTA sits in the accordion header.
-    - The Similar and Conflicts rail drawings match the real rail.
-  - Node highlight:
-    - a thin static ring with an even 2-unit gap;
-    - the **blink (`fg-ping`) restored**, growing evenly on all four sides via CSS-variable x/y/width/height.
-- **`src/app/components/FormRuleEditor.tsx`:** opens A on the guide tab and wires the dock.
-- **`src/app/components/FormRuleInsights.tsx`:** adds the `guide` tab and prop.
-- **`src/styles/theme.css`:** adds the `fg-*` keyframes.
-- **Checks:**
-  - The typecheck is clean for the touched files.
-  - `npm run build` passes.
-  - Verified with Playwright probes (`D:/Motadata/tour-shots/formrule/g1–g6.mjs`).
+- **Reference PDF:** `D:\Motadata\FormRule-Help-Guide-References.pdf` holds 29 Mobbin help-guide and tutorial screens, styled like the Keyboard-Shortcuts references PDF. It is outside the repo.
+- **V3 layout:**
+  - A third V1|V2|V3 pill in the header switch (`formRuleUi`=v3 → layout `V3`).
+  - The builder is on the left and a 560px help panel on the right, with no tabs.
+- **Findings chips:** red Conflicts and amber Similar rules chips (`FindingCard`) sit inline right of the "Help guide" title, with no subline. Each opens the 960px RelatedDrawer.
+- **Conflicts drawer in V3** (`resolveCard`): "How to resolve" is a blue card at the top.
+  - It has six numbered tiles; the picked tile's text is explained underneath.
+  - It has a "Read the full guide" link and folds (`formRuleResolveFolded`).
+  - V1 and V2 still show the bar at the foot.
+- **`formRuleHelpContent.ts`:** 19 articles of typed blocks. They include real ITSM scenarios, worked examples with before/after mini forms, do's and don'ts, a troubleshooting checklist, operator cards and an FAQ.
+- **`FormRuleHelpPanel.tsx` → `HelpDocGuide`:** a topic list → article view.
+  - Home has a Start-here hero and five topic groups.
+  - Articles have On-this-page chips, Previous/Next and "Was this helpful".
+  - Search covers every word.
+- **`FormRuleHelpCard.tsx`:** the V3 right panel, matched to the Figma board. It has light-grey foldable section cards:
+  - What is a form rule?
+  - Key terms, with E.g. lines.
+  - How a rule is evaluated: a dotted model, a FIELD/VALUE table, and a REQ-101..104 table with Runs/Skipped pills.
+  - Actions at a glance.
+  - Conflicts and similar rules.
+  - Before you save.
+  - Foot links: Open the full guide, Watch the 1-min video.
+- **`GlobalHelpGuide.tsx`** (mounted in App): a 480px floating card under the header.
+  - It has no backdrop, and Esc closes it.
+  - It opens from the header ⓘ or the `open-global-help` event, on the guide for the module in the URL (`GUIDES`).
+  - Form Rules is the only guide so far; other pages say "No guide for X yet" and list the ready guides.
+- Every view was checked with Playwright screenshots and showed no page errors. The touched files typecheck clean.
 
 ## In progress
-Nothing mid-flight.
+Nothing is mid-flight. The Help Card currently opens 3 of its 6 sections (`what`, `terms`, `how`), while the Figma board shows them all expanded.
 
 ## Next steps
-- Get Zeni's review of the video pacing and copy in the browser.
-- **V2 (B3)** has no Help guide. Ask before adding one.
+- Ask Zeni whether the global Help guide should get a modules list on the left, like the shortcuts panel, or stay one module at a time.
+- Ask Zeni whether to use the Figma board's dark code-block and tab-toggle cards; they were left out because they suit setup guides.
+- Add guides for other modules. Each is one row in `GUIDES` in `GlobalHelpGuide.tsx`.
+- Decide whether all Help Card sections should start open.
 
 ## Decisions made
-- Only V1 has the guide. The video has no Name chapter.
-- The right-hand flow is a picture for reference, not a preview. It says so with the "For reference only" chip and the Help guide copy.
-- There are no lines from the form to the flow. Highlighting the node shows the link.
-- The pulse must stay. Zeni asked for it back after it was dropped by mistake.
+- **Two levels of help:**
+  - The module's right panel is the lighter Help Card.
+  - The detailed, searchable doc guide is the GLOBAL popup, opened module-wise from the header ⓘ.
+  - This was Zeni's split.
+- **The global guide is non-modal.** It has no backdrop so the user can keep working while reading.
+- **Help wording is read from `formRuleData`.** Wording for events, execute-on, applies-to and actions comes from there, so the help cannot drift from the dropdowns.
+- **V1 and V2 are unchanged.** The resolve card and the help panel are V3-only.
 
 ## Gotchas & notes
-- Git Bash strips backslashes in heredocs, so patch scripts are written to files.
-- `FormRuleConflictReview.tsx` and some other files have CRLF line endings. Normalise line endings when matching multi-line anchors.
-- The dev server runs at http://localhost:5200/serviceops-ticket-detail/. To see the video, go to Admin › Request Form Rule → Create Rule. Clear `formRuleGuideSeen` to see it auto-open again.
+- **Figma access:** the Figma MCP account (zeni300605@gmail.com) has a View seat only, so every Figma MCP call fails with "no edit access". The board was read through Chrome instead.
+- **Two cross-component events wire V3 together:**
+  - `form-rule-watch-guide` plays the editor's video dock.
+  - `open-global-help` opens the popup.
+- **Repo clutter:** the repo has many untracked unrelated files (images, svgs, `.claude/agents`, `.impeccable`, etc.). Commit only the form-rule files.

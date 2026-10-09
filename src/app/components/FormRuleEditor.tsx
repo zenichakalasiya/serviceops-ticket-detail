@@ -17,13 +17,15 @@ import { FormRuleLinearView } from './FormRuleLinearView';
 import { FormRuleConflictReview } from './FormRuleConflictReview';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { FORM_RULE_GUIDE_SEEN, FormRuleGuideDock, FormRuleHelpGuide } from './FormRuleGuide';
+import { FormRuleHelpCard } from './FormRuleHelpCard';
 import { RelatedDrawer, RelatedSummaryCards, RelatedSummaryChips, RULE_CHECK_INTRO_KEY, RuleCheckEmpty, SimilarRulesView } from './FormRuleRelatedView';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from './ui/hover-card';
 
 /** The four layouts being compared. They share ONE draft, so switching compares the same rule. */
-export type EditorVersion = 'H1' | 'H2' | 'H3' | 'A' | 'A2' | 'A3' | 'A3R' | 'B3' | 'S' | 'LS' | 'RC' | 'EG' | 'HF' | 'R' | 'B' | 'B2' | 'P' | 'C' | 'G2' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I';
+export type EditorVersion = 'V3' | 'H1' | 'H2' | 'H3' | 'A' | 'A2' | 'A3' | 'A3R' | 'B3' | 'S' | 'LS' | 'RC' | 'EG' | 'HF' | 'R' | 'B' | 'B2' | 'P' | 'C' | 'G2' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I';
 /** Only A · B · B2 · I are offered (Zeni, 1 Oct 2026); the rest stay built but hidden. */
 const VERSIONS: { id: EditorVersion; label: string; hint: string; fav?: boolean; show?: boolean }[] = [
+  { id: 'V3', label: 'V3 · Help panel', hint: 'Builder + a right panel holding only the detailed Help guide; conflicts and similar rules appear as small cards at its top' },
   { id: 'A', show: true, fav: true, label: 'A · Split', hint: 'Builder + a resizable, collapsible Rule check rail' },
   { id: 'H1', show: true, label: 'H1 · Steps across · cards top right', hint: 'The two steps across the top, the form left-aligned under them, the summary cards in a right column at the top' },
   { id: 'H2', show: true, label: 'H2 · Steps across · cards bottom right', hint: 'Like H1, but the summary cards dock at the foot of the right column' },
@@ -55,13 +57,13 @@ const VERSIONS: { id: EditorVersion; label: string; hint: string; fav?: boolean;
 /* All the shortlisted layouts are offered again for comparison (6 Oct 2026, Zeni) — B3 first and still the default; the H1/H2/H3 steps-across variants stay hidden. */
 /* A is the FINAL layout (6 Oct 2026, Zeni): the builder with the Rule check rail open beside it by
    default. Every other layout stays built and hidden; add ids back here to compare again. */
-const SHOWN: EditorVersion[] = ['A', 'B3'];
+const SHOWN: EditorVersion[] = ['A', 'B3', 'V3'];
 /** V1 = A (the default), V2 = B3 (the previous final). Picked from the switch beside the Motadata
     logo — not from a Layout bar — and remembered under this key. */
 export const FORM_RULE_UI_KEY = 'formRuleUi';
-const uiVersion = (): EditorVersion => { try { return localStorage.getItem(FORM_RULE_UI_KEY) === 'v2' ? 'B3' : 'A'; } catch { return 'A'; } };
+const uiVersion = (): EditorVersion => { try { const v = localStorage.getItem(FORM_RULE_UI_KEY); return v === 'v2' ? 'B3' : v === 'v3' ? 'V3' : 'A'; } catch { return 'A'; } };
 /** The layouts whose conflict / similar checks open in the two summary sidebars. */
-const SUMMARY: EditorVersion[] = ['H1', 'H2', 'H3', 'R', 'B3', 'A3', 'A3R', 'S', 'LS', 'RC', 'EG', 'HF'];
+const SUMMARY: EditorVersion[] = ['V3', 'H1', 'H2', 'H3', 'R', 'B3', 'A3', 'A3R', 'S', 'LS', 'RC', 'EG', 'HF'];
 const RAIL_MIN = 320;
 const RAIL_MAX = 560;
 const RAIL_DEFAULT = 420;
@@ -212,6 +214,12 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
   const [guideOpen, setGuideOpen] = useState(() => { try { return !localStorage.getItem(FORM_RULE_GUIDE_SEEN); } catch { return false; } });
   const closeGuide = () => { setGuideOpen(false); try { localStorage.setItem(FORM_RULE_GUIDE_SEEN, '1'); } catch { /* private mode */ } };
   const guideEl = <FormRuleHelpGuide onWatch={() => setGuideOpen(true)} />;
+  /* The global Help guide popup's "Watch in 1 min" plays the same video. */
+  useEffect(() => {
+    const on = () => setGuideOpen(true);
+    window.addEventListener('form-rule-watch-guide', on);
+    return () => window.removeEventListener('form-rule-watch-guide', on);
+  }, []);
   const [hoverAction, setHoverAction] = useState<string | null>(null);
   const [flashAction, setFlashAction] = useState<string | null>(null);
 
@@ -565,7 +573,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
   </>);
   /** B3 (and the hidden H layouts) ask who the rule is for beside WHEN it runs — the trigger, the
       execution and the audience together say when this rule applies (5 Oct 2026). */
-  const appliesInWhen = ['A', 'B3', 'H1', 'H2', 'H3'].includes(version);
+  const appliesInWhen = ['A', 'V3', 'B3', 'H1', 'H2', 'H3'].includes(version);
   const whenEl = (<>
             {/* WHEN */}
             <Step icon={<History size={12} />} tone="#3D8BD0" badge="#E2EDF5" lead="When" rest="this rule should run and when it should execute">
@@ -960,7 +968,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
     relOpen === 'conflicts' ? (
       <RelatedDrawer title="Resolve conflicts"
         onClose={() => { setRelOpen(null); setRelHelp(false); setRelField(null); }} hideHead={relHelp}>
-        <FormRuleConflictReview key={relField ?? 'all'} sidebar initialMode={relField ? 'field' : 'rule'} initialSel={relField ?? undefined}
+        <FormRuleConflictReview key={relField ?? 'all'} sidebar resolveCard={version === 'V3'} initialMode={relField ? 'field' : 'rule'} initialSel={relField ?? undefined}
           onHelpChange={setRelHelp} onClose={() => { setRelOpen(null); setRelHelp(false); setRelField(null); }} conflicts={conflicts} rules={rules} currentExecution={draft.execution} fieldLabel={(id) => fieldById(id)?.label ?? id}
           onJump={(id) => { setRelOpen(null); requestAnimationFrame(() => jumpTo(id)); }} onOpenRule={openOther} />
       </RelatedDrawer>
@@ -973,6 +981,21 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
           draft={{ event: draft.event, execution: draft.execution, applies: draft.applies }} onOpenRule={openOther} />
       </RelatedDrawer>
     )
+  );
+
+  /* V3 (Zeni, 8 Oct 2026): the builder on the left; on the right, at A's width, ONLY the Help guide —
+     no tabs. Conflicts and similar rules arrive as two small cards at the top of that panel and open
+     the big drawers (relDrawer) over the page. */
+  const v3W = narrow ? 440 : RAIL_MAX;
+  const v3Body = (
+    <div className="relative flex min-h-0 flex-1">
+      <div className="min-h-0 flex-1 overflow-y-auto">{builder}</div>
+      <div className="flex-shrink-0" style={{ width: v3W }}>
+        <FormRuleHelpCard ready={ready} conflicts={conflicts.length} conflictRules={new Set(conflicts.map((x) => x.other.name)).size}
+          similar={similar.length} onOpenConflicts={() => setRelOpen('conflicts')} onOpenSimilar={() => setRelOpen('similar')} onWatch={() => setGuideOpen(true)} />
+      </div>
+      {guideOpen && <FormRuleGuideDock onClose={closeGuide} right={v3W + 20} />}
+    </div>
   );
 
   // ── H · start from the trigger ────────────────────────────────────────────
@@ -1688,6 +1711,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
 
   const body =
     version === 'B' ? stepperBody
+      : version === 'V3' ? v3Body
       : version === 'R' ? relBody
       : version === 'B3' ? b3Body
       : version === 'H1' ? hsBody('top')

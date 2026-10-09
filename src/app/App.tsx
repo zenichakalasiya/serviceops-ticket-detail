@@ -24,6 +24,7 @@ import { Toaster } from 'sonner';
 import { formatHash, parseHash, titleFor } from './routes';
 import type { Page, Route } from './routes';
 import { GlobalShortcutsPanel } from './components/GlobalShortcutsPanel';
+import { GlobalHelpGuide } from './components/GlobalHelpGuide';
 
 export default function App() {
   /* The URL is the source of truth for which screen is open — see routes.ts for why it lives in
@@ -104,6 +105,7 @@ export default function App() {
       <GlobalSearch activePage={activePage} onNavigate={navigate} />
       {/* ONE Keyboard shortcuts panel for the whole product — header icon, `?`, and the builder's rail. */}
       <GlobalShortcutsPanel page={activePage} />
+      <GlobalHelpGuide />
       <Toaster position="top-right" />
     </DrawerStackProvider>
   );
