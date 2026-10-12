@@ -150,9 +150,12 @@ function EmailsPopup({ anchor, emails, onChange, onClose }: {
             ) : (
               <button
                 type="button"
-                title="Add email"
+                /* A full audience has nowhere to put another address, so the way back to the
+                   email field is off until one is removed. */
+                disabled={full}
+                title={full ? `Audience is full (${AUDIENCE_LIMIT} emails) — remove one to add another` : 'Add email'}
                 onClick={() => { setMode('add'); setQuery(''); }}
-                className="flex size-8 items-center justify-center rounded-md bg-[#3D8BD0] text-white transition-colors hover:bg-[#3478B5]"
+                className="flex size-8 items-center justify-center rounded-md bg-[#3D8BD0] text-white transition-colors hover:bg-[#3478B5] disabled:cursor-not-allowed disabled:bg-[#CBD5E1] disabled:hover:bg-[#CBD5E1]"
               ><Plus size={16} /></button>
             )}
           </div>
