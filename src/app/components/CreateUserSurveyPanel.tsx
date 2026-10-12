@@ -188,28 +188,22 @@ function EmailsPopup({ anchor, emails, onChange, onClose }: {
           </div>
         </div>
 
-        {mode === 'add' && <ErrorText>{error}</ErrorText>}
-
-        {/* The Add button only exists once there is something to add. */}
-        <div className={`grid transition-[grid-template-rows] duration-200 ease-out ${mode === 'add' && typed ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
-          <div data-add-row className="overflow-hidden">
-            <button type="button" onClick={add} tabIndex={mode === 'add' && typed ? 0 : -1} className={`${btnPrimary} mt-2`}>
-              <Plus size={14} /> Add
-            </button>
-          </div>
-        </div>
+        {/* No Add button: Enter adds. One quiet line says so, and gives way to the error when there is one. */}
+        {mode === 'add' && (error
+          ? <ErrorText>{error}</ErrorText>
+          : !full && <p className="mt-1.5 text-[11px] leading-4 text-[#7B8FA5]">Press <span className="rounded border border-[#DFE5ED] bg-[#F8FAFC] px-1 text-[10px] font-medium text-[#64748B]">Enter</span> to add · separate several with commas</p>)}
       </div>
 
       {/* Nothing added yet = just the field. A count of zero and an empty list are white space. */}
       {emails.length > 0 && <>
-      <div className="flex items-center justify-between border-t border-[#EEF2F6] px-3 py-1.5 text-[11px] text-[#7B8FA5]">
-        <span>{mode === 'search' && q ? `${shown.length} of ${emails.length} emails` : `${emails.length} of ${AUDIENCE_LIMIT} emails added`}</span>
+      <div className="flex items-center justify-between px-3 pb-1 pt-2 text-[11px] text-[#7B8FA5]">
+        <span className="text-[14px] font-bold text-[#364658]">Emails</span>
         {emails.length > 0 && !(mode === 'search' && q) && (
           <button type="button" onClick={() => onChange([])} className="text-[11px] font-medium text-[#64748B] hover:text-[#DC2626]">Clear all</button>
         )}
       </div>
 
-      <div className="max-h-[208px] overflow-y-auto pb-1.5">
+      <div className="max-h-[176px] overflow-y-auto">
         {shown.length === 0 ? (
           <div className="px-3 py-6 text-center text-[12px] text-[#9CA3AF]">
             {emails.length === 0 ? 'No emails yet — type one above and press Add.' : `No added email matches “${query}”.`}
@@ -225,6 +219,10 @@ function EmailsPopup({ anchor, emails, onChange, onClose }: {
             ><X size={13} /></button>
           </div>
         ))}
+      </div>
+      {/* The count sits OUTSIDE the scroll box, so it stays in view however long the list is. */}
+      <div className="px-3 pb-2.5 pt-2 text-[11px] text-[#7B8FA5]">
+        {mode === 'search' && q ? `${shown.length} of ${emails.length} emails match` : `${emails.length} of ${AUDIENCE_LIMIT} emails added`}
       </div>
       </>}
     </div>,

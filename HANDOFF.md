@@ -1,4 +1,4 @@
-# Handoff — 2026-10-12 17:44 (User Surveys session)
+# Handoff — 2026-10-12 18:08 (User Surveys session)
 
 > Two sessions share this file. **This top part is the User Surveys session**; the Form Rules
 > session's notes follow unchanged below the divider.
@@ -19,6 +19,9 @@ popup, plus an "Import values" button that feeds CSV emails into the survey's au
 - Empty popup is just the input row (58px); count line and list appear with the first email.
 - **Import values** beside the Emails label → `ImportEmailsPanel` with the survey's real count and an
   `onImport` callback; duplicates skipped.
+- Later the same day: the popup lost its Add button (a hint line "Press Enter to add · separate several
+  with commas" replaces it), gained a bold **Emails** title, a count pinned under the list, no
+  divider lines, and the search-mode **+** is disabled while the audience is full (500).
 - Verified in Chrome (Playwright), no page errors. Published.
 
 ## In progress
@@ -27,7 +30,6 @@ Nothing mid-flight.
 ## Next steps
 - Zeni to decide: rich-text Description or keep the plain text box; whether search should look up
   directory users; whether the LISTING's Import button (demo count 120) should go.
-- At exactly 500 emails the Import values button's disabled state was not seen in a test.
 - Row click and Schedule Survey still have no screens.
 
 ## Decisions made
