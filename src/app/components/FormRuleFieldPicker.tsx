@@ -124,7 +124,7 @@ export function FieldPicker({ value, options, onChange, placeholder = 'Fields', 
   /* ── the dropdown ── */
   const left = options.filter((o) => !value.includes(o.value) && test(o.label, q, 'contains'));
   const menu = (
-    <div ref={panel} style={{ width: MENU_W, ...pos }}
+    <div ref={panel} data-rule-menu style={{ width: MENU_W, ...pos }}
       className="fixed z-[10060] flex max-h-[400px] flex-col gap-1.5 rounded-xl border border-[#DFE5ED] bg-white p-3 shadow-[0_4px_6px_rgba(0,0,0,0.1)]">
       <div className="flex flex-shrink-0 items-center gap-1.5">
         <div className="relative min-w-0 flex-1">
@@ -176,7 +176,7 @@ export function FieldPicker({ value, options, onChange, placeholder = 'Fields', 
   };
 
   const big = (
-    <div ref={panel} style={{ width: BIG_W, height: BIG_H, ...pos }}
+    <div ref={panel} data-rule-menu style={{ width: BIG_W, height: BIG_H, ...pos }}
       className="fixed z-[10060] flex flex-col overflow-hidden rounded-xl border border-[#DFE5ED] bg-white shadow-[0_4px_12px_rgba(0,0,0,0.1)]">
       <div className="flex flex-shrink-0 items-center justify-between border-b border-[#DFE5ED] px-3 py-[7px]">
         <span className="text-[14px] font-medium text-[#364658]">{title}</span>

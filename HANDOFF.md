@@ -84,8 +84,9 @@ Nothing mid-flight.
 Open questions for Zeni:
 - **Picture captions** are my wording, not her copy: "Conditions met: HR fields shown", "No longer
   met: hidden again", "Same trigger and conditions → add your action to the existing rule".
-- **Blur timing:** the Conflicts popup and blur arrive while the Fields dropdown is still open (the
-  dropdown stays usable on top). Hold the popup until the dropdown closes?
+- **Popup waits for the dropdown (done, late evening):** the halo, blur and popup now hold until
+  the builder dropdown closes; the card itself still slides in at once. Zeni had asked whether the
+  dropdown should close by itself instead; that alternative is still on offer if she prefers it.
 - **Once per visit vs once ever** for real users; it is per visit so it can be demoed.
 - The hidden V1 / V4 guides (`FormRuleHelpMinimal`, `FormRuleHelpV4`) and the global Help guide
   still hold the 9 Oct copy.
@@ -103,6 +104,11 @@ Open questions for Zeni:
 ## Gotchas & notes
 - **Stacking:** `.rc-enter` must stay `backwards` (not `both`) and the card wrapper takes `z-50`
   while its popup is open, or the guide paints over the popup.
+- **Dropdown watch:** the editor looks for `[data-rule-menu]` on the body (`menuOpen`). `RuleSelect`'s
+  menu and both `FieldPicker` shapes carry it; a new portalled builder menu must carry it too.
+  Probe: `df1.mjs`.
+- **Dev server:** port 5200 was stopped by the system for low memory; restart with
+  `npm run dev -- --port 5200` when needed.
 - **Seen flags:** V3 reads and writes no `formRuleCheckIntroSeen` key; other layouts keep once-ever.
 - **Probe scripts** in `D:/Motadata/tour-shots/formrule/`: `at5.mjs` (attention flow over two
   visits), `ar1.mjs` / `ar2.mjs` (example pictures), `fn1.mjs` (Soft final, no tabs), `v4a.mjs`

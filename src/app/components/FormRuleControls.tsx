@@ -174,7 +174,7 @@ export function RuleSelect({
       )}
       {open && pos && createPortal(
         <div
-          ref={menu}
+          ref={menu} data-rule-menu
           style={{ left: pos.left, width: pos.width, ...(pos.up ? { bottom: window.innerHeight - pos.top } : { top: pos.top }) }}
           className="fixed z-[10060] max-h-[300px] overflow-y-auto rounded-lg border border-[#DFE5ED] bg-white py-2 shadow-lg"
         >
