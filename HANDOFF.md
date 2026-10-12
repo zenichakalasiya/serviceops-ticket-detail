@@ -1,7 +1,7 @@
 # Handoff — 2026-10-12 18:08 (User Surveys session)
 
 > Two sessions share this file. **This top part is the User Surveys session**; the Form Rules
-> session's notes follow unchanged below the divider.
+> session's notes follow below the divider.
 
 ## Read first (User Surveys)
 CLAUDE.md › Key context › *User Surveys — listing + Import Emails* and *User Surveys — Create User
@@ -38,73 +38,75 @@ Nothing mid-flight.
 - No empty-state block in the popup (Zeni: too much white space).
 
 ## Gotchas & notes
-- Another session's Form Rule files (`FormRuleEditor`, `FormRuleHelpCard`, `FormRuleRelatedView`,
-  `theme.css`) were uncommitted in the tree during this publish and were deliberately NOT committed.
+- The Form Rules session's files (`FormRuleEditor`, `FormRuleHelpCard`, `FormRuleRelatedView`,
+  `theme.css`) were left out of this session's publish; that session published them itself afterwards.
 - Playwright counts a zero-height button as visible — measure `[data-add-row]`'s height instead.
+
 
 ---
 
-# Handoff — 2026-10-12 (later session)
+# Handoff — 2026-10-12 (Form Rules session, evening)
 
 ## Read first
-Start with CLAUDE.md → **Structure › Request Form Management**, from **"V3 (8 Oct 2026, Zeni)"**
-to the end of that bullet, then the two bullets after it: **Form Rule editor — V3 is FINAL** and
-**Form Rule action row — the FIELDS picker**.
+CLAUDE.md → **Structure**, the three bullets starting **Form Rule editor — V3 is FINAL**,
+**Form Rule help guide — FINAL copy** and **Form Rule action row — the FIELDS picker**.
+The help-guide bullet carries everything from this session.
 
 ## What we worked on this session
-The Form Rule editor (Admin › Request Management › Request Form Rule):
-- **V3 was made the final version.** The other versions are hidden.
-- V3's help guide and conflicts drawer were polished.
-- The action row got a new Fields picker, built from Zeni's Figma component.
+The Form Rule editor's right panel (Admin › Request Management › Request Form Rule, V3):
+- New final help guide copy, then a redesign of the guide into small accordions.
+- A first-time attention flow for the Similar rules and Conflicts summary cards.
 
 ## Completed
-- **V3 is FINAL.** The V1 | V2 | V3 | V4 switch beside the logo is hidden, and the editor always
-  opens on V3, whatever the browser had stored. V1, V2 and V4 stay built.
-  - Restore: `FINAL_UI = null` in `FormRuleEditor.tsx` and remove `false &&` before
-    `<FormRuleUiSwitch />` in `Header.tsx`.
-- **V3 help guide (`FormRuleHelpCard.tsx`):**
-  - Each item is a bullet point with a bold title.
-  - Section cards have a lighter background (`#F7F9FC`, was `#F1F4F9`).
-- **V3 conflicts drawer:** the "How do I resolve these conflicts?" foot bar is a prominent light-blue
-  card with a **View steps ›** button (`helpProminent` prop on `FormRuleConflictReview`).
-- **V4:** the Minimal | Cards switch was removed; the Help guide shows Cards only. (V4 is hidden now.)
-- **Fields picker (`FormRuleFieldPicker.tsx`, new)** replaces the multi-field select in the action row:
-  - 300px dropdown: search, an Expand button, selected fields as chips (five, then `+N`), the
-    remaining fields as a flat list. Picking applies straight away.
-  - Expanded 600×500 "Select fields" panel: match mode + keyword and Select all on the left; the
-    selection, a download button and Clear all on the right; Cancel / Apply Fields.
-  - "Set value" keeps its single-field dropdown.
-- Each change was checked in the browser with Playwright; no page errors.
+- **Help guide copy (Zeni's final, 12 Oct):** panel title "Form Rules Guide" + sub-line; two groups,
+  seven topics. Do not rewrite it.
+- **Help guide layout — Soft is FINAL** (`FormRuleHelpCard.tsx`):
+  - Each group has a small heading with its intro line always visible.
+  - Each topic is a light grey tile: grey icon, title, chevron. All seven are open on arrival and
+    each folds on its own.
+  - Examples sit in a block labelled "Example", with a small still picture above the sentence:
+    Reverse Action (a form in two states), Conflict (the popup's drawing), Similar Rule (two rule cards).
+  - `FINAL_HELP_LOOK = 'soft'` in `FormRuleEditor.tsx` hides the layout tabs. Grouped, Lines and
+    Cards stay built; `null` brings the tabs back beside Cancel / Save Rule.
+  - Steps, Nested and Tabbed layouts were built and then removed on request.
+- **Summary cards — attention flow (V3):**
+  - A card slides in when it arrives, gets a soft pulsing halo in its own colour, and its info popup
+    drops in below it.
+  - The rest of the page dims and blurs while the popup is open; Got it, ✕ or a click on the blur
+    closes it.
+  - Shows once per card **per editor visit** (not once ever). The ⓘ beside the card title replays it.
+- Each change was checked in the browser with Playwright; no page errors. Published.
 
 ## In progress
 Nothing mid-flight.
 
 ## Next steps
 Open questions for Zeni:
-- **Fields picker**
-  - What should the download icon do? It downloads the selection as a CSV, which is a guess.
-  - Collapse keeps the picks; Cancel, ✕, Esc and a click outside discard. Is that right?
-  - The expanded panel opens at the field. Should it be a centred dialog instead?
-  - Apply Fields is the product blue (Figma shows black). Keep?
-  - The list is flat, so the System / Custom headings are gone. OK?
-  - Should conditions or "Set value" use this picker too?
+- **Picture captions** are my wording, not her copy: "Conditions met: HR fields shown", "No longer
+  met: hidden again", "Same trigger and conditions → add your action to the existing rule".
+- **Blur timing:** the Conflicts popup and blur arrive while the Fields dropdown is still open (the
+  dropdown stays usable on top). Hold the popup until the dropdown closes?
+- **Once per visit vs once ever** for real users; it is per visit so it can be demoed.
+- The hidden V1 / V4 guides (`FormRuleHelpMinimal`, `FormRuleHelpV4`) and the global Help guide
+  still hold the 9 Oct copy.
+- **Fields picker** (from the earlier session, still open): what the download icon should do (it
+  downloads the selection as CSV, a guess); Collapse keeps the picks; anchored vs centred panel;
+  blue vs black Apply; flat list with no System / Custom headings; use it for conditions / Set value?
 - **Prominent resolve card:** the sub-line "Six ways to fix a clash, step by step." is my wording.
-- **Help guide bullets:** "points" was read as dots + bold titles. Remove the dots if only bold was meant.
-- **Help cards:** go lighter than `#F7F9FC` if wanted.
 
 ## Decisions made
-- V3 is the final Form Rule editor (Zeni, 12 Oct 2026).
-- The help copy is final; only its presentation changes.
-- The Fields picker's expanded panel edits a draft; nothing changes on the rule until Apply.
+- V3 is the final Form Rule editor; Soft is the final help guide layout (Zeni, 12 Oct 2026).
+- All topics expanded; grey icons; guide links stay at the foot.
+- Example pictures: above the sentence, mini rule cards, static.
+- The attention flow reuses the existing info popups, placed below the card so they stay off the form.
 
 ## Gotchas & notes
-- **Screenshots:** write each Playwright screenshot to a new filename; a re-read of an overwritten
-  path can return the old image.
-- **Probe scripts** are in `D:/Motadata/tour-shots/formrule/`. `v3o.mjs` checks the V3-only state,
-  `fp1.mjs` walks the Fields picker, and `v4a.mjs` lines 1–35 build a rule that has findings.
-  - Scripts that set `formRuleUi` to v1 / v2 / v4 now land on V3 regardless.
+- **Stacking:** `.rc-enter` must stay `backwards` (not `both`) and the card wrapper takes `z-50`
+  while its popup is open, or the guide paints over the popup.
+- **Seen flags:** V3 reads and writes no `formRuleCheckIntroSeen` key; other layouts keep once-ever.
+- **Probe scripts** in `D:/Motadata/tour-shots/formrule/`: `at5.mjs` (attention flow over two
+  visits), `ar1.mjs` / `ar2.mjs` (example pictures), `fn1.mjs` (Soft final, no tabs), `v4a.mjs`
+  lines 1–35 build a rule that has findings. Write screenshots to new filenames.
 - **CRLF:** `FormRuleConflictReview.tsx` has CRLF line endings; normalise them in patch scripts.
-- **Repo clutter:** many untracked unrelated files (images, svgs, `.claude/agents`, `.impeccable`,
-  probe PNGs in `src/app/components/`). Commit only the form-rule files.
-- `FormRuleHelpGuide` (old six steps), `ResolveCard`, `FormRuleCheckPanel` (V4) and the V1 / V2
-  layouts are built but not reachable while `FINAL_UI` is set.
+- **Shared tree:** another session commits to this repo at the same time. Commit only the form-rule
+  files, and re-read CLAUDE.md / HANDOFF.md before editing them.

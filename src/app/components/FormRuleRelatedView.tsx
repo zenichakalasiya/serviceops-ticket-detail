@@ -17,9 +17,12 @@ const KIND_FG: Record<ConflictKind, string> = { Blocking: '#9F1239', Opposite: '
 
 /** The two cards that sit at the top of the builder. */
 export type IntroKind = 'conflicts' | 'similar';
-export function RelatedSummaryCards({ ready, conflicts, similar, onOpenConflicts, onOpenSimilar, onlyFound = false, stack = false, arrowAlways = false, compact = false, intro = null, onInfo, onCloseIntro, introSide = 'right', introAlign = 'bottom' }: {
+export function RelatedSummaryCards({ ready, conflicts, similar, onOpenConflicts, onOpenSimilar, onlyFound = false, stack = false, arrowAlways = false, compact = false, intro = null, onInfo, onCloseIntro, introSide = 'right', introAlign = 'bottom', attention = false }: {
+  /** V3 (Zeni, 12 Oct 2026): a card slides in when it arrives, and while its info popup is open it wears a
+   *  soft pulsing halo in its own colour, so the eye lands on the card first and the popup second. */
+  attention?: boolean;
   /** Where a card's info popup opens: beside the card on this side, lined up with this edge. */
-  introSide?: 'left' | 'right';
+  introSide?: 'left' | 'right' | 'below';
   introAlign?: 'top' | 'bottom';
   /** Which card's info popup is open beside it (one at a time). */
   intro?: IntroKind | null;
@@ -55,7 +58,8 @@ export function RelatedSummaryCards({ ready, conflicts, similar, onOpenConflicts
      arrow appears top-right, so it reads as clickable without a link line. */
   /* The width lives on a wrapper so a card's info popup can sit beside it as a SIBLING — a popup with
      buttons cannot live inside the card, which is itself a button. */
-  const wrap = (stack ? 'w-full' : 'min-w-[240px] flex-1') + ' relative';
+  const wrap = (stack ? 'w-full' : 'min-w-[240px] flex-1') + ' relative' + (attention ? ' rc-enter' : '');
+  const halo = (k: IntroKind) => (attention && intro === k ? ' rc-attn' : '');
   const card = (tint: string, hover: string, empty: boolean) =>
     'group relative flex w-full flex-col rounded-md border px-4 text-left transition-[background-color,box-shadow,padding] duration-300 ' + (compact ? 'py-2.5 ' : 'py-4 ') +
     (empty ? 'cursor-default border-[#E5EAF0] bg-[#F7F9FB]' : tint + ' ' + hover + ' hover:shadow-[0_2px_10px_rgba(15,23,42,0.08)]');
@@ -91,31 +95,36 @@ export function RelatedSummaryCards({ ready, conflicts, similar, onOpenConflicts
   const kinds = KINDS.map((k) => { const n = conflicts.filter((x) => x.kind === k).length; return n ? n + ' ' + k : null; }).filter(Boolean).join(' · ');
   return (
     <div className={stack ? 'flex flex-col gap-4' : 'flex flex-wrap gap-4'}>
+      {/* V3: while a card's popup is open the rest of the page dims and blurs, so the card and its popup are
+          the only sharp things on screen (Zeni, 12 Oct 2026). A click on it closes the popup. */}
+      {attention && intro && onCloseIntro && <div className="rc-veil fixed inset-0 z-40 bg-[#0F172A]/30 backdrop-blur-[3px]" onClick={onCloseIntro} aria-hidden="true" />}
       {/* Similar rules first (it appears first, on the first condition); Conflicts below it. */}
       {!(onlyFound && similar.length === 0) && (
-        <div className={wrap}>
+        <div className={wrap + (intro === 'similar' ? ' z-50' : '')}>
           <button type="button" onClick={onOpenSimilar} disabled={similar.length === 0}
-            className={card('border-[#B45309] bg-[#FFF9E8]', 'hover:bg-[#FFF3D1]', similar.length === 0)}>
+            style={{ ['--rc' as string]: '180, 83, 9' }}
+            className={card('border-[#B45309] bg-[#FFF9E8]', 'hover:bg-[#FFF3D1]', similar.length === 0) + halo('similar')}>
             {similar.length > 0 && corner('similar', '#B45309')}
             {head(similar.length, similar.length === 1 ? 'Similar rule' : similar.length ? 'Similar rules' : 'No similar rules', similar.length ? '#B45309' : '#98A2B3', similar.length > 0 && info('similar', '#B45309'))}
             {summary(similar.length
               ? 'Already use this trigger and conditions. Consider updating one instead of creating a new rule.'
               : 'No other rule uses this trigger and these conditions.', similar.length ? '#B45309' : '#64748B')}
           </button>
-          {intro === 'similar' && similar.length > 0 && onCloseIntro && <RuleCheckIntro key="s" kind="similar" side={introSide} align={introAlign} onClose={onCloseIntro} />}
+          {intro === 'similar' && similar.length > 0 && onCloseIntro && <RuleCheckIntro key="s" kind="similar" side={introSide} align={introAlign} edge="left" delay={attention ? 420 : 0} onClose={onCloseIntro} />}
         </div>
       )}
       {!(onlyFound && conflicts.length === 0) && (
-        <div className={wrap}>
+        <div className={wrap + (intro === 'conflicts' ? ' z-50' : '')}>
           <button type="button" onClick={onOpenConflicts} disabled={conflicts.length === 0}
-            className={card('border-[#DC2626] bg-[#FEF4F4]', 'hover:bg-[#FDEBEB]', conflicts.length === 0)}>
+            style={{ ['--rc' as string]: '220, 38, 38' }}
+            className={card('border-[#DC2626] bg-[#FEF4F4]', 'hover:bg-[#FDEBEB]', conflicts.length === 0) + halo('conflicts')}>
             {conflicts.length > 0 && corner('conflicts', '#DC2626')}
             {head(conflicts.length, conflicts.length === 1 ? 'Conflict' : conflicts.length ? 'Conflicts' : 'No conflicts', conflicts.length ? '#DC2626' : '#98A2B3', conflicts.length > 0 && info('conflicts', '#DC2626'))}
             {summary(conflicts.length
               ? <>{kinds} with {nRules} rule{nRules === 1 ? '' : 's'}. Resolve them so the form ends up in one clear state.</>
               : 'No other rule leaves these fields in a different state.', conflicts.length ? '#DC2626' : '#64748B')}
           </button>
-          {intro === 'conflicts' && conflicts.length > 0 && onCloseIntro && <RuleCheckIntro key="c" kind="conflicts" side={introSide} align={introAlign} onClose={onCloseIntro} />}
+          {intro === 'conflicts' && conflicts.length > 0 && onCloseIntro && <RuleCheckIntro key="c" kind="conflicts" side={introSide} align={introAlign} edge={!onlyFound || similar.length > 0 ? 'right' : 'left'} delay={attention ? 420 : 0} onClose={onCloseIntro} />}
         </div>
       )}
     </div>
@@ -161,23 +170,29 @@ const INTRO: Record<IntroKind, { color: string; tint: string; title: string; tex
     todo: 'Open the card to compare them — updating one is often better than adding another rule.',
   },
 };
-export function RuleCheckIntro({ kind, onClose, side = 'right', align = 'bottom', inset = false }: {
-  kind: IntroKind; onClose: () => void; side?: 'left' | 'right'; align?: 'top' | 'bottom';
+export function RuleCheckIntro({ kind, onClose, side = 'right', align = 'bottom', inset = false, edge = 'left', delay = 0 }: {
+  kind: IntroKind; onClose: () => void; side?: 'left' | 'right' | 'below'; align?: 'top' | 'bottom';
+  /** side 'below': which edge of the card the popup lines up with. */
+  edge?: 'left' | 'right';
+  /** Wait this long before sliding in, so the card's own arrival is seen first. */
+  delay?: number;
   /** Placed by its host (the rail's tab, bottom right) instead of beside a card — no caret. */
   inset?: boolean;
 }) {
   const [shown, setShown] = useState(false);
-  useEffect(() => { const t = requestAnimationFrame(() => setShown(true)); return () => cancelAnimationFrame(t); }, []);
+  useEffect(() => { const t = window.setTimeout(() => setShown(true), Math.max(delay, 16)); return () => window.clearTimeout(t); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const m = INTRO[kind];
   return (
     <div role="dialog" aria-label={m.title}
-      className={'z-50 w-[300px] rounded-xl border border-[#E5EAF0] bg-white shadow-[0_12px_32px_rgba(15,23,42,0.14)] transition-[opacity,transform] duration-200 ease-out '
+      className={'z-50 w-[300px] rounded-xl border border-[#E5EAF0] bg-white shadow-[0_12px_32px_rgba(15,23,42,0.14)] transition-[opacity,transform] duration-300 ease-out ' + (shown ? '' : 'pointer-events-none ')
         + (inset ? (shown ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0')
+          : side === 'below' ? 'absolute top-[calc(100%+12px)] ' + (edge === 'right' ? 'right-0 ' : 'left-0 ') + (shown ? 'translate-y-0 opacity-100' : '-translate-y-2 opacity-0')
           : 'absolute ' + (align === 'top' ? 'top-0 ' : 'bottom-0 ')
             + (side === 'left' ? 'right-[calc(100%+12px)] ' + (shown ? 'translate-x-0 opacity-100' : 'translate-x-2 opacity-0')
               : 'left-[calc(100%+12px)] ' + (shown ? 'translate-x-0 opacity-100' : '-translate-x-2 opacity-0')))}>
       {/* caret pointing back at its card */}
-      {!inset && <span className={'absolute size-3 rotate-45 bg-white ' + (side === 'left' ? '-right-[6px] border-r border-t border-[#E5EAF0] ' : '-left-[6px] border-b border-l border-[#E5EAF0] ') + (align === 'top' ? 'top-[52px]' : 'bottom-[52px]')} />}
+      {!inset && side === 'below' && <span className={'absolute -top-[6px] size-3 rotate-45 border-l border-t border-[#E5EAF0] bg-[#F4F6FA] ' + (edge === 'right' ? 'right-8' : 'left-8')} />}
+      {!inset && side !== 'below' && <span className={'absolute size-3 rotate-45 bg-white ' + (side === 'left' ? '-right-[6px] border-r border-t border-[#E5EAF0] ' : '-left-[6px] border-b border-l border-[#E5EAF0] ') + (align === 'top' ? 'top-[52px]' : 'bottom-[52px]')} />}
       <button type="button" onClick={onClose} aria-label="Close" className="absolute right-2 top-2 z-10 flex size-7 items-center justify-center rounded text-[#64748B] transition-colors hover:bg-white"><X size={15} /></button>
       <div className="overflow-hidden rounded-t-xl bg-[#F4F6FA]">{kind === 'conflicts' ? <ConflictArt /> : <RuleCheckArt conflicts={false} similar />}</div>
       <div className="flex flex-col gap-3 p-4">
@@ -204,7 +219,7 @@ export function RuleCheckIntro({ kind, onClose, side = 'right', align = 'bottom'
 /** Line art for the intro: a rule card at the centre, checked against the cards that came back. */
 /* How a conflict happens: two rules whose ACTION rows act on the SAME field in opposite ways —
    one hides Status, the other shows it — so both lines meet at that one field and clash there. */
-function ConflictArt() {
+export function ConflictArt() {
   const rule = (y: number, name: string, verb: string) => (
     <g>
       <rect x="14" y={y} width="150" height="42" rx="7" fill="#FFFFFF" stroke="#DCE3EC" />

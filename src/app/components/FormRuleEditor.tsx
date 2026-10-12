@@ -17,7 +17,7 @@ import { FormRuleLinearView } from './FormRuleLinearView';
 import { FormRuleConflictReview } from './FormRuleConflictReview';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { FORM_RULE_GUIDE_SEEN, FormRuleGuideDock, FormRuleHelpGuide } from './FormRuleGuide';
-import { FormRuleHelpCard } from './FormRuleHelpCard';
+import { FormRuleHelpCard, HELP_LOOKS, type HelpLook } from './FormRuleHelpCard';
 import { FormRuleCheckPanel } from './FormRuleCheckPanel';
 import { FieldPicker } from './FormRuleFieldPicker';
 import { FormRuleHelpMinimal } from './FormRuleHelpV4';
@@ -69,6 +69,9 @@ export const FORM_RULE_UI_KEY = 'formRuleUi';
 /** V3 is FINAL (Zeni, 12 Oct 2026): every editor opens on it whatever `formRuleUi` holds, and the
     header switch is hidden. Set to null to let the stored choice (and the switch) decide again. */
 const FINAL_UI: EditorVersion | null = 'V3';
+/** The Help guide look is FINAL too — Soft (Zeni, 12 Oct 2026). Grouped, Lines and Cards stay built;
+ *  null brings the tabs beside Cancel / Save Rule back. */
+const FINAL_HELP_LOOK: HelpLook | null = 'soft';
 const uiVersion = (): EditorVersion => { if (FINAL_UI) return FINAL_UI; try { const v = localStorage.getItem(FORM_RULE_UI_KEY); return v === 'v2' ? 'B3' : v === 'v3' ? 'V3' : v === 'v4' ? 'V4' : 'A'; } catch { return 'A'; } };
 /** The layouts whose conflict / similar checks open in the two summary sidebars. */
 const SUMMARY: EditorVersion[] = ['V4', 'V3', 'H1', 'H2', 'H3', 'R', 'B3', 'A3', 'A3R', 'S', 'LS', 'RC', 'EG', 'HF'];
@@ -219,6 +222,10 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
   /* V1 opens on the Help guide tab (other layouts have no guide and fall back to Conflicts). */
   const [tab, setTab] = useState<InsightTab>('guide');
   /** The "Rule builder basics" video: opens by itself the first time, then from Help guide › Watch guide. */
+  /* The Help guide's accordion looks were compared from tabs beside Cancel / Save Rule; SOFT is final
+     (FINAL_HELP_LOOK), so the tabs are hidden and this stored choice is not read. */
+  const [helpLook, setHelpLook] = useState<HelpLook>(() => { try { const v = localStorage.getItem('formRuleHelpLook'); return HELP_LOOKS.some((l) => l.id === v) ? (v as HelpLook) : 'grouped'; } catch { return 'grouped'; } });
+  const pickHelpLook = (l: HelpLook) => { setHelpLook(l); try { localStorage.setItem('formRuleHelpLook', l); } catch { /* private mode */ } };
   const [guideOpen, setGuideOpen] = useState(() => { try { return !localStorage.getItem(FORM_RULE_GUIDE_SEEN); } catch { return false; } });
   const closeGuide = () => { setGuideOpen(false); try { localStorage.setItem(FORM_RULE_GUIDE_SEEN, '1'); } catch { /* private mode */ } };
   /* V1's Help guide tab: the minimal guide (Zeni, 9 Oct 2026) — it replaced the six numbered steps (FormRuleHelpGuide, still built). */
@@ -271,8 +278,13 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
   const [intro, setIntro] = useState<null | 'conflicts' | 'similar'>(null);
   /* 'Seen' is remembered PER LAYOUT while layouts are being compared, so trying H1 after B3 still
      shows H1's own first-time popups beside its own cards. */
-  const seenKey = (v: string, k: string) => RULE_CHECK_INTRO_KEY + ':' + v + ':' + k;
+  /* V3 carries ':2': before 12 Oct 2026 V3 marked its cards seen without ever showing a popup, so a
+     browser that had already built a rule there would never get the first-time flow. */
+  const seenKey = (v: string, k: string) => RULE_CHECK_INTRO_KEY + ':' + v + ':' + k + (v === 'V3' ? ':2' : '');
   const readSeen = (v: string) => {
+    /* V3 (Zeni, 12 Oct 2026): the cards announce themselves EVERY time the editor is opened — the first
+       time each card appears in that visit — so nothing is remembered between visits. */
+    if (v === 'V3') return { conflicts: false, similar: false };
     const read = (k: string) => { try { return localStorage.getItem(seenKey(v, k)) === '1'; } catch { return false; } };
     return { conflicts: read('conflicts'), similar: read('similar') };
   };
@@ -386,7 +398,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
     if (!fresh || !(intro === null || (fresh === 'conflicts' && intro === 'similar'))) return;
     setIntro(fresh);
     setIntroSeen((s) => ({ ...s, [fresh]: true }));
-    try { localStorage.setItem(seenKey(version, fresh), '1'); } catch { /* private mode */ }
+    if (version !== 'V3') { try { localStorage.setItem(seenKey(version, fresh), '1'); } catch { /* private mode */ } }
   }, [ready, relOpen, conflicts.length, similar.length, intro, introSeen, version]);
   const timeline = useMemo(() => runOrder(shape, rules, fields, conflicts, selfIndex), [draft, rules, fields, conflicts]); // eslint-disable-line react-hooks/exhaustive-deps
   const conditionLines = draft.groups.flatMap((g) => g.conditions).filter((x) => x.fieldId && x.op).map((x) => conditionText(x, fields));
@@ -1012,9 +1024,9 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
     <div className="relative flex min-h-0 flex-1">
       <div className="min-h-0 flex-1 overflow-y-auto">{builder}</div>
       <div className="flex-shrink-0" style={{ width: v3W }}>
-        <FormRuleHelpCard onWatch={() => setGuideOpen(true)}
+        <FormRuleHelpCard look={FINAL_HELP_LOOK ?? helpLook} onWatch={() => setGuideOpen(true)}
           ruleCheck={(compact) => ready && (conflicts.length > 0 || similar.length > 0)
-            ? <RelatedSummaryCards onlyFound arrowAlways compact={compact} ready={ready} conflicts={conflicts} similar={similar} onOpenConflicts={() => setRelOpen('conflicts')} onOpenSimilar={() => setRelOpen('similar')} />
+            ? <RelatedSummaryCards onlyFound arrowAlways attention compact={compact} intro={intro} onInfo={setIntro} onCloseIntro={closeIntro} introSide="below" ready={ready} conflicts={conflicts} similar={similar} onOpenConflicts={() => setRelOpen('conflicts')} onOpenSimilar={() => setRelOpen('similar')} />
             : <RuleCheckEmpty compact={compact} />} />
       </div>
       {guideOpen && <FormRuleGuideDock onClose={closeGuide} right={v3W + 20} />}
@@ -1814,6 +1826,11 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
           {version === 'S'
             ? <RelatedSummaryChips ready={ready} conflicts={conflicts} similar={similar} onOpenConflicts={() => setRelOpen('conflicts')} onOpenSimilar={() => setRelOpen('similar')} />
             : !SUMMARY.includes(version) && version !== 'A' && statusChip /* the summary layouts show the counts as cards; A's rail carries them on its tabs */}
+          {version === 'V3' && !FINAL_HELP_LOOK && (
+            <div className="pill-track" title="Help guide layout">
+              {HELP_LOOKS.map((l) => <button key={l.id} type="button" aria-pressed={helpLook === l.id} onClick={() => pickHelpLook(l.id)}>{l.label}</button>)}
+            </div>
+          )}
           <button type="button" onClick={leave} className="rounded-md border border-[#DFE5ED] bg-white px-3 py-1.5 text-[12px] font-medium text-[#7B8FA5] transition-colors hover:bg-[#F9FAFB] hover:text-[#364658]">Cancel</button>
           <button type="button" onClick={() => save()} className="rounded-md bg-[#3D8BD0] px-3 py-1.5 text-[12px] font-medium text-white transition-colors hover:bg-[#3478B5]">Save Rule</button>
         </div>

@@ -815,3 +815,13 @@ body[data-portal-dragging] [data-portal-toolbar] { pointer-events: none; opacity
 @keyframes fg-slide { from { opacity: 0; transform: translateX(8px); } to { opacity: 1; transform: none; } }
 .fg-slide { animation: fg-slide 420ms cubic-bezier(0.4,0,0.2,1) both; }
 @media (prefers-reduced-motion: reduce) { .fg-click, .fg-ping, .fg-draw, .fg-fade-in, .fg-slide { animation: none; } .fg-ping, .fg-click { opacity: 0; } }
+
+/* Form Rule V3 — a Rule check card arriving, and the halo it wears while its info popup is open. */
+@keyframes rc-enter { from { opacity: 0; transform: translateY(6px) scale(0.985); } to { opacity: 1; transform: none; } }
+@keyframes rc-attn { 0% { box-shadow: 0 0 0 0 rgba(var(--rc), 0.32); } 70% { box-shadow: 0 0 0 8px rgba(var(--rc), 0); } 100% { box-shadow: 0 0 0 3px rgba(var(--rc), 0.14); } }
+/* 'backwards', not 'both': a filled transform keeps a stacking context, which trapped the popup under the guide. */
+.rc-enter { animation: rc-enter 360ms cubic-bezier(0.22, 1, 0.36, 1) backwards; }
+.rc-attn { box-shadow: 0 0 0 3px rgba(var(--rc), 0.14); animation: rc-attn 1100ms ease-out 200ms 2 both; }
+@keyframes rc-veil { from { opacity: 0; } to { opacity: 1; } }
+.rc-veil { animation: rc-veil 320ms ease-out backwards; }
+@media (prefers-reduced-motion: reduce) { .rc-enter, .rc-attn, .rc-veil { animation: none; } }
