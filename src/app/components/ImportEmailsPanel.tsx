@@ -152,10 +152,12 @@ function PreviewModal({ file, onClose }: { file: Parsed; onClose: () => void }) 
   );
 }
 
-export function ImportEmailsPanel({ manualCount, onClose }: {
+export function ImportEmailsPanel({ manualCount, onClose, onImport }: {
   /** Emails already written into the audience by hand — they take slots before the file does. */
   manualCount: number;
   onClose: () => void;
+  /** Receives the rows that fit, in file order. Given this, the caller reports the result itself. */
+  onImport?: (emails: string[]) => void;
 }) {
   const [step, setStep] = useState<1 | 2>(1);
   const [type, setType] = useState<FileType>('csv');
@@ -352,7 +354,11 @@ export function ImportEmailsPanel({ manualCount, onClose }: {
           ) : (
             <button
               type="button"
-              onClick={() => { toast.success(`${imported} emails imported`); onClose(); }}
+              onClick={() => {
+                if (onImport && file) onImport(file.rows.slice(0, imported).map((r) => (r[emailCol] ?? '').trim()).filter(Boolean));
+                else toast.success(`${imported} emails imported`);
+                onClose();
+              }}
               className={btnPrimary}
             >Import {imported} emails</button>
           )}

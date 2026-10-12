@@ -3,6 +3,8 @@ import { toast } from 'sonner';
 import { ChevronDown, ExternalLink, Pin, Plus, RefreshCw, Search, Star, Upload, User, X, ListFilter } from 'lucide-react';
 import { Pagination } from './Pagination';
 import { ImportEmailsPanel } from './ImportEmailsPanel';
+import { CreateUserSurveyPanel } from './CreateUserSurveyPanel';
+import type { NewSurvey } from './CreateUserSurveyPanel';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 
 /* Admin › User Survey › User Surveys — the listing. Same surface as every admin listing
@@ -184,13 +186,26 @@ export function AdminUserSurveyModule() {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [importing, setImporting] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [surveys, setSurveys] = useState<Survey[]>(SURVEYS);
+
+  /** A new survey starts in Design, at the top; its end is the start plus its validity. */
+  const addSurvey = (n: NewSurvey) => {
+    const iso = (d: Date) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    const next = Math.max(...surveys.map((x) => +x.id.split('-')[1])) + 1;
+    const end = new Date(new Date(n.start).getTime() + n.validityDays * DAY);
+    setSurveys((xs) => [{ id: `SUR-${next}`, name: n.name, status: 'Design', start: n.start, end: iso(end), created: iso(TODAY), owner: n.owner, catalog: n.catalog }, ...xs]);
+    setView(SURVEY_VIEWS[0]);
+    setSearch('');
+    setPage(1);
+  };
 
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return SURVEYS
+    return surveys
       .filter((s) => inView(s, view))
       .filter((s) => !q || [s.id, s.name, s.status, s.owner ?? 'Unassigned', s.catalog ?? ''].some((x) => x.toLowerCase().includes(q)));
-  }, [view, search]);
+  }, [view, search, surveys]);
 
   const totalPages = Math.max(1, Math.ceil(rows.length / perPage));
   const pageRows = rows.slice((page - 1) * perPage, page * perPage);
@@ -240,7 +255,7 @@ export function AdminUserSurveyModule() {
           </button>
           <button
             type="button"
-            onClick={() => toast('Survey builder is not part of this prototype yet')}
+            onClick={() => setCreating(true)}
             className="inline-flex h-9 items-center gap-1.5 rounded bg-[#3D8BD0] px-4 text-[13px] font-medium text-white transition-colors hover:bg-[#3478B5]"
           >
             <Plus size={15} /> Create User Survey
@@ -333,6 +348,7 @@ export function AdminUserSurveyModule() {
       />
 
       {/* Demo: 120 emails already typed into the audience by hand, so a file can add 380. */}
+      {creating && <CreateUserSurveyPanel onClose={() => setCreating(false)} onCreate={addSurvey} />}
       {importing && <ImportEmailsPanel manualCount={120} onClose={() => setImporting(false)} />}
     </div>
   );

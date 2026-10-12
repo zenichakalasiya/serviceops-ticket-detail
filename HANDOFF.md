@@ -1,3 +1,47 @@
+# Handoff — 2026-10-12 17:44 (User Surveys session)
+
+> Two sessions share this file. **This top part is the User Surveys session**; the Form Rules
+> session's notes follow unchanged below the divider.
+
+## Read first (User Surveys)
+CLAUDE.md › Key context › *User Surveys — listing + Import Emails* and *User Surveys — Create User
+Survey panel + the Emails field (12 Oct 2026)*.
+
+## What we worked on this session
+The Create User Survey panel and its new Emails field: a chip read-out that opens an add / search
+popup, plus an "Import values" button that feeds CSV emails into the survey's audience.
+
+## Completed
+- `CreateUserSurveyPanel.tsx` — all fields from the old form on our own controls; inline validation;
+  a created survey lands on top of the listing as Design.
+- Emails field + popup: Add button appears while typing, search icon expands and folds the email
+  field into a blue +, newest email first, paste-many, invalid/duplicate errors, 500 cap.
+- Empty popup is just the input row (58px); count line and list appear with the first email.
+- **Import values** beside the Emails label → `ImportEmailsPanel` with the survey's real count and an
+  `onImport` callback; duplicates skipped.
+- Verified in Chrome (Playwright), no page errors. Published.
+
+## In progress
+Nothing mid-flight.
+
+## Next steps
+- Zeni to decide: rich-text Description or keep the plain text box; whether search should look up
+  directory users; whether the LISTING's Import button (demo count 120) should go.
+- At exactly 500 emails the Import values button's disabled state was not seen in a test.
+- Row click and Schedule Survey still have no screens.
+
+## Decisions made
+- The emails live in a popup, the field is only a read-out (an audience runs to hundreds).
+- Collapse to + is animated, coming back to add is instant (Zeni's wording).
+- No empty-state block in the popup (Zeni: too much white space).
+
+## Gotchas & notes
+- Another session's Form Rule files (`FormRuleEditor`, `FormRuleHelpCard`, `FormRuleRelatedView`,
+  `theme.css`) were uncommitted in the tree during this publish and were deliberately NOT committed.
+- Playwright counts a zero-height button as visible — measure `[data-add-row]`'s height instead.
+
+---
+
 # Handoff — 2026-10-12 (later session)
 
 ## Read first
