@@ -18,7 +18,7 @@ export const openGlobalHelp = () => window.dispatchEvent(new CustomEvent('open-g
 
 function Section({ title, open, onToggle, children }: { title: string; open: boolean; onToggle: () => void; children: React.ReactNode }) {
   return (
-    <section className="rounded-lg bg-[#F1F4F9]">
+    <section className="rounded-lg bg-[#F7F9FC]">
       <button type="button" onClick={onToggle} aria-expanded={open}
         className="flex w-full items-center gap-2 px-4 pb-2 pt-3.5 text-left">
         <span className="min-w-0 flex-1 text-[15px] font-medium text-[#1D2A3E]">{title}</span>

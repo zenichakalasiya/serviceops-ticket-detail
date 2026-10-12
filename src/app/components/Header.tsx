@@ -156,7 +156,9 @@ export function Header({ selectedCount, onOpenAdmin }: HeaderProps) {
     <header className="flex h-[56px] items-center justify-between border-b border-[#e5e7eb] bg-white px-6">
       <div className="flex items-center gap-4">
         <MotadataLogo />
-        <FormRuleUiSwitch />
+        {/* V3 is FINAL (Zeni, 12 Oct 2026): the switch is hidden; V1, V2 and V4 stay built.
+            Restoring it is this line plus FINAL_UI in FormRuleEditor. */}
+        {false && <FormRuleUiSwitch />}
       </div>
       
       <div className="flex items-center gap-2">

@@ -68,9 +68,11 @@ function KindBar({ cs, h = 6 }: { cs: RuleConflict[]; h?: number }) {
 
 const countKinds = (cs: RuleConflict[]) => KINDS.map((k) => [k, cs.filter((c) => c.kind === k).length] as const).filter(([, n]) => n > 0);
 
-export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, onOpenRule, currentExecution, accordion = false, onHelpChange, onClose, sidebar = false, resolveCard = false, initialMode, initialSel, focus }: {
+export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, onOpenRule, currentExecution, accordion = false, onHelpChange, onClose, sidebar = false, resolveCard = false, helpProminent = false, initialMode, initialSel, focus }: {
   /** V3: "How to resolve" is a prominent card at the TOP of the review, not the bar at its foot. */
   resolveCard?: boolean;
+  /** V3 (Zeni, 12 Oct 2026): the resolve bar at the foot is a prominent blue card, not a quiet line. */
+  helpProminent?: boolean;
   /** Bring this FIELD forward: switch to By field, open its accordion, tint it and scroll to it.
       `n` changes on every request so asking for the same field twice still works. */
   focus?: { field: string; n: number } | null;
@@ -461,7 +463,24 @@ export function FormRuleConflictReview({ conflicts, rules, fieldLabel, onJump, o
         </div>
       )}
 
-      {!resolveCard && <div className="flex flex-shrink-0 items-center border-t border-[#EEF2F6]">
+      {!resolveCard && helpProminent && (
+        <div className="flex-shrink-0 border-t border-[#EEF2F6] p-3">
+          <button type="button" onClick={() => setHelpOpen(true)}
+            className="group flex w-full items-center gap-3 rounded-lg border border-[#BFDBF7] bg-[#EBF5FF] px-3 py-2.5 text-left transition-colors hover:border-[#3D8BD0] hover:bg-[#DCEBFA]">
+            <span className="flex size-9 flex-shrink-0 items-center justify-center rounded-lg bg-white">
+              <Lightbulb size={18} className="text-[#F59E0B]" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[14px] font-semibold text-[#1D2A3E]">How do I resolve these conflicts?</span>
+              <span className="block text-[12.5px] text-[#475569]">Six ways to fix a clash, step by step.</span>
+            </span>
+            <span className="inline-flex h-8 flex-shrink-0 items-center gap-1 rounded bg-[#3D8BD0] px-3 text-[13px] font-medium text-white transition-colors group-hover:bg-[#3378B8]">
+              View steps <ChevronRight size={15} />
+            </span>
+          </button>
+        </div>
+      )}
+      {!resolveCard && !helpProminent && <div className="flex flex-shrink-0 items-center border-t border-[#EEF2F6]">
         <button type="button" onClick={() => setHelpOpen(true)}
           className="flex min-w-0 flex-1 items-center gap-2 px-3 py-3 text-left text-[13px] text-[#364658] transition-colors hover:bg-[#F7F9FB]">
           <Lightbulb size={15} className="text-[#F59E0B]" />

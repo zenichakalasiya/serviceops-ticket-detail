@@ -19,6 +19,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { FORM_RULE_GUIDE_SEEN, FormRuleGuideDock, FormRuleHelpGuide } from './FormRuleGuide';
 import { FormRuleHelpCard } from './FormRuleHelpCard';
 import { FormRuleCheckPanel } from './FormRuleCheckPanel';
+import { FieldPicker } from './FormRuleFieldPicker';
 import { FormRuleHelpMinimal } from './FormRuleHelpV4';
 import type { CheckTab } from './FormRuleCheckPanel';
 import { RelatedDrawer, RelatedSummaryCards, RelatedSummaryChips, RULE_CHECK_INTRO_KEY, RuleCheckEmpty, SimilarRulesView } from './FormRuleRelatedView';
@@ -65,7 +66,10 @@ const SHOWN: EditorVersion[] = ['A', 'B3', 'V3', 'V4'];
 /** V1 = A (the default), V2 = B3 (the previous final). Picked from the switch beside the Motadata
     logo — not from a Layout bar — and remembered under this key. */
 export const FORM_RULE_UI_KEY = 'formRuleUi';
-const uiVersion = (): EditorVersion => { try { const v = localStorage.getItem(FORM_RULE_UI_KEY); return v === 'v2' ? 'B3' : v === 'v3' ? 'V3' : v === 'v4' ? 'V4' : 'A'; } catch { return 'A'; } };
+/** V3 is FINAL (Zeni, 12 Oct 2026): every editor opens on it whatever `formRuleUi` holds, and the
+    header switch is hidden. Set to null to let the stored choice (and the switch) decide again. */
+const FINAL_UI: EditorVersion | null = 'V3';
+const uiVersion = (): EditorVersion => { if (FINAL_UI) return FINAL_UI; try { const v = localStorage.getItem(FORM_RULE_UI_KEY); return v === 'v2' ? 'B3' : v === 'v3' ? 'V3' : v === 'v4' ? 'V4' : 'A'; } catch { return 'A'; } };
 /** The layouts whose conflict / similar checks open in the two summary sidebars. */
 const SUMMARY: EditorVersion[] = ['V4', 'V3', 'H1', 'H2', 'H3', 'R', 'B3', 'A3', 'A3R', 'S', 'LS', 'RC', 'EG', 'HF'];
 const RAIL_MIN = 320;
@@ -782,10 +786,17 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
                                     onChange={([v]) => patchAction(act.id, { type: v as RuleAction['type'], fieldIds: v === 'Set value' ? act.fieldIds.slice(0, 1) : act.fieldIds, value: [] })} />
                                 </div>
                                 <div className={(single ? 'w-[200px] flex-shrink-0' : 'min-w-0 flex-1')}>
-                                  <RuleSelect compact multi={!single} value={act.fieldIds} searchable invalid={bad && act.fieldIds.length === 0}
-                                    placeholder={single ? 'Field to set' : 'Fields'}
-                                    options={fields.filter((f) => !single || f.kind !== 'attachment').map((f) => ({ value: f.id, label: f.label, group: f.system ? 'System fields' : 'Custom fields' }))}
-                                    onChange={(v) => patchAction(act.id, { fieldIds: v, value: single ? [] : act.value })} />
+                                  {single ? (
+                                  <RuleSelect compact value={act.fieldIds} searchable invalid={bad && act.fieldIds.length === 0}
+                                    placeholder="Field to set"
+                                    options={fields.filter((f) => f.kind !== 'attachment').map((f) => ({ value: f.id, label: f.label, group: f.system ? 'System fields' : 'Custom fields' }))}
+                                    onChange={(v) => patchAction(act.id, { fieldIds: v, value: [] })} />
+                                  ) : (
+                                  /* Several fields: the dropdown that expands into "Select fields" (Zeni, 12 Oct 2026). */
+                                  <FieldPicker value={act.fieldIds} invalid={bad && act.fieldIds.length === 0} placeholder="Fields"
+                                    options={fields.map((f) => ({ value: f.id, label: f.label }))}
+                                    onChange={(v) => patchAction(act.id, { fieldIds: v })} />
+                                  )}
                                 </div>
                                 {single && (
                                   <div className="min-w-0 flex-1">
@@ -978,7 +989,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
     relOpen === 'conflicts' ? (
       <RelatedDrawer title="Resolve conflicts"
         onClose={() => { setRelOpen(null); setRelHelp(false); setRelField(null); }} hideHead={relHelp}>
-        <FormRuleConflictReview key={relField ?? 'all'} sidebar /* V3 dropped the top "How to resolve" card (Zeni, 9 Oct 2026): the bar at the foot opens the steps as a page with a back arrow, as in V1/V2. */ initialMode={relField ? 'field' : 'rule'} initialSel={relField ?? undefined}
+        <FormRuleConflictReview key={relField ?? 'all'} sidebar helpProminent={version === 'V3'} /* V3 dropped the top "How to resolve" card (Zeni, 9 Oct 2026): the bar at the foot opens the steps as a page with a back arrow, as in V1/V2. */ initialMode={relField ? 'field' : 'rule'} initialSel={relField ?? undefined}
           onHelpChange={setRelHelp} onClose={() => { setRelOpen(null); setRelHelp(false); setRelField(null); }} conflicts={conflicts} rules={rules} currentExecution={draft.execution} fieldLabel={(id) => fieldById(id)?.label ?? id}
           onJump={(id) => { setRelOpen(null); requestAnimationFrame(() => jumpTo(id)); }} onOpenRule={openOther} />
       </RelatedDrawer>
