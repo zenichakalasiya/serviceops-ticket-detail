@@ -122,7 +122,7 @@ export function MotadataLogo() {
 /** V1 / V2 of the form-rule editor, beside the logo. Shown only on the form-rule screens. */
 function FormRuleUiSwitch() {
   const [hash, setHash] = useState(() => location.hash);
-  const [v, setV] = useState(() => { try { const s = localStorage.getItem('formRuleUi'); return s === 'v2' || s === 'v3' ? s : 'v1'; } catch { return 'v1'; } });
+  const [v, setV] = useState(() => { try { const s = localStorage.getItem('formRuleUi'); return s === 'v2' || s === 'v3' || s === 'v4' ? s : 'v1'; } catch { return 'v1'; } });
   useEffect(() => {
     const on = () => setHash(location.hash);
     window.addEventListener('hashchange', on);
@@ -130,7 +130,7 @@ function FormRuleUiSwitch() {
     return () => { window.removeEventListener('hashchange', on); window.clearInterval(t); };
   }, []);
   if (!hash.startsWith('#/admin/request-form')) return null;
-  const pick = (x: 'v1' | 'v2' | 'v3') => {
+  const pick = (x: 'v1' | 'v2' | 'v3' | 'v4') => {
     setV(x);
     try { localStorage.setItem('formRuleUi', x); } catch { /* private mode */ }
     window.dispatchEvent(new Event('form-rule-ui'));
@@ -140,6 +140,7 @@ function FormRuleUiSwitch() {
       <button type="button" aria-pressed={v === 'v1'} onClick={() => pick('v1')}>V1</button>
       <button type="button" aria-pressed={v === 'v2'} onClick={() => pick('v2')}>V2</button>
       <button type="button" aria-pressed={v === 'v3'} onClick={() => pick('v3')}>V3</button>
+      <button type="button" aria-pressed={v === 'v4'} onClick={() => pick('v4')}>V4</button>
     </div>
   );
 }

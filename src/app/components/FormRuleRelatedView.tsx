@@ -17,7 +17,7 @@ const KIND_FG: Record<ConflictKind, string> = { Blocking: '#9F1239', Opposite: '
 
 /** The two cards that sit at the top of the builder. */
 export type IntroKind = 'conflicts' | 'similar';
-export function RelatedSummaryCards({ ready, conflicts, similar, onOpenConflicts, onOpenSimilar, onlyFound = false, stack = false, intro = null, onInfo, onCloseIntro, introSide = 'right', introAlign = 'bottom' }: {
+export function RelatedSummaryCards({ ready, conflicts, similar, onOpenConflicts, onOpenSimilar, onlyFound = false, stack = false, arrowAlways = false, compact = false, intro = null, onInfo, onCloseIntro, introSide = 'right', introAlign = 'bottom' }: {
   /** Where a card's info popup opens: beside the card on this side, lined up with this edge. */
   introSide?: 'left' | 'right';
   introAlign?: 'top' | 'bottom';
@@ -30,6 +30,11 @@ export function RelatedSummaryCards({ ready, conflicts, similar, onOpenConflicts
   onlyFound?: boolean;
   /** One card per row, for a narrow sidebar. */
   stack?: boolean;
+  /** Show the corner arrow at rest, not only on hover (V3, Zeni 9 Oct 2026). */
+  arrowAlways?: boolean;
+  /** Collapsed: count + title only, the summary folds away and the card loses height (V3, while the
+   *  Help guide below is hovered). Animated, so the guide slides up rather than jumping. */
+  compact?: boolean;
   ready: boolean;
   conflicts: RuleConflict[];
   similar: SimilarRule[];
@@ -52,12 +57,12 @@ export function RelatedSummaryCards({ ready, conflicts, similar, onOpenConflicts
      buttons cannot live inside the card, which is itself a button. */
   const wrap = (stack ? 'w-full' : 'min-w-[240px] flex-1') + ' relative';
   const card = (tint: string, hover: string, empty: boolean) =>
-    'group relative flex w-full flex-col rounded-md border p-4 text-left transition-[background-color,box-shadow] ' +
+    'group relative flex w-full flex-col rounded-md border px-4 text-left transition-[background-color,box-shadow,padding] duration-300 ' + (compact ? 'py-2.5 ' : 'py-4 ') +
     (empty ? 'cursor-default border-[#E5EAF0] bg-[#F7F9FB]' : tint + ' ' + hover + ' hover:shadow-[0_2px_10px_rgba(15,23,42,0.08)]');
   const head = (n: number, label: string, color: string, info?: React.ReactNode) => (
     <span className="flex min-w-0 items-center gap-1.5 pr-8">
       <span className="flex min-w-0 items-baseline gap-1">
-        <span className="text-[24px] font-semibold leading-none tabular-nums" style={{ color }}>{n}</span>
+        <span className={'font-semibold leading-none tabular-nums transition-[font-size] duration-300 ' + (compact ? 'text-[18px]' : 'text-[24px]')} style={{ color }}>{n}</span>
         <span className="truncate whitespace-nowrap text-[14px] font-semibold" style={{ color }}>{label}</span>
       </span>
       {info}
@@ -67,7 +72,7 @@ export function RelatedSummaryCards({ ready, conflicts, similar, onOpenConflicts
      hover ↗ (where clicking the card takes you). The ⓘ is a span with a button role because the card
      around it is already a button. */
   const corner = (_k: IntroKind, color: string) => (
-    <ArrowUpRight size={16} className="absolute right-4 top-4 opacity-0 transition-opacity group-hover:opacity-100" style={{ color }} />
+    <ArrowUpRight size={16} className={'absolute right-4 transition-[opacity,top] duration-300 ' + (compact ? 'top-3 ' : 'top-4 ') + (arrowAlways ? '' : 'opacity-0 group-hover:opacity-100')} style={{ color }} />
   );
   const info = (k: IntroKind, color: string) => onInfo && (
     <span role="button" tabIndex={0} aria-label="What is this?"
@@ -77,7 +82,12 @@ export function RelatedSummaryCards({ ready, conflicts, similar, onOpenConflicts
       <Info size={14} />
     </span>
   );
-  const summary = (text: React.ReactNode, color: string) => <span className="mt-4 line-clamp-2 text-[12px] font-normal leading-[1.5]" style={{ color }}>{text}</span>;
+  /* Folds with grid-template-rows (1fr → 0fr), the one way to animate a height you don't know. */
+  const summary = (text: React.ReactNode, color: string) => (
+    <span className={'grid transition-[grid-template-rows,opacity,margin] duration-300 ' + (compact ? 'mt-0 grid-rows-[0fr] opacity-0' : 'mt-4 grid-rows-[1fr] opacity-100')}>
+      <span className="min-h-0 overflow-hidden"><span className="line-clamp-2 text-[12px] font-normal leading-[1.5]" style={{ color }}>{text}</span></span>
+    </span>
+  );
   const kinds = KINDS.map((k) => { const n = conflicts.filter((x) => x.kind === k).length; return n ? n + ' ' + k : null; }).filter(Boolean).join(' · ');
   return (
     <div className={stack ? 'flex flex-col gap-4' : 'flex flex-wrap gap-4'}>
@@ -114,17 +124,20 @@ export function RelatedSummaryCards({ ready, conflicts, similar, onOpenConflicts
 
 /** Nothing to report yet: says where conflicts and similar rules WILL appear, so the space reads as a
  *  check that is running rather than a blank corner. */
-export function RuleCheckEmpty() {
+export function RuleCheckEmpty({ compact = false }: { compact?: boolean } = {}) {
+  /* Compact (V3, Help guide hovered): icon + title only — the line folds away and the card shortens. */
   return (
-    <div className="flex items-start gap-3 rounded-md border border-[#E5EAF0] bg-white p-4">
-      <svg viewBox="0 0 48 48" className="size-12 flex-shrink-0" aria-hidden="true">
+    <div className={'flex gap-3 rounded-md border border-[#E5EAF0] bg-white px-4 transition-[padding] duration-300 ' + (compact ? 'items-center py-2.5' : 'items-start py-4')}>
+      <svg viewBox="0 0 48 48" className={'flex-shrink-0 transition-[width,height] duration-300 ' + (compact ? 'size-8' : 'size-12')} aria-hidden="true">
         <circle cx="24" cy="24" r="22" fill="#F4F6FA" />
         <path d="M24 11.5l10 3.6v7.6c0 6.6-4.2 11.6-10 13.8-5.8-2.2-10-7.2-10-13.8v-7.6z" fill="#FFFFFF" stroke="#98A2B3" strokeWidth="1.6" strokeLinejoin="round" />
         <path d="M19.3 24.2l3.4 3.3 6.2-6.6" fill="none" stroke="#3D8BD0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
       <div className="min-w-0">
         <div className="text-[13px] font-semibold text-[#1D2A3E]">All clear so far</div>
-        <p className="mt-0.5 text-[12px] leading-[1.5] text-[#64748B]">No conflicts or similar rules. If this rule clashes with another, or one already does the same job, it shows up here.</p>
+        <div className={'grid transition-[grid-template-rows,opacity,margin] duration-300 ' + (compact ? 'mt-0 grid-rows-[0fr] opacity-0' : 'mt-0.5 grid-rows-[1fr] opacity-100')}>
+          <p className="min-h-0 overflow-hidden text-[12px] leading-[1.5] text-[#64748B]">No conflicts or similar rules. If this rule clashes with another, or one already does the same job, it shows up here.</p>
+        </div>
       </div>
     </div>
   );

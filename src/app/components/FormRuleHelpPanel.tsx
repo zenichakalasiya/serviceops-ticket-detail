@@ -119,14 +119,15 @@ function Home({ onOpen, onWatch }: { onOpen: (id: string) => void; onWatch?: () 
               <h3 className="text-[11px] font-semibold uppercase tracking-wide text-[#7B8FA5]">{g}</h3>
               <span className="text-[11px] text-[#B0BCCB]">{items.length}</span>
             </div>
-            <ul className="divide-y divide-[#EEF2F6] overflow-hidden rounded-lg border border-[#E8EDF3]">
+            {/* Each topic is its OWN card (Zeni, 9 Oct 2026) — not rows joined in one bordered list. */}
+            <ul className="flex flex-col gap-2">
               {items.map((a) => {
                 const I = ICONS[a.icon] ?? HelpCircle;
                 return (
                   <li key={a.id}>
                     <button type="button" onClick={() => onOpen(a.id)}
-                      className="group flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-[#F8FAFC]">
-                      <span className="flex size-8 flex-shrink-0 items-center justify-center rounded-md bg-[#F1F5F9] text-[#475569] transition-colors group-hover:bg-[#EBF5FF] group-hover:text-[#3D8BD0]"><I size={15} /></span>
+                      className="group flex w-full items-center gap-3 rounded-lg border border-[#E8EDF3] bg-[#F8FAFC] px-3 py-3 text-left transition-colors hover:border-[#C9DDF1] hover:bg-[#F3F8FD]">
+                      <span className="flex size-8 flex-shrink-0 items-center justify-center rounded-md bg-[#EBF5FF] text-[#3D8BD0]"><I size={15} /></span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-[13px] font-medium text-[#1D2A3E]">{a.title}</span>
                         <span className="block truncate text-[12px] text-[#7B8FA5]">{a.sub}</span>

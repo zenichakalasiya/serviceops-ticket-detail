@@ -530,7 +530,7 @@ function ResolveCard({ onReadMore }: { onReadMore: () => void }) {
   );
 }
 
-const RESOLVE_STEPS = [
+export const RESOLVE_STEPS = [
   { title: 'Decide which rule should win', text: 'If two rules do opposite things to the same field, keep the action on the rule that matches your intent and remove it from the other. Left alone, whichever rule runs last wins — and that may not be the one you want.' },
   { title: 'Narrow the conditions so both can’t fire', text: 'A conflict only matters when both rules run on the same request. Add a condition to one of them so their conditions no longer overlap.' },
   { title: 'Separate them by when they run', text: 'Two rules can’t collide if one runs On Create and the other On Edit. Check the Execute on setting before changing anything else.' },
