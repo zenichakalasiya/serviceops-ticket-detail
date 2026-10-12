@@ -31,10 +31,14 @@ function Section({ title, open, onToggle, children }: { title: string; open: boo
 
 const P = ({ children, className = '' }: { children: string; className?: string }) => <p className={'mt-1.5 ' + className}>{rich(children)}</p>;
 const Term = ({ name, children, example }: { name: string; children: string; example?: string }) => (
-  <div className="mt-3 first:mt-1">
-    <div className="text-[13px] font-semibold text-[#1D2A3E]">{name}</div>
-    <P className="!mt-0.5">{children}</P>
-    {example && <p className="mt-1 pl-4 text-[#6B7A99]">Example: {example}</p>}
+  /* a bullet point with a BOLD title (Zeni, 12 Oct 2026); the text hangs under the title, clear of the dot */
+  <div className="mt-3 flex gap-2 first:mt-1">
+    <span className="mt-[7px] size-[5px] flex-shrink-0 rounded-full bg-[#1D2A3E]" />
+    <div className="min-w-0 flex-1">
+      <div className="text-[13px] font-bold text-[#1D2A3E]">{name}</div>
+      <P className="!mt-0.5">{children}</P>
+      {example && <p className="mt-1 pl-4 text-[#6B7A99]">Example: {example}</p>}
+    </div>
   </div>
 );
 
