@@ -1,3 +1,47 @@
+# Handoff — 2026-10-13 11:48 (User Surveys session)
+
+> Sessions share this file. **This top part is the newest User Surveys session**; older notes follow
+> unchanged below the divider.
+
+## Read first (User Surveys)
+CLAUDE.md › Key context › *User Surveys — the Emails field is ONE search-or-add box (13 Oct 2026)*.
+It supersedes the popup details in the two User Surveys bullets above it.
+
+## What we worked on this session
+After user testing showed add and search could not be used together, redesigned the Emails popup
+into a single search-or-add box, to Zeni's spec. It is meant to be reused across the product.
+
+## Completed
+- One box, icon inside it: grey magnifier while searching, filled blue + once the text stops matching.
+- Yellow highlight on matched characters; matches sorted best-first.
+- Field shows one chip + a number; hovering the number lists the other emails.
+- Popup focuses its box on open (it never did before — fixed).
+- Removed: the count line, the empty "no match" block, the comparison tabs and the three other designs.
+- Field no longer looks focused while the popup is open.
+- Every input and dropdown in the panel is 4px, like the ticket detail page.
+- Verified in Chrome (Playwright), no page errors. Published.
+
+## In progress
+Nothing mid-flight.
+
+## Next steps
+- Extract `EmailsField` / `EmailsPopup` into a shared component if it is to be used product-wide
+  (today it lives inside `CreateUserSurveyPanel.tsx`).
+- Check `ImportEmailsPanel`'s controls against the 4px radius rule.
+- Still open from before: rich-text Description, the listing's own Import button (demo count 120).
+
+## Decisions made
+- Search and add are ONE field; the icon tells you which the text currently is (Zeni).
+- A complete new address is always addable, even inside an added one.
+- No count line in the popup (Zeni).
+
+## Gotchas & notes
+- Another session's Form Rule files and `theme.css` are uncommitted in this folder and were NOT
+  published; `CLAUDE.md` goes up whole, so its unpublished doc notes go with it.
+- Patch scripts with template literals must be written with the Write tool — a bash heredoc broke one.
+
+---
+
 # Handoff — 2026-10-12 18:08 (User Surveys session)
 
 > Two sessions share this file. **This top part is the User Surveys session**; the Form Rules

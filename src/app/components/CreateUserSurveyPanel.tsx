@@ -2,7 +2,8 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 import { Plus, Search, Upload, X } from 'lucide-react';
-import { ErrorText, FieldLabel, RuleSelect, TagEditor, inputCls } from './FormRuleControls';
+import { ErrorText, FieldLabel, RuleSelect, TagEditor, inputCls as formRuleInputCls } from './FormRuleControls';
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import type { SelectOption } from './FormRuleControls';
 import { AUDIENCE_LIMIT, ImportEmailsPanel } from './ImportEmailsPanel';
 
@@ -39,6 +40,11 @@ const GROUPS: { name: string; size: number }[] = [
 ];
 const GROUP_OPTIONS: SelectOption[] = GROUPS.map((g) => ({ value: g.name, label: g.name, hint: `${g.size} requesters` }));
 
+/* The shared form controls carry the Form Rules screen's 6px corners. This panel follows the ticket
+   detail page instead: every input and dropdown is 4px (`rounded`). */
+const inputCls = formRuleInputCls.replace('rounded-md', 'rounded');
+const SELECT_4PX = '!rounded';
+
 const EMAIL_RE = /^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/;
 const btnPrimary = 'inline-flex h-8 items-center gap-1.5 rounded bg-[#3D8BD0] px-3.5 text-[13px] font-medium text-white transition-colors hover:bg-[#3478B5] disabled:cursor-not-allowed disabled:bg-[#CBD5E1]';
 const btnSecondary = 'inline-flex h-8 items-center gap-1.5 rounded border border-[#d1d5db] bg-white px-3.5 text-[13px] font-medium text-[#364658] transition-colors hover:bg-[#F9FAFB]';
@@ -54,15 +60,14 @@ function EmailsPopup({ anchor, emails, onChange, onClose }: {
   onChange: (next: string[]) => void;
   onClose: () => void;
 }) {
-  /** One row, two controls, and only one of them is ever wide: adding, or searching. */
-  const [mode, setMode] = useState<'add' | 'search'>('add');
+  /* ONE field. While what is typed still matches an added email it is a search (the list below
+     narrows, the icon is a magnifier); once it matches nothing — or is a complete new address —
+     the icon becomes a + and Enter adds it. */
   const [draft, setDraft] = useState('');
-  const [query, setQuery] = useState('');
   const [error, setError] = useState('');
   const [pos, setPos] = useState<{ left: number; width: number; top?: number; bottom?: number } | null>(null);
   const root = useRef<HTMLDivElement>(null);
   const addInput = useRef<HTMLInputElement>(null);
-  const searchInput = useRef<HTMLInputElement>(null);
 
   useLayoutEffect(() => {
     const place = () => {
@@ -93,7 +98,9 @@ function EmailsPopup({ anchor, emails, onChange, onClose }: {
     return () => { document.removeEventListener('mousedown', down); window.removeEventListener('keydown', key, true); };
   }, [anchor, onClose]);
 
-  useEffect(() => { (mode === 'add' ? addInput : searchInput).current?.focus(); }, [mode]);
+  // The field only exists once the popup has been placed, so focus waits for that.
+  const placed = !!pos;
+  useEffect(() => { if (placed) addInput.current?.focus(); }, [placed]);
 
   const full = emails.length >= AUDIENCE_LIMIT;
   const typed = draft.trim();
@@ -116,14 +123,30 @@ function EmailsPopup({ anchor, emails, onChange, onClose }: {
     addInput.current?.focus();
   };
 
-  const q = query.trim().toLowerCase();
-  const shown = mode === 'search' && q ? emails.filter((e) => e.toLowerCase().includes(q)) : emails;
+  /** Several addresses at once (a paste) are never a search. */
+  const oneToken = typed && !/[\s,;]/.test(typed) ? typed.toLowerCase() : '';
+  const shown = oneToken
+    ? emails
+      .map((e) => ({ e, at: e.toLowerCase().indexOf(oneToken) }))
+      .filter((x) => x.at >= 0)
+      .sort((a, b) => a.at - b.at || a.e.length - b.e.length || a.e.localeCompare(b.e))
+      .map((x) => x.e)
+    : emails;
+  /** The matched characters of a row, marked in yellow. */
+  const marked = (e: string) => {
+    const at = oneToken ? e.toLowerCase().indexOf(oneToken) : -1;
+    if (at < 0) return e;
+    return <>{e.slice(0, at)}<mark className="rounded-sm bg-[#FDE68A] text-[#364658]">{e.slice(at, at + oneToken.length)}</mark>{e.slice(at + oneToken.length)}</>;
+  };
+  const exists = !!oneToken && emails.some((e) => e.toLowerCase() === oneToken);
+  const parts = typed.split(/[\s,;]+/).filter(Boolean);
+  const complete = parts.length > 0 && parts.every((p) => EMAIL_RE.test(p));
+  /* The + takes over from the magnifier when the text has stopped matching, or when it is a whole
+     new address — "a@x.com" must stay addable although "anna@x.com" contains it. */
+  const adding = !!typed && !exists && (shown.length === 0 || complete || !oneToken);
 
-  /* Collapsing is animated (the email field folds away as the search opens); coming back is not —
-     you pressed + to type an address, so the field is simply there. */
-  const ease = mode === 'search' ? 'transition-[flex-grow,flex-basis] duration-300 ease-out' : '';
-  const wide = 'min-w-0 flex-[1_1_0%]';
-  const narrow = 'flex-[0_0_32px]';
+  const keycap = <span className="rounded border border-[#DFE5ED] bg-[#F8FAFC] px-1 text-[10px] font-medium text-[#64748B]">Enter</span>;
+  const hintCls = 'mt-1.5 text-[11px] leading-4 text-[#7B8FA5]';
 
   if (!pos) return null;
   return createPortal(
@@ -133,84 +156,61 @@ function EmailsPopup({ anchor, emails, onChange, onClose }: {
       style={{ left: pos.left, top: pos.top, bottom: pos.bottom, width: pos.width }}
       className="fixed z-[10050] flex flex-col rounded-lg border border-[#DFE5ED] bg-white shadow-lg"
     >
-      <div className={emails.length ? 'p-3 pb-2' : 'p-3'}>
-        <div className="flex items-center gap-2">
-          {/* Add — the email field, or (while searching) the + that brings it back */}
-          <div className={`${mode === 'add' ? wide : narrow} ${ease}`}>
-            {mode === 'add' ? (
-              <input
-                ref={addInput}
-                value={draft}
-                disabled={full}
-                onChange={(e) => { setDraft(e.target.value); setError(''); }}
-                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); add(); } }}
-                placeholder={full ? `Audience is full (${AUDIENCE_LIMIT} emails)` : 'Add email'}
-                className={`${inputCls} ${error ? '!border-[#F25C4E] focus:!ring-[#F25C4E]' : ''}`}
-              />
-            ) : (
-              <button
-                type="button"
-                /* A full audience has nowhere to put another address, so the way back to the
-                   email field is off until one is removed. */
-                disabled={full}
-                title={full ? `Audience is full (${AUDIENCE_LIMIT} emails) — remove one to add another` : 'Add email'}
-                onClick={() => { setMode('add'); setQuery(''); }}
-                className="flex size-8 items-center justify-center rounded-md bg-[#3D8BD0] text-white transition-colors hover:bg-[#3478B5] disabled:cursor-not-allowed disabled:bg-[#CBD5E1] disabled:hover:bg-[#CBD5E1]"
-              ><Plus size={16} /></button>
-            )}
-          </div>
-
-          {/* Search — an icon beside the email field, or the whole row once opened */}
-          <div className={`${mode === 'search' ? wide : narrow} ${ease}`}>
-            {mode === 'search' ? (
-              <div className="relative">
-                <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#9CA3AF]" />
-                <input
-                  ref={searchInput}
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search added emails"
-                  className={`${inputCls} !pl-8 !pr-7`}
-                />
-                {query && (
-                  <button type="button" onClick={() => { setQuery(''); searchInput.current?.focus(); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-[#364658]"><X size={14} /></button>
-                )}
-              </div>
-            ) : (
-              <button
-                type="button"
-                title="Search added emails"
-                disabled={emails.length === 0}
-                onClick={() => { setMode('search'); setError(''); }}
-                className="flex size-8 items-center justify-center rounded-md border border-[#DFE5ED] text-[#64748B] transition-colors hover:bg-[#F3F4F6] hover:text-[#364658] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
-              ><Search size={15} /></button>
-            )}
-          </div>
+      <div className={emails.length && shown.length ? 'p-3 pb-2' : 'p-3'}>
+        <div className="relative">
+          <input
+            ref={addInput}
+            value={draft}
+            onChange={(e) => { setDraft(e.target.value); setError(''); }}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); if (adding && !full) add(); } }}
+            placeholder={emails.length ? 'Search or add email' : 'Add email'}
+            className={`${inputCls} !pr-9 ${error ? '!border-[#F25C4E] focus:!ring-[#F25C4E]' : ''}`}
+          />
+          {adding ? (
+            <button
+              type="button"
+              data-emails-add
+              disabled={full}
+              title={full ? `Audience is full (${AUDIENCE_LIMIT} emails) — remove one to add another` : 'Add email'}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={add}
+              className="absolute right-1 top-1/2 flex size-6 -translate-y-1/2 items-center justify-center rounded bg-[#3D8BD0] text-white shadow-sm transition-colors hover:bg-[#3478B5] disabled:cursor-not-allowed disabled:bg-[#CBD5E1] disabled:shadow-none"
+            ><Plus size={15} strokeWidth={2.5} /></button>
+          ) : (
+            <Search data-emails-search size={14} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9CA3AF]" />
+          )}
         </div>
 
-        {/* No Add button: Enter adds. One quiet line says so, and gives way to the error when there is one. */}
-        {mode === 'add' && (error
-          ? <ErrorText>{error}</ErrorText>
-          : !full && <p className="mt-1.5 text-[11px] leading-4 text-[#7B8FA5]">Press <span className="rounded border border-[#DFE5ED] bg-[#F8FAFC] px-1 text-[10px] font-medium text-[#64748B]">Enter</span> to add · separate several with commas</p>)}
+        {/* One quiet line under the field; an error takes its place. */}
+        {error ? <ErrorText>{error}</ErrorText> : (
+          <p className={hintCls}>
+            {exists ? 'Already added — shown below.'
+              : adding && full ? `Audience is full (${AUDIENCE_LIMIT} emails) — remove one to add another.`
+              : adding ? <>Press {keycap} or + to add{parts.length > 1 ? ` ${parts.length} emails` : ''}</>
+              : typed ? <>{shown.length} added {shown.length === 1 ? 'email matches' : 'emails match'} · keep typing to add a new one</>
+              : emails.length ? <>Type to search · a new email can be added with {keycap}</>
+              : <>Type an email and press {keycap} · separate several with commas</>}
+          </p>
+        )}
       </div>
 
       {/* Nothing added yet = just the field. A count of zero and an empty list are white space. */}
-      {emails.length > 0 && <>
+      {emails.length > 0 && shown.length > 0 && <>
       <div className="flex items-center justify-between px-3 pb-1 pt-2 text-[11px] text-[#7B8FA5]">
         <span className="text-[14px] font-bold text-[#364658]">Emails</span>
-        {emails.length > 0 && !(mode === 'search' && q) && (
+        {emails.length > 0 && !oneToken && (
           <button type="button" onClick={() => onChange([])} className="text-[11px] font-medium text-[#64748B] hover:text-[#DC2626]">Clear all</button>
         )}
       </div>
 
-      <div className="max-h-[176px] overflow-y-auto">
+      <div className="max-h-[176px] overflow-y-auto pb-1.5">
         {shown.length === 0 ? (
           <div className="px-3 py-6 text-center text-[12px] text-[#9CA3AF]">
-            {emails.length === 0 ? 'No emails yet — type one above and press Add.' : `No added email matches “${query}”.`}
+            {complete ? 'Not added yet — press Enter or + to add it.' : `No added email matches “${typed}”.`}
           </div>
         ) : shown.map((e) => (
           <div key={e} className="group flex h-8 items-center gap-2 px-3 transition-colors hover:bg-[#F9FAFB]">
-            <span className="min-w-0 flex-1 truncate text-[12px] text-[#364658]" title={e}>{e}</span>
+            <span className="min-w-0 flex-1 truncate text-[12px] text-[#364658]" title={e}>{marked(e)}</span>
             <button
               type="button"
               title="Remove"
@@ -219,10 +219,6 @@ function EmailsPopup({ anchor, emails, onChange, onClose }: {
             ><X size={13} /></button>
           </div>
         ))}
-      </div>
-      {/* The count sits OUTSIDE the scroll box, so it stays in view however long the list is. */}
-      <div className="px-3 pb-2.5 pt-2 text-[11px] text-[#7B8FA5]">
-        {mode === 'search' && q ? `${shown.length} of ${emails.length} emails match` : `${emails.length} of ${AUDIENCE_LIMIT} emails added`}
       </div>
       </>}
     </div>,
@@ -234,19 +230,21 @@ function EmailsPopup({ anchor, emails, onChange, onClose }: {
 function EmailsField({ emails, onChange, invalid }: { emails: string[]; onChange: (next: string[]) => void; invalid?: boolean }) {
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
-  const SHOW = 3;
+  const SHOW = 1;
+  const HOVER_MAX = 12;
   const rest = emails.length - SHOW;
   return (
     <>
       <div
         ref={box}
+        data-emails-field
         role="button"
         tabIndex={0}
         onClick={() => setOpen(true)}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(true); } }}
         style={{ cursor: 'text' }}
-        className={`flex h-8 w-full items-center gap-1.5 overflow-hidden rounded-md border bg-white px-1.5 text-[12px] outline-none transition-colors ${
-          open ? 'border-[#3D8BD0] ring-1 ring-[#3D8BD0]' : invalid ? 'border-[#F25C4E]' : 'border-[#DFE5ED] hover:border-[#CBD5E1] focus:border-[#3D8BD0]'
+        className={`flex h-8 w-full items-center gap-1.5 overflow-hidden rounded border bg-white px-1.5 text-[12px] outline-none transition-colors ${
+          invalid && !open ? 'border-[#F25C4E]' : open ? 'border-[#DFE5ED]' : 'border-[#DFE5ED] hover:border-[#CBD5E1] focus-visible:border-[#3D8BD0]'
         }`}
       >
         {emails.length === 0 ? (
@@ -254,7 +252,7 @@ function EmailsField({ emails, onChange, invalid }: { emails: string[]; onChange
         ) : (
           <>
             {emails.slice(0, SHOW).map((e) => (
-              <span key={e} className="inline-flex min-w-0 max-w-[190px] flex-shrink items-center gap-1 rounded bg-[#F1F5F9] py-0.5 pl-2 pr-1 text-[12px] text-[#364658]">
+              <span key={e} className="inline-flex min-w-0 max-w-[260px] flex-shrink items-center gap-1 rounded bg-[#F1F5F9] py-0.5 pl-2 pr-1 text-[12px] text-[#364658]">
                 <span className="truncate" title={e}>{e}</span>
                 <button
                   type="button"
@@ -264,7 +262,19 @@ function EmailsField({ emails, onChange, invalid }: { emails: string[]; onChange
                 ><X size={11} /></button>
               </span>
             ))}
-            {rest > 0 && <span className="flex-shrink-0 rounded bg-[#EBF5FF] px-1.5 py-0.5 text-[12px] font-medium text-[#3D8BD0]">+{rest}</span>}
+            {rest > 0 && (
+              <Tooltip delayDuration={150}>
+                <TooltipTrigger asChild>
+                  <span data-emails-more className="flex-shrink-0 rounded bg-[#EBF5FF] px-1.5 py-0.5 text-[12px] font-medium text-[#3D8BD0]">+{rest}</span>
+                </TooltipTrigger>
+                <TooltipContent side="top" align="start" className="max-w-[320px] text-wrap px-3 py-2 text-left">
+                  <div className="space-y-1 text-[12px] leading-4">
+                    {emails.slice(SHOW, SHOW + HOVER_MAX).map((e) => <div key={e} className="truncate">{e}</div>)}
+                    {rest > HOVER_MAX && <div className="pt-0.5 opacity-70">+{rest - HOVER_MAX} more</div>}
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            )}
           </>
         )}
       </div>
@@ -380,19 +390,19 @@ export function CreateUserSurveyPanel({ onClose, onCreate }: { onClose: () => vo
             </div>
             <div>
               <FieldLabel>Service Catalog</FieldLabel>
-              <RuleSelect value={catalog} options={CATALOGS} onChange={setCatalog} />
+              <RuleSelect className={SELECT_4PX} value={catalog} options={CATALOGS} onChange={setCatalog} />
             </div>
             <div>
               <FieldLabel>Owner</FieldLabel>
-              <RuleSelect value={owner} options={OWNERS} onChange={setOwner} placeholder="Select Technician" />
+              <RuleSelect className={SELECT_4PX} value={owner} options={OWNERS} onChange={setOwner} placeholder="Select Technician" />
             </div>
             <div>
               <FieldLabel>Department</FieldLabel>
-              <RuleSelect value={department} options={DEPARTMENTS} onChange={setDepartment} />
+              <RuleSelect className={SELECT_4PX} value={department} options={DEPARTMENTS} onChange={setDepartment} />
             </div>
             <div>
               <FieldLabel>Location</FieldLabel>
-              <RuleSelect value={location} options={LOCATIONS} onChange={setLocation} />
+              <RuleSelect className={SELECT_4PX} value={location} options={LOCATIONS} onChange={setLocation} />
             </div>
           </div>
 
@@ -424,7 +434,7 @@ export function CreateUserSurveyPanel({ onClose, onCreate }: { onClose: () => vo
               <div className="flex items-end gap-4">
                 <div className="min-w-0 flex-1">
                   <FieldLabel>Requester Group</FieldLabel>
-                  <RuleSelect value={groups} options={GROUP_OPTIONS} onChange={setGroups} multi />
+                  <RuleSelect className={SELECT_4PX} value={groups} options={GROUP_OPTIONS} onChange={setGroups} multi />
                 </div>
                 <label className="flex h-8 flex-shrink-0 cursor-pointer items-center gap-2 text-[12px] text-[#364658]">
                   <input type="checkbox" checked={excludeTech} onChange={(e) => setExcludeTech(e.target.checked)} className="size-3.5 accent-[#3D8BD0]" />
