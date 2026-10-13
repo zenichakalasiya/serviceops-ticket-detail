@@ -291,17 +291,8 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
   const [introSeen, setIntroSeen] = useState(() => readSeen(version));
   useEffect(() => { setIntro(null); setIntroSeen(readSeen(version)); }, [version]); // eslint-disable-line react-hooks/exhaustive-deps
   const closeIntro = useCallback(() => setIntro(null), []);
-  /* V3: a card's first-time popup WAITS while a builder dropdown is open (Zeni, 12 Oct 2026). The blur
-     used to arrive on the first clashing field, with the Fields dropdown still open on top of it — two
-     things asking for the eye at once. Dropdowns are portalled to the body and marked data-rule-menu. */
-  const [menuOpen, setMenuOpen] = useState(false);
-  useEffect(() => {
-    const read = () => setMenuOpen(!!document.querySelector('[data-rule-menu]'));
-    const mo = new MutationObserver(read);
-    mo.observe(document.body, { childList: true });
-    read();
-    return () => mo.disconnect();
-  }, []);
+  /* V3: the popup opens the moment its card appears, even with a builder dropdown open (Zeni, 13 Oct
+     2026). With no veil it covers nothing in the builder, so there is no reason to hold it back. */
   useEffect(() => { if (relOpen) setIntro(null); }, [relOpen]);
   /** R-family: open the conflicts sidebar straight on one field (from an action row's warning). */
   const [relField, setRelField] = useState<string | null>(null);
@@ -404,13 +395,13 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
   const conflicts = useMemo(() => { const real = findConflicts(shape, rules, fields, selfIndex); return real.length ? real : demoConflicts(shape, rules, fields); }, [draft, rules, fields]); // eslint-disable-line react-hooks/exhaustive-deps
   const similar = useMemo(() => { const real = findSimilar(shape, rules, fields); return real.length ? real : demoSimilar(shape, rules, fields); }, [draft, rules, fields]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
-    if (!ready || relOpen || (version === 'V3' && menuOpen)) return;
+    if (!ready || relOpen) return;
     const fresh = conflicts.length && !introSeen.conflicts ? 'conflicts' : similar.length && !introSeen.similar ? 'similar' : null;
     if (!fresh || !(intro === null || (fresh === 'conflicts' && intro === 'similar'))) return;
     setIntro(fresh);
     setIntroSeen((s) => ({ ...s, [fresh]: true }));
     if (version !== 'V3') { try { localStorage.setItem(seenKey(version, fresh), '1'); } catch { /* private mode */ } }
-  }, [ready, relOpen, conflicts.length, similar.length, intro, introSeen, version, menuOpen]);
+  }, [ready, relOpen, conflicts.length, similar.length, intro, introSeen, version]);
   const timeline = useMemo(() => runOrder(shape, rules, fields, conflicts, selfIndex), [draft, rules, fields, conflicts]); // eslint-disable-line react-hooks/exhaustive-deps
   const conditionLines = draft.groups.flatMap((g) => g.conditions).filter((x) => x.fieldId && x.op).map((x) => conditionText(x, fields));
 

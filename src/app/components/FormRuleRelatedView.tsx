@@ -95,9 +95,8 @@ export function RelatedSummaryCards({ ready, conflicts, similar, onOpenConflicts
   const kinds = KINDS.map((k) => { const n = conflicts.filter((x) => x.kind === k).length; return n ? n + ' ' + k : null; }).filter(Boolean).join(' · ');
   return (
     <div className={stack ? 'flex flex-col gap-4' : 'flex flex-wrap gap-4'}>
-      {/* V3: while a card's popup is open the rest of the page dims and blurs, so the card and its popup are
-          the only sharp things on screen (Zeni, 12 Oct 2026). A click on it closes the popup. */}
-      {attention && intro && onCloseIntro && <div className="rc-veil fixed inset-0 z-40 bg-[#0F172A]/30 backdrop-blur-[3px]" onClick={onCloseIntro} aria-hidden="true" />}
+      {/* V3: NO veil behind the popup (Zeni, 13 Oct 2026) — a dimmed, blurred page cut the user off from the
+          rule they were building. The card's steady ring and the popup carry the attention on their own. */}
       {/* Similar rules first (it appears first, on the first condition); Conflicts below it. */}
       {!(onlyFound && similar.length === 0) && (
         <div className={wrap + (intro === 'similar' ? ' z-50' : '')}>
@@ -110,7 +109,7 @@ export function RelatedSummaryCards({ ready, conflicts, similar, onOpenConflicts
               ? 'Already use this trigger and conditions. Consider updating one instead of creating a new rule.'
               : 'No other rule uses this trigger and these conditions.', similar.length ? '#B45309' : '#64748B')}
           </button>
-          {intro === 'similar' && similar.length > 0 && onCloseIntro && <RuleCheckIntro key="s" kind="similar" side={introSide} align={introAlign} edge="left" delay={attention ? 420 : 0} onClose={onCloseIntro} />}
+          {intro === 'similar' && similar.length > 0 && onCloseIntro && <RuleCheckIntro key="s" kind="similar" side={introSide} align={introAlign} edge="left"onClose={onCloseIntro} />}
         </div>
       )}
       {!(onlyFound && conflicts.length === 0) && (
@@ -124,7 +123,7 @@ export function RelatedSummaryCards({ ready, conflicts, similar, onOpenConflicts
               ? <>{kinds} with {nRules} rule{nRules === 1 ? '' : 's'}. Resolve them so the form ends up in one clear state.</>
               : 'No other rule leaves these fields in a different state.', conflicts.length ? '#DC2626' : '#64748B')}
           </button>
-          {intro === 'conflicts' && conflicts.length > 0 && onCloseIntro && <RuleCheckIntro key="c" kind="conflicts" side={introSide} align={introAlign} edge={!onlyFound || similar.length > 0 ? 'right' : 'left'} delay={attention ? 420 : 0} onClose={onCloseIntro} />}
+          {intro === 'conflicts' && conflicts.length > 0 && onCloseIntro && <RuleCheckIntro key="c" kind="conflicts" side={introSide} align={introAlign} edge={!onlyFound || similar.length > 0 ? 'right' : 'left'}onClose={onCloseIntro} />}
         </div>
       )}
     </div>
@@ -182,34 +181,36 @@ export function RuleCheckIntro({ kind, onClose, side = 'right', align = 'bottom'
   const [shown, setShown] = useState(false);
   useEffect(() => { const t = window.setTimeout(() => setShown(true), Math.max(delay, 16)); return () => window.clearTimeout(t); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const m = INTRO[kind];
+  /* DARK popup (Zeni, 13 Oct 2026): the product's tooltip colour, so it stands out from the white panel
+     with no veil behind it. The picture keeps its light ground as a rounded box INSIDE the dark card. */
   return (
     <div role="dialog" aria-label={m.title}
-      className={'z-50 w-[300px] rounded-xl border border-[#E5EAF0] bg-white shadow-[0_12px_32px_rgba(15,23,42,0.14)] transition-[opacity,transform] duration-300 ease-out ' + (shown ? '' : 'pointer-events-none ')
+      className={'z-50 w-[320px] rounded-xl bg-[#364658] shadow-[0_16px_40px_rgba(15,23,42,0.28)] transition-[opacity,transform] duration-300 ease-out ' + (shown ? '' : 'pointer-events-none ')
         + (inset ? (shown ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0')
           : side === 'below' ? 'absolute top-[calc(100%+12px)] ' + (edge === 'right' ? 'right-0 ' : 'left-0 ') + (shown ? 'translate-y-0 opacity-100' : '-translate-y-2 opacity-0')
           : 'absolute ' + (align === 'top' ? 'top-0 ' : 'bottom-0 ')
             + (side === 'left' ? 'right-[calc(100%+12px)] ' + (shown ? 'translate-x-0 opacity-100' : 'translate-x-2 opacity-0')
               : 'left-[calc(100%+12px)] ' + (shown ? 'translate-x-0 opacity-100' : '-translate-x-2 opacity-0')))}>
       {/* caret pointing back at its card */}
-      {!inset && side === 'below' && <span className={'absolute -top-[6px] size-3 rotate-45 border-l border-t border-[#E5EAF0] bg-[#F4F6FA] ' + (edge === 'right' ? 'right-8' : 'left-8')} />}
-      {!inset && side !== 'below' && <span className={'absolute size-3 rotate-45 bg-white ' + (side === 'left' ? '-right-[6px] border-r border-t border-[#E5EAF0] ' : '-left-[6px] border-b border-l border-[#E5EAF0] ') + (align === 'top' ? 'top-[52px]' : 'bottom-[52px]')} />}
-      <button type="button" onClick={onClose} aria-label="Close" className="absolute right-2 top-2 z-10 flex size-7 items-center justify-center rounded text-[#64748B] transition-colors hover:bg-white"><X size={15} /></button>
-      <div className="overflow-hidden rounded-t-xl bg-[#F4F6FA]">{kind === 'conflicts' ? <ConflictArt /> : <RuleCheckArt conflicts={false} similar />}</div>
+      {!inset && side === 'below' && <span className={'absolute -top-[6px] size-3 rotate-45 bg-[#364658] ' + (edge === 'right' ? 'right-8' : 'left-8')} />}
+      {!inset && side !== 'below' && <span className={'absolute size-3 rotate-45 bg-[#364658] ' + (side === 'left' ? '-right-[6px] ' : '-left-[6px] ') + (align === 'top' ? 'top-[52px]' : 'bottom-[52px]')} />}
+      <button type="button" onClick={onClose} aria-label="Close" className="absolute right-4 top-4 z-10 flex size-7 items-center justify-center rounded text-[#64748B] transition-colors hover:bg-white"><X size={15} /></button>
+      <div className="p-2.5 pb-0"><div className="overflow-hidden rounded-lg bg-[#F4F6FA]">{kind === 'conflicts' ? <ConflictArt /> : <RuleCheckArt conflicts={false} similar />}</div></div>
       <div className="flex flex-col gap-3 p-4">
         <div>
-          <div className="text-[14px] font-semibold text-[#1D2A3E]">{m.title}</div>
+          <div className="text-[15px] font-semibold text-white">{m.title}</div>
           {/* Two plain points — what it is, then what to do — in the same secondary text; no tinted box. */}
           <ul className="mt-1.5 flex flex-col gap-1.5">
             {[m.text, m.todo].map((t) => (
-              <li key={t} className="flex gap-2 text-[12px] leading-[1.5] text-[#64748B]">
-                <span className="mt-[7px] size-1 flex-shrink-0 rounded-full bg-[#98A2B3]" />
+              <li key={t} className="flex gap-2 text-[12.5px] leading-[1.5] text-white/80">
+                <span className="mt-[7px] size-1 flex-shrink-0 rounded-full bg-white/50" />
                 <span>{t}</span>
               </li>
             ))}
           </ul>
         </div>
         <div className="flex justify-end">
-          <button type="button" onClick={onClose} className="inline-flex h-8 items-center rounded bg-[#3D8BD0] px-3 text-[12px] font-medium text-white transition-colors hover:bg-[#3478B5]">Got it</button>
+          <button type="button" onClick={onClose} className="inline-flex h-8 items-center rounded bg-white px-3 text-[12px] font-semibold text-[#1D2A3E] transition-colors hover:bg-[#E8EDF3]">Got it</button>
         </div>
       </div>
     </div>

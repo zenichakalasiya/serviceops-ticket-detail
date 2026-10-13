@@ -45,7 +45,7 @@ Nothing mid-flight.
 
 ---
 
-# Handoff — 2026-10-12 (Form Rules session, evening)
+# Handoff — 2026-10-13 (Form Rules session)
 
 ## Read first
 CLAUDE.md → **Structure**, the three bullets starting **Form Rule editor — V3 is FINAL**,
@@ -69,13 +69,19 @@ The Form Rule editor's right panel (Admin › Request Management › Request For
   - `FINAL_HELP_LOOK = 'soft'` in `FormRuleEditor.tsx` hides the layout tabs. Grouped, Lines and
     Cards stay built; `null` brings the tabs back beside Cancel / Save Rule.
   - Steps, Nested and Tabbed layouts were built and then removed on request.
-- **Summary cards — attention flow (V3):**
-  - A card slides in when it arrives, gets a soft pulsing halo in its own colour, and its info popup
-    drops in below it.
-  - The rest of the page dims and blurs while the popup is open; Got it, ✕ or a click on the blur
-    closes it.
-  - Shows once per card **per editor visit** (not once ever). The ⓘ beside the card title replays it.
-- Each change was checked in the browser with Playwright; no page errors. Published.
+- **Summary cards — attention flow (V3), reworked 13 Oct:**
+  - No blur and no dimming: the page behind stays exactly as it is (Zeni: the blur disconnected users).
+  - The popup opens the moment its card appears, even while a builder dropdown is open.
+  - The card wears a steady 3px ring in its own colour while the popup is open (no pulsing).
+  - Closes only from Got it, X or the info icon beside the card title; opening a sidebar also closes it.
+  - Once per card **per editor visit**, as before.
+- **Popup look (13 Oct):** dark (`#364658`), 320px wide, picture as a light rounded box inside it,
+  white Got it button. It is one shared component, so hidden V1 / V2 / V4 get it too.
+- **Help guide (13 Oct):** section headings are 15px with a dark icon tile, a hairline above the
+  second section, and the heading sticks to the top while its section scrolls. Topic icons are bare
+  (no white tile) and sit closer to their titles.
+- ⚠️ The 13 Oct changes were typechecked only before publishing: the dev server was stopped (low
+  memory), so they were not seen in a local browser.
 
 ## In progress
 Nothing mid-flight.
@@ -84,9 +90,7 @@ Nothing mid-flight.
 Open questions for Zeni:
 - **Picture captions** are my wording, not her copy: "Conditions met: HR fields shown", "No longer
   met: hidden again", "Same trigger and conditions → add your action to the existing rule".
-- **Popup waits for the dropdown (done, late evening):** the halo, blur and popup now hold until
-  the builder dropdown closes; the card itself still slides in at once. Zeni had asked whether the
-  dropdown should close by itself instead; that alternative is still on offer if she prefers it.
+- **Got it button** is white on the dark popup (my choice); Zeni may prefer the product blue.
 - **Once per visit vs once ever** for real users; it is per visit so it can be demoed.
 - The hidden V1 / V4 guides (`FormRuleHelpMinimal`, `FormRuleHelpV4`) and the global Help guide
   still hold the 9 Oct copy.
@@ -104,9 +108,8 @@ Open questions for Zeni:
 ## Gotchas & notes
 - **Stacking:** `.rc-enter` must stay `backwards` (not `both`) and the card wrapper takes `z-50`
   while its popup is open, or the guide paints over the popup.
-- **Dropdown watch:** the editor looks for `[data-rule-menu]` on the body (`menuOpen`). `RuleSelect`'s
-  menu and both `FieldPicker` shapes carry it; a new portalled builder menu must carry it too.
-  Probe: `df1.mjs`.
+- **Dropdown watch is gone:** the editor no longer observes `[data-rule-menu]`; the attribute is
+  still on `RuleSelect` and `FieldPicker` menus, unused.
 - **Dev server:** port 5200 was stopped by the system for low memory; restart with
   `npm run dev -- --port 5200` when needed.
 - **Seen flags:** V3 reads and writes no `formRuleCheckIntroSeen` key; other layouts keep once-ever.

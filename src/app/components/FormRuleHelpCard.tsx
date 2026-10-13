@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AlertTriangle, ArrowRight, ArrowUpRight, ChevronDown, CirclePlay, Copy, EyeOff, History, Lightbulb, Split, Undo2, Workflow } from 'lucide-react';
+import { AlertTriangle, ArrowRight, ArrowUpRight, BookOpen, ChevronDown, CirclePlay, Copy, EyeOff, History, Lightbulb, ShieldAlert, Split, Undo2, Workflow } from 'lucide-react';
 import { ConflictArt } from './FormRuleRelatedView';
 
 /**
@@ -38,12 +38,12 @@ type Topic = {
   points?: [string, string][];
   closing?: string;
 };
-type TopicGroup = { title: string; intro: string; topics: Topic[] };
+type TopicGroup = { title: string; icon: React.ReactNode; intro: string; topics: Topic[] };
 
 /* Final copy (Zeni, 12 Oct 2026 — do not rewrite). Only its presentation changes. */
 const GROUPS: TopicGroup[] = [
   {
-    title: 'How Form Rules Work',
+    title: 'How Form Rules Work', icon: <BookOpen size={13} />,
     intro: 'Form Rules let you control how a form behaves based on specified conditions. When the conditions are met, the configured actions determine what happens on the form.',
     topics: [
       { id: 'when', icon: <History size={13} />, title: 'When to Run & Execution',
@@ -59,7 +59,7 @@ const GROUPS: TopicGroup[] = [
     ],
   },
   {
-    title: 'Rule Conflicts & Similar Rules',
+    title: 'Rule Conflicts & Similar Rules', icon: <ShieldAlert size={13} />,
     intro: 'Existing rules may be flagged when their configurations conflict with or closely match the rule you are creating. Review the detected rules before saving.',
     topics: [
       { id: 'conflict', icon: <AlertTriangle size={13} />, title: 'Conflict',
@@ -155,20 +155,22 @@ function TopicRow({ topic, open, onToggle, look }: { topic: Topic; open: boolean
   const pad = flat ? 'px-0' : 'px-3';
   const shell = look === 'cards' ? 'rounded-lg border bg-white transition-colors ' + (open ? 'border-[#CBD5E1]' : 'border-[#E5E9F0] hover:border-[#CBD5E1]')
     : look === 'soft' ? 'rounded-lg transition-colors ' + (open ? 'bg-[#F4F6FA]' : 'bg-[#F7F9FC] hover:bg-[#F1F4F9]') : '';
-  const badge = 'rounded text-[#64748B] ' + (look === 'lines' ? '' : look === 'soft' ? 'bg-white' : 'bg-[#F1F5F9]');
+  /* Soft: a BARE icon, no white tile behind it, sitting close to its title (Zeni, 13 Oct 2026). */
+  const soft = look === 'soft';
+  const badge = 'rounded text-[#64748B] ' + (soft ? 'size-4' : look === 'lines' ? 'size-6' : 'size-6 bg-[#F1F5F9]');
   return (
     <div className={shell}>
       <button type="button" onClick={onToggle} aria-expanded={open}
-        className={'group flex w-full items-center gap-2.5 py-2.5 text-left ' + pad}>
+        className={'group flex w-full items-center py-2.5 text-left ' + (soft ? 'gap-2 ' : 'gap-2.5 ') + pad}>
         {/* grey for every topic (Zeni): the guide stays quiet beside the coloured builder */}
-        <span className={'flex size-6 flex-shrink-0 items-center justify-center ' + badge}>{topic.icon}</span>
+        <span className={'flex flex-shrink-0 items-center justify-center ' + badge}>{topic.icon}</span>
         <span className={'min-w-0 flex-1 text-[13px] text-[#1D2A3E] ' + (open ? 'font-semibold' : 'font-medium')}>{topic.title}</span>
         <ChevronDown size={15} className={'flex-shrink-0 text-[#94A3B8] transition-transform duration-200 group-hover:text-[#475569] ' + (open ? 'rotate-180' : '')} />
       </button>
       <div className="grid transition-[grid-template-rows] duration-200 ease-out" style={{ gridTemplateRows: open ? '1fr' : '0fr' }}>
         <div className="min-h-0 overflow-hidden">
           {/* the text hangs under the title, clear of the icon */}
-          <div className={'pb-3.5 text-[12.5px] leading-[1.6] text-[#475569] ' + (flat ? 'pl-[34px]' : 'pl-[46px] pr-3')}>
+          <div className={'pb-3.5 text-[12.5px] leading-[1.6] text-[#475569] ' + (flat ? 'pl-[34px]' : soft ? 'pl-[36px] pr-3' : 'pl-[46px] pr-3')}>
             <p>{topic.text}</p>
             {topic.points && (
               <ul className="mt-2 flex flex-col gap-1.5">
@@ -204,10 +206,16 @@ export function FormRuleHelpSections({ onWatch, look = 'grouped' }: { onWatch: (
     : look === 'soft' ? 'flex flex-col gap-1.5' : 'flex flex-col gap-2';
   return (
     <>
-    <div className="flex flex-col gap-6">
-      {GROUPS.map((g) => (
-        <section key={g.title}>
-          <h3 className="mb-1 text-[13.5px] font-semibold text-[#1D2A3E]">{g.title}</h3>
+    {/* The two sections must read as two (Zeni, 13 Oct 2026): a 15px heading led by a DARK icon tile (the
+        topics keep grey ones, so this is one level up), a hairline and more room before the second, and
+        the heading PINS to the top of the guide while its section scrolls. */}
+    <div className="flex flex-col gap-5">
+      {GROUPS.map((g, i) => (
+        <section key={g.title} className={i ? 'border-t border-[#E5E9F0] pt-3' : ''}>
+          <div className="sticky top-0 z-10 -mx-4 flex items-center gap-2 bg-white px-4 py-2">
+            <span className="flex size-6 flex-shrink-0 items-center justify-center rounded bg-[#1D2A3E] text-white">{g.icon}</span>
+            <h3 className="min-w-0 flex-1 text-[15px] font-semibold text-[#1D2A3E]">{g.title}</h3>
+          </div>
           <p className="text-[12.5px] leading-[1.55] text-[#64748B]">{g.intro}</p>
           <div className={'mt-3 ' + list}>
             {g.topics.map((t) => (
