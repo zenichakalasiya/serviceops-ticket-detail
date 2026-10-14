@@ -1,4 +1,4 @@
-import { Car, Armchair, Package, Pencil, Shield, User, ChevronDown, ExternalLink } from 'lucide-react';
+import { AirVent, Armchair, FileText, Package, Pencil, Trash2, User, ChevronDown, ExternalLink } from 'lucide-react';
 import type { NonItAsset, NonItStatus } from './NonItAssetsListPage';
 
 interface NonItAssetsTableProps {
@@ -13,17 +13,19 @@ interface NonItAssetsTableProps {
   onAssetClick?: (asset: NonItAsset) => void;
 }
 
+/* Mirrors the data-grid's non-IT type icons (the routed listing). */
 const typeIcon = (t: string) => {
   switch (t) {
-    case 'Vehicles':
-    case 'SUV':
-      return <Car size={14} />;
     case 'Furniture':
       return <Armchair size={14} />;
-    case 'Safety Equipment':
-      return <Shield size={14} />;
-    case 'Stationery':
+    case 'Stationary':
       return <Pencil size={14} />;
+    case 'Document':
+      return <FileText size={14} />;
+    case 'Air conditioner':
+      return <AirVent size={14} />;
+    case 'Trash':
+      return <Trash2 size={14} />;
     default:
       return <Package size={14} />;
   }

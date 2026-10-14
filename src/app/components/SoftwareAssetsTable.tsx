@@ -13,7 +13,19 @@ interface SoftwareAssetsTableProps {
   onAssetClick?: (asset: SoftwareAsset) => void;
 }
 
-const statusColor = (s: SoftwareStatus) => (s === 'In Store' ? '#3D8BD0' : s === 'Retired' ? '#9CA3AF' : '#22C55E');
+/* Mirrors MODULE_STATUS_OPTS.software in the data-grid — the routed listing. */
+const SW_STATUS_COLOR: Record<SoftwareStatus, string> = {
+  'In Stock': '#3D8BD0',
+  'In Use': '#22C55E',
+  Missing: '#EF4444',
+  Retired: '#4B5563',
+  'In Repair': '#F97316',
+  Disposed: '#374151',
+  Expired: '#EAB308',
+  Decommission: '#94A3B8',
+  Allocated: '#A3B2C2',
+};
+const statusColor = (s: SoftwareStatus) => SW_STATUS_COLOR[s] ?? '#94A3B8';
 
 const impactColor = (impact: string) => {
   switch (impact) {

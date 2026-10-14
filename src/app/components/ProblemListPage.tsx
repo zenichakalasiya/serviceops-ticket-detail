@@ -3,6 +3,7 @@ import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { ProblemToolbar } from './ProblemToolbar';
 import { ProblemTable } from './ProblemTable';
+import { TicketGroupSuggestions } from './TicketGroupSuggestions';
 import { Pagination } from './Pagination';
 import { useDrawerStack } from './DrawerStack';
 import { ProblemDrawer } from './ProblemDrawer';
@@ -168,6 +169,7 @@ export function ProblemListPage({ onNavigate }: { onNavigate: (page: string) => 
               onItemsPerPageChange={(v) => { setItemsPerPage(v); setCurrentPage(1); }}
             />
         </main>
+        <TicketGroupSuggestions panelOnly />
       </div>
       <ProblemDrawer
         openProblems={openProblems}

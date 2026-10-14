@@ -98,7 +98,7 @@ function TooltipContent({
         {...filterFigmaProps(props)}
       >
         {children}
-        {!hideArrow && <TooltipPrimitive.Arrow className={cn("z-50 size-2.5 translate-y-[calc(-50%_-_2px)] rotate-45 rounded-[2px]", arrowClassName)} />}
+        {!hideArrow && <TooltipPrimitive.Arrow className={cn("z-[10010] size-2.5 translate-y-[calc(-50%_-_2px)] rotate-45 rounded-[2px]", arrowClassName)} />}
       </TooltipPrimitive.Content>
     </TooltipPrimitive.Portal>
   );

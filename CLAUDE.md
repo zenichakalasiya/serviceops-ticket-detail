@@ -2839,3 +2839,24 @@ Upstream original: https://github.com/ronak-patel-motadata/ServiceOps-Ticket-Det
 
 ## Handoff
 Latest session state is in [HANDOFF.md](HANDOFF.md) — read it first.
+
+## Upstream sync (14 Oct 2026)
+Merged ronak-patel-motadata/ServiceOps-Ticket-Detail- (`upstream` remote) up to `fadeb68`. The two
+histories now share a merge commit, so the next sync is just `git fetch upstream && git merge upstream/main`.
+- **Rule used (Zeni's option A):** upstream's LISTING pages and NEW modules came in; every existing
+  detail page and the shared detail components behind them stayed ours, unchanged.
+- **Listings** now route to upstream's `*ListingPage.tsx` data-grid pages (App.tsx). The old
+  `*ListPage.tsx` files remain because they own the mock data and helpers the new grids import.
+- **New modules:** Projects, My Approvals, Knowledge, Tasks, Reports, My Team, Software Meter, Package /
+  Registry Deployments, Automatic Patch Tests / Deployments, Icon Gallery, Views Lab, each with a route in
+  `routes.ts`.
+- ⚠️ **`src/app/components/upstream/` is a VENDORED copy of 61 upstream shared detail components**
+  (TicketPropertiesPanel, AssetFields, TicketDrawer, EditorToolbar…). Only the NEW upstream pages import
+  it; they need upstream's newer panel modes (knowledgeMode, projectMode, taskMode, packageDeployMode…).
+  To change OUR detail pages, edit `components/X.tsx`, never `components/upstream/X.tsx`.
+- Patch Deployments listing: the grid's **Create** opens our `CreatePatchDeployment` form
+  (`primaryAction.onClick`, a prop added to `AssetRegisterPage` / `TicketGridToolbar`).
+- `?page=<slug>&open=<id>` (the grids' open-in-new-tab links) is read by App when there is no hash.
+- Left out on purpose: upstream's global checkbox restyle in theme.css (it would restyle every detail page).
+- Not carried over: our old Patch Deployments saved views (OS Upgrade / Archived). The new grid has its
+  own views. Archived runs now show in "All Deployments".

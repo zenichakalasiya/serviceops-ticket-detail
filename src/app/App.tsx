@@ -1,21 +1,34 @@
 import { useEffect, useState } from 'react';
 import { TicketListPage } from './components/TicketListPage';
-import { ProblemListPage } from './components/ProblemListPage';
-import { ChangeListPage } from './components/ChangeListPage';
-import { ReleaseListPage } from './components/ReleaseListPage';
-import { HardwareAssetsListPage } from './components/HardwareAssetsListPage';
-import { SoftwareAssetsListPage } from './components/SoftwareAssetsListPage';
-import { NonItAssetsListPage } from './components/NonItAssetsListPage';
-import { ConsumableAssetsListPage } from './components/ConsumableAssetsListPage';
-import { SoftwareLicensesListPage } from './components/SoftwareLicensesListPage';
-import { ContractsListPage } from './components/ContractsListPage';
-import { PurchasesListPage } from './components/PurchasesListPage';
-import { CmdbListPage } from './components/CmdbListPage';
-import { PatchesListPage } from './components/PatchesListPage';
-import { PatchDeploymentsListPage } from './components/PatchDeploymentsListPage';
-import { EndpointsListPage } from './components/EndpointsListPage';
-import { VulnerabilitiesListPage } from './components/VulnerabilitiesListPage';
-import { DetectedCvesListPage } from './components/DetectedCvesListPage';
+import { ProblemListingPage } from './components/ProblemListingPage';
+import { ReleaseListingPage } from './components/ReleaseListingPage';
+import { HardwareAssetsListingPage } from './components/HardwareAssetsListingPage';
+import { SoftwareAssetsListingPage } from './components/SoftwareAssetsListingPage';
+import { NonItAssetsListingPage } from './components/NonItAssetsListingPage';
+import { ConsumableAssetsListingPage } from './components/ConsumableAssetsListingPage';
+import { SoftwareLicensesListingPage } from './components/SoftwareLicensesListingPage';
+import { SoftwareMeterListingPage } from './components/SoftwareMeterListingPage';
+import { ContractsListingPage } from './components/ContractsListingPage';
+import { PurchasesListingPage } from './components/PurchasesListingPage';
+import { ProjectsListingPage } from './components/ProjectsListingPage';
+import { MyApprovalsListPage } from './components/MyApprovalsListPage';
+import { CmdbListingPage } from './components/CmdbListingPage';
+import { PatchesListingPage } from './components/PatchesListingPage';
+import { PatchDeploymentsListingPage } from './components/PatchDeploymentsListingPage';
+import { AutomaticPatchTestsListingPage } from './components/AutomaticPatchTestsListingPage';
+import { AutomaticPatchDeploymentsListingPage } from './components/AutomaticPatchDeploymentsListingPage';
+import { PackageDeploymentsListingPage } from './components/PackageDeploymentsListingPage';
+import { RegistryDeploymentsListingPage } from './components/RegistryDeploymentsListingPage';
+import { KnowledgeListingPage } from './components/KnowledgeListingPage';
+import { TasksListingPage } from './components/TasksListingPage';
+import { ReportsListingPage } from './components/ReportsListingPage';
+import { MyTeamListingPage } from './components/MyTeamListingPage';
+import { IconGalleryPage } from './components/IconGalleryPage';
+import { ViewsLabListPage } from './components/ViewsLabListPage';
+import { ChangeListingPage } from './components/ChangeListingPage';
+import { EndpointsListingPage } from './components/EndpointsListingPage';
+import { VulnerabilitiesListingPage } from './components/VulnerabilitiesListingPage';
+import { DetectedCvesListingPage } from './components/DetectedCvesListingPage';
 import { BomInventoryListPage } from './components/BomInventoryListPage';
 import { AdminPage } from './components/AdminPage';
 import { DrawerStackProvider } from './components/DrawerStack';
@@ -30,7 +43,12 @@ export default function App() {
   /* The URL is the source of truth for which screen is open — see routes.ts for why it lives in
      the hash. State is seeded from it so a shared link lands on the right screen with no flash of
      the default page. */
-  const [route, setRoute] = useState<Route>(() => parseHash(window.location.hash));
+  /* A listing row's "open in a new tab" link (from the upstream grids) carries ?page=<slug>&open=<id>
+     rather than a hash. With no hash, the query names the page; the grid itself reads ?open. */
+  const [route, setRoute] = useState<Route>(() => {
+    const fromQuery = new URLSearchParams(window.location.search).get('page');
+    return parseHash(!window.location.hash && fromQuery ? `#/${fromQuery}` : window.location.hash);
+  });
   const activePage = route.page;
 
   // Back/forward, and any hash we write ourselves, both arrive here — one way in.
@@ -73,22 +91,35 @@ export default function App() {
   return (
     <DrawerStackProvider activePage={activePage}>
       {activePage === 'request' && <TicketListPage onNavigate={navigate} />}
-      {activePage === 'problem' && <ProblemListPage onNavigate={navigate} />}
-      {activePage === 'change' && <ChangeListPage onNavigate={navigate} />}
-      {activePage === 'release' && <ReleaseListPage onNavigate={navigate} />}
-      {activePage === 'hardware-assets' && <HardwareAssetsListPage onNavigate={navigate} />}
-      {activePage === 'software-assets' && <SoftwareAssetsListPage onNavigate={navigate} initialOpenId={pendingSoftwareAssetId} onInitialOpenConsumed={() => setPendingSoftwareAssetId(null)} />}
-      {activePage === 'non-it-assets' && <NonItAssetsListPage onNavigate={navigate} />}
-      {activePage === 'consumable-assets' && <ConsumableAssetsListPage onNavigate={navigate} />}
-      {activePage === 'software-licenses' && <SoftwareLicensesListPage onNavigate={navigate} onOpenSoftwareAsset={openSoftwareAsset} />}
-      {activePage === 'contracts' && <ContractsListPage onNavigate={navigate} />}
-      {activePage === 'purchases' && <PurchasesListPage onNavigate={navigate} />}
-      {activePage === 'cmdb' && <CmdbListPage onNavigate={navigate} />}
-      {activePage === 'patches' && <PatchesListPage onNavigate={navigate} />}
-      {activePage === 'patch-deployments' && <PatchDeploymentsListPage onNavigate={navigate} />}
-      {activePage === 'endpoints' && <EndpointsListPage onNavigate={navigate} />}
-      {activePage === 'vulnerabilities' && <VulnerabilitiesListPage onNavigate={navigate} />}
-      {activePage === 'detected-cves' && <DetectedCvesListPage onNavigate={navigate} />}
+      {activePage === 'views-lab' && <ViewsLabListPage onNavigate={navigate} />}
+      {activePage === 'problem' && <ProblemListingPage onNavigate={navigate} />}
+      {activePage === 'change' && <ChangeListingPage onNavigate={navigate} />}
+      {activePage === 'release' && <ReleaseListingPage onNavigate={navigate} />}
+      {activePage === 'hardware-assets' && <HardwareAssetsListingPage onNavigate={navigate} />}
+      {activePage === 'software-assets' && <SoftwareAssetsListingPage onNavigate={navigate} initialOpenId={pendingSoftwareAssetId} onInitialOpenConsumed={() => setPendingSoftwareAssetId(null)} />}
+      {activePage === 'non-it-assets' && <NonItAssetsListingPage onNavigate={navigate} />}
+      {activePage === 'consumable-assets' && <ConsumableAssetsListingPage onNavigate={navigate} />}
+      {activePage === 'software-licenses' && <SoftwareLicensesListingPage onNavigate={navigate} />}
+      {activePage === 'software-meter' && <SoftwareMeterListingPage onNavigate={navigate} />}
+      {activePage === 'contracts' && <ContractsListingPage onNavigate={navigate} />}
+      {activePage === 'purchases' && <PurchasesListingPage onNavigate={navigate} />}
+      {activePage === 'projects' && <ProjectsListingPage onNavigate={navigate} />}
+      {activePage === 'my-approvals' && <MyApprovalsListPage onNavigate={navigate} />}
+      {activePage === 'cmdb' && <CmdbListingPage onNavigate={navigate} />}
+      {activePage === 'patches' && <PatchesListingPage onNavigate={navigate} />}
+      {activePage === 'patch-deployments' && <PatchDeploymentsListingPage onNavigate={navigate} />}
+      {activePage === 'automatic-patch-tests' && <AutomaticPatchTestsListingPage onNavigate={navigate} />}
+      {activePage === 'automatic-patch-deployments' && <AutomaticPatchDeploymentsListingPage onNavigate={navigate} />}
+      {activePage === 'package-deployments' && <PackageDeploymentsListingPage onNavigate={navigate} />}
+      {activePage === 'registry-deployments' && <RegistryDeploymentsListingPage onNavigate={navigate} />}
+      {activePage === 'knowledge' && <KnowledgeListingPage onNavigate={navigate} />}
+      {activePage === 'tasks' && <TasksListingPage onNavigate={navigate} />}
+      {activePage === 'reports' && <ReportsListingPage onNavigate={navigate} />}
+      {activePage === 'my-team' && <MyTeamListingPage onNavigate={navigate} />}
+      {activePage === 'icons' && <IconGalleryPage onNavigate={navigate} />}
+      {activePage === 'endpoints' && <EndpointsListingPage onNavigate={navigate} />}
+      {activePage === 'vulnerabilities' && <VulnerabilitiesListingPage onNavigate={navigate} />}
+      {activePage === 'detected-cves' && <DetectedCvesListingPage onNavigate={navigate} />}
       {activePage === 'bom' && <BomInventoryListPage onNavigate={navigate} />}
       {activePage === 'admin' && (
         <AdminPage

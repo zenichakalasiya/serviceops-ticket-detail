@@ -20,6 +20,8 @@ export type Page =
   | 'patches' | 'patch-deployments' | 'endpoints'
   | 'vulnerabilities' | 'detected-cves'
   | 'bom'
+  // Brought in from the upstream prototype (Oct 2026 sync).
+  | 'software-meter' | 'projects' | 'my-approvals' | 'automatic-patch-tests' | 'automatic-patch-deployments' | 'package-deployments' | 'registry-deployments' | 'knowledge' | 'tasks' | 'reports' | 'my-team' | 'icons' | 'views-lab'
   | 'admin';
 
 /** The page a bare URL lands on. */
@@ -35,6 +37,7 @@ const PAGES: readonly Page[] = [
   'patches', 'patch-deployments', 'endpoints',
   'vulnerabilities', 'detected-cves',
   'bom',
+  'software-meter', 'projects', 'my-approvals', 'automatic-patch-tests', 'automatic-patch-deployments', 'package-deployments', 'registry-deployments', 'knowledge', 'tasks', 'reports', 'my-team', 'icons', 'views-lab',
   'admin',
 ];
 
@@ -135,6 +138,19 @@ const PAGE_TITLES: Record<Page, string> = {
   vulnerabilities: 'Vulnerabilities',
   'detected-cves': 'Detected CVEs',
   bom: 'BOM Inventory',
+  'software-meter': 'Software Meter',
+  'projects': 'Projects',
+  'my-approvals': 'My Approvals',
+  'automatic-patch-tests': 'Automatic Patch Tests',
+  'automatic-patch-deployments': 'Automatic Patch Deployments',
+  'package-deployments': 'Package Deployments',
+  'registry-deployments': 'Registry Deployments',
+  'knowledge': 'Knowledge',
+  'tasks': 'Tasks',
+  'reports': 'Reports',
+  'my-team': 'My Team',
+  'icons': 'Icon Gallery',
+  'views-lab': 'Views Lab',
   admin: 'Admin',
 };
 

@@ -2,6 +2,7 @@ import { ArrowUpDown } from 'lucide-react';
 import type { Problem } from './ProblemListPage';
 import { ProblemStatusBadge } from './ProblemStatusBadge';
 import { PriorityBar } from './PriorityBar';
+import { AiSparkle } from './AiSparkle';
 
 interface ProblemTableProps {
   problems: Problem[];
@@ -39,6 +40,49 @@ export function ProblemTable({
 
     return `${dayName}, ${day}/${month}/${year} ${hours}:${minutes} PM`;
   };
+
+  /* AI-suggested problem from the request-grouping engine — not a real record yet.
+     Sits at slot 2; Requester/Assignee stay blank until Create Problem is confirmed. */
+  const aiRow = (
+    <tr
+      key="__ai-suggested"
+      className="cursor-pointer transition-shadow hover:shadow-[inset_0_0_0_1px_rgba(115,30,251,0.25)]"
+      style={{ background: 'linear-gradient(90deg, rgba(76, 177, 254, 0.05) 0%, rgba(115, 30, 251, 0.05) 41.49%, rgba(249, 17, 227, 0.05) 100%), #FFF' }}
+      onClick={() => window.dispatchEvent(new CustomEvent('open-suggested-group', { detail: 'grp-2' }))}
+    >
+      <td className="px-4 py-3" />
+      <td className="px-4 py-3">
+        <span
+          className="inline-flex items-center gap-1.5 whitespace-nowrap rounded px-2 py-0.5 text-[12px] font-semibold text-[#731EFB]"
+          style={{ background: 'rgba(115, 30, 251, 0.08)' }}
+        >
+          <AiSparkle size={12} />
+          AI
+        </span>
+      </td>
+      <td className="px-4 py-3 text-[12px] text-[#364658]">
+        <span className="inline-flex max-w-[420px] items-center gap-2">
+          <span className="truncate font-medium">Onboarding requests stalled at AD account creation</span>
+          <span className="flex-shrink-0 rounded-sm bg-[#FEF3C7] px-1.5 py-0.5 text-[11px] font-semibold text-[#B45309]">Medium · 78%</span>
+        </span>
+      </td>
+      <td className="px-4 py-3" />
+      <td className="px-4 py-3 whitespace-nowrap">
+        <span className="text-[12px] text-[#64748B]">5h ago</span>
+      </td>
+      <td className="px-4 py-3" />
+      <td className="px-4 py-3 whitespace-nowrap">
+        <span className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[#731EFB]">
+          <span className="size-2 rounded-full bg-[#731EFB]" />
+          Suggested
+        </span>
+      </td>
+      <td className="px-4 py-3">
+        <PriorityBar priority="Medium" />
+      </td>
+      <td className="px-4 py-3" />
+    </tr>
+  );
 
   const SortButton = ({ column, children }: { column: keyof Problem; children: React.ReactNode }) => (
     <button onClick={() => onSort(column)} className="flex items-center gap-1 hover:text-[#3D8BD0]">
@@ -87,7 +131,8 @@ export function ProblemTable({
           </tr>
         </thead>
         <tbody className="divide-y divide-[#e5e7eb] bg-white">
-          {problems.map((problem) => (
+          {(() => {
+            const renderRow = (problem: Problem) => (
             <tr
               key={problem.id}
               className="group hover:bg-[#f9fafb] transition-colors cursor-pointer"
@@ -141,7 +186,15 @@ export function ProblemTable({
                 <PriorityBar priority={problem.urgency} />
               </td>
             </tr>
-          ))}
+            );
+            return (
+              <>
+                {problems.slice(0, 1).map(renderRow)}
+                {aiRow}
+                {problems.slice(1).map(renderRow)}
+              </>
+            );
+          })()}
         </tbody>
       </table>
     </div>

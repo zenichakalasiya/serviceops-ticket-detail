@@ -1,5 +1,6 @@
 import { Plus, Calendar, Bell, Settings, Keyboard, Info } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { CURRENT_USER, CURRENT_USER_INITIALS } from './technicianRoster';
 import svgPaths from "../../imports/svg-vmnsig04gh";
 import { GlobalSearchButton } from './GlobalSearch';
 import { openGlobalShortcuts } from './shortcutContext';
@@ -178,8 +179,8 @@ export function Header({ selectedCount, onOpenAdmin }: HeaderProps) {
         </button>
         
         <button
-          onClick={onOpenAdmin}
-          title={onOpenAdmin ? 'Admin' : undefined}
+          onClick={onOpenAdmin ?? (() => { window.location.hash = '#/admin'; })}
+          title="Admin"
           className="flex h-[32px] w-[32px] items-center justify-center rounded text-[#6b7280] hover:bg-[#f3f4f6]"
         >
           <Settings size={18} strokeWidth={2} />
@@ -195,8 +196,11 @@ export function Header({ selectedCount, onOpenAdmin }: HeaderProps) {
           <Info size={18} strokeWidth={2} />
         </button>
         
-        <button className="flex h-[32px] w-[32px] items-center justify-center rounded bg-[#3D8BD0] text-[11px] font-semibold text-white hover:bg-[#2d6ca0]">
-          AS
+        <button
+          title={CURRENT_USER}
+          className="flex h-[32px] w-[32px] items-center justify-center rounded bg-[#3D8BD0] text-[11px] font-semibold text-white hover:bg-[#2d6ca0]"
+        >
+          {CURRENT_USER_INITIALS}
         </button>
       </div>
     </header>

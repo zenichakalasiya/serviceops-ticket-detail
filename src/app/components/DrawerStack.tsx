@@ -14,6 +14,10 @@ import { PurchaseDrawer } from './PurchaseDrawer';
 import { CmdbDrawer } from './CmdbDrawer';
 import { PatchDrawer } from './PatchDrawer';
 import { PatchDeploymentDrawer } from './PatchDeploymentDrawer';
+import { PackageDeploymentDrawer } from './PackageDeploymentDrawer';
+import { RegistryDeploymentDrawer } from './RegistryDeploymentDrawer';
+import { KnowledgeDrawer } from './KnowledgeDrawer';
+import { ReportDrawer } from './ReportDrawer';
 import { EndpointDrawer } from './EndpointDrawer';
 import { VulnerabilityDrawer } from './VulnerabilityDrawer';
 import { DetectedCveDrawer } from './DetectedCveDrawer';
@@ -26,11 +30,18 @@ import { mockContracts } from './ContractsListPage';
 import { mockPurchases } from './PurchasesListPage';
 import { mockCis } from './CmdbListPage';
 import { DrawerShortcuts } from './DrawerShortcuts';
+import { ApprovalDrawer } from './ApprovalDrawer';
+import { TaskDrawer } from './TaskDrawer';
+import { ProjectDrawer, projectToProblemShape } from './ProjectDrawer';
+import { mockProjects } from './ProjectsListPage';
 
 export type StackModule =
   | 'request' | 'request-v2' | 'problem' | 'change' | 'release'
   | 'hardware-assets' | 'software-assets' | 'non-it-assets' | 'consumable-assets'
-  | 'software-licenses' | 'contracts' | 'purchases' | 'cmdb' | 'patches' | 'patch-deployments' | 'endpoints' | 'vulnerabilities' | 'detected-cves';
+  | 'software-licenses' | 'contracts' | 'purchases' | 'cmdb' | 'patches' | 'patch-deployments' | 'endpoints' | 'vulnerabilities' | 'detected-cves' | 'package-deployments' | 'registry-deployments' | 'knowledge' | 'tasks' | 'report' | 'projects'
+  /* Not a module of its own — an approval opens the record it points at, through
+     the approvals' own detail page (`ApprovalDrawer`) so it can diverge. */
+  | 'approval';
 
 export interface StackItem { key: string; module: StackModule; id: string; subject: string; data: any }
 export interface Relation { ticketId: string; subject: string; type: string; status: string; priority: string; assignedTo: { name: string } }
@@ -46,6 +57,7 @@ const REL_MAP: Record<string, { module: StackModule; pool: () => any[]; disp: st
   CI: { module: 'cmdb', pool: () => mockCis, disp: 'name' },
   Contract: { module: 'contracts', pool: () => mockContracts, disp: 'name' },
   Purchase: { module: 'purchases', pool: () => mockPurchases, disp: 'name' },
+  Project: { module: 'projects', pool: () => mockProjects, disp: 'name' },
 };
 
 interface DrawerStackApi {
@@ -101,6 +113,23 @@ export function DrawerStackProvider({ children, activePage }: { children: ReactN
     return () => window.removeEventListener('reorder-drawer-tabs', onReorder as EventListener);
   }, []);
 
+  /* A drawer marks its conversation read (TicketDrawer does it a beat after the
+     Conversation tab opens) → clear that open item's unread dot on the tab strip.
+     An event keeps it out of every drawer's prop list. */
+  useEffect(() => {
+    const onRead = (e: Event) => {
+      const id = (e as CustomEvent).detail?.id as string | undefined;
+      if (!id) return;
+      setStack((prev) =>
+        prev.some((s) => s.id === id && s.data?.unread)
+          ? prev.map((s) => (s.id === id ? { ...s, data: { ...s.data, unread: 0 } } : s))
+          : prev,
+      );
+    };
+    window.addEventListener('drawer-item-read', onRead as EventListener);
+    return () => window.removeEventListener('drawer-item-read', onRead as EventListener);
+  }, []);
+
   const open: DrawerStackApi['open'] = (module, id, subject, data) => {
     const key = `${module}:${id}`;
     setStack((prev) => (prev.some((s) => s.key === key) ? prev : [...prev, { key, module, id, subject, data }]));
@@ -132,6 +161,20 @@ export function DrawerStackProvider({ children, activePage }: { children: ReactN
 
   const active = stack.find((s) => s.key === activeKey) || null;
   // Enrich each tab with status/priority/technician (field names vary by module) for the tab hover card.
+  /* Tab hover-card KPIs — module-aware so EVERY open item shows 2-3 useful chips, not just
+     the ticket family. Each chip: optional dot colour, optional grey label, a value, and
+     `user` for the person icon. Unknown shapes fall back to the generic field sniff. */
+  const sevDot = (v?: string) => ({ critical: '#EF4444', important: '#F59E0B', high: '#EF4444', moderate: '#EAB308', medium: '#F59E0B', low: '#22A06B', unspecified: '#6B7280' } as Record<string, string>)[(v ?? '').toLowerCase()] ?? '#6B7280';
+  const stDot = (v?: string) => {
+    const s = (v ?? '').toLowerCase();
+    if (s === 'open' || s === 'pending' || s === 'not started' || s === 'sent for approval' || s === 'generated' || s === 'draft') return '#D97706';
+    if (s === 'in progress' || s === 'ordered' || s === 'partially received' || s === 'on hold') return '#3D8BD0';
+    if (s.includes('resolv') || s.includes('close') || s === 'in use' || s === 'completed' || s === 'operational' || s === 'approved' || s === 'received' || s === 'active' || s === 'published') return '#22A06B';
+    if (s === 'expired' || s === 'missing' || s === 'declined' || s === 'rejected') return '#EF4444';
+    return '#9CA3AF';
+  };
+  /* Our tab strip (DrawerTabStrip) reads status / priority / technician for its hover card — the
+     upstream module-aware KPI chips belong to upstream's strip, which this project does not use. */
   const tabMeta = (data: any) => {
     if (!data) return {};
     const status = typeof data.status === 'string' ? data.status : undefined;
@@ -167,10 +210,13 @@ export function DrawerStackProvider({ children, activePage }: { children: ReactN
       onStackActiveGroupChange: setActiveGroup,
     } as any;
     switch (active.module) {
+      // My Approvals — the approval's own detail page resolves the referenced record.
+      case 'approval': drawer = <ApprovalDrawer approval={active.data} {...shared} />; break;
       case 'request': drawer = <TicketDrawer openTickets={[active.data]} activeTicketId={active.id} {...shared} />; break;
       // V2 design option of the Ticket detail page — INC-33 routes here from the listing page.
       case 'request-v2': drawer = <TicketDrawerV2 openTickets={[active.data]} activeTicketId={active.id} {...shared} />; break;
       case 'problem': drawer = <ProblemDrawer openProblems={[active.data]} activeProblemId={active.id} {...shared} />; break;
+      case 'projects': drawer = <ProjectDrawer openProblems={[projectToProblemShape(active.data)]} activeProblemId={active.id} {...shared} />; break;
       case 'change': drawer = <ChangeDrawer openChanges={[active.data]} activeChangeId={active.id} {...shared} />; break;
       case 'release': drawer = <ReleaseDrawer openReleases={[active.data]} activeReleaseId={active.id} {...shared} />; break;
       case 'hardware-assets': drawer = <HardwareAssetDrawer openAssets={[active.data]} activeAssetId={active.id} {...shared} />; break;
@@ -185,6 +231,12 @@ export function DrawerStackProvider({ children, activePage }: { children: ReactN
       // Patch Deployment detail page — clone of the Patch detail page; the list page adapts the
       // deployment record onto the Patch shape before opening.
       case 'patch-deployments': drawer = <PatchDeploymentDrawer openAssets={[active.data]} activeAssetId={active.id} {...shared} />; break;
+      case 'package-deployments': drawer = <PackageDeploymentDrawer openAssets={[active.data]} activeAssetId={active.id} {...shared} />; break;
+      case 'registry-deployments': drawer = <RegistryDeploymentDrawer openAssets={[active.data]} activeAssetId={active.id} {...shared} />; break;
+      case 'knowledge': drawer = <KnowledgeDrawer openAssets={[active.data]} activeAssetId={active.id} {...shared} />; break;
+      case 'report': drawer = <ReportDrawer openAssets={[active.data]} activeAssetId={active.id} {...shared} />; break;
+      // Task detail page — clone of the Patch detail page; the list adapts the task record.
+      case 'tasks': drawer = <TaskDrawer openAssets={[active.data]} activeAssetId={active.id} {...shared} />; break;
       // Endpoint detail page — clone of the Patch detail page; the list adapts the endpoint record.
       case 'endpoints': drawer = <EndpointDrawer openAssets={[active.data]} activeAssetId={active.id} {...shared} />; break;
       // Vulnerability detail page — clone of the Patch detail page; the list adapts the record.

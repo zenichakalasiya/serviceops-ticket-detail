@@ -28,13 +28,13 @@ export interface Endpoint {
 export const mockEndpoints: Endpoint[] = [
   { id: 'EP-408', agentOnline: true, hostName: 'FIN-LT-0188', ipAddress: '10.20.22.188', osName: 'Microsoft Windows 11 Pro', version: '10.0.26200.8328', servicePack: 'None', architecture: '64 BIT', remoteOffice: 'Mumbai Office', systemHealth: 'Healthy', tags: ['finance'], rebootRequired: 'No' },
   { id: 'EP-406', agentOnline: true, hostName: 'SAL-LT-0204', ipAddress: '10.20.23.204', osName: 'Microsoft Windows 10 Enterprise', version: '10.0.19045.6466', servicePack: 'None', architecture: '64 BIT', remoteOffice: 'Bengaluru Campus', systemHealth: 'Healthy', tags: [], rebootRequired: 'No' },
-  { id: 'EP-400', agentOnline: true, hostName: 'ENG-LT-0312', ipAddress: '10.20.19.112', osName: 'Microsoft Windows 11 Pro', version: '10.0.26200.8655', servicePack: 'None', architecture: '64 BIT', remoteOffice: 'Hyderabad Office', systemHealth: 'Healthy', tags: [], rebootRequired: 'Yes' },
+  { id: 'EP-400', agentOnline: true, hostName: 'ENG-LT-0312', ipAddress: '10.20.19.112', osName: 'Ubuntu Linux 22.04 LTS', version: '6.8.0-45-generic', servicePack: 'None', architecture: '64 BIT', remoteOffice: 'Hyderabad Office', systemHealth: 'Healthy', tags: [], rebootRequired: 'Yes' },
   { id: 'EP-397', agentOnline: true, hostName: 'Jevyjava-LT', ipAddress: '192.168.112.75', osName: 'Microsoft Windows 11 Pro', version: '10.0.26200.8655', servicePack: 'None', architecture: '64 BIT', remoteOffice: 'Ahmedabad HQ', systemHealth: 'Healthy', tags: [], rebootRequired: 'No' },
   { id: 'EP-396', agentOnline: false, hostName: 'DESKTOP-A19KJ', ipAddress: '10.20.41.40', osName: 'Microsoft Windows 10 Pro', version: null, servicePack: null, architecture: '64 BIT', remoteOffice: 'Mumbai Office', systemHealth: null, tags: [], rebootRequired: 'No' },
-  { id: 'EP-392', agentOnline: true, hostName: 'DHRUVPANCHAL', ipAddress: '10.20.40.202', osName: 'Microsoft Windows 11 Enterprise', version: '10.0.26200.7462', servicePack: 'None', architecture: '64 BIT', remoteOffice: 'Ahmedabad HQ', systemHealth: 'Healthy', tags: [], rebootRequired: 'No' },
+  { id: 'EP-392', agentOnline: true, hostName: 'DHRUVPANCHAL', ipAddress: '10.20.40.202', osName: 'macOS 14 Sonoma', version: '14.7.1 (23H222)', servicePack: 'None', architecture: '64 BIT', remoteOffice: 'Ahmedabad HQ', systemHealth: 'Healthy', tags: [], rebootRequired: 'No' },
   { id: 'EP-391', agentOnline: true, hostName: 'Adarsh-PC', ipAddress: '192.168.1.11', osName: 'Microsoft Windows 10 Pro', version: '10.0.19045.6466', servicePack: 'None', architecture: '64 BIT', remoteOffice: 'Bengaluru Campus', systemHealth: 'Healthy', tags: [], rebootRequired: 'No' },
-  { id: 'EP-389', agentOnline: false, hostName: 'DESKTOP-N81KQ', ipAddress: '10.20.41.103', osName: 'Microsoft Windows 11 Pro', version: '10.0.26200.6691', servicePack: 'None', architecture: '64 BIT', remoteOffice: 'Delhi NCR Office', systemHealth: 'Warning', tags: [], rebootRequired: 'Yes' },
-  { id: 'EP-388', agentOnline: true, hostName: 'PARTH-UPADHYAY', ipAddress: '10.20.40.182', osName: 'Microsoft Windows 11 Pro', version: '10.0.26200.8037', servicePack: 'None', architecture: '64 BIT', remoteOffice: 'Ahmedabad HQ', systemHealth: 'Healthy', tags: [], rebootRequired: 'No' },
+  { id: 'EP-389', agentOnline: false, hostName: 'DESKTOP-N81KQ', ipAddress: '10.20.41.103', osName: 'Red Hat Enterprise Linux 9', version: '5.14.0-427.el9', servicePack: 'None', architecture: '64 BIT', remoteOffice: 'Delhi NCR Office', systemHealth: 'Warning', tags: [], rebootRequired: 'Yes' },
+  { id: 'EP-388', agentOnline: true, hostName: 'PARTH-UPADHYAY', ipAddress: '10.20.40.182', osName: 'macOS 15 Sequoia', version: '15.5 (24F74)', servicePack: 'None', architecture: '64 BIT', remoteOffice: 'Ahmedabad HQ', systemHealth: 'Healthy', tags: [], rebootRequired: 'No' },
   { id: 'EP-386', agentOnline: true, hostName: 'DESKTOP-DK09P', ipAddress: '192.168.0.104', osName: 'Microsoft Windows 10 Pro', version: '10.0.19045.6466', servicePack: 'None', architecture: '64 BIT', remoteOffice: 'Bengaluru Campus', systemHealth: 'Healthy', tags: ['vip'], rebootRequired: 'No' },
   { id: 'EP-384', agentOnline: true, hostName: 'ARJUN-CHAUHAN', ipAddress: '192.168.1.14', osName: 'Microsoft Windows 10 Pro', version: '10.0.19045.6466', servicePack: 'None', architecture: '64 BIT', remoteOffice: 'Pune Development Center', systemHealth: 'Healthy', tags: [], rebootRequired: 'No' },
   { id: 'EP-383', agentOnline: false, hostName: 'DESKTOP-5F2AL', ipAddress: '192.168.29.101', osName: 'Microsoft Windows 10 Pro', version: '10.0.19045.6466', servicePack: 'None', architecture: '64 BIT', remoteOffice: 'Delhi NCR Office', systemHealth: null, tags: [], rebootRequired: 'No' },
@@ -111,9 +111,66 @@ function EndpointsToolbar({ searchQuery, setSearchQuery }: { searchQuery: string
   );
 }
 
+/* ── Derived endpoint attributes ──────────────────────────────────────────────
+   The product's listing filters on a wider record than the mock stores — the domain, the
+   subnet, and the vulnerability scan results. Derived HERE, once, so the listing row and the
+   detail page it opens read the same values. */
+
+/** Windows machines are domain-joined; the Linux and macOS fleet is not. */
+export const endpointDomainOf = (e: Endpoint): string =>
+  !e.version ? '—' : /windows/i.test(e.osName) ? 'motadata.local' : 'WORKGROUP';
+
+/** The /24 the address sits in — the unit remote offices are actually allocated in. */
+export const endpointIpRangeOf = (e: Endpoint): string => {
+  const m = e.ipAddress.match(/^(\d+)\.(\d+)\.(\d+)\.\d+$/);
+  return m ? `${m[1]}.${m[2]}.${m[3]}.0/24` : '—';
+};
+
+/* Scan results. An endpoint that has never reported an inventory (no OS build) has never
+   been scanned either — it reads "—" and 0, which is the true answer rather than a zero
+   that would claim a clean machine. Counts are deterministic per id and weighted by health,
+   so the fleet's worst machines are also its most vulnerable ones. */
+const scanSeed = (e: Endpoint) => [...e.id].reduce((a, ch) => a + ch.charCodeAt(0), 0);
+export const endpointScanned = (e: Endpoint): boolean => !!e.version;
+export const endpointOsVulnsOf = (e: Endpoint): number => {
+  if (!endpointScanned(e)) return 0;
+  const weight = e.systemHealth === 'Critical' ? 18 : e.systemHealth === 'Warning' ? 9 : 3;
+  return weight + (scanSeed(e) % Math.max(2, Math.round(weight / 2)));
+};
+export const endpointSoftwareVulnsOf = (e: Endpoint): number => {
+  if (!endpointScanned(e)) return 0;
+  const weight = e.systemHealth === 'Critical' ? 11 : e.systemHealth === 'Warning' ? 6 : 2;
+  return weight + ((scanSeed(e) * 3) % Math.max(2, weight));
+};
+export const endpointVulnCountOf = (e: Endpoint): number =>
+  endpointOsVulnsOf(e) + endpointSoftwareVulnsOf(e);
+
+/** Last vulnerability scan, staggered so a fleet does not all scan at once. Most of the fleet
+ *  scanned inside the week; roughly one machine in four has not been reached for 8–17 days —
+ *  the "Not Scanned in 7 Days" cut the listing's KPI strip makes. */
+export const endpointScanDateOf = (e: Endpoint): Date | null => {
+  if (!endpointScanned(e)) return null;
+  const h = scanSeed(e) % 17;
+  const hoursAgo = h < 13 ? 1 + h * 12 : 24 * (8 + (h - 13) * 3);
+  const d = new Date();
+  d.setHours(d.getHours() - hoursAgo);
+  return d;
+};
+
+/** Patches the scanner found missing on this machine — weighted by System Health like the
+ *  vulnerability counts, so the fleet's unhealthiest machines are also its least patched. A
+ *  machine that has never reported an inventory has never been scanned: 0, not a guess. */
+export const endpointMissingPatchesOf = (e: Endpoint): number => {
+  if (!endpointScanned(e)) return 0;
+  const s = scanSeed(e);
+  if (e.systemHealth === 'Critical') return 9 + (s % 6);
+  if (e.systemHealth === 'Warning') return 4 + (s % 4);
+  return s % 3 === 0 ? 1 + (s % 2) : 0;
+};
+
 /** Adapt an endpoint onto the Patch shape the cloned EndpointDrawer body expects
  *  (same pattern as the deployment adapter). */
-const endpointToPatchShape = (e: Endpoint): Patch => ({
+export const endpointToPatchShape = (e: Endpoint): Patch => ({
   id: e.id,
   name: e.hostName,
   severity: 'Unspecified',
@@ -123,7 +180,9 @@ const endpointToPatchShape = (e: Endpoint): Patch => ({
   rebootRequired: e.rebootRequired === 'Yes' ? 'Yes' : 'No',
   approvalStatus: 'Approved',
   category: 'Endpoint',
-  endpoint: { agentOnline: e.agentOnline, systemHealth: e.systemHealth },
+  /* `osVersion` is the reported BUILD — the OS Lifecycle card needs it to tell 22H2 from
+     25H2, which the OS name alone never says. */
+  endpoint: { agentOnline: e.agentOnline, systemHealth: e.systemHealth, osName: e.osName, ipAddress: e.ipAddress, osVersion: e.version },
 });
 
 export function EndpointsListPage({ onNavigate }: { onNavigate: (page: string) => void }) {

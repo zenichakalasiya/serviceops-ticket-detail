@@ -111,6 +111,73 @@ function DetectedCvesToolbar({ searchQuery, setSearchQuery }: { searchQuery: str
   );
 }
 
+/* ── Derived CVE attributes ───────────────────────────────────────────────────
+   The product's listing filters on a wider record than the mock stores — the CNA title, the
+   vulnerability type, all four CVSS generations and an approval state. Each is derived HERE,
+   once, so the listing row and the detail page it opens read the same values. */
+
+/** The CNA that assigned the CVE. Every record in this catalogue is a Microsoft advisory,
+ *  which is exactly what the product's own grid shows in its Title column. */
+export const cveTitleOf = (_c: DetectedCve): string => 'secure@microsoft.com';
+
+/* OS vs Application. This catalogue is a Windows Patch-Tuesday set, so most of it is the
+   operating system proper; the exceptions are the installable COMPONENTS that ship with
+   Windows but are not the core OS — MSHTML, MSMQ, the Speech API, the Streaming Service —
+   which scanners do categorise separately. Named explicitly rather than guessed, because
+   "contains Windows" would have swept the whole list into one bucket. */
+const APP_COMPONENTS = /\b(mshtml|message queuing|msmq|speech application|sapi|streaming service|edge|chromium|office|outlook|word|excel|sharepoint)\b/i;
+export const cveVulnTypeOf = (c: DetectedCve): string =>
+  APP_COMPONENTS.test(c.description) ? 'Application' : 'OS';
+
+/* CVSS by generation. v2 was retired for anything published after 2015, so a 2024 CVE
+   genuinely has none — the column reads "—" and that is the true answer, not a gap. The v3.0
+   and v3.1 BASE formulas are identical, so where NVD carries both the number is the same.
+   v4.0 is still being adopted, so only a deterministic share of records carry one. */
+export const cveScoreOf = (c: DetectedCve, gen: '2.0' | '3.0' | '3.1' | '4.0'): number | null => {
+  if (gen === '2.0') return null;
+  if (gen === '3.1' || gen === '3.0') return c.cvssScore || null;
+  const h = [...c.id].reduce((a, ch) => a + ch.charCodeAt(0), 0);
+  if (h % 5 >= 2 || !c.cvssScore) return null;          // ~40% carry a v4.0 score
+  return Math.min(10, Math.round((c.cvssScore + (h % 3 === 0 ? 0.2 : -0.3)) * 10) / 10);
+};
+
+/** A plausible base vector for a score, in the requested generation's own notation. */
+export const cveVectorOf = (c: DetectedCve, gen: '2.0' | '3.0' | '3.1' | '4.0'): string => {
+  const n = cveScoreOf(c, gen);
+  if (n === null) return '—';
+  if (gen === '4.0') {
+    /* v4.0 renamed the impact metrics (VC/VI/VA) and added Attack Requirements. */
+    return n >= 9 ? 'CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H'
+      : n >= 7 ? 'CVSS:4.0/AV:N/AC:L/AT:N/PR:L/UI:N/VC:H/VI:H/VA:N'
+        : 'CVSS:4.0/AV:L/AC:L/AT:N/PR:L/UI:P/VC:L/VI:L/VA:N';
+  }
+  const metrics =
+    n >= 9.5 ? 'AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H'
+      : n >= 8.5 ? 'AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H'
+        : n >= 7.6 ? 'AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H'
+          : n >= 7 ? 'AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H'
+            : n >= 4 ? 'AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N'
+              : 'AV:L/AC:H/PR:L/UI:R/S:U/C:L/I:N/A:N';
+  return `CVSS:${gen}/${metrics}`;
+};
+
+/** NVD revises a record after publication; "Analyzed" means that pass is done. */
+export const cveLastUpdatedOf = (c: DetectedCve): string => {
+  const base = new Date(c.publishedDate.replace(/^[A-Za-z]{3},\s*/, ''));
+  if (Number.isNaN(base.getTime())) return c.publishedDate;
+  const h = [...c.id].reduce((a, ch) => a + ch.charCodeAt(0), 0);
+  base.setDate(base.getDate() + (c.status === 'Awaiting Analysis' ? 0 : 20 + (h % 90)));
+  return base.toISOString();
+};
+
+/* Approved = cleared for remediation. Anything under active exploitation is approved on
+   sight; the rest wait on a review, which is what the filter is for. */
+export const cveApprovalOf = (c: DetectedCve): 'Approved' | 'Not Approved' => {
+  if (c.exploitStatus === 'Yes') return 'Approved';
+  const h = [...c.id].reduce((a, ch) => a + ch.charCodeAt(0), 0);
+  return c.severity === 'Critical' || h % 3 === 0 ? 'Approved' : 'Not Approved';
+};
+
 /** Maps a DetectedCve onto the Patch shape so the cloned DetectedCveDrawer body compiles. */
 export const cveToPatchShape = (c: DetectedCve): Patch => ({
   id: c.id,
@@ -120,7 +187,7 @@ export const cveToPatchShape = (c: DetectedCve): Patch => ({
   missingSystem: c.impactedEndpoints,
   installedSystem: null,
   rebootRequired: 'No',
-  approvalStatus: 'Approved',
+  approvalStatus: cveApprovalOf(c),
   category: 'Security Updates',
   // NVD-style long description for the Overview tab, composed from the record's real facts.
   description: `${c.description}. Tracked as ${c.id} (${c.cweId}), this vulnerability was published on ${c.publishedDate} and carries a CVSS 3.1 base score of ${c.cvssScore}. ${c.exploitStatus === 'Yes' ? 'Exploitation in the wild has been reported — remediation should be prioritized.' : 'No in-the-wild exploitation has been reported so far.'} A vendor patch is ${c.patchAvailability === 'Yes' ? 'available and can be deployed through the linked patches' : 'not yet available'}, and ${c.impactedEndpoints} managed endpoint${c.impactedEndpoints === 1 ? ' is' : 's are'} currently impacted.`,

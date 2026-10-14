@@ -17,7 +17,7 @@ import {
   IconMyTeam,
   IconBom,
 } from './SidebarIcons';
-import { Cpu, AppWindow, Boxes, Recycle, KeyRound, Gauge, FileText, ShoppingCart, Rocket, Monitor, ClipboardCheck, Settings } from 'lucide-react';
+import { Shapes, LayoutTemplate, Cpu, AppWindow, Boxes, Recycle, KeyRound, Gauge, FileText, ShoppingCart, Rocket, Monitor, ClipboardCheck, Settings } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
 
 // Asset sub-modules surfaced in the hover flyout (grouped with dividers).
@@ -47,16 +47,17 @@ function AssetsNavItem({ activePage, onNavigate }: { activePage?: string; onNavi
       : label === 'Non-IT Assets' ? 'non-it-assets'
       : label === 'Consumable Assets' ? 'consumable-assets'
       : label === 'Software Licenses' ? 'software-licenses'
+      : label === 'Software Meter' ? 'software-meter'
       : label === 'Contracts' ? 'contracts'
       : label === 'Purchases' ? 'purchases'
       : undefined;
-  const sectionActive = activePage === 'hardware-assets' || activePage === 'software-assets' || activePage === 'non-it-assets' || activePage === 'consumable-assets' || activePage === 'software-licenses' || activePage === 'contracts' || activePage === 'purchases';
+  const sectionActive = activePage === 'hardware-assets' || activePage === 'software-assets' || activePage === 'non-it-assets' || activePage === 'consumable-assets' || activePage === 'software-licenses' || activePage === 'software-meter' || activePage === 'contracts' || activePage === 'purchases';
   return (
     <div className="relative group">
       <NavItem icon={<IconAssets size={20} />} active={sectionActive} title="Assets" disableTooltip />
       {/* Flyout — pl-2 keeps a visual gap while bridging the hover area */}
       <div className="absolute left-full top-0 z-[9999] hidden group-hover:block pl-2">
-        <div className="w-[210px] bg-white rounded-lg shadow-lg border border-[#DFE5ED] py-1">
+        <div className="app-menu w-[210px] bg-white rounded-lg shadow-lg border border-[#DFE5ED] py-1">
           {ASSET_GROUPS.map((group, gi) => (
             <div key={gi}>
               {gi > 0 && <div className="my-1 border-t border-[#F0F2F5]" />}
@@ -100,7 +101,7 @@ function VulnerabilityNavItem({ activePage, onNavigate }: { activePage?: string;
       <NavItem icon={<IconVulnerability size={20} />} active={sectionActive} title="Vulnerability" disableTooltip />
       {/* Flyout — pl-2 keeps a visual gap while bridging the hover area */}
       <div className="absolute left-full top-0 z-[9999] hidden group-hover:block pl-2">
-        <div className="w-[210px] bg-white rounded-lg shadow-lg border border-[#DFE5ED] py-1">
+        <div className="app-menu w-[210px] bg-white rounded-lg shadow-lg border border-[#DFE5ED] py-1">
           {VULNERABILITY_ITEMS.map((item) => {
             const isActive = !!item.page && item.page === activePage;
             return (
@@ -128,8 +129,8 @@ const PATCH_ITEMS: { icon: React.ReactNode; label: string; page?: string }[] = [
   { icon: <IconPatch size={16} />, label: 'Patches', page: 'patches' },
   { icon: <Rocket size={16} />, label: 'Patch Deployment', page: 'patch-deployments' },
   { icon: <Monitor size={16} />, label: 'Endpoint', page: 'endpoints' },
-  { icon: <ClipboardCheck size={16} />, label: 'Automatic Patch Test' },
-  { icon: <Settings size={16} />, label: 'Automatic Patch Deployment' },
+  { icon: <ClipboardCheck size={16} />, label: 'Automatic Patch Test', page: 'automatic-patch-tests' },
+  { icon: <Settings size={16} />, label: 'Automatic Patch Deployment', page: 'automatic-patch-deployments' },
 ];
 
 /** Patch nav item with a hover flyout listing the patch sub-modules (mirrors AssetsNavItem). */
@@ -140,8 +141,47 @@ function PatchNavItem({ activePage, onNavigate }: { activePage?: string; onNavig
       <NavItem icon={<IconPatch size={20} />} active={sectionActive} title="Patch" disableTooltip />
       {/* Flyout — pl-2 keeps a visual gap while bridging the hover area */}
       <div className="absolute left-full top-0 z-[9999] hidden group-hover:block pl-2">
-        <div className="w-[250px] bg-white rounded-lg shadow-lg border border-[#DFE5ED] py-1">
+        <div className="app-menu w-[250px] bg-white rounded-lg shadow-lg border border-[#DFE5ED] py-1">
           {PATCH_ITEMS.map((item) => {
+            const isActive = !!item.page && item.page === activePage;
+            return (
+              <button
+                key={item.label}
+                onClick={() => item.page && onNavigate?.(item.page)}
+                className={`w-full px-3 py-2 text-[13px] text-left transition-colors flex items-center gap-2.5 whitespace-nowrap ${
+                  isActive ? 'bg-[#3D8BD0] text-white' : 'hover:bg-[#F5F7FA] text-[#364658]'
+                }`}
+              >
+                <span className={`flex-shrink-0 ${isActive ? 'text-white' : 'text-[#6B7280]'}`}>{item.icon}</span>
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Package sub-modules surfaced in the hover flyout. Endpoint reuses the shared Endpoints
+// listing (same as the Patch / Vulnerability flyouts); the two deployment items are
+// prototype placeholders until those pages exist.
+const PACKAGE_ITEMS: { icon: React.ReactNode; label: string; page?: string }[] = [
+  { icon: <IconPackage size={16} />, label: 'Package Deployments', page: 'package-deployments' },
+  { icon: <ClipboardCheck size={16} />, label: 'Registry Deployments', page: 'registry-deployments' },
+  { icon: <Monitor size={16} />, label: 'Endpoint', page: 'endpoints' },
+];
+
+/** Package nav item with a hover flyout listing its sub-modules (mirrors PatchNavItem). */
+function PackageNavItem({ activePage, onNavigate }: { activePage?: string; onNavigate?: (page: string) => void }) {
+  const sectionActive = activePage === 'package-deployments' || activePage === 'registry-deployments';
+  return (
+    <div className="relative group">
+      <NavItem icon={<IconPackage size={20} />} active={sectionActive} title="Package" disableTooltip />
+      {/* Flyout — pl-2 keeps a visual gap while bridging the hover area */}
+      <div className="absolute left-full top-0 z-[9999] hidden group-hover:block pl-2">
+        <div className="app-menu w-[250px] bg-white rounded-lg shadow-lg border border-[#DFE5ED] py-1">
+          {PACKAGE_ITEMS.map((item) => {
             const isActive = !!item.page && item.page === activePage;
             return (
               <button
@@ -248,13 +288,30 @@ export function Sidebar({ activePage, onNavigate }: SidebarProps) {
           onClick={() => onNavigate?.('bom')}
         />
         <PatchNavItem activePage={activePage} onNavigate={onNavigate} />
-        <NavItem icon={<IconPackage size={20} />} title="Package" />
-        <NavItem icon={<IconProject size={20} />} title="Project" />
-        <NavItem icon={<IconKnowledge size={20} />} title="Knowledge" />
-        <NavItem icon={<IconReport size={20} />} title="Report" />
-        <NavItem icon={<IconMyApproval size={20} />} title="My Approval" />
-        <NavItem icon={<IconTask size={20} />} title="Task" />
-        <NavItem icon={<IconMyTeam size={20} />} title="My Team" />
+        <PackageNavItem activePage={activePage} onNavigate={onNavigate} />
+        <NavItem icon={<IconProject size={20} />} title="Project" active={activePage === 'projects'} onClick={() => onNavigate?.('projects')} />
+        <NavItem icon={<IconKnowledge size={20} />} title="Knowledge" active={activePage === 'knowledge'} onClick={() => onNavigate('knowledge')} />
+        <NavItem icon={<IconReport size={20} />} title="Report" active={activePage === 'reports'} onClick={() => onNavigate?.('reports')} />
+        <NavItem icon={<IconMyApproval size={20} />} title="My Approval" active={activePage === 'my-approvals'} onClick={() => onNavigate?.('my-approvals')} />
+        <NavItem icon={<IconTask size={20} />} title="Task" active={activePage === 'tasks'} onClick={() => onNavigate?.('tasks')} />
+        <NavItem icon={<IconMyTeam size={20} />} title="My Team" active={activePage === 'my-team'} onClick={() => onNavigate?.('my-team')} />
+      </div>
+
+      {/* Pinned to the BOTTOM — the team's two reference pages: the listing-view bench
+          and the icon library. Neither is a product module, hence the divider. */}
+      <div className="mt-auto flex flex-col border-t border-[#e5e7eb] py-1">
+        <NavItem
+          icon={<LayoutTemplate size={20} />}
+          title="Views Lab"
+          active={activePage === 'views-lab'}
+          onClick={() => onNavigate?.('views-lab')}
+        />
+        <NavItem
+          icon={<Shapes size={20} />}
+          title="Icon Library"
+          active={activePage === 'icons'}
+          onClick={() => onNavigate?.('icons')}
+        />
       </div>
     </aside>
   );

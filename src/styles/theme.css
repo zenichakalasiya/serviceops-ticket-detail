@@ -196,6 +196,34 @@
 }
 .app-select::-ms-expand { display: none; }
 
+/* Unread dot in the listing grid — a soft 2px ring in the dot's OWN colour (orange
+   requester / blue technician) plus a slow halo pulse, so a row with new replies
+   catches the eye without shouting. The row passes its colour in as
+   --dot-ring / --dot-pulse, and the pulse is dropped for reduced-motion users
+   while the ring stays, so nothing is lost. */
+@keyframes unread-dot-pulse {
+  0%   { box-shadow: 0 0 0 2px var(--dot-ring), 0 0 0 0 var(--dot-pulse); }
+  70%  { box-shadow: 0 0 0 2px var(--dot-ring), 0 0 0 5px transparent; }
+  100% { box-shadow: 0 0 0 2px var(--dot-ring), 0 0 0 0 transparent; }
+}
+.unread-dot {
+  box-shadow: 0 0 0 2px var(--dot-ring);
+  animation: unread-dot-pulse 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .unread-dot { animation: none; }
+}
+
+/* Quiet variant — the chevron stays hidden until the field row (or the select
+   itself) is hovered/focused: the detail-page Key-Information recipe. Padding
+   stays reserved so nothing shifts when it appears. */
+.app-select.app-select-quiet { background-image: none; }
+.app-select.app-select-quiet:hover,
+.app-select.app-select-quiet:focus,
+.ki-row:hover .app-select.app-select-quiet {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%237B8FA5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+
 /* Rich reply-editor content — restore list/heading/hr styles stripped by the Tailwind preflight,
    so execCommand lists and blocks actually render inside contentEditable surfaces. */
 [contenteditable] ul { list-style: disc; padding-left: 1.5rem; margin: 4px 0; }
@@ -229,6 +257,28 @@
   scrollbar-color: #3D8BD0 transparent;
 }
 
+
+/* The app is a fixed-viewport shell — every page roots at h-screen and scrolls in its
+   own panes. Locking the document stops a second, OS-styled scrollbar appearing beside
+   the app's thin ones when the window is short (e.g. 1366x768 laptops). */
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Dropdown rows: the hover fill sits INSET from the menu edges with a 4px radius rather
+   than running edge to edge. Applied through the .app-menu marker on menu surfaces, so
+   modals, side panels and hover cards are untouched. Only full-width rows are affected —
+   a menu's own footer buttons (Cancel / Apply) keep their natural size. */
+.app-menu button[class~="w-full"],
+.app-menu a[class~="w-full"] {
+  width: calc(100% - 8px);
+  margin-inline: 4px;
+  border-radius: 4px;
+}
+
 /* Auto-hide scrollbars — the thumb stays invisible until the pointer is over that
    scroll area (or something inside it), so we never show several bars at once.
    Applied globally to Tailwind's overflow utilities; the gutter stays reserved so
@@ -246,7 +296,8 @@
 .overflow-x-auto:hover,
 .overflow-y-scroll:hover,
 .overflow-x-scroll:hover {
-  scrollbar-color: #CBD5E1 transparent;
+  /* One step lighter than the old #CBD5E1/#94A3B8 ramp — the revealed thumb read as a dark bar against the board. */
+  scrollbar-color: #E2E8F0 transparent;
 }
 .overflow-y-auto::-webkit-scrollbar,
 .overflow-auto::-webkit-scrollbar,
@@ -277,14 +328,14 @@
 .overflow-x-auto:hover::-webkit-scrollbar-thumb,
 .overflow-y-scroll:hover::-webkit-scrollbar-thumb,
 .overflow-x-scroll:hover::-webkit-scrollbar-thumb {
-  background-color: #CBD5E1;
+  background-color: #E2E8F0;
 }
 .overflow-y-auto::-webkit-scrollbar-thumb:hover,
 .overflow-auto::-webkit-scrollbar-thumb:hover,
 .overflow-x-auto::-webkit-scrollbar-thumb:hover,
 .overflow-y-scroll::-webkit-scrollbar-thumb:hover,
 .overflow-x-scroll::-webkit-scrollbar-thumb:hover {
-  background-color: #94A3B8;
+  background-color: #CBD5E1;
 }
 
 /* Hide the scrollbar entirely while keeping the element scrollable — for strips the user drags
@@ -823,3 +874,37 @@ body[data-portal-dragging] [data-portal-toolbar] { pointer-events: none; opacity
 .rc-enter { animation: rc-enter 360ms cubic-bezier(0.22, 1, 0.36, 1) backwards; }
 .rc-attn { box-shadow: 0 0 0 3px rgba(var(--rc), 0.22); animation: rc-attn 300ms ease-out backwards; }
 @media (prefers-reduced-motion: reduce) { .rc-enter, .rc-attn { animation: none; } }
+/* Animated AI gradient border — the brand gradient slowly circling the control.
+   Falls back to a static gradient border where @property is unsupported. */
+@property --ai-border-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+@keyframes ai-border-spin {
+  to { --ai-border-angle: 360deg; }
+}
+.ai-animated-border {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(#fff, #fff) padding-box,
+    conic-gradient(from var(--ai-border-angle), #4CB1FE, #731EFB, #F911E3, #4CB1FE) border-box;
+  animation: ai-border-spin 4s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ai-animated-border { animation: none; }
+}
+
+/* Scrollable but bar-less, INCLUDING on hover — placed last and !important so the
+   auto-hide scrollbar rules above can never resurrect the bar. */
+.no-scrollbar-ever {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+.no-scrollbar-ever::-webkit-scrollbar,
+.no-scrollbar-ever:hover::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+

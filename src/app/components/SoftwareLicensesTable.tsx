@@ -1,4 +1,4 @@
-import { KeyRound, Pencil, Trash2 } from 'lucide-react';
+import { KeyRound, SquarePen, Trash2 } from 'lucide-react';
 import type { SoftwareLicense } from './SoftwareLicensesListPage';
 
 interface SoftwareLicensesTableProps {
@@ -109,7 +109,7 @@ export function SoftwareLicensesTable({
               <td className="px-4 py-3 whitespace-nowrap">
                 <div className="flex items-center gap-3">
                   <button className="text-[#6B7280] hover:text-[#3D8BD0] transition-colors" title="Edit">
-                    <Pencil size={15} />
+                    <SquarePen size={15} />
                   </button>
                   <button className="text-[#DC2626] hover:text-[#b91c1c] transition-colors" title="Delete">
                     <Trash2 size={15} />

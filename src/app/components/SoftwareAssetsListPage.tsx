@@ -7,7 +7,8 @@ import { Pagination } from './Pagination';
 import { useDrawerStack } from './DrawerStack';
 import { SoftwareAssetDrawer } from './SoftwareAssetDrawer';
 
-export type SoftwareStatus = 'In Use' | 'In Store' | 'Retired';
+/* The software lifecycle the listing's Status cell offers (see MODULE_STATUS_OPTS.software). */
+export type SoftwareStatus = 'In Stock' | 'In Use' | 'Missing' | 'Retired' | 'In Repair' | 'Disposed' | 'Expired' | 'Decommission' | 'Allocated';
 
 export interface SoftwareAsset {
   id: string;
@@ -56,7 +57,7 @@ export const mockAssets: SoftwareAsset[] = [
   { id: 'SWAST-26919', name: 'Python 3.12.4 (64-bit)', assetType: 'Application', status: 'In Use', version: '3.12.4150.0', softwareType: 'Managed', managedByGroup: 'IT Operations', managedBy: { name: 'Neha Raje', initials: 'NR', color: '#EC4899' }, impact: 'On Department', softwareCategory: 'Developer Tools' },
   { id: 'SWAST-26918', name: 'Node.js', assetType: 'Application', status: 'In Use', version: '22.11.0', softwareType: 'Managed', managedByGroup: 'IT Operations', managedBy: { name: 'Neha Raje', initials: 'NR', color: '#EC4899' }, impact: 'On Department', softwareCategory: 'Developer Tools' },
   { id: 'SWAST-26917', name: 'Git', assetType: 'Application', status: 'In Use', version: '2.47.1', softwareType: 'Managed', managedByGroup: 'IT Operations', managedBy: { name: 'Imran Qureshi', initials: 'IQ', color: '#F59E0B' }, impact: 'On Department', softwareCategory: 'Developer Tools' },
-  { id: 'SWAST-26916', name: 'PostgreSQL 16', assetType: 'Application', status: 'In Store', version: '16.4', softwareType: 'Managed', managedByGroup: 'Datacenter Team', managedBy: { name: 'Vikram Sethi', initials: 'VS', color: '#10B981' }, impact: 'On Organization', softwareCategory: 'Database' },
+  { id: 'SWAST-26916', name: 'PostgreSQL 16', assetType: 'Application', status: 'In Stock', version: '16.4', softwareType: 'Managed', managedByGroup: 'Datacenter Team', managedBy: { name: 'Vikram Sethi', initials: 'VS', color: '#10B981' }, impact: 'On Organization', softwareCategory: 'Database' },
   { id: 'SWAST-26915', name: 'Docker Desktop', assetType: 'Application', status: 'In Use', version: '4.34.2', softwareType: 'Managed', managedByGroup: 'IT Operations', managedBy: { name: 'Neha Raje', initials: 'NR', color: '#EC4899' }, impact: 'On Department', softwareCategory: 'Developer Tools' },
   { id: 'SWAST-26914', name: 'Visual Studio Code', assetType: 'Application', status: 'In Use', version: '1.96.2', softwareType: 'Managed', managedByGroup: 'End User Computing', managedBy: { name: 'Rohan Mehta', initials: 'RM', color: '#6366F1' }, impact: 'On Department', softwareCategory: 'Developer Tools' },
   { id: 'SWAST-26913', name: 'CrowdStrike Falcon Sensor', assetType: 'Application', status: 'In Use', version: '7.20.19204.0', softwareType: 'Managed', managedByGroup: 'Network Team', managedBy: { name: 'Imran Qureshi', initials: 'IQ', color: '#F59E0B' }, impact: 'On Organization', softwareCategory: 'Security' },

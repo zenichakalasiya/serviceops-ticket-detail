@@ -5,7 +5,7 @@ import { Header } from './Header';
 import { VulnerabilitiesTable } from './VulnerabilitiesTable';
 import { Pagination } from './Pagination';
 import { useDrawerStack } from './DrawerStack';
-import type { Patch } from './PatchesListPage';
+import type { ApprovalStatus, Patch, RebootRequired } from './PatchesListPage';
 
 /* Vulnerabilities listing — opened from the Vulnerability sidebar flyout's "Vulnerabilities"
  * item. A clone of the Patches list page: the rows are DETECTED VULNERABILITY PATCHES (patches
@@ -107,17 +107,73 @@ function VulnerabilitiesToolbar({ searchQuery, setSearchQuery }: { searchQuery: 
   );
 }
 
+/* ── Derived advisory attributes ──────────────────────────────────────────────
+   The product's listing filters on KB number, support URI, reboot requirement, approval
+   status and the CVSS vector. None of them is a free field on a detected patch — each is
+   read off the advisory — so they are DERIVED here, once, and the adapter below feeds the
+   same values to the detail page. Hard-coding them in two places is how a listing starts
+   disagreeing with the record it opens. */
+
+/** "…for x64 (KB5036894)" → "KB5036894". Third-party advisories carry no KB. */
+export const vulnKbOf = (v: Vulnerability): string => {
+  const kb = v.name.match(/\(KB(\d+)\)/)?.[1];
+  return kb ? `KB${kb}` : '—';
+};
+
+/** The vendor page a technician actually opens: Microsoft's KB article, else NVD's CVE record. */
+export const vulnSupportUriOf = (v: Vulnerability): string => {
+  const kb = v.name.match(/\(KB(\d+)\)/)?.[1];
+  if (kb) return `https://support.microsoft.com/help/${kb}`;
+  const cve = v.exploitedCves[0] ?? v.nonExploitedCves[0];
+  return cve ? `https://nvd.nist.gov/vuln/detail/${cve}` : '—';
+};
+
+/* Matches how the patch catalogue itself is populated: OS and framework cumulative updates
+   are "May be" (it depends on what the servicing stack replaces), server products demand a
+   restart outright, and user-space applications do not. */
+export const vulnRebootOf = (v: Vulnerability): RebootRequired =>
+  /exchange server|office online server/i.test(v.name) ? 'Yes'
+    : /cumulative update|\.net framework|windows server/i.test(v.name) ? 'May be'
+      : 'No';
+
+/* Approved = cleared for deployment. An advisory with active exploitation gets approved on
+   sight, and so is a critical one — except the one in four still sitting in review, which is
+   exactly the row the listing's "Critical, Not Approved" card exists to surface (every critical
+   auto-approved left that card reading 0 for ever). The rest wait on a review. */
+export const vulnApprovalOf = (v: Vulnerability): ApprovalStatus => {
+  if (v.exploitedCves.length > 0) return 'Approved';
+  const h = [...v.id].reduce((a, c) => a + c.charCodeAt(0), 0);
+  if (v.severity === 'Critical') return h % 4 === 0 ? 'Not Approved' : 'Approved';
+  return h % 3 === 0 ? 'Approved' : 'Not Approved';
+};
+
+/* A plausible CVSS 3.1 base vector for the score the advisory carries — graded so the
+   vector and the number tell the same story rather than contradicting each other. */
+export const vulnCvssVectorOf = (v: Vulnerability): string => {
+  const n = v.cvssScore;
+  if (n <= 0) return '—';
+  const metrics =
+    n >= 9.5 ? 'AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H'
+      : n >= 8.5 ? 'AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H'
+        : n >= 7.6 ? 'AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H'
+          : n >= 7 ? 'AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H'
+            : n >= 4 ? 'AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N'
+              : 'AV:L/AC:H/PR:L/UI:R/S:U/C:L/I:N/A:N';
+  return `CVSS:3.1/${metrics}`;
+};
+
 /** Maps a Vulnerability onto the Patch shape so the cloned VulnerabilityDrawer body compiles. */
-const vulnerabilityToPatchShape = (v: Vulnerability): Patch => ({
+export const vulnerabilityToPatchShape = (v: Vulnerability): Patch => ({
   id: v.id,
   name: v.name,
   severity: v.severity,
   releaseDate: v.publishedDate,
   missingSystem: v.impactedEndpoints,
   installedSystem: null,
-  rebootRequired: 'No',
-  approvalStatus: 'Approved',
+  rebootRequired: vulnRebootOf(v),
+  approvalStatus: vulnApprovalOf(v),
   category: v.category,
+  supportUri: vulnSupportUriOf(v),
 });
 
 export function VulnerabilitiesListPage({ onNavigate }: { onNavigate: (page: string) => void }) {
