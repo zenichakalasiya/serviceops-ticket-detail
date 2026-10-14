@@ -1,0 +1,48 @@
+/* Ported from components/ui/ColorPicker.vue — scoped to .dc-ColorPicker. */
+@scope (.dc-ColorPicker) {
+.cp, :scope:is(.cp) { position: relative; }
+/* measures like our Dropdown: same height, same border, same chevron */
+.cp-btn, :scope:is(.cp-btn) { display: flex; align-items: center; gap: 8px; width: 100%; height: 36px; padding: 0 10px; border: 1px solid var(--border-control); background: var(--surface); border-radius: var(--r); font-size: 13px; color: var(--ink-2); }
+.cp-btn:hover, :scope:is(.cp-btn:hover) { border-color: var(--muted-2); }
+.cp-lbl, :scope:is(.cp-lbl) { flex: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cp-hex, :scope:is(.cp-hex) { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11px; color: var(--muted-2); }
+.cp-chev, :scope:is(.cp-chev) { color: var(--muted); flex: none; }
+/* the chip carries a hairline: Transparent and a white Default have nothing to show
+   against the field otherwise */
+.cp-sw, :scope:is(.cp-sw) { width: 14px; height: 14px; flex: none; border-radius: 3px; border: 1px solid var(--border-strong); }
+
+.cp-back, :scope:is(.cp-back) { position: fixed; inset: 0; z-index: 199; }
+.cp-pop, :scope:is(.cp-pop) { position: fixed; z-index: 200; width: 396px; display: flex; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--sh-pop); overflow: hidden; }
+
+.cp-names, :scope:is(.cp-names) { width: 132px; flex: none; border-right: 1px solid var(--border); padding: 6px; overflow: auto; max-height: 304px; }
+.cp-name, :scope:is(.cp-name) { display: flex; align-items: center; gap: 8px; width: 100%; padding: 7px 8px; border: none; background: transparent; border-radius: var(--r); font-size: 13px; color: var(--ink-2); text-align: left; }
+.cp-name:hover, :scope:is(.cp-name:hover) { background: var(--surface-2); }
+.cp-name.on, :scope:is(.cp-name.on) { color: var(--primary-700); font-weight: 500; }
+.cp-name .ellip, :scope:is(.cp-name) .ellip { flex: 1; min-width: 0; }
+
+.cp-custom, :scope:is(.cp-custom) { flex: 1; min-width: 0; padding: 10px; display: flex; flex-direction: column; gap: 9px; }
+.cp-sv, :scope:is(.cp-sv) { position: relative; height: 120px; border-radius: var(--r); cursor: crosshair; }
+.cp-dot, :scope:is(.cp-dot) { position: absolute; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.35); pointer-events: none; }
+
+.cp-sliders, :scope:is(.cp-sliders) { display: flex; align-items: center; gap: 9px; }
+.cp-rails, :scope:is(.cp-rails) { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 7px; }
+.cp-rails input, :scope:is(.cp-rails) input { -webkit-appearance: none; appearance: none; width: 100%; height: 10px; border-radius: var(--r-pill); border: 1px solid var(--border); outline: none; }
+.cp-rails input::-webkit-slider-thumb, :scope:is(.cp-rails) input::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%; background: #fff; border: 1px solid rgba(0,0,0,.35); box-shadow: 0 1px 2px rgba(0,0,0,.3); }
+.cp-hue, :scope:is(.cp-hue) { background: linear-gradient(to right, #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%); }
+/* the alpha rail shows the colour it is fading, so the slider means something */
+.cp-alpha, :scope:is(.cp-alpha) { background:
+  linear-gradient(to right, transparent, var(--a-to)),
+  repeating-conic-gradient(var(--border) 0% 25%, var(--surface) 0% 50%) 0 0 / 8px 8px; }
+.cp-preview, :scope:is(.cp-preview) { width: 30px; height: 30px; flex: none; border-radius: var(--r); border: 1px solid var(--border); overflow: hidden; background: repeating-conic-gradient(var(--border) 0% 25%, var(--surface) 0% 50%) 0 0 / 8px 8px; }
+.cp-preview i, :scope:is(.cp-preview) i { display: block; width: 100%; height: 100%; }
+
+.cp-fields, :scope:is(.cp-fields) { display: flex; gap: 6px; }
+.cp-f, :scope:is(.cp-f) { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.cp-f-hex, :scope:is(.cp-f-hex) { flex: 2.2; }
+.cp-f input, :scope:is(.cp-f) input { width: 100%; min-width: 0; height: 26px; padding: 0 6px; text-align: center; border: 1px solid var(--border-control); border-radius: var(--r); background: var(--surface); color: var(--ink); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11px; outline: none; }
+.cp-f input:focus, :scope:is(.cp-f) input:focus { border-color: var(--primary); }
+.cp-f span, :scope:is(.cp-f) span { font-size: 10px; color: var(--muted-2); }
+
+.cp-foot, :scope:is(.cp-foot) { display: flex; justify-content: flex-end; gap: 8px; margin-top: 1px; }
+}
+

@@ -1,0 +1,4 @@
+/* Ported from components/ui/EmptyPreviewArt.vue — scoped to .dc-EmptyPreviewArt. */
+@scope (.dc-EmptyPreviewArt) {
+.epa, :scope:is(.epa) { display: block; flex: none; overflow: visible; }
+}

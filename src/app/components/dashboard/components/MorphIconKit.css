@@ -1,0 +1,21 @@
+/* Ported from components/ui/MorphIconKit.vue — scoped to .dc-MorphIconKit. */
+@scope (.dc-MorphIconKit) {
+.kit, :scope:is(.kit) { border: 1px solid var(--tile-border); border-radius: var(--r-lg); background: var(--bg); padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+.kit-head, :scope:is(.kit-head) { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.kit-t, :scope:is(.kit-t) { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--ink); }
+.kit-row, :scope:is(.kit-row) { display: flex; align-items: center; gap: 6px; }
+.kit-l, :scope:is(.kit-l) { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.kit-l b, :scope:is(.kit-l) b { font-size: 12px; font-weight: 600; color: var(--ink); }
+.kit-l span, .kit-l code, :scope:is(.kit-l) span, :scope:is(.kit-l) code { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kit-l code, :scope:is(.kit-l) code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+.kit-b, :scope:is(.kit-b) { flex: none; display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 8px; border: 1px solid var(--border); border-radius: var(--r-sm); background: var(--surface); color: var(--ink-2); font-size: 11px; font-weight: 600; cursor: pointer; }
+.kit-b:hover, :scope:is(.kit-b:hover) { color: var(--ink); border-color: var(--border-strong); }
+.kit-sub, :scope:is(.kit-sub) { font-size: 11px; font-weight: 600; color: var(--label); margin-top: 2px; }
+.kit-frames, :scope:is(.kit-frames) { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.kit-f, :scope:is(.kit-f) { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 2px; border: 1px solid var(--border); border-radius: var(--r-sm); background: var(--surface); min-width: 0; }
+.kit-art, :scope:is(.kit-art) { color: var(--picker-ico); line-height: 0; }
+.kit-fn, :scope:is(.kit-fn) { font-size: 10px; color: var(--ink-2); }
+.kit-fb, :scope:is(.kit-fb) { display: flex; gap: 2px; }
+.kit-fb button, :scope:is(.kit-fb) button { border: none; background: none; padding: 1px 3px; border-radius: 3px; font-size: 10px; font-weight: 600; color: var(--primary); cursor: pointer; }
+.kit-fb button:hover, :scope:is(.kit-fb) button:hover { background: var(--seg-track); }
+}

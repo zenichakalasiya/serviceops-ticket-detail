@@ -1,0 +1,4 @@
+/* Ported from components/ui/EmptyBoardArt.vue — scoped to .dc-EmptyBoardArt. STATIC — no motion */
+@scope (.dc-EmptyBoardArt) {
+.eba, :scope:is(.eba) { display: block; flex: none; overflow: visible; }
+}

@@ -1,0 +1,287 @@
+/* Ported from components/dashboard/WidgetBuilderModal.vue — scoped to .dc-WidgetBuilderModal. */
+@scope (.dc-WidgetBuilderModal) {
+.overlay, :scope:is(.overlay) { position: fixed; inset: 0; background: rgba(20,21,38,.5); backdrop-filter: blur(2px); z-index: 120; display: grid; place-items: center; padding: 16px; }
+.builder, :scope:is(.builder) { width: 100%; height: 100%; background: var(--surface); border-radius: var(--r-xl); box-shadow: var(--sh-lg); display: flex; flex-direction: column; overflow: hidden; }
+/* 2026-09-24 Figma: a 46px header band, 12px inset, 16px medium title */
+.bhead, :scope:is(.bhead) { display: flex; align-items: center; justify-content: space-between; height: 46px; padding: 0 8px 0 12px; border-bottom: 1px solid var(--border); flex: none; }
+.btitle, :scope:is(.btitle) { margin: 0; font-size: 16px; font-weight: 500; }
+.hacts, :scope:is(.hacts) { display: flex; gap: 2px; }
+.ic, :scope:is(.ic) { width: 34px; height: 32px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
+.ic:hover, :scope:is(.ic:hover) { background: var(--surface-2); color: var(--ink); }
+.bbody, :scope:is(.bbody) { flex: 1; display: flex; min-height: 0; }
+/* Nothing divides the preview from the config panel — no rule AND no colour change.
+   There was never a border here, but the preview sat on --bg while the panel sits on
+   --surface, and that edge read as a 1px divider running the full height. The preview
+   card keeps its own border and shadow, so it still reads as a card on white. */
+/* The left pane is a WORKSPACE: a tinted band at the top carrying the family switch,
+   then the preview card inset within it. It used to be a white pane with the tabs
+   floating on the same ground as the chart, which made the switch look like part of the
+   preview rather than the control that changes what is being previewed. */
+/* No padding at the TOP. It was `12px 0`, and that 12 stacked on the 16 inside .pv-top, so
+   the band between the header rule and the family switcher measured 28 while the gap under
+   the switcher measured 16 — the switcher looked pushed down rather than centred in a band.
+
+   The bottom 12 stays. It is not the same spacing: with the left/right 12 on .pv-card it is
+   the frame the preview card sits in, and dropping it would put the card hard against the
+   foot of the pane. Only the top was doubling up. */
+/* Figma: the preview side is white — the card inside it carries the border */
+.preview, :scope:is(.preview) { flex: 1.5; display: flex; flex-direction: column; min-width: 0; padding: 12px 0; background: var(--surface); }
+/* One segmented control on a soft track with the active family filled near-black — the
+   same control the reference uses for every either/or in this panel (family, access,
+   Manual/Query, Top/Bottom/All). Four loose outlined buttons with a blue fill read as
+   four separate things you could each turn on. */
+/* the tab track and Refresh share one line; `margin-left:auto` (not space-between)
+   keeps Refresh hard right even when there are no tabs to push it there */
+/* 62 = the 30px pill plus 16 above and 16 below. The row already asks for centring; what it
+   was not getting is explained by the rule below, and until that was fixed the pill sat hard
+   against the header and all 16px of the old 46px row piled up underneath it.
+
+   16 rather than the 8 that centring alone would have given: the space UNDER the switcher was
+   never the problem, so the fix adds a matching gap above instead of splitting the existing
+   one in half. */
+/* Figma: the family track 12px from the pane's edges, the preview card 10px under it */
+.pv-top, :scope:is(.pv-top) { display: flex; align-items: center; gap: 12px; padding: 0 12px 10px; flex: none; }
+/* .seg carries `align-self: flex-start` globally, which is what stops it stretching to full
+   width inside the COLUMN form layouts it usually lives in. This row is a flex ROW, so the
+   cross axis is vertical and that same declaration pins it to the top. It arrived when the
+   family switcher stopped being `.pv-tab` and became `.seg` — the shared control brought a
+   rule the private copy never had. */
+.pv-top .pill-track, :scope:is(.pv-top) .pill-track { align-self: center; }
+.pv-top .pill-track button, .config .pill-track button, :scope:is(.pv-top) .pill-track button, :scope:is(.config) .pill-track button { display: inline-flex; align-items: center; gap: 5px; }
+/* in the card's top-right corner, over the canvas — the same place and size the action
+   occupies on a placed widget, so the preview behaves like the thing it previews */
+.pv-refresh, :scope:is(.pv-refresh) { position: absolute; top: 10px; right: 10px; z-index: 2; width: 32px; height: 32px; display: grid; place-items: center; border: 1px solid var(--border-control); background: var(--surface); color: var(--muted); border-radius: var(--r); }
+.pv-refresh:hover, :scope:is(.pv-refresh:hover) { background: var(--surface-2); color: var(--ink); }
+/* The family switcher was `.pv-tab`, a fifth private copy of the segmented control — its
+   own track, its own 30px button, its own near-black active state. It is `.seg` now, and
+   the only thing left here is the one rule that is genuinely local to this panel. */
+.rot90, :scope:is(.rot90) { transform: rotate(90deg); }
+/* chart-kind picker in the config panel — the family row's little sibling, sized for
+   a 2-up grid so all four fit the narrow column without wrapping oddly */
+/* Icon-only squares that WRAP, so all twelve kinds show at the reference's size instead
+   of a fixed 4-column grid stretching each cell to the column width. Fixed 48px keeps the
+   padding even on every side — an aspect-ratio cell in a fluid grid does not. */
+/* A group of kinds: a quiet caption over its own row of squares. The caption is
+   deliberately lighter and smaller than .sec-h — "Chart Type" is the field, these
+   are subdivisions of it, and matching weights would have read as four fields. */
+.kind-grp + .kind-grp, :scope:is(.kind-grp) + .kind-grp { margin-top: 12px; }
+/* the category track above the one row of tiles */
+.kind-cats, :scope:is(.kind-cats) { margin-bottom: 10px; }
+.kind-cats, :scope:is(.kind-cats) { width: fit-content; }
+.kind-cats button, :scope:is(.kind-cats) button { text-transform: none; }
+.kind-grp-h, :scope:is(.kind-grp-h) { font-size: 11px; font-weight: 500; letter-spacing: .04em; text-transform: uppercase; color: var(--label); margin-bottom: 6px; }
+/* 2026-09-24 Figma: 56×50 tiles, 8px corners, 8px apart, each carrying the chart's
+   illustrated artwork (ChartIcon) rather than a line glyph */
+.kinds, :scope:is(.kinds) { display: flex; flex-wrap: wrap; gap: 8px; }
+.kind, :scope:is(.kind) { flex: none; display: grid; place-items: center; width: 56px; height: 50px; padding: 0; border: 1px solid var(--border-control); background: var(--surface); color: var(--picker-ico); border-radius: var(--r-lg); transition: border-color .15s, color .15s, background .15s; }
+.kind:hover, :scope:is(.kind:hover) { border-color: var(--muted-2); }
+/* selected: a near-black edge on a faint fill, the artwork darkening with it */
+.kind.on, :scope:is(.kind.on) { border-color: var(--sel); background: var(--surface-2); color: var(--ink); }
+.pv-card, :scope:is(.pv-card) { position: relative; flex: 1; margin: 0 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--sh-sm); display: flex; flex-direction: column; overflow: hidden; }
+.pv-canvas, :scope:is(.pv-canvas) { flex: 1; display: grid; place-items: center; padding: 22px; min-height: 0; }
+.pv-canvas > *, :scope:is(.pv-canvas) > * { width: 100%; }
+.pv-text, :scope:is(.pv-text) { align-self: stretch; max-height: 100%; overflow: auto; align-self: start; }
+/* the preview has to be the tile, and a note's tile is paper — showing it on the white
+   widget surface would preview something the board never renders */
+/* The preview card is NEUTRAL for a note now — the note paints its own background, which
+   is a per-widget setting, so a card that also painted one showed the wrong colour behind
+   every choice except the old paper. Zero padding for the same reason the placed tile has
+   none: the note's inset is its own `pad` option. */
+.pv-card:has(.pv-text), :scope:is(.pv-card:has(.pv-text)) { background: var(--surface); border-color: var(--border); padding: 0; overflow: hidden; }
+.pv-card:has(.pv-text) .pv-text, :scope:is(.pv-card:has(.pv-text)) .pv-text { height: 100%; }
+/* the preview's empty state — the empty group's idiom: slate art, one short title, a line */
+.pv-empty, :scope:is(.pv-empty) { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; max-width: 360px; }
+.pv-empty-art, :scope:is(.pv-empty-art) { color: var(--picker-ico); margin-bottom: 10px; }
+.pv-empty-t, :scope:is(.pv-empty-t) { font-size: 14px; font-weight: 600; color: var(--ink); }
+/* two lines, never more — the same copy and width as /preview-states */
+.pv-empty-s, :scope:is(.pv-empty-s) { margin: 0; max-width: 300px; font-size: 13px; line-height: 1.5; color: var(--muted);
+  display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.pv-kpi, :scope:is(.pv-kpi) { font-size: 72px; font-weight: 500; letter-spacing: -2px; text-align: center; }
+.pv-tbl, :scope:is(.pv-tbl) { width: 100%; border-collapse: collapse; font-size: 13px; align-self: start; }
+.pv-tbl th, :scope:is(.pv-tbl) th { text-align: left; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .4px; padding: 7px 10px; border-bottom: 1px solid var(--border); }
+.pv-tbl td, :scope:is(.pv-tbl) td { padding: 9px 10px; border-bottom: 1px solid var(--border); }
+/* The line does the separating, so the panel no longer pays for a second gutter on top
+   of the preview's own right padding — the two together read as an undivided drift
+   rather than as two regions. Fields keep 20px off the rule so they do not touch it. */
+.config, :scope:is(.config) { width: 480px; flex: none; display: flex; flex-direction: column; min-height: 0; border-left: 1px solid var(--border); }
+.cfg-scroll, :scope:is(.cfg-scroll) { flex: 1; overflow: auto; padding: 12px 12px 12px 16px; }
+/* 2026-09-24 Figma: 30px fields with 12px type and 4px corners, throughout the panel */
+.config .input, :scope:is(.config) .input { height: 30px; font-size: 12px; }
+.config textarea.input, :scope:is(.config) textarea.input { height: auto; }
+.config .dd-btn, :scope:is(.config) .dd-btn { height: 30px; font-size: 12px; }
+/* No rules between sections — the config sidebar had one under every section, so a Gauge
+   scrolled past six or seven of them. Each heading is already a bold line with space above
+   it; the rule was drawing a border around something the type had already separated.
+   Applies to all four families (Widget · KPI · Shortcut · Free Text) since they share
+   this one .sec class. */
+/* A section owns its own bottom space. Its LAST child was adding a 12px margin on top
+   of that, so the gap between two sections was 22px or 34px depending on whether the
+   section happened to end in a field, a hint or a toggle. */
+/* 24px under EVERY main section (user, 2026-09-29) — Chart Type included, so the tighter
+   12px it briefly had above Axes is gone */
+.sec, :scope:is(.sec) { padding-bottom: 24px; margin-bottom: 0; border-bottom: none; }
+/* every other line of text in the sidebar (user, 2026-09-29) */
+.config .kind-grp-h, .config .toggle, :scope:is(.config) .kind-grp-h, :scope:is(.config) .toggle { color: var(--cfg-text); }
+/* the grey one-liners stay grey — #516381 (user, 2026-09-29) */
+.config .acc-note, .config .acc-note .ico, :scope:is(.config) .acc-note, :scope:is(.config) .acc-note .ico { color: var(--cfg-sub); }
+.sec > *:last-child, :scope:is(.sec) > *:last-child { margin-bottom: 0; }
+/* Manage Legend — the segmented control and the value field share the row and fill it
+   together, both at input height. The value box was 74px, which is a box for a number
+   rather than a field you are asked to fill in. */
+.rank-row, :scope:is(.rank-row) { display: flex; align-items: stretch; gap: 10px; }
+.rank-row .pill-track, :scope:is(.rank-row) .pill-track { flex: 1; }
+.rank-row .pill-track button, :scope:is(.rank-row) .pill-track button { flex: 1; }
+.rank-n, :scope:is(.rank-n) { flex: 0 0 150px; text-align: center; font-weight: 600; }
+.rank-n:disabled, :scope:is(.rank-n:disabled) { background: var(--surface-2); color: var(--muted-2); font-weight: 500; cursor: not-allowed; }
+
+/* Display → toggles */
+.tgl-row, :scope:is(.tgl-row) { display: flex; align-items: center; justify-content: space-between; gap: 14px; cursor: pointer; margin-bottom: 16px; }
+.tgl-row:last-child, :scope:is(.tgl-row:last-child) { margin-bottom: 0; }
+.tgl-txt, :scope:is(.tgl-txt) { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+/* --ink, not --ink-2. This <b> is the control's NAME and the only full-strength thing in
+   the row — the <em> under it is already muted and the switch beside it carries no text.
+   Secondary grey over muted grey gave the whole row nothing at primary strength, so it
+   read as disabled. (A .fld label stays grey precisely because it is not alone: the input
+   beneath it holds its value at full ink, so the label can afford to recede.) */
+.tgl-txt b, :scope:is(.tgl-txt) b { font-size: 13px; font-weight: 500; color: var(--cfg-title); }
+.tgl-txt em, :scope:is(.tgl-txt) em { font-style: normal; font-size: 12px; color: var(--cfg-sub); line-height: 1.4; }
+/* the ON/OFF pill, same as the dashboard panel's — a bare track says there are two states
+   but not which one you are looking at */
+.tgl, :scope:is(.tgl) { flex: none; width: 58px; height: 24px; padding: 0; border: 1px solid var(--border-strong); border-radius: 999px; background: var(--surface-2); position: relative; transition: background .15s, border-color .15s; }
+.tgl i, :scope:is(.tgl) i { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: var(--muted-2); box-shadow: var(--sh-sm); transition: left .15s, background .15s; }
+.tgl b, :scope:is(.tgl) b { position: absolute; top: 0; right: 8px; line-height: 22px; font-size: 10px; font-weight: 700; letter-spacing: .4px; color: var(--muted); transition: color .15s; }
+.tgl.on, :scope:is(.tgl.on) { background: var(--green-soft); border-color: color-mix(in srgb, var(--green) 40%, transparent); }
+.tgl.on i, :scope:is(.tgl.on) i { left: 38px; background: var(--green); }
+.tgl.on b, :scope:is(.tgl.on) b { right: auto; left: 9px; color: var(--green); }
+
+/* the predefined info line — Figma: a quiet grey band at the top of the panel, info glyph,
+   ink text with the two facts in bold, 20px above the first section */
+.pe-note, :scope:is(.pe-note) { display: flex; align-items: flex-start; gap: 6px; font-size: 11px; line-height: 1.45; color: var(--ink); background: var(--surface-2); border: none; border-radius: var(--r); padding: 6px 8px; margin-bottom: 20px; }
+.pe-note .ico, :scope:is(.pe-note) .ico { flex: none; margin-top: 1px; color: var(--ink-2); }
+.pe-note b, :scope:is(.pe-note) b { font-weight: 600; }
+/* Duplicate-name warning. It belongs to the Name field, so it hugs it: the top
+ * margin pulls back most of the field's 12px, and the gap it owns sits *below*.
+ * It used to be the other way round — 16px above, 0 below — which read as though
+ * it belonged to the Technician fields it was jammed against.
+ * align-items: flex-start keeps the icon at the top-left when the text wraps to
+ * two lines, instead of the icon drifting to the vertical centre. */
+/* Duplicate name reads as a WARNING, not an error — amber, not red. */
+.dup-warn, :scope:is(.dup-warn) { display: flex; align-items: flex-start; gap: 7px; font-size: 12px; line-height: 1.45; color: var(--amber); background: var(--amber-soft); border-radius: 4px; padding: 8px 10px; margin: -6px 0 10px; }
+.dup-warn .ico, :scope:is(.dup-warn) .ico { flex: none; margin-top: 1px; }   /* optical-align with the first text line */
+.dup-warn b, :scope:is(.dup-warn) b { font-weight: 600; color: var(--amber); }
+.input.bad, :scope:is(.input.bad) { border-color: var(--amber); }
+/* NO :last-child exception. The Display section is the last child of its <fieldset> while
+   Highlights sits outside it, so ":last-child" zeroed the gap on a section that was not
+   last on screen — the heading landed straight under the previous field's helper text.
+   A section is separated from whatever follows it regardless of how the markup nests, and
+   the trailing 22px at the very bottom keeps the last control off the footer. */
+/* 14px matches Create/Edit Dashboard — the two panels sit one click apart and were
+   using different heading sizes for the same level of heading. */
+/* Figma: a 14px medium heading, 12px above its fields */
+/* 2026-09-29 (user): titles #07101F medium, 8px above their first field in EVERY section */
+.sec-h, :scope:is(.sec-h) { font-weight: 500; font-size: 14px; color: var(--cfg-title); margin-bottom: 8px; }
+/* heading and its action on one line, the action right-aligned */
+.q-head, :scope:is(.q-head) { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+/* ── Free Text: the field is RichTextEditor.vue, which owns its own styles ── */
+/* a heading that OWNS the line under it sits tight to it — 12px of air between a title
+   and its own description reads as two separate things */
+.sec-h:has(+ .hint), :scope:is(.sec-h:has(+ .hint)) { margin-bottom: 2px; }
+/* …and a one-liner under a FIELD (or a row of fields, the Manual / Query chips, the Query
+   heading, the Free Text box) sits exactly as tight: 2px, the same as under a title
+   (user, 2026-09-29). One rule, so a new field + one-liner pair gets it for free. */
+.config :not(.sec-h):not(.hint):has(+ .hint), :scope:is(.config) :not(.sec-h):not(.hint):has(+ .hint) { margin-bottom: 2px; }
+.config .hint:not(:first-child), :scope:is(.config) .hint:not(:first-child) { margin-top: 0; }
+/* 16px between fields (was 12) — the user asked for more air between them */
+.grid2, :scope:is(.grid2) { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+/* a side-by-side pair is ONE row: its fields drop their own bottom margin (it stretched the
+   grid row, leaving 36px under the pair instead of the section's 20) and the row takes it */
+.grid2 > .fld, :scope:is(.grid2) > .fld { margin-bottom: 0; }
+.grid2, :scope:is(.grid2) { margin-bottom: 16px; }
+.fld, :scope:is(.fld) { display: flex; flex-direction: column; margin-bottom: 16px; }
+.fld:last-child, :scope:is(.fld:last-child) { margin-bottom: 0; }
+/* Figma: field labels are the subdued 12px, 4px over their field */
+.fld label, :scope:is(.fld) label { font-size: 12px; font-weight: 400; color: var(--cfg-text); margin-bottom: 4px; }
+.fld label i, :scope:is(.fld) label i { color: var(--red); font-style: normal; }
+.selw, :scope:is(.selw) { position: relative; }
+.selw select, :scope:is(.selw) select { appearance: none; padding-right: 30px; cursor: pointer; }
+.chev, :scope:is(.chev) { position: absolute; right: 11px; top: 12px; color: var(--muted); pointer-events: none; }
+/* Manual / Query, and Manage Legend's All / Highest / Lowest. No bottom margin — what
+   follows a segmented control is the configuration it governs, so it belongs against it. */
+/* No top margin. A hint is the DESCRIPTION of the heading above it, not a paragraph in
+   its own right — it belongs against that heading, with the air below the pair. */
+.hint, :scope:is(.hint) { font-size: 12px; color: var(--cfg-sub); margin: 0 0 8px; }
+/* Visibility & Sharing — Figma: a 276px switch (three equal segments), then the grey
+   note band under it */
+.acc-lbl, :scope:is(.acc-lbl) { display: block; font-size: 12px; font-weight: 400; color: var(--cfg-text); margin-bottom: 4px; }
+.acc-seg, :scope:is(.acc-seg) { width: 276px; max-width: 100%; }
+.acc-seg button, :scope:is(.acc-seg) button { flex: 1; }
+.acc-lbl i, :scope:is(.acc-lbl) i { color: var(--red); font-style: normal; }
+
+/* Read-only, on a predefined widget. The value stays legible — showing WHAT it is set
+   to is the entire reason these fields are rendered instead of hidden — so only the
+   affordance is removed: no hover, no pointer, a quieter fill on the active segment. */
+/* a fieldset is only a disabling MECHANISM here — it must not draw a box or
+   introduce its own layout */
+/* A fieldset is only a disabling MECHANISM here — it must not draw a box or bring
+   its own layout. NOT `display: contents`: Chrome stops propagating the disabled
+   state to descendants when a fieldset is taken out of the box tree, so half the
+   controls stayed live. `block` keeps the propagation and the reset does the rest. */
+.ro-fs, :scope:is(.ro-fs) { border: none; margin: 0; padding: 0; min-width: 0; display: block; }
+.input:disabled, textarea.input:disabled, :scope:is(.input:disabled), :scope:is(textarea.input:disabled) {
+  background: var(--surface-2); color: var(--ink-2); cursor: default;
+  border-color: var(--border); -webkit-text-fill-color: var(--ink-2); opacity: 1;
+}
+.acc-note, :scope:is(.acc-note) { display: inline-flex; align-items: center; gap: 10px; margin: 6px 0 0; padding: 6px 10px; border-radius: var(--r); background: var(--surface-2); font-size: 10px; color: var(--label); }
+.acc-note .ico, :scope:is(.acc-note) .ico { flex: none; color: var(--label); }
+/* Manual / Query Based is DataModeSwitch.vue. Its heading sits 32px under the Chart Type tiles — a different question (how the data
+   is fetched, not how it is drawn). */
+.dm-head, :scope:is(.dm-head) { margin-top: 32px; }
+/* 2px larger and 200 heavier than a section title (16/700, not 14/500) — it heads the choice
+   that decides every field below it (user, 2026-09-30) */
+.sec-h.dm-title, :scope:is(.sec-h.dm-title) { font-size: 16px; font-weight: 700; }
+/* The SIDEBAR's segmented tracks are white-minimal (user, 2026-09-30, from a reference):
+   grey track, the chosen segment a white chip with a hairline shadow and ink text — not the
+   near-black fill the rest of the app's .seg wears. Only the Data source "Pill" design stays
+   black, so the one choice that swaps the fields below is the one that stands out. */
+/* the section the switch ends is 6px tighter (18, not 24) so the first field under it —
+   Axes, or Query — reads as belonging to the chosen mode (user, 2026-09-30) */
+.sec:has(> .dm-cards, > .dm-banner), :scope:is(.sec:has(> .dm-cards, > .dm-banner)) { padding-bottom: 18px; }
+/* the Black pill is a slim 36px track, so the field under it sits 4px closer still (user) */
+.sec:has(> .dm-seg), :scope:is(.sec:has(> .dm-seg)) { padding-bottom: 14px; }
+/* the prototype's demo pill for comparing the two designs — dashed, so it never reads as UI */
+.dm-demo, :scope:is(.dm-demo) { display: flex; align-items: center; gap: 4px; margin: 0 0 8px; padding: 4px 6px; border: 1px dashed var(--border-strong); border-radius: var(--r); font-size: 11px; color: var(--muted); width: fit-content; }
+.dm-demo span, :scope:is(.dm-demo) span { margin-right: 4px; }
+/* the demo switch is the product pill-track, kept small — it is prototype chrome */
+.dm-demo-track, :scope:is(.dm-demo-track) { transform: scale(.85); transform-origin: left center; }
+/* the Measurement and Asset type tracks hug their text */
+.gauge-seg, .asset-seg, :scope:is(.gauge-seg), :scope:is(.asset-seg) { width: fit-content; margin-bottom: 12px; }
+.open-dd, :scope:is(.open-dd) { display: flex; flex-direction: column; gap: 3px; border: 1px solid var(--primary-soft); border-radius: 4px; padding: 5px; background: var(--primary-softer); }
+.dd-opt, :scope:is(.dd-opt) { display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; border: none; background: transparent; border-radius: 4px; font-size: 13px; text-align: left; }
+.dd-opt:hover, :scope:is(.dd-opt:hover) { background: var(--surface); } .dd-opt.on, :scope:is(.dd-opt.on) { background: var(--surface); color: var(--primary-700); font-weight: 600; }
+.toggle, :scope:is(.toggle) { display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: var(--ink-2); }
+.sw, :scope:is(.sw) { width: 38px; height: 22px; border-radius: 999px; border: none; background: var(--border-strong); position: relative; transition: background .15s; }
+.sw i, :scope:is(.sw) i { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: left .15s; box-shadow: var(--sh-sm); }
+.sw.on, :scope:is(.sw.on) { background: var(--primary); } .sw.on i, :scope:is(.sw.on) i { left: 18px; }
+/* Figma "+ Add Highlights": an outlined button edged in the near-black */
+.add-line, :scope:is(.add-line) { display: inline-flex; align-items: center; gap: 4px; height: 26px; border: 1px solid var(--sel); background: var(--surface); border-radius: var(--r); padding: 0 8px; font-size: 12px; font-weight: 500; color: var(--sel); }
+.add-line:hover, :scope:is(.add-line:hover) { background: var(--surface-2); }
+.sec-h .req, :scope:is(.sec-h) .req { color: var(--red); font-style: normal; }
+/* the derived-title note under the editor — states what the note will be filed as, so
+   the missing Name field never reads as something that was forgotten */
+.note-name-hint, :scope:is(.note-name-hint) { display: flex; align-items: flex-start; gap: 6px; margin-top: 10px; }
+.note-name-hint b, :scope:is(.note-name-hint) b { color: var(--ink-2); font-weight: 600; }
+.sql, :scope:is(.sql) { font-family: 'Consolas', ui-monospace, monospace; font-size: 13px; line-height: 1.55; background: var(--surface-2); color: var(--ink); }
+.sql::placeholder, :scope:is(.sql)::placeholder { color: var(--muted-2); opacity: 1; }
+.pv-kpi .u, :scope:is(.pv-kpi) .u { font-size: 28px; font-weight: 600; color: var(--muted); margin-left: 4px; }
+.spin, :scope:is(.spin) { animation: dc-WidgetBuilderModal-bsp .7s linear infinite; } 
+.qrow, :scope:is(.qrow) { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 9px; }
+/* Footer — Figma: 30px buttons, 12px medium labels; both creates are the global primary
+   (near-black), Cancel the outlined default. No local repaint of .btn-primary. */
+.cfg-foot .btn, :scope:is(.cfg-foot) .btn { height: 30px; padding: 0 12px; font-size: 12px; }
+@media (max-width: 900px) {
+  .bbody, :scope:is(.bbody) { flex-direction: column; }
+  .preview, :scope:is(.preview) { flex: none; height: 240px; border-right: none; }
+  .config, :scope:is(.config) { width: auto; flex: 1; }
+}
+}
+@keyframes dc-WidgetBuilderModal-bsp { to { transform: rotate(360deg); } }

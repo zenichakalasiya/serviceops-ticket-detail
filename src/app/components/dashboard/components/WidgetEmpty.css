@@ -1,0 +1,27 @@
+/* Ported from components/dashboard/WidgetEmpty.vue — scoped to .dc-WidgetEmpty. */
+@scope (.dc-WidgetEmpty) {
+.we, :scope:is(.we) {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; gap: 6px; color: var(--muted); padding: 14px;
+}
+/* 42px disc, 24px mark. A circle rather than the 4px rounded square this started as —
+   a disc reads as a place the mark LIVES, where a small rounded rectangle inside a card
+   reads as a second, smaller card. */
+.we-disc, :scope:is(.we-disc) {
+  width: 42px; height: 42px; flex: none; border-radius: 50%; display: grid; place-items: center;
+  margin-bottom: 5px;
+  /* --icon-hover is the one neutral that steps far enough off the card in BOTH themes
+     (#f3f4f6 on white, #2a2a35 on the dark card). Do NOT swap it for --inset or
+     --surface-2 without checking dark: --inset sits 4 units off the dark card and the
+     disc disappears there while looking correct in light. */
+  background: var(--icon-hover);
+  color: var(--picker-ico);
+}
+/* A fault is the one state that earns colour — it is the only one the person has to act
+   on, and a red disc says so before the sentence under it is read. */
+.we.err .we-disc, :scope:is(.we.err) .we-disc { background: var(--red-soft); color: var(--red); }
+.we-sub, :scope:is(.we-sub) { font-size: 12px; max-width: 260px; line-height: 1.45; }
+.we .btn, :scope:is(.we) .btn { margin-top: 9px; }
+/* the no-data illustration, in the empty group's slate */
+.we-art, :scope:is(.we-art) { color: var(--picker-ico); margin-bottom: 4px; }
+}

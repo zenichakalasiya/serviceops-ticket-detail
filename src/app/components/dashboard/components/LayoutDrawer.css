@@ -1,0 +1,20 @@
+@scope (.dc-LayoutDrawer) {
+.ld-catch, :scope:is(.ld-catch) { position: fixed; inset: 0; z-index: 110; }
+/* 620px — the Create Dashboard drawer's width. Two board-level side panels that open
+   from the same header should not be two different sizes, and the extra room is what
+   lets the scope cards and the six fields sit two to a row. */
+.ld, :scope:is(.ld) {
+  position: fixed; top: 0; right: 0; bottom: 0; z-index: 111;
+  width: 620px; max-width: 96vw; display: flex; flex-direction: column;
+  background: var(--surface); border-left: 1px solid var(--border);
+  box-shadow: var(--sh-lg);
+}
+/* No padding and no scrolling here: LayoutAppearance splits itself into a scrolling
+   body and a pinned footer, and it can only do that if it owns the full height. A
+   padded, scrolling wrapper would put the footer inside the scroll again. */
+.ld-b, :scope:is(.ld-b) { flex: 1; min-height: 0; overflow: hidden; }
+
+.ld-enter-active, .ld-leave-active, :scope:is(.ld-enter-active), :scope:is(.ld-leave-active) { transition: transform .2s cubic-bezier(.2,.7,.3,1); }
+.ld-enter-from, .ld-leave-to, :scope:is(.ld-enter-from), :scope:is(.ld-leave-to) { transform: translateX(100%); }
+@media (prefers-reduced-motion: reduce) { .ld-enter-active, .ld-leave-active, :scope:is(.ld-enter-active), :scope:is(.ld-leave-active) { transition: none; } }
+}

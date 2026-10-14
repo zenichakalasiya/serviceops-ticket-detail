@@ -1,0 +1,38 @@
+/* Ported from components/ui/ChartIcon.vue — scoped to .dc-ChartIcon. */
+@scope (.dc-ChartIcon) {
+/* --ci-1..3 are the sheet's three depth steps, strongest first, and they are MONOCHROME:
+   currentColor at 1 / 0.55 / 0.3, so the caller's colour drives all three.
+
+   The sheet's own ramp was 0.6 / 0.4 / 0.2, which was tuned for a TINTED card. Against a
+   white one the whole glyph washed out — the strongest step never got past a mid grey, so
+   a Column and a Histogram were hard to tell apart at a glance. Taking the top step to
+   full currentColor puts the contrast back into the shape, and the two lower steps still
+   carry the depth the sheet drew.
+
+   These were briefly painted from the --chart-* stops, per-kind. The design file draws
+   every glyph in one inked ramp, so that is what they are again. It reads better in the
+   gallery too: seventeen tiles each carrying three hues turned a grid you scan by SHAPE
+   into one you have to scan past colour to read, and the colour was not carrying any
+   meaning — a pie icon is a pie whatever it is tinted.
+
+   color-mix toward transparent rather than opacity on each path, so the ramp is one
+   declaration per step instead of an attribute on all 97 shapes. */
+/* The RAMP, taken from the ServiceOps chart-type icons themselves. Those SVGs carry TWO
+   variables, not one: --chart-line-type-icon paints the axis at full strength, and
+   --chart-type-icon paints the data at 0.8 / 0.6 / 0.4. That split is the whole reason the
+   real icons read as charts — the axis is the frame and the data sits inside it — and it is
+   exactly what our single 1 / 0.55 / 0.3 ramp was missing. Same four values here, all
+   driven off currentColor so one token still sets the whole icon. */
+.cico, :scope:is(.cico) {
+  --ci-axis: currentColor;
+  --ci-1: color-mix(in srgb, currentColor 80%, transparent);
+  --ci-2: color-mix(in srgb, currentColor 60%, transparent);
+  --ci-3: color-mix(in srgb, currentColor 40%, transparent);
+  /* --ci-4 is not a fourth data step, it is the GROUND: the card behind a KPI, the body of
+     a hexagon, the bars a histogram is not drawing attention to. 0.4 was the lightest the
+     reference ramp went, but 0.4 is still a mid tone when it fills a large area rather than
+     a thin bar — a whole card at 0.4 reads as a filled block, not as backing. */
+  --ci-4: color-mix(in srgb, currentColor 22%, transparent);
+}
+.cico, :scope:is(.cico) { display: block; flex: none; }
+}

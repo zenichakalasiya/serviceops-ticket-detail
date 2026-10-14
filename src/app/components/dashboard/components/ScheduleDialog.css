@@ -1,0 +1,36 @@
+@scope (.dc-ScheduleDialog) {
+  .sc-overlay, :scope:is(.sc-overlay) { position: fixed; inset: 0; background: rgba(20,21,38,.42); backdrop-filter: blur(2px); z-index: 100; display: flex; justify-content: flex-end; }
+  .sc-panel, :scope:is(.sc-panel) { width: 720px; max-width: 96vw; height: 100%; background: var(--surface); box-shadow: var(--sh-lg); display: flex; flex-direction: column; overflow: hidden; animation: dc-ScheduleDialog-slideIn .22s cubic-bezier(.2,.8,.2,1); }
+  .ic, :scope:is(.ic) { width: 34px; height: 32px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; } .ic:hover, :scope:is(.ic:hover) { background: var(--surface-2); color: var(--ink); }
+  /* list */
+  .lst-top, :scope:is(.lst-top) { display: flex; align-items: center; gap: 12px; padding: 16px 22px 8px; }
+  .qbox, :scope:is(.qbox) { display: flex; align-items: center; gap: 8px; flex: 1; height: 36px; border: 1px solid var(--border-strong); border-radius: var(--r); padding: 0 11px; background: var(--surface-2); }
+  .qbox input, :scope:is(.qbox) input { border: none; outline: none; background: transparent; width: 100%; font-size: 13px; }
+  .lst-body, :scope:is(.lst-body) { flex: 1; overflow: auto; padding: 8px 22px; min-height: 220px; }
+  .stbl, :scope:is(.stbl) { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .stbl th, :scope:is(.stbl) th { text-align: left; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .4px; font-weight: 600; padding: 10px 10px; border-bottom: 1px solid var(--border); }
+  .stbl td, :scope:is(.stbl) td { padding: 12px 10px; border-bottom: 1px solid var(--border); }
+  .ta-r, :scope:is(.ta-r) { text-align: right; }
+  .act, :scope:is(.act) { width: 30px; height: 30px; border: none; background: transparent; color: var(--muted); border-radius: 4px; }
+  .act:hover, :scope:is(.act:hover) { background: var(--surface-2); color: var(--primary-700); } .act.del:hover, :scope:is(.act.del:hover) { color: var(--red); background: var(--red-soft); }
+  .none, :scope:is(.none) { text-align: center; color: var(--muted-2); padding: 40px; }
+  /* form */
+  .body, :scope:is(.body) { flex: 1; padding: 16px 22px; overflow: auto; }
+  .grid2, :scope:is(.grid2) { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 20px; margin-bottom: 4px; }
+  .fld, :scope:is(.fld) { display: flex; flex-direction: column; }
+  .fld.span2, :scope:is(.fld.span2) { grid-column: 1 / -1; }
+  .fld > label, :scope:is(.fld) > label { font-size: 12px; font-weight: 500; color: var(--ink-2); margin-bottom: 6px; } .fld > label i, :scope:is(.fld) > label i { color: var(--red); font-style: normal; }
+  .fld .pill-track, :scope:is(.fld) .pill-track { align-self: flex-start; }
+  .pwd-input, :scope:is(.pwd-input) { display: flex; align-items: center; gap: 8px; border: 1px solid var(--border-strong); border-radius: var(--r); padding: 0 10px; height: 36px; }
+  .pwd-input input, :scope:is(.pwd-input) input { border: none; outline: none; background: transparent; flex: 1; font-size: 13px; }
+  .eye, :scope:is(.eye) { border: none; background: transparent; color: var(--muted); display: grid; place-items: center; }
+  .emails, :scope:is(.emails) { display: flex; align-items: center; min-height: 38px; }
+  .time-row, :scope:is(.time-row) { display: flex; align-items: center; gap: 8px; } .time-row .colon, :scope:is(.time-row) .colon { color: var(--muted); font-weight: 600; }
+}
+@keyframes dc-ScheduleDialog-slideIn { from { transform: translateX(30px); opacity: .4; } to { transform: translateX(0); opacity: 1; } }
+@scope (.dc-ScheduleDialog) {
+  .emails, :scope:is(.emails) { flex-wrap: wrap; gap: 6px; border: 1px solid var(--border-strong); border-radius: 4px; padding: 6px 8px; }
+  .echip, :scope:is(.echip) { display: inline-flex; align-items: center; gap: 5px; background: var(--primary-soft); color: var(--primary-700); border-radius: 4px; padding: 2px 8px; font-size: 12px; } .echip button, :scope:is(.echip) button { border: none; background: transparent; color: var(--primary-700); display: grid; place-items: center; }
+  .einput, :scope:is(.einput) { border: none; outline: none; background: transparent; flex: 1; min-width: 90px; font-size: 13px; }
+  .eadd, :scope:is(.eadd) { width: 26px; height: 26px; border: none; background: var(--primary); color: #fff; border-radius: 4px; display: grid; place-items: center; }
+}

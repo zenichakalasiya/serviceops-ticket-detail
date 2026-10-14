@@ -1,0 +1,207 @@
+/* Ported from components/dashboard/AddWidgetModal.vue — scoped to .dc-AddWidgetModal. */
+@scope (.dc-AddWidgetModal) {
+.hd-a, :scope:is(.hd-a) { display: flex; align-items: center; gap: 8px; }
+.drawer-overlay, :scope:is(.drawer-overlay) { position: fixed; inset: 0; background: rgba(20,21,38,.42); backdrop-filter: blur(2px); z-index: 100; display: flex; justify-content: flex-end; }
+/* 640px, not 720. The Create Widget cards are a fixed 4 per row, so the panel's width
+   IS the card's width — at 720 each card was 160px around a 64px icon and the artwork
+   swam in it. 640 pulls the card in to ~140 with the icon untouched.
+   It cannot go much lower: the tab strip (Create Widget → Archive) measures 622px, and
+   the active tab is bold, so its width shifts as you switch tabs — hence the headroom.
+   Below that the strip scrolls horizontally, which costs more than the cards gain. */
+/* WHITE, with the boxes tinted — the reverse of how this started. A tinted panel carrying
+   white cards makes the panel the figure and the cards the holes in it; on white, each box
+   is an object sitting on a page. The drawer is also the biggest surface on screen when it
+   is open, so it is the one that should be the quietest. */
+.aw, :scope:is(.aw) { width: 640px; max-width: 96vw; height: 100%; background: var(--surface); box-shadow: var(--sh-lg); display: flex; flex-direction: column; overflow: hidden; animation: dc-AddWidgetModal-slideIn .22s cubic-bezier(.2,.8,.2,1); }
+
+.ic, :scope:is(.ic) { width: 34px; height: 32px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
+.ic:hover, :scope:is(.ic:hover) { background: var(--surface-2); color: var(--ink); }
+/* five labels are wider than the drawer, so the strip scrolls sideways rather than
+   clipping the last tab — same treatment as the dashboard listing's tabs */
+/* 16px, on every side of the drawer. .dlg-head and .dlg-foot are the shared dialog chrome
+   and carry 22px of their own, so they are overridden here rather than in global.css —
+   every other dialog in the app still wants the wider inset.
+
+   Only the values that ARE an edge take 16. The 8px under the header and the 12px under the
+   search are gaps BETWEEN bands, not insets; moving them with the edge would have closed the
+   bands up instead of widening the margin. */
+.aw .dlg-head, :scope:is(.aw) .dlg-head { padding: 16px 16px 8px; }
+.aw .dlg-foot, :scope:is(.aw) .dlg-foot { padding: 16px; }
+/* Port: the top tabs are the product pill-track (porting rule — tab strips become the pill) */
+.aw-tabs, :scope:is(.aw-tabs) { display: flex; padding: 4px 16px 12px; border-bottom: 1px solid var(--border); overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -ms-overflow-style: none; }
+.aw-tabs .pill-track, :scope:is(.aw-tabs) .pill-track { flex: none; }
+.aw-tabs::-webkit-scrollbar, :scope:is(.aw-tabs)::-webkit-scrollbar { display: none; }
+.awt-count, :scope:is(.awt-count) { font-size: 11px; font-weight: 700; background: var(--red-soft); color: var(--red); border-radius: 999px; padding: 0 6px; }
+/* More air above the search box than below it: it needs to read as its own band under
+   the tab strip's border, while the type pills right below already carry their own
+   12px top padding — stacking two generous gaps there would double the space the two
+   controls need to read as adjacent, not separate. */
+.aw-search, :scope:is(.aw-search) { padding: 18px 16px 4px; }
+.srch-x, :scope:is(.srch-x) { width: 20px; height: 20px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; flex: none; }
+.srch-x:hover, :scope:is(.srch-x:hover) { background: var(--surface-2); color: var(--ink); }
+.srch, :scope:is(.srch) { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--border-control); border-radius: var(--r); padding: 0 11px; height: 36px; flex: 1; }
+.srch input, :scope:is(.srch) input { border: none; outline: none; background: transparent; width: 100%; font-size: 13px; }
+.modsel, :scope:is(.modsel) { width: 148px; flex: none; }
+/* section 10.1 content tabs — underline, no fill. Every tab carries a transparent 2px
+   bottom border so selection does not shift the row. */
+/* PILLS, as the reference draws them — not the underline row this was.
+
+   These are a FILTER over one list, not a second level of navigation. The tab strip
+   above already switches what you are looking at; a second underline row directly
+   under it read as two navigations of equal weight stacked on each other, and you
+   had to work out which one owned the content. A pill sits ON the list it filters. */
+.type-tabs, :scope:is(.type-tabs) { display: flex; align-items: center; gap: 7px; padding: 12px 16px 0; }
+.tt-sp, :scope:is(.tt-sp) { flex: 1; }
+/* Measured off the frame: 30px tall, 6px/8px padding, 4px gap, 12px/500 label, and a
+   6px radius. 6 is off our 2/4/8/12 radius scale — the design file asks for it here and
+   the ask was fidelity to the file, so it is stated as a literal rather than dressed up
+   as a token it is not. */
+/* Port: the type pills are the product pill-track; the count rides inside each option */
+.type-tabs .pill-track button, :scope:is(.type-tabs) .pill-track button { display: inline-flex; align-items: center; gap: 4px; }
+/* section 7.4 count badge: rounded-sm, never a pill — and no white-on-ink to invert in dark */
+/* The count rides inside the pill and INVERTS on the active one — that inversion is
+   what makes the chosen filter readable without colouring the whole pill.
+   On an inactive pill the number stays --ink even though its label is muted: the label
+   says which filter, the number is data, and greying the data too made the row look
+   disabled in the frame comparison. */
+.ttab-c, :scope:is(.ttab-c) { display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 500; background: var(--surface-2); color: var(--ink); border-radius: var(--r-pill); padding: 1px 4px; }
+.type-tabs .pill-track button[aria-pressed="true"] .ttab-c, :scope:is(.type-tabs) .pill-track button[aria-pressed="true"] .ttab-c { background: var(--primary); color: #fff; padding: 2px 3px; }
+.aw-body, :scope:is(.aw-body) { flex: 1; overflow: auto; padding: 16px; }
+.cat, :scope:is(.cat) { margin-bottom: 18px; }
+.cat-h, :scope:is(.cat-h) { font-size: 13px; color: var(--muted); font-weight: 500; margin: 6px 0 10px; }
+/* fixed-width cards (see .tc) — as many per row as the drawer fits, no stretching */
+.cards, :scope:is(.cards) { display: grid; grid-template-columns: repeat(auto-fill, 114px); gap: 12px; }
+/* §9.2 clickable / module card. Three things follow from that section:
+   · it sits on --surface, not the grey --surface-2 — a card IS the surface, and a grey
+     one on a white drawer reads as disabled rather than as pickable;
+   · 8px, because a card is a SURFACE and only controls are 4px (§3.1) — this was the
+     one clickable card in the app still wearing a control's corner;
+   · hover is a primary border plus the guide's lift shadow, not a colour wash. The
+     wash tinted the whole card blue and the icon lost its own contrast against it.
+   The icon keeps --muted at rest and takes the primary on hover, per §5. */
+/* White card, hairline border, on the sunken ground. The fill and the ground were the
+   other way round — a tinted card on a near-white panel — which gave the grid very little
+   separation, since the two surfaces were four steps apart. A white card against
+   #f6f9fc is the ordinary card-on-ground relationship and the tiles read as objects.
+
+   --picker-ico drives the artwork: the icon ramp resolves from currentColor, so one
+   token sets all three depth steps of every glyph. */
+/* The CARD keeps its size and the artwork grows inside it: 64 -> 88px in a block that was
+   and stays 138x133. The room comes from the vertical padding, 20 -> 10 — an icon this size
+   needs less framing, not more, and the card was mostly padding before. min-height pins the
+   height so a one-line and a two-line label still produce identical tiles. */
+/* No resting outline — the fill alone makes the tile. It keeps a TRANSPARENT 1px border
+   rather than none, so the hover edge costs no reflow: dropping the border outright would
+   have every tile in the grid shift 1px as the cursor crossed it.
+
+   0.625rem, the same corner the listing cards take. Both are the picker's "a thing you can
+   choose", and they are the only two shapes in the module wearing it.
+
+   Hover is the primary edge now, not --muted-2 — the same edge the listing cards answer
+   with, since blue is the module's one accent. */
+/* 2026-09-24: the artwork is 64px (was 88) and the CARD shrinks with it, keeping the same
+   frame around the icon — 25px each side, ~10px above and below the icon+label stack — so
+   114×109 where it was 138×133. */
+.tc, :scope:is(.tc) { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; width: 114px; padding: 10px 6px; min-height: 109px; border: 1px solid transparent; background: var(--picker-tile-fill); border-radius: 0.625rem; color: var(--picker-ico); transition: border-color .15s, box-shadow .15s; }
+.tc:hover, :scope:is(.tc:hover) { border-color: var(--primary); box-shadow: var(--sh-sm); }
+/* Empty Group KEEPS its edge. It is the one tile whose border is not decoration — a dashed
+   outline around nothing is what "empty" looks like, and it is the only tile here that adds
+   a container rather than a widget. */
+.tc-group, :scope:is(.tc-group) { border-style: dashed; border-color: var(--border-strong); }
+.tc-ico, :scope:is(.tc-ico) { width: 64px; height: 64px; display: grid; place-items: center; }
+/* the label is READ, so it holds the primary ink while the icon stays quiet beside it */
+/* the LABEL stays --ink: it is text and has to stay readable, while the artwork beside
+   it is decoration and can sit back at --picker-ico */
+.tc-label, :scope:is(.tc-label) { font-size: 13px; font-weight: 500; color: var(--ink); }
+
+.res-h, :scope:is(.res-h) { font-size: 13px; color: var(--muted); margin: 0 0 12px; }
+.lst, :scope:is(.lst) { display: flex; flex-direction: column; gap: 12px; }
+/* A row is two lines now (title + description), so it is a card-sized object rather than
+   a line of text — hence the white surface and the hairline, matching the type cards on
+   the Create Widget tab. */
+/* WHITE and outlined, on the white drawer — the edge is what makes it a card here, not a
+   fill. The chart-type tiles keep their tint, and the difference is deliberate: a tile is
+   133px of mostly-artwork and needs a ground to sit the drawing on, while a row is 62px of
+   mostly-text, where a tint behind the text is just less contrast. */
+/* 0.625rem = 10px, stated as the literal it is. Our radius scale is 2/4/8/12 and this is
+   none of them, so it gets no token — a var() named after a tier it does not belong to is
+   how an off-scale value quietly becomes the scale. Same treatment as the 6px on .ttab. */
+.lrow, :scope:is(.lrow) { display: flex; align-items: center; gap: 11px; padding: 10px 12px; border-radius: 0.625rem; background: var(--surface); border: 1px solid var(--picker-tile-border); transition: border-color .15s, box-shadow .15s, background .15s; }
+/* the artwork block. 34px inside a 40px well: the icons are drawn on a 64 artboard with
+   their own margins, so a tight well would crop the visual weight rather than the box. */
+.lt-ico, :scope:is(.lt-ico) { width: 40px; height: 40px; flex: none; display: grid; place-items: center; border-radius: var(--r); background: var(--picker-tile-fill); color: var(--picker-ico); }
+/* A row already on the board is an ORDINARY card, same fill, same edge — its only tell is
+   the static green "already added" mark that replaces the action icons. */
+.lrow.placed, :scope:is(.lrow.placed) { cursor: default; }
+.lt-main, :scope:is(.lt-main) { flex: 1; min-width: 0; }
+.lt-name-row, :scope:is(.lt-name-row) { display: flex; align-items: center; gap: 7px; } .lt-name, :scope:is(.lt-name) { font-weight: 600; font-size: 13px; }
+/* The tag sits BESIDE the title now, not at the right edge of the column. Beside it, it reads
+   as a property OF the title — proximity is what binds them; right-aligned it read as a
+   separate column the row happened to also have. The cost is the ragged right edge that the
+   alignment was buying, and that is the trade, made deliberately.
+
+   min-width: 0 is what lets a long title shrink and ellipsis instead of shoving the tag off
+   the right — a nowrap span's min-content width is its whole text. */
+.lt-name, :scope:is(.lt-name) { flex: 0 1 auto; min-width: 0; }
+/* the description, one line and clipped. It is context, not content — a wrapping
+   description would make rows of different heights out of a list you scan by rhythm. */
+.lt-desc, :scope:is(.lt-desc) { font-size: 12px; color: var(--muted); margin-top: 1px; line-height: 1.45; }
+.row-tag, :scope:is(.row-tag) { flex: none; font-size: 11px; font-weight: 500; border-radius: var(--r-sm); padding: 1px 6px; white-space: nowrap; }
+/* A minimal chip: the badge radius (--r-sm, 2px per the guide), the quiet fill, no border. */
+.row-tag.mod, :scope:is(.row-tag.mod) { background: var(--surface-2); color: var(--muted); border-radius: var(--r-sm); }
+/* the row tooltip and its arrow were deleted here — see the note by TYPE_LABEL */
+/* surface, padding and colour come from .tt now — only the placement is local */
+
+/* Hover actions (Duplicate / Edit / Delete) — each in its own outlined box rather than a
+   bare glyph, so on a tinted hovered row they still read as three separate buttons. Delete
+   is red at rest, not only on its own hover: it is the one action here you cannot undo. */
+/* focus-within as well as hover: these are the only actions on the row, and reaching them
+   by keyboard should not require a mouse to be somewhere. */
+/* A FIXED gutter, four buttons wide (Add + Duplicate + Edit + Delete), whether or not this
+   row has all four. The action count is per-provenance — Predefined offers Add + Duplicate
+   only, your own offers all four — so a gutter that sized itself to its contents put the
+   tag column in a different place on every row. The column only reads as a column if it is
+   one. Rows with fewer actions right-align into it. */
+.lt-acts, :scope:is(.lt-acts) { display: flex; align-items: center; justify-content: flex-end; gap: 6px; width: 130px; flex: none; opacity: 0; transition: opacity .12s; }
+.lrow:hover .lt-acts, .lrow:focus-within .lt-acts, :scope:is(.lrow:hover) .lt-acts, :scope:is(.lrow:focus-within) .lt-acts { opacity: 1; }
+.lt-acts.always, :scope:is(.lt-acts.always) { opacity: 1; }
+/* FILLED, not outlined — the box is solid and the glyph inside it stays a stroke. An
+   outlined box around an outlined glyph is two outlines competing to be the button, which
+   is what these were; filling the box settles it, and the glyph goes back to matching every
+   other icon in the app. The fill is --surface: the row it sits on is tinted now, so white
+   is the step that reads as a raised control on it.
+
+   Delete is red at REST, not only on its own hover. It is the one action here you cannot
+   undo, and a colour that appears only once you are already pointing at it is a warning
+   that arrives after the decision.
+
+   --surface-2, not --surface: the row went back to white, so the button has to be the darker
+   step to read as a control on it. */
+.la, :scope:is(.la) { width: 28px; height: 28px; border: none; background: var(--surface-2); color: var(--ink-2); border-radius: var(--r); display: grid; place-items: center; transition: background .12s, color .12s; }
+.la:hover, :scope:is(.la:hover) { color: var(--primary-700); background: var(--primary-softer); }
+.la.del, :scope:is(.la.del) { color: var(--red); }
+.la.del:hover, :scope:is(.la.del:hover) { color: var(--red); background: var(--red-soft); }
+/* Add is the one action this whole list exists for, so it reads primary at rest rather
+   than only on hover like Duplicate/Edit — and it sits first, leftmost of the group. */
+.la-add, :scope:is(.la-add) { color: var(--primary-700); background: var(--primary-softer); }
+.la-add:hover, :scope:is(.la-add:hover) { background: var(--primary-soft); }
+/* The "already added" mark replaces the whole action group for a placed row. It is static
+   (no button, no hover state) and stays visible via `.lt-acts.always` — the old ticked
+   checkbox's job, now done without a checkbox. */
+.la-added, :scope:is(.la-added) { width: 28px; height: 28px; background: var(--green-soft); color: var(--green); border-radius: var(--r); display: grid; place-items: center; }
+/* delete confirmation modal */
+.cf-overlay, :scope:is(.cf-overlay) { position: fixed; inset: 0; background: rgba(20,21,38,.5); backdrop-filter: blur(2px); z-index: 130; display: grid; place-items: center; padding: 24px; }
+.cf, :scope:is(.cf) { width: min(400px, 92vw); background: var(--surface); border-radius: var(--r-xl); box-shadow: var(--sh-lg); padding: 24px; text-align: center; }
+.cf-ico, :scope:is(.cf-ico) { width: 48px; height: 48px; border-radius: 50%; background: var(--red-soft); color: var(--red); display: grid; place-items: center; margin: 0 auto 14px; }
+.cf h4, :scope:is(.cf) h4 { margin: 0 0 6px; font-size: 16px; }
+.cf p, :scope:is(.cf) p { margin: 0 0 18px; font-size: 13px; color: var(--muted); line-height: 1.5; }
+.cf-btns, :scope:is(.cf-btns) { display: flex; justify-content: center; gap: 10px; }
+.cf-del, :scope:is(.cf-del) { background: var(--red); border-color: var(--red); color: #fff; }
+.cf-del:hover, :scope:is(.cf-del:hover) { background: #c73f34; border-color: #c73f34; }
+.fbtns, :scope:is(.fbtns) { display: flex; gap: 10px; }
+.none, :scope:is(.none) { display: flex; flex-direction: column; align-items: center; gap: 6px; color: var(--muted-2); padding: 54px 20px; text-align: center; }
+.none-t, :scope:is(.none-t) { margin: 4px 0 0; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.none-h, :scope:is(.none-h) { font-size: 13px; color: var(--muted); max-width: 300px; }
+.ellip, :scope:is(.ellip) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+@keyframes dc-AddWidgetModal-slideIn { from { transform: translateX(30px); opacity: .4; } to { transform: translateX(0); opacity: 1; } }

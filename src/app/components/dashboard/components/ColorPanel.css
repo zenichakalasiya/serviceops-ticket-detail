@@ -1,0 +1,39 @@
+/* Ported from components/ui/ColorPanel.vue — scoped to .dc-ColorPanel. */
+@scope (.dc-ColorPanel) {
+.cpx, :scope:is(.cpx) { position: fixed; z-index: 300; width: 440px; height: 306px; display: flex; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--sh-pop); overflow: hidden; }
+
+/* the named list */
+.cpx-names, :scope:is(.cpx-names) { width: 150px; flex: none; padding: 8px 6px; border-right: 1px solid var(--border); overflow: auto; display: flex; flex-direction: column; gap: 2px; }
+.cpx-row, :scope:is(.cpx-row) { display: flex; align-items: center; gap: 10px; width: 100%; height: 30px; flex: none; padding: 0 8px; border: none; border-radius: var(--r); background: transparent; color: var(--ink); font-size: 13px; text-align: left; cursor: pointer; }
+.cpx-row:hover, :scope:is(.cpx-row:hover) { background: var(--surface-2); }
+.cpx-row.on, :scope:is(.cpx-row.on) { background: var(--row-hover, var(--surface-2)); font-weight: 600; }
+.cpx-row .ico, :scope:is(.cpx-row) .ico { color: var(--ink); flex: none; }
+.cpx-l, :scope:is(.cpx-l) { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cpx-sw, :scope:is(.cpx-sw) { width: 16px; height: 16px; flex: none; border-radius: 4px; border: 1px solid var(--border-strong); overflow: hidden; }
+/* the custom chip shows its colour over a checker, so a low opacity reads as see-through */
+.cpx-sw-ck, :scope:is(.cpx-sw-ck) { background: repeating-conic-gradient(var(--border) 0% 25%, var(--surface) 0% 50%) 0 0 / 6px 6px; }
+.cpx-sw-ck i, :scope:is(.cpx-sw-ck) i { display: block; width: 100%; height: 100%; }
+.cpx-rule, :scope:is(.cpx-rule) { display: block; flex: none; height: 1px; margin: 4px 2px; background: var(--border); }
+
+/* the custom pane */
+.cpx-pane, :scope:is(.cpx-pane) { flex: 1; min-width: 0; padding: 10px; display: flex; flex-direction: column; gap: 10px; }
+.cpx-sv, :scope:is(.cpx-sv) { position: relative; height: 150px; flex: none; border-radius: var(--r); cursor: crosshair; }
+.cpx-dot, :scope:is(.cpx-dot) { position: absolute; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0, 0, 0, .35); pointer-events: none; }
+.cpx-sliders, :scope:is(.cpx-sliders) { display: flex; align-items: center; gap: 10px; }
+.cpx-rails, :scope:is(.cpx-rails) { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.cpx-rails input, :scope:is(.cpx-rails) input { -webkit-appearance: none; appearance: none; display: block; width: 100%; height: 12px; margin: 0; border-radius: var(--r-pill); border: none; outline: none; cursor: pointer; }
+.cpx-rails input::-webkit-slider-thumb, :scope:is(.cpx-rails) input::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #fff; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0, 0, 0, .4), 0 1px 3px rgba(0, 0, 0, .3); }
+.cpx-rails input::-moz-range-thumb, :scope:is(.cpx-rails) input::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: #fff; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0, 0, 0, .4); }
+.cpx-hue, :scope:is(.cpx-hue) { background: linear-gradient(to right, #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%); }
+.cpx-alpha, :scope:is(.cpx-alpha) { background: linear-gradient(to right, transparent, var(--a-to)), repeating-conic-gradient(var(--border) 0% 25%, var(--surface) 0% 50%) 0 0 / 8px 8px; }
+.cpx-prev, :scope:is(.cpx-prev) { width: 30px; height: 30px; flex: none; border-radius: var(--r); border: 1px solid var(--border); overflow: hidden; background: repeating-conic-gradient(var(--border) 0% 25%, var(--surface) 0% 50%) 0 0 / 8px 8px; }
+.cpx-prev i, :scope:is(.cpx-prev) i { display: block; width: 100%; height: 100%; }
+.cpx-fields, :scope:is(.cpx-fields) { display: flex; gap: 6px; }
+.cpx-f, :scope:is(.cpx-f) { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; margin: 0; }
+.cpx-f-hex, :scope:is(.cpx-f-hex) { flex: 2.6; }
+.cpx-f input, :scope:is(.cpx-f) input { width: 100%; min-width: 0; height: 28px; padding: 0 4px; text-align: center; border: 1px solid var(--border-control); border-radius: var(--r); background: var(--surface-2); color: var(--ink); font-size: 12px; outline: none; }
+.cpx-f input:focus, :scope:is(.cpx-f) input:focus { border-color: var(--primary); background: var(--surface); }
+.cpx-f span, :scope:is(.cpx-f) span { font-size: 11px; color: var(--muted); }
+.cpx-foot, :scope:is(.cpx-foot) { margin-top: auto; display: flex; justify-content: flex-end; gap: 8px; }
+}
+

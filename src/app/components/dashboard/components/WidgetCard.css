@@ -1,0 +1,181 @@
+/* Ported from WidgetCard.vue's \3c style scoped>. Rules that compete with a global primitive in
+   dashboard.base.css (.card, .menu, .menu-item, .tt, .overlay) carry `:scope` (and where needed a
+   doubled class) so they keep the precedence Vue's scope attribute gave them. */
+@scope (.dc-WidgetCard) {
+  /* Fill the grid cell so the body — and a fill-height chart inside it — get a real height.
+     §9.1 — a widget tile IS a content card, so it takes the surface radius. */
+  :scope.tile.card { display: flex; flex-direction: column; overflow: hidden; min-height: 130px; flex: 1; border-radius: var(--r-lg); border-color: var(--tile-border); }
+
+  /* ── A note — the one tile with no header. The writing on its own surface is the whole
+     affordance; the header is overlaid on the top-right and fades in on hover. */
+  :scope.tile.card.note { position: relative; background: var(--surface); }
+  /* Transparent background: no card at all — no fill and no outline. */
+  :scope.tile.card.note.clear { background: transparent; border-color: transparent; box-shadow: none; }
+  /* The note's lane is its own 12px top inset; the ⋯ is pinned to the corner. */
+  .tile.note .thead, :scope:is(.tile.note) .thead {
+    position: absolute; top: 0; right: 0; left: 0; width: auto; height: 12px; min-height: 0; z-index: 3;
+    background: transparent; padding: 0; justify-content: flex-end; overflow: visible;
+  }
+  .tile.note .ractions, :scope:is(.tile.note) .ractions { position: absolute; top: 4px; right: 4px; }
+  /* no title, no info: a note is read, not identified */
+  .tile.note .title, .tile.note .info, :scope:is(.tile.note) .title, :scope:is(.tile.note) .info { display: none; }
+  /* Only the ⋯, and plain — it appears with the hover like every other widget's actions. */
+  .tile.note .ractions, :scope:is(.tile.note) .ractions { opacity: 0; cursor: default; }
+  .tile.note:hover .ractions, .tile.note.acting .ractions, :scope:is(.tile.note:hover) .ractions, :scope:is(.tile.note.acting) .ractions { opacity: 1; }
+  .tile.note .mwrap .ti, :scope:is(.tile.note) .mwrap .ti { width: 24px; height: 24px; display: grid; place-items: center; background: transparent; border: none; color: var(--muted); border-radius: var(--r); }
+  .tile.note .mwrap .ti:hover, :scope:is(.tile.note) .mwrap .ti:hover { background: color-mix(in srgb, var(--ink) 8%, transparent); color: var(--ink); }
+  /* No inset: the note's background is a setting, so it has to reach the card's edges. */
+  .tile.note .tbody, :scope:is(.tile.note) .tbody { padding: 0; }
+  /* --bg header band; no rule under it — the band's own background separates it. */
+  .thead, :scope:is(.thead) { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 8px 4px 12px; background: var(--bg); cursor: move; }
+  /* the header's controls are clicked, not dragged — they keep their own cursors */
+  .thead button, :scope:is(.thead) button { cursor: pointer; }
+  .thead input, :scope:is(.thead) input { cursor: text; }
+  .left, :scope:is(.left) { position: relative; display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .pinbadge, :scope:is(.pinbadge) { display: inline-grid; place-items: center; color: var(--primary); flex: none; transform: rotate(35deg); }
+  .title, :scope:is(.title) { font-weight: 600; font-size: var(--tile-title, 13.5px); }
+
+  /* the schedule badge is always on — it reports a fact, it is not a hover action */
+  .sch-mark, :scope:is(.sch-mark) { flex: none; width: 20px; height: 20px; border: none; background: transparent; color: var(--green); border-radius: 4px; display: grid; place-items: center; }
+  .sch-mark:hover, :scope:is(.sch-mark:hover) { background: var(--green-soft); }
+  .info, :scope:is(.info) { position: relative; color: var(--muted-2); display: inline-grid; place-items: center; cursor: help; opacity: 0; }
+  /* left-side extras appear with the header hover */
+  .thead:hover .info, :scope:is(.thead:hover) .info { opacity: 1; }
+  .info:hover, :scope:is(.info:hover) { color: var(--primary); }
+  :scope.tt.info-tt { position: fixed; z-index: 200; width: 240px; }
+
+  /* the right cluster: a persistent date control, then the hover-revealed actions. INSTANT, no slide. */
+  .ractions, :scope:is(.ractions) { display: flex; align-items: center; gap: 2px; flex: none; }
+  .right, .lrev, :scope:is(.right), :scope:is(.lrev) { display: grid; grid-template-columns: 0fr; opacity: 0; }
+  .r-in, :scope:is(.r-in) { display: flex; align-items: center; gap: 1px; min-width: 0; overflow: hidden; }
+  .tile:hover .right, .tile.searching .right, .tile.acting .right, .tile:hover .lrev, .tile.searching .lrev, .tile.acting .lrev, :scope:is(.tile:hover) .right, :scope:is(.tile.searching) .right, :scope:is(.tile.acting) .right, :scope:is(.tile:hover) .lrev, :scope:is(.tile.searching) .lrev, :scope:is(.tile.acting) .lrev { grid-template-columns: 1fr; opacity: 1; }
+  /* The per-widget time range, deliberately SMALLER than the actions around it (22px to 28px). */
+  .ti.df-btn, :scope:is(.ti.df-btn) { width: 22px; height: 22px; }
+  .ti.df-btn .ico, :scope:is(.ti.df-btn) .ico { color: var(--df); flex: none; }
+  .ti.df-btn.on, :scope:is(.ti.df-btn.on) { background: var(--df-soft); color: var(--df-ink); }
+  .ti.df-btn.on .ico, :scope:is(.ti.df-btn.on) .ico { color: var(--df); }
+  /* .own / .group filled the same way; .none a plain grey action */
+  .ti.df-btn.own, .ti.df-btn.group, :scope:is(.ti.df-btn.own), :scope:is(.ti.df-btn.group) { background: var(--df-soft); color: var(--df-ink); }
+  .ti.df-btn.none, :scope:is(.ti.df-btn.none) { color: var(--muted); }
+  .ti.df-btn.none .ico, :scope:is(.ti.df-btn.none) .ico { color: var(--muted); }
+  .ti.df-btn.none:hover, :scope:is(.ti.df-btn.none:hover) { background: var(--surface); color: var(--ink); }
+  .ti.df-btn.none:hover .ico, :scope:is(.ti.df-btn.none:hover) .ico { color: var(--ink); }
+  /* the date icon's tooltip — range name, resolved window, then its source */
+  :scope.tt.df-tt { position: fixed; z-index: 200; width: 260px; display: flex; flex-direction: column; gap: 4px; }
+  .dft-name, :scope:is(.dft-name) { color: #fff; font-weight: 600; }
+  .dft-stamps, :scope:is(.dft-stamps) { color: rgba(255,255,255,.9); font-variant-numeric: tabular-nums; }
+  .dft-from, :scope:is(.dft-from) { color: #b9bcd6; font-size: 11px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .right, .lrev, :scope:is(.right), :scope:is(.lrev) { transition: none; }
+  }
+  /* padding 0: the UA's 1px 6px leaves a 22px button a 10px content box */
+  .ti, :scope:is(.ti) { width: 28px; height: 28px; padding: 0; border-radius: 4px; border: none; background: transparent; color: var(--muted); display: grid; place-items: center; }
+  /* hover uses the card surface (white) so it reads against the neutral header band */
+  .ti:hover, :scope:is(.ti:hover) { background: var(--surface); color: var(--ink); }
+  .ti.on, :scope:is(.ti.on) { background: var(--primary-soft); color: var(--primary-700); }
+  /* the AI sparkle carries its soft wash the whole time it is on screen */
+  .ti.ai, :scope:is(.ti.ai) { color: var(--ai); background: var(--ai-softer); }
+  .ti.ai:hover, .ti.ai.on, :scope:is(.ti.ai:hover), :scope:is(.ti.ai.on) { background: var(--ai-soft); color: var(--ai-ink); }
+  /* per-widget hover mini-summary card — shell/wash/CTAs come from global .aic / .ai-cta */
+  :scope.wai-card { position: fixed; z-index: 260; width: 384px; max-width: 92vw; padding: 16px; box-shadow: var(--sh-lg); animation: dc-WidgetCard-fade .14s ease; }
+  :scope.wai-card.up { transform: translateY(-100%); }
+  .wai-h, :scope:is(.wai-h) { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--ink); }
+  .wai-h .ellip, :scope:is(.wai-h) .ellip { color: var(--ai-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .wai-spark, :scope:is(.wai-spark) { flex: none; display: grid; place-items: center; }
+  .wai-spark .ico, :scope:is(.wai-spark) .ico { stroke: url(#ai-grad); color: var(--ai); }
+  .wai-sum, :scope:is(.wai-sum) { margin: 10px 0 16px; font-size: 13px; line-height: 1.6; color: var(--ink); }
+  /* two actions, side by side */
+  .wai-acts, :scope:is(.wai-acts) { display: flex; flex-wrap: wrap; gap: 8px; }
+  .spin, :scope:is(.spin) { animation: dc-WidgetCard-sp 0.75s linear infinite; }
+  .mwrap, :scope:is(.mwrap) { position: relative; }
+  .backdrop, :scope:is(.backdrop) { position: fixed; inset: 0; z-index: 130; }
+  /* portalled menu — fixed to viewport, above the card so it is never clipped */
+  :scope .menu.tile-menu { position: fixed; z-index: 140; min-width: 190px; }
+  /* the Move-to-group submenu — Export's flyout, sized for group names; long lists scroll */
+  .submenu.mv-sub, :scope:is(.submenu.mv-sub) { min-width: 220px; max-height: 280px; overflow: auto; }
+  .mv-row, :scope:is(.mv-row) { gap: 8px; }
+  .mv-dot, :scope:is(.mv-dot) { width: 6px; height: 6px; border-radius: 50%; flex: none; background: transparent; }
+  .mv-nm, :scope:is(.mv-nm) { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mv-n, :scope:is(.mv-n) { flex: none; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  :scope .menu-item.mv-row.cur { font-weight: 600; cursor: default; }
+  .mv-row.cur .mv-dot, :scope:is(.mv-row.cur) .mv-dot { background: var(--sel); }
+  .mv-row.cur .mv-n, :scope:is(.mv-row.cur) .mv-n { color: var(--ink); font-weight: 600; }
+  :scope .menu-item.mv-row.cur:hover { background: transparent; }
+  /* AI action, when it has collapsed into the ⋯ menu on a small tile */
+  :scope .menu-item.ai { color: var(--ai-ink); }
+  .menu-item.ai .ico, :scope:is(.menu-item.ai) .ico { color: var(--ai); }
+  :scope .menu-item.ai:hover { background: var(--ai-softer); }
+  /* the chevron is chrome, not AI — keep it the same muted grey as the other submenus */
+  .menu-item.ai .mi-c .ico, .menu-item.ai .mi-c, .menu-item.ai .ico.mi-c, :scope:is(.menu-item.ai) .mi-c .ico, :scope:is(.menu-item.ai) .mi-c, :scope:is(.menu-item.ai) .ico.mi-c { color: var(--muted); }
+  /* the AI flyout is a CARD — it carries the same summary + two CTAs as the header sparkle's */
+  .submenu.ai-sub, :scope:is(.submenu.ai-sub) { width: 384px; min-width: 384px; padding: 12px 13px; border-color: var(--ai-border); }
+  .menu-item.sub, :scope:is(.menu-item.sub) { justify-content: space-between; position: relative; }
+  .mi-l, :scope:is(.mi-l) { display: flex; align-items: center; gap: 10px; }
+  .mi-c, :scope:is(.mi-c) { color: var(--muted); }
+  .submenu, :scope:is(.submenu) { position: absolute; top: -7px; right: 100%; min-width: 124px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--sh-pop); padding: 6px; animation: dc-WidgetCard-fade .12s ease; }
+  /* near the left edge there is no room to fly out leftwards — go right instead */
+  .tile-menu.sub-right .submenu, :scope:is(.tile-menu.sub-right) .submenu { right: auto; left: 100%; }
+  /* chart-type submenu: current one checked, incompatible ones greyed */
+  .submenu.types, :scope:is(.submenu.types) { min-width: 178px; top: -80px; }
+  /* wide enough for "Email as PDF" on ONE line */
+  .submenu.ex, :scope:is(.submenu.ex) { min-width: 180px; }
+  .submenu.ex .menu-item, :scope:is(.submenu.ex) .menu-item { white-space: nowrap; }
+  .ct, :scope:is(.ct) { justify-content: flex-start; gap: 10px; }
+  .ct .ct-ck, :scope:is(.ct) .ct-ck { margin-left: auto; color: var(--primary); }
+  :scope .menu-item.ct.on { color: var(--primary-700); font-weight: 600; }
+  .ct:disabled, :scope:is(.ct:disabled) { opacity: .4; cursor: not-allowed; }
+  :scope .menu-item.ct:disabled:hover { background: transparent; }
+  /* frozen: a predefined pie/KPI/shortcut can't be recast at all */
+  .menu-item.sub.dis, :scope:is(.menu-item.sub.dis) { opacity: .4; cursor: not-allowed; }
+  :scope .menu-item.sub.dis:hover { background: transparent; }
+  /* --tile-pad is set on the board from the GLOBAL layout setting */
+  .tbody, :scope:is(.tbody) { flex: 1; padding: var(--tile-pad, 12px); display: flex; flex-direction: column; min-height: 0; }
+  .loading, :scope:is(.loading) { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+  /* the loader sits dead centre of the body, whatever the widget's size */
+  .demo-loader, :scope:is(.demo-loader) { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
+  /* No hover fill behind the number — hovering a KPI does nothing. */
+  .kpi, :scope:is(.kpi) { display: flex; flex-direction: column; justify-content: center; align-items: center; flex: 1; text-align: center; padding: 18px 16px; }
+  .kpinum, :scope:is(.kpinum) { font-size: 46px; font-weight: 500; letter-spacing: -1px; line-height: 1; }
+  .kpinum .unit, :scope:is(.kpinum) .unit { font-size: 20px; font-weight: 600; color: var(--muted); margin-left: 3px; }
+  .stbl, :scope:is(.stbl) { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+  .stbl-scroll, :scope:is(.stbl-scroll) { flex: 1; overflow: auto; min-height: 0; max-height: 200px; }
+  /* margin-top: auto pins it to the tile's bottom edge whatever the table's height */
+  .sfoot, :scope:is(.sfoot) { flex: none; margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 10px; border-top: 1px solid var(--border); }
+  .sfoot-t, :scope:is(.sfoot-t) { font-size: 12px; color: var(--muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sfoot-a, :scope:is(.sfoot-a) { flex: none; display: inline-flex; align-items: center; gap: 2px; border: none; background: transparent; padding: 0; font-size: 13px; font-weight: 500; color: var(--primary-700); cursor: pointer; }
+  .sfoot-a:hover, :scope:is(.sfoot-a:hover) { text-decoration: underline; }
+  table, :scope:is(table) { font-size: 13px; }
+  /* §7.3 status badge — 2px, NOT a pill: a state badge, not a clickable chip. */
+  .pill, :scope:is(.pill) { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: var(--r-sm); font-size: 11px; font-weight: 500; white-space: nowrap; }
+  .pill-blue, :scope:is(.pill-blue) { background: var(--blue-soft); color: var(--blue); }
+  .pill-amber, :scope:is(.pill-amber) { background: var(--amber-soft); color: var(--amber); }
+  .pill-green, :scope:is(.pill-green) { background: var(--green-soft); color: var(--green); }
+  .pill-red, :scope:is(.pill-red) { background: var(--red-soft); color: var(--red); }
+  .pill-p1, :scope:is(.pill-p1) { background: var(--red-soft); color: var(--red); }
+  .pill-p2, :scope:is(.pill-p2) { background: var(--amber-soft); color: var(--amber); }
+  .pill-p3, :scope:is(.pill-p3) { background: var(--blue-soft); color: var(--blue); }
+  .pill-p4, :scope:is(.pill-p4) { background: var(--surface-2); color: var(--muted); }
+  /* explorable record ID (task 12) */
+  .id-link, :scope:is(.id-link) { border: none; background: transparent; color: var(--primary-700); font: inherit; font-weight: 600; padding: 0; cursor: pointer; }
+  .id-link:hover, :scope:is(.id-link:hover) { text-decoration: underline; }
+  /* same footprint as the builder — including the 16px gutter (the shared .overlay uses 24px) */
+  :scope .overlay.overlay { padding: 16px; }
+  .present, :scope:is(.present) { background: var(--surface); border-radius: var(--r-xl); width: 100%; height: 100%; display: flex; flex-direction: column; box-shadow: var(--sh-lg); overflow: hidden; }
+  /* A tinted band, 46px tall — the same band a placed widget wears. */
+  .phead, :scope:is(.phead) { display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 46px; padding: 0 12px; background: var(--surface-2); border-bottom: 1px solid var(--border); font-size: 15px; flex: none; }
+  .phead-a, :scope:is(.phead-a) { display: flex; align-items: center; gap: 2px; }
+  .pbody, :scope:is(.pbody) { padding: 32px 40px; flex: 1; min-height: 62vh; display: grid; place-items: center; overflow: auto; }
+  /* A table gets 12 on every side instead of 32/40 — a grid should use the width it was given. */
+  .pbody.tbl, :scope:is(.pbody.tbl) { padding: 12px; }
+  .pbody > *, :scope:is(.pbody) > * { width: 100%; }
+  .kpi.big, :scope:is(.kpi.big) { padding: 0; } .kpi.big .kpinum, :scope:is(.kpi.big) .kpinum { font-size: 150px; } .kpi.big .kpinum .unit, :scope:is(.kpi.big) .kpinum .unit { font-size: 48px; }
+  .stbl.big, :scope:is(.stbl.big) { align-self: stretch; width: 100%; } .stbl.big table, :scope:is(.stbl.big) table { font-size: 15px; }
+  /* 12 between the search bar and the first row at full screen (the in-card bar keeps 6). */
+  .stbl.big .tfb, :scope:is(.stbl.big) .tfb { margin-bottom: 12px; }
+  /* full screen: the record list scrolls within the dialog, taller than the tile */
+  .stbl.big .stbl-scroll, :scope:is(.stbl.big) .stbl-scroll { max-height: 72vh; }
+  .ellip, :scope:is(.ellip) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+@keyframes dc-WidgetCard-sp { to { transform: rotate(360deg); } }
+@keyframes dc-WidgetCard-fade { from { opacity: 0; } to { opacity: 1; } }

@@ -1,0 +1,402 @@
+@scope (.dc-DashboardView) {
+/* flex: none — .main is a flex column, and a shrinkable board was squeezed to the viewport
+   height with its content overflowing it; the sticky toolbar then un-stuck as soon as that
+   viewport-tall box scrolled away. The board must be as tall as what it holds. */
+:scope.board { display: flex; flex-direction: column; min-height: 100%; flex: none; }
+/* 16px sides, not 24. The BODY below takes its side padding inline from the board-margin
+   setting (16px by default), so a 24px header put the board title 8px left of the widgets
+   it belongs to — the one edge in the view where two stacked regions did not line up. */
+/* STICKY: the toolbar holds the Groups navigator, so it stays with you down the board.
+   Above the group headers (20); the group headers stick under it via --bar-h. */
+.bhead, :scope:is(.bhead) { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 16px; background: var(--surface); border-bottom: 1px solid var(--border); flex-wrap: nowrap; position: sticky; top: 0; z-index: 30; }
+.bh-left, :scope:is(.bh-left) { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1; }
+.listing-toggle, :scope:is(.listing-toggle) { width: 34px; height: 32px; border: 1px solid var(--border); background: var(--surface); color: var(--ink-2); border-radius: 4px; display: grid; place-items: center; flex: none; }
+.listing-toggle:hover, :scope:is(.listing-toggle:hover) { background: var(--surface-2); color: var(--ink); border-color: var(--border-strong); }
+.star, :scope:is(.star) { width: 34px; height: 32px; border-radius: 4px; border: none; background: transparent; color: var(--muted); display: grid; place-items: center; }
+.star:hover, .star.on, :scope:is(.star:hover), :scope:is(.star.on) { color: #f5a623; }
+.titles, :scope:is(.titles) { min-width: 0; }
+.t-row, :scope:is(.t-row) { display: flex; align-items: center; gap: 9px; }
+.t-row h1, :scope:is(.t-row) h1 { margin: 0; font-size: 19px; letter-spacing: -.3px; }
+.acc-wrap, :scope:is(.acc-wrap) { position: relative; }
+.dinfo, :scope:is(.dinfo) { position: relative; color: var(--muted-2); display: inline-grid; place-items: center; cursor: help; }
+.dinfo:hover, :scope:is(.dinfo:hover) { color: var(--primary); }
+.dinfo-tt, :scope:is(.dinfo-tt) { top: 26px; left: -8px; width: 260px; }
+/* pills sit BELOW the description, left-aligned — mirrors WidgetCard's .tt-tag */
+/* the audience, folded in below a rule so it reads as a second fact about the board
+   rather than more of the description */
+/* .tt-desc / .tt-tag / .tt-acc* all live in global.css. A scoped copy here is what made
+   this tooltip's tags a bordered 999px pill while the widget tooltip's were 4px — scoped
+   styles carry a data attribute and out-specify the global rule. Do not reintroduce one. */
+/* restricted → click the icon to see technician + group access */
+/* the pill now appears on every board, so it carries the access level's own colour —
+   the glyph alone (globe / lock / people) is what has to say which one this is */
+/* Restricted is the only access level that shows a pill, so it carries that one hue */
+.restrict-ic, :scope:is(.restrict-ic) { display: inline-grid; place-items: center; width: 28px; height: 26px; border: 1px solid var(--border-strong); background: var(--surface); border-radius: 4px; color: var(--amber); cursor: pointer; }
+.restrict-ic:hover, :scope:is(.restrict-ic:hover) { border-color: transparent; background: var(--amber-soft); }
+.restrict-pop, :scope:is(.restrict-pop) { position: absolute; top: 34px; left: 0; z-index: 60; width: 300px; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+.backdrop, :scope:is(.backdrop) { position: fixed; inset: 0; z-index: 55; }
+.ap-h, :scope:is(.ap-h) { display: flex; align-items: center; gap: 7px; font-weight: 600; font-size: 13px; }
+/* the one-line answer sits directly under the heading, before the lists that back it up */
+/* the recipient count, on the heading */
+.ap-n, :scope:is(.ap-n) { margin-left: auto; min-width: 20px; height: 18px; padding: 0 6px; display: inline-grid; place-items: center; background: var(--inset); color: var(--ink-2); border-radius: var(--r-sm); font-size: 11px; font-weight: 600; }
+.ap-locked, :scope:is(.ap-locked) { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 12px; color: var(--muted); }
+.ap-none, :scope:is(.ap-none) { margin: 0; font-size: 12px; line-height: 1.5; color: var(--muted); }
+.ap-sec label, :scope:is(.ap-sec) label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); font-weight: 600; margin-bottom: 7px; }
+/* Named ROWS, not chips: a person is shown the way people are shown everywhere else in
+   the product — an avatar and a full name on one line. Chips wrapped mid-name and read
+   as removable filters rather than as a list of who can open the board. */
+.ap-rows, :scope:is(.ap-rows) { display: flex; flex-direction: column; gap: 2px; max-height: 190px; overflow: auto; }
+.ap-row, :scope:is(.ap-row) { display: flex; align-items: center; gap: 8px; padding: 5px 6px; border-radius: var(--r); }
+.ap-row:hover, :scope:is(.ap-row:hover) { background: var(--row-hover); }
+.ap-av, :scope:is(.ap-av) { flex: none; width: 24px; height: 24px; display: grid; place-items: center; border-radius: var(--r); background: var(--primary); color: #fff; font-size: 10px; font-weight: 500; }
+/* a group is a set, not a person — square avatar, quieter fill, a glyph instead of initials */
+.ap-av.grp, :scope:is(.ap-av.grp) { background: var(--inset); color: var(--ink-2); }
+.ap-nm, :scope:is(.ap-nm) { font-size: 13px; color: var(--ink); min-width: 0; }
+.small, :scope:is(.small) { font-size: 12px; }
+.ap-desc, :scope:is(.ap-desc) { margin: 0; font-size: 13px; color: var(--ink-2); line-height: 1.5; }
+.ap-edit, :scope:is(.ap-edit) { display: flex; align-items: center; gap: 7px; justify-content: center; border: 1px solid var(--border-strong); background: var(--surface); border-radius: 4px; padding: 7px; font-weight: 500; font-size: 13px; color: var(--ink-2); }
+.ap-edit:hover, :scope:is(.ap-edit:hover) { background: var(--surface-2); }
+.bh-right, :scope:is(.bh-right) { display: flex; align-items: center; gap: 8px; flex: none; }
+.titles, :scope:is(.titles) { min-width: 0; }
+.t-row h1, :scope:is(.t-row) h1 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 360px; }
+.vsep, :scope:is(.vsep) { width: 1px; height: 24px; background: var(--border); margin: 0 2px; }
+/* ── Groups navigator (toolbar) ──
+   The trigger matches the toolbar's other bordered 32px controls and just says "Groups";
+   where you are is marked inside the list (scroll-spy), not on the button. */
+.gnav-wrap, :scope:is(.gnav-wrap) { margin-right: 4px; }
+.gnav-btn, :scope:is(.gnav-btn) { display: inline-flex; align-items: center; gap: 6px; height: 32px; max-width: 240px; padding: 0 8px 0 10px; border: 1px solid var(--border); border-radius: var(--r); background: var(--surface); color: var(--ink); font-size: 13px; font-weight: 500; }
+.gnav-btn:hover, .gnav-btn.on, :scope:is(.gnav-btn:hover), :scope:is(.gnav-btn.on) { background: var(--surface-2); border-color: var(--border-strong); }
+.gnav-btn .ico, :scope:is(.gnav-btn) .ico { color: var(--ink-2); }
+.gnav-cur, :scope:is(.gnav-cur) { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gnav-chev, :scope:is(.gnav-chev) { flex: none; }
+.gnav-pop, :scope:is(.gnav-pop) { top: calc(100% + 6px); left: 0; width: 290px; padding: 4px 0 0; display: flex; flex-direction: column; max-height: min(440px, 70vh); }
+.gnav-search, :scope:is(.gnav-search) { display: flex; align-items: center; gap: 6px; margin: 6px 8px 2px; height: 30px; padding: 0 8px; border: 1px solid var(--border-control); border-radius: var(--r); color: var(--muted); }
+.gnav-search input, :scope:is(.gnav-search) input { flex: 1; min-width: 0; border: none; outline: none; background: transparent; font-size: 13px; color: var(--ink); }
+.gnav-list, :scope:is(.gnav-list) { flex: 1; min-height: 0; overflow: auto; padding-bottom: 4px; }
+.gnav-row, :scope:is(.gnav-row) { gap: 8px; }
+.gnav-dot, :scope:is(.gnav-dot) { width: 6px; height: 6px; border-radius: 50%; flex: none; }
+.gnav-nm, :scope:is(.gnav-nm) { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gnav-n, :scope:is(.gnav-n) { flex: none; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+/* the loose widgets are a section too, but not a group — set in italic-free muted ink */
+.gnav-row.ug .gnav-nm, :scope:is(.gnav-row.ug) .gnav-nm { color: var(--ink-2); }
+.gnav-row.cur, :scope:is(.gnav-row.cur) { font-weight: 600; }
+.gnav-row.cur .gnav-dot, :scope:is(.gnav-row.cur) .gnav-dot { background: var(--sel); }
+.gnav-row.cur .gnav-nm, :scope:is(.gnav-row.cur) .gnav-nm { color: var(--ink); }
+.gnav-row.cur .gnav-n, :scope:is(.gnav-row.cur) .gnav-n { color: var(--ink); font-weight: 600; }
+.gnav-none, :scope:is(.gnav-none) { padding: 10px 12px; font-size: 12px; color: var(--muted); }
+.gnav-foot, :scope:is(.gnav-foot) { display: flex; align-items: center; gap: 4px; padding: 6px 8px; border-top: 1px solid var(--border-hairline); }
+.gnav-act, :scope:is(.gnav-act) { display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 8px; border: none; border-radius: var(--r); background: transparent; color: var(--ink-2); font-size: 12px; font-weight: 500; }
+.gnav-act:hover, :scope:is(.gnav-act:hover) { background: var(--surface-2); color: var(--ink); }
+.gnav-keys, :scope:is(.gnav-keys) { margin-left: auto; display: inline-flex; gap: 4px; }
+.gnav-keys kbd, :scope:is(.gnav-keys) kbd { font-family: inherit; font-size: 10px; color: var(--muted); border: 1px solid var(--border); border-radius: 3px; padding: 0 4px; line-height: 16px; }
+.btn.ico-only, :scope:is(.btn.ico-only) { width: 38px; padding: 0; justify-content: center; }
+.btn.ico-only.on, :scope:is(.btn.ico-only.on) { background: var(--primary-soft); color: var(--primary-700); border-color: transparent; }
+.pop-wrap, :scope:is(.pop-wrap) { position: relative; }
+.editbar, :scope:is(.editbar) { display: flex; align-items: center; gap: 9px; padding: 9px 24px; background: var(--primary-softer); border-bottom: 1px solid var(--primary-soft); color: var(--primary-700); font-size: 13px; }
+.unsaved, :scope:is(.unsaved) { color: var(--amber); font-weight: 600; font-size: 12px; }
+/* the canvas is white: tiles are --surface too, so the separation comes from their
+   borders and shadow rather than a tinted ground */
+.bbody, :scope:is(.bbody) { flex: 1; padding: 16px 24px 28px; background: var(--surface); }
+/* the board gutter is set inline from store.layout.boardMargin — see boardPad */
+.grid, :scope:is(.grid) { display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px; align-items: start; }
+/* B placement: the AI card in the KPI row — ~3 KPI widths, height matched to a KPI tile */
+.ai-cell, :scope:is(.ai-cell) { grid-column: span 6; min-height: 140px; }
+.ai-cell .ai-card-b, :scope:is(.ai-cell) .ai-card-b { min-height: 140px; }
+.cell, :scope:is(.cell) { position: relative; border-radius: var(--r-lg); display: flex; flex-direction: column; }
+/* minimal highlight on a just-added widget */
+.cell.flash, :scope:is(.cell.flash) { animation: dc-DashboardView-flash 1.8s ease-out; }
+.cell.flash .tile, :scope:is(.cell.flash) .tile { border-color: var(--primary); }
+
+.span-3, :scope:is(.span-3) { grid-column: span 3; } .span-6, :scope:is(.span-6) { grid-column: span 6; } .span-4, :scope:is(.span-4) { grid-column: span 4; } .span-12, :scope:is(.span-12) { grid-column: span 12; }
+.cell > .tile, :scope:is(.cell) > .tile { flex: 1; min-height: 0; }
+.sk, :scope:is(.sk) { min-height: 140px; padding: 10px; } .sk.span-6, :scope:is(.sk.span-6) { min-height: 248px; }
+/* drag-reorder states */
+.cell.dragging, :scope:is(.cell.dragging) { opacity: .4; }
+.cell.dropzone, :scope:is(.cell.dropzone) { outline: 2px dashed var(--primary); outline-offset: 2px; border-radius: var(--r-lg); }
+/* Bottom-right resize grip: a CORNER BRACKET, revealed on hover. It traces the tile's own
+   corner, which is what it moves — the two diagonal strokes it replaced read as a generic
+   textarea grip and said nothing about which edge you were about to drag.
+   Drawn with two borders on an empty box, so it is crisp at any zoom and needs no asset;
+   the rounded outer corner echoes the card's radius instead of cutting across it. Inset
+   5px clears the tile's 1px border and its corner arc. The HIT area stays 16px even though
+   the mark is 6: a drag target should be easier to grab than it is to see. Instant on
+   hover, like the widget's other actions. */
+/* a locked layout can't be dragged, so its widget headers don't offer the move cursor */
+.cell.locked .thead, :scope:is(.cell.locked) .thead { cursor: default; }
+.resize, :scope:is(.resize) { position: absolute; right: 3px; bottom: 3px; width: 16px; height: 16px; z-index: 6; cursor: nwse-resize; opacity: 0; }
+.resize::after, :scope:is(.resize)::after {
+  content: ''; position: absolute; right: 2px; bottom: 2px; width: 6px; height: 6px;
+  /* --muted-2, the info icon's grey — the two sit in the same card and read as one set */
+  border-right: 2px solid var(--muted-2); border-bottom: 2px solid var(--muted-2);
+  border-bottom-right-radius: 2px;
+}
+.cell:hover .resize, :scope:is(.cell:hover) .resize { opacity: 1; }
+.resize:hover::after, :scope:is(.resize:hover)::after { border-color: var(--primary); }
+/* staggered widget reveal after the loading skeleton */
+/* The CARD arrives quickly and quietly; the CHART inside it is what animates. This
+   used to run .5s with up to .35s of stagger — long enough that a chart's 550ms draw
+   finished behind a still-invisible card, which is why the charts appeared to pop in
+   fully formed. Now the cards are all present by ~.5s and the chart entrance (held
+   back by ENTER_DELAY in ChartTile) plays out in full view. */
+.revealing .cell, :scope:is(.revealing) .cell { animation: dc-DashboardView-cellReveal .3s cubic-bezier(.2,.8,.2,1) backwards; }
+.revealing .cell:nth-child(2), :scope:is(.revealing) .cell:nth-child(2) { animation-delay: .04s; }
+.revealing .cell:nth-child(3), :scope:is(.revealing) .cell:nth-child(3) { animation-delay: .08s; }
+.revealing .cell:nth-child(4), :scope:is(.revealing) .cell:nth-child(4) { animation-delay: .12s; }
+.revealing .cell:nth-child(5), :scope:is(.revealing) .cell:nth-child(5) { animation-delay: .16s; }
+.revealing .cell:nth-child(n+6), :scope:is(.revealing) .cell:nth-child(n+6) { animation-delay: .2s; }
+
+/* widget groups (collapsible rows) */
+.board-groups, :scope:is(.board-groups) { display: flex; flex-direction: column; gap: 16px; }
+/* No outline. The ground colour already marks the group's extent, and once the tiles
+   inside got their own stronger edge the container's border was a third frame stacked on
+   the same content. It comes back only while something is being dragged into it, where
+   the border IS the message. */
+/* ── A GROUP: a bordered card with a header BAND and a body of widgets ──────────────
+   Matches the reference: the band is a strip on the widget header's own colour, so the
+   group and the widgets in it share one header language; the body holds the widgets on
+   the group ground with one 12px gutter. `overflow: hidden` rounds the band's corners —
+   everything that must escape it (the ⋯ menu, the date popover) is teleported. */
+/* White body (the card surface), and an outline that follows the header colour. */
+/* `overflow: clip`, NOT hidden: hidden makes the group a scroll container, and a sticky
+   header then sticks inside the group (never) instead of to the page. clip still rounds
+   the corners. */
+.group, :scope:is(.group) { border: 1px solid var(--gh-line, var(--border)); border-radius: var(--r-lg); background: var(--gh-body, var(--surface)); overflow: clip; transition: box-shadow .15s, border-color .15s; }
+.group.drop-into, .grid.drop-into, :scope:is(.group.drop-into), :scope:is(.grid.drop-into) { border: 1px solid var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); border-radius: var(--r-lg); }
+.grid.drop-into, :scope:is(.grid.drop-into) { padding: 4px; }
+/* reordering: a primary rule where the dragged group will land, and the source dims */
+.group.g-drop-before, :scope:is(.group.g-drop-before) { box-shadow: 0 -3px 0 var(--primary); }
+.group.g-dragging, :scope:is(.group.g-dragging) { opacity: .5; }
+
+/* Three columns. Centred (the default) the title owns the middle track, so it centres
+   on the BAND; the side tracks are equal so the middle one really is the middle. Left-
+   aligned, the title's track grows and sits straight after the collapse caret. */
+.grp-head, :scope:is(.grp-head) {
+  display: grid; grid-template-columns: 1fr minmax(0, auto) 1fr; align-items: center; gap: 8px;
+  /* 6px sides: with 28px controls in a 40px band that is 6px above them too, so the
+     collapse arrow sits as far from the left edge as from the top, and ⋯ likewise right */
+  min-height: 40px; padding: 0 6px; background: var(--gh-bg, var(--bg)); color: var(--gh-ink, var(--ink));
+  border-bottom: 1px solid var(--gh-line, var(--border));
+  cursor: grab;
+  /* Sticky, as in the reference: while its group scrolls past, the header holds the top
+     of the page and the widgets slide under it; when the group's end arrives the header
+     leaves with it and the next group's header takes the top. A sticky element is bound
+     by its parent, so the hand-off needs no script. z-index clears every layer inside a
+     group (resize grip 6, row inserter 8) and stays under the FAB (40). */
+  position: sticky; top: calc(var(--bar-h, 0px) + 16px); z-index: 20;
+}
+/* STUCK: fill the 16px above with the board's white (reaching over the group's own side
+   borders, hence -1px and the 1px clip margin), and give the band a top edge of its own
+   since the group's top border has scrolled away. See markStuck(). */
+/* …and keep its ROUNDED top corners while it rides: the band is repainted as a rounded
+   layer (::after, edged like the group) over a white backing (::before) that runs from the
+   gap above down behind the band — so the corners show white, not the widgets scrolling
+   under. The header's own content is lifted above both. */
+.grp-head.stuck, :scope:is(.grp-head.stuck) { background: transparent; }
+.grp-head.stuck::before, :scope:is(.grp-head.stuck)::before { content: ''; position: absolute; left: -1px; right: -1px; top: -17px; bottom: 0; background: var(--surface); pointer-events: none; }
+.grp-head.stuck::after, :scope:is(.grp-head.stuck)::after {
+  content: ''; position: absolute; left: -1px; right: -1px; top: 0; bottom: 0; pointer-events: none;
+  background: var(--gh-bg, var(--grp-head)); border: 1px solid var(--gh-line, var(--border)); border-bottom: none;
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+}
+.grp-head.stuck > *, :scope:is(.grp-head.stuck) > * { position: relative; z-index: 1; }
+.group:has(> .grp-head.stuck), :scope:is(.group:has(> .grp-head.stuck)) { overflow-clip-margin: 1px; }
+.grp-head:active, :scope:is(.grp-head:active) { cursor: grabbing; }
+.grp-head button, :scope:is(.grp-head) button { cursor: pointer; }
+.grp-head.gh-left-align, :scope:is(.grp-head.gh-left-align) { grid-template-columns: auto minmax(0, 1fr) auto; }
+.group.collapsed .grp-head, :scope:is(.group.collapsed) .grp-head { border-bottom-color: transparent; }
+.gh-l, .gh-r, :scope:is(.gh-l), :scope:is(.gh-r) { display: flex; align-items: center; gap: 2px; }
+.gh-r, :scope:is(.gh-r) { justify-content: flex-end; }
+.gh-t, :scope:is(.gh-t) { display: flex; align-items: center; justify-content: center; gap: 6px; min-width: 0; }
+.gh-left-align .gh-t, :scope:is(.gh-left-align) .gh-t { justify-content: flex-start; }
+.grp-name, :scope:is(.grp-name) { font-weight: 600; font-size: var(--gh-size, 14px); line-height: 1.2; cursor: text; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.grp-name-input, :scope:is(.grp-name-input) { font-weight: 600; font-size: 14px; border: 1px solid var(--primary); border-radius: var(--r); padding: 2px 8px; outline: none; box-shadow: 0 0 0 3px var(--primary-soft); background: var(--surface); color: var(--ink); min-width: 0; }
+.gh-lock, :scope:is(.gh-lock) { display: inline-grid; place-items: center; opacity: .7; }
+
+.gh-tog, :scope:is(.gh-tog) { width: 28px; height: 28px; border: none; background: transparent; color: inherit; opacity: .7; display: grid; place-items: center; padding: 0; border-radius: var(--r); }
+.gh-tog:hover, :scope:is(.gh-tog:hover) { opacity: 1; }
+
+/* Right side: + and ⋯ appear on hover, instantly, like a widget's actions. The date icon
+   is always there: plain with no range, tinted once one is set — it reports a state. */
+.gh-act, :scope:is(.gh-act) { width: 28px; height: 28px; padding: 0; border: none; background: transparent; color: inherit; opacity: .75; display: grid; place-items: center; border-radius: var(--r); }
+.gh-act:hover, :scope:is(.gh-act:hover) { opacity: 1; background: color-mix(in srgb, currentColor 10%, transparent); }
+/* + and ⋯ take NO room at rest (display, not visibility), so a set date chip sits hard
+   right; on hover they arrive and the chip steps left of them, instantly */
+.gh-hov, :scope:is(.gh-hov) { display: none; }
+.grp-head:hover .gh-hov, .grp-head.acting .gh-hov, :scope:is(.grp-head:hover) .gh-hov, :scope:is(.grp-head.acting) .gh-hov { display: grid; }
+/* the widget's calendar chip exactly: 22px, 13px icon, a filled --df tint (WidgetCard .df-btn) */
+.gh-act.gh-date, :scope:is(.gh-act.gh-date) { width: 22px; height: 22px; margin: 0 3px; }
+.gh-act.gh-date.on, :scope:is(.gh-act.gh-date.on) { opacity: 1; color: var(--df); background: var(--df-soft); }
+.gh-act.gh-date.on:hover, :scope:is(.gh-act.gh-date.on:hover) { background: var(--df-soft); color: var(--df-ink); }
+
+/* the body — widget padding is the group's own `pad` option */
+.grp-body, :scope:is(.grp-body) { padding: 12px; }
+.group.no-pad .grp-body, :scope:is(.group.no-pad) .grp-body { padding: 0; }
+/* the one-liner under the header: what that range does to the widgets below it */
+/* the group date chip's hover card: the builder's predefined note (.pe-note) — grey band,
+   info glyph, ink text, facts in bold — lifted onto a floating card */
+.gd-tip, :scope:is(.gd-tip) { position: fixed; z-index: 150; display: flex; align-items: flex-start; gap: 6px; padding: 6px 8px; border-radius: var(--r); background: var(--surface-2); border: 1px solid var(--border); box-shadow: var(--sh-pop); font-size: 11px; line-height: 1.45; color: var(--ink); pointer-events: none; }
+.gd-tip .ico, :scope:is(.gd-tip) .ico { flex: none; margin-top: 1px; color: var(--ink-2); }
+.gd-tip b, :scope:is(.gd-tip) b { font-weight: 600; }
+/* an EMPTY group is a dashed drop well and nothing else — see the template */
+.grp-empty, :scope:is(.grp-empty) {
+  grid-column: 1 / -1; border: 1px dashed var(--border-strong); border-radius: var(--r-lg); background: var(--surface);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 20px 16px; text-align: center;
+}
+/* the same 42px disc / 20px mark as WidgetEmpty, so an empty group and an empty widget
+   speak one language — see WidgetEmpty.vue for why --icon-hover and not --surface-2 */
+/* the empty group's illustration (EmptyGroupArt) — painted in the chart-artwork slate */
+.ge-art, :scope:is(.ge-art) { color: var(--picker-ico); margin-bottom: 6px; }
+.ge-sub, :scope:is(.ge-sub) { margin: 0; font-size: 13px; line-height: 1.45; color: var(--muted); max-width: 320px; }
+.grp-empty .btn, :scope:is(.grp-empty) .btn { margin-top: 8px; }
+.grp-menu, :scope:is(.grp-menu) { position: fixed; z-index: 140; min-width: 188px; }
+/* arrival: the outline glows once, softly — a light slate ring and a faint halo, not the
+   solid near-black it started as (that read as an error/selection, not "you are here") */
+.group.g-flash, :scope:is(.group.g-flash) { animation: dc-DashboardView-gflash 1.2s ease-out; }
+
+@media (prefers-reduced-motion: reduce) { .group.g-flash, :scope:is(.group.g-flash) { animation: none; box-shadow: 0 0 0 2px color-mix(in srgb, var(--sel) 22%, transparent); } }
+/* grouping-style demo switcher */
+.gstyle-bar, :scope:is(.gstyle-bar) { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 8px 12px; margin-bottom: 14px; background: var(--surface); border: 1px dashed var(--border-strong); border-radius: 4px; }
+.legend-bar .gsb-label em, :scope:is(.legend-bar) .gsb-label em { font-style: normal; font-weight: 500; color: var(--muted); font-size: 11px; margin-left: 4px; }
+.gsb-label, :scope:is(.gsb-label) { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--muted); }
+.gsb-seg, :scope:is(.gsb-seg) { display: inline-flex; gap: 3px; background: var(--surface-2); padding: 3px; border-radius: 4px; border: 1px solid var(--border); }
+.gsb-b, :scope:is(.gsb-b) { border: none; background: transparent; padding: 5px 11px; border-radius: 4px; font-size: 13px; font-weight: 500; color: var(--muted); display: inline-flex; align-items: center; gap: 5px; }
+.gsb-b:hover, :scope:is(.gsb-b:hover) { color: var(--ink); }
+.gsb-b.on, :scope:is(.gsb-b.on) { background: var(--surface); color: var(--primary-700); box-shadow: var(--sh-sm); font-weight: 600; }
+.gsb-n, :scope:is(.gsb-n) { font-size: 13px; }
+.gsb-desc, :scope:is(.gsb-desc) { font-size: 12px; color: var(--muted-2); margin-left: auto; }
+.gsb-desc em, :scope:is(.gsb-desc) em { font-style: normal; color: var(--ai-ink); font-weight: 500; }
+@media (max-width: 720px) { .gsb-desc, :scope:is(.gsb-desc) { display: none; } }
+
+/* ---- AI entry demo: bar tinted lavender so it reads as the AI control ---- */
+.ai-bar, :scope:is(.ai-bar) { border-color: var(--ai-border); background: var(--ai-softer); }
+.gsb-label.ai .ico, .ai-bar .gsb-label, :scope:is(.gsb-label.ai) .ico, :scope:is(.ai-bar) .gsb-label { color: var(--ai-ink); }
+.gsb-label.ai .ico, :scope:is(.gsb-label.ai) .ico {
+  background: var(--ai-grad); -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+}
+.ai-bar .gsb-b.on, :scope:is(.ai-bar) .gsb-b.on { color: var(--ai-ink); box-shadow: 0 0 0 1px var(--ai-border), var(--sh-sm); }
+
+/* ② toolbar icon — a compact sparkle beside ⋯ (icon-only, no "Ask AI" text) */
+.ai-ico.btn.ico-only, :scope:is(.ai-ico.btn.ico-only) { border-color: var(--ai-border); background: var(--ai-softer); color: var(--ai); }
+.ai-ico.btn.ico-only:hover, :scope:is(.ai-ico.btn.ico-only:hover) { background: var(--ai-soft); border-color: var(--ai); color: var(--ai-ink); }
+
+/* ⑥ onboarding nudge */
+.ai-nudge, :scope:is(.ai-nudge) { display: flex; align-items: center; gap: 12px; border: 1px solid var(--ai-border); border-radius: var(--r-lg); background: var(--ai-grad-soft); padding: 11px 14px; margin-bottom: 14px; }
+.an-spark, :scope:is(.an-spark) { flex: none; width: 32px; height: 32px; border-radius: 4px; display: grid; place-items: center; background: var(--ai-grad); color: #fff; }
+.an-txt, :scope:is(.an-txt) { flex: 1; font-size: 13px; color: var(--ink-2); line-height: 1.45; }
+.an-txt b, :scope:is(.an-txt) b { color: var(--ink); }
+.an-sub, :scope:is(.an-sub) { display: flex; align-items: center; gap: 4px; margin-top: 3px; font-size: 12px; color: var(--muted); }
+.an-sub .ico, :scope:is(.an-sub) .ico { color: var(--ai); }
+.an-try, :scope:is(.an-try) { flex: none; height: 32px; padding: 0 12px; border: none; border-radius: var(--r); background: var(--ai-grad); color: #fff; font-weight: 500; font-size: 13px; }
+.an-try:hover, :scope:is(.an-try:hover) { filter: brightness(1.06); }
+.an-x, :scope:is(.an-x) { flex: none; width: 28px; height: 28px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
+.an-x:hover, :scope:is(.an-x:hover) { background: var(--ai-soft); color: var(--ai-ink); }
+
+/* docked assistant panel */
+.ai-dock, :scope:is(.ai-dock) { position: fixed; top: var(--topbar-h); right: 0; width: 480px; max-width: 94vw; height: calc(100vh - var(--topbar-h)); z-index: 200; background: var(--surface); border-left: 1px solid var(--border); box-shadow: var(--sh-lg); }
+.ai-slide-enter-active, .ai-slide-leave-active, :scope:is(.ai-slide-enter-active), :scope:is(.ai-slide-leave-active) { transition: transform .22s ease, opacity .22s ease; }
+.ai-slide-enter-from, .ai-slide-leave-to, :scope:is(.ai-slide-enter-from), :scope:is(.ai-slide-leave-to) { transform: translateX(24px); opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .ai-slide-enter-active, .ai-slide-leave-active, :scope:is(.ai-slide-enter-active), :scope:is(.ai-slide-leave-active) { transition: none; } }
+.bg-toolbar, :scope:is(.bg-toolbar) { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
+/* ⑨ auto-group: segmented "Group by" control */
+.auto-seg, :scope:is(.auto-seg) { display: inline-flex; gap: 3px; background: var(--surface-2); padding: 3px; border-radius: 4px; border: 1px solid var(--border); }
+.auto-b, :scope:is(.auto-b) { border: none; background: transparent; padding: 4px 12px; border-radius: 4px; font-size: 13px; font-weight: 500; color: var(--muted); }
+.auto-b.on, :scope:is(.auto-b.on) { background: var(--surface); color: var(--primary-700); box-shadow: var(--sh-sm); font-weight: 600; }
+/* ⑧ sections / ⑨ auto: render groups as borderless headings instead of boxed containers */
+.group.as-section, :scope:is(.group.as-section) { border: none; background: transparent; padding: 0; box-shadow: none; margin-bottom: 6px; }
+.group.as-section > .grp-head, :scope:is(.group.as-section) > .grp-head { border-bottom: 1.5px solid var(--border); border-radius: 0; padding: 4px 2px 8px; background: transparent; }
+.group.as-section .sec-ic, :scope:is(.group.as-section) .sec-ic { color: var(--primary); }
+.group.as-section > .grid, :scope:is(.group.as-section) > .grid { padding: 12px 0 4px; }
+.new-section-bar, :scope:is(.new-section-bar) { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 12px; padding: 9px; border: 1px dashed var(--border-strong); background: transparent; border-radius: 4px; color: var(--primary-700); font-weight: 600; font-size: 13px; }
+.new-section-bar:hover, :scope:is(.new-section-bar:hover) { background: var(--primary-softer); border-color: var(--primary); }
+/* ⑦ per-widget group chip (hover-reveal, bottom-left, out of the header actions' way) */
+.cell-grp-chip, :scope:is(.cell-grp-chip) { position: absolute; left: 10px; bottom: 8px; z-index: 7; display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 11px; border: 1px solid var(--primary-soft); background: var(--surface); color: var(--primary-700); border-radius: 999px; font-size: 12px; font-weight: 600; box-shadow: var(--sh-sm); opacity: 0; transition: opacity .14s; }
+.cell:hover .cell-grp-chip, :scope:is(.cell:hover) .cell-grp-chip { opacity: 1; }
+.cell-grp-chip:hover, :scope:is(.cell-grp-chip:hover) { background: var(--primary-softer); border-color: var(--primary); }
+/* ⑥/⑦ tile group menu */
+.tile-grp-menu, :scope:is(.tile-grp-menu) { position: fixed; z-index: 140; min-width: 200px; max-height: 320px; overflow: auto; }
+.menu-label, :scope:is(.menu-label) { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted-2); font-weight: 600; padding: 4px 10px 2px; }
+/* inline (③): hover-reveal "+ New group here" inserter in each ungrouped row gap */
+.ug-wrap, :scope:is(.ug-wrap) { position: relative; }
+.row-insert, :scope:is(.row-insert) { position: absolute; left: 0; right: 0; height: 16px; transform: translateY(-50%); display: flex; align-items: center; gap: 10px; cursor: pointer; opacity: 0; transition: opacity .14s; z-index: 8; }
+.row-insert:hover, :scope:is(.row-insert:hover) { opacity: 1; }
+.bg-hint, :scope:is(.bg-hint) { margin-right: auto; font-size: 12px; color: var(--muted-2); }
+/* hover-reveal "+ New group here" between group sections */
+.grp-insert, :scope:is(.grp-insert) { display: flex; align-items: center; gap: 10px; height: 14px; margin: 2px 0; cursor: pointer; opacity: 0; transition: opacity .14s; }
+.grp-insert:hover, :scope:is(.grp-insert:hover) { opacity: 1; }
+.gi-line, :scope:is(.gi-line) { flex: 1; height: 1px; background: var(--primary-soft); }
+.gi-btn, :scope:is(.gi-btn) { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; color: var(--primary-700); background: var(--primary-softer); border: 1px solid var(--primary-soft); border-radius: 999px; padding: 2px 10px; }
+.empty-cta, :scope:is(.empty-cta) { display: flex; gap: 10px; align-items: center; }
+.big-cta.ghost, :scope:is(.big-cta.ghost) { background: transparent; color: var(--primary-700); border: 1px solid var(--border-strong); }
+.big-cta.ghost:hover, :scope:is(.big-cta.ghost:hover) { background: var(--primary-softer); border-color: var(--primary); }
+/* marquee (rubber-band) group selection */
+.board-groups.selecting, :scope:is(.board-groups.selecting) { cursor: crosshair; user-select: none; }
+.board-groups.selecting .tile, .board-groups.selecting .resize, :scope:is(.board-groups.selecting) .tile, :scope:is(.board-groups.selecting) .resize { pointer-events: none; }
+.cell.pick-on, :scope:is(.cell.pick-on) { outline: 2px dashed var(--primary); outline-offset: 2px; box-shadow: 0 0 0 4px var(--primary-soft); border-radius: var(--r-lg); }
+.marquee, :scope:is(.marquee) { position: fixed; z-index: 300; border: 1.5px dashed var(--primary); background: rgba(61,139,208,.12); border-radius: 4px; pointer-events: none; }
+/* bottom-right confirm CTA */
+/* Centred at the foot of the board, not tucked bottom-right. What it reports is about
+   the SELECTION, which is spread across the canvas — a bar pinned to one corner reads as
+   belonging to the thing in that corner (the FAB sits there) rather than to the widgets
+   the user just marqueed. */
+.group-cta, :scope:is(.group-cta) { position: fixed; left: 50%; transform: translateX(-50%); bottom: 26px; z-index: 60; display: flex; align-items: center; gap: 10px; padding: 10px 12px 10px 18px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--sh-lg); }
+.gc-count, :scope:is(.gc-count) { display: inline-flex; align-items: center; font-weight: 500; font-size: 13px; color: var(--ink); margin-right: 4px; }
+.add-group, :scope:is(.add-group) { display: inline-flex; align-items: center; gap: 7px; border: none; background: transparent; border-radius: 4px; padding: 8px 12px; font-weight: 600; font-size: 13px; color: var(--primary-700); }
+.add-group:hover, :scope:is(.add-group:hover) { background: var(--primary-softer); }
+.empty, :scope:is(.empty) { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 9px; padding: 64px 20px; text-align: center; }
+/* illustration — a small cluster of the three tile types */
+/* the illustration paints in the slate the empty-group art uses (#7186A8) */
+.empty-ill, :scope:is(.empty-ill) { color: var(--picker-ico); margin-bottom: 18px; }
+.empty h3, :scope:is(.empty) h3 { margin: 0; font-size: 18px; } .empty p, :scope:is(.empty) p { margin: 0 0 6px; color: var(--muted); }
+.empty p b, :scope:is(.empty) p b { color: var(--ink-2); font-weight: 600; }
+.big-cta, :scope:is(.big-cta) { height: 40px; padding: 0 20px; font-size: 14px; }
+:scope.missing { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 90px; color: var(--muted); }
+/* The Figma's near-black square that shows + and turns to ×, enlarged 32 → 42px on
+   2026-09-24; the pills above scale with it (28 → 36px, 12 → 13px type, 14 → 18px glyphs) */
+.fab-wrap, :scope:is(.fab-wrap) { position: fixed; right: 26px; bottom: 26px; z-index: 40; display: flex; flex-direction: column; align-items: flex-end; gap: 16px; }
+.fab-backdrop, :scope:is(.fab-backdrop) { position: fixed; inset: 0; z-index: -1; }
+.fab, :scope:is(.fab) { position: relative; width: 42px; height: 42px; padding: 0; border-radius: 8px; border: none; background: var(--sel); color: var(--sel-ink); display: grid; place-items: center; box-shadow: 0 4px 12px rgba(7,16,31,.22); transition: background .15s, box-shadow .15s; }
+.fab:hover, :scope:is(.fab:hover) { background: var(--sel-hover); box-shadow: 0 6px 16px rgba(7,16,31,.28); }
+/* ③/⑩ live inside this menu — tint it AI-purple and pulse so the entry is findable */
+.fab.ai-hint, :scope:is(.fab.ai-hint) { background: var(--ai-grad); box-shadow: 0 4px 12px rgba(139,92,246,.42); animation: dc-DashboardView-fabpulse 2.2s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) { .fab.ai-hint, :scope:is(.fab.ai-hint) { animation: none; } }
+/* slide-up menu above the FAB */
+.fab-menu, :scope:is(.fab-menu) { display: flex; flex-direction: column; gap: 14px; align-items: flex-end; }
+.fab-opt, :scope:is(.fab-opt) { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px 0 11px; border: 1px solid var(--sel); background: var(--surface); color: var(--sel); border-radius: 8px; font-weight: 500; font-size: 13px; white-space: nowrap; box-shadow: var(--sh-sm); }
+.fab-opt:hover, :scope:is(.fab-opt:hover) { background: var(--surface-2); }
+/* Generate With AI — the gradient edge (blue→purple→pink) and the violet label */
+.fab-opt.ai, :scope:is(.fab-opt.ai) { padding-left: 10px; border: 1px solid transparent; background: linear-gradient(var(--surface), var(--surface)) padding-box, var(--ai-grad-line) border-box; color: #7d1dfa; }
+.fab-opt.ai .ico, :scope:is(.fab-opt.ai) .ico { color: var(--ai); opacity: .8; }
+.fab-opt.ai:hover, :scope:is(.fab-opt.ai:hover) { background: linear-gradient(var(--ai-softer), var(--ai-softer)) padding-box, var(--ai-grad-line) border-box; }
+[data-theme="dark"] :scope .fab-opt.ai { color: var(--ai-ink); }
+.fabpop-enter-active, :scope:is(.fabpop-enter-active) { transition: opacity .2s ease, transform .22s cubic-bezier(.2,.8,.2,1); }
+.fabpop-leave-active, :scope:is(.fabpop-leave-active) { transition: opacity .14s ease, transform .14s ease; }
+.fabpop-enter-from, .fabpop-leave-to, :scope:is(.fabpop-enter-from), :scope:is(.fabpop-leave-to) { opacity: 0; transform: translateY(16px); }
+@media (max-width: 1100px) { .span-3, :scope:is(.span-3) { grid-column: span 6; } .span-6, :scope:is(.span-6) { grid-column: span 12; } }
+}
+@keyframes dc-DashboardView-flash {
+  0% { box-shadow: 0 0 0 3px var(--primary-soft), 0 0 0 1px var(--primary); }
+  60% { box-shadow: 0 0 0 3px var(--primary-soft), 0 0 0 1px var(--primary); }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+@keyframes dc-DashboardView-cellReveal { from { opacity: 0; transform: translateY(10px) scale(.99); } to { opacity: 1; transform: none; } }
+@keyframes dc-DashboardView-gflash {
+  0%   { box-shadow: 0 0 0 0 transparent; }
+  20%  { box-shadow: 0 0 0 2px color-mix(in srgb, var(--sel) 22%, transparent), 0 0 0 7px color-mix(in srgb, var(--sel) 6%, transparent); }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+@keyframes dc-DashboardView-fabpulse { 0%, 100% { box-shadow: 0 4px 12px rgba(139,92,246,.42), 0 0 0 0 rgba(139,92,246,.35); } 50% { box-shadow: 0 4px 12px rgba(139,92,246,.42), 0 0 0 9px rgba(139,92,246,0); } }
+/* ── Port additions ──────────────────────────────────────────────────────────────
+   The product header has no Ask AI and no dark-mode toggle, so both moved onto the board's
+   own toolbar. Their look is copied from the prototype's AppTopbar (.askai / .ic). */
+@scope (.dc-DashboardView) {
+.askai, :scope:is(.askai) { display: flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; border-radius: var(--r); border: 1.5px solid transparent; background: linear-gradient(var(--surface), var(--surface)) padding-box, var(--ai-grad-line) border-box; color: var(--ai-ink); font-weight: 500; font-size: 13px; white-space: nowrap; flex: none; }
+.askai .ico, :scope:is(.askai) .ico { color: var(--ai); }
+.askai:hover, :scope:is(.askai:hover) { background: linear-gradient(var(--ai-soft), var(--ai-soft)) padding-box, var(--ai-grad-line) border-box; }
+.ic, :scope:is(.ic) { width: 36px; height: 36px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; flex: none; }
+.ic:hover, :scope:is(.ic:hover) { background: var(--surface-2); color: var(--ink); }
+/* the FAB menu's slide-up (Vue's fabpop enter transition) */
+.fab-in, :scope:is(.fab-in) { animation: dc-DashboardView-fabin .22s cubic-bezier(.2,.8,.2,1); }
+}
+@keyframes dc-DashboardView-fabin { from { opacity: 0; transform: translateY(16px); } }

@@ -1,0 +1,29 @@
+@scope (.dc-AiSummaryCard) {
+/* Shell, wash and both CTA types come from `.aic` / `.ai-cta` in global.css. Only the
+   board-specific bits stay here — the margin, and the overflow the collapse needs. */
+:scope.ai-card { margin-bottom: 14px; overflow: hidden; }
+
+.ac-head, :scope:is(.ac-head) { position: relative; display: flex; align-items: center; gap: 8px; padding: 12px 24px; cursor: pointer; }
+.ac-head:focus-visible, :scope:is(.ac-head:focus-visible) { outline: 2px solid var(--ai); outline-offset: -2px; }
+/* a bare gradient glyph, not a tinted square — the reference gives it no container */
+.ac-spark, :scope:is(.ac-spark) { flex: none; display: grid; place-items: center; }
+.ac-spark .ico, :scope:is(.ac-spark) .ico { stroke: url(#ai-grad); color: var(--ai); }
+.ac-title, :scope:is(.ac-title) { font-size: 14px; font-weight: 600; color: var(--ink); }
+.ac-meta, :scope:is(.ac-meta) { margin-left: auto; font-size: 11px; color: var(--muted-2); white-space: nowrap; }
+.ac-arrow, :scope:is(.ac-arrow) { flex: none; width: 22px; height: 22px; display: grid; place-items: center; color: var(--muted); border-radius: var(--r); }
+.ac-head:hover .ac-arrow, :scope:is(.ac-head:hover) .ac-arrow { background: var(--surface-2); color: var(--ink); }
+
+.ac-body, :scope:is(.ac-body) { position: relative; padding: 0 24px 16px; animation: dc-AiSummaryCard-acx .16s ease; }
+.ac-summary, :scope:is(.ac-summary) { margin: 0 0 16px; font-size: 13px; line-height: 1.6; color: var(--ink); max-width: 90ch; }
+.ac-kp, :scope:is(.ac-kp) { font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
+.ac-points, :scope:is(.ac-points) { list-style: none; margin: 0; padding: 0; }
+.ac-points li, :scope:is(.ac-points) li { display: flex; gap: 8px; margin-bottom: 12px; font-size: 13px; line-height: 1.5; color: var(--ink); }
+.ac-dot, :scope:is(.ac-dot) { flex: none; width: 4px; height: 4px; margin-top: 7px; border-radius: 50%; background: var(--ai); }
+.ac-gen, :scope:is(.ac-gen) { font-size: 11px; color: var(--muted-2); margin-bottom: 16px; }
+
+.ac-ctas, :scope:is(.ac-ctas) { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+
+@media (prefers-reduced-motion: reduce) { .ac-body, :scope:is(.ac-body) { animation: none; } }
+@media (max-width: 620px) { .ac-head, .ac-body, :scope:is(.ac-head), :scope:is(.ac-body) { padding-left: 16px; padding-right: 16px; } }
+}
+@keyframes dc-AiSummaryCard-acx { from { opacity: 0; } }

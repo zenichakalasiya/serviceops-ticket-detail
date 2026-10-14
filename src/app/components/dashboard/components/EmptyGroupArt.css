@@ -1,0 +1,10 @@
+/* Ported from components/ui/EmptyGroupArt.vue — scoped to .dc-EmptyGroupArt. */
+@scope (.dc-EmptyGroupArt) {
+.ega, :scope:is(.ega) { display: block; flex: none; overflow: visible; }
+/* a slow bob: the card is being carried, not sitting — its shadow tightens as it dips */
+.ega-card, :scope:is(.ega-card) { animation: dc-EmptyGroupArt-egaBob 2.8s ease-in-out infinite; transform-box: fill-box; }
+.ega-shadow, :scope:is(.ega-shadow) { animation: dc-EmptyGroupArt-egaShadow 2.8s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+@media (prefers-reduced-motion: reduce) { .ega-card, .ega-shadow, :scope:is(.ega-card), :scope:is(.ega-shadow) { animation: none; } }
+}
+@keyframes dc-EmptyGroupArt-egaBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(3px); } }
+@keyframes dc-EmptyGroupArt-egaShadow { 0%, 100% { transform: scaleX(1); opacity: 1; } 50% { transform: scaleX(.85); opacity: 1.25; } }

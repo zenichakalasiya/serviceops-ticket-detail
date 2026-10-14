@@ -1,0 +1,59 @@
+/* Ported from components/dashboard/RichTextEditor.vue — scoped to .dc-RichTextEditor. */
+@scope (.dc-RichTextEditor) {
+.rte, :scope:is(.rte) { position: relative; display: flex; flex-direction: column; border: 1px solid var(--border-control); border-radius: var(--r); background: var(--surface); transition: border-color .15s; }
+.rte.focus, :scope:is(.rte.focus) { border-color: var(--primary); }
+.rte-area, :scope:is(.rte-area) { position: relative; }
+/* layout cards — a grey card holding a white thumbnail, the chosen one edged in --sel */
+.rte-lay, :scope:is(.rte-lay) { display: flex; gap: 8px; padding: 8px; border-bottom: 1px solid var(--border); }
+.rte-lc, :scope:is(.rte-lc) { flex: 1; max-width: 132px; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 8px 6px; border: 1px solid transparent; border-radius: var(--r-lg); background: var(--surface-2); color: var(--muted); font-size: 12px; cursor: pointer; transition: border-color .15s, background .15s; }
+.rte-lc:hover, :scope:is(.rte-lc:hover) { border-color: var(--border-strong); }
+.rte-lc.on, :scope:is(.rte-lc.on) { border-color: var(--sel); background: color-mix(in srgb, var(--primary) 6%, var(--surface-2)); color: var(--ink); font-weight: 600; }
+.rte-lc-art, :scope:is(.rte-lc-art) { width: 100%; height: 26px; border-radius: 4px; background: var(--surface); display: flex; flex-direction: column; justify-content: center; gap: 3px; padding: 0 8px; box-shadow: 0 0 0 1px var(--border); }
+.rte-lc-art i, :scope:is(.rte-lc-art) i { display: block; height: 3px; border-radius: 2px; background: var(--muted-2); }
+.rte-lc-art.lc-header, :scope:is(.rte-lc-art.lc-header) { align-items: center; }
+.rte-lc-art.lc-header i, :scope:is(.rte-lc-art.lc-header) i { width: 58%; height: 5px; }
+.rte-lc-art.lc-header i + i, :scope:is(.rte-lc-art.lc-header) i + i { display: none; }
+/* Header: what you type sits where the banner will show it — centred, mid-height */
+.rte-body.is-hdr, :scope:is(.rte-body.is-hdr) { display: flex; flex-direction: column; justify-content: center; text-align: center; font-size: 24px; line-height: 1.25; }
+.rte-body, :scope:is(.rte-body) { overflow: auto; padding: 10px 12px 18px; outline: none; font-size: 13px; color: var(--ink); }
+/* the same corner mark as a widget's resize handle (DashboardView .resize), shown on hover */
+.rte-resize, :scope:is(.rte-resize) { position: absolute; right: 3px; bottom: 3px; width: 16px; height: 16px; cursor: ns-resize; opacity: 0; transition: opacity .15s; }
+.rte-resize::after, :scope:is(.rte-resize)::after { content: ''; position: absolute; right: 2px; bottom: 2px; width: 6px; height: 6px; border-right: 2px solid var(--muted-2); border-bottom: 2px solid var(--muted-2); border-bottom-right-radius: 2px; }
+.rte:hover .rte-resize, .rte.focus .rte-resize, :scope:is(.rte:hover) .rte-resize, :scope:is(.rte.focus) .rte-resize { opacity: 1; }
+.rte-resize:hover::after, :scope:is(.rte-resize:hover)::after { border-color: var(--primary); }
+.rte-body:empty::before, :scope:is(.rte-body:empty)::before { content: attr(data-ph); color: var(--placeholder, var(--muted-2)); pointer-events: none; }
+/* one row: the bar has to fit the 480px builder sidebar without wrapping */
+.rte-fmt, :scope:is(.rte-fmt) { display: flex; align-items: center; flex-wrap: nowrap; gap: 1px; padding: 5px 6px; border-top: 1px solid var(--border); background: var(--surface-2); }
+.rte-foot, :scope:is(.rte-foot) { display: flex; align-items: center; gap: 2px; padding: 5px 8px; border-top: 1px solid var(--border); }
+.rte-btn, :scope:is(.rte-btn) { position: relative; flex: none; height: 28px; min-width: 26px; padding: 0 4px; display: inline-flex; align-items: center; justify-content: center; gap: 2px; border: none; border-radius: var(--r); background: transparent; color: var(--ink-2); cursor: pointer; }
+.rte-btn:hover, .rte-btn.open, :scope:is(.rte-btn:hover), :scope:is(.rte-btn.open) { background: var(--border); color: var(--ink); }
+.rte-btn.on, :scope:is(.rte-btn.on) { background: var(--primary-soft); color: var(--primary-700); }
+.rte-a, :scope:is(.rte-a) { font-size: 14px; font-weight: 700; line-height: 1; }
+.rte-num, :scope:is(.rte-num) { font-size: 12px; font-weight: 500; }
+.rte-sep, :scope:is(.rte-sep) { flex: none; width: 1px; height: 16px; background: var(--border-strong); margin: 0 3px; }
+/* the two colour buttons carry the last-used colour as a bar under the glyph */
+.rte-col, :scope:is(.rte-col) { flex-direction: column; gap: 1px; padding-top: 3px; }
+.rte-bar, :scope:is(.rte-bar) { width: 16px; height: 3px; border-radius: 1px; }
+.rte-dd, :scope:is(.rte-dd) { position: relative; }
+.rte-pop, :scope:is(.rte-pop) { position: absolute; z-index: 40; background: var(--surface); border: 1px solid var(--border-control); border-radius: var(--r-lg); box-shadow: var(--sh-pop); }
+/* both bars sit at the bottom, so every menu opens UPWARD */
+.rte-fmt .rte-pop, :scope:is(.rte-fmt) .rte-pop { bottom: calc(100% + 6px); left: 0; }
+.rte-foot .rte-pop, :scope:is(.rte-foot) .rte-pop { bottom: calc(100% + 6px); left: 0; }
+.rte-menu, :scope:is(.rte-menu) { min-width: 150px; padding: 4px; display: flex; flex-direction: column; }
+.rte-scroll, :scope:is(.rte-scroll) { min-width: 110px; max-height: 240px; overflow: auto; }
+.rte-mi, :scope:is(.rte-mi) { display: flex; align-items: center; gap: 10px; width: 100%; padding: 7px 12px; border: none; border-radius: 6px; background: transparent; color: var(--ink); font-size: 13px; text-align: left; cursor: pointer; }
+.rte-mi:hover, .rte-mi.on, :scope:is(.rte-mi:hover), :scope:is(.rte-mi.on) { background: var(--row-hover, var(--surface-2)); }
+.rte-mi-ic .ico, :scope:is(.rte-mi-ic) .ico { color: var(--muted); }
+/* the block menu shows each style at its own size */
+.rte-mi.bk-h1, :scope:is(.rte-mi.bk-h1) { font-size: 20px; font-weight: 600; }
+.rte-mi.bk-h2, :scope:is(.rte-mi.bk-h2) { font-size: 17px; font-weight: 600; }
+.rte-mi.bk-h3, :scope:is(.rte-mi.bk-h3) { font-size: 15px; font-weight: 600; }
+.rte-ins, :scope:is(.rte-ins) { width: 280px; padding: 12px; display: flex; flex-direction: column; gap: 6px; }
+.rte-lbl, :scope:is(.rte-lbl) { font-size: 12px; color: var(--ink-2); }
+.rte-ins .input, :scope:is(.rte-ins) .input { height: 30px; font-size: 12px; }
+.rte-ins-row, :scope:is(.rte-ins-row) { display: flex; gap: 6px; margin-top: 4px; }
+.rte-count, :scope:is(.rte-count) { font-size: 12px; color: var(--muted); }
+.rte-count.full, :scope:is(.rte-count.full) { color: var(--red); }
+.grow, :scope:is(.grow) { flex: 1; }
+}
+

@@ -1,0 +1,4 @@
+/* Ported from components/ui/NoDataArt.vue — scoped to .dc-NoDataArt. */
+@scope (.dc-NoDataArt) {
+.nda, :scope:is(.nda) { display: block; flex: none; overflow: visible; }
+}

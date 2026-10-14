@@ -31,6 +31,8 @@ import { VulnerabilitiesListingPage } from './components/VulnerabilitiesListingP
 import { DetectedCvesListingPage } from './components/DetectedCvesListingPage';
 import { BomInventoryListPage } from './components/BomInventoryListPage';
 import { AdminPage } from './components/AdminPage';
+import { DashboardPage } from './components/dashboard/DashboardPage';
+import { ManageDashboardsPage } from './components/dashboard/ManageDashboardsPage';
 import { DrawerStackProvider } from './components/DrawerStack';
 import { GlobalSearch } from './components/GlobalSearch';
 import { Toaster } from 'sonner';
@@ -121,6 +123,8 @@ export default function App() {
       {activePage === 'vulnerabilities' && <VulnerabilitiesListingPage onNavigate={navigate} />}
       {activePage === 'detected-cves' && <DetectedCvesListingPage onNavigate={navigate} />}
       {activePage === 'bom' && <BomInventoryListPage onNavigate={navigate} />}
+      {activePage === 'dashboard' && <DashboardPage onNavigate={navigate} dashboardId={route.dashboard} />}
+      {activePage === 'dashboards' && <ManageDashboardsPage onNavigate={navigate} />}
       {activePage === 'admin' && (
         <AdminPage
           onNavigate={navigate}

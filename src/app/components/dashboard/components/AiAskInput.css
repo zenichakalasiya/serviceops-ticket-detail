@@ -1,0 +1,33 @@
+@scope (.dc-AiAskInput) {
+/* Soft lavender field with a gradient sparkle — the reference "Ask AI…" input. */
+:scope.ai-ask {
+  display: flex; align-items: center; gap: 9px; width: 100%;
+  height: 40px; padding: 0 6px 0 12px; cursor: text;
+  border: 1px solid var(--ai-border); border-radius: var(--r-pill);
+  background: var(--ai-softer);
+  transition: border-color .14s, box-shadow .14s, background .14s;
+}
+:scope.ai-ask.lg { height: 48px; padding: 0 8px 0 15px; }
+:scope.ai-ask:hover { border-color: var(--ai); }
+:scope.ai-ask:focus-within { border-color: var(--ai); box-shadow: 0 0 0 3px var(--ai-soft); background: var(--surface); }
+.aa-spark, :scope:is(.aa-spark) { flex: none; display: grid; place-items: center; color: var(--ai); }
+/* gradient-fill the glyph so it matches the reference sparkle */
+.aa-spark .ico, :scope:is(.aa-spark) .ico {
+  background: var(--ai-grad); -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+}
+input, :scope:is(input) {
+  flex: 1; min-width: 0; border: none; outline: none; background: transparent;
+  font-family: inherit; font-size: 13px; color: var(--ink);
+}
+:scope.lg input { font-size: 14px; }
+input::placeholder, :scope:is(input)::placeholder { color: var(--ai-ink); opacity: .6; }
+.aa-send, :scope:is(.aa-send) {
+  flex: none; width: 30px; height: 30px; border: none; border-radius: 50%;
+  display: grid; place-items: center; color: var(--muted); background: transparent;
+  transition: all .14s;
+}
+:scope.lg .aa-send { width: 36px; height: 36px; }
+.aa-send.ready, :scope:is(.aa-send.ready) { background: var(--ai-grad); color: #fff; }
+.aa-send:not(.ready):hover, :scope:is(.aa-send:not(.ready):hover) { background: var(--ai-soft); color: var(--ai-ink); }
+}

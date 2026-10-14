@@ -1,0 +1,23 @@
+/* Ported from components/dashboard/FormattingHelp.vue — scoped to .dc-FormattingHelp. */
+@scope (.dc-FormattingHelp) {
+.fh-overlay, :scope:is(.fh-overlay) { position: fixed; inset: 0; background: rgba(20,21,38,.5); backdrop-filter: blur(2px); z-index: 150; display: grid; place-items: center; padding: 24px; }
+.fh, :scope:is(.fh) { width: min(680px, 94vw); max-height: 82vh; background: var(--surface); border-radius: var(--r-xl); box-shadow: var(--sh-lg); display: flex; flex-direction: column; overflow: hidden; }
+.fh-head, :scope:is(.fh-head) { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid var(--border); }
+.fh-head h4, :scope:is(.fh-head) h4 { margin: 0; font-size: 15px; font-weight: 600; color: var(--ink); }
+.fh-body, :scope:is(.fh-body) { flex: 1; overflow: auto; padding: 4px 18px; }
+/* Source on the left, result on the right — the pairing IS the explanation, so they sit
+   on one row rather than the result being a caption under the code. */
+.fh-row, :scope:is(.fh-row) { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border-hairline); }
+.fh-row:last-child, :scope:is(.fh-row:last-child) { border-bottom: none; }
+.fh-src, :scope:is(.fh-src) { position: relative; background: var(--surface-2); border-radius: var(--r); padding: 9px 34px 9px 11px; }
+.fh-src pre, :scope:is(.fh-src) pre { margin: 0; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; color: var(--ink-2); white-space: pre-wrap; word-break: break-word; }
+.fh-copy, :scope:is(.fh-copy) { position: absolute; top: 6px; right: 6px; width: 24px; height: 24px; border: none; background: transparent; color: var(--muted); border-radius: var(--r); display: grid; place-items: center; }
+.fh-copy:hover, :scope:is(.fh-copy:hover) { background: var(--surface); color: var(--ink); }
+.fh-out *, :scope:is(.fh-out) * { margin: 0; }
+.fh-out ul, .fh-out ol, :scope:is(.fh-out) ul, :scope:is(.fh-out) ol { padding-left: 18px; }
+.fh-out img, :scope:is(.fh-out) img { max-width: 100%; max-height: 54px; border-radius: var(--r); }
+.fh-note, :scope:is(.fh-note) { display: block; margin-top: 5px; font-size: 11.5px; color: var(--muted); }
+.fh-foot, :scope:is(.fh-foot) { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; border-top: 1px solid var(--border); }
+.fh-hint, :scope:is(.fh-hint) { font-size: 12px; color: var(--muted); }
+}
+

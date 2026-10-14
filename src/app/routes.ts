@@ -22,6 +22,8 @@ export type Page =
   | 'bom'
   // Brought in from the upstream prototype (Oct 2026 sync).
   | 'software-meter' | 'projects' | 'my-approvals' | 'automatic-patch-tests' | 'automatic-patch-deployments' | 'package-deployments' | 'registry-deployments' | 'knowledge' | 'tasks' | 'reports' | 'my-team' | 'icons' | 'views-lab'
+  // The Dashboard module (ported from ServiceOps_Dashboard_v2, Oct 2026): one board, and the full listing.
+  | 'dashboard' | 'dashboards'
   | 'admin';
 
 /** The page a bare URL lands on. */
@@ -38,6 +40,7 @@ const PAGES: readonly Page[] = [
   'vulnerabilities', 'detected-cves',
   'bom',
   'software-meter', 'projects', 'my-approvals', 'automatic-patch-tests', 'automatic-patch-deployments', 'package-deployments', 'registry-deployments', 'knowledge', 'tasks', 'reports', 'my-team', 'icons', 'views-lab',
+  'dashboard', 'dashboards',
   'admin',
 ];
 
@@ -83,6 +86,8 @@ export interface Route {
   /** A form rule opened straight into its editor — #/admin/request-form-rules/<rule id>. The
       conflict / similar sidebars open a rule this way, in a new tab. */
   rule?: string;
+  /** The board open on #/dashboard/<id>. Absent = the default board. */
+  dashboard?: string;
 }
 
 /** The address of one portal, as a slug. Names are unique (see `uniquePageName`), so the slug is
@@ -96,6 +101,7 @@ export function parseHash(hash: string): Route {
   const parts = hash.replace(/^#\/?/, '').split('/').filter(Boolean);
   const page = parts[0] as Page | undefined;
   if (!page || !PAGES.includes(page)) return { page: DEFAULT_PAGE };
+  if (page === 'dashboard') return { page, dashboard: parts[1] };
   if (page !== 'admin') return { page };
   const slug = parts[1];
   if (!slug || !adminRouteBySlug(slug)) return { page };
@@ -110,6 +116,7 @@ export function formatHash(route: Route): string {
     if (route.rule) return `#/admin/${route.admin}/${route.rule}`;
     return route.portal ? `#/admin/${route.admin}/${route.portal}` : `#/admin/${route.admin}`;
   }
+  if (route.page === 'dashboard' && route.dashboard) return `#/dashboard/${route.dashboard}`;
   return `#/${route.page}`;
 }
 
@@ -151,6 +158,8 @@ const PAGE_TITLES: Record<Page, string> = {
   'my-team': 'My Team',
   'icons': 'Icon Gallery',
   'views-lab': 'Views Lab',
+  dashboard: 'Dashboard',
+  dashboards: 'Manage Dashboards',
   admin: 'Admin',
 };
 

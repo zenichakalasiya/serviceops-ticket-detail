@@ -1,0 +1,116 @@
+@scope (.dc-ListingFlyout) {
+/* The listing sits on the plain surface, not the sidebar tint. It used to remap --surface
+   /--surface-2/--border to the sidebar palette for every child, which is what made the
+   panel read as a tinted rail; on --surface it reads as part of the page. Using the token
+   rather than a literal #fff keeps dark mode working. */
+:scope { width: 300px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; height: 100%; }
+.fhead, :scope:is(.fhead) { display: flex; align-items: center; justify-content: space-between; padding: 12px 12px 8px; }
+.ftitle, :scope:is(.ftitle) { font-weight: 600; font-size: 15px; }
+.ic, :scope:is(.ic) { width: 30px; height: 30px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
+.ic:hover, :scope:is(.ic:hover) { background: var(--surface-2); color: var(--ink); }
+/* the primary create action — same filled treatment as the topbar's +, sized to this
+   header so it sits level with the 30px ghost chevron opposite it */
+.new-ic, :scope:is(.new-ic) { width: 28px; height: 28px; border: none; border-radius: 4px; background: var(--primary); color: #fff; display: grid; place-items: center; box-shadow: var(--sh-sm); }
+.new-ic:hover, :scope:is(.new-ic:hover) { background: var(--primary-600); }
+.row, :scope:is(.row) { display: flex; align-items: center; } .gap-6, :scope:is(.gap-6) { gap: 6px; }
+/* footer: Manage all dashboards, on its own */
+.ffoot, :scope:is(.ffoot) { border-top: 1px solid var(--border); padding: 10px; display: flex; align-items: center; gap: 4px; }
+.appearance-link, :scope:is(.appearance-link) { flex: none; width: 34px; height: 34px; display: grid; place-items: center; border: none; background: transparent; color: var(--muted); border-radius: var(--r); }
+.appearance-link:hover, :scope:is(.appearance-link:hover) { background: var(--surface-2); color: var(--ink); }
+.appearance-link.on, :scope:is(.appearance-link.on) { background: var(--primary-soft); color: var(--primary); }
+.manage-link, :scope:is(.manage-link) { flex: 1; min-width: 0; display: flex; align-items: center; gap: 9px; padding: 9px 12px; border: none; background: transparent; color: var(--ink-2); font-weight: 600; font-size: 13px; border-radius: 4px; }
+.manage-link:hover, :scope:is(.manage-link:hover) { background: var(--surface-2); color: var(--ink); }
+.manage-link .ml-arrow, :scope:is(.manage-link) .ml-arrow { margin-left: auto; color: var(--muted); }
+/* inline underline tabs (matches the Add-Widget side popup). Four labels are wider than
+   300px, so the strip scrolls sideways instead of clipping "Predefined". The scrollbar is
+   hidden — a visible one under a 1px rule reads as a broken border. */
+.tabs2, :scope:is(.tabs2) { display: flex; gap: 0; padding: 0 12px; border-bottom: 1px solid var(--border); margin-bottom: 8px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -ms-overflow-style: none; }
+.tabs2::-webkit-scrollbar, :scope:is(.tabs2)::-webkit-scrollbar { display: none; }
+.t2, :scope:is(.t2) { border: none; background: transparent; padding: 9px 2px; margin-right: 14px; color: var(--muted); font-weight: 500; font-size: 13px; border-bottom: 2px solid transparent; white-space: nowrap; flex: none; }
+.t2:last-child, :scope:is(.t2:last-child) { margin-right: 0; }
+.t2:hover, :scope:is(.t2:hover) { color: var(--ink); }
+.t2.on, :scope:is(.t2.on) { color: var(--primary-700); border-bottom-color: var(--primary); }
+.fsearch, :scope:is(.fsearch) { display: flex; align-items: center; gap: 8px; margin: 0 12px 8px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; padding: 0 10px; height: 36px; }
+.fsearch input, :scope:is(.fsearch) input { border: none; outline: none; background: transparent; width: 100%; font-size: 13px; }
+.glist, :scope:is(.glist) { flex: 1; overflow: auto; padding: 4px 8px 14px; }
+.grp, :scope:is(.grp) { margin-bottom: 2px; }
+/* the chevron sits hard against the panel's left edge — it was indented 6px, which put
+   every group heading out of line with the "Dashboards" title and the search box above */
+/* A CATEGORY row, built to the admin sidebar's parent-module row: 34px tall, 0/10
+   padding, 12px label, and a 16px muted glyph hard left. The chevron IS that left glyph
+   here — admin puts a module icon left and a chevron right, but a category has no icon
+   of its own to show, so the one position carries the one job. Nothing on the right.
+   The label keeps 600 where admin's parent is 400: admin separates its modules with
+   section headers ("Intelligent Automation") and we have none, so weight is what tells
+   a category from the boards inside it. */
+.grp-head, :scope:is(.grp-head) { display: flex; align-items: center; gap: 8px; width: 100%; height: 34px; border: none; background: transparent; padding: 0 10px; border-radius: 4px; color: var(--ink); font-weight: 600; font-size: 12px; text-align: left; }
+.grp-head:hover, :scope:is(.grp-head:hover) { background: var(--surface-2); }
+.grp-head > .ico, :scope:is(.grp-head) > .ico { flex: none; color: var(--muted); }
+.gname, :scope:is(.gname) { flex: 1; }
+/* §7.4 count badge — rounded-sm, not a pill; a pill reads as something you can press */
+.gcount, :scope:is(.gcount) { font-size: 11px; color: var(--muted); background: var(--surface-2); border-radius: var(--r-sm); padding: 1px 6px; font-weight: 600; }
+.items, :scope:is(.items) { display: flex; flex-direction: column; gap: 1px; padding: 1px 0 4px; }
+/* A DASHBOARD row = admin's sub-module row: same 34px height and 12px label as its
+   parent, indented, with a 16px muted glyph left saying WHICH KIND of board it is. */
+.item, :scope:is(.item) { display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 8px 0 24px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+.item:hover, :scope:is(.item:hover) { background: var(--surface-2); }
+/* No filled "selected" row inside the groups. The default board is already marked by the
+   home icon beside its name AND pinned on its own row above, so a third signal on the
+   same board — in two groups at once, since it is both a favourite and recent — was
+   painting the sidebar blue to say something already said twice. The name alone carries
+   the current board. */
+.item.active .iname, :scope:is(.item.active) .iname { color: var(--primary-700); font-weight: 600; }
+/* Bare glyph, no container — the settings-nav treatment. The box this used to sit in was
+   doing the work of a second, competing surface: a filled tile inside a row that already
+   fills on hover, so hovering swapped one fill for another and the row read as two
+   overlapping controls. Uniformity now comes from the fixed-width SLOT (the names still
+   line up) rather than from a drawn box, and the glyph is quiet enough that the name
+   stays the thing you read first. Colour still carries state: muted at rest, ink on
+   hover, primary on the current board — matching the name beside it. */
+/* the kind glyph. 16px and --muted, exactly as the admin sidebar paints its sub-module
+   icons — one grey down the whole list, so the column reads as structure, not status. */
+.ibox, :scope:is(.ibox) { flex: none; width: 16px; height: 16px; display: grid; place-items: center; color: var(--muted); }
+/* deliberately NOT recoloured when active — see .ibox */
+.lk, :scope:is(.lk) { color: var(--muted-2); flex: none; }
+.iname, :scope:is(.iname) { flex: 0 1 auto; min-width: 0; font-size: 12px; }
+.tag-pre, :scope:is(.tag-pre) { font-size: 10px; font-weight: 500; color: var(--primary-700); background: var(--primary-soft); padding: 2px 6px; border-radius: 4px; flex: none; }
+/* pinned default row — sits above the groups, so no chevron indent; home icon + ⋯ only */
+.def-row, :scope:is(.def-row) { margin: 0 8px 6px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+.item.def, :scope:is(.item.def) { padding-left: 8px; }
+.item.def .iname, :scope:is(.item.def) .iname { flex: 1; font-weight: 600; color: var(--ink); }
+.def-lead, :scope:is(.def-lead) { color: var(--primary); flex: none; }
+/* the home icon beside the default's name in the category/Favourite/Recently rows */
+.def-mark, :scope:is(.def-mark) { flex: none; color: var(--primary); }
+.lk.arch, :scope:is(.lk.arch) { color: var(--muted); }
+/* THE ACTION SLOTS. At rest the star is the RIGHTMOST thing in the row. On hover the
+   three-dots takes that rightmost place and the star steps one slot to its left.
+
+   display:none, not visibility:hidden — a hidden-but-present three-dots still holds its
+   24px, which left the resting row with a blank gap to the right of the star and the star
+   itself never actually flush right. The slot has to collapse for the star to sit where
+   the eye expects the row to end.
+
+   No transition, anywhere: the star does move on hover, and that is intended, but it has
+   to move in one frame. A tweened 26px slide down a list of rows is the "dancing" effect
+   this is explicitly avoiding — display cannot be transitioned, which is the point. */
+.hov, :scope:is(.hov) { display: none; align-items: center; gap: 2px; }
+.item:hover .hov, .item.menu-open .hov, :scope:is(.item:hover) .hov, :scope:is(.item.menu-open) .hov { display: flex; }
+.item.menu-open, :scope:is(.item.menu-open) { background: var(--surface-2); }
+.hb, :scope:is(.hb) { width: 24px; height: 24px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
+.hb:hover, :scope:is(.hb:hover) { background: var(--surface); }
+.hb.del:hover, :scope:is(.hb.del:hover) { color: var(--red); background: var(--red-soft); }
+/* The star is on EVERY row, always — rightmost at rest, immediately left of the
+   three-dots on hover. Grey says "you can favourite this"; gold says "you did". It used
+   to appear only on hover, which meant the control people use most had to be found by
+   sweeping the list. */
+.hb.fav, :scope:is(.hb.fav) { margin-left: auto; }
+.hb.fav.show, :scope:is(.hb.fav.show) { color: #f5a623; }
+.hb.fav:hover, :scope:is(.hb.fav:hover) { color: #f5a623; }
+/* the star keeps its colour inside the menu, so "on" reads at a glance */
+.menu-item .favon, :scope:is(.menu-item) .favon { color: #f5a623; }
+/* teleported per-row menu — fixed to viewport so it isn't clipped by the scroll area */
+.row-menu, :scope:is(.row-menu) { position: fixed; z-index: 61; }
+.row-backdrop, :scope:is(.row-backdrop) { position: fixed; inset: 0; z-index: 59; }
+.none, :scope:is(.none) { padding: 24px 12px; text-align: center; color: var(--muted); font-size: 13px; }
+.ellip, :scope:is(.ellip) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}

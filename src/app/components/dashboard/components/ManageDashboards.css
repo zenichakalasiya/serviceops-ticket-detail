@@ -1,0 +1,137 @@
+@scope (.dc-ManageDashboards) {
+/* The listing is a PAGE, not a card on a page. It used to be a bordered, rounded panel
+   floating on the tinted canvas — a container around content that already fills the
+   screen adds a frame and takes width without earning either. White ground, rows ruled
+   by hairlines, nothing boxed. */
+/* 2026-09-24 Figma: a 62px head (16px inset) with the listing toggle and title, the
+   segmented tabs, the search 12px under them, then the table. */
+:scope { padding: 16px 16px 40px; height: 100%; display: flex; flex-direction: column; background: var(--surface); }
+.page-head, :scope:is(.page-head) { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; min-height: 30px; }
+.ph-l, :scope:is(.ph-l) { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.page-head h1, :scope:is(.page-head) h1 { margin: 0; font-size: 16px; font-weight: 500; line-height: 24px; color: var(--ink); }
+.listing-toggle, :scope:is(.listing-toggle) { width: 24px; height: 24px; padding: 0; border: 1px solid var(--border); background: var(--surface); color: var(--ink-2); border-radius: 4px; display: grid; place-items: center; flex: none; }
+.listing-toggle:hover, :scope:is(.listing-toggle:hover) { background: var(--surface-2); color: var(--ink); border-color: var(--border-strong); }
+.mtabs, :scope:is(.mtabs) { margin-bottom: 12px; }
+.searchbar, :scope:is(.searchbar) { margin-bottom: 14px; }
+.tr, :scope:is(.tr) { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.srch, :scope:is(.srch) { display: flex; align-items: center; gap: 7px; background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: 4px; padding: 0 10px; height: 36px; width: 200px; }
+.srch input, :scope:is(.srch) input { border: none; outline: none; background: transparent; width: 100%; font-size: 13px; }
+/* the prototype gives this screen ONE wide field carrying the chips and the query,
+   with the picker inside it — the same bar the Shortcut tables use */
+.srch.wide, :scope:is(.srch.wide) { width: auto; flex: 1; min-width: 320px; background: var(--surface); padding: 0 4px 0 10px; }
+.srch.wide:focus-within, :scope:is(.srch.wide:focus-within) { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
+.srch.wide input, :scope:is(.srch.wide) input { min-width: 80px; }
+.in-srch .fm-btn, :scope:is(.in-srch) .fm-btn { width: 26px; height: 26px; border: none; background: transparent; }
+.in-srch .fm-btn:hover, :scope:is(.in-srch) .fm-btn:hover { background: var(--surface-2); }
+.mchip, :scope:is(.mchip) { display: inline-flex; align-items: center; gap: 4px; flex: none; max-width: 220px; height: 22px; padding: 0 4px 0 8px; border-radius: 4px; background: var(--surface-2); border: 1px solid var(--border); font-size: 12px; color: var(--ink-2); white-space: nowrap; }
+.mchip b, :scope:is(.mchip) b { font-weight: 600; color: var(--ink); overflow: hidden; text-overflow: ellipsis; }
+.mchip em, :scope:is(.mchip) em { font-style: normal; color: var(--muted); }
+.mchip button, :scope:is(.mchip) button { flex: none; width: 15px; height: 15px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
+.mchip button:hover, :scope:is(.mchip) button:hover { background: var(--border); color: var(--ink); }
+.fsel, :scope:is(.fsel) { height: 34px; border: 1px solid var(--border-strong); background: var(--surface); border-radius: 4px; padding: 0 10px; font-size: 13px; color: var(--ink-2); }
+.colbtn, :scope:is(.colbtn) { display: inline-flex; align-items: center; gap: 6px; font-weight: 500; }
+.cols-wrap, :scope:is(.cols-wrap) { position: relative; }
+.cols-back, :scope:is(.cols-back) { position: fixed; inset: 0; z-index: 40; }
+/* right-anchored so it never overflows past the viewport edge */
+.cols-pop, :scope:is(.cols-pop) { position: absolute; top: calc(100% + 4px); right: 0; left: auto; z-index: 41; min-width: 210px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--sh-pop); padding: 6px; }
+.col-opt, :scope:is(.col-opt) { display: flex; align-items: center; gap: 8px; padding: 7px 9px; border-radius: 4px; font-size: 13px; color: var(--ink-2); cursor: pointer; width: 100%; border: none; background: transparent; text-align: left; white-space: nowrap; }
+.col-opt:hover, :scope:is(.col-opt:hover) { background: var(--surface-2); }
+.col-opt input, :scope:is(.col-opt) input { accent-color: var(--primary); }
+.col-foot, :scope:is(.col-foot) { display: flex; justify-content: flex-end; padding: 6px 4px 2px; border-top: 1px solid var(--border); margin-top: 4px; }
+/* bulk bar */
+.bulkbar, :scope:is(.bulkbar) { display: flex; align-items: center; gap: 8px; padding: 8px 12px; margin-bottom: 10px; background: var(--primary-softer); border: 1px solid var(--primary-soft); border-radius: 4px; }
+.bb-n, :scope:is(.bb-n) { font-weight: 600; font-size: 13px; color: var(--primary-700); }
+.btn.danger, :scope:is(.btn.danger) { color: var(--red); border-color: var(--red-soft); }
+.btn.danger:hover, :scope:is(.btn.danger:hover) { background: var(--red-soft); }
+/* table */
+.tbl-wrap, :scope:is(.tbl-wrap) { flex: 1; overflow: auto; border: 0; border-radius: 0; background: transparent; }
+.appearance-pane, :scope:is(.appearance-pane) { flex: 1; overflow: auto; padding: 4px 2px 24px; min-height: 0; }
+.ph-acts, :scope:is(.ph-acts) { display: flex; align-items: center; gap: 8px; }
+.ph-acts .btn.ico-only, :scope:is(.ph-acts) .btn.ico-only { width: 38px; padding: 0; justify-content: center; }
+.ph-acts .btn.ico-only.on, :scope:is(.ph-acts) .btn.ico-only.on { background: var(--primary-soft); color: var(--primary); border-color: transparent; }
+/* Appearance is not a fifth filter over the list, so a rule separates it from the four
+   that are, and it carries an icon none of them have. */
+.t-sep, :scope:is(.t-sep) { width: 1px; height: 18px; background: var(--border); margin: 0 4px; flex: none; }
+.t-appearance, :scope:is(.t-appearance) { display: inline-flex; align-items: center; gap: 6px; }
+/* Figma: 12px type throughout, semibold headers, 42px rows ruled by hairlines */
+.mtbl, :scope:is(.mtbl) { width: 100%; border-collapse: collapse; font-size: 12px; color: var(--ink); }
+.mtbl thead th, :scope:is(.mtbl) thead th { position: sticky; top: 0; z-index: 2; background: var(--surface); text-align: left; font-size: 12px; color: var(--ink); font-weight: 600; padding: 10px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.mtbl td, :scope:is(.mtbl) td { height: 42px; padding: 0 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+/* sortable headers — the Figma draws the sort mark on every sortable column at rest */
+.mtbl thead th.srt, :scope:is(.mtbl) thead th.srt { cursor: pointer; user-select: none; }
+.mtbl thead th.srt:hover, :scope:is(.mtbl) thead th.srt:hover { color: var(--ink-2); }
+.th-in, :scope:is(.th-in) { display: inline-flex; align-items: center; gap: 4px; }
+.sc, :scope:is(.sc) { opacity: .55; color: var(--muted-2); transition: opacity .12s; flex: none; }
+.mtbl thead th.srt:hover .sc, :scope:is(.mtbl) thead th.srt:hover .sc { opacity: .9; }
+.sc.vis, :scope:is(.sc.vis) { opacity: 1; color: var(--ink); }
+
+/* the whole row opens the board, so it says so */
+.mtbl tbody tr.row-open, :scope:is(.mtbl) tbody tr.row-open { cursor: pointer; }
+.mtbl tbody tr:hover, :scope:is(.mtbl) tbody tr:hover { background: var(--surface-2); }
+.mtbl tbody tr.sel, :scope:is(.mtbl) tbody tr.sel { background: var(--primary-softer); }
+.mtbl tbody tr.dim, :scope:is(.mtbl) tbody tr.dim { opacity: .55; }
+.c-chk, :scope:is(.c-chk) { width: 34px; } .c-chk input, :scope:is(.c-chk) input { accent-color: var(--primary); }
+/* Lay the cell out with an inner flex row, never on the <td> itself: a table-cell
+   set to display:flex leaves the table layout, so it no longer stretches to the
+   row height and its border-bottom draws above the neighbouring cells' — the row
+   rule then visibly breaks at that cell's edges. Same for .acts below. */
+.nm, :scope:is(.nm) { min-width: 220px; }
+.nm-in, :scope:is(.nm-in) { display: flex; align-items: center; gap: 8px; min-width: 0; }
+/* the reorder grip is there when you reach for the row, not on every row at rest */
+.drag, :scope:is(.drag) { color: var(--muted-2); cursor: grab; flex: none; opacity: 0; }
+.mtbl tbody tr:hover .drag, :scope:is(.mtbl) tbody tr:hover .drag { opacity: 1; }
+.nm-t, :scope:is(.nm-t) { cursor: pointer; min-width: 0; } .nm-t:hover, :scope:is(.nm-t:hover) { color: var(--primary-700); text-decoration: underline; }
+/* favourite (star) + default (home) indicators, side by side */
+.nm-ic, :scope:is(.nm-ic) { flex: none; display: inline-grid; place-items: center; }
+.nm-ic.def, :scope:is(.nm-ic.def) { color: var(--primary); }
+.nm-ic.fav, :scope:is(.nm-ic.fav) { border: none; background: transparent; color: var(--muted-2); border-radius: 4px; opacity: 0; transition: opacity .12s; padding: 2px; }
+.nm:hover .nm-ic.fav, .nm-ic.fav.on, :scope:is(.nm:hover) .nm-ic.fav, :scope:is(.nm-ic.fav.on) { opacity: 1; }
+.nm-ic.fav.on, :scope:is(.nm-ic.fav.on) { color: #f5a623; }
+.nm-ic.fav:hover, :scope:is(.nm-ic.fav:hover) { background: var(--surface); }
+/* plain text + a small "+N" that opens the rest */
+.techcell, :scope:is(.techcell) { position: relative; white-space: nowrap; }
+.tp, :scope:is(.tp) { display: inline-flex; align-items: center; font-size: 11px; color: var(--ink-2); background: var(--seg-track); border-radius: 4px; padding: 1px 6px; margin-right: 4px; }
+.tp.more, :scope:is(.tp.more) { cursor: pointer; margin-left: 6px; color: var(--ink); font-weight: 500; }
+.tp.more:hover, :scope:is(.tp.more:hover) { background: var(--border); }
+.tp-back, :scope:is(.tp-back) { position: fixed; inset: 0; z-index: 40; }
+.tp-pop, :scope:is(.tp-pop) { position: absolute; top: calc(100% + 3px); left: 0; z-index: 41; display: flex; flex-wrap: wrap; gap: 4px; max-width: 240px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--sh-pop); padding: 8px; }
+.desc, :scope:is(.desc) { color: var(--ink); max-width: 240px; }
+/* The Figma's ON/OFF switch — an outlined 44×20 pill with the state written inside and a
+   16px knob: green (#89c540) on the right when ON, grey on the left when OFF. */
+.sw, :scope:is(.sw) { position: relative; width: 44px; height: 20px; padding: 0; border: 1px solid #dee5ed; border-radius: 50px; background: var(--surface); flex: none; display: block; }
+.sw-t, :scope:is(.sw-t) { position: absolute; top: 50%; transform: translateY(-50%); font-size: 10px; line-height: 1; color: #a5bad0; }
+.sw i, :scope:is(.sw) i { position: absolute; top: 1px; width: 16px; height: 16px; border-radius: 50%; background: #a5bad0; box-shadow: 0 2px 2px rgba(0,0,0,.1); transition: left .15s, background .15s; }
+.sw.on i, :scope:is(.sw.on) i { left: 24px; background: #89c540; }
+.sw.on .sw-t, :scope:is(.sw.on) .sw-t { left: 6px; }
+.sw:not(.on), :scope:is(.sw:not(.on)) { width: 47px; }
+.sw:not(.on) i, :scope:is(.sw:not(.on)) i { left: 2px; }
+.sw:not(.on) .sw-t, :scope:is(.sw:not(.on)) .sw-t { right: 6px; }
+.acts, :scope:is(.acts) { white-space: nowrap; }
+/* Figma: 16px glyphs in 20px boxes, 4px apart, in the icon slate; delete in red */
+.acts-in, :scope:is(.acts-in) { display: flex; gap: 4px; align-items: center; }
+.ia, :scope:is(.ia) { width: 20px; height: 20px; padding: 0; border: none; background: transparent; color: var(--picker-ico); border-radius: 5px; display: grid; place-items: center; }
+.ia:disabled, :scope:is(.ia:disabled) { color: var(--muted-2); cursor: not-allowed; }
+.ia:disabled:hover, :scope:is(.ia:disabled:hover) { background: transparent; }
+.ia:hover, :scope:is(.ia:hover) { background: var(--icon-hover); color: var(--ink); }
+.ia.del, :scope:is(.ia.del) { color: var(--red); }
+.ia.del:hover, :scope:is(.ia.del:hover) { color: var(--red); background: var(--red-soft); }
+/* holds the delete slot's width open on a row that has no delete action */
+.ia-blank, :scope:is(.ia-blank) { display: block; width: 20px; height: 20px; }
+.del-wrap, :scope:is(.del-wrap) { position: relative; }
+.cfm-back, :scope:is(.cfm-back) { position: fixed; inset: 0; z-index: 45; }
+.cfm, :scope:is(.cfm) { position: absolute; top: 50%; right: calc(100% + 6px); transform: translateY(-50%); z-index: 46; display: flex; align-items: center; gap: 6px; white-space: nowrap; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; box-shadow: var(--sh-pop); padding: 7px 10px; font-size: 13px; color: var(--ink-2); }
+.empty, :scope:is(.empty) { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 44px; color: var(--muted); }
+.ellip, :scope:is(.ellip) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+/* ── Port: the product's admin-listing look (Workflow / TicketTable) where it differs ──
+   pill-track tabs sized to their labels; header cells px-4 py-2.5 12px semibold #364658;
+   body cells px-4 py-3; rows hover #f9fafb. */
+@scope (.dc-ManageDashboards) {
+.mtabs, :scope:is(.mtabs) { width: fit-content; }
+.mtbl thead th, :scope:is(.mtbl) thead th { padding: 10px 16px; font-size: 12px; font-weight: 600; color: #364658; border-bottom-color: #e5e7eb; }
+.mtbl td, :scope:is(.mtbl) td { height: auto; padding: 12px 16px; border-bottom-color: #e5e7eb; }
+.mtbl tbody tr:hover, :scope:is(.mtbl) tbody tr:hover { background: #f9fafb; }
+.mtbl .c-chk, :scope:is(.mtbl) .c-chk { width: 34px; padding-right: 0; }
+}
+.dash-root[data-theme='dark'] .dc-ManageDashboards .mtbl thead th { color: var(--ink); }
+.dash-root[data-theme='dark'] .dc-ManageDashboards .mtbl tbody tr:hover { background: var(--surface-2); }

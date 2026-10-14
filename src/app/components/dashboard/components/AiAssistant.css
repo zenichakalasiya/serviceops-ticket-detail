@@ -1,0 +1,512 @@
+@scope (.dc-AiAssistant) {
+.asst, :scope:is(.asst) { display: flex; flex-direction: column; height: 100%; overflow: hidden; background: var(--surface); }
+.ah, :scope:is(.ah) { display: flex; align-items: center; justify-content: space-between; padding: 13px 14px; border-bottom: 1px solid var(--border); }
+.ah-l, :scope:is(.ah-l) { display: flex; gap: 10px; align-items: center; }
+/* AI icons are gradient GLYPHS on a soft tile, not white-on-solid orbs */
+.spk, :scope:is(.spk) { width: 32px; height: 32px; border-radius: 4px; flex: none; display: grid; place-items: center; background: var(--ai-softer); }
+.spk .ico, :scope:is(.spk) .ico { stroke: url(#ai-grad); color: var(--ai); }
+.ah-t, :scope:is(.ah-t) { font-weight: 600; font-size: 15px; }
+.ah-sub, :scope:is(.ah-sub) { font-size: 12px; color: var(--muted); }
+.x, :scope:is(.x) { border: none; background: transparent; color: var(--muted); display: grid; place-items: center; padding: 3px; border-radius: 4px; }
+.x:hover, :scope:is(.x:hover) { background: var(--surface-2); color: var(--ink); }
+/* header ⋯ menu */
+.ah-r, :scope:is(.ah-r) { position: relative; display: flex; align-items: center; gap: 2px; }
+.ahmenu-back, :scope:is(.ahmenu-back) { position: fixed; inset: 0; z-index: 40; }
+.ahmenu, :scope:is(.ahmenu) { position: absolute; top: calc(100% + 6px); right: 0; z-index: 50; min-width: 194px; padding: 6px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); box-shadow: var(--sh-pop); display: flex; flex-direction: column; }
+.ahm-item, :scope:is(.ahm-item) { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; border: none; background: transparent; border-radius: 4px; padding: 8px 9px; font-size: 13px; color: var(--ink); }
+.ahm-item .ico, :scope:is(.ahm-item) .ico { color: var(--muted); flex: none; }
+.ahm-item:hover, :scope:is(.ahm-item:hover) { background: var(--ai-softer); color: var(--ai-ink); }
+.ahm-item:hover .ico, :scope:is(.ahm-item:hover) .ico { color: var(--ai); }
+.ahm-item.danger, :scope:is(.ahm-item.danger) { color: var(--red); }
+.ahm-item.danger .ico, :scope:is(.ahm-item.danger) .ico { color: var(--red); }
+.ahm-item.danger:hover, :scope:is(.ahm-item.danger:hover) { background: var(--red-soft); color: var(--red); }
+
+/* generous rhythm — the thread is read, not scanned, so answers need room */
+.ab, :scope:is(.ab) { flex: 1; overflow: auto; padding: 18px 16px 22px; display: flex; flex-direction: column; gap: 22px; }
+.blk, :scope:is(.blk) { animation: dc-AiAssistant-rise .2s ease both; }
+
+@media (prefers-reduced-motion: reduce) { .blk, :scope:is(.blk) { animation: none; } }
+.user, :scope:is(.user) { display: flex; justify-content: flex-end; }
+.user span, :scope:is(.user) span { background: var(--surface-2); color: var(--ink); font-size: 13px; font-weight: 500; padding: 8px 13px; border-radius: 4px 4px 0 4px; max-width: 85%; }
+.blk-h, :scope:is(.blk-h) { display: flex; align-items: center; gap: 7px; font-weight: 600; font-size: 13px; margin-bottom: 12px; }
+.blk-h.bad > :first-child, :scope:is(.blk-h.bad) > :first-child { color: var(--red); } .blk-h.warn > :first-child, :scope:is(.blk-h.warn) > :first-child { color: var(--amber); }
+.blk-h > :first-child, :scope:is(.blk-h) > :first-child { color: var(--ai); }
+.updated, :scope:is(.updated) { margin-left: auto; font-size: 11px; font-weight: 400; color: var(--muted); }
+/* summary facts */
+.facts, :scope:is(.facts) { display: flex; flex-direction: column; gap: 2px; }
+.fact, :scope:is(.fact) { display: flex; gap: 9px; padding: 9px; border-radius: 4px; }
+.fact:hover, :scope:is(.fact:hover) { background: var(--primary-softer); }
+.dot, :scope:is(.dot) { width: 8px; height: 8px; border-radius: 50%; margin-top: 4px; flex: none; }
+.dot.bad, :scope:is(.dot.bad) { background: var(--red); } .dot.warn, :scope:is(.dot.warn) { background: var(--amber); } .dot.info, :scope:is(.dot.info) { background: var(--blue); }
+.fb, :scope:is(.fb) { flex: 1; min-width: 0; }
+.ftext, :scope:is(.ftext) { font-size: 13px; font-weight: 500; line-height: 1.45; }
+.ftext b, :scope:is(.ftext) b { color: var(--ink); font-weight: 600; }
+.fmeta, :scope:is(.fmeta) { display: flex; align-items: center; gap: 10px; margin-top: 5px; }
+.cite, :scope:is(.cite) { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; color: var(--ink-2); background: var(--surface-2); border: 1px solid var(--border); padding: 1px 7px; border-radius: var(--r-pill); }
+.lnk, :scope:is(.lnk) { border: none; background: transparent; color: var(--primary-700); font-weight: 600; font-size: 12px; padding: 0; }
+.lnk:hover, :scope:is(.lnk:hover) { text-decoration: underline; }
+.calm, :scope:is(.calm) { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); padding: 8px; }
+.calm > :first-child, :scope:is(.calm) > :first-child { color: var(--green); }
+
+/* ---- Deep dive -------------------------------------------------------------
+   Four zones, in the order a reader needs them: the verdict (a position, not a
+   description), the readings (receipts), the drivers (the insight), and the
+   consequence. Prose belongs only in the last two, and only a sentence at a time.
+
+   The visual system for BOTH CTA answers, and the reason it is this quiet:
+
+   These two answers are the longest things the panel ever prints, and the earlier
+   treatment gave every part its own container — a tinted verdict box, bordered
+   reading chips, a ruled driver list, bordered cards with a 3px severity bar, a
+   dashed divider inside each one. Five container styles stacked in one scroll read
+   as noise, and noise is exactly what an answer must not be.
+
+   So: ONE card style (hairline border, 14px radius, 16px padding), severity carried
+   by a small mark rather than a full-card wash, and SPACE doing the separating that
+   rules used to do. The spacing scale is 8 / 12 / 16 / 24 and nothing else. */
+
+/* the verdict — the position, stated. A white card: tinting the whole panel red
+   makes every deep dive read as an emergency, so the tone rides in the tag alone. */
+.vd, :scope:is(.vd) { border-radius: 4px; padding: 16px; margin-bottom: 16px; border: 1px solid var(--border); background: var(--surface); }
+.vd.bad, :scope:is(.vd.bad) { border-color: color-mix(in srgb, var(--red) 26%, var(--border)); }
+.vd.warn, :scope:is(.vd.warn) { border-color: color-mix(in srgb, var(--amber) 30%, var(--border)); }
+.vd.good, :scope:is(.vd.good) { border-color: color-mix(in srgb, var(--green) 28%, var(--border)); }
+/* the tag is the only saturated thing in the card, so it is where the eye lands */
+.vd-tag, :scope:is(.vd-tag) { display: inline-block; font-size: 10px; text-transform: uppercase; letter-spacing: .7px; font-weight: 700; margin-bottom: 10px; padding: 3px 8px; border-radius: var(--r-pill); color: var(--muted-2); background: var(--surface-2); }
+.vd.bad .vd-tag, :scope:is(.vd.bad) .vd-tag { color: var(--red); background: color-mix(in srgb, var(--red) 10%, var(--surface)); }
+.vd.warn .vd-tag, :scope:is(.vd.warn) .vd-tag { color: var(--amber); background: color-mix(in srgb, var(--amber) 12%, var(--surface)); }
+.vd.good .vd-tag, :scope:is(.vd.good) .vd-tag { color: var(--green); background: color-mix(in srgb, var(--green) 10%, var(--surface)); }
+.vd-h, :scope:is(.vd-h) { font-size: 15px; font-weight: 700; line-height: 1.4; color: var(--ink); letter-spacing: -.2px; text-wrap: balance; }
+.vd-s, :scope:is(.vd-s) { font-size: 13px; color: var(--ink-2); line-height: 1.65; margin-top: 8px; }
+
+/* readings — receipts. Borderless: a 2×2 grid of bordered chips inside a bordered
+   answer is three frames deep. The wash alone separates them from the page. */
+.rd, :scope:is(.rd) { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 24px; }
+.rd-c, :scope:is(.rd-c) { border: 0; border-radius: 4px; padding: 11px 12px; background: var(--surface-2); }
+/* only the genuinely bad one is washed. Washing 'warn' too turned all four cards amber
+   at once — a uniform colour field carries no signal, and the delta below each value is
+   already red or green, so the wash was saying it a second time in a weaker voice. */
+.rd-c.bad, :scope:is(.rd-c.bad) { background: color-mix(in srgb, var(--red) 8%, var(--surface)); }
+.rd-l, :scope:is(.rd-l) { font-size: 11px; color: var(--muted); line-height: 1.3; margin-bottom: 5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rd-v, :scope:is(.rd-v) { font-size: 17px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; display: flex; align-items: baseline; gap: 6px; letter-spacing: -.3px; }
+.rd-d, :scope:is(.rd-d) { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 0; }
+.rd-d.up, :scope:is(.rd-d.up) { color: var(--red); } .rd-d.down, :scope:is(.rd-d.down) { color: var(--green); }
+
+/* section label — the only thing marking a new zone now that the rules are gone,
+   so it needs the space above it to actually do that job */
+.sec-l, :scope:is(.sec-l) { font-size: 11px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted-2); font-weight: 700; margin: 0 0 12px; }
+/* a driver is prose, not a card. No left rule — with real space between them the
+   rule was drawing a box around something that was already separate. */
+.dv, :scope:is(.dv) { padding: 0; margin-bottom: 20px; }
+.dv:last-child, :scope:is(.dv:last-child) { margin-bottom: 0; }
+.dv-t, :scope:is(.dv-t) { font-size: 13px; font-weight: 650; color: var(--ink); line-height: 1.45; }
+.dv-ls, :scope:is(.dv-ls) { margin: 10px 0; display: flex; flex-direction: column; gap: 6px; }
+.dv-li, :scope:is(.dv-li) { font-size: 12px; color: var(--ink); line-height: 1.5; padding-left: 14px; position: relative; }
+.dv-li::before, :scope:is(.dv-li)::before { content: ''; position: absolute; left: 2px; top: 7px; width: 4px; height: 4px; border-radius: 50%; background: var(--ai); }
+.dv-li.muted, :scope:is(.dv-li.muted) { color: var(--muted); }
+.dv-li.muted::before, :scope:is(.dv-li.muted)::before { background: var(--muted-2); }
+.dv-b, :scope:is(.dv-b) { font-size: 12px; color: var(--ink-2); line-height: 1.65; margin-top: 8px; }
+
+/* the consequence — the one thing on screen that isn't visible on the tiles */
+.mn, :scope:is(.mn) { margin-top: 24px; border-radius: 4px; padding: 16px; background: var(--ai-grad-soft); border: 1px solid var(--ai-border); }
+.mn-h, :scope:is(.mn-h) { display: flex; align-items: center; gap: 6px; font-size: 11px; text-transform: uppercase; letter-spacing: .8px; font-weight: 700; color: var(--ai-ink); margin-bottom: 8px; }
+.mn-b, :scope:is(.mn-b) { font-size: 13px; line-height: 1.7; color: var(--ink); }
+
+/* ---- What needs attention --------------------------------------------------
+   A recommendation card, not a row in a list: what, why it matters, and the steps.
+   A bare severity list is something a threshold rule could print without any AI. */
+.foc-lead, :scope:is(.foc-lead) { font-size: 13px; color: var(--ink-2); line-height: 1.65; margin: 0 0 16px; }
+.foc, :scope:is(.foc) { display: flex; flex-direction: column; gap: 12px; }
+/* the numbered badge already carries severity in full colour — a 3px bar on the
+   same card said it a second time and made every card look like a warning banner */
+.foc-i, :scope:is(.foc-i) { border: 1px solid var(--border); border-radius: 4px; padding: 16px; background: var(--surface); }
+.foc-hd, :scope:is(.foc-hd) { display: flex; align-items: flex-start; gap: 10px; }
+.foc-n, :scope:is(.foc-n) { flex: none; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 700; color: #fff; margin-top: 1px; }
+.foc-n.bad, :scope:is(.foc-n.bad) { background: var(--red); } .foc-n.warn, :scope:is(.foc-n.warn) { background: var(--amber); } .foc-n.info, :scope:is(.foc-n.info) { background: var(--blue); }
+.foc-t, :scope:is(.foc-t) { flex: 1; min-width: 0; font-size: 13px; font-weight: 650; line-height: 1.45; color: var(--ink); text-wrap: balance; }
+/* the two halves are separated by space, not a dashed rule — inside a card that is
+   already bordered, an internal divider is a frame within a frame */
+.foc-why, :scope:is(.foc-why) { font-size: 12px; color: var(--ink-2); line-height: 1.7; margin: 14px 0 0; }
+.foc-next, :scope:is(.foc-next) { font-size: 12px; color: var(--ink); line-height: 1.7; margin-top: 16px; }
+.foc-why b, .foc-next b, :scope:is(.foc-why) b, :scope:is(.foc-next) b { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: .8px; font-weight: 700; margin-bottom: 5px; }
+.foc-why b, :scope:is(.foc-why) b { color: var(--muted-2); }
+.foc-next b, :scope:is(.foc-next) b { color: var(--ai-ink); }
+
+/* what is already fixing itself — reported, never ranked as work. Borderless: it is
+   deliberately the quietest thing in the answer. */
+.imp, :scope:is(.imp) { margin-top: 4px; border-radius: 4px; padding: 14px 16px; background: var(--surface-2); border: 0; }
+.imp-h, :scope:is(.imp-h) { display: flex; align-items: center; gap: 6px; font-size: 11px; text-transform: uppercase; letter-spacing: .8px; font-weight: 700; color: var(--muted-2); margin-bottom: 8px; }
+.imp-r, :scope:is(.imp-r) { font-size: 12px; color: var(--ink-2); line-height: 1.7; padding-left: 14px; position: relative; }
+.imp-r + .imp-r, :scope:is(.imp-r) + .imp-r { margin-top: 4px; }
+.imp-r::before, :scope:is(.imp-r)::before { content: '–'; position: absolute; left: 0; color: var(--muted-2); }
+.imp-r.good::before, :scope:is(.imp-r.good)::before { content: '✓'; color: var(--green); font-size: 10px; }
+/* what changed since last visit */
+.lastvisit, :scope:is(.lastvisit) { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); margin-bottom: 11px; }
+/* compact 2-up change cards — one mini stat card per moved metric; the explanatory
+   note rides in a hover tooltip so the digest stays small. Severity gives the wash. */
+.chg-grid, :scope:is(.chg-grid) { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.chgc, :scope:is(.chgc) { display: flex; flex-direction: column; gap: 5px; min-width: 0; border: 1px solid var(--border); border-radius: 4px; padding: 9px 10px; background: var(--surface-2); }
+.chgc.bad, :scope:is(.chgc.bad) { background: var(--red-soft); border-color: color-mix(in srgb, var(--red) 22%, transparent); }
+.chgc.warn, :scope:is(.chgc.warn) { background: var(--amber-soft); border-color: color-mix(in srgb, var(--amber) 24%, transparent); }
+.chgc.good, :scope:is(.chgc.good) { background: var(--green-soft); border-color: color-mix(in srgb, var(--green) 24%, transparent); }
+.chgc.hasnote, :scope:is(.chgc.hasnote) { cursor: help; }
+.chgc-top, :scope:is(.chgc-top) { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.chgc-ico, :scope:is(.chgc-ico) { flex: none; width: 20px; height: 20px; border-radius: 4px; display: grid; place-items: center; background: var(--surface); color: var(--muted); box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+.chgc.bad .chgc-ico, :scope:is(.chgc.bad) .chgc-ico { color: var(--red); } .chgc.warn .chgc-ico, :scope:is(.chgc.warn) .chgc-ico { color: var(--amber); } .chgc.good .chgc-ico, :scope:is(.chgc.good) .chgc-ico { color: var(--green); }
+.chgc-delta, :scope:is(.chgc-delta) { flex: none; font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; padding: 1px 7px; border-radius: var(--r-pill); background: var(--surface); }
+.chgc.bad .chgc-delta, :scope:is(.chgc.bad) .chgc-delta { color: var(--red); } .chgc.warn .chgc-delta, :scope:is(.chgc.warn) .chgc-delta { color: var(--amber); } .chgc.good .chgc-delta, :scope:is(.chgc.good) .chgc-delta { color: var(--green); }
+.chgc-name, :scope:is(.chgc-name) { font-size: 12px; font-weight: 600; color: var(--ink); line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.chgc-val, :scope:is(.chgc-val) { font-size: 11px; color: var(--muted); }
+.chgc-val b, :scope:is(.chgc-val) b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+/* a faint marker that a hover note exists */
+.chgc.hasnote .chgc-val::after, :scope:is(.chgc.hasnote) .chgc-val::after { content: "ⓘ"; color: var(--muted-2); font-weight: 400; margin-left: 5px; font-size: 11px; }
+/* ===== realistic "thinking" phase — pulsing orb + reasoning steps ===== */
+.think, :scope:is(.think) { display: flex; gap: 11px; padding: 4px 0 6px; }
+.think-orb, :scope:is(.think-orb) { width: 30px; height: 30px; border-radius: 4px; flex: none; display: grid; place-items: center; background: var(--ai-softer); animation: dc-AiAssistant-orbpulse 1.3s ease-in-out infinite; }
+.think-orb .ico, :scope:is(.think-orb) .ico { stroke: url(#ai-grad); color: var(--ai); }
+
+.think-main, :scope:is(.think-main) { flex: 1; min-width: 0; padding-top: 2px; }
+/* the label shimmers left→right in the AI gradient while it's thinking */
+.think-t, :scope:is(.think-t) { font-size: 13px; font-weight: 600; display: inline-flex; align-items: baseline;
+  background: linear-gradient(90deg, var(--muted) 0%, var(--muted) 20%, #731efb 42%, #f911e3 52%, var(--muted) 74%, var(--muted) 100%);
+  background-size: 220% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: dc-AiAssistant-shimmer 2.1s linear infinite; }
+
+@media (prefers-reduced-motion: reduce) { .think-t, :scope:is(.think-t) { animation: none; color: var(--ink); background: none; -webkit-text-fill-color: currentColor; } }
+.think-dots, :scope:is(.think-dots) { display: inline-flex; gap: 3px; margin-left: 5px; align-self: flex-end; margin-bottom: 4px; }
+.think-dots i, :scope:is(.think-dots) i { width: 3px; height: 3px; border-radius: 50%; background: var(--ai); animation: dc-AiAssistant-andot 1.2s infinite; }
+.think-dots i:nth-child(2), :scope:is(.think-dots) i:nth-child(2) { animation-delay: .2s; } .think-dots i:nth-child(3), :scope:is(.think-dots) i:nth-child(3) { animation-delay: .4s; }
+
+.think-steps, :scope:is(.think-steps) { display: flex; flex-direction: column; gap: 7px; margin-top: 9px; }
+.tstep, :scope:is(.tstep) { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+.tstep.active, :scope:is(.tstep.active) { color: var(--ink-2); } .tstep.done, :scope:is(.tstep.done) { color: var(--ink-2); }
+.tstep-ic, :scope:is(.tstep-ic) { width: 16px; height: 16px; flex: none; display: grid; place-items: center; }
+.tstep.done .tstep-ic, :scope:is(.tstep.done) .tstep-ic { color: var(--green); }
+.tspin, :scope:is(.tspin) { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--ai-soft); border-top-color: var(--ai); animation: dc-AiAssistant-spin .6s linear infinite; }
+
+/* streaming caret + progressive reveal */
+.caret, :scope:is(.caret) { display: inline-block; width: 2px; height: 1em; margin-left: 2px; vertical-align: -2px; background: var(--ai); border-radius: 1px; animation: dc-AiAssistant-blink 1s steps(2) infinite; }
+
+.reveal, :scope:is(.reveal) { animation: dc-AiAssistant-rise .28s ease both; }
+@media (prefers-reduced-motion: reduce) { .think-orb, .think-dots i, .tspin, .caret, .reveal, :scope:is(.think-orb), :scope:is(.think-dots) i, :scope:is(.tspin), :scope:is(.caret), :scope:is(.reveal) { animation: none; } }
+/* explain */
+.say, :scope:is(.say) { margin: 0 0 12px; font-size: 13px; line-height: 1.62; color: var(--ink-2); }
+.say b, :scope:is(.say) b { color: var(--ink); font-weight: 600; }
+.say:first-of-type, :scope:is(.say:first-of-type) { color: var(--ink); }
+/* "spotlighted a widget on the board" note — the written answer points AT the tile */
+.spot, :scope:is(.spot) { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 10px; font-size: 12px; color: var(--ai-ink); background: var(--ai-grad-soft); border: 1px solid var(--ai-border); border-radius: var(--r-pill); padding: 4px 11px; }
+.spot .ico, :scope:is(.spot) .ico { color: var(--ai); }
+.spot b, :scope:is(.spot) b { font-weight: 600; }
+.spark svg, :scope:is(.spark) svg { width: 100%; height: 42px; display: block; margin-bottom: 8px; }
+.sl, :scope:is(.sl) { fill: none; stroke: var(--muted-2); stroke-width: 1.5; }
+.mean, :scope:is(.mean) { stroke: var(--border-strong); stroke-width: 1; stroke-dasharray: 3 3; }
+.pt.bad, :scope:is(.pt.bad) { fill: var(--red); } .pt.warn, :scope:is(.pt.warn) { fill: var(--amber); }
+.how summary, :scope:is(.how) summary { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--muted); cursor: pointer; list-style: none; }
+.how summary::-webkit-details-marker, :scope:is(.how) summary::-webkit-details-marker { display: none; }
+.how > div, :scope:is(.how) > div { margin-top: 6px; font-size: 11px; color: var(--ink-2); background: var(--surface-2); border-radius: 4px; padding: 7px 9px; line-height: 1.45; }
+/* .mini-cta is now the product .btn.btn-sm — only its spacing stays */
+.mini-cta, :scope:is(.mini-cta) { margin-top: 9px; display: inline-flex; align-items: center; gap: 1px; }
+/* shared chips */
+.sub-h, :scope:is(.sub-h) { display: flex; align-items: baseline; gap: 7px; font-size: 12px; font-weight: 600; margin: 12px 0 8px; }
+.sub-h .muted, :scope:is(.sub-h) .muted { font-weight: 400; font-size: 11px; }
+.chips, :scope:is(.chips) { display: flex; flex-wrap: wrap; gap: 6px; }
+.dchip, :scope:is(.dchip) { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-pill); padding: 3px 8px; color: var(--ink-2); }
+.dchip b, :scope:is(.dchip) b { color: var(--ink); font-weight: 600; }
+.dchip .op, :scope:is(.dchip) .op { color: var(--muted); }
+.dchip.locked, :scope:is(.dchip.locked) { background: var(--primary-softer); border-color: transparent; }
+.cx, :scope:is(.cx) { border: none; background: transparent; color: var(--muted); display: grid; place-items: center; padding: 0; border-radius: 3px; }
+.cx:hover, :scope:is(.cx:hover) { background: var(--red-soft); color: var(--red); }
+.cl, :scope:is(.cl) { color: var(--muted-2); }
+.tier, :scope:is(.tier) { display: flex; align-items: flex-start; gap: 4px; margin: 8px 0 0; font-size: 11px; background: var(--amber-soft); color: var(--amber); border-radius: 4px; padding: 7px 9px; line-height: 1.4; }
+.rtbl, :scope:is(.rtbl) { border: 1px solid var(--border); border-radius: var(--r); overflow: auto; max-height: 200px; }
+table, :scope:is(table) { width: 100%; border-collapse: collapse; font-size: 12px; }
+th, :scope:is(th) { text-align: left; font-weight: 600; color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .3px; padding: 6px 8px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--surface); }
+td, :scope:is(td) { padding: 6px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+tr:last-child td, :scope:is(tr:last-child) td { border-bottom: none; }
+.none, :scope:is(.none) { text-align: center; color: var(--muted); padding: 12px; }
+.idl, :scope:is(.idl) { color: var(--primary-700); font-weight: 600; }
+.pill, :scope:is(.pill) { display: inline-flex; align-items: center; height: 18px; padding: 0 7px; border-radius: 999px; font-size: 10px; font-weight: 600; }
+.pill-blue, :scope:is(.pill-blue) { background: var(--blue-soft); color: var(--blue); } .pill-amber, :scope:is(.pill-amber) { background: var(--amber-soft); color: var(--amber); }
+.pill-green, :scope:is(.pill-green) { background: var(--green-soft); color: var(--green); } .pill-red, :scope:is(.pill-red) { background: var(--red-soft); color: var(--red); }
+.pill-p1, :scope:is(.pill-p1) { background: var(--red-soft); color: var(--red); } .pill-p2, :scope:is(.pill-p2) { background: var(--amber-soft); color: var(--amber); }
+.pill-p3, :scope:is(.pill-p3) { background: var(--blue-soft); color: var(--blue); } .pill-p4, :scope:is(.pill-p4) { background: var(--surface-2); color: var(--muted); }
+.acts, :scope:is(.acts) { display: flex; flex-direction: column; gap: 6px; }
+.act, :scope:is(.act) { display: flex; align-items: center; gap: 9px; text-align: left; border: 1px solid var(--border); background: var(--surface); border-radius: 4px; padding: 9px 10px; }
+.act:hover, :scope:is(.act:hover) { border-color: var(--primary); background: var(--primary-softer); }
+.aic, :scope:is(.aic) { width: 26px; height: 26px; border-radius: 4px; flex: none; display: grid; place-items: center; background: var(--surface-2); color: var(--ink-2); }
+.act:hover .aic, :scope:is(.act:hover) .aic { background: var(--primary-soft); color: var(--primary-700); }
+.al, :scope:is(.al) { flex: 1; font-size: 12px; font-weight: 500; }
+.ac, :scope:is(.ac) { color: var(--muted-2); }
+/* widget */
+.wprev, :scope:is(.wprev) { border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+.wp-h, :scope:is(.wp-h) { display: flex; align-items: center; justify-content: space-between; padding: 8px 11px; border-bottom: 1px solid var(--border); }
+.wp-h b, :scope:is(.wp-h) b { font-size: 13px; }
+.pv, :scope:is(.pv) { font-size: 10px; font-weight: 600; color: var(--primary-700); background: var(--primary-soft); border-radius: 4px; padding: 1px 6px; }
+.kinds, :scope:is(.kinds) { display: flex; gap: 6px; }
+.kind, :scope:is(.kind) { position: relative; display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--border); background: var(--surface); border-radius: 4px; padding: 6px 9px; font-size: 12px; color: var(--ink-2); }
+.kind.on, :scope:is(.kind.on) { border-color: var(--primary); background: var(--primary-softer); color: var(--primary-700); font-weight: 600; }
+.rec, :scope:is(.rec) { color: var(--green); font-weight: 700; }
+.why, :scope:is(.why) { display: flex; align-items: flex-start; gap: 5px; margin: 9px 0 0; font-size: 12px; color: var(--ink-2); background: var(--surface-2); border-radius: 4px; padding: 8px 10px; line-height: 1.45; }
+.why > :first-child, :scope:is(.why) > :first-child { color: var(--amber); flex: none; margin-top: 1px; }
+/* Primary AI CTA — a gradient BORDER and gradient label on a white fill, never a
+   solid gradient slab. The label needs its own <span> because the border trick
+   already owns the button's `background`. */
+/* .add is now the product .btn.btn-primary.btn-sm — only its spacing stays */
+.add, :scope:is(.add) { margin-top: 11px; display: inline-flex; align-items: center; gap: 6px; }
+/* ===== create flow ===== */
+/* the AI-chosen name, called out in the sentence that announces it */
+.nm, :scope:is(.nm) { color: var(--ai-ink); font-weight: 700; background: var(--ai-grad-soft); border: 1px solid var(--ai-border); border-radius: 4px; padding: 1px 7px; }
+.named, :scope:is(.named) { margin-top: 10px; }
+.nm-note, :scope:is(.nm-note) { color: var(--muted); font-size: 12px; margin-left: 5px; }
+.ofn, :scope:is(.ofn) { margin-left: auto; font-size: 11px; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; }
+.muted-say, :scope:is(.muted-say) { color: var(--muted); font-size: 12px; margin-top: -2px; }
+.doneacts, :scope:is(.doneacts) { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin-top: 10px; }
+.doneacts .add, .doneacts .mini-cta, :scope:is(.doneacts) .add, :scope:is(.doneacts) .mini-cta { margin-top: 0; }
+.lnk-row, :scope:is(.lnk-row) { display: inline-flex; align-items: center; gap: 6px; margin-top: 4px; border: none; background: transparent; color: var(--ai-ink); font-weight: 600; font-size: 12px; padding: 4px 0; }
+.lnk-row .ico, :scope:is(.lnk-row) .ico { color: var(--ai); }
+.lnk-row:hover, :scope:is(.lnk-row:hover) { text-decoration: underline; }
+
+/* numbered next steps / prompt angles — prose list, each line actionable */
+.nsteps, :scope:is(.nsteps) { margin: 4px 0 8px; padding-left: 20px; display: flex; flex-direction: column; gap: 7px; }
+.nsteps li, :scope:is(.nsteps) li { font-size: 13px; line-height: 1.5; color: var(--ink-2); }
+.nsteps li::marker, :scope:is(.nsteps) li::marker { color: var(--muted); font-weight: 600; }
+.nstep, :scope:is(.nstep) { display: block; width: 100%; text-align: left; border: none; background: transparent; padding: 3px 6px 3px 2px; border-radius: 4px; font: inherit; font-size: 13px; line-height: 1.5; color: var(--ink-2); cursor: pointer; }
+.nstep b, :scope:is(.nstep) b { color: var(--ink); font-weight: 600; }
+.nstep:hover, :scope:is(.nstep:hover) { background: var(--ai-softer); }
+.nstep:hover b, :scope:is(.nstep:hover) b { color: var(--ai-ink); }
+/* what the AI needs to know before it can write a prompt */
+.needs, :scope:is(.needs) { display: flex; flex-direction: column; gap: 5px; margin: 8px 0 12px; padding: 9px 11px; background: var(--surface-2); border-radius: 4px; }
+.need, :scope:is(.need) { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ink-2); }
+.need-n, :scope:is(.need-n) { flex: none; width: 16px; height: 16px; border-radius: 4px; display: grid; place-items: center; background: var(--surface); color: var(--muted); font-size: 10px; font-weight: 700; }
+/* the whole-board proposal — scannable rows, accepted in one click */
+.prop, :scope:is(.prop) { border: 1px solid var(--ai-border); border-radius: 4px; background: var(--surface); padding: 13px; }
+.prop-h, :scope:is(.prop-h) { font-size: 13px; color: var(--ink-2); }
+.prop-h b, :scope:is(.prop-h) b { color: var(--ink); font-weight: 700; }
+.prop-match, :scope:is(.prop-match) { display: inline-flex; margin-top: 7px; padding: 2px 9px; border-radius: var(--r-pill); background: var(--ai-grad-soft); border: 1px solid var(--ai-border); color: var(--ai-ink); font-size: 11px; font-weight: 700; }
+.prop-meta, :scope:is(.prop-meta) { margin-top: 7px; font-size: 11px; color: var(--muted); }
+.prop-list, :scope:is(.prop-list) { display: flex; flex-direction: column; gap: 6px; margin: 12px 0; }
+.prop-row, :scope:is(.prop-row) { display: flex; align-items: center; gap: 8px; padding: 7px 9px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface-2); }
+.prop-mod, :scope:is(.prop-mod) { flex: none; padding: 1px 7px; border-radius: 4px; background: var(--ai-soft); color: var(--ai-ink); font-size: 10px; font-weight: 700; letter-spacing: .2px; }
+.prop-name, :scope:is(.prop-name) { flex: 1; min-width: 0; font-size: 12px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.prop-viz, :scope:is(.prop-viz) { flex: none; padding: 1px 7px; border-radius: 4px; border: 1px solid var(--ai-border); color: var(--ai-ink); font-size: 10px; font-weight: 700; }
+/* a suggested row is a checkbox: same anatomy as prop-row, with a leading tick and a
+   ticked/unticked state so the whole row is one target */
+.sug-row, :scope:is(.sug-row) { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; padding: 7px 9px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); }
+.sug-row:hover, :scope:is(.sug-row:hover) { border-color: var(--ai); }
+.sug-row.on, :scope:is(.sug-row.on) { background: var(--ai-soft); border-color: var(--ai); }
+.sug-check, :scope:is(.sug-check) { flex: none; width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid var(--border-strong); display: grid; place-items: center; }
+.sug-row.on .sug-check, :scope:is(.sug-row.on) .sug-check { background: var(--ai); border-color: var(--ai); color: #fff; }
+.prop-acts, :scope:is(.prop-acts) { display: flex; flex-wrap: wrap; gap: 7px; }
+/* .pact is now the product .btn.btn-sm (and .btn-primary for the go action) */
+/* the widget vocabulary — a small, clean palette rather than a form */
+.wtypes, :scope:is(.wtypes) { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin-bottom: 10px; }
+.wtype, :scope:is(.wtype) { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; padding: 9px 10px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); text-align: left; }
+.wtype:hover, :scope:is(.wtype:hover) { border-color: var(--ai-border); background: var(--ai-softer); }
+.wtype.on, :scope:is(.wtype.on) { border-color: var(--ai); background: var(--ai-softer); }
+.wt-l, :scope:is(.wt-l) { font-size: 12px; font-weight: 600; color: var(--ink); }
+.wt-h, :scope:is(.wt-h) { font-size: 10px; color: var(--muted); line-height: 1.3; }
+/* a tiny glyph that hints at each form, drawn in CSS so it costs nothing */
+.wt-g, :scope:is(.wt-g) { width: 26px; height: 16px; margin-bottom: 2px; opacity: .85; }
+.wt-g.bar, :scope:is(.wt-g.bar) { background: linear-gradient(to top, var(--ai) 40%, transparent 40%), linear-gradient(to top, var(--ai) 70%, transparent 70%), linear-gradient(to top, var(--ai) 55%, transparent 55%); background-size: 6px 100%, 6px 100%, 6px 100%; background-position: 0 100%, 10px 100%, 20px 100%; background-repeat: no-repeat; }
+.wt-g.hbar, :scope:is(.wt-g.hbar) { background: linear-gradient(to right, var(--ai) 60%, transparent 60%), linear-gradient(to right, var(--ai) 90%, transparent 90%), linear-gradient(to right, var(--ai) 40%, transparent 40%); background-size: 100% 4px, 100% 4px, 100% 4px; background-position: 0 1px, 0 7px, 0 13px; background-repeat: no-repeat; }
+.wt-g.line, :scope:is(.wt-g.line) { background: linear-gradient(45deg, transparent 45%, var(--ai) 45%, var(--ai) 58%, transparent 58%); }
+.wt-g.donut, :scope:is(.wt-g.donut) { width: 16px; height: 16px; border-radius: 50%; border: 4px solid var(--ai); }
+.wt-g.kpi, :scope:is(.wt-g.kpi) { font-size: 0; position: relative; }
+.wt-g.kpi::after, :scope:is(.wt-g.kpi)::after { content: '128'; font-size: 11px; font-weight: 700; color: var(--ai); letter-spacing: -.3px; }
+/* a real table glyph reads better than anything drawable in CSS */
+.wt-i, :scope:is(.wt-i) { height: 16px; margin-bottom: 2px; color: var(--ai); display: grid; place-items: center; }
+/* the configuration, spelled back after adding */
+/* The conditions on their own. The old "How it's configured" table restated what the
+ * meta line above the preview already says (source · measure · how it's drawn) — the
+ * conditions were the only part of it you couldn't read anywhere else. */
+.condrow, :scope:is(.condrow) { margin-top: 10px; }
+/* chart-type preference pills sit tight under the preview */
+.kindrow, :scope:is(.kindrow) { margin-top: 9px; }
+.wmeta, :scope:is(.wmeta) { font-size: 11px; color: var(--muted); margin: -4px 0 9px; font-family: var(--mono, inherit); }
+/* inline previews of what was just built */
+.kpiprev, :scope:is(.kpiprev) { padding: 20px 14px; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.kpiprev b, :scope:is(.kpiprev) b { font-size: 34px; font-weight: 500; letter-spacing: -1px; color: var(--ink); }
+.kpiprev span, :scope:is(.kpiprev) span { font-size: 12px; color: var(--muted); }
+.tblprev, :scope:is(.tblprev) { padding: 4px 10px 10px; overflow-x: auto; }
+.tblprev table, :scope:is(.tblprev) table { width: 100%; font-size: 11px; }
+.tblprev th, :scope:is(.tblprev) th { font-size: 10px; }
+.tblprev td, :scope:is(.tblprev) td { padding: 5px 7px; }
+
+/* ===== the question card (one per mandatory question) ===== */
+.askc, :scope:is(.askc) { border: 1px solid var(--ai-border); border-radius: 4px; background: var(--surface); box-shadow: var(--sh-sm); padding: 11px; display: flex; flex-direction: column; gap: 6px; }
+.askc.done, :scope:is(.askc.done) { background: var(--surface-2); border-color: var(--border); }
+.ask-h, :scope:is(.ask-h) { display: flex; align-items: flex-start; gap: 10px; padding: 1px 2px 6px; }
+.ask-qs, :scope:is(.ask-qs) { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ask-q, :scope:is(.ask-q) { font-size: 13px; font-weight: 700; color: var(--ink); line-height: 1.35; }
+.ask-sub, :scope:is(.ask-sub) { font-size: 11px; color: var(--muted); }
+.ask-step, :scope:is(.ask-step) { flex: none; font-size: 11px; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ask-opt, :scope:is(.ask-opt) { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; border: 1px solid var(--border); background: var(--surface); border-radius: 4px; padding: 8px 10px; }
+.ask-opt:hover, :scope:is(.ask-opt:hover) { border-color: var(--ai); background: var(--ai-softer); }
+.ask-n, :scope:is(.ask-n) { flex: none; width: 20px; height: 20px; border-radius: 4px; display: grid; place-items: center; background: var(--surface-2); color: var(--ink-2); font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.ask-opt:hover .ask-n, :scope:is(.ask-opt:hover) .ask-n { background: var(--ai-grad); color: #fff; }
+.ask-l, :scope:is(.ask-l) { flex: 1; min-width: 0; font-size: 13px; color: var(--ink); }
+.ask-arrow, :scope:is(.ask-arrow) { color: var(--muted-2); flex: none; }
+.ask-opt:hover .ask-arrow, :scope:is(.ask-opt:hover) .ask-arrow { color: var(--ai); }
+.ask-foot, :scope:is(.ask-foot) { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
+.ask-other, :scope:is(.ask-other) { flex: 1; min-width: 0; display: inline-flex; align-items: center; gap: 7px; height: 32px; padding: 0 10px; border: 1px dashed var(--border-strong); border-radius: 4px; color: var(--muted); }
+.ask-other:focus-within, :scope:is(.ask-other:focus-within) { border-style: solid; border-color: var(--ai); background: var(--ai-softer); }
+.ask-other input, :scope:is(.ask-other) input { flex: 1; min-width: 0; border: none; outline: none; background: transparent; font: inherit; font-size: 12px; color: var(--ink); }
+.ask-skip, :scope:is(.ask-skip) { flex: none; }
+.ask-answered, :scope:is(.ask-answered) { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--ai-ink); }
+.ask-answered .ico, :scope:is(.ask-answered) .ico { color: var(--green); }
+
+.opts, :scope:is(.opts) { display: flex; flex-direction: column; gap: 8px; }
+.opt, :scope:is(.opt) { display: flex; align-items: center; gap: 11px; text-align: left; border: 1px solid var(--ai-border); background: var(--ai-grad-soft); border-radius: 4px; padding: 11px 12px; }
+.opt:hover, :scope:is(.opt:hover) { border-color: var(--ai); background: var(--ai-softer); }
+.opt.sm, :scope:is(.opt.sm) { padding: 9px 11px; }
+.opt-ic, :scope:is(.opt-ic) { width: 30px; height: 30px; border-radius: 4px; flex: none; display: grid; place-items: center; background: var(--ai-soft); color: var(--ai-ink); }
+.opt > div, :scope:is(.opt) > div { display: flex; flex-direction: column; }
+.opt b, :scope:is(.opt) b { font-size: 13px; color: var(--ink); }
+.opt > div > span, :scope:is(.opt) > div > span { font-size: 11px; color: var(--muted); }
+.formrow, :scope:is(.formrow) { display: flex; gap: 7px; align-items: center; margin-top: 4px; }
+.fin, :scope:is(.fin) { flex: 1; height: 34px; border: 1.5px solid var(--ai); border-radius: 4px; padding: 0 11px; font: inherit; font-size: 13px; color: var(--ink); background: var(--surface); box-shadow: 0 0 0 3px var(--ai-soft); }
+.fin:focus, :scope:is(.fin:focus) { outline: none; }
+.recap, :scope:is(.recap) { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.recap > div, :scope:is(.recap) > div { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; padding: 6px 9px; background: var(--surface-2); border-radius: 4px; }
+.recap span, :scope:is(.recap) span { color: var(--muted); } .recap b, :scope:is(.recap) b { color: var(--ink); }
+.picklist, :scope:is(.picklist) { display: flex; flex-direction: column; gap: 6px; }
+.pick, :scope:is(.pick) { display: inline-flex; align-items: center; gap: 8px; text-align: left; border: 1px solid var(--ai-border); background: var(--ai-grad-soft); border-radius: 4px; padding: 9px 11px; font-size: 13px; color: var(--ink); }
+.pick:hover, :scope:is(.pick:hover) { border-color: var(--ai); background: var(--ai-softer); color: var(--ai-ink); }
+.pick.new, :scope:is(.pick.new) { color: var(--ai-ink); border-style: dashed; }
+.sg.on, :scope:is(.sg.on) { background: var(--ai-soft); border-color: var(--ai); color: var(--ai-ink); }
+/* reasoning line */
+.reasoning, :scope:is(.reasoning) { display: flex; align-items: center; gap: 7px; font-size: 11px; color: var(--muted); margin-bottom: 12px; }
+.rz-dot, :scope:is(.rz-dot) { width: 8px; height: 8px; border-radius: 50%; background: var(--ai-grad); flex: none; }
+/* grouped summary points */
+.sum-grp, :scope:is(.sum-grp) { margin-bottom: 16px; }
+.sum-gt, :scope:is(.sum-gt) { font-size: 12px; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
+/* widget-by-widget — the name and its headline number on one line, the reading beneath */
+.wrow, :scope:is(.wrow) { padding: 10px 0; border-bottom: 1px solid var(--border); }
+.wrow:last-child, :scope:is(.wrow:last-child) { border-bottom: 0; }
+.wrow-h, :scope:is(.wrow-h) { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.wdot, :scope:is(.wdot) { width: 7px; height: 7px; border-radius: 50%; flex: none; align-self: center; background: var(--muted-2); }
+.wdot.bad, :scope:is(.wdot.bad) { background: var(--red); } .wdot.warn, :scope:is(.wdot.warn) { background: var(--amber); } .wdot.info, :scope:is(.wdot.info) { background: var(--blue, var(--primary)); }
+.wrow-t, :scope:is(.wrow-t) { font-size: 13px; color: var(--ink); }
+.wrow-k, :scope:is(.wrow-k) { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }
+.wrow-v, :scope:is(.wrow-v) { margin-left: auto; font-size: 13px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+.wrow-s, :scope:is(.wrow-s) { margin: 5px 0 0; font-size: 13px; line-height: 1.55; color: var(--ink-2); }
+.sum-list, :scope:is(.sum-list) { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.sum-list li, :scope:is(.sum-list) li { position: relative; padding-left: 16px; font-size: 13px; line-height: 1.62; color: var(--ink-2); }
+.sum-list li b, :scope:is(.sum-list) li b { color: var(--ink); font-weight: 600; }
+.sum-list li::before, :scope:is(.sum-list) li::before { content: ''; position: absolute; left: 3px; top: 8px; width: 5px; height: 5px; border-radius: 50%; background: var(--ai); }
+/* status update — the subject line reads like an email header */
+.subj, :scope:is(.subj) { display: flex; align-items: baseline; gap: 9px; padding: 8px 11px; margin-bottom: 11px; background: var(--surface-2); border-radius: 4px; font-size: 13px; }
+.subj span, :scope:is(.subj) span { flex: none; font-size: 10px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; color: var(--muted); }
+.subj b, :scope:is(.subj) b { color: var(--ink); font-weight: 600; }
+/* ranked work queue */
+.wq, :scope:is(.wq) { display: flex; gap: 10px; padding: 9px 0; }
+.wq + .wq, :scope:is(.wq) + .wq { border-top: 1px solid var(--border); }
+.wq-n, :scope:is(.wq-n) { flex: none; width: 22px; height: 22px; border-radius: 4px; display: grid; place-items: center; font-size: 11px; font-weight: 700; color: #fff; background: var(--muted-2); }
+.wq-n.bad, :scope:is(.wq-n.bad) { background: var(--red); } .wq-n.warn, :scope:is(.wq-n.warn) { background: var(--amber); } .wq-n.info, :scope:is(.wq-n.info) { background: var(--blue); }
+.wq-b, :scope:is(.wq-b) { flex: 1; min-width: 0; }
+.wq-t, :scope:is(.wq-t) { font-size: 13px; font-weight: 500; color: var(--ink); line-height: 1.4; }
+.wq-t b, :scope:is(.wq-t) b { font-weight: 600; }
+.wq-w, :scope:is(.wq-w) { font-size: 12px; color: var(--muted); margin-top: 3px; line-height: 1.45; }
+.wq-b .lnk, :scope:is(.wq-b) .lnk { margin-top: 5px; }
+/* rate / copy — quiet until you reach for them */
+.fb-row, :scope:is(.fb-row) { display: flex; align-items: center; gap: 2px; margin-top: 10px; }
+.fbtn, :scope:is(.fbtn) { width: 26px; height: 26px; border: none; background: transparent; color: var(--muted-2); border-radius: 4px; display: grid; place-items: center; }
+.fbtn:hover, :scope:is(.fbtn:hover) { background: var(--surface-2); color: var(--ink-2); }
+.fbtn.on, :scope:is(.fbtn.on) { color: var(--ai); background: var(--ai-softer); }
+.fbtn.ok, :scope:is(.fbtn.ok) { color: var(--green); }
+/* contextual Follow ups (ClickUp-style vertical rows) */
+.fu-sec, :scope:is(.fu-sec) { margin-top: 16px; }
+.fu-h, :scope:is(.fu-h) { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+.fu-list, :scope:is(.fu-list) { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+/* follow-ups stay monochrome — colour here competes with the answer above it */
+.fu, :scope:is(.fu) { display: inline-flex; align-items: center; gap: 7px; max-width: 100%; text-align: left; border: 1px solid var(--border); background: var(--surface-2); border-radius: var(--r-pill); padding: 8px 14px; font-size: 13px; font-weight: 500; color: var(--ink-2); }
+.fu .fu-arrow, :scope:is(.fu) .fu-arrow { color: var(--muted-2); transform: rotate(0deg); flex: none; }
+.fu:hover, :scope:is(.fu:hover) { border-color: var(--border-strong); background: var(--surface); color: var(--ink); }
+.fu:hover .fu-arrow, :scope:is(.fu:hover) .fu-arrow { color: var(--ink-2); }
+/* footer input */
+.af, :scope:is(.af) { border-top: 1px solid var(--border); padding: 10px 14px 12px; }
+/* command palette — compact: icon + name, sized to its content, not the panel */
+.actpop.cmdpop, :scope:is(.actpop.cmdpop) { width: max-content; min-width: 168px; max-width: 230px; padding: 5px; }
+.cmditem, :scope:is(.cmditem) { display: flex; align-items: center; gap: 9px; width: 100%; text-align: left; border: none; background: transparent; border-radius: 4px; padding: 7px 9px; cursor: pointer; }
+.cmditem .ico, :scope:is(.cmditem) .ico { color: var(--muted); flex: none; }
+.cmditem.sel, :scope:is(.cmditem.sel) { background: var(--ai-softer); }
+.cmditem.sel .ico, :scope:is(.cmditem.sel) .ico { color: var(--ai); }
+.cmd-l, :scope:is(.cmd-l) { font-size: 13px; font-weight: 500; color: var(--ink); }
+.cmditem.sel .cmd-l, :scope:is(.cmditem.sel) .cmd-l { color: var(--ai-ink); font-weight: 600; }
+.cmd-none, :scope:is(.cmd-none) { padding: 9px; font-size: 12px; color: var(--muted); white-space: nowrap; }
+.actpop, :scope:is(.actpop) { border: 1px solid var(--ai-border); border-radius: var(--r); background: var(--surface); box-shadow: var(--sh-pop); padding: 8px; margin-bottom: 9px; }
+.actpop-h, :scope:is(.actpop-h) { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .3px; color: var(--muted); padding: 4px 6px 8px; }
+.actpop-h .ico, :scope:is(.actpop-h) .ico { color: var(--ai); }
+.apx, :scope:is(.apx) { margin-left: auto; border: none; background: transparent; color: var(--muted); display: grid; place-items: center; padding: 2px; border-radius: 4px; }
+.apx:hover, :scope:is(.apx:hover) { background: var(--surface-2); color: var(--ink); }
+.actprompt, :scope:is(.actprompt) { display: flex; align-items: center; gap: 9px; width: 100%; text-align: left; border: none; background: transparent; border-radius: 4px; padding: 8px 8px; font-size: 13px; color: var(--ink); }
+.actprompt .ico, :scope:is(.actprompt) .ico { color: var(--muted-2); flex: none; }
+.actprompt:hover, .actprompt.sel, :scope:is(.actprompt:hover), :scope:is(.actprompt.sel) { background: var(--ai-softer); color: var(--ai-ink); }
+.actprompt:hover .ico, .actprompt.sel .ico, :scope:is(.actprompt:hover) .ico, :scope:is(.actprompt.sel) .ico { color: var(--ai); }
+.chipsrow, :scope:is(.chipsrow) { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 9px; }
+.sg, :scope:is(.sg) { border: 1px solid var(--ai-border); background: var(--ai-grad-soft); border-radius: var(--r-pill); padding: 5px 11px; font-size: 12px; color: var(--ink-2); }
+/* minimal suggestive actions — plain outline; the AI accent only on hover */
+.chipsrow.mini, :scope:is(.chipsrow.mini) { gap: 6px; margin-bottom: 6px; }
+.chipsrow.mini .sg, :scope:is(.chipsrow.mini) .sg { background: transparent; border-color: var(--border); color: var(--ink-2); font-size: 12px; padding: 5px 11px; font-weight: 500; text-align: left; }
+.chipsrow.mini .sg:hover, :scope:is(.chipsrow.mini) .sg:hover { border-color: var(--ai); background: var(--ai-softer); color: var(--ai-ink); }
+.chipsrow.mini .sg.go, :scope:is(.chipsrow.mini) .sg.go { border-color: var(--ai); color: var(--ai-ink); font-weight: 600; }
+.sg:hover, :scope:is(.sg:hover) { border-color: var(--primary); background: var(--primary-softer); color: var(--primary-700); }
+/* composer — a light sweep rides the top edge so the field reads as "live" */
+.inbox, :scope:is(.inbox) { position: relative; display: flex; align-items: center; gap: 6px; min-height: 46px; border: 1px solid var(--ai-border); border-radius: 4px; padding: 6px 6px 6px 7px; background: var(--surface); }
+.inbox::before, :scope:is(.inbox)::before {
+  content: ''; position: absolute; top: -1px; left: 18%; right: 18%; height: 2px; border-radius: 2px;
+  background: var(--ai-grad); filter: blur(2.5px); pointer-events: none;
+  animation: dc-AiAssistant-sweep 3.4s ease-in-out infinite;
+}
+
+.inbox:focus-within, :scope:is(.inbox:focus-within) { border-color: var(--ai); box-shadow: 0 0 0 3px var(--ai-soft); }
+.inbox:focus-within::before, :scope:is(.inbox:focus-within)::before { opacity: 1; animation: none; }
+.plusbtn, :scope:is(.plusbtn) { width: 32px; height: 32px; border: 1px solid var(--border); background: var(--surface); color: var(--ink-2); border-radius: 50%; display: grid; place-items: center; flex: none; transition: border-color .14s, background .14s, color .14s; }
+.plusbtn:hover, .plusbtn.on, :scope:is(.plusbtn:hover), :scope:is(.plusbtn.on) { border-color: var(--ai); background: var(--ai-softer); color: var(--ai-ink); }
+/* the picked command sits in the field as a chip, ahead of what you type */
+.cmdchip, :scope:is(.cmdchip) { display: inline-flex; align-items: center; gap: 5px; flex: none; height: 24px; padding: 0 5px 0 9px; border-radius: var(--r-pill); background: var(--ai-grad-soft); border: 1px solid var(--ai-border); color: var(--ai-ink); font-size: 12px; font-weight: 600; }
+.cmdchip .ico, :scope:is(.cmdchip) .ico { color: var(--ai); }
+.ccx, :scope:is(.ccx) { border: none; background: transparent; color: var(--ai-ink); display: grid; place-items: center; padding: 2px; border-radius: 4px; opacity: .65; }
+.ccx:hover, :scope:is(.ccx:hover) { opacity: 1; background: var(--ai-soft); }
+@media (prefers-reduced-motion: reduce) { .inbox::before, :scope:is(.inbox)::before { animation: none; opacity: .5; } }
+.inbox input, :scope:is(.inbox) input { flex: 1; border: none; outline: none; background: transparent; font-size: 13px; font-family: inherit; color: var(--ink); }
+.send, :scope:is(.send) { width: 32px; height: 32px; border: none; border-radius: 4px; background: var(--surface-2); color: var(--muted); display: grid; place-items: center; flex: none; transition: background .14s, color .14s; }
+.send.ready, :scope:is(.send.ready) { background: var(--ai-grad); color: #fff; }
+
+/* greeting empty state */
+.empty-ai, :scope:is(.empty-ai) { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 30px 18px 12px; }
+.ea-orb .ico, :scope:is(.ea-orb) .ico { stroke: url(#ai-grad); color: var(--ai); }
+.empty-ai h3, :scope:is(.empty-ai) h3 { font-size: 20px; font-weight: 600; margin: 4px 0 8px; color: var(--ink); letter-spacing: -.2px; }
+.empty-ai p, :scope:is(.empty-ai) p { font-size: 13px; color: var(--muted); line-height: 1.5; margin: 0 0 20px; max-width: 300px; }
+.ea-ctas, :scope:is(.ea-ctas) { display: flex; flex-direction: column; gap: 9px; width: 100%; }
+.ea-cta, :scope:is(.ea-cta) { display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 14px; border: none; border-radius: 4px; background: var(--ai-grad-soft); color: var(--ink); font-weight: 500; font-size: 13px; text-align: left; }
+.ea-cta .ico, :scope:is(.ea-cta) .ico { color: var(--ai); flex: none; }
+.ea-cta:hover, :scope:is(.ea-cta:hover) { background: var(--ai-soft); }
+/* same option style reused at creation time; starters wrap since they're sentences */
+.ea-ctas.starters, :scope:is(.ea-ctas.starters) { margin: 10px 0 6px; gap: 8px; }
+.ea-cta.wrap, :scope:is(.ea-cta.wrap) { height: auto; min-height: 44px; padding: 11px 14px; line-height: 1.4; align-items: flex-start; }
+.ea-cta.wrap .ico, :scope:is(.ea-cta.wrap) .ico { margin-top: 1px; }
+
+/* suggested next actions */
+.na-h, :scope:is(.na-h) { font-size: 11px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; color: var(--muted); margin: 13px 0 8px; }
+.na-row .sg, :scope:is(.na-row) .sg { background: var(--ai-grad-soft); border: 1px solid var(--ai-border); color: var(--ai-ink); }
+.na-row .sg:hover, :scope:is(.na-row) .sg:hover { background: var(--ai-soft); border-color: var(--ai); color: var(--ai-ink); }
+.grounded, :scope:is(.grounded) { display: flex; align-items: center; gap: 5px; margin-top: 8px; font-size: 11px; color: var(--muted); }
+
+/* Vue <transition> enter effects, as keyframes */
+.tstep, :scope:is(.tstep) { animation: dc-AiAssistant-tstep .25s ease both; }
+.ahmenu, .actpop, :scope:is(.ahmenu), :scope:is(.actpop) { animation: dc-AiAssistant-actpop .18s ease both; }
+/* the visibility question answers in the product's pill-track */
+.vis-pills, :scope:is(.vis-pills) { margin-top: 2px; }
+.vis-pills > button, :scope:is(.vis-pills) > button { flex: 1; }
+@media (prefers-reduced-motion: reduce) { .tstep, .ahmenu, .actpop, :scope:is(.tstep), :scope:is(.ahmenu), :scope:is(.actpop) { animation: none; } }
+}
+@keyframes dc-AiAssistant-rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes dc-AiAssistant-orbpulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(139,92,246,.42); } 50% { box-shadow: 0 0 0 8px rgba(139,92,246,0); } }
+@keyframes dc-AiAssistant-shimmer { from { background-position: 120% 0; } to { background-position: -120% 0; } }
+@keyframes dc-AiAssistant-andot { 0%, 60%, 100% { opacity: .2; } 30% { opacity: 1; } }
+@keyframes dc-AiAssistant-spin { to { transform: rotate(360deg); } }
+@keyframes dc-AiAssistant-blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
+@keyframes dc-AiAssistant-sweep { 0%, 100% { opacity: .18; transform: scaleX(.55); } 50% { opacity: .9; transform: scaleX(1); } }
+@keyframes dc-AiAssistant-tstep { from { opacity: 0; transform: translateY(4px); } }
+@keyframes dc-AiAssistant-actpop { from { opacity: 0; transform: translateY(8px); } }

@@ -1,0 +1,26 @@
+@scope (.dc-HistoryDialog) {
+:scope { position: fixed; inset: 0; background: rgba(20,21,38,.42); backdrop-filter: blur(2px); z-index: 100; display: flex; justify-content: flex-end; }
+.hd, :scope:is(.hd) { width: 860px; max-width: 96vw; height: 100%; background: var(--surface); box-shadow: var(--sh-lg); display: flex; flex-direction: column; overflow: hidden; animation: dc-HistoryDialog-slideIn .22s cubic-bezier(.2,.8,.2,1); }
+
+.hd-head, :scope:is(.hd-head) { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px 14px; border-bottom: 1px solid var(--border); }
+.hd-head h3, :scope:is(.hd-head) h3 { margin: 0; font-size: 17px; }
+.ic, :scope:is(.ic) { width: 34px; height: 32px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
+.ic:hover, :scope:is(.ic:hover) { background: var(--surface-2); color: var(--ink); }
+.hd-filters, :scope:is(.hd-filters) { display: flex; align-items: flex-end; gap: 12px; padding: 16px 22px 12px; }
+.hd-filter2, :scope:is(.hd-filter2) { padding: 0 22px 16px; border-bottom: 1px solid var(--border); }
+.fl, :scope:is(.fl) { display: flex; flex-direction: column; }
+.fl label, :scope:is(.fl) label { font-size: 12px; font-weight: 500; color: var(--ink-2); margin-bottom: 6px; } .fl label i, :scope:is(.fl) label i { color: var(--red); font-style: normal; }
+.srch-btn, :scope:is(.srch-btn) { height: 36px; }
+.qbox, :scope:is(.qbox) { display: flex; align-items: center; gap: 8px; height: 36px; border: 1px solid var(--border-strong); border-radius: var(--r); padding: 0 11px; background: var(--surface-2); }
+.qbox input, :scope:is(.qbox) input { border: none; outline: none; background: transparent; width: 100%; font-size: 13px; }
+.hd-body, :scope:is(.hd-body) { flex: 1; overflow: auto; padding: 6px 22px 20px; }
+.htbl, :scope:is(.htbl) { width: 100%; border-collapse: collapse; font-size: 13px; }
+.htbl th, :scope:is(.htbl) th { position: sticky; top: 0; background: var(--surface); text-align: left; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .4px; font-weight: 600; padding: 12px 12px; border-bottom: 1px solid var(--border); }
+.htbl td, :scope:is(.htbl) td { padding: 12px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.htbl tr:hover td, :scope:is(.htbl) tr:hover td { background: var(--surface-2); }
+.user, :scope:is(.user) { color: var(--primary-700); font-weight: 500; }
+.sum, :scope:is(.sum) { color: var(--ink-2); }
+.none, :scope:is(.none) { text-align: center; color: var(--muted-2); padding: 40px; }
+.hd-foot, :scope:is(.hd-foot) { padding: 12px 22px; border-top: 1px solid var(--border); background: var(--surface-2); font-size: 13px; }
+}
+@keyframes dc-HistoryDialog-slideIn { from { transform: translateX(30px); opacity: .4; } to { transform: translateX(0); opacity: 1; } }

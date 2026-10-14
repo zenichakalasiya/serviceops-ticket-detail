@@ -1,0 +1,19 @@
+@scope (.dc-PresentMode) {
+.pm, :scope:is(.pm) { position: fixed; inset: 0; z-index: 200; background: var(--bg); display: flex; flex-direction: column; }
+.pm-bar, :scope:is(.pm-bar) { height: 60px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 18px; background: var(--surface); border-bottom: 1px solid var(--border); }
+.pm-title, :scope:is(.pm-title) { display: flex; align-items: center; gap: 10px; font-size: 17px; color: var(--ink); }
+.pm-title b, :scope:is(.pm-title) b { font-weight: 600; }
+.pm-ctl, :scope:is(.pm-ctl) { display: flex; align-items: center; gap: 8px; }
+.pm-sep, :scope:is(.pm-sep) { width: 1px; height: 24px; background: var(--border); margin: 0 4px; }
+.pm-exit, :scope:is(.pm-exit) { width: 44px; height: 44px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
+.pm-exit:hover, :scope:is(.pm-exit:hover) { background: var(--red-soft); color: var(--red); }
+.pm-body, :scope:is(.pm-body) { flex: 1; overflow: auto; padding: 22px 26px; }
+.pm-grid, :scope:is(.pm-grid) { display: grid; grid-template-columns: repeat(12, 1fr); align-items: start; }
+.pm-cell, :scope:is(.pm-cell) { position: relative; display: flex; flex-direction: column; }
+.pm-cell > .tile, :scope:is(.pm-cell) > .tile { flex: 1; min-height: 0; }
+/* wallboard: hide per-tile hover controls + drag handle */
+.pm-cell .right, :scope:is(.pm-cell) .right { display: none !important; }
+/* nothing moves in present mode, so the header doesn't offer the move cursor */
+.pm-cell .thead, :scope:is(.pm-cell) .thead { cursor: default; }
+.pm-empty, :scope:is(.pm-empty) { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; height: 100%; color: var(--muted-2); }
+}

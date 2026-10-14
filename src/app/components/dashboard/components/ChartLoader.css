@@ -1,0 +1,145 @@
+/* Ported from components/ui/ChartLoader.vue — scoped to .dc-ChartLoader. */
+@scope (.dc-ChartLoader) {
+.cl, :scope:is(.cl) { --spd: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; width: 100%; height: 100%; min-height: 0; padding: 10px; }
+/* SMALL on purpose (2026-09-24): a loader sits quietly in the widget body, it does not
+   fill it — 76px wide at most, with a smaller caption under it */
+.cl-svg, :scope:is(.cl-svg) { width: 100%; max-width: var(--cl-w, 76px); height: auto; max-height: calc(100% - 24px); overflow: visible; display: block; }
+.cl-cap, :scope:is(.cl-cap) { margin: 0; font-size: 11px; font-weight: 500; color: var(--muted); letter-spacing: .01em; }
+/* Vue <transition> → the caption remounts on each new line (keyed) and fades up in */
+.cl-cap, :scope:is(.cl-cap) { animation: dc-ChartLoader-capIn .16s ease both; }
+
+/* ONE x-axis line on the axis charts (column · bar · stacked · line); no gridlines, and
+   nothing under a pie or donut. A crisp 1px that does NOT shrink with the drawing — at
+   100px wide a scaled stroke thinned below a pixel and vanished. */
+.cl-base, :scope:is(.cl-base) { stroke: var(--muted-2); stroke-opacity: .6; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.mbase, :scope:is(.mbase) { transition: opacity calc(.35s / var(--spd)); }
+.mbase.off, :scope:is(.mbase.off) { opacity: 0; }
+
+/* ── flow ── the pieces re-shade smoothly between charts; the trend draws itself */
+.fl-pc, :scope:is(.fl-pc) { transition: fill .8s ease; }
+.fl-trend, :scope:is(.fl-trend) { fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-dasharray: 1; }
+
+/* ── morph ── */
+.mb, :scope:is(.mb) { transform-box: fill-box; transform-origin: 50% 100%; transition: transform calc(.55s / var(--spd)) cubic-bezier(.34, 1.4, .64, 1), opacity calc(.4s / var(--spd)); }
+.mb.down, :scope:is(.mb.down) { transform: scaleY(0); opacity: 0; transition-timing-function: cubic-bezier(.5, 0, .75, 0); }
+.mt, :scope:is(.mt) { stroke: var(--ink-2); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; opacity: 0; transition: stroke-dashoffset calc(.8s / var(--spd)) ease .25s, opacity .25s; }
+.mt.on, :scope:is(.mt.on) { stroke-dashoffset: 0; opacity: .55; }
+.mdot, :scope:is(.mdot) { transform-box: fill-box; transform-origin: center; transform: scale(0); transition: transform calc(.45s / var(--spd)) cubic-bezier(.34, 1.6, .64, 1); }
+.mdot.on, :scope:is(.mdot.on) { transform: scale(1); }
+.mring, :scope:is(.mring) { transform-origin: 80px 50px; transform: rotate(-90deg) scale(.6); opacity: 0; transition: transform calc(.7s / var(--spd)) cubic-bezier(.34, 1.3, .64, 1), opacity calc(.3s / var(--spd)); }
+.mring.on, :scope:is(.mring.on) { transform: rotate(-90deg) scale(1); opacity: 1; }
+.mring-track, :scope:is(.mring-track) { stroke: var(--border); stroke-width: 12; }
+.mseg, :scope:is(.mseg) { stroke-width: 12; stroke-dasharray: 0 var(--circ); stroke-dashoffset: var(--off); transition: stroke-dasharray calc(.6s / var(--spd)) ease-out; }
+.mring.on .mseg, :scope:is(.mring.on) .mseg { stroke-dasharray: var(--len) var(--circ); }
+/* 3 · find the pattern — the dots pop in where they lie, then gather onto the trend */
+.msc-dot, :scope:is(.msc-dot) { opacity: 0; transform: translate(var(--x1), var(--y1)) scale(0); }
+.msc.on .msc-dot, :scope:is(.msc.on) .msc-dot { animation: dc-ChartLoader-mscGather calc(2s / var(--spd)) cubic-bezier(.65, 0, .35, 1) var(--dl) both; }
+
+.msc-line, :scope:is(.msc-line) { stroke: var(--ink-2); stroke-width: 1.75; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; opacity: 0; }
+.msc.on .msc-line, :scope:is(.msc.on) .msc-line { animation: dc-ChartLoader-mscLine calc(2s / var(--spd)) ease both; }
+
+/* leaving: the pattern and the blocks fade out while the next chart comes in */
+.msc, .mbk, :scope:is(.msc), :scope:is(.mbk) { transition: opacity calc(.45s / var(--spd)) ease; }
+.msc.leaving, .mbk.leaving, :scope:is(.msc.leaving), :scope:is(.mbk.leaving) { opacity: 0; }
+/* 4 · block drop — each block falls in turn and settles with a bounce */
+.mbk-b, :scope:is(.mbk-b) { transform-box: fill-box; opacity: 0; }
+.mbk.on .mbk-b, :scope:is(.mbk.on) .mbk-b { animation: dc-ChartLoader-mbkIn calc(.7s / var(--spd)) cubic-bezier(.34, 1.5, .64, 1) calc(var(--dl) / var(--spd)) both; }
+
+/* ── equalizer ── */
+.eq, :scope:is(.eq) { transform-box: fill-box; transform-origin: 50% 100%; animation: dc-ChartLoader-eq calc(var(--d) / var(--spd)) ease-in-out var(--dl) infinite alternate; }
+
+/* ── trend ── */
+.tr-ghost, :scope:is(.tr-ghost) { stroke: var(--border-strong); stroke-width: 1.5; stroke-dasharray: 3 4; }
+.tr-line, :scope:is(.tr-line) { stroke: var(--chart-1); stroke-width: 2.5; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; animation: dc-ChartLoader-trDraw calc(2.6s / var(--spd)) cubic-bezier(.45, 0, .25, 1) infinite; }
+.tr-area, :scope:is(.tr-area) { opacity: 0; animation: dc-ChartLoader-trArea calc(2.6s / var(--spd)) ease infinite; }
+.tr-dot, :scope:is(.tr-dot) { fill: var(--chart-1); stroke: var(--surface); stroke-width: 2; }
+.tr-halo, :scope:is(.tr-halo) { fill: var(--chart-1); }
+
+/* ── orbit ── */
+.or-track, :scope:is(.or-track) { stroke: var(--border); stroke-width: 11; }
+.or-spin, :scope:is(.or-spin) { transform-origin: 80px 50px; animation: dc-ChartLoader-orSpin calc(6s / var(--spd)) linear infinite; }
+.or-seg, :scope:is(.or-seg) { stroke-width: 11; stroke-linecap: round; stroke-dasharray: 0 var(--circ); stroke-dashoffset: var(--off); animation: dc-ChartLoader-orGrow calc(2.4s / var(--spd)) cubic-bezier(.34, 1.2, .64, 1) var(--dl) infinite; }
+
+.or-num, :scope:is(.or-num) { fill: var(--ink); font-size: 17px; font-weight: 700; text-anchor: middle; font-variant-numeric: tabular-nums; }
+.or-pct, :scope:is(.or-pct) { font-size: 10px; font-weight: 600; fill: var(--muted); }
+
+/* ── slices ── */
+.sl, :scope:is(.sl) { transform-box: view-box; transform-origin: 80px 50px; animation: dc-ChartLoader-slFly calc(2.8s / var(--spd)) cubic-bezier(.34, 1.35, .64, 1) var(--dl) infinite; }
+.sl-hole, :scope:is(.sl-hole) { fill: var(--surface); }
+
+/* ── scatter ── */
+.sc-dot, :scope:is(.sc-dot) { animation: dc-ChartLoader-scMove calc(3s / var(--spd)) cubic-bezier(.65, 0, .35, 1) var(--dl) infinite; }
+.sc-line, :scope:is(.sc-line) { stroke: var(--ink-2); stroke-width: 1.75; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; opacity: .5; animation: dc-ChartLoader-scLine calc(3s / var(--spd)) ease infinite; }
+
+/* ── blocks ── */
+.bk, :scope:is(.bk) { transform-box: fill-box; opacity: 0; animation: dc-ChartLoader-bkDrop calc(3.2s / var(--spd)) linear infinite; animation-delay: calc(var(--dl) / var(--spd)); }
+
+/* ── gauge ── */
+.ga-band, :scope:is(.ga-band) { stroke-width: 9; stroke-linecap: round; }
+.ga-needle, :scope:is(.ga-needle) { transform-origin: 80px 78px; }
+.ga-needle path, :scope:is(.ga-needle) path { stroke: var(--ink); stroke-width: 3; stroke-linecap: round; }
+.ga-hub, :scope:is(.ga-hub) { fill: var(--ink); }
+.ga-val, :scope:is(.ga-val) { fill: var(--ink); font-size: 13px; font-weight: 700; text-anchor: middle; font-variant-numeric: tabular-nums; }
+
+/* ── mono: the lines join the slate too (the fills come from C() in the script) ── */
+.mono .mt, .mono .msc-line, .mono .sc-line, :scope:is(.mono) .mt, :scope:is(.mono) .msc-line, :scope:is(.mono) .sc-line { stroke: var(--picker-ico); }
+.mono .cl-base, :scope:is(.mono) .cl-base { stroke: var(--picker-ico); stroke-opacity: .45; }
+.mono .mring-track, .mono .or-track, :scope:is(.mono) .mring-track, :scope:is(.mono) .or-track { stroke: color-mix(in srgb, var(--picker-ico) 14%, var(--surface)); }
+
+/* ── smooth: the same story with no overshoot — standard ease-in-out curves, a little
+   longer, so every change glides instead of springing ── */
+.smooth .mb, :scope:is(.smooth) .mb { transition: transform calc(.8s / var(--spd)) cubic-bezier(.4, 0, .2, 1), opacity calc(.6s / var(--spd)) ease; }
+.smooth .mb.down, :scope:is(.smooth) .mb.down { transition-timing-function: cubic-bezier(.4, 0, .2, 1); }
+.smooth .mt, :scope:is(.smooth) .mt { transition: stroke-dashoffset calc(1s / var(--spd)) cubic-bezier(.4, 0, .2, 1) .2s, opacity calc(.4s / var(--spd)) ease; }
+.smooth .mdot, :scope:is(.smooth) .mdot { transition: transform calc(.6s / var(--spd)) cubic-bezier(.4, 0, .2, 1); }
+.smooth .mring, :scope:is(.smooth) .mring { transition: transform calc(.9s / var(--spd)) cubic-bezier(.4, 0, .2, 1), opacity calc(.5s / var(--spd)) ease; }
+.smooth .mseg, :scope:is(.smooth) .mseg { transition: stroke-dasharray calc(.9s / var(--spd)) cubic-bezier(.4, 0, .2, 1); }
+.smooth .mbk.on .mbk-b, :scope:is(.smooth) .mbk.on .mbk-b { animation-duration: calc(.85s / var(--spd)); animation-timing-function: cubic-bezier(.22, .61, .36, 1); }
+.smooth .mbase, :scope:is(.smooth) .mbase { transition-duration: calc(.6s / var(--spd)); }
+.smooth .msc, .smooth .mbk, :scope:is(.smooth) .msc, :scope:is(.smooth) .mbk { transition-duration: calc(.6s / var(--spd)); }
+
+/* reduced motion: no travel — the finished chart breathes */
+.cl.still *, :scope:is(.cl.still) * { animation: none !important; transition: none !important; }
+.cl.still .cl-svg, :scope:is(.cl.still) .cl-svg { animation: dc-ChartLoader-clBreath 2.4s ease-in-out infinite !important; }
+.cl.still .mb, :scope:is(.cl.still) .mb { transform: none; opacity: 1; }
+.cl.still .tr-line, .cl.still .sc-line, :scope:is(.cl.still) .tr-line, :scope:is(.cl.still) .sc-line { stroke-dashoffset: 0; }
+.cl.still .tr-area, .cl.still .bk, .cl.still .sl, :scope:is(.cl.still) .tr-area, :scope:is(.cl.still) .bk, :scope:is(.cl.still) .sl { opacity: 1; transform: none; }
+.cl.still .or-seg, :scope:is(.cl.still) .or-seg { stroke-dasharray: var(--len) var(--circ); }
+}
+
+@keyframes dc-ChartLoader-mscGather {
+  0% { transform: translate(var(--x1), var(--y1)) scale(0); opacity: 0; }
+  16% { transform: translate(var(--x1), var(--y1)) scale(1); opacity: 1; }
+  62%, 100% { transform: translate(var(--x2), var(--y2)) scale(1); opacity: 1; }
+}
+@keyframes dc-ChartLoader-mscLine { 0%, 58% { stroke-dashoffset: 1; opacity: .5; } 88%, 100% { stroke-dashoffset: 0; opacity: .5; } }
+@keyframes dc-ChartLoader-mbkIn { 0% { transform: translateY(-46px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+@keyframes dc-ChartLoader-eq { 0% { transform: scaleY(.18); } 60% { transform: scaleY(.95); } 100% { transform: scaleY(.42); } }
+@keyframes dc-ChartLoader-trDraw { 0% { stroke-dashoffset: 1; opacity: 1; } 65% { stroke-dashoffset: 0; opacity: 1; } 88% { stroke-dashoffset: 0; opacity: 1; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+@keyframes dc-ChartLoader-trArea { 0%, 45% { opacity: 0; } 70%, 88% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes dc-ChartLoader-orSpin { to { transform: rotate(360deg); } }
+@keyframes dc-ChartLoader-orGrow { 0% { stroke-dasharray: 0 var(--circ); } 45%, 80% { stroke-dasharray: var(--len) var(--circ); } 100% { stroke-dasharray: 0 var(--circ); } }
+@keyframes dc-ChartLoader-slFly {
+  0% { transform: translate(var(--dx), var(--dy)) scale(.6); opacity: 0; }
+  30% { transform: translate(0, 0) scale(1); opacity: 1; }
+  62% { transform: translate(0, 0) scale(1); opacity: 1; }
+  74% { transform: translate(var(--ex), var(--ey)) scale(1); opacity: 1; }
+  86% { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(.6); opacity: 0; }
+}
+@keyframes dc-ChartLoader-scMove {
+  0%, 12% { transform: translate(var(--x1), var(--y1)); }
+  45%, 78% { transform: translate(var(--x2), var(--y2)); }
+  100% { transform: translate(var(--x1), var(--y1)); }
+}
+@keyframes dc-ChartLoader-scLine { 0%, 45% { stroke-dashoffset: 1; opacity: .5; } 68%, 80% { stroke-dashoffset: 0; opacity: .5; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+@keyframes dc-ChartLoader-bkDrop {
+  0% { transform: translateY(-70px); opacity: 0; animation-timing-function: cubic-bezier(.55, 0, 1, .45); }
+  14% { transform: translateY(0); opacity: 1; animation-timing-function: cubic-bezier(0, .55, .45, 1); }
+  18% { transform: translateY(-5px); }
+  22% { transform: translateY(0); }
+  70% { transform: translateY(0); opacity: 1; }
+  82%, 100% { transform: translateY(0); opacity: 0; }
+}
+@keyframes dc-ChartLoader-clBreath { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+@keyframes dc-ChartLoader-capIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }

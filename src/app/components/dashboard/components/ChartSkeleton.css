@@ -1,0 +1,71 @@
+/* Ported from components/ui/ChartSkeleton.vue — scoped to .dc-ChartSkeleton. */
+@scope (.dc-ChartSkeleton) {
+/* The CALLER gives this box its height, and every shape fills it. That is not a detail:
+   an SVG with a viewBox and no definite height claims its own aspect ratio as intrinsic
+   height, which once made the line tile twice the height of the bar tile beside it. */
+.cs, :scope:is(.cs) {
+  /* 60 / 30 / 16 / 12 — a lighter ramp than the chart-icon one, so the preview reads as a
+     wireframe of a board rather than a board. The caller sets currentColor (#8E9FBC). */
+  --sk-1: color-mix(in srgb, currentColor 60%, transparent);
+  --sk-2: color-mix(in srgb, currentColor 30%, transparent);
+  --sk-3: color-mix(in srgb, currentColor 16%, transparent);
+  --sk-grid: color-mix(in srgb, currentColor 12%, transparent);
+  /* the one extra step a four-series stack needs between 60 and 30 */
+  --sk-mid: color-mix(in srgb, currentColor 45%, transparent);
+  min-width: 0; display: flex; flex-direction: column; gap: 7px;
+  /* An inset of the drawing's own, inside the card's padding. A chart that runs to the
+     edge of its card reads as CROPPED rather than placed — the donut in particular grew
+     to the full height of the body and pressed on both rules. Because box-sizing is
+     border-box everywhere, this shrinks the drawing and leaves the card exactly where
+     the Row-height slider put it. */
+  padding: 10px 12px;
+}
+/* A placeholder for a label. One class, every axis and the legend. */
+.cs-stub, :scope:is(.cs-stub) { height: 4px; border-radius: 2px; background: var(--sk-3); flex: none; }
+
+/* ── gridded plot ── */
+.cs-plot, :scope:is(.cs-plot) { flex: 1; min-height: 0; display: flex; gap: 6px; }
+/* space-between puts a tick against each gridline, which is what ties the two together */
+.cs-yax, :scope:is(.cs-yax) { width: 10px; flex: none; display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between; }
+/* hbar: the categories sit one per bar, centred on its slot (bars at 1/8, 3/8, 5/8, 7/8) */
+.cs-yax.cat, :scope:is(.cs-yax.cat) { justify-content: space-around; }
+.cs-canvas, :scope:is(.cs-canvas) { flex: 1; min-width: 0; height: 100%; display: block; overflow: visible; }
+.cs-grid, :scope:is(.cs-grid) { stroke: var(--sk-grid); stroke-width: 1; fill: none; }
+.cs-col, :scope:is(.cs-col) { fill: var(--sk-2); }
+/* stack series, bottom-up: dark, light, mid, dark again — no two neighbours share a tone */
+.cs-s1, :scope:is(.cs-s1) { fill: var(--sk-1); }
+.cs-s2, :scope:is(.cs-s2) { fill: var(--sk-3); }
+.cs-s3, :scope:is(.cs-s3) { fill: var(--sk-mid); }
+.cs-s4, :scope:is(.cs-s4) { fill: var(--sk-2); }
+.cs-series, :scope:is(.cs-series) { fill: none; stroke: var(--sk-1); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.cs-mark, :scope:is(.cs-mark) { stroke: var(--sk-1); stroke-width: 7; stroke-linecap: round; }
+/* the knockout, so a marker reads as a ring — the card colour, not white, or it breaks
+   the moment the theme flips */
+.cs-mark-in, :scope:is(.cs-mark-in) { stroke: var(--surface); stroke-width: 3.5; stroke-linecap: round; }
+/* indented by the y-axis and its gap, so the labels line up under the plot instead of
+   under the axis */
+.cs-xax, :scope:is(.cs-xax) { flex: none; display: flex; padding-left: 16px; }
+.cs-xax .cs-slot, :scope:is(.cs-xax) .cs-slot { display: flex; }
+/* category: one equal slot per bar, label centred in it */
+.cs-xax.cat .cs-slot, :scope:is(.cs-xax.cat) .cs-slot { flex: 1; justify-content: center; }
+/* value: the ends run to the edges of the plot, as a time axis does */
+.cs-xax.val, :scope:is(.cs-xax.val) { justify-content: space-between; }
+
+/* ── donut ── */
+.cs-donut-wrap, :scope:is(.cs-donut-wrap) { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
+/* sized off its own height so it stays round at every row height rather than becoming
+   an ellipse in a wide card */
+/* The full height of its box (it was 84%, and read as too small beside the charts). The
+   box already carries the skeleton's own 10px inset, so the ring still clears the card. */
+.cs-donut, :scope:is(.cs-donut) {
+  height: 100%; aspect-ratio: 1; border-radius: 50%; position: relative;
+  background: conic-gradient(var(--sk-1) 0 142deg, var(--sk-2) 142deg 250deg, var(--sk-3) 250deg 318deg, var(--sk-2) 318deg 360deg);
+}
+/* the hole takes the CARD's colour, which is what makes this a ring and not a pie */
+.cs-hole, :scope:is(.cs-hole) {
+  position: absolute; inset: 27%; border-radius: 50%; background: var(--surface);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+}
+.cs-total, :scope:is(.cs-total) { width: 54%; height: 8px; background: var(--sk-2); }
+.cs-total-lbl, :scope:is(.cs-total-lbl) { width: 34%; height: 4px; }
+}

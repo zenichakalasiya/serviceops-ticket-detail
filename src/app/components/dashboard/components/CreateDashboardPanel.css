@@ -1,0 +1,113 @@
+@scope (.dc-CreateDashboardPanel) {
+/* A right-edge drawer, matching Add New Widget and every other side panel in the module.
+   This was briefly a centered modal and it made Create Dashboard the only overlay in the
+   product that arrived from somewhere else — a panel whose position tells you which panel
+   it is, is a panel you have to re-learn. The redesigned contents are unchanged; only the
+   placement went back. */
+:scope { position: fixed; inset: 0; background: rgba(20,21,38,.42); backdrop-filter: blur(2px); z-index: 100; display: flex; justify-content: flex-end; }
+.drawer, :scope:is(.drawer) { width: 620px; max-width: 96vw; height: 100%; background: var(--surface); box-shadow: var(--sh-lg); display: flex; flex-direction: column; overflow: hidden; animation: dc-CreateDashboardPanel-slideIn .22s cubic-bezier(.2,.8,.2,1); }
+
+.head p, :scope:is(.head) p { margin: 3px 0 0; font-size: 13px; }
+/* close sits in its own soft square, as the design has it */
+.body, :scope:is(.body) { flex: 1; padding: var(--cd-top) 12px 20px; display: flex; flex-direction: column; gap: var(--cd-gap); overflow: auto; }
+/* ── Figma "Create dashboard — Full form" (node 362:12919), measured text-to-text
+   (2026-09-29, user): 12px side padding everywhere, a 48px header over a 1px rule, 30px
+   controls, a 12px footer. Scoped to this panel — .dlg-head/.dlg-foot are shared. ── */
+.drawer, :scope:is(.drawer) { --cd-top: 12px; --cd-gap: 12px; --cd-lbl: 2px; --cd-sec: 8px; }
+/* the two toggles are section-level settings in the Figma, spaced like a section */
+.drawer .toggle-grp, :scope:is(.drawer) .toggle-grp { margin-top: var(--cd-sec); }
+.drawer .dlg-head, :scope:is(.drawer) .dlg-head { min-height: 50px; padding: 0 12px; border-bottom: 1px solid var(--border); }
+.drawer .dlg-foot, :scope:is(.drawer) .dlg-foot { padding: 12px; }
+.drawer .dlg-foot .btn, :scope:is(.drawer) .dlg-foot .btn { height: 30px; }
+.drawer .grp > label.field, :scope:is(.drawer) .grp > label.field { margin-bottom: var(--cd-lbl); }
+.drawer .body .input:not(textarea), .drawer .body .dd-btn, .drawer .cat-new, :scope:is(.drawer) .body .input:not(textarea), :scope:is(.drawer) .body .dd-btn, :scope:is(.drawer) .cat-new { height: 30px; }
+.drawer .body textarea.input, :scope:is(.drawer) .body textarea.input { height: 64px; }
+/* the access switch is 276×36 with three equal segments, the note under it hugs its text,
+   and a toggle sits level with its setting's title — all as the Figma frame draws them */
+.drawer .seg, :scope:is(.drawer) .seg { width: 276px; max-width: 100%; }
+.drawer .seg .seg-b, :scope:is(.drawer) .seg .seg-b { flex: 1; height: 28px; }
+.drawer .oneliner:not(.plain), :scope:is(.drawer) .oneliner:not(.plain) { align-self: flex-start; padding: 6px 10px; font-size: 12px; }
+.drawer .toggle-grp, :scope:is(.drawer) .toggle-grp { align-items: flex-start; }
+.drawer .grp > label.field + .seg, :scope:is(.drawer) .grp > label.field + .seg { margin-top: 3px; }
+/* the first toggle opens its own block after the fields, so it takes a section's step */
+.drawer .body > :not(.toggle-grp) + .toggle-grp, :scope:is(.drawer) .body > :not(.toggle-grp) + .toggle-grp { margin-top: 16px; }
+/* section headings — Basics / Visibility & sharing / Layout, as the design groups them.
+   The first one loses its top margin so it doesn't push away from the drawer header. */
+/* The .body already owns the vertical rhythm (gap: 16px). A heading carrying its own
+   22px top and -2px bottom margin fought that gap, so a section title sat 38px below
+   what preceded it and 14px above what followed — the spacing changed depending on
+   which block you were between. It now adds ONE deliberate step (8px, so 24px above a
+   heading) and nothing below, leaving the container to space everything else evenly. */
+.sec-h, :scope:is(.sec-h) { font-size: 14px; font-weight: 600; color: var(--ink); margin: var(--cd-sec) 0 0; }
+.sec-h:first-of-type, :scope:is(.sec-h:first-of-type) { margin-top: 0; }
+.grp, :scope:is(.grp) { display: flex; flex-direction: column; }
+.two, :scope:is(.two) { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.req, :scope:is(.req) { color: var(--red); }
+.err, :scope:is(.err) { color: var(--red); font-size: 12px; margin-top: 5px; }
+/* Duplicate name reads as a WARNING, not an error — amber, not red. */
+.dup-err, :scope:is(.dup-err) { display: flex; align-items: flex-start; gap: 7px; margin: 6px 0 0; padding: 8px 10px; font-size: 12px; line-height: 1.45; color: var(--amber); background: var(--amber-soft); border-radius: 4px; }
+.dup-err .ico, :scope:is(.dup-err) .ico { flex: none; margin-top: 1px; }
+.dup-err b, :scope:is(.dup-err) b { font-weight: 600; color: var(--amber); }
+.input.bad, :scope:is(.input.bad) { border-color: var(--amber); }
+.sec-title, :scope:is(.sec-title) { font-size: 14px; font-weight: 600; color: var(--ink); margin-bottom: 10px; }
+/* the predefined info note is the first thing in the panel; it should not also carry
+   the heading step on top of the container gap */
+.pd-note + .sec-h, :scope:is(.pd-note) + .sec-h { margin-top: 0; }
+/* one segmented control on a soft track, active segment filled solid — the same control
+   the Manage tabs use, so "which of these three is in force" reads identically everywhere */
+/* `--surface`, not #fff — `--ink` is near-white in dark, so a hardcoded white label
+   was invisible on its own fill. In light `--surface` is #ffffff, unchanged. */
+/* Read-only (a predefined board's identity). The value STAYS legible — the point is to
+   show what the board is, not to grey it into unreadability — so only the affordance is
+   removed: no hover, no pointer, and a quieter fill on the selected segment. */
+.input:disabled, textarea.input:disabled, :scope:is(.input:disabled), :scope:is(textarea.input:disabled) {
+  background: var(--surface-2); color: var(--ink-2); cursor: default;
+  border-color: var(--border); -webkit-text-fill-color: var(--ink-2); opacity: 1;
+}
+/* the access one-liner sits in its own soft box, not as loose grey text under the control */
+.oneliner, :scope:is(.oneliner) { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; padding: 9px 11px; background: var(--surface-2); border-radius: 4px; font-size: 13px; color: var(--ink-2); }
+.oneliner .ico, :scope:is(.oneliner) .ico { color: var(--muted); flex: none; }
+/* predefined-dashboard note — same treatment as the predefined-widget line in the builder */
+.pd-note, :scope:is(.pd-note) { display: flex; align-items: flex-start; gap: 8px; margin: 0; font-size: 13px; line-height: 1.5; color: var(--primary-700); background: var(--primary-softer); border: 1px solid var(--primary-soft); border-radius: 4px; padding: 10px 12px; }
+.pd-note .ico, :scope:is(.pd-note) .ico { flex: none; margin-top: 1px; }
+/* `.plain` is the toggle's own description — loose grey text, no box, since it explains a
+   switch rather than reporting the consequence of a choice */
+.oneliner.plain, :scope:is(.oneliner.plain) { display: block; margin: 3px 0 0; padding: 0; background: none; border-radius: 0; font-size: 12px; line-height: 1.5; color: var(--muted); }
+/* category + add new */
+.cat-row, :scope:is(.cat-row) { position: relative; display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: start; }
+.cat-new, :scope:is(.cat-new) { height: 36px; white-space: nowrap; color: var(--primary-700); border-color: var(--border-strong); }
+.cat-new:hover, :scope:is(.cat-new:hover) { background: var(--primary-softer); border-color: transparent; }
+.cat-pop, :scope:is(.cat-pop) { position: absolute; top: 46px; right: 0; z-index: 30; width: 280px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+.cat-pop-btns, :scope:is(.cat-pop-btns) { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+/* default landing toggle */
+.toggle-grp, :scope:is(.toggle-grp) { flex-direction: row; align-items: center; justify-content: space-between; gap: 14px; }
+/* the toggle rows are section-level settings, so their titles read at section weight
+   rather than field-label size */
+.toggle-grp .field, :scope:is(.toggle-grp) .field { font-size: 14px; font-weight: 600; color: var(--ink); }
+.tg-text, :scope:is(.tg-text) { display: flex; flex-direction: column; }
+/* an ON/OFF pill, not a bare switch: at a glance a plain track tells you there are two
+   states but not which one you are looking at, and these two toggles both change what
+   other people see. The word removes the guess. */
+.sw, :scope:is(.sw) { width: 58px; height: 24px; border-radius: 999px; border: 1px solid var(--border-strong); background: var(--surface-2); position: relative; transition: background .15s, border-color .15s; flex: none; }
+.sw i, :scope:is(.sw) i { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: var(--muted-2); transition: left .15s, background .15s; box-shadow: var(--sh-sm); }
+.sw b, :scope:is(.sw) b { position: absolute; top: 0; right: 8px; line-height: 22px; font-size: 10px; font-weight: 700; letter-spacing: .4px; color: var(--muted); transition: color .15s; }
+.sw.on, :scope:is(.sw.on) { background: var(--green-soft); border-color: color-mix(in srgb, var(--green) 40%, transparent); }
+.sw.on i, :scope:is(.sw.on) i { left: 38px; background: var(--green); }
+.sw.on b, :scope:is(.sw.on) b { right: auto; left: 9px; color: var(--green); }
+/* layout controls */
+/* live preview */
+/* ---- Default landing scope: who does this become the home screen for? ---- */
+
+/* The near-black override is gone. Its reasoning was that a blue CTA competed with the
+   access segment — but the segment was near-black too, so what actually happened is that
+   the panel had two competing near-blacks and no primary at all. The segment is blue now
+   and the button is the global .btn-primary, which is the same blue: one accent, used for
+   the choice you made and the action that commits it. */
+}
+@keyframes dc-CreateDashboardPanel-slideIn { from { transform: translateX(30px); opacity: .4; } to { transform: none; opacity: 1; } }
+/* Port: the access level radios are the product's pill-track; labels are FieldLabel */
+@scope (.dc-CreateDashboardPanel) {
+.acc-seg, :scope:is(.acc-seg) { width: 276px; max-width: 100%; }
+.acc-seg.ro > button, :scope:is(.acc-seg.ro) > button { cursor: default; }
+.grp > label, :scope:is(.grp) > label { margin-bottom: 2px; }
+}

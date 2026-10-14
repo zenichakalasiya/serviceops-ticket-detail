@@ -1,0 +1,16 @@
+@scope (.dc-DashboardTable) {
+:scope { padding: 4px; overflow: visible; }
+.th, .tr, :scope:is(.th), :scope:is(.tr) { display: grid; grid-template-columns: 34px 2.4fr 1fr 1.1fr .9fr 1.3fr 44px; align-items: center; gap: 10px; padding: 9px 12px; }
+.th, :scope:is(.th) { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted-2); font-weight: 600; }
+.tr, :scope:is(.tr) { border-top: 1px solid var(--border); font-size: 13px; cursor: pointer; border-radius: 4px; }
+.tr:hover, :scope:is(.tr:hover) { background: var(--surface-2); }
+.star, :scope:is(.star) { width: 26px; height: 26px; border: none; background: transparent; color: var(--muted-2); border-radius: 4px; display: grid; place-items: center; }
+.star:hover, .star.on, :scope:is(.star:hover), :scope:is(.star.on) { color: #f5a623; }
+.nm, :scope:is(.nm) { display: flex; align-items: center; gap: 8px; min-width: 0; font-weight: 500; }
+.chip.sm, :scope:is(.chip.sm) { height: 18px; font-size: 10px; padding: 0 6px; }
+.own, :scope:is(.own) { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.av, :scope:is(.av) { width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--accent)); color: #fff; font-size: 10px; font-weight: 700; display: grid; place-items: center; flex: none; }
+.act, :scope:is(.act) { display: flex; justify-content: flex-end; }
+.ellip, :scope:is(.ellip) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tr.empty, :scope:is(.tr.empty) { grid-template-columns: 34px 1fr; }
+}

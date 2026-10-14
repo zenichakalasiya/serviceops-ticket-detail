@@ -1,0 +1,35 @@
+/* Ported from components/dashboard/DataModeSwitch.vue — scoped to .dc-DataModeSwitch. */
+@scope (.dc-DataModeSwitch) {
+/* ── A · cards ── */
+.dm-cards, :scope:is(.dm-cards) { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.dm-card, :scope:is(.dm-card) { position: relative; display: flex; align-items: flex-start; gap: 10px; padding: 12px; min-height: 72px; text-align: left; border: 1px solid var(--border-control); border-radius: var(--r-lg); background: var(--surface); color: var(--ink); cursor: pointer; transition: border-color .15s, background .15s; }
+.dm-card:hover, :scope:is(.dm-card:hover) { border-color: var(--muted-2); }
+/* 1px only (user, 2026-09-30) — no second ring */
+.dm-card.on, :scope:is(.dm-card.on) { border-color: var(--sel); }
+.dm-card .dm-ic, :scope:is(.dm-card) .dm-ic { background: var(--surface-2); color: var(--muted); }
+/* the chosen badge: a LIGHT tint of the near-black with the glyph in it — the solid dark
+   square read too heavy (user, 2026-09-30) */
+.dm-card.on .dm-ic, :scope:is(.dm-card.on) .dm-ic { background: color-mix(in srgb, var(--sel) 10%, var(--surface)); color: var(--sel); }
+.dm-check, :scope:is(.dm-check) { position: absolute; top: 10px; right: 10px; color: var(--sel-ink); fill: var(--sel); }
+.dm-txt, :scope:is(.dm-txt) { display: flex; flex-direction: column; gap: 3px; min-width: 0; padding-right: 18px; }
+.dm-txt b, :scope:is(.dm-txt) b { font-size: 13px; font-weight: 600; color: var(--ink); }
+.dm-txt span, :scope:is(.dm-txt) span { font-size: 12px; line-height: 1.4; color: var(--muted); }
+
+/* shared icon badge */
+.dm-ic, :scope:is(.dm-ic) { flex: none; width: 30px; height: 30px; border-radius: var(--r); display: grid; place-items: center; transition: background .15s, color .15s; }
+
+/* -- pill -- the product's .pill-track (porting rule); the track hugs its text */
+.pill-track.dm-seg, :scope:is(.pill-track.dm-seg) { width: fit-content; }
+.pill-track.dm-seg button, :scope:is(.pill-track.dm-seg) button { display: inline-flex; align-items: center; gap: 5px; }
+
+/* ── D · banner ── */
+.dm-banner, :scope:is(.dm-banner) { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: var(--r-lg); border: 1px solid var(--border); border-left: 3px solid var(--sel); background: color-mix(in srgb, var(--primary) 5%, var(--surface)); }
+.dm-banner .dm-ic, :scope:is(.dm-banner) .dm-ic { background: color-mix(in srgb, var(--sel) 10%, var(--surface)); color: var(--sel); }
+.dm-banner .dm-txt, :scope:is(.dm-banner) .dm-txt { flex: 1; padding: 0; }
+.dm-banner em, :scope:is(.dm-banner) em { font-style: normal; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink); }
+.dm-banner .dm-txt span, :scope:is(.dm-banner) .dm-txt span { color: var(--ink-2); }
+/* query mode wears a darker wash, so the two states never look alike at a glance */
+.dm-banner.is-query, :scope:is(.dm-banner.is-query) { background: color-mix(in srgb, var(--ink) 6%, var(--surface)); }
+.dm-switch, :scope:is(.dm-switch) { flex: none; white-space: nowrap; }
+}
+

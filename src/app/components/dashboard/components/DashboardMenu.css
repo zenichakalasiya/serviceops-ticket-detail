@@ -1,0 +1,14 @@
+@scope (.dc-DashboardMenu) {
+:scope { position: relative; }
+.btn-icon.on, :scope:is(.btn-icon.on) { background: var(--surface-2); color: var(--ink); }
+/* the board-header variant: 38×36 with a real border, matching the Export button it
+   sits beside — `.btn-icon` ships 34×34 and a transparent border, which left the ⋯ a
+   glyph floating 2px shorter than every control in the row */
+.btn-icon.tb, :scope:is(.btn-icon.tb) { width: 38px; height: 36px; border-color: var(--border-strong); background: var(--surface); }
+.btn-icon.tb:hover, :scope:is(.btn-icon.tb:hover) { background: var(--surface-2); border-color: var(--muted-2); color: var(--ink); }
+.backdrop, :scope:is(.backdrop) { position: fixed; inset: 0; z-index: 55; }
+.menu, :scope:is(.menu) { top: 38px; }
+.menu-item:disabled, :scope:is(.menu-item:disabled) { opacity: .45; cursor: not-allowed; }
+.menu.right, :scope:is(.menu.right) { right: 0; }
+.menu.left, :scope:is(.menu.left) { left: 0; }
+}

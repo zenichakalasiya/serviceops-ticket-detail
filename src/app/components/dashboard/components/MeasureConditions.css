@@ -1,0 +1,13 @@
+/* Ported from components/dashboard/MeasureConditions.vue — scoped to .dc-MeasureConditions. */
+@scope (.dc-MeasureConditions) {
+.mconds, :scope:is(.mconds) { display: flex; flex-direction: column; gap: 8px; }
+.mc-empty, :scope:is(.mc-empty) { margin: 0; }
+.mc-row, :scope:is(.mc-row) { display: flex; align-items: center; gap: 8px; }
+.mc-dd, :scope:is(.mc-dd) { flex: 1; min-width: 0; }
+.mc-is, :scope:is(.mc-is) { flex: none; font-size: 13px; color: var(--muted); }
+.mc-x, :scope:is(.mc-x) { flex: none; width: 28px; height: 28px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
+.mc-x:hover, :scope:is(.mc-x:hover) { background: var(--red-soft); color: var(--red); }
+/* the add button is the product's secondary .btn-sm (porting rule); this only places it */
+.mc-add, :scope:is(.mc-add) { align-self: flex-start; }
+}
+

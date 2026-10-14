@@ -1,0 +1,126 @@
+/* Ported from components/dashboard/ChartTile.vue — scoped to .dc-ChartTile. */
+@scope (.dc-ChartTile) {
+.chart, :scope:is(.chart) { display: flex; flex-direction: column; min-width: 0; position: relative; }
+.chart-row, :scope:is(.chart-row) { flex: 1; display: flex; min-height: 0; gap: 10px; }
+.ec, :scope:is(.ec) { flex: 1; min-height: 0; min-width: 0; }
+
+/* Part-of-whole charts only: centre the DONUT + LEGEND as one group.
+   With the canvas at flex:1 and the legend pinned at a fixed 168px, the donut was
+   centred inside whatever was left over while the legend's own text — always narrower
+   than 168 — left dead space against the right edge. So the pair read as sitting left of
+   centre even though each half was doing what it was told. Capping the canvas and letting
+   the legend size to its content makes the pair a real group that justify-content can
+   centre. Scoped to .has-side so bar and line charts still fill the tile. */
+.chart-row.has-side, :scope:is(.chart-row.has-side) { justify-content: center; }
+/* A donut is CIRCULAR, so its natural box is a square the height of the row. Sizing the
+   canvas to that — rather than letting it flex to fill — means the canvas contains the
+   drawing and nothing else, so donut + legend is a real group with no invisible padding
+   on either side for justify-content to centre around. Sizing it any other way just moves
+   the empty space from one side to the other. */
+/* flex:none plus an inline width from ecSide — see the comment on ecSide for why the
+   pure-CSS square never held. With the canvas no longer far wider than the drawing,
+   the donut and the legend are a real pair and justify-content can centre them. */
+.chart-row.has-side .ec, :scope:is(.chart-row.has-side) .ec { flex: none; height: 100%; min-width: 0; }
+.chart-row.has-side .legend-side, :scope:is(.chart-row.has-side) .legend-side { flex: 0 1 auto; width: auto; min-width: 0; max-width: 190px; }
+
+/* Side legend — part-of-whole charts. The list is the only part that flexes, so
+   the pager stays pinned at the bottom and the rank pill at the top. */
+.legend-side, :scope:is(.legend-side) { flex: none; width: 168px; display: flex; flex-direction: column; gap: 6px; min-height: 0; padding: 2px 0; }
+/* Centred, so a short legend sits opposite the middle of the donut instead of piling
+   against the top of a full-height column and reading as a separate top-aligned block.
+   Safe with a long one too: the list is PAGED to what the column can hold, so it never
+   overflows and centring a full page is a no-op — few entries centre, many fill. */
+.ls-list, :scope:is(.ls-list) { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: 4px; overflow: hidden; }
+.lg-side, :scope:is(.lg-side) { width: 100%; height: 18px; justify-content: flex-start; }   /* 18 + 4 gap = ROW_H */
+/* The name takes only the width it needs (flex: 0 1 auto), so the value sits right
+   beside it. It used to be flex: 1, which ate every spare pixel and shoved the value
+   to the far edge — a chasm of dead space next to a label as short as "P1". A long
+   name still shrinks and ellipses, which is what the min-width: 0 is for. */
+.ls-nm, :scope:is(.ls-nm) { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* see legendCompact: too narrow for both, so keep the exact number and let the swatch
+   carry the identity rather than showing two truncated things */
+.legend-side.compact .ls-nm, :scope:is(.legend-side.compact) .ls-nm { display: none; }
+.lg-side b, :scope:is(.lg-side) b { flex: none; margin-left: 2px; font-variant-numeric: tabular-nums; }
+/* Footer: pill on the left, pager on the right, on one line. It wraps only if the
+   two genuinely can't share the width — then it degrades to the old stacked look. */
+/* Pill + pager share ONE line and never wrap: the pager keeps its size and the pill
+   shrinks (its label ellipsing) so the two always sit beside each other, even when the
+   widget is narrowed. */
+.ls-foot, :scope:is(.ls-foot) { flex: none; display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; }
+.ls-pager, :scope:is(.ls-pager) { flex: none; display: flex; align-items: center; justify-content: center; gap: 1px; height: 22px; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ls-pager button, :scope:is(.ls-pager) button { width: 16px; height: 16px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
+.ls-pager button:hover:not(:disabled), :scope:is(.ls-pager) button:hover:not(:disabled) { background: var(--surface-2); color: var(--ink); }
+.ls-pager button:disabled, :scope:is(.ls-pager) button:disabled { opacity: .3; cursor: not-allowed; }
+/* The pill takes the row's spare width and its label ellipses rather than pushing
+   the pager off the line. */
+.cs-chip.side, :scope:is(.cs-chip.side) { flex: 1 1 auto; min-width: 0; justify-content: center; padding: 0 7px; gap: 3px; }
+.cs-lbl, :scope:is(.cs-lbl) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+
+/* The pill is the row's anchor: it must sit at the far left and stay there. So the
+   row itself never wraps — only the chips inside .lg-wrap do. (With flex-wrap on
+   .legend the chip block was wide enough to take its own line, which left the pill
+   stranded and centred above it.) */
+.legend, :scope:is(.legend) { display: flex; flex-wrap: nowrap; align-items: flex-start; gap: 10px; padding: 6px 4px 0; flex: none; }
+.lg-wrap, :scope:is(.lg-wrap) { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px 12px; }
+/* revealing all 63 legends must not shove the chart out of the tile */
+.lg-wrap.scroller, :scope:is(.lg-wrap.scroller) { max-height: 74px; overflow-y: auto; padding: 1px 2px; }
+.lg, :scope:is(.lg) { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--muted); cursor: pointer; transition: opacity .12s; user-select: none; }
+.lg.faded, :scope:is(.lg.faded) { opacity: .4; }
+.lg i, :scope:is(.lg) i { width: 9px; height: 9px; border-radius: 3px; flex: none; }
+.lg b, :scope:is(.lg) b { color: var(--ink-2); }
+/* a disabled series stays in the legend, struck through, so it can come back */
+.lg.off, :scope:is(.lg.off) { opacity: .42; }
+.lg.off i, :scope:is(.lg.off) i { background: var(--muted-2) !important; }
+.lg.off, .lg.off b, :scope:is(.lg.off), :scope:is(.lg.off) b { text-decoration: line-through; }
+.lg.click:hover, :scope:is(.lg.click:hover) { color: var(--ink); }
+.more, :scope:is(.more) { display: inline-flex; align-items: center; gap: 4px; border: 1px dashed var(--border-strong); background: var(--surface); color: var(--primary-700); border-radius: 999px; padding: 2px 9px; font-size: 11px; font-weight: 600; flex: none; }
+.more:hover, :scope:is(.more:hover) { background: var(--primary-soft); border-style: solid; border-color: var(--primary); }
+
+/* ④ overflow popover — teleported to <body>, so it floats over the whole card
+   instead of being clipped by it. Positioned in viewport coords from the chip. */
+.more-back, :scope:is(.more-back) { position: fixed; inset: 0; z-index: 299; }
+/* 2026-09-24 Figma "Legend Filter": a borderless card lifted by a soft all-round shadow,
+   10px corners, 10/12/12 padding, sections 12px apart */
+.more-pop, :scope:is(.more-pop) { position: fixed; z-index: 300; display: flex; flex-direction: column; gap: 12px; padding: 10px 12px 12px; background: var(--surface); border: none; border-radius: 10px; box-shadow: 0 0 6px rgba(0,0,0,.12), var(--sh-pop); }
+/* only the series list grows and scrolls; tabs, field and footnote stay put */
+.more-pop > *, :scope:is(.more-pop) > * { flex: none; }
+.more-pop > .sm, :scope:is(.more-pop) > .sm { flex: 1; min-height: 0; }
+.mp-arrow, :scope:is(.mp-arrow) { position: absolute; bottom: -5px; width: 10px; height: 10px; flex: none; background: var(--surface); transform: translateX(-50%) rotate(45deg); box-shadow: 2px 2px 3px rgba(0,0,0,.06); }
+.more-pop.below .mp-arrow, :scope:is(.more-pop.below) .mp-arrow { top: -5px; bottom: auto; box-shadow: -2px -2px 3px rgba(0,0,0,.06); }
+/* the popover's title reads as a title: sentence case at panel-heading size, and ruled
+   off from the controls under it. At 10.5px uppercase muted it looked like a field label
+   for the Sort Order row rather than the name of the panel. */
+/* No rule under the title. The gap alone groups it away from the controls (Gestalt:
+   proximity), and a divider two rows above another divider read as a boxed-in header. */
+.mp-h, :scope:is(.mp-h) { display: flex; align-items: center; justify-content: space-between; flex: none; font-size: 14px; font-weight: 500; color: var(--ink); margin-bottom: -6px; }
+.mp-x, :scope:is(.mp-x) { border: none; background: transparent; color: var(--muted); display: grid; place-items: center; padding: 2px; border-radius: 4px; }
+.mp-x:hover, :scope:is(.mp-x:hover) { background: var(--surface-2); color: var(--ink); }
+
+/* ② the "Other" residue, spelled out */
+.census, :scope:is(.census) { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 7px 2px 0; flex: none; flex-wrap: wrap; }
+.cs-note, :scope:is(.cs-note) { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
+.cs-note i, :scope:is(.cs-note) i { width: 9px; height: 9px; border-radius: 3px; }
+
+/* the rank pill — first item in the legend row */
+.cs-chip, :scope:is(.cs-chip) { display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 8px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink-2); border-radius: 999px; font-size: 12px; font-weight: 600; flex: none; }
+.cs-chip:hover, .cs-chip.on, :scope:is(.cs-chip:hover), :scope:is(.cs-chip.on) { border-color: var(--primary); color: var(--primary-700); background: var(--primary-soft); }
+
+/* rank window — tabs, then the one field that tab needs */
+/* Sort Order (tabs) and Value (select) share one row, each under its own label */
+/* Sort Order's track sizes to its labels; Value takes the rest of the row */
+.rp-row, :scope:is(.rp-row) { display: flex; align-items: flex-end; gap: 8px; }
+.rp-col, :scope:is(.rp-col) { display: flex; flex-direction: column; gap: 4px; flex: none; min-width: 0; }
+.rp-col.n, :scope:is(.rp-col.n) { flex: 1; }
+.rp-l, :scope:is(.rp-l) { font-size: 12px; font-weight: 400; color: var(--label); }
+/* a 30px field with the up/down affordance drawn over a native select */
+.rp-selw, :scope:is(.rp-selw) { position: relative; }
+.rp-sel, :scope:is(.rp-sel) { width: 100%; height: 30px; border: 1px solid var(--border-control); border-radius: var(--r); background: var(--surface); color: var(--ink); font: inherit; font-size: 12px; padding: 0 28px 0 12px; appearance: none; -webkit-appearance: none; }
+.rp-sel:focus, :scope:is(.rp-sel:focus) { outline: none; border-color: var(--sel); }
+.rp-sel:disabled, :scope:is(.rp-sel:disabled) { opacity: .5; cursor: not-allowed; }
+.rp-chev, :scope:is(.rp-chev) { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); color: var(--label); pointer-events: none; }
+.rp-field, :scope:is(.rp-field) { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; min-height: 30px; padding-bottom: 7px; border-bottom: 1px solid var(--border); font-size: 12px; color: var(--muted); }
+.rp-field label, :scope:is(.rp-field) label { font-size: 12px; color: var(--ink-2); font-weight: 500; }
+.rp-n, :scope:is(.rp-n) { width: 56px; height: 26px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); color: var(--ink); font: inherit; font-size: 12px; font-weight: 600; text-align: center; }
+.rp-n:focus, :scope:is(.rp-n:focus) { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
+.rp-d, :scope:is(.rp-d) { color: var(--muted); font-size: 12px; }
+}

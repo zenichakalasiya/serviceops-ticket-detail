@@ -1,0 +1,41 @@
+@scope (.dc-TableFilterBar) {
+  .tfb, :scope:is(.tfb) { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  /* the whole bar is ONE field — chips and the query share it, as the design draws it */
+  .tfb-box, :scope:is(.tfb-box) { flex: 1; min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; min-height: 36px; padding: 4px 6px 4px 10px; border: 1px solid var(--border-strong); border-radius: 4px; background: var(--surface); cursor: text; }
+  .tfb-box.act, .tfb-box:focus-within, :scope:is(.tfb-box.act), :scope:is(.tfb-box:focus-within) { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
+  .mu, :scope:is(.mu) { color: var(--muted); flex: none; }
+  .tfb-in, :scope:is(.tfb-in) { flex: 1; min-width: 120px; border: none; outline: none; background: transparent; font-size: 13px; color: var(--ink); }
+  /* the trailing clear, inside the field — 24px so it never makes the 36px box taller */
+  .tfb-x, :scope:is(.tfb-x) { flex: none; width: 24px; height: 24px; margin-left: auto; border: none; background: transparent; color: var(--muted); border-radius: var(--r); display: grid; place-items: center; }
+  .tfb-x:hover, :scope:is(.tfb-x:hover) { background: var(--surface-2); color: var(--ink); }
+
+  /* a condition, stated the way the product states it: Field Operator Value */
+  .fchip, :scope:is(.fchip) { display: inline-flex; align-items: center; gap: 4px; flex: none; max-width: 240px; height: 22px; padding: 0 4px 0 8px; border-radius: 4px; background: var(--surface-2); border: 1px solid var(--border); font-size: 12px; color: var(--ink-2); white-space: nowrap; cursor: pointer; }
+  .fchip:hover, :scope:is(.fchip:hover) { border-color: var(--border-strong); }
+  .fchip.on, :scope:is(.fchip.on) { border-color: var(--primary); background: var(--primary-soft); }
+  /* still being built — it filters nothing until it has a value */
+  .fchip.draft, :scope:is(.fchip.draft) { border-style: dashed; color: var(--muted); }
+  .fchip b, :scope:is(.fchip) b { font-weight: 600; color: var(--ink); }
+  .fchip b.v, :scope:is(.fchip) b.v { overflow: hidden; text-overflow: ellipsis; }
+  .fchip em, :scope:is(.fchip) em { font-style: normal; color: var(--muted); }
+  .fchip button, :scope:is(.fchip) button { flex: none; width: 15px; height: 15px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
+  .fchip button:hover, :scope:is(.fchip) button:hover { background: var(--border); color: var(--ink); }
+
+  .tfb-back, :scope:is(.tfb-back) { position: fixed; inset: 0; z-index: 210; }
+  /* field list */
+  .tfb-fields, :scope:is(.tfb-fields) { position: fixed; z-index: 211; width: 224px; max-height: 320px; overflow: auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); box-shadow: var(--sh-pop); padding: 6px; }
+  .tfb-f, :scope:is(.tfb-f) { display: block; width: 100%; text-align: left; padding: 8px 10px; border: none; background: transparent; border-radius: 4px; font-size: 13px; color: var(--ink-2); }
+  .tfb-f:hover, :scope:is(.tfb-f:hover) { background: var(--surface-2); color: var(--ink); }
+  .tfb-empty, :scope:is(.tfb-empty) { margin: 0; padding: 12px; text-align: center; font-size: 12px; color: var(--muted-2); }
+  /* operator + value */
+  .tfb-cond, :scope:is(.tfb-cond) { position: fixed; z-index: 211; width: 304px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); box-shadow: var(--sh-pop); padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .tfb-l, :scope:is(.tfb-l) { font-size: 12px; font-weight: 500; color: var(--ink-2); }
+  .tfb-t, :scope:is(.tfb-t) { width: 100%; }
+  .tfb-vals, :scope:is(.tfb-vals) { max-height: 190px; overflow: auto; display: flex; flex-direction: column; gap: 1px; }
+  .tfb-v, :scope:is(.tfb-v) { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 4px; font-size: 13px; color: var(--ink-2); cursor: pointer; }
+  .tfb-v:hover, :scope:is(.tfb-v:hover) { background: var(--surface-2); }
+  .tfb-v.on, :scope:is(.tfb-v.on) { color: var(--primary-700); font-weight: 500; }
+  .tfb-v input, :scope:is(.tfb-v) input { accent-color: var(--primary); flex: none; }
+  .tfb-foot, :scope:is(.tfb-foot) { display: flex; justify-content: flex-end; }
+  .ellip, :scope:is(.ellip) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}

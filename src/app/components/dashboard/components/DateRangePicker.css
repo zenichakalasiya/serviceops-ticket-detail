@@ -1,0 +1,24 @@
+@scope (.dc-DateRangePicker) {
+  .drf, :scope:is(.drf) { display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 4px 0 12px; border: 1px solid var(--border-strong); border-radius: 4px; background: var(--surface); cursor: pointer; }
+  .drf:hover, :scope:is(.drf:hover) { border-color: var(--primary); }
+  .drf.on, :scope:is(.drf.on) { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
+  .drf-v, :scope:is(.drf-v) { flex: 1; min-width: 0; font-size: 13px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .drf-v.ph, :scope:is(.drf-v.ph) { color: var(--muted-2); }
+  .drf-cal, :scope:is(.drf-cal) { flex: none; width: 30px; height: 30px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
+  .drf:hover .drf-cal, .drf.on .drf-cal, :scope:is(.drf:hover) .drf-cal, :scope:is(.drf.on) .drf-cal { color: var(--primary); }
+
+  .drf-back, :scope:is(.drf-back) { position: fixed; inset: 0; z-index: 300; }
+  /* one pane — no quick-range column, so it is the width of the From/To fields alone */
+  .drf-pop, :scope:is(.drf-pop) { position: fixed; z-index: 301; width: 288px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--sh-pop); overflow: hidden; animation: dc-DateRangePicker-pop .14s ease-out; }
+  .drf-abs, :scope:is(.drf-abs) { padding: 16px; display: flex; flex-direction: column; }
+  .drf-foot, :scope:is(.drf-foot) { display: flex; justify-content: flex-end; gap: 8px; margin-top: 2px; }
+  .drf-h, :scope:is(.drf-h) { font-weight: 600; font-size: 13px; margin-bottom: 12px; }
+  .drf-fb, :scope:is(.drf-fb) { display: flex; flex-direction: column; margin-bottom: 12px; }
+  .drf-fb label, :scope:is(.drf-fb) label { font-size: 12px; font-weight: 500; color: var(--ink-2); margin-bottom: 5px; }
+  .drf-dt, :scope:is(.drf-dt) { position: relative; }
+  .drf-dt .input, :scope:is(.drf-dt) .input { height: 36px; font-size: 13px; padding-right: 36px; width: 100%; }
+  .drf-dt .input::-webkit-calendar-picker-indicator, :scope:is(.drf-dt) .input::-webkit-calendar-picker-indicator { opacity: 0; }
+  .drf-ci, :scope:is(.drf-ci) { position: absolute; right: 4px; top: 4px; width: 28px; height: 28px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
+  .drf-ci:hover, :scope:is(.drf-ci:hover) { background: var(--surface-2); color: var(--ink); }
+}
+@keyframes dc-DateRangePicker-pop { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }

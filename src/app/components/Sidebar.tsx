@@ -247,7 +247,12 @@ export function Sidebar({ activePage, onNavigate }: SidebarProps) {
   return (
     <aside className="flex h-full w-[54px] flex-col border-r border-[#e5e7eb] bg-[#f9fafb]">
       <div className="flex flex-col">
-        <NavItem icon={<IconDashboard size={20} />} title="Dashboard" />
+        <NavItem
+          icon={<IconDashboard size={20} />}
+          active={activePage === 'dashboard' || activePage === 'dashboards'}
+          title="Dashboard"
+          onClick={() => onNavigate?.('dashboard')}
+        />
         <NavItem
           icon={<IconRequest size={20} />}
           active={activePage === 'request'}

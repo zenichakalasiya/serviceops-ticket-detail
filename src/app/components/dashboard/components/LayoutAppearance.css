@@ -1,0 +1,125 @@
+@scope (.dc-LayoutAppearance) {
+:scope { display: flex; flex-direction: column; min-width: 0; }
+.la-scroll, :scope:is(.la-scroll) { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+/* In the drawer the panel owns the full height and does its own scrolling, so the
+   footer can be a plain flex child that never moves. `min-height: 0` is what lets
+   the scroll area actually shrink inside the flex column. */
+:scope.drawer { height: 100%; }
+/* 22px gutters, matching the Create Dashboard drawer this one now sits beside in width */
+:scope.drawer .la-scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 16px 22px 20px; }
+
+/* ── the scope block ──────────────────────────────────────────────────────────── */
+/* Values copied from CreateDashboardPanel's Visibility & sharing rather than
+   approximated — scoped CSS can't share them, so the numbers have to match by hand
+   for the two panels to read as one product. */
+.la-scope, :scope:is(.la-scope) { display: flex; flex-direction: column; }
+.sec-h, :scope:is(.sec-h) { font-size: 14px; font-weight: 600; color: var(--ink); margin: 0 0 8px; }
+
+/* `:not(.on)` is load-bearing, not tidiness. Hover has to be excluded from the active
+   segment explicitly: `:hover:not(:disabled)` is (0,3,0) and outranks `.seg-btn.on` at
+   (0,2,0), so it repainted the white label near-black on the near-black fill. Naming
+   `.on` here settles it by specificity rather than by source order. */
+/* colour marks WHICH option is in force — a soft tint would read as "hovered".
+   The label is `--surface`, NOT #fff: `--ink` is near-black in light but near-WHITE
+   in dark (#ececf3), so a hardcoded white label vanished on it — 1.18:1. `--surface`
+   inverts with the fill, and in light it resolves to #ffffff, exactly as before. */
+.seg-btn:disabled, :scope:is(.seg-btn:disabled) { color: var(--muted-2); cursor: not-allowed; }
+
+/* `align-items: flex-start` not center: the sentence wraps to two lines at this width,
+   and a vertically-centred icon would float in the middle of the paragraph */
+.oneliner, :scope:is(.oneliner) { display: flex; align-items: flex-start; gap: 8px; margin: 10px 0 0; padding: 9px 11px; background: var(--surface-2); border-radius: 4px; font-size: 13px; line-height: 1.5; color: var(--ink-2); }
+.oneliner .ico, :scope:is(.oneliner) .ico { color: var(--muted); flex: none; margin-top: 2px; }
+.oneliner b, :scope:is(.oneliner) b { font-weight: 600; color: var(--ink); }
+
+/* ── the controls ─────────────────────────────────────────────────────────────── */
+.la-body, :scope:is(.la-body) { display: grid; gap: 18px; }
+:scope.panel .la-body { grid-template-columns: minmax(280px, 360px) 1fr; align-items: start; }
+:scope.drawer .la-body { grid-template-columns: 1fr; }
+
+/* two per row; `align-items: start` so a wrapped label can't stretch its neighbour */
+.la-controls, :scope:is(.la-controls) { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 18px; align-items: start; min-width: 0; }
+.la-fld, :scope:is(.la-fld) { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.la-fld label, :scope:is(.la-fld) label { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; color: var(--ink); }
+
+/* the value sits beside the track, not up in the label: at half width the label row is
+   short and a right-floated number drifted away from the control it belonged to */
+.la-rng-row, :scope:is(.la-rng-row) { display: flex; align-items: center; gap: 10px; min-width: 0; }
+/* a FIXED width, not min-width: "14" and "140" in different chips gave their sliders
+   different lengths, and two tracks in the same column stopping at different points
+   reads as a mistake. 46px holds three digits. */
+/* A bordered box, as the reference draws it, not a filled chip — beside a track this
+   value is the track's CURRENT reading and the outline says it is a field you could
+   type into next, which is where this is heading. A grey fill made it look disabled. */
+.la-val, :scope:is(.la-val) {
+  flex: none; width: 46px; height: 30px;
+  display: inline-grid; place-items: center;
+  background: var(--surface); border: 1px solid var(--border-control); border-radius: var(--r);
+  font-size: 12px; font-weight: 500; color: var(--ink); font-variant-numeric: tabular-nums;
+}
+
+/* `margin: 0` overrides Chrome's UA 2px on range inputs — it made every track start
+   2px inside its column, and put the S/L marks 2px off the track they label. */
+.la-rng, :scope:is(.la-rng) { flex: 1; min-width: 0; margin: 0; accent-color: var(--primary); }
+
+/* the S · M · L stops. `margin-right` is the chip's 46px plus the row's 10px gap, so
+   the marks sit under the TRACK rather than under the track-plus-chip — the first and
+   last land on the thumb's actual end positions. */
+.la-scale, :scope:is(.la-scale) { display: flex; justify-content: space-between; margin: 2px 56px 0 0; font-size: 11px; color: var(--muted); }
+
+/* ── the footer ───────────────────────────────────────────────────────────────── */
+/* Reset holds the left edge; `margin-right: auto` on it is what pushes the commit
+   pair right, so the gap between them carries the "different kind of action" */
+.la-ghost, :scope:is(.la-ghost) {
+  display: inline-flex; align-items: center; gap: 6px; margin-right: auto;
+  height: 32px; padding: 0 10px; border: none; background: transparent;
+  color: var(--ink-2); border-radius: var(--r); font-size: 13px; font-weight: 500;
+}
+.la-ghost:hover:not(:disabled), :scope:is(.la-ghost:hover:not(:disabled)) { background: var(--surface-2); color: var(--ink); }
+.la-ghost:disabled, :scope:is(.la-ghost:disabled) { opacity: .4; cursor: not-allowed; }
+:scope.drawer .la-foot {
+  flex: none;
+  background: var(--surface); border-top: 1px solid var(--border);
+}
+:scope.panel .la-foot { margin-top: 18px; }
+.la-foot .btn, :scope:is(.la-foot) .btn { height: 32px; }
+
+/* ── the preview ──────────────────────────────────────────────────────────────── */
+.la-pv-cap, :scope:is(.la-pv-cap) { display: block; font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 8px; }
+/* WHITE, not the board's grey ground. The preview is a figure on the panel, not a
+   miniature of the canvas, and a grey frame put a third surface behind cards that are
+   already sitting on one. */
+.la-pv-frame, :scope:is(.la-pv-frame) { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); }
+.la-pv-grid, :scope:is(.la-pv-grid) { display: grid; grid-template-columns: 1fr 1fr; }
+.la-pv-tile, :scope:is(.la-pv-tile) { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); display: flex; flex-direction: column; overflow: hidden; }
+/* The header BAND — tinted and ruled off, exactly as a real tile's header is. It is the
+   Widget-title-size slider's only target, so it carries the bound font size. */
+.la-pv-head, :scope:is(.la-pv-head) {
+  padding: 8px 12px; background: var(--bg); border-bottom: 1px solid var(--border);
+  font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* Widget padding applies to the BODY, not the whole card — a header band has its own
+   inset, and letting cardPad push the band around would move the title away from a rule
+   that stays put. */
+.la-pv-body, :scope:is(.la-pv-body) { flex: 1; display: flex; min-height: 0; }
+/* The skeleton's whole ramp resolves from this one colour — see ChartSkeleton.vue.
+   --picker-ico is the SAME ink the chart artwork uses everywhere else: the widget
+   picker's type tiles and the disc on an empty widget. A neutral grey (--muted-2) was
+   here first and read as disabled rather than as a drawing; the blue-grey is what the
+   product already means by "a chart, rendered quietly".
+
+   `flex: 1` is load-bearing, not tidiness: the body is a ROW flex container, so without
+   it the skeleton takes content width — and the bar and funnel, which have no intrinsic
+   width, collapse to nothing while the line and pie (an SVG and an aspect-ratio box)
+   survive on theirs. Two of the four silently disappear. */
+/* #8E9FBC is the skeleton ink, fixed across themes: a mid blue-grey that stays a quiet
+   wireframe on the white card and still reads on the dark one. */
+.la-pv-chart, :scope:is(.la-pv-chart) { color: #8E9FBC; flex: 1; min-width: 0; }
+}
+/* Port: the scope switch is the product's pill-track */
+@scope (.dc-LayoutAppearance) {
+.la-seg > button:disabled, :scope:is(.la-seg) > button:disabled { color: var(--muted-2); cursor: not-allowed; }
+}
+@scope (.dc-LayoutAppearance) {
+/* the skeleton fills the sizing box that carries the row-height-driven height */
+.la-pv-chart > *, :scope:is(.la-pv-chart) > * { width: 100%; height: 100%; }
+}

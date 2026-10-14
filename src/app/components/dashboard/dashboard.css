@@ -1,0 +1,51 @@
+/* The Dashboard module's styles. dashboard.base.css is the prototype's own tokens + primitives,
+ * GENERATED and scoped under .dash-root (scripts/build-dashboard-css.mjs). This file is the hand-
+ * written layer on top: it puts the PRODUCT's controls back wherever the prototype drew its own.
+ *
+ * Rule (Zeni, Oct 2026): CTAs, form fields and radios are ServiceOps's, not the prototype's —
+ *   · the primary button is the product blue #3D8BD0, not the prototype's near-black
+ *   · a segmented choice / radio is the product's .pill-track (white pill on #EEF2F6)
+ *   · inputs and selects are 4px-cornered with the product's light border
+ * Everything else (charts, tiles, the board) keeps the prototype's look. */
+@import './dashboard.base.css';
+
+.dash-root {
+  /* --sel was the prototype's near-black "selected / primary". Here it is the product blue, which
+     also makes a selected tile edge and a chosen chart type read in the product's colour. */
+  --sel: #3d8bd0;
+  --sel-hover: #2f7ab8;
+  --sel-ink: #ffffff;
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  height: 100%;
+}
+/* Dark mode is Dashboard-only (decided with Zeni): the same blue stays the primary in dark. */
+.dash-root[data-theme='dark'] {
+  --sel: #3d8bd0;
+  --sel-hover: #5a9fdc;
+  --sel-ink: #ffffff;
+}
+
+/* ── Primary CTA = the product's blue button ─────────────────────────────── */
+.dash-root .btn-primary { background: #3d8bd0; border-color: #3d8bd0; color: #fff; }
+.dash-root .btn-primary:hover { background: #2f7ab8; border-color: #2f7ab8; }
+.dash-root .btn-primary:active { background: #2e6ba4; border-color: #2e6ba4; }
+.dash-root .btn-primary:disabled { background: #cbd5e1; border-color: #cbd5e1; color: #fff; }
+
+/* ── Tabs / segmented = the product's pill-track ─────────────────────────── */
+.dash-root .tabs { background: #eef2f6; padding: 3px; border-radius: 8px; gap: 2px; }
+.dash-root .tab { height: 26px; border-radius: 6px; font-size: 12px; color: #364658; }
+.dash-root .tab.active {
+  background: #fff; color: #364658; font-weight: 500;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.1), 0 1px 1px rgba(16, 24, 40, 0.06);
+}
+.dash-root[data-theme='dark'] .tab.active { background: #2f2f3b; color: #ececf3; }
+
+/* ── Form fields = the product's 4px, light-border inputs ────────────────── */
+.dash-root .input { border-radius: 4px; border-color: #dfe5ed; height: 32px; }
+.dash-root textarea.input { height: auto; }
+.dash-root .input:focus { border-color: #3d8bd0; box-shadow: 0 0 0 1px #3d8bd0; }

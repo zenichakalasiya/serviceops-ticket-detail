@@ -1,0 +1,30 @@
+@scope (.dc-DataTable) {
+  /* `table-layout: fixed` is what makes truncation possible at all: with the default auto layout
+     the browser widens a column to fit its longest cell, so `text-overflow` never has anything to
+     overflow and every long value wraps. Fixed shares the width evenly, then each cell truncates. */
+  :scope { width: 100%; border-collapse: collapse; font-size: inherit; table-layout: fixed; }
+  /* one line everywhere — headers and values alike. A wrapped cell changes its row's height
+     and knocks the row rule out of line with its neighbours. */
+  th, td, :scope:is(th), :scope:is(td) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* §8 — header 12px semibold in the PRIMARY ink (not muted uppercase), body 13px. */
+  th, :scope:is(th) { text-align: left; color: var(--ink); font-weight: 600; font-size: 12px; letter-spacing: .01em; padding: 8px; border-bottom: 1px solid var(--border); background: var(--surface); position: sticky; top: 0; z-index: 1; }
+  td, :scope:is(td) { padding: 8px; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--ink); }
+  tbody tr, :scope:is(tbody) tr { transition: background .12s; }
+  tbody tr:hover, :scope:is(tbody) tr:hover { background: var(--row-hover); }
+  /* §8: an empty cell renders an em dash, never blank */
+  td:empty::after, :scope:is(td:empty)::after { content: '—'; color: var(--placeholder); }
+  /* the sort header is an inline-flex row, so it needs its own clamp */
+  .th-lbl, :scope:is(.th-lbl) { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* §8 empty state — the guide's py-12, in the placeholder ink */
+  .nodata, :scope:is(.nodata) { text-align: center; color: var(--placeholder); padding: 48px 16px; font-size: 13px; }
+  /* Header doubles as a sort control. The caret stays invisible until hover or active sort,
+     so an unsorted table looks exactly like the old static one. */
+  th.srt, :scope:is(th.srt) { cursor: pointer; user-select: none; }
+  .th-in, :scope:is(.th-in) { display: flex; align-items: center; gap: 3px; max-width: 100%; }
+  .sc, :scope:is(.sc) { opacity: 0; color: var(--muted-2); transition: opacity .12s; flex: none; }
+  th.srt:hover .sc, :scope:is(th.srt:hover) .sc { opacity: .6; }
+  .sc.vis, :scope:is(.sc.vis) { opacity: 1; color: var(--primary); }
+  th.on, :scope:is(th.on) { color: var(--ink); }
+  .clr, :scope:is(.clr) { display: block; margin: 8px auto 0; border: 1px solid var(--border); background: var(--surface); color: var(--primary-700); border-radius: 4px; padding: 4px 10px; font-size: 12px; font-weight: 600; }
+  .clr:hover, :scope:is(.clr:hover) { background: var(--primary-soft); border-color: var(--primary); }
+}

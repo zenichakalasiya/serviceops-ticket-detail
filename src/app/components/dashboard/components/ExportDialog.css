@@ -1,0 +1,58 @@
+@scope (.dc-ExportDialog) {
+.pv-back, :scope:is(.pv-back) { position: fixed; inset: 0; z-index: 55; }
+/* anchored directly under the Export button, right-aligned to it */
+/* 420, not 380: at 380 the recipient rows and the password field crowded their own
+   labels, and the footer's two buttons sat tight against the edges. */
+.pv, :scope:is(.pv) { position: absolute; top: 44px; right: 0; z-index: 60; width: 420px; padding: 14px 16px 12px; }
+.pv-head, :scope:is(.pv-head) { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.pv-title, :scope:is(.pv-title) { font-weight: 700; font-size: 15px; color: var(--ink); }
+
+/* §10.1 content tabs (underline) — the detail-page pattern */
+.ctabs, :scope:is(.ctabs) { display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); margin: 12px 0 14px; }
+.ctab, :scope:is(.ctab) { border: none; border-bottom: 2px solid transparent; background: transparent; padding: 0 8px 10px; font-size: 14px; font-weight: 500; color: var(--muted); }
+.ctab:hover, :scope:is(.ctab:hover) { color: var(--ink); border-bottom-color: var(--border-strong); }
+.ctab.on, :scope:is(.ctab.on) { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+
+/* the format switcher inside Download — §10.2 segmented toggle */
+.seg-b:not(.on):hover, :scope:is(.seg-b:not(.on):hover) { color: var(--ink); }
+
+/* the destination, spelled out where the short tab label could not */
+.sec-h, :scope:is(.sec-h) { font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 12px; }
+
+.fl, :scope:is(.fl) { display: block; font-size: 12px; font-weight: 500; color: var(--ink-2); margin: 14px 0 6px; }
+.fl i, :scope:is(.fl) i { color: var(--red); font-style: normal; }
+
+/* one address per row, with the [+] as the only affordance when nothing is being typed */
+.emails, :scope:is(.emails) { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.erow, :scope:is(.erow) { display: flex; align-items: center; gap: 6px; width: 100%; }
+.erow .input, :scope:is(.erow) .input { flex: 1; min-width: 0; }
+.eaddr, :scope:is(.eaddr) { flex: 1; min-width: 0; height: 36px; display: flex; align-items: center; padding: 0 10px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface-2); font-size: 13px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ex, :scope:is(.ex) { flex: none; width: 28px; height: 28px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
+.ex:hover, :scope:is(.ex:hover) { background: var(--surface-2); color: var(--red); }
+.add-btn, :scope:is(.add-btn) { flex: none; width: 34px; height: 32px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--primary-700); border-radius: 4px; display: grid; place-items: center; }
+.add-btn:hover, :scope:is(.add-btn:hover) { background: var(--primary-soft); border-color: var(--primary); }
+
+.tgl-row, :scope:is(.tgl-row) { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 14px; cursor: pointer; }
+.tgl-txt, :scope:is(.tgl-txt) { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+/* same row, same reason — see WidgetBuilderModal. The two copies of this pattern have
+   already drifted apart on weight (600 here, 500 there); they are at least not going to
+   disagree about whether the label looks switched off. */
+.tgl-txt b, :scope:is(.tgl-txt) b { font-size: 13px; font-weight: 600; color: var(--ink); }
+.tgl-txt em, :scope:is(.tgl-txt) em { font-style: normal; font-size: 12px; color: var(--muted); line-height: 1.45; }
+.tgl, :scope:is(.tgl) { flex: none; width: 38px; height: 22px; padding: 0; border: none; border-radius: 999px; background: var(--border-strong); position: relative; transition: background .15s; }
+.tgl i, :scope:is(.tgl) i { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: var(--sh-sm); transition: transform .15s; }
+.tgl.on, :scope:is(.tgl.on) { background: var(--primary); }
+.tgl.on i, :scope:is(.tgl.on) i { transform: translateX(16px); }
+
+.pw, :scope:is(.pw) { position: relative; }
+.pw .input, :scope:is(.pw) .input { width: 100%; padding-right: 38px; }
+.eye, :scope:is(.eye) { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 28px; height: 28px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
+.eye:hover, :scope:is(.eye:hover) { background: var(--surface-2); color: var(--ink); }
+
+.pv-foot, :scope:is(.pv-foot) { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); }
+}
+/* Port: the Download | Export tabs and the Image | PDF switch are the product's pill-track */
+@scope (.dc-ExportDialog) {
+.pv-modes, :scope:is(.pv-modes) { margin: 12px 0 14px; }
+.pv-fmt > button, :scope:is(.pv-fmt) > button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+}

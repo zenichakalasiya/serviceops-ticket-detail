@@ -1,0 +1,48 @@
+@scope (.dc-TourGuide) {
+/* above the AI dock (200) and every popover — the tour owns the screen while open */
+.tour-root, :scope:is(.tour-root) { position: fixed; inset: 0; z-index: 3000; pointer-events: auto; }
+.tour-dim, :scope:is(.tour-dim) { position: fixed; inset: 0; background: rgba(14, 17, 28, .58); pointer-events: none; }
+/* the spotlight: a rounded rect whose enormous shadow dims everything around it */
+.tour-spot, :scope:is(.tour-spot) {
+  position: fixed; border-radius: 4px; pointer-events: none;
+  box-shadow: 0 0 0 9999px rgba(14, 17, 28, .58), 0 0 0 2px var(--ai, #6d28d9), 0 0 0 6px color-mix(in srgb, var(--ai, #6d28d9) 30%, transparent);
+  transition: top .28s cubic-bezier(.4, 0, .2, 1), left .28s cubic-bezier(.4, 0, .2, 1), width .28s cubic-bezier(.4, 0, .2, 1), height .28s cubic-bezier(.4, 0, .2, 1);
+}
+
+.tour-tip, :scope:is(.tour-tip) {
+  position: fixed; width: 322px; max-width: 92vw; z-index: 3001; pointer-events: auto;
+  background: var(--surface); color: var(--ink);
+  border: 1px solid var(--border); border-radius: 4px; box-shadow: var(--sh-lg);
+  padding: 14px 16px 13px; transition: top .28s cubic-bezier(.4, 0, .2, 1), left .28s cubic-bezier(.4, 0, .2, 1);
+}
+.tour-tip.centered, :scope:is(.tour-tip.centered) { width: 380px; }
+
+/* title row with a close (skip) icon beside the title */
+.tt-head, :scope:is(.tt-head) { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 6px; }
+.tt-title, :scope:is(.tt-title) { flex: 1; margin: 0; font-size: 15px; font-weight: 700; letter-spacing: -.01em; color: var(--ink); }
+.tt-x, :scope:is(.tt-x) { flex: none; width: 26px; height: 26px; margin: -2px -4px 0 0; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
+.tt-x:hover, :scope:is(.tt-x:hover) { background: var(--surface-2); color: var(--ink); }
+.tt-anim, :scope:is(.tt-anim) { margin: 6px 0 10px; }
+.tt-body, :scope:is(.tt-body) { margin: 0; font-size: 13px; line-height: 1.5; color: var(--ink-2); }
+/* the extra guidance points (Create step) */
+.tt-points, :scope:is(.tt-points) { list-style: none; margin: 9px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.tt-points li, :scope:is(.tt-points) li { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; line-height: 1.45; color: var(--ink-2); }
+.tt-points li .ico, :scope:is(.tt-points) li .ico { color: var(--ai, #6d28d9); flex: none; margin-top: 1px; }
+
+.tt-foot, :scope:is(.tt-foot) { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
+/* progress as a number, not dots */
+.tt-num, :scope:is(.tt-num) { flex: 1; font-size: 12px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; letter-spacing: .03em; }
+.tt-btns, :scope:is(.tt-btns) { display: flex; align-items: center; gap: 7px; flex: none; }
+.tb, :scope:is(.tb) { height: 32px; padding: 0 15px; border-radius: 4px; font-size: 13px; font-weight: 600; border: 1px solid var(--border); background: var(--surface); color: var(--ink-2); }
+.tb.ghost:hover, :scope:is(.tb.ghost:hover) { background: var(--surface-2); color: var(--ink); }
+.tb.primary, :scope:is(.tb.primary) {
+  border: 1.5px solid transparent; color: #fff; background: var(--ai-grad, linear-gradient(90deg, #2563eb, #7c3aed 45%, #db2777));
+}
+.tb.primary:hover, :scope:is(.tb.primary:hover) { filter: brightness(1.05); }
+
+.tour-fade-enter-active, .tour-fade-leave-active, :scope:is(.tour-fade-enter-active), :scope:is(.tour-fade-leave-active) { transition: opacity .2s ease; }
+.tour-fade-enter-from, .tour-fade-leave-to, :scope:is(.tour-fade-enter-from), :scope:is(.tour-fade-leave-to) { opacity: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .tour-spot, .tour-tip, .tour-fade-enter-active, .tour-fade-leave-active, :scope:is(.tour-spot), :scope:is(.tour-tip), :scope:is(.tour-fade-enter-active), :scope:is(.tour-fade-leave-active) { transition: none; }
+}
+}

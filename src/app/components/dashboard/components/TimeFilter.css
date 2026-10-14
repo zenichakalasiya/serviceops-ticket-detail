@@ -1,0 +1,31 @@
+@scope (.dc-TimeFilter) {
+:scope { position: relative; }
+.trigger, :scope:is(.trigger) { height: 36px; max-width: 230px; }
+.trigger.on, :scope:is(.trigger.on) { border-color: var(--primary); color: var(--primary-700); }
+.lbl-1, :scope:is(.lbl-1) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* compact two-line From/To range inside the trigger */
+.trigger.is-range, :scope:is(.trigger.is-range) { padding-top: 0; padding-bottom: 0; max-width: 300px; }
+/* One line, not two. Stacked, the applied range made the trigger taller than every other
+   control in the header row, so the whole toolbar grew whenever a custom range was set. */
+.rng, :scope:is(.rng) { display: inline-flex; align-items: center; gap: 6px; line-height: 1.2; font-size: 11px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rng .rl + .rl::before, :scope:is(.rng) .rl + .rl::before { content: '–'; margin-right: 6px; color: var(--muted-2); }
+.rl, :scope:is(.rl) { white-space: nowrap; }
+.backdrop, :scope:is(.backdrop) { position: fixed; inset: 0; z-index: 55; }
+.pop, :scope:is(.pop) { position: absolute; top: 42px; right: 0; z-index: 60; display: grid; grid-template-columns: 264px 232px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--sh-pop); overflow: hidden; }
+.abs, :scope:is(.abs) { padding: 16px; border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+.lbl, :scope:is(.lbl) { font-weight: 600; font-size: 13px; margin-bottom: 12px; }
+/* From / To stacked vertically */
+.field-block, :scope:is(.field-block) { display: flex; flex-direction: column; margin-bottom: 12px; }
+.field-block label, :scope:is(.field-block) label { font-size: 12px; font-weight: 500; color: var(--ink-2); margin-bottom: 5px; }
+.dt, :scope:is(.dt) { position: relative; }
+.dt .input, :scope:is(.dt) .input { height: 36px; font-size: 13px; padding-right: 36px; width: 100%; }
+.dt .input::-webkit-calendar-picker-indicator, :scope:is(.dt) .input::-webkit-calendar-picker-indicator { opacity: 0; }
+.cal, :scope:is(.cal) { position: absolute; right: 4px; top: 4px; width: 28px; height: 28px; border: none; background: transparent; color: var(--muted); border-radius: 4px; display: grid; place-items: center; }
+.cal:hover, :scope:is(.cal:hover) { background: var(--surface-2); color: var(--ink); }
+.apply, :scope:is(.apply) { width: 100%; margin-top: 4px; }
+.quick, :scope:is(.quick) { padding: 12px 10px; display: flex; flex-direction: column; min-height: 0; }
+.qlist, :scope:is(.qlist) { display: flex; flex-direction: column; gap: 1px; overflow: auto; max-height: 300px; }
+.qitem, :scope:is(.qitem) { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border: none; background: transparent; border-radius: 4px; font-size: 13px; color: var(--ink-2); text-align: left; }
+.qitem:hover, :scope:is(.qitem:hover) { background: var(--surface-2); }
+.qitem.on, :scope:is(.qitem.on) { background: var(--primary-soft); color: var(--primary-700); font-weight: 600; }
+}

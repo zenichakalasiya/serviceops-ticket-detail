@@ -1,0 +1,29 @@
+@scope (.dc-AiInsightChip) {
+:scope.chip-wrap { position: relative; }
+/* AI-accented pill: gradient-border over white, gradient glyph, count badge */
+/* Sized and cornered like every other action in the board header (.btn — 36px tall,
+   --r radius). It was a 30px pill, which made the one AI control in the row both shorter
+   than its neighbours and a different shape; the gradient border is enough to mark it out
+   without also breaking the row's geometry. */
+.ai-chip, :scope:is(.ai-chip) {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  width: 36px; height: 36px; padding: 0;
+  border: 1.5px solid transparent; border-radius: var(--r);
+  background: linear-gradient(var(--surface), var(--surface)) padding-box, var(--ai-grad-line) border-box;
+}
+.ai-chip .ico, :scope:is(.ai-chip) .ico { stroke: url(#ai-grad); color: var(--ai); }
+.ai-chip-l, :scope:is(.ai-chip-l) { font-size: 13px; font-weight: 600; color: var(--ai-ink); white-space: nowrap; }
+.ai-chip-n, :scope:is(.ai-chip-n) { min-width: 17px; height: 17px; padding: 0 5px; display: grid; place-items: center; border-radius: 999px; background: var(--ai-soft); font-size: 11px; font-weight: 700; color: var(--ai-ink); font-variant-numeric: tabular-nums; }
+.ai-chip:hover, .ai-chip.on, :scope:is(.ai-chip:hover), :scope:is(.ai-chip.on) { background: linear-gradient(var(--ai-soft), var(--ai-soft)) padding-box, var(--ai-grad-line) border-box; }
+.pop-backdrop, :scope:is(.pop-backdrop) { position: fixed; inset: 0; z-index: 40; }
+/* Shell, wash and both CTA types come from `.aic` / `.ai-cta` in global.css —
+   the same card the ticket detail page shows. Only placement is local. */
+.ai-pop, :scope:is(.ai-pop) { position: absolute; top: 38px; right: 0; z-index: 50; width: 340px; box-shadow: var(--sh-pop); padding: 16px; transform-origin: top right; animation: dc-AiInsightChip-pop .14s ease; }
+.ai-pop-h, :scope:is(.ai-pop-h) { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--ink); margin-bottom: 10px; }
+/* a bare gradient glyph, no tinted container — the reference gives it none */
+.ai-pop-spark, :scope:is(.ai-pop-spark) { flex: none; display: grid; place-items: center; }
+.ai-pop-spark .ico, :scope:is(.ai-pop-spark) .ico { stroke: url(#ai-grad); color: var(--ai); }
+.ai-pop-sum, :scope:is(.ai-pop-sum) { margin: 0; font-size: 13px; line-height: 1.6; color: var(--ink); }
+.ai-pop-acts, :scope:is(.ai-pop-acts) { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+}
+@keyframes dc-AiInsightChip-pop { from { opacity: 0; transform: scale(.96); } }
