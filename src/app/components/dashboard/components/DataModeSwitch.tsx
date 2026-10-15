@@ -50,7 +50,7 @@ export function DataModeSwitch({ modelValue = 'manual', variant = 'cards', subje
     <div className="dc-DataModeSwitch pill-track dm-seg" role="radiogroup" aria-label="Data source">
       {MODES.map((m) => (
         <button key={m.id} type="button" aria-pressed={m.id === cur.id} title={m.line} onClick={() => pick(m.id)}>
-          <Icon name={m.icon} size={14} /> {m.title}
+          {m.title}
         </button>
       ))}
     </div>

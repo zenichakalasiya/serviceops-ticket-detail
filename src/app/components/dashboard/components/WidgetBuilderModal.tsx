@@ -502,19 +502,13 @@ export function WidgetBuilderModal({
     }
   }
 
-  /* DEMO: which Manual / Query design is live — A cards · D banner · pill (store.ui.modeUi) */
-  const modeVariant = ['banner', 'pill'].includes(store.ui.modeUi) ? store.ui.modeUi : 'cards';
+  /* Data source is the product's pill-track — the same control as Public / Private / Restricted
+     (Zeni, 15 Oct 2026). The prototype's "Demo · switch UI" bar (A · Cards / D · Banner / Pill) is
+     gone; the cards and banner variants stay built in DataModeSwitch, unused. */
+  const modeVariant = 'pill';
   const dataSource = (headCls: string) => (
     <>
       <div className={headCls}>Data source</div>
-      <div className="dm-demo" title="Prototype only — compare the designs">
-        <span>Demo · switch UI</span>
-        <div className="pill-track dm-demo-track">
-          <button aria-pressed={modeVariant === 'cards'} onClick={() => { store.ui.modeUi = 'cards'; }}>A · Cards</button>
-          <button aria-pressed={modeVariant === 'banner'} onClick={() => { store.ui.modeUi = 'banner'; }}>D · Banner</button>
-          <button aria-pressed={modeVariant === 'pill'} onClick={() => { store.ui.modeUi = 'pill'; }}>Pill</button>
-        </div>
-      </div>
       <DataModeSwitch modelValue={cfg.mode} onUpdateModelValue={(v: string) => { cfg.mode = v; }} variant={modeVariant} subject={isKpi ? 'KPI' : 'chart'} />
     </>
   );
