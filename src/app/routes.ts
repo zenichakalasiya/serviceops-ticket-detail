@@ -24,6 +24,8 @@ export type Page =
   | 'software-meter' | 'projects' | 'my-approvals' | 'automatic-patch-tests' | 'automatic-patch-deployments' | 'package-deployments' | 'registry-deployments' | 'knowledge' | 'tasks' | 'reports' | 'my-team' | 'icons' | 'views-lab'
   // The Dashboard module (ported from ServiceOps_Dashboard_v2, Oct 2026): one board, and the full listing.
   | 'dashboard' | 'dashboards'
+  // The requester's Support Portal (default portal), from the profile popup.
+  | 'portal'
   | 'admin';
 
 /** The page a bare URL lands on. */
@@ -41,6 +43,7 @@ const PAGES: readonly Page[] = [
   'bom',
   'software-meter', 'projects', 'my-approvals', 'automatic-patch-tests', 'automatic-patch-deployments', 'package-deployments', 'registry-deployments', 'knowledge', 'tasks', 'reports', 'my-team', 'icons', 'views-lab',
   'dashboard', 'dashboards',
+  'portal',
   'admin',
 ];
 
@@ -160,6 +163,7 @@ const PAGE_TITLES: Record<Page, string> = {
   'views-lab': 'Views Lab',
   dashboard: 'Dashboard',
   dashboards: 'Manage Dashboards',
+  portal: 'Support Portal',
   admin: 'Admin',
 };
 

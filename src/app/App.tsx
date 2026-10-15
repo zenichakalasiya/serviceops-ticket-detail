@@ -31,6 +31,7 @@ import { VulnerabilitiesListingPage } from './components/VulnerabilitiesListingP
 import { DetectedCvesListingPage } from './components/DetectedCvesListingPage';
 import { BomInventoryListPage } from './components/BomInventoryListPage';
 import { AdminPage } from './components/AdminPage';
+import { RequesterPortalPage } from './components/RequesterPortalPage';
 import { DashboardPage } from './components/dashboard/DashboardPage';
 import { ManageDashboardsPage } from './components/dashboard/ManageDashboardsPage';
 import { DrawerStackProvider } from './components/DrawerStack';
@@ -122,6 +123,7 @@ export default function App() {
       {activePage === 'endpoints' && <EndpointsListingPage onNavigate={navigate} />}
       {activePage === 'vulnerabilities' && <VulnerabilitiesListingPage onNavigate={navigate} />}
       {activePage === 'detected-cves' && <DetectedCvesListingPage onNavigate={navigate} />}
+      {activePage === 'portal' && <RequesterPortalPage onBack={() => window.history.length > 1 ? window.history.back() : navigate('request')} />}
       {activePage === 'bom' && <BomInventoryListPage onNavigate={navigate} />}
       {activePage === 'dashboard' && <DashboardPage onNavigate={navigate} dashboardId={route.dashboard} />}
       {activePage === 'dashboards' && <ManageDashboardsPage onNavigate={navigate} />}

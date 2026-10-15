@@ -872,13 +872,17 @@ export function DashboardView({ id: idProp }: any) {
           {/* A: the AI-insights chip lives in the header, immediately left of the ⋯ menu */}
           {!loadingBoard && ap === 'A' && <AiInsightChip board={aiBoard} onAsk={onCardAsk} />}
           <DashboardMenu d={d} align="right" toolbar onPresent={() => setPresenting(true)} onSchedule={() => setShowSchedule(true)} onHistory={() => setShowHistory(true)} />
-          {/* Port: the product header has no Ask AI and no dark-mode toggle — both live here,
-              at the end of the board's own toolbar (dark mode is Dashboard-only). */}
-          <span className="vsep" />
-          <button className="askai" onClick={openAi}><Icon name="sparkles" size={15} /> Ask AI</button>
-          <button className="ic theme-ic" title={store.ui.theme === 'dark' ? 'Light mode' : 'Dark mode'} onClick={toggleTheme}>
-            <Icon name={store.ui.theme === 'dark' ? 'sun' : 'moon'} size={18} />
-          </button>
+          {/* Ask AI and the light/dark toggle were here; HIDDEN on Zeni's call (15 Oct 2026) — the
+              theme moves to the header's profile popup. Restoring is flipping this one flag. */}
+          {false && (
+            <>
+              <span className="vsep" />
+              <button className="askai" onClick={openAi}><Icon name="sparkles" size={15} /> Ask AI</button>
+              <button className="ic theme-ic" title={store.ui.theme === 'dark' ? 'Light mode' : 'Dark mode'} onClick={toggleTheme}>
+                <Icon name={store.ui.theme === 'dark' ? 'sun' : 'moon'} size={18} />
+              </button>
+            </>
+          )}
         </div>
       </header>
 

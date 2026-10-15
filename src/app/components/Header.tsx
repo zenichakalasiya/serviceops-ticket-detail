@@ -4,6 +4,7 @@ import { CURRENT_USER, CURRENT_USER_INITIALS } from './technicianRoster';
 import svgPaths from "../../imports/svg-vmnsig04gh";
 import { GlobalSearchButton } from './GlobalSearch';
 import { openGlobalShortcuts } from './shortcutContext';
+import { ProfileMenu } from './ProfileMenu';
 
 /** Exported so the Support Portal preview renders the same mark the product header does. */
 export function MotadataLogo() {
@@ -196,12 +197,8 @@ export function Header({ selectedCount, onOpenAdmin }: HeaderProps) {
           <Info size={18} strokeWidth={2} />
         </button>
         
-        <button
-          title={CURRENT_USER}
-          className="flex h-[32px] w-[32px] items-center justify-center rounded bg-[#3D8BD0] text-[11px] font-semibold text-white hover:bg-[#2d6ca0]"
-        >
-          {CURRENT_USER_INITIALS}
-        </button>
+        {/* The avatar opens the profile popup (theme on Dashboard screens, switch to Support Portal). */}
+        <ProfileMenu />
       </div>
     </header>
   );

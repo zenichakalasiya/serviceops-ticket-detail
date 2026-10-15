@@ -23,12 +23,64 @@
   -webkit-font-smoothing: antialiased;
   height: 100%;
 }
-/* Dark mode is Dashboard-only (decided with Zeni): the same blue stays the primary in dark. */
+/* Dark mode is Dashboard-only (decided with Zeni): the same blue stays the primary in dark.
+ *
+ * DARK NEUTRALS = the design system's "Color Primitives" collection, Dark mode (Figma file
+ * ZzUz2GRbzdOZjnxOc55VDq, read 15 Oct 2026). The prototype shipped a grey-violet dark palette
+ * (#14141C / #1D1D27 / #2F2F3B) that matched none of them. Each token takes the primitive its LIGHT
+ * value corresponds to, then that primitive's Dark value:
+ *   Core/White  #07101F   card / surface (light #FFFFFF)
+ *   Neutral/10  #172336   page, inset, row hover (light #F6F9FC)
+ *   Neutral/20  #1D2A3E   segment track, group head, hairline (light #ECF1F9)
+ *   Neutral/30  #2B394F   borders (light #E3E8F2)
+ *   Neutral/40  #485975   strong border (light #CAD3E2)
+ *   Neutral/50  #6A7FA0   labels, placeholder (light #8E9FBC)
+ *   Neutral/60  #7186A8   muted text (light #7186A8 — the same in both modes in the file)
+ *   Text/Heading #E3E8F2 · Text/Para #CAD3E2 · Text/Subdued #8E9FBC
+ * Light mode is untouched — it stays the product's own colours (Zeni: dark only). */
 .dash-root[data-theme='dark'] {
   --sel: #3d8bd0;
   --sel-hover: #5a9fdc;
   --sel-ink: #ffffff;
+
+  --surface: #07101f;
+  --sidebar: #07101f;
+  --bg: #172336;
+  --surface-2: #172336;
+  --picker-bg: #172336;
+  --row-hover: #172336;
+  --inset: #172336;
+  --group-bg: #172336;
+  --sidebar-hover: #172336;
+  --icon-hover: #1d2a3e;
+  --neutral-soft: #1d2a3e;
+  --seg-track: #1d2a3e;
+  --grp-head: #1d2a3e;
+  --picker-tile-fill: #1d2a3e;
+  --border-hairline: #1d2a3e;
+  --rule: #1d2a3e;
+  --border: #2b394f;
+  --border-control: #2b394f;
+  --tile-border: #2b394f;
+  --picker-tile-border: #2b394f;
+  --sidebar-border: #2b394f;
+  --border-strong: #485975;
+  --strong: #e3e8f2;
+  --ink: #cad3e2;
+  --ink-2: #8e9fbc;
+  --ink-3: #6a7fa0;
+  --muted: #7186a8;
+  --neutral: #7186a8;
+  --muted-2: #6a7fa0;
+  --placeholder: #6a7fa0;
+  --label: #6a7fa0;
+  --neutral-dot: #6a7fa0;
 }
+/* The product's pill-track has no dark state of its own; inside a dark Dashboard it takes the same
+   primitives — track Neutral/20, chosen pill Neutral/30, text Text/Para. */
+.dash-root[data-theme='dark'] .pill-track { background: #1d2a3e; }
+.dash-root[data-theme='dark'] .pill-track > button { color: #8e9fbc; }
+.dash-root[data-theme='dark'] .pill-track > button[aria-pressed='true'] { background: #2b394f; color: #e3e8f2; box-shadow: none; }
 
 /* ── Primary CTA = the product's blue button ─────────────────────────────── */
 .dash-root .btn-primary { background: #3d8bd0; border-color: #3d8bd0; color: #fff; }
