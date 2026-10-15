@@ -243,12 +243,23 @@ export function AddWidgetModal({ d, group = null, onClose, onCreated, onNewgroup
         {/* Per-tab filters: type pills and module. */}
         {tab !== 'chart' && (
           <div className="type-tabs">
-            <div className="pill-track" role="tablist">
-              {TYPE_FILTERS.map((t) => (
-                <button key={t.v} role="tab" aria-pressed={fType === t.v} aria-selected={fType === t.v} onClick={() => setFType(t.v)}>
-                  {t.label} <span className="ttab-c">{typeCounts[t.v]}</span>
-                </button>
-              ))}
+            {/* The ticket detail page's Relations filter pills (RelationsTabContent) — Zeni, 15 Oct 2026:
+                a bordered chip, light-blue when chosen, with the count in a round badge. */}
+            <div className="flex flex-wrap items-center gap-2" role="tablist">
+              {TYPE_FILTERS.map((t) => {
+                const on = fType === t.v;
+                return (
+                  <button
+                    key={t.v} role="tab" aria-selected={on} onClick={() => setFType(t.v)}
+                    className={`inline-flex items-center gap-1.5 rounded border px-2.5 py-1.5 text-[13px] font-medium transition-colors ${on ? 'border-[#3D8BD0] bg-[#EBF5FF] text-[#3D8BD0]' : 'border-[#DFE5ED] bg-white text-[#364658] hover:border-[#3D8BD0] hover:bg-[#F5F7FA]'}`}
+                  >
+                    {t.label}
+                    <span className={`inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[11px] font-semibold ${on ? 'bg-[#3D8BD0] text-white' : 'bg-[#EEF2F6] text-[#64748B]'}`}>
+                      {typeCounts[t.v]}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
             <span className="tt-sp" />
             {fType !== 'shortcut' && <div className="modsel"><Dropdown modelValue={fModule} options={moduleOptions} onUpdateModelValue={setFModule} placeholder="All modules" /></div>}
