@@ -2876,6 +2876,18 @@ reached from the sidebar's Dashboard icon. Code: `src/app/components/dashboard/`
 - Zeni's rule: CTAs, form fields, radios are the PRODUCT's — blue `.btn-primary`, `pill-track`
   (aria-pressed) for every segmented choice, `Dropdown` = the product `RuleSelect`, `ToggleSwitch` /
   `StatusToggle`, sonner toasts. Charts (ECharts), tiles, loaders and illustrations keep the prototype look.
-- Dark mode is Dashboard-only (moon/sun on the board header, `store.ui.theme` → `data-theme`).
-- Placed by the port, to confirm with Zeni: Ask AI + dark toggle on the board header (the product
-  header has neither); "Take a tour" in the board's ⋯ menu.
+- Dark mode is Dashboard-only. Its switch lives in the header's PROFILE POPUP (`ProfileMenu.tsx`,
+  mounted in `Header.tsx` in place of the old avatar button) and shows only while the hash is
+  `#/dashboard(s)`; it sets `store.ui.theme` → `data-theme`. Ask AI and the sun/moon button on the board
+  header are hidden (`{false && …}` in `DashboardView.tsx`).
+- Dark neutrals = the Figma design system's "Color Primitives" Dark values (file ZzUz2GRbzdOZjnxOc55VDq):
+  card `#07101F`, page `#172336`, borders `#2B394F`, body `#CAD3E2` — mapping table in `dashboard.css`.
+  Light mode keeps the product's own colours. `.pill-track` gets dark styles only inside `.dash-root`.
+- The widget builder's Data source is always the pill-track (no icons, no "Demo · switch UI" bar); the
+  Add-widget type filter uses the Relations-tab filter chips.
+- The profile popup also has **Switch to Support Portal** → `#/portal` (`RequesterPortalPage.tsx`: the
+  DEFAULT portal design, read-only, with a bottom-left "Switch to Technician Portal" that goes back) and
+  **Sign out** (toast only). The email is derived from the name; the roster has no emails.
+- Still to confirm with Zeni: "Take a tour" in the board's ⋯ menu; ListingFlyout keeps underline tabs;
+  prototype-only UI kept where the product has no equivalent (email chip fields, chart-type and colour
+  pickers, rich-text/note toolbars, filter checkbox lists).

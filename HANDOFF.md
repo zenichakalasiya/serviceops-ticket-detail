@@ -1,7 +1,53 @@
-# Handoff — 2026-10-13 11:48 (User Surveys session)
+# Handoff — 2026-10-16 15:53 (Upstream merge + Dashboard session)
 
-> Sessions share this file. **This top part is the newest User Surveys session**; older notes follow
-> unchanged below the divider.
+> Sessions share this file. **This top part is the newest session**; older notes follow unchanged
+> below the dividers.
+
+## Read first
+CLAUDE.md › **Upstream sync (14 Oct 2026)** and **Dashboard module** (the last two sections). Then
+`src/app/components/dashboard/PORTING.md` before touching any Dashboard file.
+
+## What we worked on this session
+Brought the upstream prototype in (its new listings and modules, our detail pages kept), ported the
+Vue Dashboard prototype into React, then added a header profile popup with the Dashboard's theme
+switch, a requester Support Portal view and a design-system dark palette.
+
+## Completed
+- Upstream merge `93b8b39` (option A: upstream listings + new modules; our 79 detail files kept, list in
+  `D:/Motadata/keep-ours.txt`; 61 upstream shared components vendored in `components/upstream/`).
+- Dashboard port `cb588b3`: boards, widgets (ECharts), builder, Manage dashboards; routes
+  `#/dashboard/<id>` and `#/dashboards`; sidebar Dashboard icon wired.
+- `3fa1441` Data source = pill-track; `7f2c7c6` Add-widget filter = Relations-tab chips.
+- `cf8b37f` Profile popup (`ProfileMenu.tsx`), theme switch on Dashboard pages only, `#/portal`
+  requester view (`RequesterPortalPage.tsx`), Figma Color Primitives dark palette. Verified headless:
+  no page errors, theme row only on dashboards, portal opens and Back returns.
+
+## In progress
+Nothing mid-flight. Everything above was on branch `sync/upstream-oct` (worktree
+`D:\Motadata\sync-upstream`) until this session's publish.
+
+## Next steps
+- Zeni to confirm: "Take a tour" in the board ⋯ menu; ListingFlyout underline tabs; "All" chip count in
+  Add widget; portal back-button placement; derived email address.
+- Decide whether prototype-only Dashboard UI (email chip fields, chart-type/colour pickers, note
+  toolbars, filter checkbox lists) should be replaced with product components.
+- Figma: Neutral/60 is identical in Light and Dark; the older "Token" collection has a second dark palette.
+- Software License → Software asset deep link is broken (already broken on `main`, not fixed).
+
+## Decisions made
+- Option A merge: new upstream pages, our detail pages unchanged (they hold months of our work).
+- Dashboard: core product only (no Iris/galleries), ECharts, dark mode Dashboard-only.
+- Product UI wins: CTAs, form fields, `.pill-track` radios are ServiceOps components inside the Dashboard.
+- Dark palette from Figma Color Primitives, dark mode only; light mode unchanged.
+
+## Gotchas & notes
+- `scripts/scope-root-fix.mjs` must be re-run after editing any Dashboard component CSS (`@scope` root bug).
+- tsc aborts early on `CatalogItemDetailsModal.tsx` syntax errors, so an empty typecheck is not "clean".
+- The worktree dev server ran on port 5201 (dev base `/`).
+
+---
+
+# Handoff — 2026-10-13 11:48 (User Surveys session)
 
 ## Read first (User Surveys)
 CLAUDE.md › Key context › *User Surveys — the Emails field is ONE search-or-add box (13 Oct 2026)*.
