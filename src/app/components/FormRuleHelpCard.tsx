@@ -263,7 +263,6 @@ export function FormRuleHelpCard({ ruleCheck, onWatch, look = 'grouped' }: {
           <span className="h-[18px] w-[3px] flex-shrink-0 rounded-full bg-[#1D2A3E]" />
           <h2 className="min-w-0 flex-1 text-[16px] font-medium text-[#1D2A3E]">Form Rules Guide</h2>
         </div>
-        <p className="mt-1 pl-[11px] text-[12.5px] text-[#64748B]">Learn how to configure rules and identify potential conflicts.</p>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-5"
