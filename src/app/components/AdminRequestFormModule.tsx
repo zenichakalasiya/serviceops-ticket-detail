@@ -11,6 +11,11 @@ import { FormRuleEditor } from './FormRuleEditor';
 import { AdminFormBuilder } from './AdminFormBuilder';
 import { conflictCount } from './formRuleEngine';
 import { AdminFormRuleMatrix } from './AdminFormRuleMatrix';
+import { FormRuleIllustrations } from './FormRuleIllustrations';
+
+/** The illustrations page lives at #/admin/request-form-rules/illustrations (Zeni, 19 Oct 2026). */
+const ILLUS_HASH = '#/admin/request-form-rules/illustrations';
+const onIllusHash = () => location.hash === ILLUS_HASH;
 
 /* Request Form Management — Admin › Request Management. One page, two inline tabs: the FORM (what
  * is on it) and its RULES (how it behaves). Both nav rows — Request Form and Request Form Rule —
@@ -115,6 +120,24 @@ export function AdminRequestFormModule({ tab, onTab, onEditor, openRuleId }: {
     setStartStep(0);
     if (/#\/admin\/request-form-rules\/./.test(location.hash)) history.replaceState(null, '', '#/admin/request-form-rules');
   };
+  /* The illustrations page. Opened from the editor it sits OVER the editor (kept mounted, so the draft
+     survives) with its own address; back returns to the editor. The address is the one source, so the
+     browser's back button closes it too. */
+  const [illus, setIllus] = useState(onIllusHash);
+  const pushedIllus = useRef(false);
+  useEffect(() => {
+    const sync = () => { setIllus(onIllusHash()); if (!onIllusHash()) pushedIllus.current = false; };
+    window.addEventListener('hashchange', sync);
+    window.addEventListener('popstate', sync);
+    return () => { window.removeEventListener('hashchange', sync); window.removeEventListener('popstate', sync); };
+  }, []);
+  const openIllus = () => { history.pushState(null, '', ILLUS_HASH); pushedIllus.current = true; setIllus(true); };
+  const closeIllus = () => {
+    if (pushedIllus.current) { history.back(); return; }
+    history.replaceState(null, '', '#/admin/request-form-rules');
+    setIllus(false);
+  };
+  const illusPage = illus ? <FormRuleIllustrations onBack={closeIllus} /> : null;
   const [pendingDelete, setPendingDelete] = useState<FormRule | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
   /** J · the field matrix is a view of the rules, not its own nav destination, so it is local state. Its tab was REMOVED (5 Oct 2026, Zeni); the view stays built — add ['matrix', 'Field Matrix'] back to the tab list to restore it. */
@@ -159,8 +182,12 @@ export function AdminRequestFormModule({ tab, onTab, onEditor, openRuleId }: {
   if (editing !== null) {
     const current = editing === 'new' ? undefined : rules.find((r) => r.id === editing);
     return (
+      <>
+      {illusPage}
+      <div style={{ display: illus ? 'none' : 'contents' }}>
       <FormRuleEditor
         key={editing}
+        onOpenIllustrations={openIllus}
         rule={current}
         rules={rules}
         onOpenRule={(id) => setEditing(id)}
@@ -178,8 +205,12 @@ export function AdminRequestFormModule({ tab, onTab, onEditor, openRuleId }: {
           closeEditor();
         }}
       />
+      </div>
+      </>
     );
   }
+
+  if (illusPage) return illusPage;
 
   return (
     <div className="px-4 py-6">

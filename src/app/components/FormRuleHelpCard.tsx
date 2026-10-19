@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { AlertTriangle, ArrowRight, ArrowUpRight, BookOpen, ChevronDown, CirclePlay, Copy, EyeOff, History, Lightbulb, ShieldAlert, Split, Undo2, Workflow } from 'lucide-react';
+import { AlertTriangle, ArrowRight, ArrowUpRight, BookOpen, ChevronDown, CirclePlay, Copy, History, Lightbulb, ShieldAlert, Split, Undo2, Workflow } from 'lucide-react';
 import { ConflictArt } from './FormRuleRelatedView';
+import { ReverseActionArt, SimilarRuleArt } from './FormRuleArt';
 
 /**
  * V3's right panel — the module's HELP CARD (Zeni's Figma "Help guide Card UI Inspiration",
@@ -85,31 +86,14 @@ const GROUPS: TopicGroup[] = [
 /* ── Example pictures: mini rule cards drawn like the builder's own rows, static (Zeni, 12 Oct 2026).
       They sit above the example sentence and never replace it. Function declarations, so GROUPS above
       can use them. ── */
-const ART_CARD = 'min-w-0 flex-1 rounded-md border border-[#E5E9F0] bg-white p-2';
-const ART_HEAD = 'text-[10px] font-semibold text-[#7B8FA5]';
 const ART_NOTE = 'mt-1.5 text-[10.5px] leading-[1.4] text-[#64748B]';
 
-/** Similar Rule: an existing rule and yours share the SAME If line; only the Then differs. */
+/** Similar Rule: an existing rule and yours share the SAME If line; only the Then differs.
+    The drawing is SVG (FormRuleArt), shared with the illustrations page; the caption stays text. */
 function SimilarArt() {
-  const rule = (name: string, then: string, yours: boolean) => (
-    <div className={ART_CARD}>
-      <div className={ART_HEAD}>{name}</div>
-      <div className="mt-1.5 flex items-center gap-1.5">
-        <span className="w-7 flex-shrink-0 text-[10px] text-[#94A3B8]">If</span>
-        <span className="min-w-0 truncate rounded border border-[#F2D58A] bg-[#FFF9E8] px-1.5 py-0.5 text-[10.5px] font-medium text-[#B45309]">Priority is High</span>
-      </div>
-      <div className="mt-1 flex items-center gap-1.5">
-        <span className="w-7 flex-shrink-0 text-[10px] text-[#94A3B8]">Then</span>
-        <span className={'min-w-0 truncate rounded border px-1.5 py-0.5 text-[10.5px] font-medium ' + (yours ? 'border-dashed border-[#94A3B8] bg-white text-[#475569]' : 'border-[#E5E9F0] bg-[#F7F9FC] text-[#475569]')}>{then}</span>
-      </div>
-    </div>
-  );
   return (
     <div aria-hidden="true">
-      <div className="flex items-stretch gap-2">
-        {rule('Existing rule', 'Mandate Impact', false)}
-        {rule('Your rule', 'Hide Category', true)}
-      </div>
+      <SimilarRuleArt />
       <div className={ART_NOTE + ' flex items-center gap-1'}>
         <span className="size-1.5 flex-shrink-0 rounded-full bg-[#D9A441]" /> Same trigger and conditions
         <ArrowRight size={11} className="mx-0.5 flex-shrink-0 text-[#94A3B8]" /> add your action to the existing rule
@@ -118,34 +102,16 @@ function SimilarArt() {
   );
 }
 
-/** Reverse Action: the same form in two states — conditions met, then no longer met. */
+/** Reverse Action: the same form in two states — conditions met, then no longer met. The captions sit
+    under each form, at the widths the SVG draws them (204 of 440 each). */
 function ReverseArt() {
-  const field = (label: string, value?: string) => (
-    <div className="mt-1 flex items-center gap-1.5">
-      <span className="w-[66px] flex-shrink-0 truncate text-[10px] text-[#64748B]">{label}</span>
-      <span className={'h-[18px] min-w-0 flex-1 truncate rounded border border-[#E5E9F0] px-1.5 text-[10.5px] leading-[16px] ' + (value ? 'bg-white font-medium text-[#1D2A3E]' : 'bg-[#F7F9FC]')}>{value}</span>
-    </div>
-  );
-  const hidden = (
-    <div className="mt-1 flex h-[18px] items-center justify-center gap-1 rounded border border-dashed border-[#CBD5E1] text-[10px] text-[#94A3B8]">
-      <EyeOff size={10} /> Hidden
-    </div>
-  );
-  const form = (dept: string, shown: boolean, note: string) => (
-    <div className="min-w-0 flex-1">
-      <div className={ART_CARD}>
-        {field('Department', dept)}
-        {shown ? field('Employee ID') : hidden}
-        {shown ? field('Joining date') : hidden}
-      </div>
-      <div className={ART_NOTE}>{note}</div>
-    </div>
-  );
   return (
-    <div className="flex items-start gap-1.5" aria-hidden="true">
-      {form('HR', true, 'Conditions met: HR fields shown')}
-      <ArrowRight size={13} className="mt-[30px] flex-shrink-0 text-[#94A3B8]" />
-      {form('Sales', false, 'No longer met: hidden again')}
+    <div aria-hidden="true">
+      <ReverseActionArt />
+      <div className="flex justify-between">
+        <div className={ART_NOTE + ' w-[46.4%]'}>Conditions met: HR fields shown</div>
+        <div className={ART_NOTE + ' w-[46.4%]'}>No longer met: hidden again</div>
+      </div>
     </div>
   );
 }

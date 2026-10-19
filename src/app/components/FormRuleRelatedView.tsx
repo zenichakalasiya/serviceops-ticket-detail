@@ -257,7 +257,7 @@ export function ConflictArt() {
   );
 }
 
-function RuleCheckArt({ conflicts, similar }: { conflicts: boolean; similar: boolean }) {
+export function RuleCheckArt({ conflicts, similar }: { conflicts: boolean; similar: boolean }) {
   const red = conflicts, amb = similar;
   return (
     <svg viewBox="0 0 320 112" className="block h-[112px] w-full" aria-hidden="true">

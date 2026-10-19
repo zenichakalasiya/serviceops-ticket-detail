@@ -170,6 +170,7 @@ The Form Rule editor's right panel (Admin › Request Management › Request For
 - **Help guide (13 Oct):** section headings are 15px with a dark icon tile, a hairline above the
   second section, and the heading sticks to the top while its section scrolls. Topic icons are bare
   (no white tile) and sit closer to their titles.
+- **19 Oct:** Illustrations page for developers — icon left of Cancel in the rule editor header → `#/admin/request-form-rules/illustrations`; 4 pictures with SVG / PNG @2x / Copy SVG. Guide pictures redrawn as real SVG (one source). Open: Conflict file background grey vs white; 12px padding on guide pictures.
 - **17 Oct:** the one-line description under the Form Rules Guide title was removed (Zeni).
 - ⚠️ The 13 Oct changes were typechecked only before publishing: the dev server was stopped (low
   memory), so they were not seen in a local browser.

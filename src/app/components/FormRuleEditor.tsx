@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, ArrowLeft, ArrowUpRight, Check, ChevronRight, ChevronsLeft, Copy, X as XIcon, ExternalLink, History, Plus, RefreshCcw, Split, Trash2, Users, Workflow, FileText } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, ArrowUpRight, Check, ChevronRight, ChevronsLeft, Copy, X as XIcon, ExternalLink, History, Images, Plus, RefreshCcw, Split, Trash2, Users, Workflow, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   ACTION_TYPES, APPLIES_OPTIONS, EVENT_OPTIONS, EXECUTION_OPTIONS, NO_VALUE, PEOPLE,
@@ -201,7 +201,9 @@ function JoinToggle({ value, onChange }: { value: 'And' | 'Or'; onChange: (v: 'A
   );
 }
 
-export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRule, startStep = 0 }: {
+export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRule, onOpenIllustrations, startStep = 0 }: {
+  /** Opens the illustrations page (the guide's and popups' pictures, for developers). */
+  onOpenIllustrations?: () => void;
   /** The step to open on — 1 lands straight on the rule builder (a rule opened from another tab). */
   startStep?: number;
   /** The rule being edited, or undefined for a new one. */
@@ -1832,6 +1834,17 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
             <div className="pill-track" title="Help guide layout">
               {HELP_LOOKS.map((l) => <button key={l.id} type="button" aria-pressed={helpLook === l.id} onClick={() => pickHelpLook(l.id)}>{l.label}</button>)}
             </div>
+          )}
+          {onOpenIllustrations && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button type="button" onClick={onOpenIllustrations} aria-label="Illustrations for developers"
+                  className="flex size-8 items-center justify-center rounded-md border border-[#DFE5ED] bg-white text-[#7B8FA5] transition-colors hover:bg-[#F9FAFB] hover:text-[#364658]">
+                  <Images size={15} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">Illustrations — download SVG / PNG</TooltipContent>
+            </Tooltip>
           )}
           <button type="button" onClick={leave} className="rounded-md border border-[#DFE5ED] bg-white px-3 py-1.5 text-[12px] font-medium text-[#7B8FA5] transition-colors hover:bg-[#F9FAFB] hover:text-[#364658]">Cancel</button>
           <button type="button" onClick={() => save()} className="rounded-md bg-[#3D8BD0] px-3 py-1.5 text-[12px] font-medium text-white transition-colors hover:bg-[#3478B5]">Save Rule</button>
