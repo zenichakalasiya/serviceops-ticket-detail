@@ -34,11 +34,12 @@ import { ApprovalDrawer } from './ApprovalDrawer';
 import { TaskDrawer } from './TaskDrawer';
 import { ProjectDrawer, projectToProblemShape } from './ProjectDrawer';
 import { mockProjects } from './ProjectsListPage';
+import { CompliancePolicyDrawer } from './CompliancePolicyDrawer';
 
 export type StackModule =
   | 'request' | 'request-v2' | 'problem' | 'change' | 'release'
   | 'hardware-assets' | 'software-assets' | 'non-it-assets' | 'consumable-assets'
-  | 'software-licenses' | 'contracts' | 'purchases' | 'cmdb' | 'patches' | 'patch-deployments' | 'endpoints' | 'vulnerabilities' | 'detected-cves' | 'package-deployments' | 'registry-deployments' | 'knowledge' | 'tasks' | 'report' | 'projects'
+  | 'software-licenses' | 'contracts' | 'purchases' | 'cmdb' | 'patches' | 'patch-deployments' | 'endpoints' | 'vulnerabilities' | 'detected-cves' | 'package-deployments' | 'registry-deployments' | 'knowledge' | 'tasks' | 'report' | 'projects' | 'compliance-policies'
   /* Not a module of its own — an approval opens the record it points at, through
      the approvals' own detail page (`ApprovalDrawer`) so it can diverge. */
   | 'approval';
@@ -233,6 +234,8 @@ export function DrawerStackProvider({ children, activePage }: { children: ReactN
       case 'patch-deployments': drawer = <PatchDeploymentDrawer openAssets={[active.data]} activeAssetId={active.id} {...shared} />; break;
       case 'package-deployments': drawer = <PackageDeploymentDrawer openAssets={[active.data]} activeAssetId={active.id} {...shared} />; break;
       case 'registry-deployments': drawer = <RegistryDeploymentDrawer openAssets={[active.data]} activeAssetId={active.id} {...shared} />; break;
+      // Compliance Policy detail page — reads the policy live from its store by id.
+      case 'compliance-policies': drawer = <CompliancePolicyDrawer activeAssetId={active.id} {...shared} />; break;
       case 'knowledge': drawer = <KnowledgeDrawer openAssets={[active.data]} activeAssetId={active.id} {...shared} />; break;
       case 'report': drawer = <ReportDrawer openAssets={[active.data]} activeAssetId={active.id} {...shared} />; break;
       // Task detail page — clone of the Patch detail page; the list adapts the task record.

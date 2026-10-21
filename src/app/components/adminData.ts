@@ -32,7 +32,7 @@ export interface AdminCard {
  * scrolls the Overview, exactly as before. Expansion is opt-in per section rather than automatic
  * for all 24, because a section only earns its own nav branch once its modules are real screens.
  */
-export const SIDEBAR_TREE: string[] = ['Request Management', 'BOM Management', 'Patch Management', 'Organization', 'Support Channels', 'User Survey'];
+export const SIDEBAR_TREE: string[] = ['Request Management', 'BOM Management', 'Patch Management', 'Organization', 'Support Channels', 'User Survey', 'Compliance Settings'];
 
 export const isTreeSection = (title: string) => SIDEBAR_TREE.includes(title);
 
@@ -52,6 +52,7 @@ export const ADMIN_NAV: { group: string; items: string[] }[] = [
   { group: 'IT Operations', items: ['CMDB', 'Discovery And Agents', 'Patch Management', 'Asset Management', 'Vulnerability Management', 'BOM Management', 'OS Deployment'] },
   { group: 'Vendor & Procurement', items: ['Supplier Management', 'Contract Management', 'Purchase Management'] },
   { group: 'Project Delivery', items: ['Project Management'] },
+  { group: 'Compliance', items: ['Compliance Settings'] },
 ];
 
 export const ADMIN_SECTIONS: AdminSection[] = [
@@ -410,6 +411,16 @@ export const ADMIN_SECTIONS: AdminSection[] = [
     { title: 'Task Form', desc: 'Customize form fields to capture task details.', icon: 'FileText', href: '/admin/form/task' },
     { title: 'Task Form Rule', desc: 'Show, hide, or require fields on task forms based on conditions.', icon: 'GitBranch', href: '/admin/form-rules/task' },
     { title: 'Task Status', desc: 'Define statuses to track the task lifecycle.', icon: 'CircleDot', href: '/admin/status?type=task' },
+    ],
+  },
+  {
+    key: 'compliance-settings',
+    title: 'Compliance Settings',
+    desc: 'Browse the predefined compliance rules and build benchmarks from them.',
+    icon: 'ShieldCheck',
+    cards: [
+    { title: 'Rules', desc: 'Browse the predefined checks every benchmark is built from.', icon: 'ListChecks', href: '/admin/compliance/rules' },
+    { title: 'Benchmark', desc: 'Group rules into named benchmarks that compliance policies assess.', icon: 'ShieldCheck', href: '/admin/compliance/benchmark' },
     ],
   },
 ];

@@ -10,6 +10,10 @@ import { AdminOsUpgradeModule } from './AdminOsUpgradeModule';
 import { AdminSupportPortalModule } from './AdminSupportPortalModule';
 import { AdminRequestFormModule } from './AdminRequestFormModule';
 import { AdminUserSurveyModule } from './AdminUserSurveyModule';
+import { AdminComplianceRulesModule } from './AdminComplianceRulesModule';
+import { AdminComplianceBenchmarkModule } from './AdminComplianceBenchmarkModule';
+import { BENCHMARKS_SEED } from './complianceData';
+import type { Benchmark } from './complianceData';
 
 /** Sections that have a real module behind them rather than only a card grid. Selecting one in
  *  the sidebar opens that module; everything else still scrolls the Overview. */
@@ -37,6 +41,8 @@ const CARD_MODULES: Record<string, string> = {
      from Organization is gone rather than left as a second door. */
   'Support Channels/Support Portal': 'Support Portal',
   'User Survey/User Surveys': 'User Surveys',
+  'Compliance Settings/Rules': 'Compliance Rules',
+  'Compliance Settings/Benchmark': 'Compliance Benchmark',
 };
 
 /* Admin hub — the settings surface. Its own shell: the product's left icon rail is replaced by a
@@ -69,6 +75,8 @@ export function AdminPage({ onNavigate, moduleSlug, onModuleChange, portalSlug, 
   const [bomScreen, setBomScreen] = useState<BomAdminScreen>('landing');
   /** The portal builder is a canvas — it takes the whole screen, so the admin shell stands down. */
   const [builderOpen, setBuilderOpen] = useState(false);
+  /* Lifted here, not in the Benchmark module: the Rules panel's Used In reads the same list. */
+  const [benchmarks, setBenchmarks] = useState<Benchmark[]>(BENCHMARKS_SEED);
 
   const toggle = (key: string) =>
     setOpenKeys((prev) => {
@@ -192,6 +200,14 @@ export function AdminPage({ onNavigate, moduleSlug, onModuleChange, portalSlug, 
           ) : module === 'User Surveys' ? (
             <div className="min-h-0 flex-1 overflow-y-auto bg-white">
               <AdminUserSurveyModule />
+            </div>
+          ) : module === 'Compliance Rules' ? (
+            <div className="min-h-0 flex-1 overflow-y-auto bg-white">
+              <AdminComplianceRulesModule benchmarks={benchmarks} />
+            </div>
+          ) : module === 'Compliance Benchmark' ? (
+            <div className="min-h-0 flex-1 overflow-y-auto bg-white">
+              <AdminComplianceBenchmarkModule key={activeCard ?? ''} benchmarks={benchmarks} onChange={setBenchmarks} onEditor={setBuilderOpen} />
             </div>
           ) : module === 'Support Portal' ? (
             <div className="min-h-0 flex-1 overflow-y-auto bg-white">

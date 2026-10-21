@@ -19,6 +19,8 @@ import { AutomaticPatchTestsListingPage } from './components/AutomaticPatchTests
 import { AutomaticPatchDeploymentsListingPage } from './components/AutomaticPatchDeploymentsListingPage';
 import { PackageDeploymentsListingPage } from './components/PackageDeploymentsListingPage';
 import { RegistryDeploymentsListingPage } from './components/RegistryDeploymentsListingPage';
+import { CompliancePoliciesListingPage } from './components/CompliancePoliciesListingPage';
+import { CompliancePolicyEditorHost } from './components/CompliancePolicyEditor';
 import { KnowledgeListingPage } from './components/KnowledgeListingPage';
 import { TasksListingPage } from './components/TasksListingPage';
 import { ReportsListingPage } from './components/ReportsListingPage';
@@ -115,6 +117,7 @@ export default function App() {
       {activePage === 'automatic-patch-deployments' && <AutomaticPatchDeploymentsListingPage onNavigate={navigate} />}
       {activePage === 'package-deployments' && <PackageDeploymentsListingPage onNavigate={navigate} />}
       {activePage === 'registry-deployments' && <RegistryDeploymentsListingPage onNavigate={navigate} />}
+      {activePage === 'compliance-policies' && <CompliancePoliciesListingPage onNavigate={navigate} />}
       {activePage === 'knowledge' && <KnowledgeListingPage onNavigate={navigate} />}
       {activePage === 'tasks' && <TasksListingPage onNavigate={navigate} />}
       {activePage === 'reports' && <ReportsListingPage onNavigate={navigate} />}
@@ -140,6 +143,8 @@ export default function App() {
       {/* Mounted once, inside the drawer host, so search works on every page and can open any
           module's real detail drawer as a tab. */}
       <GlobalSearch activePage={activePage} onNavigate={navigate} />
+      {/* The Compliance Policy form — one full-screen page, opened from the listing or a policy's detail drawer. */}
+      <CompliancePolicyEditorHost />
       {/* ONE Keyboard shortcuts panel for the whole product — header icon, `?`, and the builder's rail. */}
       <GlobalShortcutsPanel page={activePage} />
       <GlobalHelpGuide />

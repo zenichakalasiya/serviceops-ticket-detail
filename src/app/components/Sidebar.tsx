@@ -17,7 +17,7 @@ import {
   IconMyTeam,
   IconBom,
 } from './SidebarIcons';
-import { Shapes, LayoutTemplate, Cpu, AppWindow, Boxes, Recycle, KeyRound, Gauge, FileText, ShoppingCart, Rocket, Monitor, ClipboardCheck, Settings } from 'lucide-react';
+import { Shapes, ShieldCheck, LayoutTemplate, Cpu, AppWindow, Boxes, Recycle, KeyRound, Gauge, FileText, ShoppingCart, Rocket, Monitor, ClipboardCheck, Settings } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
 
 // Asset sub-modules surfaced in the hover flyout (grouped with dividers).
@@ -294,6 +294,8 @@ export function Sidebar({ activePage, onNavigate }: SidebarProps) {
         />
         <PatchNavItem activePage={activePage} onNavigate={onNavigate} />
         <PackageNavItem activePage={activePage} onNavigate={onNavigate} />
+        {/* Compliance Policy — sits directly below Package: one benchmark bound to endpoints. */}
+        <NavItem icon={<ShieldCheck size={20} />} title="Compliance Policy" active={activePage === 'compliance-policies'} onClick={() => onNavigate?.('compliance-policies')} />
         <NavItem icon={<IconProject size={20} />} title="Project" active={activePage === 'projects'} onClick={() => onNavigate?.('projects')} />
         <NavItem icon={<IconKnowledge size={20} />} title="Knowledge" active={activePage === 'knowledge'} onClick={() => onNavigate('knowledge')} />
         <NavItem icon={<IconReport size={20} />} title="Report" active={activePage === 'reports'} onClick={() => onNavigate?.('reports')} />

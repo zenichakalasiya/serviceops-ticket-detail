@@ -2892,3 +2892,41 @@ reached from the sidebar's Dashboard icon. Code: `src/app/components/dashboard/`
 - Still to confirm with Zeni: "Take a tour" in the board's ⋯ menu; ListingFlyout keeps underline tabs;
   prototype-only UI kept where the product has no equivalent (email chip fields, chart-type and colour
   pickers, rich-text/note toolbars, filter checkbox lists).
+
+## Compliance (Oct 2026)
+Three records: **Rule → Benchmark → Compliance Policy**. Rules and Benchmark are ADMIN submodules
+(Admin › Compliance nav group); Compliance Policy is a TECHNICIAN module (sidebar, directly below
+Package). Field content comes from the ObserveOps prototype in
+`C:\Users\Zeni Chakalasiya\Downloads\compliance-settings (2)\compliance-settings` (it runs on port
+5175 with `npm run dev`; nothing is fixed to 5176). Zeni's standing rule: reuse product components,
+and ask before building any new one.
+- **Data:** `complianceData.ts` (rules, the 13 seed benchmarks `BENCHMARKS_SEED`, `osVersionOf`, `benchmarkTree`,
+  `groupRuleIds`). A benchmark targets ONE Type + ONE OS version (`osVersion`, e.g. "Debian Linux 11"); only that
+  version's rules can be attached. `RuleGroup.children` = sub-groups, ONE level deep.
+- **Rules** (`AdminComplianceRulesModule`, `#/admin/compliance-rules`): read-only catalogue; search + `TicketFilterBar`.
+- **Benchmark** (`AdminComplianceBenchmarkModule`, `#/admin/compliance-benchmarks`): listing → full-screen
+  ticket-style detail drawer → full-page form. Rule groups are numbered in THREE levels: group `1`, its own rules
+  `1.1, 1.2`, a sub-group takes the next number (`1.3`) and its rules `1.3.1`. Default (CIS) benchmarks show
+  sections as groups and subsections as sub-groups. Attach Rules and Add Sub-group are bordered SECONDARY CTAs;
+  an empty group shows `EmptyRulesArt` (OS badge → rule cards). The Attach picker shows two LOCKED chips
+  (Type is …, Version is …). Shared bits: `ComplianceShared.tsx` (`SeverityPill`, `TagCell`, `RuleDetailPanel`,
+  `matchRules`). `PickerDrawer` (from `CreatePatchDeployment`) has a select-all header and a `filterBar` slot.
+- **Compliance Policy** (`#/compliance-policies`): one policy = ONE benchmark + endpoints + metadata
+  (tags, Config File Type for Router/Switch/Firewall only, schedule, notify team).
+  - `compliancePolicyData.ts` — types, the endpoint fleet (real Endpoints-module machines whose OS matches a
+    benchmark + hand-written servers/network devices `EP-5xx`), deterministic scan results, schedule wording,
+    and the LIVE store (`usePolicies`, `policyStore.save/remove/toggle/setSchedule/run`, `openPolicyEditor`).
+    ⚠️ Store state sits on `globalThis.__compliancePolicyStore` — Vite HMR can serve the module twice and two
+    copies made Create stop opening the form. ⚠️ The fleet and seed are built LAZILY (import cycle via DrawerStack).
+  - `CompliancePoliciesListingPage` — the shared `AssetRegisterPage` grid (`moduleCols 'compliance-policy'`,
+    `viewsStore 'compliance'`, filters/views in `complianceFilterAttrs.ts`). Row actions Run Now · Schedule ·
+    Edit · ⋮ Clone/Delete (added in `TicketTable`, `RowAction 'run'`); the Enable switch reaches the store
+    through the new `onUpdateRow` prop on `AssetRegisterPage`.
+  - `CompliancePolicyEditor` — the full-screen Create/Edit/Clone form, mounted ONCE in `App`
+    (`CompliancePolicyEditorHost`). Sections have a name + one-liner only (no icon, no divider, 40px apart).
+    A new policy starts on the first benchmark. In Endpoint mode endpoints are ADDED from the side panel; the
+    "Endpoints to assess" box shows `EmptyEndpointsArt` + "Add Endpoints" until then.
+  - `CompliancePolicyDrawer` — detail page in the shared `DrawerStack` (module `compliance-policies`):
+    Overview · Endpoints · Rules, Policy Properties panel. The results visualisations (static drill-down,
+    any-to-any) are a LATER tab.
+  - Admin benchmarks are NOT shared with the technician side yet — the policy form reads `BENCHMARKS_SEED`.

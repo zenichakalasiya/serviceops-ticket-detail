@@ -21,7 +21,7 @@ export type Page =
   | 'vulnerabilities' | 'detected-cves'
   | 'bom'
   // Brought in from the upstream prototype (Oct 2026 sync).
-  | 'software-meter' | 'projects' | 'my-approvals' | 'automatic-patch-tests' | 'automatic-patch-deployments' | 'package-deployments' | 'registry-deployments' | 'knowledge' | 'tasks' | 'reports' | 'my-team' | 'icons' | 'views-lab'
+  | 'software-meter' | 'projects' | 'my-approvals' | 'automatic-patch-tests' | 'automatic-patch-deployments' | 'package-deployments' | 'registry-deployments' | 'compliance-policies' | 'knowledge' | 'tasks' | 'reports' | 'my-team' | 'icons' | 'views-lab'
   // The Dashboard module (ported from ServiceOps_Dashboard_v2, Oct 2026): one board, and the full listing.
   | 'dashboard' | 'dashboards'
   // The requester's Support Portal (default portal), from the profile popup.
@@ -41,7 +41,7 @@ const PAGES: readonly Page[] = [
   'patches', 'patch-deployments', 'endpoints',
   'vulnerabilities', 'detected-cves',
   'bom',
-  'software-meter', 'projects', 'my-approvals', 'automatic-patch-tests', 'automatic-patch-deployments', 'package-deployments', 'registry-deployments', 'knowledge', 'tasks', 'reports', 'my-team', 'icons', 'views-lab',
+  'software-meter', 'projects', 'my-approvals', 'automatic-patch-tests', 'automatic-patch-deployments', 'package-deployments', 'registry-deployments', 'compliance-policies', 'knowledge', 'tasks', 'reports', 'my-team', 'icons', 'views-lab',
   'dashboard', 'dashboards',
   'portal',
   'admin',
@@ -64,6 +64,8 @@ export const ADMIN_ROUTES: readonly AdminRoute[] = [
   { slug: 'os-upgrade', section: 'Patch Management', card: 'OS Upgrade' },
   { slug: 'support-portal', section: 'Support Channels', card: 'Support Portal' },
   { slug: 'user-surveys', section: 'User Survey', card: 'User Surveys' },
+  { slug: 'compliance-rules', section: 'Compliance Settings', card: 'Rules' },
+  { slug: 'compliance-benchmarks', section: 'Compliance Settings', card: 'Benchmark' },
   { slug: 'bom-management', section: 'BOM Management' },
   { slug: 'bom-licensing', section: 'BOM Management', card: 'BOM Licensing' },
   { slug: 'bom-scheduler', section: 'BOM Management', card: 'BOM Scheduler' },
@@ -155,6 +157,7 @@ const PAGE_TITLES: Record<Page, string> = {
   'automatic-patch-deployments': 'Automatic Patch Deployments',
   'package-deployments': 'Package Deployments',
   'registry-deployments': 'Registry Deployments',
+  'compliance-policies': 'Compliance Policies',
   'knowledge': 'Knowledge',
   'tasks': 'Tasks',
   'reports': 'Reports',

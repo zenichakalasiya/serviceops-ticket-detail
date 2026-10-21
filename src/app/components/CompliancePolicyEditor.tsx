@@ -1,0 +1,465 @@
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
+import { ArrowLeft, CalendarClock, Plus, X } from 'lucide-react';
+import { ErrorText, FieldLabel, RuleSelect, TagEditor, inputCls as formInputCls } from './FormRuleControls';
+import type { SelectOption } from './FormRuleControls';
+import { PickerDrawer } from './CreatePatchDeployment';
+import type { PickerColumn } from './CreatePatchDeployment';
+import { TagCell } from './ComplianceShared';
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
+import { BENCHMARKS_SEED, benchmarkRuleIds } from './complianceData';
+import { TECH_GROUPS, TECHNICIANS } from './technicianRoster';
+import {
+  benchmarkOf, deviceTagsOf, endpointsForBenchmark, fmtStamp, getPolicy, needsConfigType, nextRun, officesOf, openPolicyEditor,
+  policyStore, resolvedEndpoints, scheduleLabel, usePolicyEditor, WEEKDAYS,
+} from './compliancePolicyData';
+import type { ComplianceEndpoint, CompliancePolicy, ConfigFileType, DeviceAxis, Frequency, PolicySchedule } from './compliancePolicyData';
+
+/* Compliance Policy — the full-screen Create / Edit / Clone form.
+ *
+ * Mounted ONCE by App (CompliancePolicyEditorHost), opened through `openPolicyEditor`, so the
+ * listing's Create, a row's Edit / Clone and the detail drawer's Edit all land on the same page.
+ * The product header stays; the page sits over the module the way the Form Rule editor does.
+ *
+ * Content follows the ObserveOps compliance-settings prototype — Policy Name, Description, Tags,
+ * Benchmark Filter by Tags, Benchmark, Device Filter + Select, Config File Type (network
+ * benchmarks only), Schedule, Notify Team — laid out in the product's sections. One policy
+ * assesses ONE benchmark; the endpoint pool is that benchmark's Type + OS version only. */
+
+const inputCls = formInputCls.replace('rounded-md', 'rounded');
+const AXES: { value: DeviceAxis; label: string }[] = [
+  { value: 'endpoint', label: 'Endpoint' },
+  { value: 'office', label: 'Remote Office' },
+  { value: 'tag', label: 'Tag' },
+];
+const FREQS: { value: Frequency; label: string }[] = [
+  { value: 'none', label: 'None' },
+  { value: 'once', label: 'Once' },
+  { value: 'daily', label: 'Daily' },
+  { value: 'weekly', label: 'Weekly' },
+  { value: 'monthly', label: 'Monthly' },
+];
+const NOTIFY_OPTIONS: SelectOption[] = [
+  ...TECH_GROUPS.map((g) => ({ value: g, label: g, group: 'Technician groups' })),
+  ...TECHNICIANS.map((t) => ({ value: t.name, label: t.name, group: 'Technicians', avatar: { initials: t.initials, color: '#3D8BD0' } })),
+];
+
+/** The product's segmented control — a pill on a track, the chosen option lifted out in white. */
+function Pills<T extends string>({ value, options, onChange, disabled }: { value: T; options: { value: T; label: string }[]; onChange: (v: T) => void; disabled?: boolean }) {
+  return (
+    <div className={`pill-track ${disabled ? 'pointer-events-none opacity-50' : ''}`}>
+      {options.map((o) => (
+        <button key={o.value} type="button" aria-pressed={value === o.value} onClick={() => onChange(o.value)}>{o.label}</button>
+      ))}
+    </div>
+  );
+}
+
+/** A section of the form: its name and one line, then its fields. No icon and no divider —
+ *  the gap between sections (space-y-10 on the column) is what separates them. */
+function Section({ title, sub, children }: { title: string; sub: string; children: React.ReactNode }) {
+  return (
+    <section>
+      <div className="mb-4">
+        <h2 className="text-[15px] font-semibold text-[#364658]">{title}</h2>
+        <p className="mt-0.5 text-[12px] text-[#7B8FA5]">{sub}</p>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+/** "No endpoints yet": a monitor with an empty, dashed screen and a magnifier that found
+ *  nothing — the policy has nothing to assess until endpoints are added. */
+function EmptyEndpointsArt() {
+  return (
+    <svg width="148" height="104" viewBox="0 0 148 104" fill="none" aria-hidden="true" focusable="false">
+      <ellipse cx="74" cy="56" rx="64" ry="42" fill="#F3F7FC" />
+      <rect x="22" y="22" width="52" height="36" rx="4" fill="#F8FAFC" stroke="#E2E8F0" strokeWidth="1.25" />
+      <path d="M40 64 H56 M48 58 V64" stroke="#E2E8F0" strokeWidth="1.5" strokeLinecap="round" />
+      <rect x="44" y="30" width="62" height="44" rx="5" fill="#FFFFFF" stroke="#CBD5E1" strokeWidth="1.25" />
+      <rect x="50" y="36" width="50" height="30" rx="2.5" fill="#F8FAFC" stroke="#CBD5E1" strokeWidth="1" strokeDasharray="3 2.5" />
+      <path d="M66 81 H84 M75 74 V81" stroke="#CBD5E1" strokeWidth="1.75" strokeLinecap="round" />
+      <rect x="56" y="44" width="20" height="2.4" rx="1.2" fill="#E2E8F0" />
+      <rect x="56" y="50" width="30" height="2.4" rx="1.2" fill="#EEF2F6" />
+      <circle cx="108" cy="62" r="13" fill="#FFFFFF" stroke="#3D8BD0" strokeWidth="2.25" />
+      <path d="M117.5 71.5 L126 80" stroke="#3D8BD0" strokeWidth="3" strokeLinecap="round" />
+      <path d="M103.5 57.5 L112.5 66.5 M112.5 57.5 L103.5 66.5" stroke="#9DC3E8" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/* ── Schedule — shared by the form and the row's Schedule shortcut ───────────────────── */
+
+export function ScheduleFields({ value, onChange }: { value: PolicySchedule; onChange: (s: PolicySchedule) => void }) {
+  const f = value.frequency;
+  const set = (patch: Partial<PolicySchedule>) => onChange({ ...value, ...patch });
+  const next = nextRun(value);
+  return (
+    <div>
+      <FieldLabel>Frequency</FieldLabel>
+      <Pills
+        value={f}
+        options={FREQS}
+        onChange={(v) => onChange(v === 'none' ? { frequency: 'none' } : {
+          frequency: v,
+          startDate: value.startDate ?? new Date().toISOString().slice(0, 10),
+          time: value.time ?? '02:00',
+          weekday: value.weekday ?? 0,
+          monthday: value.monthday ?? 1,
+        })}
+      />
+      {f !== 'none' && (
+        <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-4">
+          <div>
+            <FieldLabel required>{f === 'once' ? 'Run On' : 'Start Date'}</FieldLabel>
+            <input type="date" value={value.startDate ?? ''} onChange={(e) => set({ startDate: e.target.value })} className={inputCls} />
+          </div>
+          <div>
+            <FieldLabel required>Time</FieldLabel>
+            <input type="time" value={value.time ?? ''} onChange={(e) => set({ time: e.target.value })} className={inputCls} />
+          </div>
+          {f === 'weekly' && (
+            <div>
+              <FieldLabel required>Day of Week</FieldLabel>
+              <RuleSelect className="!rounded" value={[String(value.weekday ?? 0)]} options={WEEKDAYS.map((d, i) => ({ value: String(i), label: d }))} onChange={(v) => set({ weekday: Number(v[0]) })} />
+            </div>
+          )}
+          {f === 'monthly' && (
+            <div>
+              <FieldLabel required>Day of Month</FieldLabel>
+              <RuleSelect className="!rounded" value={[String(value.monthday ?? 1)]} options={Array.from({ length: 28 }, (_, i) => ({ value: String(i + 1), label: String(i + 1) }))} onChange={(v) => set({ monthday: Number(v[0]) })} />
+            </div>
+          )}
+        </div>
+      )}
+      <p className="mt-3 flex items-center gap-1.5 text-[12px] text-[#64748B]">
+        <CalendarClock size={13} className="text-[#7B8FA5]" />
+        {f === 'none' ? 'Runs only when someone presses Run Now.' : <>{scheduleLabel(value)} · next scan <span className="font-medium text-[#364658]">{next ? fmtStamp(next) : '—'}</span></>}
+      </p>
+    </div>
+  );
+}
+
+/** The row's Schedule shortcut — the same fields, in a right side panel. */
+export function PolicyScheduleDrawer({ policyId, onClose }: { policyId: string; onClose: () => void }) {
+  const p = getPolicy(policyId);
+  const [draft, setDraft] = useState<PolicySchedule>(p?.schedule ?? { frequency: 'none' });
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+  if (!p) return null;
+  const incomplete = draft.frequency !== 'none' && (!draft.startDate || !draft.time);
+  return (
+    <div className="fixed inset-0 z-[10000] flex justify-end bg-black/40" onMouseDown={onClose}>
+      <div className="flex h-full w-[520px] max-w-[95vw] flex-col bg-white shadow-xl" onMouseDown={(e) => e.stopPropagation()}>
+        <div className="flex items-start justify-between gap-3 border-b border-[#e5e7eb] px-5 py-4">
+          <div className="min-w-0">
+            <h3 className="text-[16px] font-semibold text-[#364658]">Schedule</h3>
+            <p className="mt-0.5 truncate text-[12px] text-[#7B8FA5]">{p.name}</p>
+          </div>
+          <button type="button" onClick={onClose} className="flex size-8 flex-shrink-0 items-center justify-center rounded text-[#7B8FA5] transition-colors hover:bg-[#F3F4F6] hover:text-[#364658]"><X size={18} /></button>
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5"><ScheduleFields value={draft} onChange={setDraft} /></div>
+        <div className="flex justify-end gap-2 border-t border-[#e5e7eb] px-5 py-3">
+          <button type="button" onClick={onClose} className="h-8 rounded border border-[#DFE5ED] bg-white px-4 text-[13px] font-medium text-[#364658] hover:bg-[#F9FAFB]">Cancel</button>
+          <button
+            type="button"
+            disabled={incomplete}
+            onClick={() => { policyStore.setSchedule(p.id, draft); toast.success(`Schedule updated — ${scheduleLabel(draft)}`); onClose(); }}
+            className="h-8 rounded bg-[#3D8BD0] px-4 text-[13px] font-medium text-white hover:bg-[#3478B5] disabled:cursor-not-allowed disabled:opacity-50"
+          >Save Schedule</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── The form ────────────────────────────────────────────────────────────────────────── */
+
+type Draft = Omit<CompliancePolicy, 'id' | 'createdAt' | 'updatedAt' | 'lastScan' | 'createdBy' | 'scanning'>;
+/** A new policy starts on the first benchmark, so endpoints can be added straight away. */
+const blank = (): Draft => ({
+  name: '', description: '', tags: [], benchmarkId: BENCHMARKS_SEED[0]?.id ?? '', configType: null, axis: 'endpoint',
+  endpointIds: [], offices: [], deviceTags: [], schedule: { frequency: 'none' }, notify: [], enabled: true,
+});
+
+/** Mount once (App). Renders the form whenever something opens it. */
+export function CompliancePolicyEditorHost() {
+  const ed = usePolicyEditor();
+  if (!ed) return null;
+  return <CompliancePolicyForm key={ed.mode + ('id' in ed ? ed.id : '')} mode={ed.mode} sourceId={'id' in ed ? ed.id : undefined} onClose={() => openPolicyEditor(null)} />;
+}
+
+function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'edit' | 'clone'; sourceId?: string; onClose: () => void }) {
+  const source = sourceId ? getPolicy(sourceId) : undefined;
+  const [d, setD] = useState<Draft>(() => {
+    if (!source) return blank();
+    const { id, createdAt, updatedAt, lastScan, createdBy, scanning, ...rest } = source;
+    return { ...rest, name: mode === 'clone' ? `Copy of ${source.name}` : source.name };
+  });
+  const set = (patch: Partial<Draft>) => setD((x) => ({ ...x, ...patch }));
+  const [benchTagFilter, setBenchTagFilter] = useState<string[]>([]);
+  const [picking, setPicking] = useState(false);
+  const [tried, setTried] = useState(false);
+
+  const benchmark = benchmarkOf(d.benchmarkId);
+  const showConfig = needsConfigType(benchmark);
+  const pool = useMemo(() => endpointsForBenchmark(benchmark), [benchmark]);
+  const resolved = useMemo(() => resolvedEndpoints(d), [d]);
+
+  const benchTagOptions = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const b of BENCHMARKS_SEED) for (const t of b.tags) counts.set(t, (counts.get(t) ?? 0) + 1);
+    return [...counts].sort((a, b) => a[0].localeCompare(b[0])).map(([t, n]) => ({ value: t, label: `${t} (${n})` }));
+  }, []);
+  const benchOptions = useMemo(() => BENCHMARKS_SEED
+    .filter((b) => !benchTagFilter.length || benchTagFilter.every((t) => b.tags.includes(t)))
+    .map((b) => ({ value: b.id, label: b.name, hint: `${b.osVersion} · ${b.origin}` })), [benchTagFilter]);
+
+  const officeOptions = officesOf(pool).map((o) => ({ value: o, label: `${o} (${pool.filter((e) => e.office === o).length})` }));
+  const tagOptions = deviceTagsOf(pool).map((t) => ({ value: t, label: `${t} (${pool.filter((e) => e.tags.includes(t)).length})` }));
+
+  const scheduleIncomplete = d.schedule.frequency !== 'none' && (!d.schedule.startDate || !d.schedule.time);
+  const reason =
+    !d.name.trim() ? 'The policy needs a name'
+      : !d.benchmarkId ? 'Choose the benchmark it assesses'
+        : showConfig && !d.configType ? 'Choose a Config File Type'
+          : resolved.length === 0 ? 'Choose at least one endpoint to assess'
+            : scheduleIncomplete ? 'Complete the schedule — a start date and a time'
+              : '';
+
+  const changeBenchmark = (id: string) => {
+    if (id === d.benchmarkId) return;
+    const had = d.endpointIds.length + d.offices.length + d.deviceTags.length;
+    if (had) toast('The endpoint selection was cleared — the new benchmark is written for a different set of endpoints');
+    const b = benchmarkOf(id);
+    set({ benchmarkId: id, endpointIds: [], offices: [], deviceTags: [], configType: needsConfigType(b) ? (d.configType ?? 'running') : null });
+  };
+
+  const save = () => {
+    setTried(true);
+    if (reason) return;
+    const id = policyStore.save({ ...d, name: d.name.trim(), description: d.description.trim(), configType: showConfig ? d.configType : null, id: mode === 'edit' ? sourceId : undefined });
+    toast.success(mode === 'edit'
+      ? `“${d.name.trim()}” updated`
+      : `“${d.name.trim()}” created — it assesses ${resolved.length} endpoint${resolved.length === 1 ? '' : 's'} against ${benchmark!.name}`);
+    onClose();
+    return id;
+  };
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); save(); }
+      if (e.key === 'Escape' && !picking && !document.querySelector('[data-rule-menu]')) onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  });
+
+  const title = mode === 'edit' ? 'Edit Compliance Policy' : mode === 'clone' ? 'Clone Compliance Policy' : 'Create Compliance Policy';
+  const pickReason = !benchmark ? 'Choose a benchmark first — only endpoints it is written for can be assessed' : pool.length === 0 ? `No endpoint runs ${benchmark.osVersion} yet` : undefined;
+
+  const columns: PickerColumn<ComplianceEndpoint>[] = [
+    {
+      header: 'Host Name', cell: (e) => (
+        <span className="flex items-center gap-2">
+          <span className={`size-2 flex-shrink-0 rounded-full ${e.agentOnline ? 'bg-[#22C55E]' : 'bg-[#F59E0B]'}`} title={e.agentOnline ? 'Agent online' : 'Agent offline'} />
+          <span className="flex-shrink-0 whitespace-nowrap rounded bg-[#e8f4fd] px-1.5 py-0.5 text-[11px] font-medium text-[#3D8BD0]">{e.id}</span>
+          <span className="whitespace-nowrap text-[13px] font-medium">{e.hostName}</span>
+        </span>
+      ),
+    },
+    { header: 'IP Address', cell: (e) => <span className="tabular-nums">{e.ip}</span> },
+    { header: 'Operating System', cell: (e) => <span className="whitespace-nowrap">{e.osName}</span> },
+    { header: 'Remote Office', cell: (e) => <span className="whitespace-nowrap">{e.office}</span> },
+    { header: 'Tags', cell: (e) => <TagCell tags={e.tags} /> },
+  ];
+
+  return (
+    <div className="fixed inset-x-0 bottom-0 top-[56px] z-[9000] flex flex-col bg-white">
+      <div className="flex flex-shrink-0 items-center gap-2 border-b border-[#DFE5ED] px-4 py-3">
+        <button type="button" onClick={onClose} title="Back" className="-ml-1.5 flex size-[30px] flex-shrink-0 items-center justify-center rounded text-[#7B8FA5] transition-colors hover:bg-[#EEF2F6] hover:text-[#364658]">
+          <ArrowLeft size={16} />
+        </button>
+        <h1 className="truncate text-[16px] font-medium text-[#364658]">{title}</h1>
+        <div className="ml-auto flex flex-shrink-0 items-center gap-2.5">
+          {tried && reason && <span className="text-[12px] text-[#F25C4E]">{reason}</span>}
+          <button type="button" onClick={onClose} className="rounded border border-[#DFE5ED] bg-white px-3 py-1.5 text-[12px] font-medium text-[#7B8FA5] transition-colors hover:bg-[#F9FAFB] hover:text-[#364658]">Cancel</button>
+          <button type="button" onClick={save} className="rounded bg-[#3D8BD0] px-3 py-1.5 text-[12px] font-medium text-white transition-colors hover:bg-[#3478B5]">{mode === 'edit' ? 'Update Policy' : 'Create Policy'}</button>
+        </div>
+      </div>
+
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="mx-auto max-w-[1100px] space-y-10 px-4 py-6">
+          <Section title="Policy Details" sub="What the policy is called and how people will find it.">
+            <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+              <div>
+                <FieldLabel required>Policy Name</FieldLabel>
+                <input autoFocus value={d.name} onChange={(e) => set({ name: e.target.value })} placeholder="Must be unique" className={`${inputCls} ${tried && !d.name.trim() ? '!border-[#F25C4E]' : ''}`} />
+                <ErrorText>{tried && !d.name.trim() ? 'Enter a name' : ''}</ErrorText>
+              </div>
+              <div>
+                <FieldLabel>Tags</FieldLabel>
+                <div className="pt-1"><TagEditor tags={d.tags} onChange={(t) => set({ tags: t })} /></div>
+              </div>
+              <div className="col-span-2">
+                <FieldLabel>Description</FieldLabel>
+                <textarea value={d.description} onChange={(e) => set({ description: e.target.value })} placeholder="Write a description" rows={2} className={`${inputCls} !h-auto resize-y py-2 leading-[18px]`} />
+              </div>
+            </div>
+          </Section>
+
+          <Section title="Benchmark" sub="A policy assesses ONE benchmark. Its Type and OS version decide which endpoints can be chosen.">
+            <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+              <div>
+                <FieldLabel>Benchmark Filter by Tags</FieldLabel>
+                <RuleSelect className="!rounded" multi value={benchTagFilter} options={benchTagOptions} onChange={setBenchTagFilter} placeholder="All benchmarks" />
+              </div>
+              <div>
+                <FieldLabel required>Benchmark</FieldLabel>
+                <RuleSelect className="!rounded" value={d.benchmarkId ? [d.benchmarkId] : []} options={benchOptions} onChange={(v) => v[0] && changeBenchmark(v[0])} invalid={tried && !d.benchmarkId} placeholder={benchOptions.length ? 'Select' : 'No benchmark carries these tags'} />
+                <ErrorText>{tried && !d.benchmarkId ? 'Choose a benchmark' : ''}</ErrorText>
+              </div>
+            </div>
+            {benchmark && (
+              <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 rounded-lg bg-[#F9FAFB] px-4 py-3 text-[12px]">
+                {[
+                  ['Type', benchmark.type],
+                  ['Version', benchmark.osVersion],
+                  ['Origin', benchmark.origin],
+                  ['Rules', String(benchmarkRuleIds(benchmark).length)],
+                  ['Endpoints running it', String(pool.length)],
+                ].map(([k, v]) => (
+                  <span key={k} className="inline-flex items-center gap-1.5"><span className="text-[#7B8FA5]">{k}</span><span className="font-medium text-[#364658]">{v}</span></span>
+                ))}
+              </div>
+            )}
+            {showConfig && (
+              <div className="mt-4">
+                <FieldLabel required>Config File Type</FieldLabel>
+                <Pills value={(d.configType ?? 'running') as ConfigFileType} options={[{ value: 'startup', label: 'Startup' }, { value: 'running', label: 'Running' }]} onChange={(v) => set({ configType: v })} />
+                <p className="mt-1.5 text-[12px] text-[#7B8FA5]">Startup checks the configuration the device boots with; Running checks what it is running now.</p>
+              </div>
+            )}
+          </Section>
+
+          <Section title="Endpoints" sub="Which endpoints the policy assesses — pick them one by one, or by remote office or tag so new machines join on their own.">
+            <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+              <div>
+                <FieldLabel required>Device Filter</FieldLabel>
+                <Pills value={d.axis} options={AXES} onChange={(v) => set({ axis: v, endpointIds: [], offices: [], deviceTags: [] })} />
+              </div>
+              {/* Picked one by one, endpoints are ADDED from the side panel (the container below);
+                  by office or tag, the choice is a dropdown here. */}
+              {d.axis !== 'endpoint' && (
+              <div>
+                <FieldLabel required>{d.axis === 'office' ? 'Select Remote Offices' : 'Select Tags'}</FieldLabel>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      {(
+                        <RuleSelect
+                          className="!rounded"
+                          multi
+                          disabled={!!pickReason}
+                          value={d.axis === 'office' ? d.offices : d.deviceTags}
+                          options={d.axis === 'office' ? officeOptions : tagOptions}
+                          onChange={(v) => set(d.axis === 'office' ? { offices: v } : { deviceTags: v })}
+                          invalid={tried && resolved.length === 0}
+                        />
+                      )}
+                    </div>
+                  </TooltipTrigger>
+                  {pickReason && <TooltipContent className="text-wrap max-w-[260px]">{pickReason}</TooltipContent>}
+                </Tooltip>
+                <ErrorText>{tried && benchmark && resolved.length === 0 ? 'Choose at least one endpoint' : ''}</ErrorText>
+              </div>
+              )}
+            </div>
+
+            {/* What will actually be assessed, whichever axis chose it. */}
+            <div className={`mt-4 rounded-lg border ${tried && resolved.length === 0 ? 'border-[#F25C4E]' : 'border-[#E5E7EB]'}`}>
+              <div className="flex min-h-[48px] items-center gap-3 border-b border-[#EEF1F4] bg-[#F6F9FC] px-4 py-2">
+                <span className="text-[13px] font-semibold text-[#364658]">Endpoints to assess <span className="ml-1 rounded-sm bg-[#EEF2F6] px-1.5 py-0.5 text-[11px] font-medium text-[#64748B]">{resolved.length}</span></span>
+                {resolved.some((e) => !e.agentOnline) && (
+                  <span className="text-[12px] text-[#B45309]">{resolved.filter((e) => !e.agentOnline).length} offline — skipped until their agent reports in</span>
+                )}
+                {/* Once some are added, the CTA moves up here so more can be added. */}
+                {d.axis === 'endpoint' && resolved.length > 0 && (
+                  <button type="button" onClick={() => setPicking(true)} className="ml-auto inline-flex h-8 items-center gap-1.5 rounded border border-[#DFE5ED] bg-white px-3 text-[13px] font-medium text-[#364658] transition-colors hover:bg-[#F5F7FA]"><Plus size={14} /> Add Endpoints</button>
+                )}
+              </div>
+              {resolved.length === 0 ? (
+                <div className="flex flex-col items-center px-4 pb-7 pt-5 text-center">
+                  <EmptyEndpointsArt />
+                  <p className="mt-3 max-w-[600px] text-[13px] leading-[1.55] text-[#64748B]">
+                    {pickReason
+                      ? pickReason
+                      : d.axis === 'endpoint'
+                        ? <>No endpoints added yet — add the <span className="font-medium text-[#364658]">{benchmark!.osVersion}</span> endpoints this policy should assess.</>
+                        : `No endpoints match yet — choose the ${d.axis === 'office' ? 'remote offices' : 'tags'} above.`}
+                  </p>
+                  {d.axis === 'endpoint' && (
+                    <button
+                      type="button"
+                      disabled={!!pickReason}
+                      onClick={() => setPicking(true)}
+                      className="mt-4 inline-flex h-8 items-center gap-1.5 rounded bg-[#3D8BD0] px-3.5 text-[13px] font-medium text-white transition-colors hover:bg-[#3478B5] disabled:cursor-not-allowed disabled:opacity-50"
+                    ><Plus size={14} /> Add Endpoints</button>
+                  )}
+                </div>
+              ) : (
+                <table className="w-full table-fixed">
+                  <colgroup><col className="w-[34%]" /><col className="w-[16%]" /><col className="w-[28%]" /><col />{d.axis === 'endpoint' && <col className="w-[56px]" />}</colgroup>
+                  <thead><tr className="border-b border-[#EEF1F4]">{['Host Name', 'IP Address', 'Operating System', 'Remote Office', ...(d.axis === 'endpoint' ? [''] : [])].map((h, i) => <th key={i} className="px-4 py-2 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>)}</tr></thead>
+                  <tbody className="divide-y divide-[#EEF1F4]">
+                    {resolved.slice(0, 8).map((e) => (
+                      <tr key={e.id} className="group/row">
+                        <td className="px-4 py-2.5"><span className="flex min-w-0 items-center gap-2"><span className={`size-2 flex-shrink-0 rounded-full ${e.agentOnline ? 'bg-[#22C55E]' : 'bg-[#F59E0B]'}`} /><span className="truncate text-[13px] text-[#364658]">{e.hostName}</span></span></td>
+                        <td className="px-4 py-2.5 text-[13px] tabular-nums text-[#64748B]">{e.ip}</td>
+                        <td className="px-4 py-2.5"><span className="block truncate text-[13px] text-[#64748B]">{e.osName}</span></td>
+                        <td className="px-4 py-2.5"><span className="block truncate text-[13px] text-[#64748B]">{e.office}</span></td>
+                        {d.axis === 'endpoint' && (
+                          <td className="px-2 py-1.5 text-right">
+                            <button type="button" title="Remove" onClick={() => set({ endpointIds: d.endpointIds.filter((x) => x !== e.id) })} className="inline-flex size-7 items-center justify-center rounded text-[#7B8FA5] opacity-0 transition-opacity hover:bg-[#EEF2F6] hover:text-[#364658] focus:opacity-100 group-hover/row:opacity-100"><X size={15} /></button>
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+              {resolved.length > 8 && <p className="border-t border-[#EEF1F4] px-4 py-2 text-[12px] text-[#7B8FA5]">and {resolved.length - 8} more</p>}
+            </div>
+          </Section>
+
+          <Section title="Schedule & Notifications" sub="When the policy scans on its own, and who hears about the result.">
+            <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+              <ScheduleFields value={d.schedule} onChange={(s) => set({ schedule: s })} />
+              <div>
+                <FieldLabel>Notify Team</FieldLabel>
+                <RuleSelect className="!rounded" multi value={d.notify} options={NOTIFY_OPTIONS} onChange={(v) => set({ notify: v })} placeholder="Technicians or groups" />
+                <p className="mt-1.5 text-[12px] text-[#7B8FA5]">Told when a scan finishes and when an endpoint turns non-compliant.</p>
+              </div>
+            </div>
+          </Section>
+        </div>
+      </div>
+
+      <PickerDrawer<ComplianceEndpoint>
+        isOpen={picking}
+        title="Select Endpoints"
+        subtitle={benchmark ? `Endpoints running ${benchmark.osVersion}` : ''}
+        rows={pool}
+        columns={columns}
+        selected={d.endpointIds}
+        searchOf={(e) => [e.id, e.hostName, e.ip, e.osName, e.office, ...e.tags].join(' ')}
+        onClose={() => setPicking(false)}
+        onApply={(ids) => { set({ endpointIds: ids }); setPicking(false); }}
+      />
+    </div>
+  );
+}

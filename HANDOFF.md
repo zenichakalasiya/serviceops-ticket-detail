@@ -1,3 +1,52 @@
+# Handoff — 2026-10-21 11:28 (Compliance session)
+
+> Sessions share this file. **This top part is the newest session**; older notes follow unchanged
+> below the dividers.
+
+## Read first
+CLAUDE.md › **Compliance (Oct 2026)** (the last section). It covers all three pieces and the two
+store gotchas.
+
+## What we worked on this session
+Built the Compliance area: Admin › Compliance › Rules and Benchmark, then the technician-side
+Compliance Policy module (listing, full-screen form, detail drawer).
+
+## Completed
+- Admin Rules listing (read-only) and Benchmark listing, detail drawer and full-page form.
+- Benchmark rule groups: 3-level numbering (1 / 1.1 / 1.1.1) with sub-groups, bordered Attach Rules +
+  Add Sub-group CTAs, new empty-group picture, locked Type/Version chips in the Attach picker.
+- Compliance Policy: sidebar item below Package, `#/compliance-policies` listing on the shared grid
+  (KPI cards, saved views, Run Now / Schedule / Edit / Clone / Delete / Enable), full-screen form,
+  detail drawer (Overview · Endpoints · Rules).
+- Form polish per Zeni: no section icons/dividers, benchmark pre-selected, endpoints added from the side
+  panel with an empty-state picture + Add Endpoints CTA.
+- All verified headless in Chrome with no page errors.
+
+## In progress
+Nothing mid-flight.
+
+## Next steps
+- Zeni to answer: (1) which benchmark a new policy should default to (currently the first, BM-1);
+  (2) should Remote Office / Tag modes also pick from a side panel instead of a dropdown?
+- Share benchmarks between Admin and the technician side (one store) so a newly created benchmark appears
+  in the policy form.
+- Results tab on the policy detail page with the two visualisations: static drill-down and any-to-any.
+
+## Decisions made
+- Policy targets = Endpoints, chosen by Endpoint / Remote Office / Tag, filtered to the benchmark's Type +
+  OS version (Zeni).
+- Metadata on the form = Tags, Config File Type (network only), Schedule, Notify Team (Zeni).
+- Row click opens a detail drawer like other modules, not a read-only form (Zeni).
+- Listing hides Schedule / Next Scan by default so Actions fit at 1440px.
+
+## Gotchas & notes
+- The policy store lives on `globalThis` because Vite HMR can load the module twice.
+- `compliancePolicyData.ts` builds its fleet lazily — it sits in an import cycle with DrawerStack.
+- Scan results and the extra servers/network devices are mock data (deterministic).
+- Dev server runs detached on port 5200 (its own window); never stop it.
+
+---
+
 # Handoff — 2026-10-16 15:53 (Upstream merge + Dashboard session)
 
 > Sessions share this file. **This top part is the newest session**; older notes follow unchanged

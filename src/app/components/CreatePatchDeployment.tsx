@@ -53,13 +53,13 @@ function EmptyRow({ colSpan, text }: { colSpan: number; text: string }) {
   );
 }
 
-interface PickerColumn<T> {
+export interface PickerColumn<T> {
   header: string;
   cell: (row: T) => React.ReactNode;
 }
 
 /** One picker for every "Add …" on this form — patches, OS upgrade patches, offices, endpoints. */
-function PickerDrawer<T extends { id: string }>({ isOpen, title, subtitle, rows, columns, selected, searchOf, onClose, onApply, single = false }: {
+export function PickerDrawer<T extends { id: string }>({ isOpen, title, subtitle, rows, columns, selected, searchOf, onClose, onApply, single = false, filterBar }: {
   isOpen: boolean;
   title: string;
   subtitle: string;
@@ -71,6 +71,8 @@ function PickerDrawer<T extends { id: string }>({ isOpen, title, subtitle, rows,
   onApply: (ids: string[]) => void;
   /** Radio behaviour — picking replaces rather than adds. A run installs ONE OS upgrade patch. */
   single?: boolean;
+  /** Optional filters beside the search — the caller filters `rows` itself (e.g. the listing filter bar). */
+  filterBar?: React.ReactNode;
 }) {
   const [picked, setPicked] = useState<string[]>(selected);
   const [q, setQ] = useState('');
@@ -97,18 +99,39 @@ function PickerDrawer<T extends { id: string }>({ isOpen, title, subtitle, rows,
           <button onClick={onClose} className="flex size-8 flex-shrink-0 items-center justify-center rounded text-[#7B8FA5] transition-colors hover:bg-[#F3F4F6] hover:text-[#364658]"><X size={18} /></button>
         </div>
 
-        <div className="border-b border-[#F0F2F5] px-5 py-3">
-          <div className="relative">
+        <div className="flex flex-wrap items-center gap-2 border-b border-[#F0F2F5] px-5 py-3">
+          <div className={`relative ${filterBar ? 'w-[280px]' : 'w-full'}`}>
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9ca3af]" size={15} />
             <input type="text" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search" className={`${inputCls} pl-9`} />
           </div>
+          {filterBar}
         </div>
 
         <div className="min-h-0 flex-1 overflow-auto">
           <table className="w-full">
             <thead className="border-b border-[#e5e7eb]">
               <tr>
-                <th className="w-[40px] px-4 py-2.5" />
+                <th className="w-[40px] px-4 py-2.5 text-left">
+                  {/* Select all acts on the VISIBLE rows, so it follows the search; a partial pick shows the dash. */}
+                  {!single && visible.length > 0 && (() => {
+                    const on = visible.filter((r) => picked.includes(r.id)).length;
+                    const all = on === visible.length;
+                    return (
+                      <input
+                        type="checkbox"
+                        aria-label="Select all"
+                        title={all ? 'Unselect all' : 'Select all'}
+                        checked={all}
+                        ref={(el) => { if (el) el.indeterminate = on > 0 && !all; }}
+                        onChange={() => {
+                          const ids = visible.map((r) => r.id);
+                          setPicked((p) => (all ? p.filter((x) => !ids.includes(x)) : [...p, ...ids.filter((x) => !p.includes(x))]));
+                        }}
+                        className="h-3.5 w-3.5 cursor-pointer rounded border-[#d1d5db] text-[#3D8BD0] focus:ring-[#3D8BD0] focus:ring-offset-0"
+                      />
+                    );
+                  })()}
+                </th>
                 {columns.map((c) => <th key={c.header} className={thCls}>{c.header}</th>)}
               </tr>
             </thead>

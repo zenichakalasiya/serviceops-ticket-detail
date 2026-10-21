@@ -99,6 +99,7 @@ export function AssetRegisterPage({
   hideSelection = false,
   hideColumnMenu = false,
   onRowAction,
+  onUpdateRow,
   onOpenRow,
   showViews = true,
   rail,
@@ -177,6 +178,9 @@ export function AssetRegisterPage({
   hideColumnMenu?: boolean;
   /** Handles the grid's per-row controls (the Reports Action column). */
   onRowAction?: React.ComponentProps<typeof TicketTable>['onRowAction'];
+  /** Hears every inline cell edit (the Enable switch), for a module whose record lives outside
+      this page — the edit still lands in the working copy first. */
+  onUpdateRow?: (id: string, patch: Partial<Ticket>) => void;
   /** Takes over what a row CLICK opens. Registers open their record's detail drawer through
       the shared stack; a module whose rows are not records with a detail page (My Team's
       people) handles the click itself and shows its own panel. */
@@ -209,8 +213,10 @@ export function AssetRegisterPage({
      register, which took the rail's expanded branches down with it.) */
   const [tickets, setTickets] = useState<Ticket[]>(rows);
   useEffect(() => { setTickets(rows); }, [rows]);
-  const updateTicket = (id: string, patch: Partial<Ticket>) =>
+  const updateTicket = (id: string, patch: Partial<Ticket>) => {
     setTickets((ts) => ts.map((t) => (t.id === id ? { ...t, ...patch } : t)));
+    onUpdateRow?.(id, patch);
+  };
   const [selectedTickets, setSelectedTickets] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
   const [isGrouped, setIsGrouped] = useState(false);

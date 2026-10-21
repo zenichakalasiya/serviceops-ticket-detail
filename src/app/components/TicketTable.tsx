@@ -1,6 +1,6 @@
 import { Fragment, cloneElement, isValidElement, useEffect, useLayoutEffect, useRef, useState, type ReactElement } from 'react';
 import { createPortal } from 'react-dom';
-import { CalendarClock, Copy, History, MoreVertical, SquarePen, GitMerge, TriangleAlert, Armchair, ArrowDown, ArrowLeftRight, ArrowLeftToLine, ArrowRightToLine, ArrowUp, ArrowUpDown, Check, ChevronDown, CircleCheck, CornerUpLeft, AirVent, BatteryFull, Cable, Camera, Database, FileText, Headphones, Keyboard, MemoryStick, Mouse, Plug, Printer, SprayCan, Trash2, Usb, Lightbulb, MonitorCog, Smartphone, Server, AppWindow, Lock, ChevronLeft, ChevronRight, ExternalLink, EyeOff, Filter, Flag, RotateCw, GripVertical, Inbox, Layers, ListChecks, MessageSquare, Package, Pencil, Pin, Plus, Search, SearchX, ThumbsDown, ThumbsUp, UserCheck, X } from 'lucide-react';
+import { CalendarClock, Copy, History, Loader2, Play, MoreVertical, SquarePen, GitMerge, TriangleAlert, Armchair, ArrowDown, ArrowLeftRight, ArrowLeftToLine, ArrowRightToLine, ArrowUp, ArrowUpDown, Check, ChevronDown, CircleCheck, CornerUpLeft, AirVent, BatteryFull, Cable, Camera, Database, FileText, Headphones, Keyboard, MemoryStick, Mouse, Plug, Printer, SprayCan, Trash2, Usb, Lightbulb, MonitorCog, Smartphone, Server, AppWindow, Lock, ChevronLeft, ChevronRight, ExternalLink, EyeOff, Filter, Flag, RotateCw, GripVertical, Inbox, Layers, ListChecks, MessageSquare, Package, Pencil, Pin, Plus, Search, SearchX, ThumbsDown, ThumbsUp, UserCheck, X } from 'lucide-react';
 import { IconAssetUpdate } from './SidebarIcons';
 import { toast } from 'sonner';
 import { AiSparkle } from './AiSparkle';
@@ -20,6 +20,7 @@ import { TEAM_FILTER_ATTRS, TEAM_STATUS_OPTIONS } from './teamFilterAttrs';
 import { PROJECT_FILTER_ATTRS, PROJECT_STATUS_OPTIONS } from './projectFilterAttrs';
 import { DEPLOY_STATUS_OPTIONS, PATCH_DEPLOY_FILTER_ATTRS, PATCH_FILTER_ATTRS } from './patchFilterAttrs';
 import { PACKAGE_DEPLOY_FILTER_ATTRS, REGISTRY_DEPLOY_FILTER_ATTRS } from './packageFilterAttrs';
+import { POLICY_FILTER_ATTRS, POLICY_STATUS_OPTIONS } from './complianceFilterAttrs';
 import { APT_FILTER_ATTRS } from './automaticPatchTests';
 import { fmtGridDate, fmtGridDateTime } from './dateFormat';
 import {
@@ -541,6 +542,8 @@ const MODULE_STATUS_OPTS: Partial<Record<string, CellOption[]>> = {
   'patch-deployment': DEPLOY_STATUS_OPTIONS,
   'package-deployment': DEPLOY_STATUS_OPTIONS,
   'registry-deployment': DEPLOY_STATUS_OPTIONS,
+  /* A compliance policy's result of its last scan — the system sets it, nobody picks it. */
+  'compliance-policy': POLICY_STATUS_OPTIONS,
   /* A CVE carries NVD's own workflow state, not a lifecycle. */
   cve: CVE_STATUS_OPTIONS,
   /* The product's full software lifecycle — the same nine states its own Status
@@ -719,7 +722,9 @@ export type RowAction =
   /* My Team's Action column: mark a member away, or bring them back. */
   | 'out-of-office'
   /* The Vulnerability modules' Impacted Endpoints count: list the machines behind it. */
-  | 'impacted-endpoints';
+  | 'impacted-endpoints'
+  /* Compliance Policy: scan now. */
+  | 'run';
 
 export const MONEY_COLS = new Set(['x_cost', 'x_totalCost', 'x_invoiceAmount', 'x_paymentAmount']);
 /** "500,000.00 INR" → "500,000.00" — the unit lives in the header. */
@@ -1624,7 +1629,7 @@ interface TicketTableProps {
       'asset' renders the Hardware Assets columns (Asset Type · Status · Host Name ·
       IP · Used By · Managed By Group · Managed By · Serial). Each module gets its
       own storage key, so request column prefs stay intact. */
-  moduleCols?: 'change' | 'release' | 'asset' | 'software' | 'meter' | 'cmdb' | 'knowledge' | 'report' | 'task' | 'team' | 'project' | 'vuln' | 'cve' | 'endpoint' | 'patch' | 'patch-deployment' | 'package-deployment' | 'registry-deployment' | 'apt' | 'apd' | 'nonit' | 'consumable' | 'license' | 'contract' | 'purchase' | 'approval';
+  moduleCols?: 'change' | 'release' | 'asset' | 'software' | 'meter' | 'cmdb' | 'knowledge' | 'report' | 'task' | 'team' | 'project' | 'vuln' | 'cve' | 'endpoint' | 'patch' | 'patch-deployment' | 'package-deployment' | 'registry-deployment' | 'compliance-policy' | 'apt' | 'apd' | 'nonit' | 'consumable' | 'license' | 'contract' | 'purchase' | 'approval';
   /** Per-row actions — the Approvals grid's decisions, and the Reports grid's Action
       column. The module decides what each one does. */
   onRowAction?: (ticket: Ticket, action: RowAction) => void;
@@ -2031,6 +2036,21 @@ export function TicketTable({
         { key: 'x_installAfter', label: 'Install After', w: 180 },
         { key: 'x_expiry', label: 'Expiry Date', w: 180 },
     ],
+    /* Compliance Policies — one benchmark bound to endpoints. The row answers: what does it
+       assess, against how many machines, how did the last scan go, and when does it run next. */
+    'compliance-policy': [
+        { key: 'id', label: 'ID', w: 96 },
+        { key: 'subject', label: 'Policy Name', flex: true, w: 200, maxW: 320 },
+        { key: 'x_benchmark', label: 'Benchmark', flex: true, w: 200, maxW: 320 },
+        { key: 'x_endpoints', label: 'Endpoints', w: 100, align: 'center' },
+        { key: 'status', label: 'Status', w: 150 },
+        { key: 'x_cpScore', label: 'Compliance', w: 140 },
+        { key: 'x_lastExecution', label: 'Last Scan', w: 180 },
+        /* Schedule and Next Scan are a Manage-columns click away — the row's Schedule action and the
+           detail header carry them, and with them on screen the Actions column fell off the right edge. */
+        { key: 'x_enabled', label: 'Enable', w: 90 },
+        { key: 'actions', label: 'Actions', w: 140 },
+    ],
     /* Automatic Patch Tests — the module's own columns. The three counts can be unknown on a
        schedule nobody has built out, so they go through NULLABLE_COUNT_COLS and print a dash
        rather than a 0 that would claim "no tests". */
@@ -2248,7 +2268,7 @@ export function TicketTable({
       ];
   /* Asset grids offer their own attributes as optional columns; every other module keeps
      the request extras. */
-  const MODULE_ATTRS = moduleCols === 'asset' ? HARDWARE_FILTER_ATTRS : moduleCols === 'software' ? SOFTWARE_FILTER_ATTRS : moduleCols === 'nonit' ? NONIT_FILTER_ATTRS : moduleCols === 'consumable' ? CONSUMABLE_FILTER_ATTRS : moduleCols === 'license' ? LICENSE_FILTER_ATTRS : moduleCols === 'contract' ? CONTRACT_FILTER_ATTRS : moduleCols === 'purchase' ? PURCHASE_FILTER_ATTRS : moduleCols === 'meter' ? METER_FILTER_ATTRS : moduleCols === 'cmdb' ? CMDB_FILTER_ATTRS : moduleCols === 'knowledge' ? KNOWLEDGE_FILTER_ATTRS : moduleCols === 'report' ? REPORT_FILTER_ATTRS : moduleCols === 'task' ? TASK_FILTER_ATTRS : moduleCols === 'team' ? TEAM_FILTER_ATTRS : moduleCols === 'project' ? PROJECT_FILTER_ATTRS : moduleCols === 'vuln' ? VULN_FILTER_ATTRS : moduleCols === 'cve' ? CVE_FILTER_ATTRS : moduleCols === 'endpoint' ? ENDPOINT_FILTER_ATTRS : moduleCols === 'patch' ? PATCH_FILTER_ATTRS : moduleCols === 'patch-deployment' ? PATCH_DEPLOY_FILTER_ATTRS : moduleCols === 'package-deployment' ? PACKAGE_DEPLOY_FILTER_ATTRS : moduleCols === 'registry-deployment' ? REGISTRY_DEPLOY_FILTER_ATTRS : moduleCols === 'apt' ? APT_FILTER_ATTRS : null;
+  const MODULE_ATTRS = moduleCols === 'asset' ? HARDWARE_FILTER_ATTRS : moduleCols === 'software' ? SOFTWARE_FILTER_ATTRS : moduleCols === 'nonit' ? NONIT_FILTER_ATTRS : moduleCols === 'consumable' ? CONSUMABLE_FILTER_ATTRS : moduleCols === 'license' ? LICENSE_FILTER_ATTRS : moduleCols === 'contract' ? CONTRACT_FILTER_ATTRS : moduleCols === 'purchase' ? PURCHASE_FILTER_ATTRS : moduleCols === 'meter' ? METER_FILTER_ATTRS : moduleCols === 'cmdb' ? CMDB_FILTER_ATTRS : moduleCols === 'knowledge' ? KNOWLEDGE_FILTER_ATTRS : moduleCols === 'report' ? REPORT_FILTER_ATTRS : moduleCols === 'task' ? TASK_FILTER_ATTRS : moduleCols === 'team' ? TEAM_FILTER_ATTRS : moduleCols === 'project' ? PROJECT_FILTER_ATTRS : moduleCols === 'vuln' ? VULN_FILTER_ATTRS : moduleCols === 'cve' ? CVE_FILTER_ATTRS : moduleCols === 'endpoint' ? ENDPOINT_FILTER_ATTRS : moduleCols === 'patch' ? PATCH_FILTER_ATTRS : moduleCols === 'patch-deployment' ? PATCH_DEPLOY_FILTER_ATTRS : moduleCols === 'package-deployment' ? PACKAGE_DEPLOY_FILTER_ATTRS : moduleCols === 'registry-deployment' ? REGISTRY_DEPLOY_FILTER_ATTRS : moduleCols === 'compliance-policy' ? POLICY_FILTER_ATTRS : moduleCols === 'apt' ? APT_FILTER_ATTRS : null;
   /* Managed By Group's menu, where the module's catalogue names its own teams. */
   const moduleGroupOptions: CellOption[] | null =
     MODULE_ATTRS?.find((a) => a.key === 'managedByGroup')?.options?.map((o) => ({ label: o.label })) ?? null;
@@ -2616,6 +2636,28 @@ export function TicketTable({
               take colour under the pointer, so a column of them reads as quiet furniture
               rather than competing with the report names. */}
           <span className="flex items-center gap-0.5">
+            {/* A compliance policy's row runs it, reschedules it, edits it; Clone and Delete sit behind the ⋮. */}
+            {moduleCols === 'compliance-policy' && (() => {
+              const busy = (ticket as any).x_scanning === true;
+              const off = (ticket as any).x_enabled !== 'Enabled';
+              return (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex">
+                      <button
+                        disabled={busy || off}
+                        onClick={(e) => { e.stopPropagation(); onRowAction?.(ticket, 'run'); }}
+                        className="flex size-7 items-center justify-center rounded text-[#7B8FA5] transition-colors hover:bg-[#EEF2F6] hover:text-[#3D8BD0] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+                      >
+                        {busy ? <Loader2 size={15} className="animate-spin text-[#3D8BD0]" /> : <Play size={15} />}
+                      </button>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>{busy ? 'Scanning…' : off ? 'Enable the policy to run it' : 'Run Now'}</TooltipContent>
+                </Tooltip>
+              );
+            })()}
+            {moduleCols === 'compliance-policy' && act('Schedule', <CalendarClock size={15} />, 'schedule')}
             {act('Edit', <SquarePen size={15} />, 'edit')}
             {/* A task has exactly two things you do to it from a list, so both sit inline —
                 Delete reads red under the pointer rather than hiding behind a menu nobody
@@ -2650,7 +2692,7 @@ export function TicketTable({
                 they belong to rather than excluded module by module — the exclusion list had
                 already leaked them onto a new grid once. */}
             {moduleCols === 'report' && act('Schedule', <CalendarClock size={15} />, 'schedule')}
-            {moduleCols === 'report' && (
+            {(moduleCols === 'report' || moduleCols === 'compliance-policy') && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
@@ -2790,6 +2832,26 @@ export function TicketTable({
     }
     /* How far a project has run, as a bar and a figure. The bar is what makes a portfolio
        readable at a glance — a column of bare percentages has to be read row by row. */
+    /* A compliance policy's score — checks passed of checks run on its last scan. Coloured by
+       how far from clean it is; a policy never scanned has no score, not a zero. */
+    if (key === 'x_cpScore') {
+      const raw = (ticket as any).x_cpScore;
+      if (raw === null || raw === undefined) {
+        return <td className="px-4 py-3 whitespace-nowrap"><span className="text-[12px] text-[#B6C0CC]">—</span></td>;
+      }
+      const pct = Math.max(0, Math.min(100, Number(raw)));
+      const color = pct >= 90 ? '#22C55E' : pct >= 70 ? '#F59E0B' : '#DC2626';
+      return (
+        <td className="overflow-hidden px-4 py-3 whitespace-nowrap">
+          <span className="flex items-center gap-2">
+            <span className="h-1.5 w-full max-w-[88px] flex-shrink overflow-hidden rounded-full bg-[#EEF2F6]">
+              <span className="block h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: color }} />
+            </span>
+            <span className="flex-shrink-0 text-[12px] font-medium tabular-nums text-[#364658]">{pct}%</span>
+          </span>
+        </td>
+      );
+    }
     if (key === 'x_completion') {
       const pct = Math.max(0, Math.min(100, Number((ticket as any).x_completion ?? 0)));
       const done = pct >= 100;
@@ -4633,10 +4695,12 @@ export function TicketTable({
             onMouseDown={(e) => e.stopPropagation()}
             className="app-menu fixed z-[9999] w-[190px] rounded-lg border border-[#DFE5ED] bg-white py-1 shadow-xl"
           >
-            {([
-              ['Duplicate', <Copy size={15} />, 'duplicate'],
-              ['View History', <History size={15} />, 'history'],
-            ] as [string, ReactElement, RowAction][]).map(([label, icon, action]) => (
+            {(((rowMenu.ticket as any).x_cpPolicy
+              ? [['Clone', <Copy size={15} />, 'duplicate']]
+              : [
+                ['Duplicate', <Copy size={15} />, 'duplicate'],
+                ['View History', <History size={15} />, 'history'],
+              ]) as [string, ReactElement, RowAction][]).map(([label, icon, action]) => (
               <button
                 key={label}
                 onClick={() => { onRowAction?.(rowMenu.ticket, action); setRowMenu(null); }}

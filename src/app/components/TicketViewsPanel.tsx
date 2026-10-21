@@ -4,6 +4,7 @@ import { ChevronDown, ChevronRight, CopyPlus, Home, LayoutList, Lock, MoreVertic
 import { toast } from 'sonner';
 import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
 import type { FilterRule } from './TicketFilterBar';
+import { POLICY_VIEWS } from './complianceFilterAttrs';
 
 /* ─── Request listing views ──────────────────────────────────────────────────
    The Dashboards sidebar pattern brought to the listing: a DOCKED left rail
@@ -340,7 +341,7 @@ const ownedByMe = (v: TicketView) => !!v.custom && (v.owner ?? CURRENT_USER) ===
    and the default view never leak between the Request and Change listings. */
 export type ViewStore =
   | 'ticket' | 'change' | 'release' | 'problem' | 'hwasset'
-  | 'swasset' | 'meter' | 'cmdb' | 'knowledge' | 'report' | 'task' | 'team' | 'project' | 'vuln' | 'cve' | 'endpoint' | 'patch' | 'patchdeploy' | 'pkgdeploy' | 'regdeploy' | 'apt' | 'apd' | 'nonit' | 'consumable' | 'license' | 'contract' | 'purchase' | 'approval';
+  | 'swasset' | 'meter' | 'cmdb' | 'knowledge' | 'report' | 'task' | 'team' | 'project' | 'vuln' | 'cve' | 'endpoint' | 'patch' | 'patchdeploy' | 'pkgdeploy' | 'regdeploy' | 'apt' | 'apd' | 'nonit' | 'consumable' | 'license' | 'contract' | 'purchase' | 'approval' | 'compliance';
 const MODULE_BUILTINS: Partial<Record<ViewStore, TicketView[]>> = {
   swasset: SWASSET_VIEWS,
   meter: METER_VIEWS,
@@ -364,6 +365,7 @@ const MODULE_BUILTINS: Partial<Record<ViewStore, TicketView[]>> = {
   regdeploy: REGISTRY_DEPLOY_VIEWS,
   apt: APT_VIEWS,
   apd: APD_VIEWS,
+  compliance: POLICY_VIEWS,
 };
 const builtinsFor = (store: ViewStore) =>
   MODULE_BUILTINS[store] ??
