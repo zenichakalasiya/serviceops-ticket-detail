@@ -142,10 +142,10 @@ function EditMenu({ onDetails, onCustomize }: { onDetails: () => void; onCustomi
   );
 }
 
-function PortalCard({ p, url, href, isDefault, on, onToggle, onCustomize, onEditDetails, onPreview, onSettings, onCopy, onMakeDefault, onDelete }: {
+function PortalCard({ p, url, href, isDefault, on, onToggle, onCustomize, onEditDetails, onPreview, onSettings, onCopy, onDelete }: {
   p: PortalPage; url: string; href: string; isDefault: boolean; on: boolean;
   onToggle: () => void; onCustomize: () => void; onEditDetails: () => void; onPreview: () => void;
-  onSettings: () => void; onCopy: () => void; onMakeDefault: () => void; onDelete: () => void;
+  onSettings: () => void; onCopy: () => void; onDelete: () => void;
 }) {
   const icon = 'flex size-8 items-center justify-center rounded border border-[#DFE5ED] bg-white text-[#64748B] transition-colors hover:border-[#C3CBD6] hover:text-[#3D8BD0] disabled:cursor-not-allowed disabled:text-[#D7DDE5] disabled:hover:border-[#DFE5ED]';
   const published = p.status === 'Published';
@@ -189,8 +189,7 @@ function PortalCard({ p, url, href, isDefault, on, onToggle, onCustomize, onEdit
             <button onClick={onPreview} title="Preview" aria-label="Preview" className={icon}><Eye size={14} /></button>
             <button onClick={onSettings} title="Settings" aria-label="Settings" className={icon}><Settings size={14} /></button>
             <button onClick={onCopy} title="Copy" aria-label="Copy" className={icon}><Copy size={14} /></button>
-            {/* ⚠️ No "Set as default" star (Zeni, 7 Oct 2026): the status switch already publishes a portal
-                and makes it the default, so the star was a second door to the same room. */}
+            {/* ⚠️ No "Set as default" (Zeni, 22 Oct 2026): the default portal never changes. */}
             <button
               onClick={onDelete}
               disabled={isDefault}
@@ -203,7 +202,7 @@ function PortalCard({ p, url, href, isDefault, on, onToggle, onCustomize, onEdit
               role="switch"
               aria-checked={on}
               /* ⚠️ The switch IS the status (27 Sep 2026): on = Published and live, off = Draft. */
-              title={on ? 'Live — switch off to unpublish (it moves to Draft)' : 'Not live — switch on to publish it and make it the default'}
+              title={on ? 'Live — switch off to unpublish (it moves to Draft)' : 'Not live — switch on to publish it'}
               onClick={onToggle}
               className={`relative inline-flex h-[18px] w-[34px] flex-shrink-0 items-center rounded-full transition-colors ${on ? 'bg-[#3D8BD0]' : 'bg-[#CBD5E1]'}`}
             >
@@ -351,39 +350,6 @@ function ConfirmDelete({ page, onCancel, onConfirm }: { page: PortalPage; onCanc
   );
 }
 
-/* ── Publishing a portal that is not the default ─────────────────────────────
- *
- * ⚠️ ONE portal is live at a time, and it is the default. Two published portals means two answers to
- * "where does a requester land", which is the conflict this dialog exists to prevent: publishing any
- * portal other than the default makes it the default AND moves whichever portal was live back to
- * Draft. That is a change to what every requester sees, so it is ASKED, never done quietly — and it
- * names the portal that will be taken down, because that is the part an admin would not expect. */
-function ConfirmPublish({ page, live, onCancel, onConfirm }: { page: PortalPage; live: PortalPage[]; onCancel: () => void; onConfirm: () => void }) {
-  const names = live.map((p) => `“${p.name}”`).join(', ');
-  return (
-    <div className="fixed inset-0 z-[10001] flex items-center justify-center bg-black/40 p-6">
-      <div className="w-[460px] max-w-full rounded-lg bg-white shadow-2xl">
-        <div className="flex items-start justify-between gap-4 px-5 pb-2 pt-4">
-          <h2 className="text-[16px] font-semibold text-[#364658]">Publish “{page.name}” and make it the default?</h2>
-          <button onClick={onCancel} className="flex size-8 flex-shrink-0 items-center justify-center rounded text-[#64748B] transition-colors hover:bg-[#F3F4F6]"><X size={18} /></button>
-        </div>
-        <div className="space-y-2 px-5 pb-5 text-[13px] leading-[1.6] text-[#64748B]">
-          <p>Only one portal can be live at a time. “{page.name}” will become the default portal — the one requesters land on.</p>
-          {live.length > 0 && (
-            <p className="rounded border border-[#FDE7C2] bg-[#FFFAF0] px-3 py-2 text-[#8A4A0C]">
-              {names} {live.length === 1 ? 'is' : 'are'} published now and will be moved to <span className="font-semibold">Draft</span>. Nothing in {live.length === 1 ? 'it' : 'them'} is lost — publish {live.length === 1 ? 'it' : 'one'} again any time.
-            </p>
-          )}
-        </div>
-        <div className="flex justify-end gap-2 border-t border-[#e5e7eb] px-5 py-3">
-          <button onClick={onCancel} className="inline-flex h-8 items-center rounded border border-[#DFE5ED] bg-white px-3.5 text-[13px] font-medium text-[#364658] transition-colors hover:bg-[#F5F7FA]">Cancel</button>
-          <button onClick={onConfirm} className="inline-flex h-8 items-center rounded bg-[#3D8BD0] px-3.5 text-[13px] font-medium text-white transition-colors hover:bg-[#2d6ca0]">Publish and make default</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 /* ── Module ──────────────────────────────────────────────────────────────── */
 
 type Scope = 'All' | 'Published' | 'Draft';
@@ -418,43 +384,11 @@ export function AdminSupportPortalModule({ onBuilder, openPortal, onOpenPortalCh
   const [openSettings, setOpenSettings] = useState(false);
   /* Which portals are switched on. Absent means ON — a portal you have never touched is live. */
 
-  /* Which portal requesters land on. State, not the seed's id: it can be moved to any PUBLISHED portal. */
-  const [defaultId, setDefaultId] = useState(DEFAULT_PORTAL_PAGE.id);
+  /* Which portal requesters land on. FIXED (Zeni, 22 Oct 2026): the default portal never changes,
+     and any number of portals can be published at once — publishing one touches no other. */
+  const defaultId = DEFAULT_PORTAL_PAGE.id;
   /* On = live. There is no separate enabled flag — see the note on the card's switch. */
   const isOn = (p: PortalPage) => p.status === 'Published';
-  /* The portal waiting on the publish-and-make-default question, while its dialog is open. */
-  const [publishAsk, setPublishAsk] = useState<string | null>(null);
-  /* Publishes `id` as THE live portal: it becomes the default, and every other published portal goes
-     back to Draft — one portal live at a time. */
-  const publishAsDefault = (id: string) => {
-    setPages((prev) => prev.map((p) => (
-      p.id === id ? { ...p, status: 'Published', dirty: false }
-        : p.status === 'Published' ? { ...p, status: 'Draft', dirty: false } : p
-    )));
-    setDefaultId(id);
-  };
-  /* ONE dialog for both routes to it — Publish inside the builder and Set as default on a card —
-     rendered by whichever of the two screens is showing. */
-  const publishDialog = () => {
-    const asking = publishAsk ? pages.find((p) => p.id === publishAsk) : null;
-    if (!asking) return null;
-    const others = pages.filter((p) => p.id !== asking.id && p.status === 'Published');
-    return (
-      <ConfirmPublish
-        page={asking}
-        live={others}
-        onCancel={() => setPublishAsk(null)}
-        onConfirm={() => {
-          publishAsDefault(asking.id);
-          setPublishAsk(null);
-          setEditingId(null);
-          toast.success(others.length
-            ? `“${asking.name}” is live and now the default — ${others.map((p) => `“${p.name}”`).join(', ')} moved to Draft`
-            : `“${asking.name}” is live and now the default portal`);
-        }}
-      />
-    );
-  };
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
 
@@ -624,7 +558,6 @@ export function AdminSupportPortalModule({ onBuilder, openPortal, onOpenPortalCh
        comment ENDS the block there, and everything after it becomes code. */
     return (
       <>
-      {publishDialog()}
       <SupportPortalBuilder
           key={editing.id}
           templatePreview={previewing ? { name: editing.source ?? '', onBack: backToTemplates, onUse: useFromPreview } : undefined}
@@ -634,8 +567,8 @@ export function AdminSupportPortalModule({ onBuilder, openPortal, onOpenPortalCh
         accent={accentFor(editing)}
         onRename={(name) => patch(editing.id, { name: uniquePageName(pages.filter((p) => p.id !== editing.id), name) })}
         onPublish={() => {
-          /* ⚠️ Publishing a portal that is NOT the default asks first — see `ConfirmPublish`. */
-          if (editing.id !== defaultId) { setPublishAsk(editing.id); return; }
+          /* No confirmation (Zeni, 22 Oct 2026): publishing goes live straight away and leaves every
+             other portal as it is — several portals can be published at once. */
           /* ⚠️ `dirty` is cleared here. It is the listing's "Unpublished changes" chip, and a page
              that has just gone live has none by definition — leaving it set would have the row
              warning about work that is already published. */
@@ -677,7 +610,6 @@ export function AdminSupportPortalModule({ onBuilder, openPortal, onOpenPortalCh
 
   const overlays = (
     <>
-      {publishDialog()}
       {creating && (
         <CreateSupportPortalModal
           /* ⚠️ Nothing to reset here. The gallery's filter is the MODAL's own state and the modal
@@ -882,11 +814,11 @@ export function AdminSupportPortalModule({ onBuilder, openPortal, onOpenPortalCh
               isDefault={p.id === defaultId}
               on={isOn(p)}
               onToggle={() => {
-                /* On: the same publish-and-make-default question Publish asks. Off: unpublish to Draft. */
+                /* On: publish it, no question asked. Off: unpublish to Draft. */
                 if (!isOn(p)) {
-                  /* Already the default: nothing to ask — publish it. */
-                  if (p.id === defaultId) { publishAsDefault(p.id); toast.success(`“${p.name}” is live again`); return; }
-                  setPublishAsk(p.id); return;
+                  patch(p.id, { status: 'Published', dirty: false });
+                  toast.success(`“${p.name}” is live on the support portal`);
+                  return;
                 }
                 patch(p.id, { status: 'Draft', dirty: false });
                 toast.success(`“${p.name}” unpublished — it is a Draft and no longer live`);
@@ -896,7 +828,6 @@ export function AdminSupportPortalModule({ onBuilder, openPortal, onOpenPortalCh
               onPreview={() => toast.success(`Opening ${p.name} in preview`)}
               onSettings={() => setSettingsId(p.id)}
               onCopy={() => copyPortal(p)}
-              onMakeDefault={() => setPublishAsk(p.id)}
               onDelete={() => setConfirmId(p.id)}
             />
           ))}

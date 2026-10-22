@@ -1,7 +1,47 @@
-# Handoff — 2026-10-21 11:28 (Compliance session)
+# Handoff — 2026-10-22 19:16 (Support Portal publishing)
 
 > Sessions share this file. **This top part is the newest session**; older notes follow unchanged
 > below the dividers.
+
+## Read first
+CLAUDE.md › the Support Portal listing bullets, especially the note marked **SUPERSEDED 22 Oct 2026**.
+It replaces the old "one live portal, and it is the default" rule.
+
+## What we worked on this session
+Found the past session about User Surveys and the one about the Support Portal builder. Then changed
+how Support Portal publishing works.
+
+## Completed
+- The default portal no longer changes. The Set as default action and the "Publish and make it the
+  default?" popup (`ConfirmPublish`) are deleted from `AdminSupportPortalModule.tsx`.
+- Several portals can be published at once. Publish in the editor and the switch on a portal card go
+  live straight away, with no confirmation, and leave every other portal as it is.
+- Save as draft has no confirmation. It still takes a live portal off the support portal.
+- Checked in Chrome: copied the default portal and switched the copy on. Both were Published, no popup
+  appeared and there were no page errors. Typecheck was clean for the file.
+
+## In progress
+Nothing mid-flight.
+
+## Next steps
+- Zeni to decide: (1) should the default portal's switch stay on permanently, so requesters always
+  have somewhere to land? (2) A copied portal keeps the original's URL, so two live portals can share an
+  address. Should publishing be blocked until the copy has its own URL?
+- Compliance next steps from the previous session (below) still stand.
+
+## Decisions made
+- The default portal is fixed, and any number of portals can be published (Zeni, 22 Oct 2026).
+- Neither Publish nor Save as draft asks for confirmation (Zeni).
+
+## Gotchas & notes
+- The past Support Portal builder session is `ab0a5508-5caf-4776-8eb3-24df9d481254` (12 Aug to 5 Oct
+  2026). The User Surveys session is `2e89b06b-1ee0-485b-85c3-a9b32e8d9b41`.
+- This folder's working tree carries uncommitted work from other sessions (Compliance, Form Builder,
+  Form Rules and others), and local `main` is behind `origin/main`.
+
+---
+
+# Previous session — 2026-10-21 11:28 (Compliance session)
 
 ## Read first
 CLAUDE.md › **Compliance (Oct 2026)** (the last section). It covers all three pieces and the two
@@ -184,9 +224,30 @@ Nothing mid-flight.
 
 ---
 
-# Handoff — 2026-10-13 (Form Rules session)
+# Handoff — 2026-10-22 15:07 (Form Rules session)
 
-## Read first
+## Latest (21–22 Oct) — Form Builder redesign, NOT committed or published
+Read CLAUDE.md → **Form Builder redesign (21 Oct 2026, Zeni …)** first.
+- **Lesson from Zeni (22 Oct):** when she attaches reference images, copy them EXACTLY. I had
+  adapted them to the design system and she was unhappy ("have you make UI same as my attached image????").
+- **Done:** Configure panel now matches her Image 14 element for element (840px, back button,
+  "Configure {field}" + Doc ↗ subtitle, dashed Create New Rule, "Select by rule name..." + All ⏷
+  filter menu, uppercase RULE / EXECUTE ON / BEHAVIOUR / ACTION table, Reuse Rule ↗). Hover
+  toolbar matches Image 16 (two h-10 #EAF2FB tabs on the dashed outline, filled gear "Create Rule",
+  dark icons; grey label + rounded "N Rules" pill). Grid `gap-y-9 pt-10`. Typecheck clean,
+  checked in the browser with Playwright (`D:/Motadata/tour-shots/formbuilder/fb1–3.mjs`).
+- **22 Oct:** removed the "Open the full guide ↗" link from the foot of the V3 Form Rules Guide
+  (`FormRuleHelpCard.tsx`); only "Watch the 1-min video" is left. Not yet seen in the browser.
+  The hidden V1/V4 guides (`FormRuleHelpV4.tsx`) still have that link — ask Zeni.
+- **Waiting on Zeni:** (1) Rules panel (from the N Rules pill) — copy Image 10 exactly, or will
+  she send a new reference? (2) Is Type (Custom / System Field) editable? (3) AI Accessible
+  tooltip wording. (4) Hint Text = placeholder, Description = line under the field — right?
+- **To commit (only when she asks, or on /tatago):** formRuleData.ts, FormRuleEditor.tsx,
+  AdminRequestFormModule.tsx, AdminFormBuilder.tsx, FormFieldEditPanel.tsx,
+  FormFieldRulesPanel.tsx, FormRuleHelpCard.tsx, CLAUDE.md, HANDOFF.md. Never `git add -A`;
+  leave the other session's Compliance files out.
+
+## Read first (13 Oct session below)
 CLAUDE.md → **Structure**, the three bullets starting **Form Rule editor — V3 is FINAL**,
 **Form Rule help guide — FINAL copy** and **Form Rule action row — the FIELDS picker**.
 The help-guide bullet carries everything from this session.
@@ -220,6 +281,7 @@ The Form Rule editor's right panel (Admin › Request Management › Request For
   second section, and the heading sticks to the top while its section scrolls. Topic icons are bare
   (no white tile) and sit closer to their titles.
 - **19 Oct:** Illustrations page for developers — icon left of Cancel in the rule editor header → `#/admin/request-form-rules/illustrations`; 4 pictures with SVG / PNG @2x / Copy SVG. Guide pictures redrawn as real SVG (one source). Open: Conflict file background grey vs white; 12px padding on guide pictures.
+- **21 Oct:** Form Builder redesigned (not published yet): grouped palette incl. Rich Text / Radio / Section / Label / Dependent; hover toolbar (Create Rule · move · width · duplicate · edit · remove); N Rules chip; Create Rule → Configure panel (create + reuse table), N Rules chip → Rules panel (detail, cleaned up); toolbar = two light-blue tabs; both add the field as a condition; Edit Field side panel. Open: is Type (Custom / System Field) editable?
 - **17 Oct:** the one-line description under the Form Rules Guide title was removed (Zeni).
 - ⚠️ The 13 Oct changes were typechecked only before publishing: the dev server was stopped (low
   memory), so they were not seen in a local browser.
