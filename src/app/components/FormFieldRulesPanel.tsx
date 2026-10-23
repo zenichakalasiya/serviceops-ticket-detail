@@ -289,8 +289,10 @@ function RuleBody({ rule, field, fields }: { rule: FormRule; field: FormField; f
   );
 }
 
+/** Read-only from the Form Builder (Zeni, 23 Oct 2026): Show Rules opens this to SEE what the
+ *  rules do — no Create New Rule, no Reuse Rule. Both stay available to a caller that passes them. */
 export function FieldRulesPanel({ field, fields, rules, onClose, onCreate, onReuse }: {
-  field: FormField; fields: FormField[]; rules: FormRule[]; onClose: () => void; onCreate: () => void; onReuse: (ruleId: string) => void;
+  field: FormField; fields: FormField[]; rules: FormRule[]; onClose: () => void; onCreate?: () => void; onReuse?: (ruleId: string) => void;
 }) {
   const using = useRulesFor(field, rules);
   const [q, setQ] = useState('');
@@ -308,8 +310,8 @@ export function FieldRulesPanel({ field, fields, rules, onClose, onCreate, onReu
 
   return (
     <Sheet title={`Rules on ${field.label}`} onClose={onClose} sub={`${using.length} rule${using.length === 1 ? '' : 's'} check or change this field.`}>
-      <CreateCta onCreate={onCreate} />
-      <div className="mt-6"><Toolbar q={q} setQ={setQ} filter={filter} setFilter={setFilter} count={count} placeholder="Search rules" /></div>
+      {onCreate && <CreateCta onCreate={onCreate} />}
+      <div className={onCreate ? 'mt-6' : ''}><Toolbar q={q} setQ={setQ} filter={filter} setFilter={setFilter} count={count} placeholder="Search rules" /></div>
       {shown.length === 0 && <p className="py-12 text-center text-[13px] text-[#9CA3AF]">{using.length ? 'No rules match your search.' : `No rule uses ${field.label} yet.`}</p>}
 
       {SECTIONS.map((s) => {
@@ -335,7 +337,7 @@ export function FieldRulesPanel({ field, fields, rules, onClose, onCreate, onReu
                         </span>
                         <span className="mt-1 block text-[13px] text-[#7B8FA5]">{s.line}</span>
                       </button>
-                      <ReuseBtn onClick={() => onReuse(r.id)} field={field.label} />
+                      {onReuse && <ReuseBtn onClick={() => onReuse(r.id)} field={field.label} />}
                       <button type="button" onClick={() => toggle(r.id)} aria-label={isOpen ? 'Collapse' : 'Expand'} className="flex size-7 flex-shrink-0 items-center justify-center rounded text-[#7B8FA5] transition-colors hover:bg-[#F3F4F6]">
                         <ChevronDown size={16} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                       </button>

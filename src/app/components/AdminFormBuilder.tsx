@@ -209,7 +209,7 @@ export function AdminFormBuilder({ fields, onFields, rules, onCreateRule, onReus
             Drag a field type here to start the form
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-x-4 gap-y-9 pt-10">
+          <div className="grid grid-cols-2 gap-x-2 gap-y-2 pt-10">
             {fields.map((f) => {
               const used = holdsValue(f) ? rulesUsing(f.id).length : 0;
               const full = f.width === 'full' || f.kind === 'section';
@@ -231,10 +231,12 @@ export function AdminFormBuilder({ fields, onFields, rules, onCreateRule, onReus
 
                   {/* Hover toolbar — two tabs sitting on the outline's top edge, right-aligned. */}
                   <div className="pointer-events-none absolute bottom-full right-4 z-10 flex items-end gap-2 opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
-                    {holdsValue(f) && (
-                      <button type="button" onClick={() => setPanel({ id: f.id, kind: 'configure' })}
+                    {/* Show Rules replaced Create Rule and the "N Rules" chip (Zeni, 23 Oct 2026): it only
+                        appears on a field some rule uses, and it opens the read-only rules sidebar. */}
+                    {used > 0 && (
+                      <button type="button" onClick={() => setPanel({ id: f.id, kind: 'rules' })}
                         className={`${TAB} gap-2 !px-4 text-[14px] text-[#1D2A3E] transition-colors hover:bg-[#DCEBFA]`}>
-                        <Settings size={16} fill="currentColor" stroke="#EAF2FB" strokeWidth={1.5} /> Create Rule
+                        <Settings size={16} fill="currentColor" stroke="#EAF2FB" strokeWidth={1.5} /> Show Rules
                       </button>
                     )}
                     <div className={`${TAB} gap-1 !px-2`}>
@@ -265,12 +267,6 @@ export function AdminFormBuilder({ fields, onFields, rules, onCreateRule, onReus
                     <>
                       <div className="mb-2 flex h-6 items-center gap-2">
                         <span className="truncate text-[14px] text-[#7B8FA5]">{f.label}{f.required && <span className="text-[#F25C4E]">*</span>}</span>
-                        {used > 0 && (
-                          <button type="button" onClick={() => setPanel({ id: f.id, kind: 'rules' })}
-                            className="flex-shrink-0 rounded-full bg-[#EAF2FB] px-2.5 text-[13px] font-medium leading-[24px] text-[#1D2A3E] transition-colors hover:bg-[#DCEBFA]">
-                            {used} Rule{used > 1 ? 's' : ''}
-                          </button>
-                        )}
                       </div>
                       <FieldPreview f={f} />
                       {f.helpText && <p className="mt-1 text-[12px] text-[#7B8FA5]">{f.helpText}</p>}
@@ -297,8 +293,7 @@ export function AdminFormBuilder({ fields, onFields, rules, onCreateRule, onReus
           onCreate={() => onCreateRule(panelField.id)} onReuse={(id) => onReuseRule(id, panelField.id)} />
       )}
       {panelField && panel!.kind === 'rules' && (
-        <FieldRulesPanel field={panelField} fields={fields} rules={rules} onClose={() => setPanel(null)}
-          onCreate={() => onCreateRule(panelField.id)} onReuse={(id) => onReuseRule(id, panelField.id)} />
+        <FieldRulesPanel field={panelField} fields={fields} rules={rules} onClose={() => setPanel(null)} />
       )}
 
       {pendingRemove && (
