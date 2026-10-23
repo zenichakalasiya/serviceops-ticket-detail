@@ -20,7 +20,7 @@ import { TEAM_FILTER_ATTRS, TEAM_STATUS_OPTIONS } from './teamFilterAttrs';
 import { PROJECT_FILTER_ATTRS, PROJECT_STATUS_OPTIONS } from './projectFilterAttrs';
 import { DEPLOY_STATUS_OPTIONS, PATCH_DEPLOY_FILTER_ATTRS, PATCH_FILTER_ATTRS } from './patchFilterAttrs';
 import { PACKAGE_DEPLOY_FILTER_ATTRS, REGISTRY_DEPLOY_FILTER_ATTRS } from './packageFilterAttrs';
-import { POLICY_FILTER_ATTRS, POLICY_STATUS_OPTIONS, POSTURE_OPTIONS, SCAN_STATUS_OPTIONS, VIZ_POLICY_FILTER_ATTRS, VIZ_RESOURCE_FILTER_ATTRS, VIZ_RULE_FILTER_ATTRS } from './complianceFilterAttrs';
+import { POLICY_FILTER_ATTRS, POLICY_STATUS_OPTIONS, POSTURE_OPTIONS, SCAN_STATUS_OPTIONS, VIZ_BENCHMARK_FILTER_ATTRS, VIZ_RESOURCE_FILTER_ATTRS, VIZ_RULE_FILTER_ATTRS } from './complianceFilterAttrs';
 import { APT_FILTER_ATTRS } from './automaticPatchTests';
 import { fmtGridDate, fmtGridDateTime } from './dateFormat';
 import {
@@ -544,7 +544,6 @@ const MODULE_STATUS_OPTS: Partial<Record<string, CellOption[]>> = {
   'registry-deployment': DEPLOY_STATUS_OPTIONS,
   /* A compliance policy's result of its last scan — the system sets it, nobody picks it. */
   'compliance-policy': POLICY_STATUS_OPTIONS,
-  'cviz-policy': POLICY_STATUS_OPTIONS,
   /* A CVE carries NVD's own workflow state, not a lifecycle. */
   cve: CVE_STATUS_OPTIONS,
   /* The product's full software lifecycle — the same nine states its own Status
@@ -1630,7 +1629,7 @@ interface TicketTableProps {
       'asset' renders the Hardware Assets columns (Asset Type · Status · Host Name ·
       IP · Used By · Managed By Group · Managed By · Serial). Each module gets its
       own storage key, so request column prefs stay intact. */
-  moduleCols?: 'change' | 'release' | 'asset' | 'software' | 'meter' | 'cmdb' | 'knowledge' | 'report' | 'task' | 'team' | 'project' | 'vuln' | 'cve' | 'endpoint' | 'patch' | 'patch-deployment' | 'package-deployment' | 'registry-deployment' | 'compliance-policy' | 'cviz-policy' | 'cviz-rule' | 'cviz-resource' | 'apt' | 'apd' | 'nonit' | 'consumable' | 'license' | 'contract' | 'purchase' | 'approval';
+  moduleCols?: 'change' | 'release' | 'asset' | 'software' | 'meter' | 'cmdb' | 'knowledge' | 'report' | 'task' | 'team' | 'project' | 'vuln' | 'cve' | 'endpoint' | 'patch' | 'patch-deployment' | 'package-deployment' | 'registry-deployment' | 'compliance-policy' | 'cviz-benchmark' | 'cviz-rule' | 'cviz-resource' | 'apt' | 'apd' | 'nonit' | 'consumable' | 'license' | 'contract' | 'purchase' | 'approval';
   /** Per-row actions — the Approvals grid's decisions, and the Reports grid's Action
       column. The module decides what each one does. */
   onRowAction?: (ticket: Ticket, action: RowAction) => void;
@@ -2052,20 +2051,23 @@ export function TicketTable({
         { key: 'x_enabled', label: 'Enable', w: 90 },
         { key: 'actions', label: 'Actions', w: 140 },
     ],
-    /* Compliance Visualization — the policies read for what their scans found (no run / edit
-       actions here: this register LOOKS, the Compliance Policy module acts). */
-    'cviz-policy': [
+    /* Compliance › Benchmark (technician) — every benchmark in the catalogue, read for how it
+       fares across the policies that run it (no edit actions: the admin owns benchmarks). */
+    'cviz-benchmark': [
         { key: 'id', label: 'ID', w: 90 },
-        { key: 'subject', label: 'Policy Name', flex: true, w: 200, maxW: 340 },
+        { key: 'subject', label: 'Benchmark', flex: true, w: 220, maxW: 360 },
+        { key: 'x_type', label: 'Type', w: 100 },
         { key: 'x_osVersion', label: 'Version', w: 170 },
+        { key: 'x_profile', label: 'Profile', w: 90, align: 'center' },
+        { key: 'x_rules', label: 'Rules', w: 80, align: 'center' },
+        { key: 'x_policies', label: 'Policies', w: 90, align: 'center' },
+        { key: 'x_endpoints', label: 'Endpoints', w: 100, align: 'center' },
+        { key: 'x_failingRules', label: 'Failing Rules', w: 120, align: 'center' },
         { key: 'x_cpScore', label: 'Compliance', w: 140 },
         { key: 'x_posture', label: 'Posture', w: 120 },
-        { key: 'x_endpoints', label: 'Endpoints', w: 95, align: 'center' },
-        { key: 'x_nonCompliant', label: 'Non-Compliant', w: 140, align: 'center' },
-        { key: 'x_failedChecks', label: 'Last Failed Scan', w: 150, align: 'center' },
         { key: 'x_lastExecution', label: 'Last Scan', w: 170 },
     ],
-    /* Explorer · Rules — every rule some policy checks, scored across the endpoints it ran on. */
+    /* A benchmark's rules — every rule some policy checks, scored across the endpoints it ran on. */
     'cviz-rule': [
         { key: 'subject', label: 'Rule', flex: true, w: 320, maxW: 520 },
         { key: 'x_severity', label: 'Severity', w: 120 },
@@ -2306,7 +2308,7 @@ export function TicketTable({
       ];
   /* Asset grids offer their own attributes as optional columns; every other module keeps
      the request extras. */
-  const MODULE_ATTRS = moduleCols === 'asset' ? HARDWARE_FILTER_ATTRS : moduleCols === 'software' ? SOFTWARE_FILTER_ATTRS : moduleCols === 'nonit' ? NONIT_FILTER_ATTRS : moduleCols === 'consumable' ? CONSUMABLE_FILTER_ATTRS : moduleCols === 'license' ? LICENSE_FILTER_ATTRS : moduleCols === 'contract' ? CONTRACT_FILTER_ATTRS : moduleCols === 'purchase' ? PURCHASE_FILTER_ATTRS : moduleCols === 'meter' ? METER_FILTER_ATTRS : moduleCols === 'cmdb' ? CMDB_FILTER_ATTRS : moduleCols === 'knowledge' ? KNOWLEDGE_FILTER_ATTRS : moduleCols === 'report' ? REPORT_FILTER_ATTRS : moduleCols === 'task' ? TASK_FILTER_ATTRS : moduleCols === 'team' ? TEAM_FILTER_ATTRS : moduleCols === 'project' ? PROJECT_FILTER_ATTRS : moduleCols === 'vuln' ? VULN_FILTER_ATTRS : moduleCols === 'cve' ? CVE_FILTER_ATTRS : moduleCols === 'endpoint' ? ENDPOINT_FILTER_ATTRS : moduleCols === 'patch' ? PATCH_FILTER_ATTRS : moduleCols === 'patch-deployment' ? PATCH_DEPLOY_FILTER_ATTRS : moduleCols === 'package-deployment' ? PACKAGE_DEPLOY_FILTER_ATTRS : moduleCols === 'registry-deployment' ? REGISTRY_DEPLOY_FILTER_ATTRS : moduleCols === 'compliance-policy' ? POLICY_FILTER_ATTRS : moduleCols === 'cviz-policy' ? VIZ_POLICY_FILTER_ATTRS : moduleCols === 'cviz-rule' ? VIZ_RULE_FILTER_ATTRS : moduleCols === 'cviz-resource' ? VIZ_RESOURCE_FILTER_ATTRS : moduleCols === 'apt' ? APT_FILTER_ATTRS : null;
+  const MODULE_ATTRS = moduleCols === 'asset' ? HARDWARE_FILTER_ATTRS : moduleCols === 'software' ? SOFTWARE_FILTER_ATTRS : moduleCols === 'nonit' ? NONIT_FILTER_ATTRS : moduleCols === 'consumable' ? CONSUMABLE_FILTER_ATTRS : moduleCols === 'license' ? LICENSE_FILTER_ATTRS : moduleCols === 'contract' ? CONTRACT_FILTER_ATTRS : moduleCols === 'purchase' ? PURCHASE_FILTER_ATTRS : moduleCols === 'meter' ? METER_FILTER_ATTRS : moduleCols === 'cmdb' ? CMDB_FILTER_ATTRS : moduleCols === 'knowledge' ? KNOWLEDGE_FILTER_ATTRS : moduleCols === 'report' ? REPORT_FILTER_ATTRS : moduleCols === 'task' ? TASK_FILTER_ATTRS : moduleCols === 'team' ? TEAM_FILTER_ATTRS : moduleCols === 'project' ? PROJECT_FILTER_ATTRS : moduleCols === 'vuln' ? VULN_FILTER_ATTRS : moduleCols === 'cve' ? CVE_FILTER_ATTRS : moduleCols === 'endpoint' ? ENDPOINT_FILTER_ATTRS : moduleCols === 'patch' ? PATCH_FILTER_ATTRS : moduleCols === 'patch-deployment' ? PATCH_DEPLOY_FILTER_ATTRS : moduleCols === 'package-deployment' ? PACKAGE_DEPLOY_FILTER_ATTRS : moduleCols === 'registry-deployment' ? REGISTRY_DEPLOY_FILTER_ATTRS : moduleCols === 'compliance-policy' ? POLICY_FILTER_ATTRS : moduleCols === 'cviz-benchmark' ? VIZ_BENCHMARK_FILTER_ATTRS : moduleCols === 'cviz-rule' ? VIZ_RULE_FILTER_ATTRS : moduleCols === 'cviz-resource' ? VIZ_RESOURCE_FILTER_ATTRS : moduleCols === 'apt' ? APT_FILTER_ATTRS : null;
   /* Managed By Group's menu, where the module's catalogue names its own teams. */
   const moduleGroupOptions: CellOption[] | null =
     MODULE_ATTRS?.find((a) => a.key === 'managedByGroup')?.options?.map((o) => ({ label: o.label })) ?? null;

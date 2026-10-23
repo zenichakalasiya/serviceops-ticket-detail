@@ -1,3 +1,55 @@
+# Handoff — 2026-10-23 15:55 (Compliance research + technician side split into four pages)
+
+> Sessions share this file. **This top part is the newest session**; older notes follow unchanged
+> below the dividers.
+
+## Read first
+CLAUDE.md › "## Compliance (Oct 2026)", especially the new last bullet "Technician side split into
+four pages". It replaces the Compliance Visualization notes above it.
+
+## What we worked on this session
+Finished the Compliance deep research (the run in the other tab paused at the usage limit), turned it
+into two shareable pages, then restructured the technician side of the Compliance module.
+
+## Completed
+- **Research brief** (white page): https://claude.ai/artifact/PhNgU1vE5Z7zXciJNmQ42h — source
+  `docs/compliance/research-brief.html`, plus `docs/compliance/RESEARCH.md`. Built from the paused
+  `deep-research` run's journal (22 sources, 97 claims, 60 of 75 votes). A Claude Docs copy also exists
+  (https://claude.ai/artifact/Mj1Tpu6KdJ69cksr6TBZLv) but did not open for Zeni.
+- **Plain-language explainer with diagrams**: https://claude.ai/artifact/KFGicKQMCoVj53oqw9kZHF —
+  source `docs/compliance/compliance-explained.html` (what CIS is, rules, benchmarks, policies, why
+  ITSM needs it, the flow, a worked example, glossary, 30-second script).
+- **Compliance flyout = Dashboard · Benchmark · Compliance Policy · Endpoints** (new pages
+  `ComplianceDashboardPage`, `ComplianceBenchmarksPage`, `ComplianceEndpointsPage`, shared rows in
+  `complianceRows.tsx`). Compliance Visualization deleted; its Policies tab removed and its tiles moved
+  into the Compliance Policy listing as a Tiles layout. Old links redirect to the dashboard.
+- Checked headless on localhost:5200: all four pages load, benchmark → rules panel → rule results,
+  Tiles view, endpoint panel, no page errors. Typecheck clean, build passes.
+
+## In progress
+Nothing mid-flight. The `deep-research` workflow in the left tab is PAUSED (88/103 agents); it can
+resume after the usage reset in that tab only. Its findings are already in the research brief.
+
+## Next steps
+- Zeni said "then we will renew the full flow on technician side": the research's recommendations
+  (results states, remediation doors Create Change / Deploy fix / Assign task, exceptions with
+  approval and expiry, drift, evidence export) are the candidate next work.
+- Decide whether to let the paused research run finish or stop it (`x` in its tab).
+- Confirm the posture bands and 85% target (still open from before).
+
+## Decisions made
+- Flyout order Dashboard · Benchmark · Compliance Policy · Endpoints (reads like the flow).
+- Technician Benchmark page = benchmark list → its rules with results (admin keeps editing rights).
+- Compliance Policy listing keeps List & KPI as default; Tiles is an option.
+- Endpoint row opens the existing compliance side panel, not the full Endpoint drawer.
+
+## Gotchas & notes
+- `FormRuleRelatedView.tsx` is modified by another session and was deliberately NOT committed here.
+- Heredocs in this Bash strip backslashes — write probe scripts with the Write tool.
+- A row click in the shared register must land on a cell (e.g. the name cell), not the row edge.
+
+---
+
 # Handoff — 2026-10-23 (Compliance: visualization, benchmark profiles, form polish)
 
 > Sessions share this file. **This top part is the newest session**; older notes follow unchanged

@@ -1,0 +1,349 @@
+<title>Compliance Module Research Brief</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400&display=swap">
+<style>
+  /* Layout: a research memo — a fixed contents rail on the left at desktop, the memo column ~68ch on the right; stacks on phones. Single committed white look. */
+  :root {
+    --bg: #FFFFFF;
+    --paper: #F7F9FC;
+    --fg: #1D2A3E;
+    --muted: #566578;
+    --line: #DFE5ED;
+    --accent: #3D8BD0;
+    --accent-soft: #EBF5FF;
+    --ok-bg: #E6F6EE; --ok-fg: #126634;
+    --bad-bg: #FDECEC; --bad-fg: #B91C1C;
+    --warn-bg: #FFF4DF; --warn-fg: #944207;
+    --inf-bg: #EEF2F6; --inf-fg: #475569;
+    --display: "IBM Plex Serif", Georgia, "Times New Roman", serif;
+    --body: "IBM Plex Sans", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: "IBM Plex Mono", Consolas, "Courier New", monospace;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--fg);
+    font-family: var(--body); font-size: 15px; line-height: 1.6;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 0 64px;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 56px; }
+  nav.toc { position: sticky; top: 24px; align-self: start; padding-top: 48px; font-size: 13px; }
+  nav.toc .eyebrow { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; }
+  nav.toc ol { list-style: none; margin: 0; padding: 0; border-left: 1px solid var(--line); }
+  nav.toc li a { display: block; padding: 5px 0 5px 14px; margin-left: -1px; border-left: 2px solid transparent; color: var(--muted); text-decoration: none; }
+  nav.toc li a:hover, nav.toc li a:focus-visible { color: var(--fg); border-left-color: var(--accent); outline: none; }
+  main { min-width: 0; max-width: 72ch; }
+  header.head { padding-top: 48px; border-bottom: 1px solid var(--line); padding-bottom: 24px; margin-bottom: 32px; }
+  .kicker { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); font-weight: 600; margin: 0 0 12px; }
+  h1 { font-family: var(--display); font-weight: 600; font-size: 34px; line-height: 1.15; margin: 0 0 14px; text-wrap: balance; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 23px; line-height: 1.25; margin: 48px 0 12px; text-wrap: balance; scroll-margin-top: 24px; }
+  h3 { font-size: 15px; font-weight: 600; margin: 24px 0 8px; }
+  p { margin: 0 0 12px; }
+  .lede { font-size: 16px; color: var(--muted); margin: 0 0 16px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 13px; color: var(--muted); }
+  .meta b { color: var(--fg); font-weight: 500; }
+  ul, ol { margin: 0 0 14px; padding-left: 22px; }
+  li { margin-bottom: 6px; }
+  li::marker { color: var(--muted); }
+  strong { font-weight: 600; }
+  a { color: var(--accent); }
+  .tag { display: inline-block; font-size: 11px; font-weight: 500; line-height: 16px; padding: 2px 8px; border-radius: 3px; vertical-align: 1px; white-space: nowrap; font-style: normal; }
+  .ok { background: var(--ok-bg); color: var(--ok-fg); }
+  .bad { background: var(--bad-bg); color: var(--bad-fg); }
+  .warn { background: var(--warn-bg); color: var(--warn-fg); }
+  .inf { background: var(--inf-bg); color: var(--inf-fg); }
+  .legend { display: flex; flex-wrap: wrap; gap: 10px 16px; font-size: 13px; color: var(--muted); background: var(--paper); border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; margin: 0 0 8px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .tablewrap { overflow-x: auto; margin: 0 0 16px; border: 1px solid var(--line); border-radius: 6px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+  th { background: var(--paper); font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); font-weight: 600; white-space: nowrap; }
+  tr:last-child td { border-bottom: 0; }
+  td b { font-weight: 600; }
+  .flow { background: var(--paper); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; margin: 0 0 16px; }
+  .flow ol { margin: 0; padding-left: 22px; }
+  .flow li { margin-bottom: 4px; }
+  .flow .loop { font-size: 13px; color: var(--muted); margin: 10px 0 0; }
+  .callout { background: var(--accent-soft); border: 1px solid #CFE3F6; padding: 14px 18px; border-radius: 6px; margin: 0 0 16px; }
+  .callout p:last-child { margin-bottom: 0; }
+  code { font-family: var(--mono); font-size: 13px; background: var(--paper); border: 1px solid var(--line); padding: 2px 7px; border-radius: 3px; }
+  .srcs { font-size: 13.5px; }
+  .srcs h3 { margin-top: 18px; }
+  .srcs li { margin-bottom: 4px; }
+  .num { font-variant-numeric: tabular-nums; }
+  @media (max-width: 860px) {
+    .wrap { grid-template-columns: minmax(0, 1fr); gap: 0; }
+    nav.toc { position: static; padding-top: 32px; }
+    nav.toc ol { display: flex; flex-wrap: wrap; gap: 4px 0; border-left: 0; }
+    nav.toc li a { padding: 4px 10px; border-left: 0; border: 1px solid var(--line); border-radius: 999px; margin: 0 6px 6px 0; }
+    header.head { padding-top: 24px; }
+    h1 { font-size: 28px; }
+  }
+</style>
+
+<div class="wrap">
+  <nav class="toc" aria-label="Contents">
+    <p class="eyebrow">Contents</p>
+    <ol>
+      <li><a href="#short">1 The short version</a></li>
+      <li><a href="#domain">2 Domain knowledge</a></li>
+      <li><a href="#personas">3 Personas</a></li>
+      <li><a href="#flow">4 The full flow</a></li>
+      <li><a href="#competitors">5 Competitor models</a></li>
+      <li><a href="#recs">6 Recommendations</a></li>
+      <li><a href="#confidence">7 Confidence</a></li>
+      <li><a href="#sources">8 Sources</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <header class="head">
+      <p class="kicker">ServiceOps · Compliance module</p>
+      <h1>Security Configuration Compliance: a research brief for the designer</h1>
+      <p class="lede">How CIS Benchmark compliance works, who uses it, the end-to-end flow, how nine competitors model it, and what to change in our Rules, Benchmark and Compliance Policy screens.</p>
+      <div class="meta">
+        <span>Written <b>23 Oct 2026</b></span>
+        <span>Sources <b class="num">22</b></span>
+        <span>Claims extracted <b class="num">97</b></span>
+        <span>Verification votes <b class="num">60 of 75</b></span>
+      </div>
+    </header>
+
+    <div class="legend">
+      <span><i class="tag ok">verified</i> three independent votes found the source supports it</span>
+      <span><i class="tag bad">refuted</i> the votes found the claim wrong; the corrected version is given</span>
+      <span><i class="tag warn">unverified</i> extracted from a source, but its votes never ran</span>
+      <span><i class="tag inf">inference</i> our reading, not a source's</span>
+    </div>
+
+    <h2 id="short">1. The short version</h2>
+    <p>Seven findings change the design. Every other section is the evidence behind them.</p>
+    <ol>
+      <li><strong>A CIS rule is a documented recommendation with a fixed set of fields:</strong> Title, Assessment Status (Automated / Manual), Profile Applicability (Level 1 / Level 2), Description, Rationale, Impact, Audit Procedure, Remediation Procedure, Default Value, References. That list is the rule-detail panel. <i class="tag ok">verified</i></li>
+      <li><strong>Tags are not the rule's identity, and neither is the CIS number.</strong> CIS says there is no standard numbering convention, a number only means something inside one benchmark version, and a number can be reused after a check is deprecated. SCAP content gives each rule its own stable ID and attaches the CIS number as a reference tied to one product version. <i class="tag ok">verified</i> The module needs an internal rule ID per OS version; the CIS number and tags are metadata.</li>
+      <li><strong>A benchmark is one product at one version with its own version number</strong>, such as Ubuntu 22.04 v2.0.0. CIS has no fixed release cadence. Every scan result should be stamped with the benchmark version it ran against. <i class="tag ok">verified</i></li>
+      <li><strong>Level 2 is a superset of Level 1.</strong> L1 is safe to apply broadly; L2 is defence-in-depth that may hurt usability. A STIG profile has replaced the old Level 3. <i class="tag ok">verified</i></li>
+      <li><strong>Every competitor runs the same loop:</strong> content catalogue, policy or benchmark, targets, scheduled assessment, per-endpoint and per-rule results with a compliance percentage, remediation, re-assess, and exceptions with an owner, a reason and an expiry. Our module has the first four stages. The last four are the gap. <i class="tag inf">inference</i></li>
+      <li><strong>Exceptions are a first-class record, not a note.</strong> Every mature product scopes an exception to a rule and a host set, requires a written reason, routes it through approval, gives it an expiry, keeps the raw result untouched and shows the override in audit output. <i class="tag ok">verified</i></li>
+      <li><strong>Remediation lands in ITSM as grouped work</strong>, not one ticket per failed check. ServiceNow groups failed results into Remediation Tasks and raises a Change from a task. Tanium pushes CIS remediation keyed to the same control IDs, then re-assesses. <i class="tag ok">verified</i> ServiceOps already has Patch, Package and Change, so the join is the design opportunity.</li>
+    </ol>
+
+    <h2 id="domain">2. Domain knowledge, explained PM-to-designer</h2>
+
+    <h3>What a CIS Benchmark is</h3>
+    <p>A consensus document, built in the community CIS WorkBench, that targets one product at one version and groups its recommendations into sections. The z/OS V2R5 benchmark v1.1.0 has 219 recommendations across 9 domains. <i class="tag ok">verified</i> Benchmarks are published once the community agrees and keep being maintained afterwards; new and updated benchmarks are announced by monthly email. <i class="tag ok">verified</i> The Windows benchmark for a release covers all earlier builds of it.</p>
+
+    <h3>Licensing shapes the product</h3>
+    <p>The free benchmarks are PDFs. The machine-readable XCCDF format, which automated checks come from, is for CIS SecureSuite members only. <i class="tag ok">verified</i> Every competitor owns that licence and ships CIS-derived content on its own schedule; ManageEngine syncs content to the server every day at 1 AM. So in our module the admin curates rule content. They do not author it.</p>
+
+    <h3>Anatomy of one recommendation</h3>
+    <p>This is the rule-detail panel, in reading order: what, why, what it costs, how to check, how to fix.</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Field</th><th>What it answers for the reader</th></tr></thead>
+      <tbody>
+        <tr><td><b>Title</b></td><td>The intended configuration, in one line</td></tr>
+        <tr><td><b>Assessment Status</b></td><td>Can a scanner check this (Automated) or must a human (Manual)?</td></tr>
+        <tr><td><b>Profile Applicability</b></td><td>Level 1 (everyone) or Level 2 (special security needs)</td></tr>
+        <tr><td><b>Description</b></td><td>What the setting is</td></tr>
+        <tr><td><b>Rationale</b></td><td>Why it matters: the threat it closes</td></tr>
+        <tr><td><b>Impact</b></td><td>What breaks or changes if you apply it</td></tr>
+        <tr><td><b>Audit Procedure</b></td><td>How to check compliance, step by step</td></tr>
+        <tr><td><b>Remediation Procedure</b></td><td>How to fix it, step by step</td></tr>
+        <tr><td><b>Default Value</b></td><td>What the setting is out of the box</td></tr>
+        <tr><td><b>References</b></td><td>Links, plus framework mappings (CIS Controls, NIST 800-53, PCI DSS, STIG)</td></tr>
+      </tbody>
+    </table></div>
+    <p>SCAP content adds a severity from a fixed set (unknown, info, low, medium, high), a plain description for non-experts beside the rationale, and a per-rule idempotent remediation script. <i class="tag ok">verified</i> ManageEngine's rule row shows the setting, its default, the accepted range, the recommended value, the rationale and a How to Fix column.</p>
+
+    <h3>Profiles</h3>
+    <p>Level 1 can be implemented promptly without significant performance impact. Level 2 is defence in depth and may have an adverse effect on usability or business operations if applied without due care. The STIG profile replaces the former Level 3. <i class="tag ok">verified</i> In SCAP terms a profile is a selection of rules: rules are unselected by default, one rule can belong to many profiles, and a profile can override a rule's severity. <i class="tag ok">verified</i> Our Benchmark Profile field (L1 / L2) is correct and should filter which rules attach.</p>
+
+    <h3>Identity and versioning: the tags question</h3>
+    <ul>
+      <li>There is no standard numbering convention. A recommendation number is meaningful only inside one benchmark version and can be reused after a check is deprecated.</li>
+      <li>In ComplianceAsCode a rule's unique ID is its own identifier and links it to its checks and fixes. CIS numbers and STIG IDs are references keyed to one product version (<code>cis@ubuntu2204</code>), so the same rule carries a different CIS number on each OS version. <i class="tag ok">verified</i></li>
+      <li>Corrected: the run first extracted that a CCE is the single global identifier for a rule. All three votes refuted it. CCEs are product-dependent too, a different CCE per product and version. <i class="tag bad">refuted</i> No identifier survives across products.</li>
+      <li>Tenable and Rapid7 both key overrides to the individual rule inside a policy. <i class="tag ok">verified</i></li>
+    </ul>
+    <div class="callout">
+      <p><strong>Data model to design against.</strong> A Rule carries our own ID per OS version, the CIS number, the benchmark version, optional CCE and XCCDF IDs, tags, and framework references. Tags are labels many rules share. They are good for filtering and never for identity. The hunch that the tags are the unique identifier is the one thing to drop.</p>
+    </div>
+
+    <h3>When CIS ships a new version</h3>
+    <p>There is no cadence to design a calendar around. Microsoft's Intune pattern is the best UX reference: when a new baseline version ships, existing profiles become read-only until you choose Update version, and you review the settings diff before updating. A new benchmark version should never silently change a policy. Show that a new version is available, offer a diff of added, changed and removed rules, and let the admin re-pin.</p>
+
+    <h3>Framework mappings</h3>
+    <p>Mappings to NIST, PCI, HIPAA and STIG arrive with the rule content; ServiceNow imports authoritative sources and citations from the scanner. Tanium covers CIS, NIS2, CMMC and Essential Eight. SolarWinds NCM ships DISA STIG, PCI, HIPAA and SOX reports for network devices. <i class="tag ok">verified</i> They are read-only metadata on a rule, surfaced as chips and as a report axis.</p>
+
+    <h2 id="personas">3. Personas</h2>
+    <p>Four people touch this module. Our admin and technician split matches the sources; the auditor is the missing third reader.</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Persona</th><th>Owns</th><th>Reads</th><th>Scenario from the sources</th></tr></thead>
+      <tbody>
+        <tr><td><b>Security admin</b><br>GRC, policy administrator</td><td>The rule catalogue, benchmark tailoring, custom benchmarks, exception approval</td><td>Posture by benchmark, drift, audit evidence</td><td>Tailors a CIS benchmark into an org baseline: picks the profile level, excludes rules that do not fit, adjusts parameter values, documents why. Approves exceptions based on the business risks involved. <i class="tag ok">verified</i></td></tr>
+        <tr><td><b>Technician, sysadmin</b><br>remediation owner</td><td>Policies, endpoint scope, running scans, fixing failures, requesting exceptions</td><td>Per-endpoint failures and the fix for each</td><td>A support team relaxes a setting while troubleshooting and a 15,000-device fleet drifts off its CIS L1 baseline. In ServiceNow the remediation owner is the role that requests an exception.</td></tr>
+        <tr><td><b>Auditor, CISO</b><br>reads, never edits</td><td>Nothing</td><td>Score over time, evidence that a result is reproducible, the exception register</td><td>Must be able to re-run an assessment against the same baseline version and asset scope and get the same answer.</td></tr>
+        <tr><td><b>Network engineer</b><br>router, switch, firewall</td><td>Device-config compliance</td><td>Node by rule pass or fail</td><td>SolarWinds NCM targets STIG content by a Device_Type property (router, L2 or L3 switch, firewall) plus OS (IOS, NX, XE, ASA), the same Type plus Version targeting our benchmarks use. <i class="tag ok">verified</i></td></tr>
+      </tbody>
+    </table></div>
+    <p>Two role rules from practitioners. The identity that runs checks should not also hold remediation rights, or one actor changes the state, runs the check and certifies the result. Tanium names its target roles as GRC Analyst, Policy Administrator, Systems Administrator and Systems Architect.</p>
+
+    <h2 id="flow">4. The full flow, stage by stage</h2>
+    <p>Every competitor runs one loop. Stages 1 to 4 exist in our module today; 5 to 8 are the gap.</p>
+    <div class="flow">
+      <ol>
+        <li><strong>Rule catalogue</strong> (vendor-maintained CIS content)</li>
+        <li><strong>Benchmark</strong>, tailored from a CIS parent</li>
+        <li><strong>Policy</strong>: benchmark, targets, schedule</li>
+        <li><strong>Assessment run</strong></li>
+        <li><strong>Results</strong>: endpoint by rule, with a score</li>
+        <li><strong>Remediation</strong>, then re-assess (back to 4)</li>
+        <li><strong>Exception</strong>: rule by hosts, reason, approval, expiry (feeds back into 5)</li>
+        <li><strong>Drift detection</strong> (continuous) and <strong>evidence export</strong></li>
+      </ol>
+      <p class="loop">Stages 6 and 7 both loop back: a fix returns to a new run, an exception changes how a result reads.</p>
+    </div>
+
+    <h3>Catalogue to benchmark</h3>
+    <p>ManageEngine policies are collections of CIS-derived rules grouped by platform. Policies are not targeted directly: you build a Policy Group, pick the platform, select CIS policies into it, then map target groups. Custom policies are made by importing and editing rules, then publishing. <i class="tag ok">verified</i> NinjaOne lets an admin tailor any included benchmark inside the web console while configuring the endpoint scan. CIS WorkBench tailoring forks a published benchmark, changes recommendations and exports it. Practitioners say tailoring is expected practice but should never be ad hoc or undocumented, and different server roles should get separate baseline profiles. In SolarWinds NCM rules roll up into policies and policies into policy reports; one policy can appear in several reports. <i class="tag ok">verified</i></p>
+    <p><strong>Ours:</strong> Benchmark matches this. Add a lineage line on a custom benchmark (based on CIS Ubuntu 22.04 v2.0.0), a diff against its CIS parent, and a documented reason on each excluded rule, which later seeds the exception record.</p>
+
+    <h3>Benchmark to policy to assessment</h3>
+    <p>ManageEngine maps target systems, schedules audits, and shows compliance percentage and violated rules per policy. Tanium imports content into Comply, runs an assessment, pushes CIS remediation in Enforce keyed to the same control IDs, then re-runs the assessment to verify. <i class="tag ok">verified</i> CIS recommends testing any benchmark in a non-production environment first, and DISA STIG groups controls by severity CAT I, II and III.</p>
+    <p><strong>Ours:</strong> Policy matches this. Add a pilot or test-group stage, and store the benchmark version with every run.</p>
+
+    <h3>Results and scoring</h3>
+    <p>ManageEngine scores compliance as a percentage per computer, per target group and per policy. NCM reports node by rule pass or fail. <i class="tag ok">verified</i> ServiceNow does not calculate results itself; it imports them by state, Passed and Skipped against Failed, Warning, Error and Unknown, and logs unmatched assets to a missing-asset table. <i class="tag ok">verified</i> Tenable's Change Result rules flip a failed host-audit check to Passed, or back, when a fix was made in a way the scan cannot detect; that changes the asset's compliance percentage and the override and its justification are kept on the rule. <i class="tag ok">verified</i></p>
+    <div class="callout">
+      <p><strong>Status vocabulary to adopt:</strong> Pass · Fail · Manual (needs a human) · Not applicable · Error or Unknown · Excepted. Score = passed ÷ (passed + failed), with excepted and not-applicable excluded and the denominator stated beside the number. Three roll-ups: endpoint, policy, benchmark.</p>
+    </div>
+
+    <h3>Remediation and the ITSM join</h3>
+    <p>ServiceNow groups failed test results into Remediation Tasks by rules with up to six grouping keys; a default rule keyed on Assignment group plus Test ships disabled; one result can belong to several tasks; task assignment rolls down to its results. <i class="tag ok">verified</i> From a task you Create Change, choosing all active results or a filtered set; the CIs join the change's Affected CIs and the results move to Awaiting Implementation; the task resolves when its linked changes resolve; the change can be Emergency, Normal or Standard. <i class="tag ok">verified</i> Tanium pivots from a Comply finding into Enforce or native Patch and Deploy, verified back in Comply. ManageEngine shows guidance only: summary, rationale and step-by-step fix per violation. Automox has no CIS catalogue; each Worklet carries its own evaluation block and remediation block attached to device groups.</p>
+    <p><strong>Ours:</strong> nothing here yet. From a failed rule on N endpoints, offer three doors: <strong>Create Change</strong> with affected CIs attached, <strong>Deploy fix</strong> as a Patch or Package deployment seeded with the endpoints, and <strong>Assign task</strong> grouped by rule rather than one ticket per endpoint. Each door writes a status back on the result, and a re-assessment closes it.</p>
+
+    <h3>Exceptions and waivers</h3>
+    <p>What every product agrees on:</p>
+    <ul>
+      <li><strong>Scope is a rule and a host set.</strong> Qualys exempts certain hosts from controls in a policy. <i class="tag ok">verified</i> Rapid7 overrides one rule at a time, never a group, and the scope depends on where you start: the Policies view covers all assets, the Scanned Assets view adds this asset only and this asset until the next scan. <i class="tag ok">verified</i> ServiceNow scopes an exception to a whole remediation task, so individual results inside it cannot be tracked. <i class="tag warn">unverified</i></li>
+      <li><strong>A reason is mandatory everywhere.</strong> "No known exploits" alone is not a valid justification. <i class="tag warn">unverified</i></li>
+      <li><strong>Approval is routed.</strong> Rapid7 separates submit, review and delete permissions. <i class="tag ok">verified</i> Qualys VMDR for ITSM routes through approver groups, any member can approve, some requests pass three or four stages, a rejection needs a comment, and approvers work from a Pending My Approval queue. <i class="tag ok">verified</i> ServiceNow can be two-level, and an exception cannot be requested if no first-level approver is configured. <i class="tag warn">unverified</i></li>
+      <li><strong>Expiry is standard.</strong> Tenable Accept rules carry a mandatory justification and an expiration <i class="tag warn">unverified</i>; UC Irvine caps accept and recast at one year <i class="tag warn">unverified</i>; Rapid7 reviewers can set an expiry on approval. Practitioner field lists add a next review date, compensating controls and a change-control reference, and say to keep expired exceptions visible until resolved.</li>
+      <li><strong>Two kinds exist.</strong> Tenable.sc separates Accepted Risk, left unfixed at the reported severity, from Recast Risk, where the severity is changed because the organisation disagrees; false positives are labelled recast after verification. <i class="tag warn">unverified</i></li>
+      <li><strong>Raw results stay untouched.</strong> Overlay rules never modify scan data, and Rapid7 writes overrides and reasons into the XCCDF export used for certification review. <i class="tag ok">verified</i></li>
+      <li><strong>The work item follows the exception.</strong> ServiceNow's task is In review while pending, Deferred on approval, back to its previous state on rejection, and back to Open when the exception expires. <i class="tag warn">unverified</i></li>
+    </ul>
+    <div class="callout">
+      <p><strong>Record to design.</strong> An Exception carries the rule ID, benchmark version, endpoints or all, a kind (accepted risk, false positive, compensating control), reason, risk level, compensating controls, owner, approvers, an optional change reference, expires-on, next review, and a status of requested, approved, rejected or expired. The raw result stays Fail; the view shows Excepted with the reason on hover; expiry re-opens the finding.</p>
+    </div>
+
+    <h3>Drift, re-scan and evidence</h3>
+    <p>Run benchmarking as a continuous control check, not a one-time assessment. Check for drift after emergency changes, admin access, platform upgrades and automated repairs, and send unapproved changes to an owner rather than overwriting them. Each policy in an Intune baseline has its own Fix drift action, so one policy can be remediated without republishing the whole baseline, and a drifted policy can be rolled back to its assigned version. Evidence is the scan output, the system state and a log trail operators cannot alter; store the benchmark version with each result so an auditor can re-run and reproduce.</p>
+    <p><strong>Ours:</strong> scans exist, drift does not. Add compliant-since and drifted-on per endpoint and rule, a drift filter on a policy's results, and an export that carries benchmark version, scope, timestamp and exceptions.</p>
+
+    <h2 id="competitors">5. Competitor object models side by side</h2>
+    <p>Nine products, one loop. The exception column is where the endpoint-management vendors are thin and the security scanners are deep.</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Product</th><th>Content unit</th><th>Grouping</th><th>Target</th><th>Results</th><th>Remediation</th><th>Exceptions</th></tr></thead>
+      <tbody>
+        <tr><td><b>ManageEngine</b> VMP, Endpoint Central</td><td>CIS-derived policy (rules)</td><td>Policy Group (platform × profile)</td><td>Target groups</td><td>% per computer, group, policy</td><td>Guidance only</td><td>None</td></tr>
+        <tr><td><b>NinjaOne</b></td><td>Benchmark tailored in console</td><td>Scan policy</td><td>Endpoints</td><td>Report vs internal or external policy</td><td>DSC applied automatically (Windows)</td><td>None</td></tr>
+        <tr><td><b>Tanium</b> Comply + Enforce</td><td>Imported benchmark content + custom checks</td><td>Assessment</td><td>Computer groups</td><td>Assessment results</td><td>Enforce pushes CIS fixes by control ID; re-assess</td><td>None</td></tr>
+        <tr><td><b>Qualys</b> Policy Compliance</td><td>Control in a policy</td><td>Policy</td><td>Hosts</td><td>Control posture</td><td>None</td><td>Host × control, request then approve/reject, multi-stage via ITSM</td></tr>
+        <tr><td><b>Rapid7</b> InsightVM</td><td>Rule in a policy</td><td>Policy</td><td>Assets</td><td>Rule check</td><td>None</td><td>Per rule, scope by entry point, submit/review/delete permissions, expiry</td></tr>
+        <tr><td><b>Tenable</b></td><td>Audit check</td><td>Audit</td><td>Assets</td><td>Pass, Fail, Warning counts</td><td>None</td><td>Change Result, Accept, Recast overlays; raw data untouched</td></tr>
+        <tr><td><b>ServiceNow</b> Configuration Compliance</td><td>Test (from scanner)</td><td>Test group</td><td>CIs</td><td>Imported states</td><td>Remediation Task → Change</td><td>Defers a task; two-level approval</td></tr>
+        <tr><td><b>SolarWinds</b> NCM</td><td>Rule</td><td>Policy → Policy Report</td><td>Nodes by Device_Type + OS</td><td>Node × rule</td><td>None</td><td>None</td></tr>
+        <tr><td><b>Automox</b></td><td>Worklet (check + fix)</td><td>Policy</td><td>Device groups</td><td>Scan</td><td>Worklet remediation block</td><td>None</td></tr>
+      </tbody>
+    </table></div>
+
+    <h2 id="recs">6. Recommendations for our module</h2>
+    <p>Twelve changes, grouped by screen. Keep one word per thing: <strong>Rule · Benchmark · Policy · Assessment</strong> (a run) <strong>· Result</strong> (endpoint by rule) <strong>· Finding</strong> (a failed result) <strong>· Exception</strong>. Do not use violation and finding for the same thing.</p>
+
+    <h3>Admin › Rules</h3>
+    <ol>
+      <li>Show a rule's detail in CIS field order, with Assessment Status, Profile and Severity as pills and framework mappings as chips.</li>
+      <li>Make our own ID per OS version the rule's identity. Show the CIS number as "CIS 5.2.5 in Ubuntu 22.04 v2.0.0". Tags stay tags.</li>
+    </ol>
+    <h3>Admin › Benchmark</h3>
+    <ol start="3">
+      <li>Put a lineage line on custom benchmarks ("Based on …"), a diff view against the parent, and a required reason on each excluded rule.</li>
+      <li>Pin versions. A policy pins a benchmark version; a new CIS version shows as "update available" with a rule diff and is never applied silently.</li>
+      <li>Add a profile filter on Attach Rules (L1 / L2 / STIG). The field already exists.</li>
+    </ol>
+    <h3>Technician › Compliance Policy</h3>
+    <ol start="6">
+      <li>Add a pilot group before fleet rollout, and store the benchmark version on every run.</li>
+      <li>Build a Results tab with the six-state vocabulary, a score with its denominator stated, three roll-ups, severity on each failed rule, and the rule's Remediation Procedure inline on the finding.</li>
+      <li>Put three remediation doors on a finding: Create Change (affected CIs attached), Deploy fix (Patch or Package with the endpoints seeded), Assign task (grouped by rule). Status writes back; a re-assessment closes it.</li>
+      <li>Make exceptions records: request from a finding, an approver queue for the security admin, expiry that re-opens the finding, and an exportable exception register.</li>
+      <li>Add drift: compliant-since and drifted-on per endpoint and rule, a drift filter, and Fix drift per rule.</li>
+      <li>Add an evidence export per run: benchmark version, scope, timestamp, results, and exceptions with reasons.</li>
+    </ol>
+    <h3>Visualization (exists)</h3>
+    <ol start="12">
+      <li>Confirm with the product what the posture bands and the 85% target mean. Competitors score percentages without a universal target, so the target should be a tenant setting.</li>
+    </ol>
+
+    <h2 id="confidence">7. Confidence and caveats</h2>
+    <p><span class="num">24</span> of the <span class="num">97</span> claims went through three-vote verification (the run caps at 25). <span class="num">20</span> came back supported by all three votes, <span class="num">2</span> were refuted, and <span class="num">4</span> never got their votes because the session ended. The other <span class="num">73</span> claims are extraction only; trust them by their source quality below.</p>
+    <ul>
+      <li><strong>Refuted:</strong> that a CCE is the single global identifier for a rule (CCEs are per product and version), and that rule content in products has to follow a regular release cadence (CIS has no fixed schedule; only the monthly announcement email is regular).</li>
+      <li><strong>Unverified:</strong> everything from the UC Irvine Tenable.sc governance page, the Tenable Accept-rule details, and ServiceNow's exception lifecycle.</li>
+      <li><strong>Source quality:</strong> 15 of the 22 sources are primary vendor documentation (CIS, Qualys, Rapid7, Tenable, ServiceNow, ManageEngine, Tanium, SolarWinds, ComplianceAsCode). IBM's deck is secondary. nhimg, oneuptime, natsar and Nerdio are blogs. The THWACK forum thread and the CIS Atlassian KB page were fetched but rated unreliable or came back empty; the numbering-convention point comes from the search snippet of that KB page, not from a fetch.</li>
+      <li><strong>Not covered by the run:</strong> pricing, agent architecture, how competitors present Manual checks in the UI, and any usability research on compliance consoles. A second, narrower run on Manual-check UX and exception-register UX is worth it if those become design questions.</li>
+    </ul>
+
+    <h2 id="sources">8. Sources</h2>
+    <div class="srcs">
+      <p>Pages the research run fetched, by vendor.</p>
+      <h3>CIS</h3>
+      <ul>
+        <li><a href="https://cisecurity.org/cis-benchmarks/cis-benchmarks-faq">CIS Benchmarks FAQ</a></li>
+        <li><a href="https://cisecurity.atlassian.net/wiki/spaces/SCFKB/pages/1331364226/What+is+the+numbering+convention+for+CIS+Benchmarks">CIS KB: numbering convention for CIS Benchmarks</a></li>
+        <li><a href="https://www.cisecurity.org/insights/blog/customize-cis-benchmarks-cis-workbench">CIS blog: tailoring in CIS WorkBench</a></li>
+        <li><a href="https://public.dhe.ibm.com/s390/zos/racf/pdf/nyrug_2024_05_15_cis_benchmark_overview.pdf">IBM: CIS Benchmark overview, NYRUG 2024</a></li>
+        <li><a href="https://complianceascode.readthedocs.io/en/latest/manual/developer/06_contributing_with_content.html">ComplianceAsCode: contributing content</a></li>
+        <li><a href="https://edu.chainguard.dev/compliance/cis-benchmarks/">Chainguard: CIS Benchmarks overview</a></li>
+      </ul>
+      <h3>Endpoint-management vendors</h3>
+      <ul>
+        <li><a href="https://www.manageengine.com/vulnerability-management/help/understanding-compliance-policies.html">ManageEngine: understanding compliance policies</a></li>
+        <li><a href="https://info.manageengine.com/vulnerability-management/cis-compliance.html">ManageEngine: CIS benchmarks and compliance</a></li>
+        <li><a href="https://www.ninjaone.com/docs/new-to-ninjaone/getting-started/security-configuration-management/">NinjaOne: security configuration management</a></li>
+        <li><a href="https://converge.tanium.com/2026/session/4038772/applying-multi-framework-compliance-benchmarks-with-enforce">Tanium Converge 2026: multi-framework benchmarks with Enforce</a></li>
+        <li><a href="https://converge.tanium.com/2026/session/4038753/accelerating-risk-remediation-with-guided-exposure-management">Tanium Converge 2026: guided exposure management</a></li>
+        <li><a href="https://patch.automox.com/automox-worklet-101-guide">Automox: Worklet 101</a></li>
+      </ul>
+      <h3>Security scanners and exceptions</h3>
+      <ul>
+        <li><a href="https://docs.qualys.com/en/vm/latest/module_pc/exceptions/exceptions_lp.htm">Qualys Policy Compliance: manage your exceptions</a></li>
+        <li><a href="https://docs.qualys.com/en/integration/vmdr-itsm/qualys_vmdr/exception_approval.htm">Qualys VMDR for ITSM: exception approval</a></li>
+        <li><a href="https://docs.rapid7.com/insightvm/policy-rule-overrides/">Rapid7 InsightVM: policy rule overrides</a></li>
+        <li><a href="https://docs.tenable.com/vulnerability-management/Content/recast/recast-intro.htm">Tenable: Recast, Accept and Change Result rules</a></li>
+        <li><a href="https://uci.atlassian.net/wiki/spaces/public/pages/31362588/Tenable+SecurityCenter+Accepted+and+Recast+Risk+Guidelines">UC Irvine: Tenable.sc accepted and recast risk guidelines</a></li>
+      </ul>
+      <h3>ITSM and baselines</h3>
+      <ul>
+        <li><a href="https://www.servicenow.com/docs/r/x8~ohSTeWLioGLVI5x3Vgg/j32X6eZjfkXaXS__8Bf~Iw">ServiceNow: remediation tasks and task rules</a></li>
+        <li><a href="https://www.servicenow.com/docs/r/x8~ohSTeWLioGLVI5x3Vgg/Hk3E0N3lPFMETYTJnfqDgg">ServiceNow: create a change request in Configuration Compliance</a></li>
+        <li><a href="https://www.servicenow.com/docs/r/zwMwt0JEh8FTHmrqXNjCAw/JmyzmYsavs3a~YCOFQqmfw">ServiceNow: imported data from Qualys and Tenable</a></li>
+        <li><a href="https://learn.microsoft.com/fi-fi/mem/intune/protect/security-baselines-monitor">Microsoft Learn: monitor security baselines in Intune</a></li>
+        <li><a href="https://nmmhelp.getnerdio.com/hc/en-us/articles/48262934625293">Nerdio: Intune baseline drift</a></li>
+        <li><a href="https://www.recastsoftware.com/?p=15169">Recast Software: CIS Level 1 drift in Intune fleets</a></li>
+      </ul>
+      <h3>Network devices and practitioners</h3>
+      <ul>
+        <li><a href="https://documentation.solarwinds.com/en/Success_Center/NCM/Content/NCM-Policy-reports.htm">SolarWinds NCM: policy reports</a></li>
+        <li><a href="https://documentation.solarwinds.com/en/success_center/ncm/content/ncm-select-a-policy-report.htm">SolarWinds NCM: select a policy report</a></li>
+        <li><a href="https://thwack.solarwinds.com/discussion/comment/271468">THWACK forum thread on STIG and CIS gaps</a></li>
+        <li><a href="https://nhimg.org/faq/how-should-security-teams-use-automated-cis-benchmarking-without-losing-auditabi/">nhimg: automated CIS benchmarking without losing auditability</a></li>
+        <li><a href="https://oneuptime.com/blog/post/2026-09-24-pci-dss-secure-configuration-baselines-exceptions/view">oneuptime: PCI DSS secure configuration baselines and exceptions</a></li>
+        <li><a href="https://natsar.substack.com/p/customizing-configuration-benchmarks">natsar: customizing configuration benchmarks</a></li>
+      </ul>
+    </div>
+  </main>
+</div>

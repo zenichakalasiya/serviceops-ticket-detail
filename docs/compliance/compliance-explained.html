@@ -1,0 +1,337 @@
+<title>Compliance Explained Simply</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  /* Layout: a plain-language explainer — one reading column, big section numbers, a diagram in every section, analogies in tinted "In plain words" boxes. Single committed white look. */
+  :root {
+    --bg: #FFFFFF;
+    --paper: #F7F9FC;
+    --fg: #1D2A3E;
+    --muted: #566578;
+    --line: #DFE5ED;
+    --accent: #3D8BD0;
+    --accent-soft: #EBF5FF;
+    --accent-line: #CFE3F6;
+    --accent-ink: #1E62A3;
+    --ok-bg: #E6F6EE; --ok-fg: #126634;
+    --bad-bg: #FDECEC; --bad-fg: #B91C1C;
+    --warn-bg: #FFF4DF; --warn-fg: #944207;
+    --display: "IBM Plex Serif", Georgia, "Times New Roman", serif;
+    --body: "IBM Plex Sans", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--fg);
+    font-family: var(--body); font-size: 16px; line-height: 1.65;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 0 72px;
+  }
+  main { max-width: 760px; margin: 0 auto; min-width: 0; }
+  header.head { padding-top: 48px; padding-bottom: 28px; border-bottom: 1px solid var(--line); margin-bottom: 8px; }
+  .kicker { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-ink); font-weight: 600; margin: 0 0 12px; }
+  h1 { font-family: var(--display); font-weight: 600; font-size: 36px; line-height: 1.15; margin: 0 0 14px; text-wrap: balance; }
+  .lede { font-size: 18px; color: var(--muted); margin: 0; max-width: 60ch; }
+  section { padding-top: 40px; }
+  .num { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; background: var(--fg); color: #fff; font-size: 14px; font-weight: 600; margin-right: 12px; vertical-align: middle; font-variant-numeric: tabular-nums; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 26px; line-height: 1.25; margin: 0 0 14px; text-wrap: balance; display: flex; align-items: center; gap: 0; }
+  h3 { font-size: 17px; font-weight: 600; margin: 24px 0 8px; }
+  p { margin: 0 0 14px; max-width: 68ch; }
+  ul, ol { margin: 0 0 14px; padding-left: 24px; max-width: 68ch; }
+  li { margin-bottom: 6px; }
+  li::marker { color: var(--muted); }
+  strong { font-weight: 600; }
+  .plain { background: var(--accent-soft); border: 1px solid var(--accent-line); border-radius: 8px; padding: 16px 20px; margin: 18px 0 20px; max-width: 68ch; }
+  .plain .lbl { display: block; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-ink); font-weight: 600; margin-bottom: 6px; }
+  .plain p { margin: 0; }
+  .plain p + p { margin-top: 8px; }
+  figure { margin: 20px 0 24px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); padding: 16px 16px 10px; overflow-x: auto; }
+  figure pre.mermaid { margin: 0; display: flex; justify-content: center; min-width: 0; }
+  figcaption { font-size: 13px; color: var(--muted); margin-top: 10px; text-align: center; }
+  .tablewrap { overflow-x: auto; margin: 0 0 18px; border: 1px solid var(--line); border-radius: 8px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+  th, td { text-align: left; vertical-align: top; padding: 11px 14px; border-bottom: 1px solid var(--line); }
+  th { background: var(--paper); font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); font-weight: 600; white-space: nowrap; }
+  tr:last-child td { border-bottom: 0; }
+  td b { font-weight: 600; }
+  .rule { border: 1px solid var(--line); border-radius: 8px; padding: 16px 20px; margin: 16px 0 20px; max-width: 68ch; background: #fff; }
+  .rule .id { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  .rule .title { font-weight: 600; font-size: 17px; margin-bottom: 10px; }
+  .rule dl { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 6px 14px; margin: 0; font-size: 14.5px; }
+  .rule dt { color: var(--muted); }
+  .rule dd { margin: 0; }
+  .pill { display: inline-block; font-size: 12px; font-weight: 500; line-height: 16px; padding: 4px 10px; border-radius: 4px; white-space: nowrap; }
+  .ok { background: var(--ok-bg); color: var(--ok-fg); }
+  .bad { background: var(--bad-bg); color: var(--bad-fg); }
+  .warn { background: var(--warn-bg); color: var(--warn-fg); }
+  .story { counter-reset: step; max-width: 68ch; }
+  .story li { list-style: none; position: relative; padding-left: 40px; margin-bottom: 12px; }
+  .story li::before { counter-increment: step; content: counter(step); position: absolute; left: 0; top: 2px; width: 26px; height: 26px; border-radius: 50%; background: var(--paper); border: 1px solid var(--line); font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; color: var(--muted); }
+  .script { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 18px 22px; font-family: var(--display); font-size: 18px; line-height: 1.6; max-width: 68ch; }
+  @media (max-width: 560px) {
+    header.head { padding-top: 28px; }
+    h1 { font-size: 30px; }
+    h2 { font-size: 23px; }
+    .rule dl { grid-template-columns: 1fr; gap: 2px 0; }
+    .rule dt { margin-top: 8px; }
+  }
+</style>
+
+<main>
+  <header class="head">
+    <p class="kicker">ServiceOps · Compliance, explained from zero</p>
+    <h1>What compliance is, and why an IT service desk needs it</h1>
+    <p class="lede">No technical background needed. Each part has a picture you can point at while you explain it to someone else.</p>
+  </header>
+
+  <section id="s1">
+    <h2><span class="num">1</span>Start with the idea</h2>
+    <p>Every computer has hundreds of settings: how long a password must be, whether the screen locks when you walk away, whether a guest can log in without a password, whether an old and risky feature is switched on. Most of those settings arrive in whatever state the manufacturer chose, and that state is often convenient rather than safe.</p>
+    <p><strong>Compliance</strong> means two things at once: the computer's settings match an agreed safe standard, and you can <em>prove</em> it to someone who asks.</p>
+    <div class="plain">
+      <span class="lbl">In plain words</span>
+      <p>Think of a fire-safety inspection for a building. There is a written code (the standard), an inspector walks every floor with a checklist (the scan), each item passes or fails (the result), the building manager fixes what failed (remediation), and the signed report goes in a file for the authorities (the evidence).</p>
+      <p>Compliance does exactly that, for computers instead of buildings.</p>
+    </div>
+    <figure>
+<pre class="mermaid">
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#EBF5FF','primaryBorderColor':'#3D8BD0','primaryTextColor':'#1D2A3E','lineColor':'#566578','fontFamily':'IBM Plex Sans, Segoe UI, sans-serif','fontSize':'14px'}}}%%
+flowchart LR
+  A["Written standard<br/>(the safe settings)"] --> B["Check every computer<br/>against it"]
+  B --> C["Each setting<br/>passes or fails"]
+  C --> D["Fix what failed"]
+  D --> B
+  C --> E["Report for auditors<br/>and management"]
+</pre>
+      <figcaption>Compliance in one picture: a standard, a check, fixes, and a report. The check repeats, because settings drift.</figcaption>
+    </figure>
+  </section>
+
+  <section id="s2">
+    <h2><span class="num">2</span>Who is CIS, and why do they write the standard?</h2>
+    <p><strong>CIS</strong> is the <strong>Center for Internet Security</strong>, a non-profit organisation. Thousands of security experts from companies, governments and universities around the world volunteer there. For each operating system and major product, they argue it out and agree on a list of safe settings. When they reach agreement, CIS publishes the list. That agreement process is why companies trust it: no single vendor wrote it.</p>
+    <p>The published list for one product is called a <strong>CIS Benchmark</strong>. There is one for Windows 11, one for Windows Server 2022, one for Ubuntu 22.04, one for Cisco switches, one for Microsoft 365, and so on. The benchmark is free to read as a PDF. The machine-readable version that scanners use is sold to software vendors through a membership, which is why products like ours ship CIS content rather than asking customers to write their own.</p>
+    <div class="plain">
+      <span class="lbl">Why not just write our own rules?</span>
+      <p>A company could, but then every auditor and every customer would ask "says who?". CIS is the answer everyone already accepts. Regulations for card payments (PCI DSS), for health data (HIPAA) and for government systems all point at CIS or something equivalent. Using CIS means the hard argument about what "safe" means has already been had by people whose job it is.</p>
+    </div>
+  </section>
+
+  <section id="s3">
+    <h2><span class="num">3</span>What is a rule?</h2>
+    <p>A benchmark is a long checklist. Each line on it is a <strong>rule</strong> (CIS calls it a recommendation). A rule is one specific setting and the safe value for it. The Windows 11 benchmark has several hundred rules; Ubuntu's has about the same.</p>
+    <p>Every rule is written the same way, and that structure is what our product shows on a rule's detail page. Here is a real one, in plain words:</p>
+    <div class="rule">
+      <div class="id">CIS Windows 11 · rule 2.3.7.3 · Level 1 · Automated</div>
+      <div class="title">Lock the screen after 15 minutes of inactivity</div>
+      <dl>
+        <dt>What</dt><dd>The computer must lock itself when nobody has touched it for 15 minutes or less.</dd>
+        <dt>Why</dt><dd>Someone walking past an unlocked, unattended computer can read or change anything the signed-in person could.</dd>
+        <dt>What it costs</dt><dd>People who step away briefly have to type their password again when they return.</dd>
+        <dt>How to check</dt><dd>Open the security policy and read the inactivity limit. If it is 0 or above 900 seconds, the rule fails.</dd>
+        <dt>How to fix</dt><dd>Set the inactivity limit to 900 seconds or less, either by hand or by pushing a setting to every computer at once.</dd>
+      </dl>
+    </div>
+    <p>Three labels on every rule matter for the design:</p>
+    <ul>
+      <li><strong>Level 1 or Level 2.</strong> Level 1 rules are safe to apply everywhere and rarely break anything. Level 2 rules are stricter and can get in people's way, so they are for places where security matters more than convenience, such as a server room or a bank. Level 2 includes everything in Level 1 and adds more.</li>
+      <li><strong>Automated or Manual.</strong> Automated means a scanner can check it by itself. Manual means a person has to look, for example "the data centre door has a lock". Our product can only score the automated ones.</li>
+      <li><strong>Severity.</strong> How bad it is if the rule fails. A weak password rule is high; a cosmetic setting is low.</li>
+    </ul>
+    <div class="plain">
+      <span class="lbl">One thing to get right in the product</span>
+      <p>The rule's number, like 2.3.7.3, is only meaningful inside one benchmark. The same rule can have a different number in the Windows 10 benchmark, and numbers get reused when CIS retires a rule. Tags are labels that many rules share. So neither the number nor the tags can be the rule's identity. The product needs its own ID for each rule in each operating system version, and shows the CIS number and the tags as information beside it.</p>
+    </div>
+  </section>
+
+  <section id="s4">
+    <h2><span class="num">4</span>Rules, benchmarks and policies: how they stack</h2>
+    <p>Three words carry the whole module. They nest inside each other.</p>
+    <figure>
+<pre class="mermaid">
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#EBF5FF','primaryBorderColor':'#3D8BD0','primaryTextColor':'#1D2A3E','lineColor':'#566578','fontFamily':'IBM Plex Sans, Segoe UI, sans-serif','fontSize':'14px'}}}%%
+flowchart TB
+  subgraph P["Policy — the job to run"]
+    direction TB
+    B["Benchmark — the checklist for ONE operating system version<br/>e.g. CIS Ubuntu 22.04 v2.0.0, tailored for us"]
+    T["Which computers<br/>e.g. the 40 Ubuntu servers in Mumbai"]
+    S["How often<br/>e.g. every Sunday at 2 am"]
+  end
+  subgraph B2["Inside the benchmark"]
+    direction LR
+    R1["Rule 1.1.1<br/>Separate /tmp partition"]
+    R2["Rule 5.2.5<br/>No root login over SSH"]
+    R3["Rule 5.4.1<br/>Password 14+ characters"]
+    R4["… several hundred more"]
+  end
+  B -.-> B2
+</pre>
+      <figcaption>A policy says: run this benchmark, on these computers, this often. A benchmark is a list of rules for one operating system version.</figcaption>
+    </figure>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Word</th><th>What it is</th><th>Everyday equivalent</th><th>Who owns it in our product</th></tr></thead>
+      <tbody>
+        <tr><td><b>Rule</b></td><td>One setting and its safe value</td><td>One line on a checklist</td><td>CIS writes them; the admin reads them</td></tr>
+        <tr><td><b>Benchmark</b></td><td>The full checklist for one operating system version, which the company may tailor</td><td>The fire code for one type of building</td><td>Security admin</td></tr>
+        <tr><td><b>Policy</b></td><td>A benchmark, applied to a chosen set of computers, on a schedule</td><td>The inspection plan: which buildings, how often</td><td>Technician</td></tr>
+        <tr><td><b>Assessment</b> (a scan)</td><td>One run of a policy</td><td>One inspection visit</td><td>Runs by itself</td></tr>
+        <tr><td><b>Result</b></td><td>One computer × one rule: pass, fail, or needs a human</td><td>One ticked or crossed line on the clipboard</td><td>Produced by the scan</td></tr>
+        <tr><td><b>Exception</b></td><td>A written, approved decision to accept a failing rule for a while</td><td>A signed waiver with an expiry date</td><td>Technician asks, security admin approves</td></tr>
+      </tbody>
+    </table></div>
+    <p><strong>Why one benchmark per operating system version?</strong> Because the settings genuinely differ. Windows 11 has settings Windows 10 never had, and the safe value for a Linux setting is a different file on a different version. That is also why our Benchmark screen locks a benchmark to one Type and one OS version, and only offers that version's rules.</p>
+    <p><strong>Why "tailored"?</strong> No company applies a CIS benchmark exactly as published. A rule might break an application the business depends on, so the security admin removes it from the company's copy and writes down why. That company copy, based on the CIS original, is the benchmark a policy actually uses.</p>
+  </section>
+
+  <section id="s5">
+    <h2><span class="num">5</span>Why does an IT service desk (ITSM) need this?</h2>
+    <p>Dedicated security scanners already exist. The reason compliance belongs inside ServiceOps is that a failed rule is not useful until somebody fixes it, and fixing is what a service desk already does all day.</p>
+    <figure>
+<pre class="mermaid">
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#EBF5FF','primaryBorderColor':'#3D8BD0','primaryTextColor':'#1D2A3E','lineColor':'#566578','fontFamily':'IBM Plex Sans, Segoe UI, sans-serif','fontSize':'14px'}}}%%
+flowchart LR
+  C["Compliance scan finds:<br/>screen lock OFF on 120 laptops"]
+  C --> T["Task<br/>one piece of work,<br/>not 120 tickets"]
+  C --> K["Package deployment<br/>push the setting to all 120"]
+  C --> G["Change request<br/>when the fix needs approval"]
+  T --> R["Re-scan: now PASS"]
+  K --> R
+  G --> R
+  A["Asset list (CMDB)<br/>already knows every laptop"] --> C
+</pre>
+      <figcaption>ServiceOps already has the list of machines, the people, the work tracking and the tools that push fixes. Compliance plugs a scan into that.</figcaption>
+    </figure>
+    <p>Four reasons, in the order a manager would give them:</p>
+    <ol>
+      <li><strong>Attackers look for wrong settings first.</strong> Most break-ins start with a setting left in its convenient default, not with clever code. Compliance closes those doors before anyone tries them.</li>
+      <li><strong>Someone will ask for proof.</strong> A payment-card auditor, a health regulator, a big customer's security questionnaire, or cyber-insurance. "We think we are fine" is not an answer. A dated report that says which computers passed which rules is.</li>
+      <li><strong>The desk already owns the fix.</strong> The same technicians, the same change approval, the same patch and package tools. Without the join, a security team emails a spreadsheet of failures and the desk re-types it into tickets.</li>
+      <li><strong>Settings drift.</strong> A technician relaxes a setting while troubleshooting and forgets to put it back. A new laptop arrives set up differently. Only a repeated check catches that.</li>
+    </ol>
+  </section>
+
+  <section id="s6">
+    <h2><span class="num">6</span>The two people, and what each one does</h2>
+    <p>Our module has two users on purpose. They are different jobs with different knowledge.</p>
+    <figure>
+<pre class="mermaid">
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#EBF5FF','primaryBorderColor':'#3D8BD0','primaryTextColor':'#1D2A3E','lineColor':'#566578','fontFamily':'IBM Plex Sans, Segoe UI, sans-serif','fontSize':'14px'}}}%%
+flowchart LR
+  subgraph ADM["Security admin · Admin side"]
+    direction TB
+    A1["Reads the CIS rule catalogue"]
+    A2["Builds the company benchmark<br/>(picks Level 1 or 2, removes rules that break apps, writes down why)"]
+    A3["Approves or rejects exceptions"]
+    A1 --> A2
+  end
+  subgraph TEC["Technician · Technician side"]
+    direction TB
+    T1["Creates a policy:<br/>benchmark + computers + schedule"]
+    T2["Reads results, fixes failures"]
+    T3["Asks for an exception<br/>when a fix is not possible"]
+    T1 --> T2 --> T3
+  end
+  A2 --> T1
+  T3 --> A3
+  A3 -. approved, with expiry date .-> T2
+</pre>
+      <figcaption>The admin writes the rulebook. The technician applies it to real machines and fixes what fails. Exceptions cross from one side to the other.</figcaption>
+    </figure>
+    <div class="plain">
+      <span class="lbl">The hospital version</span>
+      <p>The infection-control officer writes the hygiene rules for the whole hospital and decides when a ward may skip one. Ward staff follow the rules every shift, report what they could not do, and ask for a documented exception when a patient's situation makes a rule impossible.</p>
+      <p>A third person never edits anything but reads everything: the auditor. They want to see the score, the history, and every exception with its reason and its approver.</p>
+    </div>
+  </section>
+
+  <section id="s7">
+    <h2><span class="num">7</span>The whole flow, start to finish</h2>
+    <p>This is the picture to use when explaining the module in one go. Steps 1 to 4 are built today; 5 to 8 are what the research says every competitor has and we still need.</p>
+    <figure>
+<pre class="mermaid">
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#EBF5FF','primaryBorderColor':'#3D8BD0','primaryTextColor':'#1D2A3E','lineColor':'#566578','fontFamily':'IBM Plex Sans, Segoe UI, sans-serif','fontSize':'14px'}}}%%
+flowchart TB
+  S1["1 · Rule catalogue<br/>CIS content, updated by the vendor"]
+  S2["2 · Benchmark<br/>the company's tailored checklist for one OS version"]
+  S3["3 · Policy<br/>benchmark + computers + schedule"]
+  S4["4 · Scan runs"]
+  S5["5 · Results<br/>each computer × each rule: pass / fail / manual<br/>and a score, e.g. 87%"]
+  S6["6 · Fix<br/>task · package deployment · change request"]
+  S7["7 · Exception<br/>accept the risk, with a reason, an approver and an expiry date"]
+  S8["8 · Report and evidence<br/>score over time, drift, the exception register"]
+  S1 --> S2 --> S3 --> S4 --> S5
+  S5 -- "failed and fixable" --> S6
+  S5 -- "failed and cannot fix now" --> S7
+  S6 -- "re-scan" --> S4
+  S7 -- "expiry re-opens it" --> S5
+  S5 --> S8
+  S7 --> S8
+</pre>
+      <figcaption>The loop. A fix goes back to a new scan; an exception changes how a result reads until it expires.</figcaption>
+    </figure>
+    <h3>What each step produces</h3>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Step</th><th>Question it answers</th><th>What you see on screen</th></tr></thead>
+      <tbody>
+        <tr><td><b>1 Catalogue</b></td><td>What does CIS say is safe?</td><td>A list of rules, each with what / why / how to check / how to fix</td></tr>
+        <tr><td><b>2 Benchmark</b></td><td>Which of those rules apply to us?</td><td>A named checklist for one OS version, with rules grouped by section</td></tr>
+        <tr><td><b>3 Policy</b></td><td>Which computers, and how often?</td><td>A policy card: benchmark, endpoints, schedule, who to notify</td></tr>
+        <tr><td><b>4 Scan</b></td><td>Did it run?</td><td>A run with a date and a status</td></tr>
+        <tr><td><b>5 Results</b></td><td>What passed, what failed, where?</td><td>A grid of computers × rules, a score per computer and per policy, a list of failures by severity</td></tr>
+        <tr><td><b>6 Fix</b></td><td>Who fixes it, and how?</td><td>Buttons on a failure: Create change · Deploy fix · Assign task, with status written back</td></tr>
+        <tr><td><b>7 Exception</b></td><td>Can we live with this one, and until when?</td><td>A request form, an approval queue for the admin, an expiry that re-opens the failure</td></tr>
+        <tr><td><b>8 Report</b></td><td>Can we prove it?</td><td>Score over time, drift since the last scan, an export with the benchmark version and every exception</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section id="s8">
+    <h2><span class="num">8</span>A worked example you can retell</h2>
+    <p>Follow one laptop through the loop.</p>
+    <ol class="story">
+      <li>Priya in Finance has a Windows 11 laptop. It is in the company's asset list, so ServiceOps already knows it exists.</li>
+      <li>The security admin built a benchmark called <strong>Windows 11 Laptops, Level 1</strong> from the CIS original. She removed one rule about USB storage because Finance needs USB drives for the bank's token, and wrote that reason down.</li>
+      <li>A technician created a policy: that benchmark, all 300 Windows 11 laptops, every Sunday night.</li>
+      <li>Sunday's scan checks 280 rules on each laptop. Priya's laptop fails two: the screen-lock timeout is 30 minutes instead of 15 <span class="pill bad">Fail</span>, and an old file-sharing protocol is still enabled <span class="pill bad">Fail</span>. The other 278 pass <span class="pill ok">Pass</span>. Her laptop scores 99%; the policy scores 91% across all 300.</li>
+      <li>The technician opens the screen-lock failure. 120 laptops have the same problem. She clicks <strong>Deploy fix</strong>, which creates one package deployment to all 120, instead of 120 tickets.</li>
+      <li>The file-sharing failure is different: Finance's old printer needs that protocol. The technician clicks <strong>Request exception</strong>: this rule, Finance's 12 laptops, reason "legacy printer, replacement ordered", expiry in 90 days.</li>
+      <li>The security admin sees the request in her approval queue and approves it. Those 12 results now show <span class="pill warn">Excepted</span> instead of Fail, with the reason on hover. The raw result still says Fail underneath, so nothing is hidden from an auditor.</li>
+      <li>Next Sunday's scan runs. Screen lock now passes on all 120. The policy score is 97%. In 90 days the exception expires and the file-sharing failure comes back on its own, so nobody has to remember.</li>
+      <li>In March the auditor asks for proof. The admin exports the policy's report: benchmark version, which laptops, the date of each scan, every result, and the exception register with reasons and approvers.</li>
+    </ol>
+  </section>
+
+  <section id="s9">
+    <h2><span class="num">9</span>Words you will hear, and what they mean</h2>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Word</th><th>Plain meaning</th></tr></thead>
+      <tbody>
+        <tr><td><b>CIS</b></td><td>Center for Internet Security, the non-profit whose experts agree the safe settings</td></tr>
+        <tr><td><b>CIS Benchmark</b></td><td>CIS's published checklist of safe settings for one product, e.g. Windows 11</td></tr>
+        <tr><td><b>Recommendation / rule</b></td><td>One line on that checklist: a setting and its safe value</td></tr>
+        <tr><td><b>Level 1 / Level 2</b></td><td>Basic safety everyone should have / stricter safety that may get in the way</td></tr>
+        <tr><td><b>STIG</b></td><td>The US military's equivalent checklist. CIS now publishes a STIG profile instead of its old Level 3</td></tr>
+        <tr><td><b>Automated / Manual</b></td><td>A scanner can check it / a person has to look</td></tr>
+        <tr><td><b>Profile</b></td><td>Which set of rules you chose to apply (Level 1, Level 2, STIG)</td></tr>
+        <tr><td><b>Tailoring</b></td><td>Changing the CIS checklist into the company's own version, with reasons written down</td></tr>
+        <tr><td><b>Endpoint</b></td><td>Any computer the scan can reach: laptop, server, sometimes a switch or firewall</td></tr>
+        <tr><td><b>Posture / score</b></td><td>The percentage of rules that pass, for one computer or a whole policy</td></tr>
+        <tr><td><b>Finding</b></td><td>One failed result: this rule, on this computer</td></tr>
+        <tr><td><b>Remediation</b></td><td>Fixing a finding</td></tr>
+        <tr><td><b>Exception / waiver</b></td><td>A written, approved, time-limited decision to accept a failing rule</td></tr>
+        <tr><td><b>Drift</b></td><td>A computer that used to pass and now fails, because something changed</td></tr>
+        <tr><td><b>Evidence</b></td><td>The dated report an auditor accepts as proof</td></tr>
+        <tr><td><b>PCI DSS, HIPAA, NIST</b></td><td>Regulations and frameworks that require this kind of proof; CIS rules map onto them</td></tr>
+        <tr><td><b>XCCDF, SCAP, CCE</b></td><td>The machine-readable file formats and IDs behind the scenes. Developers care; you do not need to</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section id="s10">
+    <h2><span class="num">10</span>How to say it in thirty seconds</h2>
+    <div class="script">
+      "Every computer has hundreds of security settings, and most of them start out convenient rather than safe. CIS is a non-profit where thousands of experts agree on what safe looks like, one checklist per operating system. Our Compliance module takes that checklist, lets the security admin tailor it, and lets a technician run it against the company's computers on a schedule. Each rule passes or fails on each machine, so you get a score and a list of what to fix. Because it lives inside ServiceOps, a failure becomes a task, a deployment or a change request with one click, and when a rule genuinely cannot be fixed, there is a proper exception with a reason, an approver and an expiry date. The report at the end is the proof an auditor asks for."
+    </div>
+  </section>
+</main>

@@ -1,4 +1,5 @@
-/* Compliance Visualization — Overview tab.
+/* Compliance Dashboard — the body of #/compliance-dashboard (it was the Overview tab of the
+ * old Compliance Visualization page until 23 Oct 2026).
  *
  * Built from the DASHBOARD module's own widget pieces, so it reads as one more board: the
  * widget card (`.dc-WidgetCard` — header band, title, info, body), the KPI number, the ECharts

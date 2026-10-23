@@ -21,7 +21,9 @@ export type Page =
   | 'vulnerabilities' | 'detected-cves'
   | 'bom'
   // Brought in from the upstream prototype (Oct 2026 sync).
-  | 'software-meter' | 'projects' | 'my-approvals' | 'automatic-patch-tests' | 'automatic-patch-deployments' | 'package-deployments' | 'registry-deployments' | 'compliance-policies' | 'compliance-visualization' | 'knowledge' | 'tasks' | 'reports' | 'my-team' | 'icons' | 'views-lab'
+  | 'software-meter' | 'projects' | 'my-approvals' | 'automatic-patch-tests' | 'automatic-patch-deployments' | 'package-deployments' | 'registry-deployments' | 'knowledge' | 'tasks' | 'reports' | 'my-team' | 'icons' | 'views-lab'
+  // Compliance, technician side: the four pages of the sidebar's Compliance flyout.
+  | 'compliance-dashboard' | 'compliance-benchmarks' | 'compliance-policies' | 'compliance-endpoints'
   // The Dashboard module (ported from ServiceOps_Dashboard_v2, Oct 2026): one board, and the full listing.
   | 'dashboard' | 'dashboards'
   // The requester's Support Portal (default portal), from the profile popup.
@@ -41,7 +43,8 @@ const PAGES: readonly Page[] = [
   'patches', 'patch-deployments', 'endpoints',
   'vulnerabilities', 'detected-cves',
   'bom',
-  'software-meter', 'projects', 'my-approvals', 'automatic-patch-tests', 'automatic-patch-deployments', 'package-deployments', 'registry-deployments', 'compliance-policies', 'compliance-visualization', 'knowledge', 'tasks', 'reports', 'my-team', 'icons', 'views-lab',
+  'software-meter', 'projects', 'my-approvals', 'automatic-patch-tests', 'automatic-patch-deployments', 'package-deployments', 'registry-deployments', 'knowledge', 'tasks', 'reports', 'my-team', 'icons', 'views-lab',
+  'compliance-dashboard', 'compliance-benchmarks', 'compliance-policies', 'compliance-endpoints',
   'dashboard', 'dashboards',
   'portal',
   'admin',
@@ -96,9 +99,6 @@ export interface Route {
   workflow?: string;
   /** The board open on #/dashboard/<id>. Absent = the default board. */
   dashboard?: string;
-  /** Compliance Visualization's tab — #/compliance-visualization/<tab>[/<sub-tab>], e.g.
-      "explorer/resources". Absent = Overview. */
-  viz?: string;
 }
 
 /** The address of one portal, as a slug. Names are unique (see `uniquePageName`), so the slug is
@@ -110,10 +110,13 @@ export const portalSlug = (name: string, id: string) =>
  *  rendering nothing — a mistyped link should land somewhere, not on a blank screen. */
 export function parseHash(hash: string): Route {
   const parts = hash.replace(/^#\/?/, '').split('/').filter(Boolean);
+  /* The old Compliance Visualization page (removed 23 Oct 2026) became the Compliance Dashboard
+     plus the Benchmark and Endpoints pages; a saved link to it lands on the dashboard, and the
+     canonicalising effect rewrites the bar. */
+  if (parts[0] === 'compliance-visualization') return { page: 'compliance-dashboard' };
   const page = parts[0] as Page | undefined;
   if (!page || !PAGES.includes(page)) return { page: DEFAULT_PAGE };
   if (page === 'dashboard') return { page, dashboard: parts[1] };
-  if (page === 'compliance-visualization') return { page, viz: parts.slice(1, 3).join('/') || undefined };
   if (page !== 'admin') return { page };
   const slug = parts[1];
   if (!slug || !adminRouteBySlug(slug)) return { page };
@@ -130,7 +133,6 @@ export function formatHash(route: Route): string {
     return route.portal ? `#/admin/${route.admin}/${route.portal}` : `#/admin/${route.admin}`;
   }
   if (route.page === 'dashboard' && route.dashboard) return `#/dashboard/${route.dashboard}`;
-  if (route.page === 'compliance-visualization' && route.viz) return `#/compliance-visualization/${route.viz}`;
   return `#/${route.page}`;
 }
 
@@ -166,8 +168,10 @@ const PAGE_TITLES: Record<Page, string> = {
   'automatic-patch-deployments': 'Automatic Patch Deployments',
   'package-deployments': 'Package Deployments',
   'registry-deployments': 'Registry Deployments',
+  'compliance-dashboard': 'Compliance Dashboard',
+  'compliance-benchmarks': 'Compliance Benchmarks',
   'compliance-policies': 'Compliance Policies',
-  'compliance-visualization': 'Compliance Visualization',
+  'compliance-endpoints': 'Compliance Endpoints',
   'knowledge': 'Knowledge',
   'tasks': 'Tasks',
   'reports': 'Reports',

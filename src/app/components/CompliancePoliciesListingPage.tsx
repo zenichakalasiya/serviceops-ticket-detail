@@ -9,7 +9,9 @@
    form; a row click opens the policy's detail page in the shared drawer. */
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { ShieldCheck } from 'lucide-react';
 import { AssetRegisterPage } from './AssetRegisterPage';
+import { postureColor, postureOf, scoreColor } from './complianceVizData';
 import { POLICY_FILTER_ATTRS, POLICY_QUICK_FILTERS } from './complianceFilterAttrs';
 import {
   benchmarkOf, getPolicy, nextRun, openPolicyEditor, policyStore, resolvedEndpoints, scheduleLabel, scoreOf, statusOf, usePolicies,
@@ -22,6 +24,7 @@ import type { Ticket } from './TicketListPage';
 const toRow = (p: CompliancePolicy): Ticket => {
   const b = benchmarkOf(p.benchmarkId);
   const created = new Date(p.createdAt);
+  const score = scoreOf(p.lastScan);
   return {
     id: p.id,
     subject: p.name,
@@ -34,9 +37,13 @@ const toRow = (p: CompliancePolicy): Ticket => {
     x_cpPolicy: true,
     x_benchmark: b?.name ?? '—',
     x_type: b?.type ?? '',
+    x_osVersion: b?.osVersion ?? '',
+    x_profile: b?.profile ?? '',
     x_endpoints: resolvedEndpoints(p).length,
-    x_cpScore: scoreOf(p.lastScan),
+    x_cpScore: score,
+    x_posture: postureOf(score) ?? 'Not assessed',
     x_nonCompliant: p.lastScan?.nonCompliant ?? 0,
+    x_failedChecks: p.lastScan?.failed ?? 0,
     x_lastExecution: p.lastScan ? new Date(p.lastScan.at) : null,
     x_nextExecution: p.enabled ? nextRun(p.schedule) : null,
     x_schedule: scheduleLabel(p.schedule),
@@ -83,6 +90,65 @@ const buildCards = (rows: Ticket[]): StatCard[] => {
   ];
 };
 
+/* ── Policy tile — the Tiles layout (moved here from the old Compliance Visualization page's
+   Policies tab, 23 Oct 2026). Name and benchmark on top, the score and the endpoint count as
+   the two numbers, the last scan's failed checks at the foot. ───────────────────────────── */
+function PolicyTile({ row, onOpen }: { row: Ticket; onOpen: () => void }) {
+  const r = row as any;
+  const score: number | null = r.x_cpScore;
+  return (
+    <article
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(e) => { if (e.key === 'Enter') onOpen(); }}
+      className="flex cursor-pointer flex-col overflow-hidden rounded-lg border border-[#E5E7EB] bg-white transition-all hover:border-[#C9D4E0] hover:shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#3D8BD0]"
+    >
+      <header className="flex items-start gap-2.5 px-4 pb-3 pt-3.5">
+        <span className="flex size-7 flex-shrink-0 items-center justify-center rounded bg-[#3D8BD0]/10 text-[#3D8BD0]"><ShieldCheck size={15} /></span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="flex-shrink-0 whitespace-nowrap rounded bg-[#e8f4fd] px-1.5 py-0.5 text-[11px] font-semibold text-[#3D8BD0]">{row.id}</span>
+            <h3 className="truncate text-[14px] font-semibold text-[#1E293B]" title={row.subject}>{row.subject}</h3>
+          </div>
+          <div className="mt-1 truncate text-[12px] text-[#64748B]" title={r.x_benchmark}>{r.x_benchmark}</div>
+          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+            {r.x_type && <span className="rounded-sm bg-[#F1F5F9] px-1.5 py-0.5 text-[11px] text-[#475569]">{r.x_type}</span>}
+            {r.x_osVersion && <span className="rounded-sm bg-[#F1F5F9] px-1.5 py-0.5 text-[11px] text-[#475569]">{r.x_osVersion}</span>}
+            {r.x_profile && <span className={`rounded-sm px-1.5 py-0.5 text-[11px] font-semibold ${r.x_profile === 'L1' ? 'bg-[#EBF5FF] text-[#3D8BD0]' : 'bg-[#F3EEFF] text-[#7C3AED]'}`}>{r.x_profile}</span>}
+            {r.x_enabled === 'Disabled' && <span className="rounded-sm bg-[#F1F5F9] px-1.5 py-0.5 text-[11px] text-[#94A3B8]">Disabled</span>}
+          </div>
+        </div>
+        <span className="flex flex-shrink-0 items-center gap-1.5 text-[12px] text-[#4A5568]" title="Posture on the last scan">
+          <span className="size-2 rounded-full" style={{ backgroundColor: postureColor(r.x_posture) }} />{r.x_posture}
+        </span>
+      </header>
+
+      <div className="grid grid-cols-2 border-t border-[#EEF2F6]">
+        <div className="px-4 py-3">
+          <div className="text-[12px] text-[#64748B]">Compliance</div>
+          <div className="mt-0.5 text-[24px] font-semibold leading-8 tabular-nums" style={{ color: score === null ? '#94A3B8' : scoreColor(score) }}>
+            {score === null ? '—' : score}{score !== null && <span className="ml-0.5 text-[13px] font-medium">%</span>}
+          </div>
+          <span className="mt-1 block h-1.5 overflow-hidden rounded-full bg-[#EEF2F6]">
+            <span className="block h-full rounded-full" style={{ width: `${score ?? 0}%`, backgroundColor: scoreColor(score) }} />
+          </span>
+        </div>
+        <div className="border-l border-[#EEF2F6] px-4 py-3">
+          <div className="text-[12px] text-[#64748B]">Endpoints</div>
+          <div className="mt-0.5 text-[24px] font-semibold leading-8 tabular-nums text-[#1E293B]">{r.x_endpoints}</div>
+          <div className="mt-0.5 text-[11px] text-[#94A3B8]">{r.x_nonCompliant} non-compliant</div>
+        </div>
+      </div>
+
+      <footer className="mt-auto flex items-center justify-between bg-[#F7F9FC] px-4 py-2.5">
+        <span className="text-[12px] text-[#64748B]">Failed checks on the last scan</span>
+        <span className={`text-[18px] font-semibold tabular-nums ${score !== null && r.x_failedChecks ? 'text-[#DC2626]' : 'text-[#94A3B8]'}`}>{score === null ? '—' : r.x_failedChecks}</span>
+      </footer>
+    </article>
+  );
+}
+
 export function CompliancePoliciesListingPage({ onNavigate }: { onNavigate?: (page: string) => void }) {
   const policies = usePolicies();
   const rows = useMemo(() => policies.map(toRow), [policies]);
@@ -104,6 +170,16 @@ export function CompliancePoliciesListingPage({ onNavigate }: { onNavigate?: (pa
         quickFilters={POLICY_QUICK_FILTERS}
         layouts={['list-kpi', 'list']}
         buildCards={buildCards}
+        /* Tiles sits beside List and KPI in the layout switch; List & KPI stays the default. */
+        renderTiles={(tiles, openRow) => (
+          tiles.length ? (
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(340px,1fr))] gap-3 px-6 py-3">
+              {tiles.map((t) => <PolicyTile key={t.id} row={t} onOpen={() => openRow(t)} />)}
+            </div>
+          ) : (
+            <div className="px-6 py-16 text-center text-[13px] text-[#9CA3AF]">No policy matches this search and filter.</div>
+          )
+        )}
         searchFields={['x_benchmark', 'x_tags', 'x_createdBy']}
         /* Status is the result of the last scan — the system sets it, nobody picks it. */
         lockedCells={['status']}

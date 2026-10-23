@@ -8,7 +8,7 @@
  * "resource" it talks about is a ServiceOps ENDPOINT. */
 import { benchmarkOf, endpointResults, findingsOf, NOW, scoreOf } from './compliancePolicyData';
 import type { ComplianceEndpoint, CompliancePolicy, Finding } from './compliancePolicyData';
-import { ruleById, SEVERITIES } from './complianceData';
+import { BENCHMARKS_SEED, benchmarkRuleIds, ruleById, SEVERITIES } from './complianceData';
 import type { Benchmark, ComplianceRule, Severity } from './complianceData';
 
 /* ── Posture: how clean one endpoint (or policy) is, in four bands ─────────────────────── */
@@ -101,10 +101,30 @@ export interface RuleStat {
   score: number | null;
 }
 
+/* ── Per benchmark (the technician's Benchmark page) ───────────────────────────────────── */
+
+export interface BenchmarkStat {
+  benchmark: Benchmark;
+  /** Policies that run this benchmark. */
+  policies: CompliancePolicy[];
+  rules: number;
+  /** Distinct endpoints those policies assess. */
+  endpoints: number;
+  checked: number;
+  failing: number;
+  /** Rules failing on at least one endpoint. */
+  failingRules: number;
+  score: number | null;
+  posture: Posture | null;
+  /** Newest scan among its policies. */
+  lastScan: string | null;
+}
+
 /* ── The whole estate ─────────────────────────────────────────────────────────────────── */
 
 export interface VizSnapshot {
   stats: PolicyStat[];
+  benchmarks: BenchmarkStat[];
   findings: Finding[];
   passed: number;
   failed: number;
@@ -165,9 +185,26 @@ export function vizSnapshot(policies: CompliancePolicy[]): VizSnapshot {
   }
   for (const r of byRule.values()) r.score = pct(r.checked - r.failing, r.checked);
 
+  /* Benchmarks: every one the catalogue holds, scored from the policies that run it. A benchmark
+     no policy uses still lists — the technician can see it is there and unused. */
+  const benchmarks: BenchmarkStat[] = BENCHMARKS_SEED.map((b) => {
+    const ps = policies.filter((p) => p.benchmarkId === b.id);
+    const fs = ps.flatMap(findingsOf);
+    const failingIds = new Set(fs.filter((f) => !f.passed).map((f) => f.ruleId));
+    const eps = new Set(ps.flatMap((p) => endpointResults(p).map((r) => r.endpoint.id)));
+    const okCount = fs.filter((f) => f.passed).length;
+    const bScore = pct(okCount, fs.length);
+    const lastScan = ps.reduce<string | null>((acc, p) => (p.lastScan && (!acc || p.lastScan.at > acc) ? p.lastScan.at : acc), null);
+    return {
+      benchmark: b, policies: ps, rules: benchmarkRuleIds(b).length, endpoints: eps.size,
+      checked: fs.length, failing: fs.length - okCount, failingRules: failingIds.size,
+      score: bScore, posture: postureOf(bScore), lastScan,
+    };
+  });
+
   const score = pct(passed, findings.length);
   const snap: VizSnapshot = {
-    stats, findings, passed, failed, score, failedBySeverity,
+    stats, benchmarks, findings, passed, failed, score, failedBySeverity,
     endpoints: [...byEp.values()],
     rules: [...byRule.values()],
     trend: trendTo(score ?? 0),

@@ -17,7 +17,7 @@ import {
   IconMyTeam,
   IconBom,
 } from './SidebarIcons';
-import { ChartColumn, Shapes, ShieldCheck, LayoutTemplate, Cpu, AppWindow, Boxes, Recycle, KeyRound, Gauge, FileText, ShoppingCart, Rocket, Monitor, ClipboardCheck, Settings } from 'lucide-react';
+import { Shapes, ShieldCheck, LayoutTemplate, Cpu, AppWindow, Boxes, Recycle, KeyRound, Gauge, FileText, ShoppingCart, Rocket, Monitor, ClipboardCheck, Settings, LayoutDashboard, ListChecks } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
 
 // Asset sub-modules surfaced in the hover flyout (grouped with dividers).
@@ -202,11 +202,14 @@ function PackageNavItem({ activePage, onNavigate }: { activePage?: string; onNav
   );
 }
 
-// Compliance sub-modules surfaced in the hover flyout: the policies themselves, and the
-// visualisation of what their scans found (Overview · Policies · Explorer).
+// Compliance sub-modules surfaced in the hover flyout, in the order the flow reads: see the
+// estate (Dashboard), the checklists (Benchmark), the policies that run them, the machines.
+// The three read-only pages were the old Compliance Visualization page's tabs (23 Oct 2026).
 const COMPLIANCE_ITEMS: { icon: React.ReactNode; label: string; page: string }[] = [
+  { icon: <LayoutDashboard size={16} />, label: 'Dashboard', page: 'compliance-dashboard' },
+  { icon: <ListChecks size={16} />, label: 'Benchmark', page: 'compliance-benchmarks' },
   { icon: <ShieldCheck size={16} />, label: 'Compliance Policy', page: 'compliance-policies' },
-  { icon: <ChartColumn size={16} />, label: 'Compliance Visualization', page: 'compliance-visualization' },
+  { icon: <Monitor size={16} />, label: 'Endpoints', page: 'compliance-endpoints' },
 ];
 
 /** Compliance nav item with a hover flyout listing its sub-modules (mirrors PackageNavItem). */
@@ -330,7 +333,7 @@ export function Sidebar({ activePage, onNavigate }: SidebarProps) {
         />
         <PatchNavItem activePage={activePage} onNavigate={onNavigate} />
         <PackageNavItem activePage={activePage} onNavigate={onNavigate} />
-        {/* Compliance — sits directly below Package: Compliance Policy + Compliance Visualization. */}
+        {/* Compliance — sits directly below Package: Dashboard · Benchmark · Compliance Policy · Endpoints. */}
         <ComplianceNavItem activePage={activePage} onNavigate={onNavigate} />
         <NavItem icon={<IconProject size={20} />} title="Project" active={activePage === 'projects'} onClick={() => onNavigate?.('projects')} />
         <NavItem icon={<IconKnowledge size={20} />} title="Knowledge" active={activePage === 'knowledge'} onClick={() => onNavigate('knowledge')} />
