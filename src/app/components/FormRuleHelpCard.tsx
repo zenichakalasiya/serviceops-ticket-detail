@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AlertTriangle, ArrowRight, ArrowUpRight, BookOpen, ChevronDown, CirclePlay, Copy, History, Lightbulb, ShieldAlert, Split, Undo2, Workflow } from 'lucide-react';
+import { AlertTriangle, ArrowRight, BookOpen, ChevronDown, CirclePlay, Copy, History, Lightbulb, ShieldAlert, Split, Undo2, Workflow } from 'lucide-react';
 import { ConflictArt } from './FormRuleRelatedView';
 import { ReverseActionArt, SimilarRuleArt } from './FormRuleArt';
 
@@ -10,7 +10,7 @@ import { ReverseActionArt, SimilarRuleArt } from './FormRuleArt';
  * section starts open.
  *
  * ⚠️ Deliberately LIGHTER than the doc guide: the full, searchable guide is the GLOBAL Help guide
- * popup (header ⓘ, `openGlobalHelp`), which this card links to at its foot.
+ * popup (header ⓘ, `openGlobalHelp`).
  */
 
 /** Opens the global Help guide popup on this module. */
@@ -193,9 +193,6 @@ export function FormRuleHelpSections({ onWatch, look = 'grouped' }: { onWatch: (
     </div>
 
     <div className="mt-5 flex items-center gap-4 text-[12.5px]">
-      <button type="button" onClick={openGlobalHelp} className="inline-flex items-center gap-1 text-[12.5px] font-medium text-[#3D8BD0] hover:underline">
-        Open the full guide <ArrowUpRight size={13} />
-      </button>
       <button type="button" onClick={onWatch} className="inline-flex items-center gap-1 text-[12.5px] font-medium text-[#3D8BD0] hover:underline">
         <CirclePlay size={13} /> Watch the 1-min video
       </button>

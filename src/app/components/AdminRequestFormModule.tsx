@@ -4,7 +4,7 @@ import { Copy, ExternalLink, Filter, GripVertical, Pencil, Plus, Search, Trash2,
 import { toast } from 'sonner';
 import { Pagination } from './Pagination';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
-import { DEFAULT_FORM_FIELDS, EVENT_OPTIONS, SEED_RULES, uid } from './formRuleData';
+import { DEFAULT_FORM_FIELDS, EVENT_OPTIONS, SEED_RULES, holdsValue, uid } from './formRuleData';
 import type { FormField, FormRule, RuleApplies, RuleEvent, RuleExecution } from './formRuleData';
 import { ToggleSwitch } from './FormRuleControls';
 import { FormRuleEditor } from './FormRuleEditor';
@@ -115,8 +115,11 @@ export function AdminRequestFormModule({ tab, onTab, onEditor, openRuleId }: {
   /** A rule reached by a deep link opens on step 2 (the rule builder); everything else on step 1. */
   const [startStep, setStartStep] = useState(() => (openRuleId ? 1 : 0));
   /* Once that editor closes, the address goes back to the listing so a refresh does not reopen it. */
+  /** Set when the editor was opened from a Form Builder field — that field arrives as a condition. */
+  const [prefill, setPrefill] = useState<string | undefined>();
   const closeEditor = () => {
     setEditing(null);
+    setPrefill(undefined);
     setStartStep(0);
     if (/#\/admin\/request-form-rules\/./.test(location.hash)) history.replaceState(null, '', '#/admin/request-form-rules');
   };
@@ -186,12 +189,13 @@ export function AdminRequestFormModule({ tab, onTab, onEditor, openRuleId }: {
       {illusPage}
       <div style={{ display: illus ? 'none' : 'contents' }}>
       <FormRuleEditor
-        key={editing}
+        key={editing + (prefill ?? '')}
+        prefillFieldId={prefill}
         onOpenIllustrations={openIllus}
         rule={current}
         rules={rules}
         onOpenRule={(id) => setEditing(id)}
-        fields={fields}
+        fields={fields.filter(holdsValue)}
         startStep={startStep}
         onCancel={closeEditor}
         onSave={(data) => {
@@ -244,7 +248,13 @@ export function AdminRequestFormModule({ tab, onTab, onEditor, openRuleId }: {
       {view === 'matrix' ? (
         <AdminFormRuleMatrix rules={rules} fields={fields} onEditRule={(id) => setEditing(id)} />
       ) : tab === 'builder' ? (
-        <AdminFormBuilder fields={fields} onFields={setFields} rules={rules} />
+        <AdminFormBuilder
+          fields={fields}
+          onFields={setFields}
+          rules={rules}
+          onCreateRule={(fieldId) => { setPrefill(fieldId); setStartStep(0); setEditing('new'); }}
+          onReuseRule={(ruleId, fieldId) => { setPrefill(fieldId); setStartStep(1); setEditing(ruleId); }}
+        />
       ) : (
         <>
           <div className="mb-3 flex flex-wrap items-center gap-3">

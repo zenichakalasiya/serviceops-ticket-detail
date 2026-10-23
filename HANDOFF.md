@@ -226,7 +226,7 @@ Nothing mid-flight.
 
 # Handoff — 2026-10-22 15:07 (Form Rules session)
 
-## Latest (21–22 Oct) — Form Builder redesign, NOT committed or published
+## Latest (21–22 Oct) — Form Builder redesign, published 23 Oct 2026
 Read CLAUDE.md → **Form Builder redesign (21 Oct 2026, Zeni …)** first.
 - **Lesson from Zeni (22 Oct):** when she attaches reference images, copy them EXACTLY. I had
   adapted them to the design system and she was unhappy ("have you make UI same as my attached image????").

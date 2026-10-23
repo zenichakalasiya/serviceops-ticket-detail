@@ -5,7 +5,12 @@
  * drift the first time somebody renamed a field. */
 
 export type FieldKind =
-  | 'text' | 'textarea' | 'dropdown' | 'multiselect' | 'user' | 'number' | 'date' | 'checkbox' | 'attachment';
+  | 'text' | 'textarea' | 'dropdown' | 'multiselect' | 'user' | 'number' | 'date' | 'checkbox' | 'attachment'
+  /* Added with the Form Builder redesign (21 Oct 2026). Section and Label hold no value, so rules never offer them. */
+  | 'richtext' | 'radio' | 'section' | 'label' | 'dependent';
+
+/** One option of a Dependent field — options nest, a child is only offered once its parent is picked. */
+export interface OptionNode { id: string; label: string; children: OptionNode[] }
 
 export interface FormField {
   id: string;
@@ -18,18 +23,45 @@ export interface FormField {
   helpText?: string;
   width: 'half' | 'full';
   options?: string[];
+  /** Dependent fields only: the option tree. `options` is kept as its flattened labels so rules can test it. */
+  optionTree?: OptionNode[];
+  /** Dependent fields only. */
+  leafOnly?: boolean;
+  fullHierarchy?: boolean;
+  /** What a requester may do with the field. Technician "Required" is `required`. */
+  requesterView?: boolean;
+  requesterEdit?: boolean;
+  requesterRequired?: boolean;
+  aiAccessible?: boolean;
 }
 
+/** Fields that hold a value — the only ones a rule can test or change. */
+export const holdsValue = (f: FormField) => f.kind !== 'section' && f.kind !== 'label';
+
 export const FIELD_KINDS: { kind: FieldKind; label: string; icon: string }[] = [
-  { kind: 'text', label: 'Text', icon: 'Type' },
+  { kind: 'text', label: 'Text Input', icon: 'Type' },
   { kind: 'textarea', label: 'Text Area', icon: 'AlignLeft' },
+  { kind: 'richtext', label: 'Rich Text Area', icon: 'PenLine' },
   { kind: 'dropdown', label: 'Dropdown', icon: 'ChevronDownSquare' },
-  { kind: 'multiselect', label: 'Multi-select', icon: 'ListChecks' },
-  { kind: 'user', label: 'People', icon: 'User' },
+  { kind: 'multiselect', label: 'Multi-Select Dropdown', icon: 'ListChecks' },
+  { kind: 'date', label: 'Datetime', icon: 'Calendar' },
   { kind: 'number', label: 'Number', icon: 'Hash' },
-  { kind: 'date', label: 'Date', icon: 'Calendar' },
   { kind: 'checkbox', label: 'Checkbox', icon: 'CheckSquare' },
+  { kind: 'radio', label: 'Radio', icon: 'CircleDot' },
   { kind: 'attachment', label: 'Attachment', icon: 'Paperclip' },
+  { kind: 'section', label: 'Section', icon: 'SquareDashed' },
+  { kind: 'label', label: 'Label', icon: 'Heading' },
+  { kind: 'dependent', label: 'Dependent', icon: 'Network' },
+  { kind: 'user', label: 'People', icon: 'User' },
+];
+
+/** The builder's palette, grouped the way the product groups it. People is system-only. */
+export const PALETTE_GROUPS: { title: string; kinds: FieldKind[] }[] = [
+  { title: 'Text Fields', kinds: ['text', 'textarea', 'richtext'] },
+  { title: 'Selection Fields', kinds: ['dropdown', 'multiselect', 'date'] },
+  { title: 'Input Fields', kinds: ['number', 'checkbox', 'radio'] },
+  { title: 'Special Fields', kinds: ['attachment', 'section', 'label'] },
+  { title: 'Advance Fields', kinds: ['dependent'] },
 ];
 
 export const kindLabel = (k: FieldKind) => FIELD_KINDS.find((f) => f.kind === k)?.label ?? k;
@@ -97,12 +129,13 @@ export type Operator =
 
 export const operatorsFor = (k: FieldKind): Operator[] => {
   switch (k) {
-    case 'text': case 'textarea': return ['contains', 'does not contain', 'is', 'is not', 'starts with', 'is empty', 'is not empty'];
-    case 'dropdown': case 'multiselect': case 'user': return ['is', 'is not', 'is empty', 'is not empty'];
+    case 'text': case 'textarea': case 'richtext': return ['contains', 'does not contain', 'is', 'is not', 'starts with', 'is empty', 'is not empty'];
+    case 'dropdown': case 'multiselect': case 'user': case 'radio': case 'dependent': return ['is', 'is not', 'is empty', 'is not empty'];
     case 'number': return ['is', 'is not', 'greater than', 'less than', 'is empty', 'is not empty'];
     case 'date': return ['is', 'before', 'after', 'is empty', 'is not empty'];
     case 'checkbox': return ['is checked', 'is not checked'];
     case 'attachment': return ['is empty', 'is not empty'];
+    case 'section': case 'label': return [];
   }
 };
 

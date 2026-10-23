@@ -123,7 +123,18 @@ const toDraft = (r: FormRule): Draft => ({
   actions: r.actions.map((a) => ({ ...a, fieldIds: [...a.fieldIds], value: [...a.value] })),
 });
 
-const choiceKinds = ['dropdown', 'multiselect', 'user'];
+const choiceKinds = ['dropdown', 'multiselect', 'user', 'radio', 'dependent'];
+
+/** The draft the editor opens on. Opened from a field in the Form Builder (Create Rule / Reuse Rule),
+ *  that field arrives as a CONDITION (Zeni, 21 Oct 2026): a new rule's first group, or a new group
+ *  added to an existing rule. Its operator and value are left for the admin. */
+const seedDraft = (rule: FormRule | undefined, fields: FormField[], prefillFieldId?: string): Draft => {
+  const d = rule ? toDraft(rule) : emptyDraft();
+  const f = prefillFieldId ? fields.find((x) => x.id === prefillFieldId) : undefined;
+  if (!f) return d;
+  const group = { ...blankGroup('And'), conditions: [{ ...blankCondition(), fieldId: f.id, op: (operatorsFor(f.kind)[0] ?? '') as Condition['op'] }] };
+  return { ...d, groups: [...d.groups, group] };
+};
 const flip = (j: 'And' | 'Or'): 'And' | 'Or' => (j === 'And' ? 'Or' : 'And');
 
 /** A step: round tinted badge, a heading whose first word carries the step colour, then its body. */
@@ -201,7 +212,9 @@ function JoinToggle({ value, onChange }: { value: 'And' | 'Or'; onChange: (v: 'A
   );
 }
 
-export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRule, onOpenIllustrations, startStep = 0 }: {
+export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRule, onOpenIllustrations, startStep = 0, prefillFieldId }: {
+  /** Opened from a Form Builder field: that field is added as a condition. */
+  prefillFieldId?: string;
   /** Opens the illustrations page (the guide's and popups' pictures, for developers). */
   onOpenIllustrations?: () => void;
   /** The step to open on — 1 lands straight on the rule builder (a rule opened from another tab). */
@@ -216,8 +229,11 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
   onCancel: () => void;
   onSave: (r: Omit<FormRule, 'id' | 'createdAt' | 'conflicts' | 'enabled'>) => void;
 }) {
-  const [draft, setDraft] = useState<Draft>(() => (rule ? toDraft(rule) : emptyDraft()));
-  const initial = useMemo(() => JSON.stringify(rule ? toDraft(rule) : emptyDraft()), [rule]);
+  const [draft, setDraft] = useState<Draft>(() => seedDraft(rule, fields, prefillFieldId));
+  /* A NEW rule started from a field is not "changed" yet (its first draft IS the baseline — the seed
+     mints ids, so it cannot be rebuilt to compare); an existing rule that gained the field is. */
+  const [newBaseline] = useState(() => JSON.stringify(draft));
+  const initial = useMemo(() => (rule ? JSON.stringify(toDraft(rule)) : newBaseline), [rule, newBaseline]);
   const [tried, setTried] = useState(false);
   /** Where a confirmed leave goes: back to the list, or into another rule. */
   const [confirmLeave, setConfirmLeave] = useState<false | 'list' | string>(false);
