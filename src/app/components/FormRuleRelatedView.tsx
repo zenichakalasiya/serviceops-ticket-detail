@@ -390,28 +390,29 @@ export function SimilarRulesView({ similar, fields, draft, conditionLines, condi
      What the panel holds: the actions that MATCH yours, if there are any; otherwise the rule's own
      actions, for reference; otherwise no panel at all. Never both — "matches" is the answer when it
      exists, and the rest of the rule is one click away on Update this rule. */
-  const actionCard = (text: string, label: string, tone: string, icon: React.ReactNode) => (
-    <div key={text} className="rounded-lg bg-white px-3.5 py-3">
-      <div className="flex items-center gap-1.5 text-[12px] font-medium" style={{ color: tone }}>{icon}{label}</div>
-      <div className="mt-1 text-[15px] font-medium leading-snug text-[#1D2A3E]">{text}</div>
-    </div>
-  );
-  const group = (title: string, hint: string, cards: React.ReactNode[]) => (
+  /* ONE white box of points (Zeni, 23 Oct 2026 — two-up cards took too much room for real rule
+     counts): every action of the selected rule, 13px, matching ones FIRST with a green check and
+     a quiet "Matches yours" tag, the rest with a grey dot. */
+  const all = cur ? [...cur.common.map((t) => ({ t, match: true })), ...cur.others.map((t) => ({ t, match: false }))] : [];
+  const panel = !cur || all.length === 0 ? null : (
     <div className="rounded-xl bg-[#F4F6FA] p-3">
-      <div className="sticky top-[28px] z-10 -mx-3 -mt-3 mb-0 flex items-center gap-2 rounded-t-xl bg-[#F4F6FA] px-3.5 pb-2.5 pt-3">
-        <span className="text-[14px] font-semibold text-[#1D2A3E]">{title}</span>
-        <span className="text-[12px] text-[#98A2B3]">{hint}</span>
-        <span className="ml-auto text-[12px] font-medium tabular-nums text-[#64748B]">{cards.length}</span>
+      <div className="mb-2.5 flex items-center gap-2 px-0.5">
+        <span className="text-[13px] font-semibold text-[#1D2A3E]">Actions</span>
+        <span className="text-[12px] text-[#98A2B3]">{cur.common.length ? `${cur.common.length} of ${all.length} match yours` : 'for reference — none match yours'}</span>
       </div>
-      <div className="grid grid-cols-1 gap-2.5 @[520px]:grid-cols-2">{cards}</div>
+      <ul className="flex flex-col gap-2 rounded-lg bg-white px-3.5 py-3">
+        {all.map(({ t, match }) => (
+          <li key={t} className="flex items-center gap-2 text-[13px] leading-5 text-[#364658]">
+            {match
+              ? <Check size={13} strokeWidth={2.5} className="flex-shrink-0 text-[#12B76A]" />
+              : <span className="mx-[4px] size-1.5 flex-shrink-0 rounded-full bg-[#98A2B3]" />}
+            <span className="min-w-0">{t}</span>
+            {match && <span className="ml-auto flex-shrink-0 rounded bg-[#ECFDF3] px-1.5 py-px text-[11px] font-medium text-[#027A48]">Matches yours</span>}
+          </li>
+        ))}
+      </ul>
     </div>
   );
-  const panel = !cur ? null
-    : cur.common.length > 0
-      ? group('Matches your rule', 'it already does this', cur.common.map((t) => actionCard(t, 'Also in your rule', '#12B76A', <Check size={12} strokeWidth={2.5} />)))
-      : cur.others.length > 0
-        ? group("This rule's actions", 'for reference — none match yours', cur.others.map((t) => actionCard(t, 'Only in this rule', '#64748B', <span className="size-1.5 rounded-full bg-[#98A2B3]" />)))
-        : null;
 
   const detail = cur && (
     <div className="@container flex flex-col gap-1">

@@ -70,6 +70,11 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   imported or hooked (a `ReferenceError` that blanks the page at runtime) and a duplicate key in an
   object literal (one of the pair is silently dead). Both shipped green through `npm run build` in
   September 2026 and were caught only by running the above.
+- ⚠️ **A green local build does NOT mean the Pages build passes.** Several sessions share this working
+  tree, so a committed file can import a file that is still UNTRACKED: it builds here and fails in CI
+  ("Could not resolve …"), and the live site silently stays on the last good build. It happened on
+  23 Oct 2026 with `components/workflow/`. Before pushing, check that no tracked file imports an
+  untracked one, and after pushing confirm the Actions run succeeded.
 - ⚠️ **Known pre-existing failure:** `portalWidgetSpec.ts` has a TS1117 duplicate key —
   `fields: [], packs: []` sitting beside the action cards' real field list (line 921 as of 22 Sep
   2026 — it moves with every edit above it, so grep the pair rather than trusting a number). It is on `main`, esbuild

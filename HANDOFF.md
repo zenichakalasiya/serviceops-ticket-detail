@@ -1,3 +1,59 @@
+# Handoff — 2026-10-23 18:14 (Form Rules: Show Rules, Similar rules sidebar, deploy fix)
+
+> Sessions share this file. **This top part is the newest session**; older notes follow unchanged
+> below the dividers.
+
+## Read first
+CLAUDE.md › the two Form Builder bullets (the 23 Oct "Show Rules replaces Create Rule" note) and the
+"Similar rules sidebar — common strip + conflicts-style detail" bullet under Request Form Management.
+
+## What we worked on this session
+Picked up the Form Rule session (359d166d, which hit its usage limit) and finished its last ask, then
+reworked the Similar rules sidebar in the rule editor. Also found and fixed why the live site had
+stopped deploying.
+
+## Completed
+- **Form Builder** (`AdminFormBuilder.tsx`, `FormFieldRulesPanel.tsx`): 8px field gaps, no "N Rules"
+  pills, a **Show Rules** hover tab on fields a rule uses, opening a read-only Rules on <field> sidebar
+  (no Create New Rule / Reuse Rule). Pushed as f82c9d2.
+- **Deploy fix**: every Pages build since 4b86a36 failed because `src/app/components/workflow/` was
+  imported by AdminPage but never committed. Committed it as dc91134; the site deploys again.
+- **Similar rules sidebar** (`FormRuleCommon.tsx`, `FormRuleRelatedView.tsx`): "Common trigger &
+  conditions" is a flat strip without the actions row, 16px between trigger and conditions. Pushed as
+  2b3c39a. Then the rule detail became ONE grey "Actions" panel with ONE white box of 13px points,
+  matching actions first with a green check + "Matches yours" tag (published with this handoff).
+
+## In progress
+Nothing mid-flight.
+
+## Next steps
+- Zeni to confirm what "left card will have actions which matches current rule" meant: matches first
+  in the white box (built), matches listed under each rule name in the left list, or a two-column box.
+- Demo data has no similar rule whose actions match the current rule's, so the green "Matches yours"
+  state is unseen; seed one if Zeni wants to see it.
+- Form Builder: the 40px hover toolbar now overlaps the field above it (8px row gap). Option: sit it
+  just inside the tile's top edge. `FieldConfigurePanel` is unreachable dead code: keep or delete.
+- Older Form Rule open questions: is Type (Custom/System) editable; AI Accessible tooltip wording;
+  Hint Text = placeholder and Description = line under the field?; remove "Open the full guide" from
+  hidden V1/V4 guides too?
+- The `push` skill (`.claude/skills/push`) still names Ronak's upstream repo and `git add -A`; update it.
+
+## Decisions made
+- Commit only Form Rule files + CLAUDE.md/HANDOFF.md, never other sessions' work (Form Rule session rule).
+- Similar rules detail mirrors the conflicts sidebar's panel shape so the two read as one.
+
+## Gotchas & notes
+- Other tabs' transcripts can live in `~/.claude/projects/d--Motadata-…` (the OTHER profile), not
+  `~/.claude-pro`. Extract user messages only; transcripts reach 200 MB.
+- A local build passing does not mean CI passes: an untracked file that a committed file imports
+  breaks only the CI build. Check with a "tracked file imports untracked file" scan before pushing.
+- When another session leaves the dev server broken, verify in a throwaway `git worktree` with a
+  node_modules JUNCTION on another port. Remove the junction with `cmd /c rmdir`, never Remove-Item.
+- Git Bash strips backslashes inside heredocs and sed: write probe scripts with the Write tool.
+- ⚠️ **Never run `git worktree remove --force` on a worktree holding a node_modules junction**: git follows the junction and deletes the REAL node_modules. It happened this session; fixed by moving the damaged folder aside and running `pnpm install --frozen-lockfile` (2 min). If the dev server on 5200 acts oddly, restart it.
+
+---
+
 # Handoff — 2026-10-23 15:55 (Compliance research + technician side split into four pages)
 
 > Sessions share this file. **This top part is the newest session**; older notes follow unchanged
