@@ -2840,6 +2840,20 @@ too or every asset 404s.
 
 Upstream original: https://github.com/ronak-patel-motadata/ServiceOps-Ticket-Detail-
 
+## Module versions (since 23 Oct 2026)
+Every module keeps its OWN versions (Support Portal v1, v2…; Form Rules v1, v2…), each a frozen commit
+at a permanent link — proof of the flow we proposed before / after a discussion with dev and backend.
+- All versions: https://zenichakalasiya.github.io/serviceops-ticket-detail/versions/ ·
+  one version: `…/versions/<module id>/<version>/` (opens that module's screen).
+- ⚠️ **ALWAYS ASK ZENI before making or changing a version: "new version, or update the current one?"**
+  Never decide it yourself. A version freezes a COMMITTED state only.
+- Registry: `versions/versions.json` (22 modules, all v1 at `2b3c39a`, 23 Oct 2026). How-to:
+  `versions/README.md`. CI: `scripts/build-versions.mjs` (run by deploy.yml after the main build)
+  builds each pinned commit ONCE onto the `versions-builds` branch and copies it into `dist/versions/`.
+- Work from other `D:\Motadata` folders is versioned HERE once it has been moved into this project.
+- ⚠️ Testing locally from Git Bash: `--base=/serviceops-…` gets rewritten to a Windows path
+  (`C:/Program Files/Git/…`) — run vite builds with a custom base from PowerShell.
+
 ## Handoff
 Latest session state is in [HANDOFF.md](HANDOFF.md) — read it first.
 

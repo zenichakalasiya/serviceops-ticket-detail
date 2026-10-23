@@ -60,3 +60,6 @@ ds-bundle/
 .design-sync/learnings/
 .design-sync/node_modules
 ds-types/
+
+# Module versions: CI worktree of the versions-builds branch
+.vb/

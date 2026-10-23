@@ -6,7 +6,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  # write: scripts/build-versions.mjs pushes newly built module versions to the versions-builds branch.
+  contents: write
   pages: write
   id-token: write
 
@@ -20,6 +21,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Full history: module versions are built from older commits (see versions/versions.json).
+          fetch-depth: 0
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -37,6 +41,11 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+      # Module versions → dist/versions/. Each pinned commit is built once and kept on the
+      # versions-builds branch, so this is quick unless a new version was just added.
+      - name: Build module versions
+        run: node scripts/build-versions.mjs
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
