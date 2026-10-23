@@ -1,0 +1,1223 @@
+/* HAND-OWNED since phase 2 (22 Oct 2026). Started as scripts/port-workflow-linear.mjs's scoped copy of
+   the Linear builder's CSS (node-skin.css + the page's <style>); now edited here as components move
+   onto the product's look, so the script will not overwrite it. */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&display=swap');
+@layer utilities {
+   /* the bottom toolbar uses the host app's font (must stay the first rule) */
+/* Node-view skin for the embedded Linear view.
+   Everything here is scoped to html.embed (set in index.html's <head> only
+   when this page runs inside the node-canvas app), so the standalone V8
+   build is untouched. V8's behaviour and markup stay exactly as they are —
+   this file only restyles, one component at a time, to match the Node
+   view's own look (tokens in workflow-canvas.html's :root). */
+
+/* 1 · Accent — V8's indigo → the Node view's blue. Every focus ring, link,
+   selected row and the Save & Publish button read these two variables. */
+.wfl-scope[data-theme="light"]{
+  --accent:#3d8bd0;
+  --accent2:#3279ba;
+  /* the trigger (WHEN) had its own, different blue — same Node-view blue now,
+     with its chip/hover tints derived from it */
+  --c-when:#3d8bd0; --c-when-bg:#e6f0f9; --c-when-h:#f4f9fd;
+}
+
+/* 2 · Picker popup (Trigger / What happens next / every field & value
+   picker) — the Node view's popover chrome: its border, shadow, radius,
+   hover tint, search box and slate text. Content is V8's own, untouched.
+   Hooks: [data-pop-root] is V8's; [data-searchbox] and [data-pop-help] are
+   two attributes added to index.html for this file. */
+.wfl-scope[data-theme="light"]{
+  --border2:#dfe5ed;                                   /* the Node view's one border colour */
+  --pop-hover:rgba(223,229,237,.45);
+  --shadow-pop:0 14px 36px -14px rgba(54,70,88,.38),0 3px 10px -4px rgba(54,70,88,.16);
+}
+.wfl-scope [data-pop-root],
+.wfl-scope [data-pop-help]{
+  --text:#364658; --ink-mid:#364658; --muted:#7b8fa5; --faint:#a5bad0;   /* Node-view slate text, popup only */
+  --border:rgba(223,229,237,.6);
+}
+/* ⚠️ Form elements and headings INHERIT their type, as in the source's Tailwind v3 preflight.
+   This product's theme.css (@layer base) gives a bare <button>/<label>/<input>/<h1>–<h4> 16px — so
+   every control here that relied on inheriting its row's size rendered 16px inside an 11–13px line
+   (the "Clear 10? Keep Clear" confirm in the multi-select was the visible case). :where() keeps this at
+   zero specificity, so any element that sets its own size with a class still wins. */
+:where(.wfl-scope) :where(button, input, select, textarea, optgroup){ font-family:inherit; font-size:100%; font-weight:inherit; line-height:inherit; }
+:where(.wfl-scope) :where(label){ font-size:inherit; font-weight:inherit; line-height:inherit; }
+:where(.wfl-scope) :where(h1, h2, h3, h4, h5, h6){ font-size:inherit; font-weight:inherit; }
+
+/* (phase 2) The popover's radius, the help card and the search box are now drawn in
+   LinearBuilder.tsx with the product's RuleSelect classes — their skin overrides were removed. */
+
+/* 3 · Canvas ground — the Node canvas's own grey and dot grid, so the
+   floating sidebar card and toolbar sit on the same surface in both views. */
+.wfl-scope[data-theme="light"]{ --grain:#d8e0ea; }
+.wfl-scope [data-canvas]{background-color:#f7f9fb;}
+.wfl-scope .canvas-layer{background-image:radial-gradient(#d8e0ea 1.3px,transparent 1.3px);}
+/* the dim laid over the flow while a form is open — tinted with the same grey, not white */
+.wfl-scope [data-canvas] [style*="var(--bg) 62%"]{background:rgba(247,249,251,.62) !important;}
+
+/* 4 · Sidebar — the Node view's drawer: a floating white card (14px radius,
+   1px border, soft slate shadow) inset 10px from the edge, instead of a
+   flush full-height panel. [data-nf="side"] is the <aside>. */
+.wfl-scope [data-nf="side"]{
+  --text:#364658; --ink-mid:#364658; --muted:#7b8fa5; --faint:#a5bad0;
+  --border:rgba(223,229,237,.6); --border2:#dfe5ed;
+  background:#f7f9fb !important;border-left:none !important;box-sizing:border-box;
+}
+.wfl-scope [data-nf="side"]:not(.w-0){padding:10px 10px 10px 0;}
+.wfl-scope [data-nf="side"] > *{
+  background:#fff !important;border:1px solid #dfe5ed;border-radius:14px;overflow:hidden;
+  box-shadow:0 10px 30px -14px rgba(54,70,88,.3),0 2px 6px rgba(54,70,88,.05);
+}
+/* header: 14px/500 title, 11px description */
+.wfl-scope [data-nf="side"] .font-semibold{font-weight:500;}
+.wfl-scope [data-nf="side"] .font-bold{font-weight:600;}
+/* close button — the Node drawer's 24px bordered hover box */
+.wfl-scope [data-nf="close"]{
+  width:24px;height:24px;border:.8px solid #dfe5ed;border-radius:6.4px;color:#7b8fa5 !important;
+}
+.wfl-scope [data-nf="close"] svg{width:12px;height:12px;}
+
+/* 4a · Field labels — sentence case, 12px regular, gray (was 11px bold CAPS) */
+.wfl-scope [data-nf="side"] label.uppercase,
+.wfl-scope [data-nf="side"] .uppercase{
+  text-transform:none;letter-spacing:0;font-size:12px;font-weight:400;color:#7b8fa5 !important;
+}
+
+/* 4b · Inputs, text areas, dropdown buttons and their wrapper boxes — white,
+   1px border, 6px radius, 12px text; blue border on focus. V8 marks every
+   such box with the same inline "panel2 fill + border2 border" pair. */
+.wfl-scope [data-nf="side"] [style*="var(--panel2)"][style*="1px solid var(--border2)"]:not([data-nf="seg"]),
+.wfl-scope [data-nf="side"] input:not([type="checkbox"]):not([type="radio"])[style*="var(--panel2)"],
+.wfl-scope [data-nf="side"] textarea[style*="var(--panel2)"],
+.wfl-scope [data-nf="side"] select{
+  background:#fff !important;border-color:#dfe5ed !important;border-radius:6px;
+}
+.wfl-scope [data-nf="side"] input,
+.wfl-scope [data-nf="side"] textarea,
+.wfl-scope [data-nf="side"] select,
+.wfl-scope [data-nf="side"] button[style*="var(--panel2)"][style*="1px solid var(--border2)"]{
+  font-size:12px;color:#364658;
+}
+.wfl-scope [data-nf="side"] input:not([type="checkbox"]):not([type="radio"])[style*="1px solid var(--border2)"],
+.wfl-scope [data-nf="side"] select,
+.wfl-scope [data-nf="side"] button[style*="var(--panel2)"][style*="1px solid var(--border2)"]{
+  padding:6px 12px;min-height:32px;
+}
+.wfl-scope [data-nf="side"] input::placeholder,
+.wfl-scope [data-nf="side"] textarea::placeholder{color:#364658;opacity:.6;}
+.wfl-scope [data-nf="side"] input[style*="1px solid var(--border2)"]:focus,
+.wfl-scope [data-nf="side"] textarea[style*="1px solid var(--border2)"]:focus,
+.wfl-scope [data-nf="side"] select:focus,
+.wfl-scope [data-nf="side"] [style*="var(--panel2)"][style*="1px solid var(--border2)"]:focus-within{
+  border-color:#3d8bd0 !important;
+}
+/* other bordered boxes in the panel (switch rows, radio cards, stage cards) */
+.wfl-scope [data-nf="side"] .rounded-lg{border-radius:6px;}
+.wfl-scope [data-nf="side"] .rounded-xl{border-radius:10px;}
+
+/* 4c · Segmented choice — the Node view's tab switch: grey track, white
+   active pill with a soft shadow, slate text (was a solid accent pill) */
+.wfl-scope [data-nf="seg"]{background:#eef2f6 !important;border:none !important;border-radius:6px;padding:4px;gap:4px;}
+.wfl-scope [data-nf="seg"] > button{border-radius:6px;font-size:12px;font-weight:400;color:#364658 !important;padding:5px 10px;}
+.wfl-scope [data-nf="seg"] > button[style*="var(--accent)"]{
+  background:#fff !important;font-weight:500;filter:drop-shadow(0 0 4px rgba(54,70,88,.08));
+}
+
+/* 4d · On/off switch — the product's green "on", grey "off" */
+.wfl-scope [data-nf="switch"]{background:#dfe5ed !important;}
+.wfl-scope [data-nf="switch"][style*="var(--accent)"]{background:#37c15f !important;}
+
+/* 4e · Primary buttons (Done / Publish / Save / Apply / Add) — .btn-blue:
+   8px radius, 13px/500, no glow */
+.wfl-scope [data-nf="side"] button[style*="background: var(--accent)"]{
+  border-radius:8px;font-size:13px;font-weight:500;box-shadow:none !important;min-height:32px;
+}
+.wfl-scope [data-nf="seg"] > button[style*="var(--accent)"]{min-height:0;}
+
+/* 5 · Bottom toolbar — the Node view's toolbar card: 44px tall, white,
+   1px border, 12px radius, card shadow; 30px icon buttons; .btn-blue publish */
+.wfl-scope [data-nf="bar"]{
+  height:44px;padding:0 8px;gap:2px;bottom:18px;
+  background:#fff !important;border:1px solid #dfe5ed;border-radius:12px;
+  box-shadow:0 2px 10px rgba(54,70,88,.12),0 1px 2px rgba(54,70,88,.06) !important;
+}
+.wfl-scope [data-nf="bar"] button{color:#364658 !important;border-radius:7px;}
+.wfl-scope [data-nf="bar"] button.w-8{width:30px;height:30px;}
+.wfl-scope [data-nf="bar"] > span.w-px{background:#dfe5ed !important;margin:0 6px;}
+.wfl-scope [data-nf="publish"]{border-radius:8px;box-shadow:none !important;margin-left:2px;}
+.wfl-scope [data-nf="publish"] button{border-radius:0;color:#fff !important;font-weight:500;height:32px;}
+/* not publishable yet: the same blue button, faded (the chevron still opens the menu) */
+.wfl-scope [data-nf="publish"] button[aria-disabled="true"]{background:#3d8bd0 !important;color:#fff !important;opacity:.45;}
+.wfl-scope [data-nf="publish"] button[aria-disabled="true"] ~ button{background:#3279ba !important;color:#fff !important;opacity:.6;}
+
+/* 6 · Tooltips — the Node view's dark tip (was a white bordered bubble) */
+.wfl-scope [role="tooltip"]{
+  background:#14212d !important;color:#fff !important;border:none !important;
+  border-radius:6px !important;box-shadow:none !important;font-size:11px !important;font-weight:400 !important;
+  padding:6px 9px !important;
+}
+.wfl-scope [role="tooltip"] kbd{background:rgba(255,255,255,.14) !important;color:#fff !important;border:none !important;}
+.wfl-scope [data-tip]:hover::after,
+.wfl-scope [data-tip-below]:hover::after{
+  background:#14212d;color:#fff;border:none;border-radius:6px;box-shadow:none;font-size:11px;font-weight:400;
+}
+
+/* ======================================================================
+   7 · Figma pass — exact values read from the "Workflow Final" section of
+   the Nodebase-Workflow Figma file (38 sidebar frames). These refine the
+   rules above; where Figma defines no state (focus, hover, open dropdown
+   with search, switch, checkbox, radio, field error) the earlier rules or
+   V8's own design stand.
+   ====================================================================== */
+.wfl-scope[data-theme="light"]{ --red:#f25c4e; }        /* color/severity/critical — required marker, errors, destructive */
+
+/* header: title Medium 14 #364658; description Regular 11 #7b8fa5; the
+   divider under it is light-border */
+.wfl-scope [data-nf="side"] .h-16,
+.wfl-scope [data-nf="side"] .h-14{border-bottom-color:rgba(223,229,237,.4) !important;padding-left:12px;padding-right:12px;}
+.wfl-scope [data-nf="side"] .h-16 .min-w-0 > div:nth-child(2){font-size:11px;}
+
+/* required marker — a literal * in #f25c4e, same size as the label, one
+   space after it */
+.wfl-scope [data-nf="side"] label > span.ml-0\.5{color:#f25c4e !important;margin-left:3px;font-size:12px;font-weight:400;}
+
+/* text input ≈32px (4px 12px + 3px inner), 12px / 1.36; textarea 64px */
+.wfl-scope [data-nf="side"] input:not([type="checkbox"]):not([type="radio"])[style*="1px solid var(--border2)"],
+.wfl-scope [data-nf="side"] select,
+.wfl-scope [data-nf="side"] button[style*="var(--panel2)"][style*="1px solid var(--border2)"]{
+  padding:7px 12px;min-height:32px;line-height:1.36;
+}
+.wfl-scope [data-nf="side"] textarea{min-height:64px;line-height:1.36;}
+
+/* select trigger chevron — 18px, gray-icon */
+.wfl-scope [data-nf="side"] button[style*="var(--panel2)"][style*="1px solid var(--border2)"] > svg:last-child{
+  width:18px;height:18px;color:#7b8fa5 !important;
+}
+
+/* open dropdown list — Figma's menu: 12px radius, 6px padding, soft drop
+   shadow; rows 32px, 8px 6px, 6px radius, Regular 12 */
+.wfl-scope [data-nf="side"] .absolute.z-50.rounded-xl{
+  border-radius:12px;padding:6px;border-color:#dfe5ed !important;
+  box-shadow:0 4px 6px rgba(0,0,0,.1) !important;
+}
+.wfl-scope [data-nf="side"] .absolute.z-50.rounded-xl .overflow-y-auto{padding:0;}
+.wfl-scope [data-nf="side"] .absolute.z-50.rounded-xl .overflow-y-auto > button{
+  min-height:32px;padding:8px 6px;border-radius:6px;font-size:12px;margin-bottom:2px;
+}
+
+/* segmented tabs — track gap 8px, segment 6px 12px, 12px / 1.36 (the white
+   active pill is the variant on 28 of the 38 frames; the trigger frames
+   alone use a solid blue pill) */
+.wfl-scope [data-nf="seg"]{gap:8px;}
+.wfl-scope [data-nf="seg"] > button{padding:6px 12px;line-height:1.36;}
+
+/* primary button (Save / Done / Publish) — 6px radius, 6px 12px, Medium 12 */
+.wfl-scope [data-nf="side"] button[style*="background: var(--accent)"]{
+  border-radius:6px;padding:6px 12px;font-size:12px;font-weight:500;min-height:30px;height:auto;
+}
+.wfl-scope [data-nf="seg"] > button[style*="var(--accent)"]{padding:6px 12px;border-radius:6px;min-height:0;}
+/* outline button (Reset / Cancel / Add …) — 1px #dfe5ed, 6px radius, Medium 12 #364658 */
+.wfl-scope [data-nf="side"] button[style*="1px solid var(--border2)"]:not([style*="var(--panel2)"]){
+  border-radius:6px;padding:6px 12px;font-size:12px;font-weight:500;color:#364658 !important;min-height:30px;height:auto;
+}
+
+/* footer — 12px padding, no divider line above it */
+.wfl-scope [data-nf="side"] .shrink-0.border-t{border-top-color:transparent !important;padding:12px;}
+
+/* banner (e.g. "Add a trigger… before publishing") — Figma's warning
+   banner: tinted fill, no border, 6px radius, 8px padding */
+.wfl-scope [data-nf="side"] [style*="var(--c-when) 12%"]{
+  background:rgba(245,188,24,.12) !important;border:none !important;border-radius:6px;padding:8px;
+  font-size:11px;color:#364658 !important;
+}
+.wfl-scope [data-nf="side"] [style*="var(--c-when) 12%"] > svg{color:#f5bc18;}
+
+/* ======================================================================
+   8 · Three components from their own Figma frames
+   ====================================================================== */
+
+/* 8a · Switch Tabs (Figma 1498:82662) — the [ Specific | Dynamic ] tabs in
+   value pickers, same spec as the segmented choice: #eef2f6 track, 6px
+   radius, 4px padding, 8px gap; active = white pill + soft shadow, Medium;
+   inactive = Regular; both #364658, 12px / 1.36. */
+.wfl-scope [data-nf="tabs"]{
+  background:#eef2f6 !important;border:none !important;border-radius:6px;padding:4px;gap:8px;
+}
+.wfl-scope [data-nf="tabs"] > button{
+  padding:6px 12px;border-radius:6px;font-size:12px;line-height:1.36;font-weight:400 !important;
+  color:#364658 !important;box-shadow:none !important;
+}
+.wfl-scope [data-nf="tabs"] > button[style*="var(--pop-bg)"]{
+  background:#fff !important;font-weight:500 !important;filter:drop-shadow(0 0 4px rgba(54,70,88,.08));
+}
+
+/* 8b · Field UI (Figma 2751:96550) — a field row is two JOINED cells: the
+   field on top (8px top corners), its value below (8px bottom corners, no
+   top border), each 35px tall, 11px text, 12px chevron. Value controls that
+   are not a single box (tag adders, people cards) stay separate, 8px below. */
+.wfl-scope [data-nf="frow"]{gap:0;}
+.wfl-scope [data-nf="frow"] > div:first-child{margin-bottom:8px;}
+.wfl-scope [data-nf="side"] [data-nf="fcell"]{
+  min-height:35px !important;height:35px;padding:4px 12px !important;border-radius:8px !important;font-size:11px !important;line-height:1.36;
+  color:#364658 !important;
+}
+.wfl-scope [data-nf="side"] [data-nf="fcell"] > svg{width:12px !important;height:12px !important;color:#7b8fa5 !important;}
+.wfl-scope [data-nf="side"] [data-nf="fcell"]:has(+ [style*="1px solid var(--border2)"]){border-radius:8px 8px 0 0 !important;}
+.wfl-scope [data-nf="side"] [data-nf="fcell"] + [style*="1px solid var(--border2)"]{
+  border-top:none !important;border-radius:0 0 8px 8px !important;min-height:35px;font-size:11px;line-height:1.36;
+}
+.wfl-scope [data-nf="side"] [data-nf="fcell"] + button[style*="1px solid var(--border2)"]{height:35px;min-height:35px !important;padding:4px 12px !important;font-size:11px !important;}
+.wfl-scope [data-nf="side"] [data-nf="fcell"] + button[style*="1px solid var(--border2)"] > svg{width:12px !important;height:12px !important;color:#7b8fa5 !important;}
+.wfl-scope [data-nf="side"] [data-nf="fcell"] + [style*="1px solid var(--border2)"] input{font-size:11px;padding:4px 4px 4px 12px;}
+.wfl-scope [data-nf="side"] [data-nf="fcell"] + :not([style*="1px solid var(--border2)"]){margin-top:8px;}
+
+/* 8c · Content (Figma 2393:90558) — the rich-text box: white, 1px border,
+   8px radius, a 0 2px 2px rgba(0,0,0,.1) drop shadow; 10px padding, 100px
+   writing area, 12px text; a toolbar row under a top border, 12px padding,
+   16px gray icons, and the "Insert placeholder" link in primary blue. */
+.wfl-scope [data-nf="side"] [data-nf="content"],
+.wfl-scope [data-nf="side"] .rounded-lg.overflow-hidden[style*="var(--panel2)"][style*="1px solid var(--border2)"]{
+  background:#fff !important;border-color:#dfe5ed !important;border-radius:8px !important;
+  filter:drop-shadow(0 2px 2px rgba(0,0,0,.1));
+}
+.wfl-scope [data-nf="side"] [data-nf="fcell"] + .rounded-lg.overflow-hidden[style*="1px solid var(--border2)"]{
+  border-radius:0 0 8px 8px !important;filter:none;
+}
+.wfl-scope [data-nf="side"] [data-nf="content"] > :first-child,
+.wfl-scope [data-nf="side"] .rounded-lg.overflow-hidden[style*="var(--panel2)"] > .px-2\.5{padding:10px;}
+.wfl-scope [data-nf="side"] [contenteditable="true"]{font-size:12px;color:#364658 !important;min-height:80px;}
+.wfl-scope [data-nf="content-bar"]{border-top-color:#dfe5ed !important;}
+.wfl-scope [data-nf="content"] [data-nf="content-bar"]{padding:12px;}
+.wfl-scope [data-nf="content-bar"] button{color:#7b8fa5 !important;font-weight:400;font-size:12px;}
+.wfl-scope [data-nf="content-bar"] button[style*="var(--accent2)"]{color:#3d8bd0 !important;}
+.wfl-scope [data-nf="content-bar"] > span{font-size:11px;color:#7b8fa5 !important;}
+
+/* no divider line between field rows — spacing alone separates them */
+.wfl-scope [data-nf="frow"]{border-bottom:none !important;padding-bottom:0 !important;}
+
+/* the person / group card value (and a Picker dropdown value) joins its
+   field cell the same way — same white 35px bottom cell, small avatar */
+.wfl-scope [data-nf="side"] [data-nf="vcell"]{
+  background:#fff !important;border-color:#dfe5ed !important;border-radius:8px !important;
+  min-height:35px;padding:4px 12px !important;gap:8px;font-size:11px;
+}
+.wfl-scope [data-nf="side"] [data-nf="vcell"][style*="var(--accent2)"]{border-color:#3d8bd0 !important;}
+.wfl-scope [data-nf="side"] [data-nf="vcell"] .w-9.h-9{width:22px;height:22px;font-size:9px;}
+.wfl-scope [data-nf="side"] [data-nf="vcell"] .w-9.h-9 svg{width:12px;height:12px;}
+.wfl-scope [data-nf="side"] [data-nf="vcell"] span{font-size:11px;line-height:1.36;}
+.wfl-scope [data-nf="side"] [data-nf="vcell"] > svg{width:12px !important;height:12px !important;color:#7b8fa5 !important;}
+.wfl-scope [data-nf="side"] [data-nf="fcell"]:has(+ [data-nf="vcell"]),
+.wfl-scope [data-nf="side"] [data-nf="fcell"]:has(+ .relative > button[style*="1px solid var(--border2)"]:first-child){border-radius:8px 8px 0 0 !important;}
+.wfl-scope [data-nf="side"] [data-nf="fcell"] + [data-nf="vcell"]{border-top:none !important;border-radius:0 0 8px 8px !important;margin-top:0;}
+.wfl-scope [data-nf="side"] [data-nf="fcell"] + .relative{margin-top:0 !important;}
+.wfl-scope [data-nf="side"] [data-nf="fcell"] + .relative > button[style*="1px solid var(--border2)"]:first-child{
+  border-top:none !important;border-radius:0 0 8px 8px !important;min-height:35px !important;height:35px;
+  padding:4px 12px !important;font-size:11px !important;background:#fff !important;
+}
+.wfl-scope [data-nf="side"] [data-nf="fcell"] + .relative > button:first-child > svg{width:12px !important;height:12px !important;}
+
+/* a Yes / No value joins its field as a full-width bottom cell split in two
+   halves (it used to hang as a narrow box under the left corner) */
+.wfl-scope [data-nf="side"] [data-nf="fcell"] + .flex.overflow-hidden.self-start{
+  align-self:stretch;width:100%;height:35px;background:#fff;border-color:#dfe5ed !important;
+}
+.wfl-scope [data-nf="side"] [data-nf="fcell"] + .flex.overflow-hidden.self-start > button{
+  flex:1 1 0;font-size:11px;padding:4px 12px;
+}
+.wfl-scope [data-nf="side"] [data-nf="fcell"] + .flex.overflow-hidden.self-start > button + button{border-left:1px solid #dfe5ed;}
+/* a filled person / group card: name and email on two tight lines */
+.wfl-scope [data-nf="side"] [data-nf="vcell"] .flex-col{gap:0;}
+
+/* ======================================================================
+   9 · Send an Email / Send an SMS composer — the ServiceOps form look.
+   V8's composer is kept (To / Cc / Bcc, Subject, body, toolbar, placeholder
+   configuration); only its presentation changes: each line becomes a
+   labelled, bordered field and the body a bordered box with its toolbar
+   attached underneath. SELF-CONTAINED: delete this whole block to get
+   V8's mail-client rows back.
+   ====================================================================== */
+.wfl-scope [data-nf="compose"]{margin:0 !important;gap:16px;}
+.wfl-scope [data-nf="crow"]{
+  position:relative;flex-direction:column;align-items:stretch;gap:6px;
+  padding:0 !important;border-bottom:none !important;
+}
+.wfl-scope [data-nf="clabel"]{width:auto;font-size:12px;font-weight:400;color:#7b8fa5 !important;}
+.wfl-scope [data-nf="crow"] > .flex-1{
+  background:#fff;border:1px solid #dfe5ed;border-radius:6px;padding:4px 12px;min-height:32px;
+  font-size:12px;
+}
+.wfl-scope [data-nf="crow"] > .flex-1:focus-within{border-color:#3d8bd0;}
+.wfl-scope [data-nf="crow"] > .flex-1 button.flex-1{font-size:12px;color:#364658 !important;opacity:.6;}
+.wfl-scope [data-nf="crow"] > .flex-1 [contenteditable="true"]{min-height:0;}
+/* the quiet "Cc  Bcc" links sit top-right, level with the label */
+.wfl-scope [data-nf="crow"] > span.ml-auto{position:absolute;right:0;top:0;}
+.wfl-scope [data-nf="crow"] > span.ml-auto button{font-size:12px;color:#3d8bd0 !important;font-weight:400;}
+/* body: label above, bordered box, toolbar attached below */
+.wfl-scope [data-nf="cbody"]{padding:0 !important;display:flex;flex-direction:column;gap:6px;}
+.wfl-scope [data-nf="cbody"]::before{content:attr(data-label) " *";font-size:12px;color:#7b8fa5;}
+.wfl-scope [data-nf="cbody"] > div:first-of-type{
+  background:#fff;border:1px solid #dfe5ed;border-bottom:none;border-radius:6px 6px 0 0;padding:10px 12px;
+}
+.wfl-scope [data-nf="cbar"]{
+  margin-top:-16px;background:#fff;border:1px solid #dfe5ed;padding:8px 10px;
+}
+.wfl-scope [data-nf="cbar"] + [data-nf="cbar"]{border-top:none;}
+.wfl-scope [data-nf="cbar"]:not(:has(+ [data-nf="cbar"])){border-radius:0 0 6px 6px;}
+.wfl-scope [data-nf="cbar"] button{color:#7b8fa5 !important;}
+.wfl-scope [data-nf="cbar"] button[style*="var(--accent2)"]{color:#3d8bd0 !important;font-weight:400;}
+/* placeholder configuration: a plain section, no divider line */
+.wfl-scope [data-nf="compose"] > .border-t:not([data-nf]){border-top:none !important;padding:0 !important;}
+
+/* 10 · "Add …" buttons (Add field / Add mapping / Add stage / Add placeholder
+   configuration) — the Node view's outline button with a leading plus:
+   1px border, 6px radius, Medium 12 #364658, hugging its text at the left
+   (was a full-width blue-tinted or dashed row) */
+.wfl-scope [data-nf="addbtn"]{
+  width:auto !important;align-self:flex-start;justify-content:flex-start;
+  background:#fff !important;border:1px solid #dfe5ed !important;border-radius:6px !important;
+  padding:6px 12px 6px 10px !important;font-size:12px !important;font-weight:500 !important;color:#364658 !important;
+  min-height:30px;
+}
+.wfl-scope [data-nf="addbtn"]:hover{background:rgba(223,229,237,.2) !important;filter:none;}
+
+/* 11 · Execute app integration — mapping rows as a key | value pair, the
+   same two-box row the HTTP headers and plugin inputs use */
+.wfl-scope [data-nf="map-row"] > button[data-anchor]{flex:1 1 0;width:auto;min-width:0;height:32px;}
+.wfl-scope [data-nf="map-row"] > svg{display:none;}
+.wfl-scope [data-nf="side"] [data-nf="map-row"] > div{flex:1 1 0;height:32px !important;filter:none !important;border-radius:6px !important;}
+
+/* 12 · Two-option tabs in a form (Deployment's Install | Uninstall) — the
+   same Switch Tabs: full-width grey track, white selected pill */
+.wfl-scope [data-nf="side"] [role="tablist"]{
+  display:flex;align-self:stretch;width:100%;background:#eef2f6 !important;border:none !important;
+  border-radius:6px;padding:4px;gap:8px;
+}
+.wfl-scope [data-nf="side"] [role="tablist"] > [role="tab"]{
+  flex:1 1 0;justify-content:center;padding:6px 12px;border-radius:6px;font-size:12px;line-height:1.36;
+  font-weight:400;color:#364658 !important;background:transparent !important;
+}
+.wfl-scope [data-nf="side"] [role="tablist"] > [role="tab"][aria-selected="true"]{
+  background:#fff !important;font-weight:500;filter:drop-shadow(0 0 4px rgba(54,70,88,.08));
+}
+
+/* field-row delete — the Node view's bordered 24px icon box with the red
+   trash icon (was the word "remove") */
+.wfl-scope [data-nf="rm"]{width:24px;height:24px;border:.8px solid #dfe5ed;border-radius:6.4px;}
+
+/* the step's "Choose fields / Choose options" card while its sidebar is open —
+   a light lift only (it carried the heavy popup shadow) */
+.wfl-scope [data-canvas] span[style*="var(--shadow-pop)"][style*="z-index: 40"]{
+  box-shadow:0 2px 6px rgba(54,70,88,.08) !important;
+}
+
+/* 13 · Bottom toolbar, second pass — the SAME bar as the Node view: zoom − /
+   % / + │ fit │ guide, shortcuts │ undo, redo, Reset (markup added to
+   index.html for the embed; Save & Publish stays in the host's top bar).
+   Poppins like the host's bar; no focus ring left behind after a click. */
+.wfl-scope [data-nf="bar"]{font-family:'Poppins',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;border-color:#e8ecf1;}
+.wfl-scope [data-nf="bar"] button:hover{background:#f2f5f9 !important;}
+.wfl-scope [data-nf="bar"] button:focus{outline:none;}
+.wfl-scope [data-nf="bar"] button:focus-visible{background:#f2f5f9;}
+.wfl-scope [data-nf="bar"] > span.w-px{background:#e8ecf1 !important;height:20px;}
+.wfl-scope [data-nf="zoomlabel"]{
+  min-width:46px;height:30px;padding:0 6px;border-radius:7px;font-family:inherit;font-size:12.5px;font-weight:500;
+  color:#364658;text-align:center;
+}
+.wfl-scope [data-nf="bartext"]{
+  display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 10px;border-radius:7px;
+  font-family:inherit;font-size:12.5px;font-weight:500;color:#364658;
+}
+
+
+/* ======================================================================
+   14 · ServiceOps demo pass (Admin > Workflow > Create) — values measured
+   on the live builder.
+   ====================================================================== */
+
+/* 14a · Resizable panel — opens at 400px; drag its left edge between 400
+   and 650 (state + handle live in index.html; this is the handle: an
+   invisible 10px strip with a small grip that shows on hover). */
+.wfl-scope [data-nf="side"]{position:relative;container-type:inline-size;container-name:side;}
+.wfl-scope [data-nf="side"] > [data-nf="resizer"]{
+  position:absolute;left:0;top:10px;bottom:10px;width:10px;z-index:6;cursor:col-resize;
+  background:none !important;border:none !important;border-radius:0 !important;box-shadow:none !important;
+  display:flex;align-items:center;justify-content:center;overflow:visible;
+}
+.wfl-scope [data-nf="resizer"] > span{
+  width:4px;height:30px;border-radius:2px;background:#a5bad0;opacity:0;transition:opacity .15s;
+}
+.wfl-scope [data-nf="resizer"]:hover > span,
+.wfl-scope [data-nf="resizer"]:active > span{opacity:1;}
+
+/* 14b · Labels and the mandatory marker — 12px / 400 #7186a8; the asterisk
+   is #ec5b5b, 14px, 2px after the label and raised 5px */
+.wfl-scope [data-nf="side"] label.uppercase,
+.wfl-scope [data-nf="side"] .uppercase,
+.wfl-scope [data-nf="clabel"]{color:#7186a8 !important;line-height:18px;}
+.wfl-scope [data-nf="side"] label > span.ml-0\.5,
+.wfl-scope [data-nf="side"] [data-nf="fhead"] > span > span.ml-0\.5,
+.wfl-scope [data-nf="clabel"] > span.ml-0\.5{
+  position:relative;top:-5px;margin-left:2px;font-size:14px !important;line-height:14px;color:#ec5b5b !important;
+}
+
+/* 14c · Inputs, text areas, dropdowns — 30px tall, 4px 11px, 1px #e3e8f2,
+   8px radius, 12.8px #1d2a3e */
+.wfl-scope [data-nf="side"] [style*="var(--panel2)"][style*="1px solid var(--border2)"]:not([data-nf="seg"]),
+.wfl-scope [data-nf="side"] select,
+.wfl-scope [data-nf="crow"] > .flex-1{
+  border-color:#e3e8f2 !important;border-radius:8px;
+}
+.wfl-scope [data-nf="side"] input:not([type="checkbox"]):not([type="radio"])[style*="1px solid var(--border2)"],
+.wfl-scope [data-nf="side"] select,
+.wfl-scope [data-nf="side"] button[style*="var(--panel2)"][style*="1px solid var(--border2)"]{
+  padding:4px 11px;min-height:30px;font-size:12.8px;color:#1d2a3e;
+}
+.wfl-scope [data-nf="side"] input,
+.wfl-scope [data-nf="side"] textarea,
+.wfl-scope [data-nf="side"] [contenteditable="true"]{font-size:12.8px;color:#1d2a3e !important;}
+
+/* 14d · Attribute rows (Create / Update / Add task) — the demo block: a
+   plain "Field n" label, then a tinted card (rgba(236,241,249,.4), 9px
+   radius, 8px padding) holding the attribute cell and its value cell,
+   32px each. A mandatory row has a greyed attribute cell (#ecf1f9), no
+   lock and no "required" word; it simply cannot be deleted. */
+.wfl-scope [data-nf="frow"]{position:relative;padding:0 8px 8px !important;}
+.wfl-scope [data-nf="frow"]::before{
+  content:"";position:absolute;left:0;right:0;top:32px;bottom:0;z-index:0;
+  background:rgba(236,241,249,.4);border-radius:9px;
+}
+.wfl-scope [data-nf="frow"] > *{position:relative;z-index:1;}
+.wfl-scope [data-nf="frow"] > [data-nf="fhead"]{margin:0 -8px 16px !important;min-height:24px;}
+.wfl-scope [data-nf="side"] [data-nf="fhead"] > span:first-child{
+  font-size:12.8px !important;font-weight:400 !important;color:#1d2a3e !important;
+}
+.wfl-scope [data-nf="freq"]{display:none;}
+.wfl-scope [data-nf="side"] [data-nf="fcell"]{
+  height:32px;min-height:32px !important;padding:0 11px !important;font-size:12.8px !important;
+  border-color:#e3e8f2 !important;color:#1d2a3e !important;
+}
+.wfl-scope [data-nf="side"] [data-nf="fcell"][aria-disabled="true"]{background:#ecf1f9 !important;cursor:default;}
+.wfl-scope [data-nf="side"] [data-nf="fcell"][aria-disabled="true"] > svg{display:none;}
+.wfl-scope [data-nf="side"] [data-nf="fcell"] + [style*="1px solid var(--border2)"],
+.wfl-scope [data-nf="side"] [data-nf="fcell"] + [data-nf="vcell"],
+.wfl-scope [data-nf="side"] [data-nf="fcell"] + .relative > button[style*="1px solid var(--border2)"]:first-child{
+  min-height:32px !important;font-size:12.8px !important;border-color:#e3e8f2 !important;
+}
+.wfl-scope [data-nf="side"] [data-nf="fcell"] + button[style*="1px solid var(--border2)"]{height:32px;padding:0 11px !important;}
+.wfl-scope [data-nf="side"] [data-nf="fcell"] + [style*="1px solid var(--border2)"] input{font-size:12.8px;padding:4px 4px 4px 11px;}
+.wfl-scope [data-nf="side"] [data-nf="vcell"]{padding:0 11px !important;}
+.wfl-scope [data-nf="side"] [data-nf="vcell"] span{font-size:12.8px;}
+
+/* 14e · Responsive, as in the demo: once the panel is wider than ~500px
+   the attribute and its value sit SIDE BY SIDE (50 / 50, joined left |
+   right); narrower than that they stack (joined top | bottom). */
+@container side (min-width: 510px){
+  .wfl-scope [data-nf="frow"]{display:grid;grid-template-columns:1fr 1fr;align-items:start;}
+  .wfl-scope [data-nf="frow"] > *{grid-column:1 / -1;}
+  .wfl-scope [data-nf="side"] [data-nf="frow"] > [data-nf="fcell"]:has(+ [style*="1px solid var(--border2)"]:not(.overflow-hidden)),
+  .wfl-scope [data-nf="side"] [data-nf="frow"] > [data-nf="fcell"]:has(+ [data-nf="vcell"]),
+  .wfl-scope [data-nf="side"] [data-nf="frow"] > [data-nf="fcell"]:has(+ .relative > button[style*="1px solid var(--border2)"]:first-child){grid-column:1;}
+  .wfl-scope [data-nf="side"] [data-nf="frow"] > [data-nf="fcell"] + [style*="1px solid var(--border2)"]:not(.overflow-hidden),
+  .wfl-scope [data-nf="side"] [data-nf="frow"] > [data-nf="fcell"] + [data-nf="vcell"],
+  .wfl-scope [data-nf="frow"] > [data-nf="fcell"] + .relative{grid-column:2;}
+  .wfl-scope [data-nf="side"] [data-nf="fcell"]:has(+ [style*="1px solid var(--border2)"]:not(.overflow-hidden)),
+  .wfl-scope [data-nf="side"] [data-nf="fcell"]:has(+ [data-nf="vcell"]),
+  .wfl-scope [data-nf="side"] [data-nf="fcell"]:has(+ .relative > button[style*="1px solid var(--border2)"]:first-child){
+    border-radius:8px 0 0 8px !important;
+  }
+  .wfl-scope [data-nf="side"] [data-nf="fcell"] + [style*="1px solid var(--border2)"]:not(.overflow-hidden),
+  .wfl-scope [data-nf="side"] [data-nf="fcell"] + [data-nf="vcell"],
+  .wfl-scope [data-nf="side"] [data-nf="fcell"] + .relative > button[style*="1px solid var(--border2)"]:first-child{
+    border-top:1px solid #e3e8f2 !important;border-left:none !important;border-radius:0 8px 8px 0 !important;
+  }
+}
+
+/* 14f · "Add field" and its siblings — the demo's dark-outlined button:
+   30px, 1px #1d2a3e, 8px radius, 12px */
+.wfl-scope [data-nf="addbtn"]{border-color:#1d2a3e !important;border-radius:8px !important;color:#1d2a3e !important;font-weight:400 !important;}
+
+/* value cells: exactly as tall as the attribute cell, same text size */
+.wfl-scope [data-nf="side"] [data-nf="frow"] > [data-nf="fcell"] + button[style*="1px solid var(--border2)"],
+.wfl-scope [data-nf="side"] [data-nf="frow"] > [data-nf="fcell"] + .relative > button[style*="1px solid var(--border2)"]:first-child{
+  height:32px !important;min-height:32px !important;padding:0 11px !important;font-size:12.8px !important;
+}
+.wfl-scope [data-nf="side"] [data-nf="frow"] > [data-nf="fcell"] + [data-nf="vcell"]{min-height:32px !important;}
+.wfl-scope [data-nf="side"] [data-nf="frow"] > [data-nf="fcell"] + div[style*="1px solid var(--border2)"]:not(.overflow-hidden){height:32px;min-height:32px !important;}
+/* mandatory row: greyed attribute cell (specific enough to beat the white-field rule) */
+.wfl-scope [data-nf="side"] [data-nf="frow"] > button[data-nf="fcell"][aria-disabled="true"][style]{background:#ecf1f9 !important;}
+.wfl-scope [data-nf="frow"] > [data-nf="fhead"]{height:24px;align-items:center;}
+
+/* SMS: the hint under Technician group sits tight under its field */
+.wfl-scope [data-nf="chint"]{padding:0 2px !important;margin-top:-10px;font-size:10px;color:#7186a8 !important;}
+
+
+/* ======================================================================
+   15 · Emails field — the User Survey component (serviceops-ticket-detail).
+   The field is a read-out (newest chip + "+N"); the popup has ONE
+   search-or-add box (magnifier turns into a blue + when the text is a new
+   address), one hint/error line, then the added list with "Clear all".
+   ====================================================================== */
+.wfl-scope [data-nf="crow"] > .flex-1{flex-wrap:nowrap !important;overflow:hidden;cursor:text;}
+.wfl-scope [data-nf="crow"] > .flex-1 > span.group\/chip{
+  flex-shrink:1;min-width:0;max-width:260px;background:#F1F5F9 !important;border:none !important;border-radius:4px;
+  padding:2px 4px 2px 8px;font-size:12px;color:#364658 !important;
+}
+.wfl-scope [data-nf="crow"] > .flex-1 > span.group\/chip button{opacity:1;color:#7B8FA5 !important;}
+.wfl-scope [data-nf="rcp-more"]{
+  flex-shrink:0;background:#EBF5FF;color:#3D8BD0;border-radius:4px;padding:2px 6px;font-size:12px;font-weight:500;cursor:pointer;
+}
+.wfl-scope [data-nf="rcp-top"]{padding:12px 12px 8px;}
+.wfl-scope [data-nf="rcp-input"]{
+  width:100%;height:32px;padding:0 36px 0 10px;border:1px solid #DFE5ED;border-radius:4px;background:#fff;outline:none;
+  font-size:12px;color:#364658;transition:border-color .12s;
+}
+.wfl-scope [data-nf="rcp-input"]:focus{border-color:#3D8BD0;}
+.wfl-scope [data-nf="rcp-input"][aria-invalid="true"]{border-color:#F25C4E;}
+.wfl-scope [data-nf="rcp-input"]::placeholder{color:#364658;opacity:.6;}
+.wfl-scope [data-nf="rcp-add"]{
+  position:absolute;right:4px;top:50%;transform:translateY(-50%);width:24px;height:24px;border-radius:4px;
+  display:flex;align-items:center;justify-content:center;background:#3D8BD0;color:#fff;box-shadow:0 1px 2px rgba(0,0,0,.12);
+}
+.wfl-scope [data-nf="rcp-add"]:hover{background:#3478B5;}
+.wfl-scope [data-nf="rcp-add"]:disabled{background:#CBD5E1;box-shadow:none;cursor:not-allowed;}
+.wfl-scope [data-nf="rcp-search"]{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:#9CA3AF;pointer-events:none;}
+.wfl-scope [data-nf="rcp-hint"]{margin-top:6px;font-size:11px;line-height:16px;color:#7B8FA5;}
+.wfl-scope [data-nf="rcp-err"]{margin-top:6px;}
+.wfl-scope [data-nf="rcp-head"]{display:flex;align-items:center;justify-content:space-between;padding:8px 12px 4px;}
+.wfl-scope [data-nf="rcp-head"] > span{font-size:14px;font-weight:700;color:#364658;}
+.wfl-scope [data-nf="rcp-head"] > button{font-size:11px;font-weight:500;color:#64748B;}
+.wfl-scope [data-nf="rcp-head"] > button:hover{color:#DC2626;}
+.wfl-scope [data-nf="rcp-list"]{max-height:176px;overflow-y:auto;padding-bottom:6px;}
+.wfl-scope [data-nf="rcp-row"]{display:flex;align-items:center;gap:8px;height:32px;padding:0 12px;transition:background .12s;}
+.wfl-scope [data-nf="rcp-row"]:hover{background:#F9FAFB;}
+.wfl-scope [data-nf="rcp-row"] > span{flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:#364658;}
+.wfl-scope [data-nf="rcp-row"] > button{
+  width:24px;height:24px;flex-shrink:0;border-radius:4px;display:flex;align-items:center;justify-content:center;
+  color:#9CA3AF;opacity:0;transition:opacity .12s,background .12s,color .12s;
+}
+.wfl-scope [data-nf="rcp-row"]:hover > button,.wfl-scope [data-nf="rcp-row"] > button:focus{opacity:1;}
+.wfl-scope [data-nf="rcp-row"] > button:hover{background:#FEF2F2;color:#DC2626;}
+
+/* ---- fixes ---- */
+/* Form tabs (Deployment's Install | Uninstall): the grey Switch-Tabs track
+   was being repainted white by the field rule — restated strongly enough. */
+.wfl-scope [data-nf="side"] div[role="tablist"][style*="var(--panel2)"][style*="border"][style]{
+  background:#eef2f6 !important;border:none !important;border-radius:6px !important;padding:4px !important;min-height:0;
+}
+.wfl-scope [data-nf="side"] [role="tablist"][style] > [role="tab"]{min-height:0;height:auto;padding:6px 12px !important;font-size:12px !important;}
+.wfl-scope [data-nf="side"] [data-nf="seg"][style]{background:#eef2f6 !important;border:none !important;border-radius:6px !important;}
+
+/* Field borders were fading into the white panel: V8 brightens a control on
+   hover (which washed the pale border out to white), and #e3e8f2 was too
+   light to begin with. Borders are the product's #dfe5ed, they never get
+   the brightness filter, and hover darkens them a step instead. */
+.wfl-scope [data-nf="side"] [style*="var(--panel2)"][style*="1px solid var(--border2)"]:not([data-nf="seg"]):not([role="tablist"]),
+.wfl-scope [data-nf="side"] select,
+.wfl-scope [data-nf="crow"] > .flex-1,
+.wfl-scope [data-nf="side"] [data-nf="fcell"],
+.wfl-scope [data-nf="side"] [data-nf="vcell"],
+.wfl-scope [data-nf="side"] [data-nf="fcell"] + [style*="1px solid var(--border2)"]{border-color:#dfe5ed !important;}
+.wfl-scope [data-nf="side"] button:hover,
+.wfl-scope [data-nf="side"] [style*="1px solid var(--border2)"]:hover{filter:none !important;}
+.wfl-scope [data-nf="side"] button[style*="var(--panel2)"][style*="1px solid var(--border2)"]:hover,
+.wfl-scope [data-nf="side"] [data-nf="vcell"]:hover,
+.wfl-scope [data-nf="crow"] > .flex-1:hover{border-color:#cbd5e1 !important;}
+@container side (min-width: 510px){
+  .wfl-scope [data-nf="side"] [data-nf="fcell"] + [style*="1px solid var(--border2)"]:not(.overflow-hidden),
+  .wfl-scope [data-nf="side"] [data-nf="fcell"] + [data-nf="vcell"],
+  .wfl-scope [data-nf="side"] [data-nf="fcell"] + .relative > button[style*="1px solid var(--border2)"]:first-child{border-top-color:#dfe5ed !important;}
+}
+/* selected tab pills carry a box-shadow (not a filter) so the hover rule above cannot strip it */
+.wfl-scope [data-nf="side"] [role="tablist"] > [role="tab"][aria-selected="true"],
+.wfl-scope [data-nf="seg"] > button[style*="var(--accent)"],
+.wfl-scope [data-nf="tabs"] > button[style*="var(--pop-bg)"]{filter:none !important;box-shadow:0 0 4px rgba(54,70,88,.08) !important;}
+
+/* ======================================================================
+   16 · Panel spacing — the Node view sidebar's own rhythm (.cfg-container /
+   .cfg-scroll / .cfg-form in workflow-canvas.html): 12px padding all round;
+   the body starts 18px under the header and ends 16px above the footer;
+   16px between fields; 6px between a label and its control.
+   ====================================================================== */
+.wfl-scope [data-nf="side"] > * > .flex-1.overflow-y-auto{padding:18px 12px 16px !important;gap:16px !important;}
+.wfl-scope [data-nf="side"] .grid.grid-cols-2{row-gap:16px;column-gap:12px;}
+.wfl-scope [data-nf="side"] > * > .flex-1.overflow-y-auto > .flex.flex-col{gap:16px;}
+/* header, summary strip and footer share the 12px side padding */
+.wfl-scope [data-nf="side"] .h-16,
+.wfl-scope [data-nf="side"] .h-14{padding-left:12px !important;padding-right:12px !important;}
+.wfl-scope [data-nf="side"] .px-4.pt-3\.5.pb-4{padding:12px 12px 16px !important;}
+.wfl-scope [data-nf="side"] .shrink-0.border-t{padding:12px !important;}
+/* label → control: 6px */
+.wfl-scope [data-nf="side"] .flex.flex-col.gap-1\.5{gap:6px;}
+.wfl-scope [data-nf="compose"]{gap:16px;}
+.wfl-scope [data-nf="crow"]{gap:6px;}
+
+
+/* ======================================================================
+   17 · Field rows, third pass
+   ====================================================================== */
+/* a row's cells stay joined: the panel-spacing rule must not open a gap inside a row */
+.wfl-scope [data-nf="side"] > * > .flex-1.overflow-y-auto [data-nf="frow"]{gap:0 !important;}
+/* a rich-text value under its attribute: no drop shadow, no gap — one joined block */
+.wfl-scope [data-nf="side"] [data-nf="frow"] > [data-nf="fcell"] + .rounded-lg.overflow-hidden[style]{
+  filter:none !important;border-top:none !important;border-radius:0 0 8px 8px !important;margin-top:0 !important;
+}
+.wfl-scope [data-nf="side"] [data-nf="frow"] > [data-nf="fcell"]:has(+ .rounded-lg.overflow-hidden){border-radius:8px 8px 0 0 !important;}
+
+/* labels as in the Node sidebar: 12px #7b8fa5, the asterisk inline in #f25c4e (no raise),
+   6px between a label and what it labels */
+.wfl-scope [data-nf="side"] label.uppercase,
+.wfl-scope [data-nf="side"] .uppercase,
+.wfl-scope [data-nf="clabel"],
+.wfl-scope [data-nf="side"] [data-nf="fhead"] > span:first-child{
+  font-size:12px !important;font-weight:400 !important;color:#7b8fa5 !important;line-height:18px;
+}
+.wfl-scope [data-nf="side"] label > span.ml-0\.5,
+.wfl-scope [data-nf="side"] [data-nf="fhead"] > span > span.ml-0\.5,
+.wfl-scope [data-nf="clabel"] > span.ml-0\.5{
+  position:static;top:auto;margin-left:3px;font-size:12px !important;line-height:18px;color:#f25c4e !important;
+}
+.wfl-scope [data-nf="cbody"]::before{color:#7b8fa5;}
+/* "Field n" label → its card: 6px (card starts at 30px; 8px card padding follows) */
+.wfl-scope [data-nf="frow"]::before{top:30px;}
+.wfl-scope [data-nf="frow"] > [data-nf="fhead"]{margin:0 -8px 14px !important;}
+
+/* TokensField (Cc emails / tags as a row's value) — the survey's Emails field: a white read-out
+   cell joined under its attribute cell, the newest value as a chip and "+N" for the rest */
+.wfl-scope [data-nf="side"] [data-tfield]{height:32px;min-height:32px !important;padding:0 6px !important;background:#fff !important;border-radius:8px;gap:6px;}
+.wfl-scope [data-nf="tfield-ph"]{padding:0 5px;font-size:12.8px;color:#364658;opacity:.6;}
+.wfl-scope [data-nf="tfield-chip"]{
+  display:inline-flex;align-items:center;gap:4px;min-width:0;max-width:260px;flex-shrink:1;
+  background:#F1F5F9;border-radius:4px;padding:2px 4px 2px 8px;font-size:12px;color:#364658;
+}
+.wfl-scope [data-nf="tfield-chip"] > span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px !important;}
+.wfl-scope [data-nf="tfield-chip"] > button{width:16px;height:16px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#7B8FA5;}
+.wfl-scope [data-nf="tfield-chip"] > button:hover{background:#fff;color:#364658;}
+.wfl-scope [data-nf="tfield-pop"]{
+  position:fixed;z-index:10050;display:flex;flex-direction:column;background:#fff;border:1px solid #DFE5ED;border-radius:8px !important;
+  box-shadow:0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -4px rgba(0,0,0,.1);
+}
+
+
+/* ======================================================================
+   18 · Mandatory attribute colours (Figma 2361:89754) and the Stage block
+   (Figma 1654:88250)
+   ====================================================================== */
+/* mandatory attribute cell: rgba(236,241,249,.5) fill, Medium 12 #7186a8, a muted 12px chevron
+   (V8 draws a lock there — repainted as the chevron); the card is rgba(223,229,237,.2) */
+.wfl-scope [data-nf="frow"]::before{background:rgba(223,229,237,.2);}
+.wfl-scope [data-nf="side"] [data-nf="frow"] > button[data-nf="fcell"][aria-disabled="true"][style]{
+  background:rgba(236,241,249,.5) !important;color:#7186a8 !important;font-weight:500;font-size:12px !important;
+}
+.wfl-scope [data-nf="side"] [data-nf="fcell"][aria-disabled="true"] > svg{
+  display:block !important;width:12px !important;height:12px !important;opacity:.55;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M6 9l6 6 6-6' stroke='%237b8fa5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;
+}
+.wfl-scope [data-nf="side"] [data-nf="fcell"][aria-disabled="true"] > svg > *{display:none;}
+/* value cells: Medium 12 #364658 once filled */
+.wfl-scope [data-nf="side"] [data-nf="fcell"]{font-size:12px !important;}
+
+/* Stage container: V8's outlined card (header row inside it, 1px outline, white) — the tinted
+   pill-and-card container was tried and taken back out; only the FIELDS inside follow the Figma
+   stage (decision dropdown, Direct | Select rows, Add links). */
+.wfl-scope [data-nf="stage"]{border-radius:8px !important;}
+.wfl-scope [data-nf="stage"][style*="var(--accent)"]{border-color:#dfe5ed !important;}
+.wfl-scope [data-nf="stage-head"]{border-radius:8px 8px 0 0 !important;}
+.wfl-scope [data-nf="stage-head"][aria-expanded="false"]{border-radius:8px !important;}
+.wfl-scope [data-nf="stage-body"]{padding:12px !important;}
+.wfl-scope [data-nf="stage-body"] .grid.grid-cols-2{row-gap:16px;}
+
+/* "Direct | Select" rows + their "+ Add …" link */
+.wfl-scope [data-nf="moderows"]{display:flex;flex-direction:column;gap:8px;align-items:flex-start;}
+.wfl-scope [data-nf="moderow"]{display:flex;align-items:stretch;width:100%;}
+.wfl-scope [data-nf="mode"]{
+  display:inline-flex;align-items:center;gap:6px;height:35px;padding:4px 10px;flex-shrink:0;
+  background:#fff;border:1px solid #dfe5ed;border-right:none;border-radius:8px 0 0 8px;
+  font-size:12px;font-weight:500;line-height:1.36;color:#364658;
+}
+.wfl-scope [data-nf="mode"] > svg{color:#7b8fa5;}
+.wfl-scope [data-nf="modeval"]{flex:1 1 0;min-width:0;}
+.wfl-scope [data-nf="side"] [data-nf="modeval"] > .relative > button:first-child{
+  height:35px;min-height:35px !important;padding:4px 12px !important;border-radius:0 8px 8px 0 !important;
+  font-size:12px !important;background:#fff !important;
+}
+.wfl-scope [data-nf="side"] [data-nf="modeval"] > .relative > button:first-child > svg:last-child{width:16px !important;height:16px !important;}
+.wfl-scope [data-nf="moderm"]{
+  width:23px;height:23px;align-self:center;margin-left:6px;flex-shrink:0;border-radius:4.9px;
+  display:flex;align-items:center;justify-content:center;color:#7b8fa5;
+}
+.wfl-scope [data-nf="moderm"]:hover{background:rgba(242,92,78,.1) !important;color:#f25c4e;}
+.wfl-scope [data-nf="modeadd"]{
+  display:inline-flex;align-items:center;gap:4px;border-radius:6px;font-size:12px;font-weight:400;color:#3d8bd0;
+}
+.wfl-scope [data-nf="modeadd"]:disabled{opacity:.45;cursor:default;}
+/* "Add stage" — the outlined primary button */
+.wfl-scope [data-nf="stage"] ~ [data-nf="addbtn"]{border-color:#3d8bd0 !important;color:#3d8bd0 !important;border-radius:6px !important;font-weight:500 !important;}
+/* inside a stage the description box is a plain bordered field (no drop shadow) */
+.wfl-scope [data-nf="side"] [data-nf="stage-body"] [data-nf="content"]{filter:none !important;border-radius:6px !important;}
+
+/* 19 · Attribute card + mandatory row, final colours (Figma 2753:96477):
+   the card is neutral/10 #f6f9fc; the mandatory attribute cell is the same
+   #f6f9fc with a neutral-700 #cbd5df border and neutral/50 #8e9fbc text;
+   the value cell under it is white with the same #cbd5df border. */
+.wfl-scope [data-nf="frow"]::before{background:#f6f9fc;}
+.wfl-scope [data-nf="side"] [data-nf="frow"] > button[data-nf="fcell"][aria-disabled="true"][style]{
+  background:#f6f9fc !important;border-color:#cbd5df !important;color:#8e9fbc !important;font-weight:500;
+}
+.wfl-scope [data-nf="side"] [data-nf="frow"] > button[data-nf="fcell"][aria-disabled="true"] + [style*="1px solid var(--border2)"],
+.wfl-scope [data-nf="side"] [data-nf="frow"] > button[data-nf="fcell"][aria-disabled="true"] + [data-nf="vcell"],
+.wfl-scope [data-nf="side"] [data-nf="frow"] > button[data-nf="fcell"][aria-disabled="true"] + .relative > button:first-child{
+  background:#fff !important;border-color:#cbd5df !important;
+}
+
+
+/* 20 · "Add Field" CTA (Figma 2753:97758): 1px #1d2a3e outline, 6px radius, 6px 8px padding;
+   a 16px plus + Medium 12 #1d2a3e label (6px apart), then 8px to a 16px chevron. ~30px tall. */
+.wfl-scope [data-nf="side"] [data-nf="addbtn"]:has([data-nf="addlbl"]){
+  display:inline-flex !important;align-items:center;gap:8px !important;
+  padding:6px 8px !important;min-height:0;height:auto;
+  background:#fff !important;border:1px solid #1d2a3e !important;border-radius:6px !important;
+  font-size:12px !important;font-weight:500 !important;line-height:16px;color:#1d2a3e !important;
+}
+.wfl-scope [data-nf="addlbl"]{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;}
+.wfl-scope [data-nf="addbtn"] > [data-nf="addchev"]{width:16px;height:16px;flex-shrink:0;}
+
+/* mandatory attribute cell fill: #ECF1F9 (a step darker than the #F6F9FC card, so it reads as locked) */
+.wfl-scope [data-nf="side"] [data-nf="frow"] > button[data-nf="fcell"][aria-disabled="true"][style]{background:#ecf1f9 !important;}
+
+
+/* "Add Stage" — the Add Field CTA without its chevron: 8px left, 12px right */
+.wfl-scope [data-nf="side"] [data-nf="stage"] ~ [data-nf="addbtn"]:has([data-nf="addlbl"]){
+  padding:6px 12px 6px 8px !important;border-color:#1d2a3e !important;color:#1d2a3e !important;border-radius:6px !important;font-weight:500 !important;
+}
+/* these CTAs sit in a scrolling flex column — never let them be squeezed */
+.wfl-scope [data-nf="side"] [data-nf="addbtn"]:has([data-nf="addlbl"]){flex-shrink:0;height:30px;min-height:30px;}
+
+
+/* ======================================================================
+   2026-10-13 — error messages, HTTP URL row, header rows, approval pickers
+   ====================================================================== */
+/* compose errors: flush left, 4px under the field they belong to (the form's gap is 16px) */
+.wfl-scope [data-nf="cerr"]{padding:0 !important;margin-top:-12px;}
+.wfl-scope [data-nf="side"] [role="alert"]{font-size:11px;line-height:1.36;gap:4px;align-items:flex-start;}
+.wfl-scope [data-nf="side"] [role="alert"] > svg{margin-top:1.5px;}
+/* secondary button (Test connection, Add Header) */
+.wfl-scope [data-nf="secbtn"]{
+  height:32px;padding:0 12px !important;border-radius:6px !important;border:1px solid #dfe5ed !important;
+  background:#fff !important;color:#364658 !important;font-size:12px !important;font-weight:500 !important;white-space:nowrap;
+}
+.wfl-scope [data-nf="secbtn"]:hover{border-color:#cbd5e1 !important;background:#f8fafc !important;}
+.wfl-scope [data-nf="secbtn"] > svg{color:#7b8fa5;}
+.wfl-scope [data-nf="urlrow"]{align-items:flex-start;gap:8px;}
+.wfl-scope [data-nf="urlrow"] > [data-nf="secbtn"]{height:auto;align-self:stretch;min-height:32px;}
+/* header key/value pair: the tinted row card, with regular white fields inside */
+.wfl-scope [data-nf="kvrow"]{background:rgba(223,229,237,.2) !important;border-radius:9px !important;padding:8px !important;gap:8px;}
+.wfl-scope [data-nf="side"] [data-nf="kvrow"] > input{
+  height:32px;padding:0 11px !important;border-radius:6px !important;border:1px solid #dfe5ed !important;
+  background:#fff !important;font-size:12px !important;color:#364658 !important;
+}
+.wfl-scope [data-nf="side"] [data-nf="kvrow"] > input::placeholder{color:#7b8fa5;opacity:.7;}
+.wfl-scope [data-nf="side"] [data-nf="kvrow"] > input:focus{border-color:#3d8bd0 !important;}
+/* approval value field (replaces "Direct | Select"): one plain field that opens the Specific | Dynamic popup */
+.wfl-scope [data-nf="modecell"]{
+  flex:1 1 0;min-width:0;height:35px;padding:4px 12px;display:flex;align-items:center;text-align:left;
+  background:#fff;border:1px solid #dfe5ed;border-radius:8px;font-size:12px;line-height:1.36;cursor:pointer;
+}
+.wfl-scope [data-nf="modecell"]:hover{border-color:#cbd5e1;}
+.wfl-scope [data-nf="modecell"][data-open]{border-color:#3d8bd0;}
+.wfl-scope [data-nf="modecell-val"]{color:#364658;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.wfl-scope [data-nf="modecell-ph"]{color:#7b8fa5;opacity:.7;}
+
+/* 21. Value list (To / Cc / Bcc, SMS To, Ask for approval groups/people) — same height, border and corners as the
+   panel's other inputs (30px, #dfe5ed, radius 6); the f(x) button shrinks to fit inside. */
+.wfl-scope [data-nf="vl"]{min-height:30px !important;padding:2px 2px 2px 10px !important;border-radius:6px !important;
+  background:#fff !important;border-color:#dfe5ed !important;font-size:12px;}
+.wfl-scope [data-nf="vl"][aria-expanded="true"]{border-color:var(--accent) !important;}
+.wfl-scope [data-nf="vl"]:hover:not([aria-expanded="true"]){border-color:#cbd5e1 !important;}
+.wfl-scope [data-nf="vl-fx"]{width:24px !important;height:24px !important;border-radius:4px !important;background:#eef2f6 !important;color:#364658 !important;}
+.wfl-scope [data-nf="vl-bare"] [data-nf="vl-fx"]{margin-top:-1px;}
+
+/* 22. Value-list popup tabs use the same Switch Tabs as every other value picker (8a): the selected tab is marked
+   by aria-selected here instead of the --pop-bg inline style. */
+.wfl-scope [data-nf="tabs"] > button[role="tab"]{height:auto;}
+.wfl-scope [data-nf="tabs"] > button[role="tab"][aria-selected="true"]{
+  background:#fff !important;font-weight:500 !important;box-shadow:0 0 4px rgba(54,70,88,.08) !important;filter:none !important;}
+
+/* 23. Insert placeholder = one { } button at the field's right (user 2026-10-14): the same small grey square as the
+   value list's f(x) — top-right corner on multi-line editors, centred on one-line fields. No toolbar button any more. */
+/* (user 2026-10-19) the SAME look as the Cc field's f(x): #eef2f6 square, dark glyph, no border (the outlined
+   version was rejected). It opens the same simple "Insert placeholder" list on every field that has it. */
+.wfl-scope [data-nf="ph-btn"]{width:24px !important;height:24px !important;border-radius:4px !important;background:#eef2f6 !important;
+  border:none !important;color:#364658 !important;font-size:11px !important;letter-spacing:-.5px;}
+.wfl-scope [data-nf="ph-btn"]:disabled{color:#b4c0cd !important;}
+.wfl-scope [data-nf="ph-btn"]:not(:disabled):hover{background:#e2e8f0 !important;filter:none !important;}
+
+/* 25. Email recipients design versions (user 2026-10-15). Version 2's Cc row puts the "Bcc" link to the RIGHT of
+   the field, so the field box sits one level deeper — give it the same box as every other recipient row. */
+.wfl-scope [data-nf="rc-line"]{width:100%;}
+.wfl-scope [data-nf="rc-line"] > .flex-1{background:#fff;border:1px solid #dfe5ed !important;border-radius:6px;padding:4px 12px;min-height:32px;font-size:12px;overflow:hidden;cursor:text;}
+.wfl-scope [data-nf="rc-line"] > .flex-1:hover{border-color:#cbd5e1 !important;}
+.wfl-scope [data-nf="rc-line"] > .flex-1:focus-within{border-color:#3d8bd0 !important;}
+.wfl-scope [data-nf="rc-line"] > button{font-size:12px;color:#3d8bd0 !important;font-weight:400;}
+/* version 2: while typing, the field grows to show every chip */
+.wfl-scope [data-nf="vl-bare"][data-ver="2"][aria-expanded="true"]{align-items:flex-start;}
+
+/* 24. Reply-box editor (user 2026-10-15) — the ServiceOps ticket reply toolbar under every rich-text field
+   (ReplyTools): AI Assist · quick actions · T formatting row · undo/redo. */
+/* what the formatting produces — Tailwind's reset strips heading sizes, list bullets and table borders */
+.wfl-scope [data-rte] h1{font-size:20px;font-weight:600;line-height:1.3;margin:4px 0;}
+.wfl-scope [data-rte] h2{font-size:16px;font-weight:600;line-height:1.35;margin:4px 0;}
+.wfl-scope [data-rte] h3{font-size:14px;font-weight:600;line-height:1.4;margin:2px 0;}
+.wfl-scope [data-rte] ul{list-style:disc;padding-left:22px;margin:2px 0;}
+.wfl-scope [data-rte] ol{list-style:decimal;padding-left:22px;margin:2px 0;}
+.wfl-scope [data-rte] li{white-space:normal;}
+.wfl-scope [data-rte] hr{border:0;border-top:1px solid #dfe5ed;margin:8px 0;}
+.wfl-scope [data-rte] a{color:#3d8bd0;text-decoration:underline;}
+.wfl-scope [data-rte] table{white-space:normal;}
+.wfl-scope [data-nf="side"] [data-rte][contenteditable="true"] h1{font-size:20px;}
+/* toolbar rows: quiet grey icons, Node blue when active; the formatting row sits on a light band */
+.wfl-scope [data-nf="rte"] [data-nf="rte-bar"], .wfl-scope [data-nf="rte"] [data-nf="rte-row"]{border-top-color:#dfe5ed !important;}
+.wfl-scope [data-nf="rte"] [data-nf="rte-row"]{background:#f9fafb !important;}
+.wfl-scope [data-nf="rte"] button[data-tip]{color:#7b8fa5;}
+.wfl-scope [data-nf="rte"] button[data-tip][style*="var(--accent2)"]{color:#3d8bd0 !important;}
+.wfl-scope [data-nf="rte-ai"]{color:#364658 !important;}
+/* email compose: the toolbar hangs under the body box exactly where the old bar did */
+.wfl-scope [data-nf="compose"] > [data-nf="rte"]{margin-top:-16px;background:#fff;border:1px solid #dfe5ed;border-radius:0 0 6px 6px;}
+.wfl-scope [data-nf="compose"] > [data-nf="rte"] > :first-child{border-top:none !important;}
+.wfl-scope [data-nf="compose"] > [data-nf="rte"] > [data-nf="rte-row"]{border-radius:0;}
+
+/* 26. A DYNAMIC (reference) value (user 2026-10-19): the value only — light-purple fill, purple text, no { } icon.
+   Beats the white-field / grey-border rules above. */
+.wfl-scope [data-nf="side"] [data-refval],
+.wfl-scope [data-nf="side"] [data-refval]:hover{background:var(--ref-bg) !important;border-color:var(--ref-bg) !important;color:var(--ref-fg) !important;}
+.wfl-scope [data-nf="side"] [data-refval] span{color:var(--ref-fg) !important;}
+
+/* 27. Field-end icons (user 2026-10-19, image #145): the f(x) and { } buttons sit at the RIGHT of every field with the
+   SAME gap above, below and to the right — 6px in the 36px Email rows (To / Cc / Bcc / Subject), 4px in the 32px
+   Create / Update value cells. Multi-line editors keep them top-right at that same 6px. */
+.wfl-scope [data-nf="crow"] > .flex-1{padding:5px 5px 5px 12px !important;min-height:36px;}
+.wfl-scope [data-nf="crow"] [data-nf="vl-bare"]{padding-top:0 !important;padding-bottom:0 !important;}
+.wfl-scope [data-nf="crow"] [data-nf="vl-bare"] [data-nf="vl-fx"]{margin-top:0 !important;}
+/* multi-line value boxes (Create / Update / Add task Description …): the { } top-right at the same 6px as the Email rows */
+.wfl-scope [data-phbox] [data-nf="ph-btn"]{top:-4px !important;right:-5px !important;}
+
+/* 28. Ask for approval — the stage HEADING gets its own fill (user 2026-10-19): #F6F9FC sets it apart from the fields
+   below the divider, and a collapsed stage reads as one clean tinted bar. Hover darkens it a step. */
+.wfl-scope [data-nf="stage-head"]{background:#F6F9FC !important;}
+.wfl-scope [data-nf="stage-head"]:hover{background:#EEF2F7 !important;}
+.wfl-scope [data-nf="stage-head"][aria-expanded="true"]{border-bottom:1px solid #dfe5ed !important;}
+
+/* 29. Email Content (user 2026-10-19): the { } sits top-right with the SAME 6px gap as every other field, and the
+   "Write the email…" line is lifted so its middle lines up with the button's middle (box padding-top 10 → 3). */
+.wfl-scope [data-nf="cbody"] > div:first-of-type{padding-top:3px !important;}
+.wfl-scope [data-nf="cbody"] [data-nf="ph-btn"]{top:2px !important;right:-7px !important;}
+
+/* 30 · Text field trial (user 2026-10-21) — B's read-only Description field grows to ~3 lines
+   (the generic value-cell rule above pins every value button to 32px) */
+.wfl-scope [data-nf="side"] [data-nf="frow"] > [data-nf="fcell"] + button[data-nf="txt-b-field"][data-multi]{
+  height:auto !important;min-height:76px !important;padding:8px 11px !important;align-items:flex-start;
+}
+.wfl-scope [data-nf="txt-preview"]{font-size:12.8px !important;}
+/* C's one-line field wraps instead of clipping when the text + values outgrow one line */
+.wfl-scope [data-nf="side"] [data-nf="frow"] > [data-nf="fcell"] + div[data-nf="txt-c"]:not([data-phbox]){height:auto !important;min-height:32px !important;}
+
+/* 31 · "+N more" popup, option A (user 2026-10-21): with the selected list open, the "N selected" note moves to the
+   far left of the joined bar, so the popover's own copy hides */
+.wfl-scope [data-vp-side] [data-nf="pop-sel-count"]{visibility:hidden;}
+/* 32 · Add Packages side panel slides in from the right */
+@keyframes pkgSheetIn{from{transform:translateX(24px);opacity:.6}to{transform:none;opacity:1}}
+.wfl-scope [data-nf="pkg-sheet"]{animation:pkgSheetIn .18s ease-out;}
+
+/* 33 · Multi-select popups — the Selected side is TINTED (finalised 2026-10-21): the left column is #F9FAFB top to
+   bottom; picks are plain rows — the name and its × only, no card fill or stroke (a soft hover shows the row) */
+.wfl-scope [data-nf="rc-side-wrap"],.wfl-scope [data-nf="vp-side"],.wfl-scope [data-nf="vp-side-bar"]{background:#F9FAFB !important;}
+.wfl-scope [data-nf="rc-card"],.wfl-scope [data-nf="vp-side-row"]{background:transparent !important;border-color:transparent !important;}
+.wfl-scope [data-nf="rc-card"]:hover,.wfl-scope [data-nf="vp-side-row"]:hover{background:#EEF2F6 !important;}
+/* plain rows: the TEXT sits on the same 12px edge as the search box and section labels; the hover fill runs 10px
+   past it on both sides. A subcategory keeps its 10px indent. */
+.wfl-scope [data-nf="rc-card"],.wfl-scope [data-nf="vp-side-row"]{margin-left:-10px !important;margin-right:-10px !important;padding-left:10px !important;}
+.wfl-scope [data-nf="vp-side-row"][style*="margin-left: 10px"]{margin-left:0 !important;}
+
+/* 34 · tooltips are portalled (initTipPortal, user 2026-10-21) — the in-place ::after bubble got clipped by its container */
+.wfl-scope [data-tip]:hover::after,.wfl-scope [data-tip-below]:hover::after{display:none !important;content:none !important;}
+/* 35 · Field gallery (user 2026-10-21): every field box is white, as in the drawer */
+.wfl-scope [data-nf="gallery"] [data-nf="content"]{background:#fff !important;}
+/* the gallery gets the SIDEBAR field looks (those rules are scoped to [data-nf=side]) */
+.wfl-scope [data-nf="gallery"] [data-tfield]{min-height:38px !important;padding:0 8px !important;background:#fff !important;border-radius:8px;gap:6px;}
+.wfl-scope [data-nf="gallery"] [data-nf="vcell"]{background:#fff !important;border-color:#dfe5ed !important;border-radius:8px !important;}
+.wfl-scope [data-nf="gallery"] [data-nf="pk-btn"]{background:#fff !important;min-height:38px;}
+
+/* 36 · Side-by-side rows keep their two columns while the value's popup is open (user 2026-10-21). The 14e rules
+   key on the value control's resting border (var(--border2)); an open control switches to var(--accent2), so the
+   row used to fall back to stacked and the popup came out as wide as the whole row. These hooks hold column 2. */
+@container side (min-width: 510px){
+  .wfl-scope [data-nf="side"] [data-nf="frow"] > [data-nf="fcell"]:has(+ [style*="1px solid var(--accent2)"]:not(.overflow-hidden)),
+  .wfl-scope [data-nf="side"] [data-nf="frow"] > [data-nf="fcell"]:has(+ [data-nf="vp-field"]),
+  .wfl-scope [data-nf="side"] [data-nf="frow"] > [data-nf="fcell"]:has(+ [data-nf="txt-b-field"]),
+  .wfl-scope [data-nf="side"] [data-nf="frow"] > [data-nf="fcell"]:has(+ [data-nf="rc-box"]){grid-column:1;border-radius:8px 0 0 8px !important;}
+  .wfl-scope [data-nf="side"] [data-nf="frow"] > [data-nf="fcell"] + [style*="1px solid var(--accent2)"]:not(.overflow-hidden),
+  .wfl-scope [data-nf="side"] [data-nf="frow"] > [data-nf="fcell"] + [data-nf="vp-field"],
+  .wfl-scope [data-nf="side"] [data-nf="frow"] > [data-nf="fcell"] + [data-nf="txt-b-field"],
+  .wfl-scope [data-nf="side"] [data-nf="frow"] > [data-nf="fcell"] + [data-nf="rc-box"]{grid-column:2;border-left:none !important;border-radius:0 8px 8px 0 !important;}
+}
+
+/* 37 · Reference card — flat and subtle (user 2026-10-21): no gradient or shadow; a soft tint + border on hover */
+.wfl-scope [data-ref-card]:hover{background:#F6F1FE !important;border-color:#DCCDF8 !important;}
+
+/* 38 · Field Lab page (html.lab): the real right sidebar (opened from a lab card — field rows, stages, placeholder
+   configuration, Expression builder) floats over the lab page instead of sitting in the hidden builder layout */
+
+/* 39 · An open value cell keeps its size (user 2026-10-22): focus = the blue OUTLINE only. The height rule above keys
+   on the resting border (var(--border2)); an open control's border turns var(--accent2), so it used to fall back to
+   its own taller size and stop lining up with the attribute cell beside / above it. */
+.wfl-scope [data-nf="side"] [data-nf="frow"] > [data-nf="fcell"] + button[style*="1px solid var(--accent2)"]:not([data-multi]),
+.wfl-scope [data-nf="side"] [data-nf="frow"] > [data-nf="fcell"] + .relative > button[style*="1px solid var(--accent2)"]:first-child,
+.wfl-scope [data-nf="side"] [data-nf="frow"] > [data-nf="fcell"] + button[data-nf="txt-b-field"]:not([data-multi]),
+.wfl-scope [data-nf="side"] [data-nf="frow"] > [data-nf="fcell"] + button[data-nf="vp-field"]{
+  height:32px !important;min-height:32px !important;padding-top:0 !important;padding-bottom:0 !important;padding-left:11px !important;padding-right:11px !important;font-size:12.8px !important;
+}
+.wfl-scope [data-nf="side"] [data-nf="frow"] > [data-nf="fcell"] + div[style*="1px solid var(--accent2)"]:not(.overflow-hidden){height:32px;min-height:32px !important;}
+/* side by side: the open cell shows its whole outline (the resting join hides its left edge) */
+@container side (min-width: 510px){
+  .wfl-scope [data-nf="side"] [data-nf="frow"] > [data-nf="fcell"] + [style*="1px solid var(--accent2)"]:not(.overflow-hidden){
+    border-left:1px solid var(--accent2) !important;margin-left:-1px;position:relative;z-index:2;
+  }
+}
+/* …and no jump: the "+ non-field" 8px gap (8b) doesn't apply to an open cell; it stays joined to its attribute cell.
+   Some open cells use var(--accent), others var(--accent2) — both covered. Stacked: the top edge shows (outline). */
+.wfl-scope [data-nf="side"] [data-nf="fcell"] + [style*="1px solid var(--accent2)"]:not(.overflow-hidden),
+.wfl-scope [data-nf="side"] [data-nf="fcell"] + [style*="1px solid var(--accent)"]:not(.overflow-hidden){
+  margin-top:-1px !important;border-radius:0 0 8px 8px !important;position:relative;z-index:2;
+}
+.wfl-scope [data-nf="side"] [data-nf="frow"] > [data-nf="fcell"] + button[style*="1px solid var(--accent)"]:not([data-multi]){
+  height:32px !important;min-height:32px !important;padding-top:0 !important;padding-bottom:0 !important;padding-left:11px !important;padding-right:11px !important;font-size:12.8px !important;
+}
+@container side (min-width: 510px){
+  .wfl-scope [data-nf="side"] [data-nf="frow"] > [data-nf="fcell"] + [style*="1px solid var(--accent2)"]:not(.overflow-hidden),
+  .wfl-scope [data-nf="side"] [data-nf="frow"] > [data-nf="fcell"] + [style*="1px solid var(--accent)"]:not(.overflow-hidden){
+    margin-top:0 !important;margin-left:-1px;border-left:1px solid var(--accent2) !important;border-radius:0 8px 8px 0 !important;grid-column:2;
+  }
+  .wfl-scope [data-nf="side"] [data-nf="frow"] > [data-nf="fcell"]:has(+ [style*="1px solid var(--accent)"]:not(.overflow-hidden)){grid-column:1;border-radius:8px 0 0 8px !important;}
+}
+
+/* 40 · Gallery / Field Lab record-field rows (user 2026-10-22) sit in a [data-nf=side] box so the real sidebar skin
+   styles them — but that box is not the floating sidebar card: no panel, padding or shadow */
+.wfl-scope [data-nf="side"][data-gal-side]{background:transparent !important;padding:0 !important;}
+.wfl-scope [data-nf="side"][data-gal-side] > *{background:transparent !important;border:0 !important;border-radius:0 !important;box-shadow:none !important;overflow:visible !important;}
+
+/* 41 · …and the ATTRIBUTE cell stays joined to its open value cell (user 2026-10-22): square bottom corners when
+   stacked, square right corners when side by side — exactly as at rest, only the value's outline turns blue */
+.wfl-scope [data-nf="side"] [data-nf="fcell"]:has(+ [style*="1px solid var(--accent2)"]:not(.overflow-hidden)),
+.wfl-scope [data-nf="side"] [data-nf="fcell"]:has(+ [style*="1px solid var(--accent)"]:not(.overflow-hidden)){border-radius:8px 8px 0 0 !important;}
+@container side (min-width: 510px){
+  .wfl-scope [data-nf="side"] [data-nf="frow"] > [data-nf="fcell"]:has(+ [style*="1px solid var(--accent2)"]:not(.overflow-hidden)),
+  .wfl-scope [data-nf="side"] [data-nf="frow"] > [data-nf="fcell"]:has(+ [style*="1px solid var(--accent)"]:not(.overflow-hidden)){border-radius:8px 0 0 8px !important;}
+}
+
+/* 42 · "+N more" Selected / All-added side panel (user 2026-10-22): tighter rows — 28px, 2px apart (was 32px + 4px) */
+.wfl-scope [data-nf="rc-card"],.wfl-scope [data-nf="vp-side-row"]{height:28px !important;min-height:28px !important;margin-bottom:2px !important;}
+/* Expression card — flat and subtle like the Reference card: no gradient, no shadow; a soft tint + border on hover */
+.wfl-scope [data-nf="expr-card"]:hover{background:#FEF5EA !important;border-color:#F3D2A6 !important;}
+
+/* 43 · Send email › Content (user 2026-10-22): the reply toolbar sits INSIDE the writing box, like the SMS bar — one
+   white box, one hairline above the toolbar (the toolbar's own border-t / grey fill are dropped inside the cbar) */
+.wfl-scope [data-nf="cbar"][data-rt]{padding:4px 8px 6px !important;}
+.wfl-scope [data-nf="cbar"][data-rt] [data-nf="rte-row"], .wfl-scope [data-nf="cbar"][data-rt] [data-nf="rte-bar"], .wfl-scope [data-nf="cbar"][data-rt] [data-nf="rte-fmt"]{border-top:none !important;background:transparent !important;}
+
+
+  .wfl-scope{
+    color-scheme: dark; /* native controls (number spinners, date pickers, selects) render dark */
+    --bg:#0a0a0c; --panel:#0f0f12; --panel2:#131317; --topbar:#0c0c0f; --border:#1f1f25;
+    --border2:#2a2a32; --text:#e6e6ea; --muted:#86868f; --faint:#5a5a63; --ink-mid:#b0b0b8;
+    --pop-bg:#16161b; --pop-hover:#20202a; --ref-bg:#2b2152; --ref-fg:#c4b5fd; --seg-on:#2a2a33; --panel3:#1b1b21; --scroll:#26262e; --scroll-h:#33333d;
+    --accent:#5b6cff; --accent2:#7c89ff; --green:#3fb950; --amber:#d6a531; --red:#f85149; --split:#f0873e;
+    --vs-text:#b3bbff; /* view-switch active tab text — a LIGHT accent so it stays high-contrast on the accent tint (dark theme) */
+    --find-hl:#ffe27a; /* Ctrl+F-style search-match marker */
+    --c-when:#7aa2ff; --c-when-bg:#16213d; --c-when-h:#10192b;
+    --c-if:#e3b341;   --c-if-bg:#2a2410;   --c-if-h:#1d1a11;
+    --c-then:#5fd07e; --c-then-bg:#13241b; --c-then-h:#101e16;
+    --c-branch:#ff8a4c; --c-branch-bg:#2a1b10; --c-branch-h:#190f07;
+    --grain:#ffffff12;
+    --canvas-glow:color-mix(in srgb, var(--accent) 7%, transparent);
+    --rdy-bg:#16241c; --rdy-fg:#3fb950; --rdy-bd:#2c5237;
+    --drf-bg:#2a2418; --drf-fg:#d29922; --drf-bd:#4a3f1f;
+    --shadow-pop:0 12px 34px -14px rgba(0,0,0,.7), 0 3px 10px -4px rgba(0,0,0,.45);
+    --shadow-sm:0 6px 18px -10px rgba(0,0,0,.6), 0 1px 3px rgba(0,0,0,.35);
+    --shadow-float:0 10px 34px -8px rgba(0,0,0,.5), 0 3px 12px -4px rgba(0,0,0,.3);   /* borderless floating bar — soft diffuse lift */
+    --shell-bg:#17171d; --inset-bd:#26262e; --inset-shadow:0 6px 24px -12px rgba(0,0,0,.6); --side-bd:#2a2a32; --avatar-bg:#1c3a5e; --avatar-fg:#93c5fd;
+    --rail-bg:var(--shell-bg); --rail-icon:#6b6b75; --rail-icon-active:#e6e6ea; --rail-active:color-mix(in srgb, var(--accent) 22%, transparent);
+    --side-bg:var(--shell-bg); --side-item:#9a9aa3; --side-item-active-bg:color-mix(in srgb, var(--accent) 16%, transparent); --side-item-active-fg:#e6e6ea;
+    /* ── Typography scale · STEP 3 collapse (2026-07-06). The 8 scale tokens (TYPOGRAPHY-SYSTEM.md §2/§4) + the
+       old→token remap. --lh-* are the intended line-heights (documented; NOT force-attached — approach B keeps every
+       element on its existing relative leading / normal, which scales with size). Sizes are theme-independent. ── */
+    --fs-display:22px; --lh-display:28px;
+    --fs-title:18px;   --lh-title:24px;
+    --fs-primary:18px; --lh-primary:24px; /* node sentence + "do this…" prompt (2026-07-06: primary set to 18; = title size, distinguished by weight — primary regular 400, title semibold 600; 20 & 16 now unused) */
+    --fs-section:14px; --lh-section:20px;
+    --fs-body:13px;    --lh-body:18px;
+    --fs-body-sm:12px; --lh-body-sm:16px;
+    --fs-caption:11px; --lh-caption:15px;
+    --fs-micro:10px;   --lh-micro:14px;
+    /* the intermediate per-old-size vars now POINT at the tokens — this is the actual collapse: */
+    --fs-95:var(--fs-micro);    --fs-10:var(--fs-micro);
+    --fs-105:var(--fs-caption); --fs-11:var(--fs-caption);
+    --fs-115:var(--fs-body-sm); --fs-12:var(--fs-body-sm);
+    --fs-125:var(--fs-body);    --fs-13:var(--fs-body);
+    --fs-135:var(--fs-body);    /* 13.5 default → body; the "Body" title + "Take the tour" CTA are retagged to --fs-section in markup */
+    --fs-14:var(--fs-section);  --fs-145:var(--fs-section);  --fs-15:var(--fs-section);
+    --fs-16:var(--fs-primary);  /* 16 = the "do this…" prompt → primary; the walkthrough use-case name is retagged to --fs-title in markup */
+    --fs-17:var(--fs-title);
+    --fs-175:var(--fs-primary); /* the canvas node sentence: 17.5 → 16, inside its kept 28px (HEAD) line-box */
+    --fs-20:var(--fs-display);  --fs-22:var(--fs-display);
+  }
+  .wfl-scope{
+    color-scheme: light;
+    --bg:#ffffff; --panel:#ffffff; --panel2:#f1f5f9; --topbar:#ffffff; --border:#e8ecf1;
+    --border2:#d6dde6; --text:#0f172a; --muted:#64748b; --faint:#94a3b8; --ink-mid:#475569;
+    --pop-bg:#ffffff; --pop-hover:#f1f5f9; --ref-bg:#f0e8fc; --ref-fg:#8a24d6; --seg-on:#ffffff; --panel3:#e6ebf2; --scroll:#cfd6e0; --scroll-h:#b4bdca;
+    --accent:#4f5dff; --accent2:#5562e6; --green:#1a7f37; --amber:#9a6700; --red:#cf222e; --split:#c2410c;
+    --vs-text:#3730c7; /* view-switch active tab text — a DARK accent so it stays high-contrast on the accent tint (light theme) */
+    --find-hl:#ffe066; /* Ctrl+F-style search-match marker */
+    --c-when:#2563eb; --c-when-bg:#e8f0ff; --c-when-h:#f4f8ff;
+    --c-if:#c2820a;   --c-if-bg:#fbf1d6;   --c-if-h:#fcf8ee;
+    --c-then:#15a04a; --c-then-bg:#e7f6ed; --c-then-h:#f3faf6;
+    --c-branch:#ea580c; --c-branch-bg:#ffedd5; --c-branch-h:#fff6ee;
+    --grain:#0000000d;
+    --canvas-glow:color-mix(in srgb, var(--accent) 4%, transparent);
+    --rdy-bg:#e6f5ec; --rdy-fg:#1a7f37; --rdy-bd:#a7d8ba;
+    --drf-bg:#fdf3d8; --drf-fg:#9a6700; --drf-bd:#ecd9a3;
+    --shadow-pop:0 14px 36px -10px rgba(15,23,42,.16), 0 4px 12px -4px rgba(15,23,42,.08), 0 0 0 1px rgba(15,23,42,.04);
+    --shadow-sm:0 4px 14px -6px rgba(15,23,42,.12), 0 1px 3px rgba(15,23,42,.06);
+    --shadow-float:0 12px 32px -10px rgba(15,23,42,.16), 0 4px 12px -5px rgba(15,23,42,.09), 0 0 0 1px rgba(15,23,42,.05);   /* borderless floating bar — soft lift + faint ring keeps its edge on white */
+    --shell-bg:#f8fafc; --inset-bd:#e3e6ec; --inset-shadow:0 6px 24px -14px rgba(15,23,42,.12); --side-bd:#eceef2; --avatar-bg:#dbeafe; --avatar-fg:#1e40af;
+    --rail-bg:var(--shell-bg); --rail-icon:#8a8a93; --rail-icon-active:#16161a; --rail-active:color-mix(in srgb, var(--accent) 16%, transparent);
+    --side-bg:var(--shell-bg); --side-item:#6a6a73; --side-item-active-bg:color-mix(in srgb, var(--accent) 12%, transparent); --side-item-active-fg:#16161a;
+  }
+  :where(.wfl-scope) *{box-sizing:border-box}
+  .wfl-root{height:100%}
+  .wfl-root{margin:0;background:var(--bg);color:var(--text);
+    font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    -webkit-font-smoothing:antialiased; font-feature-settings:"cv11","ss01";
+    transition:background .2s ease,color .2s ease;}
+  :where(.wfl-scope) ::-webkit-scrollbar{width:10px;height:10px}
+  :where(.wfl-scope) ::-webkit-scrollbar-thumb{background:var(--scroll);border-radius:6px;border:2px solid var(--bg)}
+  :where(.wfl-scope) ::-webkit-scrollbar-thumb:hover{background:var(--scroll-h)}
+  :where(.wfl-scope) .no-scrollbar{scrollbar-width:none;-ms-overflow-style:none}
+  :where(.wfl-scope) .no-scrollbar::-webkit-scrollbar{display:none}
+  :where(.wfl-scope) .thin-scroll{scrollbar-width:thin;scrollbar-color:rgba(150,150,160,0.18) transparent}
+  :where(.wfl-scope) .thin-scroll::-webkit-scrollbar{width:6px}
+  :where(.wfl-scope) .thin-scroll::-webkit-scrollbar-track{background:transparent;border:none}
+  :where(.wfl-scope) .thin-scroll::-webkit-scrollbar-thumb{background:rgba(150,150,160,0.16);border-radius:6px;border:none}
+  :where(.wfl-scope) .thin-scroll::-webkit-scrollbar-thumb:hover{background:rgba(150,150,160,0.32)}
+  /* empty editable param chip in an invalid (un-filled) expression — light-red tone, dark-mode safe */
+  :where(.wfl-scope) .exprparam-error{ background:color-mix(in srgb, #ef4444 22%, transparent) !important; border:1px dashed color-mix(in srgb, #ef4444 60%, var(--border2)) !important; color:color-mix(in srgb, #ef4444 70%, var(--text)) !important; }
+  :where(.wfl-scope) .expredit-error{ border-color:#ef4444 !important; box-shadow:inset 0 1px 3px rgba(0,0,0,0.18), 0 0 0 1px color-mix(in srgb, #ef4444 50%, transparent) !important; }
+  /* placeholder chips (compose subject/body): the remove × is hidden at rest; hovering the chip EXPANDS
+     it and reveals the × (which deletes the chip). Chips are raw HTML inside contentEditable → CSS-only. */
+  :where(.wfl-scope) .ph-chip .ph-x{ width:0; opacity:0; overflow:hidden; display:inline-flex; align-items:center; justify-content:center; border-radius:9999px; transition:width .12s ease, opacity .12s ease, margin .12s ease; margin-left:0; cursor:pointer; color:var(--faint); }
+  :where(.wfl-scope) .ph-chip:hover .ph-x{ width:13px; opacity:1; margin-left:3px; }
+  :where(.wfl-scope) .ph-chip .ph-x:hover{ color:var(--red); }
+  /* Execute app integration mapping VALUE (v8): ONE line — typed text + {#placeholder#} chips run horizontally; at rest
+     whatever overflows the field width is truncated with "…"; while editing it scrolls sideways instead of wrapping. */
+  :where(.wfl-scope) .map-val [contenteditable="true"]{ white-space:nowrap !important; overflow:hidden; text-overflow:ellipsis; word-break:normal !important; overflow-wrap:normal !important; }
+  :where(.wfl-scope) .map-val [contenteditable="true"]:focus{ text-overflow:clip; overflow-x:auto; scrollbar-width:none; }
+  :where(.wfl-scope) .map-val [contenteditable="true"]:focus::-webkit-scrollbar{ display:none; }
+  /* Notion-style ghost placeholder for the expression canvas — a ::before driven by data-empty, so it is
+     NEVER a real text node (can't be selected, typed-over, or serialized). Toggled from syncFromDom. */
+  :where(.wfl-scope) .exprcanvas{ position:relative; }
+  :where(.wfl-scope) .exprcanvas[data-empty="true"]::before{ content:attr(data-ph); position:absolute; left:0; top:0; color:var(--muted); pointer-events:none; font:inherit; white-space:pre; opacity:.7; }
+  /* subtle NEUTRAL focus/hover border on the expression editor box (the .exprbox wrapper). NOTE: --border2
+     (#2a2a32) is LIGHTER than --border (#1f1f25), so we brighten toward --faint/--muted on interaction (not
+     --border, which would darken it). The RED invalid border (.expredit-error, !important) still wins. */
+  :where(.wfl-scope) .exprbox{ border:1px solid var(--border2); transition:border-color .15s ease; }
+  :where(.wfl-scope) .exprbox:hover{ border-color:var(--faint); }
+  :where(.wfl-scope) .exprbox:focus-within{ border-color:var(--muted); }
+  /* keyboard-only focus ring — actionable buttons/options ONLY; never .slot sentence words or inputs/textarea/select (they carry their own focus affordance; this was the autofocus-blue-ring regression) */
+  :where(.wfl-scope) button:not(.slot):focus-visible, :where(.wfl-scope) [role="button"]:not(.slot):focus-visible, :where(.wfl-scope) [role="option"]:focus-visible{ outline:2px solid color-mix(in srgb, var(--accent) 50%, transparent); outline-offset:2px; }
+  /* instant hover tooltip (no native-title delay) — opt in with data-tip="…" */
+  :where(.wfl-scope) [data-tip]{ position:relative; }
+  :where(.wfl-scope) [data-tip]:hover::after{ content:attr(data-tip); position:absolute; left:50%; bottom:calc(100% + 7px); transform:translateX(-50%); white-space:nowrap; background:var(--pop-bg); color:var(--text); border:1px solid var(--border2); font-size:var(--fs-11); font-weight:500; line-height:1; padding:5px 9px; border-radius:8px; pointer-events:none; z-index:60; box-shadow:var(--shadow-pop); }
+  /* downward variant — for tips on elements at the TOP of an overflow-hidden panel (e.g. the side-section close ×) */
+  :where(.wfl-scope) [data-tip-below]{ position:relative; }
+  :where(.wfl-scope) [data-tip-below]:hover::after{ content:attr(data-tip-below); position:absolute; left:50%; top:calc(100% + 7px); transform:translateX(-50%); white-space:nowrap; background:var(--pop-bg); color:var(--text); border:1px solid var(--border2); font-size:var(--fs-11); font-weight:500; line-height:1; padding:5px 9px; border-radius:8px; pointer-events:none; z-index:60; box-shadow:var(--shadow-pop); }
+  :where(.wfl-scope) .pop-enter{animation:pop .12s ease-out}
+  @keyframes pop{from{opacity:0;transform:translateY(-4px) scale(.98)}to{opacity:1;transform:none}}
+  :where(.wfl-scope) .drawer-in{animation:drawerin .28s cubic-bezier(.2,.8,.2,1)}
+  @keyframes drawerin{from{transform:translateX(100%)}to{transform:translateX(0)}}
+  :where(.wfl-scope) .grain{background-image:radial-gradient(circle at 1px 1px,var(--grain) 1px,transparent 0);background-size:22px 22px}
+  :where(.wfl-scope) .canvas-layer{position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(circle at 1px 1px,var(--grain) 1px,transparent 0);background-size:22px 22px}
+  :where(.wfl-scope) .canvas-glow{position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(ellipse 60% 55% at 50% 48%,var(--canvas-glow),transparent 60%)}
+  :where(.wfl-scope) .solid-ico svg path,:where(.wfl-scope) .solid-ico svg rect{ fill:currentColor; stroke:none; }
+  /* (phase 2) the product's RuleSelect TOKEN: a dashed #A5BAD0 rule under a filled word, #CBD5E1 under an
+     empty one (.slot-empty), solid on hover. Kept as text-decoration so a long value still wraps. */
+  :where(.wfl-scope) .slot{ display:inline; text-decoration-line:underline; text-decoration-style:dashed; text-decoration-thickness:1px; text-underline-offset:5px; text-decoration-skip-ink:none; text-decoration-color:#A5BAD0; }
+  :where(.wfl-scope) .slot.slot-empty{ text-decoration-color:#CBD5E1; }
+  :where(.wfl-scope) .slot:hover, :where(.wfl-scope) .slot:focus, :where(.wfl-scope) .slot:focus-visible{ text-decoration-style:solid; outline:none; }
+  /* clause sentence as a continuous INLINE flow: field/op/value read as one wrapping run, so wrapped lines (incl.
+     a long multi-select value) return to the LEFT MARGIN (paragraph wrap) instead of hanging under the value. */
+  :where(.wfl-scope) .clause-flow{ display:block; white-space:normal; overflow-wrap:anywhere; word-spacing:2px; }
+  :where(.wfl-scope) .clause-flow > *{ margin-right:0; }   /* token spacing comes from the literal spaces + word-spacing (matches the trigger sentence); no extra margin */
+  :where(.wfl-scope) .clause-flow .slot{ display:inline; white-space:normal; }   /* values wrap within the run, underline intact */
+  :where(.wfl-scope) .striking{ text-decoration-line:line-through; text-decoration-color:var(--text); text-decoration-thickness:1px; text-decoration-style:solid; text-decoration-skip-ink:none; }
+  :where(.wfl-scope) .striking .slot{ text-decoration-line:line-through !important; text-decoration-color:var(--text) !important; text-decoration-style:solid !important; text-decoration-skip-ink:none !important; }
+  /* clickable controls show the hand cursor. !important so it wins over Tailwind's runtime-injected base layer
+     (vendor/tailwindcss.js injects its \3c style> AFTER this block, so plain rules can lose on source order). */
+  :where(.wfl-scope) button:not(:disabled),:where(.wfl-scope) [role=button],:where(.wfl-scope) [role=option],:where(.wfl-scope) summary,:where(.wfl-scope) label[for],:where(.wfl-scope) .slot,:where(.wfl-scope) .tour-clickable{ cursor:pointer !important; }
+  :where(.wfl-scope) button:disabled,:where(.wfl-scope) [aria-disabled="true"]{ cursor:default !important; opacity:.5; }
+  /* aria-disabled controls (e.g. the periodic "add trigger", the blocked publish split button) need a
+     selector as specific as `button:not(:disabled)` above, and placed AFTER it, to win the cursor. */
+  :where(.wfl-scope) button[aria-disabled="true"],:where(.wfl-scope) [role=button][aria-disabled="true"]{ cursor:default !important; }
+  /* popover/menu option rows + sentence slots are clearly selectable → hand cursor */
+  :where(.wfl-scope) [data-pop-root] button:not(:disabled),:where(.wfl-scope) [data-pop-root] [role=option],:where(.wfl-scope) [data-pop-root] [role=button]{ cursor:pointer !important; }
+  :where(.wfl-scope) input[type=time],:where(.wfl-scope) input[type=date]{color-scheme:dark}
+  :where(.wfl-scope) input[type=time],:where(.wfl-scope) input[type=date]{color-scheme:light}
+  /* intro guide step cards — hover lifts + glows in the role color (--rc set per card) */
+  :where(.wfl-scope) .gstep{ transition:transform .2s cubic-bezier(.2,.7,.3,1), box-shadow .2s ease, border-color .2s ease; border:1px solid var(--border2); }
+  :where(.wfl-scope) .gstep:hover{ transform:translateY(-5px); border-color:var(--rc); box-shadow:0 14px 32px -12px var(--rc); }
+  :where(.wfl-scope) .gstep:hover .gtile{ transform:scale(1.08) rotate(-3deg); }
+  :where(.wfl-scope) .gtile{ transition:transform .2s cubic-bezier(.2,.7,.3,1); }
+  :where(.wfl-scope) .gstep .geg{ opacity:0; transition:opacity .2s ease; }
+  :where(.wfl-scope) .gstep:hover .geg{ opacity:1; }
+  @keyframes guidein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  :where(.wfl-scope) .guidein{ animation:guidein .35s cubic-bezier(.2,.7,.3,1) both; }
+  /* the empty start slot gently beckons — invites the first click without shouting */
+  @keyframes beckon{0%,100%{color:var(--faint);text-decoration-color:var(--border2)}50%{color:var(--accent2);text-decoration-color:var(--accent2)}}
+  :where(.wfl-scope) .slot-beckon{ animation:beckon 2.4s ease-in-out infinite; }
+  /* tour cue — a stronger pulsing accent glow on the blank the user must click during the active tour step */
+  @keyframes tourcue{0%,100%{color:var(--c-when);text-decoration-color:var(--c-when);text-shadow:0 0 0 transparent}50%{color:var(--c-when);text-decoration-color:var(--c-when);text-shadow:0 0 10px color-mix(in srgb, var(--c-when) 60%, transparent)}}
+  :where(.wfl-scope) .slot-tourcue{ animation:tourcue 1.3s ease-in-out infinite; font-weight:500; }
+  /* tour "tap here" target — a FAST-paced white pulse marking the exact click spot (no cursor icon) */
+  /* snappy core: quick scale + opacity blink (~0.8s) */
+  @keyframes tourtapcore{0%{transform:scale(.78);opacity:.78}45%{transform:scale(1.18);opacity:1}100%{transform:scale(.78);opacity:.78}}
+  :where(.wfl-scope) .tour-tapcore{ animation:tourtapcore .8s ease-in-out infinite; }
+  /* quick click ripples emanating OUT from the point — tight max scale so they don't sprawl over the row */
+  @keyframes tourtapripple{0%{transform:scale(.4);opacity:0}20%{opacity:.8}100%{transform:scale(2);opacity:0}}
+  :where(.wfl-scope) .tour-tapripple{ animation:tourtapripple .8s ease-out infinite; }
+  :where(.wfl-scope) .tour-tapripple2{ animation:tourtapripple .8s ease-out infinite; animation-delay:.4s; }
+  /* a thin "target-lock" ring that CONTRACTS inward toward the centre on each beat */
+  @keyframes tourtaplock{0%{transform:scale(1.9);opacity:0}30%{opacity:.9}80%{transform:scale(1);opacity:.5}100%{transform:scale(1);opacity:0}}
+  :where(.wfl-scope) .tour-taplock{ animation:tourtaplock .8s cubic-bezier(.3,0,.2,1) infinite; }
+  /* glassmorphism frosted card — used for the stepper builder mockups */
+  :where(.wfl-scope) .glass{ background:color-mix(in srgb, var(--pop-bg) 75%, transparent); backdrop-filter:blur(14px) saturate(1.3);
+    -webkit-backdrop-filter:blur(14px) saturate(1.3); border:1px solid var(--border);
+    box-shadow:var(--shadow-pop); }
+  /* step crossfade */
+  @keyframes stepin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  :where(.wfl-scope) .stepin{ animation:stepin .28s cubic-bezier(.2,.7,.3,1) both; }
+  /* LOOP box outline — a dashed border drawn as an SVG rect so it can travel; on hover it reverse-marches
+     (counter-clockwise) and turns the loop's cyan (variant C, user-approved 2026-08-18). */
+  :where(.wfl-scope) .loop-frame .loop-ants{ position:absolute; inset:0; width:100%; height:100%; overflow:visible; pointer-events:none; }
+  :where(.wfl-scope) .loop-frame .loop-ants rect{ fill:none; stroke:var(--border2); stroke-width:1.6; stroke-dasharray:8 8; stroke-linecap:round; }
+  :where(.wfl-scope) .loop-frame:hover .loop-ants rect{ stroke:#4ec5e0; animation:loopMarch 0.8s linear infinite; }
+  @keyframes loopMarch{ to{ stroke-dashoffset:-16; } }   /* -offset ⇒ dashes travel LEFT→RIGHT along the top (clockwise) */
+  @media (prefers-reduced-motion:reduce){ :where(.wfl-scope) .loop-frame:hover .loop-ants rect{ animation:none; } }
+  /* MERGE CONNECTOR WIRE (v5.16) — hover-only dashed branch→merge line, drawn in the merge accent, marching */
+  :where(.wfl-scope) .merge-wire-layer path{ fill:none; stroke:var(--accent); stroke-width:2; stroke-dasharray:7 6; stroke-linecap:round; }
+  :where(.wfl-scope) .merge-wire-layer .mw-cap{ fill:var(--accent); }
+  :where(.wfl-scope) .merge-wire-layer .mw-lbl-bg{ fill:var(--panel2); stroke:var(--accent); stroke-width:1; stroke-dasharray:none; }
+  :where(.wfl-scope) .merge-wire-layer .mw-lbl{ fill:var(--accent2); font-size:10.5px; font-weight:600; letter-spacing:.02em; font-family:'Inter',system-ui,sans-serif; }
+  :where(.wfl-scope) .merge-wire-layer .mw-on path{ animation:mwMarch 0.8s linear infinite; }   /* -offset ⇒ dashes travel branch→merge */
+  @keyframes mwMarch{ to{ stroke-dashoffset:-13; } }
+  @media (prefers-reduced-motion:reduce){ :where(.wfl-scope) .merge-wire-layer .mw-on path{ animation:none; } }
+
+}
