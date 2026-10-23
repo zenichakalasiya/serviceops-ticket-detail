@@ -19,6 +19,7 @@ import { AutomaticPatchTestsListingPage } from './components/AutomaticPatchTests
 import { AutomaticPatchDeploymentsListingPage } from './components/AutomaticPatchDeploymentsListingPage';
 import { PackageDeploymentsListingPage } from './components/PackageDeploymentsListingPage';
 import { RegistryDeploymentsListingPage } from './components/RegistryDeploymentsListingPage';
+import { ComplianceVisualizationPage } from './components/ComplianceVisualizationPage';
 import { CompliancePoliciesListingPage } from './components/CompliancePoliciesListingPage';
 import { CompliancePolicyEditorHost } from './components/CompliancePolicyEditor';
 import { KnowledgeListingPage } from './components/KnowledgeListingPage';
@@ -118,6 +119,7 @@ export default function App() {
       {activePage === 'package-deployments' && <PackageDeploymentsListingPage onNavigate={navigate} />}
       {activePage === 'registry-deployments' && <RegistryDeploymentsListingPage onNavigate={navigate} />}
       {activePage === 'compliance-policies' && <CompliancePoliciesListingPage onNavigate={navigate} />}
+      {activePage === 'compliance-visualization' && <ComplianceVisualizationPage tab={route.viz} onNavigate={navigate} />}
       {activePage === 'knowledge' && <KnowledgeListingPage onNavigate={navigate} />}
       {activePage === 'tasks' && <TasksListingPage onNavigate={navigate} />}
       {activePage === 'reports' && <ReportsListingPage onNavigate={navigate} />}
@@ -136,6 +138,8 @@ export default function App() {
           moduleSlug={route.admin}
           portalSlug={route.portal}
           ruleId={route.rule}
+          workflowId={route.workflow}
+          onWorkflowChange={(workflow) => go({ page: 'admin', admin: 'workflow', workflow })}
           onModuleChange={(slug) => go({ page: 'admin', admin: slug })}
           onPortalChange={(portal) => go({ page: 'admin', admin: 'support-portal', portal })}
         />

@@ -89,6 +89,10 @@ export function AssetRegisterPage({
   showQuickFilters = true,
   showFilterBuilder = true,
   showGantt = false,
+  renderTiles,
+  embedded = false,
+  viewsOpen: viewsOpenProp,
+  onViewsOpenChange,
   ganttGrain = 'month',
   ganttProgressOf,
   ganttCardAction,
@@ -152,6 +156,17 @@ export function AssetRegisterPage({
   /** Adds the Gantt to the layout picker. For a module whose records are WINDOWS rather
       than moments (Projects): the rows need `dueBy` and `dueEnd` on them. */
   showGantt?: boolean;
+  /** Turns the Tiles layout on: the page draws the CURRENT page of rows (searched, filtered,
+      sorted, paged exactly as the grid would be) as cards. A click opens the row the same way. */
+  renderTiles?: (rows: Ticket[], open: (t: Ticket) => void) => React.ReactNode;
+  /** true renders only the register's body — no product Sidebar / Header — for a page that
+      hosts the register under its OWN title and tabs (Compliance Visualization). That page owns
+      the frame; the register keeps its view-name row, views rail, toolbar and pagination. */
+  embedded?: boolean;
+  /** Embedded only: the views rail's open state, owned by the host page — it draws the toggle
+      in ITS title row (before its heading) and the register drops its own title row. */
+  viewsOpen?: boolean;
+  onViewsOpenChange?: (open: boolean) => void;
   /** Which grain that timeline opens on — see TicketGanttView's `initialGrain`. */
   ganttGrain?: React.ComponentProps<typeof TicketGanttView>['initialGrain'];
   /** Swaps the Gantt rail's state chip for a progress meter — see `progressOf`. */
@@ -233,7 +248,7 @@ export function AssetRegisterPage({
   /* Opens on the module's FIRST offered layout, not always the plain list: a module that
      does not offer 'list' (the Vulnerability pages lead with List + KPI) would otherwise
      land on a layout its own picker cannot show as selected. */
-  const [view, setView] = useState<'list' | 'list-kpi' | 'kanban' | 'dashboard' | 'calendar' | 'gantt'>(
+  const [view, setView] = useState<'list' | 'list-kpi' | 'kanban' | 'dashboard' | 'calendar' | 'gantt' | 'tiles'>(
     layouts && !layouts.includes('list') ? layouts[0] : 'list',
   );
   /* Set only when the list was reached by clicking something on the dashboard —
@@ -266,7 +281,12 @@ export function AssetRegisterPage({
   const sortColumn = sorts[0]?.column ?? null;
   const sortDirection = sorts[0]?.dir ?? 'asc';
   const [activeView, setActiveView] = useState(startView?.name ?? defaultViewName);
-  const [viewsOpen, setViewsOpen] = useState(false);
+  const [viewsOpenLocal, setViewsOpenLocal] = useState(false);
+  const viewsOpen = viewsOpenProp ?? viewsOpenLocal;
+  const setViewsOpen = (v: boolean | ((o: boolean) => boolean)) => {
+    const next = typeof v === 'function' ? v(viewsOpen) : v;
+    if (onViewsOpenChange) onViewsOpenChange(next); else setViewsOpenLocal(next);
+  };
   const [searchQuery, setSearchQuery] = useState('');
   useEffect(() => {
     setCurrentPage(1);
@@ -383,11 +403,7 @@ export function AssetRegisterPage({
   const currentPageTickets = paginatedTickets.map((t) => t.id);
   const allCurrentPageSelected = currentPageTickets.every((id) => selectedTickets.has(id)) && currentPageTickets.length > 0;
 
-  return (
-    <div className="flex h-screen bg-[#f9fafb]">
-      <Sidebar activePage={activePage} onNavigate={onNavigate} />
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <Header selectedCount={selectedTickets.size} />
+  const body = (
         <div className="flex min-h-0 flex-1 overflow-hidden">
           {/* ONE panel at a time. The module's own navigation rail (the CMDB's CI-class
               tree) and the views rail share this slot, so opening Views folds the classes
@@ -409,7 +425,7 @@ export function AssetRegisterPage({
             />
           )}
           <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-            {drillFrom ? (
+            {embedded && onViewsOpenChange && !drillFrom ? null : drillFrom ? (
               <DrillCrumb
                 label={drillFrom.label}
                 shown={sortedTickets.length}
@@ -477,6 +493,7 @@ export function AssetRegisterPage({
                     showQuickFilters={showQuickFilters}
                     showFilterBuilder={showFilterBuilder}
                     showGantt={showGantt}
+                    showTiles={!!renderTiles}
                     hideTools={hideTools}
                     allowColumnEdit={allowColumnEdit}
                     filterAttrs={filterAttrs}
@@ -543,6 +560,8 @@ export function AssetRegisterPage({
                       />
                     );
                   })()
+                ) : view === 'tiles' && renderTiles ? (
+                  renderTiles(paginatedTickets, handleOpenTicket)
                 ) : view === 'gantt' ? (
                   /* The same timeline the release train uses — a project IS a window, so
                      the bar is the honest shape of it. */
@@ -609,7 +628,7 @@ export function AssetRegisterPage({
                 />
                 )}
               </div>
-              {!isGrouped && (view === 'list' || view === 'list-kpi') && !showOverview && (
+              {!isGrouped && (view === 'list' || view === 'list-kpi' || view === 'tiles') && !showOverview && (
                 <Pagination
                   currentPage={currentPage}
                   totalPages={totalPages}
@@ -700,6 +719,14 @@ export function AssetRegisterPage({
             </main>
           </div>
         </div>
+  );
+  if (embedded) return body;
+  return (
+    <div className="flex h-screen bg-[#f9fafb]">
+      <Sidebar activePage={activePage} onNavigate={onNavigate} />
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <Header selectedCount={selectedTickets.size} />
+        {body}
       </div>
     </div>
   );

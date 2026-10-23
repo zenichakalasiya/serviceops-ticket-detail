@@ -59,10 +59,21 @@ export interface ComplianceRule {
   references: string[];
   controls: ControlMapping[];
   tags: string[];
+  /** CIS profile level: L1 = must have (practical, low impact); L2 = good to have (defence in
+   *  depth, may cost some function). An L2 benchmark includes L1 rules; an L1 one never takes L2. */
+  profile: Profile;
   /** The CIS section the check lives under — Default benchmarks group their rules by it. */
   section: [string, string];
   subsection?: [string, string];
 }
+
+export type Profile = 'L1' | 'L2';
+export const PROFILES: { value: Profile; label: string; tip: string }[] = [
+  { value: 'L1', label: 'L1', tip: 'Must have — only Level 1 rules can be attached' },
+  { value: 'L2', label: 'L2', tip: 'Good to have — Level 2 rules on top of every Level 1 rule' },
+];
+/** Which rule profiles a benchmark of this profile may hold. */
+export const profileAllows = (benchmark: Profile, rule: Profile) => benchmark === 'L2' || rule === 'L1';
 
 /* ── Platforms ─────────────────────────────────────────────────────────────────────────── */
 
@@ -450,6 +461,9 @@ const CHECKS: Check[] = [
   },
 ];
 
+/* The checks CIS puts at Level 2 — defence in depth that can cost some function. */
+const L2_CHECKS = new Set(['auditd', 'spooler', 'snmp', 'logbuffer', 'fortitimeout']);
+
 /* ── Expand checks into rules ───────────────────────────────────────────────────────────── */
 
 export const RULES: ComplianceRule[] = CHECKS.flatMap((c) =>
@@ -471,6 +485,7 @@ export const RULES: ComplianceRule[] = CHECKS.flatMap((c) =>
     references: c.references,
     controls: c.controls,
     tags: c.tags[i] ?? [],
+    profile: (L2_CHECKS.has(c.key) ? 'L2' : 'L1') as Profile,
     section: c.section,
     subsection: c.subsection,
   })),
@@ -511,6 +526,8 @@ export interface Benchmark {
   type: ComplianceType;
   /** The ONE OS version the benchmark is written for ("Debian Linux 11"); its rules are that version's. */
   osVersion: string;
+  /** L1 = must-have rules only; L2 = L1 + good-to-have rules. */
+  profile: Profile;
   /** Default = ships with the product (CIS), read-only; Custom = built here. */
   origin: 'Default' | 'Custom';
   tags: string[];
@@ -525,10 +542,11 @@ export interface Benchmark {
 
 const CIS_DESC = 'This document provides prescriptive guidance for establishing a secure configuration posture. Please see the CIS website for the latest version.';
 
-const rulesFor = (key: string) => RULES.filter((r) => r.id.endsWith(`-${key}`)).map((r) => r.id);
+/* The CIS defaults are all "Level 1" benchmarks, so they carry their version's L1 rules only. */
+const rulesFor = (key: string) => RULES.filter((r) => r.id.endsWith(`-${key}`) && r.profile === 'L1').map((r) => r.id);
 const pick = (key: string, checks: string[]) => checks.map((c) => `${c}-${key}`).filter((id) => ruleById(id));
 
-const SEED: Omit<Benchmark, 'osVersion'>[] = [
+const SEED: Omit<Benchmark, 'osVersion' | 'profile'>[] = [
   { id: 'BM-1', name: 'CIS Debian Linux 11 Benchmark v2.0.0 - Level 1 Server', description: CIS_DESC, type: 'Linux', origin: 'Default', tags: ['framework:cis', 'profile applicability:L1', 'cis'], groups: [{ id: 'g', name: '', ruleIds: rulesFor('debian') }], usedBy: 2, createdBy: 'System', updatedAt: '2026-08-12T10:20' },
   { id: 'BM-2', name: 'CIS Red Hat Enterprise Linux 9 Benchmark v2.0.0 - Level 1 Server', description: CIS_DESC, type: 'Linux', origin: 'Default', tags: ['framework:cis', 'profile applicability:L1', 'cis'], groups: [{ id: 'g', name: '', ruleIds: rulesFor('rhel') }], usedBy: 0, createdBy: 'System', updatedAt: '2026-08-12T10:20' },
   { id: 'BM-3', name: 'CIS Ubuntu Linux 22.04 LTS Benchmark v2.0.0 - Level 1 Server', description: CIS_DESC, type: 'Linux', origin: 'Default', tags: ['framework:cis', 'profile applicability:L1'], groups: [{ id: 'g', name: '', ruleIds: rulesFor('ubuntu') }], usedBy: 1, createdBy: 'System', updatedAt: '2026-08-12T10:20' },
@@ -572,8 +590,11 @@ const SEED: Omit<Benchmark, 'osVersion'>[] = [
 
 /** Every seed's OS version is read off its own rules, so the two can never disagree. */
 export const BENCHMARKS_SEED: Benchmark[] = SEED.map((b) => {
-  const first = ruleById(b.groups.flatMap(groupRuleIds)[0] ?? '');
-  return { ...b, osVersion: first ? osVersionOf(first) : '' };
+  const ids = b.groups.flatMap(groupRuleIds);
+  const first = ruleById(ids[0] ?? '');
+  // A benchmark is L2 exactly when it holds an L2 rule — read off its rules, like its OS version.
+  const profile: Profile = ids.some((id) => ruleById(id)?.profile === 'L2') ? 'L2' : 'L1';
+  return { ...b, osVersion: first ? osVersionOf(first) : '', profile };
 });
 
 export const benchmarkRuleIds = (b: Benchmark) => b.groups.flatMap(groupRuleIds);

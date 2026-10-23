@@ -19,9 +19,9 @@ import type { FilterRule, QuickFilterDef } from './TicketFilterBar';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import {
   benchmarkRuleIds, benchmarksUsingRule, benchmarkTree, COMPLIANCE_TYPES, fmtDate, groupRuleIds, osVersionOf, osVersionsFor, RULES, ruleById,
-  SEVERITIES, SEVERITY_PILL,
+  PROFILES, profileAllows, SEVERITIES, SEVERITY_PILL,
 } from './complianceData';
-import type { Benchmark, ComplianceRule, ComplianceType, RuleGroup } from './complianceData';
+import type { Benchmark, ComplianceRule, ComplianceType, Profile, RuleGroup } from './complianceData';
 
 /* Admin › Compliance › Benchmark.
  *
@@ -54,6 +54,13 @@ const deleteReason = (b: Benchmark) =>
 
 let seq = 100;
 const nextId = () => `BM-${++seq}`;
+
+/** A rule's or benchmark's CIS profile — L1 must have, L2 good to have. */
+function ProfileChip({ profile }: { profile: Profile }) {
+  return (
+    <span className={`inline-block rounded-sm px-1.5 py-0.5 text-[11px] font-semibold ${profile === 'L1' ? 'bg-[#EBF5FF] text-[#3D8BD0]' : 'bg-[#F3EEFF] text-[#7C3AED]'}`} title={profile === 'L1' ? 'Level 1 — must have' : 'Level 2 — good to have'}>{profile}</span>
+  );
+}
 
 /** A disabled control says WHY on hover — a Radix tooltip needs a wrapper to fire on a disabled button. */
 function ActionIcon({ label, reason, onClick, danger, children }: {
@@ -236,19 +243,19 @@ function BenchmarkList({ benchmarks, onOpen, onCreate, onEdit, onClone, onDelete
       <div className="-mx-4 overflow-x-auto">
         <table className="w-full min-w-[1400px] table-fixed leading-5">
           <colgroup>
-            <col className="w-[27%]" /><col className="w-[21%]" /><col className="w-[90px]" /><col className="w-[190px]" /><col className="w-[90px]" />
+            <col className="w-[27%]" /><col className="w-[21%]" /><col className="w-[90px]" /><col className="w-[190px]" /><col className="w-[80px]" /><col className="w-[90px]" />
             <col className="w-[70px]" /><col className="w-[100px]" /><col className="w-[200px]" /><col className="w-[130px]" />
           </colgroup>
           <thead className="border-b border-[#e5e7eb]">
             <tr>
-              {['Benchmark', 'Description', 'Type', 'Version', 'Origin', 'Rules', 'Used Count', 'Tag', 'Actions'].map((h) => (
+              {['Benchmark', 'Description', 'Type', 'Version', 'Profile', 'Origin', 'Rules', 'Used Count', 'Tag', 'Actions'].map((h) => (
                 <th key={h} className={`whitespace-nowrap px-4 py-2.5 text-[12px] font-semibold tracking-wider text-[#364658] ${h === 'Rules' || h === 'Used Count' ? 'text-right' : 'text-left'}`}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-[#e5e7eb] bg-white">
             {pageRows.length === 0 ? (
-              <tr><td colSpan={9} className="px-4 py-12 text-center text-[13px] text-[#9CA3AF]">No benchmark matches these filters.</td></tr>
+              <tr><td colSpan={10} className="px-4 py-12 text-center text-[13px] text-[#9CA3AF]">No benchmark matches these filters.</td></tr>
             ) : pageRows.map((b) => (
               <tr key={b.id} onClick={() => onOpen(b.id)} className="cursor-pointer transition-colors hover:bg-[#f9fafb]">
                 <td className="px-4 py-3">
@@ -257,6 +264,7 @@ function BenchmarkList({ benchmarks, onOpen, onCreate, onEdit, onClone, onDelete
                 <td className="px-4 py-3"><span className="block truncate text-[13px] text-[#64748B]" title={b.description}>{b.description || <span className="text-[#9CA3AF]">—</span>}</span></td>
                 <td className="whitespace-nowrap px-4 py-3 text-[13px] text-[#364658]">{b.type}</td>
                 <td className="px-4 py-3"><span className="block truncate text-[13px] text-[#364658]" title={b.osVersion}>{b.osVersion || '—'}</span></td>
+                <td className="px-4 py-3"><ProfileChip profile={b.profile} /></td>
                 <td className="whitespace-nowrap px-4 py-3 text-[13px] text-[#364658]">{b.origin}</td>
                 <td className="whitespace-nowrap px-4 py-3 text-right text-[13px] text-[#364658]">{benchmarkRuleIds(b).length}</td>
                 <td className={`whitespace-nowrap px-4 py-3 text-right text-[13px] ${b.usedBy ? 'text-[#364658]' : 'text-[#9CA3AF]'}`}>{b.usedBy}</td>
@@ -392,7 +400,7 @@ function GroupCard({
   // Sub-groups start open — the hierarchy is the point of having them.
   const [shut, setShut] = useState<Set<string>>(new Set());
   const toggleSub = (id: string) => setShut((s) => { const x = new Set(s); x.has(id) ? x.delete(id) : x.add(id); return x; });
-  const cols = editable ? 5 : 4;
+  const cols = editable ? 6 : 5;
 
   const ruleRow = (id: string, number: string, depth: 1 | 2) => {
     const r = ruleById(id);
@@ -404,6 +412,7 @@ function GroupCard({
         </td>
         <td className="px-4 py-2.5"><span className="block truncate text-[13px] text-[#364658] group-hover/row:text-[#3D8BD0]" title={r.name}>{r.name}</span></td>
         <td className="px-4 py-2.5"><span className="block truncate text-[13px] text-[#64748B]">{osVersionOf(r)}</span></td>
+        <td className="px-4 py-2.5"><ProfileChip profile={r.profile} /></td>
         <td className="px-4 py-2.5"><SeverityPill severity={r.severity} /></td>
         {editable && (
           <td className="px-2 py-1.5 text-right" onClick={(e) => e.stopPropagation()}>
@@ -473,10 +482,10 @@ function GroupCard({
           )
         ) : (
           <table className="w-full table-fixed">
-            <colgroup><col className="w-[96px]" /><col /><col className="w-[220px]" /><col className="w-[110px]" />{editable && <col className="w-[56px]" />}</colgroup>
+            <colgroup><col className="w-[96px]" /><col /><col className="w-[200px]" /><col className="w-[80px]" /><col className="w-[110px]" />{editable && <col className="w-[56px]" />}</colgroup>
             <thead>
               <tr className="border-b border-[#EEF1F4]">
-                {['No.', 'Rule', 'Platform', 'Severity', ...(editable ? [''] : [])].map((h, i) => <th key={i} className="px-4 py-2 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>)}
+                {['No.', 'Rule', 'Platform', 'Profile', 'Severity', ...(editable ? [''] : [])].map((h, i) => <th key={i} className="px-4 py-2 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>)}
               </tr>
             </thead>
             <tbody className="divide-y divide-[#EEF1F4]">
@@ -659,6 +668,7 @@ function BenchmarkDrawer({ benchmark, benchmarks, onClose, onEdit, onClone, onDe
   const kpis = [
     kpi('type', 'Type', benchmark.type, `Type: ${benchmark.type}`),
     kpi('version', 'Version', benchmark.osVersion || '—', `Version: ${benchmark.osVersion}`),
+    kpi('profile', 'Profile', benchmark.profile, benchmark.profile === 'L1' ? 'Level 1 — must-have rules only' : 'Level 2 — Level 1 rules plus good-to-have rules'),
     kpi('origin', 'Origin', benchmark.origin, `Origin: ${benchmark.origin}`),
     kpi('rules', 'Rules', total, `Rules: ${total}`),
     kpi('used', 'Used Count', benchmark.usedBy, `Used by ${benchmark.usedBy} compliance policies`),
@@ -668,6 +678,7 @@ function BenchmarkDrawer({ benchmark, benchmarks, onClose, onEdit, onClone, onDe
   const fields: [string, React.ReactNode][] = [
     ['Type', benchmark.type],
     ['Version', benchmark.osVersion || '—'],
+    ['Profile', <span key="p" className="inline-flex items-center gap-2"><ProfileChip profile={benchmark.profile} /><span className="text-[12px] text-[#64748B]">{benchmark.profile === 'L1' ? 'Must have' : 'Good to have — includes Level 1'}</span></span>],
     ['Origin', benchmark.origin],
     ['Description', benchmark.description || '—'],
     ['Tags', benchmark.tags.length
@@ -808,6 +819,9 @@ function BenchmarkForm({ editing, source, names, onCancel, onSave }: {
   const [name, setName] = useState(editing ? editing.name : source ? `Copy of ${source.name}` : '');
   const [type, setType] = useState<ComplianceType | ''>(base?.type ?? '');
   const [version, setVersion] = useState(base?.osVersion ?? '');
+  const [profile, setProfile] = useState<Profile>(base?.profile ?? 'L1');
+  /** L2 → L1 with Level 2 rules attached: the confirm holds the count until the admin decides. */
+  const [confirmL1, setConfirmL1] = useState<number | null>(null);
   const [description, setDescription] = useState(base?.description ?? '');
   const [tags, setTags] = useState<string[]>(base?.tags ?? []);
   const [groups, setGroups] = useState<RuleGroup[]>(() =>
@@ -848,6 +862,24 @@ function BenchmarkForm({ editing, source, names, onCancel, onSave }: {
     clearRules(version);
     setVersion(v);
   };
+  /* L1 → L2 only widens what can be attached. L2 → L1 would drop the Level 2 rules, so it asks first. */
+  const l2Attached = attached.filter((id) => ruleById(id)?.profile === 'L2');
+  const changeProfile = (p: Profile) => {
+    if (p === profile) return;
+    if (p === 'L1' && l2Attached.length) { setConfirmL1(l2Attached.length); return; }
+    setProfile(p);
+  };
+  const switchToL1 = () => {
+    const drop = new Set(l2Attached);
+    setGroups((gs) => gs.map((g) => ({
+      ...g,
+      ruleIds: g.ruleIds.filter((id) => !drop.has(id)),
+      children: (g.children ?? []).map((c) => ({ ...c, ruleIds: c.ruleIds.filter((id) => !drop.has(id)) })),
+    })));
+    setProfile('L1');
+    toast(`${drop.size} Level 2 rule${drop.size > 1 ? 's were' : ' was'} removed — an L1 benchmark holds must-have rules only`);
+    setConfirmL1(null);
+  };
 
   const save = () => {
     setTried(true);
@@ -858,6 +890,7 @@ function BenchmarkForm({ editing, source, names, onCancel, onSave }: {
       description: description.trim(),
       type: type as ComplianceType,
       osVersion: version,
+      profile,
       origin: 'Custom',
       tags,
       groups,
@@ -875,7 +908,8 @@ function BenchmarkForm({ editing, source, names, onCancel, onSave }: {
     const c = sid ? g?.children?.find((x) => x.id === sid) : undefined;
     return [g?.name || 'Untitled group', c ? c.name || 'Untitled sub-group' : ''].filter(Boolean).join(' › ');
   };
-  const pool = useMemo(() => RULES.filter((r) => r.type === type && osVersionOf(r) === version), [type, version]);
+  /* The version's rules the profile allows: L1 → Level 1 only; L2 → Level 1 and Level 2. */
+  const pool = useMemo(() => RULES.filter((r) => r.type === type && osVersionOf(r) === version && profileAllows(profile, r.profile)), [type, version, profile]);
   const [pickRules, setPickRules] = useState<FilterRule[]>([]);
   useEffect(() => { setPickRules([]); }, [attachTo?.g, attachTo?.s]);
   const pickAttrs = useMemo(() => {
@@ -884,13 +918,16 @@ function BenchmarkForm({ editing, source, names, onCancel, onSave }: {
       selectAttr('severity', 'Severity', ShieldAlert, SEVERITIES.filter((s) => pool.some((r) => r.severity === s)).map((v) => ({ label: v, color: SEVERITY_PILL[v].bar }))),
       selectAttr('section', 'Section', Layers, plain(optionsOf(pool, (r) => r.section[1]))),
       selectAttr('tags', 'Tag', Tag, plain(optionsOf(pool, (r) => r.tags))),
+      selectAttr('profile', 'Profile', BadgeCheck, plain(optionsOf(pool, (r) => r.profile, ['L1', 'L2']))),
     ];
   }, [pool]);
   const pickQuick = useMemo<QuickFilterDef[]>(() => [
     { field: 'severity', icon: ShieldAlert, tip: 'Filter by severity', title: 'Severity is', width: 196, row: 'dot', options: pickAttrs[0].options! },
     { field: 'section', icon: Layers, tip: 'Filter by section', title: 'Section is', width: 240, row: 'plain', options: pickAttrs[1].options! },
     { field: 'tags', icon: Tag, tip: 'Filter by tag', title: 'Tag is', width: 220, row: 'plain', options: pickAttrs[2].options! },
-  ], [pickAttrs]);
+    // Only an L2 benchmark mixes the two levels, so only then is there anything to filter by.
+    ...(profile === 'L2' ? [{ field: 'profile', icon: BadgeCheck, tip: 'Filter by profile', title: 'Profile is', width: 160, row: 'plain' as const, options: pickAttrs[3].options! }] : []),
+  ], [pickAttrs, profile]);
   const pickRows = useMemo(
     () => matchRules(pool, pickRules, (r, f) => (f === 'section' ? r.section[1] : f === 'tags' ? r.tags : String((r as any)[f] ?? ''))),
     [pool, pickRules],
@@ -918,6 +955,7 @@ function BenchmarkForm({ editing, source, names, onCancel, onSave }: {
       },
     },
     { header: 'Section', cell: (r) => <span className="whitespace-nowrap">{r.section[1]}</span> },
+    { header: 'Profile', cell: (r) => <ProfileChip profile={r.profile} /> },
     { header: 'Severity', cell: (r) => <SeverityPill severity={r.severity} /> },
     { header: 'Tag', cell: (r) => <TagCell tags={r.tags} /> },
   ];
@@ -944,13 +982,14 @@ function BenchmarkForm({ editing, source, names, onCancel, onSave }: {
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto max-w-[1100px] px-4 py-5">
-          <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+          {/* Six fields in two rows of three equal columns: Name · Type · Version, then
+              Description · Profile · Tags. */}
+          <div className="grid grid-cols-3 gap-x-4 gap-y-4">
             <div>
               <FieldLabel required>Benchmark Name</FieldLabel>
               <input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="Benchmark Name" className={`${inputCls} ${tried && (!name.trim() || dupName) ? '!border-[#F25C4E]' : ''}`} />
               <ErrorText>{tried && (!name.trim() ? 'Enter a name' : dupName ? 'This name is taken' : '')}</ErrorText>
             </div>
-            <div className="grid grid-cols-2 gap-x-4">
               <div>
                 <FieldLabel required>Type</FieldLabel>
                 <RuleSelect className="!rounded" value={type ? [type] : []} options={typeOptions} onChange={(v) => v[0] && changeType(v[0] as ComplianceType)} invalid={tried && !type} />
@@ -969,11 +1008,23 @@ function BenchmarkForm({ editing, source, names, onCancel, onSave }: {
                 />
                 <ErrorText>{tried && type && !version ? 'Choose a Version' : ''}</ErrorText>
               </div>
-            </div>
             <div>
               <FieldLabel>Description</FieldLabel>
               <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Description" rows={2} className={`${inputCls} !h-auto resize-y py-2 leading-[18px]`} />
             </div>
+              <div>
+                <FieldLabel required>Profile</FieldLabel>
+                <div className="pill-track flex h-8 w-full">
+                  {PROFILES.map((p) => (
+                    <Tooltip key={p.value}>
+                      <TooltipTrigger asChild>
+                        <button type="button" aria-pressed={profile === p.value} onClick={() => changeProfile(p.value)} className="flex-1">{p.label}</button>
+                      </TooltipTrigger>
+                      <TooltipContent className="text-wrap max-w-[240px]">{p.tip}</TooltipContent>
+                    </Tooltip>
+                  ))}
+                </div>
+              </div>
             <div>
               <FieldLabel>Tags</FieldLabel>
               <div className="pt-1"><TagEditor tags={tags} onChange={setTags} /></div>
@@ -1024,7 +1075,7 @@ function BenchmarkForm({ editing, source, names, onCancel, onSave }: {
       <PickerDrawer<ComplianceRule>
         isOpen={!!target}
         title="Attach Rules"
-        subtitle={attachTo ? `Rules for “${targetLabel(attachTo.g, attachTo.s)}”` : ''}
+        subtitle={attachTo ? `${profile === 'L1' ? 'Level 1 rules' : 'Level 1 and Level 2 rules'} for “${targetLabel(attachTo.g, attachTo.s)}”` : ''}
         rows={pickRows}
         columns={columns}
         selected={target?.ruleIds ?? []}
@@ -1055,6 +1106,21 @@ function BenchmarkForm({ editing, source, names, onCancel, onSave }: {
       />
 
       {openRule && <RuleDetailPanel rule={openRule} usedIn={[]} onClose={() => setRuleId(null)} />}
+
+      {confirmL1 !== null && (
+        <div className="fixed inset-0 z-[10050] flex items-center justify-center bg-black/30" onMouseDown={() => setConfirmL1(null)}>
+          <div className="w-[440px] rounded-lg bg-white p-5 shadow-xl" onMouseDown={(e) => e.stopPropagation()}>
+            <h3 className="text-[15px] font-semibold text-[#364658]">Switch to L1?</h3>
+            <p className="mt-1.5 text-[13px] leading-[1.6] text-[#64748B]">
+              An L1 benchmark holds must-have rules only. Switching removes the <span className="font-medium text-[#364658]">{confirmL1} Level 2 rule{confirmL1 === 1 ? '' : 's'}</span> attached to its groups; the Level 1 rules stay.
+            </p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button type="button" onClick={() => setConfirmL1(null)} className="h-9 rounded border border-[#DFE5ED] bg-white px-4 text-[13px] font-medium text-[#364658] hover:bg-[#F9FAFB]">Cancel</button>
+              <button type="button" onClick={switchToL1} className="h-9 rounded bg-[#3D8BD0] px-4 text-[13px] font-medium text-white hover:bg-[#3478B5]">Switch to L1</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

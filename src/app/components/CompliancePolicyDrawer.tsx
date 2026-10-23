@@ -18,6 +18,7 @@ import {
 } from './compliancePolicyData';
 import type { CompliancePolicy, EndpointOutcome } from './compliancePolicyData';
 import { PolicyScheduleDrawer } from './CompliancePolicyEditor';
+import { ComplianceEndpointPanel } from './ComplianceEndpointPanel';
 
 /* Compliance Policy — the detail page. Opened from the listing through the shared DrawerStack,
  * so it is a tab in the same drawer every other module's record opens in (tab strip, minimise to
@@ -94,6 +95,8 @@ export function CompliancePolicyDrawer({
   const [menu, setMenu] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [ruleId, setRuleId] = useState<string | null>(null);
+  /** The endpoint whose results (rule breakdown) are open over this page. */
+  const [resultFor, setResultFor] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const { open: openInStack } = useDrawerStack();
 
@@ -244,11 +247,16 @@ export function CompliancePolicyDrawer({
                   <thead><tr className="border-b border-[#e5e7eb]">{['Endpoint', 'IP Address', 'Remote Office', 'Result', 'Compliance', 'Checks'].map((h) => <th key={h} className="px-4 py-2.5 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>)}</tr></thead>
                   <tbody className="divide-y divide-[#e5e7eb]">
                     {results.map((r) => (
-                      <tr key={r.endpoint.id} onClick={() => r.endpoint.real && openEndpoint(r.endpoint.id)} className={`transition-colors hover:bg-[#f9fafb] ${r.endpoint.real ? 'cursor-pointer' : ''}`}>
+                      <tr key={r.endpoint.id} onClick={() => setResultFor(r.endpoint.id)} className="cursor-pointer transition-colors hover:bg-[#f9fafb]">
                         <td className="px-4 py-3">
                           <span className="flex min-w-0 items-center gap-2">
                             <span className={`size-2 flex-shrink-0 rounded-full ${r.endpoint.agentOnline ? 'bg-[#22C55E]' : 'bg-[#F59E0B]'}`} title={r.endpoint.agentOnline ? 'Agent online' : 'Agent offline'} />
-                            <span className="flex-shrink-0 rounded bg-[#e8f4fd] px-1.5 py-0.5 text-[11px] font-medium text-[#3D8BD0]">{r.endpoint.id}</span>
+                            {/* The id opens the endpoint's own record (Endpoints module); the row opens its results here. */}
+                            <span
+                              onClick={(e) => { if (!r.endpoint.real) return; e.stopPropagation(); openEndpoint(r.endpoint.id); }}
+                              title={r.endpoint.real ? 'Open the endpoint' : undefined}
+                              className={`flex-shrink-0 rounded bg-[#e8f4fd] px-1.5 py-0.5 text-[11px] font-medium text-[#3D8BD0] ${r.endpoint.real ? 'hover:bg-[#d0e8f9]' : ''}`}
+                            >{r.endpoint.id}</span>
                             <span className="truncate text-[13px] text-[#364658]" title={r.endpoint.osName}>{r.endpoint.hostName}</span>
                           </span>
                         </td>
@@ -301,6 +309,7 @@ export function CompliancePolicyDrawer({
         </div>
       </div>
 
+      {resultFor && <ComplianceEndpointPanel endpointId={resultFor} policyId={p.id} onClose={() => setResultFor(null)} />}
       {scheduleOpen && <PolicyScheduleDrawer policyId={p.id} onClose={() => setScheduleOpen(false)} />}
       {openRule && <RuleDetailPanel rule={openRule} usedIn={benchmarksUsingRule(BENCHMARKS_SEED, openRule.id).map((b) => b.name)} onClose={() => setRuleId(null)} />}
       {confirmDelete && (

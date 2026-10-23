@@ -231,7 +231,10 @@ export function ChartTile({
   const [overrides, setOverrides] = useState<Record<string, string>>({});
   function baseColor(name: any, i: number) {
     const sem = SEMANTIC_TOKEN[String(name).toLowerCase()];
-    return overrides[name] || (sem ? pal[sem - 1] : null) || pal[i % PAL_STOPS];
+    /* `chart.colors` (name → colour) lets a host fix colours that carry meaning — Compliance
+     * Visualization paints Passed green and Vulnerable red whatever order they arrive in. No board
+     * tile sets it, so board charts are unaffected. */
+    return overrides[name] || chart?.colors?.[name] || (sem ? pal[sem - 1] : null) || pal[i % PAL_STOPS];
   }
   const entities = useMemo(() => {
     if (sliceBased) {

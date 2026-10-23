@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { ExternalLink, GitBranch, Monitor, Search, Server, ShieldAlert, Tag, X } from 'lucide-react';
+import { BadgeCheck, ExternalLink, GitBranch, Monitor, Search, Server, ShieldAlert, Tag, X } from 'lucide-react';
 import { Pagination } from './Pagination';
 import { matchRules, optionsOf, RuleDetailPanel, selectAttr, SeverityPill, TagCell } from './ComplianceShared';
 import { TicketFilterBar } from './TicketFilterBar';
@@ -36,12 +36,14 @@ export function AdminComplianceRulesModule({ benchmarks = BENCHMARKS_SEED }: { b
       selectAttr('version', 'Version', GitBranch, plain(optionsOf(RULES, (r) => `${r.platform} ${r.version}`))),
       selectAttr('severity', 'Severity', ShieldAlert, SEVERITIES.map((v) => ({ label: v, color: SEVERITY_PILL[v].bar }))),
       selectAttr('tags', 'Tag', Tag, plain(optionsOf(RULES, (r) => r.tags))),
+      selectAttr('profile', 'Profile', BadgeCheck, [{ label: 'L1' }, { label: 'L2' }]),
     ];
   }, []);
   // The two cuts a rule list is worked by: what it runs on, and how bad a failure is.
   const quick = useMemo<QuickFilterDef[]>(() => [
     { field: 'type', icon: Monitor, tip: 'Filter by type', title: 'Type is', width: 196, row: 'plain', options: attrs[0].options! },
     { field: 'severity', icon: ShieldAlert, tip: 'Filter by severity', title: 'Severity is', width: 196, row: 'dot', options: attrs[3].options! },
+    { field: 'profile', icon: BadgeCheck, tip: 'Filter by profile', title: 'Profile is', width: 160, row: 'plain', options: attrs[5].options! },
   ], [attrs]);
 
   const rows = useMemo(() => {
@@ -88,18 +90,18 @@ export function AdminComplianceRulesModule({ benchmarks = BENCHMARKS_SEED }: { b
         <table className="w-full min-w-[1200px] table-fixed leading-5">
           <colgroup>
             <col className="w-[30%]" /><col className="w-[24%]" /><col className="w-[100px]" /><col className="w-[100px]" />
-            <col className="w-[190px]" /><col className="w-[100px]" /><col className="w-[220px]" />
+            <col className="w-[190px]" /><col className="w-[100px]" /><col className="w-[80px]" /><col className="w-[220px]" />
           </colgroup>
           <thead className="border-b border-[#e5e7eb]">
             <tr>
-              {['Rule', 'Description', 'Severity', 'Type', 'Platform', 'Version', 'Tag'].map((h) => (
+              {['Rule', 'Description', 'Severity', 'Type', 'Platform', 'Version', 'Profile', 'Tag'].map((h) => (
                 <th key={h} className="whitespace-nowrap px-4 py-2.5 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-[#e5e7eb] bg-white">
             {pageRows.length === 0 ? (
-              <tr><td colSpan={7} className="px-4 py-12 text-center text-[13px] text-[#9CA3AF]">No rule matches these filters.</td></tr>
+              <tr><td colSpan={8} className="px-4 py-12 text-center text-[13px] text-[#9CA3AF]">No rule matches these filters.</td></tr>
             ) : pageRows.map((r) => (
               <tr key={r.id} onClick={() => setOpenId(r.id)} className="cursor-pointer transition-colors hover:bg-[#f9fafb]">
                 <td className="px-4 py-3">
@@ -110,6 +112,7 @@ export function AdminComplianceRulesModule({ benchmarks = BENCHMARKS_SEED }: { b
                 <td className="whitespace-nowrap px-4 py-3 text-[13px] text-[#364658]">{r.type}</td>
                 <td className="px-4 py-3"><span className="block truncate text-[13px] text-[#364658]" title={r.platform}>{r.platform}</span></td>
                 <td className="whitespace-nowrap px-4 py-3 text-[13px] text-[#364658]">{r.version}</td>
+                <td className="px-4 py-3"><span className={`inline-block rounded-sm px-1.5 py-0.5 text-[11px] font-semibold ${r.profile === 'L1' ? 'bg-[#EBF5FF] text-[#3D8BD0]' : 'bg-[#F3EEFF] text-[#7C3AED]'}`} title={r.profile === 'L1' ? 'Level 1 — must have' : 'Level 2 — good to have'}>{r.profile}</span></td>
                 <td className="px-4 py-3"><TagCell tags={r.tags} /></td>
               </tr>
             ))}

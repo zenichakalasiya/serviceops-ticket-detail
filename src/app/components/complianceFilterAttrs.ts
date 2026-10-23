@@ -42,3 +42,87 @@ export const POLICY_VIEWS: TicketView[] = [
   { name: 'Scheduled', rules: [{ field: 'x_scheduled', condition: 'is', values: ['Scheduled'] }] },
   { name: 'Disabled', rules: [{ field: 'x_enabled', condition: 'is', values: ['Disabled'] }] },
 ];
+
+/* ── Compliance Visualization — Policies · Explorer Rules · Explorer Resources ─────────── */
+
+export const POSTURE_OPTIONS = [
+  { label: 'Secure', color: '#22C55E' },
+  { label: 'Moderate', color: '#F59E0B' },
+  { label: 'Poor', color: '#F97316' },
+  { label: 'Vulnerable', color: '#DC2626' },
+  { label: 'Not assessed', color: '#94A3B8' },
+];
+export const SCAN_STATUS_OPTIONS = [{ label: 'Success', color: '#22C55E' }, { label: 'Not reached', color: '#F59E0B' }, { label: 'Not scanned', color: '#94A3B8' }];
+const SEVERITY_OPTIONS = [
+  { label: 'Critical', color: '#DC2626' }, { label: 'High', color: '#F97316' }, { label: 'Medium', color: '#F59E0B' },
+  { label: 'Low', color: '#22C55E' }, { label: 'Info', color: '#3D8BD0' },
+];
+const PROFILE_OPTIONS = [{ label: 'L1' }, { label: 'L2' }];
+const RESULT_OPTIONS = [{ label: 'Failing', color: '#DC2626' }, { label: 'All passing', color: '#22C55E' }];
+
+export const VIZ_POLICY_FILTER_ATTRS: Attr[] = [
+  { key: 'id', label: 'ID', icon: Hash, type: 'text' },
+  { key: 'subject', label: 'Policy Name', icon: AlignLeft, type: 'text' },
+  { key: 'x_benchmark', label: 'Benchmark', icon: ShieldCheck, type: 'text' },
+  { key: 'x_type', label: 'Type', icon: Layers, type: 'select', options: TYPE_OPTIONS },
+  { key: 'x_osVersion', label: 'Version', icon: Layers, type: 'text' },
+  { key: 'x_profile', label: 'Profile', icon: ShieldCheck, type: 'select', options: PROFILE_OPTIONS },
+  { key: 'status', label: 'Status', icon: CircleDot, type: 'select', options: POLICY_STATUS_OPTIONS },
+  { key: 'x_posture', label: 'Posture', icon: CircleDot, type: 'select', options: POSTURE_OPTIONS },
+  { key: 'x_tags', label: 'Tag', icon: Tag, type: 'text' },
+  { key: 'x_lastExecution', label: 'Last Scan', icon: CalendarDays, type: 'date' },
+];
+export const VIZ_POLICY_QUICK_FILTERS: QuickFilterDef[] = [
+  { field: 'x_posture', icon: CircleDot, tip: 'Filter by posture', title: 'Posture is', width: 200, row: 'dot', options: POSTURE_OPTIONS },
+  { field: 'x_type', icon: Layers, tip: 'Filter by type', title: 'Type is', width: 180, row: 'plain', options: TYPE_OPTIONS },
+];
+export const VIZ_POLICY_VIEWS: TicketView[] = [
+  { name: 'All Policies', rules: [] },
+  { name: 'Below Target', rules: [{ field: 'x_posture', condition: 'is', values: ['Moderate', 'Poor', 'Vulnerable'] }] },
+  { name: 'Vulnerable', rules: [{ field: 'x_posture', condition: 'is', values: ['Vulnerable'] }] },
+  { name: 'Network Devices', rules: [{ field: 'x_type', condition: 'is', values: ['Router', 'Switch', 'Firewall'] }] },
+];
+
+export const VIZ_RULE_FILTER_ATTRS: Attr[] = [
+  { key: 'subject', label: 'Rule', icon: AlignLeft, type: 'text' },
+  { key: 'x_severity', label: 'Severity', icon: CircleDot, type: 'select', options: SEVERITY_OPTIONS },
+  { key: 'x_type', label: 'Type', icon: Layers, type: 'select', options: TYPE_OPTIONS },
+  { key: 'x_osVersion', label: 'Version', icon: Layers, type: 'text' },
+  { key: 'x_profile', label: 'Profile', icon: ShieldCheck, type: 'select', options: PROFILE_OPTIONS },
+  { key: 'x_section', label: 'Section', icon: Hash, type: 'text' },
+  { key: 'x_result', label: 'Result', icon: CircleDot, type: 'select', options: RESULT_OPTIONS },
+  { key: 'x_policyNames', label: 'Policy', icon: ShieldCheck, type: 'text' },
+];
+export const VIZ_RULE_QUICK_FILTERS: QuickFilterDef[] = [
+  { field: 'x_severity', icon: CircleDot, tip: 'Filter by severity', title: 'Severity is', width: 190, row: 'dot', options: SEVERITY_OPTIONS },
+  { field: 'x_result', icon: ShieldCheck, tip: 'Filter by result', title: 'Result is', width: 180, row: 'dot', options: RESULT_OPTIONS },
+  { field: 'x_type', icon: Layers, tip: 'Filter by type', title: 'Type is', width: 180, row: 'plain', options: TYPE_OPTIONS },
+];
+export const VIZ_RULE_VIEWS: TicketView[] = [
+  { name: 'All Rules', rules: [] },
+  { name: 'Failing Rules', rules: [{ field: 'x_result', condition: 'is', values: ['Failing'] }] },
+  { name: 'Critical & High Failing', rules: [{ field: 'x_result', condition: 'is', values: ['Failing'] }, { field: 'x_severity', condition: 'is', values: ['Critical', 'High'] }] },
+];
+
+export const VIZ_RESOURCE_FILTER_ATTRS: Attr[] = [
+  { key: 'id', label: 'Endpoint ID', icon: Hash, type: 'text' },
+  { key: 'subject', label: 'Host Name', icon: AlignLeft, type: 'text' },
+  { key: 'x_ip', label: 'IP Address', icon: Hash, type: 'text' },
+  { key: 'x_type', label: 'Type', icon: Layers, type: 'select', options: TYPE_OPTIONS },
+  { key: 'x_osVersion', label: 'Version', icon: Layers, type: 'text' },
+  { key: 'x_office', label: 'Remote Office', icon: Layers, type: 'text' },
+  { key: 'x_posture', label: 'Posture', icon: CircleDot, type: 'select', options: POSTURE_OPTIONS },
+  { key: 'x_scanStatus', label: 'Scan Status', icon: CircleDot, type: 'select', options: SCAN_STATUS_OPTIONS },
+  { key: 'x_policyNames', label: 'Policy', icon: ShieldCheck, type: 'text' },
+  { key: 'x_lastExecution', label: 'Last Scan', icon: CalendarDays, type: 'date' },
+];
+export const VIZ_RESOURCE_QUICK_FILTERS: QuickFilterDef[] = [
+  { field: 'x_posture', icon: CircleDot, tip: 'Filter by posture', title: 'Posture is', width: 200, row: 'dot', options: POSTURE_OPTIONS },
+  { field: 'x_scanStatus', icon: CalendarClock, tip: 'Filter by scan status', title: 'Scan Status is', width: 200, row: 'dot', options: SCAN_STATUS_OPTIONS },
+  { field: 'x_type', icon: Layers, tip: 'Filter by type', title: 'Type is', width: 180, row: 'plain', options: TYPE_OPTIONS },
+];
+export const VIZ_RESOURCE_VIEWS: TicketView[] = [
+  { name: 'All Endpoints', rules: [] },
+  { name: 'Vulnerable Endpoints', rules: [{ field: 'x_posture', condition: 'is', values: ['Vulnerable', 'Poor'] }] },
+  { name: 'Not Reached', rules: [{ field: 'x_scanStatus', condition: 'is', values: ['Not reached'] }] },
+];

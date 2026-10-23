@@ -2930,3 +2930,14 @@ and ask before building any new one.
     Overview · Endpoints · Rules, Policy Properties panel. The results visualisations (static drill-down,
     any-to-any) are a LATER tab.
   - Admin benchmarks are NOT shared with the technician side yet — the policy form reads `BENCHMARKS_SEED`.
+- **Benchmark Profile (L1 / L2)** is a benchmark field. The Create Benchmark form is `grid-cols-3`
+  with six equal fields: Name · Type · Version, then Description · Profile · Tags.
+- **Compliance Visualization** (`#/compliance-visualization`, reached from the sidebar's Compliance
+  flyout): `ComplianceVisualizationPage` (Overview + listings), `ComplianceVizOverview` (posture KPIs,
+  trend and breakdown charts through the dashboard `ChartTile`, which now takes `chart.colors`),
+  `ComplianceEndpointPanel` (per-endpoint side panel), and `complianceVizData` (derived from the policy
+  scan results, plus `findingsOf` in `compliancePolicyData`). The listings are the shared
+  `AssetRegisterPage`, through new opt-in props `Tiles` / `embedded` / `viewsOpen`. The views toggle
+  sits before the heading. `RuleDetailPanel` takes `results` to show a rule's per-endpoint outcome.
+  ⚠️ The posture bands, the 85% target and the trend data are taken from the reference or are
+  synthetic, and still need Zeni to confirm them.

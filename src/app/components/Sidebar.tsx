@@ -17,7 +17,7 @@ import {
   IconMyTeam,
   IconBom,
 } from './SidebarIcons';
-import { Shapes, ShieldCheck, LayoutTemplate, Cpu, AppWindow, Boxes, Recycle, KeyRound, Gauge, FileText, ShoppingCart, Rocket, Monitor, ClipboardCheck, Settings } from 'lucide-react';
+import { ChartColumn, Shapes, ShieldCheck, LayoutTemplate, Cpu, AppWindow, Boxes, Recycle, KeyRound, Gauge, FileText, ShoppingCart, Rocket, Monitor, ClipboardCheck, Settings } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
 
 // Asset sub-modules surfaced in the hover flyout (grouped with dividers).
@@ -202,6 +202,42 @@ function PackageNavItem({ activePage, onNavigate }: { activePage?: string; onNav
   );
 }
 
+// Compliance sub-modules surfaced in the hover flyout: the policies themselves, and the
+// visualisation of what their scans found (Overview · Policies · Explorer).
+const COMPLIANCE_ITEMS: { icon: React.ReactNode; label: string; page: string }[] = [
+  { icon: <ShieldCheck size={16} />, label: 'Compliance Policy', page: 'compliance-policies' },
+  { icon: <ChartColumn size={16} />, label: 'Compliance Visualization', page: 'compliance-visualization' },
+];
+
+/** Compliance nav item with a hover flyout listing its sub-modules (mirrors PackageNavItem). */
+function ComplianceNavItem({ activePage, onNavigate }: { activePage?: string; onNavigate?: (page: string) => void }) {
+  const sectionActive = COMPLIANCE_ITEMS.some((i) => i.page === activePage);
+  return (
+    <div className="relative group">
+      <NavItem icon={<ShieldCheck size={20} />} active={sectionActive} title="Compliance" disableTooltip />
+      <div className="absolute left-full top-0 z-[9999] hidden group-hover:block pl-2">
+        <div className="app-menu w-[250px] bg-white rounded-lg shadow-lg border border-[#DFE5ED] py-1">
+          {COMPLIANCE_ITEMS.map((item) => {
+            const isActive = item.page === activePage;
+            return (
+              <button
+                key={item.label}
+                onClick={() => onNavigate?.(item.page)}
+                className={`w-full px-3 py-2 text-[13px] text-left transition-colors flex items-center gap-2.5 whitespace-nowrap ${
+                  isActive ? 'bg-[#3D8BD0] text-white' : 'hover:bg-[#F5F7FA] text-[#364658]'
+                }`}
+              >
+                <span className={`flex-shrink-0 ${isActive ? 'text-white' : 'text-[#6B7280]'}`}>{item.icon}</span>
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface NavItemProps {
   icon: React.ReactNode;
   active?: boolean;
@@ -294,8 +330,8 @@ export function Sidebar({ activePage, onNavigate }: SidebarProps) {
         />
         <PatchNavItem activePage={activePage} onNavigate={onNavigate} />
         <PackageNavItem activePage={activePage} onNavigate={onNavigate} />
-        {/* Compliance Policy — sits directly below Package: one benchmark bound to endpoints. */}
-        <NavItem icon={<ShieldCheck size={20} />} title="Compliance Policy" active={activePage === 'compliance-policies'} onClick={() => onNavigate?.('compliance-policies')} />
+        {/* Compliance — sits directly below Package: Compliance Policy + Compliance Visualization. */}
+        <ComplianceNavItem activePage={activePage} onNavigate={onNavigate} />
         <NavItem icon={<IconProject size={20} />} title="Project" active={activePage === 'projects'} onClick={() => onNavigate?.('projects')} />
         <NavItem icon={<IconKnowledge size={20} />} title="Knowledge" active={activePage === 'knowledge'} onClick={() => onNavigate('knowledge')} />
         <NavItem icon={<IconReport size={20} />} title="Report" active={activePage === 'reports'} onClick={() => onNavigate?.('reports')} />

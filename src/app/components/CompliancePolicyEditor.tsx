@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { ArrowLeft, CalendarClock, Plus, X } from 'lucide-react';
+import { ArrowLeft, CalendarClock, Info, Plus, X } from 'lucide-react';
 import { ErrorText, FieldLabel, RuleSelect, TagEditor, inputCls as formInputCls } from './FormRuleControls';
 import type { SelectOption } from './FormRuleControls';
 import { PickerDrawer } from './CreatePatchDeployment';
@@ -62,7 +62,7 @@ function Section({ title, sub, children }: { title: string; sub: string; childre
     <section>
       <div className="mb-4">
         <h2 className="text-[15px] font-semibold text-[#364658]">{title}</h2>
-        <p className="mt-0.5 text-[12px] text-[#7B8FA5]">{sub}</p>
+        <p className="mt-px text-[12px] text-[#7B8FA5]">{sub}</p>
       </div>
       {children}
     </section>
@@ -110,7 +110,7 @@ export function ScheduleFields({ value, onChange }: { value: PolicySchedule; onC
         })}
       />
       {f !== 'none' && (
-        <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-4">
+        <div className="mt-4 grid grid-cols-2 gap-x-2 gap-y-4">
           <div>
             <FieldLabel required>{f === 'once' ? 'Run On' : 'Start Date'}</FieldLabel>
             <input type="date" value={value.startDate ?? ''} onChange={(e) => set({ startDate: e.target.value })} className={inputCls} />
@@ -295,7 +295,7 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto max-w-[1100px] space-y-10 px-4 py-6">
           <Section title="Policy Details" sub="What the policy is called and how people will find it.">
-            <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+            <div className="grid grid-cols-2 gap-x-2 gap-y-4">
               <div>
                 <FieldLabel required>Policy Name</FieldLabel>
                 <input autoFocus value={d.name} onChange={(e) => set({ name: e.target.value })} placeholder="Must be unique" className={`${inputCls} ${tried && !d.name.trim() ? '!border-[#F25C4E]' : ''}`} />
@@ -313,30 +313,43 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
           </Section>
 
           <Section title="Benchmark" sub="A policy assesses ONE benchmark. Its Type and OS version decide which endpoints can be chosen.">
-            <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+            <div className="grid grid-cols-2 gap-x-2 gap-y-4">
               <div>
                 <FieldLabel>Benchmark Filter by Tags</FieldLabel>
                 <RuleSelect className="!rounded" multi value={benchTagFilter} options={benchTagOptions} onChange={setBenchTagFilter} placeholder="All benchmarks" />
               </div>
               <div>
-                <FieldLabel required>Benchmark</FieldLabel>
+                <div className="flex items-center gap-1">
+                  <FieldLabel required>Benchmark</FieldLabel>
+                  {/* The chosen benchmark's facts live behind this icon, not in a strip under the
+                      field — they describe the choice, they are not part of the form. */}
+                  {benchmark && (
+                    <Tooltip delayDuration={150}>
+                      <TooltipTrigger asChild>
+                        <span className="-mt-1 inline-grid cursor-help place-items-center text-[#9CA3AF] hover:text-[#3D8BD0]" aria-label="Benchmark details"><Info size={13} /></span>
+                      </TooltipTrigger>
+                      <TooltipContent side="right" className="w-[240px] text-wrap p-3">
+                        <div className="mb-2 text-[12px] font-semibold leading-snug">{benchmark.name}</div>
+                        <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-[12px]">
+                          {[
+                            ['Type', benchmark.type],
+                            ['Version', benchmark.osVersion],
+                            ['Profile', benchmark.profile],
+                            ['Origin', benchmark.origin],
+                            ['Rules', String(benchmarkRuleIds(benchmark).length)],
+                            ['Endpoints', String(pool.length)],
+                          ].map(([k, v]) => (
+                            <div key={k} className="contents"><dt className="text-white/60">{k}</dt><dd className="font-medium">{v}</dd></div>
+                          ))}
+                        </dl>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                </div>
                 <RuleSelect className="!rounded" value={d.benchmarkId ? [d.benchmarkId] : []} options={benchOptions} onChange={(v) => v[0] && changeBenchmark(v[0])} invalid={tried && !d.benchmarkId} placeholder={benchOptions.length ? 'Select' : 'No benchmark carries these tags'} />
                 <ErrorText>{tried && !d.benchmarkId ? 'Choose a benchmark' : ''}</ErrorText>
               </div>
             </div>
-            {benchmark && (
-              <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 rounded-lg bg-[#F9FAFB] px-4 py-3 text-[12px]">
-                {[
-                  ['Type', benchmark.type],
-                  ['Version', benchmark.osVersion],
-                  ['Origin', benchmark.origin],
-                  ['Rules', String(benchmarkRuleIds(benchmark).length)],
-                  ['Endpoints running it', String(pool.length)],
-                ].map(([k, v]) => (
-                  <span key={k} className="inline-flex items-center gap-1.5"><span className="text-[#7B8FA5]">{k}</span><span className="font-medium text-[#364658]">{v}</span></span>
-                ))}
-              </div>
-            )}
             {showConfig && (
               <div className="mt-4">
                 <FieldLabel required>Config File Type</FieldLabel>
@@ -347,7 +360,7 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
           </Section>
 
           <Section title="Endpoints" sub="Which endpoints the policy assesses — pick them one by one, or by remote office or tag so new machines join on their own.">
-            <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+            <div className="grid grid-cols-2 gap-x-2 gap-y-4">
               <div>
                 <FieldLabel required>Device Filter</FieldLabel>
                 <Pills value={d.axis} options={AXES} onChange={(v) => set({ axis: v, endpointIds: [], offices: [], deviceTags: [] })} />
@@ -437,7 +450,7 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
           </Section>
 
           <Section title="Schedule & Notifications" sub="When the policy scans on its own, and who hears about the result.">
-            <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+            <div className="grid grid-cols-2 gap-x-2 gap-y-4">
               <ScheduleFields value={d.schedule} onChange={(s) => set({ schedule: s })} />
               <div>
                 <FieldLabel>Notify Team</FieldLabel>

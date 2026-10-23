@@ -191,15 +191,49 @@ export function endpointResults(p: CompliancePolicy): EndpointResult[] {
   });
 }
 
+/* ── Findings: ONE result per (policy, endpoint, rule) ───────────────────────────────── */
+
+/** One rule's result on one endpoint in a policy's last scan, and in the scan before it
+ *  (null = the endpoint was not assessed then). Everything that counts passes and fails —
+ *  the drawer, the listing, the visualisation's charts and the Explorer — reads these, so a
+ *  rule's failing endpoints always add up to the endpoints' failed checks. */
+export interface Finding { policyId: string; endpointId: string; ruleId: string; passed: boolean; prevPassed: boolean | null }
+
+const findingCache = new Map<string, Finding[]>();
+/** Picks n of the rules, in an order fixed by the seed — which rules an endpoint fails. */
+const pick = (ids: string[], n: number, seed: string) =>
+  new Set([...ids].sort((x, y) => hash(`${seed}|${x}`) - hash(`${seed}|${y}`)).slice(0, Math.max(0, n)));
+
+export function findingsOf(p: CompliancePolicy): Finding[] {
+  if (!p.lastScan) return [];
+  const key = `${p.id}|${p.lastScan.at}|${p.benchmarkId}|${p.axis}|${[...p.endpointIds, ...p.offices, ...p.deviceTags].join(',')}`;
+  const hit = findingCache.get(key);
+  if (hit) return hit;
+  const b = benchmarkOf(p.benchmarkId);
+  const ids = b ? benchmarkRuleIds(b) : [];
+  const out: Finding[] = [];
+  for (const r of endpointResults(p)) {
+    if (r.outcome === 'Not Scanned') continue;
+    const now = pick(ids, r.failed, `${p.id}|${r.endpoint.id}`);
+    // The previous scan: about as many failures, partly different rules — some fixed, some new.
+    const h = hash(`prev|${p.id}|${r.endpoint.id}`);
+    const prevCount = Math.max(0, r.failed + (h % 3) - 1);
+    const prev = h % 7 === 0 ? null : pick(ids, prevCount, `prev|${p.id}|${r.endpoint.id}`);
+    for (const id of ids) out.push({ policyId: p.id, endpointId: r.endpoint.id, ruleId: id, passed: !now.has(id), prevPassed: prev ? !prev.has(id) : null });
+  }
+  findingCache.set(key, out);
+  return out;
+}
+
 /** One rule's outcome across the scanned endpoints. */
 export function ruleResults(p: CompliancePolicy) {
   const b = benchmarkOf(p.benchmarkId);
   if (!b) return [];
-  const scanned = endpointResults(p).filter((r) => r.outcome !== 'Not Scanned');
-  return benchmarkRuleIds(b).map((id, i) => {
-    const r = ruleById(id)!;
-    const failing = scanned.filter((s) => hash(`${p.id}|${s.endpoint.id}|${id}`) % (i % 2 ? 4 : 6) === 0 && s.failed > 0).length;
-    return { rule: r, passed: scanned.length - failing, failed: failing };
+  const f = findingsOf(p);
+  return benchmarkRuleIds(b).map((id) => {
+    const mine = f.filter((x) => x.ruleId === id);
+    const failed = mine.filter((x) => !x.passed).length;
+    return { rule: ruleById(id)!, passed: mine.length - failed, failed };
   });
 }
 

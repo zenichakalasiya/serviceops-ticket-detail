@@ -100,7 +100,7 @@ export function DefaultLock({ show, size = 13 }: { show: boolean; size?: number 
 
 /* ── Rule detail — right side panel ──────────────────────────────────────────────────────── */
 
-type RuleTab = 'summary' | 'audit' | 'remediation' | 'references' | 'controls' | 'tags';
+type RuleTab = 'results' | 'summary' | 'audit' | 'remediation' | 'references' | 'controls' | 'tags';
 const RULE_TABS: [RuleTab, string][] = [
   ['summary', 'Summary'], ['audit', 'Audit'], ['remediation', 'Remediation'],
   ['references', 'References'], ['controls', 'Controls'], ['tags', 'Tags'],
@@ -111,14 +111,19 @@ const fieldValue = 'mt-1 text-[13px] leading-[1.6] text-[#364658]';
 const codeBox = 'mt-2 whitespace-pre-wrap rounded bg-[#F9FAFB] px-3 py-2.5 font-mono text-[12px] leading-[1.6] text-[#364658]';
 const readBox = 'mt-1 flex min-h-8 items-center rounded bg-[#F9FAFB] px-3 py-1.5 text-[13px] text-[#364658]';
 
-export function RuleDetailPanel({ rule, usedIn, onClose }: {
+export function RuleDetailPanel({ rule, usedIn, onClose, results }: {
   rule: ComplianceRule;
+  /** Where the rule passed and failed — Compliance Visualization's Explorer passes it, and it
+      becomes the panel's first tab. The admin catalogue has no results and passes none. */
+  results?: React.ReactNode;
   /** Benchmark names that reference this rule. */
   usedIn: string[];
   onClose: () => void;
 }) {
-  const [tab, setTab] = useState<RuleTab>('summary');
-  useEffect(() => { setTab('summary'); }, [rule.id]);
+  const first: RuleTab = results ? 'results' : 'summary';
+  const [tab, setTab] = useState<RuleTab>(first);
+  useEffect(() => { setTab(first); }, [rule.id]);
+  const tabs: [RuleTab, string][] = results ? [['results', 'Results'], ...RULE_TABS] : RULE_TABS;
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
@@ -130,6 +135,7 @@ export function RuleDetailPanel({ rule, usedIn, onClose }: {
     ['Type', rule.type],
     ['Platform', rule.platform],
     ['Version', rule.version],
+    ['Profile', rule.profile === 'L1' ? 'L1 — must have' : 'L2 — good to have'],
     ['Check In', rule.checkIn],
     ['Used In', usedIn.length ? `${usedIn.length} benchmark${usedIn.length > 1 ? 's' : ''}` : 'Not used yet'],
   ];
@@ -147,7 +153,7 @@ export function RuleDetailPanel({ rule, usedIn, onClose }: {
 
         <div className="border-b border-[#e5e7eb] px-5">
           <div className="flex items-center gap-2.5">
-            {RULE_TABS.map(([id, label]) => (
+            {tabs.map(([id, label]) => (
               <button
                 key={id}
                 type="button"
@@ -159,6 +165,7 @@ export function RuleDetailPanel({ rule, usedIn, onClose }: {
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+          {tab === 'results' && results}
           {tab === 'summary' && (
             <div className="space-y-5">
               <div className="grid grid-cols-3 gap-x-6 gap-y-4 rounded-lg bg-[#F9FAFB] p-4">

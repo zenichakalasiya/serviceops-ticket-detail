@@ -21,7 +21,7 @@ export type Page =
   | 'vulnerabilities' | 'detected-cves'
   | 'bom'
   // Brought in from the upstream prototype (Oct 2026 sync).
-  | 'software-meter' | 'projects' | 'my-approvals' | 'automatic-patch-tests' | 'automatic-patch-deployments' | 'package-deployments' | 'registry-deployments' | 'compliance-policies' | 'knowledge' | 'tasks' | 'reports' | 'my-team' | 'icons' | 'views-lab'
+  | 'software-meter' | 'projects' | 'my-approvals' | 'automatic-patch-tests' | 'automatic-patch-deployments' | 'package-deployments' | 'registry-deployments' | 'compliance-policies' | 'compliance-visualization' | 'knowledge' | 'tasks' | 'reports' | 'my-team' | 'icons' | 'views-lab'
   // The Dashboard module (ported from ServiceOps_Dashboard_v2, Oct 2026): one board, and the full listing.
   | 'dashboard' | 'dashboards'
   // The requester's Support Portal (default portal), from the profile popup.
@@ -41,7 +41,7 @@ const PAGES: readonly Page[] = [
   'patches', 'patch-deployments', 'endpoints',
   'vulnerabilities', 'detected-cves',
   'bom',
-  'software-meter', 'projects', 'my-approvals', 'automatic-patch-tests', 'automatic-patch-deployments', 'package-deployments', 'registry-deployments', 'compliance-policies', 'knowledge', 'tasks', 'reports', 'my-team', 'icons', 'views-lab',
+  'software-meter', 'projects', 'my-approvals', 'automatic-patch-tests', 'automatic-patch-deployments', 'package-deployments', 'registry-deployments', 'compliance-policies', 'compliance-visualization', 'knowledge', 'tasks', 'reports', 'my-team', 'icons', 'views-lab',
   'dashboard', 'dashboards',
   'portal',
   'admin',
@@ -59,6 +59,7 @@ export interface AdminRoute {
 /* Only screens that actually exist. A section that is still a card grid has no slug, because a
  * URL promising a screen that isn't built is worse than no URL. */
 export const ADMIN_ROUTES: readonly AdminRoute[] = [
+  { slug: 'workflow', section: 'Automation', card: 'Workflow' },
   { slug: 'request-form', section: 'Request Management', card: 'Request Form' },
   { slug: 'request-form-rules', section: 'Request Management', card: 'Request Form Rule' },
   { slug: 'os-upgrade', section: 'Patch Management', card: 'OS Upgrade' },
@@ -91,8 +92,13 @@ export interface Route {
   /** A form rule opened straight into its editor — #/admin/request-form-rules/<rule id>. The
       conflict / similar sidebars open a rule this way, in a new tab. */
   rule?: string;
+  /** A workflow open in its editor — #/admin/workflow/<id> (e.g. WF-101). */
+  workflow?: string;
   /** The board open on #/dashboard/<id>. Absent = the default board. */
   dashboard?: string;
+  /** Compliance Visualization's tab — #/compliance-visualization/<tab>[/<sub-tab>], e.g.
+      "explorer/resources". Absent = Overview. */
+  viz?: string;
 }
 
 /** The address of one portal, as a slug. Names are unique (see `uniquePageName`), so the slug is
@@ -107,21 +113,24 @@ export function parseHash(hash: string): Route {
   const page = parts[0] as Page | undefined;
   if (!page || !PAGES.includes(page)) return { page: DEFAULT_PAGE };
   if (page === 'dashboard') return { page, dashboard: parts[1] };
+  if (page === 'compliance-visualization') return { page, viz: parts.slice(1, 3).join('/') || undefined };
   if (page !== 'admin') return { page };
   const slug = parts[1];
   if (!slug || !adminRouteBySlug(slug)) return { page };
   /* ⚠️ A third segment only means something for the one module that has records. Anywhere else it
      is ignored rather than rejected — a stray segment should still land you on the module, not on
      the default page with no explanation. */
-  return { page, admin: slug, portal: slug === 'support-portal' ? parts[2] : undefined, rule: slug === 'request-form-rules' ? parts[2] : undefined };
+  return { page, admin: slug, portal: slug === 'support-portal' ? parts[2] : undefined, rule: slug === 'request-form-rules' ? parts[2] : undefined, workflow: slug === 'workflow' ? parts[2] : undefined };
 }
 
 export function formatHash(route: Route): string {
   if (route.page === 'admin' && route.admin) {
     if (route.rule) return `#/admin/${route.admin}/${route.rule}`;
+    if (route.workflow) return `#/admin/${route.admin}/${route.workflow}`;
     return route.portal ? `#/admin/${route.admin}/${route.portal}` : `#/admin/${route.admin}`;
   }
   if (route.page === 'dashboard' && route.dashboard) return `#/dashboard/${route.dashboard}`;
+  if (route.page === 'compliance-visualization' && route.viz) return `#/compliance-visualization/${route.viz}`;
   return `#/${route.page}`;
 }
 
@@ -158,6 +167,7 @@ const PAGE_TITLES: Record<Page, string> = {
   'package-deployments': 'Package Deployments',
   'registry-deployments': 'Registry Deployments',
   'compliance-policies': 'Compliance Policies',
+  'compliance-visualization': 'Compliance Visualization',
   'knowledge': 'Knowledge',
   'tasks': 'Tasks',
   'reports': 'Reports',

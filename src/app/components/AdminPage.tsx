@@ -10,6 +10,7 @@ import { AdminOsUpgradeModule } from './AdminOsUpgradeModule';
 import { AdminSupportPortalModule } from './AdminSupportPortalModule';
 import { AdminRequestFormModule } from './AdminRequestFormModule';
 import { AdminUserSurveyModule } from './AdminUserSurveyModule';
+import { AdminWorkflowModule } from './workflow/AdminWorkflowModule';
 import { AdminComplianceRulesModule } from './AdminComplianceRulesModule';
 import { AdminComplianceBenchmarkModule } from './AdminComplianceBenchmarkModule';
 import { BENCHMARKS_SEED } from './complianceData';
@@ -31,6 +32,7 @@ const BOM_SCREEN_FOR: Record<string, BomAdminScreen> = {
  *  Patch Management is still a card grid — OS Upgrade is the one entry with a real screen behind
  *  it, so only that row swaps the pane. */
 const CARD_MODULES: Record<string, string> = {
+  'Automation/Workflow': 'Workflow',
   'Patch Management/OS Upgrade': 'OS Upgrade',
   /* Both rows land on ONE page with two tabs — the form and the rules that act on it are one
      subject. Which tab opens is read from the card (activeCard). */
@@ -61,10 +63,13 @@ interface AdminPageProps {
   portalSlug?: string;
   /** A form rule to open straight into its editor (from a deep link). */
   ruleId?: string;
+  /** A workflow to open straight into its editor (#/admin/workflow/<id>), and a way to report one. */
+  workflowId?: string;
+  onWorkflowChange?: (id: string | undefined) => void;
   onPortalChange?: (slug: string | undefined) => void;
 }
 
-export function AdminPage({ onNavigate, moduleSlug, onModuleChange, portalSlug, onPortalChange, ruleId }: AdminPageProps) {
+export function AdminPage({ onNavigate, moduleSlug, onModuleChange, portalSlug, onPortalChange, ruleId, workflowId, onWorkflowChange }: AdminPageProps) {
   const [active, setActive] = useState('Overview');
   const [query, setQuery] = useState('');
   // Only the first section starts open, mirroring the live admin.
@@ -196,6 +201,10 @@ export function AdminPage({ onNavigate, moduleSlug, onModuleChange, portalSlug, 
                 onEditor={setBuilderOpen}
                 openRuleId={ruleId}
               />
+            </div>
+          ) : module === 'Workflow' ? (
+            <div className="min-h-0 flex-1 overflow-y-auto bg-white">
+              <AdminWorkflowModule openId={workflowId} onOpenChange={onWorkflowChange} onEditor={setBuilderOpen} />
             </div>
           ) : module === 'User Surveys' ? (
             <div className="min-h-0 flex-1 overflow-y-auto bg-white">

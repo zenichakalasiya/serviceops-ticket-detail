@@ -62,8 +62,11 @@ const LAYOUTS = [
 const CALENDAR_LAYOUT = { key: 'calendar' as const, label: 'Calendar', Icon: CalendarDays };
 /** Layout key → label, for the "default layout" confirmation toast. */
 const LAYOUT_LABEL: Record<string, string> = {
-  list: 'List', 'list-kpi': 'List + KPI', kanban: 'Kanban', dashboard: 'Dashboard', calendar: 'Calendar', gantt: 'Gantt',
+  list: 'List', 'list-kpi': 'List + KPI', kanban: 'Kanban', dashboard: 'Dashboard', calendar: 'Calendar', gantt: 'Gantt', tiles: 'Tiles',
 };
+/** Opt-in extra — a register whose records read best as cards (Compliance Visualization's
+    Policies) passes `showTiles`. Sits right after List, since it is the same rows drawn as cards. */
+const TILES_LAYOUT = { key: 'tiles' as const, label: 'Tiles', Icon: LayoutGrid };
 /** Opt-in extra — only the Release listing passes `showGantt`. */
 const GANTT_LAYOUT = { key: 'gantt' as const, label: 'Gantt', Icon: ChartGantt };
 
@@ -106,6 +109,7 @@ export function TicketGridToolbar({
   setDashScope,
   showCalendar = false,
   showGantt = false,
+  showTiles = false,
   kanbanGroup,
   setKanbanGroup,
   kanbanSubGroup,
@@ -135,8 +139,8 @@ export function TicketGridToolbar({
   onClearSorts: () => void;
   /** Current list grouping label, or null when ungrouped. */
   listGroupLabel?: string | null;
-  view: 'list' | 'list-kpi' | 'kanban' | 'dashboard' | 'calendar' | 'gantt';
-  setView: (v: 'list' | 'list-kpi' | 'kanban' | 'dashboard' | 'calendar' | 'gantt') => void;
+  view: 'list' | 'list-kpi' | 'kanban' | 'dashboard' | 'calendar' | 'gantt' | 'tiles';
+  setView: (v: 'list' | 'list-kpi' | 'kanban' | 'dashboard' | 'calendar' | 'gantt' | 'tiles') => void;
   dashScope: 'all' | 'mine';
   /** false hides the Overall/My switch (asset registers are always overall) and
       shows a quiet dashboard byline in its place so the row stays anchored. */
@@ -158,6 +162,8 @@ export function TicketGridToolbar({
   showCalendar?: boolean;
   /** Offer the Gantt timeline layout (Release listing only). */
   showGantt?: boolean;
+  /** Offer the Tiles layout — the same rows as cards. */
+  showTiles?: boolean;
   kanbanGroup: KanbanGroup;
   setKanbanGroup: (g: KanbanGroup) => void;
   kanbanSubGroup: KanbanGroup | null;
@@ -244,6 +250,7 @@ export function TicketGridToolbar({
      length, whether a picker is worth showing. */
   const layoutTiles = [
     ...LAYOUTS.filter((l) => !layouts || layouts.includes(l.key)),
+    ...(showTiles ? [TILES_LAYOUT] : []),
     ...(showCalendar ? [CALENDAR_LAYOUT] : []),
     ...(showGantt ? [GANTT_LAYOUT] : []),
   ];
@@ -279,6 +286,7 @@ export function TicketGridToolbar({
     const offered =
       (LAYOUTS.some((l) => l.key === defaultLayout) && (!layouts || layouts.includes(defaultLayout as 'list'))) ||
       (defaultLayout === 'calendar' && showCalendar) ||
+      (defaultLayout === 'tiles' && showTiles) ||
       (defaultLayout === 'gantt' && showGantt);
     if (offered) setView(defaultLayout as typeof view);
     // eslint-disable-next-line react-hooks/exhaustive-deps

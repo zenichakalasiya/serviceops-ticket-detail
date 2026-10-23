@@ -1,3 +1,50 @@
+# Handoff — 2026-10-23 (Compliance: visualization, benchmark profiles, form polish)
+
+> Sessions share this file. **This top part is the newest session**; older notes follow unchanged
+> below the dividers.
+
+## Read first
+CLAUDE.md › "## Compliance (Oct 2026)", which now covers the Compliance Visualization module and
+benchmark profiles.
+
+## What we worked on this session
+Continued the Compliance module (admin Rules + Benchmark, technician Compliance Policy). Added benchmark
+profiles, built a Compliance Visualization module, and polished the Policy and Create Benchmark forms.
+
+## Completed
+- **Benchmark Profile L1/L2** on benchmarks.
+- **Compliance Visualization** (`#/compliance-visualization`, Compliance flyout in the sidebar):
+  `ComplianceVisualizationPage`, `ComplianceVizOverview`, `ComplianceEndpointPanel`, `complianceVizData`.
+  It reuses the shared listing via new `AssetRegisterPage` props (Tiles / embedded / viewsOpen).
+  `ChartTile` takes `chart.colors`, `RuleDetailPanel` takes `results`, and `compliancePolicyData`
+  gained `findingsOf`. The views toggle sits before the heading, and the listing's title row is gone.
+- **Policy form** (`CompliancePolicyEditor`): info-icon tooltip, an 8px column gap, and a 1px gap
+  between title and subtitle.
+- **Create Benchmark form**: grid-cols-3 with six equal fields. Row 1 = Name · Type · Version,
+  row 2 = Description · Profile · Tags (Profile and Description were swapped). Checked in a headless
+  browser with no page errors.
+
+## In progress
+Nothing mid-flight.
+
+## Next steps
+- With the views rail open, check whether the Policies list still clips its last column (Last Scan).
+- Idea not built: clicking an Overview KPI should jump to a pre-filtered Explorer.
+- To confirm with Zeni: the posture bands and the 85% target (taken from the reference); the trend chart
+  uses synthetic data; whether Remote Office / Tag modes should use a side panel; and whether admin
+  benchmarks should be shared with the technician side (the policy form still reads `BENCHMARKS_SEED`).
+
+## Decisions made
+- Visualization reuses the product's listing and chart tiles; no new components were built (Zeni's rule).
+
+## Gotchas & notes
+- Dev server is http://localhost:5200/ (local base is `/`). Verification is done with headless
+  playwright-core scripts kept in the session scratchpad.
+- Untracked junk in the repo root (screenshots, "ServiceOps portal layout system/", .claude/agents,
+  .design-sync, .impeccable, g-*/j-*/q-*.png in components) is deliberately NOT committed.
+
+---
+
 # Handoff — 2026-10-22 19:16 (Support Portal publishing)
 
 > Sessions share this file. **This top part is the newest session**; older notes follow unchanged
