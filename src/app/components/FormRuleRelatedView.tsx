@@ -380,37 +380,48 @@ export function SimilarRulesView({ similar, fields, draft, conditionLines, condi
   const groups: CondGroupView[] = conditionGroups ?? (conditionLines.length ? [{ join: 'And', conds: conditionLines.map((t) => ({ join: 'And' as const, text: t })) }] : []);
   const common = (
     <CommonTriggerCard className="mx-3 mb-3" count={similar.length} eventText={eventLabel(draft.event)} execution={draft.execution}
-      applies={draft.applies} groups={groups} actions={myActions} />
+      applies={draft.applies} groups={groups} />
   );
+  void myActions;
 
-  /** One group of actions: a quiet label, then the actions as lines with a leading mark. */
-  const actionGroup = (title: string, hint: string, items: string[], icon: React.ReactNode, tone: string) => (
-    <div className="rounded-lg bg-[#F6F9FC] px-4 py-3">
-      <div className="flex items-baseline gap-2">
-        <span className="text-[12px] font-semibold" style={{ color: tone }}>{title}</span>
-        <span className="text-[11px] text-[#98A2B3]">{hint}</span>
-        <span className="ml-auto text-[12px] font-medium tabular-nums text-[#64748B]">{items.length}</span>
-      </div>
-      {items.length > 0
-        ? <ul className="mt-2 flex flex-col gap-1.5">{items.map((t) => <li key={t} className="flex items-center gap-2 text-[13px] text-[#364658]">{icon}{t}</li>)}</ul>
-        : <p className="mt-1.5 text-[12px] text-[#98A2B3]">None</p>}
+  /* The detail takes the conflicts sidebar's shape (Zeni, 23 Oct 2026): a sticky name + link row,
+     then ONE grey group panel (rounded-xl #F4F6FA, a sticky 14px title) holding white cards two-up —
+     the same panel and card the conflict pairs use, so the two sidebars read as one.
+     What the panel holds: the actions that MATCH yours, if there are any; otherwise the rule's own
+     actions, for reference; otherwise no panel at all. Never both — "matches" is the answer when it
+     exists, and the rest of the rule is one click away on Update this rule. */
+  const actionCard = (text: string, label: string, tone: string, icon: React.ReactNode) => (
+    <div key={text} className="rounded-lg bg-white px-3.5 py-3">
+      <div className="flex items-center gap-1.5 text-[12px] font-medium" style={{ color: tone }}>{icon}{label}</div>
+      <div className="mt-1 text-[15px] font-medium leading-snug text-[#1D2A3E]">{text}</div>
     </div>
   );
+  const group = (title: string, hint: string, cards: React.ReactNode[]) => (
+    <div className="rounded-xl bg-[#F4F6FA] p-3">
+      <div className="sticky top-[28px] z-10 -mx-3 -mt-3 mb-0 flex items-center gap-2 rounded-t-xl bg-[#F4F6FA] px-3.5 pb-2.5 pt-3">
+        <span className="text-[14px] font-semibold text-[#1D2A3E]">{title}</span>
+        <span className="text-[12px] text-[#98A2B3]">{hint}</span>
+        <span className="ml-auto text-[12px] font-medium tabular-nums text-[#64748B]">{cards.length}</span>
+      </div>
+      <div className="grid grid-cols-1 gap-2.5 @[520px]:grid-cols-2">{cards}</div>
+    </div>
+  );
+  const panel = !cur ? null
+    : cur.common.length > 0
+      ? group('Matches your rule', 'it already does this', cur.common.map((t) => actionCard(t, 'Also in your rule', '#12B76A', <Check size={12} strokeWidth={2.5} />)))
+      : cur.others.length > 0
+        ? group("This rule's actions", 'for reference — none match yours', cur.others.map((t) => actionCard(t, 'Only in this rule', '#64748B', <span className="size-1.5 rounded-full bg-[#98A2B3]" />)))
+        : null;
 
   const detail = cur && (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-start gap-3">
-        <div className="min-w-0 flex-1">
-          <h3 className="truncate text-[15px] font-semibold leading-5 text-[#1D2A3E]">{cur.rule.name}</h3>
-          <p className="mt-0.5 text-[12px] text-[#7B8FA5]">{cur.rule.enabled ? 'Enabled' : 'Disabled'} · {cur.common.length} of your actions already here</p>
-        </div>
-        <button type="button" onClick={() => onOpenRule(cur.rule.id)}
-          className={RULE_CTA}>
+    <div className="@container flex flex-col gap-1">
+      <div className="sticky top-0 z-20 flex items-center gap-3 bg-white pb-2">
+        <h3 className="min-w-0 flex-1 truncate text-[15px] font-semibold leading-5 text-[#1D2A3E]">{cur.rule.name}</h3>
+        <button type="button" onClick={() => onOpenRule(cur.rule.id)} className={RULE_CTA}>
           Update this rule <ArrowUpRight size={13} />
         </button>
       </div>
-      {actionGroup('Matches your rule', 'it already does this', cur.common, <Check size={12} strokeWidth={2.5} className="flex-shrink-0 text-[#12B76A]" />, '#12B76A')}
-      {actionGroup('Its other actions', 'already in this rule, not in yours', cur.others, <span className="size-1.5 flex-shrink-0 rounded-full bg-[#98A2B3]" />, '#64748B')}
+      {panel}
     </div>
   );
 
