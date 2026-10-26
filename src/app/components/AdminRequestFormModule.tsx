@@ -157,7 +157,7 @@ export function AdminRequestFormModule({ tab, onTab, onEditor, openRuleId }: {
      keeps the live tags on every row. */
   const release = useFormRuleRelease();
   const [conflictCheck, setConflictCheck] = useState<'idle' | 'loading' | 'done'>('idle');
-  useEffect(() => { setConflictCheck('idle'); }, [release]);
+  useEffect(() => { setConflictCheck('idle'); if (release === 'v2') { setFilters(NO_FILTERS); setFilterOpen(false); } }, [release]);
   const runConflictCheck = () => {
     setConflictCheck('loading');
     window.setTimeout(() => {
@@ -284,15 +284,16 @@ export function AdminRequestFormModule({ tab, onTab, onEditor, openRuleId }: {
                 <button type="button" onClick={() => { setSearch(''); setPage(1); }} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9ca3af] hover:text-[#364658]"><X size={15} /></button>
               )}
             </div>
-            <button
+            {/* V2 has no All / filter button (Zeni, 26 Oct 2026). */}
+            {release === 'v1' && <button
               ref={filterBtn}
               type="button"
               onClick={() => setFilterOpen((o) => !o)}
               className={`inline-flex h-9 items-center gap-1.5 rounded border px-3 text-[13px] transition-colors ${filterCount ? 'border-[#3D8BD0] bg-[#EBF5FF] font-medium text-[#3D8BD0]' : 'border-[#d1d5db] bg-white text-[#364658] hover:bg-[#F9FAFB]'}`}
             >
               {filterCount ? `${filterCount} filter${filterCount > 1 ? 's' : ''}` : 'All'} <Filter size={13} />
-            </button>
-            {filterCount > 0 && (
+            </button>}
+            {release === 'v1' && filterCount > 0 && (
               <button type="button" onClick={() => setFilters(NO_FILTERS)} className="text-[13px] font-medium text-[#64748B] hover:text-[#364658]">Clear</button>
             )}
             {release === 'v2' && (shortlist ? (
