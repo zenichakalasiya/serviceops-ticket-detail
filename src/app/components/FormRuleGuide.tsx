@@ -41,23 +41,24 @@ const FONT = 'Inter, system-ui, -apple-system, sans-serif';
 export interface GuideChapter { name: string; title: string; desc: string; ground: string; blob: string }
 
 export const GUIDE_CHAPTERS: GuideChapter[] = [
-  { name: 'When', title: 'When — pick when the rule runs',
-    desc: 'Choose the rule event, whether it runs on new or existing requests, and who it applies to.',
+  /* Zeni's final copy (26 Oct 2026) — do not rewrite. The chapter's name IS its title (it also labels Next). */
+  { name: 'Set Up the Rule', title: 'Set Up the Rule',
+    desc: 'Choose when the rule should run, whether it applies during record creation or editing, and who it applies to.',
     ground: '#EFF6FF', blob: '#DBEAFE' },
-  { name: 'Check if', title: 'Check if — add conditions',
-    desc: 'Add checks like “Priority is High”. Once one is set, rules with the same trigger show as Similar rules.',
+  { name: 'Add Conditions', title: 'Add Conditions',
+    desc: 'Define the conditions that must be met for the rule to run. Add conditions or groups to match your requirements.',
     ground: '#FFF7ED', blob: '#FFEDD5' },
-  { name: 'Then', title: 'Then — choose what happens',
-    desc: 'Pick an action and its field. If another rule does the opposite to that field, Conflicts appear.',
+  { name: 'Choose Actions', title: 'Choose Actions',
+    desc: 'Specify what should happen when the conditions are met by adding the required actions.',
     ground: '#F0FDF4', blob: '#DCFCE7' },
-  { name: 'Similar', title: 'Similar rules',
-    desc: 'These rules already use your trigger and conditions — add your actions to one of them instead.',
+  { name: 'Review Similar Rules', title: 'Review Similar Rules',
+    desc: 'Similar rules use the same event and conditions. Review existing rules and consider adding your actions to one of them instead.',
     ground: '#FEFCE8', blob: '#FEF3C7' },
-  { name: 'Conflicts', title: 'Conflicts',
-    desc: 'Another rule changes this field the opposite way, so the row turns red. Resolve it before saving.',
+  { name: 'Resolve Conflicts', title: 'Resolve Conflicts',
+    desc: 'Conflicts occur when rules produce opposite results. Review the highlighted actions and check the rule events, execution settings, reverse actions, and conditions. Adjust the configuration as needed.',
     ground: '#FEF2F2', blob: '#FEE2E2' },
-  { name: 'Save', title: 'Save the rule',
-    desc: 'Check the rule reads the way you want, then click Save Rule. It starts working right away.',
+  { name: 'Save the Rule', title: 'Save the Rule',
+    desc: 'Review your configuration and click Save Rule to save and activate the rule.',
     ground: '#EEF2FF', blob: '#E0E7FF' },
 ];
 
@@ -499,7 +500,13 @@ export function FormRuleGuideDock({ onClose, right = 20 }: { onClose: () => void
       <div className="px-4 pt-2.5">
         <h3 className="text-[15px] font-semibold leading-tight text-white">{chapter.title}</h3>
         {/* A floor for two lines, so the buttons under it never jump between chapters. */}
-        <p className="mt-1 min-h-[38px] text-[12.5px] leading-[1.5] text-white/70">{chapter.desc}</p>
+        {/* Every description sits in ONE grid cell, only the current one visible, so the box is always as tall as the
+            LONGEST text and the buttons under it never move between chapters (Zeni, 26 Oct 2026). */}
+        <div className="mt-1 grid text-[12.5px] leading-[1.5] text-white/70">
+          {GUIDE_CHAPTERS.map((c) => (
+            <p key={c.name} aria-hidden={c !== chapter} className={'[grid-area:1/1] ' + (c === chapter ? '' : 'invisible')}>{c.desc}</p>
+          ))}
+        </div>
       </div>
 
       <div className="flex items-center justify-between gap-2 px-4 pb-4 pt-3">
