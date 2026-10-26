@@ -1903,6 +1903,8 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   `publishDialog`, `publishAsk` and the card's Set-as-default are DELETED. Publish (builder) and the card switch
   publish straight away with NO confirmation and touch no other portal; Save as draft also has no confirmation
   (it still takes a published portal off the air). The default is still undeletable and sorts first.
+  ⚠️ **The DEFAULT portal's card has NO status switch** (Zeni, 26 Oct 2026) — it cannot be unpublished from
+  the listing. Every other portal keeps its switch (`{!isDefault && …}` in `PortalCard`).
 - **Support Portal — the listing card is WIDE, with a PICTURE of the portal (28 Sep 2026, from Zeni's
   reference).** Supersedes the card SHAPE in the bullet above (icon badge, three-up grid, a primary
   Customise button in the footer); the rules about status, default and publish all still hold.

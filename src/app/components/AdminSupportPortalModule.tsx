@@ -197,6 +197,9 @@ function PortalCard({ p, url, href, isDefault, on, onToggle, onCustomize, onEdit
               aria-label="Delete"
               className={`${icon} ${isDefault ? '' : 'hover:!border-[#FECACA] !text-[#DC2626]'}`}
             ><Trash2 size={14} /></button>
+            {/* ⚠️ The DEFAULT portal has no switch (Zeni, 26 Oct 2026): it cannot be unpublished from the
+                listing — requesters always land on it. Every other portal keeps its switch. */}
+            {!isDefault && <>
             <span className="mx-1 h-5 w-px bg-[#E5E7EB]" aria-hidden />
             <button
               role="switch"
@@ -208,6 +211,7 @@ function PortalCard({ p, url, href, isDefault, on, onToggle, onCustomize, onEdit
             >
               <span className={`inline-block size-[14px] rounded-full bg-white transition-transform ${on ? 'translate-x-[18px]' : 'translate-x-[2px]'}`} />
             </button>
+            </>}
           </div>
         </div>
 
