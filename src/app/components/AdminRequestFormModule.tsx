@@ -303,10 +303,20 @@ export function AdminRequestFormModule({ tab, onTab, onEditor, openRuleId }: {
                   className="flex size-6 items-center justify-center rounded text-[#DC2626] transition-colors hover:bg-[#FEE2E2]"><X size={14} /></button>
               </span>
             ) : (
+              /* Attention-grabbing (Zeni, 26 Oct 2026): red tint, a filled warning badge, and a pulsing red
+                 dot at the top-right corner while the check is waiting to be run. */
               <button type="button" onClick={runConflictCheck} disabled={conflictCheck === 'loading'}
-                className="inline-flex h-9 items-center gap-1.5 rounded border border-[#d1d5db] bg-white px-3 text-[13px] font-medium text-[#364658] transition-colors hover:bg-[#F9FAFB] disabled:cursor-wait disabled:opacity-70">
-                {conflictCheck === 'loading' ? <Loader2 size={14} className="animate-spin" /> : <AlertTriangle size={14} className="text-[#DC2626]" />}
+                className="relative inline-flex h-9 items-center gap-2 rounded border border-[#FCA5A5] bg-[#FEF2F2] pl-2 pr-3 text-[13px] font-semibold text-[#DC2626] shadow-[0_1px_2px_rgba(220,38,38,0.12)] transition-colors hover:border-[#F87171] hover:bg-[#FEE2E2] disabled:cursor-wait disabled:opacity-80">
+                <span className="flex size-5 items-center justify-center rounded-full bg-[#DC2626] text-white">
+                  {conflictCheck === 'loading' ? <Loader2 size={12} className="animate-spin" /> : <AlertTriangle size={12} strokeWidth={2.6} />}
+                </span>
                 {conflictCheck === 'loading' ? 'Checking conflicts…' : 'Check conflicts'}
+                {conflictCheck === 'idle' && (
+                  <span className="pointer-events-none absolute -right-1 -top-1 flex size-2.5">
+                    <span className="absolute inline-flex size-full animate-ping rounded-full bg-[#F87171] opacity-75" />
+                    <span className="relative inline-flex size-2.5 rounded-full border border-white bg-[#DC2626]" />
+                  </span>
+                )}
               </button>
             ))}
             <button type="button" onClick={() => setEditing('new')} className="ml-auto inline-flex h-9 items-center gap-1.5 rounded bg-[#3D8BD0] px-4 text-[13px] font-medium text-white transition-colors hover:bg-[#3478B5]">
