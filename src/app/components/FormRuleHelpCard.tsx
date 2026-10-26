@@ -165,13 +165,25 @@ function TopicRow({ topic, open, onToggle, look }: { topic: Topic; open: boolean
 
 /** The Help guide: two groups of small accordions. EVERY topic is open on arrival and each folds on its
  *  own (Zeni, 12 Oct 2026 — it was one-at-a-time with only the first open earlier the same day). */
-export function FormRuleHelpSections({ onWatch, look = 'grouped' }: { onWatch: () => void; look?: HelpLook }) {
+export function FormRuleHelpSections({ onWatch, look = 'grouped', watchOnTop = true }: { onWatch: () => void; look?: HelpLook; watchOnTop?: boolean }) {
   const [shut, setShut] = useState<string[]>([]);
   const list = look === 'grouped' ? 'divide-y divide-[#EEF2F6] rounded-lg border border-[#E5E9F0] bg-white'
     : look === 'lines' ? 'divide-y divide-[#EEF2F6] border-y border-[#EEF2F6]'
     : look === 'soft' ? 'flex flex-col gap-1.5' : 'flex flex-col gap-2';
   return (
     <>
+    {/* The video is the FIRST thing in the guide, as a card (Zeni, 26 Oct 2026) — it was a link at the foot. */}
+    {watchOnTop && <div className="mb-4 flex items-center gap-3 rounded-lg border border-[#D6E6F5] bg-[#F3F8FD] p-3">
+      <span className="flex size-9 flex-shrink-0 items-center justify-center rounded-full bg-white text-[#3D8BD0] shadow-sm"><CirclePlay size={18} /></span>
+      <div className="min-w-0 flex-1">
+        <div className="text-[13px] font-semibold text-[#1D2A3E]">New to form rules?</div>
+        <div className="truncate text-[12px] text-[#64748B]">See how a rule is built in 1 min.</div>
+      </div>
+      <button type="button" onClick={onWatch}
+        className="inline-flex h-8 flex-shrink-0 items-center gap-1.5 rounded border border-[#3D8BD0] bg-white px-3 text-[12px] font-medium text-[#3D8BD0] transition-colors hover:bg-[#EBF5FF]">
+        <CirclePlay size={14} /> Watch video
+      </button>
+    </div>}
     {/* The two sections must read as two (Zeni, 13 Oct 2026): a 15px heading led by a DARK icon tile (the
         topics keep grey ones, so this is one level up), a hairline and more room before the second, and
         the heading PINS to the top of the guide while its section scrolls. */}
@@ -192,16 +204,21 @@ export function FormRuleHelpSections({ onWatch, look = 'grouped' }: { onWatch: (
       ))}
     </div>
 
-    <div className="mt-5 flex items-center gap-4 text-[12.5px]">
-      <button type="button" onClick={onWatch} className="inline-flex items-center gap-1 text-[12.5px] font-medium text-[#3D8BD0] hover:underline">
-        <CirclePlay size={13} /> Watch the 1-min video
-      </button>
-    </div>
+    {/* V1 keeps the link at the foot. */}
+    {!watchOnTop && (
+      <div className="mt-5 flex items-center gap-4 text-[12.5px]">
+        <button type="button" onClick={onWatch} className="inline-flex items-center gap-1 text-[12.5px] font-medium text-[#3D8BD0] hover:underline">
+          <CirclePlay size={13} /> Watch the 1-min video
+        </button>
+      </div>
+    )}
     </>
   );
 }
 
-export function FormRuleHelpCard({ ruleCheck, onWatch, look = 'grouped' }: {
+export function FormRuleHelpCard({ ruleCheck, onWatch, look = 'grouped', watchOnTop = true }: {
+  /** V2 puts the Watch video card first; V1 keeps the link at the foot. */
+  watchOnTop?: boolean;
   /** The Rule check block — the conflicts / similar summary cards, or the "All clear so far" card
    *  while nothing is found. It sits UPFRONT, above the Help guide, and does not scroll away. */
   ruleCheck: (compact: boolean) => React.ReactNode;
@@ -212,13 +229,17 @@ export function FormRuleHelpCard({ ruleCheck, onWatch, look = 'grouped' }: {
      (Zeni, 9 Oct 2026 — on scroll, not on hover). Scrolled back to the top, it unfolds. The wheel counts
      too, so a guide short enough not to scroll still folds the cards when someone scrolls over it. */
   const [compact, setCompact] = useState(false);
+  /* Nothing found → no block at all and the guide starts at the top (Zeni, 26 Oct 2026: no "All clear" card). */
+  const check = ruleCheck(compact);
 
   return (
     <div className="flex h-full min-h-0 flex-col border-l border-[#DFE5ED] bg-white">
       {/* Rule check first (Zeni, 9 Oct 2026): what the editor found about THIS rule outranks how-to help. */}
-      <div className="flex-shrink-0 border-b border-[#EEF2F6] p-4">
-        {ruleCheck(compact)}
-      </div>
+      {check && (
+        <div className="flex-shrink-0 border-b border-[#EEF2F6] p-4">
+          {check}
+        </div>
+      )}
       <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex-shrink-0 px-4 pb-3 pt-3.5">
         {/* The reference's title: a dark accent bar before the words. */}
@@ -231,7 +252,7 @@ export function FormRuleHelpCard({ ruleCheck, onWatch, look = 'grouped' }: {
       <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-5"
         onScroll={(e) => setCompact(e.currentTarget.scrollTop > 4)}
         onWheel={(e) => { if (e.deltaY > 0) setCompact(true); else if (e.deltaY < 0 && e.currentTarget.scrollTop <= 0) setCompact(false); }}>
-        <FormRuleHelpSections onWatch={onWatch} look={look} />
+        <FormRuleHelpSections onWatch={onWatch} look={look} watchOnTop={watchOnTop} />
       </div>
       </div>
     </div>

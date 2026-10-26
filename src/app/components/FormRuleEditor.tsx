@@ -17,6 +17,8 @@ import { FormRuleLinearView } from './FormRuleLinearView';
 import { FormRuleConflictReview } from './FormRuleConflictReview';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { FORM_RULE_GUIDE_SEEN, FormRuleGuideDock, FormRuleHelpGuide } from './FormRuleGuide';
+import { FormRuleGuideDockV1 } from './FormRuleGuideV1';
+import { useFormRuleRelease } from './formRuleRelease';
 import { FormRuleHelpCard, HELP_LOOKS, type HelpLook } from './FormRuleHelpCard';
 import { FormRuleCheckPanel } from './FormRuleCheckPanel';
 import { FieldPicker } from './FormRuleFieldPicker';
@@ -244,6 +246,8 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
      (FINAL_HELP_LOOK), so the tabs are hidden and this stored choice is not read. */
   const [helpLook, setHelpLook] = useState<HelpLook>(() => { try { const v = localStorage.getItem('formRuleHelpLook'); return HELP_LOOKS.some((l) => l.id === v) ? (v as HelpLook) : 'grouped'; } catch { return 'grouped'; } });
   const pickHelpLook = (l: HelpLook) => { setHelpLook(l); try { localStorage.setItem('formRuleHelpLook', l); } catch { /* private mode */ } };
+  /* V1 | V2 pill beside the logo (Zeni, 26 Oct 2026): V2 = the new video + guide card + no All clear card. */
+  const release = useFormRuleRelease();
   const [guideOpen, setGuideOpen] = useState(() => { try { return !localStorage.getItem(FORM_RULE_GUIDE_SEEN); } catch { return false; } });
   const closeGuide = () => { setGuideOpen(false); try { localStorage.setItem(FORM_RULE_GUIDE_SEEN, '1'); } catch { /* private mode */ } };
   /* V1's Help guide tab: the minimal guide (Zeni, 9 Oct 2026) — it replaced the six numbered steps (FormRuleHelpGuide, still built). */
@@ -1044,12 +1048,15 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
     <div className="relative flex min-h-0 flex-1">
       <div className="min-h-0 flex-1 overflow-y-auto">{builder}</div>
       <div className="flex-shrink-0" style={{ width: v3W }}>
-        <FormRuleHelpCard look={FINAL_HELP_LOOK ?? helpLook} onWatch={() => setGuideOpen(true)}
+        <FormRuleHelpCard look={FINAL_HELP_LOOK ?? helpLook} onWatch={() => setGuideOpen(true)} watchOnTop={release === 'v2'}
           ruleCheck={(compact) => ready && (conflicts.length > 0 || similar.length > 0)
             ? <RelatedSummaryCards onlyFound arrowAlways attention compact={compact} intro={intro} onInfo={setIntro} onCloseIntro={closeIntro} introSide="below" ready={ready} conflicts={conflicts} similar={similar} onOpenConflicts={() => setRelOpen('conflicts')} onOpenSimilar={() => setRelOpen('similar')} />
-            : <RuleCheckEmpty compact={compact} />} />
+            : release === 'v2' ? null : <RuleCheckEmpty compact={compact} />} />
       </div>
-      {guideOpen && <FormRuleGuideDock onClose={closeGuide} right={v3W + 20} />}
+      {/* Bottom-right of the SCREEN, over the Help guide (Zeni, 26 Oct 2026). */}
+      {guideOpen && (release === 'v2'
+        ? <FormRuleGuideDock onClose={closeGuide} right={20} />
+        : <FormRuleGuideDockV1 onClose={closeGuide} right={v3W + 20} />)}
     </div>
   );
 

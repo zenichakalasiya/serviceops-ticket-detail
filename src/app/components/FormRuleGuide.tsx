@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import {
-  AlertTriangle, ChevronDown, ChevronLeft, ChevronRight, CirclePlay, Copy, History, Info, Lightbulb, Maximize2, Minimize2, Plus, Search,
+  AlertTriangle, ArrowUpRight, BookOpen, ChevronDown, ChevronLeft, ChevronRight, CirclePlay, Copy, History, Maximize2, Minimize2, Plus,
   RotateCcw, Save, Split, Workflow, X,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -16,10 +16,8 @@ import type { LucideIcon } from 'lucide-react';
  *  - `FormRuleHelpGuide`: the Help guide TAB of the Rule check rail — the same six steps written out
  *    as points, for somebody who would rather read than watch.
  *
- * ⚠️ The scene draws the rule as the FLOW view does (E · Flow, Zeni's pick, 7 Oct 2026): When → Check
- * if → a THEN hub → action nodes, left to right, with the builder's own step colours (blue / orange /
- * green). A similar rule arrives as an amber card above the nodes it shares; a conflict as a red card
- * under the action it fights.
+ * ⚠️ The scene is the builder beside a SKELETON of the Help guide panel (Zeni, 26 Oct 2026 — the flow
+ * picture was removed). Similar rules and Conflicts arrive as the panel's summary cards, in the real order.
  *
  * ⚠️ FRAMES ARE DATA and the scene NEVER remounts between them, so every change is a CSS transition.
  * This file imports nothing from the other form-rule views — the rail and the editor both import it,
@@ -44,19 +42,19 @@ export interface GuideChapter { name: string; title: string; desc: string; groun
 
 export const GUIDE_CHAPTERS: GuideChapter[] = [
   { name: 'When', title: 'When — pick when the rule runs',
-    desc: 'Choose the event, new or existing requests, and who it’s for. It shows up in the flow as WHEN.',
+    desc: 'Choose the rule event, whether it runs on new or existing requests, and who it applies to.',
     ground: '#EFF6FF', blob: '#DBEAFE' },
   { name: 'Check if', title: 'Check if — add conditions',
-    desc: 'Add checks like “Priority is High”, joined with AND or OR. Each one joins the CHECK IF step.',
+    desc: 'Add checks like “Priority is High”. Once one is set, rules with the same trigger show as Similar rules.',
     ground: '#FFF7ED', blob: '#FFEDD5' },
   { name: 'Then', title: 'Then — choose what happens',
-    desc: 'Pick an action and the field it changes. Every action becomes a step after THEN.',
+    desc: 'Pick an action and its field. If another rule does the opposite to that field, Conflicts appear.',
     ground: '#F0FDF4', blob: '#DCFCE7' },
   { name: 'Similar', title: 'Similar rules',
-    desc: 'Another rule with the same trigger and conditions shows in Similar rules — add your actions there.',
+    desc: 'These rules already use your trigger and conditions — add your actions to one of them instead.',
     ground: '#FEFCE8', blob: '#FEF3C7' },
   { name: 'Conflicts', title: 'Conflicts',
-    desc: 'If another rule changes the same field the opposite way, the row turns red. Click ⚠ to see which.',
+    desc: 'Another rule changes this field the opposite way, so the row turns red. Resolve it before saving.',
     ground: '#FEF2F2', blob: '#FEE2E2' },
   { name: 'Save', title: 'Save the rule',
     desc: 'Check the rule reads the way you want, then click Save Rule. It starts working right away.',
@@ -64,14 +62,14 @@ export const GUIDE_CHAPTERS: GuideChapter[] = [
 ];
 
 /**
- * ⚠️ THE SCENE IS THE BUILDER AND ITS FLOW, SIDE BY SIDE (Zeni, 7 Oct 2026): the real form fills in on
- * the left — the When fields, a condition row, an action row — and every answer appears at once as a
- * step in the flow on the right, the two joined by a dashed link in the step's colour. In Similar and
- * Conflicts the right side becomes the Rule check panel, as it is in the product.
+ * ⚠️ THE SCENE IS THE BUILDER BESIDE THE HELP GUIDE (Zeni, 26 Oct 2026 — the flow picture was removed):
+ * the form fills in on the left, larger; on the right a SKELETON of the V3 Help guide panel. The
+ * Similar rules card arrives the moment a trigger and a condition are filled, and the Conflicts card the
+ * moment a clashing action is — the real editor's order — each pushing the guide down, as in the product.
+ * The Similar and Conflicts chapters only RING their card; no drawer opens.
  *
  * ⚠️ MOVE, THEN CLICK. A frame that moves the cursor changes nothing else; the click — and whatever it
- * does — is the NEXT frame, so a field never fills in before the cursor has reached it. That was the
- * "delay" of the first version: the change landed while the pointer was still on its way.
+ * does — is the NEXT frame, so a field never fills in before the cursor has reached it.
  */
 interface GFrame {
   ch: number;
@@ -83,22 +81,24 @@ interface GFrame {
   when?: 0 | 1 | 2 | 3 | 4;
   cond?: 0 | 1 | 2;
   act?: 0 | 1 | 2;
-  /** What the right side shows. */
-  right?: 'flow' | 'similar' | 'conflicts';
-  /** The trigger and conditions ring amber — they are what the similar rule shares. */
+  /** The trigger and conditions ring amber — they are what the similar rules share. */
   sim?: boolean;
-  /** The Hide · Description row is in conflict. */
-  clash?: boolean;
-  /** The step that has just appeared — its node and its link light up. */
-  flash?: 'when' | 'if' | 'a1' | 'a2';
+  /** Which summary card is ringed (the Similar / Conflicts chapters). */
+  hl?: 'similar' | 'conflicts';
   save?: 'press' | 'done';
 }
 
 const DONE = { when: 4, cond: 2, act: 2 } as const;
 const REST: [number, number] = [150, 168];
 
-/* Form geometry — one place, so every frame agrees about where the fields are. */
-const F = { x: 8, w: 190, top: 26 };
+/* Form geometry, drawn at its old size and SCALED up by K about (FX, FY) so the form fills more of the
+   frame. `fm` puts a point drawn in form space where it lands on screen — every cursor target uses it. */
+const K = 1.12;
+const FX = 8;
+const FY = 24;
+const fm = ([x, y]: [number, number]): [number, number] => [FX + (x - FX) * K, FY + (y - FY) * K];
+
+const F = { x: 8, w: 190, top: 26, h: 136 };
 const SEL_Y = 47;
 const EV = { x: 14, w: 60 };
 const EX = { x: 78, w: 52 };
@@ -107,39 +107,47 @@ const R1 = 80;
 const R2 = 94;
 const A1 = 128;
 const A2 = 142;
-const mid = (b: { x: number; w: number }, y = SEL_Y + 5): [number, number] => [b.x + b.w / 2, y];
+const mid = (b: { x: number; w: number }, y = SEL_Y + 5): [number, number] => fm([b.x + b.w / 2, y]);
+
+/* The Help guide panel on the right — narrower than the form. */
+const P = { x: 226, y: 26, w: 88, h: 152 };
+const CARD_Y = P.y + 5;
+const CARD_H = 24;
+const GAP = 3;
+const halfW = (P.w - 8 - GAP) / 2;
+const SIM_C: [number, number] = [P.x + 4 + halfW / 2, CARD_Y + CARD_H / 2 + 2];
+const CON_C: [number, number] = [P.x + 4 + halfW + GAP + halfW / 2, CARD_Y + CARD_H / 2 + 2];
 
 /* ⚠️ Written at the pace it should PLAY. A move frame is long enough for the glide to finish. */
 const FRAMES: GFrame[] = [
-  /* When — open Rule Event, pick the first option, then Execute on and Applicable for */
+  /* When — all three: Rule Event, Execute on, Applicable for */
   { ch: 0, ms: 600, cur: REST },
   { ch: 0, ms: 800, cur: mid(EV) },
   { ch: 0, ms: 500, cur: mid(EV), press: true, when: 1 },
-  { ch: 0, ms: 750, cur: [46, 65], when: 1 },
-  { ch: 0, ms: 600, cur: [46, 65], press: true, when: 2, flash: 'when' },
+  { ch: 0, ms: 750, cur: fm([46, 65]), when: 1 },
+  { ch: 0, ms: 600, cur: fm([46, 65]), press: true, when: 2 },
   { ch: 0, ms: 750, cur: mid(EX), when: 2 },
-  { ch: 0, ms: 500, cur: mid(EX), press: true, when: 3, flash: 'when' },
+  { ch: 0, ms: 500, cur: mid(EX), press: true, when: 3 },
   { ch: 0, ms: 750, cur: mid(AP), when: 3 },
-  { ch: 0, ms: 1600, cur: mid(AP), press: true, when: 4, flash: 'when' },
-  /* Check if — add a condition, then a second joined by AND */
-  { ch: 1, ms: 850, cur: [96, R1 + 5], when: 4 },
-  { ch: 1, ms: 900, cur: [96, R1 + 5], press: true, when: 4, cond: 1, flash: 'if' },
-  { ch: 1, ms: 750, cur: [40, R2 + 5], when: 4, cond: 1 },
-  { ch: 1, ms: 1600, cur: [40, R2 + 5], press: true, when: 4, cond: 2, flash: 'if' },
-  /* Then — two actions */
-  { ch: 2, ms: 850, cur: [96, A1 + 5], when: 4, cond: 2 },
-  { ch: 2, ms: 900, cur: [96, A1 + 5], press: true, when: 4, cond: 2, act: 1, flash: 'a1' },
-  { ch: 2, ms: 750, cur: [40, A2 + 5], when: 4, cond: 2, act: 1 },
-  { ch: 2, ms: 1600, cur: [40, A2 + 5], press: true, ...DONE, flash: 'a2' },
-  /* Similar — the right side becomes the Rule check panel on Similar rules */
+  { ch: 0, ms: 1600, cur: mid(AP), press: true, when: 4 },
+  /* Check if — the first condition completes the trigger + condition, so Similar rules arrives */
+  { ch: 1, ms: 850, cur: fm([96, R1 + 5]), when: 4 },
+  { ch: 1, ms: 1300, cur: fm([96, R1 + 5]), press: true, when: 4, cond: 1 },
+  { ch: 1, ms: 750, cur: fm([40, R2 + 5]), when: 4, cond: 1 },
+  { ch: 1, ms: 1600, cur: fm([40, R2 + 5]), press: true, when: 4, cond: 2 },
+  /* Then — the second action clashes with another rule, so Conflicts arrives */
+  { ch: 2, ms: 850, cur: fm([96, A1 + 5]), when: 4, cond: 2 },
+  { ch: 2, ms: 900, cur: fm([96, A1 + 5]), press: true, when: 4, cond: 2, act: 1 },
+  { ch: 2, ms: 750, cur: fm([40, A2 + 5]), when: 4, cond: 2, act: 1 },
+  { ch: 2, ms: 1900, cur: fm([40, A2 + 5]), press: true, ...DONE },
+  /* Similar — the card is ringed, and so is what it shares */
   { ch: 3, ms: 800, cur: REST, ...DONE },
-  { ch: 3, ms: 900, cur: REST, ...DONE, right: 'similar', sim: true },
-  { ch: 3, ms: 850, cur: [287, 73], ...DONE, right: 'similar', sim: true },
-  { ch: 3, ms: 2000, cur: [287, 73], ...DONE, right: 'similar', sim: true },
-  /* Conflicts — the row turns red; its ⚠ opens Conflicts */
-  { ch: 4, ms: 900, cur: REST, ...DONE, clash: true },
-  { ch: 4, ms: 850, cur: [184, A2 + 5], ...DONE, clash: true },
-  { ch: 4, ms: 2300, cur: [184, A2 + 5], press: true, ...DONE, clash: true, right: 'conflicts' },
+  { ch: 3, ms: 900, cur: SIM_C, ...DONE, sim: true, hl: 'similar' },
+  { ch: 3, ms: 2200, cur: SIM_C, ...DONE, sim: true, hl: 'similar' },
+  /* Conflicts — the card is ringed beside the red row */
+  { ch: 4, ms: 800, cur: REST, ...DONE },
+  { ch: 4, ms: 900, cur: CON_C, ...DONE, hl: 'conflicts' },
+  { ch: 4, ms: 2200, cur: CON_C, ...DONE, hl: 'conflicts' },
   /* Save */
   { ch: 5, ms: 900, cur: [285, 15], ...DONE },
   { ch: 5, ms: 500, cur: [285, 15], press: true, ...DONE, save: 'press' },
@@ -211,63 +219,81 @@ function AddRow({ y, text }: { y: number; text: string }) {
   );
 }
 
-/* Flow geometry (vertical — the right side is narrow). */
-const RX = 204;
-const RW = 108;
-const WN = { x: 213, y: 45, w: 90, h: 20 };
-const IN = { x: 213, y: 75, w: 90, h: 26 };
-const HUB = { cx: 258, cy: 113, r: 6.5 };
-const AN1 = { x: 207, y: 128, w: 48, h: 22 };
-const AN2 = { x: 261, y: 128, w: 48, h: 22 };
+/** A grey skeleton bar. */
+const Bar = ({ x, y, w, h = 2.2, c = '#E2E8F0' }: { x: number; y: number; w: number; h?: number; c?: string }) =>
+  <rect x={x} y={y} width={w} height={h} rx={h / 2} fill={c} />;
 
-/** A flow node: badge, step name, its lines. `ping` plays the "just added" ring once. */
-function FNode({ b, tone, I, label, lines, ring, ping, rotate, active }: {
-  b: { x: number; y: number; w: number; h: number }; tone: string; I: LucideIcon; label: string;
-  lines: React.ReactNode[]; ring?: string; ping?: boolean; rotate?: boolean;
-  /** The step the form is filling right now — ringed and tinted in its colour. */
-  active?: boolean;
-}) {
+/** One summary card at the top of the guide panel, drawn after RelatedSummaryCards. */
+function SummaryCard({ x, w, kind, ring }: { x: number; w: number; kind: 'similar' | 'conflicts'; ring?: boolean }) {
+  const sim = kind === 'similar';
+  const tone = sim ? '#B45309' : RED;
+  const b = { x, y: CARD_Y, w, h: CARD_H };
   return (
     <g className="pt-pop">
-      {/* ⚠️ The "just added" pulse GROWS the same amount on all four sides (its x / y / width / height animate from CSS variables) — a scaled ring opened wider at the sides than top and bottom. */}
-      {active && !ring && <rect x={b.x - 2} y={b.y - 2} width={b.w + 4} height={b.h + 4} rx="5.5" fill="none" stroke={tone} strokeWidth="0.6" opacity="0.45" />}
-      {ping && <rect rx="5.5" fill="none" stroke={tone} strokeWidth="0.8" className="fg-ping"
-        style={{ '--x0': `${b.x}px`, '--y0': `${b.y}px`, '--w0': `${b.w}px`, '--h0': `${b.h}px`, '--x1': `${b.x - 5}px`, '--y1': `${b.y - 5}px`, '--w1': `${b.w + 10}px`, '--h1': `${b.h + 10}px` } as React.CSSProperties} />}
-      <rect x={b.x} y={b.y} width={b.w} height={b.h} rx="4" fill={PAPER} stroke={ring ?? (active ? tone : LINE)} strokeWidth={ring ? 0.7 : 0.6} filter="url(#fg-card)" style={{ transition: T }} />
-      <rect x={b.x} y={b.y} width={b.w} height={b.h} rx="4" fill={tone} opacity={active && !ring ? 0.07 : 0} style={{ transition: T }} />
-      <circle cx={b.x + 6} cy={b.y + 6} r="3.4" fill={tone} opacity="0.13" />
-      <g style={rotate ? { transform: 'rotate(180deg)', transformOrigin: `${b.x + 6}px ${b.y + 6}px` } : undefined}><Ico I={I} cx={b.x + 6} cy={b.y + 6} s={4} c={tone} /></g>
-      <Txt x={b.x + 11.5} y={b.y + 7.4} s={3.8} w={700} c={tone}>{label}</Txt>
-      {lines.map((l, i) => <g key={i}>{typeof l === 'string' ? <Txt x={b.x + 4} y={b.y + 14.6 + i * 6.4} s={4.2}>{l}</Txt> : l}</g>)}
+      <rect x={b.x} y={b.y} width={b.w} height={b.h} rx="3" fill={sim ? '#FFFBEB' : '#FEF2F2'} stroke={sim ? '#E9A23B' : '#F87171'} strokeWidth={ring ? 1 : 0.6} style={{ transition: T }} />
+      {ring && <rect x={b.x - 2} y={b.y - 2} width={b.w + 4} height={b.h + 4} rx="4.5" fill="none" stroke={sim ? AMBER : RED} strokeWidth="0.8" opacity="0.5" />}
+      <rect rx="4" fill="none" stroke={sim ? AMBER : RED} strokeWidth="0.7" className="fg-ping"
+        style={{ '--x0': `${b.x}px`, '--y0': `${b.y}px`, '--w0': `${b.w}px`, '--h0': `${b.h}px`, '--x1': `${b.x - 4}px`, '--y1': `${b.y - 4}px`, '--w1': `${b.w + 8}px`, '--h1': `${b.h + 8}px` } as React.CSSProperties} />
+      <Txt x={b.x + 3.5} y={b.y + 9.6} s={7.4} w={700} c={tone}>2</Txt>
+      <Txt x={b.x + 9} y={b.y + 9} s={3.9} w={600} c={tone}>{sim ? 'Similar rules' : 'Conflicts'}</Txt>
+      <Ico I={ArrowUpRight} cx={b.x + b.w - 4} cy={b.y + 4.5} s={3.6} c={tone} />
+      <Bar x={b.x + 3.5} y={b.y + 14} w={b.w - 9} h={1.8} c={sim ? '#F5D9A8' : '#FBC6C6'} />
+      <Bar x={b.x + 3.5} y={b.y + 18} w={(b.w - 9) * 0.65} h={1.8} c={sim ? '#F5D9A8' : '#FBC6C6'} />
     </g>
   );
 }
 
-/** An empty step slot in the flow — dashed and dim until its chapter fills it. */
-const Slot = ({ b, tone }: { b: { x: number; y: number; w: number; h: number }; tone?: string }) => (
-  <rect x={b.x} y={b.y} width={b.w} height={b.h} rx="4" fill={tone ?? 'none'} fillOpacity={tone ? 0.06 : 0} stroke={tone ?? '#C5D0DC'} strokeWidth="0.6" strokeDasharray="2.4 2" opacity={tone ? 1 : 0.7} style={{ transition: T }} />
-);
-
-/** A connector that DRAWS ITSELF in when it first appears, then carries a slow running dash. */
-function Wire({ d, tone = '#A5BAD0' }: { d: string; tone?: string }) {
+/** The Help guide panel, as a skeleton: watch card, title, a section and its topic rows. */
+function GuideSkeleton({ top }: { top: number }) {
+  const x = P.x + 4;
+  const w = P.w - 8;
   return (
-    <g>
-      <path d={d} fill="none" stroke={tone} strokeWidth="0.9" pathLength={1} strokeDasharray="1" className="fg-draw" />
-      <path d={d} fill="none" stroke={PAPER} strokeWidth="0.9" strokeDasharray="1.4 6" className="fg-flow" />
+    <g style={{ transform: `translateY(${top}px)`, transition: 'transform 420ms cubic-bezier(0.4,0,0.2,1)' }}>
+      {/* the Watch video card */}
+      <rect x={x} y="0" width={w} height="15" rx="2.5" fill="#F3F8FD" stroke="#D6E6F5" strokeWidth="0.5" />
+      <circle cx={x + 7} cy="7.5" r="4" fill={PAPER} />
+      <Ico I={CirclePlay} cx={x + 7} cy={7.5} s={4.4} c={BLUE} />
+      <Bar x={x + 13} y={4.4} w={30} c="#9FB3C8" />
+      <Bar x={x + 13} y={8.8} w={40} c="#CBD5E1" />
+      <rect x={x + w - 19} y="4" width="16" height="7" rx="1.5" fill={PAPER} stroke={BLUE} strokeWidth="0.45" />
+      <Txt x={x + w - 11} y={8.6} s={3.1} w={600} c={BLUE} anchor="middle">Watch</Txt>
+      {/* Form Rules Guide */}
+      <rect x={x} y="20.5" width="1.2" height="6" rx="0.6" fill="#1D2A3E" />
+      <Txt x={x + 3.5} y={25.6} s={4.6} w={600} c="#1D2A3E">Form Rules Guide</Txt>
+      {/* How Form Rules Work */}
+      <rect x={x} y="31" width="6" height="6" rx="1.2" fill="#1D2A3E" />
+      <Ico I={BookOpen} cx={x + 3} cy={34} s={3.6} c={PAPER} />
+      <Bar x={x + 9} y={32.9} w={40} h={2.4} c="#64748B" />
+      <Bar x={x} y={41} w={w} />
+      <Bar x={x} y={45} w={w * 0.72} />
+      {[0, 1, 2, 3, 4].map((i) => {
+        const y = 51 + i * 20.5;
+        return (
+          <g key={i}>
+            <rect x={x} y={y} width={w} height="18" rx="2.5" fill="#F4F6FA" />
+            <circle cx={x + 5} cy={y + 5} r="1.8" fill="#CBD5E1" />
+            <Bar x={x + 9} y={y + 3.9} w={28 - (i % 2) * 6} h={2.2} c="#94A3B8" />
+            <Bar x={x + 9} y={y + 9} w={w - 14} h={1.8} />
+            <Bar x={x + 9} y={y + 12.6} w={(w - 14) * 0.6} h={1.8} />
+          </g>
+        );
+      })}
     </g>
   );
 }
-
 
 function GuideScene({ f, n }: { f: GFrame; n: number }) {
   const c = GUIDE_CHAPTERS[f.ch];
   const when = f.when ?? 0;
   const cond = f.cond ?? 0;
   const act = f.act ?? 0;
-  const right = f.right ?? 'flow';
   const amber = f.sim ? AMBER : undefined;
-  /* The flow step the form is filling right now: lit in its colour, so the eye goes from the field to the step. */
-  const focus = f.ch === 0 ? 'when' : f.ch === 1 ? 'if' : f.ch === 2 ? (act === 2 || (act === 1 && f.cur[1] > A1 + 8) ? 'a2' : 'a1') : null;
+  /* The real editor's order: a trigger and one complete condition → Similar rules; the clashing action → Conflicts. */
+  const showSim = when >= 4 && cond >= 1;
+  const showCon = act >= 2;
+  const clash = showCon;
+  const both = showSim && showCon;
+  const cardW = both ? halfW : P.w - 8;
   return (
     <svg viewBox="0 0 320 180" className="h-full w-full" role="img" aria-label={c.title}>
       <defs>
@@ -277,7 +303,7 @@ function GuideScene({ f, n }: { f: GFrame; n: number }) {
         <filter id="fg-lift" x="-20%" y="-20%" width="140%" height="170%">
           <feDropShadow dx="0" dy="4" stdDeviation="4.5" floodColor="#101828" floodOpacity="0.2" />
         </filter>
-        <pattern id="fg-dots" width="7" height="7" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="0.5" fill="#D5DEE8" /></pattern>
+        <clipPath id="fg-panel"><rect x={P.x} y={P.y} width={P.w} height={P.h} rx="5" /></clipPath>
       </defs>
       <rect x="0" y="0" width="320" height="180" fill={c.ground} style={{ transition: T }} />
       <circle cx="296" cy="6" r="60" fill={c.blob} style={{ transition: T }} />
@@ -285,206 +311,93 @@ function GuideScene({ f, n }: { f: GFrame; n: number }) {
 
       {/* the editor's header: title, Cancel, Save Rule */}
       <g filter="url(#fg-card)">
-        <rect x="8" y="5" width="304" height="17" rx="4.5" fill={PAPER} />
-        <Txt x={15} y={16} s={6} w={600}>Add Rule</Txt>
-        <rect x="230" y="8.5" width="28" height="10" rx="2.2" fill={PAPER} stroke={LINE} strokeWidth="0.6" />
-        <Txt x={244} y={15.1} s={4.6} w={500} c={MUTED} anchor="middle">Cancel</Txt>
-        <rect x="262" y="8.5" width="46" height="10" rx="2.2" fill={f.save === 'press' ? '#2D6CA0' : BLUE} style={{ transition: T }} />
-        <Txt x={285} y={15.1} s={4.6} w={600} c={PAPER} anchor="middle">Save Rule</Txt>
+        <rect x="8" y="4" width="304" height="16" rx="4.5" fill={PAPER} />
+        <Txt x={15} y={14.6} s={6} w={600}>Add Rule</Txt>
+        <rect x="230" y="7" width="28" height="10" rx="2.2" fill={PAPER} stroke={LINE} strokeWidth="0.6" />
+        <Txt x={244} y={13.6} s={4.6} w={500} c={MUTED} anchor="middle">Cancel</Txt>
+        <rect x="262" y="7" width="46" height="10" rx="2.2" fill={f.save === 'press' ? '#2D6CA0' : BLUE} style={{ transition: T }} />
+        <Txt x={285} y={13.6} s={4.6} w={600} c={PAPER} anchor="middle">Save Rule</Txt>
       </g>
 
-      {/* ── the form ───────────────────────────────────────────────────────────────────────── */}
-      <rect x={F.x} y={F.top} width={F.w} height="148" rx="5" fill={PAPER} filter="url(#fg-card)" />
+      {/* ── the form, drawn at its old size and scaled up ──────────────────────────────────────── */}
+      <g transform={`translate(${FX} ${FY}) scale(${K}) translate(${-FX} ${-FY})`}>
+        <rect x={F.x} y={F.top} width={F.w} height={F.h} rx="5" fill={PAPER} filter="url(#fg-card)" />
 
-      <rect x="12" y="30" width="182" height="31" rx="3.5" fill="none" stroke={amber ?? 'transparent'} strokeWidth="0.9" style={{ transition: T }} />
-      <Head y={36} I={History} tone={BLUE} lead="When" rest="this rule should run" />
-      <Txt x={EV.x} y={45} s={3.6} c={MUTED}>Rule Event</Txt>
-      <Txt x={EX.x} y={45} s={3.6} c={MUTED}>Execute on</Txt>
-      <Txt x={AP.x} y={45} s={3.6} c={MUTED}>Applicable for</Txt>
-      <Sel x={EV.x} y={SEL_Y} w={EV.w} v={when >= 2 ? 'Form is filled in' : undefined} ph="Choose an event" lit={when === 1} />
-      <Sel x={EX.x} y={SEL_Y} w={EX.w} v={when >= 3 ? 'On Create' : undefined} ph="Create or edit" />
-      <Sel x={AP.x} y={SEL_Y} w={AP.w} v={when >= 4 ? 'Everyone' : undefined} ph="Choose people" />
+        <rect x="12" y="30" width="182" height="31" rx="3.5" fill="none" stroke={amber ?? 'transparent'} strokeWidth="0.9" style={{ transition: T }} />
+        <Head y={36} I={History} tone={BLUE} lead="When" rest="this rule should run" />
+        <Txt x={EV.x} y={45} s={3.6} c={MUTED}>Rule Event</Txt>
+        <Txt x={EX.x} y={45} s={3.6} c={MUTED}>Execute on</Txt>
+        <Txt x={AP.x} y={45} s={3.6} c={MUTED}>Applicable for</Txt>
+        <Sel x={EV.x} y={SEL_Y} w={EV.w} v={when >= 2 ? 'Form is filled in' : undefined} ph="Choose an event" lit={when === 1} />
+        <Sel x={EX.x} y={SEL_Y} w={EX.w} v={when >= 3 ? 'On Create' : undefined} ph="Create or edit" />
+        <Sel x={AP.x} y={SEL_Y} w={AP.w} v={when >= 4 ? 'Everyone' : undefined} ph="Choose people" />
 
-      <rect x="12" y="66" width="182" height="48" rx="3.5" fill="none" stroke={amber ?? 'transparent'} strokeWidth="0.9" style={{ transition: T }} />
-      <Head y={72} I={Split} tone={ORANGE} lead="Check if" rest="these conditions match" rotate />
-      <rect x="14" y="77" width="178" height="33" rx="3" fill="#F8FAFC" />
-      {cond === 0 ? <AddRow y={R1} text="Add condition" /> : (
-        <g className="pt-fade">
-          <Txt x={18} y={R1 + 6.7} s={4.2} c={MUTED}>Where</Txt>
-          <Sel x={36} y={R1} w={44} v="Priority" />
-          <Sel x={83} y={R1} w={22} v="is" />
-          <Sel x={108} y={R1} w={80} v="High" />
-        </g>
-      )}
-      {cond === 1 && <g className="pt-fade"><Ico I={Plus} cx={21} cy={R2 + 5} s={4.2} c={BLUE} /><Txt x={25} y={R2 + 6.6} s={4.4} w={500} c={BLUE}>Add condition</Txt></g>}
-      {cond === 2 && (
-        <g className="pt-fade">
-          <Txt x={18} y={R2 + 6.7} s={4.2} w={600} c={ORANGE}>And</Txt>
-          <Sel x={36} y={R2} w={44} v="Category" />
-          <Sel x={83} y={R2} w={22} v="is" />
-          <Sel x={108} y={R2} w={80} v="Network" />
-        </g>
-      )}
-
-      <Head y={120} I={Workflow} tone="#89C540" lead="Then" rest="choose what the rule should do" />
-      <rect x="14" y="125" width="178" height="33" rx="3" fill="#F8FAFC" />
-      {act === 0 ? <AddRow y={A1} text="Add action" /> : (
-        <g className="pt-fade">
-          <Sel x={18} y={A1} w={46} v="Mandate" />
-          <Sel x={67} y={A1} w={121} v="Urgency" />
-        </g>
-      )}
-      {act === 1 && <g className="pt-fade"><Ico I={Plus} cx={21} cy={A2 + 5} s={4.2} c={BLUE} /><Txt x={25} y={A2 + 6.6} s={4.4} w={500} c={BLUE}>Add action</Txt></g>}
-      {act === 2 && (
-        <g className="pt-fade">
-          <rect x="15" y={A2 - 2} width="176" height="14" rx="2.5" fill={f.clash ? '#FEF3F2' : 'transparent'} style={{ transition: T }} />
-          <Sel x={18} y={A2} w={46} v="Hide" fill={f.clash ? '#FFF8F7' : PAPER} />
-          <Sel x={67} y={A2} w={f.clash ? 108 : 121} v="Description" fill={f.clash ? '#FFF8F7' : PAPER} />
-          {f.clash && (
-            <g className="pt-pop">
-              <circle cx={184} cy={A2 + 5} r="4.4" fill="#FEE2E2" />
-              <Ico I={AlertTriangle} cx={184} cy={A2 + 4.8} s={5} c={RED} />
-            </g>
-          )}
-        </g>
-      )}
-
-      {/* the Rule Event menu */}
-      {when === 1 && (
-        <g className="pt-fade" filter="url(#fg-lift)">
-          <rect x={EV.x} y="58" width="96" height="33" rx="3" fill={PAPER} />
-          {['While the form is being filled', 'When the form opens', 'When the form is submitted'].map((t, i) => (
-            <g key={t}>
-              {i === 0 && <rect x={EV.x + 2} y={61 + i * 9.6} width="92" height="8.6" rx="2" fill="#EAF3FB" />}
-              <Txt x={EV.x + 5} y={66.6 + i * 9.6} s={4.3} w={i === 0 ? 600 : 400} c={i === 0 ? BLUE : INK}>{t}</Txt>
-            </g>
-          ))}
-        </g>
-      )}
-
-      {/* ── the right side: the flow, or the Rule check panel ─────────────────────────────────── */}
-      <rect x={RX} y={F.top} width={RW} height="148" rx="5" fill={PAPER} filter="url(#fg-card)" />
-      {right === 'flow' ? (
-        <g key="flow" className="pt-fade">
-          <rect x={RX} y={F.top + 12} width={RW} height="136" fill="url(#fg-dots)" />
-          <Txt x={RX + 6} y={F.top + 8.4} s={4.6} w={600} c={MUTED}>How it works</Txt>
-          {/* ⚠️ The flow is a PICTURE of the rule for this guide, not a preview the builder has — said on it. */}
-          <rect x={RX + 62} y={F.top + 3.6} width="41" height="7" rx="3.5" fill="#F1F5F9" />
-          <Txt x={RX + 82.5} y={F.top + 8.4} s={3.6} w={600} c={MUTED} anchor="middle">For reference only</Txt>
-
-          {/* connectors */}
-          {cond > 0 && <Wire key="w1" d={`M258 ${WN.y + WN.h} L258 ${IN.y}`} />}
-          {act > 0 && <Wire key="w2" d={`M258 ${IN.y + IN.h} L258 ${HUB.cy - HUB.r}`} />}
-          {act > 0 && <Wire key="w3" d={`M253 ${HUB.cy + 4} C240 ${HUB.cy + 8} 231 ${HUB.cy + 9} 231 ${AN1.y}`} />}
-          {act > 1 && <Wire key="w4" d={`M263 ${HUB.cy + 4} C276 ${HUB.cy + 8} 285 ${HUB.cy + 9} 285 ${AN2.y}`} />}
-
-          {when >= 2
-            ? <FNode key="wn" b={WN} tone={BLUE} I={History} label="WHEN" ping={f.flash === 'when'} active={focus === 'when'}
-                lines={[<Txt key="l" x={WN.x + 4} y={WN.y + 15} s={4.2}>{['Form is filled in', 'Form filled · On Create', 'Filled · Create · Everyone'][when - 2]}</Txt>]} />
-            : <Slot b={WN} tone={focus === 'when' ? BLUE : undefined} />}
-          {cond > 0
-            ? <FNode key="in" b={IN} tone={ORANGE} I={Split} label="CHECK IF" rotate ping={f.flash === 'if'} active={focus === 'if'}
-                lines={['Priority is High', ...(cond > 1 ? [<Txt key="2" x={IN.x + 4} y={IN.y + 21} s={4.2}><tspan fill={ORANGE} fontWeight={600}>and </tspan>Category is Network</Txt>] : [])]} />
-            : <Slot b={IN} tone={focus === 'if' ? ORANGE : undefined} />}
-          <g style={{ opacity: act > 0 ? 1 : 0.5, transition: T }}>
-            <circle cx={HUB.cx} cy={HUB.cy} r={HUB.r} fill={PAPER} stroke={act > 0 ? '#C5E1A5' : '#C5D0DC'} strokeWidth="0.6" strokeDasharray={act > 0 ? undefined : '2 1.6'} />
-            <Txt x={HUB.cx} y={HUB.cy + 1.4} s={3.4} w={700} c={act > 0 ? GREEN : '#98A2B3'} anchor="middle">THEN</Txt>
+        <rect x="12" y="66" width="182" height="48" rx="3.5" fill="none" stroke={amber ?? 'transparent'} strokeWidth="0.9" style={{ transition: T }} />
+        <Head y={72} I={Split} tone={ORANGE} lead="Check if" rest="these conditions match" rotate />
+        <rect x="14" y="77" width="178" height="33" rx="3" fill="#F8FAFC" />
+        {cond === 0 ? <AddRow y={R1} text="Add condition" /> : (
+          <g className="pt-fade">
+            <Txt x={18} y={R1 + 6.7} s={4.2} c={MUTED}>Where</Txt>
+            <Sel x={36} y={R1} w={44} v="Priority" />
+            <Sel x={83} y={R1} w={22} v="is" />
+            <Sel x={108} y={R1} w={80} v="High" />
           </g>
-          {act > 0
-            ? <FNode key="a1" b={AN1} tone="#89C540" I={Workflow} label="ACTION" ping={f.flash === 'a1'} active={focus === 'a1'} lines={[<Txt key="l" x={AN1.x + 4} y={AN1.y + 15.6} s={4.2}><tspan fontWeight={600}>Mandate</tspan> Urgency</Txt>]} />
-            : <Slot b={AN1} tone={focus === 'a1' ? '#89C540' : undefined} />}
-          {act > 1
-            ? <FNode key="a2" b={AN2} tone="#89C540" I={Workflow} label="ACTION" ping={f.flash === 'a2'} active={focus === 'a2'} ring={f.clash ? RED : undefined}
-                lines={[<Txt key="l" x={AN2.x + 4} y={AN2.y + 15.6} s={4.2}><tspan fontWeight={600}>Hide</tspan> Description</Txt>]} />
-            : <Slot b={AN2} tone={focus === 'a2' ? '#89C540' : undefined} />}
-        </g>
-      ) : (
-        /* the Rule check panel, on the tab the story is about */
-        <g key={right} className="fg-slide">
-          {(['Conflicts', 'Similar rules'] as const).map((t, i) => {
-            const on = (right === 'conflicts') === (i === 0);
-            const x = RX + 6 + i * 44;
-            return (
-              <g key={t}>
-                <Txt x={x} y={F.top + 9} s={4.6} w={on ? 600 : 500} c={on ? BLUE : MUTED}>{t}</Txt>
-                <rect x={x + (i ? 29 : 23)} y={F.top + 4.6} width="7" height="5.6" rx="1.2" fill={i ? '#FFF4E5' : '#FEF2F2'} />
-                <Txt x={x + (i ? 32.5 : 26.5)} y={F.top + 8.8} s={3.8} w={700} c={i ? '#B45309' : RED} anchor="middle">1</Txt>
-                {on && <rect x={x} y={F.top + 12} width={i ? 37 : 31} height="1.2" fill={BLUE} />}
+        )}
+        {cond === 1 && <g className="pt-fade"><Ico I={Plus} cx={21} cy={R2 + 5} s={4.2} c={BLUE} /><Txt x={25} y={R2 + 6.6} s={4.4} w={500} c={BLUE}>Add condition</Txt></g>}
+        {cond === 2 && (
+          <g className="pt-fade">
+            <Txt x={18} y={R2 + 6.7} s={4.2} w={600} c={ORANGE}>And</Txt>
+            <Sel x={36} y={R2} w={44} v="Category" />
+            <Sel x={83} y={R2} w={22} v="is" />
+            <Sel x={108} y={R2} w={80} v="Network" />
+          </g>
+        )}
+
+        <Head y={120} I={Workflow} tone="#89C540" lead="Then" rest="choose what the rule should do" />
+        <rect x="14" y="125" width="178" height="33" rx="3" fill="#F8FAFC" />
+        {act === 0 ? <AddRow y={A1} text="Add action" /> : (
+          <g className="pt-fade">
+            <Sel x={18} y={A1} w={46} v="Mandate" />
+            <Sel x={67} y={A1} w={121} v="Urgency" />
+          </g>
+        )}
+        {act === 1 && <g className="pt-fade"><Ico I={Plus} cx={21} cy={A2 + 5} s={4.2} c={BLUE} /><Txt x={25} y={A2 + 6.6} s={4.4} w={500} c={BLUE}>Add action</Txt></g>}
+        {act === 2 && (
+          <g className="pt-fade">
+            <rect x="15" y={A2 - 2} width="176" height="14" rx="2.5" fill={clash ? '#FEF3F2' : 'transparent'} style={{ transition: T }} />
+            <Sel x={18} y={A2} w={46} v="Hide" fill={clash ? '#FFF8F7' : PAPER} />
+            <Sel x={67} y={A2} w={clash ? 108 : 121} v="Description" fill={clash ? '#FFF8F7' : PAPER} />
+            {clash && (
+              <g className="pt-pop">
+                <circle cx={184} cy={A2 + 5} r="4.4" fill="#FEE2E2" />
+                <Ico I={AlertTriangle} cx={184} cy={A2 + 4.8} s={5} c={RED} />
               </g>
-            );
-          })}
-          <line x1={RX} x2={RX + RW} y1={F.top + 13.2} y2={F.top + 13.2} stroke="#EEF2F6" strokeWidth="0.6" />
-          {/* ⚠️ The two tabs below are drawn after the REAL rail (FormRuleInsights): the Similar tab's common
-              card + accordion card with Open rule in its header and the blue footer; the Conflicts tab's
-              By rule / By field + search, the open field accordion with its pair cards, and the help bar. */}
-          {right === 'similar' ? (
-            <g>
-              {/* Common trigger, conditions & actions — folded */}
-              <rect x={RX + 5} y="43" width={RW - 10} height="16" rx="3" fill={PAPER} stroke="#E8EDF3" strokeWidth="0.6" />
-              <Ico I={ChevronRight} cx={RX + 10} cy={48} s={4} c="#7B8FA5" />
-              <Txt x={RX + 14} y={49.4} s={4} w={600}>Common trigger, conditions &amp; actions</Txt>
-              <Txt x={RX + 14} y={55.4} s={3.5} c="#98A2B3">shared by your rule and 1 similar rule</Txt>
-              {/* the similar rule's own card */}
-              <rect x={RX + 5} y="63" width={RW - 10} height="52" rx="3" fill={PAPER} stroke="#E8EDF3" strokeWidth="0.6" />
-              <path d={`M${RX + 8} 63 h${RW - 16} a3 3 0 0 1 3 3 v10 h-${RW - 10} v-10 a3 3 0 0 1 3 -3 z`} fill="#F6F9FC" />
-              <line x1={RX + 5} x2={RX + RW - 5} y1="76" y2="76" stroke="#E8EDF3" strokeWidth="0.6" />
-              <Ico I={ChevronDown} cx={RX + 10} cy={69.6} s={4} c="#7B8FA5" />
-              <Txt x={RX + 14} y={71.2} s={4.4} w={600}>Major Incident Rule</Txt>
-              <Txt x={RX + RW - 8} y={71.2} s={3.8} w={500} c={BLUE} anchor="end">Open rule ↗</Txt>
-              <Txt x={RX + 9} y={84} s={3.5} c="#7B8FA5">Matches your rule</Txt>
-              <path d={`M${RX + 9.5} 88.6 l1.2 1.2 l2.2 -2.4`} fill="none" stroke="#16A34A" strokeWidth="0.8" strokeLinecap="round" />
-              <Txt x={RX + 15} y={90.4} s={4.1}>Mandates Urgency</Txt>
-              <Txt x={RX + 9} y={99} s={3.5} c="#7B8FA5">Its other actions</Txt>
-              <circle cx={RX + 11} cy={104} r="0.9" fill="#98A2B3" />
-              <Txt x={RX + 15} y={105.4} s={4.1}>Shows Category</Txt>
-              {/* the advice, one line, pinned at the foot */}
-              <rect x={RX} y="157" width={RW} height="17" fill="#EFF6FD" />
-              <Ico I={Info} cx={RX + 7} cy={165.5} s={4} c={BLUE} />
-              <Txt x={RX + 12} y={166.9} s={3.6} c="#1D3A5C">Add your actions to one of these rules…</Txt>
-              <Ico I={Info} cx={RX + RW - 6} cy={165.5} s={4} c="#7B8FA5" />
-            </g>
-          ) : (
-            <g>
-              {/* By rule / By field + search */}
-              <rect x={RX + 5} y="42" width="50" height="10" rx="2" fill="#EEF2F6" />
-              <Txt x={RX + 16} y={48.6} s={3.8} w={500} c={MUTED} anchor="middle">By rule</Txt>
-              <rect x={RX + 30.5} y="43" width="23.5" height="8" rx="1.6" fill={PAPER} />
-              <Txt x={RX + 42.2} y={48.6} s={3.8} w={600} anchor="middle">By field</Txt>
-              <rect x={RX + 60} y="42" width={RW - 65} height="10" rx="2" fill={PAPER} stroke="#DFE5ED" strokeWidth="0.5" />
-              <Ico I={Search} cx={RX + 64.5} cy={47} s={3.6} c="#98A2B3" />
-              <Txt x={RX + 68} y={48.4} s={3.6} c="#98A2B3">Search fields…</Txt>
-              {/* the open field, tinted red, with its pair of cards */}
-              <rect x={RX + 5} y="56" width={RW - 10} height="66" rx="3" fill={PAPER} stroke="#FCA5A5" strokeWidth="0.6" />
-              <path d={`M${RX + 8} 56 h${RW - 16} a3 3 0 0 1 3 3 v10 h-${RW - 10} v-10 a3 3 0 0 1 3 -3 z`} fill="#FEF3F2" />
-              <line x1={RX + 5} x2={RX + RW - 5} y1="69" y2="69" stroke="#FCA5A5" strokeWidth="0.6" />
-              <Ico I={ChevronDown} cx={RX + 10} cy={62.6} s={4} c="#7B8FA5" />
-              <Txt x={RX + 14} y={64.2} s={4.4} w={600}>Description</Txt>
-              <Txt x={RX + 9} y={77.6} s={4} w={600}>Status Visibility Rule</Txt>
-              {([['Current Rule', BLUE, 'Hides the', 'On Create'], ['Conflicting Rule', RED, 'Shows the', 'On Create and Edit']] as const).map(([k, tone, verb, ex], i) => {
-                const x = RX + 8 + i * 47;
-                return (
-                  <g key={k}>
-                    <rect x={x} y="81" width="45" height="37" rx="2.5" fill="#F6F9FC" />
-                    <Txt x={x + 3.5} y={87.6} s={3.6} c={tone}>{k}</Txt>
-                    <Txt x={x + 3.5} y={95} s={4.4}>{verb}</Txt>
-                    <Txt x={x + 3.5} y={100.6} s={4.4}>description</Txt>
-                    <Txt x={x + 3.5} y={111.6} s={3.4} c="#98A2B3">{ex}</Txt>
-                  </g>
-                );
-              })}
-              {/* another clashing field, folded */}
-              <rect x={RX + 5} y="126" width={RW - 10} height="13" rx="3" fill="#F6F9FC" stroke="#E8EDF3" strokeWidth="0.6" />
-              <Ico I={ChevronRight} cx={RX + 10} cy={132.6} s={4} c="#7B8FA5" />
-              <Txt x={RX + 14} y={134.2} s={4.4} w={600}>Status</Txt>
-              {/* the help bar */}
-              <line x1={RX} x2={RX + RW} y1="157" y2="157" stroke="#EEF2F6" strokeWidth="0.6" />
-              <Ico I={Lightbulb} cx={RX + 7} cy={165.5} s={4} c="#F59E0B" />
-              <Txt x={RX + 12} y={166.9} s={3.8} w={500} c="#364658">How do I resolve these conflicts? ›</Txt>
-              <Ico I={Info} cx={RX + RW - 6} cy={165.5} s={4} c="#7B8FA5" />
-            </g>
-          )}
-        </g>
-      )}
+            )}
+          </g>
+        )}
+
+        {/* the Rule Event menu */}
+        {when === 1 && (
+          <g className="pt-fade" filter="url(#fg-lift)">
+            <rect x={EV.x} y="58" width="96" height="33" rx="3" fill={PAPER} />
+            {['While the form is being filled', 'When the form opens', 'When the form is submitted'].map((t, i) => (
+              <g key={t}>
+                {i === 0 && <rect x={EV.x + 2} y={61 + i * 9.6} width="92" height="8.6" rx="2" fill="#EAF3FB" />}
+                <Txt x={EV.x + 5} y={66.6 + i * 9.6} s={4.3} w={i === 0 ? 600 : 400} c={i === 0 ? BLUE : INK}>{t}</Txt>
+              </g>
+            ))}
+          </g>
+        )}
+      </g>
+
+      {/* ── the right side: the Help guide panel, with the summary cards on top once found ────────── */}
+      <rect x={P.x} y={P.y} width={P.w} height={P.h} rx="5" fill={PAPER} filter="url(#fg-card)" />
+      <g clipPath="url(#fg-panel)">
+        {showSim && <SummaryCard key="sim" kind="similar" x={P.x + 4} w={cardW} ring={f.hl === 'similar'} />}
+        {showCon && <SummaryCard key="con" kind="conflicts" x={both ? P.x + 4 + halfW + GAP : P.x + 4} w={cardW} ring={f.hl === 'conflicts'} />}
+        {(showSim || showCon) && <line x1={P.x} x2={P.x + P.w} y1={CARD_Y + CARD_H + 4} y2={CARD_Y + CARD_H + 4} stroke="#EEF2F6" strokeWidth="0.6" />}
+        <GuideSkeleton top={showSim || showCon ? CARD_Y + CARD_H + 8 : P.y + 5} />
+      </g>
 
       {/* Saved */}
       {f.save === 'done' && (
@@ -494,7 +407,7 @@ function GuideScene({ f, n }: { f: GFrame; n: number }) {
           <path d="M54.8 160 l1.6 1.6 l3 -3.2" stroke={PAPER} strokeWidth="1.1" fill="none" strokeLinecap="round" strokeLinejoin="round" />
           <Txt x={67} y={162.2} s={6} w={600} c={PAPER}>Rule saved</Txt>
           {[[-8, -6], [6, -9], [16, -2], [-14, 3]].map(([dx, dy], i) => (
-            <circle key={i} cx={285 + dx} cy={13 + dy} r="1.5" fill={['#F59E0B', '#10B981', YOU, BLUE][i]} className="pt-burst" style={{ animationDelay: `${i * 70}ms` }} />
+            <circle key={i} cx={285 + dx} cy={12 + dy} r="1.5" fill={['#F59E0B', '#10B981', YOU, BLUE][i]} className="pt-burst" style={{ animationDelay: `${i * 70}ms` }} />
           ))}
         </g>
       )}
@@ -566,7 +479,7 @@ export function FormRuleGuideDock({ onClose, right = 20 }: { onClose: () => void
           className="inline-flex size-6 items-center justify-center rounded text-white/60 transition-colors hover:bg-white/10 hover:text-white">
           {big ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
         </button>
-        <button type="button" onClick={onClose} title="Close — replay it any time from the Help guide tab" aria-label="Close"
+        <button type="button" onClick={onClose} title="Close — replay it any time from Watch video in the Help guide" aria-label="Close"
           className="inline-flex size-6 items-center justify-center rounded text-white/60 transition-colors hover:bg-white/10 hover:text-white">
           <X size={14} />
         </button>

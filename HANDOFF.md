@@ -1,7 +1,29 @@
-# Handoff — 2026-10-23 18:14 (Form Rules: Show Rules, Similar rules sidebar, deploy fix)
+# Handoff — 2026-10-26 (Form Rules: V1 | V2 switch, Check conflicts CTA, new guide video)
 
 > Sessions share this file. **This top part is the newest session**; older notes follow unchanged
 > below the dividers.
+
+## Read first
+CLAUDE.md › "Request Form V1 | V2" bullet under Request Form Management.
+
+## Completed
+- **V1 | V2 pill beside the logo** on Request Form pages (`formRuleRelease.ts`, `Header.tsx`), opens on V2.
+- **V2 listing** (`AdminRequestFormModule.tsx`): no conflict tags on load; **Check conflicts** shortlists
+  + tags the rules with conflicts (13 of 20 in the demo data); ✕ on the chip shows all again.
+- **V2 guide video** (`FormRuleGuide.tsx`): bottom right of the screen over the Help guide; builder
+  beside a Help guide skeleton; Similar card after trigger + condition, Conflicts card after the
+  clashing action; 6 chapters, Similar / Conflicts only ring their card.
+- **V2 Help guide** (`FormRuleHelpCard.tsx`, `FormRuleEditor.tsx`): Watch video card first, no foot
+  link, no "All clear" card. V1 keeps all of the old behaviour (`FormRuleGuideV1.tsx` = frozen copy).
+- Verified in a browser (Playwright): both versions, no page errors. Published with this handoff.
+
+## Next steps
+- The 4 new chapter descriptions in `GUIDE_CHAPTERS` are our wording — Zeni to confirm.
+- Check conflicts is mocked (700ms delay, then the local engine); wire to the backend call later.
+
+---
+
+# Handoff — 2026-10-23 18:14 (Form Rules: Show Rules, Similar rules sidebar, deploy fix)
 
 ## Read first
 CLAUDE.md › the two Form Builder bullets (the 23 Oct "Show Rules replaces Create Rule" note) and the
@@ -83,14 +105,16 @@ into two shareable pages, then restructured the technician side of the Complianc
   Tiles view, endpoint panel, no page errors. Typecheck clean, build passes.
 
 ## In progress
-Nothing mid-flight. The `deep-research` workflow in the left tab is PAUSED (88/103 agents); it can
-resume after the usage reset in that tab only. Its findings are already in the research brief.
+Nothing mid-flight. UPDATE: the `deep-research` workflow (run `wf_62bd5de5-144`) has since FINISHED
+(104/104 agents): 22 claims confirmed, 3 refuted. Its report is also a PDF at
+`C:\Users\Zeni Chakalasiya\Downloads\Compliance-Module-Research.pdf`. It adds nothing that contradicts
+the research brief; Intune, NinjaOne, CIS-CAT, Ivanti, SolarWinds NCM, Kaseya and Automox are still
+unverified.
 
 ## Next steps
 - Zeni said "then we will renew the full flow on technician side": the research's recommendations
   (results states, remediation doors Create Change / Deploy fix / Assign task, exceptions with
   approval and expiry, drift, evidence export) are the candidate next work.
-- Decide whether to let the paused research run finish or stop it (`x` in its tab).
 - Confirm the posture bands and 85% target (still open from before).
 
 ## Decisions made

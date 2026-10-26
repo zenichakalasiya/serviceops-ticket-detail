@@ -5,6 +5,7 @@ import svgPaths from "../../imports/svg-vmnsig04gh";
 import { GlobalSearchButton } from './GlobalSearch';
 import { openGlobalShortcuts } from './shortcutContext';
 import { ProfileMenu } from './ProfileMenu';
+import { setRelease, useFormRuleRelease } from './formRuleRelease';
 
 /** Exported so the Support Portal preview renders the same mark the product header does. */
 export function MotadataLogo() {
@@ -147,6 +148,25 @@ function FormRuleUiSwitch() {
   );
 }
 
+/** V1 / V2 of the Request Form screens (Zeni, 26 Oct 2026) — see formRuleRelease.ts. */
+function FormRuleReleaseSwitch() {
+  const [hash, setHash] = useState(() => location.hash);
+  const v = useFormRuleRelease();
+  useEffect(() => {
+    const on = () => setHash(location.hash);
+    window.addEventListener('hashchange', on);
+    const t = window.setInterval(on, 500); // replaceState does not fire hashchange
+    return () => { window.removeEventListener('hashchange', on); window.clearInterval(t); };
+  }, []);
+  if (!hash.startsWith('#/admin/request-form')) return null;
+  return (
+    <div className="pill-track" title="Request Form version">
+      <button type="button" aria-pressed={v === 'v1'} onClick={() => setRelease('v1')}>V1</button>
+      <button type="button" aria-pressed={v === 'v2'} onClick={() => setRelease('v2')}>V2</button>
+    </div>
+  );
+}
+
 interface HeaderProps {
   selectedCount: number;
   /** Opens the Admin hub. Passed only where the gear should navigate. */
@@ -161,6 +181,7 @@ export function Header({ selectedCount, onOpenAdmin }: HeaderProps) {
         {/* V3 is FINAL (Zeni, 12 Oct 2026): the switch is hidden; V1, V2 and V4 stay built.
             Restoring it is this line plus FINAL_UI in FormRuleEditor. */}
         {false && <FormRuleUiSwitch />}
+        <FormRuleReleaseSwitch />
       </div>
       
       <div className="flex items-center gap-2">

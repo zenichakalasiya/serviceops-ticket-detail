@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Copy, ExternalLink, Filter, GripVertical, Pencil, Plus, Search, Trash2, X } from 'lucide-react';
+import { AlertTriangle, Copy, ExternalLink, Filter, GripVertical, Loader2, Pencil, Plus, Search, Trash2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Pagination } from './Pagination';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
@@ -12,6 +12,7 @@ import { AdminFormBuilder } from './AdminFormBuilder';
 import { conflictCount } from './formRuleEngine';
 import { AdminFormRuleMatrix } from './AdminFormRuleMatrix';
 import { FormRuleIllustrations } from './FormRuleIllustrations';
+import { useFormRuleRelease } from './formRuleRelease';
 
 /** The illustrations page lives at #/admin/request-form-rules/illustrations (Zeni, 19 Oct 2026). */
 const ILLUS_HASH = '#/admin/request-form-rules/illustrations';
@@ -151,6 +152,23 @@ export function AdminRequestFormModule({ tab, onTab, onEditor, openRuleId }: {
   useEffect(() => { onEditor?.(editing !== null); }, [editing, onEditor]);
   useEffect(() => () => onEditor?.(false), [onEditor]);
 
+  /* V2 (Zeni, 26 Oct 2026): the backend cannot measure conflicts on load, so the listing shows no conflict
+     tags until "Check conflicts" is pressed — that SHORTLISTS the rules with conflicts and tags them. V1
+     keeps the live tags on every row. */
+  const release = useFormRuleRelease();
+  const [conflictCheck, setConflictCheck] = useState<'idle' | 'loading' | 'done'>('idle');
+  useEffect(() => { setConflictCheck('idle'); }, [release]);
+  const runConflictCheck = () => {
+    setConflictCheck('loading');
+    window.setTimeout(() => {
+      const n = rules.filter((r) => conflictCount(r, rules, fields) > 0).length;
+      if (!n) { setConflictCheck('idle'); toast.success('No conflicts found between your rules'); return; }
+      setConflictCheck('done'); setPage(1);
+    }, 700);
+  };
+  const shortlist = release === 'v2' && conflictCheck === 'done';
+  const showTags = release === 'v1' || shortlist;
+
   const filterCount = Object.values(filters).reduce((n, v) => n + v.length, 0);
   const q = search.trim().toLowerCase();
   const rows = rules.filter((r) =>
@@ -158,8 +176,9 @@ export function AdminRequestFormModule({ tab, onTab, onEditor, openRuleId }: {
     && (!filters.applies.length || filters.applies.includes(r.applies))
     && (!filters.event.length || filters.event.includes(r.event))
     && (!filters.execution.length || filters.execution.includes(r.execution))
-    && (!filters.status.length || filters.status.includes(r.enabled ? 'Enabled' : 'Disabled')));
-  const narrowed = !!q || filterCount > 0;
+    && (!filters.status.length || filters.status.includes(r.enabled ? 'Enabled' : 'Disabled'))
+    && (!shortlist || conflictCount(r, rules, fields) > 0));
+  const narrowed = !!q || filterCount > 0 || shortlist;
   const totalPages = Math.ceil(rows.length / perPage) || 1;
   const pageRows = rows.slice((page - 1) * perPage, page * perPage);
 
@@ -276,6 +295,19 @@ export function AdminRequestFormModule({ tab, onTab, onEditor, openRuleId }: {
             {filterCount > 0 && (
               <button type="button" onClick={() => setFilters(NO_FILTERS)} className="text-[13px] font-medium text-[#64748B] hover:text-[#364658]">Clear</button>
             )}
+            {release === 'v2' && (shortlist ? (
+              <span className="inline-flex h-9 items-center gap-2 rounded border border-[#FECACA] bg-[#FEF2F2] pl-3 pr-1.5 text-[13px] font-medium text-[#DC2626]">
+                <AlertTriangle size={14} /> {rows.length} rule{rows.length === 1 ? '' : 's'} with conflicts
+                <button type="button" onClick={() => { setConflictCheck('idle'); setPage(1); }} title="Show all rules" aria-label="Show all rules"
+                  className="flex size-6 items-center justify-center rounded text-[#DC2626] transition-colors hover:bg-[#FEE2E2]"><X size={14} /></button>
+              </span>
+            ) : (
+              <button type="button" onClick={runConflictCheck} disabled={conflictCheck === 'loading'}
+                className="inline-flex h-9 items-center gap-1.5 rounded border border-[#d1d5db] bg-white px-3 text-[13px] font-medium text-[#364658] transition-colors hover:bg-[#F9FAFB] disabled:cursor-wait disabled:opacity-70">
+                {conflictCheck === 'loading' ? <Loader2 size={14} className="animate-spin" /> : <AlertTriangle size={14} className="text-[#DC2626]" />}
+                {conflictCheck === 'loading' ? 'Checking conflicts…' : 'Check conflicts'}
+              </button>
+            ))}
             <button type="button" onClick={() => setEditing('new')} className="ml-auto inline-flex h-9 items-center gap-1.5 rounded bg-[#3D8BD0] px-4 text-[13px] font-medium text-white transition-colors hover:bg-[#3478B5]">
               <Plus size={15} /> Create Rule
             </button>
@@ -295,7 +327,7 @@ export function AdminRequestFormModule({ tab, onTab, onEditor, openRuleId }: {
               <tbody className="divide-y divide-[#e5e7eb] bg-white">
                 {pageRows.length === 0 ? (
                   <tr><td colSpan={8} className="px-4 py-12 text-center text-[13px] text-[#9CA3AF]">
-                    {rules.length === 0 ? 'No form rules yet — create one to start shaping the request form.' : 'No rules match your search or filters.'}
+                    {rules.length === 0 ? 'No form rules yet — create one to start shaping the request form.' : shortlist ? 'No rules with conflicts match your search or filters.' : 'No rules match your search or filters.'}
                   </td></tr>
                 ) : pageRows.map((r) => {
                   const order = rules.findIndex((x) => x.id === r.id) + 1;
@@ -324,13 +356,13 @@ export function AdminRequestFormModule({ tab, onTab, onEditor, openRuleId }: {
                               ><GripVertical size={14} /></button>
                             </span>
                           </TooltipTrigger>
-                          <TooltipContent>{narrowed ? 'Clear the search and filters to change the execution order' : 'Drag to change the execution order'}</TooltipContent>
+                          <TooltipContent>{narrowed ? (shortlist ? 'Show all rules to change the execution order' : 'Clear the search and filters to change the execution order') : 'Drag to change the execution order'}</TooltipContent>
                         </Tooltip>
                         <div className="flex items-center gap-2">
                           <button type="button" onClick={() => setEditing(r.id)} className="max-w-[220px] truncate text-left text-[13px] font-medium text-[#364658] hover:text-[#3D8BD0]" title={r.name}>
                             <span className="mr-1 tabular-nums text-[#7B8FA5]">{order}.</span>{r.name}
                           </button>
-                          {nConflicts > 0 && (
+                          {showTags && nConflicts > 0 && (
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <span className="flex-shrink-0 cursor-help rounded-sm bg-[#FEF2F2] px-1.5 py-px text-[11px] leading-4 font-medium text-[#DC2626]">{nConflicts} conflict{nConflicts > 1 ? 's' : ''}</span>
