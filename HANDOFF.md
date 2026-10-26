@@ -1,48 +1,45 @@
-# Handoff — 2026-10-26 (Form Rules V2: switch, Check conflicts CTA, guide video copy)
+# Handoff — 2026-10-26 (Form Rules: V1 | V2 switch, Check conflicts CTA, new guide video)
 
 > Sessions share this file. **This top part is the newest session**; older notes follow unchanged
 > below the dividers.
 
 ## Read first
-CLAUDE.md › "Request Form V1 | V2" bullet under Request Form Management (everything here is V2-only).
-
-## What we worked on this session
-Put the Form Rules work behind a V1 | V2 switch and kept building V2: the listing's conflict check,
-the new guide video and Help guide card, Zeni's final video copy, and a calmer Check conflicts button.
+CLAUDE.md › "Request Form V1 | V2" bullet under Request Form Management.
 
 ## Completed
 - **V1 | V2 pill beside the logo** on Request Form pages (`formRuleRelease.ts`, `Header.tsx`), opens on V2.
 - **V2 listing** (`AdminRequestFormModule.tsx`): no conflict tags on load; **Check conflicts** shortlists
-  + tags the rules with conflicts (13 of 20 in demo data); ✕ on the chip shows all. No All / filter
-  button in V2. The CTA is calm: white, soft red border, bare red warning icon, dark-red text.
+  + tags the rules with conflicts (13 of 20 in the demo data); ✕ on the chip shows all again.
 - **V2 guide video** (`FormRuleGuide.tsx`): bottom right of the screen over the Help guide; builder
   beside a Help guide skeleton; Similar card after trigger + condition, Conflicts card after the
-  clashing action; Similar / Conflicts chapters only ring their card. Chapters carry Zeni's FINAL copy
-  (Set Up the Rule · Add Conditions · Choose Actions · Review Similar Rules · Resolve Conflicts · Save
-  the Rule); Next uses those titles; the text box is as tall as the longest text so buttons never move.
+  clashing action; 6 chapters, Similar / Conflicts only ring their card.
 - **V2 Help guide** (`FormRuleHelpCard.tsx`, `FormRuleEditor.tsx`): Watch video card first, no foot
-  link, no "All clear" card. V1 keeps the old behaviour (`FormRuleGuideV1.tsx` = frozen copy).
-- All verified in a browser (Playwright), no page errors. Published with this handoff.
-
-## In progress
-Nothing mid-flight.
+  link, no "All clear" card. V1 keeps all of the old behaviour (`FormRuleGuideV1.tsx` = frozen copy).
+- Verified in a browser (Playwright): both versions, no page errors. Published with this handoff.
+- Later the same day (published with this /tatago): V2 listing lost its **All** filter button; the
+  **Check conflicts** CTA is calm (white, soft red border, bare red warning icon — the filled badge and
+  pulsing dot were rejected as too critical); the video carries Zeni's FINAL chapter copy (Set Up the
+  Rule · Add Conditions · Choose Actions · Review Similar Rules · Resolve Conflicts · Save the Rule; Next
+  uses these titles; the text box is as tall as the longest text so the buttons never move); the video
+  frame's bottom gap now equals its top gap.
+- **Guide video slides** on the illustrations page (`#/admin/request-form-rules/illustrations`): one
+  card per chapter — animated SVG (plays in an <img>, loops, Inter embedded, ~100–120 KB / ~16 KB
+  gzipped) + 640×360 GIF (~0.8 MB) + Copy SVG, built by `formRuleGuideExport.tsx` from the video's own
+  timeline. New dependency: `gifenc`.
 
 ## Next steps
-- Check conflicts is mocked (700ms delay, then the local engine); wire it to the backend call later.
-- Form Builder open items: the hover toolbar overlaps the field above (8px row gap);
-  `FieldConfigurePanel` is unreachable — keep or delete.
+- Check conflicts is mocked (700ms delay, then the local engine); wire to the backend call later.
+- The purple "You" cursor tag dips slightly past the bottom edge when it clicks the last action row —
+  tuck it inside if Zeni wants.
 
 ## Decisions made
-- V2 is the default; V1 stays as it was for comparison. Do V2 work in the live files; never edit
-  `FormRuleGuideV1.tsx`.
-- The filled red badge + pulsing dot on Check conflicts were rejected as too critical.
+- Animated SVG (not GIF) is the recommended format for the product; GIF is the fallback. Files are
+  animation only — title, text, dots and buttons stay real UI. Every slide loops forever.
 
 ## Gotchas & notes
-- The dev server on 5200 hung once this session; killing the 5200 listener and running
-  `npm run dev -- --port 5200` again fixed it.
-- In Git Bash, never put backticks inside a double-quoted `node -e` script: they run as commands
-  (one started a stray dev server). Write such scripts with the Write tool.
-- Commit only Form Rule files + CLAUDE.md/HANDOFF.md; the tree has other sessions' Compliance work.
+- Keyframe percentages in the slide SVG need 4 decimals and a 1 ms step, or two stops merge.
+- Running a Playwright script while the shell's cwd is `src/app/components` writes its screenshots
+  there — keep cwd in the scratchpad.
 
 ---
 

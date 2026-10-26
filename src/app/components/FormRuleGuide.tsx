@@ -72,7 +72,7 @@ export const GUIDE_CHAPTERS: GuideChapter[] = [
  * ⚠️ MOVE, THEN CLICK. A frame that moves the cursor changes nothing else; the click — and whatever it
  * does — is the NEXT frame, so a field never fills in before the cursor has reached it.
  */
-interface GFrame {
+export interface GFrame {
   ch: number;
   ms: number;
   cur: [number, number];
@@ -99,7 +99,9 @@ const FX = 8;
 const FY = 24;
 const fm = ([x, y]: [number, number]): [number, number] => [FX + (x - FX) * K, FY + (y - FY) * K];
 
-const F = { x: 8, w: 190, top: 26, h: 136 };
+/* Bottom edge: the scaled form and the guide panel both end at y 176 — 4 units from the bottom, the same
+   as the header's 4 from the top (Zeni, 26 Oct 2026). F.h is in form space: FY + (top + h - FY) * K = 176. */
+const F = { x: 8, w: 190, top: 26, h: 133.7 };
 const SEL_Y = 47;
 const EV = { x: 14, w: 60 };
 const EX = { x: 78, w: 52 };
@@ -111,7 +113,7 @@ const A2 = 142;
 const mid = (b: { x: number; w: number }, y = SEL_Y + 5): [number, number] => fm([b.x + b.w / 2, y]);
 
 /* The Help guide panel on the right — narrower than the form. */
-const P = { x: 226, y: 26, w: 88, h: 152 };
+const P = { x: 226, y: 26, w: 88, h: 150 };
 const CARD_Y = P.y + 5;
 const CARD_H = 24;
 const GAP = 3;
@@ -120,7 +122,8 @@ const SIM_C: [number, number] = [P.x + 4 + halfW / 2, CARD_Y + CARD_H / 2 + 2];
 const CON_C: [number, number] = [P.x + 4 + halfW + GAP + halfW / 2, CARD_Y + CARD_H / 2 + 2];
 
 /* ⚠️ Written at the pace it should PLAY. A move frame is long enough for the glide to finish. */
-const FRAMES: GFrame[] = [
+/** Exported for the slide files (formRuleGuideExport.ts) — one timeline, so a download matches the video. */
+export const FRAMES: GFrame[] = [
   /* When — all three: Rule Event, Execute on, Applicable for */
   { ch: 0, ms: 600, cur: REST },
   { ch: 0, ms: 800, cur: mid(EV) },
@@ -283,7 +286,8 @@ function GuideSkeleton({ top }: { top: number }) {
   );
 }
 
-function GuideScene({ f, n }: { f: GFrame; n: number }) {
+/** `noCursor` drops the cursor — the slide exporter draws its own, animated between frames. */
+export function GuideScene({ f, n, noCursor = false }: { f: GFrame; n: number; noCursor?: boolean }) {
   const c = GUIDE_CHAPTERS[f.ch];
   const when = f.when ?? 0;
   const cond = f.cond ?? 0;
@@ -355,7 +359,7 @@ function GuideScene({ f, n }: { f: GFrame; n: number }) {
         )}
 
         <Head y={120} I={Workflow} tone="#89C540" lead="Then" rest="choose what the rule should do" />
-        <rect x="14" y="125" width="178" height="33" rx="3" fill="#F8FAFC" />
+        <rect x="14" y="125" width="178" height="31" rx="3" fill="#F8FAFC" />
         {act === 0 ? <AddRow y={A1} text="Add action" /> : (
           <g className="pt-fade">
             <Sel x={18} y={A1} w={46} v="Mandate" />
@@ -413,7 +417,7 @@ function GuideScene({ f, n }: { f: GFrame; n: number }) {
         </g>
       )}
 
-      <Cursor at={f.cur} press={f.press} n={n} />
+      {!noCursor && <Cursor at={f.cur} press={f.press} n={n} />}
     </svg>
   );
 }
