@@ -586,6 +586,13 @@ export function AdminSupportPortalModule({ onBuilder, openPortal, onOpenPortalCh
            status and it is the true one. The toast says so, because it changes what requesters see.
            It does not leave the builder: saving a draft is a pause in a piece of work, not its end. */
         onSaveDraft={() => {
+          /* ⚠️ The DEFAULT portal always stays live (Zeni, 26 Oct 2026): its work is saved, its status
+             is not touched — requesters always land on it. */
+          if (editing.id === defaultId) {
+            patch(editing.id, { dirty: false });
+            toast.success(`“${editing.name}” saved — it is the default portal, so it stays live`);
+            return;
+          }
           const wasLive = editing.status === 'Published';
           patch(editing.id, { status: 'Draft', dirty: false });
           toast.success(wasLive
