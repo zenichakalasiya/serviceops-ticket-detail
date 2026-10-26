@@ -2,8 +2,20 @@
    palette. Its own small file with no heavy imports, because TicketTable and TicketViewsPanel
    read it and both sit underneath half the app. */
 import { AlignLeft, CalendarClock, CalendarDays, CircleDot, Hash, Layers, Power, ShieldCheck, Tag, User } from 'lucide-react';
-import type { Attr, QuickFilterDef } from './TicketFilterBar';
+import type { Attr, FilterRule, QuickFilterDef } from './TicketFilterBar';
 import type { TicketView } from './TicketViewsPanel';
+
+/* Dashboard → list hand-off. A click on the Compliance Dashboard leaves the filter its target
+   page should open with, then navigates; the page TAKES it once on mount (so a later visit
+   from the sidebar opens unfiltered). On globalThis so a hot reload cannot split the store. */
+type DrillRules = Omit<FilterRule, 'id'>[];
+const drillStore: Record<string, DrillRules> = ((globalThis as any).__complianceDrill ??= {});
+export function setComplianceDrill(page: string, rules: DrillRules) { drillStore[page] = rules; }
+export function takeComplianceDrill(page: string): DrillRules | undefined {
+  const r = drillStore[page];
+  delete drillStore[page];
+  return r;
+}
 
 export const POLICY_STATUS_OPTIONS = [
   { label: 'Compliant', color: '#22C55E' },

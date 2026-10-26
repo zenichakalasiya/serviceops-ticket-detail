@@ -1,15 +1,15 @@
 /* Compliance › Endpoints — #/compliance-endpoints, the last page of the sidebar's Compliance
  * flyout. Every endpoint some policy assesses, read across all its policies: posture, failed
- * checks, whether the last scan reached it. A row opens the endpoint's compliance side panel
- * (its rule-by-rule breakdown per policy). It was the old Compliance Visualization page's
+ * checks, whether the last scan reached it. A row opens the endpoint's compliance detail page
+ * (Overview · Rules · Policies · Exceptions · Audit Trail). It was the old Compliance Visualization page's
  * Explorer › Resources tab. */
 import { useMemo, useState } from 'react';
+import { useOpenComplianceEndpoint } from './ComplianceEndpointDrawer';
 import { AssetRegisterPage } from './AssetRegisterPage';
-import { ComplianceEndpointPanel } from './ComplianceEndpointPanel';
 import { usePolicies } from './compliancePolicyData';
 import { scoreColor, vizSnapshot } from './complianceVizData';
 import { endpointRow } from './complianceRows';
-import { VIZ_RESOURCE_FILTER_ATTRS, VIZ_RESOURCE_QUICK_FILTERS } from './complianceFilterAttrs';
+import { takeComplianceDrill, VIZ_RESOURCE_FILTER_ATTRS, VIZ_RESOURCE_QUICK_FILTERS } from './complianceFilterAttrs';
 import type { StatCard } from './AssetStatsRow';
 import type { Ticket } from './TicketListPage';
 
@@ -31,13 +31,16 @@ const buildCards = (rows: Ticket[]): StatCard[] => {
 export function ComplianceEndpointsPage({ onNavigate }: { onNavigate?: (page: string) => void }) {
   const policies = usePolicies();
   const rows = useMemo(() => vizSnapshot(policies).endpoints.map(endpointRow), [policies]);
-  const [endpoint, setEndpoint] = useState<string | null>(null);
+  const openEndpoint = useOpenComplianceEndpoint();
+  /* A Dashboard click lands here already filtered (read once). */
+  const [drill] = useState(() => takeComplianceDrill('compliance-endpoints'));
 
   return (
     <>
       <AssetRegisterPage
         activePage="compliance-endpoints"
         stackModule="endpoints"
+        initialFilters={drill}
         viewsStore="cviz-resource"
         noun="endpoint"
         moduleCols="cviz-resource"
@@ -52,10 +55,9 @@ export function ComplianceEndpointsPage({ onNavigate }: { onNavigate?: (page: st
         searchFields={['x_ip', 'x_osVersion', 'x_office', 'x_policyNames']}
         hideSelection
         moreActions={[]}
-        onOpenRow={(t) => setEndpoint(t.id)}
+        onOpenRow={(t) => openEndpoint(t.id)}
         onNavigate={onNavigate}
       />
-      {endpoint && <ComplianceEndpointPanel endpointId={endpoint} onClose={() => setEndpoint(null)} />}
     </>
   );
 }

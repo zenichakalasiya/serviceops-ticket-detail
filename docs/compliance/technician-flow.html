@@ -1,0 +1,596 @@
+<title>Compliance Technician Flow</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column (~760px) with wide bands for diagrams and wireframes; ServiceOps blue as the only accent. */
+:root {
+  --bg: #F6F8FB; --paper: #FFFFFF; --ink: #1D2A3E; --ink-2: #364658; --muted: #536378; --line: #DFE5ED; --soft: #EEF3F9;
+  --accent: #3D8BD0; --accent-soft: #EBF5FF; --accent-ink: #1F5E99; --accent-strong: #2A68A1; --on-accent: #FFFFFF;
+  --pass: #166534; --pass-soft: #DCFCE7; --fail: #B23A0A; --fail-soft: #FFEDD5; --crit: #B91C1C; --crit-soft: #FEE2E2;
+  --exc: #6D28D9; --exc-soft: #EDE9FE; --warn: #9A4708; --warn-soft: #FEF3C7; --code: #0F1B2D; --code-ink: #DCE6F2;
+  --serif: "IBM Plex Serif", Georgia, "Times New Roman", serif;
+  --sans: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", Consolas, "Courier New", monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0E1726; --paper: #142033; --ink: #E4EAF3; --ink-2: #C3CEDD; --muted: #9DADC2; --line: #2B394F; --soft: #1A283D;
+  --accent: #5AA2E0; --accent-soft: #17304A; --accent-ink: #9CC9F0; --accent-strong: #7DB7EA; --on-accent: #08111E;
+  --pass: #4ADE80; --pass-soft: #12321F; --fail: #FB923C; --fail-soft: #3A2414; --crit: #F87171; --crit-soft: #3B1818;
+  --exc: #A78BFA; --exc-soft: #2A2145; --warn: #FBBF24; --warn-soft: #3A2E10; --code: #08111E; --code-ink: #DCE6F2; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0E1726; --paper: #142033; --ink: #E4EAF3; --ink-2: #C3CEDD; --muted: #9DADC2; --line: #2B394F; --soft: #1A283D;
+  --accent: #5AA2E0; --accent-soft: #17304A; --accent-ink: #9CC9F0; --accent-strong: #7DB7EA; --on-accent: #08111E;
+  --pass: #4ADE80; --pass-soft: #12321F; --fail: #FB923C; --fail-soft: #3A2414; --crit: #F87171; --crit-soft: #3B1818;
+  --exc: #A78BFA; --exc-soft: #2A2145; --warn: #FBBF24; --warn-soft: #3A2E10; --code: #08111E; --code-ink: #DCE6F2; color-scheme: dark }
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 15.5px; line-height: 1.6; margin: 0; }
+.wrap { max-width: 1080px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 40px 80px; }
+.col { max-width: 760px; }
+h1, h2, h3 { text-wrap: balance; color: var(--ink); }
+h1 { font-family: var(--serif); font-weight: 600; font-size: clamp(30px, 4.4vw, 44px); line-height: 1.15; margin: 8px 0 14px; }
+h2 { font-family: var(--serif); font-weight: 600; font-size: 26px; line-height: 1.25; margin: 0 0 10px; }
+h3 { font-size: 16px; font-weight: 600; margin: 22px 0 6px; }
+p { margin: 8px 0; }
+.eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-ink); font-weight: 600; }
+.lede { font-size: 18px; color: var(--ink-2); max-width: 720px; }
+.muted { color: var(--muted); }
+section { padding-top: 44px; margin-top: 44px; border-top: 1px solid var(--line); }
+section > .num { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+code, .mono { font-family: var(--mono); font-size: .9em; }
+ul, ol { padding-left: 20px; margin: 8px 0; }
+li { margin: 4px 0; }
+a { color: var(--accent-ink); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.meta { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; color: var(--muted); margin-top: 6px; }
+.toc { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 22px; }
+.toc a { font-size: 13px; text-decoration: none; padding: 4px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--paper); color: var(--ink-2); }
+.toc a:hover { border-color: var(--accent); color: var(--accent-ink); }
+
+.statement { background: var(--accent-soft); border-radius: 8px; padding: 18px 20px; margin: 14px 0; }
+.statement.problem { background: var(--fail-soft); }
+.statement .label { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+.statement p.big { font-family: var(--serif); font-size: 20px; line-height: 1.45; margin: 0; color: var(--ink); }
+
+.grid { display: grid; gap: 14px; }
+.g2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+.g3 { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.g4 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.card { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 16px 18px; min-width: 0; }
+.card h3 { margin-top: 0; }
+.card .k { font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); font-weight: 600; margin: 12px 0 2px; }
+
+.persona-head { display: flex; gap: 12px; align-items: center; margin-bottom: 6px; }
+.avatar { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-weight: 600; font-size: 14px; flex: none; }
+.av1 { background: var(--accent-soft); color: var(--accent-ink); }
+.av2 { background: var(--exc-soft); color: var(--exc); }
+.av3 { background: var(--pass-soft); color: var(--pass); }
+.role { font-size: 13px; color: var(--muted); }
+.tagline { font-family: var(--serif); font-size: 15.5px; font-style: italic; color: var(--ink-2); margin: 6px 0 2px; }
+.prio { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; letter-spacing: .03em; }
+.prio.p1 { background: var(--accent-strong); color: var(--on-accent); }
+.prio.p2 { background: var(--soft); color: var(--ink-2); }
+
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+.tbl { overflow-x: auto; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; margin: 12px 0; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; background: var(--soft); }
+tr:last-child td { border-bottom: 0; }
+td strong { color: var(--ink); }
+
+.pill { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 4px; white-space: nowrap; }
+.pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.s-pass { background: var(--pass-soft); color: var(--pass); }
+.s-fail { background: var(--fail-soft); color: var(--fail); }
+.s-crit { background: var(--crit-soft); color: var(--crit); }
+.s-exc { background: var(--exc-soft); color: var(--exc); }
+.s-man { background: var(--warn-soft); color: var(--warn); }
+.s-na { background: var(--soft); color: var(--muted); }
+
+/* Flow diagrams in plain HTML so they render offline */
+.flow { display: flex; flex-wrap: wrap; align-items: stretch; gap: 0; margin: 14px 0; }
+.step { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; min-width: 130px; flex: 1 1 130px; font-size: 13.5px; position: relative; }
+.step b { display: block; font-size: 13.5px; color: var(--ink); }
+.step small { color: var(--muted); font-size: 12px; line-height: 1.4; display: block; margin-top: 2px; }
+.step.hl { border-color: var(--accent); background: var(--accent-soft); }
+.step.new { border-style: dashed; border-color: var(--accent); }
+.arrow { display: grid; place-items: center; color: var(--muted); padding: 0 6px; font-size: 18px; flex: none; }
+.lane { display: grid; grid-template-columns: 150px 1fr; gap: 10px; align-items: center; margin: 8px 0; }
+.lane .who { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12.5px; color: var(--muted); margin-top: 6px; }
+.legend span { display: inline-flex; gap: 6px; align-items: center; }
+.sw { width: 14px; height: 10px; border-radius: 2px; border: 1px solid var(--line); background: var(--paper); }
+.sw.hl { background: var(--accent-soft); border-color: var(--accent); }
+.sw.new { border: 1px dashed var(--accent); }
+
+.tree { font-family: var(--mono); font-size: 13px; background: var(--code); color: var(--code-ink); border-radius: 8px; padding: 16px 18px; overflow-x: auto; white-space: pre; line-height: 1.7; }
+.tree .c { color: #8FA8C4; }
+.tree .a { color: #8EC7FF; }
+.tree .g { color: #86EFAC; }
+.tree .o { color: #FDBA74; }
+
+/* Low-fidelity wireframes */
+.wf { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin: 14px 0; }
+.wf-cap { font-size: 12.5px; color: var(--ink-2); padding: 8px 14px; border-top: 1px solid var(--line); background: var(--soft); }
+.wf-body { display: flex; min-height: 300px; overflow-x: auto; }
+.wf-main { flex: 1 1 60%; min-width: 320px; padding: 14px; border-right: 1px solid var(--line); }
+.wf-side { flex: 1 1 40%; min-width: 300px; padding: 14px; background: var(--bg); }
+.wf-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-weight: 600; font-size: 15px; }
+.idpill { font-family: var(--mono); font-size: 12px; background: var(--accent-soft); color: var(--accent-ink); padding: 2px 8px; border-radius: 4px; font-weight: 500; }
+.kpis { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--muted); margin: 6px 0 10px; }
+.kpis b { color: var(--ink); font-weight: 600; }
+.tabs { display: flex; gap: 16px; border-bottom: 1px solid var(--line); font-size: 13px; margin-bottom: 10px; overflow-x: auto; }
+.tabs span { padding: 6px 0; color: var(--muted); white-space: nowrap; border-bottom: 2px solid transparent; }
+.tabs span.on { color: var(--accent-ink); border-bottom-color: var(--accent); font-weight: 600; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.chip { font-size: 12px; padding: 3px 9px; border-radius: 4px; border: 1px solid var(--line); background: var(--paper); color: var(--ink-2); }
+.chip.on { border-color: var(--accent); color: var(--accent-ink); background: var(--accent-soft); }
+.rows { border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--paper); }
+.row { display: grid; grid-template-columns: 1.4fr 1fr .8fr .7fr; gap: 8px; padding: 8px 10px; font-size: 12.5px; border-bottom: 1px solid var(--line); align-items: center; }
+.row:last-child { border-bottom: 0; }
+.row.head { background: var(--soft); color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .05em; font-weight: 600; }
+.row.sel { background: var(--accent-soft); }
+.crumb { font-size: 12px; color: var(--muted); margin-bottom: 8px; font-family: var(--mono); }
+.crumb b { color: var(--ink); font-weight: 500; }
+.acc { border: 1px solid var(--line); border-radius: 6px; background: var(--paper); margin-bottom: 6px; font-size: 12.5px; }
+.acc > div { padding: 7px 10px; display: flex; justify-content: space-between; gap: 8px; }
+.acc .sub { border-top: 1px solid var(--line); padding-left: 22px; }
+.btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.btn { font-size: 12px; padding: 5px 10px; border-radius: 4px; border: 1px solid var(--line); background: var(--paper); color: var(--ink-2); font-weight: 500; }
+.btn.pri { background: var(--accent-strong); border-color: var(--accent-strong); color: var(--on-accent); }
+.kv { display: grid; grid-template-columns: 110px 1fr; gap: 4px 10px; font-size: 12.5px; margin: 6px 0; }
+.kv span:nth-child(odd) { color: var(--muted); }
+.ev { font-family: var(--mono); font-size: 12px; }
+
+.callout { background: var(--accent-soft); border-radius: 8px; padding: 14px 16px; margin: 14px 0; color: var(--ink); }
+.callout.warn { background: var(--warn-soft); }
+.callout b { color: var(--ink); }
+
+.phase .eyebrow { color: var(--accent-ink); }
+.phase.p2c .eyebrow { color: var(--exc); }
+.phase.p3c .eyebrow { color: var(--ink-2); }
+.phase .size { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+
+.story { counter-reset: s; list-style: none; padding: 0; }
+.story li { counter-increment: s; position: relative; padding: 10px 0 10px 44px; border-bottom: 1px dashed var(--line); margin: 0; }
+.story li::before { content: counter(s); position: absolute; left: 0; top: 10px; width: 28px; height: 28px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; font-size: 13px; display: grid; place-items: center; }
+.story .where { font-family: var(--mono); font-size: 12px; color: var(--muted); display: block; }
+
+@media (max-width: 640px) {
+  .lane { grid-template-columns: 1fr; }
+  .arrow { transform: rotate(90deg); padding: 4px 0; width: 100%; }
+  .flow { flex-direction: column; }
+  .row { grid-template-columns: 1.2fr 1fr .8fr; }
+  .row > :nth-child(4) { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+
+<header class="col">
+  <div class="eyebrow">ServiceOps · Compliance · Product proposal</div>
+  <h1>The technician's compliance flow: from a score to a fix to proof</h1>
+  <p class="lede">A proposal for how a technician discovers, explores, navigates and audits configuration compliance in ServiceOps, built on the CIS research and on the Patch and Package patterns our users already know.</p>
+  <div class="meta"><span>Prepared for: Senior management &amp; CEO review</span><span>Author: Product Design</span><span>26 Oct 2026</span><span>Status: Proposal for decision</span></div>
+  <nav class="toc" aria-label="Contents">
+    <a href="#problem">Problem</a><a href="#goal">Goal</a><a href="#personas">Personas</a><a href="#principles">Principles</a><a href="#ia">Four pages</a><a href="#policy">Policy flow</a><a href="#pages">Page by page</a><a href="#fix">Fix loop</a><a href="#audit">Audit</a><a href="#story">Walkthrough</a><a href="#plan">Phasing</a><a href="#decide">Decisions</a>
+  </nav>
+</header>
+
+<section id="summary" class="col">
+  <span class="num">Summary</span>
+  <h2>In one minute</h2>
+  <ul>
+    <li><b>What we have:</b> four technician pages (Dashboard, Benchmark, Compliance Policy, Endpoints) that tell a technician <i>how compliant</i> the estate is.</li>
+    <li><b>What is missing:</b> the path from that number to the exact machine and rule, the reason it matters, the fix, and the proof. Today a failed rule is a dead end.</li>
+    <li><b>The proposal:</b> make the <b>Compliance Policy</b> the technician's home. Open it as the same full-screen detail drawer as a Patch Deployment, and drill <b>Policy → Endpoint → Rule</b> in at most two clicks. Every failure gets the same four actions: <b>Deploy fix</b>, <b>Create change</b>, <b>Create task</b> and <b>Request exception</b>. Every scan becomes exportable evidence.</li>
+    <li><b>Why us:</b> scanners find problems; ServiceOps already owns the endpoints, the people, approvals and the deployment engine that fixes them. This is the join competitors lack. In the research, ManageEngine, NinjaOne and Tanium have no exception workflow, and the scanners have no deployment engine.</li>
+  </ul>
+</section>
+
+<section id="problem" class="col">
+  <span class="num">01</span>
+  <h2>Problem statement</h2>
+  <div class="statement problem">
+    <div class="label">Problem</div>
+    <p class="big">Technicians can see that a policy is 83% compliant, but cannot quickly answer the four questions that follow: which machines are failing, which rules, why it matters, and what to do next. Fixing and proving compliance happens outside the product, in spreadsheets, emails and one ticket per machine.</p>
+  </div>
+  <h3>What this costs the organisation today</h3>
+  <ul>
+    <li><b>Results are a dead end.</b> A failed rule has no owner, no action and no status, so the same failures reappear scan after scan.</li>
+    <li><b>Fixes don't scale.</b> One rule failing on 120 laptops becomes 120 tickets, or nothing. The deployment engine that could push one fix to all 120 sits one module away, unconnected.</li>
+    <li><b>Nothing can be waived properly.</b> When a rule genuinely can't be applied, such as a legacy printer that needs an old protocol, there is no approved, time-limited exception. The failure either drags the score down forever or gets ignored.</li>
+    <li><b>Audits are manual.</b> An auditor asks "prove these servers were compliant in March". The answer is screenshots and exports stitched together by hand, with no record of which benchmark version was used or who approved which exception.</li>
+    <li><b>The nested structure is hard to navigate.</b> A policy holds endpoints, each endpoint holds hundreds of rule results, and each rule carries CIS metadata. Without a clear drill-down, technicians get lost three levels deep and lose the context they started from.</li>
+  </ul>
+</section>
+
+<section id="goal" class="col">
+  <span class="num">02</span>
+  <h2>Goal statement</h2>
+  <div class="statement">
+    <div class="label">Goal</div>
+    <p class="big">From any compliance number, a technician reaches the exact endpoint and rule in two clicks, understands why it matters in plain words, and starts a fix with ServiceOps' existing deployment, change or task tools in one more. Every result stays provable to an auditor without IT's help.</p>
+  </div>
+  <h3>How we will know it worked</h3>
+  <div class="tbl"><table>
+    <tr><th>Measure</th><th>Why it matters</th><th>Target to agree</th></tr>
+    <tr><td><strong>Clicks from a score to rule evidence</strong></td><td>The navigation promise</td><td>≤ 2 after opening a policy</td></tr>
+    <tr><td><strong>Failures with an action within 7 days</strong></td><td>Results stop being a dead end</td><td>e.g. 80% of Critical/High</td></tr>
+    <tr><td><strong>Mean time to remediate a Critical finding</strong></td><td>The security outcome</td><td>Baseline in Phase 1, then cut</td></tr>
+    <tr><td><strong>Fixes delivered as one deployment, not N tickets</strong></td><td>The ITSM join working</td><td>Share of fixed findings via Deploy fix</td></tr>
+    <tr><td><strong>Time to produce audit evidence</strong></td><td>The proof promise</td><td>Minutes, from one export</td></tr>
+    <tr><td><strong>Exceptions with reason, approver and expiry</strong></td><td>Governance</td><td>100% (enforced by the form)</td></tr>
+  </table></div>
+</section>
+
+<section id="personas">
+  <div class="col">
+    <span class="num">03</span>
+    <h2>Three personas</h2>
+    <p>Drawn from the research. The technician is the primary user of this flow; the admin and the auditor shape what it must produce.</p>
+  </div>
+  <div class="grid g3" style="margin-top:14px">
+    <article class="card">
+      <div class="persona-head"><div class="avatar av1">RM</div><div><b>Rohan Mehta</b><div class="role">IT Technician · remediation owner</div></div></div>
+      <span class="prio p1">Primary user</span>
+      <p class="tagline">"Tell me what's broken, on which machines, and give me the fastest safe way to fix it."</p>
+      <div class="k">Owns</div><p>Compliance policies, endpoint scope, running scans, fixing failures, asking for exceptions.</p>
+      <div class="k">A typical week</div><p>Monday: opens the dashboard and sees the Windows 11 laptop policy dropped to 91%. Finds 120 laptops failing the screen-lock rule, pushes one fix, re-scans. Asks for an exception for a Finance printer protocol.</p>
+      <div class="k">Pain today</div><p>Gets lost between policy, endpoint and rule; re-types failures into tickets; can't show a fix was done.</p>
+      <div class="k">Needs from the flow</div><p>Failed-first views, bulk actions, Deploy fix, status written back, Re-scan now.</p>
+    </article>
+    <article class="card">
+      <div class="persona-head"><div class="avatar av2">AI</div><div><b>Ananya Iyer</b><div class="role">Security &amp; Compliance Admin · GRC</div></div></div>
+      <span class="prio p2">Shapes the rules</span>
+      <p class="tagline">"I decide what 'safe' means for us, and I decide when we can live with an exception."</p>
+      <div class="k">Owns</div><p>The rule catalogue, tailored benchmarks (Level 1 or 2, rules removed with a reason), approving exceptions.</p>
+      <div class="k">A typical week</div><p>Builds "Windows 11 Laptops, Level 1" from the CIS original and removes the USB rule Finance can't follow. Clears the exception queue. Watches posture by benchmark.</p>
+      <div class="k">Pain today</div><p>Exceptions arrive by email with no expiry; can't see which benchmark version a result came from.</p>
+      <div class="k">Needs from the flow</div><p>An approval queue, exception expiry, benchmark version on every result, posture by benchmark.</p>
+    </article>
+    <article class="card">
+      <div class="persona-head"><div class="avatar av3">VR</div><div><b>Vikram Rao</b><div class="role">Internal Auditor · CISO office</div></div></div>
+      <span class="prio p2">Reads, never edits</span>
+      <p class="tagline">"Show me proof I can reproduce, and every exception with who approved it."</p>
+      <div class="k">Owns</div><p>Nothing in the product. Reads scores, history and evidence.</p>
+      <div class="k">A typical week</div><p>Quarter-end PCI audit: needs the cardholder servers' compliance on the audit date, the benchmark version used, and every waived rule with reason and approver.</p>
+      <div class="k">Pain today</div><p>Evidence is assembled by hand from screenshots; exceptions are undocumented.</p>
+      <div class="k">Needs from the flow</div><p>Scan history, a per-run evidence export, an exception register, raw results that are never altered.</p>
+    </article>
+  </div>
+  <p class="col muted" style="margin-top:12px;font-size:14px">A fourth role, the network engineer who checks router, switch and firewall configuration, is real in the research. It can share this flow later, because device policies use the same Type + Version targeting.</p>
+</section>
+
+<section id="principles" class="col">
+  <span class="num">04</span>
+  <h2>Four design principles: discover, explore, navigate, audit</h2>
+  <div class="tbl"><table>
+    <tr><th style="width:16%">Principle</th><th>What it means for the technician</th><th style="width:38%">How the flow delivers it</th></tr>
+    <tr><td><strong>Discover</strong></td><td>"What needs my attention right now?" without hunting for it.</td><td>Dashboard KPIs and charts all click through to a pre-filtered list. Failed-first sorting everywhere. A "New since last scan" (drift) filter. Expiring exceptions are surfaced.</td></tr>
+    <tr><td><strong>Explore</strong></td><td>Understand a failure in plain words before touching anything.</td><td>Each rule reads in CIS order: what, why, what it costs, how to check, how to fix. Evidence shows <span class="mono">expected vs found</span>. Level, severity and Automated/Manual appear as pills.</td></tr>
+    <tr><td><strong>Navigate</strong></td><td>Move between policy, endpoint and rule without losing the starting point.</td><td>One drill pattern: drawer → tab → side panel, with a breadcrumb. Three entry points (policy, endpoint, rule) lead to the <b>same result card</b>. At most two overlays. Every level has a link.</td></tr>
+    <tr><td><strong>Audit</strong></td><td>Prove what happened, when, and who decided.</td><td>Scan history stamped with the benchmark version. An evidence export per run. An exception register. An Audit Trail tab. The raw result stays Fail under "Excepted".</td></tr>
+  </table></div>
+  <h3>One shared status language</h3>
+  <p>Every screen uses the same six states, so a result reads the same wherever it is met.</p>
+  <p style="display:flex;flex-wrap:wrap;gap:8px"><span class="pill s-pass">Pass</span><span class="pill s-fail">Fail</span><span class="pill s-man">Manual check</span><span class="pill s-exc">Excepted</span><span class="pill s-na">Not applicable</span><span class="pill s-na">Not reached</span></p>
+  <p><b>Score = passed ÷ (passed + failed)</b>, shown with its denominator, for example "91% · 2,548 of 2,800 checks". Excepted, not-applicable and manual results are left out of the denominator and counted beside it. The same formula rolls up per endpoint, per policy and per benchmark.</p>
+</section>
+
+<section id="ia">
+  <div class="col">
+    <span class="num">05</span>
+    <h2>The four pages, and how they connect</h2>
+    <p>Three records stack inside each other: a <b>Policy</b> runs one <b>Benchmark</b> on many <b>Endpoints</b>, and a benchmark holds many <b>Rules</b>. Each scan produces one <b>Result</b> per endpoint and rule. The four pages are four ways into those results, and all of them end at the same result card.</p>
+  </div>
+
+  <div class="tree" role="img" aria-label="Object model">
+<span class="c">// The object model a technician moves through</span>
+<span class="a">Compliance Policy</span>  CP-101 Production Debian Web Tier        <span class="c">← technician creates</span>
+ ├─ Benchmark        CIS Debian 11 v2.0.0 · Level 1 Server        <span class="c">← admin tailors, technician picks</span>
+ │   └─ Rules        e.g. 5.2.5 "Disable SSH root login" … (several hundred)
+ ├─ Endpoints        EP-204, EP-211, EP-219, EP-230
+ ├─ Schedule         Every Sunday 02:00 · notify Linux team
+ └─ Scan runs        each run stamped with benchmark version
+     └─ <span class="g">Result</span>       one Endpoint × one Rule → <span class="g">Pass</span> | <span class="o">Fail</span> | Manual | Excepted | N/A | Not reached
+         ├─ Evidence     expected "PermitRootLogin no" · found "yes"
+         ├─ Action       Deploy fix PKD-1023 · Change CHG-2091 · Task TSK-88
+         └─ Exception    reason · approver · expires 21 Jan 2027
+  </div>
+
+  <div class="grid g4" style="margin-top:16px">
+    <div class="card"><div class="eyebrow">Page 1</div><h3>Dashboard</h3><p><b>Question:</b> How are we doing, and where should I act?</p><p class="muted" style="font-size:14px">Entry point for discovery. Every number clicks through to a filtered list on the other three pages.</p></div>
+    <div class="card"><div class="eyebrow">Page 2</div><h3>Benchmark</h3><p><b>Question:</b> What does this rule mean, and where does it fail?</p><p class="muted" style="font-size:14px">The <b>rule lens</b>. Read-only for technicians. Rule detail shows CIS metadata, failing endpoints and the policies that use it.</p></div>
+    <div class="card" style="border-color:var(--accent)"><div class="eyebrow">Page 3 · home</div><h3>Compliance Policy</h3><p><b>Question:</b> Is my job running, and what did it find?</p><p class="muted" style="font-size:14px">The <b>job lens</b> and the technician's main workspace. Create, schedule, run, drill, fix, prove.</p></div>
+    <div class="card"><div class="eyebrow">Page 4</div><h3>Endpoints</h3><p><b>Question:</b> Is this machine safe, across every policy?</p><p class="muted" style="font-size:14px">The <b>machine lens</b>. The endpoint detail gains a Compliance tab beside Patches, Vulnerabilities and Deployment.</p></div>
+  </div>
+
+  <div class="col">
+    <h3>Three doors, one room</h3>
+    <p>Whichever page a technician starts on, they arrive at the same <b>result card</b> (endpoint × rule), with the same evidence and the same four actions. The prototype at localhost:5177 only enters through the policy. We add the rule and endpoint doors, which is what the research calls any-to-any drill-down.</p>
+  </div>
+  <div class="flow" aria-label="Three entry points converge on one result card">
+    <div class="step"><b>Policy</b><small>CP-101 → Endpoints tab → EP-204 → rule 5.2.5</small></div>
+    <div class="arrow">→</div>
+    <div class="step hl"><b>Result card</b><small>EP-204 × 5.2.5 · Fail · expected vs found · Deploy fix · Change · Task · Exception</small></div>
+    <div class="arrow">←</div>
+    <div class="step"><b>Rule</b><small>Benchmark → 5.2.5 → Where it fails → EP-204</small></div>
+    <div class="arrow">←</div>
+    <div class="step"><b>Endpoint</b><small>EP-204 → Compliance tab → rule 5.2.5</small></div>
+  </div>
+</section>
+
+<section id="policy">
+  <div class="col">
+    <span class="num">06</span>
+    <h2>The nested policy flow: who needs it, and how to show it</h2>
+    <p>The policy is the only record that holds all four levels at once (policy → endpoints → benchmark rules → rule metadata), so it is where navigation can go wrong. First, who uses each level:</p>
+  </div>
+  <div class="tbl"><table>
+    <tr><th>Level</th><th>Rohan · Technician</th><th>Ananya · Admin</th><th>Vikram · Auditor</th></tr>
+    <tr><td><strong>Policy</strong> (score, trend, scope)</td><td>Daily</td><td>Weekly, by benchmark</td><td>At audit time</td></tr>
+    <tr><td><strong>Endpoints in the policy</strong></td><td><b>Daily: worst machines first</b></td><td>Rarely</td><td>Sampling</td></tr>
+    <tr><td><strong>Rules in the policy</strong></td><td><b>Daily: biggest fix first</b> (one rule × many machines)</td><td>To judge a rule's impact</td><td>Sampling</td></tr>
+    <tr><td><strong>Result + rule metadata</strong></td><td>Before every fix</td><td>When approving exceptions</td><td><b>Evidence</b></td></tr>
+  </table></div>
+  <div class="callout col"><b>Takeaway:</b> the technician needs the deep levels most and uses <b>two lenses</b> on the same data. "Worst machine first" is used when one machine is the problem. "Biggest rule first" is used when one fix clears 120 machines, and that is where the real time saving is. The policy detail must offer both, side by side, as tabs.</div>
+
+  <div class="col">
+    <h3>Three ways to show the nesting</h3>
+  </div>
+  <div class="grid g3">
+    <div class="card"><h3>A · Page-by-page drill</h3><p class="muted" style="font-size:14px">The prototype at 5177: policy page → device page with a breadcrumb → rule side panel.</p><p><b>+</b> Simple, matches the mental model.<br><b>−</b> Only one lens (by device). Each level replaces the last, so context is lost. New pattern for ServiceOps users.</p></div>
+    <div class="card" style="border-color:var(--accent)"><h3>B · Drawer, tabs, side panel <span class="prio p1">Recommended</span></h3><p class="muted" style="font-size:14px">The policy opens as our standard full-screen detail drawer, like a Patch Deployment. Endpoints and Rules tabs. A row opens a side panel that drills one level more, with back and a breadcrumb.</p><p><b>+</b> Both lenses. Policy context stays visible. Same muscle memory as Patch and Package. Drawer tabs keep several policies open. <b>−</b> Needs care so the side panel does not stack twice.</p></div>
+    <div class="card"><h3>C · Matrix (endpoints × rules)</h3><p class="muted" style="font-size:14px">A heat-map grid of every endpoint against every rule.</p><p><b>+</b> Great overview for auditors and for spotting a rule that fails everywhere.<br><b>−</b> Unreadable at hundreds of rules. Best as an <b>extra view</b> in Phase 3, not the primary flow.</p></div>
+  </div>
+
+  <div class="col"><h3>Recommended structure (option B)</h3></div>
+  <div class="tree" role="img" aria-label="Policy drawer structure">
+<span class="a">Compliance Policy listing</span>   List &amp; KPI (default) · Tiles     <span class="c">row → opens drawer</span>
+└─ <span class="a">Policy drawer</span>  CP-101 · header KPIs: Score · Failed critical · Endpoints · Last scan · Benchmark version
+   │  Header actions: Run now · Edit · ⋮ (Clone, Disable, Export evidence)
+   ├─ Overview        score + trend · failures by severity · top failing rules · top failing endpoints · drift
+   ├─ <span class="g">Endpoints</span>       worst first · pills: Failed | Passed | Not reached        <span class="c">row → Endpoint panel</span>
+   │   └─ Endpoint panel   EP-204 in CP-101 · benchmark sections (failed first)   <span class="c">rule → Result view (same panel)</span>
+   ├─ <span class="g">Rules</span>           biggest fix first · rule × failing count · severity       <span class="c">row → Rule panel</span>
+   │   └─ Rule panel       5.2.5 in CP-101 · endpoints failing / passing        <span class="c">endpoint → Result view (same panel)</span>
+   ├─ <span class="o">Findings</span>        every open Fail with its action status (Deploying · Change pending · Excepted)
+   ├─ <span class="o">Exceptions</span>      requested · approved · expiring · expired
+   ├─ Scan history    each run · version · scope · duration · result → Export evidence
+   └─ Audit trail     who created, edited, ran, excepted
+                             <span class="c">"Open endpoint" / "Open rule" → opens that record as a new drawer tab (DrawerStack)</span>
+  </div>
+  <div class="legend col"><span><span class="sw hl"></span>Exists in the prototype pattern</span><span><span class="sw new"></span>New tabs proposed</span></div>
+
+  <div class="col">
+    <h3>Navigation rules that keep it shallow</h3>
+    <ol>
+      <li><b>Two clicks to evidence.</b> Policy drawer → row (Endpoint or Rule) → result. Never more.</li>
+      <li><b>One side panel, never two.</b> Drilling inside the panel replaces its content and adds a breadcrumb (<span class="mono">CP-101 › EP-204 › 5.2.5</span>) and a back arrow. This is the same in-panel step the Form Rules "How do I resolve" page uses.</li>
+      <li><b>Leaving the policy is explicit.</b> "Open endpoint" or "Open rule" opens that record as a new drawer tab, so the policy tab stays put and the technician can return.</li>
+      <li><b>Failed first, always.</b> Sections, endpoints and rules sort by failures and severity. Passing items fold away behind a count.</li>
+      <li><b>Every level has a link.</b> For example <span class="mono">#/compliance-policies/CP-101/endpoints/EP-204</span>, so a technician can paste a finding into a ticket or chat.</li>
+    </ol>
+  </div>
+
+  <div class="wf" role="img" aria-label="Wireframe of the policy drawer with an endpoint panel">
+    <div class="wf-body">
+      <div class="wf-main">
+        <div class="wf-title"><span class="idpill">CP-101</span> Production Debian Web Tier <span class="pill s-fail">Non-compliant</span></div>
+        <div class="kpis"><span>Score <b>83% · 1,412 of 1,700</b></span><span>Failed critical <b>9</b></span><span>Endpoints <b>4</b></span><span>Benchmark <b>CIS Debian 11 v2.0.0 L1</b></span><span>Last scan <b>19 Oct, 02:04</b></span></div>
+        <div class="tabs"><span>Overview</span><span class="on">Endpoints</span><span>Rules</span><span>Findings</span><span>Exceptions</span><span>Scan history</span><span>Audit trail</span></div>
+        <div class="chips"><span class="chip on">Failed 3</span><span class="chip">Passed 1</span><span class="chip">Not reached 0</span></div>
+        <div class="rows">
+          <div class="row head"><span>Endpoint</span><span>Score</span><span>Failed</span><span>Drift</span></div>
+          <div class="row sel"><span><span class="idpill">EP-204</span> web-prd-01</span><span>71%</span><span><span class="pill s-crit">4 critical</span></span><span>+3 new</span></div>
+          <div class="row"><span><span class="idpill">EP-211</span> web-prd-02</span><span>80%</span><span><span class="pill s-fail">2 high</span></span><span>—</span></div>
+          <div class="row"><span><span class="idpill">EP-219</span> web-prd-03</span><span>88%</span><span><span class="pill s-fail">1 high</span></span><span>+1 new</span></div>
+          <div class="row"><span><span class="idpill">EP-230</span> web-stg-01</span><span>100%</span><span><span class="pill s-pass">0</span></span><span>—</span></div>
+        </div>
+      </div>
+      <div class="wf-side">
+        <div class="crumb"><b>CP-101</b> › <b>EP-204</b> web-prd-01</div>
+        <div class="kpis"><span>Score <b>71%</b></span><span>Fail <b>12</b></span><span>Pass <b>29</b></span><span>Excepted <b>1</b></span></div>
+        <div class="acc"><div><span>▾ 5 Access, Authentication</span><span class="pill s-fail">3 fail</span></div><div class="sub"><span>5.2.5 Disable SSH root login</span><span class="pill s-crit">Fail</span></div><div class="sub"><span>5.4.1 Password length ≥ 14</span><span class="pill s-fail">Fail</span></div><div class="sub"><span>5.2.13 SSH idle timeout</span><span class="pill s-exc">Excepted</span></div></div>
+        <div class="acc"><div><span>▸ 3 Network Configuration</span><span class="pill s-fail">2 fail</span></div></div>
+        <div class="acc"><div><span>▸ 1 Initial Setup</span><span class="pill s-pass">all pass</span></div></div>
+        <div class="btns"><span class="btn">Open endpoint ↗</span><span class="btn">Re-scan</span></div>
+      </div>
+    </div>
+    <div class="wf-cap">Wireframe 1. Policy drawer, Endpoints tab. The row opens the endpoint's results inside this policy in a side panel, with the failed sections open and the passing ones folded.</div>
+  </div>
+
+  <div class="wf" role="img" aria-label="Wireframe of a single result with evidence and actions">
+    <div class="wf-body">
+      <div class="wf-main">
+        <div class="wf-title"><span class="idpill">CP-101</span> Production Debian Web Tier</div>
+        <div class="tabs"><span>Overview</span><span>Endpoints</span><span class="on">Rules</span><span>Findings</span><span>Exceptions</span><span>Scan history</span></div>
+        <div class="chips"><span class="chip on">Failing 14</span><span class="chip">Passing 186</span><span class="chip">Manual 6</span></div>
+        <div class="rows">
+          <div class="row head"><span>Rule</span><span>Severity</span><span>Failing</span><span>Action</span></div>
+          <div class="row sel"><span>5.2.5 Disable SSH root login</span><span><span class="pill s-crit">Critical</span></span><span>3 of 4</span><span>—</span></div>
+          <div class="row"><span>5.4.1 Password length ≥ 14</span><span><span class="pill s-fail">High</span></span><span>2 of 4</span><span>Deploying</span></div>
+          <div class="row"><span>3.3.1 Disable IP forwarding</span><span><span class="pill s-fail">High</span></span><span>2 of 4</span><span>CHG-2091</span></div>
+        </div>
+      </div>
+      <div class="wf-side">
+        <div class="crumb"><b>CP-101</b> › <b>5.2.5</b> › <b>EP-204</b></div>
+        <div style="font-weight:600;font-size:14px">Ensure SSH root login is disabled</div>
+        <p style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0"><span class="pill s-crit">Critical</span><span class="pill s-na">Level 1</span><span class="pill s-na">Automated</span><span class="pill s-na">CIS 5.2.5 · Debian 11 v2.0.0</span></p>
+        <div class="kv"><span>Expected</span><span class="ev">PermitRootLogin no</span><span>Found</span><span class="ev" style="color:var(--crit)">PermitRootLogin yes</span><span>First failed</span><span>12 Oct 2026</span><span>Last checked</span><span>19 Oct 2026, 02:04</span></div>
+        <div class="k" style="font-size:12px;color:var(--muted);margin-top:8px">Why it matters</div>
+        <p style="font-size:12.5px;margin:2px 0">Root over SSH gives an attacker full control with one guessed password, and hides who did it.</p>
+        <div class="btns"><span class="btn pri">Deploy fix</span><span class="btn">Create change</span><span class="btn">Create task</span><span class="btn">Request exception</span></div>
+      </div>
+    </div>
+    <div class="wf-cap">Wireframe 2. Rules tab → rule panel → one endpoint's result, in the same panel. Evidence, the reason in plain words, and the four actions. This is the same card a technician reaches from the Endpoints tab or the Endpoint page.</div>
+  </div>
+</section>
+
+<section id="pages">
+  <div class="col">
+    <span class="num">07</span>
+    <h2>Page by page</h2>
+    <p>What each page shows today and what changes. Everything reuses components we already ship: the listing grid, the full-screen detail drawer and its tabs, the side panel, the header KPI strip, approvals and the audit trail.</p>
+  </div>
+
+  <div class="grid g2">
+    <div class="card">
+      <div class="eyebrow">1 · Dashboard</div><h3>"Where should I act today?"</h3>
+      <div class="k">Shows</div>
+      <ul>
+        <li>Score with its denominator, and the trend against a <b>target set by each customer</b> (not a fixed 85%).</li>
+        <li>Failures by severity · <b>Top failing rules</b> (biggest fix first) · Top failing endpoints.</li>
+        <li><b>New failures since last scan</b> (drift) · endpoints not reached.</li>
+        <li>Exceptions expiring in 30 days · open findings without an action.</li>
+      </ul>
+      <div class="k">Changes</div>
+      <p>Every number and bar is clickable and opens the right page pre-filtered. A "My policies" switch lets a technician see only the policies they own.</p>
+    </div>
+    <div class="card">
+      <div class="eyebrow">2 · Benchmark (rule lens)</div><h3>"What does this rule mean, and where does it fail?"</h3>
+      <div class="k">Listing</div><p>Benchmarks with OS, version, level, score across policies and number of policies using it.</p>
+      <div class="k">Benchmark detail</div><p>Overview (version, "based on CIS …", score) · Rules (sections, failed first) · Policies using it · Endpoints.</p>
+      <div class="k">Rule detail tabs</div>
+      <ul>
+        <li><b>Summary:</b> what, why, what it costs, in CIS order.</li>
+        <li><b>Check &amp; fix:</b> the audit procedure, the remediation and the default value.</li>
+        <li><b>Where it fails:</b> failing endpoints grouped by policy, with bulk <b>Deploy fix</b>.</li>
+        <li><b>Used in:</b> policies and benchmarks that include this rule.</li>
+        <li><b>References:</b> CIS Controls, NIST, PCI and other framework mappings.</li>
+      </ul>
+      <p class="muted" style="font-size:14px">Read-only for technicians; editing stays with the admin.</p>
+    </div>
+    <div class="card" style="border-color:var(--accent)">
+      <div class="eyebrow">3 · Compliance Policy (job lens, home)</div><h3>"Is my job running, and what did it find?"</h3>
+      <div class="k">Listing</div><p>List &amp; KPI (default) or Tiles. Row actions: Run now · Schedule · Edit · Clone · Delete. Saved views such as Non-compliant, Not scanned and Mine.</p>
+      <div class="k">Create</div><p>The existing full-page form: name, one benchmark, endpoints, schedule, notify. <b>New:</b> optional <b>pilot group</b> first ("test on 5 machines, then roll out"), as CIS advises.</p>
+      <div class="k">Detail</div><p>The drawer in section 06: Overview · Endpoints · Rules · Findings · Exceptions · Scan history · Audit trail.</p>
+    </div>
+    <div class="card">
+      <div class="eyebrow">4 · Endpoints (machine lens)</div><h3>"Is this machine safe across every policy?"</h3>
+      <div class="k">Listing</div><p>Score, failed critical, policies applied, last scan, drift, agent health.</p>
+      <div class="k">Endpoint detail</div><p>The <b>existing Endpoint drawer</b> gains a <b>Compliance</b> tab beside Vulnerabilities, BOM, Patches and Deployment. It uses the Patches tab's pattern: <span class="pill s-fail">Failed</span> <span class="pill s-pass">Passed</span> <span class="pill s-exc">Excepted</span> <span class="pill s-man">Manual</span> pills, a policy filter, and Take action on selected rows.</p>
+      <div class="k">Why here</div><p>A technician fixing one machine sees missing patches, vulnerabilities and misconfigurations together, on one page they already use.</p>
+    </div>
+  </div>
+</section>
+
+<section id="fix">
+  <div class="col">
+    <span class="num">08</span>
+    <h2>The fix loop: where ServiceOps wins</h2>
+    <p>Every competitor in the research runs the same loop. ServiceOps can close it inside one product, because the deployment engine, change management and approvals already exist.</p>
+  </div>
+
+  <div class="lane"><div class="who">Scan finds</div>
+    <div class="flow" style="margin:0"><div class="step"><b>Result: Fail</b><small>5.2.5 on 3 endpoints</small></div><div class="arrow">→</div><div class="step hl"><b>Result card</b><small>reason · evidence · 4 actions</small></div></div></div>
+
+  <div class="tbl"><table>
+    <tr><th style="width:18%">Action</th><th>When to use it</th><th>What ServiceOps does</th><th style="width:20%">Status on the result</th></tr>
+    <tr><td><strong>Deploy fix</strong></td><td>The fix is a script or setting that is safe to push.</td><td>Opens the existing Create Deployment form, pre-filled with the rule's remediation script and the failing endpoints. One deployment for 120 machines, not 120 tickets.</td><td><span class="pill s-man">Deploying · PKD-1023</span></td></tr>
+    <tr><td><strong>Create change</strong></td><td>The fix touches production and needs approval or a window.</td><td>Creates a Change with the endpoints attached as affected CIs and the rule as justification.</td><td><span class="pill s-man">Change pending · CHG-2091</span></td></tr>
+    <tr><td><strong>Create task</strong></td><td>Manual work, or a Manual rule.</td><td>One task per rule, grouped (not per endpoint), assigned to a technician or group.</td><td><span class="pill s-man">Task · TSK-88</span></td></tr>
+    <tr><td><strong>Request exception</strong></td><td>The rule can't be applied for a business reason.</td><td>Form: rule × endpoints × reason (from a list) × expiry × compensating control. Routed to the admin's approval queue.</td><td><span class="pill s-exc">Excepted until 21 Jan 2027</span></td></tr>
+  </table></div>
+
+  <div class="lane"><div class="who">Then</div>
+    <div class="flow" style="margin:0"><div class="step new"><b>Auto re-scan</b><small>when the deployment or change completes</small></div><div class="arrow">→</div><div class="step"><b>Result: Pass</b><small>finding closes, status keeps the link</small></div><div class="arrow">→</div><div class="step new"><b>Exception expires</b><small>finding re-opens by itself</small></div></div></div>
+
+  <div class="col">
+    <h3>Exception rules, from the research</h3>
+    <ul>
+      <li><b>Scope</b> is one rule on chosen endpoints, never a whole section (Rapid7, Qualys).</li>
+      <li><b>A reason is required</b>, chosen from: Risk accepted · Awaiting maintenance window · Fix unavailable · Mitigating control in place (ServiceNow's list).</li>
+      <li><b>Approval</b> uses the ServiceOps approval engine. One or two levels is the leadership decision below.</li>
+      <li><b>Expiry</b> is required. The finding <b>re-opens at expiry</b>, or earlier if a scan finds a different value (Qualys).</li>
+      <li><b>The raw result stays Fail.</b> The view shows Excepted with the reason on hover, so nothing is hidden from an auditor.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="audit" class="col">
+  <span class="num">09</span>
+  <h2>Audit: making every result provable</h2>
+  <div class="grid g2" style="margin-top:10px">
+    <div class="card"><h3>Scan history (policy tab)</h3><p>One row per run: date, <b>benchmark version</b>, scope (which endpoints), duration, score, and who triggered it. Opening a run shows that run's results as they were then, not as they are now.</p></div>
+    <div class="card"><h3>Evidence export (per run)</h3><p>PDF or CSV carrying the benchmark version, scope, timestamp, every result with evidence, and the exception register with reasons and approvers. The same scope and version reproduce the same answer.</p></div>
+    <div class="card"><h3>Exception register</h3><p>All exceptions across policies: rule, endpoints, reason, approver, approved on, expires, status. Filterable, exportable, and shown on the dashboard when expiring.</p></div>
+    <div class="card"><h3>Audit trail</h3><p>Who created, edited, enabled, ran and excepted, in our standard Audit Trail format. Read-only access for an auditor role.</p></div>
+  </div>
+</section>
+
+<section id="story" class="col">
+  <span class="num">10</span>
+  <h2>Walkthrough: one Monday in Rohan's week</h2>
+  <ol class="story">
+    <li><span class="where">Dashboard</span>The score dropped from 96% to 91%. "Top failing rules" shows <i>Screen lock after 15 min</i> failing on 120 Windows 11 laptops, all new since Sunday's scan.</li>
+    <li><span class="where">Dashboard → Benchmark › rule 2.3.7.3</span>One click opens the rule. Summary says why it matters. "Where it fails" lists the 120 laptops, all in policy CP-114.</li>
+    <li><span class="where">Rule → Where it fails → Deploy fix</span>Rohan selects all 120 and clicks <b>Deploy fix</b>. The existing deployment form opens with the remediation script and the 120 endpoints filled in. He schedules it for tonight.</li>
+    <li><span class="where">Policy CP-114 › Findings</span>The 120 results now read <i>Deploying · PKD-1023</i>. Nobody re-types anything into tickets.</li>
+    <li><span class="where">Policy CP-114 › Endpoints › EP-377 › rule 18.4.2</span>One Finance laptop also fails "SMBv1 disabled". The old cheque printer needs it. Rohan clicks <b>Request exception</b>: this rule, 12 Finance laptops, "Fix unavailable — printer replacement ordered", 90 days.</li>
+    <li><span class="where">Admin approval queue</span>Ananya approves it. The 12 results show <i>Excepted</i>, and the raw Fail stays underneath.</li>
+    <li><span class="where">Tuesday, automatic</span>The deployment finishes and triggers a re-scan. Screen lock passes on all 120. The score is 97%.</li>
+    <li><span class="where">Quarter end · Scan history → Export evidence</span>Vikram exports the run: benchmark version, the 300 laptops, every result, and the exception register with Ananya's approval. The audit request is answered in minutes.</li>
+    <li><span class="where">90 days later, automatic</span>The exception expires and the SMBv1 failure re-opens by itself, so nobody has to remember.</li>
+  </ol>
+</section>
+
+<section id="plan">
+  <div class="col">
+    <span class="num">11</span>
+    <h2>Phasing: feasible steps, each one usable on its own</h2>
+    <p>Sizes are relative (S, M, L), to be confirmed with engineering. Each phase reuses existing ServiceOps components.</p>
+  </div>
+  <div class="grid g3">
+    <div class="card phase"><div class="eyebrow">Phase 1 · See it</div><h3>Navigate &amp; understand</h3><p class="size">Size: M · mostly front end</p>
+      <ul>
+        <li>Policy drawer tabs: Overview, Endpoints, Rules, Scan history, Audit trail</li>
+        <li>Endpoint panel and rule panel with in-panel drill and breadcrumb</li>
+        <li>One result card with evidence and CIS fields</li>
+        <li>Six-state status and score with denominator</li>
+        <li>Compliance tab in the Endpoint drawer</li>
+        <li>Dashboard click-throughs, "My policies"</li>
+      </ul>
+      <p class="muted" style="font-size:14px"><b>Delivers:</b> discover, explore, navigate.</p></div>
+    <div class="card phase p2c"><div class="eyebrow">Phase 2 · Fix it</div><h3>Act &amp; govern</h3><p class="size">Size: L · needs back-end links</p>
+      <ul>
+        <li>Deploy fix → pre-filled Package/Script deployment</li>
+        <li>Create change (affected CIs) · Create task (grouped)</li>
+        <li>Status written back · auto re-scan</li>
+        <li>Exceptions: request, approval, expiry, re-open</li>
+        <li>Findings and Exceptions tabs · exception register</li>
+      </ul>
+      <p class="muted" style="font-size:14px"><b>Delivers:</b> the ServiceOps difference.</p></div>
+    <div class="card phase p3c"><div class="eyebrow">Phase 3 · Prove it</div><h3>Audit &amp; scale</h3><p class="size">Size: M</p>
+      <ul>
+        <li>Evidence export per run</li>
+        <li>Drift ("new since last scan", compliant since)</li>
+        <li>Benchmark version diff and opt-in upgrade</li>
+        <li>Auditor read-only role</li>
+        <li>Pilot group in policy creation</li>
+        <li>Matrix view · network-device policies</li>
+      </ul>
+      <p class="muted" style="font-size:14px"><b>Delivers:</b> audit-ready, enterprise scale.</p></div>
+  </div>
+</section>
+
+<section id="decide" class="col">
+  <span class="num">12</span>
+  <h2>Decisions needed from leadership</h2>
+  <div class="tbl"><table>
+    <tr><th style="width:4%">#</th><th>Decision</th><th>Why it matters</th><th>Our recommendation</th></tr>
+    <tr><td>1</td><td><strong>CIS SecureSuite Product Vendor membership</strong></td><td>Shipping machine-readable CIS rules in a product requires it; the free PDFs are non-commercial only.</td><td>Confirm we hold or will obtain it before rule content and updates are promised.</td></tr>
+    <tr><td>2</td><td><strong>Where remediation scripts come from</strong></td><td>Deploy fix needs a script per rule and OS.</td><td>Ship scripts for the top Critical/High rules first. Allow a custom script per rule.</td></tr>
+    <tr><td>3</td><td><strong>Exception approval: one or two levels, maximum expiry</strong></td><td>Governance versus speed.</td><td>One level (security admin), 90-day default, 1-year maximum. Configurable per customer.</td></tr>
+    <tr><td>4</td><td><strong>Compliance target</strong></td><td>The prototype hard-codes 85%. Competitors don't use a universal target.</td><td>A setting for each customer, shown on the dashboard trend.</td></tr>
+    <tr><td>5</td><td><strong>Auditor role</strong></td><td>Read-only access to scores, history and evidence.</td><td>Include in Phase 3. Decide whether it is licensed separately.</td></tr>
+  </table></div>
+  <div class="callout warn"><b>What this proposal does not claim.</b> The research verified competitor behaviour for ManageEngine, Tanium, Rapid7, Qualys, Tenable and ServiceNow only. Statements about other vendors are not sourced. The posture bands and the trend data in today's prototype are illustrative.</div>
+  <p class="muted" style="font-size:14px">Sources: the Compliance research brief and the plain-language explainer (23 Oct 2026, 22 sources), the ObserveOps compliance prototype, and the current ServiceOps Compliance pages.</p>
+</section>
+
+</div>

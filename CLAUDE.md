@@ -2981,3 +2981,38 @@ and ask before building any new one.
   `ComplianceEndpointsPage` (`'cviz-resource'`), a row opens `ComplianceEndpointPanel`. Shared rows and
   the rule-results table are in `complianceRows.tsx`. A rule no policy has checked shows dashes and
   the result "Not checked", never zeros.
+- **Technician flow rebuilt as linked detail pages (26 Oct 2026, Zeni) — supersedes the side-panel
+  endpoint view and the Benchmark rules side panel above.** One policy runs ONE benchmark; one
+  benchmark is run by many policies. Every detail page opens in the shared DrawerStack and has an
+  Overview tab first (the auditor's counts).
+  - **Hierarchy numbers everywhere** — `numberedGroups(b)` / `ruleNumbers(b)` / `benchmarkGroups(b)`
+    in `complianceData.ts` (the admin Benchmark page now reads the same `benchmarkGroups`). Groups 1, 2;
+    a group's own rules 1.1, 1.2; a sub-group takes the next number (1.3) and its rules 1.3.1. Default
+    CIS benchmarks: section = group, subsection = sub-group. Rendered by ONE tree, `RuleGroupTree`
+    (ComplianceEndpointPanel.tsx; `resultOf` / `right` / optional `show` filter), with
+    `ComplianceBreakdown` (one endpoint, Previous → Last scan) and `FailedOnCell` ("Failed on N of M").
+  - **Policy page** (`CompliancePolicyDrawer`): Overview (cards, Failed Rules by Severity, Endpoints /
+    Rules Failing Most; a count card opens Endpoints filtered) · Endpoints · Rules (the grouped tree,
+    Failing / All Passing cards filter it) · Audit Trail. An endpoint row opens the **endpoint × policy
+    page**; a rule opens the rule side panel (endpoints list above the metadata tabs → one result).
+  - **Endpoint page** (`ComplianceEndpointDrawer`, module `compliance-endpoints`): Overview · Rules ·
+    Policies · Exceptions · Audit Trail, right panel Endpoint Properties (Agent Status only for
+    endpoints in the Endpoints module). A Policies row opens a SIDE DRAWER (panel view `breakdown`):
+    that policy's rule groups with this endpoint's Pass/Fail. Opened with id `EP-512@CP-101` it is the
+    endpoint × policy page (one policy, no Policies tab, lands on Rules; tab reads "EP-512 · CP-101").
+    Open it via `useOpenComplianceEndpoint()(id, policyId?)`.
+  - **Benchmark page** (`ComplianceBenchmarkDrawer`, module `compliance-benchmarks`, opened from the
+    Benchmark listing): Overview (Compliance across policies, Failed Rules by Severity, Compliance by
+    Policy, Rules Failing Most) · Rules (grouped tree; a rule opens RuleDetailPanel with its number) ·
+    Endpoints (row → Endpoint page) · Policies (row → Policy page).
+  - **Rule side panel** (`ComplianceEndpointPanel`, views breakdown / rule / result / exception, drilled
+    in place, back arrow + Escape, no breadcrumb, product side-panel header). **No Results tab and no
+    metadata grid** in any rule's tabs (Summary = Description + Rationale only). **Request exception**
+    on a Fail result (Reason from the research list, Expires On default +90 days, Justification) →
+    `exceptionStore` in compliancePolicyData (status stays Requested; no approval screen yet).
+  - **Dashboard is clickable**: KPIs / Posture slices open the Policy or Endpoints listing pre-filtered
+    (`setComplianceDrill` → `AssetRegisterPage initialFilters`); pass/fail slice and severity rows open a
+    filtered rule list over the dashboard; endpoints open the Endpoint page. `ChartTile` has an optional
+    `onPick(label)`. `AuditTrailsTabContent` takes optional `entries` (render it bare — it has its own padding).
+  - Research docs for this work: `docs/compliance/technician-flow.html` (pitch) and the explainer's new
+    section 4 (every rule field explained).

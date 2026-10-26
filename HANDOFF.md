@@ -1,3 +1,55 @@
+# Handoff — 2026-10-26 (Compliance: linked detail pages, numbering, exceptions, clickable dashboard)
+
+> Sessions share this file. **This top part is the newest session**; older notes follow unchanged
+> below the dividers.
+
+## Read first
+CLAUDE.md › "## Compliance (Oct 2026)", last bullet "Technician flow rebuilt as linked detail pages".
+
+## What we worked on this session
+Researched CIS compliance (deep-research run, PDF + two shareable pages), pitched a technician flow,
+then rebuilt the technician side of Compliance as linked detail pages with Zeni, step by step.
+
+## Completed
+- Research: `C:\Users\Zeni Chakalasiya\Downloads\Compliance-Module-Research.pdf`; pitch page
+  https://claude.ai/artifact/QsPzQacsSjG7icAjp8DASo (`docs/compliance/technician-flow.html`); explainer with
+  every rule field explained https://claude.ai/artifact/4gv81TJJ6U1rpoUsRe27Qp (old link …KFGicK… not reachable
+  from this account). Chrome copies in Downloads.
+- Hierarchy numbering (1 · 1.1 · 1.3.1) from the benchmark's groups on every page.
+- Policy page: Overview · Endpoints · Rules (grouped) · Audit Trail.
+- Endpoint page (new) + endpoint × policy page + Policies side drawer.
+- Benchmark detail page (new): Overview · Rules · Endpoints · Policies.
+- Rule side panel: in-place drill, no breadcrumb, no Results tab, no Summary metadata grid; Request
+  exception form (demo store).
+- Dashboard: every KPI / slice / bar / row clicks through, pre-filtered.
+
+## In progress
+Nothing mid-flight. Dev server for this work ran on http://localhost:5201 (5200 was held by a hung process).
+
+## Next steps
+- Zeni to decide: side-panel width (920 vs Patch's 820px); pills under rule titles (and in the admin rule
+  panel); Observed value / First seen on the result card (needs mock data); posture words (Secure…
+  Vulnerable vs Compliant / Non-Compliant); 85% target as a tenant setting.
+- Admin approval screen for exception requests; other actions (Deploy fix, Create change, Create task)
+  were offered and NOT chosen yet.
+- Admin benchmarks are still not shared with the technician side (BENCHMARKS_SEED).
+
+## Decisions made
+- Endpoint opens a full detail page everywhere; a rule opens the side panel. From a policy, an endpoint
+  opens the endpoint × policy page; from the Endpoint page's Policies tab, a side drawer.
+- In a policy's rule panel an endpoint opens its result in place (no page change).
+- Every detail page has an Overview tab first; the policy's report moved into it.
+- Only "Request exception" for now, on a single endpoint's Fail result, in the same panel.
+- Use only product / CIS words; reuse product components; ask before new components.
+
+## Gotchas & notes
+- PowerShell's `R` is an alias (Invoke-History) — patch scripts are Node files in the scratchpad.
+- Bare `<button>` doesn't inherit font size; give breadcrumb/link buttons `text-[12px]`.
+- Headless test gotchas: navigating to the same hash doesn't reload (go via about:blank); charts below
+  the fold need scrollIntoView before clicking the canvas.
+
+---
+
 # Handoff — 2026-10-26 (Form Rules: V1 | V2 switch, Check conflicts CTA, new guide video)
 
 > Sessions share this file. **This top part is the newest session**; older notes follow unchanged

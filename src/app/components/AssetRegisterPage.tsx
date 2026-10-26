@@ -111,6 +111,7 @@ export function AssetRegisterPage({
   resetKey,
   lockedCells,
   initialOpenId,
+  initialFilters,
   onInitialOpenConsumed,
   onNavigate,
 }: {
@@ -218,6 +219,9 @@ export function AssetRegisterPage({
   /** Extra row fields the free-text search also matches (x_ keys). */
   searchFields?: string[];
   initialOpenId?: string | null;
+  /** Filters the page opens with, instead of its default view's — how a click elsewhere (the
+      Compliance Dashboard) lands on this list already narrowed. Read once, on mount. */
+  initialFilters?: Omit<FilterRule, 'id'>[];
   onInitialOpenConsumed?: () => void;
   onNavigate?: (page: string) => void;
 }) {
@@ -243,7 +247,9 @@ export function AssetRegisterPage({
   const [sorts, setSorts] = useState<{ column: keyof Ticket; dir: 'asc' | 'desc' }[]>([]);
   const startView = getDefaultView(viewsStore);
   const [filterRules, setFilterRules] = useState<FilterRule[]>(
-    () => startView?.rules.map((r, i) => ({ ...r, id: `view-${startView.name}-${i}` })) ?? [],
+    () => initialFilters?.length
+      ? initialFilters.map((r, i) => ({ ...r, id: `drill-${i}` }))
+      : startView?.rules.map((r, i) => ({ ...r, id: `view-${startView.name}-${i}` })) ?? [],
   );
   /* Opens on the module's FIRST offered layout, not always the plain list: a module that
      does not offer 'list' (the Vulnerability pages lead with List + KPI) would otherwise

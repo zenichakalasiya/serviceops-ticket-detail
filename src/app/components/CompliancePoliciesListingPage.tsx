@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 import { ShieldCheck } from 'lucide-react';
 import { AssetRegisterPage } from './AssetRegisterPage';
 import { postureColor, postureOf, scoreColor } from './complianceVizData';
-import { POLICY_FILTER_ATTRS, POLICY_QUICK_FILTERS } from './complianceFilterAttrs';
+import { POLICY_FILTER_ATTRS, POLICY_QUICK_FILTERS, takeComplianceDrill } from './complianceFilterAttrs';
 import {
   benchmarkOf, getPolicy, nextRun, openPolicyEditor, policyStore, resolvedEndpoints, scheduleLabel, scoreOf, statusOf, usePolicies,
 } from './compliancePolicyData';
@@ -153,12 +153,15 @@ export function CompliancePoliciesListingPage({ onNavigate }: { onNavigate?: (pa
   const policies = usePolicies();
   const rows = useMemo(() => policies.map(toRow), [policies]);
   const [scheduleFor, setScheduleFor] = useState<string | null>(null);
+  /* A Dashboard click lands here already filtered (read once). */
+  const [drill] = useState(() => takeComplianceDrill('compliance-policies'));
 
   return (
     <>
       <AssetRegisterPage
         activePage="compliance-policies"
         stackModule="compliance-policies"
+        initialFilters={drill}
         viewsStore="compliance"
         noun="policy"
         moduleCols="compliance-policy"

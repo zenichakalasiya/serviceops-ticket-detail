@@ -4,9 +4,11 @@ import { useState } from 'react';
 
 interface AuditTrailsTabContentProps {
   ticketId?: string;
+  /** A module's own history. Omitted = the built-in ticket history below (every existing caller). */
+  entries?: AuditEntry[];
 }
 
-interface AuditEntry {
+export interface AuditEntry {
   id: string;
   timestamp: string;
   user: string;
@@ -19,11 +21,11 @@ interface AuditEntry {
   descriptionChange?: { old: string; new: string };
 }
 
-export function AuditTrailsTabContent({ ticketId }: AuditTrailsTabContentProps = {}) {
+export function AuditTrailsTabContent({ ticketId, entries }: AuditTrailsTabContentProps = {}) {
   // Empty state for blank ticket (INC-32)
   const isBlankTicket = ticketId === 'INC-32';
 
-  const auditTrails: AuditEntry[] = isBlankTicket ? [] : [
+  const builtIn: AuditEntry[] = isBlankTicket ? [] : [
     {
       id: '0',
       timestamp: '2024-03-10 15:10:00',
@@ -127,6 +129,7 @@ export function AuditTrailsTabContent({ ticketId }: AuditTrailsTabContentProps =
       changes: []
     }
   ];
+  const auditTrails = entries ?? builtIn;
 
   // The before/after description change shown in the centered "View Changes" popup.
   const [diff, setDiff] = useState<{ old: string; new: string } | null>(null);

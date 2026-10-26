@@ -100,7 +100,7 @@ export function DefaultLock({ show, size = 13 }: { show: boolean; size?: number 
 
 /* ── Rule detail — right side panel ──────────────────────────────────────────────────────── */
 
-type RuleTab = 'results' | 'summary' | 'audit' | 'remediation' | 'references' | 'controls' | 'tags';
+type RuleTab = 'summary' | 'audit' | 'remediation' | 'references' | 'controls' | 'tags';
 const RULE_TABS: [RuleTab, string][] = [
   ['summary', 'Summary'], ['audit', 'Audit'], ['remediation', 'Remediation'],
   ['references', 'References'], ['controls', 'Controls'], ['tags', 'Tags'],
@@ -111,34 +111,19 @@ const fieldValue = 'mt-1 text-[13px] leading-[1.6] text-[#364658]';
 const codeBox = 'mt-2 whitespace-pre-wrap rounded bg-[#F9FAFB] px-3 py-2.5 font-mono text-[12px] leading-[1.6] text-[#364658]';
 const readBox = 'mt-1 flex min-h-8 items-center rounded bg-[#F9FAFB] px-3 py-1.5 text-[13px] text-[#364658]';
 
-export function RuleDetailPanel({ rule, usedIn, onClose, results }: {
+export function RuleDetailPanel({ rule, usedIn, onClose, number }: {
   rule: ComplianceRule;
-  /** Where the rule passed and failed — Compliance Visualization's Explorer passes it, and it
-      becomes the panel's first tab. The admin catalogue has no results and passes none. */
-  results?: React.ReactNode;
+  /** The rule's hierarchy number in the benchmark it was opened from (1.3.2). */
+  number?: string;
   /** Benchmark names that reference this rule. */
   usedIn: string[];
   onClose: () => void;
 }) {
-  const first: RuleTab = results ? 'results' : 'summary';
-  const [tab, setTab] = useState<RuleTab>(first);
-  useEffect(() => { setTab(first); }, [rule.id]);
-  const tabs: [RuleTab, string][] = results ? [['results', 'Results'], ...RULE_TABS] : RULE_TABS;
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
-
-  const meta: [string, React.ReactNode][] = [
-    ['Severity', <SeverityPill key="s" severity={rule.severity} />],
-    ['Type', rule.type],
-    ['Platform', rule.platform],
-    ['Version', rule.version],
-    ['Profile', rule.profile === 'L1' ? 'L1 — must have' : 'L2 — good to have'],
-    ['Check In', rule.checkIn],
-    ['Used In', usedIn.length ? `${usedIn.length} benchmark${usedIn.length > 1 ? 's' : ''}` : 'Not used yet'],
-  ];
 
   return (
     <div className="fixed inset-0 z-[10000] flex justify-end bg-black/40" onClick={onClose}>
@@ -146,11 +131,33 @@ export function RuleDetailPanel({ rule, usedIn, onClose, results }: {
         <div className="flex items-start justify-between gap-3 px-5 pt-4">
           <h3 className="flex min-w-0 items-start gap-2 text-[16px] font-semibold leading-6 text-[#364658]">
             <span className="mt-1 h-4 w-[3px] flex-shrink-0 rounded-full" style={{ backgroundColor: SEVERITY_PILL[rule.severity].bar }} title={rule.severity} />
+            {number && <span className="flex-shrink-0 tabular-nums text-[#7B8FA5]">{number}</span>}
             <span>{rule.name}</span>
           </h3>
           <button type="button" onClick={onClose} className="flex size-8 flex-shrink-0 items-center justify-center rounded text-[#7B8FA5] transition-colors hover:bg-[#F3F4F6] hover:text-[#364658]"><X size={18} /></button>
         </div>
+        <RuleDetailBody rule={rule} usedIn={usedIn} />
+      </div>
+    </div>
+  );
+}
 
+/** The rule's metadata tabs (Summary · Audit · Remediation · References · Controls · Tags) and
+ *  their content, without a panel around them — so a panel that drills into a rule can show it
+ *  in place, under its own header. `lead` sits above the tabs (the result on one endpoint, or
+ *  the endpoints a rule passed / failed on). There is no Results tab: results are never a tab. */
+export function RuleDetailBody({ rule, usedIn, lead }: {
+  rule: ComplianceRule;
+  usedIn: string[];
+  lead?: React.ReactNode;
+}) {
+  const [tab, setTab] = useState<RuleTab>('summary');
+  useEffect(() => { setTab('summary'); }, [rule.id]);
+  const tabs = RULE_TABS;
+
+  return (
+    <>
+        {lead && <div className="px-5 pb-4 pt-4">{lead}</div>}
         <div className="border-b border-[#e5e7eb] px-5">
           <div className="flex items-center gap-2.5">
             {tabs.map(([id, label]) => (
@@ -165,17 +172,8 @@ export function RuleDetailPanel({ rule, usedIn, onClose, results }: {
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
-          {tab === 'results' && results}
           {tab === 'summary' && (
             <div className="space-y-5">
-              <div className="grid grid-cols-3 gap-x-6 gap-y-4 rounded-lg bg-[#F9FAFB] p-4">
-                {meta.map(([k, v]) => (
-                  <div key={k}>
-                    <div className={fieldLabel}>{k}</div>
-                    <div className="mt-1 text-[13px] font-medium text-[#364658]">{v}</div>
-                  </div>
-                ))}
-              </div>
               <div>
                 <div className={fieldLabel}>Description</div>
                 <p className={fieldValue}>{rule.description}</p>
@@ -256,7 +254,6 @@ export function RuleDetailPanel({ rule, usedIn, onClose, results }: {
             ) : <p className="text-[13px] text-[#9CA3AF]">No tags on this rule.</p>
           )}
         </div>
-      </div>
-    </div>
+    </>
   );
 }

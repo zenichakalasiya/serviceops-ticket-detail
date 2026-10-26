@@ -385,6 +385,29 @@ export type EditorState = { mode: 'create' } | { mode: 'edit'; id: string } | { 
 export const openPolicyEditor = (e: EditorState) => { S.editor = e; S.editorSubs.forEach((f) => f()); };
 const subscribeEditor = (f: () => void) => { S.editorSubs.add(f); return () => S.editorSubs.delete(f); };
 export const usePolicyEditor = () => useSyncExternalStore(subscribeEditor, () => S.editor);
+/* ── Exceptions ────────────────────────────────────────────────────────────────────────────
+ * A request to accept ONE failing rule on ONE endpoint, within one policy, until a date. The
+ * raw result stays Fail; the request sits beside it for the security admin to decide (that
+ * approval screen is not built yet, so a request stays 'Requested'). Live like the policies,
+ * on globalThis so a hot reload cannot split it. Reasons are the four the research found. */
+export const EXCEPTION_REASONS = ['Risk accepted', 'Awaiting maintenance window', 'Fix unavailable', 'Mitigating control in place'] as const;
+export type ExceptionReason = (typeof EXCEPTION_REASONS)[number];
+export interface ComplianceException {
+  policyId: string; endpointId: string; ruleId: string;
+  reason: ExceptionReason; expiresOn: string; justification: string;
+  status: 'Requested'; requestedBy: string; requestedAt: string;
+}
+const X: { list: ComplianceException[]; subs: Set<() => void> } = ((globalThis as any).__complianceExceptions ??= { list: [], subs: new Set() });
+const xKey = (p: string, e: string, r: string) => `${p}|${e}|${r}`;
+export const exceptionStore = {
+  request(x: Omit<ComplianceException, 'status' | 'requestedAt'>) {
+    X.list = [...X.list.filter((o) => xKey(o.policyId, o.endpointId, o.ruleId) !== xKey(x.policyId, x.endpointId, x.ruleId)), { ...x, status: 'Requested', requestedAt: stamp() }];
+    X.subs.forEach((f) => f());
+  },
+};
+export const useExceptions = () => useSyncExternalStore((f) => { X.subs.add(f); return () => X.subs.delete(f); }, () => X.list);
+export const exceptionFor = (list: ComplianceException[], policyId: string, endpointId: string, ruleId: string) =>
+  list.find((o) => o.policyId === policyId && o.endpointId === endpointId && o.ruleId === ruleId);
 
 /** All the offices / tags the fleet carries (for the form's pickers). */
 export const officesOf = (pool: ComplianceEndpoint[]) => [...new Set(pool.map((e) => e.office))].sort();

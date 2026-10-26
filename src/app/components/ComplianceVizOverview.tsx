@@ -26,11 +26,21 @@ import { POSTURES, scoreColor, SEVERITY_COLOR, TARGET_SCORE, vizSnapshot } from 
 const TOP_N = 10;
 
 /** The dashboard's widget card, minus the board's authoring actions. */
-function Widget({ title, info, span, height, flush, children }: {
-  title: string; info?: string; span: number; height?: number; flush?: boolean; children: React.ReactNode;
+function Widget({ title, info, span, height, flush, onClick, hint, children }: {
+  title: string; info?: string; span: number; height?: number; flush?: boolean;
+  /** Makes the whole card a click-through (the KPI cards). */
+  onClick?: () => void; hint?: string; children: React.ReactNode;
 }) {
   return (
-    <div className="dc-WidgetCard tile card" style={{ gridColumn: `span ${span}`, minHeight: height }}>
+    <div
+      className={`dc-WidgetCard tile card ${onClick ? 'cursor-pointer transition-shadow hover:shadow-md' : ''}`}
+      style={{ gridColumn: `span ${span}`, minHeight: height }}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      title={hint}
+      onClick={onClick}
+      onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } } : undefined}
+    >
       <div className="thead" style={{ cursor: 'default', minHeight: 34 }}>
         <div className="left">
           <span className="title ellip">{title}</span>
@@ -59,10 +69,19 @@ function Kpi({ value, unit, color, sub }: { value: React.ReactNode; unit?: strin
   );
 }
 
-export function ComplianceVizOverview({ onOpenPolicy, onOpenEndpoint }: {
+/** Where a dashboard click goes. 'policies' / 'endpoints' open those pages filtered; 'rules'
+ *  opens the rule list (filtered) over the dashboard; 'rule' opens one rule's results. */
+export type ComplianceDrill =
+  | { to: 'policies' | 'endpoints'; rules?: { field: string; condition: string; values: string[] }[] }
+  | { to: 'rules'; title: string; rules: { field: string; condition: string; values: string[] }[] }
+  | { to: 'rule'; ruleId: string };
+
+export function ComplianceVizOverview({ onOpenPolicy, onOpenEndpoint, onDrill }: {
   onOpenPolicy: (policyId: string) => void;
   onOpenEndpoint: (endpointId: string) => void;
+  onDrill?: (d: ComplianceDrill) => void;
 }) {
+  const drill = (d: ComplianceDrill) => () => onDrill?.(d);
   const policies = usePolicies();
   const v = useMemo(() => vizSnapshot(policies), [policies]);
 
@@ -110,7 +129,15 @@ export function ComplianceVizOverview({ onOpenPolicy, onOpenEndpoint }: {
 
   /* DataTable hands every cell to this slot: an endpoint id becomes the product's id pill
      (it opens that endpoint's results), a severity gets its dot, the rest prints plain. */
+  const ruleByName = new Map(topRules.map((r) => [r.rule.name, r.rule.id]));
   const cell = ({ value }: { value: any }) => {
+    if (typeof value === 'string' && ruleByName.has(value) && onDrill) {
+      return (
+        <button type="button" onClick={() => onDrill({ to: 'rule', ruleId: ruleByName.get(value)! })} className="text-left text-[#364658] hover:text-[#3D8BD0] hover:underline">
+          {value}
+        </button>
+      );
+    }
     if (typeof value === 'string' && /^EP-\d+$/.test(value)) {
       return (
         <button type="button" onClick={() => onOpenEndpoint(value)} className="rounded bg-[#e8f4fd] px-2 py-0.5 text-[12px] font-semibold text-[#3D8BD0] hover:bg-[#d0e8f9]">
@@ -135,16 +162,16 @@ export function ComplianceVizOverview({ onOpenPolicy, onOpenEndpoint }: {
     <div className="dash-root" data-theme="light" style={{ background: 'transparent' }}>
       <div className="grid grid-cols-12 gap-3 px-6 pb-8 pt-4">
         {/* ── KPIs ─────────────────────────────────────────────────────────── */}
-        <Widget title="Compliance Score" span={3} info="Checks passed of checks run, across every endpoint every policy assessed on its last scan.">
+        <Widget title="Compliance Score" span={3} onClick={drill({ to: 'policies' })} hint="Open Compliance Policy" info="Checks passed of checks run, across every endpoint every policy assessed on its last scan.">
           <Kpi value={v.score ?? '—'} unit={v.score === null ? undefined : '%'} color={scoreColor(v.score)} sub={`Target ${TARGET_SCORE}%`} />
         </Widget>
-        <Widget title="Endpoints Assessed" span={3} info="Endpoints at least one policy scanned on its last run.">
+        <Widget title="Endpoints Assessed" span={3} onClick={drill({ to: 'endpoints', rules: [{ field: 'x_scanStatus', condition: 'is', values: ['Success'] }] })} hint="Open the endpoints scanned" info="Endpoints at least one policy scanned on its last run.">
           <Kpi value={scanned.length} sub={`of ${v.endpoints.length} in scope`} />
         </Widget>
-        <Widget title="Failed Checks" span={3} info="Rule checks that failed on the last scan, across every policy.">
+        <Widget title="Failed Checks" span={3} onClick={drill({ to: 'policies', rules: [{ field: 'status', condition: 'is', values: ['Non-Compliant'] }] })} hint="Open Non-Compliant policies" info="Rule checks that failed on the last scan, across every policy.">
           <Kpi value={v.failed.toLocaleString('en-US')} color={v.failed ? '#DC2626' : undefined} sub={`of ${(v.passed + v.failed).toLocaleString('en-US')} run`} />
         </Widget>
-        <Widget title="Endpoints Not Reached" span={3} info="Endpoints whose agent was offline — counted in scope, never scored.">
+        <Widget title="Endpoints Not Reached" span={3} onClick={drill({ to: 'endpoints', rules: [{ field: 'x_scanStatus', condition: 'is', values: ['Not reached'] }] })} hint="Open the endpoints not reached" info="Endpoints whose agent was offline — counted in scope, never scored.">
           <Kpi value={notReached.length} color={notReached.length ? '#B45309' : undefined} sub={notReached.length ? notReached.slice(0, 2).map((e) => e.endpoint.hostName).join(', ') + (notReached.length > 2 ? ` +${notReached.length - 2}` : '') : 'Every agent answered'} />
         </Widget>
 
@@ -153,16 +180,24 @@ export function ComplianceVizOverview({ onOpenPolicy, onOpenEndpoint }: {
           <ChartTile chart={trendChart} height={232} />
         </Widget>
         <Widget title="Rule Assessment Results" span={4} height={290} info="Every check run on the last scan — passed or failed.">
-          <ChartTile chart={resultChart} height={232} />
+          <ChartTile chart={resultChart} height={232} onPick={onDrill ? (l: string) => onDrill(l === 'Failed'
+            ? { to: 'rules', title: 'Failing Rules', rules: [{ field: 'x_result', condition: 'is', values: ['Failing'] }] }
+            : { to: 'rules', title: 'Passing Rules', rules: [{ field: 'x_result', condition: 'is', values: ['All passing'] }] }) : undefined} />
         </Widget>
 
         {/* ── severity + policies ──────────────────────────────────────────── */}
         <Widget title="Failed by Severity" span={4} height={300} info="Failed checks by the severity of the rule they broke.">
-          <div className="flex flex-1 flex-col justify-center gap-2.5">
+          <div className="flex flex-1 flex-col justify-center gap-0.5">
             {SEVERITIES.map((s) => {
               const n = v.failedBySeverity[s];
               return (
-                <div key={s} className="flex items-center gap-3">
+                <button
+                  key={s}
+                  type="button"
+                  title={`Open the failing ${s} rules`}
+                  onClick={drill({ to: 'rules', title: `Failing ${s} Rules`, rules: [{ field: 'x_result', condition: 'is', values: ['Failing'] }, { field: 'x_severity', condition: 'is', values: [s] }] })}
+                  className="-mx-2 flex items-center gap-3 rounded px-2 py-1 text-left transition-colors hover:bg-[#F5F7FA]"
+                >
                   <span className="flex w-[78px] items-center gap-2 text-[12px] text-[#364658]">
                     <span className="size-2 rounded-full" style={{ backgroundColor: SEVERITY_COLOR[s] }} />{s}
                   </span>
@@ -171,7 +206,7 @@ export function ComplianceVizOverview({ onOpenPolicy, onOpenEndpoint }: {
                   </span>
                   <span className="w-[34px] text-right text-[13px] font-semibold tabular-nums text-[#364658]">{n}</span>
                   <span className="w-[34px] text-right text-[11px] tabular-nums text-[#7B8FA5]">{Math.round((n / sevTotal) * 100)}%</span>
-                </div>
+                </button>
               );
             })}
           </div>
@@ -200,10 +235,12 @@ export function ComplianceVizOverview({ onOpenPolicy, onOpenEndpoint }: {
 
         {/* ── posture + top endpoints ──────────────────────────────────────── */}
         <Widget title="Endpoint Posture" span={4} height={300} info="Endpoints by how many of their checks pass: Secure 90%+, Moderate 70–89%, Poor 50–69%, Vulnerable under 50%.">
-          <ChartTile chart={postureChart} height={240} />
+          <ChartTile chart={postureChart} height={240} onPick={onDrill ? (l: string) => onDrill({ to: 'endpoints', rules: [l === 'Not reached'
+            ? { field: 'x_scanStatus', condition: 'is', values: ['Not reached'] }
+            : { field: 'x_posture', condition: 'is', values: [l] }] }) : undefined} />
         </Widget>
         <Widget title={`Top ${TOP_N} Endpoints Failed in Last Scan`} span={8} height={300} info="Endpoints with the most failed checks on their last scan.">
-          <ChartTile chart={topEndpointChart} height={240} legend={false} />
+          <ChartTile chart={topEndpointChart} height={240} legend={false} onPick={(host: string) => { const e = topEndpoints.find((x) => x.endpoint.hostName === host); if (e) onOpenEndpoint(e.endpoint.id); }} />
         </Widget>
 
         {/* ── tables ───────────────────────────────────────────────────────── */}

@@ -188,6 +188,7 @@ export function ChartTile({
   height = 180,
   legend = true,
   dataLabels = false,   // print values on the slices themselves
+  onPick,               // host app: (label) => void when a slice / bar / point is clicked
 }: any) {
   useDashStore();
   const rootEl = useRef<HTMLDivElement>(null);
@@ -334,6 +335,24 @@ export function ChartTile({
     else inst.dispatchAction({ type: 'highlight', seriesIndex: i });
   }
   function relax() { setLegendHover(null); chartRef.current?.dispatchAction({ type: 'downplay' }); }
+
+  /* Optional click-through (host app): a click on a slice / bar / point reports its label.
+   * The ECharts instance is created by <EChart> after this tile mounts, so wait a frame for it. */
+  const onPickRef = useRef(onPick);
+  onPickRef.current = onPick;
+  useEffect(() => {
+    if (!onPick) return;
+    let raf = 0; let inst: any = null;
+    const handler = (p: any) => { if (p?.name != null) onPickRef.current?.(String(p.name)); };
+    const attach = () => {
+      inst = chartRef.current;
+      if (!inst) { raf = requestAnimationFrame(attach); return; }
+      inst.on('click', handler);
+      inst.getZr?.().setCursorStyle?.('pointer');
+    };
+    attach();
+    return () => { cancelAnimationFrame(raf); inst?.off('click', handler); };
+  }, [!!onPick]);
 
   const pctOf = (v: number) => ((v / trueTotal) * 100).toFixed(2);
 

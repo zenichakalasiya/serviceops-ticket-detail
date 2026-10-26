@@ -639,6 +639,58 @@ export function benchmarkTree(b: Benchmark): TreeNode[] {
   return [...sections.values()].sort(byNum).map((s) => ({ ...s, children: s.children.sort(byNum) }));
 }
 
+/** A benchmark as rule groups. Custom = its own groups; Default = its CIS tree, each section a
+ *  group and each subsection a sub-group — so both read the same three levels. The admin
+ *  Benchmark page and every technician page read groups through here. */
+export function benchmarkGroups(b: Benchmark): RuleGroup[] {
+  if (b.origin === 'Custom') return b.groups;
+  return benchmarkTree(b).map((s) => ({
+    id: `${b.id}-${s.key}`,
+    name: s.name,
+    ruleIds: s.ruleIds,
+    children: s.children.map((c) => ({ id: `${b.id}-${s.key}-${c.key}`, name: c.name, ruleIds: c.ruleIds })),
+  }));
+}
+
+/* ── The hierarchy numbers every page shows ───────────────────────────────────────────────
+ * The admin's scheme, in ONE place: groups 1, 2, 3 … ; a group's own rules number 1.1, 1.2 … ;
+ * a sub-group takes the next number after them (1.3) and its rules take the third level
+ * (1.3.1, 1.3.2 …). Derived from the benchmark's order — nothing is stored. */
+export interface NumberedRule { id: string; number: string }
+export interface NumberedGroup {
+  key: string;
+  number: string;
+  name: string;
+  rules: NumberedRule[];
+  children: { key: string; number: string; name: string; rules: NumberedRule[] }[];
+}
+export function numberedGroups(b: Benchmark): NumberedGroup[] {
+  return benchmarkGroups(b).map((g, i) => {
+    const n = String(i + 1);
+    return {
+      key: g.id,
+      number: n,
+      name: g.name || 'Untitled group',
+      rules: g.ruleIds.map((id, j) => ({ id, number: `${n}.${j + 1}` })),
+      children: (g.children ?? []).map((s, k) => {
+        const sn = `${n}.${g.ruleIds.length + k + 1}`;
+        return { key: s.id, number: sn, name: s.name || 'Untitled sub-group', rules: s.ruleIds.map((id, j) => ({ id, number: `${sn}.${j + 1}` })) };
+      }),
+    };
+  });
+}
+/** Rule id → its number in this benchmark (e.g. "1.3.2"). */
+export function ruleNumbers(b: Benchmark): Map<string, string> {
+  const m = new Map<string, string>();
+  for (const g of numberedGroups(b)) {
+    for (const r of g.rules) m.set(r.id, r.number);
+    for (const s of g.children) for (const r of s.rules) m.set(r.id, r.number);
+  }
+  return m;
+}
+/** Sorts "1.10" after "1.9". */
+export const byRuleNumber = (a: string, z: string) => a.localeCompare(z, undefined, { numeric: true });
+
 /* ── Formatting ────────────────────────────────────────────────────────────────────────── */
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];

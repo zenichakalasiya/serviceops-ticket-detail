@@ -18,7 +18,7 @@ import { TicketFilterBar } from './TicketFilterBar';
 import type { FilterRule, QuickFilterDef } from './TicketFilterBar';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import {
-  benchmarkRuleIds, benchmarksUsingRule, benchmarkTree, COMPLIANCE_TYPES, fmtDate, groupRuleIds, osVersionOf, osVersionsFor, RULES, ruleById,
+  benchmarkGroups, benchmarkRuleIds, benchmarksUsingRule, COMPLIANCE_TYPES, fmtDate, groupRuleIds, osVersionOf, osVersionsFor, RULES, ruleById,
   PROFILES, profileAllows, SEVERITIES, SEVERITY_PILL,
 } from './complianceData';
 import type { Benchmark, ComplianceRule, ComplianceType, Profile, RuleGroup } from './complianceData';
@@ -611,19 +611,8 @@ const nextGroupName = (gs: RuleGroup[]) => {
   return `Rule Group ${n}`;
 };
 
-/** A benchmark as numbered groups. Custom = its own groups; Default = its CIS tree, each section a
- *  group and each subsection a sub-group — so the two read the same three levels on the detail
- *  page (1 · 1.1 · 1.1.1), and a clone starts from exactly what was shown. The card numbers them,
- *  so the CIS number is not repeated in the name. */
-function groupsOf(b: Benchmark): RuleGroup[] {
-  if (b.origin === 'Custom') return b.groups;
-  return benchmarkTree(b).map((s) => ({
-    id: `${b.id}-${s.key}`,
-    name: s.name,
-    ruleIds: s.ruleIds,
-    children: s.children.map((c) => ({ id: `${b.id}-${s.key}-${c.key}`, name: c.name, ruleIds: c.ruleIds })),
-  }));
-}
+/* A benchmark as numbered groups — benchmarkGroups() in complianceData, shared with every
+   technician page so the 1 · 1.1 · 1.3.1 numbering reads the same everywhere. */
 
 /* ── Detail — full-screen drawer, read only (the ticket detail page's shape) ──────────────── */
 
@@ -646,7 +635,7 @@ function BenchmarkDrawer({ benchmark, benchmarks, onClose, onEdit, onClone, onDe
   onClone: () => void;
   onDelete: () => void;
 }) {
-  const groups = useMemo(() => groupsOf(benchmark), [benchmark]);
+  const groups = useMemo(() => benchmarkGroups(benchmark), [benchmark]);
   // The first group starts open — the rest is one click away.
   const [open, setOpen] = useState<Set<string>>(() => new Set(groups[0] ? [groups[0].id] : []));
   useEffect(() => { setOpen(new Set(groups[0] ? [groups[0].id] : [])); }, [benchmark.id]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -826,7 +815,7 @@ function BenchmarkForm({ editing, source, names, onCancel, onSave }: {
   const [tags, setTags] = useState<string[]>(base?.tags ?? []);
   const [groups, setGroups] = useState<RuleGroup[]>(() =>
     editing ? editing.groups.map(copyGroup)
-      : source ? groupsOf(source).map((g) => ({ ...copyGroup(g), id: newGroup().id, children: (g.children ?? []).map((c) => ({ ...copyGroup(c), id: newGroup().id })) }))
+      : source ? benchmarkGroups(source).map((g) => ({ ...copyGroup(g), id: newGroup().id, children: (g.children ?? []).map((c) => ({ ...copyGroup(c), id: newGroup().id })) }))
         : [newGroup('Rule Group 1')]);
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set(groups.map((g) => g.id)));
   /** Where Attach Rules is aimed: a group, or one of its sub-groups. */

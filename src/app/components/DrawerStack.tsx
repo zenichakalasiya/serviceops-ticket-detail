@@ -35,11 +35,13 @@ import { TaskDrawer } from './TaskDrawer';
 import { ProjectDrawer, projectToProblemShape } from './ProjectDrawer';
 import { mockProjects } from './ProjectsListPage';
 import { CompliancePolicyDrawer } from './CompliancePolicyDrawer';
+import { ComplianceEndpointDrawer } from './ComplianceEndpointDrawer';
+import { ComplianceBenchmarkDrawer } from './ComplianceBenchmarkDrawer';
 
 export type StackModule =
   | 'request' | 'request-v2' | 'problem' | 'change' | 'release'
   | 'hardware-assets' | 'software-assets' | 'non-it-assets' | 'consumable-assets'
-  | 'software-licenses' | 'contracts' | 'purchases' | 'cmdb' | 'patches' | 'patch-deployments' | 'endpoints' | 'vulnerabilities' | 'detected-cves' | 'package-deployments' | 'registry-deployments' | 'knowledge' | 'tasks' | 'report' | 'projects' | 'compliance-policies'
+  | 'software-licenses' | 'contracts' | 'purchases' | 'cmdb' | 'patches' | 'patch-deployments' | 'endpoints' | 'vulnerabilities' | 'detected-cves' | 'package-deployments' | 'registry-deployments' | 'knowledge' | 'tasks' | 'report' | 'projects' | 'compliance-policies' | 'compliance-endpoints' | 'compliance-benchmarks'
   /* Not a module of its own — an approval opens the record it points at, through
      the approvals' own detail page (`ApprovalDrawer`) so it can diverge. */
   | 'approval';
@@ -188,7 +190,9 @@ export function DrawerStackProvider({ children, activePage }: { children: ReactN
     id: s.id,
     // A record opened from BOM is addressed by its CI id, so the tab agrees with the header and
     // with the listing it was opened from. Selection and closing still key off the real id.
-    displayId: s.data?.bomMode ? s.id.replace(/^EP-/, 'CI-') : undefined,
+    displayId: s.data?.bomMode ? s.id.replace(/^EP-/, 'CI-')
+      // An endpoint opened within a policy ("EP-512@CP-101") reads as the pair.
+      : s.module === 'compliance-endpoints' && s.id.includes('@') ? s.id.replace('@', ' · ') : undefined,
     subject: s.subject,
     ...tabMeta(s.data),
   }));
@@ -236,6 +240,11 @@ export function DrawerStackProvider({ children, activePage }: { children: ReactN
       case 'registry-deployments': drawer = <RegistryDeploymentDrawer openAssets={[active.data]} activeAssetId={active.id} {...shared} />; break;
       // Compliance Policy detail page — reads the policy live from its store by id.
       case 'compliance-policies': drawer = <CompliancePolicyDrawer activeAssetId={active.id} {...shared} />; break;
+      // Compliance Endpoint detail page — reads the endpoint and its policies live; `data.fromPolicy`
+      // lands it on Rules for the policy it was opened from.
+      // Compliance Benchmark detail page — reads the benchmark and the policies using it live.
+      case 'compliance-benchmarks': drawer = <ComplianceBenchmarkDrawer activeAssetId={active.id} {...shared} />; break;
+      case 'compliance-endpoints': drawer = <ComplianceEndpointDrawer activeAssetId={active.id} data={active.data} {...shared} />; break;
       case 'knowledge': drawer = <KnowledgeDrawer openAssets={[active.data]} activeAssetId={active.id} {...shared} />; break;
       case 'report': drawer = <ReportDrawer openAssets={[active.data]} activeAssetId={active.id} {...shared} />; break;
       // Task detail page — clone of the Patch detail page; the list adapts the task record.

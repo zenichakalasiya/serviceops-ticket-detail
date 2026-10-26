@@ -69,6 +69,18 @@
   .story li { list-style: none; position: relative; padding-left: 40px; margin-bottom: 12px; }
   .story li::before { counter-increment: step; content: counter(step); position: absolute; left: 0; top: 2px; width: 26px; height: 26px; border-radius: 50%; background: var(--paper); border: 1px solid var(--line); font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; color: var(--muted); }
   .script { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 18px 22px; font-family: var(--display); font-size: 18px; line-height: 1.6; max-width: 68ch; }
+  code { font-family: Consolas, "Courier New", monospace; font-size: .88em; background: var(--paper); border: 1px solid var(--line); border-radius: 4px; padding: 2px 6px; overflow-wrap: anywhere; }
+  .grp { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-ink); font-weight: 600; background: var(--accent-soft) !important; }
+  .fieldtable td:first-child { white-space: nowrap; font-weight: 600; }
+  .fieldtable td:nth-child(3) { color: var(--fg); }
+  .fieldtable td:last-child { color: var(--muted); font-size: 13.5px; }
+  .rule.full .id { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .rule.full .sect { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-ink); font-weight: 600; margin: 16px 0 6px; padding-top: 12px; border-top: 1px solid var(--line); }
+  .pill.neutral { background: var(--paper); color: var(--muted); border: 1px solid var(--line); }
+  .pairs { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 0 0 18px; }
+  .pair { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; background: #fff; min-width: 0; }
+  .pair b { display: block; margin-bottom: 4px; }
+  .pair p { margin: 0; font-size: 14.5px; }
   @media (max-width: 560px) {
     header.head { padding-top: 28px; }
     h1 { font-size: 30px; }
@@ -141,12 +153,123 @@ flowchart LR
     </ul>
     <div class="plain">
       <span class="lbl">One thing to get right in the product</span>
+      <p>Section 4 goes through every field a rule carries, one by one, with a full example.</p>
       <p>The rule's number, like 2.3.7.3, is only meaningful inside one benchmark. The same rule can have a different number in the Windows 10 benchmark, and numbers get reused when CIS retires a rule. Tags are labels that many rules share. So neither the number nor the tags can be the rule's identity. The product needs its own ID for each rule in each operating system version, and shows the CIS number and the tags as information beside it.</p>
     </div>
   </section>
 
+  <section id="s3b">
+    <h2><span class="num">4</span>Inside a rule: every field, explained with one example</h2>
+    <p>Open any rule in the product and you see about twenty pieces of information. They look technical, but each one answers a simple question. They fall into five groups, and the first four come from CIS:</p>
+    <ul>
+      <li><strong>Identity:</strong> which rule is this, and where does it belong?</li>
+      <li><strong>Summary:</strong> what is the setting, why does it matter, and what does it cost?</li>
+      <li><strong>Check and fix:</strong> how do I test it, how do I correct it, and what was it before?</li>
+      <li><strong>References:</strong> which other standards ask for the same thing?</li>
+      <li><strong>Result</strong> (ours, not CIS's): what did we actually find on this computer?</li>
+    </ul>
+    <div class="plain">
+      <span class="lbl">In plain words</span>
+      <p>A rule is like one clause in a building's fire code. The clause has a number and a title ("Fire doors must close by themselves"). It says why ("smoke spreads through an open door in seconds"), what it costs ("doors are heavier to push"), how the inspector checks it ("open the door, let go, it must shut"), how to fix it ("fit a door closer"), and which other codes say the same thing. The inspector's clipboard then adds one more line: what they found at <em>this</em> building, today.</p>
+    </div>
+
+    <h3>One real rule, every field filled in</h3>
+    <p>This is a common Linux rule. It stops anyone signing in remotely as the all-powerful <strong>root</strong> account.</p>
+    <div class="rule full">
+      <div class="id"><span>RUL-DEB11-0412</span><span class="pill neutral">CIS 5.2.5 · Debian Linux 11 v2.0.0</span><span class="pill bad">High</span><span class="pill neutral">Level 1 · Server</span><span class="pill neutral">Automated</span></div>
+      <div class="title">Ensure SSH root login is disabled</div>
+
+      <div class="sect">Summary</div>
+      <dl>
+        <dt>Description</dt><dd>SSH is how administrators connect to a Linux server from another computer. This setting decides whether someone may connect directly as <strong>root</strong>, the account that can do anything.</dd>
+        <dt>Rationale</dt><dd>If root can sign in over the network, an attacker only has to guess one password to own the whole server. Requiring people to sign in as themselves first, then switch to root, also leaves a record of who did what.</dd>
+        <dt>Impact</dt><dd>Administrators can no longer type <code>ssh root@server</code>. They sign in with their own account and use <code>sudo</code>. Any script that connects as root has to be changed first.</dd>
+      </dl>
+
+      <div class="sect">Check and fix</div>
+      <dl>
+        <dt>Audit</dt><dd>Run <code>sshd -T | grep permitrootlogin</code>. The rule <strong>passes</strong> if the answer is <code>permitrootlogin no</code>.</dd>
+        <dt>Remediation</dt><dd>In <code>/etc/ssh/sshd_config</code> set <code>PermitRootLogin no</code>, then restart the SSH service.</dd>
+        <dt>Default value</dt><dd><code>prohibit-password</code>: root may sign in with a key but not a password. Safer than "yes", but CIS wants "no".</dd>
+      </dl>
+
+      <div class="sect">References</div>
+      <dl>
+        <dt>CIS Controls</dt><dd>v8 control 5.4: restrict administrator privileges to dedicated administrator accounts.</dd>
+        <dt>Frameworks</dt><dd>Maps to least-privilege requirements in frameworks such as NIST 800-53 and PCI DSS (the exact clause numbers come with the rule content).</dd>
+        <dt>Tags</dt><dd><span class="pill neutral">ssh</span> <span class="pill neutral">authentication</span> <span class="pill neutral">remote-access</span></dd>
+      </dl>
+
+      <div class="sect">Result on this computer · web-prd-01 (ours)</div>
+      <dl>
+        <dt>Status</dt><dd><span class="pill bad">Fail</span></dd>
+        <dt>Expected</dt><dd><code>permitrootlogin no</code></dd>
+        <dt>Found</dt><dd><code>permitrootlogin yes</code></dd>
+        <dt>First failed</dt><dd>12 Oct 2026 · last checked 19 Oct 2026, 02:04</dd>
+        <dt>Action</dt><dd>Fix being deployed to 3 servers · deployment PKD-1023</dd>
+      </dl>
+    </div>
+
+    <h3>Each field in plain language</h3>
+    <div class="tablewrap">
+      <table class="fieldtable">
+        <tr><th>Field</th><th>The question it answers</th><th>In the example</th><th>Who reads it</th></tr>
+        <tr><td colspan="4" class="grp">Identity</td></tr>
+        <tr><td>Rule ID</td><td>What is this rule's permanent name in <em>our</em> product? It never changes, even when CIS renumbers.</td><td>RUL-DEB11-0412</td><td>Everyone; used in links and exports</td></tr>
+        <tr><td>CIS number</td><td>Where does it sit in CIS's checklist for this edition? Only meaningful with the benchmark version next to it.</td><td>5.2.5 in Debian 11 v2.0.0</td><td>Auditors, admins</td></tr>
+        <tr><td>Title</td><td>What should the setting be, in one line?</td><td>Ensure SSH root login is disabled</td><td>Everyone</td></tr>
+        <tr><td>Benchmark &amp; version</td><td>Which checklist, and which edition of it?</td><td>CIS Debian Linux 11 v2.0.0</td><td>Auditors (evidence)</td></tr>
+        <tr><td>Profile</td><td>How strict is this rule: basic safety for all (Level 1) or extra safety that may get in the way (Level 2)? For which kind of machine?</td><td>Level 1 · Server</td><td>Admin, when building a benchmark</td></tr>
+        <tr><td>Assessment</td><td>Can the scanner check it alone (Automated), or must a person look (Manual)?</td><td>Automated</td><td>Technician</td></tr>
+        <tr><td>Severity</td><td>How bad is it if this fails? Decides what to fix first.</td><td>High</td><td>Technician (priority)</td></tr>
+        <tr><td>Tags</td><td>Which topic labels help me filter? Many rules share a tag, so a tag is never the rule's identity.</td><td>ssh, authentication</td><td>Everyone (search, filters)</td></tr>
+        <tr><td colspan="4" class="grp">Summary</td></tr>
+        <tr><td>Description</td><td>What is this setting, in everyday terms?</td><td>Whether root may connect over SSH</td><td>Technician, new staff</td></tr>
+        <tr><td>Rationale</td><td>Why does it matter? Which attack does it stop? <strong>This is the line to read out when explaining a rule.</strong></td><td>One guessed password would own the server</td><td>Everyone; approvers of exceptions</td></tr>
+        <tr><td>Impact</td><td>What changes or breaks for people if we apply it?</td><td>Admins must use their own account + sudo</td><td>Technician, before fixing</td></tr>
+        <tr><td colspan="4" class="grp">Check and fix</td></tr>
+        <tr><td>Audit procedure</td><td>How do I test it by hand, and what answer means "pass"?</td><td><code>sshd -T</code> shows <code>no</code></td><td>Technician; auditor re-checking</td></tr>
+        <tr><td>Remediation</td><td>How do I correct it? This is what "Deploy fix" pushes.</td><td>Set <code>PermitRootLogin no</code>, restart</td><td>Technician</td></tr>
+        <tr><td>Default value</td><td>What does the system ship with, before anyone changes it?</td><td><code>prohibit-password</code></td><td>Technician (why it failed)</td></tr>
+        <tr><td colspan="4" class="grp">References</td></tr>
+        <tr><td>References</td><td>Where can I read more?</td><td>The SSH manual page</td><td>Curious readers</td></tr>
+        <tr><td>CIS Controls</td><td>Which of CIS's 18 high-level security goals does this rule serve?</td><td>Control 5.4</td><td>Security admin, CISO</td></tr>
+        <tr><td>Framework mappings</td><td>Which regulations ask for the same thing? Lets one scan answer several audits.</td><td>NIST 800-53, PCI DSS</td><td>Auditor</td></tr>
+        <tr><td colspan="4" class="grp">Result on this computer (ours)</td></tr>
+        <tr><td>Status</td><td>Pass, Fail, Manual check, Excepted, Not applicable or Not reached.</td><td>Fail</td><td>Everyone</td></tr>
+        <tr><td>Expected vs Found</td><td>What should it be, and what is it actually? <strong>This pair is the evidence.</strong></td><td><code>no</code> vs <code>yes</code></td><td>Technician, auditor</td></tr>
+        <tr><td>First failed / Last checked</td><td>Since when has it been wrong, and how fresh is this answer?</td><td>12 Oct · 19 Oct</td><td>Technician (drift), auditor</td></tr>
+        <tr><td>Action or exception</td><td>Is someone already fixing it, or has it been waived, by whom and until when?</td><td>Deploying · PKD-1023</td><td>Everyone</td></tr>
+      </table>
+    </div>
+
+    <h3>Pairs people often mix up</h3>
+    <div class="pairs">
+      <div class="pair"><b>Description vs Rationale</b><p>Description says <em>what</em> the setting is. Rationale says <em>why</em> it matters. If you only have time for one, read the rationale.</p></div>
+      <div class="pair"><b>Impact vs Severity</b><p>Impact is the cost of <em>applying</em> the rule (people may be slowed down). Severity is the danger of <em>failing</em> it. A rule can be high severity and low impact; those are the easy wins.</p></div>
+      <div class="pair"><b>Audit vs Remediation</b><p>Audit is the test ("is the door shut?"). Remediation is the repair ("fit a closer"). The scanner runs the audit; "Deploy fix" runs the remediation.</p></div>
+      <div class="pair"><b>Default vs Expected vs Found</b><p>Default is how the system ships. Expected is what CIS wants. Found is what is really on this machine. The rule fails when Found does not match Expected.</p></div>
+      <div class="pair"><b>Profile vs Severity</b><p>Profile (Level 1 or 2) is about how strict a company chooses to be. Severity is about how dangerous one failure is. A Level 2 rule can still be high severity.</p></div>
+      <div class="pair"><b>CIS number vs Rule ID</b><p>The CIS number is a page reference in one edition of the checklist, and can change. Our Rule ID is the rule's permanent name tag.</p></div>
+    </div>
+
+    <h3>Where these fields appear in the product</h3>
+    <p>The rule's side panel keeps the same order, so it reads top to bottom like a story: what it is, why it matters, how to check, how to fix.</p>
+    <div class="tablewrap">
+      <table>
+        <tr><th>Panel area</th><th>Fields shown</th></tr>
+        <tr><td><b>Header</b></td><td>Title, Rule ID, CIS number with benchmark version, and pills for Severity, Profile and Assessment</td></tr>
+        <tr><td><b>Result on this endpoint</b></td><td>Status, Expected vs Found, First failed, Last checked, and the action or exception (only when opened from a policy or an endpoint)</td></tr>
+        <tr><td><b>Summary</b> tab</td><td>Description, Rationale, Impact</td></tr>
+        <tr><td><b>Audit</b> tab</td><td>Audit procedure, Remediation, Default value</td></tr>
+        <tr><td><b>References</b> and <b>Controls</b> tabs</td><td>Reference links, CIS Controls, framework mappings</td></tr>
+        <tr><td><b>Tags</b></td><td>Topic labels, clickable to filter other rules</td></tr>
+      </table>
+    </div>
+  </section>
+
   <section id="s4">
-    <h2><span class="num">4</span>Rules, benchmarks and policies: how they stack</h2>
+    <h2><span class="num">5</span>Rules, benchmarks and policies: how they stack</h2>
     <p>Three words carry the whole module. They nest inside each other.</p>
     <figure>
 <pre class="mermaid">
@@ -185,7 +308,7 @@ flowchart TB
   </section>
 
   <section id="s5">
-    <h2><span class="num">5</span>Why does an IT service desk (ITSM) need this?</h2>
+    <h2><span class="num">6</span>Why does an IT service desk (ITSM) need this?</h2>
     <p>Dedicated security scanners already exist. The reason compliance belongs inside ServiceOps is that a failed rule is not useful until somebody fixes it, and fixing is what a service desk already does all day.</p>
     <figure>
 <pre class="mermaid">
@@ -212,7 +335,7 @@ flowchart LR
   </section>
 
   <section id="s6">
-    <h2><span class="num">6</span>The two people, and what each one does</h2>
+    <h2><span class="num">7</span>The two people, and what each one does</h2>
     <p>Our module has two users on purpose. They are different jobs with different knowledge.</p>
     <figure>
 <pre class="mermaid">
@@ -246,7 +369,7 @@ flowchart LR
   </section>
 
   <section id="s7">
-    <h2><span class="num">7</span>The whole flow, start to finish</h2>
+    <h2><span class="num">8</span>The whole flow, start to finish</h2>
     <p>This is the picture to use when explaining the module in one go. Steps 1 to 4 are built today; 5 to 8 are what the research says every competitor has and we still need.</p>
     <figure>
 <pre class="mermaid">
@@ -287,7 +410,7 @@ flowchart TB
   </section>
 
   <section id="s8">
-    <h2><span class="num">8</span>A worked example you can retell</h2>
+    <h2><span class="num">9</span>A worked example you can retell</h2>
     <p>Follow one laptop through the loop.</p>
     <ol class="story">
       <li>Priya in Finance has a Windows 11 laptop. It is in the company's asset list, so ServiceOps already knows it exists.</li>
@@ -303,7 +426,7 @@ flowchart TB
   </section>
 
   <section id="s9">
-    <h2><span class="num">9</span>Words you will hear, and what they mean</h2>
+    <h2><span class="num">10</span>Words you will hear, and what they mean</h2>
     <div class="tablewrap"><table>
       <thead><tr><th>Word</th><th>Plain meaning</th></tr></thead>
       <tbody>
@@ -329,7 +452,7 @@ flowchart TB
   </section>
 
   <section id="s10">
-    <h2><span class="num">10</span>How to say it in thirty seconds</h2>
+    <h2><span class="num">11</span>How to say it in thirty seconds</h2>
     <div class="script">
       "Every computer has hundreds of security settings, and most of them start out convenient rather than safe. CIS is a non-profit where thousands of experts agree on what safe looks like, one checklist per operating system. Our Compliance module takes that checklist, lets the security admin tailor it, and lets a technician run it against the company's computers on a schedule. Each rule passes or fails on each machine, so you get a score and a list of what to fix. Because it lives inside ServiceOps, a failure becomes a task, a deployment or a change request with one click, and when a rule genuinely cannot be fixed, there is a proper exception with a reason, an approver and an expiry date. The report at the end is the proof an auditor asks for."
     </div>
