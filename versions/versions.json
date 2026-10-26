@@ -112,7 +112,7 @@
     {
       "id": "support-portal", "name": "Support Portal", "area": "Admin", "route": "#/admin/support-portal",
       "versions": [
-        { "version": "v1", "date": "2026-10-23", "commit": "2b3c39a", "changes": ["Baseline: portal listing cards, create flow, the full portal builder (widgets, banner, theme, branding, tour) and Settings.", "The default portal is fixed; several portals can be published; Publish and Save as draft ask no confirmation."] }
+        { "version": "v1", "date": "2026-10-26", "commit": "ca0aa2d", "changes": ["Baseline: portal listing cards, create flow, the full portal builder (widgets, banner, theme, branding, tour) and Settings.", "The default portal is fixed; several portals can be published; Publish and Save as draft ask no confirmation.", "The default portal is always live: its card has no status switch, and Save as draft keeps it published."] }
       ]
     },
     {
