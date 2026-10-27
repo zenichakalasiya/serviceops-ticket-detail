@@ -3027,3 +3027,30 @@ and ask before building any new one.
 - **Create Policy has a required OS Type (27 Oct 2026, Zeni).** It sits beside Benchmark (where "Benchmark
   Filter by Tags" was) and narrows the Benchmark list to that type; Benchmark is disabled until it is set.
   It is NOT stored — it is read from the chosen benchmark. Changing it clears the benchmark and endpoints.
+- **Compliance pass, 27 Oct 2026 (later) — supersedes the "Technician flow rebuilt" Overview tabs above.**
+  - **No Overview tab** on the Policy, Benchmark or Endpoint detail pages. Policy opens on **Endpoints** (cards:
+    Average Compliance [static, `StatCard.static`] · Compliant · Non-Compliant · Not Scanned; Actions =
+    outlined **View rule results** → sidebar of that endpoint's rule results, `ComplianceEndpointPanel`
+    breakdown; the **EP ID** opens the Endpoint page). Rules tab = plain tree (`RuleGroupTree plain`:
+    numbers + names only). Run History has no cards. Benchmark page opens on Rules; its Policies tab has
+    status cards. Endpoint page = **Policies · Audit Trail** only (no Rules, no Exceptions); a Policies row
+    opens the breakdown headed by the **policy** (`headBy="policy"`, no subtext).
+  - **Compliance % appears only** in the Policy header, its Endpoints tab and Run History (removed from
+    Benchmark / Endpoint pages and their tabs). Listings: Benchmark lost Failing Rules/Compliance/Posture/
+    Last Scan; Endpoints lost Posture/Failed; Policy listing merges score into Status ("Non-Compliant · 83%"),
+    no Enable column, the Schedule action icon is blue when scheduled (tooltip = schedule + next scan).
+  - **Demo scan data never goes fail → fail** (`findingsOf`): failing rules all passed last time.
+  - **No Tag device filter anywhere** — seed policies saved by tag are converted to Endpoint on load.
+  - **Admin › Rules:** rules carry `assessment` (Automated/Manual; `MANUAL_CHECKS`). The rule side panel
+    has detail chips under the title (`MetaChip`). **V1 | V2 switch** beside the logo on `#/admin/compliance*`
+    (`complianceRuleUi.ts`, opens on V2): V2 = one scrolling page (title → data → divider; Rule Condition
+    table; one "CIS Controls" block), V1 = tabs. Admin only (`RuleDetailPanel admin`).
+  - **Admin › Benchmark:** profile is `BenchmarkProfile` = 'L1' | 'L2' | 'L1+L2' (`profileLevels`/`profileOf`/
+    `profileLabel`). Listing: Origin tag, live **Policies** count (`usePolicyCounts`). Detail: chips under the
+    title, no properties panel. Form: Name | Profile (two boxes, one or both) · Type | Version · Description
+    full width. **Rule groups follow the live ObserveOps flow** (verified on 172.16.12.100): recursive
+    `GroupNode`, up to **7 levels**; a new group arrives with its name field (✓ / Enter saves; ⊕ refuses
+    until named); ⊕ on an **open** group adds a sub-group inside it, on a **closed** group adds the next group
+    beside it; rules number first (1.1.1.1), sub-groups after (1.1.1.3); a group holding only sub-groups has
+    no Attach. Row actions show on hover: ✎ · ⊕ · blue **Attach rules** · red 🗑. Rule rows: L1 + severity
+    flush right, ✕ / › on hover. `groupRuleIds` and `ruleNumbers` are recursive.

@@ -61,18 +61,27 @@ export interface ComplianceRule {
   /** CIS profile level: L1 = must have (practical, low impact); L2 = good to have (defence in
    *  depth, may cost some function). An L2 benchmark includes L1 rules; an L1 one never takes L2. */
   profile: Profile;
+  /** CIS assessment status: Automated = the agent checks it; Manual = a person has to review it. */
+  assessment: Assessment;
   /** The CIS section the check lives under — Default benchmarks group their rules by it. */
   section: [string, string];
   subsection?: [string, string];
 }
 
 export type Profile = 'L1' | 'L2';
+export type Assessment = 'Automated' | 'Manual';
+/** A benchmark's profile: Level 1 rules only, Level 2 rules only, or both. A rule is L1 or L2. */
+export type BenchmarkProfile = 'L1' | 'L2' | 'L1+L2';
 export const PROFILES: { value: Profile; label: string; tip: string }[] = [
-  { value: 'L1', label: 'L1', tip: 'Must have — only Level 1 rules can be attached' },
-  { value: 'L2', label: 'L2', tip: 'Good to have — Level 2 rules on top of every Level 1 rule' },
+  { value: 'L1', label: 'Level 1', tip: 'Must have — practical, low-impact rules' },
+  { value: 'L2', label: 'Level 2', tip: 'Good to have — defence in depth, may cost some function' },
 ];
+/** The levels a benchmark profile is made of, and back. */
+export const profileLevels = (p: BenchmarkProfile): Profile[] => (p === 'L1+L2' ? ['L1', 'L2'] : [p]);
+export const profileOf = (levels: Profile[]): BenchmarkProfile => (levels.includes('L1') && levels.includes('L2') ? 'L1+L2' : levels.includes('L2') ? 'L2' : 'L1');
+export const profileLabel = (p: BenchmarkProfile) => (p === 'L1+L2' ? 'L1 + L2' : p);
 /** Which rule profiles a benchmark of this profile may hold. */
-export const profileAllows = (benchmark: Profile, rule: Profile) => benchmark === 'L2' || rule === 'L1';
+export const profileAllows = (benchmark: BenchmarkProfile, rule: Profile) => profileLevels(benchmark).includes(rule);
 
 /* ── Platforms ─────────────────────────────────────────────────────────────────────────── */
 
@@ -460,6 +469,8 @@ const CHECKS: Check[] = [
 
 /* The checks CIS puts at Level 2 — defence in depth that can cost some function. */
 const L2_CHECKS = new Set(['auditd', 'spooler', 'snmp', 'logbuffer', 'fortitimeout']);
+/** Checks a person has to review — CIS marks these "Manual"; everything else the agent assesses. */
+const MANUAL_CHECKS = new Set(['tmp', 'banner', 'fortianyany']);
 
 /* ── Expand checks into rules ───────────────────────────────────────────────────────────── */
 
@@ -482,6 +493,7 @@ export const RULES: ComplianceRule[] = CHECKS.flatMap((c) =>
     references: c.references,
     controls: c.controls,
     profile: (L2_CHECKS.has(c.key) ? 'L2' : 'L1') as Profile,
+    assessment: (MANUAL_CHECKS.has(c.key) ? 'Manual' : 'Automated') as Assessment,
     section: c.section,
     subsection: c.subsection,
   })),
@@ -507,13 +519,13 @@ export interface RuleGroup {
   name: string;
   /** Rules attached straight to the group — numbered 1.1, 1.2 … */
   ruleIds: string[];
-  /** Sub-groups, ONE level deep. They number on after the group's own rules (1.3) and their
-   *  rules take a third level (1.3.1). A sub-group never holds sub-groups of its own. */
+  /** Sub-groups, nesting up to 7 levels in all. They number on after the group's own rules
+   *  (1.3) and their rules take the next level (1.3.1); the same again below. */
   children?: RuleGroup[];
 }
 
 /** Every rule a group holds, its sub-groups' included. */
-export const groupRuleIds = (g: RuleGroup): string[] => [...g.ruleIds, ...(g.children ?? []).flatMap((c) => c.ruleIds)];
+export const groupRuleIds = (g: RuleGroup): string[] => [...g.ruleIds, ...(g.children ?? []).flatMap(groupRuleIds)];
 
 export interface Benchmark {
   id: string;
@@ -522,8 +534,8 @@ export interface Benchmark {
   type: ComplianceType;
   /** The ONE OS version the benchmark is written for ("Debian Linux 11"); its rules are that version's. */
   osVersion: string;
-  /** L1 = must-have rules only; L2 = L1 + good-to-have rules. */
-  profile: Profile;
+  /** L1 = Level 1 rules only; L2 = Level 2 rules only; L1+L2 = both. */
+  profile: BenchmarkProfile;
   /** Default = ships with the product (CIS), read-only; Custom = built here. */
   origin: 'Default' | 'Custom';
   /** Custom benchmarks are authored as one level of named groups. Default ones are not stored
@@ -587,8 +599,8 @@ const SEED: Omit<Benchmark, 'osVersion' | 'profile'>[] = [
 export const BENCHMARKS_SEED: Benchmark[] = SEED.map((b) => {
   const ids = b.groups.flatMap(groupRuleIds);
   const first = ruleById(ids[0] ?? '');
-  // A benchmark is L2 exactly when it holds an L2 rule — read off its rules, like its OS version.
-  const profile: Profile = ids.some((id) => ruleById(id)?.profile === 'L2') ? 'L2' : 'L1';
+  // The profile is read off its rules, like its OS version: the levels it actually holds.
+  const profile = profileOf([...new Set(ids.map((id) => ruleById(id)?.profile).filter(Boolean))] as Profile[]);
   return { ...b, osVersion: first ? osVersionOf(first) : '', profile };
 });
 
@@ -677,10 +689,12 @@ export function numberedGroups(b: Benchmark): NumberedGroup[] {
 /** Rule id → its number in this benchmark (e.g. "1.3.2"). */
 export function ruleNumbers(b: Benchmark): Map<string, string> {
   const m = new Map<string, string>();
-  for (const g of numberedGroups(b)) {
-    for (const r of g.rules) m.set(r.id, r.number);
-    for (const s of g.children) for (const r of s.rules) m.set(r.id, r.number);
-  }
+  // Any depth: rules 1.1, 1.2 …, then sub-groups take the next numbers and recurse.
+  const walk = (g: RuleGroup, n: string) => {
+    g.ruleIds.forEach((id, j) => m.set(id, `${n}.${j + 1}`));
+    (g.children ?? []).forEach((c, k) => walk(c, `${n}.${g.ruleIds.length + k + 1}`));
+  };
+  benchmarkGroups(b).forEach((g, i) => walk(g, String(i + 1)));
   return m;
 }
 /** Sorts "1.10" after "1.9". */

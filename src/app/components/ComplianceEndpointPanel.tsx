@@ -88,7 +88,10 @@ type View =
   /** Request exception — one level below a failed result, in the same panel. */
   | { kind: 'exception'; endpointId: string; ruleId: string };
 
-export function ComplianceEndpointPanel({ endpointId, ruleId, policyId, onClose, onOpenEndpoint, onOpenPolicy }: {
+export function ComplianceEndpointPanel({ endpointId, ruleId, policyId, onClose, onOpenEndpoint, onOpenPolicy, headBy = 'endpoint' }: {
+  /** Whose ID + name heads the breakdown: the endpoint (opened from a policy) or the POLICY
+      (opened from the endpoint's own page, where the endpoint is already the page). */
+  headBy?: 'endpoint' | 'policy';
   /** With ruleId: open straight on this endpoint's result for the rule (the endpoint page).
       Without ruleId: open on this endpoint's rule groups for the policy. */
   endpointId?: string;
@@ -145,11 +148,27 @@ export function ComplianceEndpointPanel({ endpointId, ruleId, policyId, onClose,
               <button type="button" onClick={back} aria-label="Back" title="Back" className="-mt-1 flex size-8 flex-shrink-0 items-center justify-center rounded text-[#7B8FA5] transition-colors hover:bg-[#F3F4F6] hover:text-[#364658]"><ArrowLeft size={18} /></button>
             )}
             <div className="min-w-0">
-              {view.kind === 'breakdown' && ep && (
+              {view.kind === 'breakdown' && ep && headBy === 'policy' && policy && (
+                <>
+                  <h3 className="flex min-w-0 items-center gap-2 text-[16px] font-semibold leading-6 text-[#364658]">
+                    {onOpenPolicy ? (
+                      <button type="button" onClick={() => { onClose(); onOpenPolicy(policy.id); }} title="Open policy" className="rounded bg-[#e8f4fd] px-2 py-0.5 text-[12px] font-semibold text-[#3D8BD0] hover:underline">{policy.id}</button>
+                    ) : (
+                      <span className="rounded bg-[#e8f4fd] px-2 py-0.5 text-[12px] font-semibold text-[#3D8BD0]">{policy.id}</span>
+                    )}
+                    <span className="truncate">{policy.name}</span>
+                  </h3>
+                </>
+              )}
+              {view.kind === 'breakdown' && ep && headBy === 'endpoint' && (
                 <>
                   <h3 className="flex min-w-0 items-center gap-2 text-[16px] font-semibold leading-6 text-[#364658]">
                     {ep.real && <span className="size-2.5 flex-shrink-0 rounded-full" style={{ backgroundColor: ep.agentOnline ? '#22C55E' : '#F59E0B' }} title={ep.agentOnline ? 'Agent online' : 'Agent offline'} />}
-                    <span className="rounded bg-[#e8f4fd] px-2 py-0.5 text-[12px] font-semibold text-[#3D8BD0]">{ep.id}</span>
+                    {onOpenEndpoint ? (
+                      <button type="button" onClick={() => { onClose(); onOpenEndpoint(ep.id); }} title="Open endpoint details" className="rounded bg-[#e8f4fd] px-2 py-0.5 text-[12px] font-semibold text-[#3D8BD0] hover:underline">{ep.id}</button>
+                    ) : (
+                      <span className="rounded bg-[#e8f4fd] px-2 py-0.5 text-[12px] font-semibold text-[#3D8BD0]">{ep.id}</span>
+                    )}
                     <span className="truncate">{ep.hostName}</span>
                   </h3>
                   <p className="mt-1 flex flex-wrap items-center gap-x-2 text-[12px] text-[#7B8FA5]">
@@ -183,7 +202,7 @@ export function ComplianceEndpointPanel({ endpointId, ruleId, policyId, onClose,
           const mine = findings.filter((f) => f.endpointId === ep.id);
           const ok = mine.filter((f) => f.passed).length;
           const got = mine.length > 0;
-          const sp = pct(ok, mine.length);
+          const fresh = mine.filter((f) => f.prevPassed === true && !f.passed).length;
           return (
             <div className="flex-1 overflow-y-auto pb-5">
               <div className="-ml-1 mr-1 pt-4">
@@ -191,17 +210,15 @@ export function ComplianceEndpointPanel({ endpointId, ruleId, policyId, onClose,
                   rules={[]}
                   onApplyFilter={() => {}}
                   cards={[
-                    { label: 'Compliance', value: got ? `${sp}%` : '—', sub: got ? `${ok} of ${mine.length} checks pass` : 'Not scanned', valueColor: got ? scoreColor(sp) : DIM },
                     { label: 'Passed', value: got ? ok : '—', sub: 'rules', valueColor: got ? '#15803D' : DIM },
                     { label: 'Failed', value: got ? mine.length - ok : '—', sub: 'rules', valueColor: got && mine.length - ok ? '#DC2626' : DIM },
-                    { label: 'New Failures', value: got ? mine.filter((f) => f.prevPassed === true && !f.passed).length : '—', sub: 'passed last scan, fail now', valueColor: DIM },
+                    { label: 'New Failures', value: got ? fresh : '—', sub: 'passed last scan, fail now', valueColor: got && fresh ? '#B45309' : DIM },
                   ]}
                 />
               </div>
               <div className="space-y-4 px-5">
                 {got ? (
                   <>
-                    <FailedBySeverity counts={severityCounts(mine)} />
                     <ComplianceBreakdown benchmark={benchmark} findings={mine} onRule={(rid) => push({ kind: 'result', endpointId: ep.id, ruleId: rid })} />
                   </>
                 ) : (
@@ -269,12 +286,15 @@ export function ComplianceEndpointPanel({ endpointId, ruleId, policyId, onClose,
 
 export interface RuleTally { passed: number; failed: number }
 
-export function RuleGroupTree({ benchmark, resultOf, right, onRule, title = 'Rules', note, show }: {
+export function RuleGroupTree({ benchmark, resultOf = () => null, right, onRule, title = 'Rules', note, show, plain = false }: {
   benchmark: Benchmark;
   /** What this page knows about a rule — null when it was not checked. */
-  resultOf: (ruleId: string) => RuleTally | null;
+  resultOf?: (ruleId: string) => RuleTally | null;
   /** The end of a rule row (Pass/Fail icons, or "Failed on 3 of 4"). */
-  right: (ruleId: string, t: RuleTally | null) => React.ReactNode;
+  right?: (ruleId: string, t: RuleTally | null) => React.ReactNode;
+  /** The rules and nothing else — numbers and names, no results, no severity (the Policy and
+      Benchmark Rules tabs). Every group starts open. */
+  plain?: boolean;
   onRule: (ruleId: string) => void;
   title?: string;
   /** A short line at the right of the header (e.g. "Previous → Last scan"). */
@@ -299,18 +319,18 @@ export function RuleGroupTree({ benchmark, resultOf, right, onRule, title = 'Rul
   const [open, setOpen] = useState<Set<string>>(new Set());
   useEffect(() => {
     const keys: string[] = [];
+    if (plain) { setOpen(new Set(tree.flatMap((g) => [g.key, ...g.children.map((s) => s.key)]))); return; }
     for (const g of tree) {
       const subsFailed = g.children.filter((s) => tally(s.rules).failed);
       if (tally(g.rules).failed || subsFailed.length) keys.push(g.key);
       keys.push(...subsFailed.map((s) => s.key));
     }
     setOpen(new Set(keys));
-  }, [tree, sig]);
+  }, [tree, sig, plain]);
   const toggle = (k: string) => setOpen((o) => { const n = new Set(o); if (n.has(k)) n.delete(k); else n.add(k); return n; });
 
   const head = (key: string, number: string, name: string, rules: NumberedRule[], depth: 0 | 1) => {
     const { ok, total } = tally(rules);
-    const sp = pct(ok, total);
     return (
       <button
         type="button"
@@ -320,9 +340,12 @@ export function RuleGroupTree({ benchmark, resultOf, right, onRule, title = 'Rul
         <ChevronRight size={15} className={`flex-shrink-0 text-[#7B8FA5] transition-transform ${open.has(key) ? 'rotate-90' : ''}`} />
         <span className="w-[40px] flex-shrink-0 text-[13px] font-semibold tabular-nums text-[#364658]">{number}</span>
         <span className={`min-w-0 flex-1 truncate text-[13px] text-[#364658] ${depth ? '' : 'font-medium'}`}>{name}</span>
-        <span className="text-[12px] tabular-nums text-[#7B8FA5]" title="Rules passing / rules checked">{ok}/{total}</span>
-        <span className="w-[42px] text-right text-[12px] font-semibold tabular-nums" style={{ color: scoreColor(sp) }}>{sp ?? '—'}%</span>
-        <ResultIcon passed={total ? ok === total : null} />
+        {!plain && (
+          <>
+            <span className="text-[12px] tabular-nums text-[#7B8FA5]" title="Rules passing / rules checked">{ok}/{total}</span>
+            <ResultIcon passed={total ? ok === total : null} />
+          </>
+        )}
       </button>
     );
   };
@@ -336,11 +359,11 @@ export function RuleGroupTree({ benchmark, resultOf, right, onRule, title = 'Rul
         onClick={() => onRule(r.id)}
         className={`group/rule flex w-full items-center gap-3 py-2 pr-4 text-left transition-colors hover:bg-[#F5F7FA] ${depth === 2 ? 'pl-[84px]' : 'pl-[60px]'}`}
       >
-        <span className="h-4 w-[3px] flex-shrink-0 rounded-full" style={{ backgroundColor: SEVERITY_COLOR[r.severity] }} title={r.severity} />
+        {!plain && <span className="h-4 w-[3px] flex-shrink-0 rounded-full" style={{ backgroundColor: SEVERITY_COLOR[r.severity] }} title={r.severity} />}
         <span className="w-[44px] flex-shrink-0 text-[12px] tabular-nums text-[#7B8FA5]">{nr.number}</span>
         <span className="min-w-0 flex-1 truncate text-[13px] text-[#364658] group-hover/rule:text-[#3D8BD0]">{r.name}</span>
-        <SeverityPill severity={r.severity} />
-        {right(r.id, resultOf(r.id))}
+        {!plain && <SeverityPill severity={r.severity} />}
+        {!plain && right?.(r.id, resultOf(r.id))}
         <ChevronRight size={14} className="flex-shrink-0 text-[#B6C0CC] group-hover/rule:text-[#3D8BD0]" />
       </button>
     );

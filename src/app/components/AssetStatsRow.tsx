@@ -36,6 +36,8 @@ export type StatCard = {
   hint?: string;
   filter?: Omit<FilterRule, 'id'>[];
   valueColor?: string;
+  /** A read-only figure — never clickable, even in a strip whose other cards filter. */
+  static?: boolean;
 };
 
 /* The strip renderer, extracted so every module's listing builds its OWN card set
@@ -78,7 +80,7 @@ export function StatsCardsRow({
 
   const isApplied = (label: string) =>
     onCardClick ? activeLabel === label : rules.some((r) => r.id.startsWith(`kpi-${label}-`));
-  const clickable = (c: StatCard) => !!onCardClick || !!c.filter;
+  const clickable = (c: StatCard) => !c.static && (!!onCardClick || !!c.filter);
   const activate = (c: StatCard, on: boolean) => {
     if (onCardClick) return onCardClick(c);
     if (c.filter) onApplyFilter(on ? [] : c.filter.map((r, i) => ({ ...r, id: `kpi-${c.label}-${i}` })));

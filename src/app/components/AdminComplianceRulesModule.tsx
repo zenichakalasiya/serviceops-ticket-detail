@@ -129,6 +129,7 @@ export function AdminComplianceRulesModule({ benchmarks = BENCHMARKS_SEED }: { b
 
       {open && (
         <RuleDetailPanel
+          admin
           rule={open}
           usedIn={benchmarksUsingRule(benchmarks, open.id).map((b) => b.name)}
           onClose={() => setOpenId(null)}

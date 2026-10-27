@@ -1,13 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { ArrowLeft, CalendarClock, Info, Plus, X } from 'lucide-react';
+import { ArrowLeft, Building2, CalendarClock, Info, Monitor, Plus, Wifi, X } from 'lucide-react';
 import { ErrorText, FieldLabel, RuleSelect, inputCls as formInputCls } from './FormRuleControls';
+import { TicketFilterBar } from './TicketFilterBar';
+import type { FilterRule, QuickFilterDef } from './TicketFilterBar';
+import { matchRules, optionsOf, selectAttr } from './ComplianceShared';
 import type { SelectOption } from './FormRuleControls';
 import { PickerDrawer } from './CreatePatchDeployment';
 import type { PickerColumn } from './CreatePatchDeployment';
 import { TagCell } from './ComplianceShared';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
-import { BENCHMARKS_SEED, COMPLIANCE_TYPES, benchmarkRuleIds } from './complianceData';
+import { BENCHMARKS_SEED, COMPLIANCE_TYPES, benchmarkRuleIds, profileLabel } from './complianceData';
 import type { ComplianceType } from './complianceData';
 import { TECH_GROUPS, TECHNICIANS } from './technicianRoster';
 import {
@@ -31,7 +34,6 @@ const inputCls = formInputCls.replace('rounded-md', 'rounded');
 const AXES: { value: DeviceAxis; label: string }[] = [
   { value: 'endpoint', label: 'Endpoint' },
   { value: 'office', label: 'Remote Office' },
-  { value: 'tag', label: 'Tag' },
 ];
 const FREQS: { value: Frequency; label: string }[] = [
   { value: 'none', label: 'None' },
@@ -213,13 +215,26 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
   const pool = useMemo(() => endpointsForBenchmark(benchmark), [benchmark]);
   const resolved = useMemo(() => resolvedEndpoints(d), [d]);
 
-  const osTypeOptions = COMPLIANCE_TYPES.map((t) => {
-    const n = BENCHMARKS_SEED.filter((b) => b.type === t).length;
-    return { value: t, label: t, hint: `${n} benchmark${n === 1 ? '' : 's'}` };
-  });
+  const osTypeOptions = COMPLIANCE_TYPES.map((t) => ({ value: t, label: t }));
+  /* Many benchmarks per type, so the menu searches and groups them under their OS version. */
   const benchOptions = useMemo(() => BENCHMARKS_SEED
     .filter((b) => b.type === osType)
-    .map((b) => ({ value: b.id, label: b.name, hint: `${b.osVersion} · ${b.origin}` })), [osType]);
+    .sort((a, b) => a.osVersion.localeCompare(b.osVersion) || a.name.localeCompare(b.name))
+    .map((b) => ({ value: b.id, label: b.name, hint: `${profileLabel(b.profile)} · ${b.origin}`, group: b.osVersion })), [osType]);
+
+  /* The endpoint picker's filters — the same filter bar the Attach Rules picker uses. */
+  const [pickRules, setPickRules] = useState<FilterRule[]>([]);
+  const pickAttrs = useMemo(() => [
+    selectAttr('office', 'Remote Office', Building2, optionsOf(pool, (e) => e.office).map(({ label }) => ({ label }))),
+    selectAttr('agent', 'Agent Status', Wifi, [{ label: 'Online', color: '#22C55E' }, { label: 'Offline', color: '#F59E0B' }]),
+    selectAttr('os', 'Operating System', Monitor, optionsOf(pool, (e) => e.osName).map(({ label }) => ({ label }))),
+  ], [pool]);
+  const pickQuick = useMemo<QuickFilterDef[]>(() => [
+    { field: 'office', icon: Building2, tip: 'Filter by remote office', title: 'Remote Office is', width: 220, row: 'plain', options: pickAttrs[0].options! },
+    { field: 'agent', icon: Wifi, tip: 'Filter by agent status', title: 'Agent Status is', width: 180, row: 'dot', options: pickAttrs[1].options! },
+    { field: 'os', icon: Monitor, tip: 'Filter by operating system', title: 'Operating System is', width: 240, row: 'plain', options: pickAttrs[2].options! },
+  ], [pickAttrs]);
+  const pickRows = useMemo(() => matchRules(pool, pickRules, (e, k) => (k === 'office' ? e.office : k === 'agent' ? (e.agentOnline ? 'Online' : 'Offline') : k === 'os' ? e.osName : '')), [pool, pickRules]);
 
   const officeOptions = officesOf(pool).map((o) => ({ value: o, label: `${o} (${pool.filter((e) => e.office === o).length})` }));
   const tagOptions = deviceTagsOf(pool).map((t) => ({ value: t, label: `${t} (${pool.filter((e) => e.tags.includes(t)).length})` }));
@@ -308,17 +323,17 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-[1100px] space-y-10 px-4 py-6">
+        <div className="mx-auto max-w-[840px] space-y-10 px-4 py-6">
           <Section title="Policy Details" sub="What the policy is called and what it is for.">
             <div className="grid grid-cols-2 gap-x-2 gap-y-4">
-              <div className="col-span-2">
+              <div>
                 <FieldLabel required>Policy Name</FieldLabel>
                 <input autoFocus value={d.name} onChange={(e) => set({ name: e.target.value })} placeholder="Must be unique" className={`${inputCls} ${tried && !d.name.trim() ? '!border-[#F25C4E]' : ''}`} />
                 <ErrorText>{tried && !d.name.trim() ? 'Enter a name' : ''}</ErrorText>
               </div>
-              <div className="col-span-2">
+              <div>
                 <FieldLabel>Description</FieldLabel>
-                <textarea value={d.description} onChange={(e) => set({ description: e.target.value })} placeholder="Write a description" rows={2} className={`${inputCls} !h-auto resize-y py-2 leading-[18px]`} />
+                <textarea value={d.description} onChange={(e) => set({ description: e.target.value })} placeholder="Write a description" rows={1} className={`${inputCls} resize-y py-2 leading-[18px]`} />
               </div>
             </div>
           </Section>
@@ -346,7 +361,7 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
                           {[
                             ['Type', benchmark.type],
                             ['Version', benchmark.osVersion],
-                            ['Profile', benchmark.profile],
+                            ['Profile', profileLabel(benchmark.profile)],
                             ['Origin', benchmark.origin],
                             ['Rules', String(benchmarkRuleIds(benchmark).length)],
                             ['Endpoints', String(pool.length)],
@@ -358,7 +373,7 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
                     </Tooltip>
                   )}
                 </div>
-                <RuleSelect className="!rounded" value={d.benchmarkId ? [d.benchmarkId] : []} options={benchOptions} onChange={(v) => v[0] && changeBenchmark(v[0])} invalid={tried && !!osType && !d.benchmarkId} disabled={!osType} placeholder={!osType ? 'Choose an OS Type first' : benchOptions.length ? 'Select' : `No ${osType} benchmark yet`} />
+                <RuleSelect className="!rounded" searchable value={d.benchmarkId ? [d.benchmarkId] : []} options={benchOptions} onChange={(v) => v[0] && changeBenchmark(v[0])} invalid={tried && !!osType && !d.benchmarkId} disabled={!osType} placeholder={!osType ? 'Choose an OS Type first' : benchOptions.length ? 'Select' : `No ${osType} benchmark yet`} />
                 <ErrorText>{tried && osType && !d.benchmarkId ? 'Choose a benchmark' : ''}</ErrorText>
               </div>
             </div>
@@ -371,7 +386,7 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
             )}
           </Section>
 
-          <Section title="Endpoints" sub="Which endpoints the policy assesses — pick them one by one, or by remote office or tag so new machines join on their own.">
+          <Section title="Endpoints" sub="Which endpoints the policy assesses — pick them one by one, or by remote office so new machines join on their own.">
             <div className="grid grid-cols-2 gap-x-2 gap-y-4">
               <div>
                 <FieldLabel required>Device Filter</FieldLabel>
@@ -462,13 +477,13 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
           </Section>
 
           <Section title="Schedule & Notifications" sub="When the policy scans on its own, and who hears about the result.">
-            <div className="grid grid-cols-2 gap-x-2 gap-y-4">
-              <ScheduleFields value={d.schedule} onChange={(s) => set({ schedule: s })} />
+            <div className="space-y-4">
               <div>
                 <FieldLabel>Notify Team</FieldLabel>
                 <RuleSelect className="!rounded" multi value={d.notify} options={NOTIFY_OPTIONS} onChange={(v) => set({ notify: v })} placeholder="Technicians or groups" />
                 <p className="mt-1.5 text-[12px] text-[#7B8FA5]">Told when a scan finishes and when an endpoint turns non-compliant.</p>
               </div>
+              <ScheduleFields value={d.schedule} onChange={(s) => set({ schedule: s })} />
             </div>
           </Section>
         </div>
@@ -478,12 +493,13 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
         isOpen={picking}
         title="Select Endpoints"
         subtitle={benchmark ? `Endpoints running ${benchmark.osVersion}` : ''}
-        rows={pool}
+        rows={pickRows}
         columns={columns}
         selected={d.endpointIds}
+        filterBar={<TicketFilterBar rules={pickRules} setRules={setPickRules} noun="endpoint" attrs={pickAttrs} quickFilters={pickQuick} showFilterBuilder={false} />}
         searchOf={(e) => [e.id, e.hostName, e.ip, e.osName, e.office, ...e.tags].join(' ')}
-        onClose={() => setPicking(false)}
-        onApply={(ids) => { set({ endpointIds: ids }); setPicking(false); }}
+        onClose={() => { setPicking(false); setPickRules([]); }}
+        onApply={(ids) => { set({ endpointIds: ids }); setPicking(false); setPickRules([]); }}
       />
     </div>
   );

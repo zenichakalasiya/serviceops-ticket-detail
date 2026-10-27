@@ -6,6 +6,7 @@ import { GlobalSearchButton } from './GlobalSearch';
 import { openGlobalShortcuts } from './shortcutContext';
 import { ProfileMenu } from './ProfileMenu';
 import { setRelease, useFormRuleRelease } from './formRuleRelease';
+import { setComplianceRuleUi, useComplianceRuleUi } from './complianceRuleUi';
 
 /** Exported so the Support Portal preview renders the same mark the product header does. */
 export function MotadataLogo() {
@@ -167,6 +168,25 @@ function FormRuleReleaseSwitch() {
   );
 }
 
+/** V1 / V2 of the admin rule detail (Zeni, 27 Oct 2026) — see complianceRuleUi.ts. */
+function ComplianceRuleUiSwitch() {
+  const [hash, setHash] = useState(() => location.hash);
+  const v = useComplianceRuleUi();
+  useEffect(() => {
+    const on = () => setHash(location.hash);
+    window.addEventListener('hashchange', on);
+    const t = window.setInterval(on, 500);
+    return () => { window.removeEventListener('hashchange', on); window.clearInterval(t); };
+  }, []);
+  if (!hash.startsWith('#/admin/compliance')) return null;
+  return (
+    <div className="pill-track" title="Rule detail version">
+      <button type="button" aria-pressed={v === 'v1'} onClick={() => setComplianceRuleUi('v1')}>V1</button>
+      <button type="button" aria-pressed={v === 'v2'} onClick={() => setComplianceRuleUi('v2')}>V2</button>
+    </div>
+  );
+}
+
 interface HeaderProps {
   selectedCount: number;
   /** Opens the Admin hub. Passed only where the gear should navigate. */
@@ -182,6 +202,7 @@ export function Header({ selectedCount, onOpenAdmin }: HeaderProps) {
             Restoring it is this line plus FINAL_UI in FormRuleEditor. */}
         {false && <FormRuleUiSwitch />}
         <FormRuleReleaseSwitch />
+        <ComplianceRuleUiSwitch />
       </div>
       
       <div className="flex items-center gap-2">

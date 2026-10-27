@@ -220,10 +220,13 @@ export function findingsOf(p: CompliancePolicy): Finding[] {
   for (const r of endpointResults(p)) {
     if (r.outcome === 'Not Scanned') continue;
     const now = pick(ids, r.failed, `${p.id}|${r.endpoint.id}`);
-    // The previous scan: about as many failures, partly different rules — some fixed, some new.
+    // The previous scan: only pass → pass, pass → fail (a new failure) and fail → pass (fixed) —
+    // never fail → fail (Zeni, 27 Oct 2026). So the rules failing now all PASSED last time, and
+    // last time's failures come only from the rules passing now.
     const h = hash(`prev|${p.id}|${r.endpoint.id}`);
-    const prevCount = Math.max(0, r.failed + (h % 3) - 1);
-    const prev = h % 7 === 0 ? null : pick(ids, prevCount, `prev|${p.id}|${r.endpoint.id}`);
+    const passingNow = ids.filter((id) => !now.has(id));
+    const prevCount = Math.min(passingNow.length, h % 3);
+    const prev = h % 7 === 0 ? null : pick(passingNow, prevCount, `prev|${p.id}|${r.endpoint.id}`);
     for (const id of ids) out.push({ policyId: p.id, endpointId: r.endpoint.id, ruleId: id, passed: !now.has(id), prevPassed: prev ? !prev.has(id) : null });
   }
   findingCache.set(key, out);
@@ -337,6 +340,13 @@ const seedPolicies = (): CompliancePolicy[] => SEED.map(({ created, scanned, ...
     configType: null, notify: [], enabled: true, endpointIds: [], offices: [], deviceTags: [],
     ...s, createdAt: created, updatedAt: scanned ?? created, lastScan: null,
   };
+  // Tag is no longer a way to choose endpoints (Zeni, 27 Oct 2026): a seed written by tag keeps
+  // exactly the machines it matched, picked one by one.
+  if (p.axis === 'tag') {
+    p.endpointIds = resolvedEndpoints(p).map((e) => e.id);
+    p.axis = 'endpoint';
+    p.deviceTags = [];
+  }
   if (scanned) p.lastScan = summarise(p, scanned);
   return p;
 });

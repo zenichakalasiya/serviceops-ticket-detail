@@ -2042,13 +2042,12 @@ export function TicketTable({
         { key: 'id', label: 'ID', w: 96 },
         { key: 'subject', label: 'Policy Name', flex: true, w: 200, maxW: 320 },
         { key: 'x_benchmark', label: 'Benchmark', flex: true, w: 200, maxW: 320 },
-        { key: 'x_endpoints', label: 'Endpoints', w: 100, align: 'center' },
-        { key: 'status', label: 'Status', w: 150 },
-        { key: 'x_cpScore', label: 'Compliance', w: 140 },
+        { key: 'x_endpoints', label: 'Endpoints', w: 100 },
+        /* Status carries the last scan's score beside it ("Non-Compliant · 72%"), so there is no
+           separate Compliance column. Enable lives in the detail page's ⋮; whether the policy is
+           scheduled is read off the Schedule action's icon. */
+        { key: 'status', label: 'Status', w: 190 },
         { key: 'x_lastExecution', label: 'Last Scan', w: 180 },
-        /* Schedule and Next Scan are a Manage-columns click away — the row's Schedule action and the
-           detail header carry them, and with them on screen the Actions column fell off the right edge. */
-        { key: 'x_enabled', label: 'Enable', w: 90 },
         { key: 'actions', label: 'Actions', w: 140 },
     ],
     /* Compliance › Benchmark (technician) — every benchmark in the catalogue, read for how it
@@ -2058,14 +2057,10 @@ export function TicketTable({
         { key: 'subject', label: 'Benchmark', flex: true, w: 220, maxW: 360 },
         { key: 'x_type', label: 'Type', w: 100 },
         { key: 'x_osVersion', label: 'Version', w: 170 },
-        { key: 'x_profile', label: 'Profile', w: 90, align: 'center' },
-        { key: 'x_rules', label: 'Rules', w: 80, align: 'center' },
-        { key: 'x_policies', label: 'Policies', w: 90, align: 'center' },
-        { key: 'x_endpoints', label: 'Endpoints', w: 100, align: 'center' },
-        { key: 'x_failingRules', label: 'Failing Rules', w: 120, align: 'center' },
-        { key: 'x_cpScore', label: 'Compliance', w: 140 },
-        { key: 'x_posture', label: 'Posture', w: 120 },
-        { key: 'x_lastExecution', label: 'Last Scan', w: 170 },
+        { key: 'x_profile', label: 'Profile', w: 90 },
+        { key: 'x_rules', label: 'Rules', w: 80 },
+        { key: 'x_policies', label: 'Policies', w: 90 },
+        { key: 'x_endpoints', label: 'Endpoints', w: 100 },
     ],
     /* A benchmark's rules — every rule some policy checks, scored across the endpoints it ran on. */
     'cviz-rule': [
@@ -2084,9 +2079,7 @@ export function TicketTable({
         { key: 'subject', label: 'Host Name', flex: true, w: 170, maxW: 300 },
         { key: 'x_osVersion', label: 'Version', w: 170 },
         { key: 'x_office', label: 'Remote Office', w: 150 },
-        { key: 'x_posture', label: 'Posture', w: 120 },
-        { key: 'x_policies', label: 'Policies', w: 85, align: 'center' },
-        { key: 'x_failedChecks', label: 'Failed', w: 80, align: 'center' },
+        { key: 'x_policies', label: 'Policies', w: 85 },
         { key: 'x_cpScore', label: 'Compliance', w: 140 },
         { key: 'x_scanStatus', label: 'Scan Status', w: 120 },
         { key: 'x_lastExecution', label: 'Last Scan', w: 170 },
@@ -2697,7 +2690,29 @@ export function TicketTable({
                 </Tooltip>
               );
             })()}
-            {moduleCols === 'compliance-policy' && act('Schedule', <CalendarClock size={15} />, 'schedule')}
+            {moduleCols === 'compliance-policy' && (() => {
+              const on = (ticket as any).x_scheduled === 'Scheduled';
+              const off = (ticket as any).x_enabled !== 'Enabled';
+              const next = (ticket as any).x_nextExecution as Date | null;
+              return (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onRowAction?.(ticket, 'schedule'); }}
+                      className={`flex size-7 items-center justify-center rounded transition-colors ${
+                        on && !off ? 'text-[#3D8BD0] hover:bg-[#EBF5FF]' : 'text-[#7B8FA5] hover:bg-[#EEF2F6] hover:text-[#364658]'
+                      }`}
+                    >
+                      <CalendarClock size={15} />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent className="text-wrap">
+                    {!on ? 'Not scheduled — set a schedule'
+                      : <>{(ticket as any).x_schedule}{off ? ' · policy disabled' : next ? <><br />Next scan: {next.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</> : null}</>}
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })()}
             {act('Edit', <SquarePen size={15} />, 'edit')}
             {/* A task has exactly two things you do to it from a list, so both sit inline —
                 Delete reads red under the pointer rather than hiding behind a menu nobody
@@ -2874,6 +2889,22 @@ export function TicketTable({
        readable at a glance — a column of bare percentages has to be read row by row. */
     /* A compliance policy's score — checks passed of checks run on its last scan. Coloured by
        how far from clean it is; a policy never scanned has no score, not a zero. */
+    if (key === 'status' && moduleCols === 'compliance-policy') {
+      const dot = POLICY_STATUS_OPTIONS.find((o) => o.label === (ticket.status as string))?.color ?? '#94A3B8';
+      const raw = (ticket as any).x_cpScore;
+      const busy = (ticket as any).x_scanning === true;
+      return (
+        <td className="overflow-hidden px-4 py-3 whitespace-nowrap">
+          <span className="flex min-w-0 items-center gap-2">
+            {busy ? <Loader2 size={12} className="flex-shrink-0 animate-spin text-[#3D8BD0]" /> : <span className="size-2 flex-shrink-0 rounded-full" style={{ backgroundColor: dot }} />}
+            <span className="truncate text-[12px] text-[#4A5568]">{ticket.status}</span>
+            {raw !== null && raw !== undefined && !busy && (
+              <span className="flex-shrink-0 text-[12px] font-medium tabular-nums" style={{ color: Number(raw) >= 90 ? '#15803D' : Number(raw) >= 70 ? '#B45309' : '#DC2626' }}>· {Math.round(Number(raw))}%</span>
+            )}
+          </span>
+        </td>
+      );
+    }
     if (key === 'x_cpScore') {
       const raw = (ticket as any).x_cpScore;
       if (raw === null || raw === undefined) {

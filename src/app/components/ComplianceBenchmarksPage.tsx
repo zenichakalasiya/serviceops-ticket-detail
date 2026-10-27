@@ -6,23 +6,23 @@
 import { useMemo } from 'react';
 import { AssetRegisterPage } from './AssetRegisterPage';
 import { usePolicies } from './compliancePolicyData';
-import { scoreColor, vizSnapshot } from './complianceVizData';
+import { vizSnapshot } from './complianceVizData';
 import { benchmarkRow } from './complianceRows';
 import { VIZ_BENCHMARK_FILTER_ATTRS, VIZ_BENCHMARK_QUICK_FILTERS } from './complianceFilterAttrs';
 import type { StatCard } from './AssetStatsRow';
 import type { Ticket } from './TicketListPage';
 import { useDrawerStack } from './DrawerStack';
 
+/* The catalogue at a glance — how many benchmarks, which are in use, and what they cover.
+   Compliance, posture and failing rules are read on a policy, not here. */
 const buildCards = (rows: Ticket[]): StatCard[] => {
   const used = rows.filter((t) => (t as any).x_inUse === 'In use');
-  const scored = rows.filter((t) => (t as any).x_cpScore !== null && (t as any).x_cpScore !== undefined);
-  const avg = scored.length ? Math.round(scored.reduce((a, t) => a + Number((t as any).x_cpScore), 0) / scored.length) : null;
-  const below = rows.filter((t) => ['Moderate', 'Poor', 'Vulnerable'].includes((t as any).x_posture));
+  const network = rows.filter((t) => ['Router', 'Switch', 'Firewall'].includes((t as any).x_type));
   return [
-    { label: 'Benchmarks', value: rows.length, sub: `${used.length} used by a policy`, filter: [{ field: 'x_inUse', condition: 'is', values: ['In use'] }] },
-    { label: 'Average Compliance', value: avg === null ? '—' : `${avg}%`, sub: 'across benchmarks in use', valueColor: avg === null ? undefined : scoreColor(avg) },
-    { label: 'Below Target', value: below.length, sub: 'benchmarks under 90%', valueColor: below.length ? '#B45309' : undefined, filter: [{ field: 'x_posture', condition: 'is', values: ['Moderate', 'Poor', 'Vulnerable'] }] },
-    { label: 'Failing Rules', value: rows.reduce((a, t) => a + Number((t as any).x_failingRules ?? 0), 0), sub: 'failing on at least one endpoint', valueColor: '#DC2626' },
+    { label: 'Benchmarks', value: rows.length, sub: 'in the catalogue' },
+    { label: 'In Use', value: used.length, sub: 'run by a policy', valueColor: used.length ? '#15803D' : undefined, filter: [{ field: 'x_inUse', condition: 'is', values: ['In use'] }] },
+    { label: 'Unused', value: rows.length - used.length, sub: 'no policy runs them', filter: [{ field: 'x_inUse', condition: 'is', values: ['Unused'] }] },
+    { label: 'Network Devices', value: network.length, sub: 'router, switch, firewall', filter: [{ field: 'x_type', condition: 'is', values: ['Router', 'Switch', 'Firewall'] }] },
   ];
 };
 

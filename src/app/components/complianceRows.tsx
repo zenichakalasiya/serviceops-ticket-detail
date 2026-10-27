@@ -5,6 +5,7 @@
 import { complianceEndpoint, findingsOf } from './compliancePolicyData';
 import type { CompliancePolicy } from './compliancePolicyData';
 import type { ComplianceRule } from './complianceData';
+import { profileLabel } from './complianceData';
 import type { BenchmarkStat, EndpointStat, RuleStat } from './complianceVizData';
 import type { Ticket } from './TicketListPage';
 
@@ -18,7 +19,7 @@ export const benchmarkRow = (s: BenchmarkStat): Ticket => ({
   ...baseRow(s.benchmark.id, s.benchmark.name),
   x_type: s.benchmark.type,
   x_osVersion: s.benchmark.osVersion,
-  x_profile: s.benchmark.profile,
+  x_profile: profileLabel(s.benchmark.profile),
   x_origin: s.benchmark.origin,
   x_rules: s.rules,
   x_policies: s.policies.length,

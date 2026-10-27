@@ -43,7 +43,6 @@ export const POLICY_FILTER_ATTRS: Attr[] = [
   { key: 'x_benchmark', label: 'Benchmark', icon: ShieldCheck, type: 'text' },
   { key: 'x_type', label: 'Type', icon: Layers, type: 'select', options: TYPE_OPTIONS },
   { key: 'status', label: 'Status', icon: CircleDot, type: 'select', options: POLICY_STATUS_OPTIONS },
-  { key: 'x_posture', label: 'Posture', icon: CircleDot, type: 'select', options: POSTURE_OPTIONS },
   { key: 'x_enabled', label: 'Enable', icon: Power, type: 'select', options: ENABLED_OPTIONS },
   { key: 'x_scheduled', label: 'Schedule', icon: CalendarClock, type: 'select', options: SCHEDULED_OPTIONS },
   { key: 'x_schedule', label: 'Schedule Details', icon: CalendarClock, type: 'text' },
@@ -73,7 +72,7 @@ const SEVERITY_OPTIONS = [
   { label: 'Critical', color: '#DC2626' }, { label: 'High', color: '#F97316' }, { label: 'Medium', color: '#F59E0B' },
   { label: 'Low', color: '#22C55E' }, { label: 'Info', color: '#3D8BD0' },
 ];
-const PROFILE_OPTIONS = [{ label: 'L1' }, { label: 'L2' }];
+const PROFILE_OPTIONS = [{ label: 'L1' }, { label: 'L2' }, { label: 'L1 + L2' }];
 const RESULT_OPTIONS = [{ label: 'Failing', color: '#DC2626' }, { label: 'All passing', color: '#22C55E' }, { label: 'Not checked', color: '#94A3B8' }];
 
 const ORIGIN_OPTIONS = [{ label: 'Default' }, { label: 'Custom' }];
@@ -88,18 +87,14 @@ export const VIZ_BENCHMARK_FILTER_ATTRS: Attr[] = [
   { key: 'x_profile', label: 'Profile', icon: ShieldCheck, type: 'select', options: PROFILE_OPTIONS },
   { key: 'x_origin', label: 'Origin', icon: Layers, type: 'select', options: ORIGIN_OPTIONS },
   { key: 'x_inUse', label: 'Usage', icon: Power, type: 'select', options: IN_USE_OPTIONS },
-  { key: 'x_posture', label: 'Posture', icon: CircleDot, type: 'select', options: POSTURE_OPTIONS },
   { key: 'x_policyNames', label: 'Policy', icon: ShieldCheck, type: 'text' },
-  { key: 'x_lastExecution', label: 'Last Scan', icon: CalendarDays, type: 'date' },
 ];
 export const VIZ_BENCHMARK_QUICK_FILTERS: QuickFilterDef[] = [
-  { field: 'x_posture', icon: CircleDot, tip: 'Filter by posture', title: 'Posture is', width: 200, row: 'dot', options: POSTURE_OPTIONS },
   { field: 'x_type', icon: Layers, tip: 'Filter by type', title: 'Type is', width: 180, row: 'plain', options: TYPE_OPTIONS },
 ];
 export const VIZ_BENCHMARK_VIEWS: TicketView[] = [
   { name: 'All Benchmarks', rules: [] },
   { name: 'In Use', rules: [{ field: 'x_inUse', condition: 'is', values: ['In use'] }] },
-  { name: 'Below Target', rules: [{ field: 'x_posture', condition: 'is', values: ['Moderate', 'Poor', 'Vulnerable'] }] },
   { name: 'Network Devices', rules: [{ field: 'x_type', condition: 'is', values: ['Router', 'Switch', 'Firewall'] }] },
 ];
 
@@ -137,12 +132,10 @@ export const VIZ_RESOURCE_FILTER_ATTRS: Attr[] = [
   { key: 'x_lastExecution', label: 'Last Scan', icon: CalendarDays, type: 'date' },
 ];
 export const VIZ_RESOURCE_QUICK_FILTERS: QuickFilterDef[] = [
-  { field: 'x_posture', icon: CircleDot, tip: 'Filter by posture', title: 'Posture is', width: 200, row: 'dot', options: POSTURE_OPTIONS },
   { field: 'x_scanStatus', icon: CalendarClock, tip: 'Filter by scan status', title: 'Scan Status is', width: 200, row: 'dot', options: SCAN_STATUS_OPTIONS },
   { field: 'x_type', icon: Layers, tip: 'Filter by type', title: 'Type is', width: 180, row: 'plain', options: TYPE_OPTIONS },
 ];
 export const VIZ_RESOURCE_VIEWS: TicketView[] = [
   { name: 'All Endpoints', rules: [] },
-  { name: 'Vulnerable Endpoints', rules: [{ field: 'x_posture', condition: 'is', values: ['Vulnerable', 'Poor'] }] },
   { name: 'Not Reached', rules: [{ field: 'x_scanStatus', condition: 'is', values: ['Not reached'] }] },
 ];

@@ -1,3 +1,52 @@
+# Handoff — 2026-10-27 17:22 (Compliance: detail pages without Overview, admin rule V2, benchmark rule-group tree)
+
+> Sessions share this file. **This top part is the newest session**; older notes follow unchanged
+> below the dividers.
+
+## Read first
+CLAUDE.md › "## Compliance (Oct 2026)", last bullet ("Compliance pass, 27 Oct 2026 (later)").
+
+## What we worked on this session
+A long Compliance polish pass with Zeni: listings trimmed, Overview tabs removed, rule results moved into a
+per-endpoint sidebar, the admin rule detail got a one-page V2, and the admin Benchmark form's rule groups were
+rebuilt to match the live ObserveOps create-benchmark flow.
+
+## Completed
+- Listings: Benchmark / Policy / Endpoints columns trimmed; policy Status carries the score; schedule icon.
+- Policy page: Endpoints first (Average Compliance card, outlined "View rule results"), plain Rules tree, no
+  Run History cards, properties de-duplicated, header Compliance coloured like the card.
+- Benchmark page: Rules first, plain tree, status cards on Policies, no Compliance anywhere.
+- Endpoint page: Policies + Audit Trail only; breakdown sidebar headed by the policy.
+- Rule results sidebar: no "Failed Rules by Severity" box (hidden until Zeni designs a new container).
+- Demo data: no fail → fail; Tag device filter removed (seed tag policies → Endpoint).
+- Admin Rules: Automated/Manual field, detail chips, V1 | V2 switch, V2 one-page layout.
+- Admin Benchmark: Origin tag, live Policies count, chips header, L1 / L2 / L1+L2 profile, new form layout,
+  recursive 7-level rule-group tree with open/closed ⊕ logic and hover actions.
+- Every step verified in the browser (localhost:5201, headless playwright-core), typecheck clean.
+
+## In progress
+Nothing mid-flight.
+
+## Next steps
+- Zeni to design a new container for severity in the rule-results sidebar (`FailedBySeverity` still exported).
+- Admin benchmarks are still not shared with the technician side (technician reads `BENCHMARKS_SEED`), so
+  deep (3+ level) groups never reach `RuleGroupTree` there yet.
+- Only 3 rules are Manual (`MANUAL_CHECKS`) — confirm the list.
+- Earlier open questions still stand (panel widths, posture words, 85% target, exception approvals).
+
+## Decisions made
+- Compliance % only on the Policy page (header, Endpoints tab, Run History).
+- Rule groups: copy live behaviour, but keep Delete on a parent group (with a confirm) and cap at 7 levels.
+- V2 rule detail is admin-only; technician panels stay tabbed.
+- Did NOT create a /versions link (the versions question went unanswered — ask before freezing one).
+
+## Gotchas & notes
+- Git Bash heredocs strip backslashes — write patch/test scripts with the Write tool (bit us several times).
+- The live ObserveOps reference is at 172.16.12.100 (ask Zeni for the login; it is not stored here).
+- `AssetStatsRow.tsx` is CRLF; edit it with the Edit tool.
+
+---
+
 # Handoff — 2026-10-27 11:49 (Compliance: Run History tab, tags removed, OS Type in policy form)
 
 > Sessions share this file. **This top part is the newest session**; older notes follow unchanged

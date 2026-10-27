@@ -8,12 +8,12 @@ import type { HeaderKpiItem } from './HeaderKpiRow';
 import { HeaderCopyButton } from './HeaderCopyButton';
 import { StatsCardsRow } from './AssetStatsRow';
 import { RuleDetailPanel } from './ComplianceShared';
-import { FailedBySeverity, FailedOnCell, RuleGroupTree, severityCounts } from './ComplianceEndpointPanel';
+import { RuleGroupTree } from './ComplianceEndpointPanel';
 import { useOpenComplianceEndpoint } from './ComplianceEndpointDrawer';
-import { benchmarksUsingRule, BENCHMARKS_SEED, fmtDate, ruleById, ruleNumbers } from './complianceData';
-import { endpointResults, findingsOf, fmtStamp, getPolicy, scoreOf, statusOf, usePolicies } from './compliancePolicyData';
+import { benchmarksUsingRule, BENCHMARKS_SEED, fmtDate, profileLabel, ruleById, ruleNumbers } from './complianceData';
+import { endpointResults, findingsOf, fmtStamp, getPolicy, POLICY_STATUS_OPTIONS, statusOf, usePolicies } from './compliancePolicyData';
 import type { ComplianceEndpoint, EndpointOutcome } from './compliancePolicyData';
-import { scoreColor, vizSnapshot } from './complianceVizData';
+import { vizSnapshot } from './complianceVizData';
 import { useDrawerStack } from './DrawerStack';
 
 /* Compliance › Benchmark — a benchmark's detail page, opened from the Benchmark listing through
@@ -21,12 +21,13 @@ import { useDrawerStack } from './DrawerStack';
  *
  * One policy runs ONE benchmark; one benchmark can be run by many policies — so everything here
  * reads across every policy that uses it.
- * Tabs: Overview (the auditor's numbers) · Rules (its rule groups, 1 · 1.1 · 1.3.1, each rule
- * "Failed on N of M"; a rule opens its metadata + results) · Endpoints (every endpoint those
- * policies check; a row opens the Endpoint page) · Policies (a row opens the Policy page). */
+ * Tabs: Rules (its rule groups, 1 · 1.1 · 1.3.1 — numbers and names only; a rule opens its
+ * metadata) · Endpoints (every endpoint those policies check; a row opens the Endpoint page) ·
+ * Policies (status count cards over the list; a row opens the Policy page). */
 
-type Tab = 'overview' | 'rules' | 'endpoints' | 'policies';
-const TABS: [Tab, string][] = [['overview', 'Overview'], ['rules', 'Rules'], ['endpoints', 'Endpoints'], ['policies', 'Policies']];
+type Tab = 'rules' | 'endpoints' | 'policies';
+const TABS: [Tab, string][] = [['rules', 'Rules'], ['endpoints', 'Endpoints'], ['policies', 'Policies']];
+const POLICY_STATUSES = ['Compliant', 'Non-Compliant', 'Scanning', 'Not Scanned'] as const;
 const OUTCOME_TONE: Record<EndpointOutcome, { bg: string; text: string }> = {
   Compliant: { bg: '#ECFDF3', text: '#15803D' },
   'Non-Compliant': { bg: '#FEF3F2', text: '#B42318' },
@@ -34,7 +35,7 @@ const OUTCOME_TONE: Record<EndpointOutcome, { bg: string; text: string }> = {
 };
 const DIM = '#94A3B8';
 const th = 'px-4 py-2.5 text-left text-[12px] font-semibold tracking-wider text-[#364658]';
-const pct = (a: number, n: number) => (n ? Math.round((a / n) * 100) : null);
+const statusColor = (s: string) => POLICY_STATUS_OPTIONS.find((o) => o.label === s)?.color ?? DIM;
 
 function kpi(key: string, label: string, value: React.ReactNode, tip: string): HeaderKpiItem {
   return {
@@ -74,9 +75,11 @@ export function ComplianceBenchmarkDrawer({
   const { open: openInStack } = useDrawerStack();
   const openEndpoint = useOpenComplianceEndpoint();
 
-  const [tabLocal, setTabLocal] = useState<Tab>('overview');
+  const [tabLocal, setTabLocal] = useState<Tab>('rules');
   const remembered = stackActiveTab ?? tabLocal;
-  const tab: Tab = TABS.some(([t]) => t === remembered) ? (remembered as Tab) : 'overview';
+  const tab: Tab = TABS.some(([t]) => t === remembered) ? (remembered as Tab) : 'rules';
+  /** The status card lit above the Policies list. */
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const setTab = (t: Tab) => { setTabLocal(t); onStackActiveTabChange?.(t); };
   const [widthLocal, setWidthLocal] = useState(stackWidth ?? 99999);
   const full = (stackWidth ?? widthLocal) > 1080;
@@ -117,29 +120,21 @@ export function ComplianceBenchmarkDrawer({
   }
 
   const numbers = ruleNumbers(b);
-  const passedChecks = findings.filter((f) => f.passed).length;
-  const score = pct(passedChecks, findings.length);
-  const reached = findings.length > 0;
   const ruleIds = [...numbers.keys()];
-  const failingRules = ruleIds.filter((id) => (byRule.get(id)?.failed ?? 0) > 0).length;
-  const worstRules = ruleIds.filter((id) => (byRule.get(id)?.failed ?? 0) > 0).sort((x, y) => (byRule.get(y)!.failed - byRule.get(x)!.failed)).slice(0, 5);
+  const shownPolicies = statusFilter ? mine.filter((p) => statusOf(p) === statusFilter) : mine;
   const openPolicy = (id: string) => { const p = getPolicy(id); if (p) openInStack('compliance-policies', p.id, p.name, p); };
   const openRule = ruleId ? ruleById(ruleId) : undefined;
 
   const kpis = [
     kpi('type', 'Type', b.type, `Type: ${b.type}`),
     kpi('version', 'Version', b.osVersion, `Version: ${b.osVersion}`),
-    kpi('profile', 'Profile', b.profile, b.profile === 'L1' ? 'Level 1 — must-have rules only' : 'Level 2 — Level 1 rules plus good-to-have rules'),
+    kpi('profile', 'Profile', profileLabel(b.profile), b.profile === 'L1' ? 'Level 1 rules only' : b.profile === 'L2' ? 'Level 2 rules only' : 'Level 1 and Level 2 rules'),
     kpi('rules', 'Rules', ruleIds.length, `${ruleIds.length} rules`),
     kpi('policies', 'Policies', mine.length, mine.length ? mine.map((p) => p.name).join(', ') : 'No policy runs this benchmark'),
-    kpi('score', 'Compliance', score === null ? '—' : <span style={{ color: scoreColor(score) }}>{score}%</span>, 'Checks passed across the policies that run it'),
   ];
+  /* Type, Version, Profile and the rule count are in the header — not repeated here. */
   const fields: [string, React.ReactNode][] = [
-    ['Type', b.type],
-    ['Version', b.osVersion],
-    ['Profile', b.profile === 'L1' ? 'Level 1' : 'Level 2'],
     ['Origin', b.origin],
-    ['Rules', ruleIds.length],
     ['Description', b.description || '—'],
     ['Created By', b.createdBy],
     ['Last Updated', fmtDate(b.updatedAt)],
@@ -195,89 +190,9 @@ export function ComplianceBenchmarkDrawer({
             </div>
 
             <div className="min-h-0 flex-1 overflow-y-auto">
-              {tab === 'overview' && (
-                <div className="pb-6 pt-5">
-                  <StatsCardsRow
-                    rules={[]}
-                    onApplyFilter={() => {}}
-                    cards={[
-                      { label: 'Compliance', value: reached ? `${score}%` : '—', sub: reached ? `${passedChecks} of ${findings.length} checks pass` : 'Not scanned', valueColor: reached ? scoreColor(score) : DIM },
-                      { label: 'Endpoints Assessed', value: endpoints.filter((e) => e.outcome !== 'Not Scanned').length, sub: `of ${endpoints.length} in scope` },
-                      { label: 'Failed Checks', value: reached ? findings.length - passedChecks : '—', sub: `of ${findings.length} run`, valueColor: reached && findings.length - passedChecks ? '#DC2626' : DIM },
-                      { label: 'Failing Rules', value: reached ? failingRules : '—', sub: `of ${ruleIds.length} rules`, valueColor: reached && failingRules ? '#B42318' : DIM },
-                    ]}
-                  />
-                  <div className="space-y-4 px-6">
-                    {reached ? (
-                      <FailedBySeverity counts={severityCounts(ruleIds.filter((id) => byRule.has(id)).map((id) => ({ ruleId: id, passed: byRule.get(id)!.failed === 0 })))} />
-                    ) : (
-                      <div className="rounded-lg border border-dashed border-[#DFE5ED] px-4 py-8 text-center text-[13px] text-[#7B8FA5]">
-                        {mine.length ? 'No policy using this benchmark has been scanned yet.' : 'No policy runs this benchmark yet.'}
-                      </div>
-                    )}
-                    <div className="grid grid-cols-2 gap-4">
-                      <section className="rounded-lg border border-[#E5E7EB]">
-                        <header className="flex items-center justify-between border-b border-[#E5E7EB] bg-[#F9FAFB] px-4 py-2.5">
-                          <span className="text-[13px] font-semibold text-[#364658]">Compliance by Policy</span>
-                          <button type="button" onClick={() => setTab('policies')} className="text-[12px] font-medium text-[#3D8BD0] hover:underline">View all</button>
-                        </header>
-                        <div className="space-y-1 p-2">
-                          {mine.length === 0 && <p className="px-2 py-4 text-center text-[13px] text-[#9CA3AF]">No policy runs this benchmark.</p>}
-                          {mine.map((p) => {
-                            const s = scoreOf(p.lastScan);
-                            return (
-                              <button key={p.id} type="button" onClick={() => openPolicy(p.id)} className="group flex w-full flex-col gap-1 rounded px-2 py-1.5 text-left transition-colors hover:bg-[#F5F7FA]">
-                                <span className="flex items-baseline gap-2 text-[12.5px]">
-                                  <span className="truncate font-medium text-[#364658] group-hover:text-[#3D8BD0]">{p.name}</span>
-                                  <span className="ml-auto flex-shrink-0 font-semibold tabular-nums" style={{ color: s === null ? DIM : scoreColor(s) }}>{s === null ? 'Not Scanned' : `${s}%`}</span>
-                                </span>
-                                <span className="h-1.5 w-full overflow-hidden rounded-full bg-[#EEF2F6]">
-                                  <span className="block h-full rounded-full" style={{ width: `${s ?? 0}%`, backgroundColor: s === null ? DIM : scoreColor(s) }} />
-                                </span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </section>
-                      <section className="rounded-lg border border-[#E5E7EB]">
-                        <header className="flex items-center justify-between border-b border-[#E5E7EB] bg-[#F9FAFB] px-4 py-2.5">
-                          <span className="text-[13px] font-semibold text-[#364658]">Rules Failing Most</span>
-                          <button type="button" onClick={() => setTab('rules')} className="text-[12px] font-medium text-[#3D8BD0] hover:underline">View all rules</button>
-                        </header>
-                        {worstRules.length === 0 ? (
-                          <p className="px-4 py-6 text-center text-[13px] text-[#9CA3AF]">{reached ? 'Every rule passed on every scanned endpoint.' : 'Results appear here after the first scan.'}</p>
-                        ) : (
-                          <ul className="divide-y divide-[#EEF1F4]">
-                            {worstRules.map((id) => {
-                              const r = ruleById(id)!;
-                              const t = byRule.get(id)!;
-                              return (
-                                <li key={id}>
-                                  <button type="button" onClick={() => setRuleId(id)} className="group flex w-full items-center gap-2 px-4 py-2.5 text-left transition-colors hover:bg-[#F5F7FA]">
-                                    <span className="w-[40px] flex-shrink-0 text-[12px] tabular-nums text-[#7B8FA5]">{numbers.get(id)}</span>
-                                    <span className="min-w-0 flex-1 truncate text-[13px] text-[#364658] group-hover:text-[#3D8BD0]" title={r.name}>{r.name}</span>
-                                    <span className="flex-shrink-0 text-[12px] font-medium tabular-nums text-[#B42318]">{t.failed} of {t.failed + t.passed}</span>
-                                  </button>
-                                </li>
-                              );
-                            })}
-                          </ul>
-                        )}
-                      </section>
-                    </div>
-                  </div>
-                </div>
-              )}
-
               {tab === 'rules' && (
                 <div className="px-6 py-4">
-                  <RuleGroupTree
-                    benchmark={b}
-                    title="Rule Groups"
-                    onRule={setRuleId}
-                    resultOf={(id) => byRule.get(id) ?? null}
-                    right={(_, t) => <FailedOnCell t={t} />}
-                  />
+                  <RuleGroupTree benchmark={b} title="Rule Groups" onRule={setRuleId} plain />
                 </div>
               )}
 
@@ -287,18 +202,16 @@ export function ComplianceBenchmarkDrawer({
                     <p className="py-10 text-center text-[13px] text-[#9CA3AF]">No policy using this benchmark checks any endpoint.</p>
                   ) : (
                     <table className="w-full table-fixed">
-                      <colgroup><col className="w-[30%]" /><col className="w-[14%]" /><col className="w-[18%]" /><col className="w-[15%]" /><col className="w-[11%]" /><col /></colgroup>
-                      <thead><tr className="border-b border-[#e5e7eb]">{['Endpoint', 'IP Address', 'Remote Office', 'Result', 'Compliance', 'Policies'].map((h) => <th key={h} className={th}>{h}</th>)}</tr></thead>
+                      <colgroup><col className="w-[34%]" /><col className="w-[16%]" /><col className="w-[20%]" /><col className="w-[16%]" /><col /></colgroup>
+                      <thead><tr className="border-b border-[#e5e7eb]">{['Endpoint', 'IP Address', 'Remote Office', 'Result', 'Policies'].map((h) => <th key={h} className={th}>{h}</th>)}</tr></thead>
                       <tbody className="divide-y divide-[#e5e7eb]">
                         {endpoints.map((e) => {
-                          const s = pct(e.passed, e.passed + e.failed);
                           return (
                             <tr key={e.endpoint.id} onClick={() => openEndpoint(e.endpoint.id)} className="group/row cursor-pointer transition-colors hover:bg-[#f9fafb]">
                               <td className="px-4 py-3"><span className="flex min-w-0 items-center gap-2"><IdPill id={e.endpoint.id} /><span className="truncate text-[13px] text-[#364658] group-hover/row:text-[#3D8BD0]">{e.endpoint.hostName}</span></span></td>
                               <td className="px-4 py-3 text-[13px] tabular-nums text-[#64748B]">{e.endpoint.ip}</td>
                               <td className="px-4 py-3"><span className="block truncate text-[13px] text-[#64748B]">{e.endpoint.office}</span></td>
                               <td className="px-4 py-3"><OutcomePill outcome={e.outcome} /></td>
-                              <td className="px-4 py-3 text-[13px] font-medium tabular-nums text-[#364658]">{s === null ? '—' : `${s}%`}</td>
                               <td className="px-4 py-3 text-[13px] tabular-nums text-[#64748B]">{e.policies}</td>
                             </tr>
                           );
@@ -310,28 +223,42 @@ export function ComplianceBenchmarkDrawer({
               )}
 
               {tab === 'policies' && (
-                <div className="px-6 py-4">
+                <div className="pb-6 pt-4">
                   {mine.length === 0 ? (
                     <p className="py-10 text-center text-[13px] text-[#9CA3AF]">No policy runs this benchmark yet.</p>
                   ) : (
-                    <table className="w-full table-fixed">
-                      <colgroup><col /><col className="w-[150px]" /><col className="w-[110px]" /><col className="w-[100px]" /><col className="w-[190px]" /></colgroup>
-                      <thead><tr className="border-b border-[#e5e7eb]">{['Policy', 'Status', 'Compliance', 'Endpoints', 'Last Scan'].map((h) => <th key={h} className={th}>{h}</th>)}</tr></thead>
-                      <tbody className="divide-y divide-[#e5e7eb]">
-                        {mine.map((p) => {
-                          const s = scoreOf(p.lastScan);
-                          return (
-                            <tr key={p.id} onClick={() => openPolicy(p.id)} className="group/row cursor-pointer transition-colors hover:bg-[#f9fafb]">
-                              <td className="px-4 py-3"><span className="flex min-w-0 items-center gap-2"><IdPill id={p.id} /><span className="truncate text-[13px] text-[#364658] group-hover/row:text-[#3D8BD0]">{p.name}</span></span></td>
-                              <td className="px-4 py-3 text-[13px] text-[#364658]">{statusOf(p)}</td>
-                              <td className="px-4 py-3 text-[13px] font-medium tabular-nums" style={{ color: s === null ? DIM : scoreColor(s) }}>{s === null ? '—' : `${s}%`}</td>
-                              <td className="px-4 py-3 text-[13px] tabular-nums text-[#64748B]">{endpointResults(p).length}</td>
-                              <td className="whitespace-nowrap px-4 py-3 text-[13px] text-[#64748B]">{fmtStamp(p.lastScan?.at)}</td>
-                            </tr>
-                          );
+                    <>
+                      <StatsCardsRow
+                        rules={[]}
+                        onApplyFilter={() => {}}
+                        activeLabel={statusFilter}
+                        onCardClick={(c) => setStatusFilter(c.label === statusFilter ? null : c.label)}
+                        cards={POLICY_STATUSES.map((s) => {
+                          const n = mine.filter((p) => statusOf(p) === s).length;
+                          return { label: s, value: n, sub: `polic${n === 1 ? 'y' : 'ies'}`, valueColor: n ? statusColor(s) : DIM, hint: `Show only ${s} policies` };
                         })}
-                      </tbody>
-                    </table>
+                      />
+                      <div className="px-6">
+                        <table className="w-full table-fixed">
+                          <colgroup><col /><col className="w-[170px]" /><col className="w-[110px]" /><col className="w-[190px]" /></colgroup>
+                          <thead><tr className="border-b border-[#e5e7eb]">{['Policy', 'Status', 'Endpoints', 'Last Scan'].map((h) => <th key={h} className={th}>{h}</th>)}</tr></thead>
+                          <tbody className="divide-y divide-[#e5e7eb]">
+                            {shownPolicies.map((p) => {
+                              const st = statusOf(p);
+                              return (
+                                <tr key={p.id} onClick={() => openPolicy(p.id)} className="group/row cursor-pointer transition-colors hover:bg-[#f9fafb]">
+                                  <td className="px-4 py-3"><span className="flex min-w-0 items-center gap-2"><IdPill id={p.id} /><span className="truncate text-[13px] text-[#364658] group-hover/row:text-[#3D8BD0]">{p.name}</span></span></td>
+                                  <td className="px-4 py-3"><span className="flex items-center gap-2 text-[13px] text-[#364658]"><span className="size-2 rounded-full" style={{ backgroundColor: statusColor(st) }} />{st}</span></td>
+                                  <td className="px-4 py-3 text-[13px] tabular-nums text-[#64748B]">{endpointResults(p).length}</td>
+                                  <td className="whitespace-nowrap px-4 py-3 text-[13px] text-[#64748B]">{fmtStamp(p.lastScan?.at)}</td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                        {shownPolicies.length === 0 && <p className="py-10 text-center text-[13px] text-[#9CA3AF]">No {statusFilter} policy.</p>}
+                      </div>
+                    </>
                   )}
                 </div>
               )}
