@@ -51,7 +51,7 @@ function Sides({ mine, theirs, theirsLabel = 'Conflicting' }: { mine: string; th
 }
 
 function ruleMeta(r: FormRule) {
-  return [eventLabel(r.event), r.execution, r.applies === 'Everyone' ? 'Everyone' : r.applies + ' only'].join(' · ');
+  return [eventLabel(r.event), r.execution, r.applies === 'All Users' ? 'All Users' : r.applies + ' only'].join(' · ');
 }
 
 /** List + detail, side by side (stacked when narrow). */

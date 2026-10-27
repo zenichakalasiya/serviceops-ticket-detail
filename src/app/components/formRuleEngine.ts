@@ -92,7 +92,7 @@ export const conditionText = (c: Condition, fields: FormField[]) => {
 
 // ── scope ───────────────────────────────────────────────────────────────────
 
-const appliesOverlap = (a: string, b: string) => !!a && !!b && (a === b || a === 'Everyone' || b === 'Everyone');
+const appliesOverlap = (a: string, b: string) => !!a && !!b && (a === b || a === 'All Users' || b === 'All Users');
 const execOverlap = (a: string, b: string) => !!a && !!b && (a === b || a === 'On Create and Edit' || b === 'On Create and Edit');
 const execShared = (a: string, b: string) => (a === 'On Create and Edit' ? b : a);
 

@@ -552,7 +552,7 @@ function ResolveCard({ onReadMore }: { onReadMore: () => void }) {
 export const RESOLVE_STEPS = [
   { title: 'Decide which rule should win', text: 'If two rules do opposite things to the same field, keep the action on the rule that matches your intent and remove it from the other. Left alone, whichever rule runs last wins — and that may not be the one you want.' },
   { title: 'Narrow the conditions so both can’t fire', text: 'A conflict only matters when both rules run on the same request. Add a condition to one of them so their conditions no longer overlap.' },
-  { title: 'Separate them by when they run', text: 'Two rules can’t collide if one runs On Create and the other On Edit. Check the Execute on setting before changing anything else.' },
+  { title: 'Separate them by when they run', text: 'Two rules can’t collide if one runs On Create and the other On Edit. Check the Rule Execution On setting before changing anything else.' },
   { title: 'Separate them by who they apply to', text: 'A rule for Requesters only and a rule for Technicians only can safely do opposite things to the same field, because they never run for the same person.' },
   { title: 'Merge them into one rule', text: 'If both rules watch the same condition, add your action to the existing rule instead of keeping a second one. Use a block to handle each case inside a single rule.' },
   { title: 'Change the run order', text: 'For Opposite and Override conflicts the rule that runs last wins. Drag the rule you want to decide the field below the other in the Form Rules list.' },

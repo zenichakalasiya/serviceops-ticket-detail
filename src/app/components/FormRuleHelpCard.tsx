@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { AlertTriangle, ArrowRight, BookOpen, ChevronDown, CirclePlay, Copy, History, Lightbulb, ShieldAlert, Split, Undo2, Workflow } from 'lucide-react';
 import { ConflictArt } from './FormRuleRelatedView';
-import { ReverseActionArt, SimilarRuleArt } from './FormRuleArt';
+import { ReverseActionArt, SimilarRuleArt, PlayIcon } from './FormRuleArt';
 
 /**
  * V3's right panel — the module's HELP CARD (Zeni's Figma "Help guide Card UI Inspiration",
@@ -174,14 +174,14 @@ export function FormRuleHelpSections({ onWatch, look = 'grouped', watchOnTop = t
     <>
     {/* The video is the FIRST thing in the guide, as a card (Zeni, 26 Oct 2026) — it was a link at the foot. */}
     {watchOnTop && <div className="mb-4 flex items-center gap-3 rounded-lg border border-[#D6E6F5] bg-[#F3F8FD] p-3">
-      <span className="flex size-9 flex-shrink-0 items-center justify-center rounded-full bg-white text-[#3D8BD0] shadow-sm"><CirclePlay size={18} /></span>
+      <span className="flex size-9 flex-shrink-0 items-center justify-center rounded-full bg-white text-[#3D8BD0] shadow-sm"><PlayIcon size={18} /></span>
       <div className="min-w-0 flex-1">
         <div className="text-[13px] font-semibold text-[#1D2A3E]">New to form rules?</div>
         <div className="truncate text-[12px] text-[#64748B]">See how a rule is built in 1 min.</div>
       </div>
       <button type="button" onClick={onWatch}
         className="inline-flex h-8 flex-shrink-0 items-center gap-1.5 rounded border border-[#3D8BD0] bg-white px-3 text-[12px] font-medium text-[#3D8BD0] transition-colors hover:bg-[#EBF5FF]">
-        <CirclePlay size={14} /> Watch video
+        <PlayIcon size={14} /> Watch video
       </button>
     </div>}
     {/* The two sections must read as two (Zeni, 13 Oct 2026): a 15px heading led by a DARK icon tile (the

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Check, Copy, Download, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ConflictArt, RuleCheckArt } from './FormRuleRelatedView';
-import { ReverseActionArt, SimilarRuleArt } from './FormRuleArt';
+import { PLAY_ICON_COLOR, PLAY_ICON_PATH, PlayIcon, ReverseActionArt, SimilarRuleArt } from './FormRuleArt';
 import { GUIDE_CHAPTERS } from './FormRuleGuide';
 import { animatedSvg, slideGif, slideLength } from './formRuleGuideExport';
 
@@ -145,6 +145,60 @@ function IllustrationCard({ item }: { item: Item }) {
   );
 }
 
+/* ── the play icon, as files ───────────────────────────────────────────────────────────────── */
+
+const ICON_SIZES = [16, 24, 48] as const;
+/** One filled path, transparent background, scaled from its 24×24 box to the size asked for. */
+const iconSvg = (size: number) =>
+  `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24"><path d="${PLAY_ICON_PATH}" fill="${PLAY_ICON_COLOR}" fill-rule="evenodd"/></svg>`;
+
+async function iconPng(size: number, scale: number, name: string) {
+  const url = URL.createObjectURL(new Blob([iconSvg(size)], { type: 'image/svg+xml' }));
+  try {
+    const img = new Image();
+    await new Promise<void>((res, rej) => { img.onload = () => res(); img.onerror = () => rej(); img.src = url; });
+    const canvas = document.createElement('canvas');
+    canvas.width = size * scale;
+    canvas.height = size * scale;
+    canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
+    canvas.toBlob((b) => b && save(b, name), 'image/png');
+  } finally { URL.revokeObjectURL(url); }
+}
+
+/** The play icon the guide's Watch video card uses (Zeni, 27 Oct 2026): ONE flattened path, at 16 / 24 / 48 px. */
+function PlayIconCard() {
+  const [copied, setCopied] = useState(false);
+  const copyPath = async () => {
+    try { await navigator.clipboard.writeText(PLAY_ICON_PATH); setCopied(true); toast.success('Path copied'); setTimeout(() => setCopied(false), 1600); }
+    catch { toast.error('Could not copy — your browser blocked the clipboard'); }
+  };
+  return (
+    <div className="flex flex-col overflow-hidden rounded-lg border border-[#E5E9F0] bg-white" data-icon-card>
+      <div className="grid grid-cols-3 divide-x divide-[#E5E9F0] border-b border-[#E5E9F0]">
+        {ICON_SIZES.map((s) => (
+          <div key={s} className="flex flex-col items-center gap-3 p-5" data-icon-size={s}>
+            <div className="flex h-[72px] items-center justify-center"><PlayIcon size={s} color={PLAY_ICON_COLOR} /></div>
+            <div className="text-[12px] font-medium text-[#364658]">{s} × {s} px</div>
+            <div className="flex flex-wrap justify-center gap-1.5">
+              <button type="button" onClick={() => save(new Blob([iconSvg(s)], { type: 'image/svg+xml' }), `play-icon-${s}.svg`)} className={BTN}><Download size={14} /> SVG</button>
+              <button type="button" onClick={() => iconPng(s, 1, `play-icon-${s}.png`).catch(() => toast.error('Could not make the PNG'))} className={BTN}><Download size={14} /> PNG</button>
+              <button type="button" onClick={() => iconPng(s, 2, `play-icon-${s}@2x.png`).catch(() => toast.error('Could not make the PNG'))} className={BTN}><Download size={14} /> PNG @2x</button>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="flex flex-wrap items-center gap-3 p-4">
+        <div className="min-w-0 flex-1">
+          <div className="text-[14px] font-semibold text-[#1D2A3E]">Play icon</div>
+          <div className="mt-0.5 text-[12px] text-[#64748B]">Form Rules Guide › Watch video card · lucide CirclePlay, flattened to one path</div>
+          <div className="mt-0.5 text-[11px] text-[#94A3B8]">24 × 24 viewBox · fill {PLAY_ICON_COLOR} · even-odd · transparent background</div>
+        </div>
+        <button type="button" onClick={copyPath} className={BTN}>{copied ? <Check size={14} className="text-[#16A34A]" /> : <Copy size={14} />} Copy path</button>
+      </div>
+    </div>
+  );
+}
+
 const kb = (n: number) => (n < 1024 * 1024 ? `${Math.max(1, Math.round(n / 1024))} KB` : `${(n / 1024 / 1024).toFixed(1)} MB`);
 const slug = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
@@ -219,6 +273,12 @@ export function FormRuleIllustrations({ onBack }: { onBack: () => void }) {
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
           {ITEMS.map((it) => <IllustrationCard key={it.id} item={it} />)}
         </div>
+
+        <div className="mb-3 mt-8">
+          <h2 className="text-[15px] font-semibold text-[#1D2A3E]">Icons</h2>
+          <p className="mt-0.5 text-[12px] text-[#64748B]">One flattened path per icon — copy the path, or download SVG / PNG at the size you need.</p>
+        </div>
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2"><PlayIconCard /></div>
 
         {/* The guide video, one file per slide (Zeni, 26 Oct 2026). */}
         <div className="mb-3 mt-8">

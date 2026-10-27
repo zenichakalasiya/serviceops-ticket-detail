@@ -43,7 +43,7 @@ interface Filters { applies: RuleApplies[]; event: RuleEvent[]; execution: RuleE
 const NO_FILTERS: Filters = { applies: [], event: [], execution: [], status: [] };
 
 const FILTER_GROUPS: { key: keyof Filters; label: string; options: string[] }[] = [
-  { key: 'applies', label: 'Applies to', options: ['Requesters', 'Technicians', 'Everyone'] },
+  { key: 'applies', label: 'Applies to', options: ['Requesters', 'Technicians', 'All Users'] },
   { key: 'event', label: 'Event', options: EVENT_OPTIONS.map((e) => e.value) },
   { key: 'execution', label: 'Execution', options: ['On Create', 'On Edit', 'On Create and Edit'] },
   { key: 'status', label: 'Status', options: ['Enabled', 'Disabled'] },
@@ -296,7 +296,8 @@ export function AdminRequestFormModule({ tab, onTab, onEditor, openRuleId }: {
             {release === 'v1' && filterCount > 0 && (
               <button type="button" onClick={() => setFilters(NO_FILTERS)} className="text-[13px] font-medium text-[#64748B] hover:text-[#364658]">Clear</button>
             )}
-            {release === 'v2' && (shortlist ? (
+            {/* V2: the conflicts control sits on the RIGHT, beside Create (Zeni, 27 Oct 2026). */}
+            {release === 'v2' && <div className="ml-auto">{shortlist ? (
               <span className="inline-flex h-9 items-center gap-2 rounded border border-[#FECACA] bg-[#FEF2F2] pl-3 pr-1.5 text-[13px] font-medium text-[#DC2626]">
                 <AlertTriangle size={14} /> {rows.length} rule{rows.length === 1 ? '' : 's'} with conflicts
                 <button type="button" onClick={() => { setConflictCheck('idle'); setPage(1); }} title="Show all rules" aria-label="Show all rules"
@@ -310,8 +311,8 @@ export function AdminRequestFormModule({ tab, onTab, onEditor, openRuleId }: {
                 {conflictCheck === 'loading' ? <Loader2 size={14} className="animate-spin text-[#DC2626]" /> : <AlertTriangle size={14} className="text-[#DC2626]" />}
                 <span className="text-[#B42318]">{conflictCheck === 'loading' ? 'Checking conflicts…' : 'Check conflicts'}</span>
               </button>
-            ))}
-            <button type="button" onClick={() => setEditing('new')} className="ml-auto inline-flex h-9 items-center gap-1.5 rounded bg-[#3D8BD0] px-4 text-[13px] font-medium text-white transition-colors hover:bg-[#3478B5]">
+            )}</div>}
+            <button type="button" onClick={() => setEditing('new')} className={(release === 'v1' ? 'ml-auto ' : '') + "inline-flex h-9 items-center gap-1.5 rounded bg-[#3D8BD0] px-4 text-[13px] font-medium text-white transition-colors hover:bg-[#3478B5]"}>
               <Plus size={15} /> Create Rule
             </button>
           </div>

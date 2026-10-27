@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   AlertTriangle, ArrowUpRight, BookOpen, ChevronDown, ChevronLeft, ChevronRight, CirclePlay, Copy, History, Maximize2, Minimize2, Plus,
-  RotateCcw, Save, Split, Workflow, X,
+  RotateCcw, Save, Split, Trash2, Workflow, X,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -106,10 +106,10 @@ const SEL_Y = 47;
 const EV = { x: 14, w: 60 };
 const EX = { x: 78, w: 52 };
 const AP = { x: 134, w: 58 };
-const R1 = 80;
-const R2 = 94;
-const A1 = 128;
-const A2 = 142;
+const R1 = 81;
+const R2 = 92;
+const A1 = 121;
+const A2 = 133;
 const mid = (b: { x: number; w: number }, y = SEL_Y + 5): [number, number] => fm([b.x + b.w / 2, y]);
 
 /* The Help guide panel on the right — narrower than the form. */
@@ -135,13 +135,13 @@ export const FRAMES: GFrame[] = [
   { ch: 0, ms: 750, cur: mid(AP), when: 3 },
   { ch: 0, ms: 1600, cur: mid(AP), press: true, when: 4 },
   /* Check if — the first condition completes the trigger + condition, so Similar rules arrives */
-  { ch: 1, ms: 850, cur: fm([96, R1 + 5]), when: 4 },
-  { ch: 1, ms: 1300, cur: fm([96, R1 + 5]), press: true, when: 4, cond: 1 },
+  { ch: 1, ms: 850, cur: fm([103, 92.5]), when: 4 },
+  { ch: 1, ms: 1300, cur: fm([103, 92.5]), press: true, when: 4, cond: 1 },
   { ch: 1, ms: 750, cur: fm([40, R2 + 5]), when: 4, cond: 1 },
   { ch: 1, ms: 1600, cur: fm([40, R2 + 5]), press: true, when: 4, cond: 2 },
   /* Then — the second action clashes with another rule, so Conflicts arrives */
-  { ch: 2, ms: 850, cur: fm([96, A1 + 5]), when: 4, cond: 2 },
-  { ch: 2, ms: 900, cur: fm([96, A1 + 5]), press: true, when: 4, cond: 2, act: 1 },
+  { ch: 2, ms: 850, cur: fm([36, A1 + 4.5]), when: 4, cond: 2 },
+  { ch: 2, ms: 900, cur: fm([36, A1 + 4.5]), press: true, when: 4, cond: 2, act: 1 },
   { ch: 2, ms: 750, cur: fm([40, A2 + 5]), when: 4, cond: 2, act: 1 },
   { ch: 2, ms: 1900, cur: fm([40, A2 + 5]), press: true, ...DONE },
   /* Similar — the card is ringed, and so is what it shares */
@@ -194,9 +194,9 @@ function Cursor({ at, press, n }: { at: [number, number]; press?: boolean; n: nu
 function Sel({ x, y, w, v, ph, tone, fill = PAPER, lit }: { x: number; y: number; w: number; v?: string; ph?: string; tone?: string; fill?: string; lit?: boolean }) {
   return (
     <g>
-      <rect x={x} y={y} width={w} height="10" rx="2" fill={fill} stroke={lit ? BLUE : '#D5DEE8'} strokeWidth={lit ? 0.9 : 0.6} style={{ transition: T }} />
-      <Txt x={x + 3.5} y={y + 6.7} s={4.4} w={v ? 500 : 400} c={v ? (tone ?? INK) : '#98A2B3'}>{v ?? ph}</Txt>
-      <path d={`M${x + w - 6} ${y + 4.2} l1.6 1.6 l1.6 -1.6`} fill="none" stroke="#98A2B3" strokeWidth="0.6" strokeLinecap="round" />
+      <rect x={x} y={y} width={w} height="9" rx="2" fill={fill} stroke={lit ? BLUE : '#D5DEE8'} strokeWidth={lit ? 0.9 : 0.6} style={{ transition: T }} />
+      <Txt x={x + 3.5} y={y + 6.2} s={4.2} w={v ? 500 : 400} c={v ? (tone ?? INK) : '#98A2B3'}>{v ?? ph}</Txt>
+      <path d={`M${x + w - 6} ${y + 3.7} l1.6 1.6 l1.6 -1.6`} fill="none" stroke="#98A2B3" strokeWidth="0.6" strokeLinecap="round" />
     </g>
   );
 }
@@ -212,16 +212,20 @@ function Head({ y, I, tone, lead, rest, rotate }: { y: number; I: LucideIcon; to
   );
 }
 
-/** A dashed "add" row, the way an empty list starts in the builder. */
-function AddRow({ y, text }: { y: number; text: string }) {
-  return (
-    <g className="pt-fade">
-      <rect x="18" y={y} width="170" height="10" rx="2" fill={PAPER} fillOpacity="0.6" stroke="#B6C3D1" strokeWidth="0.6" strokeDasharray="2.6 2" />
-      <Ico I={Plus} cx={86} cy={y + 5} s={4.4} c={MUTED} />
-      <Txt x={90} y={y + 6.7} s={4.4} w={500} c={MUTED}>{text}</Txt>
-    </g>
-  );
-}
+/** The grey panel each builder section's fields sit on. */
+const PANEL = '#F4F6FA';
+
+/** A field label, as the editor prints it: grey words and a red asterisk (every When field is required). */
+const Label = ({ x, y, children }: { x: number; y: number; children: React.ReactNode }) =>
+  <Txt x={x} y={y} s={3.5} c={MUTED}>{children}<tspan fill="#F25C4E"> *</tspan></Txt>;
+
+/** A row's copy and delete icons, at the right end of the row — the editor's own pair. */
+const RowTools = ({ y }: { y: number }) => (
+  <g>
+    <Ico I={Copy} cx={177.5} cy={y + 4.5} s={4} c="#7B8FA5" />
+    <Ico I={Trash2} cx={185.2} cy={y + 4.5} s={4} c={RED} />
+  </g>
+);
 
 /** A grey skeleton bar. */
 const Bar = ({ x, y, w, h = 2.2, c = '#E2E8F0' }: { x: number; y: number; w: number; h?: number; c?: string }) =>
@@ -325,70 +329,89 @@ export function GuideScene({ f, n, noCursor = false }: { f: GFrame; n: number; n
       </g>
 
       {/* ── the form, drawn at its old size and scaled up ──────────────────────────────────────── */}
+      {/* ⚠️ Copies the REAL editor (Zeni, 27 Oct 2026): the same headings, field labels and option values,
+          each section's fields on a grey panel, conditions in a "Condition group 1" white box with
+          Where / And, copy and delete on every row. Change the editor's words → change them here too. */}
       <g transform={`translate(${FX} ${FY}) scale(${K}) translate(${-FX} ${-FY})`}>
         <rect x={F.x} y={F.top} width={F.w} height={F.h} rx="5" fill={PAPER} filter="url(#fg-card)" />
 
-        <rect x="12" y="30" width="182" height="31" rx="3.5" fill="none" stroke={amber ?? 'transparent'} strokeWidth="0.9" style={{ transition: T }} />
-        <Head y={36} I={History} tone={BLUE} lead="When" rest="this rule should run" />
-        <Txt x={EV.x} y={45} s={3.6} c={MUTED}>Rule Event</Txt>
-        <Txt x={EX.x} y={45} s={3.6} c={MUTED}>Execute on</Txt>
-        <Txt x={AP.x} y={45} s={3.6} c={MUTED}>Applicable for</Txt>
-        <Sel x={EV.x} y={SEL_Y} w={EV.w} v={when >= 2 ? 'Form is filled in' : undefined} ph="Choose an event" lit={when === 1} />
-        <Sel x={EX.x} y={SEL_Y} w={EX.w} v={when >= 3 ? 'On Create' : undefined} ph="Create or edit" />
-        <Sel x={AP.x} y={SEL_Y} w={AP.w} v={when >= 4 ? 'Everyone' : undefined} ph="Choose people" />
+        {/* When */}
+        <rect x="12" y="29.5" width="182" height="31" rx="3.5" fill="none" stroke={amber ?? 'transparent'} strokeWidth="0.9" style={{ transition: T }} />
+        <Head y={34} I={History} tone={BLUE} lead="When" rest="this rule should run and when it should execute" />
+        <rect x="14" y="39" width="178" height="20" rx="3" fill={PANEL} />
+        <Label x={EV.x + 2} y={44.6}>Rule Event</Label>
+        <Label x={EX.x} y={44.6}>Rule Execution On</Label>
+        <Label x={AP.x} y={44.6}>Rule Applicable For</Label>
+        <Sel x={EV.x + 2} y={SEL_Y} w={EV.w - 2} v={when >= 2 ? 'On Field Change' : undefined} ph="Choose an event" lit={when === 1} />
+        <Sel x={EX.x} y={SEL_Y} w={EX.w} v={when >= 3 ? 'On Create' : undefined} ph="Create, edit or both" />
+        <Sel x={AP.x} y={SEL_Y} w={AP.w - 2} v={when >= 4 ? 'All Users' : undefined} ph="Choose people" />
 
-        <rect x="12" y="66" width="182" height="48" rx="3.5" fill="none" stroke={amber ?? 'transparent'} strokeWidth="0.9" style={{ transition: T }} />
-        <Head y={72} I={Split} tone={ORANGE} lead="Check if" rest="these conditions match" rotate />
-        <rect x="14" y="77" width="178" height="33" rx="3" fill="#F8FAFC" />
-        {cond === 0 ? <AddRow y={R1} text="Add condition" /> : (
+        {/* Check if */}
+        <rect x="12" y="61.5" width="182" height="46.5" rx="3.5" fill="none" stroke={amber ?? 'transparent'} strokeWidth="0.9" style={{ transition: T }} />
+        <Head y={66} I={Split} tone={ORANGE} lead="Check if" rest="these conditions match" rotate />
+        <rect x="14" y="70" width="178" height="36" rx="3" fill={PANEL} />
+        {cond === 0 ? (
           <g className="pt-fade">
-            <Txt x={18} y={R1 + 6.7} s={4.2} c={MUTED}>Where</Txt>
-            <Sel x={36} y={R1} w={44} v="Priority" />
-            <Sel x={83} y={R1} w={22} v="is" />
-            <Sel x={108} y={R1} w={80} v="High" />
+            <rect x="16" y="73" width="174" height="31" rx="2.5" fill={PAPER} />
+            <Txt x={103} y={83.5} s={3.8} w={600} c={INK} anchor="middle">No conditions yet</Txt>
+            <rect x="85" y="88" width="36" height="9" rx="2" fill={PAPER} stroke="#D5DEE8" strokeWidth="0.6" />
+            <Ico I={Plus} cx={89.5} cy={92.5} s={3.8} c={INK} />
+            <Txt x={92.5} y={93.9} s={3.6} w={500} c={INK}>Add Condition</Txt>
+          </g>
+        ) : (
+          <g className="pt-fade">
+            <rect x="16" y="72" width="34" height="5.6" rx="2.8" fill="#E8EDF3" />
+            <Txt x={19} y={75.9} s={3.2} w={500} c={MUTED}>Condition group 1</Txt>
+            <rect x="16" y="79" width="174" height="25" rx="2.5" fill={PAPER} />
+            <Txt x={19} y={R1 + 6} s={3.9} c={MUTED}>Where</Txt>
+            <Sel x={36} y={R1} w={40} v="Priority" />
+            <Sel x={79} y={R1} w={22} v="is" />
+            <Sel x={104} y={R1} w={68} v="High" />
+            <RowTools y={R1} />
           </g>
         )}
-        {cond === 1 && <g className="pt-fade"><Ico I={Plus} cx={21} cy={R2 + 5} s={4.2} c={BLUE} /><Txt x={25} y={R2 + 6.6} s={4.4} w={500} c={BLUE}>Add condition</Txt></g>}
+        {cond === 1 && <g className="pt-fade"><Ico I={Plus} cx={21} cy={R2 + 4.5} s={4} c={INK} /><Txt x={24.5} y={R2 + 6} s={4} w={500} c={INK}>Add Condition</Txt></g>}
         {cond === 2 && (
           <g className="pt-fade">
-            <Txt x={18} y={R2 + 6.7} s={4.2} w={600} c={ORANGE}>And</Txt>
-            <Sel x={36} y={R2} w={44} v="Category" />
-            <Sel x={83} y={R2} w={22} v="is" />
-            <Sel x={108} y={R2} w={80} v="Network" />
+            <rect x="17" y={R2} width="16" height="9" rx="2" fill={PAPER} stroke="#D5DEE8" strokeWidth="0.6" />
+            <Txt x={25} y={R2 + 6} s={3.9} w={500} c={INK} anchor="middle">And</Txt>
+            <Sel x={36} y={R2} w={40} v="Category" />
+            <Sel x={79} y={R2} w={22} v="is" />
+            <Sel x={104} y={R2} w={68} v="Network" />
+            <RowTools y={R2} />
           </g>
         )}
 
-        <Head y={120} I={Workflow} tone="#89C540" lead="Then" rest="choose what the rule should do" />
-        <rect x="14" y="125" width="178" height="31" rx="3" fill="#F8FAFC" />
-        {act === 0 ? <AddRow y={A1} text="Add action" /> : (
+        {/* Then */}
+        <Head y={113} I={Workflow} tone="#89C540" lead="Then" rest="choose what the rule should do" />
+        <rect x="14" y="117" width="178" height="31" rx="3" fill={PANEL} />
+        <rect x="16" y="119" width="174" height="27" rx="2.5" fill={PAPER} />
+        {act === 0 ? <g className="pt-fade"><Ico I={Plus} cx={21} cy={A1 + 4.5} s={4} c={INK} /><Txt x={24.5} y={A1 + 6} s={4} w={500} c={INK}>Add Action</Txt></g> : (
           <g className="pt-fade">
-            <Sel x={18} y={A1} w={46} v="Mandate" />
-            <Sel x={67} y={A1} w={121} v="Urgency" />
+            <Sel x={19} y={A1} w={42} v="Mandate" />
+            <Sel x={64} y={A1} w={100} v="Urgency" />
+            <RowTools y={A1} />
           </g>
         )}
-        {act === 1 && <g className="pt-fade"><Ico I={Plus} cx={21} cy={A2 + 5} s={4.2} c={BLUE} /><Txt x={25} y={A2 + 6.6} s={4.4} w={500} c={BLUE}>Add action</Txt></g>}
+        {act === 1 && <g className="pt-fade"><Ico I={Plus} cx={21} cy={A2 + 4.5} s={4} c={INK} /><Txt x={24.5} y={A2 + 6} s={4} w={500} c={INK}>Add Action</Txt></g>}
         {act === 2 && (
           <g className="pt-fade">
-            <rect x="15" y={A2 - 2} width="176" height="14" rx="2.5" fill={clash ? '#FEF3F2' : 'transparent'} style={{ transition: T }} />
-            <Sel x={18} y={A2} w={46} v="Hide" fill={clash ? '#FFF8F7' : PAPER} />
-            <Sel x={67} y={A2} w={clash ? 108 : 121} v="Description" fill={clash ? '#FFF8F7' : PAPER} />
-            {clash && (
-              <g className="pt-pop">
-                <circle cx={184} cy={A2 + 5} r="4.4" fill="#FEE2E2" />
-                <Ico I={AlertTriangle} cx={184} cy={A2 + 4.8} s={5} c={RED} />
-              </g>
-            )}
+            <rect x="17" y={A2 - 1.5} width="172" height="12" rx="2" fill={clash ? '#FEF3F2' : 'transparent'} style={{ transition: T }} />
+            <Sel x={19} y={A2} w={42} v="Hide" fill={clash ? '#FFF8F7' : PAPER} />
+            <Sel x={64} y={A2} w={100} v="Description" fill={clash ? '#FFF8F7' : PAPER} />
+            {clash && <g className="pt-pop"><Ico I={AlertTriangle} cx={169.5} cy={A2 + 4.4} s={4.6} c={RED} /></g>}
+            <RowTools y={A2} />
           </g>
         )}
 
         {/* the Rule Event menu */}
         {when === 1 && (
           <g className="pt-fade" filter="url(#fg-lift)">
-            <rect x={EV.x} y="58" width="96" height="33" rx="3" fill={PAPER} />
-            {['While the form is being filled', 'When the form opens', 'When the form is submitted'].map((t, i) => (
+            <rect x={EV.x + 2} y="57" width="64" height="31" rx="3" fill={PAPER} />
+            {['On Field Change', 'On Form Load', 'On Form Submit'].map((t, i) => (
               <g key={t}>
-                {i === 0 && <rect x={EV.x + 2} y={61 + i * 9.6} width="92" height="8.6" rx="2" fill="#EAF3FB" />}
-                <Txt x={EV.x + 5} y={66.6 + i * 9.6} s={4.3} w={i === 0 ? 600 : 400} c={i === 0 ? BLUE : INK}>{t}</Txt>
+                {i === 0 && <rect x={EV.x + 4} y={59.5 + i * 9.4} width="60" height="8.4" rx="2" fill="#EAF3FB" />}
+                <Txt x={EV.x + 7} y={65 + i * 9.4} s={4.3} w={i === 0 ? 600 : 400} c={i === 0 ? BLUE : INK}>{t}</Txt>
               </g>
             ))}
           </g>
@@ -430,10 +453,12 @@ export function GuideScene({ f, n, noCursor = false }: { f: GFrame; n: number; n
  * Previous, Next or a dot, that chapter loops until you move on (the Editor basics rule).
  * ⚠️ `right` is passed in — the card sits in the corner of the FORM, clear of the Rule check rail.
  */
-export function FormRuleGuideDock({ onClose, right = 20 }: { onClose: () => void; right?: number }) {
+/** `startBig`: opened from Watch video, the card arrives FULL SIZE in the centre; making it small drops it
+ *  to the bottom right. The first-landing open passes nothing and starts in the corner (Zeni, 27 Oct 2026). */
+export function FormRuleGuideDock({ onClose, right = 20, startBig = false }: { onClose: () => void; right?: number; startBig?: boolean }) {
   const [at, setAt] = useState(0);
   const [driven, setDriven] = useState(false);
-  const [big, setBig] = useState(false);
+  const [big, setBig] = useState(startBig);
   const elapsed = useRef(0);
   useEffect(() => {
     if (!big) return;

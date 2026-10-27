@@ -100,22 +100,22 @@ export const DEFAULT_FORM_FIELDS: FormField[] = [
 
 // ── Rules ──────────────────────────────────────────────────────────────────
 
-export type RuleApplies = 'Requesters' | 'Technicians' | 'Everyone';
+export type RuleApplies = 'Requesters' | 'Technicians' | 'All Users';
 export type RuleEvent = 'On Field Change' | 'On Form Load' | 'On Form Submit';
 export type RuleExecution = 'On Create' | 'On Edit' | 'On Create and Edit';
 
-/** What the admin reads in the editor, beside what the listing prints for the same value. */
+/** The editor shows the PRODUCT's own values (Zeni, 27 Oct 2026) — the same words the listing prints. */
 /** A hover tip on a dropdown option: what it means, and one example of a rule using it. */
 export interface OptionTip { desc: string; example: string }
 export const APPLIES_OPTIONS: { value: RuleApplies; label: string; tip: OptionTip }[] = [
-  { value: 'Requesters', label: 'Requesters Only', tip: { desc: 'Runs only for people raising requests from the self-service portal.', example: 'Hide Technician Group from requesters.' } },
-  { value: 'Technicians', label: 'Technicians Only', tip: { desc: 'Runs only for technicians working on requests in the technician portal.', example: 'Make Assignee mandatory for technicians.' } },
-  { value: 'Everyone', label: 'Everyone', tip: { desc: 'Runs for anyone who opens the form, no matter who they are.', example: 'Require Priority for everyone who opens the form.' } },
+  { value: 'Requesters', label: 'Requesters', tip: { desc: 'Runs only for people raising requests from the self-service portal.', example: 'Hide Technician Group from requesters.' } },
+  { value: 'Technicians', label: 'Technicians', tip: { desc: 'Runs only for technicians working on requests in the technician portal.', example: 'Make Assignee mandatory for technicians.' } },
+  { value: 'All Users', label: 'All Users', tip: { desc: 'Runs for anyone who opens the form, no matter who they are.', example: 'Require Priority for everyone who opens the form.' } },
 ];
 export const EVENT_OPTIONS: { value: RuleEvent; label: string; tip: OptionTip }[] = [
-  { value: 'On Field Change', label: 'While the form is being filled', tip: { desc: 'Runs every time a field the rule watches changes, while the form is open.', example: 'Show Vendor the moment Category is set to Hardware.' } },
-  { value: 'On Form Load', label: 'When the form opens', tip: { desc: 'Runs once, as the form is first shown.', example: 'Hide Department on every new request until it is needed.' } },
-  { value: 'On Form Submit', label: 'When the form is submitted', tip: { desc: 'Runs as the requester or technician saves the form.', example: 'Make Description mandatory when Priority is Urgent.' } },
+  { value: 'On Field Change', label: 'On Field Change', tip: { desc: 'Runs every time a field the rule watches changes, while the form is open.', example: 'Show Vendor the moment Category is set to Hardware.' } },
+  { value: 'On Form Load', label: 'On Form Load', tip: { desc: 'Runs once, as the form is first shown.', example: 'Hide Department on every new request until it is needed.' } },
+  { value: 'On Form Submit', label: 'On Form Submit', tip: { desc: 'Runs as the requester or technician saves the form.', example: 'Make Description mandatory when Priority is Urgent.' } },
 ];
 export const EXECUTION_OPTIONS: { value: RuleExecution; label: string; tip: OptionTip }[] = [
   { value: 'On Create', label: 'On Create', tip: { desc: 'Runs only while a new request is being raised.', example: 'Set Priority to Medium on every new request.' } },
@@ -235,7 +235,7 @@ export const SEED_RULES: FormRule[] = [
     actions: [a('Mandate', ['category', 'urgency', 'impact', 'technician-group', 'department']), a('Hide', ['assignee', 'vendor', 'due-by', 'location'])],
     reverse: true,
   }),
-  r('hide request cc emails', 'On Create', 'Everyone', 'On Form Load', 'Fri, Jul 03, 2026 05:14 PM', {
+  r('hide request cc emails', 'On Create', 'All Users', 'On Form Load', 'Fri, Jul 03, 2026 05:14 PM', {
     groups: [], actions: [a('Hide', ['cc-emails'])],
   }),
   r('Subject Line Needed', 'On Create', 'Requesters', 'On Form Submit', 'Fri, Jul 03, 2026 04:38 PM', {
@@ -246,7 +246,7 @@ export const SEED_RULES: FormRule[] = [
     groups: [g([{ join: 'And', fieldId: 'priority', op: 'is', value: ['Urgent'] }])],
     actions: [a('Make optional', ['assignee'])],
   }),
-  r('Optional Assignee for High Priority Requests', 'On Create', 'Everyone', 'On Field Change', 'Thu, Jul 02, 2026 06:19 PM', {
+  r('Optional Assignee for High Priority Requests', 'On Create', 'All Users', 'On Field Change', 'Thu, Jul 02, 2026 06:19 PM', {
     actions: [a('Make optional', ['assignee'])],
   }),
   r('Copy of High Priority Request for VIP Clients', 'On Create and Edit', 'Technicians', 'On Field Change', 'Thu, Jul 02, 2026 04:05 PM', {
@@ -262,12 +262,12 @@ export const SEED_RULES: FormRule[] = [
     groups: [g([{ join: 'And', fieldId: 'category', op: 'is', value: ['Hardware'] }])],
     actions: [a('Show', ['vendor']), a('Mandate', ['vendor'])],
   }),
-  r('Contract Renewal Alert', 'On Create', 'Everyone', 'On Form Submit', 'Mon, Jul 15, 2026 08:00 AM', {
+  r('Contract Renewal Alert', 'On Create', 'All Users', 'On Form Submit', 'Mon, Jul 15, 2026 08:00 AM', {
     conflicts: 7,
     groups: [g([{ join: 'And', fieldId: 'category', op: 'is', value: ['Software'] }])],
     actions: [a('Mandate', ['due-by'])],
   }),
-  r('Quality Assurance Review', 'On Edit', 'Everyone', 'On Field Change', 'Wed, Aug 10, 2026 02:30 PM', {
+  r('Quality Assurance Review', 'On Edit', 'All Users', 'On Field Change', 'Wed, Aug 10, 2026 02:30 PM', {
     groups: [g([{ join: 'And', fieldId: 'status', op: 'is', value: ['Resolved'] }])],
     actions: [a('Mandate', ['description'])],
   }),
@@ -275,32 +275,32 @@ export const SEED_RULES: FormRule[] = [
     groups: [g([{ join: 'And', fieldId: 'category', op: 'is', value: ['Hardware'] }])],
     actions: [a('Mandate', ['location'])],
   }),
-  r('Assignment Policy', 'On Create and Edit', 'Everyone', 'On Field Change', 'Mon, Aug 24, 2026 10:12 AM', {
+  r('Assignment Policy', 'On Create and Edit', 'All Users', 'On Field Change', 'Mon, Aug 24, 2026 10:12 AM', {
     groups: [g([{ join: 'And', fieldId: 'priority', op: 'is', value: ['High'] }])],
     actions: [a('Mandate', ['assignee', 'status']), a('Set value', ['technician-group'], ['Service Desk'])],
   }),
-  r('Portal Cleanup Rule', 'On Create', 'Everyone', 'On Field Change', 'Tue, Aug 25, 2026 04:40 PM', {
+  r('Portal Cleanup Rule', 'On Create', 'All Users', 'On Field Change', 'Tue, Aug 25, 2026 04:40 PM', {
     groups: [g([{ join: 'And', fieldId: 'priority', op: 'is', value: ['High'] }])],
     actions: [a('Show', ['category']), a('Hide', ['assignee'])],
   }),
   /* Broad rules (no condition, or a common one) touching the fields admins most often act on —
      so a typical new rule demonstrates conflicts with several rules at once. */
-  r('Status Always Visible', 'On Create and Edit', 'Everyone', 'On Form Load', 'Wed, Aug 26, 2026 09:10 AM', {
+  r('Status Always Visible', 'On Create and Edit', 'All Users', 'On Form Load', 'Wed, Aug 26, 2026 09:10 AM', {
     groups: [], actions: [a('Show', ['status']), a('Enable', ['status'])],
   }),
   r('Lock Status for Requesters', 'On Create and Edit', 'Requesters', 'On Form Load', 'Wed, Aug 26, 2026 11:42 AM', {
     groups: [], actions: [a('Disable', ['status'])],
   }),
-  r('Category Required Policy', 'On Create and Edit', 'Everyone', 'On Form Submit', 'Thu, Aug 27, 2026 03:05 PM', {
+  r('Category Required Policy', 'On Create and Edit', 'All Users', 'On Form Submit', 'Thu, Aug 27, 2026 03:05 PM', {
     groups: [], actions: [a('Mandate', ['category', 'status'])],
   }),
-  r('Priority Defaults to Medium', 'On Create', 'Everyone', 'On Form Load', 'Fri, Aug 28, 2026 10:20 AM', {
+  r('Priority Defaults to Medium', 'On Create', 'All Users', 'On Form Load', 'Fri, Aug 28, 2026 10:20 AM', {
     groups: [], actions: [a('Set value', ['priority'], ['Medium']), a('Show', ['urgency', 'impact'])],
   }),
   r('Requester Simplified Form', 'On Create', 'Requesters', 'On Form Load', 'Mon, Aug 31, 2026 01:15 PM', {
     groups: [], actions: [a('Hide', ['urgency', 'impact']), a('Make optional', ['category'])],
   }),
-  r('Service Desk Default Assignment', 'On Create and Edit', 'Everyone', 'On Field Change', 'Tue, Sep 01, 2026 05:48 PM', {
+  r('Service Desk Default Assignment', 'On Create and Edit', 'All Users', 'On Field Change', 'Tue, Sep 01, 2026 05:48 PM', {
     groups: [g([{ join: 'And', fieldId: 'priority', op: 'is', value: ['High', 'Urgent'] }])],
     actions: [a('Set value', ['technician-group'], ['Service Desk']), a('Show', ['assignee'])],
   }),

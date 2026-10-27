@@ -75,3 +75,25 @@ export function ReverseActionArt({ className = 'block h-auto w-full' }: { classN
     </svg>
   );
 }
+
+/**
+ * The play icon (lucide `CirclePlay`, v0.487) FLATTENED to ONE filled path (Zeni, 27 Oct 2026), so a
+ * developer can copy one `d`, or download an SVG / PNG with no strokes to expand. Lucide draws it as a
+ * 2px stroke (round joins) round `circle r=10` and `polygon 10 8 16 12 10 16`; here every stroke is
+ * outlined — the ring is r 11 minus r 9, the triangle is its 1px-out outline (rounded corners) minus its
+ * 1px-in outline — and the four rings sit in ONE path filled even-odd. Same 24×24 box, same look.
+ */
+export const PLAY_ICON_PATH =
+  'M12 1a11 11 0 1 0 0 22a11 11 0 1 0 0-22Z' +
+  'M12 3a9 9 0 1 1 0 18a9 9 0 1 1 0-18Z' +
+  'M10.555 7.168L16.555 11.168A1 1 0 0 1 16.555 12.832L10.555 16.832A1 1 0 0 1 9 16V8A1 1 0 0 1 10.555 7.168Z' +
+  'M11 9.869V14.131L14.197 12Z';
+export const PLAY_ICON_COLOR = '#3D8BD0';
+
+export function PlayIcon({ size = 24, color = 'currentColor', className }: { size?: number; color?: string; className?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" className={className} aria-hidden="true">
+      <path d={PLAY_ICON_PATH} fill={color} fillRule="evenodd" />
+    </svg>
+  );
+}

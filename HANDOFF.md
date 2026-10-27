@@ -1,3 +1,28 @@
+# Handoff — 2026-10-27 (Form Rules: product wording, play icon, guide video openings)
+
+> Sessions share this file. This top part is the newest (Form Rules session); the Compliance notes follow.
+
+## Read first
+CLAUDE.md › "Form Rules — the product's own words, the play icon, and Check conflicts on the right".
+
+## Completed (published with this handoff)
+- Rule editor labels = the product's: Name* · Tags (now OPTIONAL) · Description · Rule Event* ·
+  Rule Execution On* · Rule Applicable For*; dropdowns show product values; 'Everyone' renamed 'All Users'.
+- V2 guide video's form copies the real editor (labels, values, Condition group 1 box, row icons); the
+  slide SVG/GIF downloads follow automatically.
+- Illustrations page: Icons section — the play icon flattened to ONE path (pixel-identical to lucide),
+  SVG / PNG / PNG @2x at 16 / 24 / 48 px + Copy path; the Watch video card uses the same path.
+- V2 listing: Check conflicts sits on the right beside Create Rule.
+- Guide video: first landing (create or edit) opens it small bottom-right, once; Watch video opens it
+  full size centred; shrinking drops it to the bottom right.
+
+## Next steps
+- `formRuleHelpContent.ts` (global help guide) still describes an option called "Everyone".
+- The video's "Create, edit or both" placeholder runs slightly into its chevron (shows only briefly).
+- Check conflicts is still mocked (700ms + local engine).
+
+---
+
 # Handoff — 2026-10-27 evening (Compliance follow-ups after the 17:22 publish)
 
 > Sessions share this file. This top part is the newest; the 17:22 section below still holds for the rest.

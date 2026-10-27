@@ -92,7 +92,7 @@ const VERB: Record<string, string> = {
 };
 const EVENT_WORD: Record<string, string> = { 'On Field Change': 'is being filled', 'On Form Load': 'opens', 'On Form Submit': 'is submitted' };
 const EXEC_WORD: Record<string, string> = { 'On Create': 'a new request', 'On Edit': 'an existing request', 'On Create and Edit': 'new and existing requests' };
-const APPLIES_WORD: Record<string, string> = { Requesters: 'requesters', Technicians: 'technicians', Everyone: 'everyone' };
+const APPLIES_WORD: Record<string, string> = { Requesters: 'requesters', Technicians: 'technicians', 'All Users': 'all users' };
 const TONE = { when: '#3D8BD0', ifc: '#D97706', then: '#4D8A1A' };
 
 /* The rule editor — a full page, not a side drawer (the live product uses a drawer). A rule is a
@@ -250,11 +250,17 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
   const release = useFormRuleRelease();
   const [guideOpen, setGuideOpen] = useState(() => { try { return !localStorage.getItem(FORM_RULE_GUIDE_SEEN); } catch { return false; } });
   const closeGuide = () => { setGuideOpen(false); try { localStorage.setItem(FORM_RULE_GUIDE_SEEN, '1'); } catch { /* private mode */ } };
+  /* The video opens BY ITSELF on the FIRST landing only (create or edit), small in the bottom-right corner —
+     marked seen the moment it shows, so leaving without closing it does not bring it back. Watch video opens
+     it FULL SIZE in the centre; every press remounts it (key) so it always arrives big (Zeni, 27 Oct 2026). */
+  useEffect(() => { if (guideOpen) try { localStorage.setItem(FORM_RULE_GUIDE_SEEN, '1'); } catch { /* private mode */ } }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const [guideWatch, setGuideWatch] = useState(0);
+  const watchGuide = () => { setGuideWatch((n) => n + 1); setGuideOpen(true); };
   /* V1's Help guide tab: the minimal guide (Zeni, 9 Oct 2026) — it replaced the six numbered steps (FormRuleHelpGuide, still built). */
-  const guideEl = <div className="px-4 pb-5 pt-4"><FormRuleHelpMinimal onWatch={() => setGuideOpen(true)} /></div>;
+  const guideEl = <div className="px-4 pb-5 pt-4"><FormRuleHelpMinimal onWatch={watchGuide} /></div>;
   /* The global Help guide popup's "Watch in 1 min" plays the same video. */
   useEffect(() => {
-    const on = () => setGuideOpen(true);
+    const on = () => { setGuideWatch((n) => n + 1); setGuideOpen(true); };
     window.addEventListener('form-rule-watch-guide', on);
     return () => window.removeEventListener('form-rule-watch-guide', on);
   }, []);
@@ -379,7 +385,8 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
   const errors = {
     name: !draft.name.trim() ? 'Give the rule a name' : '',
     applies: !draft.applies ? 'Choose who this rule applies to' : '',
-    tags: draft.tags.length === 0 ? 'Add at least one tag' : '',
+    /* Tags are OPTIONAL (Zeni, 27 Oct 2026 — the product's own form has no asterisk on them). */
+    tags: '',
     event: !draft.event ? 'Choose when the rule runs' : '',
     execution: !draft.execution ? 'Choose where it executes' : '',
     conditions: draft.groups.some((g) => g.conditions.some(condIncomplete)) ? 'Finish or remove the highlighted conditions' : '',
@@ -597,12 +604,12 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
           <div className="flex flex-col gap-4 p-4 pt-5">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <FieldLabel required>Rule name</FieldLabel>
+                <FieldLabel required>Name</FieldLabel>
                 <input value={draft.name} onChange={(e) => set({ name: e.target.value })} placeholder="Rule name" className={`${inputCls} ${err('name') ? '!border-[#F25C4E]' : ''}`} />
                 <ErrorText>{err('name')}</ErrorText>
               </div>
               <div>
-                <FieldLabel required>Select Rule Applicable for</FieldLabel>
+                <FieldLabel required>Rule Applicable For</FieldLabel>
                 <RuleSelect value={draft.applies ? [draft.applies] : []} onChange={([v]) => set({ applies: v as FormRule['applies'] })} options={APPLIES_OPTIONS} placeholder="Choose people" invalid={!!err('applies')} />
                 <ErrorText>{err('applies')}</ErrorText>
               </div>
@@ -612,7 +619,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
               <textarea value={draft.description} onChange={(e) => set({ description: e.target.value })} placeholder="Description" className={`${inputCls} h-16 resize-y py-1.5 leading-[1.36]`} />
             </div>
             <div className="flex items-start gap-3">
-              <span className="flex h-6 items-center text-[12px] text-[#7B8FA5]">Add tag&nbsp;<span className="text-[#F25C4E]">*</span></span>
+              <span className="flex h-6 items-center text-[12px] text-[#7B8FA5]">Add tag</span>
               <div className="flex-1">
                 <TagEditor tags={draft.tags} onChange={(tags) => set({ tags })} invalid={!!err('tags')} />
                 <ErrorText>{err('tags')}</ErrorText>
@@ -630,18 +637,18 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
               <Panel>
                 <div className={appliesInWhen ? 'grid grid-cols-3 gap-4' : 'grid grid-cols-2 gap-4'}>
                   <div>
-                    <label className="mb-0.5 block text-[12px] text-[#7B8FA5]">Select Rule Event <span className="text-[#F25C4E]">*</span></label>
+                    <label className="mb-0.5 block text-[12px] text-[#7B8FA5]">Rule Event <span className="text-[#F25C4E]">*</span></label>
                     <RuleSelect value={draft.event ? [draft.event] : []} onChange={([v]) => set({ event: v as FormRule['event'] })} options={EVENT_OPTIONS} placeholder="Choose an event" invalid={!!err('event')} />
                     <ErrorText>{err('event')}</ErrorText>
                   </div>
                   <div>
-                    <label className="mb-0.5 block text-[12px] text-[#7B8FA5]">Execute on <span className="text-[#F25C4E]">*</span></label>
+                    <label className="mb-0.5 block text-[12px] text-[#7B8FA5]">Rule Execution On <span className="text-[#F25C4E]">*</span></label>
                     <RuleSelect value={draft.execution ? [draft.execution] : []} onChange={([v]) => set({ execution: v as FormRule['execution'] })} options={EXECUTION_OPTIONS} placeholder="Create, edit or both" invalid={!!err('execution')} />
                     <ErrorText>{err('execution')}</ErrorText>
                   </div>
                   {appliesInWhen && (
                     <div>
-                      <label className="mb-0.5 block text-[12px] text-[#7B8FA5]">Select Rule Applicable for <span className="text-[#F25C4E]">*</span></label>
+                      <label className="mb-0.5 block text-[12px] text-[#7B8FA5]">Rule Applicable For <span className="text-[#F25C4E]">*</span></label>
                       <RuleSelect value={draft.applies ? [draft.applies] : []} onChange={([v]) => set({ applies: v as FormRule['applies'] })} options={APPLIES_OPTIONS} placeholder="Choose people" invalid={!!err('applies')} />
                       <ErrorText>{err('applies')}</ErrorText>
                     </div>
@@ -660,7 +667,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
       <Panel>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="mb-0.5 block text-[12px] text-[#7B8FA5]">Select Rule Applicable for <span className="text-[#F25C4E]">*</span></label>
+            <label className="mb-0.5 block text-[12px] text-[#7B8FA5]">Rule Applicable For <span className="text-[#F25C4E]">*</span></label>
             <RuleSelect value={draft.applies ? [draft.applies] : []} onChange={([v]) => set({ applies: v as FormRule['applies'] })} options={APPLIES_OPTIONS} placeholder="Choose people" invalid={!!err('applies')} />
             <ErrorText>{err('applies')}</ErrorText>
           </div>
@@ -676,20 +683,20 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
         <div className="flex flex-col gap-4">
           <div className={withApplies ? 'grid grid-cols-2 gap-4' : 'grid grid-cols-2 gap-4'}>
             <div>
-              <label className="mb-0.5 block text-[12px] text-[#7B8FA5]">Rule name <span className="text-[#F25C4E]">*</span></label>
+              <label className="mb-0.5 block text-[12px] text-[#7B8FA5]">Name <span className="text-[#F25C4E]">*</span></label>
               <input value={draft.name} onChange={(e) => set({ name: e.target.value })} placeholder="Rule name" className={`${inputCls} ${err('name') ? '!border-[#F25C4E]' : ''}`} />
               <ErrorText>{err('name')}</ErrorText>
             </div>
             {!withApplies && (
               <div>
-                <label className="mb-0.5 block text-[12px] text-[#7B8FA5]">Tags <span className="text-[#F25C4E]">*</span></label>
+                <label className="mb-0.5 block text-[12px] text-[#7B8FA5]">Tags</label>
                 <div className="flex min-h-8 items-center"><TagEditor tags={draft.tags} onChange={(tags) => set({ tags })} invalid={!!err('tags')} /></div>
                 <ErrorText>{err('tags')}</ErrorText>
               </div>
             )}
             {withApplies && (
               <div>
-                <label className="mb-0.5 block text-[12px] text-[#7B8FA5]">Select Rule Applicable for <span className="text-[#F25C4E]">*</span></label>
+                <label className="mb-0.5 block text-[12px] text-[#7B8FA5]">Rule Applicable For <span className="text-[#F25C4E]">*</span></label>
                 <RuleSelect value={draft.applies ? [draft.applies] : []} onChange={([v]) => set({ applies: v as FormRule['applies'] })} options={APPLIES_OPTIONS} placeholder="Choose people" invalid={!!err('applies')} />
                 <ErrorText>{err('applies')}</ErrorText>
               </div>
@@ -700,7 +707,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
             <textarea value={draft.description} onChange={(e) => set({ description: e.target.value })} placeholder="Description" className={`${inputCls} h-16 resize-y bg-white py-1.5 leading-[1.36]`} />
           </div>
           {withApplies && <div>
-            <label className="mb-0.5 block text-[12px] text-[#7B8FA5]">Tags <span className="text-[#F25C4E]">*</span></label>
+            <label className="mb-0.5 block text-[12px] text-[#7B8FA5]">Tags</label>
             <TagEditor tags={draft.tags} onChange={(tags) => set({ tags })} invalid={!!err('tags')} />
             <ErrorText>{err('tags')}</ErrorText>
           </div>}
@@ -973,7 +980,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
       )}
       {!railVisible && railStrip}
       {/* The guide video sits in the corner of the FORM, clear of the rail (or its folded strip). */}
-      {version === 'A' && guideOpen && <FormRuleGuideDock onClose={closeGuide} right={!narrow && railOpen ? RAIL_MAX + 20 : 56} />}
+      {version === 'A' && guideOpen && <FormRuleGuideDock key={guideWatch} startBig={guideWatch > 0} onClose={closeGuide} right={!narrow && railOpen ? RAIL_MAX + 20 : 56} />}
     </div>
   );
 
@@ -1048,14 +1055,14 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
     <div className="relative flex min-h-0 flex-1">
       <div className="min-h-0 flex-1 overflow-y-auto">{builder}</div>
       <div className="flex-shrink-0" style={{ width: v3W }}>
-        <FormRuleHelpCard look={FINAL_HELP_LOOK ?? helpLook} onWatch={() => setGuideOpen(true)} watchOnTop={release === 'v2'}
+        <FormRuleHelpCard look={FINAL_HELP_LOOK ?? helpLook} onWatch={watchGuide} watchOnTop={release === 'v2'}
           ruleCheck={(compact) => ready && (conflicts.length > 0 || similar.length > 0)
             ? <RelatedSummaryCards onlyFound arrowAlways attention compact={compact} intro={intro} onInfo={setIntro} onCloseIntro={closeIntro} introSide="below" ready={ready} conflicts={conflicts} similar={similar} onOpenConflicts={() => setRelOpen('conflicts')} onOpenSimilar={() => setRelOpen('similar')} />
             : release === 'v2' ? null : <RuleCheckEmpty compact={compact} />} />
       </div>
       {/* Bottom-right of the SCREEN, over the Help guide (Zeni, 26 Oct 2026). */}
       {guideOpen && (release === 'v2'
-        ? <FormRuleGuideDock onClose={closeGuide} right={20} />
+        ? <FormRuleGuideDock key={guideWatch} startBig={guideWatch > 0} onClose={closeGuide} right={20} />
         : <FormRuleGuideDockV1 onClose={closeGuide} right={v3W + 20} />)}
     </div>
   );
@@ -1066,13 +1073,13 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
     <div className="relative flex min-h-0 flex-1">
       <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
         <div className="min-h-0 flex-1 overflow-y-auto [&>div]:mx-0">{builder}</div>
-        {guideOpen && <FormRuleGuideDock onClose={closeGuide} right={20} />}
+        {guideOpen && <FormRuleGuideDock key={guideWatch} startBig={guideWatch > 0} onClose={closeGuide} right={20} />}
       </div>
       {/* 20% narrower than the room right of the form (Zeni, 9 Oct 2026), pinned to the right edge — the
           form keeps its 880px and the space given up sits between the two. */}
       <div className="ml-2 flex-shrink-0" style={{ width: 'max(360px, calc((100% - 888px) * 0.8))' }}>
         <FormRuleCheckPanel tab={v4Tab} onTab={setV4Tab} ready={ready} conflicts={conflicts} similar={similar}
-          fieldLabel={(id) => fieldById(id)?.label ?? id} onOpenRule={openOther} onWatch={() => setGuideOpen(true)} focus={v4Focus}
+          fieldLabel={(id) => fieldById(id)?.label ?? id} onOpenRule={openOther} onWatch={watchGuide} focus={v4Focus}
           common={{ eventText: eventLabel(draft.event), execution: draft.execution, applies: railProps.common.applies, groups: railProps.common.groups, actions: railProps.common.actions }} />
       </div>
     </div>
@@ -1138,12 +1145,12 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
   const detailsFields = (
           <div className="flex flex-col gap-3.5 px-4 pb-4 pt-1">
             <div>
-              <FieldLabel required>Rule name</FieldLabel>
+              <FieldLabel required>Name</FieldLabel>
               <input value={draft.name} onChange={(e) => set({ name: e.target.value })} placeholder="Rule name" className={`${inputCls} ${err('name') ? '!border-[#F25C4E]' : ''}`} />
               <ErrorText>{err('name')}</ErrorText>
             </div>
             <div>
-              <FieldLabel required>Select Rule Applicable for</FieldLabel>
+              <FieldLabel required>Rule Applicable For</FieldLabel>
               <RuleSelect value={draft.applies ? [draft.applies] : []} onChange={([v]) => set({ applies: v as FormRule['applies'] })} options={APPLIES_OPTIONS} placeholder="Choose people" invalid={!!err('applies')} />
               <ErrorText>{err('applies')}</ErrorText>
             </div>
@@ -1152,7 +1159,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
               <textarea value={draft.description} onChange={(e) => set({ description: e.target.value })} placeholder="Description" className={`${inputCls} h-16 resize-y py-1.5 leading-[1.36]`} />
             </div>
             <div>
-              <FieldLabel required>Tags</FieldLabel>
+              <FieldLabel>Tags</FieldLabel>
               <TagEditor tags={draft.tags} onChange={(tags) => set({ tags })} invalid={!!err('tags')} />
               <ErrorText>{err('tags')}</ErrorText>
             </div>
@@ -1163,7 +1170,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
   const detailsFieldsNoWho = (
     <div className="flex flex-col gap-3.5 px-4 pb-4 pt-1">
       <div>
-        <FieldLabel required>Rule name</FieldLabel>
+        <FieldLabel required>Name</FieldLabel>
         <input value={draft.name} onChange={(e) => set({ name: e.target.value })} placeholder="Rule name" className={`${inputCls} ${err('name') ? '!border-[#F25C4E]' : ''}`} />
         <ErrorText>{err('name')}</ErrorText>
       </div>
@@ -1172,7 +1179,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
         <textarea value={draft.description} onChange={(e) => set({ description: e.target.value })} placeholder="Description" className={`${inputCls} h-16 resize-y py-1.5 leading-[1.36]`} />
       </div>
       <div>
-        <FieldLabel required>Tags</FieldLabel>
+        <FieldLabel>Tags</FieldLabel>
         <TagEditor tags={draft.tags} onChange={(tags) => set({ tags })} invalid={!!err('tags')} />
         <ErrorText>{err('tags')}</ErrorText>
       </div>
@@ -1211,7 +1218,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
   );
 
   // ── B · guided stepper ────────────────────────────────────────────────────
-  const detailsDone = !!draft.name.trim() && (appliesInWhen || !!draft.applies) && draft.tags.length > 0;
+  const detailsDone = !!draft.name.trim() && (appliesInWhen || !!draft.applies);
   const actionsDone = draft.actions.length > 0 && !draft.actions.some(actionIncomplete);
   const STEPS = [
     { label: 'Rule details', hint: appliesInWhen ? 'Name, description, tags' : 'Name, who it is for, tags', done: detailsDone, locked: false },
@@ -1654,7 +1661,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
   const pDetailsFields = (
     <div className="flex flex-col gap-3.5 px-4 pb-4 pt-1">
       <div>
-        <FieldLabel required>Rule name</FieldLabel>
+        <FieldLabel required>Name</FieldLabel>
         <input value={draft.name} onChange={(e) => set({ name: e.target.value })} placeholder="Rule name" className={`${inputCls} ${err('name') ? '!border-[#F25C4E]' : ''}`} />
         <ErrorText>{err('name')}</ErrorText>
       </div>
@@ -1663,7 +1670,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
         <textarea value={draft.description} onChange={(e) => set({ description: e.target.value })} placeholder="Description" className={`${inputCls} h-16 resize-y py-1.5 leading-[1.36]`} />
       </div>
       <div>
-        <FieldLabel required>Tags</FieldLabel>
+        <FieldLabel>Tags</FieldLabel>
         <TagEditor tags={draft.tags} onChange={(tags) => set({ tags })} invalid={!!err('tags')} />
         <ErrorText>{err('tags')}</ErrorText>
       </div>
@@ -1693,7 +1700,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
       </>)}
     </div>
   );
-  const introOk = !!draft.name.trim() && draft.tags.length > 0;
+  const introOk = !!draft.name.trim();
   const introEl = version === 'P' && !introDone && (
     <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-[#0F172A]/40">
       <div className="w-[min(520px,92vw)] rounded-xl bg-white shadow-xl">
@@ -1706,7 +1713,7 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
         </div>
         <div className="flex flex-col gap-4 px-5 py-4">
           <div>
-            <FieldLabel required>Rule name</FieldLabel>
+            <FieldLabel required>Name</FieldLabel>
             <input autoFocus value={draft.name} onChange={(e) => set({ name: e.target.value })} placeholder="Rule name" className={`${inputCls} ${introTried && !draft.name.trim() ? '!border-[#F25C4E]' : ''}`} />
             <ErrorText>{introTried && !draft.name.trim() ? 'Give the rule a name' : ''}</ErrorText>
           </div>
@@ -1715,9 +1722,9 @@ export function FormRuleEditor({ rule, rules, fields, onCancel, onSave, onOpenRu
             <textarea value={draft.description} onChange={(e) => set({ description: e.target.value })} placeholder="Description" className={`${inputCls} h-20 resize-y py-1.5 leading-[1.36]`} />
           </div>
           <div>
-            <FieldLabel required>Tags</FieldLabel>
-            <TagEditor tags={draft.tags} onChange={(tags) => set({ tags })} invalid={introTried && draft.tags.length === 0} />
-            <ErrorText>{introTried && draft.tags.length === 0 ? 'Add at least one tag' : ''}</ErrorText>
+            <FieldLabel>Tags</FieldLabel>
+            <TagEditor tags={draft.tags} onChange={(tags) => set({ tags })} />
+            
           </div>
         </div>
         <div className="flex justify-end gap-2 border-t border-[#EEF2F6] px-5 py-3">
