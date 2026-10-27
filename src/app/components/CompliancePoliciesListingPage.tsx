@@ -50,7 +50,6 @@ const toRow = (p: CompliancePolicy): Ticket => {
     x_scheduled: p.schedule.frequency === 'none' ? 'Not scheduled' : 'Scheduled',
     x_enabled: p.enabled ? 'Enabled' : 'Disabled',
     x_scanning: !!p.scanning,
-    x_tags: p.tags.join(', '),
     x_createdBy: p.createdBy,
   } as unknown as Ticket;
 };
@@ -183,7 +182,7 @@ export function CompliancePoliciesListingPage({ onNavigate }: { onNavigate?: (pa
             <div className="px-6 py-16 text-center text-[13px] text-[#9CA3AF]">No policy matches this search and filter.</div>
           )
         )}
-        searchFields={['x_benchmark', 'x_tags', 'x_createdBy']}
+        searchFields={['x_benchmark', 'x_createdBy']}
         /* Status is the result of the last scan — the system sets it, nobody picks it. */
         lockedCells={['status']}
         moreActions={[]}

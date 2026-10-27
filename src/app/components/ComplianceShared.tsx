@@ -100,10 +100,10 @@ export function DefaultLock({ show, size = 13 }: { show: boolean; size?: number 
 
 /* ── Rule detail — right side panel ──────────────────────────────────────────────────────── */
 
-type RuleTab = 'summary' | 'audit' | 'remediation' | 'references' | 'controls' | 'tags';
+type RuleTab = 'summary' | 'audit' | 'remediation' | 'references' | 'controls';
 const RULE_TABS: [RuleTab, string][] = [
   ['summary', 'Summary'], ['audit', 'Audit'], ['remediation', 'Remediation'],
-  ['references', 'References'], ['controls', 'Controls'], ['tags', 'Tags'],
+  ['references', 'References'], ['controls', 'Controls'],
 ];
 
 const fieldLabel = 'text-[12px] text-[#7B8FA5]';
@@ -142,7 +142,7 @@ export function RuleDetailPanel({ rule, usedIn, onClose, number }: {
   );
 }
 
-/** The rule's metadata tabs (Summary · Audit · Remediation · References · Controls · Tags) and
+/** The rule's metadata tabs (Summary · Audit · Remediation · References · Controls) and
  *  their content, without a panel around them — so a panel that drills into a rule can show it
  *  in place, under its own header. `lead` sits above the tabs (the result on one endpoint, or
  *  the endpoints a rule passed / failed on). There is no Results tab: results are never a tab. */
@@ -166,7 +166,7 @@ export function RuleDetailBody({ rule, usedIn, lead }: {
                 type="button"
                 onClick={() => setTab(id)}
                 className={`whitespace-nowrap border-b-2 px-2 py-3 text-[14px] font-medium transition-colors ${tab === id ? 'border-[#3D8BD0] text-[#3D8BD0]' : 'border-transparent text-[#6b7280] hover:border-[#CBD5E1] hover:bg-[#F5F7FA] hover:text-[#364658]'}`}
-              >{label}{id === 'tags' && rule.tags.length > 0 && <span className="ml-1.5 text-[12px] text-[#9CA3AF]">{rule.tags.length}</span>}</button>
+              >{label}</button>
             ))}
           </div>
         </div>
@@ -246,13 +246,6 @@ export function RuleDetailBody({ rule, usedIn, lead }: {
             </div>
           )}
 
-          {tab === 'tags' && (
-            rule.tags.length ? (
-              <div className="flex flex-wrap gap-2">
-                {rule.tags.map((t) => <span key={t} className="rounded bg-[#F1F5F9] px-2 py-1 text-[12px] text-[#364658]">{t}</span>)}
-              </div>
-            ) : <p className="text-[13px] text-[#9CA3AF]">No tags on this rule.</p>
-          )}
         </div>
     </>
   );

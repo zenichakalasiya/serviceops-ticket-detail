@@ -58,7 +58,6 @@ export interface ComplianceRule {
   remediationValue: string;
   references: string[];
   controls: ControlMapping[];
-  tags: string[];
   /** CIS profile level: L1 = must have (practical, low impact); L2 = good to have (defence in
    *  depth, may cost some function). An L2 benchmark includes L1 rules; an L1 one never takes L2. */
   profile: Profile;
@@ -112,8 +111,6 @@ interface Check {
   section: [string, string];
   subsection?: [string, string];
   platforms: Platform[];
-  /** Tags per platform index, so copies of one check don't all read alike. */
-  tags: string[][];
 }
 
 const LINUX = [P.debian, P.rhel, P.ubuntu];
@@ -132,7 +129,7 @@ const CHECKS: Check[] = [
     references: ['NIST SP 800-53 Rev. 5: CM-7'],
     controls: [{ version: 'v8', safeguard: '4.8 Uninstall or Disable Unnecessary Services on Enterprise Assets and Software', text: 'Uninstall or disable unnecessary services on enterprise assets and software, such as an unused file sharing service.' }, { version: 'v7', safeguard: '5.1 Establish Secure Configurations', text: 'Maintain documented, standard security configuration standards for all authorized operating systems and software.' }],
     section: ['1', 'Initial Setup'], subsection: ['1.1', 'Filesystem Configuration'],
-    platforms: LINUX, tags: [['cis'], ['nist', 'framework:cis'], ['cis', 'section:filesystem']],
+    platforms: LINUX,
   },
   {
     key: 'tmp', name: 'Ensure separate partition exists for /tmp',
@@ -146,7 +143,7 @@ const CHECKS: Check[] = [
     references: ['NIST SP 800-53 Rev. 5: CM-7'],
     controls: [{ version: 'v8', safeguard: '3.3 Configure Data Access Control Lists', text: 'Configure data access control lists based on a user’s need to know.' }, { version: 'v7', safeguard: null }],
     section: ['1', 'Initial Setup'], subsection: ['1.1', 'Filesystem Configuration'],
-    platforms: LINUX, tags: [['cis', 'framework:pci-dss', 'section:filesystem', 'profile applicability:L1'], ['framework:pci-dss', 'cis'], ['cis']],
+    platforms: LINUX,
   },
   {
     key: 'gpgcheck', name: 'Ensure gpgcheck is globally activated',
@@ -160,7 +157,7 @@ const CHECKS: Check[] = [
     references: ['NIST SP 800-53 Rev. 5: SI-7'],
     controls: [{ version: 'v8', safeguard: '7.3 Perform Automated Operating System Patch Management', text: 'Perform operating system updates on enterprise assets through automated patch management on a monthly, or more frequent, basis.' }, { version: 'v7', safeguard: '3.4 Deploy Automated Operating System Patch Management Tools', text: 'Deploy automated software update tools to ensure the operating systems run the most recent updates.' }],
     section: ['1', 'Initial Setup'], subsection: ['1.2', 'Configure Software Updates'],
-    platforms: LINUX, tags: [['profile applicability:L1'], ['framework:hipaa'], ['cis', 'profile applicability:L1']],
+    platforms: LINUX,
   },
   {
     key: 'aslr', name: 'Ensure address space layout randomization is enabled',
@@ -174,7 +171,7 @@ const CHECKS: Check[] = [
     references: ['NIST SP 800-53 Rev. 5: CM-6'],
     controls: [{ version: 'v8', safeguard: '10.5 Enable Anti-Exploitation Features', text: 'Enable anti-exploitation features on enterprise assets and software, where possible.' }, { version: 'v7', safeguard: '8.3 Enable Operating System Anti-Exploitation Features', text: 'Enable anti-exploitation features such as DEP or ASLR that are available in an operating system.' }],
     section: ['1', 'Initial Setup'], subsection: ['1.5', 'Additional Process Hardening'],
-    platforms: LINUX, tags: [['cis', 'hipaa'], ['hipaa', 'framework:cis'], ['nist']],
+    platforms: LINUX,
   },
   {
     key: 'coredump', name: 'Ensure core dumps are restricted',
@@ -188,7 +185,7 @@ const CHECKS: Check[] = [
     references: ['NIST SP 800-53 Rev. 5: CM-6'],
     controls: [{ version: 'v8', safeguard: null }, { version: 'v7', safeguard: null }],
     section: ['1', 'Initial Setup'], subsection: ['1.5', 'Additional Process Hardening'],
-    platforms: LINUX, tags: [['cis', 'nist'], ['nist', 'cis', 'bfsi', 'compliance'], ['cis']],
+    platforms: LINUX,
   },
   {
     key: 'firewalld', name: 'Ensure firewalld is running',
@@ -202,7 +199,7 @@ const CHECKS: Check[] = [
     references: ['NIST SP 800-53 Rev. 5: SC-7'],
     controls: [{ version: 'v8', safeguard: '4.4 Implement and Manage a Firewall on Servers', text: 'Implement and manage a firewall on servers, where supported.' }, { version: 'v7', safeguard: '9.4 Apply Host-based Firewalls or Port Filtering', text: 'Apply host-based firewalls or port filtering tools on end systems.' }],
     section: ['3', 'Network Configuration'], subsection: ['3.4', 'Configure Host Based Firewall'],
-    platforms: LINUX, tags: [['profile applicability:L1'], [], ['cis', 'framework:pci-dss']],
+    platforms: LINUX,
   },
   {
     key: 'auditd', name: 'Ensure auditd is installed',
@@ -216,7 +213,7 @@ const CHECKS: Check[] = [
     references: ['NIST SP 800-53 Rev. 5: AU-2, AU-12'],
     controls: [{ version: 'v8', safeguard: '8.2 Collect Audit Logs', text: 'Collect audit logs. Ensure that logging, per the enterprise’s audit log management process, has been enabled across enterprise assets.' }, { version: 'v7', safeguard: '6.2 Activate audit logging', text: 'Ensure that local logging has been enabled on all systems and networking devices.' }],
     section: ['4', 'Logging and Auditing'], subsection: ['4.1', 'Configure System Accounting (auditd)'],
-    platforms: LINUX, tags: [['framework:cis', 'section:logging'], ['framework:cis', 'hipaa'], ['section:logging']],
+    platforms: LINUX,
   },
   {
     key: 'sshroot', name: 'Ensure SSH root login is disabled',
@@ -230,7 +227,7 @@ const CHECKS: Check[] = [
     references: ['NIST SP 800-53 Rev. 5: AC-6(2), AC-6(5)'],
     controls: [{ version: 'v8', safeguard: '5.4 Restrict Administrator Privileges to Dedicated Administrator Accounts', text: 'Restrict administrator privileges to dedicated administrator accounts on enterprise assets.' }, { version: 'v7', safeguard: '4.3 Ensure the Use of Dedicated Administrative Accounts', text: 'Ensure that all users with administrative account access use a dedicated or secondary account for elevated activities.' }],
     section: ['5', 'Access, Authentication and Authorization'], subsection: ['5.2', 'Configure SSH Server'],
-    platforms: LINUX, tags: [['pci-dss', 'cis', 'bfsi'], ['framework:hipaa', 'cis'], ['pci-dss']],
+    platforms: LINUX,
   },
   {
     key: 'sshtries', name: 'Ensure SSH MaxAuthTries is set to 4 or less',
@@ -244,7 +241,7 @@ const CHECKS: Check[] = [
     references: ['NIST SP 800-53 Rev. 5: AU-3'],
     controls: [{ version: 'v8', safeguard: '8.5 Collect Detailed Audit Logs', text: 'Configure detailed audit logging for enterprise assets containing sensitive data.' }, { version: 'v7', safeguard: '16.13 Alert on Account Login Behavior Deviation', text: 'Alert when users deviate from normal login behavior, such as time-of-day or workstation location.' }],
     section: ['5', 'Access, Authentication and Authorization'], subsection: ['5.2', 'Configure SSH Server'],
-    platforms: LINUX, tags: [['profile applicability:L1'], ['framework:hipaa', 'cis'], ['cis']],
+    platforms: LINUX,
   },
   {
     key: 'passwd', name: 'Ensure permissions on /etc/passwd are configured',
@@ -258,7 +255,7 @@ const CHECKS: Check[] = [
     references: ['NIST SP 800-53 Rev. 5: AC-3, MP-2'],
     controls: [{ version: 'v8', safeguard: '3.3 Configure Data Access Control Lists', text: 'Configure data access control lists based on a user’s need to know.' }, { version: 'v7', safeguard: '14.6 Protect Information through Access Control Lists', text: 'Protect all information stored on systems with file system, network share, claims, application, or database specific access control lists.' }],
     section: ['6', 'System Maintenance'], subsection: ['6.1', 'System File Permissions'],
-    platforms: LINUX, tags: [['framework:hipaa'], ['framework:cis'], ['framework:hipaa', 'cis']],
+    platforms: LINUX,
   },
   /* ── Windows ── */
   {
@@ -273,7 +270,7 @@ const CHECKS: Check[] = [
     references: ['NIST SP 800-53 Rev. 5: IA-5(1)'],
     controls: [{ version: 'v8', safeguard: '5.2 Use Unique Passwords', text: 'Use unique passwords for all enterprise assets.' }, { version: 'v7', safeguard: '4.4 Use Unique Passwords', text: 'Where multi-factor authentication is not supported, user accounts shall be required to use long passwords on the system.' }],
     section: ['1', 'Account Policies'], subsection: ['1.1', 'Password Policy'],
-    platforms: WIN, tags: [['framework:cis', 'pci-dss', 'profile applicability:L1'], ['framework:cis']],
+    platforms: WIN,
   },
   {
     key: 'pwlength', name: "Ensure 'Minimum password length' is set to '14 or more character(s)'",
@@ -287,7 +284,7 @@ const CHECKS: Check[] = [
     references: ['NIST SP 800-53 Rev. 5: IA-5(1)'],
     controls: [{ version: 'v8', safeguard: '5.2 Use Unique Passwords', text: 'Use unique passwords for all enterprise assets.' }, { version: 'v7', safeguard: '4.4 Use Unique Passwords' }],
     section: ['1', 'Account Policies'], subsection: ['1.1', 'Password Policy'],
-    platforms: WIN, tags: [['pci-dss', 'bfsi'], ['pci-dss']],
+    platforms: WIN,
   },
   {
     key: 'lockout', name: "Ensure 'Account lockout threshold' is set to '5 or fewer invalid logon attempt(s), but not 0'",
@@ -301,7 +298,7 @@ const CHECKS: Check[] = [
     references: ['NIST SP 800-53 Rev. 5: AC-7'],
     controls: [{ version: 'v8', safeguard: '4.10 Enforce Automatic Device Lockout on Portable End-User Devices' }, { version: 'v7', safeguard: '16.7 Establish Process for Revoking Access' }],
     section: ['1', 'Account Policies'], subsection: ['1.2', 'Account Lockout Policy'],
-    platforms: WIN, tags: [['framework:cis'], ['framework:cis', 'hipaa']],
+    platforms: WIN,
   },
   {
     key: 'spooler', name: "Ensure 'Print Spooler (Spooler)' is set to 'Disabled' (DC only)",
@@ -315,7 +312,7 @@ const CHECKS: Check[] = [
     references: ['NIST SP 800-53 Rev. 5: CM-7'],
     controls: [{ version: 'v8', safeguard: '4.8 Uninstall or Disable Unnecessary Services on Enterprise Assets and Software' }, { version: 'v7', safeguard: '9.2 Ensure Only Approved Ports, Protocols and Services Are Running' }],
     section: ['5', 'System Services'],
-    platforms: WIN, tags: [['cis', 'hipaa'], ['cis']],
+    platforms: WIN,
   },
   {
     key: 'smb1', name: "Ensure 'Configure SMB v1 server' is set to 'Disabled'",
@@ -329,7 +326,7 @@ const CHECKS: Check[] = [
     references: ['NIST SP 800-53 Rev. 5: CM-7'],
     controls: [{ version: 'v8', safeguard: '4.8 Uninstall or Disable Unnecessary Services on Enterprise Assets and Software' }, { version: 'v7', safeguard: '9.2 Ensure Only Approved Ports, Protocols and Services Are Running' }],
     section: ['18', 'Administrative Templates (Computer)'], subsection: ['18.4', 'MS Security Guide'],
-    platforms: WIN, tags: [['bfsi', 'compliance'], []],
+    platforms: WIN,
   },
   /* ── Network ── */
   {
@@ -344,7 +341,7 @@ const CHECKS: Check[] = [
     references: ['NIST SP 800-53 Rev. 5: AC-2, IA-2'],
     controls: [{ version: 'v8', safeguard: '6.7 Centralize Access Control', text: 'Centralize access control for all enterprise assets through a directory service or SSO provider.' }, { version: 'v7', safeguard: '16.2 Configure Centralized Point of Authentication' }],
     section: ['1', 'Management Plane'], subsection: ['1.1', 'Local Authentication, Authorization and Accounting (AAA) Rules'],
-    platforms: [P.iosRouter, P.iosSwitch, P.junos, P.nxos], tags: [['framework:cis', 'bfsi'], ['framework:cis'], ['cis'], ['framework:cis', 'section:access control']],
+    platforms: [P.iosRouter, P.iosSwitch, P.junos, P.nxos],
   },
   {
     key: 'telnet', name: "Set 'transport input ssh' for 'line vty' connections",
@@ -358,7 +355,7 @@ const CHECKS: Check[] = [
     references: ['NIST SP 800-53 Rev. 5: AC-17(2)'],
     controls: [{ version: 'v8', safeguard: '12.6 Use of Secure Network Management and Communication Protocols' }, { version: 'v7', safeguard: '11.5 Use Automated Tools to Verify Standard Device Configurations and Detect Changes' }],
     section: ['1', 'Management Plane'], subsection: ['1.2', 'Access Rules'],
-    platforms: [P.iosRouter, P.iosSwitch, P.junos, P.nxos], tags: [['pci-dss', 'framework:cis'], ['pci-dss'], ['section:access control'], ['framework:cis']],
+    platforms: [P.iosRouter, P.iosSwitch, P.junos, P.nxos],
   },
   {
     key: 'banner', name: "Set the 'banner-text' for 'banner login'",
@@ -372,7 +369,7 @@ const CHECKS: Check[] = [
     references: ['NIST SP 800-53 Rev. 5: AC-8'],
     controls: [{ version: 'v8', safeguard: null }, { version: 'v7', safeguard: null }],
     section: ['1', 'Management Plane'], subsection: ['1.3', 'Banner Rules'],
-    platforms: [P.iosRouter, P.iosSwitch], tags: [['hipaa'], ['hipaa', 'cis']],
+    platforms: [P.iosRouter, P.iosSwitch],
   },
   {
     key: 'snmp', name: "Unset 'private' for 'snmp-server community'",
@@ -386,7 +383,7 @@ const CHECKS: Check[] = [
     references: ['NIST SP 800-53 Rev. 5: CM-6'],
     controls: [{ version: 'v8', safeguard: '4.7 Manage Default Accounts on Enterprise Assets and Software' }, { version: 'v7', safeguard: '11.1 Maintain Standard Security Configurations for Network Devices' }],
     section: ['1', 'Management Plane'], subsection: ['1.5', 'SNMP Rules'],
-    platforms: [P.iosRouter, P.iosSwitch, P.nxos], tags: [['framework:cis'], ['framework:cis', 'section:snmp'], ['cis']],
+    platforms: [P.iosRouter, P.iosSwitch, P.nxos],
   },
   {
     key: 'logbuffer', name: "Set 'logging buffered'",
@@ -400,7 +397,7 @@ const CHECKS: Check[] = [
     references: ['NIST SP 800-53 Rev. 5: AU-4'],
     controls: [{ version: 'v8', safeguard: '8.3 Ensure Adequate Audit Log Storage' }, { version: 'v7', safeguard: '6.4 Ensure adequate storage for logs' }],
     section: ['2', 'Control Plane'], subsection: ['2.2', 'Logging Rules'],
-    platforms: [P.iosRouter, P.iosSwitch, P.junos], tags: [['section:logging'], ['section:logging', 'cis'], []],
+    platforms: [P.iosRouter, P.iosSwitch, P.junos],
   },
   {
     key: 'ntp', name: "Set 'ntp authenticate'",
@@ -414,7 +411,7 @@ const CHECKS: Check[] = [
     references: ['NIST SP 800-53 Rev. 5: AU-8'],
     controls: [{ version: 'v8', safeguard: '8.4 Standardize Time Synchronization' }, { version: 'v7', safeguard: '6.1 Utilize Three Synchronized Time Sources' }],
     section: ['2', 'Control Plane'], subsection: ['2.3', 'NTP Rules'],
-    platforms: [P.iosRouter, P.iosSwitch, P.junos], tags: [['nist'], ['nist'], ['framework:cis']],
+    platforms: [P.iosRouter, P.iosSwitch, P.junos],
   },
   /* ── Firewall ── */
   {
@@ -429,7 +426,7 @@ const CHECKS: Check[] = [
     references: ['NIST SP 800-53 Rev. 5: AC-2'],
     controls: [{ version: 'v8', safeguard: '4.7 Manage Default Accounts on Enterprise Assets and Software' }, { version: 'v7', safeguard: '4.2 Change Default Passwords' }],
     section: ['2', 'System Settings'], subsection: ['2.4', 'Administrators and Admin Profiles'],
-    platforms: [P.forti, P.panos], tags: [['bfsi', 'pci-dss'], ['pci-dss']],
+    platforms: [P.forti, P.panos],
   },
   {
     key: 'fortitimeout', name: 'Ensure idle timeout time is configured',
@@ -443,7 +440,7 @@ const CHECKS: Check[] = [
     references: ['NIST SP 800-53 Rev. 5: AC-12'],
     controls: [{ version: 'v8', safeguard: '4.3 Configure Automatic Session Locking on Enterprise Assets' }, { version: 'v7', safeguard: '16.11 Lock Workstation Sessions After Inactivity' }],
     section: ['2', 'System Settings'], subsection: ['2.4', 'Administrators and Admin Profiles'],
-    platforms: [P.forti, P.panos], tags: [['framework:cis'], ['framework:cis', 'compliance']],
+    platforms: [P.forti, P.panos],
   },
   {
     key: 'fortianyany', name: 'Ensure that unused or "any-any" policies are reviewed and removed',
@@ -457,7 +454,7 @@ const CHECKS: Check[] = [
     references: ['NIST SP 800-53 Rev. 5: SC-7(5)'],
     controls: [{ version: 'v8', safeguard: '4.5 Implement and Manage a Firewall on End-User Devices' }, { version: 'v7', safeguard: '9.4 Apply Host-based Firewalls or Port Filtering' }],
     section: ['3', 'Policy and Objects'],
-    platforms: [P.forti, P.panos], tags: [['pci-dss', 'framework:pci-dss'], []],
+    platforms: [P.forti, P.panos],
   },
 ];
 
@@ -484,7 +481,6 @@ export const RULES: ComplianceRule[] = CHECKS.flatMap((c) =>
     remediationValue: c.remediationValue,
     references: c.references,
     controls: c.controls,
-    tags: c.tags[i] ?? [],
     profile: (L2_CHECKS.has(c.key) ? 'L2' : 'L1') as Profile,
     section: c.section,
     subsection: c.subsection,
@@ -530,7 +526,6 @@ export interface Benchmark {
   profile: Profile;
   /** Default = ships with the product (CIS), read-only; Custom = built here. */
   origin: 'Default' | 'Custom';
-  tags: string[];
   /** Custom benchmarks are authored as one level of named groups. Default ones are not stored
    *  as groups at all — they read as the CIS tree, built from each rule's section. */
   groups: RuleGroup[];
@@ -547,17 +542,17 @@ const rulesFor = (key: string) => RULES.filter((r) => r.id.endsWith(`-${key}`) &
 const pick = (key: string, checks: string[]) => checks.map((c) => `${c}-${key}`).filter((id) => ruleById(id));
 
 const SEED: Omit<Benchmark, 'osVersion' | 'profile'>[] = [
-  { id: 'BM-1', name: 'CIS Debian Linux 11 Benchmark v2.0.0 - Level 1 Server', description: CIS_DESC, type: 'Linux', origin: 'Default', tags: ['framework:cis', 'profile applicability:L1', 'cis'], groups: [{ id: 'g', name: '', ruleIds: rulesFor('debian') }], usedBy: 2, createdBy: 'System', updatedAt: '2026-08-12T10:20' },
-  { id: 'BM-2', name: 'CIS Red Hat Enterprise Linux 9 Benchmark v2.0.0 - Level 1 Server', description: CIS_DESC, type: 'Linux', origin: 'Default', tags: ['framework:cis', 'profile applicability:L1', 'cis'], groups: [{ id: 'g', name: '', ruleIds: rulesFor('rhel') }], usedBy: 0, createdBy: 'System', updatedAt: '2026-08-12T10:20' },
-  { id: 'BM-3', name: 'CIS Ubuntu Linux 22.04 LTS Benchmark v2.0.0 - Level 1 Server', description: CIS_DESC, type: 'Linux', origin: 'Default', tags: ['framework:cis', 'profile applicability:L1'], groups: [{ id: 'g', name: '', ruleIds: rulesFor('ubuntu') }], usedBy: 1, createdBy: 'System', updatedAt: '2026-08-12T10:20' },
-  { id: 'BM-4', name: 'CIS Microsoft Windows Server 2019 Benchmark v3.0.0 - Level 1 Member Server', description: CIS_DESC, type: 'Windows', origin: 'Default', tags: ['framework:cis', 'profile applicability:L1'], groups: [{ id: 'g', name: '', ruleIds: rulesFor('win2019') }], usedBy: 3, createdBy: 'System', updatedAt: '2026-08-12T10:20' },
-  { id: 'BM-5', name: 'CIS Microsoft Windows Server 2022 Benchmark v3.0.0 - Level 1 Member Server', description: CIS_DESC, type: 'Windows', origin: 'Default', tags: ['framework:cis', 'profile applicability:L1'], groups: [{ id: 'g', name: '', ruleIds: rulesFor('win2022') }], usedBy: 0, createdBy: 'System', updatedAt: '2026-08-12T10:20' },
-  { id: 'BM-6', name: 'CIS Cisco IOS XE 17.x Benchmark v2.1.0 - Router', description: CIS_DESC, type: 'Router', origin: 'Default', tags: ['framework:cis', 'cis'], groups: [{ id: 'g', name: '', ruleIds: rulesFor('ios-r') }], usedBy: 1, createdBy: 'System', updatedAt: '2026-08-12T10:20' },
-  { id: 'BM-7', name: 'CIS Juniper OS Benchmark v2.1.0', description: CIS_DESC, type: 'Router', origin: 'Default', tags: ['framework:cis'], groups: [{ id: 'g', name: '', ruleIds: rulesFor('junos') }], usedBy: 0, createdBy: 'System', updatedAt: '2026-08-12T10:20' },
-  { id: 'BM-8', name: 'CIS Cisco IOS XE 17.x Benchmark v2.1.0 - Switch', description: CIS_DESC, type: 'Switch', origin: 'Default', tags: ['framework:cis'], groups: [{ id: 'g', name: '', ruleIds: rulesFor('ios-s') }], usedBy: 0, createdBy: 'System', updatedAt: '2026-08-12T10:20' },
-  { id: 'BM-9', name: 'CIS Fortigate 7.4.x Benchmark v1.0.0', description: CIS_DESC, type: 'Firewall', origin: 'Default', tags: ['framework:cis', 'pci-dss'], groups: [{ id: 'g', name: '', ruleIds: rulesFor('forti') }], usedBy: 2, createdBy: 'System', updatedAt: '2026-08-12T10:20' },
+  { id: 'BM-1', name: 'CIS Debian Linux 11 Benchmark v2.0.0 - Level 1 Server', description: CIS_DESC, type: 'Linux', origin: 'Default', groups: [{ id: 'g', name: '', ruleIds: rulesFor('debian') }], usedBy: 2, createdBy: 'System', updatedAt: '2026-08-12T10:20' },
+  { id: 'BM-2', name: 'CIS Red Hat Enterprise Linux 9 Benchmark v2.0.0 - Level 1 Server', description: CIS_DESC, type: 'Linux', origin: 'Default', groups: [{ id: 'g', name: '', ruleIds: rulesFor('rhel') }], usedBy: 0, createdBy: 'System', updatedAt: '2026-08-12T10:20' },
+  { id: 'BM-3', name: 'CIS Ubuntu Linux 22.04 LTS Benchmark v2.0.0 - Level 1 Server', description: CIS_DESC, type: 'Linux', origin: 'Default', groups: [{ id: 'g', name: '', ruleIds: rulesFor('ubuntu') }], usedBy: 1, createdBy: 'System', updatedAt: '2026-08-12T10:20' },
+  { id: 'BM-4', name: 'CIS Microsoft Windows Server 2019 Benchmark v3.0.0 - Level 1 Member Server', description: CIS_DESC, type: 'Windows', origin: 'Default', groups: [{ id: 'g', name: '', ruleIds: rulesFor('win2019') }], usedBy: 3, createdBy: 'System', updatedAt: '2026-08-12T10:20' },
+  { id: 'BM-5', name: 'CIS Microsoft Windows Server 2022 Benchmark v3.0.0 - Level 1 Member Server', description: CIS_DESC, type: 'Windows', origin: 'Default', groups: [{ id: 'g', name: '', ruleIds: rulesFor('win2022') }], usedBy: 0, createdBy: 'System', updatedAt: '2026-08-12T10:20' },
+  { id: 'BM-6', name: 'CIS Cisco IOS XE 17.x Benchmark v2.1.0 - Router', description: CIS_DESC, type: 'Router', origin: 'Default', groups: [{ id: 'g', name: '', ruleIds: rulesFor('ios-r') }], usedBy: 1, createdBy: 'System', updatedAt: '2026-08-12T10:20' },
+  { id: 'BM-7', name: 'CIS Juniper OS Benchmark v2.1.0', description: CIS_DESC, type: 'Router', origin: 'Default', groups: [{ id: 'g', name: '', ruleIds: rulesFor('junos') }], usedBy: 0, createdBy: 'System', updatedAt: '2026-08-12T10:20' },
+  { id: 'BM-8', name: 'CIS Cisco IOS XE 17.x Benchmark v2.1.0 - Switch', description: CIS_DESC, type: 'Switch', origin: 'Default', groups: [{ id: 'g', name: '', ruleIds: rulesFor('ios-s') }], usedBy: 0, createdBy: 'System', updatedAt: '2026-08-12T10:20' },
+  { id: 'BM-9', name: 'CIS Fortigate 7.4.x Benchmark v1.0.0', description: CIS_DESC, type: 'Firewall', origin: 'Default', groups: [{ id: 'g', name: '', ruleIds: rulesFor('forti') }], usedBy: 2, createdBy: 'System', updatedAt: '2026-08-12T10:20' },
   {
-    id: 'BM-10', name: 'Motadata Corporate Baseline', description: 'The minimum hardening every Linux server must pass before it joins production.', type: 'Linux', origin: 'Custom', tags: ['compliance', 'section:access control'],
+    id: 'BM-10', name: 'Motadata Corporate Baseline', description: 'The minimum hardening every Linux server must pass before it joins production.', type: 'Linux', origin: 'Custom',
     groups: [
       { id: 'g1', name: 'Access Control', ruleIds: pick('debian', ['sshroot', 'sshtries']), children: [{ id: 'g1s1', name: 'File Permissions', ruleIds: pick('debian', ['passwd']) }] },
       { id: 'g2', name: 'Logging', ruleIds: pick('debian', ['auditd']) },
@@ -566,7 +561,7 @@ const SEED: Omit<Benchmark, 'osVersion' | 'profile'>[] = [
     usedBy: 3, createdBy: 'Kavit Gohel', updatedAt: '2026-10-08T15:42',
   },
   {
-    id: 'BM-11', name: 'BFSI Network Hardening', description: 'Top rules essential for BFSI branch routers.', type: 'Router', origin: 'Custom', tags: ['bfsi', 'pci-dss'],
+    id: 'BM-11', name: 'BFSI Network Hardening', description: 'Top rules essential for BFSI branch routers.', type: 'Router', origin: 'Custom',
     groups: [
       { id: 'g1', name: 'Device Access', ruleIds: pick('ios-r', ['aaa', 'telnet', 'banner']) },
       { id: 'g2', name: 'Monitoring', ruleIds: pick('ios-r', ['snmp', 'logbuffer']) },
@@ -574,7 +569,7 @@ const SEED: Omit<Benchmark, 'osVersion' | 'profile'>[] = [
     usedBy: 1, createdBy: 'Dharti Patel', updatedAt: '2026-10-02T11:05',
   },
   {
-    id: 'BM-12', name: 'PCI DSS Windows Servers', description: 'Password and service controls required for servers in the cardholder data environment.', type: 'Windows', origin: 'Custom', tags: ['pci-dss', 'framework:pci-dss'],
+    id: 'BM-12', name: 'PCI DSS Windows Servers', description: 'Password and service controls required for servers in the cardholder data environment.', type: 'Windows', origin: 'Custom',
     groups: [
       { id: 'g1', name: 'Password Policy', ruleIds: pick('win2022', ['pwhistory', 'pwlength', 'lockout']) },
       { id: 'g2', name: 'Services', ruleIds: pick('win2022', ['spooler', 'smb1']) },
@@ -582,7 +577,7 @@ const SEED: Omit<Benchmark, 'osVersion' | 'profile'>[] = [
     usedBy: 0, createdBy: 'Neha Shah', updatedAt: '2026-09-27T09:30',
   },
   {
-    id: 'BM-13', name: 'Perimeter Firewall Review', description: '', type: 'Firewall', origin: 'Custom', tags: [],
+    id: 'BM-13', name: 'Perimeter Firewall Review', description: '', type: 'Firewall', origin: 'Custom',
     groups: [{ id: 'g1', name: 'Firewall Policies', ruleIds: pick('forti', ['fortiadmin', 'fortianyany']) }],
     usedBy: 0, createdBy: 'Vasu Hirpara', updatedAt: '2026-09-18T17:12',
   },

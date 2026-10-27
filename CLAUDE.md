@@ -3016,3 +3016,14 @@ and ask before building any new one.
     `onPick(label)`. `AuditTrailsTabContent` takes optional `entries` (render it bare — it has its own padding).
   - Research docs for this work: `docs/compliance/technician-flow.html` (pitch) and the explainer's new
     section 4 (every rule field explained).
+- **Run History tab on the Policy page (27 Oct 2026).** Tabs: Overview · Endpoints · Rules · Run History ·
+  Audit Trail. `runHistory(p)` (compliancePolicyData) = the real last scan, then runs started with Run Now this
+  session (`history`, `lastTrigger`), then 6 GENERATED earlier runs one schedule interval apart; a Running row
+  while scanning. Older rows are demo data.
+- **No tags on Rules, Benchmarks or Policies (27 Oct 2026, Zeni).** `tags` was removed from the Rule,
+  Benchmark and CompliancePolicy types, seeds, columns, filters, the rule panel's Tags tab and both forms.
+  ⚠️ ENDPOINT (device) tags stay — the policy form's "Tag" device filter still picks endpoints by machine tag.
+  Create Benchmark = Name · Type · Version / Description (two columns) · Profile.
+- **Create Policy has a required OS Type (27 Oct 2026, Zeni).** It sits beside Benchmark (where "Benchmark
+  Filter by Tags" was) and narrows the Benchmark list to that type; Benchmark is disabled until it is set.
+  It is NOT stored — it is read from the chosen benchmark. Changing it clears the benchmark and endpoints.

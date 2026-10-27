@@ -7,7 +7,7 @@
  *   result (Fail)               → Request exception (one level deeper)
  *
  * Every result view is "Result on this endpoint" over the rule's own tabs (Summary · Audit ·
- * Remediation · References · Controls · Tags). The back arrow steps back out; Escape steps back
+ * Remediation · References · Controls). The back arrow steps back out; Escape steps back
  * one level, then closes. The header and the 20px margins are the product's side-panel standard
  * (as Patch › Impacted Endpoints). It also exports the pieces the endpoint page reads with:
  * the numbered Compliance Breakdown (1 · 1.1 · 1.3.1, from the benchmark's groups), the

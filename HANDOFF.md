@@ -1,3 +1,50 @@
+# Handoff — 2026-10-27 11:49 (Compliance: Run History tab, tags removed, OS Type in policy form)
+
+> Sessions share this file. **This top part is the newest session**; older notes follow unchanged
+> below the dividers.
+
+## Read first
+CLAUDE.md › "## Compliance (Oct 2026)", last two bullets ("Run History" and "No tags").
+
+## What we worked on this session
+Added a Run History tab to the Compliance Policy detail page, removed tags from Rules, Benchmarks and
+Policies, and added a required OS Type field to the Create Policy form.
+
+## Completed
+- Policy page tabs: Overview · Endpoints · Rules · **Run History** · Audit Trail. `runHistory(p)` in
+  `compliancePolicyData.ts` (real last scan first, Run Now runs from this session, then 6 generated earlier
+  runs one schedule interval apart; a Running row while scanning). Cards Runs / Scheduled / Run Now /
+  Average Compliance; table Run ID · Last Scan · Triggered By · Duration · Endpoints · Checks · Compliance · Status.
+- Tags gone from: Rules listing (column + filter), rule detail panel (Tags tab), Benchmark listing (column +
+  filter), benchmark detail, Attach Rules picker, Create Benchmark form (now Name · Type · Version /
+  Description ×2 · Profile), technician Benchmark page + drawer, policy form, Policy Properties, policy
+  listing filter/search. `tags` removed from the Rule, Benchmark and CompliancePolicy types and seeds.
+- Create Policy: Policy Details = Name + Description (full width). Benchmark section = **OS Type**
+  (required, Linux · Windows · Router · Switch · Firewall, with benchmark counts) beside Benchmark, which
+  lists only that type and is disabled until OS Type is chosen. Replaced "Benchmark Filter by Tags".
+- Verified in the browser (localhost:5201): headers, tabs, both forms, no page errors.
+
+## In progress
+Nothing mid-flight.
+
+## Next steps
+- Same open questions as the previous session (panel width, pills under rule titles, posture words,
+  85% target, exception approval screen, sharing admin benchmarks with the technician side).
+- Older Run History rows are generated demo data — confirm with Zeni whether that is enough.
+
+## Decisions made
+- Zeni: remove tags from Rules + Benchmarks + Policies. ENDPOINT (device) tags stay — the policy form's
+  "Tag" device filter still picks endpoints by machine tag.
+- Zeni: OS Type filters the Benchmark list and replaces the tag filter.
+- OS Type is NOT stored on the policy — it is read from the chosen benchmark. A new policy still opens on
+  the first benchmark, so OS Type starts as Linux. Changing OS Type clears the benchmark and endpoints (toast).
+
+## Gotchas & notes
+- Patch scripts: `patch-notags.mjs`, `patch-runs.mjs`, `patch-runtab.mjs` in the session scratchpad.
+- Some compliance files are LF, others CRLF — scripts keep each file's own line endings.
+
+---
+
 # Handoff — 2026-10-26 (Compliance: linked detail pages, numbering, exceptions, clickable dashboard)
 
 > Sessions share this file. **This top part is the newest session**; older notes follow unchanged

@@ -3,7 +3,7 @@
  *
  *   Rule  →  Benchmark (Admin)  →  Compliance Policy (here)
  *
- * A policy = ONE benchmark + the endpoints it assesses + its metadata (tags, config file type,
+ * A policy = ONE benchmark + the endpoints it assesses + its metadata (config file type,
  * schedule, notify team). Content follows the ObserveOps compliance-settings prototype; the
  * device axis is mapped onto ServiceOps endpoints (Endpoint / Remote Office / Tag).
  *
@@ -49,7 +49,6 @@ export interface CompliancePolicy {
   id: string;
   name: string;
   description: string;
-  tags: string[];
   /** ONE benchmark per policy. */
   benchmarkId: string;
   /** Only for Router / Switch / Firewall benchmarks — read from a config file. */
@@ -67,7 +66,13 @@ export interface CompliancePolicy {
   updatedAt: string;
   lastScan: ScanResult | null;
   scanning?: boolean;
+  /** How the last scan was started. Unset = the schedule (or Run Now when it has none). */
+  lastTrigger?: RunTrigger;
+  /** Scans run during this session, newest first (each Run Now pushes the previous one here). */
+  history?: (ScanResult & { trigger: RunTrigger })[];
 }
+
+export type RunTrigger = 'Schedule' | 'Run Now';
 
 export interface ComplianceEndpoint {
   id: string;
@@ -310,21 +315,21 @@ type Seed = Omit<CompliancePolicy, 'lastScan' | 'createdAt' | 'updatedAt' | 'con
   Partial<Pick<CompliancePolicy, 'configType' | 'notify' | 'enabled' | 'endpointIds' | 'offices' | 'deviceTags'>> & { created: string; scanned?: string };
 
 const SEED: Seed[] = [
-  { id: 'CP-101', name: 'Production Debian Web Tier', description: 'CIS Level 1 hardening for every customer-facing Debian web and API server.', tags: ['production', 'cis'], benchmarkId: 'BM-1', axis: 'tag', deviceTags: ['production'], schedule: { frequency: 'daily', startDate: '2026-09-01', time: '02:00' }, notify: ['IT Support Group', 'Sarah Johnson'], createdBy: 'Kavit Gohel', created: '2026-09-01T10:15', scanned: '2026-10-19T02:04' },
-  { id: 'CP-102', name: 'Corporate Linux Baseline — Debian', description: 'The minimum hardening every Debian server must pass before it joins production.', tags: ['baseline'], benchmarkId: 'BM-10', axis: 'office', offices: ['Ahmedabad HQ', 'Mumbai Office'], schedule: { frequency: 'weekly', startDate: '2026-09-07', weekday: 0, time: '01:00' }, notify: ['IT Support Group'], createdBy: 'Kavit Gohel', created: '2026-09-07T09:40', scanned: '2026-10-19T01:06' },
-  { id: 'CP-103', name: 'Build Servers — Staging Check', description: 'Pune build agents, checked against the corporate Debian baseline.', tags: ['staging'], benchmarkId: 'BM-10', axis: 'endpoint', endpointIds: ['EP-517', 'EP-518'], schedule: { frequency: 'none' }, notify: [], createdBy: 'Vasu Hirpara', created: '2026-10-02T15:20' },
-  { id: 'CP-104', name: 'RHEL Database Cluster', description: 'PostgreSQL hosts on Red Hat 9 — CIS Level 1 Server.', tags: ['database', 'cis', 'production'], benchmarkId: 'BM-2', axis: 'tag', deviceTags: ['database'], schedule: { frequency: 'daily', startDate: '2026-08-20', time: '03:30' }, notify: ['Software Support Team', 'Priya Raut'], createdBy: 'Neha Shah', created: '2026-08-20T11:00', scanned: '2026-10-19T03:41' },
-  { id: 'CP-105', name: 'Kubernetes Nodes — RHEL 9', description: 'Worker nodes in the Bengaluru cluster.', tags: ['kubernetes'], benchmarkId: 'BM-2', axis: 'office', offices: ['Bengaluru Campus'], schedule: { frequency: 'weekly', startDate: '2026-09-01', weekday: 3, time: '22:00' }, notify: ['Software Support Team'], createdBy: 'Dharti Patel', created: '2026-09-01T14:05', scanned: '2026-10-15T22:12' },
-  { id: 'CP-106', name: 'Research GPU Hosts', description: 'Ubuntu 22.04 hosts used by the ML team.', tags: ['research'], benchmarkId: 'BM-3', axis: 'office', offices: ['Hyderabad Office'], schedule: { frequency: 'monthly', startDate: '2026-08-01', monthday: 1, time: '01:00' }, notify: ['Daniel Okafor'], createdBy: 'Kavit Gohel', created: '2026-08-01T12:30', scanned: '2026-10-01T01:18' },
-  { id: 'CP-107', name: 'DMZ Proxy Hardening', description: '', tags: ['dmz'], benchmarkId: 'BM-3', axis: 'tag', deviceTags: ['dmz'], schedule: { frequency: 'none' }, notify: [], enabled: false, createdBy: 'Sarah Johnson', created: '2026-10-10T16:45' },
-  { id: 'CP-108', name: 'Domain Controllers — Windows 2019', description: 'CIS Level 1 Member Server for every domain controller and file server.', tags: ['identity', 'cis'], benchmarkId: 'BM-4', axis: 'tag', deviceTags: ['domain controller', 'file server'], schedule: { frequency: 'weekly', startDate: '2026-09-01', weekday: 6, time: '23:00' }, notify: ['IT Support Group', 'Marcus Bell'], createdBy: 'Neha Shah', created: '2026-09-01T09:00', scanned: '2026-10-18T23:20' },
-  { id: 'CP-109', name: 'PCI DSS Cardholder Servers', description: 'Password and service controls for servers in the cardholder data environment.', tags: ['pci-dss', 'audit'], benchmarkId: 'BM-12', axis: 'tag', deviceTags: ['pci'], schedule: { frequency: 'daily', startDate: '2026-09-27', time: '04:00' }, notify: ['IT Support Group', 'Sneha Kulkarni'], createdBy: 'Neha Shah', created: '2026-09-27T10:00', scanned: '2026-10-19T04:09' },
-  { id: 'CP-110', name: 'Windows Server 2022 — Full CIS', description: '', tags: ['cis'], benchmarkId: 'BM-5', axis: 'office', offices: ['Ahmedabad HQ', 'Bengaluru Campus', 'Mumbai Office'], schedule: { frequency: 'monthly', startDate: '2026-09-01', monthday: 15, time: '02:00' }, notify: [], createdBy: 'Sarah Johnson', created: '2026-09-01T17:10', scanned: '2026-10-15T02:27' },
-  { id: 'CP-111', name: 'Branch Routers — Startup Config', description: 'The configuration each branch router boots with.', tags: ['network', 'bfsi'], benchmarkId: 'BM-11', configType: 'startup', axis: 'tag', deviceTags: ['branch'], schedule: { frequency: 'weekly', startDate: '2026-10-02', weekday: 1, time: '05:00' }, notify: ['Network Operations'], createdBy: 'Dharti Patel', created: '2026-10-02T11:30', scanned: '2026-10-13T05:08' },
-  { id: 'CP-112', name: 'Branch Routers — Running Config', description: 'What each branch router is actually running right now.', tags: ['network', 'drift'], benchmarkId: 'BM-6', configType: 'running', axis: 'tag', deviceTags: ['branch'], schedule: { frequency: 'daily', startDate: '2026-10-02', time: '06:00' }, notify: ['Network Operations'], createdBy: 'Dharti Patel', created: '2026-10-02T11:45', scanned: '2026-10-19T06:03' },
-  { id: 'CP-113', name: 'Core Switching', description: '', tags: ['network'], benchmarkId: 'BM-8', configType: 'running', axis: 'endpoint', endpointIds: ['EP-571', 'EP-572'], schedule: { frequency: 'none' }, notify: [], createdBy: 'Vasu Hirpara', created: '2026-10-14T13:05' },
-  { id: 'CP-114', name: 'Perimeter Firewalls', description: 'FortiGate perimeter firewalls at every office.', tags: ['network', 'perimeter', 'pci-dss'], benchmarkId: 'BM-9', configType: 'running', axis: 'tag', deviceTags: ['perimeter'], schedule: { frequency: 'daily', startDate: '2026-09-18', time: '01:30' }, notify: ['Network Operations', 'Ivan Petrov'], createdBy: 'Vasu Hirpara', created: '2026-09-18T17:12', scanned: '2026-10-19T01:36' },
-  { id: 'CP-115', name: 'Firewall Policy Review (quarterly)', description: 'The custom firewall review for the external audit.', tags: ['audit'], benchmarkId: 'BM-13', configType: 'startup', axis: 'endpoint', endpointIds: ['EP-581'], schedule: { frequency: 'once', startDate: '2026-10-31', time: '10:00' }, notify: ['Sneha Kulkarni'], enabled: true, createdBy: 'Sarah Johnson', created: '2026-10-16T10:00' },
+  { id: 'CP-101', name: 'Production Debian Web Tier', description: 'CIS Level 1 hardening for every customer-facing Debian web and API server.', benchmarkId: 'BM-1', axis: 'tag', deviceTags: ['production'], schedule: { frequency: 'daily', startDate: '2026-09-01', time: '02:00' }, notify: ['IT Support Group', 'Sarah Johnson'], createdBy: 'Kavit Gohel', created: '2026-09-01T10:15', scanned: '2026-10-19T02:04' },
+  { id: 'CP-102', name: 'Corporate Linux Baseline — Debian', description: 'The minimum hardening every Debian server must pass before it joins production.', benchmarkId: 'BM-10', axis: 'office', offices: ['Ahmedabad HQ', 'Mumbai Office'], schedule: { frequency: 'weekly', startDate: '2026-09-07', weekday: 0, time: '01:00' }, notify: ['IT Support Group'], createdBy: 'Kavit Gohel', created: '2026-09-07T09:40', scanned: '2026-10-19T01:06' },
+  { id: 'CP-103', name: 'Build Servers — Staging Check', description: 'Pune build agents, checked against the corporate Debian baseline.', benchmarkId: 'BM-10', axis: 'endpoint', endpointIds: ['EP-517', 'EP-518'], schedule: { frequency: 'none' }, notify: [], createdBy: 'Vasu Hirpara', created: '2026-10-02T15:20' },
+  { id: 'CP-104', name: 'RHEL Database Cluster', description: 'PostgreSQL hosts on Red Hat 9 — CIS Level 1 Server.', benchmarkId: 'BM-2', axis: 'tag', deviceTags: ['database'], schedule: { frequency: 'daily', startDate: '2026-08-20', time: '03:30' }, notify: ['Software Support Team', 'Priya Raut'], createdBy: 'Neha Shah', created: '2026-08-20T11:00', scanned: '2026-10-19T03:41' },
+  { id: 'CP-105', name: 'Kubernetes Nodes — RHEL 9', description: 'Worker nodes in the Bengaluru cluster.', benchmarkId: 'BM-2', axis: 'office', offices: ['Bengaluru Campus'], schedule: { frequency: 'weekly', startDate: '2026-09-01', weekday: 3, time: '22:00' }, notify: ['Software Support Team'], createdBy: 'Dharti Patel', created: '2026-09-01T14:05', scanned: '2026-10-15T22:12' },
+  { id: 'CP-106', name: 'Research GPU Hosts', description: 'Ubuntu 22.04 hosts used by the ML team.', benchmarkId: 'BM-3', axis: 'office', offices: ['Hyderabad Office'], schedule: { frequency: 'monthly', startDate: '2026-08-01', monthday: 1, time: '01:00' }, notify: ['Daniel Okafor'], createdBy: 'Kavit Gohel', created: '2026-08-01T12:30', scanned: '2026-10-01T01:18' },
+  { id: 'CP-107', name: 'DMZ Proxy Hardening', description: '', benchmarkId: 'BM-3', axis: 'tag', deviceTags: ['dmz'], schedule: { frequency: 'none' }, notify: [], enabled: false, createdBy: 'Sarah Johnson', created: '2026-10-10T16:45' },
+  { id: 'CP-108', name: 'Domain Controllers — Windows 2019', description: 'CIS Level 1 Member Server for every domain controller and file server.', benchmarkId: 'BM-4', axis: 'tag', deviceTags: ['domain controller', 'file server'], schedule: { frequency: 'weekly', startDate: '2026-09-01', weekday: 6, time: '23:00' }, notify: ['IT Support Group', 'Marcus Bell'], createdBy: 'Neha Shah', created: '2026-09-01T09:00', scanned: '2026-10-18T23:20' },
+  { id: 'CP-109', name: 'PCI DSS Cardholder Servers', description: 'Password and service controls for servers in the cardholder data environment.', benchmarkId: 'BM-12', axis: 'tag', deviceTags: ['pci'], schedule: { frequency: 'daily', startDate: '2026-09-27', time: '04:00' }, notify: ['IT Support Group', 'Sneha Kulkarni'], createdBy: 'Neha Shah', created: '2026-09-27T10:00', scanned: '2026-10-19T04:09' },
+  { id: 'CP-110', name: 'Windows Server 2022 — Full CIS', description: '', benchmarkId: 'BM-5', axis: 'office', offices: ['Ahmedabad HQ', 'Bengaluru Campus', 'Mumbai Office'], schedule: { frequency: 'monthly', startDate: '2026-09-01', monthday: 15, time: '02:00' }, notify: [], createdBy: 'Sarah Johnson', created: '2026-09-01T17:10', scanned: '2026-10-15T02:27' },
+  { id: 'CP-111', name: 'Branch Routers — Startup Config', description: 'The configuration each branch router boots with.', benchmarkId: 'BM-11', configType: 'startup', axis: 'tag', deviceTags: ['branch'], schedule: { frequency: 'weekly', startDate: '2026-10-02', weekday: 1, time: '05:00' }, notify: ['Network Operations'], createdBy: 'Dharti Patel', created: '2026-10-02T11:30', scanned: '2026-10-13T05:08' },
+  { id: 'CP-112', name: 'Branch Routers — Running Config', description: 'What each branch router is actually running right now.', benchmarkId: 'BM-6', configType: 'running', axis: 'tag', deviceTags: ['branch'], schedule: { frequency: 'daily', startDate: '2026-10-02', time: '06:00' }, notify: ['Network Operations'], createdBy: 'Dharti Patel', created: '2026-10-02T11:45', scanned: '2026-10-19T06:03' },
+  { id: 'CP-113', name: 'Core Switching', description: '', benchmarkId: 'BM-8', configType: 'running', axis: 'endpoint', endpointIds: ['EP-571', 'EP-572'], schedule: { frequency: 'none' }, notify: [], createdBy: 'Vasu Hirpara', created: '2026-10-14T13:05' },
+  { id: 'CP-114', name: 'Perimeter Firewalls', description: 'FortiGate perimeter firewalls at every office.', benchmarkId: 'BM-9', configType: 'running', axis: 'tag', deviceTags: ['perimeter'], schedule: { frequency: 'daily', startDate: '2026-09-18', time: '01:30' }, notify: ['Network Operations', 'Ivan Petrov'], createdBy: 'Vasu Hirpara', created: '2026-09-18T17:12', scanned: '2026-10-19T01:36' },
+  { id: 'CP-115', name: 'Firewall Policy Review (quarterly)', description: 'The custom firewall review for the external audit.', benchmarkId: 'BM-13', configType: 'startup', axis: 'endpoint', endpointIds: ['EP-581'], schedule: { frequency: 'once', startDate: '2026-10-31', time: '10:00' }, notify: ['Sneha Kulkarni'], enabled: true, createdBy: 'Sarah Johnson', created: '2026-10-16T10:00' },
 ];
 
 const seedPolicies = (): CompliancePolicy[] => SEED.map(({ created, scanned, ...s }) => {
@@ -372,7 +377,10 @@ export const policyStore = {
     set(all().map((p) => (p.id === id ? { ...p, scanning: true } : p)));
     window.setTimeout(() => {
       const at = stamp();
-      set(all().map((p) => (p.id === id ? { ...p, scanning: false, lastScan: summarise(p, at), updatedAt: at } : p)));
+      set(all().map((p) => (p.id === id ? {
+        ...p, scanning: false, lastScan: summarise(p, at), updatedAt: at, lastTrigger: 'Run Now',
+        history: p.lastScan ? [{ ...p.lastScan, trigger: defaultTrigger(p, p.lastTrigger) }, ...(p.history ?? [])] : p.history,
+      } : p)));
       const done = getPolicy(id);
       if (done) onDone?.(done);
     }, 2400);
@@ -412,3 +420,78 @@ export const exceptionFor = (list: ComplianceException[], policyId: string, endp
 /** All the offices / tags the fleet carries (for the form's pickers). */
 export const officesOf = (pool: ComplianceEndpoint[]) => [...new Set(pool.map((e) => e.office))].sort();
 export const deviceTagsOf = (pool: ComplianceEndpoint[]) => [...new Set(pool.flatMap((e) => e.tags))].sort();
+
+/* ── Run History ───────────────────────────────────────────────────────────────────────────
+ * Every scan run of a policy, newest first. The newest is the REAL last scan; runs started with
+ * Run Now during this session follow it; earlier runs are generated (deterministic, from the
+ * policy id) one schedule interval apart, so the history reads like the schedule. A scan in
+ * progress shows on top as Running. */
+export interface PolicyRun {
+  id: string;
+  /** When the scan finished (or started, while Running). */
+  at: string;
+  trigger: RunTrigger;
+  status: 'Completed' | 'Running';
+  /** Seconds the scan took. */
+  duration: number | null;
+  endpoints: number;
+  notScanned: number;
+  passed: number;
+  failed: number;
+  score: number | null;
+}
+const defaultTrigger = (p: CompliancePolicy, t?: RunTrigger): RunTrigger =>
+  t ?? (p.schedule.frequency === 'none' ? 'Run Now' : 'Schedule');
+const INTERVAL_DAYS: Record<Frequency, number> = { none: 3, once: 3, daily: 1, weekly: 7, monthly: 30 };
+const GENERATED_RUNS = 6;
+
+export function runHistory(p: CompliancePolicy): PolicyRun[] {
+  const total = resolvedEndpoints(p).length;
+  const toRun = (s: ScanResult, trigger: RunTrigger, n: number): PolicyRun => {
+    const checks = s.passed + s.failed;
+    return {
+      id: `${p.id}-R${n}`, at: s.at, trigger, status: 'Completed',
+      duration: 60 + (hash(`${p.id}|${s.at}`) % 300),
+      endpoints: s.compliant + s.nonCompliant + s.notScanned, notScanned: s.notScanned,
+      passed: s.passed, failed: s.failed, score: checks ? Math.round((s.passed / checks) * 100) : null,
+    };
+  };
+  const real: { s: ScanResult; t: RunTrigger }[] = [
+    ...(p.lastScan ? [{ s: p.lastScan, t: defaultTrigger(p, p.lastTrigger) }] : []),
+    ...(p.history ?? []).map((h) => ({ s: h, t: h.trigger })),
+  ];
+  const runs: PolicyRun[] = [];
+  /* Generated earlier runs, older than the oldest real one. */
+  const oldest = real.length ? new Date(real[real.length - 1].s.at) : null;
+  const gen: PolicyRun[] = [];
+  if (oldest && p.lastScan) {
+    const checks = p.lastScan.passed + p.lastScan.failed;
+    const last = checks ? p.lastScan.passed / checks : 1;
+    const day = 86400000 * INTERVAL_DAYS[p.schedule.frequency];
+    for (let i = 1; i <= GENERATED_RUNS; i++) {
+      const at = new Date(oldest.getTime() - day * i);
+      const h = hash(`${p.id}|gen|${i}`);
+      /* A little worse the further back, so the history shows the policy improving. */
+      const rate = Math.max(0.3, Math.min(1, last - (i * 0.02) + ((h % 7) - 3) / 100));
+      const passed = Math.round(checks * rate);
+      const ns = total > 2 && h % 4 === 0 ? 1 : 0;
+      const pad = (n: number) => String(n).padStart(2, '0');
+      const iso = `${at.getFullYear()}-${pad(at.getMonth() + 1)}-${pad(at.getDate())}T${pad(at.getHours())}:${pad(at.getMinutes())}`;
+      gen.push({
+        id: '', at: iso, trigger: p.schedule.frequency === 'none' ? 'Run Now' : 'Schedule', status: 'Completed',
+        duration: 60 + (h % 300), endpoints: total, notScanned: ns, passed, failed: checks - passed,
+        score: checks ? Math.round((passed / checks) * 100) : null,
+      });
+    }
+  }
+  const completed = [...real.map((r) => ({ s: r.s, t: r.t })), ...gen.map((g) => ({ g }))];
+  const n = completed.length;
+  completed.forEach((x, i) => {
+    const num = n - i;
+    runs.push('g' in x ? { ...x.g, id: `${p.id}-R${num}` } : toRun(x.s, x.t, num));
+  });
+  if (p.scanning) {
+    runs.unshift({ id: `${p.id}-R${n + 1}`, at: stamp(), trigger: 'Run Now', status: 'Running', duration: null, endpoints: total, notScanned: 0, passed: 0, failed: 0, score: null });
+  }
+  return runs;
+}

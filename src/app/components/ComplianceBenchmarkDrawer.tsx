@@ -7,7 +7,7 @@ import { HeaderKpiRow } from './HeaderKpiRow';
 import type { HeaderKpiItem } from './HeaderKpiRow';
 import { HeaderCopyButton } from './HeaderCopyButton';
 import { StatsCardsRow } from './AssetStatsRow';
-import { RuleDetailPanel, TagCell } from './ComplianceShared';
+import { RuleDetailPanel } from './ComplianceShared';
 import { FailedBySeverity, FailedOnCell, RuleGroupTree, severityCounts } from './ComplianceEndpointPanel';
 import { useOpenComplianceEndpoint } from './ComplianceEndpointDrawer';
 import { benchmarksUsingRule, BENCHMARKS_SEED, fmtDate, ruleById, ruleNumbers } from './complianceData';
@@ -140,7 +140,6 @@ export function ComplianceBenchmarkDrawer({
     ['Profile', b.profile === 'L1' ? 'Level 1' : 'Level 2'],
     ['Origin', b.origin],
     ['Rules', ruleIds.length],
-    ['Tags', b.tags.length ? <TagCell tags={b.tags} /> : '—'],
     ['Description', b.description || '—'],
     ['Created By', b.createdBy],
     ['Last Updated', fmtDate(b.updatedAt)],

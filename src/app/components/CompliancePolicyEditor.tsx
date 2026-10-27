@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { ArrowLeft, CalendarClock, Info, Plus, X } from 'lucide-react';
-import { ErrorText, FieldLabel, RuleSelect, TagEditor, inputCls as formInputCls } from './FormRuleControls';
+import { ErrorText, FieldLabel, RuleSelect, inputCls as formInputCls } from './FormRuleControls';
 import type { SelectOption } from './FormRuleControls';
 import { PickerDrawer } from './CreatePatchDeployment';
 import type { PickerColumn } from './CreatePatchDeployment';
 import { TagCell } from './ComplianceShared';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
-import { BENCHMARKS_SEED, benchmarkRuleIds } from './complianceData';
+import { BENCHMARKS_SEED, COMPLIANCE_TYPES, benchmarkRuleIds } from './complianceData';
+import type { ComplianceType } from './complianceData';
 import { TECH_GROUPS, TECHNICIANS } from './technicianRoster';
 import {
   benchmarkOf, deviceTagsOf, endpointsForBenchmark, fmtStamp, getPolicy, needsConfigType, nextRun, officesOf, openPolicyEditor,
@@ -21,8 +22,8 @@ import type { ComplianceEndpoint, CompliancePolicy, ConfigFileType, DeviceAxis, 
  * listing's Create, a row's Edit / Clone and the detail drawer's Edit all land on the same page.
  * The product header stays; the page sits over the module the way the Form Rule editor does.
  *
- * Content follows the ObserveOps compliance-settings prototype — Policy Name, Description, Tags,
- * Benchmark Filter by Tags, Benchmark, Device Filter + Select, Config File Type (network
+ * Content follows the ObserveOps compliance-settings prototype — Policy Name, Description,
+ * OS Type, Benchmark, Device Filter + Select, Config File Type (network
  * benchmarks only), Schedule, Notify Team — laid out in the product's sections. One policy
  * assesses ONE benchmark; the endpoint pool is that benchmark's Type + OS version only. */
 
@@ -182,7 +183,7 @@ export function PolicyScheduleDrawer({ policyId, onClose }: { policyId: string; 
 type Draft = Omit<CompliancePolicy, 'id' | 'createdAt' | 'updatedAt' | 'lastScan' | 'createdBy' | 'scanning'>;
 /** A new policy starts on the first benchmark, so endpoints can be added straight away. */
 const blank = (): Draft => ({
-  name: '', description: '', tags: [], benchmarkId: BENCHMARKS_SEED[0]?.id ?? '', configType: null, axis: 'endpoint',
+  name: '', description: '', benchmarkId: BENCHMARKS_SEED[0]?.id ?? '', configType: null, axis: 'endpoint',
   endpointIds: [], offices: [], deviceTags: [], schedule: { frequency: 'none' }, notify: [], enabled: true,
 });
 
@@ -201,7 +202,9 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
     return { ...rest, name: mode === 'clone' ? `Copy of ${source.name}` : source.name };
   });
   const set = (patch: Partial<Draft>) => setD((x) => ({ ...x, ...patch }));
-  const [benchTagFilter, setBenchTagFilter] = useState<string[]>([]);
+  /* OS Type comes first and decides which benchmarks are offered. It is not stored on the
+     policy — the chosen benchmark already carries it — so it opens on that benchmark's type. */
+  const [osType, setOsType] = useState<ComplianceType | ''>(() => benchmarkOf(source?.benchmarkId ?? blank().benchmarkId)?.type ?? '');
   const [picking, setPicking] = useState(false);
   const [tried, setTried] = useState(false);
 
@@ -210,14 +213,13 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
   const pool = useMemo(() => endpointsForBenchmark(benchmark), [benchmark]);
   const resolved = useMemo(() => resolvedEndpoints(d), [d]);
 
-  const benchTagOptions = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const b of BENCHMARKS_SEED) for (const t of b.tags) counts.set(t, (counts.get(t) ?? 0) + 1);
-    return [...counts].sort((a, b) => a[0].localeCompare(b[0])).map(([t, n]) => ({ value: t, label: `${t} (${n})` }));
-  }, []);
+  const osTypeOptions = COMPLIANCE_TYPES.map((t) => {
+    const n = BENCHMARKS_SEED.filter((b) => b.type === t).length;
+    return { value: t, label: t, hint: `${n} benchmark${n === 1 ? '' : 's'}` };
+  });
   const benchOptions = useMemo(() => BENCHMARKS_SEED
-    .filter((b) => !benchTagFilter.length || benchTagFilter.every((t) => b.tags.includes(t)))
-    .map((b) => ({ value: b.id, label: b.name, hint: `${b.osVersion} · ${b.origin}` })), [benchTagFilter]);
+    .filter((b) => b.type === osType)
+    .map((b) => ({ value: b.id, label: b.name, hint: `${b.osVersion} · ${b.origin}` })), [osType]);
 
   const officeOptions = officesOf(pool).map((o) => ({ value: o, label: `${o} (${pool.filter((e) => e.office === o).length})` }));
   const tagOptions = deviceTagsOf(pool).map((t) => ({ value: t, label: `${t} (${pool.filter((e) => e.tags.includes(t)).length})` }));
@@ -225,6 +227,7 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
   const scheduleIncomplete = d.schedule.frequency !== 'none' && (!d.schedule.startDate || !d.schedule.time);
   const reason =
     !d.name.trim() ? 'The policy needs a name'
+      : !osType ? 'Choose an OS Type'
       : !d.benchmarkId ? 'Choose the benchmark it assesses'
         : showConfig && !d.configType ? 'Choose a Config File Type'
           : resolved.length === 0 ? 'Choose at least one endpoint to assess'
@@ -237,6 +240,18 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
     if (had) toast('The endpoint selection was cleared — the new benchmark is written for a different set of endpoints');
     const b = benchmarkOf(id);
     set({ benchmarkId: id, endpointIds: [], offices: [], deviceTags: [], configType: needsConfigType(b) ? (d.configType ?? 'running') : null });
+  };
+
+  /* A different OS Type means none of the old type's benchmarks apply, so the benchmark and the
+     endpoints chosen for it are cleared — the same rule changing the benchmark itself follows. */
+  const changeOsType = (t: ComplianceType) => {
+    if (t === osType) return;
+    setOsType(t);
+    const b = benchmarkOf(d.benchmarkId);
+    if (b && b.type === t) return;
+    const had = d.endpointIds.length + d.offices.length + d.deviceTags.length;
+    if (had) toast('The benchmark and endpoint selection were cleared — they were for a different OS Type');
+    set({ benchmarkId: '', endpointIds: [], offices: [], deviceTags: [], configType: null });
   };
 
   const save = () => {
@@ -294,16 +309,12 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto max-w-[1100px] space-y-10 px-4 py-6">
-          <Section title="Policy Details" sub="What the policy is called and how people will find it.">
+          <Section title="Policy Details" sub="What the policy is called and what it is for.">
             <div className="grid grid-cols-2 gap-x-2 gap-y-4">
-              <div>
+              <div className="col-span-2">
                 <FieldLabel required>Policy Name</FieldLabel>
                 <input autoFocus value={d.name} onChange={(e) => set({ name: e.target.value })} placeholder="Must be unique" className={`${inputCls} ${tried && !d.name.trim() ? '!border-[#F25C4E]' : ''}`} />
                 <ErrorText>{tried && !d.name.trim() ? 'Enter a name' : ''}</ErrorText>
-              </div>
-              <div>
-                <FieldLabel>Tags</FieldLabel>
-                <div className="pt-1"><TagEditor tags={d.tags} onChange={(t) => set({ tags: t })} /></div>
               </div>
               <div className="col-span-2">
                 <FieldLabel>Description</FieldLabel>
@@ -312,11 +323,12 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
             </div>
           </Section>
 
-          <Section title="Benchmark" sub="A policy assesses ONE benchmark. Its Type and OS version decide which endpoints can be chosen.">
+          <Section title="Benchmark" sub="Choose the OS Type, then the ONE benchmark the policy assesses. Its OS version decides which endpoints can be chosen.">
             <div className="grid grid-cols-2 gap-x-2 gap-y-4">
               <div>
-                <FieldLabel>Benchmark Filter by Tags</FieldLabel>
-                <RuleSelect className="!rounded" multi value={benchTagFilter} options={benchTagOptions} onChange={setBenchTagFilter} placeholder="All benchmarks" />
+                <FieldLabel required>OS Type</FieldLabel>
+                <RuleSelect className="!rounded" value={osType ? [osType] : []} options={osTypeOptions} onChange={(v) => v[0] && changeOsType(v[0] as ComplianceType)} invalid={tried && !osType} placeholder="Select" />
+                <ErrorText>{tried && !osType ? 'Choose an OS Type' : ''}</ErrorText>
               </div>
               <div>
                 <div className="flex items-center gap-1">
@@ -346,8 +358,8 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
                     </Tooltip>
                   )}
                 </div>
-                <RuleSelect className="!rounded" value={d.benchmarkId ? [d.benchmarkId] : []} options={benchOptions} onChange={(v) => v[0] && changeBenchmark(v[0])} invalid={tried && !d.benchmarkId} placeholder={benchOptions.length ? 'Select' : 'No benchmark carries these tags'} />
-                <ErrorText>{tried && !d.benchmarkId ? 'Choose a benchmark' : ''}</ErrorText>
+                <RuleSelect className="!rounded" value={d.benchmarkId ? [d.benchmarkId] : []} options={benchOptions} onChange={(v) => v[0] && changeBenchmark(v[0])} invalid={tried && !!osType && !d.benchmarkId} disabled={!osType} placeholder={!osType ? 'Choose an OS Type first' : benchOptions.length ? 'Select' : `No ${osType} benchmark yet`} />
+                <ErrorText>{tried && osType && !d.benchmarkId ? 'Choose a benchmark' : ''}</ErrorText>
               </div>
             </div>
             {showConfig && (

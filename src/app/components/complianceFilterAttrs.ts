@@ -1,7 +1,7 @@
 /* Compliance Policy listing — the filter catalogue, quick filters, saved views and status
    palette. Its own small file with no heavy imports, because TicketTable and TicketViewsPanel
    read it and both sit underneath half the app. */
-import { AlignLeft, CalendarClock, CalendarDays, CircleDot, Hash, Layers, Power, ShieldCheck, Tag, User } from 'lucide-react';
+import { AlignLeft, CalendarClock, CalendarDays, CircleDot, Hash, Layers, Power, ShieldCheck, User } from 'lucide-react';
 import type { Attr, FilterRule, QuickFilterDef } from './TicketFilterBar';
 import type { TicketView } from './TicketViewsPanel';
 
@@ -47,7 +47,6 @@ export const POLICY_FILTER_ATTRS: Attr[] = [
   { key: 'x_enabled', label: 'Enable', icon: Power, type: 'select', options: ENABLED_OPTIONS },
   { key: 'x_scheduled', label: 'Schedule', icon: CalendarClock, type: 'select', options: SCHEDULED_OPTIONS },
   { key: 'x_schedule', label: 'Schedule Details', icon: CalendarClock, type: 'text' },
-  { key: 'x_tags', label: 'Tag', icon: Tag, type: 'text' },
   { key: 'x_createdBy', label: 'Created By', icon: User, type: 'text' },
   { key: 'x_lastExecution', label: 'Last Scan', icon: CalendarDays, type: 'date' },
   { key: 'x_nextExecution', label: 'Next Scan', icon: CalendarDays, type: 'date' },
@@ -91,7 +90,6 @@ export const VIZ_BENCHMARK_FILTER_ATTRS: Attr[] = [
   { key: 'x_inUse', label: 'Usage', icon: Power, type: 'select', options: IN_USE_OPTIONS },
   { key: 'x_posture', label: 'Posture', icon: CircleDot, type: 'select', options: POSTURE_OPTIONS },
   { key: 'x_policyNames', label: 'Policy', icon: ShieldCheck, type: 'text' },
-  { key: 'x_tags', label: 'Tag', icon: Tag, type: 'text' },
   { key: 'x_lastExecution', label: 'Last Scan', icon: CalendarDays, type: 'date' },
 ];
 export const VIZ_BENCHMARK_QUICK_FILTERS: QuickFilterDef[] = [

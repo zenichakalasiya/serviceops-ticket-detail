@@ -15,7 +15,7 @@ import { benchmarkRuleIds, ruleById, ruleNumbers } from './complianceData';
 import { useDrawerStack } from './DrawerStack';
 import {
   benchmarkOf, endpointResults, fmtStamp, nextRun, openPolicyEditor, policyStore, POLICY_STATUS_OPTIONS, ruleResults,
-  scheduleLabel, scoreOf, statusOf, useExceptions, usePolicies,
+  runHistory, scheduleLabel, scoreOf, statusOf, useExceptions, usePolicies,
 } from './compliancePolicyData';
 import type { CompliancePolicy, EndpointOutcome } from './compliancePolicyData';
 import { PolicyScheduleDrawer } from './CompliancePolicyEditor';
@@ -31,12 +31,13 @@ import { useOpenComplianceEndpoint } from './ComplianceEndpointDrawer';
  * It reads the policy LIVE from the store by id — Run Now, a schedule change or an edit made
  * elsewhere shows here at once. Tabs: Overview (the report an auditor reads first) · Endpoints ·
  * Rules (the benchmark's rule groups, 1 · 1.1 · 1.3.1, each rule "Failed on N of M") · Audit
- * Trail. On Endpoints and Rules a slim row of count cards filters the list under it.
+ * Trail, plus Run History (every scan run, newest first). On Endpoints and Rules a slim row of count cards filters the list under it.
  * An endpoint opens the endpoint × this policy page; a rule opens the rule side panel (its
  * endpoints → one endpoint's result, in place). */
 
-type Tab = 'overview' | 'endpoints' | 'rules' | 'audit';
-const TABS: [Tab, string][] = [['overview', 'Overview'], ['endpoints', 'Endpoints'], ['rules', 'Rules'], ['audit', 'Audit Trail']];
+type Tab = 'overview' | 'endpoints' | 'rules' | 'runs' | 'audit';
+const TABS: [Tab, string][] = [['overview', 'Overview'], ['endpoints', 'Endpoints'], ['rules', 'Rules'], ['runs', 'Run History'], ['audit', 'Audit Trail']];
+const fmtDuration = (s: number | null) => (s === null ? '—' : s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${String(s % 60).padStart(2, '0')}s`);
 type RuleFilter = 'Failing' | 'All Passing';
 const OUTCOME_TONE: Record<EndpointOutcome, { bg: string; text: string }> = {
   Compliant: { bg: '#ECFDF3', text: '#15803D' },
@@ -136,7 +137,6 @@ export function CompliancePolicyDrawer({
     [p.axis === 'endpoint' ? 'Endpoints' : p.axis === 'office' ? 'Remote Offices' : 'Tags Selected', p.axis === 'endpoint' ? `${p.endpointIds.length} selected` : <TagCell tags={p.axis === 'office' ? p.offices : p.deviceTags} />],
     ['Schedule', scheduleLabel(p.schedule)],
     ['Notify Team', p.notify.length ? p.notify.join(', ') : '—'],
-    ['Tags', p.tags.length ? <span className="flex flex-wrap gap-1.5">{p.tags.map((t) => <span key={t} className="rounded bg-[#F1F5F9] px-1.5 py-0.5 text-[12px] text-[#364658]">{t}</span>)}</span> : '—'],
     ['Description', p.description || '—'],
     ['Enable', p.enabled ? 'Enabled' : 'Disabled'],
     ['Created By', p.createdBy],
@@ -150,6 +150,9 @@ export function CompliancePolicyDrawer({
   const failingRules = rules.filter((r) => r.failed > 0).length;
   const shownResults = outcomeFilter ? results.filter((r) => r.outcome === outcomeFilter) : results;
   const numbers = benchmark ? ruleNumbers(benchmark) : new Map<string, string>();
+  const runs = runHistory(p);
+  const completedRuns = runs.filter((r) => r.status === 'Completed' && r.score !== null);
+  const avgScore = completedRuns.length ? Math.round(completedRuns.reduce((a, r) => a + (r.score ?? 0), 0) / completedRuns.length) : null;
   const byRuleRes = new Map(rules.map((r) => [r.rule.id, r]));
   const worstEndpoints = [...results].filter((r) => r.failed > 0).sort((a, b) => b.failed - a.failed).slice(0, 5);
   const worstRules = [...rules].filter((r) => r.failed > 0).sort((a, b) => b.failed - a.failed).slice(0, 5);
@@ -258,6 +261,7 @@ export function CompliancePolicyDrawer({
                   {label}
                   {id === 'endpoints' && <span className="ml-1.5 rounded-full bg-[#EBF5FF] px-1.5 text-[11px] font-semibold text-[#3D8BD0]">{results.length}</span>}
                   {id === 'rules' && benchmark && <span className="ml-1.5 rounded-full bg-[#EBF5FF] px-1.5 text-[11px] font-semibold text-[#3D8BD0]">{benchmarkRuleIds(benchmark).length}</span>}
+                  {id === 'runs' && <span className="ml-1.5 rounded-full bg-[#EBF5FF] px-1.5 text-[11px] font-semibold text-[#3D8BD0]">{runs.length}</span>}
                 </button>
               ))}
             </div>
@@ -398,6 +402,50 @@ export function CompliancePolicyDrawer({
                         right={(_, t) => <FailedOnCell t={t} />}
                         show={ruleFilter && p.lastScan ? (id) => { const r = byRuleRes.get(id); return !!r && (ruleFilter === 'Failing' ? r.failed > 0 : r.failed === 0); } : undefined}
                       />
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* ── Run History: every scan run, newest first ── */}
+              {tab === 'runs' && (
+                <div className="pb-6 pt-4">
+                  <StatsCardsRow
+                    rules={[]}
+                    onApplyFilter={() => {}}
+                    cards={[
+                      { label: 'Runs', value: runs.length, sub: runs.length ? `since ${fmtStamp(runs[runs.length - 1].at)}` : 'not run yet' },
+                      { label: 'Scheduled', value: runs.filter((r) => r.trigger === 'Schedule').length, sub: 'started by the schedule' },
+                      { label: 'Run Now', value: runs.filter((r) => r.trigger === 'Run Now').length, sub: 'started by hand' },
+                      { label: 'Average Compliance', value: avgScore === null ? '—' : `${avgScore}%`, sub: 'across completed runs', valueColor: avgScore === null ? '#94A3B8' : scoreColor(avgScore) },
+                    ]}
+                  />
+                  <div className="px-6">
+                    {runs.length === 0 ? (
+                      <p className="py-10 text-center text-[13px] text-[#9CA3AF]">This policy has not run yet. Press Run Now, or wait for its schedule.</p>
+                    ) : (
+                      <table className="w-full table-fixed">
+                        <colgroup><col className="w-[130px]" /><col className="w-[190px]" /><col className="w-[120px]" /><col className="w-[90px]" /><col className="w-[110px]" /><col /><col className="w-[110px]" /><col className="w-[110px]" /></colgroup>
+                        <thead><tr className="border-b border-[#e5e7eb]">{['Run ID', 'Scan Date', 'Triggered By', 'Duration', 'Endpoints', 'Checks', 'Compliance', 'Status'].map((h) => <th key={h} className="px-4 py-2.5 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>)}</tr></thead>
+                        <tbody className="divide-y divide-[#e5e7eb]">
+                          {runs.map((r) => (
+                            <tr key={r.id} className="transition-colors hover:bg-[#f9fafb]">
+                              <td className="px-4 py-3"><span className="rounded bg-[#e8f4fd] px-1.5 py-0.5 text-[11px] font-medium text-[#3D8BD0]">{r.id}</span></td>
+                              <td className="whitespace-nowrap px-4 py-3 text-[13px] text-[#364658]">{fmtStamp(r.at)}</td>
+                              <td className="px-4 py-3 text-[13px] text-[#64748B]">{r.trigger}</td>
+                              <td className="px-4 py-3 text-[13px] tabular-nums text-[#64748B]">{fmtDuration(r.duration)}</td>
+                              <td className="whitespace-nowrap px-4 py-3 text-[13px] tabular-nums text-[#364658]" title={r.notScanned ? `${r.notScanned} not scanned — agent offline on this run` : undefined}>{r.notScanned > 0 ? <span className="text-[#B45309]">{r.endpoints - r.notScanned} of {r.endpoints}</span> : r.endpoints}</td>
+                              <td className="whitespace-nowrap px-4 py-3 text-[12px] text-[#64748B]">{r.status === 'Running' ? '—' : <><span className="text-[#15803D]">{r.passed} passed</span> · <span className={r.failed ? 'text-[#B42318]' : ''}>{r.failed} failed</span></>}</td>
+                              <td className="px-4 py-3 text-[13px] font-medium tabular-nums" style={{ color: r.score === null ? '#94A3B8' : scoreColor(r.score) }}>{r.score === null ? '—' : `${r.score}%`}</td>
+                              <td className="px-4 py-3">
+                                <span className={`inline-flex items-center gap-1.5 rounded-sm px-2 py-0.5 text-[12px] font-medium ${r.status === 'Running' ? 'bg-[#EBF5FF] text-[#3D8BD0]' : 'bg-[#ECFDF3] text-[#15803D]'}`}>
+                                  {r.status === 'Running' && <Loader2 size={12} className="animate-spin" />}{r.status}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     )}
                   </div>
                 </div>

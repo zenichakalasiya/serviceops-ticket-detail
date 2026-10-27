@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import {
   ArrowLeft, BadgeCheck, ChevronDown, ChevronRight, Copy, ExternalLink, FolderPlus, Layers, Link2, Lock, Monitor, MoreVertical,
-  Pencil, Plus, Search, ShieldAlert, Tag, Trash2, X,
+  Pencil, Plus, Search, ShieldAlert, Trash2, X,
 } from 'lucide-react';
 import { Pagination } from './Pagination';
 import { HeaderKpiRow } from './HeaderKpiRow';
@@ -12,8 +12,8 @@ import { HeaderCopyButton } from './HeaderCopyButton';
 import { DrawerTabStrip } from './DrawerTabStrip';
 import { PickerDrawer } from './CreatePatchDeployment';
 import type { PickerColumn } from './CreatePatchDeployment';
-import { ErrorText, FieldLabel, RuleSelect, TagEditor, inputCls as formInputCls } from './FormRuleControls';
-import { matchRules, optionsOf, RuleDetailPanel, selectAttr, SeverityPill, TagCell } from './ComplianceShared';
+import { ErrorText, FieldLabel, RuleSelect, inputCls as formInputCls } from './FormRuleControls';
+import { matchRules, optionsOf, RuleDetailPanel, selectAttr, SeverityPill } from './ComplianceShared';
 import { TicketFilterBar } from './TicketFilterBar';
 import type { FilterRule, QuickFilterDef } from './TicketFilterBar';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
@@ -184,22 +184,20 @@ function BenchmarkList({ benchmarks, onOpen, onCreate, onEdit, onClone, onDelete
     return [
       selectAttr('type', 'Type', Monitor, plain(optionsOf(benchmarks, (b) => b.type, COMPLIANCE_TYPES))),
       selectAttr('origin', 'Origin', BadgeCheck, plain(optionsOf(benchmarks, (b) => b.origin, ['Default', 'Custom']))),
-      selectAttr('tags', 'Tag', Tag, plain(optionsOf(benchmarks, (b) => b.tags))),
     ];
   }, [benchmarks]);
-  // Type, Origin and Tag are every cut this list has, so they are all quick filters and the
-  // Filters builder (and its pill) is switched off — it would only offer the same three again.
+  // Type and Origin are every cut this list has, so they are both quick filters and the
+  // Filters builder (and its pill) is switched off — it would only offer the same two again.
   const quick = useMemo<QuickFilterDef[]>(() => [
     { field: 'type', icon: Monitor, tip: 'Filter by type', title: 'Type is', width: 196, row: 'plain', options: attrs[0].options! },
     { field: 'origin', icon: BadgeCheck, tip: 'Filter by origin', title: 'Origin is', width: 180, row: 'plain', options: attrs[1].options! },
-    { field: 'tags', icon: Tag, tip: 'Filter by tag', title: 'Tag is', width: 220, row: 'plain', options: attrs[2].options! },
   ], [attrs]);
 
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
-    const byField = (b: Benchmark, f: string): string | string[] => (f === 'tags' ? b.tags : String((b as any)[f] ?? ''));
+    const byField = (b: Benchmark, f: string): string | string[] => String((b as any)[f] ?? '');
     return matchRules(benchmarks, rules, byField).filter((b) =>
-      !q || [b.name, b.description, b.osVersion, ...b.tags].some((x) => x.toLowerCase().includes(q)));
+      !q || [b.name, b.description, b.osVersion].some((x) => x.toLowerCase().includes(q)));
   }, [benchmarks, search, rules]);
 
   const totalPages = Math.max(1, Math.ceil(rows.length / perPage));
@@ -241,21 +239,21 @@ function BenchmarkList({ benchmarks, onOpen, onCreate, onEdit, onClone, onDelete
       </div>
 
       <div className="-mx-4 overflow-x-auto">
-        <table className="w-full min-w-[1400px] table-fixed leading-5">
+        <table className="w-full min-w-[1200px] table-fixed leading-5">
           <colgroup>
-            <col className="w-[27%]" /><col className="w-[21%]" /><col className="w-[90px]" /><col className="w-[190px]" /><col className="w-[80px]" /><col className="w-[90px]" />
-            <col className="w-[70px]" /><col className="w-[100px]" /><col className="w-[200px]" /><col className="w-[130px]" />
+            <col className="w-[32%]" /><col className="w-[26%]" /><col className="w-[90px]" /><col className="w-[190px]" /><col className="w-[80px]" /><col className="w-[90px]" />
+            <col className="w-[70px]" /><col className="w-[100px]" /><col className="w-[130px]" />
           </colgroup>
           <thead className="border-b border-[#e5e7eb]">
             <tr>
-              {['Benchmark', 'Description', 'Type', 'Version', 'Profile', 'Origin', 'Rules', 'Used Count', 'Tag', 'Actions'].map((h) => (
+              {['Benchmark', 'Description', 'Type', 'Version', 'Profile', 'Origin', 'Rules', 'Used Count', 'Actions'].map((h) => (
                 <th key={h} className={`whitespace-nowrap px-4 py-2.5 text-[12px] font-semibold tracking-wider text-[#364658] ${h === 'Rules' || h === 'Used Count' ? 'text-right' : 'text-left'}`}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-[#e5e7eb] bg-white">
             {pageRows.length === 0 ? (
-              <tr><td colSpan={10} className="px-4 py-12 text-center text-[13px] text-[#9CA3AF]">No benchmark matches these filters.</td></tr>
+              <tr><td colSpan={9} className="px-4 py-12 text-center text-[13px] text-[#9CA3AF]">No benchmark matches these filters.</td></tr>
             ) : pageRows.map((b) => (
               <tr key={b.id} onClick={() => onOpen(b.id)} className="cursor-pointer transition-colors hover:bg-[#f9fafb]">
                 <td className="px-4 py-3">
@@ -268,7 +266,6 @@ function BenchmarkList({ benchmarks, onOpen, onCreate, onEdit, onClone, onDelete
                 <td className="whitespace-nowrap px-4 py-3 text-[13px] text-[#364658]">{b.origin}</td>
                 <td className="whitespace-nowrap px-4 py-3 text-right text-[13px] text-[#364658]">{benchmarkRuleIds(b).length}</td>
                 <td className={`whitespace-nowrap px-4 py-3 text-right text-[13px] ${b.usedBy ? 'text-[#364658]' : 'text-[#9CA3AF]'}`}>{b.usedBy}</td>
-                <td className="px-4 py-3"><TagCell tags={b.tags} /></td>
                 <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
                   <span className="flex items-center gap-0.5">
                     <ActionIcon label="Edit" reason={b.origin === 'Default' ? DEFAULT_READ_ONLY : undefined} onClick={() => onEdit(b.id)}><Pencil size={15} /></ActionIcon>
@@ -670,9 +667,6 @@ function BenchmarkDrawer({ benchmark, benchmarks, onClose, onEdit, onClone, onDe
     ['Profile', <span key="p" className="inline-flex items-center gap-2"><ProfileChip profile={benchmark.profile} /><span className="text-[12px] text-[#64748B]">{benchmark.profile === 'L1' ? 'Must have' : 'Good to have — includes Level 1'}</span></span>],
     ['Origin', benchmark.origin],
     ['Description', benchmark.description || '—'],
-    ['Tags', benchmark.tags.length
-      ? <span className="flex flex-wrap gap-1.5">{benchmark.tags.map((t) => <span key={t} className="rounded bg-[#F1F5F9] px-1.5 py-0.5 text-[12px] text-[#364658]">{t}</span>)}</span>
-      : '—'],
     ['Used Count', benchmark.usedBy],
     ['Created By', benchmark.createdBy],
     ['Last Updated', fmtDate(benchmark.updatedAt)],
@@ -812,7 +806,6 @@ function BenchmarkForm({ editing, source, names, onCancel, onSave }: {
   /** L2 → L1 with Level 2 rules attached: the confirm holds the count until the admin decides. */
   const [confirmL1, setConfirmL1] = useState<number | null>(null);
   const [description, setDescription] = useState(base?.description ?? '');
-  const [tags, setTags] = useState<string[]>(base?.tags ?? []);
   const [groups, setGroups] = useState<RuleGroup[]>(() =>
     editing ? editing.groups.map(copyGroup)
       : source ? benchmarkGroups(source).map((g) => ({ ...copyGroup(g), id: newGroup().id, children: (g.children ?? []).map((c) => ({ ...copyGroup(c), id: newGroup().id })) }))
@@ -881,7 +874,6 @@ function BenchmarkForm({ editing, source, names, onCancel, onSave }: {
       osVersion: version,
       profile,
       origin: 'Custom',
-      tags,
       groups,
       usedBy: editing?.usedBy ?? 0,
       createdBy: editing?.createdBy ?? 'Zeni Chakalasiya',
@@ -906,19 +898,17 @@ function BenchmarkForm({ editing, source, names, onCancel, onSave }: {
     return [
       selectAttr('severity', 'Severity', ShieldAlert, SEVERITIES.filter((s) => pool.some((r) => r.severity === s)).map((v) => ({ label: v, color: SEVERITY_PILL[v].bar }))),
       selectAttr('section', 'Section', Layers, plain(optionsOf(pool, (r) => r.section[1]))),
-      selectAttr('tags', 'Tag', Tag, plain(optionsOf(pool, (r) => r.tags))),
       selectAttr('profile', 'Profile', BadgeCheck, plain(optionsOf(pool, (r) => r.profile, ['L1', 'L2']))),
     ];
   }, [pool]);
   const pickQuick = useMemo<QuickFilterDef[]>(() => [
     { field: 'severity', icon: ShieldAlert, tip: 'Filter by severity', title: 'Severity is', width: 196, row: 'dot', options: pickAttrs[0].options! },
     { field: 'section', icon: Layers, tip: 'Filter by section', title: 'Section is', width: 240, row: 'plain', options: pickAttrs[1].options! },
-    { field: 'tags', icon: Tag, tip: 'Filter by tag', title: 'Tag is', width: 220, row: 'plain', options: pickAttrs[2].options! },
     // Only an L2 benchmark mixes the two levels, so only then is there anything to filter by.
-    ...(profile === 'L2' ? [{ field: 'profile', icon: BadgeCheck, tip: 'Filter by profile', title: 'Profile is', width: 160, row: 'plain' as const, options: pickAttrs[3].options! }] : []),
+    ...(profile === 'L2' ? [{ field: 'profile', icon: BadgeCheck, tip: 'Filter by profile', title: 'Profile is', width: 160, row: 'plain' as const, options: pickAttrs[2].options! }] : []),
   ], [pickAttrs, profile]);
   const pickRows = useMemo(
-    () => matchRules(pool, pickRules, (r, f) => (f === 'section' ? r.section[1] : f === 'tags' ? r.tags : String((r as any)[f] ?? ''))),
+    () => matchRules(pool, pickRules, (r, f) => (f === 'section' ? r.section[1] : String((r as any)[f] ?? ''))),
     [pool, pickRules],
   );
   /** Where a rule already sits — a rule lives in ONE place in a benchmark. */
@@ -946,7 +936,6 @@ function BenchmarkForm({ editing, source, names, onCancel, onSave }: {
     { header: 'Section', cell: (r) => <span className="whitespace-nowrap">{r.section[1]}</span> },
     { header: 'Profile', cell: (r) => <ProfileChip profile={r.profile} /> },
     { header: 'Severity', cell: (r) => <SeverityPill severity={r.severity} /> },
-    { header: 'Tag', cell: (r) => <TagCell tags={r.tags} /> },
   ];
 
   const attachReason = !type ? 'Choose the benchmark’s Type and Version first'
@@ -971,8 +960,8 @@ function BenchmarkForm({ editing, source, names, onCancel, onSave }: {
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto max-w-[1100px] px-4 py-5">
-          {/* Six fields in two rows of three equal columns: Name · Type · Version, then
-              Description · Profile · Tags. */}
+          {/* Five fields in two rows of three equal columns: Name · Type · Version, then
+              Description (two columns wide) · Profile. */}
           <div className="grid grid-cols-3 gap-x-4 gap-y-4">
             <div>
               <FieldLabel required>Benchmark Name</FieldLabel>
@@ -997,7 +986,7 @@ function BenchmarkForm({ editing, source, names, onCancel, onSave }: {
                 />
                 <ErrorText>{tried && type && !version ? 'Choose a Version' : ''}</ErrorText>
               </div>
-            <div>
+            <div className="col-span-2">
               <FieldLabel>Description</FieldLabel>
               <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Description" rows={2} className={`${inputCls} !h-auto resize-y py-2 leading-[18px]`} />
             </div>
@@ -1014,10 +1003,6 @@ function BenchmarkForm({ editing, source, names, onCancel, onSave }: {
                   ))}
                 </div>
               </div>
-            <div>
-              <FieldLabel>Tags</FieldLabel>
-              <div className="pt-1"><TagEditor tags={tags} onChange={setTags} /></div>
-            </div>
           </div>
 
           <div className="mt-8 flex items-center justify-between">
@@ -1068,7 +1053,7 @@ function BenchmarkForm({ editing, source, names, onCancel, onSave }: {
         rows={pickRows}
         columns={columns}
         selected={target?.ruleIds ?? []}
-        searchOf={(r) => [r.name, r.description, r.section[1], r.severity, ...r.tags].join(' ')}
+        searchOf={(r) => [r.name, r.description, r.section[1], r.severity].join(' ')}
         filterBar={(
           <>
             {/* The pool is already narrowed to the benchmark's Type and Version — said here as two

@@ -47,7 +47,7 @@ export function ComplianceBenchmarksPage({ onNavigate }: { onNavigate?: (page: s
       quickFilters={VIZ_BENCHMARK_QUICK_FILTERS}
       layouts={['list-kpi', 'list']}
       buildCards={buildCards}
-      searchFields={['x_osVersion', 'x_policyNames', 'x_tags']}
+      searchFields={['x_osVersion', 'x_policyNames']}
       hideSelection
       moreActions={[]}
       onOpenRow={(t) => { const s = v.benchmarks.find((x) => x.benchmark.id === t.id); if (s) open('compliance-benchmarks', s.benchmark.id, s.benchmark.name); }}

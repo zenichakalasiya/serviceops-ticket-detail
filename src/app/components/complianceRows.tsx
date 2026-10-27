@@ -28,7 +28,6 @@ export const benchmarkRow = (s: BenchmarkStat): Ticket => ({
   x_failingRules: s.score === null ? null : s.failingRules,
   x_cpScore: s.score,
   x_posture: s.posture ?? 'Not assessed',
-  x_tags: s.benchmark.tags.join(', '),
   x_lastExecution: s.lastScan ? new Date(s.lastScan) : null,
 } as unknown as Ticket);
 
