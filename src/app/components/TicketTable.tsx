@@ -2057,7 +2057,6 @@ export function TicketTable({
         { key: 'subject', label: 'Benchmark', flex: true, w: 220, maxW: 360 },
         { key: 'x_type', label: 'Type', w: 100 },
         { key: 'x_osVersion', label: 'Version', w: 170 },
-        { key: 'x_profile', label: 'Profile', w: 90 },
         { key: 'x_rules', label: 'Rules', w: 80 },
         { key: 'x_policies', label: 'Policies', w: 90 },
         { key: 'x_endpoints', label: 'Endpoints', w: 100 },

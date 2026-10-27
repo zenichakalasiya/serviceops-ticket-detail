@@ -100,18 +100,35 @@ export function ScheduleFields({ value, onChange }: { value: PolicySchedule; onC
   const next = nextRun(value);
   return (
     <div>
-      <FieldLabel>Frequency</FieldLabel>
+      <FieldLabel>Run</FieldLabel>
+      {/* Manual or on a schedule first; only a schedule has anything more to set. */}
       <Pills
-        value={f}
-        options={FREQS}
-        onChange={(v) => onChange(v === 'none' ? { frequency: 'none' } : {
-          frequency: v,
+        value={f === 'none' ? 'manual' : 'scheduled'}
+        options={[{ value: 'manual', label: 'Manual' }, { value: 'scheduled', label: 'Scheduled' }]}
+        onChange={(v) => onChange(v === 'manual' ? { frequency: 'none' } : {
+          frequency: 'daily',
           startDate: value.startDate ?? new Date().toISOString().slice(0, 10),
           time: value.time ?? '02:00',
           weekday: value.weekday ?? 0,
           monthday: value.monthday ?? 1,
         })}
       />
+      {f === 'none' && (
+        <p className="mt-2 flex items-center gap-1.5 text-[12px] text-[#64748B]">
+          <Info size={13} className="flex-shrink-0 text-[#7B8FA5]" />
+          This policy runs only when someone presses Run Now — on the policy page or from its row in the listing.
+        </p>
+      )}
+      {f !== 'none' && (
+        <div className="mt-4">
+          <FieldLabel>Frequency</FieldLabel>
+          <Pills
+            value={f}
+            options={FREQS.filter((o) => o.value !== 'none')}
+            onChange={(v) => onChange({ ...value, frequency: v })}
+          />
+        </div>
+      )}
       {f !== 'none' && (
         <div className="mt-4 grid grid-cols-2 gap-x-2 gap-y-4">
           <div>
@@ -136,10 +153,12 @@ export function ScheduleFields({ value, onChange }: { value: PolicySchedule; onC
           )}
         </div>
       )}
-      <p className="mt-3 flex items-center gap-1.5 text-[12px] text-[#64748B]">
-        <CalendarClock size={13} className="text-[#7B8FA5]" />
-        {f === 'none' ? 'Runs only when someone presses Run Now.' : <>{scheduleLabel(value)} · next scan <span className="font-medium text-[#364658]">{next ? fmtStamp(next) : '—'}</span></>}
-      </p>
+      {f !== 'none' && (
+        <p className="mt-3 flex items-center gap-1.5 text-[12px] text-[#64748B]">
+          <CalendarClock size={13} className="text-[#7B8FA5]" />
+          {scheduleLabel(value)} · next scan <span className="font-medium text-[#364658]">{next ? fmtStamp(next) : '—'}</span>
+        </p>
+      )}
     </div>
   );
 }
@@ -237,7 +256,6 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
   const pickRows = useMemo(() => matchRules(pool, pickRules, (e, k) => (k === 'office' ? e.office : k === 'agent' ? (e.agentOnline ? 'Online' : 'Offline') : k === 'os' ? e.osName : '')), [pool, pickRules]);
 
   const officeOptions = officesOf(pool).map((o) => ({ value: o, label: `${o} (${pool.filter((e) => e.office === o).length})` }));
-  const tagOptions = deviceTagsOf(pool).map((t) => ({ value: t, label: `${t} (${pool.filter((e) => e.tags.includes(t)).length})` }));
 
   const scheduleIncomplete = d.schedule.frequency !== 'none' && (!d.schedule.startDate || !d.schedule.time);
   const reason =
@@ -305,7 +323,6 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
     { header: 'IP Address', cell: (e) => <span className="tabular-nums">{e.ip}</span> },
     { header: 'Operating System', cell: (e) => <span className="whitespace-nowrap">{e.osName}</span> },
     { header: 'Remote Office', cell: (e) => <span className="whitespace-nowrap">{e.office}</span> },
-    { header: 'Tags', cell: (e) => <TagCell tags={e.tags} /> },
   ];
 
   return (
@@ -386,38 +403,29 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
             )}
           </Section>
 
-          <Section title="Endpoints" sub="Which endpoints the policy assesses — pick them one by one, or by remote office so new machines join on their own.">
+          <Section title="Endpoints" sub="Which endpoints the policy assesses — whole remote offices (new machines there join on their own), endpoints added one by one, or both.">
             <div className="grid grid-cols-2 gap-x-2 gap-y-4">
               <div>
-                <FieldLabel required>Device Filter</FieldLabel>
-                <Pills value={d.axis} options={AXES} onChange={(v) => set({ axis: v, endpointIds: [], offices: [], deviceTags: [] })} />
-              </div>
-              {/* Picked one by one, endpoints are ADDED from the side panel (the container below);
-                  by office or tag, the choice is a dropdown here. */}
-              {d.axis !== 'endpoint' && (
-              <div>
-                <FieldLabel required>{d.axis === 'office' ? 'Select Remote Offices' : 'Select Tags'}</FieldLabel>
+                <FieldLabel>Remote Offices</FieldLabel>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div>
-                      {(
-                        <RuleSelect
-                          className="!rounded"
-                          multi
-                          disabled={!!pickReason}
-                          value={d.axis === 'office' ? d.offices : d.deviceTags}
-                          options={d.axis === 'office' ? officeOptions : tagOptions}
-                          onChange={(v) => set(d.axis === 'office' ? { offices: v } : { deviceTags: v })}
-                          invalid={tried && resolved.length === 0}
-                        />
-                      )}
+                      <RuleSelect
+                        className="!rounded"
+                        multi
+                        disabled={!!pickReason}
+                        value={d.offices}
+                        options={officeOptions}
+                        onChange={(v) => set({ offices: v })}
+                        placeholder="Select remote offices"
+                        invalid={tried && resolved.length === 0}
+                      />
                     </div>
                   </TooltipTrigger>
                   {pickReason && <TooltipContent className="text-wrap max-w-[260px]">{pickReason}</TooltipContent>}
                 </Tooltip>
-                <ErrorText>{tried && benchmark && resolved.length === 0 ? 'Choose at least one endpoint' : ''}</ErrorText>
+                <ErrorText>{tried && benchmark && resolved.length === 0 ? 'Choose a remote office or add an endpoint' : ''}</ErrorText>
               </div>
-              )}
             </div>
 
             {/* What will actually be assessed, whichever axis chose it. */}
@@ -428,7 +436,7 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
                   <span className="text-[12px] text-[#B45309]">{resolved.filter((e) => !e.agentOnline).length} offline — skipped until their agent reports in</span>
                 )}
                 {/* Once some are added, the CTA moves up here so more can be added. */}
-                {d.axis === 'endpoint' && resolved.length > 0 && (
+                {resolved.length > 0 && (
                   <button type="button" onClick={() => setPicking(true)} className="ml-auto inline-flex h-8 items-center gap-1.5 rounded border border-[#DFE5ED] bg-white px-3 text-[13px] font-medium text-[#364658] transition-colors hover:bg-[#F5F7FA]"><Plus size={14} /> Add Endpoints</button>
                 )}
               </div>
@@ -438,11 +446,9 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
                   <p className="mt-3 max-w-[600px] text-[13px] leading-[1.55] text-[#64748B]">
                     {pickReason
                       ? pickReason
-                      : d.axis === 'endpoint'
-                        ? <>No endpoints added yet — add the <span className="font-medium text-[#364658]">{benchmark!.osVersion}</span> endpoints this policy should assess.</>
-                        : `No endpoints match yet — choose the ${d.axis === 'office' ? 'remote offices' : 'tags'} above.`}
+                      : <>No endpoints yet — choose remote offices above, or add the <span className="font-medium text-[#364658]">{benchmark!.osVersion}</span> endpoints this policy should assess one by one.</>}
                   </p>
-                  {d.axis === 'endpoint' && (
+                  {(
                     <button
                       type="button"
                       disabled={!!pickReason}
@@ -453,8 +459,8 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
                 </div>
               ) : (
                 <table className="w-full table-fixed">
-                  <colgroup><col className="w-[34%]" /><col className="w-[16%]" /><col className="w-[28%]" /><col />{d.axis === 'endpoint' && <col className="w-[56px]" />}</colgroup>
-                  <thead><tr className="border-b border-[#EEF1F4]">{['Host Name', 'IP Address', 'Operating System', 'Remote Office', ...(d.axis === 'endpoint' ? [''] : [])].map((h, i) => <th key={i} className="px-4 py-2 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>)}</tr></thead>
+                  <colgroup><col className="w-[22%]" /><col className="w-[14%]" /><col className="w-[20%]" /><col /><col className="w-[124px]" /><col className="w-[48px]" /></colgroup>
+                  <thead><tr className="border-b border-[#EEF1F4]">{['Host Name', 'IP Address', 'Operating System', 'Remote Office', 'Added By', ''].map((h, i) => <th key={i} className="whitespace-nowrap px-4 py-2 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>)}</tr></thead>
                   <tbody className="divide-y divide-[#EEF1F4]">
                     {resolved.slice(0, 8).map((e) => (
                       <tr key={e.id} className="group/row">
@@ -462,11 +468,22 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
                         <td className="px-4 py-2.5 text-[13px] tabular-nums text-[#64748B]">{e.ip}</td>
                         <td className="px-4 py-2.5"><span className="block truncate text-[13px] text-[#64748B]">{e.osName}</span></td>
                         <td className="px-4 py-2.5"><span className="block truncate text-[13px] text-[#64748B]">{e.office}</span></td>
-                        {d.axis === 'endpoint' && (
-                          <td className="px-2 py-1.5 text-right">
+                        {/* Where it came from: an office it sits in, or added by hand. */}
+                        <td className="px-4 py-2.5">
+                          <span className={`inline-block rounded-sm px-1.5 py-0.5 text-[11px] font-medium ${d.offices.includes(e.office) ? 'bg-[#EEF2F6] text-[#475569]' : 'bg-[#EBF5FF] text-[#3D8BD0]'}`}>{d.offices.includes(e.office) ? 'Remote Office' : 'Endpoint'}</span>
+                        </td>
+                        <td className="px-2 py-1.5 text-right">
+                          {d.offices.includes(e.office) ? (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="inline-flex size-7 cursor-help items-center justify-center rounded text-[#CBD5E1] opacity-0 group-hover/row:opacity-100"><X size={15} /></span>
+                              </TooltipTrigger>
+                              <TooltipContent className="text-wrap max-w-[240px]">Comes from {e.office} — remove the office above to drop it</TooltipContent>
+                            </Tooltip>
+                          ) : (
                             <button type="button" title="Remove" onClick={() => set({ endpointIds: d.endpointIds.filter((x) => x !== e.id) })} className="inline-flex size-7 items-center justify-center rounded text-[#7B8FA5] opacity-0 transition-opacity hover:bg-[#EEF2F6] hover:text-[#364658] focus:opacity-100 group-hover/row:opacity-100"><X size={15} /></button>
-                          </td>
-                        )}
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -497,7 +514,7 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
         columns={columns}
         selected={d.endpointIds}
         filterBar={<TicketFilterBar rules={pickRules} setRules={setPickRules} noun="endpoint" attrs={pickAttrs} quickFilters={pickQuick} showFilterBuilder={false} />}
-        searchOf={(e) => [e.id, e.hostName, e.ip, e.osName, e.office, ...e.tags].join(' ')}
+        searchOf={(e) => [e.id, e.hostName, e.ip, e.osName, e.office].join(' ')}
         onClose={() => { setPicking(false); setPickRules([]); }}
         onApply={(ids) => { set({ endpointIds: ids }); setPicking(false); setPickRules([]); }}
       />

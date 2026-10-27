@@ -7,11 +7,11 @@ import { HeaderIdPill } from './HeaderIdPill';
 import { HeaderKpiRow } from './HeaderKpiRow';
 import type { HeaderKpiItem } from './HeaderKpiRow';
 import { HeaderCopyButton } from './HeaderCopyButton';
-import { SeverityPill, TagCell } from './ComplianceShared';
+import { RuleDetailPanel } from './ComplianceShared';
 import { StatsCardsRow } from './AssetStatsRow';
 import { scoreColor } from './complianceVizData';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
-import { benchmarkRuleIds, ruleById, ruleNumbers } from './complianceData';
+import { benchmarkRuleIds, benchmarksUsingRule, BENCHMARKS_SEED, ruleById, ruleNumbers } from './complianceData';
 import { useDrawerStack } from './DrawerStack';
 import {
   benchmarkOf, endpointResults, fmtStamp, nextRun, openPolicyEditor, policyStore, POLICY_STATUS_OPTIONS, ruleResults,
@@ -132,8 +132,8 @@ export function CompliancePolicyDrawer({
     /* Version and the endpoint count are in the header — not repeated here. */
     ['Benchmark', benchmark?.name ?? '—'],
     ...(p.configType ? [['Config File Type', p.configType === 'startup' ? 'Startup' : 'Running'] as [string, React.ReactNode]] : []),
-    ['Device Filter', AXIS_LABEL[p.axis]],
-    ...(p.axis === 'endpoint' ? [] : [[p.axis === 'office' ? 'Remote Offices' : 'Tags Selected', <TagCell tags={p.axis === 'office' ? p.offices : p.deviceTags} />] as [string, React.ReactNode]]),
+    ...(p.offices.length ? [['Remote Offices', p.offices.join(', ')] as [string, React.ReactNode]] : []),
+    ...(p.endpointIds.length ? [['Endpoints Added', `${p.endpointIds.length} added one by one`] as [string, React.ReactNode]] : []),
     ['Schedule', scheduleLabel(p.schedule)],
     ['Notify Team', p.notify.length ? p.notify.join(', ') : '—'],
     ['Description', p.description || '—'],
@@ -371,7 +371,15 @@ export function CompliancePolicyDrawer({
         </div>
       </div>
 
-      {ruleId && <ComplianceEndpointPanel ruleId={ruleId} policyId={p.id} onClose={() => setRuleId(null)} onOpenEndpoint={openEndpoint} />}
+      {/* A rule opens its details only — results live on the Endpoints tab. */}
+      {ruleId && ruleById(ruleId) && (
+        <RuleDetailPanel
+          rule={ruleById(ruleId)!}
+          number={benchmark ? ruleNumbers(benchmark).get(ruleId) : undefined}
+          usedIn={benchmarksUsingRule(BENCHMARKS_SEED, ruleId).map((b) => b.name)}
+          onClose={() => setRuleId(null)}
+        />
+      )}
       {resultsFor && <ComplianceEndpointPanel key={resultsFor} endpointId={resultsFor} policyId={p.id} onClose={() => setResultsFor(null)} onOpenEndpoint={openEndpoint} />}
       {scheduleOpen && <PolicyScheduleDrawer policyId={p.id} onClose={() => setScheduleOpen(false)} />}
       {confirmDelete && (

@@ -1,3 +1,23 @@
+# Handoff — 2026-10-27 evening (Compliance follow-ups after the 17:22 publish)
+
+> Sessions share this file. This top part is the newest; the 17:22 section below still holds for the rest.
+
+## Completed since 85c5a0f
+- Admin Benchmark listing: Profile + Policies columns removed; technician Benchmark listing: Profile removed.
+- Both Benchmark detail pages: Profile + Policies removed from the line under the title.
+- Tags removed from the Endpoint page properties and the Select Endpoints picker.
+- Policy › Rules tab: a rule opens its details only (no endpoints / Passed On cards).
+- Create Policy: Run = Manual | Scheduled; Endpoints = Remote Offices AND individual endpoints together
+  (union, "Added By" column); policy properties show Remote Offices / Endpoints Added.
+- Change log of the whole afternoon: https://claude.ai/artifact/5jG8RfrhpAmc6zhktGpWsn (private).
+
+## Next steps
+- Same as the 17:22 section (severity container design, sharing admin benchmarks with the technician side,
+  confirm the Manual rules list).
+- The technician Endpoints listing still offers a Profile filter on the Benchmark page's filter builder — ask.
+
+---
+
 # Handoff — 2026-10-27 17:22 (Compliance: detail pages without Overview, admin rule V2, benchmark rule-group tree)
 
 > Sessions share this file. **This top part is the newest session**; older notes follow unchanged

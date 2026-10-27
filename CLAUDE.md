@@ -3054,3 +3054,11 @@ and ask before building any new one.
     beside it; rules number first (1.1.1.1), sub-groups after (1.1.1.3); a group holding only sub-groups has
     no Attach. Row actions show on hover: ✎ · ⊕ · blue **Attach rules** · red 🗑. Rule rows: L1 + severity
     flush right, ✕ / › on hover. `groupRuleIds` and `ruleNumbers` are recursive.
+  - **Later the same day:** admin Benchmark listing has no Profile / Policies columns, technician listing no
+    Profile; neither detail page shows Profile / Policies under the title. No Tags anywhere in Compliance UI
+    (endpoint properties, endpoint picker). Policy › Rules tab: a rule opens `RuleDetailPanel` (details only).
+    **Create Policy:** Run = **Manual | Scheduled** pill (Manual → one info line; Scheduled → Once/Daily/
+    Weekly/Monthly + fields; `ScheduleFields`, shared with the row's Schedule panel). Endpoints = **Remote
+    Offices multi-select AND Add Endpoints together** — `resolvedEndpoints` is the union (axis kept only for
+    legacy 'tag'); "Endpoints to assess" has an **Added By** column; policy properties show Remote Offices /
+    Endpoints Added. Change log page: https://claude.ai/artifact/5jG8RfrhpAmc6zhktGpWsn

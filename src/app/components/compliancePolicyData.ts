@@ -168,12 +168,12 @@ export const endpointsForBenchmark = (b?: Benchmark) =>
 
 export const benchmarkOf = (id: string) => BENCHMARKS_SEED.find((b) => b.id === id);
 
-/** What the policy actually assesses, whichever axis was used to choose it. */
+/** What the policy actually assesses: every endpoint in its remote offices AND every endpoint added
+ *  one by one (Zeni, 27 Oct 2026 — the two are used together, not as alternatives). */
 export function resolvedEndpoints(p: Pick<CompliancePolicy, 'benchmarkId' | 'axis' | 'endpointIds' | 'offices' | 'deviceTags'>) {
   const pool = endpointsForBenchmark(benchmarkOf(p.benchmarkId));
-  if (p.axis === 'office') return pool.filter((e) => p.offices.includes(e.office));
   if (p.axis === 'tag') return pool.filter((e) => e.tags.some((t) => p.deviceTags.includes(t)));
-  return pool.filter((e) => p.endpointIds.includes(e.id));
+  return pool.filter((e) => p.offices.includes(e.office) || p.endpointIds.includes(e.id));
 }
 
 /* ── Results ──────────────────────────────────────────────────────────────────────────── */

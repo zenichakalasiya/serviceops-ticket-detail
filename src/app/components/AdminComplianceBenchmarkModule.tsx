@@ -264,21 +264,21 @@ function BenchmarkList({ benchmarks, onOpen, onCreate, onEdit, onClone, onDelete
       </div>
 
       <div className="-mx-4 overflow-x-auto">
-        <table className="w-full min-w-[1200px] table-fixed leading-5">
+        <table className="w-full min-w-[1000px] table-fixed leading-5">
           <colgroup>
-            <col className="w-[28%]" /><col className="w-[22%]" /><col className="w-[90px]" /><col className="w-[190px]" /><col className="w-[96px]" /><col className="w-[96px]" />
-            <col className="w-[70px]" /><col className="w-[100px]" /><col className="w-[130px]" />
+            <col className="w-[32%]" /><col className="w-[26%]" /><col className="w-[90px]" /><col className="w-[190px]" /><col className="w-[96px]" />
+            <col className="w-[70px]" /><col className="w-[130px]" />
           </colgroup>
           <thead className="border-b border-[#e5e7eb]">
             <tr>
-              {['Benchmark', 'Description', 'Type', 'Version', 'Profile', 'Origin', 'Rules', 'Policies', 'Actions'].map((h) => (
-                <th key={h} className="whitespace-nowrap px-4 py-2.5 text-left text-[12px] font-semibold tracking-wider text-[#364658]" title={h === 'Policies' ? 'Compliance policies that run this benchmark' : undefined}>{h}</th>
+              {['Benchmark', 'Description', 'Type', 'Version', 'Origin', 'Rules', 'Actions'].map((h) => (
+                <th key={h} className="whitespace-nowrap px-4 py-2.5 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-[#e5e7eb] bg-white">
             {pageRows.length === 0 ? (
-              <tr><td colSpan={9} className="px-4 py-12 text-center text-[13px] text-[#9CA3AF]">No benchmark matches these filters.</td></tr>
+              <tr><td colSpan={7} className="px-4 py-12 text-center text-[13px] text-[#9CA3AF]">No benchmark matches these filters.</td></tr>
             ) : pageRows.map((b) => (
               <tr key={b.id} onClick={() => onOpen(b.id)} className="cursor-pointer transition-colors hover:bg-[#f9fafb]">
                 <td className="px-4 py-3">
@@ -287,10 +287,8 @@ function BenchmarkList({ benchmarks, onOpen, onCreate, onEdit, onClone, onDelete
                 <td className="px-4 py-3"><span className="block truncate text-[13px] text-[#64748B]" title={b.description}>{b.description || <span className="text-[#9CA3AF]">—</span>}</span></td>
                 <td className="whitespace-nowrap px-4 py-3 text-[13px] text-[#364658]">{b.type}</td>
                 <td className="px-4 py-3"><span className="block truncate text-[13px] text-[#364658]" title={b.osVersion}>{b.osVersion || '—'}</span></td>
-                <td className="px-4 py-3"><ProfileChip profile={b.profile} /></td>
                 <td className="whitespace-nowrap px-4 py-3"><OriginTag origin={b.origin} /></td>
                 <td className="whitespace-nowrap px-4 py-3 text-[13px] text-[#364658]">{benchmarkRuleIds(b).length}</td>
-                <td className={`whitespace-nowrap px-4 py-3 text-[13px] ${usedBy(b.id) ? 'text-[#364658]' : 'text-[#9CA3AF]'}`}>{usedBy(b.id)}</td>
                 <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
                   <span className="flex items-center gap-0.5">
                     <ActionIcon label="Edit" reason={b.origin === 'Default' ? DEFAULT_READ_ONLY : undefined} onClick={() => onEdit(b.id)}><Pencil size={15} /></ActionIcon>
@@ -642,10 +640,8 @@ function BenchmarkDrawer({ benchmark, benchmarks, onClose, onEdit, onClone, onDe
             <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
               <MetaChip label="Type" value={benchmark.type} />
               <MetaChip label="Version" value={benchmark.osVersion || '—'} />
-              <MetaChip label="Profile" value={profileLabel(benchmark.profile)} tone={benchmark.profile === 'L1' ? 'blue' : 'violet'} title={benchmark.profile === 'L1' ? 'Level 1 rules only' : benchmark.profile === 'L2' ? 'Level 2 rules only' : 'Level 1 and Level 2 rules'} />
               <MetaChip value={benchmark.origin} tone={isDefault ? 'neutral' : 'green'} icon={isDefault ? <Lock size={11} /> : undefined} title={isDefault ? 'Ships with the product — read only' : 'Built in this workspace'} />
               <MetaChip label="Rules" value={total} />
-              <MetaChip label="Policies" value={usedBy} title="Compliance policies that run this benchmark" />
               <MetaChip label="Updated" value={fmtDate(benchmark.updatedAt)} title={`by ${benchmark.createdBy}`} />
             </div>
           </div>

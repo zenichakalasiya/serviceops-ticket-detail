@@ -10,7 +10,7 @@ import { HeaderCopyButton } from './HeaderCopyButton';
 import { StatsCardsRow } from './AssetStatsRow';
 import { AuditTrailsTabContent } from './AuditTrailsTabContent';
 import type { AuditEntry } from './AuditTrailsTabContent';
-import { SeverityPill, TagCell } from './ComplianceShared';
+import { SeverityPill } from './ComplianceShared';
 import { ComplianceBreakdown, ComplianceEndpointPanel, FailedBySeverity, severityCounts } from './ComplianceEndpointPanel';
 import { ruleById, ruleNumbers, SEVERITIES } from './complianceData';
 import {
@@ -152,7 +152,6 @@ export function ComplianceEndpointDrawer({
     ['Type', ep.type],
     ['Remote Office', ep.office],
     ...(ep.real ? [['Agent Status', <span key="a" className="inline-flex items-center gap-1.5"><span className="size-2 rounded-full" style={{ backgroundColor: ep.agentOnline ? '#22C55E' : '#F59E0B' }} />{ep.agentOnline ? 'Online' : 'Offline'}</span>] as [string, React.ReactNode]] : []),
-    ['Tags', ep.tags.length ? <TagCell tags={ep.tags} /> : '—'],
   ];
 
   const audit: AuditEntry[] = [

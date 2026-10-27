@@ -128,9 +128,7 @@ export function ComplianceBenchmarkDrawer({
   const kpis = [
     kpi('type', 'Type', b.type, `Type: ${b.type}`),
     kpi('version', 'Version', b.osVersion, `Version: ${b.osVersion}`),
-    kpi('profile', 'Profile', profileLabel(b.profile), b.profile === 'L1' ? 'Level 1 rules only' : b.profile === 'L2' ? 'Level 2 rules only' : 'Level 1 and Level 2 rules'),
     kpi('rules', 'Rules', ruleIds.length, `${ruleIds.length} rules`),
-    kpi('policies', 'Policies', mine.length, mine.length ? mine.map((p) => p.name).join(', ') : 'No policy runs this benchmark'),
   ];
   /* Type, Version, Profile and the rule count are in the header — not repeated here. */
   const fields: [string, React.ReactNode][] = [
