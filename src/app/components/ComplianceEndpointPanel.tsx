@@ -23,7 +23,7 @@ import { RuleDetailBody, SeverityPill } from './ComplianceShared';
 import { benchmarksUsingRule, BENCHMARKS_SEED, numberedGroups, ruleById, ruleNumbers, SEVERITIES, SEVERITY_PILL } from './complianceData';
 import type { Benchmark, ComplianceRule, NumberedRule, Severity } from './complianceData';
 import {
-  benchmarkOf, complianceEndpoint, EXCEPTION_REASONS, exceptionFor, exceptionStore, findingsOf, fmtStamp, getPolicy, resolvedEndpoints, useExceptions, usePolicies,
+  benchmarkOf, complianceEndpoint, endpointResults, EXCEPTION_REASONS, exceptionFor, exceptionStore, findingsOf, fmtStamp, getPolicy, resolvedEndpoints, useExceptions, usePolicies,
 } from './compliancePolicyData';
 import type { ComplianceEndpoint, ComplianceException, CompliancePolicy, ExceptionReason, Finding } from './compliancePolicyData';
 import { ErrorText, FieldLabel, RuleSelect, inputCls as formInputCls } from './FormRuleControls';
@@ -315,11 +315,25 @@ export function ComplianceEndpointPanel({ endpointId, ruleId, policyId, onClose,
                     )}
                     <span className="truncate">{ep.hostName}</span>
                   </h3>
-                  <p className="mt-1 flex flex-wrap items-center gap-x-2 text-[12px] text-[#7B8FA5]">
-                    <span>{policy?.name}</span>
-                    {benchmark && <span>· {benchmark.name}</span>}
-                    {onOpenPolicy && policy && <button type="button" onClick={() => { onClose(); onOpenPolicy(policy.id); }} className="text-[12px] font-medium text-[#3D8BD0] hover:underline">Open policy ↗</button>}
-                  </p>
+                  {/* One line that says how this endpoint did: result · score · worst failing · when. */}
+                  {policy && (() => {
+                    const res = endpointResults(policy).find((r) => r.endpoint.id === ep.id);
+                    const failing = findings.filter((f) => f.endpointId === ep.id && !f.passed);
+                    const bySev = SEVERITIES.map((s) => [s, failing.filter((f) => ruleById(f.ruleId)?.severity === s).length] as const).filter(([, n]) => n);
+                    const tone = res?.outcome === 'Compliant' ? { bg: '#ECFDF3', text: '#15803D' } : res?.outcome === 'Non-Compliant' ? { bg: '#FEF3F2', text: '#B42318' } : { bg: '#F1F5F9', text: '#64748B' };
+                    return (
+                      <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-[#7B8FA5]">
+                        {res && <span className="rounded-sm px-1.5 py-0.5 text-[12px] font-medium" style={{ backgroundColor: tone.bg, color: tone.text }}>{res.outcome}</span>}
+                        {res?.score != null && <span className="font-semibold tabular-nums" style={{ color: scoreColor(res.score) }}>{res.score}%</span>}
+                        {res?.outcome !== 'Not Scanned' && (
+                          bySev.length
+                            ? <span>· {bySev.map(([s, n], i) => <span key={s}>{i ? ', ' : ''}<span className="font-medium text-[#364658]">{n} {s}</span></span>)} {failing.length === 1 ? 'rule' : 'rules'} failing</span>
+                            : <span>· No rules failing</span>
+                        )}
+                        <span>· {policy.lastScan ? `Scanned ${fmtStamp(policy.lastScan.at)}` : 'Not scanned yet'}</span>
+                      </p>
+                    );
+                  })()}
                 </>
               )}
               {rule && (
