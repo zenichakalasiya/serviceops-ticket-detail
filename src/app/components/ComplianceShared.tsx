@@ -151,8 +151,11 @@ export function RuleDetailPanel({ rule, usedIn, onClose, number, admin, firstTab
   /** A wider panel, for a first tab that holds a table. */
   wide?: boolean;
 }) {
-  const ui = useComplianceRuleUi();
-  const onePage = admin && ui === 'v2';
+  // The rule panel is ALWAYS the tabbed version (Zeni, 28 Oct 2026): the one-page V2 did not fit
+  // a rule's content well. The V1 | V2 pill now only switches the benchmark rule-group builder.
+  // RulePageBody stays built; restoring it is `admin && ui === 'v2'` here.
+  useComplianceRuleUi();
+  const onePage = false;
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
