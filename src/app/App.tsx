@@ -21,6 +21,7 @@ import { PackageDeploymentsListingPage } from './components/PackageDeploymentsLi
 import { RegistryDeploymentsListingPage } from './components/RegistryDeploymentsListingPage';
 import { ComplianceDashboardPage } from './components/ComplianceDashboardPage';
 import { ComplianceBenchmarksPage } from './components/ComplianceBenchmarksPage';
+import { ComplianceRulesPage } from './components/ComplianceRulesPage';
 import { ComplianceEndpointsPage } from './components/ComplianceEndpointsPage';
 import { CompliancePoliciesListingPage } from './components/CompliancePoliciesListingPage';
 import { CompliancePolicyEditorHost } from './components/CompliancePolicyEditor';
@@ -121,6 +122,7 @@ export default function App() {
       {activePage === 'package-deployments' && <PackageDeploymentsListingPage onNavigate={navigate} />}
       {activePage === 'registry-deployments' && <RegistryDeploymentsListingPage onNavigate={navigate} />}
       {activePage === 'compliance-dashboard' && <ComplianceDashboardPage onNavigate={navigate} />}
+      {activePage === 'compliance-rules' && <ComplianceRulesPage onNavigate={navigate} />}
       {activePage === 'compliance-benchmarks' && <ComplianceBenchmarksPage onNavigate={navigate} />}
       {activePage === 'compliance-policies' && <CompliancePoliciesListingPage onNavigate={navigate} />}
       {activePage === 'compliance-endpoints' && <ComplianceEndpointsPage onNavigate={navigate} />}

@@ -3063,3 +3063,26 @@ and ask before building any new one.
     Offices multi-select AND Add Endpoints together** — `resolvedEndpoints` is the union (axis kept only for
     legacy 'tag'); "Endpoints to assess" has an **Added By** column; policy properties show Remote Offices /
     Endpoints Added. Change log page: https://claude.ai/artifact/5jG8RfrhpAmc6zhktGpWsn
+- **Compliance pass, 27–28 Oct 2026 — saved as Compliance v1 on the versions page.**
+  - **Technician Rules page** (`#/compliance-rules`, `ComplianceRulesPage.tsx`; flyout Dashboard · Rules · Benchmark · …):
+    admin Rules columns + Endpoints + **Rule Score** (`ruleEndpointResults` / `ruleScore` in complianceVizData — one row per
+    endpoint, Fail when any policy fails it). A rule opens `RuleDetailPanel` with a FIRST tab **Endpoints** (`firstTab` +
+    `wide` props). The demo fleet's FAMILIES were grown (~40 endpoints per rule).
+  - **Detail-tab search + Filter = `ComplianceTabFilter.tsx`** (`TabListToolbar`, a copy of PatchInstallationTab's toolbar:
+    search, one Filter button → chips · a tab per filter · All · Clear all / Done). On Policy › Endpoints / Rules / Run
+    History, Benchmark › Rules / Endpoints / Policies, Endpoint › Compliance Audit, and (search only) the rule-results
+    sidebar. Count cards set the same filter (`cardToggle`). Rule trees take `query`: matches highlighted (`Hl`), shown under
+    their parent groups, a group matched by name shows all its rules; `ruleTreeCount` is the empty-state test.
+  - **Export** = `ExportButton` + `exportTable` (ComplianceEndpointPanel; the Audit Trail Download popup, PDF | CSV +
+    password) — ONLY on the rule-results sidebar, right of its search. CSV downloads; PDF opens a print-ready page.
+  - Endpoint page tab **Policies → "Compliance Audit"** (same list). Rule / benchmark names wrap to 2 lines (TicketTable
+    `ColDef.wrap` + `.cell-wrap` in theme.css). Schedule **Frequency is a dropdown**; the Run Manual | Scheduled pill is sized
+    to its text; the policy form's Benchmark dropdown is names only. Controls tab: version label outside a filled box.
+    Rounded boxes with tinted headers use `overflow-hidden`.
+  - **Admin › Benchmark rule groups — two builders on the logo's V1 | V2 pill** (`useComplianceRuleUi`, the same pill as
+    the rule panel; opens on V2). **V1** = the tree: ⊕ opens *Add sub-group inside · Add group below* with a dashed
+    placement preview; while naming, Enter ONLY saves, Tab / Shift+Tab move the group in / out. **V2** = `GroupExplorer`
+    (the VS Code rule): select a row; **+** adds a group INSIDE the selected group (open or closed); the top row is the
+    benchmark (root) → top-level; a selected rule adds into its group; toolbar + row hover icons; right-click menu;
+    F2 / Delete. A two-pane builder was tried and removed.
+  - ⚠️ **Before every new Compliance task, ASK Zeni: save it into Compliance v1, or make a new version?**

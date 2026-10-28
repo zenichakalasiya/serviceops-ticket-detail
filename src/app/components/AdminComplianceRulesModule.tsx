@@ -104,7 +104,7 @@ export function AdminComplianceRulesModule({ benchmarks = BENCHMARKS_SEED }: { b
             ) : pageRows.map((r) => (
               <tr key={r.id} onClick={() => setOpenId(r.id)} className="cursor-pointer transition-colors hover:bg-[#f9fafb]">
                 <td className="px-4 py-3">
-                  <span className="block truncate text-[13px] font-medium text-[#364658] hover:text-[#3D8BD0]" title={r.name}>{r.name}</span>
+                  <span className="line-clamp-2 break-words text-[13px] font-medium text-[#364658] hover:text-[#3D8BD0]" title={r.name}>{r.name}</span>
                 </td>
                 <td className="px-4 py-3"><span className="block truncate text-[13px] text-[#64748B]" title={r.description}>{r.description}</span></td>
                 <td className="whitespace-nowrap px-4 py-3"><SeverityPill severity={r.severity} /></td>

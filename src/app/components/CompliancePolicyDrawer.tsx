@@ -19,10 +19,15 @@ import {
 } from './compliancePolicyData';
 import type { CompliancePolicy, EndpointOutcome } from './compliancePolicyData';
 import { PolicyScheduleDrawer } from './CompliancePolicyEditor';
-import { ComplianceEndpointPanel, RuleGroupTree } from './ComplianceEndpointPanel';
+import { ComplianceEndpointPanel, RuleGroupTree, ruleTreeCount } from './ComplianceEndpointPanel';
 import { AuditTrailsTabContent } from './AuditTrailsTabContent';
 import type { AuditEntry } from './AuditTrailsTabContent';
 import { useOpenComplianceEndpoint } from './ComplianceEndpointDrawer';
+import { anyFilter, cardActive, cardToggle, matchesFilter, matchesSearch, NoMatch, optionsFrom, TabListToolbar } from './ComplianceTabFilter';
+import type { FilterValue } from './ComplianceTabFilter';
+import { findingsOf } from './compliancePolicyData';
+import { SEVERITIES } from './complianceData';
+import { SEVERITY_COLOR } from './complianceVizData';
 
 /* Compliance Policy — the detail page. Opened from the listing through the shared DrawerStack,
  * so it is a tab in the same drawer every other module's record opens in (tab strip, minimise to
@@ -95,8 +100,14 @@ export function CompliancePolicyDrawer({
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [ruleId, setRuleId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  /** The count card lit above each list — it narrows the list to that result. */
-  const [outcomeFilter, setOutcomeFilter] = useState<EndpointOutcome | null>(null);
+  /** Search + Filter per tab (ComplianceTabFilter). The Endpoints count cards set epF.result. */
+  const [epQ, setEpQ] = useState('');
+  const [epF, setEpF] = useState<FilterValue>({});
+  const [ruleQ, setRuleQ] = useState('');
+  const [ruleF, setRuleF] = useState<FilterValue>({});
+  const [runQ, setRunQ] = useState('');
+  const [runF, setRunF] = useState<FilterValue>({});
+  useEffect(() => { setEpQ(''); setEpF({}); setRuleQ(''); setRuleF({}); setRunQ(''); setRunF({}); }, [activeAssetId]);
   /** The endpoint whose rule results are open in the side panel. */
   const [resultsFor, setResultsFor] = useState<string | null>(null);
   const { open: openInStack } = useDrawerStack();
@@ -143,8 +154,40 @@ export function CompliancePolicyDrawer({
 
   /* An EP ID opens the endpoint's own detail page. */
   const openEndpoint = (id: string) => openComplianceEndpoint(id);
-  const shownResults = outcomeFilter ? results.filter((r) => r.outcome === outcomeFilter) : results;
-  const runs = runHistory(p);
+  /* ── Endpoints tab ── */
+  const epGroups = [
+    { key: 'result', label: 'Result', options: (['Compliant', 'Non-Compliant', 'Not Scanned'] as EndpointOutcome[]).map((o) => ({ value: o, dot: OUTCOME_TONE[o].text })) },
+    { key: 'office', label: 'Office', options: optionsFrom(results.map((r) => r.endpoint.office)) },
+    { key: 'agent', label: 'Agent', options: [{ value: 'Online', dot: '#22C55E' }, { value: 'Offline', dot: '#F59E0B' }] },
+    { key: 'os', label: 'OS', options: optionsFrom(results.map((r) => r.endpoint.osName)) },
+  ];
+  const shownResults = results.filter((r) =>
+    matchesSearch(epQ, [r.endpoint.id, r.endpoint.hostName, r.endpoint.ip]) &&
+    matchesFilter(epF, (k) => (k === 'result' ? r.outcome : k === 'office' ? r.endpoint.office : k === 'agent' ? (r.endpoint.agentOnline ? 'Online' : 'Offline') : r.endpoint.osName)));
+  /* ── Rules tab: a rule FAILS here when any endpoint failed it on the last scan ── */
+  const findings = findingsOf(p);
+  const ruleNums = benchmark ? ruleNumbers(benchmark) : new Map<string, string>();
+  const ruleResult = (id: string) => {
+    const fs = findings.filter((f) => f.ruleId === id);
+    return !fs.length ? 'Not Checked' : fs.some((f) => !f.passed) ? 'Fail' : 'Pass';
+  };
+  const ruleGroups = [
+    { key: 'result', label: 'Result', options: [{ value: 'Fail', dot: '#EF4444' }, { value: 'Pass', dot: '#22C55E' }, { value: 'Not Checked', dot: '#94A3B8' }] },
+    { key: 'severity', label: 'Severity', options: SEVERITIES.map((s) => ({ value: s, dot: SEVERITY_COLOR[s] })) },
+    { key: 'assessment', label: 'Assessment', options: [{ value: 'Automated' }, { value: 'Manual' }] },
+  ];
+  const ruleShow = anyFilter('', ruleF) ? (id: string) => {
+    const r = ruleById(id);
+    return !!r &&
+      matchesFilter(ruleF, (k) => (k === 'result' ? ruleResult(id) : k === 'severity' ? r.severity : r.assessment));
+  } : undefined;
+  const ruleHits = anyFilter(ruleQ, ruleF) && benchmark ? ruleTreeCount(benchmark, ruleShow, ruleQ) : -1;
+  const allRuns = runHistory(p);
+  const runGroups = [
+    { key: 'trigger', label: 'Triggered By', options: optionsFrom(allRuns.map((r) => r.trigger)) },
+    { key: 'status', label: 'Status', options: optionsFrom(allRuns.map((r) => r.status)) },
+  ];
+  const runs = allRuns.filter((r) => matchesSearch(runQ, [r.id, fmtStamp(r.at)]) && matchesFilter(runF, (k) => (k === 'trigger' ? r.trigger : r.status)));
   const audit: AuditEntry[] = [
     ...exceptions.filter((x) => x.policyId === p.id).map((x, i) => ({
       id: `x${i}`, timestamp: x.requestedAt.replace('T', ' ') + ':00', user: 'You', userInitials: 'YO', userColor: '#3D8BD0',
@@ -250,7 +293,7 @@ export function CompliancePolicyDrawer({
                   {label}
                   {id === 'endpoints' && <span className="ml-1.5 rounded-full bg-[#EBF5FF] px-1.5 text-[11px] font-semibold text-[#3D8BD0]">{results.length}</span>}
                   {id === 'rules' && benchmark && <span className="ml-1.5 rounded-full bg-[#EBF5FF] px-1.5 text-[11px] font-semibold text-[#3D8BD0]">{benchmarkRuleIds(benchmark).length}</span>}
-                  {id === 'runs' && <span className="ml-1.5 rounded-full bg-[#EBF5FF] px-1.5 text-[11px] font-semibold text-[#3D8BD0]">{runs.length}</span>}
+                  {id === 'runs' && <span className="ml-1.5 rounded-full bg-[#EBF5FF] px-1.5 text-[11px] font-semibold text-[#3D8BD0]">{allRuns.length}</span>}
                 </button>
               ))}
             </div>
@@ -262,8 +305,8 @@ export function CompliancePolicyDrawer({
                   <StatsCardsRow
                     rules={[]}
                     onApplyFilter={() => {}}
-                    activeLabel={outcomeFilter}
-                    onCardClick={(c) => setOutcomeFilter(c.label === outcomeFilter ? null : (c.label as EndpointOutcome))}
+                    activeLabel={cardActive(epF, 'result')}
+                    onCardClick={(c) => setEpF(cardToggle(epF, 'result', c.label))}
                     cards={[
                       {
                         label: 'Average Compliance', value: score === null ? '—' : `${score}%`,
@@ -277,6 +320,7 @@ export function CompliancePolicyDrawer({
                     ]}
                   />
                   <div className="px-6">
+                    <TabListToolbar search={epQ} onSearch={setEpQ} groups={epGroups} value={epF} onChange={setEpF} />
                     <table className="w-full table-fixed">
                       <colgroup><col className="w-[23%]" /><col className="w-[12%]" /><col className="w-[13%]" /><col className="w-[140px]" /><col className="w-[10%]" /><col /><col className="w-[169px]" /></colgroup>
                       <thead><tr className="border-b border-[#e5e7eb]">{['Endpoint', 'IP Address', 'Remote Office', 'Result', 'Compliance', 'Checks', 'Actions'].map((h) => <th key={h} className="px-4 py-2.5 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>)}</tr></thead>
@@ -303,6 +347,7 @@ export function CompliancePolicyDrawer({
                         ))}
                       </tbody>
                     </table>
+                    {shownResults.length === 0 && results.length > 0 && <NoMatch what="endpoints" onClear={() => { setEpQ(''); setEpF({}); }} />}
                   </div>
                 </div>
               )}
@@ -310,7 +355,9 @@ export function CompliancePolicyDrawer({
               {/* ── Rules: the benchmark's rules, numbered, nothing else ── */}
               {tab === 'rules' && (
                 <div className="px-6 py-4">
-                  {benchmark && <RuleGroupTree benchmark={benchmark} title={benchmark.name} onRule={setRuleId} plain />}
+                  <TabListToolbar search={ruleQ} onSearch={setRuleQ} groups={ruleGroups} value={ruleF} onChange={setRuleF} />
+                  {benchmark && ruleHits !== 0 && <RuleGroupTree benchmark={benchmark} title={benchmark.name} onRule={setRuleId} plain show={ruleShow} query={ruleQ} />}
+                  {ruleHits === 0 && <NoMatch what="rules" onClear={() => { setRuleQ(''); setRuleF({}); }} />}
                 </div>
               )}
 
@@ -318,7 +365,10 @@ export function CompliancePolicyDrawer({
               {tab === 'runs' && (
                 <div className="pb-6 pt-4">
                   <div className="px-6">
-                    {runs.length === 0 ? (
+                    {allRuns.length > 0 && <TabListToolbar search={runQ} onSearch={setRunQ} groups={runGroups} value={runF} onChange={setRunF} />}
+                    {allRuns.length > 0 && runs.length === 0 ? (
+                      <NoMatch what="runs" onClear={() => { setRunQ(''); setRunF({}); }} />
+                    ) : runs.length === 0 ? (
                       <p className="py-10 text-center text-[13px] text-[#9CA3AF]">This policy has not run yet. Press Run Now, or wait for its schedule.</p>
                     ) : (
                       <table className="w-full table-fixed">
@@ -355,7 +405,7 @@ export function CompliancePolicyDrawer({
           <aside className="flex w-[380px] flex-shrink-0 flex-col border-l border-[#e5e7eb] bg-white">
             <div className="flex-shrink-0 border-b border-[#e5e7eb] px-4 py-3 text-[16px] font-semibold text-[#364658]">Policy Properties</div>
             <div className="min-h-0 flex-1 overflow-y-auto p-4">
-              <div className="rounded-lg border border-[#e5e7eb]">
+              <div className="overflow-hidden rounded-lg border border-[#e5e7eb]">
                 <div className="border-b border-[#e5e7eb] px-4 py-3 text-[14px] font-semibold text-[#364658]">Policy Fields</div>
                 <dl className="space-y-3.5 px-4 py-4">
                   {fields.map(([label, value]) => (

@@ -23,7 +23,7 @@ export type Page =
   // Brought in from the upstream prototype (Oct 2026 sync).
   | 'software-meter' | 'projects' | 'my-approvals' | 'automatic-patch-tests' | 'automatic-patch-deployments' | 'package-deployments' | 'registry-deployments' | 'knowledge' | 'tasks' | 'reports' | 'my-team' | 'icons' | 'views-lab'
   // Compliance, technician side: the four pages of the sidebar's Compliance flyout.
-  | 'compliance-dashboard' | 'compliance-benchmarks' | 'compliance-policies' | 'compliance-endpoints'
+  | 'compliance-dashboard' | 'compliance-rules' | 'compliance-benchmarks' | 'compliance-policies' | 'compliance-endpoints'
   // The Dashboard module (ported from ServiceOps_Dashboard_v2, Oct 2026): one board, and the full listing.
   | 'dashboard' | 'dashboards'
   // The requester's Support Portal (default portal), from the profile popup.
@@ -44,7 +44,7 @@ const PAGES: readonly Page[] = [
   'vulnerabilities', 'detected-cves',
   'bom',
   'software-meter', 'projects', 'my-approvals', 'automatic-patch-tests', 'automatic-patch-deployments', 'package-deployments', 'registry-deployments', 'knowledge', 'tasks', 'reports', 'my-team', 'icons', 'views-lab',
-  'compliance-dashboard', 'compliance-benchmarks', 'compliance-policies', 'compliance-endpoints',
+  'compliance-dashboard', 'compliance-rules', 'compliance-benchmarks', 'compliance-policies', 'compliance-endpoints',
   'dashboard', 'dashboards',
   'portal',
   'admin',
@@ -169,6 +169,7 @@ const PAGE_TITLES: Record<Page, string> = {
   'package-deployments': 'Package Deployments',
   'registry-deployments': 'Registry Deployments',
   'compliance-dashboard': 'Compliance Dashboard',
+  'compliance-rules': 'Compliance Rules',
   'compliance-benchmarks': 'Compliance Benchmarks',
   'compliance-policies': 'Compliance Policies',
   'compliance-endpoints': 'Compliance Endpoints',

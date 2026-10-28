@@ -17,7 +17,7 @@
  * the policy's tabs and the endpoint page always agree. */
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { ArrowLeft, CheckCircle2, ChevronRight, MinusCircle, X, XCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, ChevronRight, Download, Eye, EyeOff, Lock, MinusCircle, X, XCircle } from 'lucide-react';
 import { StatsCardsRow } from './AssetStatsRow';
 import { RuleDetailBody, SeverityPill } from './ComplianceShared';
 import { benchmarksUsingRule, BENCHMARKS_SEED, numberedGroups, ruleById, ruleNumbers, SEVERITIES, SEVERITY_PILL } from './complianceData';
@@ -25,9 +25,10 @@ import type { Benchmark, ComplianceRule, NumberedRule, Severity } from './compli
 import {
   benchmarkOf, complianceEndpoint, EXCEPTION_REASONS, exceptionFor, exceptionStore, findingsOf, fmtStamp, getPolicy, resolvedEndpoints, useExceptions, usePolicies,
 } from './compliancePolicyData';
-import type { ComplianceException, ExceptionReason, Finding } from './compliancePolicyData';
+import type { ComplianceEndpoint, ComplianceException, CompliancePolicy, ExceptionReason, Finding } from './compliancePolicyData';
 import { ErrorText, FieldLabel, RuleSelect, inputCls as formInputCls } from './FormRuleControls';
 import { scoreColor, SEVERITY_COLOR } from './complianceVizData';
+import { NoMatch, TabListToolbar } from './ComplianceTabFilter';
 
 const pct = (a: number, n: number) => (n ? Math.round((a / n) * 100) : null);
 const DIM = '#94A3B8';
@@ -49,7 +50,7 @@ export function FailedBySeverity({ title = 'Failed Rules by Severity', counts }:
   counts: Record<Severity, { failed: number; total: number }>;
 }) {
   return (
-    <section className="rounded-lg border border-[#E5E7EB]">
+    <section className="overflow-hidden rounded-lg border border-[#E5E7EB]">
       <header className="border-b border-[#E5E7EB] bg-[#F9FAFB] px-4 py-2.5 text-[13px] font-semibold text-[#364658]">{title}</header>
       <div className="grid grid-cols-5 divide-x divide-[#EEF2F6]">
         {SEVERITIES.map((s) => {
@@ -88,6 +89,147 @@ type View =
   /** Request exception — one level below a failed result, in the same panel. */
   | { kind: 'exception'; endpointId: string; ruleId: string };
 
+/* ── Export of one endpoint's assessment result (the breakdown view) ───────────────────────
+   The popup is the product's Download popup (the Audit Trail one): Format · Password Protected ·
+   Download / Cancel — with only the two formats a shared result needs, PDF and CSV. */
+
+type ResultRow = { number: string; rule: string; severity: string; previous: string; last: string };
+const resultWord = (v: boolean | null | undefined) => (v == null ? 'Not Scanned' : v ? 'Pass' : 'Fail');
+const byNumber = (a: string, b: string) => {
+  const x = a.split('.').map(Number); const y = b.split('.').map(Number);
+  for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] ?? -1) - (y[i] ?? -1); if (d) return d; }
+  return 0;
+};
+function resultRows(benchmark: Benchmark, mine: Finding[]): ResultRow[] {
+  const nums = ruleNumbers(benchmark);
+  return [...nums.entries()]
+    .map(([id, number]) => {
+      const r = ruleById(id); const f = mine.find((x) => x.ruleId === id);
+      return { number, rule: r?.name ?? id, severity: r?.severity ?? '', previous: resultWord(f?.prevPassed), last: resultWord(f ? f.passed : null) };
+    })
+    .sort((a, b) => byNumber(a.number, b.number));
+}
+export const fileSafe = (s: string) => s.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '');
+const esc = (s: string) => s.replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch] as string));
+
+/** One table as a file: CSV downloads; PDF opens a print-ready page whose print dialog saves it
+ *  as a PDF. `head` is the label/value summary above the table; Pass / Fail and the outcome words
+ *  are coloured in the PDF wherever they appear. */
+export function exportTable({ format, name, title, head, columns, rows }: {
+  format: 'PDF' | 'CSV';
+  name: string;
+  title: string;
+  head: string[][];
+  columns: string[];
+  rows: string[][];
+}) {
+  if (format === 'CSV') {
+    const q = (v: string) => (/[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
+    const lines = [...head.map((h) => h.map(q).join(',')), '', columns.map(q).join(','), ...rows.map((r) => r.map(q).join(','))];
+    const url = URL.createObjectURL(new Blob(['\ufeff' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' }));
+    const a = document.createElement('a'); a.href = url; a.download = `${name}.csv`; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    return;
+  }
+  const w = window.open('', '_blank');
+  if (!w) { toast.error('Allow pop-ups for this site to export a PDF'); return; }
+  const tone = (v: string) => (/^(Pass|Compliant)$/.test(v) ? 'color:#15803D;font-weight:600' : /^(Fail|Non-Compliant)$/.test(v) ? 'color:#B42318;font-weight:600' : /^Not Scanned$/.test(v) ? 'color:#64748B' : '');
+  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title>
+<style>body{font:13px Inter,Arial,sans-serif;color:#364658;margin:32px}h1{font-size:18px;margin:0 0 12px}
+dl{display:grid;grid-template-columns:140px 1fr;gap:4px 12px;margin:0 0 20px}dt{color:#7B8FA5}dd{margin:0}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:7px 8px;border-bottom:1px solid #E5E7EB}
+th{font-size:12px;background:#F7F9FC}</style></head><body>
+<h1>${esc(title)}</h1><dl>${head.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
+<table><thead><tr>${columns.map((h) => `<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>
+${rows.map((r) => `<tr>${r.map((v) => `<td style="${tone(v)}">${esc(v)}</td>`).join('')}</tr>`).join('')}
+</tbody></table></body></html>`);
+  w.document.close(); w.focus(); setTimeout(() => w.print(), 300);
+}
+
+/** The Export icon + popup — the product's Download popup (Audit Trail): Format PDF | CSV,
+ *  Password Protected, Export / Cancel. `onExport` builds the file. */
+export function ExportButton({ title = 'Export', onExport, className = '' }: {
+  title?: string;
+  onExport: (format: 'PDF' | 'CSV', passwordProtected: boolean) => void;
+  className?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [format, setFormat] = useState<'PDF' | 'CSV'>('PDF');
+  const [pw, setPw] = useState(false);
+  const [password, setPassword] = useState('');
+  const [showPw, setShowPw] = useState(false);
+  const run = () => {
+    if (pw && !password.trim()) { toast.error('Enter an attachment password'); return; }
+    onExport(format, pw);
+    setOpen(false);
+  };
+  return (
+    <div className={`relative flex-shrink-0 ${className}`}>
+      <button type="button" onClick={() => setOpen((v) => !v)} title={title} aria-label={title} className={`flex size-8 items-center justify-center rounded border border-[#DFE5ED] text-[#7B8FA5] transition-colors hover:bg-[#F5F7FA] hover:text-[#364658] ${open ? 'border-[#3D8BD0] text-[#3D8BD0]' : ''}`}><Download size={16} /></button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 top-full z-50 mt-2 w-[300px] rounded-lg border border-[#E5E7EB] bg-white p-4 shadow-lg">
+            <h4 className="mb-3 text-[15px] font-semibold text-[#3D8BD0]">Export</h4>
+            <div className="mb-4">
+              <label className="mb-1.5 block text-[13px] text-[#7B8FA5]">Format</label>
+              <div className="inline-flex overflow-hidden rounded border border-[#DFE5ED]">
+                {(['PDF', 'CSV'] as const).map((fm) => (
+                  <button key={fm} type="button" onClick={() => setFormat(fm)} className={`px-4 py-1.5 text-[13px] font-medium transition-colors ${format === fm ? 'bg-[#3D8BD0] text-white' : 'bg-white text-[#364658] hover:bg-[#F5F7FA]'}`}>{fm}</button>
+                ))}
+              </div>
+            </div>
+            <div className="mb-3">
+              <label className="mb-1.5 block text-[13px] text-[#7B8FA5]">Password Protected</label>
+              <button type="button" onClick={() => setPw((v) => !v)} role="switch" aria-checked={pw} className={`relative inline-flex h-[22px] w-10 flex-shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${pw ? 'bg-[#22C55E]' : 'bg-[#D1D5DB] hover:bg-[#C4C9D0]'}`}>
+                <span className={`inline-block size-[18px] rounded-full bg-white shadow-sm ring-1 ring-black/[0.04] transition-transform duration-200 ease-in-out ${pw ? 'translate-x-[20px]' : 'translate-x-[2px]'}`} />
+              </button>
+            </div>
+            {pw && (
+              <div className="mb-1">
+                <label className="mb-1.5 block text-[13px] text-[#7B8FA5]">Attachment Password <span className="text-[#EF4444]">*</span></label>
+                <div className="relative">
+                  <Lock size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9CA3AF]" />
+                  <input type={showPw ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Attachment Password" className="w-full rounded border border-[#DFE5ED] py-2 pl-9 pr-9 text-[13px] text-[#364658] outline-none placeholder:text-[#9CA3AF] focus:border-[#3D8BD0] focus:ring-1 focus:ring-[#3D8BD0]" />
+                  <button type="button" onClick={() => setShowPw((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-[#364658]">{showPw ? <EyeOff size={14} /> : <Eye size={14} />}</button>
+                </div>
+              </div>
+            )}
+            <div className="mt-4 flex items-center justify-end gap-2 border-t border-[#F0F1F3] pt-3">
+              <button type="button" onClick={run} className="rounded bg-[#3D8BD0] px-3 py-1.5 text-[13px] font-medium text-white transition-colors hover:bg-[#2F7AB8]">Export</button>
+              <button type="button" onClick={() => setOpen(false)} className="rounded border border-[#DFE5ED] px-3 py-1.5 text-[13px] font-medium text-[#364658] transition-colors hover:bg-[#F5F7FA]">Cancel</button>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function ExportResultButton({ ep, policy, benchmark, mine }: { ep: ComplianceEndpoint; policy: CompliancePolicy; benchmark: Benchmark; mine: Finding[] }) {
+  return (
+    <ExportButton
+      title="Export assessment result"
+      onExport={(format, pw) => {
+        const pass = mine.filter((x) => x.passed).length;
+        exportTable({
+          format,
+          name: `${fileSafe(ep.id)}-${fileSafe(policy.id)}-assessment`,
+          title: `Assessment result — ${ep.hostName}`,
+          head: [
+            ['Endpoint', `${ep.id} · ${ep.hostName}`], ['IP Address', ep.ip], ['Policy', `${policy.id} · ${policy.name}`],
+            ['Benchmark', benchmark.name], ['Last Scan', policy.lastScan ? fmtStamp(policy.lastScan.at) : '—'],
+            ['Result', `${pass} passed · ${mine.length - pass} failed`],
+          ],
+          columns: ['Number', 'Rule', 'Severity', 'Previous Scan', 'Last Scan'],
+          rows: resultRows(benchmark, mine).map((r) => [r.number, r.rule, r.severity, r.previous, r.last]),
+        });
+        toast.success(`Assessment result exported as ${format}${pw ? ' (password protected)' : ''}`);
+      }}
+    />
+  );
+}
+
 export function ComplianceEndpointPanel({ endpointId, ruleId, policyId, onClose, onOpenEndpoint, onOpenPolicy, headBy = 'endpoint' }: {
   /** Whose ID + name heads the breakdown: the endpoint (opened from a policy) or the POLICY
       (opened from the endpoint's own page, where the endpoint is already the page). */
@@ -120,6 +262,8 @@ export function ComplianceEndpointPanel({ endpointId, ruleId, policyId, onClose,
   const findings = useMemo(() => (policy ? findingsOf(policy) : []), [policy]);
   const numbers = useMemo(() => (benchmark ? ruleNumbers(benchmark) : new Map<string, string>()), [benchmark]);
   const exceptions = useExceptions();
+  /** Search over the breakdown's rules (number, name, group name). */
+  const [bdQ, setBdQ] = useState('');
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -195,7 +339,9 @@ export function ComplianceEndpointPanel({ endpointId, ruleId, policyId, onClose,
               )}
             </div>
           </div>
-          <button type="button" onClick={onClose} aria-label="Close" className="-mt-1 flex size-8 flex-shrink-0 items-center justify-center rounded text-[#7B8FA5] transition-colors hover:bg-[#F3F4F6] hover:text-[#364658]"><X size={18} /></button>
+          <div className="flex flex-shrink-0 items-start gap-1.5">
+            <button type="button" onClick={onClose} aria-label="Close" className="-mt-1 flex size-8 flex-shrink-0 items-center justify-center rounded text-[#7B8FA5] transition-colors hover:bg-[#F3F4F6] hover:text-[#364658]"><X size={18} /></button>
+          </div>
         </div>
 
         {view.kind === 'breakdown' && ep && policy && benchmark && (() => {
@@ -219,7 +365,13 @@ export function ComplianceEndpointPanel({ endpointId, ruleId, policyId, onClose,
               <div className="space-y-4 px-5">
                 {got ? (
                   <>
-                    <ComplianceBreakdown benchmark={benchmark} findings={mine} onRule={(rid) => push({ kind: 'result', endpointId: ep.id, ruleId: rid })} />
+                    <div className="flex items-center gap-3">
+                      <TabListToolbar className="min-w-0 flex-1" search={bdQ} onSearch={setBdQ} groups={[]} value={{}} onChange={() => {}} placeholder="Search rules..." />
+                      <ExportResultButton ep={ep} policy={policy} benchmark={benchmark} mine={mine} />
+                    </div>
+                    {ruleTreeCount(benchmark, undefined, bdQ) === 0
+                      ? <NoMatch what="rules" onClear={() => setBdQ('')} />
+                      : <ComplianceBreakdown benchmark={benchmark} findings={mine} query={bdQ} onRule={(rid) => push({ kind: 'result', endpointId: ep.id, ruleId: rid })} />}
                   </>
                 ) : (
                   <div className="rounded-lg border border-dashed border-[#DFE5ED] px-4 py-10 text-center text-[13px] text-[#7B8FA5]">
@@ -286,7 +438,32 @@ export function ComplianceEndpointPanel({ endpointId, ruleId, policyId, onClose,
 
 export interface RuleTally { passed: number; failed: number }
 
-export function RuleGroupTree({ benchmark, resultOf = () => null, right, onRule, title = 'Rules', note, show, plain = false }: {
+/** The searched words, marked yellow inside a name (the Emails popup's highlight). */
+export function Hl({ text, q }: { text: string; q?: string }) {
+  const s = q?.trim();
+  if (!s) return <>{text}</>;
+  const i = text.toLowerCase().indexOf(s.toLowerCase());
+  if (i < 0) return <>{text}</>;
+  return <>{text.slice(0, i)}<mark className="rounded-sm bg-[#FDE68A] px-0 text-inherit">{text.slice(i, i + s.length)}</mark>{text.slice(i + s.length)}</>;
+}
+
+/* How a search reads the tree: a rule matches on its own number or name, OR because its group
+   (or sub-group) matches — a group found by name comes up with every rule it holds. */
+const hits = (q: string, ...texts: string[]) => texts.some((t) => t.toLowerCase().includes(q));
+/** Rules the tree will show for this search + filter — the caller's "nothing matches" test. */
+export function ruleTreeCount(benchmark: Benchmark, show: ((id: string) => boolean) | undefined, query: string): number {
+  const q = query.trim().toLowerCase();
+  let n = 0;
+  for (const g of numberedGroups(benchmark)) {
+    const gHit = !!q && hits(q, g.number, g.name);
+    const count = (rules: NumberedRule[], groupHit: boolean) => rules.filter((r) => (!show || show(r.id)) && (!q || groupHit || hits(q, r.number, ruleById(r.id)?.name ?? ''))).length;
+    n += count(g.rules, gHit);
+    for (const s of g.children) n += count(s.rules, gHit || (!!q && hits(q, s.number, s.name)));
+  }
+  return n;
+}
+
+export function RuleGroupTree({ benchmark, resultOf = () => null, right, onRule, title = 'Rules', note, show, plain = false, query = '' }: {
   benchmark: Benchmark;
   /** What this page knows about a rule — null when it was not checked. */
   resultOf?: (ruleId: string) => RuleTally | null;
@@ -302,8 +479,14 @@ export function RuleGroupTree({ benchmark, resultOf = () => null, right, onRule,
   /** Narrows the tree (a count card's filter): rules it rejects are hidden, and so is any
       group or sub-group left with none. */
   show?: (ruleId: string) => boolean;
+  /** The search text: matching rules show under their groups, a group matched by its own name
+      shows with all its rules, and the matched words are highlighted. */
+  query?: string;
 }) {
-  const visible = (rules: NumberedRule[]) => (show ? rules.filter((r) => show(r.id)) : rules);
+  const q = query.trim().toLowerCase();
+  const narrowing = !!show || !!q;
+  const visible = (rules: NumberedRule[], groupHit = false) =>
+    rules.filter((r) => (!show || show(r.id)) && (!q || groupHit || hits(q, r.number, ruleById(r.id)?.name ?? '')));
   const tree = useMemo(() => numberedGroups(benchmark), [benchmark]);
   const tally = (rules: NumberedRule[]) => {
     let ok = 0, total = 0, failed = false;
@@ -338,8 +521,8 @@ export function RuleGroupTree({ benchmark, resultOf = () => null, right, onRule,
         className={`flex w-full items-center gap-2 py-2.5 pr-4 text-left transition-colors hover:bg-[#F9FAFB] ${depth ? 'pl-9' : 'pl-4'}`}
       >
         <ChevronRight size={15} className={`flex-shrink-0 text-[#7B8FA5] transition-transform ${open.has(key) ? 'rotate-90' : ''}`} />
-        <span className="w-[40px] flex-shrink-0 text-[13px] font-semibold tabular-nums text-[#364658]">{number}</span>
-        <span className={`min-w-0 flex-1 truncate text-[13px] text-[#364658] ${depth ? '' : 'font-medium'}`}>{name}</span>
+        <span className="w-[40px] flex-shrink-0 text-[13px] font-semibold tabular-nums text-[#364658]"><Hl text={number} q={query} /></span>
+        <span className={`min-w-0 flex-1 truncate text-[13px] text-[#364658] ${depth ? '' : 'font-medium'}`}><Hl text={name} q={query} /></span>
         {!plain && (
           <>
             <span className="text-[12px] tabular-nums text-[#7B8FA5]" title="Rules passing / rules checked">{ok}/{total}</span>
@@ -360,8 +543,8 @@ export function RuleGroupTree({ benchmark, resultOf = () => null, right, onRule,
         className={`group/rule flex w-full items-center gap-3 py-2 pr-4 text-left transition-colors hover:bg-[#F5F7FA] ${depth === 2 ? 'pl-[84px]' : 'pl-[60px]'}`}
       >
         {!plain && <span className="h-4 w-[3px] flex-shrink-0 rounded-full" style={{ backgroundColor: SEVERITY_COLOR[r.severity] }} title={r.severity} />}
-        <span className="w-[44px] flex-shrink-0 text-[12px] tabular-nums text-[#7B8FA5]">{nr.number}</span>
-        <span className="min-w-0 flex-1 truncate text-[13px] text-[#364658] group-hover/rule:text-[#3D8BD0]">{r.name}</span>
+        <span className="w-[44px] flex-shrink-0 text-[12px] tabular-nums text-[#7B8FA5]"><Hl text={nr.number} q={query} /></span>
+        <span className="line-clamp-2 min-w-0 flex-1 break-words text-[13px] text-[#364658] group-hover/rule:text-[#3D8BD0]"><Hl text={r.name} q={query} /></span>
         {!plain && <SeverityPill severity={r.severity} />}
         {!plain && right?.(r.id, resultOf(r.id))}
         <ChevronRight size={14} className="flex-shrink-0 text-[#B6C0CC] group-hover/rule:text-[#3D8BD0]" />
@@ -370,24 +553,26 @@ export function RuleGroupTree({ benchmark, resultOf = () => null, right, onRule,
   };
 
   return (
-    <section className="rounded-lg border border-[#E5E7EB]">
+    <section className="overflow-hidden rounded-lg border border-[#E5E7EB]">
       <header className="flex items-center justify-between border-b border-[#E5E7EB] bg-[#F9FAFB] px-4 py-2.5">
         <span className="text-[13px] font-semibold text-[#364658]">{title}</span>
         {note && <span className="text-[11px] text-[#7B8FA5]">{note}</span>}
       </header>
       {tree.map((g) => {
-        const subs = g.children.filter((s) => visible(s.rules).length);
-        if (!visible(g.rules).length && !subs.length) return null;
+        const gHit = !!q && hits(q, g.number, g.name);
+        const sHit = (s: { number: string; name: string }) => gHit || (!!q && hits(q, s.number, s.name));
+        const subs = g.children.filter((s) => visible(s.rules, sHit(s)).length);
+        if (!visible(g.rules, gHit).length && !subs.length) return null;
         return (
           <div key={g.key} className="border-b border-[#EEF2F6] last:border-b-0">
             {head(g.key, g.number, g.name, [...g.rules, ...g.children.flatMap((s) => s.rules)], 0)}
-            {(open.has(g.key) || !!show) && (
+            {(open.has(g.key) || narrowing) && (
               <>
-                {visible(g.rules).map((r) => ruleRow(r, 1))}
+                {visible(g.rules, gHit).map((r) => ruleRow(r, 1))}
                 {subs.map((s) => (
                   <div key={s.key}>
                     {head(s.key, s.number, s.name, s.rules, 1)}
-                    {(open.has(s.key) || !!show) && visible(s.rules).map((r) => ruleRow(r, 2))}
+                    {(open.has(s.key) || narrowing) && visible(s.rules, sHit(s)).map((r) => ruleRow(r, 2))}
                   </div>
                 ))}
               </>
@@ -400,10 +585,12 @@ export function RuleGroupTree({ benchmark, resultOf = () => null, right, onRule,
 }
 
 /** One endpoint's results as the tree — Previous → Last scan on each rule. */
-export function ComplianceBreakdown({ benchmark, findings, onRule }: {
+export function ComplianceBreakdown({ benchmark, findings, onRule, query }: {
   benchmark: Benchmark;
   /** This endpoint's findings for the policy. */
   findings: Finding[];
+  /** Search text — highlighted, matches shown under their groups. */
+  query?: string;
   onRule: (ruleId: string) => void;
 }) {
   const byRule = useMemo(() => new Map(findings.map((f) => [f.ruleId, f])), [findings]);
@@ -412,6 +599,7 @@ export function ComplianceBreakdown({ benchmark, findings, onRule }: {
       benchmark={benchmark}
       title="Compliance Breakdown"
       note="Previous → Last scan"
+      query={query}
       onRule={onRule}
       resultOf={(id) => { const f = byRule.get(id); return f ? { passed: f.passed ? 1 : 0, failed: f.passed ? 0 : 1 } : null; }}
       right={(id) => {
@@ -500,7 +688,7 @@ function RuleView({ rule, endpoints, findings, scanned, onEndpoint }: {
               ]}
             />
           </div>
-          <div className="mt-4 rounded-lg border border-[#E5E7EB]">
+          <div className="mt-4 overflow-hidden rounded-lg border border-[#E5E7EB]">
             <header className="border-b border-[#E5E7EB] bg-[#F9FAFB] px-4 py-2.5 text-[13px] font-semibold text-[#364658]">Endpoints</header>
             <div className="px-1">{scanned ? table : <p className="py-8 text-center text-[13px] text-[#9CA3AF]">This policy has not been scanned yet.</p>}</div>
           </div>
@@ -526,7 +714,7 @@ function ResultCard({ rule, endpoint, finding, lastScan, exception, onRequestExc
 }) {
   const label = 'text-[12px] text-[#7B8FA5]';
   return (
-    <section className="rounded-lg border border-[#E5E7EB]">
+    <section className="overflow-hidden rounded-lg border border-[#E5E7EB]">
       <header className="flex items-center justify-between gap-2 border-b border-[#E5E7EB] bg-[#F9FAFB] px-4 py-2.5">
         <span className="text-[13px] font-semibold text-[#364658]">Result on this endpoint</span>
         <span className="flex items-center gap-2 text-[12px] text-[#64748B]">

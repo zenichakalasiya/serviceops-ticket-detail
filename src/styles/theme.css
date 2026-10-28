@@ -909,3 +909,12 @@ body[data-portal-dragging] [data-portal-toolbar] { pointer-events: none; opacity
 }
 
 
+
+/* A grid column flagged wrap (TicketTable ColDef.wrap — rule and benchmark names): the cell's
+   one-line truncate becomes a two-line clamp, so a long name reads in full up to two lines. */
+td.cell-wrap { white-space: normal !important; }
+td.cell-wrap.truncate { text-overflow: clip; }
+td.cell-wrap .truncate, td.cell-wrap.truncate > span, td.cell-wrap .cell-clamp {
+  white-space: normal; overflow: hidden; text-overflow: clip; overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+}

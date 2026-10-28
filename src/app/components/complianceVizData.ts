@@ -101,6 +101,49 @@ export interface RuleStat {
   score: number | null;
 }
 
+/* ── One rule across the estate, ONE row per endpoint (the technician's Rules page) ──────── */
+
+export type RuleResult = 'Pass' | 'Fail' | 'Not Scanned';
+export interface RuleEndpointResult {
+  endpoint: ComplianceEndpoint;
+  /** Fail when ANY policy checking it here fails it; Not Scanned when none reached it. */
+  result: RuleResult;
+  policies: CompliancePolicy[];
+}
+
+const ruleEpCache = new WeakMap<CompliancePolicy[], Map<string, RuleEndpointResult[]>>();
+/** Every endpoint a rule is checked on, through every policy whose benchmark carries it. */
+export function ruleEndpointResults(ruleId: string, policies: CompliancePolicy[]): RuleEndpointResult[] {
+  let byRule = ruleEpCache.get(policies);
+  if (!byRule) { byRule = new Map(); ruleEpCache.set(policies, byRule); }
+  const hit = byRule.get(ruleId);
+  if (hit) return hit;
+  const m = new Map<string, RuleEndpointResult>();
+  for (const p of policies) {
+    const b = benchmarkOf(p.benchmarkId);
+    if (!b || !benchmarkRuleIds(b).includes(ruleId)) continue;
+    const fs = findingsOf(p).filter((f) => f.ruleId === ruleId);
+    for (const r of endpointResults(p)) {
+      const f = fs.find((x) => x.endpointId === r.endpoint.id);
+      const here: RuleResult = f ? (f.passed ? 'Pass' : 'Fail') : 'Not Scanned';
+      const cur = m.get(r.endpoint.id) ?? { endpoint: r.endpoint, result: 'Not Scanned' as RuleResult, policies: [] };
+      cur.policies.push(p);
+      if (here === 'Fail' || (here === 'Pass' && cur.result === 'Not Scanned')) cur.result = here;
+      m.set(r.endpoint.id, cur);
+    }
+  }
+  const rank: Record<RuleResult, number> = { Fail: 0, Pass: 1, 'Not Scanned': 2 };
+  const out = [...m.values()].sort((a, z) => rank[a.result] - rank[z.result] || a.endpoint.hostName.localeCompare(z.endpoint.hostName));
+  byRule.set(ruleId, out);
+  return out;
+}
+/** Rule score = endpoints passing ÷ endpoints checked (Not Scanned left out); null when none checked. */
+export const ruleScore = (rs: RuleEndpointResult[]) => {
+  const pass = rs.filter((r) => r.result === 'Pass').length;
+  const fail = rs.filter((r) => r.result === 'Fail').length;
+  return pct(pass, pass + fail);
+};
+
 /* ── Per benchmark (the technician's Benchmark page) ───────────────────────────────────── */
 
 export interface BenchmarkStat {

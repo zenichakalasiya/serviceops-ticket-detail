@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { X } from 'lucide-react';
 import { DrawerTabStrip } from './DrawerTabStrip';
 import { MinimizedDrawerRail } from './MinimizedDrawerRail';
@@ -8,13 +8,17 @@ import type { HeaderKpiItem } from './HeaderKpiRow';
 import { HeaderCopyButton } from './HeaderCopyButton';
 import { StatsCardsRow } from './AssetStatsRow';
 import { RuleDetailPanel } from './ComplianceShared';
-import { RuleGroupTree } from './ComplianceEndpointPanel';
+import { RuleGroupTree, ruleTreeCount } from './ComplianceEndpointPanel';
 import { useOpenComplianceEndpoint } from './ComplianceEndpointDrawer';
 import { benchmarksUsingRule, BENCHMARKS_SEED, fmtDate, profileLabel, ruleById, ruleNumbers } from './complianceData';
 import { endpointResults, findingsOf, fmtStamp, getPolicy, POLICY_STATUS_OPTIONS, statusOf, usePolicies } from './compliancePolicyData';
 import type { ComplianceEndpoint, EndpointOutcome } from './compliancePolicyData';
 import { vizSnapshot } from './complianceVizData';
 import { useDrawerStack } from './DrawerStack';
+import { anyFilter, cardActive, cardToggle, matchesFilter, matchesSearch, NoMatch, optionsFrom, TabListToolbar } from './ComplianceTabFilter';
+import type { FilterValue } from './ComplianceTabFilter';
+import { SEVERITIES } from './complianceData';
+import { SEVERITY_COLOR } from './complianceVizData';
 
 /* Compliance › Benchmark — a benchmark's detail page, opened from the Benchmark listing through
  * the shared DrawerStack. Read only for the technician (the admin owns benchmarks).
@@ -78,8 +82,14 @@ export function ComplianceBenchmarkDrawer({
   const [tabLocal, setTabLocal] = useState<Tab>('rules');
   const remembered = stackActiveTab ?? tabLocal;
   const tab: Tab = TABS.some(([t]) => t === remembered) ? (remembered as Tab) : 'rules';
-  /** The status card lit above the Policies list. */
-  const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  /** Search + Filter per tab (ComplianceTabFilter). The Policies status cards set polF.status. */
+  const [ruleQ, setRuleQ] = useState('');
+  const [ruleF, setRuleF] = useState<FilterValue>({});
+  const [epQ, setEpQ] = useState('');
+  const [epF, setEpF] = useState<FilterValue>({});
+  const [polQ, setPolQ] = useState('');
+  const [polF, setPolF] = useState<FilterValue>({});
+  useEffect(() => { setRuleQ(''); setRuleF({}); setEpQ(''); setEpF({}); setPolQ(''); setPolF({}); }, [activeAssetId]);
   const setTab = (t: Tab) => { setTabLocal(t); onStackActiveTabChange?.(t); };
   const [widthLocal, setWidthLocal] = useState(stackWidth ?? 99999);
   const full = (stackWidth ?? widthLocal) > 1080;
@@ -100,12 +110,12 @@ export function ComplianceBenchmarkDrawer({
   }, [findings]);
   /* Per endpoint, across those policies: the worst result, and checks passed / failed. */
   const endpoints = useMemo(() => {
-    const m = new Map<string, { endpoint: ComplianceEndpoint; outcome: EndpointOutcome; passed: number; failed: number; policies: number }>();
+    const m = new Map<string, { endpoint: ComplianceEndpoint; outcome: EndpointOutcome; passed: number; failed: number; policies: number; policyNames: string[] }>();
     const rank: Record<EndpointOutcome, number> = { 'Non-Compliant': 2, Compliant: 1, 'Not Scanned': 0 };
     for (const p of mine) {
       for (const r of endpointResults(p)) {
-        const cur = m.get(r.endpoint.id) ?? { endpoint: r.endpoint, outcome: 'Not Scanned' as EndpointOutcome, passed: 0, failed: 0, policies: 0 };
-        cur.passed += r.passed; cur.failed += r.failed; cur.policies += 1;
+        const cur = m.get(r.endpoint.id) ?? { endpoint: r.endpoint, outcome: 'Not Scanned' as EndpointOutcome, passed: 0, failed: 0, policies: 0, policyNames: [] as string[] };
+        cur.passed += r.passed; cur.failed += r.failed; cur.policies += 1; cur.policyNames.push(p.name);
         if (rank[r.outcome] > rank[cur.outcome]) cur.outcome = r.outcome;
         m.set(r.endpoint.id, cur);
       }
@@ -121,7 +131,35 @@ export function ComplianceBenchmarkDrawer({
 
   const numbers = ruleNumbers(b);
   const ruleIds = [...numbers.keys()];
-  const shownPolicies = statusFilter ? mine.filter((p) => statusOf(p) === statusFilter) : mine;
+  /* ── Rules ── a rule FAILS here when any endpoint of any policy running this benchmark failed it. */
+  const ruleResult = (id: string) => { const t = byRule.get(id); return !t ? 'Not Checked' : t.failed ? 'Fail' : 'Pass'; };
+  const ruleGroups = [
+    { key: 'result', label: 'Result', options: [{ value: 'Fail', dot: '#EF4444' }, { value: 'Pass', dot: '#22C55E' }, { value: 'Not Checked', dot: '#94A3B8' }] },
+    { key: 'severity', label: 'Severity', options: SEVERITIES.map((s) => ({ value: s, dot: SEVERITY_COLOR[s] })) },
+    { key: 'assessment', label: 'Assessment', options: [{ value: 'Automated' }, { value: 'Manual' }] },
+    { key: 'profile', label: 'Profile', options: [{ value: 'L1' }, { value: 'L2' }] },
+  ];
+  const ruleShow = anyFilter('', ruleF) ? (id: string) => {
+    const r = ruleById(id);
+    return !!r &&
+      matchesFilter(ruleF, (k) => (k === 'result' ? ruleResult(id) : k === 'severity' ? r.severity : k === 'profile' ? r.profile : r.assessment));
+  } : undefined;
+  const ruleHits = anyFilter(ruleQ, ruleF) && b ? ruleTreeCount(b, ruleShow, ruleQ) : -1;
+  /* ── Endpoints ── */
+  const epGroups = [
+    { key: 'result', label: 'Result', options: (['Compliant', 'Non-Compliant', 'Not Scanned'] as EndpointOutcome[]).map((o) => ({ value: o, dot: OUTCOME_TONE[o].text })) },
+    { key: 'office', label: 'Office', options: optionsFrom(endpoints.map((e) => e.endpoint.office)) },
+    { key: 'policy', label: 'Policy', options: optionsFrom(mine.map((p) => p.name)) },
+  ];
+  const shownEndpoints = endpoints.filter((e) => matchesSearch(epQ, [e.endpoint.id, e.endpoint.hostName, e.endpoint.ip]) &&
+    matchesFilter(epF, (k) => (k === 'result' ? e.outcome : k === 'office' ? e.endpoint.office : e.policyNames)));
+  /* ── Policies ── */
+  const polGroups = [
+    { key: 'status', label: 'Status', options: POLICY_STATUSES.map((s) => ({ value: s, dot: statusColor(s) })) },
+    { key: 'run', label: 'Run', options: [{ value: 'Manual' }, { value: 'Scheduled' }] },
+  ];
+  const shownPolicies = mine.filter((p) => matchesSearch(polQ, [p.id, p.name]) &&
+    matchesFilter(polF, (k) => (k === 'status' ? statusOf(p) : p.schedule.frequency === 'none' ? 'Manual' : 'Scheduled')));
   const openPolicy = (id: string) => { const p = getPolicy(id); if (p) openInStack('compliance-policies', p.id, p.name, p); };
   const openRule = ruleId ? ruleById(ruleId) : undefined;
 
@@ -160,7 +198,7 @@ export function ComplianceBenchmarkDrawer({
           <div className="min-w-0 flex-1">
             <h1 className="flex min-w-0 items-center gap-2 text-[18px] font-semibold text-[#364658]">
               <HeaderIdPill id={b.id} />
-              <span className="truncate">{b.name}</span>
+              <span className="line-clamp-2 break-words">{b.name}</span>
             </h1>
             <HeaderKpiRow items={kpis} />
           </div>
@@ -190,7 +228,9 @@ export function ComplianceBenchmarkDrawer({
             <div className="min-h-0 flex-1 overflow-y-auto">
               {tab === 'rules' && (
                 <div className="px-6 py-4">
-                  <RuleGroupTree benchmark={b} title="Rule Groups" onRule={setRuleId} plain />
+                  <TabListToolbar search={ruleQ} onSearch={setRuleQ} groups={ruleGroups} value={ruleF} onChange={setRuleF} />
+                  {ruleHits !== 0 && <RuleGroupTree benchmark={b} title="Rule Groups" onRule={setRuleId} plain show={ruleShow} query={ruleQ} />}
+                  {ruleHits === 0 && <NoMatch what="rules" onClear={() => { setRuleQ(''); setRuleF({}); }} />}
                 </div>
               )}
 
@@ -199,11 +239,13 @@ export function ComplianceBenchmarkDrawer({
                   {endpoints.length === 0 ? (
                     <p className="py-10 text-center text-[13px] text-[#9CA3AF]">No policy using this benchmark checks any endpoint.</p>
                   ) : (
+                    <>
+                    <TabListToolbar search={epQ} onSearch={setEpQ} groups={epGroups} value={epF} onChange={setEpF} />
                     <table className="w-full table-fixed">
                       <colgroup><col className="w-[34%]" /><col className="w-[16%]" /><col className="w-[20%]" /><col className="w-[16%]" /><col /></colgroup>
                       <thead><tr className="border-b border-[#e5e7eb]">{['Endpoint', 'IP Address', 'Remote Office', 'Result', 'Policies'].map((h) => <th key={h} className={th}>{h}</th>)}</tr></thead>
                       <tbody className="divide-y divide-[#e5e7eb]">
-                        {endpoints.map((e) => {
+                        {shownEndpoints.map((e) => {
                           return (
                             <tr key={e.endpoint.id} onClick={() => openEndpoint(e.endpoint.id)} className="group/row cursor-pointer transition-colors hover:bg-[#f9fafb]">
                               <td className="px-4 py-3"><span className="flex min-w-0 items-center gap-2"><IdPill id={e.endpoint.id} /><span className="truncate text-[13px] text-[#364658] group-hover/row:text-[#3D8BD0]">{e.endpoint.hostName}</span></span></td>
@@ -216,6 +258,8 @@ export function ComplianceBenchmarkDrawer({
                         })}
                       </tbody>
                     </table>
+                    {shownEndpoints.length === 0 && <NoMatch what="endpoints" onClear={() => { setEpQ(''); setEpF({}); }} />}
+                    </>
                   )}
                 </div>
               )}
@@ -229,14 +273,15 @@ export function ComplianceBenchmarkDrawer({
                       <StatsCardsRow
                         rules={[]}
                         onApplyFilter={() => {}}
-                        activeLabel={statusFilter}
-                        onCardClick={(c) => setStatusFilter(c.label === statusFilter ? null : c.label)}
+                        activeLabel={cardActive(polF, 'status')}
+                        onCardClick={(c) => setPolF(cardToggle(polF, 'status', c.label))}
                         cards={POLICY_STATUSES.map((s) => {
                           const n = mine.filter((p) => statusOf(p) === s).length;
                           return { label: s, value: n, sub: `polic${n === 1 ? 'y' : 'ies'}`, valueColor: n ? statusColor(s) : DIM, hint: `Show only ${s} policies` };
                         })}
                       />
                       <div className="px-6">
+                        <TabListToolbar search={polQ} onSearch={setPolQ} groups={polGroups} value={polF} onChange={setPolF} />
                         <table className="w-full table-fixed">
                           <colgroup><col /><col className="w-[170px]" /><col className="w-[110px]" /><col className="w-[190px]" /></colgroup>
                           <thead><tr className="border-b border-[#e5e7eb]">{['Policy', 'Status', 'Endpoints', 'Last Scan'].map((h) => <th key={h} className={th}>{h}</th>)}</tr></thead>
@@ -254,7 +299,7 @@ export function ComplianceBenchmarkDrawer({
                             })}
                           </tbody>
                         </table>
-                        {shownPolicies.length === 0 && <p className="py-10 text-center text-[13px] text-[#9CA3AF]">No {statusFilter} policy.</p>}
+                        {shownPolicies.length === 0 && <NoMatch what="policies" onClear={() => { setPolQ(''); setPolF({}); }} />}
                       </div>
                     </>
                   )}
@@ -266,7 +311,7 @@ export function ComplianceBenchmarkDrawer({
           <aside className="flex w-[380px] flex-shrink-0 flex-col border-l border-[#e5e7eb] bg-white">
             <div className="flex-shrink-0 border-b border-[#e5e7eb] px-4 py-3 text-[16px] font-semibold text-[#364658]">Benchmark Properties</div>
             <div className="min-h-0 flex-1 overflow-y-auto p-4">
-              <div className="rounded-lg border border-[#e5e7eb]">
+              <div className="overflow-hidden rounded-lg border border-[#e5e7eb]">
                 <div className="border-b border-[#e5e7eb] px-4 py-3 text-[14px] font-semibold text-[#364658]">Benchmark Fields</div>
                 <dl className="space-y-3.5 px-4 py-4">
                   {fields.map(([label, value]) => (

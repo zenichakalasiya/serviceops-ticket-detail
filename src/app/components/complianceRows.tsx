@@ -6,7 +6,8 @@ import { complianceEndpoint, findingsOf } from './compliancePolicyData';
 import type { CompliancePolicy } from './compliancePolicyData';
 import type { ComplianceRule } from './complianceData';
 import { profileLabel } from './complianceData';
-import type { BenchmarkStat, EndpointStat, RuleStat } from './complianceVizData';
+import type { BenchmarkStat, EndpointStat, RuleEndpointResult, RuleStat } from './complianceVizData';
+import { ruleScore } from './complianceVizData';
 import type { Ticket } from './TicketListPage';
 
 /** A register row is the grid's Ticket shape; only the fields the grid reads are real. */
@@ -34,18 +35,26 @@ export const benchmarkRow = (s: BenchmarkStat): Ticket => ({
 
 /** A rule row. A rule no policy has checked yet still lists, with dashes rather than zeros —
  *  "0 failing" would claim it passed. */
-export const ruleRow = (rule: ComplianceRule, stat?: RuleStat): Ticket => ({
+export const ruleRow = (rule: ComplianceRule, stat?: RuleStat, eps?: RuleEndpointResult[]): Ticket => ({
   ...baseRow(rule.id, rule.name),
+  x_desc: rule.description,
   x_severity: rule.severity,
   x_type: rule.type,
+  x_platform: rule.platform,
+  x_version: rule.version,
+  x_assessment: rule.assessment,
   x_osVersion: `${rule.platform} ${rule.version}`,
+  // Endpoint-level: one endpoint counts once, Fail when any policy fails it there.
+  x_endpoints: eps ? eps.length : 0,
+  x_passing: eps ? eps.filter((r) => r.result === 'Pass').length : 0,
+  x_failingEps: eps ? eps.filter((r) => r.result === 'Fail').length : 0,
   x_profile: rule.profile,
   x_section: `${rule.section[0]} ${rule.section[1]}`,
   x_policies: stat?.policies.length ?? 0,
   x_policyNames: stat?.policies.map((p) => p.name).join(', ') ?? '',
   x_checked: stat?.checked ?? null,
   x_failing: stat ? stat.failing : null,
-  x_cpScore: stat?.score ?? null,
+  x_cpScore: eps ? ruleScore(eps) : (stat?.score ?? null),
   x_result: !stat ? 'Not checked' : stat.failing ? 'Failing' : 'All passing',
 } as unknown as Ticket);
 

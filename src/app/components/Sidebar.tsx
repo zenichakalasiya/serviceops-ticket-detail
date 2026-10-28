@@ -17,7 +17,7 @@ import {
   IconMyTeam,
   IconBom,
 } from './SidebarIcons';
-import { Shapes, ShieldCheck, LayoutTemplate, Cpu, AppWindow, Boxes, Recycle, KeyRound, Gauge, FileText, ShoppingCart, Rocket, Monitor, ClipboardCheck, Settings, LayoutDashboard, ListChecks } from 'lucide-react';
+import { Shapes, ShieldCheck, LayoutTemplate, Cpu, AppWindow, Boxes, Recycle, KeyRound, Gauge, FileText, ShoppingCart, Rocket, Monitor, ClipboardCheck, Settings, LayoutDashboard, ListChecks, ScrollText } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
 
 // Asset sub-modules surfaced in the hover flyout (grouped with dividers).
@@ -207,6 +207,7 @@ function PackageNavItem({ activePage, onNavigate }: { activePage?: string; onNav
 // The three read-only pages were the old Compliance Visualization page's tabs (23 Oct 2026).
 const COMPLIANCE_ITEMS: { icon: React.ReactNode; label: string; page: string }[] = [
   { icon: <LayoutDashboard size={16} />, label: 'Dashboard', page: 'compliance-dashboard' },
+  { icon: <ScrollText size={16} />, label: 'Rules', page: 'compliance-rules' },
   { icon: <ListChecks size={16} />, label: 'Benchmark', page: 'compliance-benchmarks' },
   { icon: <ShieldCheck size={16} />, label: 'Compliance Policy', page: 'compliance-policies' },
   { icon: <Monitor size={16} />, label: 'Endpoints', page: 'compliance-endpoints' },

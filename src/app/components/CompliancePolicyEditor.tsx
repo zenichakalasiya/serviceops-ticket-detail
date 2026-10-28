@@ -50,7 +50,7 @@ const NOTIFY_OPTIONS: SelectOption[] = [
 /** The product's segmented control — a pill on a track, the chosen option lifted out in white. */
 function Pills<T extends string>({ value, options, onChange, disabled }: { value: T; options: { value: T; label: string }[]; onChange: (v: T) => void; disabled?: boolean }) {
   return (
-    <div className={`pill-track ${disabled ? 'pointer-events-none opacity-50' : ''}`}>
+    <div className={`pill-track !inline-flex w-fit [&>button]:!flex-none [&>button]:!px-4 ${disabled ? 'pointer-events-none opacity-50' : ''}`}>
       {options.map((o) => (
         <button key={o.value} type="button" aria-pressed={value === o.value} onClick={() => onChange(o.value)}>{o.label}</button>
       ))}
@@ -120,24 +120,12 @@ export function ScheduleFields({ value, onChange }: { value: PolicySchedule; onC
         </p>
       )}
       {f !== 'none' && (
-        <div className="mt-4">
-          <FieldLabel>Frequency</FieldLabel>
-          <Pills
-            value={f}
-            options={FREQS.filter((o) => o.value !== 'none')}
-            onChange={(v) => onChange({ ...value, frequency: v })}
-          />
-        </div>
-      )}
-      {f !== 'none' && (
         <div className="mt-4 grid grid-cols-2 gap-x-2 gap-y-4">
+          {/* Row 1: how often (a dropdown) and, for weekly / monthly, which day.
+              Row 2: from when, at what time. */}
           <div>
-            <FieldLabel required>{f === 'once' ? 'Run On' : 'Start Date'}</FieldLabel>
-            <input type="date" value={value.startDate ?? ''} onChange={(e) => set({ startDate: e.target.value })} className={inputCls} />
-          </div>
-          <div>
-            <FieldLabel required>Time</FieldLabel>
-            <input type="time" value={value.time ?? ''} onChange={(e) => set({ time: e.target.value })} className={inputCls} />
+            <FieldLabel required>Frequency</FieldLabel>
+            <RuleSelect className="!rounded" value={[f]} options={FREQS.filter((o) => o.value !== 'none')} onChange={(v) => v[0] && onChange({ ...value, frequency: v[0] as Frequency })} />
           </div>
           {f === 'weekly' && (
             <div>
@@ -151,6 +139,15 @@ export function ScheduleFields({ value, onChange }: { value: PolicySchedule; onC
               <RuleSelect className="!rounded" value={[String(value.monthday ?? 1)]} options={Array.from({ length: 28 }, (_, i) => ({ value: String(i + 1), label: String(i + 1) }))} onChange={(v) => set({ monthday: Number(v[0]) })} />
             </div>
           )}
+          {(f === 'once' || f === 'daily') && <div />}
+          <div>
+            <FieldLabel required>{f === 'once' ? 'Run On' : 'Start Date'}</FieldLabel>
+            <input type="date" value={value.startDate ?? ''} onChange={(e) => set({ startDate: e.target.value })} className={inputCls} />
+          </div>
+          <div>
+            <FieldLabel required>Time</FieldLabel>
+            <input type="time" value={value.time ?? ''} onChange={(e) => set({ time: e.target.value })} className={inputCls} />
+          </div>
         </div>
       )}
       {f !== 'none' && (
@@ -239,7 +236,7 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
   const benchOptions = useMemo(() => BENCHMARKS_SEED
     .filter((b) => b.type === osType)
     .sort((a, b) => a.osVersion.localeCompare(b.osVersion) || a.name.localeCompare(b.name))
-    .map((b) => ({ value: b.id, label: b.name, hint: `${profileLabel(b.profile)} · ${b.origin}`, group: b.osVersion })), [osType]);
+    .map((b) => ({ value: b.id, label: b.name })), [osType]);
 
   /* The endpoint picker's filters — the same filter bar the Attach Rules picker uses. */
   const [pickRules, setPickRules] = useState<FilterRule[]>([]);
@@ -363,33 +360,7 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
                 <ErrorText>{tried && !osType ? 'Choose an OS Type' : ''}</ErrorText>
               </div>
               <div>
-                <div className="flex items-center gap-1">
-                  <FieldLabel required>Benchmark</FieldLabel>
-                  {/* The chosen benchmark's facts live behind this icon, not in a strip under the
-                      field — they describe the choice, they are not part of the form. */}
-                  {benchmark && (
-                    <Tooltip delayDuration={150}>
-                      <TooltipTrigger asChild>
-                        <span className="-mt-1 inline-grid cursor-help place-items-center text-[#9CA3AF] hover:text-[#3D8BD0]" aria-label="Benchmark details"><Info size={13} /></span>
-                      </TooltipTrigger>
-                      <TooltipContent side="right" className="w-[240px] text-wrap p-3">
-                        <div className="mb-2 text-[12px] font-semibold leading-snug">{benchmark.name}</div>
-                        <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-[12px]">
-                          {[
-                            ['Type', benchmark.type],
-                            ['Version', benchmark.osVersion],
-                            ['Profile', profileLabel(benchmark.profile)],
-                            ['Origin', benchmark.origin],
-                            ['Rules', String(benchmarkRuleIds(benchmark).length)],
-                            ['Endpoints', String(pool.length)],
-                          ].map(([k, v]) => (
-                            <div key={k} className="contents"><dt className="text-white/60">{k}</dt><dd className="font-medium">{v}</dd></div>
-                          ))}
-                        </dl>
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
-                </div>
+                <FieldLabel required>Benchmark</FieldLabel>
                 <RuleSelect className="!rounded" searchable value={d.benchmarkId ? [d.benchmarkId] : []} options={benchOptions} onChange={(v) => v[0] && changeBenchmark(v[0])} invalid={tried && !!osType && !d.benchmarkId} disabled={!osType} placeholder={!osType ? 'Choose an OS Type first' : benchOptions.length ? 'Select' : `No ${osType} benchmark yet`} />
                 <ErrorText>{tried && osType && !d.benchmarkId ? 'Choose a benchmark' : ''}</ErrorText>
               </div>
@@ -429,7 +400,7 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
             </div>
 
             {/* What will actually be assessed, whichever axis chose it. */}
-            <div className={`mt-4 rounded-lg border ${tried && resolved.length === 0 ? 'border-[#F25C4E]' : 'border-[#E5E7EB]'}`}>
+            <div className={`mt-4 overflow-hidden rounded-lg border ${tried && resolved.length === 0 ? 'border-[#F25C4E]' : 'border-[#E5E7EB]'}`}>
               <div className="flex min-h-[48px] items-center gap-3 border-b border-[#EEF1F4] bg-[#F6F9FC] px-4 py-2">
                 <span className="text-[13px] font-semibold text-[#364658]">Endpoints to assess <span className="ml-1 rounded-sm bg-[#EEF2F6] px-1.5 py-0.5 text-[11px] font-medium text-[#64748B]">{resolved.length}</span></span>
                 {resolved.some((e) => !e.agentOnline) && (

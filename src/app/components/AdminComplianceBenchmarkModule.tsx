@@ -1,9 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 import {
   ArrowLeft, BadgeCheck, Check, ChevronDown, ChevronRight, Copy, ExternalLink, FolderPlus, Layers, Link2, Lock, Monitor, MoreVertical,
-  Pencil, Plus, PlusCircle, Search, ShieldAlert, Trash2, X,
+  Pencil, Plus, PlusCircle, Search, ShieldAlert, Trash2, X, CornerDownRight, ArrowDown, ChevronsDownUp,
 } from 'lucide-react';
+import { useComplianceRuleUi } from './complianceRuleUi';
 import { Pagination } from './Pagination';
 import { HeaderKpiRow } from './HeaderKpiRow';
 import type { HeaderKpiItem } from './HeaderKpiRow';
@@ -282,7 +284,7 @@ function BenchmarkList({ benchmarks, onOpen, onCreate, onEdit, onClone, onDelete
             ) : pageRows.map((b) => (
               <tr key={b.id} onClick={() => onOpen(b.id)} className="cursor-pointer transition-colors hover:bg-[#f9fafb]">
                 <td className="px-4 py-3">
-                  <span className="block truncate text-[13px] font-medium text-[#364658] hover:text-[#3D8BD0]" title={b.name}>{b.name}</span>
+                  <span className="line-clamp-2 break-words text-[13px] font-medium text-[#364658] hover:text-[#3D8BD0]" title={b.name}>{b.name}</span>
                 </td>
                 <td className="px-4 py-3"><span className="block truncate text-[13px] text-[#64748B]" title={b.description}>{b.description || <span className="text-[#9CA3AF]">—</span>}</span></td>
                 <td className="whitespace-nowrap px-4 py-3 text-[13px] text-[#364658]">{b.type}</td>
@@ -412,7 +414,14 @@ interface TreeOps {
   onName?: (id: string, v: string) => void;
   onSaveName?: (id: string) => void;
   onEditName?: (id: string) => void;
+  /** ⊕ menu: a sub-group INSIDE this group / a group BELOW it at the same level. */
   onAddChild?: (id: string) => void;
+  onAddBelow?: (id: string) => void;
+  /** Where a group would land while an ⊕ menu item is hovered — drawn as a dashed ghost row. */
+  preview?: { at: string; mode: 'inside' | 'below' } | null;
+  setPreview?: (p: { at: string; mode: 'inside' | 'below' } | null) => void;
+  /** Keys while naming: Enter → a group below · Tab → make it a sub-group · Shift+Tab → move it out. */
+  onNameKey?: (id: string, e: React.KeyboardEvent<HTMLInputElement>) => void;
   onAttach?: (id: string) => void;
   onDelete?: (g: RuleGroup) => void;
   deleteReason?: (id: string) => string | undefined;
@@ -420,8 +429,21 @@ interface TreeOps {
   onOpenRule?: (id: string) => void;
 }
 
-/** One group of the tree and, while open, its rules then its sub-groups. */
-function GroupNode({ g, number, depth, ops }: { g: RuleGroup; number: string; depth: number; ops: TreeOps }) {
+/** The dashed row that shows where a group will land, with the number it will get. */
+function GhostRow({ number, depth, label }: { number: string; depth: number; label: string }) {
+  return (
+    <div style={{ paddingLeft: 12 + depth * 24 + 28 }} className="flex h-10 items-center gap-2 border-t border-[#EEF1F4] pr-3">
+      <span className="flex h-7 flex-1 items-center gap-2 rounded border border-dashed border-[#3D8BD0] bg-[#F5FAFF] px-2 text-[13px]">
+        <span className="font-semibold tabular-nums text-[#3D8BD0]">{number}</span>
+        <span className="italic text-[#3D8BD0]">{label}</span>
+      </span>
+    </div>
+  );
+}
+
+/** One group of the tree and, while open, its rules then its sub-groups. `siblingNext` is the
+ *  number a group added BELOW this one would take. */
+function GroupNode({ g, number, depth, ops, siblingNext }: { g: RuleGroup; number: string; depth: number; ops: TreeOps; siblingNext?: string }) {
   const kids = g.children ?? [];
   const isOpen = ops.open.has(g.id);
   const naming = !!ops.editable && !!ops.editingNames?.has(g.id);
@@ -429,10 +451,18 @@ function GroupNode({ g, number, depth, ops }: { g: RuleGroup; number: string; de
   const total = groupRuleIds(g).length;
   const pad = 12 + depth * 24;
   const blank = !g.name.trim();
-  /* ⊕ follows the arrow: OPEN adds a sub-group inside this group; CLOSED adds the next group at
-     this same level, right after it. Only the inside case can hit the depth limit. */
-  const addLabel = isOpen ? 'Add sub-group' : 'Add group after this';
-  const addReason = isOpen && depth + 1 >= MAX_GROUP_DEPTH ? `Groups go ${MAX_GROUP_DEPTH} levels deep at most — close it to add the next group instead` : undefined;
+  const [menu, setMenu] = useState<{ top: number; right: number } | null>(null);
+  const plusRef = useRef<HTMLSpanElement>(null);
+  const openMenu = () => {
+    if (menu) { setMenu(null); return; }
+    const r = plusRef.current?.getBoundingClientRect();
+    if (r) setMenu({ top: r.bottom + 4, right: window.innerWidth - r.right });
+  };
+  const insideReason = depth + 1 >= MAX_GROUP_DEPTH ? `Groups go ${MAX_GROUP_DEPTH} levels deep at most` : undefined;
+  const addReason = blank ? 'Name this group first' : undefined;
+  const childNext = `${number}.${g.ruleIds.length + kids.length + 1}`;
+  const pv = ops.preview;
+  const closeMenu = () => { setMenu(null); ops.setPreview?.(null); };
 
   const ruleRow = (id: string, n: string) => {
     const r = ruleById(id);
@@ -441,7 +471,7 @@ function GroupNode({ g, number, depth, ops }: { g: RuleGroup; number: string; de
       <div key={id} onClick={() => ops.onOpenRule?.(id)} style={{ paddingLeft: pad + 28 }} className={`group/row flex items-center gap-3 border-t border-[#EEF1F4] py-2 pr-3 transition-colors hover:bg-[#F5F7FA] ${ops.onOpenRule ? 'cursor-pointer' : ''}`}>
         <span className="h-4 w-[3px] flex-shrink-0 rounded-full" style={{ backgroundColor: SEVERITY_PILL[r.severity].bar }} title={r.severity} />
         <span className="flex-shrink-0 text-[12px] tabular-nums text-[#7B8FA5]">{n}</span>
-        <span className="min-w-0 flex-1 truncate text-[13px] text-[#364658] group-hover/row:text-[#3D8BD0]" title={r.name}>{r.name}</span>
+        <span className="line-clamp-2 min-w-0 flex-1 break-words text-[13px] text-[#364658] group-hover/row:text-[#3D8BD0]" title={r.name}>{r.name}</span>
         {/* At rest the two tags sit at the row's right edge; on hover the action takes the edge
             and the tags step left — nothing is reserved for a control that isn't showing. */}
         <ProfileChip profile={r.profile} />
@@ -455,7 +485,44 @@ function GroupNode({ g, number, depth, ops }: { g: RuleGroup; number: string; de
     );
   };
 
+  /* ⊕ → a two-item menu. Hovering an item draws the ghost row where the group will land. */
+  const addMenu = (
+    <span ref={plusRef} className="relative inline-flex">
+      <ActionIcon label="Add group" reason={addReason} onClick={openMenu}><PlusCircle size={15} /></ActionIcon>
+      {menu && createPortal(
+        <>
+          <div className="fixed inset-0 z-[10040]" onClick={(e) => { e.stopPropagation(); closeMenu(); }} />
+          <div style={{ top: menu.top, right: menu.right }} className="fixed z-[10041] w-[220px] rounded-lg border border-[#E5E7EB] bg-white py-1 shadow-lg" onClick={(e) => e.stopPropagation()}>
+            {([
+              ['inside', <CornerDownRight size={15} />, 'Add sub-group inside', insideReason, () => ops.onAddChild?.(g.id)],
+              ['below', <ArrowDown size={15} />, 'Add group below', undefined, () => ops.onAddBelow?.(g.id)],
+            ] as ['inside' | 'below', React.ReactNode, string, string | undefined, () => void][]).map(([mode, icon, label, reason, fn]) => (
+              <Tooltip key={mode}>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    disabled={!!reason}
+                    onMouseEnter={() => ops.setPreview?.({ at: g.id, mode })}
+                    onMouseLeave={() => ops.setPreview?.(null)}
+                    onClick={() => { closeMenu(); fn(); }}
+                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[13px] text-[#364658] transition-colors hover:bg-[#F5F7FA] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
+                  >
+                    <span className="text-[#7B8FA5]">{icon}</span>{label}
+                  </button>
+                </TooltipTrigger>
+                {reason && <TooltipContent side="left">{reason}</TooltipContent>}
+              </Tooltip>
+            ))}
+          </div>
+        </>,
+        document.body,
+      )}
+    </span>
+  );
+
   return (
+    <>
+    {/* The group box clips to its rounded corners; the ⊕ menu is portalled, so the clip cannot cut it. */}
     <div className={depth ? '' : `overflow-hidden rounded-lg border ${ops.showErrors && blank ? 'border-[#F25C4E]' : 'border-[#E5E7EB]'}`}>
       <div
         onClick={(e) => { if (!(e.target as HTMLElement).closest('input,button')) ops.onToggle(g.id); }}
@@ -465,14 +532,20 @@ function GroupNode({ g, number, depth, ops }: { g: RuleGroup; number: string; de
         <button type="button" onClick={() => ops.onToggle(g.id)} aria-label={isOpen ? 'Collapse group' : 'Expand group'} aria-expanded={isOpen} className="flex size-5 flex-shrink-0 items-center justify-center rounded text-[#7B8FA5] hover:bg-[#EEF2F6] hover:text-[#364658]">
           <ChevronRight size={14} className={`transition-transform ${isOpen ? 'rotate-90' : ''}`} />
         </button>
-        <span className={`flex-shrink-0 tabular-nums text-[#364658] ${depth ? 'text-[13px] font-semibold' : 'text-[13px] font-bold'}`}>{number}</span>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className={`flex-shrink-0 cursor-default tabular-nums text-[#364658] ${depth ? 'text-[13px] font-semibold' : 'text-[13px] font-bold'}`}>{number}</span>
+          </TooltipTrigger>
+          <TooltipContent>Level {depth + 1} of {MAX_GROUP_DEPTH}</TooltipContent>
+        </Tooltip>
         {naming ? (
           <input
             autoFocus
             value={g.name}
             onChange={(e) => ops.onName?.(g.id, e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') ops.onSaveName?.(g.id); }}
+            onKeyDown={(e) => { if (ops.onNameKey) ops.onNameKey(g.id, e); else if (e.key === 'Enter') ops.onSaveName?.(g.id); }}
             placeholder="Enter Name"
+            title="Enter: save the name · Tab: make it a sub-group · Shift+Tab: move it out"
             className={`h-8 min-w-0 flex-1 rounded border bg-white px-2 text-[13px] text-[#364658] placeholder:text-[#9CA3AF] focus:border-[#3D8BD0] focus:outline-none ${ops.showErrors && blank ? 'border-[#F25C4E]' : 'border-[#DFE5ED]'}`}
           />
         ) : (
@@ -480,16 +553,16 @@ function GroupNode({ g, number, depth, ops }: { g: RuleGroup; number: string; de
         )}
         {!naming && total > 0 && countChip(total)}
         {ops.editable && (
-          <span className={`ml-auto flex flex-shrink-0 items-center gap-0.5 ${naming ? '' : 'opacity-0 transition-opacity focus-within:opacity-100 group-hover/gr:opacity-100'}`}>
+          <span className={`ml-auto flex flex-shrink-0 items-center gap-0.5 ${naming || menu ? '' : 'opacity-0 transition-opacity focus-within:opacity-100 group-hover/gr:opacity-100'}`}>
             {naming ? (
               <>
                 <ActionIcon label="Save name" onClick={() => ops.onSaveName?.(g.id)}><Check size={15} className="text-[#16A34A]" /></ActionIcon>
-                <ActionIcon label={addLabel} reason={addReason} onClick={() => ops.onAddChild?.(g.id)}><PlusCircle size={15} /></ActionIcon>
+                {addMenu}
               </>
             ) : (
               <>
                 <ActionIcon label="Edit name" onClick={() => ops.onEditName?.(g.id)}><Pencil size={14} /></ActionIcon>
-                <ActionIcon label={addLabel} reason={addReason} onClick={() => ops.onAddChild?.(g.id)}><PlusCircle size={15} /></ActionIcon>
+                {addMenu}
                 {!parentOnly && <ReasonButton reason={ops.attachReason} onClick={() => ops.onAttach?.(g.id)} className={ADD_LINK}><Link2 size={14} /> Attach rules</ReasonButton>}
                 <ActionIcon label={kids.length ? 'Delete group and its sub-groups' : 'Delete group'} danger reason={ops.deleteReason?.(g.id)} onClick={() => ops.onDelete?.(g)}><Trash2 size={15} className={ops.deleteReason?.(g.id) ? '' : 'text-[#DC2626]'} /></ActionIcon>
               </>
@@ -497,18 +570,243 @@ function GroupNode({ g, number, depth, ops }: { g: RuleGroup; number: string; de
           </span>
         )}
       </div>
-      {isOpen && (
-        <>
-          {g.ruleIds.map((id, j) => ruleRow(id, `${number}.${j + 1}`))}
-          {kids.map((k, i) => <GroupNode key={k.id} g={k} number={`${number}.${g.ruleIds.length + i + 1}`} depth={depth + 1} ops={ops} />)}
-          {!g.ruleIds.length && !kids.length && (
+      {(isOpen || (pv?.at === g.id && pv.mode === 'inside')) && (
+        <div className="relative">
+          {isOpen && g.ruleIds.map((id, j) => ruleRow(id, `${number}.${j + 1}`))}
+          {isOpen && kids.map((k, i) => <GroupNode key={k.id} g={k} number={`${number}.${g.ruleIds.length + i + 1}`} depth={depth + 1} ops={ops} siblingNext={`${number}.${g.ruleIds.length + i + 2}`} />)}
+          {pv?.at === g.id && pv.mode === 'inside' && <GhostRow number={childNext} depth={depth + 1} label="New sub-group" />}
+          {isOpen && !g.ruleIds.length && !kids.length && !(pv?.at === g.id) && (
             <div style={{ paddingLeft: pad + 28 }} className="border-t border-[#EEF1F4] py-3 pr-3 text-[12px] text-[#9CA3AF]">
               {ops.editable
                 ? (ops.attachReason ?? <>No rules yet — attach rules written for <span className="font-medium text-[#64748B]">{ops.ruleScope}</span>, or add a sub-group with ⊕.</>)
                 : 'No rules in this group.'}
             </div>
           )}
-        </>
+        </div>
+      )}
+    </div>
+    {pv?.at === g.id && pv.mode === 'below' && siblingNext && (
+      depth ? <GhostRow number={siblingNext} depth={depth} label="New group" />
+        : <div className="rounded-lg border border-dashed border-[#3D8BD0] bg-[#F5FAFF] px-3 py-2.5 text-[13px]"><span className="font-semibold tabular-nums text-[#3D8BD0]">{siblingNext}</span> <span className="italic text-[#3D8BD0]">New group</span></div>
+    )}
+    </>
+  );
+}
+
+/* ── V2 of the rule-group builder — the VS Code explorer's rule ───────────────────────────────
+ * Click a row to SELECT it. "+" adds a group INSIDE the selected group — open or closed, it opens.
+ * The top row is the benchmark itself (the root): select it and "+" adds a top-level group. A
+ * selected RULE sends a new group into that rule's own group, as VS Code sends a new folder next
+ * to a selected file. The same "+" and Attach rules sit on the section's title toolbar (acting on
+ * the selection) and on a hovered row (acting on that row). Right-click a row for Add group ·
+ * Attach rules · Rename · Delete; F2 renames, Delete deletes. A new group arrives with its name
+ * field open — Enter saves, Esc on an empty name drops it. Nothing is ever added on its own. */
+
+type ExplorerSel = { kind: 'root' } | { kind: 'group'; id: string } | { kind: 'rule'; groupId: string; ruleId: string };
+
+function GroupExplorer({ groups, setGroups, rootName, naming, setNaming, expanded, setExpanded, showErrors, attachReason, onAttach, onOpenRule, onDelete, deleteReason }: {
+  groups: RuleGroup[];
+  setGroups: React.Dispatch<React.SetStateAction<RuleGroup[]>>;
+  rootName: string;
+  naming: Set<string>;
+  setNaming: React.Dispatch<React.SetStateAction<Set<string>>>;
+  expanded: Set<string>;
+  setExpanded: React.Dispatch<React.SetStateAction<Set<string>>>;
+  showErrors: boolean;
+  attachReason?: string;
+  onAttach: (groupId: string) => void;
+  onOpenRule: (ruleId: string) => void;
+  onDelete: (g: RuleGroup) => void;
+  deleteReason: (id: string) => string | undefined;
+}) {
+  const [sel, setSel] = useState<ExplorerSel>({ kind: 'root' });
+  const [rootOpen, setRootOpen] = useState(true);
+  const [ctx, setCtx] = useState<{ x: number; y: number; sel: ExplorerSel } | null>(null);
+  const nums = groupNumbers(groups);
+  const all = allGroups(groups);
+  const find = (id: string) => all.find((g) => g.id === id);
+  const depthOf = (id: string) => (locate(groups, id)?.depth ?? 0);
+  // A selection whose row has gone falls back to the root.
+  useEffect(() => {
+    if (sel.kind === 'group' && !find(sel.id)) setSel({ kind: 'root' });
+    if (sel.kind === 'rule' && !find(sel.groupId)?.ruleIds.includes(sel.ruleId)) setSel({ kind: 'root' });
+  });
+
+  /** The group a new group goes INTO for a selection — null = top level. */
+  const targetOf = (s: ExplorerSel): string | null => (s.kind === 'root' ? null : s.kind === 'group' ? s.id : s.groupId);
+  const addReasonFor = (s: ExplorerSel) => {
+    const t = targetOf(s);
+    if (t === null) return undefined;
+    const g = find(t);
+    if (!g?.name.trim()) return 'Name this group first';
+    if (depthOf(t) + 1 >= MAX_GROUP_DEPTH) return `Groups go ${MAX_GROUP_DEPTH} levels deep at most`;
+    return undefined;
+  };
+  const attachReasonFor = (s: ExplorerSel) => attachReason ?? (s.kind === 'root' ? 'Select a group to attach rules to it' : undefined);
+  const addInside = (s: ExplorerSel) => {
+    if (addReasonFor(s)) return;
+    const t = targetOf(s);
+    const fresh = newGroup('');
+    if (t === null) { setGroups((gs) => [...gs, fresh]); setRootOpen(true); }
+    else { setGroups((gs) => mapGroup(gs, t, (y) => ({ ...y, children: [...(y.children ?? []), fresh] }))); setExpanded((x) => new Set(x).add(t)); }
+    setExpanded((x) => new Set(x).add(fresh.id));
+    setNaming((x) => new Set(x).add(fresh.id));
+    setSel({ kind: 'group', id: fresh.id });
+  };
+  const attach = (s: ExplorerSel) => { const t = targetOf(s); if (t && !attachReasonFor(s)) onAttach(t); };
+  const rename = (s: ExplorerSel) => { if (s.kind === 'group') setNaming((x) => new Set(x).add(s.id)); };
+  const remove = (s: ExplorerSel) => {
+    if (s.kind === 'group') { const g = find(s.id); if (g && !deleteReason(s.id)) onDelete(g); }
+    if (s.kind === 'rule') setGroups((gs) => mapGroup(gs, s.groupId, (x) => ({ ...x, ruleIds: x.ruleIds.filter((y) => y !== s.ruleId) })));
+  };
+  const saveName = (id: string) => {
+    if (!find(id)?.name.trim()) { toast.error('Please enter name'); return; }
+    setNaming((x) => { const n = new Set(x); n.delete(id); return n; });
+  };
+  const cancelName = (id: string) => {
+    const g = find(id);
+    if (g && !g.name.trim() && !g.ruleIds.length && !(g.children ?? []).length && !(groups.length === 1 && groups[0].id === id)) {
+      setGroups((gs) => dropGroup(gs, id)); setSel({ kind: 'root' }); return;
+    }
+    if (g?.name.trim()) setNaming((x) => { const n = new Set(x); n.delete(id); return n; });
+  };
+  const isSel = (s: ExplorerSel) => JSON.stringify(s) === JSON.stringify(sel);
+  const onKey = (e: React.KeyboardEvent) => {
+    if ((e.target as HTMLElement).closest('input')) return;
+    if (e.key === 'F2') { e.preventDefault(); rename(sel); }
+    if (e.key === 'Delete') { e.preventDefault(); remove(sel); }
+  };
+
+  const rowCls = (s: ExplorerSel) => `group/ex relative flex h-9 cursor-pointer select-none items-center gap-1.5 pr-2 transition-colors ${isSel(s) ? 'bg-[#EBF5FF] before:absolute before:inset-y-0 before:left-0 before:w-[2px] before:bg-[#3D8BD0]' : 'hover:bg-[#F5F7FA]'}`;
+  const hoverIcons = (s: ExplorerSel, extra?: React.ReactNode) => (
+    <span className={`ml-auto flex flex-shrink-0 items-center ${isSel(s) ? '' : 'invisible group-hover/ex:visible'}`} onClick={(e) => e.stopPropagation()}>
+      <ActionIcon label="Add group inside" reason={addReasonFor(s)} onClick={() => addInside(s)}><Plus size={15} /></ActionIcon>
+      <ActionIcon label="Attach rules" reason={attachReasonFor(s)} onClick={() => attach(s)}><Link2 size={14} /></ActionIcon>
+      {extra}
+    </span>
+  );
+  const chevron = (open: boolean, onToggle: () => void, show: boolean) => show ? (
+    <button type="button" onClick={(e) => { e.stopPropagation(); onToggle(); }} aria-label={open ? 'Collapse' : 'Expand'} className="flex size-5 flex-shrink-0 items-center justify-center rounded text-[#7B8FA5] hover:bg-[#EEF2F6] hover:text-[#364658]">
+      <ChevronRight size={14} className={`transition-transform ${open ? 'rotate-90' : ''}`} />
+    </button>
+  ) : <span className="size-5 flex-shrink-0" />;
+  const toggle = (id: string) => setExpanded((x) => { const n = new Set(x); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const openCtx = (e: React.MouseEvent, s: ExplorerSel) => { e.preventDefault(); setSel(s); setCtx({ x: e.clientX, y: e.clientY, sel: s }); };
+
+  const renderGroup = (g: RuleGroup, depth: number): React.ReactNode => {
+    const s: ExplorerSel = { kind: 'group', id: g.id };
+    const kids = g.children ?? [];
+    const open = expanded.has(g.id);
+    const num = nums.get(g.id) ?? '';
+    const isNaming = naming.has(g.id);
+    const blank = !g.name.trim();
+    const total = groupRuleIds(g).length;
+    return (
+      <div key={g.id}>
+        <div style={{ paddingLeft: 8 + (depth + 1) * 18 }} className={rowCls(s)} onClick={() => setSel(s)} onContextMenu={(e) => openCtx(e, s)} onDoubleClick={() => toggle(g.id)}>
+          {chevron(open, () => toggle(g.id), g.ruleIds.length > 0 || kids.length > 0)}
+          <Tooltip>
+            <TooltipTrigger asChild><span className={`flex-shrink-0 cursor-default text-[13px] tabular-nums text-[#364658] ${depth ? 'font-semibold' : 'font-bold'}`}>{num}</span></TooltipTrigger>
+            <TooltipContent>Level {depth + 1} of {MAX_GROUP_DEPTH}</TooltipContent>
+          </Tooltip>
+          {isNaming ? (
+            <input
+              autoFocus
+              value={g.name}
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => setGroups((gs) => mapGroup(gs, g.id, (x) => ({ ...x, name: e.target.value })))}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); saveName(g.id); } if (e.key === 'Escape') { e.preventDefault(); cancelName(g.id); } }}
+              placeholder="Enter Name"
+              className={`h-7 min-w-0 flex-1 rounded border bg-white px-2 text-[13px] text-[#364658] placeholder:text-[#9CA3AF] focus:border-[#3D8BD0] focus:outline-none ${showErrors && blank ? 'border-[#F25C4E]' : 'border-[#DFE5ED]'}`}
+            />
+          ) : (
+            <span className={`min-w-0 truncate text-[13px] text-[#364658] ${depth ? 'font-medium' : 'font-semibold'} ${blank ? (showErrors ? 'italic !text-[#F25C4E]' : 'italic !text-[#9CA3AF]') : ''}`} title={g.name}>{g.name || 'Untitled group'}</span>
+          )}
+          {!isNaming && total > 0 && countChip(total)}
+          {isNaming
+            ? <span className="ml-auto flex-shrink-0" onClick={(e) => e.stopPropagation()}><ActionIcon label="Save name" onClick={() => saveName(g.id)}><Check size={15} className="text-[#16A34A]" /></ActionIcon></span>
+            : hoverIcons(s, <>
+              <ActionIcon label="Rename (F2)" onClick={() => rename(s)}><Pencil size={14} /></ActionIcon>
+              <ActionIcon label={kids.length ? 'Delete group and its sub-groups (Delete)' : 'Delete group (Delete)'} danger reason={deleteReason(g.id)} onClick={() => remove(s)}><Trash2 size={15} className={deleteReason(g.id) ? '' : 'text-[#DC2626]'} /></ActionIcon>
+            </>)}
+        </div>
+        {open && (
+          <>
+            {g.ruleIds.map((rid, j) => {
+              const r = ruleById(rid);
+              if (!r) return null;
+              const rs: ExplorerSel = { kind: 'rule', groupId: g.id, ruleId: rid };
+              return (
+                <div key={rid} style={{ paddingLeft: 8 + (depth + 2) * 18 + 20 }} className={rowCls(rs)} onClick={() => setSel(rs)} onDoubleClick={() => onOpenRule(rid)} onContextMenu={(e) => openCtx(e, rs)}>
+                  <span className="h-4 w-[3px] flex-shrink-0 rounded-full" style={{ backgroundColor: SEVERITY_PILL[r.severity].bar }} title={r.severity} />
+                  <span className="flex-shrink-0 text-[12px] tabular-nums text-[#7B8FA5]">{num}.{j + 1}</span>
+                  <span className="line-clamp-2 min-w-0 flex-1 break-words text-[13px] text-[#364658]" title={r.name}>{r.name}</span>
+                  <ProfileChip profile={r.profile} />
+                  <SeverityPill severity={r.severity} />
+                  <span className={`flex flex-shrink-0 items-center ${isSel(rs) ? '' : 'invisible group-hover/ex:visible'}`} onClick={(e) => e.stopPropagation()}>
+                    <ActionIcon label="Open rule" onClick={() => onOpenRule(rid)}><ChevronRight size={15} /></ActionIcon>
+                    <ActionIcon label="Remove from group (Delete)" onClick={() => remove(rs)}><X size={15} /></ActionIcon>
+                  </span>
+                </div>
+              );
+            })}
+            {kids.map((k) => renderGroup(k, depth + 1))}
+          </>
+        )}
+      </div>
+    );
+  };
+
+  const groupCount = all.length;
+  const ruleCount = groups.flatMap(groupRuleIds).length;
+  const ctxItems = ctx ? ([
+    ['Add group inside', <Plus size={15} />, addReasonFor(ctx.sel), () => addInside(ctx.sel)],
+    ['Attach rules', <Link2 size={15} />, attachReasonFor(ctx.sel), () => attach(ctx.sel)],
+    ...(ctx.sel.kind === 'group' ? [['Rename', <Pencil size={14} />, undefined, () => rename(ctx.sel)] as const] : []),
+    ...(ctx.sel.kind === 'group' ? [['Delete', <Trash2 size={15} />, deleteReason(ctx.sel.id), () => remove(ctx.sel)] as const] : []),
+    ...(ctx.sel.kind === 'rule' ? [['Remove from group', <X size={15} />, undefined, () => remove(ctx.sel)] as const] : []),
+  ] as (readonly [string, React.ReactNode, string | undefined, () => void])[]) : [];
+
+  return (
+    <div className="overflow-hidden rounded-lg border border-[#E5E7EB]" tabIndex={0} onKeyDown={onKey}>
+      {/* Title toolbar — acts on the SELECTED row. */}
+      <div className="flex h-10 items-center gap-1 border-b border-[#E5E7EB] bg-[#F6F9FC] pl-3 pr-2">
+        <span className="min-w-0 flex-1 truncate text-[12px] text-[#7B8FA5]">
+          {groupCount} group{groupCount === 1 ? '' : 's'} · {ruleCount} rule{ruleCount === 1 ? '' : 's'} · adds go into <span className="font-medium text-[#364658]">{sel.kind === 'root' ? 'the top level' : `${nums.get(targetOf(sel)!) ?? ''} ${find(targetOf(sel)!)?.name || 'Untitled group'}`}</span>
+        </span>
+        <ActionIcon label="Add group inside the selected group" reason={addReasonFor(sel)} onClick={() => addInside(sel)}><Plus size={16} /></ActionIcon>
+        <ActionIcon label="Attach rules to the selected group" reason={attachReasonFor(sel)} onClick={() => attach(sel)}><Link2 size={15} /></ActionIcon>
+        <ActionIcon label="Collapse all" onClick={() => setExpanded(new Set())}><ChevronsDownUp size={15} /></ActionIcon>
+      </div>
+      <div className="py-1">
+        {/* The root — the benchmark itself. Select it to add top-level groups. */}
+        <div style={{ paddingLeft: 8 }} className={rowCls({ kind: 'root' })} onClick={() => setSel({ kind: 'root' })} onContextMenu={(e) => openCtx(e, { kind: 'root' })}>
+          {chevron(rootOpen, () => setRootOpen((v) => !v), groups.length > 0)}
+          <Layers size={15} className="flex-shrink-0 text-[#7B8FA5]" />
+          <span className="min-w-0 truncate text-[13px] font-semibold text-[#364658]">{rootName.trim() || 'New benchmark'}</span>
+          {hoverIcons({ kind: 'root' })}
+        </div>
+        {rootOpen && groups.map((g) => renderGroup(g, 0))}
+      </div>
+      {ctx && createPortal(
+        <>
+          <div className="fixed inset-0 z-[10040]" onClick={() => setCtx(null)} onContextMenu={(e) => { e.preventDefault(); setCtx(null); }} />
+          <div style={{ top: Math.min(ctx.y, window.innerHeight - 200), left: Math.min(ctx.x, window.innerWidth - 230) }} className="fixed z-[10041] w-[210px] rounded-lg border border-[#E5E7EB] bg-white py-1 shadow-lg">
+            {ctxItems.map(([label, icon, reason, fn]) => (
+              <button
+                key={label}
+                type="button"
+                disabled={!!reason}
+                title={reason}
+                onClick={() => { setCtx(null); fn(); }}
+                className={`flex w-full items-center gap-2.5 px-3 py-2 text-left text-[13px] transition-colors hover:bg-[#F5F7FA] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent ${label === 'Delete' ? 'text-[#DC2626]' : 'text-[#364658]'}`}
+              >
+                <span className={label === 'Delete' ? 'text-[#DC2626]' : 'text-[#7B8FA5]'}>{icon}</span>{label}
+              </button>
+            ))}
+          </div>
+        </>,
+        document.body,
       )}
     </div>
   );
@@ -531,6 +829,33 @@ const insertAfter = (gs: RuleGroup[], id: string, g: RuleGroup): RuleGroup[] => 
   if (i >= 0) return [...gs.slice(0, i + 1), g, ...gs.slice(i + 1)];
   return gs.map((x) => ({ ...x, children: x.children ? insertAfter(x.children, id, g) : x.children }));
 };
+/** Where a group sits: the list it is in, its index there, and its depth. */
+const locate = (gs: RuleGroup[], id: string, depth = 0, parent: RuleGroup | null = null): { list: RuleGroup[]; i: number; depth: number; parent: RuleGroup | null } | null => {
+  const i = gs.findIndex((g) => g.id === id);
+  if (i >= 0) return { list: gs, i, depth, parent };
+  for (const g of gs) { const hit = locate(g.children ?? [], id, depth + 1, g); if (hit) return hit; }
+  return null;
+};
+/** How many levels a group's subtree spans (a group with no sub-groups = 1). */
+const heightOf = (g: RuleGroup): number => 1 + Math.max(0, ...(g.children ?? []).map(heightOf));
+/** Tab: the group becomes the LAST sub-group of the group just above it. */
+const indentGroup = (gs: RuleGroup[], id: string): { gs: RuleGroup[]; parentId: string } | string => {
+  const at = locate(gs, id);
+  if (!at || at.i === 0) return 'There is no group above it to go under';
+  const g = at.list[at.i];
+  if (at.depth + 1 + heightOf(g) > MAX_GROUP_DEPTH) return `Groups go ${MAX_GROUP_DEPTH} levels deep at most`;
+  const above = at.list[at.i - 1];
+  const moved = dropGroup(gs, id);
+  return { gs: mapGroup(moved, above.id, (x) => ({ ...x, children: [...(x.children ?? []), g] })), parentId: above.id };
+};
+/** Shift+Tab: the group leaves its parent and lands right after it. */
+const outdentGroup = (gs: RuleGroup[], id: string): RuleGroup[] | string => {
+  const at = locate(gs, id);
+  if (!at?.parent) return 'It is already a top-level group';
+  const g = at.list[at.i];
+  return insertAfter(dropGroup(gs, id), at.parent.id, g);
+};
+
 /** The tree without the group `id` (and its sub-groups). */
 const dropGroup = (gs: RuleGroup[], id: string): RuleGroup[] =>
   gs.filter((g) => g.id !== id).map((g) => ({ ...g, children: g.children ? dropGroup(g.children, id) : g.children }));
@@ -634,7 +959,7 @@ function BenchmarkDrawer({ benchmark, benchmarks, onClose, onEdit, onClone, onDe
           <div className="min-w-0 flex-1">
             <h1 className="flex min-w-0 items-center gap-2 text-[18px] font-semibold text-[#364658]">
               <HeaderIdPill id={benchmark.id} />
-              <span className="truncate">{benchmark.name}</span>
+              <span className="line-clamp-2 break-words">{benchmark.name}</span>
             </h1>
             {/* Its facts as chips under the title — tinted where the value means something. */}
             <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
@@ -733,8 +1058,12 @@ function BenchmarkForm({ editing, source, names, onCancel, onSave }: {
       : source ? benchmarkGroups(source).map((g) => copyGroup(g, true))
         : [newGroup('')]);
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set(allGroupIds(groups)));
+  /** V1 = the ⊕-menu tree; V2 = the explorer (select a group, + adds inside it). The logo's V1 | V2 pill. */
+  const builderUi = useComplianceRuleUi();
   /** Groups whose name field is open — a new group starts here, ✓ closes it. */
   const [naming, setNaming] = useState<Set<string>>(() => new Set(groups.filter((g) => !g.name.trim()).map((g) => g.id)));
+  /** Where a new group would land while an ⊕ menu item is hovered. */
+  const [preview, setPreview] = useState<{ at: string; mode: 'inside' | 'below' } | null>(null);
   /** A group with sub-groups waiting on a confirm before it goes. */
   const [confirmGroup, setConfirmGroup] = useState<RuleGroup | null>(null);
   /** Where Attach Rules is aimed: a group, or one of its sub-groups. */
@@ -849,7 +1178,7 @@ function BenchmarkForm({ editing, source, names, onCancel, onSave }: {
         const here = !!other && !!attachTo && other.g === attachTo.g;
         return (
           <span className="flex min-w-0 items-center gap-2">
-            <span className="block max-w-[320px] truncate text-[13px] font-medium" title={r.name}>{r.name}</span>
+            <span className="line-clamp-2 break-words text-[13px] font-medium" title={r.name}>{r.name}</span>
             {other && !here && <span className="max-w-[220px] flex-shrink-0 truncate rounded bg-[#FFFAEB] px-1.5 py-0.5 text-[11px] text-[#B54708]" title={`In ${targetLabel(other.g)}`}>In {targetLabel(other.g)}</span>}
           </span>
         );
@@ -934,6 +1263,26 @@ function BenchmarkForm({ editing, source, names, onCancel, onSave }: {
             <h2 className="text-[14px] font-semibold text-[#364658]">Rule Groups <span className="ml-1 text-[12px] font-normal text-[#7B8FA5]">{groups.length} group{groups.length === 1 ? '' : 's'} · {attached.length} rule{attached.length === 1 ? '' : 's'}</span></h2>
           </div>
 
+          {builderUi === 'v2' && (
+            <div className="mt-3">
+              <GroupExplorer
+                groups={groups}
+                setGroups={setGroups}
+                rootName={name}
+                naming={naming}
+                setNaming={setNaming}
+                expanded={expanded}
+                setExpanded={setExpanded}
+                showErrors={tried}
+                attachReason={attachReason}
+                onAttach={(id) => setAttachTo({ g: id })}
+                onOpenRule={setRuleId}
+                onDelete={(x) => { if (x.children?.length) setConfirmGroup(x); else setGroups((gs) => dropGroup(gs, x.id)); }}
+                deleteReason={(id) => (groups.length === 1 && groups[0].id === id ? 'A benchmark needs at least one rule group' : undefined)}
+              />
+            </div>
+          )}
+          {builderUi === 'v1' && (
           <div className="mt-3 space-y-3">
             {groups.map((g, gi) => (
               <GroupNode
@@ -941,6 +1290,7 @@ function BenchmarkForm({ editing, source, names, onCancel, onSave }: {
                 g={g}
                 number={String(gi + 1)}
                 depth={0}
+                siblingNext={String(gi + 2)}
                 ops={{
                   editable: true,
                   showErrors: tried,
@@ -957,18 +1307,35 @@ function BenchmarkForm({ editing, source, names, onCancel, onSave }: {
                   },
                   onEditName: (id) => setNaming((s) => new Set(s).add(id)),
                   onAddChild: (id) => {
-                    const x = allGroups(groups).find((y) => y.id === id);
-                    if (!x?.name.trim()) { toast.error('Please enter name'); return; }
                     const fresh = newGroup('');
-                    if (expanded.has(id)) {
-                      // Open → a sub-group inside it.
-                      setGroups((gs) => mapGroup(gs, id, (y) => ({ ...y, children: [...(y.children ?? []), fresh] })));
-                    } else {
-                      // Closed → the next group at the same level, right after it.
-                      setGroups((gs) => insertAfter(gs, id, fresh));
-                    }
-                    // A new group arrives closed, so its own ⊕ adds the next one beside it until it is opened.
+                    setGroups((gs) => mapGroup(gs, id, (y) => ({ ...y, children: [...(y.children ?? []), fresh] })));
+                    setExpanded((s) => new Set(s).add(id).add(fresh.id));
                     setNaming((s) => { const n = new Set(s); n.delete(id); n.add(fresh.id); return n; });
+                  },
+                  onAddBelow: (id) => {
+                    const fresh = newGroup('');
+                    setGroups((gs) => insertAfter(gs, id, fresh));
+                    setExpanded((s) => new Set(s).add(fresh.id));
+                    setNaming((s) => { const n = new Set(s); n.delete(id); n.add(fresh.id); return n; });
+                  },
+                  preview,
+                  setPreview,
+                  onNameKey: (id, e) => {
+                    const x = allGroups(groups).find((y) => y.id === id);
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      if (!x?.name.trim()) { toast.error('Please enter name'); return; }
+                      // Enter only saves the name — new groups come from the ⊕ menu, never on their own.
+                      setNaming((s) => { const n = new Set(s); n.delete(id); return n; });
+                    } else if (e.key === 'Tab') {
+                      e.preventDefault();
+                      const res = e.shiftKey ? outdentGroup(groups, id) : indentGroup(groups, id);
+                      if (typeof res === 'string') { toast(res); return; }
+                      if (Array.isArray(res)) setGroups(res);
+                      else { setGroups(res.gs); setExpanded((s) => new Set(s).add(res.parentId)); }
+                    } else if (e.key === 'Escape') {
+                      if (x?.name.trim()) setNaming((s) => { const n = new Set(s); n.delete(id); return n; });
+                    }
                   },
                   onAttach: (id) => setAttachTo({ g: id }),
                   onDelete: (x) => { if (x.children?.length) setConfirmGroup(x); else setGroups((gs) => dropGroup(gs, x.id)); },
@@ -985,6 +1352,7 @@ function BenchmarkForm({ editing, source, names, onCancel, onSave }: {
               className="flex h-11 w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-[#CBD5E1] text-[13px] font-medium text-[#3D8BD0] transition-colors hover:border-[#3D8BD0] hover:bg-[#F5FAFF]"
             ><Plus size={15} /> Add rule group</button>
           </div>
+          )}
         </div>
       </div>
 

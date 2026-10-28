@@ -154,8 +154,43 @@ const EXTRA: ComplianceEndpoint[] = [
   E('EP-586', 'AHM-PA-01', '10.20.0.5', 'PAN-OS 11.1.2', 'PAN-OS 11.x', 'Firewall', 'Ahmedabad HQ', ['network', 'perimeter']),
 ];
 
+/* The rest of each server estate (Zeni, 27 Oct 2026: "show so many endpoints"): more of the same
+   kinds of machine in the same offices, carrying the same tags — so the office- and tag-chosen
+   policies grow with them and every Compliance page counts the bigger fleet the same way.
+   Names continue each family's own numbering; every ninth one has its agent offline. */
+const FAMILIES: [prefix: string, from: number, count: number, net: string, osName: string, osVersion: string, type: ComplianceType, office: string, tags: string[]][] = [
+  ['AHM-WEB', 3, 22, '10.20.50', 'Debian GNU/Linux 11 (bullseye)', 'Debian Linux 11', 'Linux', 'Ahmedabad HQ', ['server', 'production', 'web']],
+  ['MUM-APP', 4, 16, '10.30.50', 'Debian GNU/Linux 11 (bullseye)', 'Debian Linux 11', 'Linux', 'Mumbai Office', ['server', 'production']],
+  ['AHM-DB-PG', 3, 10, '10.20.51', 'Red Hat Enterprise Linux 9.4', 'Red Hat Enterprise Linux 9', 'Linux', 'Ahmedabad HQ', ['server', 'production', 'database']],
+  ['BLR-K8S-NODE', 4, 24, '10.50.51', 'Red Hat Enterprise Linux 9.4', 'Red Hat Enterprise Linux 9', 'Linux', 'Bengaluru Campus', ['server', 'kubernetes']],
+  ['HYD-ML-GPU', 3, 16, '10.60.52', 'Ubuntu 22.04.4 LTS', 'Ubuntu Linux 22.04 LTS', 'Linux', 'Hyderabad Office', ['server', 'research']],
+  ['DEL-PROXY', 2, 8, '10.70.52', 'Ubuntu 22.04.4 LTS', 'Ubuntu Linux 22.04 LTS', 'Linux', 'Delhi NCR Office', ['server', 'dmz']],
+  ['AHM-DC', 2, 2, '10.20.53', 'Microsoft Windows Server 2019 Standard', 'Windows Server 2019', 'Windows', 'Ahmedabad HQ', ['server', 'domain controller']],
+  ['MUM-FS', 2, 8, '10.30.53', 'Microsoft Windows Server 2019 Standard', 'Windows Server 2019', 'Windows', 'Mumbai Office', ['server', 'file server']],
+  ['BLR-FS', 1, 6, '10.50.53', 'Microsoft Windows Server 2019 Standard', 'Windows Server 2019', 'Windows', 'Bengaluru Campus', ['server', 'file server']],
+  ['AHM-PAY-APP', 3, 10, '10.20.54', 'Microsoft Windows Server 2022 Datacenter', 'Windows Server 2022', 'Windows', 'Ahmedabad HQ', ['server', 'pci', 'production']],
+  ['MUM-PAY-DB', 2, 6, '10.30.54', 'Microsoft Windows Server 2022 Datacenter', 'Windows Server 2022', 'Windows', 'Mumbai Office', ['server', 'pci', 'database']],
+  ['BLR-RDS', 2, 14, '10.50.54', 'Microsoft Windows Server 2022 Standard', 'Windows Server 2022', 'Windows', 'Bengaluru Campus', ['server']],
+  ['BR-RTR', 0, 4, '10.90.1', 'Cisco IOS XE 17.9.4a', 'Cisco IOS XE 17.x', 'Router', '', ['network', 'branch']],
+  ['FW', 0, 3, '10.90.0', 'FortiOS 7.4.3', 'FortiOS 7.4', 'Firewall', '', ['network', 'perimeter']],
+];
+/* Network devices go to offices that had none yet. */
+const NET_OFFICES = { 'BR-RTR': ['Pune Development Center', 'Hyderabad Office', 'Delhi NCR Office', 'Chennai Office'], FW: ['Bengaluru Campus', 'Hyderabad Office', 'Pune Development Center'] } as Record<string, string[]>;
+const NET_PREFIX: Record<string, string> = { 'Pune Development Center': 'PUN', 'Hyderabad Office': 'HYD', 'Delhi NCR Office': 'DEL', 'Chennai Office': 'CHN', 'Bengaluru Campus': 'BLR' };
+const GROWN: ComplianceEndpoint[] = (() => {
+  let seq = 600, k = 0;
+  return FAMILIES.flatMap(([prefix, from, count, net, osName, osVersion, type, office, tags]) =>
+    Array.from({ length: count }, (_, i) => {
+      const n = from + i;
+      const off = office || NET_OFFICES[prefix][i];
+      const host = office ? `${prefix}-${String(n).padStart(2, '0')}` : `${NET_PREFIX[off]}-${prefix}-01`;
+      k++;
+      return E(`EP-${++seq}`, host, `${net}.${office ? 20 + n : 1 + i}`, osName, osVersion, type, off, tags, k % 9 !== 0);
+    }));
+})();
+
 let fleet: ComplianceEndpoint[] | null = null;
-export const complianceEndpoints = () => (fleet ??= [...realEndpoints(), ...EXTRA]);
+export const complianceEndpoints = () => (fleet ??= [...realEndpoints(), ...EXTRA, ...GROWN]);
 export const complianceEndpoint = (id: string) => complianceEndpoints().find((e) => e.id === id);
 
 /** Read from a config file — the only benchmarks where Startup vs Running means anything. */

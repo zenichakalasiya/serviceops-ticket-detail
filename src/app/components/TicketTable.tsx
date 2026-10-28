@@ -812,7 +812,9 @@ const USED_BY_OPTIONS: CellOption[] = [
 interface ColDef { key: string; label: string; flex?: boolean; w?: number; align?: 'right' | 'center';
   /** Ceiling for a FLEX column that would otherwise soak all the slack on a sparse grid —
    *  past it the surplus is shared out across every column instead. */
-  maxW?: number }
+  maxW?: number;
+  /** A long NAME column (a rule, a benchmark): wraps to two lines instead of being cut off. */
+  wrap?: boolean }
 
 /* ── Similarity grouping ──────────────────────────────────────────────────────
    A grouping axis that is NOT a column: the clusters the AI suggestions panel found.
@@ -2041,7 +2043,7 @@ export function TicketTable({
     'compliance-policy': [
         { key: 'id', label: 'ID', w: 96 },
         { key: 'subject', label: 'Policy Name', flex: true, w: 200, maxW: 320 },
-        { key: 'x_benchmark', label: 'Benchmark', flex: true, w: 200, maxW: 320 },
+        { key: 'x_benchmark', label: 'Benchmark', flex: true, w: 200, maxW: 320, wrap: true },
         { key: 'x_endpoints', label: 'Endpoints', w: 100 },
         /* Status carries the last scan's score beside it ("Non-Compliant · 72%"), so there is no
            separate Compliance column. Enable lives in the detail page's ⋮; whether the policy is
@@ -2054,7 +2056,7 @@ export function TicketTable({
        fares across the policies that run it (no edit actions: the admin owns benchmarks). */
     'cviz-benchmark': [
         { key: 'id', label: 'ID', w: 90 },
-        { key: 'subject', label: 'Benchmark', flex: true, w: 220, maxW: 360 },
+        { key: 'subject', label: 'Benchmark', flex: true, w: 220, maxW: 360, wrap: true },
         { key: 'x_type', label: 'Type', w: 100 },
         { key: 'x_osVersion', label: 'Version', w: 170 },
         { key: 'x_rules', label: 'Rules', w: 80 },
@@ -2062,15 +2064,18 @@ export function TicketTable({
         { key: 'x_endpoints', label: 'Endpoints', w: 100 },
     ],
     /* A benchmark's rules — every rule some policy checks, scored across the endpoints it ran on. */
+    /* Compliance › Rules (technician) — the admin Rules columns, plus how the rule fares across
+       the estate: how many endpoints check it, and the share of them that pass (Rule Score). */
     'cviz-rule': [
-        { key: 'subject', label: 'Rule', flex: true, w: 320, maxW: 520 },
-        { key: 'x_severity', label: 'Severity', w: 120 },
-        { key: 'x_osVersion', label: 'Version', w: 190 },
-        { key: 'x_profile', label: 'Profile', w: 90 },
-        { key: 'x_policies', label: 'Policies', w: 100, align: 'center' },
-        { key: 'x_failing', label: 'Failing', w: 100, align: 'center' },
-        { key: 'x_checked', label: 'Checked', w: 115, align: 'center' },
-        { key: 'x_cpScore', label: 'Rule Score', w: 160 },
+        { key: 'subject', label: 'Rule', flex: true, w: 300, maxW: 460, wrap: true },
+        { key: 'x_desc', label: 'Description', flex: true, w: 220, maxW: 340 },
+        { key: 'x_severity', label: 'Severity', w: 110 },
+        { key: 'x_type', label: 'Type', w: 95 },
+        { key: 'x_platform', label: 'Platform', w: 170 },
+        { key: 'x_version', label: 'Version', w: 95 },
+        { key: 'x_profile', label: 'Profile', w: 80 },
+        { key: 'x_endpoints', label: 'Endpoints', w: 100 },
+        { key: 'x_cpScore', label: 'Rule Score', w: 150 },
     ],
     /* Explorer · Resources — every endpoint a policy assesses, across all its policies. */
     'cviz-resource': [
@@ -4267,7 +4272,15 @@ export function TicketTable({
                 if (!m.col) return <td key="__ph" className="bg-[#FAFBFC]" />;
                 const c = m.col;
                 const ci = m.ri;
-                const el = renderCell(c.key, ticket);
+                const raw = renderCell(c.key, ticket);
+                /* A wrap column: the cell's one-line cut-off becomes a two-line clamp (theme.css .cell-wrap). */
+                const el = (c as ColDef).wrap && isValidElement(raw)
+                  ? cloneElement(raw as React.ReactElement<{ className?: string; children?: React.ReactNode }>, {
+                      className: `${(raw.props as { className?: string }).className ?? ''} cell-wrap`,
+                      ...(typeof (raw.props as { children?: unknown }).children === 'string'
+                        ? { children: <span className="cell-clamp">{(raw.props as { children: string }).children}</span> } : {}),
+                    })
+                  : raw;
                 if (ci <= frozenIdx && isValidElement(el)) {
                   const props = el.props as { className?: string; style?: React.CSSProperties };
                   return (

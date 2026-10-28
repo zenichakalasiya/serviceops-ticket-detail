@@ -125,7 +125,9 @@ export function DefaultLock({ show, size = 13 }: { show: boolean; size?: number 
 
 /* ── Rule detail — right side panel ──────────────────────────────────────────────────────── */
 
-type RuleTab = 'summary' | 'audit' | 'remediation' | 'references' | 'controls';
+type RuleTab = 'first' | 'summary' | 'audit' | 'remediation' | 'references' | 'controls';
+/** An extra tab placed BEFORE the metadata tabs (the technician Rules page's Endpoints). */
+export interface RuleFirstTab { label: string; node: React.ReactNode }
 const RULE_TABS: [RuleTab, string][] = [
   ['summary', 'Summary'], ['audit', 'Audit'], ['remediation', 'Remediation'],
   ['references', 'References'], ['controls', 'Controls'],
@@ -136,7 +138,7 @@ const fieldValue = 'mt-1 text-[13px] leading-[1.6] text-[#364658]';
 const codeBox = 'mt-2 whitespace-pre-wrap rounded bg-[#F9FAFB] px-3 py-2.5 font-mono text-[12px] leading-[1.6] text-[#364658]';
 const readBox = 'mt-1 flex min-h-8 items-center rounded bg-[#F9FAFB] px-3 py-1.5 text-[13px] text-[#364658]';
 
-export function RuleDetailPanel({ rule, usedIn, onClose, number, admin }: {
+export function RuleDetailPanel({ rule, usedIn, onClose, number, admin, firstTab, wide }: {
   rule: ComplianceRule;
   /** The rule's hierarchy number in the benchmark it was opened from (1.3.2). */
   number?: string;
@@ -145,6 +147,9 @@ export function RuleDetailPanel({ rule, usedIn, onClose, number, admin }: {
   onClose: () => void;
   /** Admin side: follows the V1 | V2 switch (V2 = one scrolling page, no tabs). */
   admin?: boolean;
+  firstTab?: RuleFirstTab;
+  /** A wider panel, for a first tab that holds a table. */
+  wide?: boolean;
 }) {
   const ui = useComplianceRuleUi();
   const onePage = admin && ui === 'v2';
@@ -156,7 +161,7 @@ export function RuleDetailPanel({ rule, usedIn, onClose, number, admin }: {
 
   return (
     <div className="fixed inset-0 z-[10000] flex justify-end bg-black/40" onClick={onClose}>
-      <div className="flex h-full w-[800px] max-w-[95vw] flex-col bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
+      <div className={`flex h-full ${wide ? 'w-[1040px]' : 'w-[800px]'} max-w-[95vw] flex-col bg-white shadow-xl`} onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start justify-between gap-3 px-5 pt-4">
           <h3 className="flex min-w-0 items-start gap-2 text-[16px] font-semibold leading-6 text-[#364658]">
             <span className="mt-1 h-4 w-[3px] flex-shrink-0 rounded-full" style={{ backgroundColor: SEVERITY_PILL[rule.severity].bar }} title={rule.severity} />
@@ -174,7 +179,7 @@ export function RuleDetailPanel({ rule, usedIn, onClose, number, admin }: {
           <MetaChip value={rule.assessment} tone={rule.assessment === 'Automated' ? 'green' : 'amber'} title={rule.assessment === 'Automated' ? 'The agent checks this rule' : 'A person has to review this rule'} />
           <MetaChip label="Severity" value={rule.severity} />
         </div>
-        {onePage ? <RulePageBody rule={rule} /> : <RuleDetailBody rule={rule} usedIn={usedIn} />}
+        {onePage ? <RulePageBody rule={rule} /> : <RuleDetailBody rule={rule} usedIn={usedIn} firstTab={firstTab} />}
       </div>
     </div>
   );
@@ -279,14 +284,16 @@ function RulePageBody({ rule }: { rule: ComplianceRule }) {
  *  their content, without a panel around them — so a panel that drills into a rule can show it
  *  in place, under its own header. `lead` sits above the tabs (the result on one endpoint, or
  *  the endpoints a rule passed / failed on). There is no Results tab: results are never a tab. */
-export function RuleDetailBody({ rule, usedIn, lead }: {
+export function RuleDetailBody({ rule, usedIn, lead, firstTab }: {
   rule: ComplianceRule;
   usedIn: string[];
   lead?: React.ReactNode;
+  firstTab?: RuleFirstTab;
 }) {
-  const [tab, setTab] = useState<RuleTab>('summary');
-  useEffect(() => { setTab('summary'); }, [rule.id]);
-  const tabs = RULE_TABS;
+  const start: RuleTab = firstTab ? 'first' : 'summary';
+  const [tab, setTab] = useState<RuleTab>(start);
+  useEffect(() => { setTab(start); }, [rule.id]);
+  const tabs: [RuleTab, string][] = firstTab ? [['first', firstTab.label], ...RULE_TABS] : RULE_TABS;
 
   return (
     <>
@@ -305,6 +312,7 @@ export function RuleDetailBody({ rule, usedIn, lead }: {
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+          {tab === 'first' && firstTab?.node}
           {tab === 'summary' && (
             <div className="space-y-5">
               <div>
@@ -371,16 +379,19 @@ export function RuleDetailBody({ rule, usedIn, lead }: {
           {tab === 'controls' && (
             <div className="space-y-4">
               {rule.controls.map((c) => (
-                <div key={c.version} className="rounded-lg border border-[#E5E7EB] p-4">
+                /* The version is the label; the safeguard sits in a quiet filled box under it. */
+                <div key={c.version}>
                   <div className={fieldLabel}>Controls Version: {c.version}</div>
-                  {c.safeguard ? (
-                    <>
-                      <div className="mt-1.5 text-[13px] font-semibold text-[#364658]">{c.safeguard}</div>
-                      {c.text && <p className="mt-1 text-[13px] leading-[1.6] text-[#64748B]">{c.text}</p>}
-                    </>
-                  ) : (
-                    <div className="mt-1.5 text-[13px] text-[#64748B]">Explicitly Not Mapped</div>
-                  )}
+                  <div className="mt-1.5 rounded-lg bg-[#F6F9FC] px-4 py-3">
+                    {c.safeguard ? (
+                      <>
+                        <div className="text-[13px] font-semibold text-[#364658]">{c.safeguard}</div>
+                        {c.text && <p className="mt-1 text-[13px] leading-[1.6] text-[#64748B]">{c.text}</p>}
+                      </>
+                    ) : (
+                      <div className="text-[13px] text-[#64748B]">Explicitly Not Mapped</div>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

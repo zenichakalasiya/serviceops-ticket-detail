@@ -20,6 +20,8 @@ import {
 import type { EndpointOutcome, Finding } from './compliancePolicyData';
 import { scoreColor } from './complianceVizData';
 import { useDrawerStack } from './DrawerStack';
+import { matchesFilter, matchesSearch, NoMatch, optionsFrom, TabListToolbar } from './ComplianceTabFilter';
+import type { FilterValue } from './ComplianceTabFilter';
 
 /* Compliance › Endpoint — the endpoint's detail page. Opened from wherever an endpoint is
  * clicked in the Compliance module (the Endpoints page, a policy's Endpoints tab, the Dashboard)
@@ -40,7 +42,7 @@ import { useDrawerStack } from './DrawerStack';
  * Read only, and LIVE: it reads the policy store, so Scan Now (or a scan anywhere) shows here. */
 
 type Tab = 'policies' | 'audit';
-const TABS: [Tab, string][] = [['policies', 'Policies'], ['audit', 'Audit Trail']];
+const TABS: [Tab, string][] = [['policies', 'Compliance Audit'], ['audit', 'Audit Trail']];
 const OUTCOME_TONE: Record<EndpointOutcome, { bg: string; text: string }> = {
   Compliant: { bg: '#ECFDF3', text: '#15803D' },
   'Non-Compliant': { bg: '#FEF3F2', text: '#B42318' },
@@ -101,6 +103,10 @@ export function ComplianceEndpointDrawer({
   const [openRule, setOpenRule] = useState<{ ruleId: string; policyId: string } | null>(null);
   /** The policy whose rule groups (with this endpoint's Pass/Fail) are open in the side drawer. */
   const [policyDrawer, setPolicyDrawer] = useState<string | null>(null);
+  /** Search + Filter on the Policies tab (ComplianceTabFilter). */
+  const [polQ, setPolQ] = useState('');
+  const [polF, setPolF] = useState<FilterValue>({});
+  useEffect(() => { setPolQ(''); setPolF({}); }, [activeAssetId]);
 
   /* Every policy that assesses this endpoint, with its result here. */
   const mine = useMemo(
@@ -109,6 +115,8 @@ export function ComplianceEndpointDrawer({
       .map((p) => ({ policy: p, result: endpointResults(p).find((r) => r.endpoint.id === epId)! })),
     [policies, epId, lockPolicy],
   );
+  const shownMine = mine.filter(({ policy, result }) => matchesSearch(polQ, [policy.id, policy.name]) &&
+    matchesFilter(polF, (k) => (k === 'result' ? result.outcome : benchmarkOf(policy.benchmarkId)?.name)));
   const [pid, setPid] = useState(lockPolicy ?? mine.find((m) => m.policy.lastScan)?.policy.id ?? mine[0]?.policy.id ?? '');
   useEffect(() => { if (!mine.some((m) => m.policy.id === pid)) setPid(mine[0]?.policy.id ?? ''); }, [mine, pid]);
 
@@ -230,11 +238,18 @@ export function ComplianceEndpointDrawer({
               {/* ── Policies: every policy that assesses it ── */}
               {tab === 'policies' && (
                 <div className="px-6 py-4">
+                  {mine.length > 0 && (() => {
+                    const groups = [
+                      { key: 'result', label: 'Result', options: (['Compliant', 'Non-Compliant', 'Not Scanned'] as EndpointOutcome[]).map((o) => ({ value: o, dot: OUTCOME_TONE[o].text })) },
+                      { key: 'benchmark', label: 'Benchmark', options: optionsFrom(mine.map((m) => benchmarkOf(m.policy.benchmarkId)?.name)) },
+                    ];
+                    return <TabListToolbar search={polQ} onSearch={setPolQ} groups={groups} value={polF} onChange={setPolF} />;
+                  })()}
                   <table className="w-full table-fixed">
                     <colgroup><col /><col className="w-[32%]" /><col className="w-[150px]" /><col className="w-[190px]" /></colgroup>
                     <thead><tr className="border-b border-[#e5e7eb]">{['Policy', 'Benchmark', 'Result', 'Last Scan'].map((h) => <th key={h} className={th}>{h}</th>)}</tr></thead>
                     <tbody className="divide-y divide-[#e5e7eb]">
-                      {mine.map(({ policy, result }) => (
+                      {shownMine.map(({ policy, result }) => (
                         <tr key={policy.id} onClick={() => setPolicyDrawer(policy.id)} className="group/row cursor-pointer transition-colors hover:bg-[#f9fafb]">
                           <td className="px-4 py-3"><span className="flex min-w-0 items-center gap-2"><IdPill id={policy.id} /><span className="truncate text-[13px] text-[#364658] group-hover/row:text-[#3D8BD0]">{policy.name}</span></span></td>
                           <td className="px-4 py-3"><span className="block truncate text-[13px] text-[#64748B]" title={benchmarkOf(policy.benchmarkId)?.name}>{benchmarkOf(policy.benchmarkId)?.name ?? '—'}</span></td>
@@ -245,6 +260,7 @@ export function ComplianceEndpointDrawer({
                     </tbody>
                   </table>
                   {mine.length === 0 && <p className="py-10 text-center text-[13px] text-[#9CA3AF]">No policy assesses this endpoint.</p>}
+                  {mine.length > 0 && shownMine.length === 0 && <NoMatch what="policies" onClear={() => { setPolQ(''); setPolF({}); }} />}
                 </div>
               )}
 
@@ -255,7 +271,7 @@ export function ComplianceEndpointDrawer({
           <aside className="flex w-[380px] flex-shrink-0 flex-col border-l border-[#e5e7eb] bg-white">
             <div className="flex-shrink-0 border-b border-[#e5e7eb] px-4 py-3 text-[16px] font-semibold text-[#364658]">Endpoint Properties</div>
             <div className="min-h-0 flex-1 overflow-y-auto p-4">
-              <div className="rounded-lg border border-[#e5e7eb]">
+              <div className="overflow-hidden rounded-lg border border-[#e5e7eb]">
                 <div className="border-b border-[#e5e7eb] px-4 py-3 text-[14px] font-semibold text-[#364658]">Endpoint Fields</div>
                 <dl className="space-y-3.5 px-4 py-4">
                   {fields.map(([label, value]) => (
