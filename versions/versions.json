@@ -100,7 +100,7 @@
           "Rule results sidebar has no Request exception; V2 rule groups show the benchmark name as the heading and each main group as its own tinted card.",
           "Admin rule panel's CIS Controls use the technician Controls style: version label above a filled box."
         ] },
-        { "version": "v2", "date": "2026-10-28", "commit": "e5a3011", "changes": [
+        { "version": "v2", "date": "2026-10-28", "commit": "ff23f91", "changes": [
           "Rule details: a MITRE ATT&CK tab after Controls (techniques, tactics, mitigations with their names), on both technician and admin sides.",
           "Endpoint page tabs: Vulnerabilities · Patches · Compliance Audit · Installation · Notes · Audit Trail.",
           "A version menu on every Compliance page to open an older version.",
