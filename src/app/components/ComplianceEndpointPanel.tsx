@@ -365,7 +365,7 @@ export function ComplianceEndpointPanel({ endpointId, ruleId, policyId, onClose,
               <div className="space-y-4 px-5">
                 {got ? (
                   <>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 pt-2">
                       <TabListToolbar className="min-w-0 flex-1" search={bdQ} onSearch={setBdQ} groups={[]} value={{}} onChange={() => {}} placeholder="Search rules..." />
                       <ExportResultButton ep={ep} policy={policy} benchmark={benchmark} mine={mine} />
                     </div>
@@ -743,11 +743,7 @@ function ResultCard({ rule, endpoint, finding, lastScan, exception, onRequestExc
           </div>
         )}
       </div>
-      {!exception && finding && !finding.passed && onRequestException && (
-        <div className="flex justify-end border-t border-[#E5E7EB] px-4 py-3">
-          <button type="button" onClick={onRequestException} className="inline-flex h-8 items-center rounded border border-[#DFE5ED] bg-white px-3 text-[13px] font-medium text-[#364658] transition-colors hover:bg-[#F5F7FA]">Request exception</button>
-        </div>
-      )}
+      {/* No Request exception here — exceptions are not part of this flow (Zeni, 28 Oct 2026). */}
     </section>
   );
 }

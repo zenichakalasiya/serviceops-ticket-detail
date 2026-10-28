@@ -677,7 +677,8 @@ function GroupExplorer({ groups, setGroups, rootName, naming, setNaming, expande
     if (e.key === 'Delete') { e.preventDefault(); remove(sel); }
   };
 
-  const rowCls = (s: ExplorerSel) => `group/ex relative flex h-9 cursor-pointer select-none items-center gap-1.5 pr-2 transition-colors ${isSel(s) ? 'bg-[#EBF5FF] before:absolute before:inset-y-0 before:left-0 before:w-[2px] before:bg-[#3D8BD0]' : 'hover:bg-[#F5F7FA]'}`;
+  const TONE = { top: 'min-h-[44px] bg-[#F6F9FC]', sub: 'h-10 border-t border-[#EEF1F4] bg-[#FAFBFC]', rule: 'h-10 border-t border-[#EEF1F4] bg-white' } as const;
+  const rowCls = (s: ExplorerSel, tone: keyof typeof TONE = 'rule') => `group/ex relative flex cursor-pointer select-none items-center gap-1.5 pr-2 transition-colors ${TONE[tone]} ${isSel(s) ? '!bg-[#EBF5FF] before:absolute before:inset-y-0 before:left-0 before:w-[2px] before:bg-[#3D8BD0]' : 'hover:!bg-[#F5F7FA]'}`;
   const hoverIcons = (s: ExplorerSel, extra?: React.ReactNode) => (
     <span className={`ml-auto flex flex-shrink-0 items-center ${isSel(s) ? '' : 'invisible group-hover/ex:visible'}`} onClick={(e) => e.stopPropagation()}>
       <ActionIcon label="Add group inside" reason={addReasonFor(s)} onClick={() => addInside(s)}><Plus size={15} /></ActionIcon>
@@ -703,7 +704,7 @@ function GroupExplorer({ groups, setGroups, rootName, naming, setNaming, expande
     const total = groupRuleIds(g).length;
     return (
       <div key={g.id}>
-        <div style={{ paddingLeft: 8 + (depth + 1) * 18 }} className={rowCls(s)} onClick={() => setSel(s)} onContextMenu={(e) => openCtx(e, s)} onDoubleClick={() => toggle(g.id)}>
+        <div style={{ paddingLeft: 12 + depth * 22 }} className={rowCls(s, depth ? 'sub' : 'top')} onClick={() => setSel(s)} onContextMenu={(e) => openCtx(e, s)} onDoubleClick={() => toggle(g.id)}>
           {chevron(open, () => toggle(g.id), g.ruleIds.length > 0 || kids.length > 0)}
           <Tooltip>
             <TooltipTrigger asChild><span className={`flex-shrink-0 cursor-default text-[13px] tabular-nums text-[#364658] ${depth ? 'font-semibold' : 'font-bold'}`}>{num}</span></TooltipTrigger>
@@ -737,7 +738,7 @@ function GroupExplorer({ groups, setGroups, rootName, naming, setNaming, expande
               if (!r) return null;
               const rs: ExplorerSel = { kind: 'rule', groupId: g.id, ruleId: rid };
               return (
-                <div key={rid} style={{ paddingLeft: 8 + (depth + 2) * 18 + 20 }} className={rowCls(rs)} onClick={() => setSel(rs)} onDoubleClick={() => onOpenRule(rid)} onContextMenu={(e) => openCtx(e, rs)}>
+                <div key={rid} style={{ paddingLeft: 12 + (depth + 1) * 22 + 20 }} className={rowCls(rs, 'rule')} onClick={() => setSel(rs)} onDoubleClick={() => onOpenRule(rid)} onContextMenu={(e) => openCtx(e, rs)}>
                   <span className="h-4 w-[3px] flex-shrink-0 rounded-full" style={{ backgroundColor: SEVERITY_PILL[r.severity].bar }} title={r.severity} />
                   <span className="flex-shrink-0 text-[12px] tabular-nums text-[#7B8FA5]">{num}.{j + 1}</span>
                   <span className="line-clamp-2 min-w-0 flex-1 break-words text-[13px] text-[#364658]" title={r.name}>{r.name}</span>
@@ -768,26 +769,29 @@ function GroupExplorer({ groups, setGroups, rootName, naming, setNaming, expande
   ] as (readonly [string, React.ReactNode, string | undefined, () => void])[]) : [];
 
   return (
-    <div className="overflow-hidden rounded-lg border border-[#E5E7EB]" tabIndex={0} onKeyDown={onKey}>
-      {/* Title toolbar — acts on the SELECTED row. */}
-      <div className="flex h-10 items-center gap-1 border-b border-[#E5E7EB] bg-[#F6F9FC] pl-3 pr-2">
-        <span className="min-w-0 flex-1 truncate text-[12px] text-[#7B8FA5]">
-          {groupCount} group{groupCount === 1 ? '' : 's'} · {ruleCount} rule{ruleCount === 1 ? '' : 's'} · adds go into <span className="font-medium text-[#364658]">{sel.kind === 'root' ? 'the top level' : `${nums.get(targetOf(sel)!) ?? ''} ${find(targetOf(sel)!)?.name || 'Untitled group'}`}</span>
+    <div className="space-y-3 outline-none" tabIndex={0} onKeyDown={onKey}>
+      {/* The heading bar IS the root — the benchmark itself. Click it to select the top level; its
+          + · Attach rules · Collapse all act on whatever is selected. */}
+      <div
+        onClick={() => setSel({ kind: 'root' })}
+        onContextMenu={(e) => openCtx(e, { kind: 'root' })}
+        className={`group/ex flex h-11 cursor-pointer select-none items-center gap-2 rounded-lg border pl-3 pr-2 transition-colors ${isSel({ kind: 'root' }) ? 'border-[#3D8BD0] bg-[#EBF5FF]' : 'border-[#E5E7EB] bg-white hover:bg-[#F9FAFB]'}`}
+      >
+        <Layers size={16} className="flex-shrink-0 text-[#7B8FA5]" />
+        <span className="min-w-0 flex-1 truncate text-[14px] font-semibold text-[#364658]">{rootName.trim() || 'New benchmark'}</span>
+        <span className="flex flex-shrink-0 items-center" onClick={(e) => e.stopPropagation()}>
+          <ActionIcon label={sel.kind === 'root' ? 'Add a main group' : 'Add group inside the selected group'} reason={addReasonFor(sel)} onClick={() => addInside(sel)}><Plus size={16} /></ActionIcon>
+          <ActionIcon label="Attach rules to the selected group" reason={attachReasonFor(sel)} onClick={() => attach(sel)}><Link2 size={15} /></ActionIcon>
+          <ActionIcon label="Collapse all" onClick={() => setExpanded(new Set())}><ChevronsDownUp size={15} /></ActionIcon>
         </span>
-        <ActionIcon label="Add group inside the selected group" reason={addReasonFor(sel)} onClick={() => addInside(sel)}><Plus size={16} /></ActionIcon>
-        <ActionIcon label="Attach rules to the selected group" reason={attachReasonFor(sel)} onClick={() => attach(sel)}><Link2 size={15} /></ActionIcon>
-        <ActionIcon label="Collapse all" onClick={() => setExpanded(new Set())}><ChevronsDownUp size={15} /></ActionIcon>
       </div>
-      <div className="py-1">
-        {/* The root — the benchmark itself. Select it to add top-level groups. */}
-        <div style={{ paddingLeft: 8 }} className={rowCls({ kind: 'root' })} onClick={() => setSel({ kind: 'root' })} onContextMenu={(e) => openCtx(e, { kind: 'root' })}>
-          {chevron(rootOpen, () => setRootOpen((v) => !v), groups.length > 0)}
-          <Layers size={15} className="flex-shrink-0 text-[#7B8FA5]" />
-          <span className="min-w-0 truncate text-[13px] font-semibold text-[#364658]">{rootName.trim() || 'New benchmark'}</span>
-          {hoverIcons({ kind: 'root' })}
+      {/* One card per main group (1, 2, 3 …), as in V1. */}
+      {groups.map((g) => (
+        <div key={g.id} className={`overflow-hidden rounded-lg border ${showErrors && !g.name.trim() ? 'border-[#F25C4E]' : 'border-[#E5E7EB]'}`}>
+          {renderGroup(g, 0)}
         </div>
-        {rootOpen && groups.map((g) => renderGroup(g, 0))}
-      </div>
+      ))}
+      {!groups.length && <p className="rounded-lg border border-dashed border-[#DFE5ED] px-4 py-6 text-center text-[13px] text-[#9CA3AF]">No groups yet — select the benchmark above and press +.</p>}
       {ctx && createPortal(
         <>
           <div className="fixed inset-0 z-[10040]" onClick={() => setCtx(null)} onContextMenu={(e) => { e.preventDefault(); setCtx(null); }} />
