@@ -1,5 +1,5 @@
 import { ComplianceVersionMenu } from './ComplianceVersionMenu';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { isValidElement, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 import {
@@ -92,7 +92,7 @@ function OriginTag({ origin }: { origin: Benchmark['origin'] }) {
 /** A disabled control says WHY on hover — a Radix tooltip needs a wrapper to fire on a disabled button. */
 function ActionIcon({ label, reason, onClick, danger, children }: {
   label: string;
-  reason?: string;
+  reason?: React.ReactNode;
   onClick: () => void;
   danger?: boolean;
   children: React.ReactNode;
@@ -362,7 +362,13 @@ function EmptyRulesArt() {
 
 /** A button that explains itself when it cannot be used — a Radix tooltip needs a wrapper to
  *  fire on a disabled button. */
-function ReasonButton({ reason, onClick, className, children }: { reason?: string; onClick?: () => void; className: string; children: React.ReactNode }) {
+/** A reason node as plain text, for a native title. */
+const textOf = (n: React.ReactNode): string =>
+  typeof n === 'string' || typeof n === 'number' ? String(n)
+    : Array.isArray(n) ? n.map(textOf).join('')
+    : isValidElement(n) ? textOf((n.props as { children?: React.ReactNode }).children) : '';
+
+function ReasonButton({ reason, onClick, className, children }: { reason?: React.ReactNode; onClick?: () => void; className: string; children: React.ReactNode }) {
   const btn = <button type="button" disabled={!!reason} style={reason ? { pointerEvents: 'none' } : undefined} onClick={(e) => { e.stopPropagation(); onClick?.(); }} className={className}>{children}</button>;
   if (!reason) return btn;
   return (
@@ -410,7 +416,7 @@ export const MAX_GROUP_DEPTH = 7;
 interface TreeOps {
   editable?: boolean;
   showErrors?: boolean;
-  attachReason?: string;
+  attachReason?: React.ReactNode;
   ruleScope?: string;
   open: Set<string>;
   onToggle: (id: string) => void;
@@ -617,7 +623,7 @@ function GroupExplorer({ groups, setGroups, rootName, naming, setNaming, expande
   expanded: Set<string>;
   setExpanded: React.Dispatch<React.SetStateAction<Set<string>>>;
   showErrors: boolean;
-  attachReason?: string;
+  attachReason?: React.ReactNode;
   onAttach: (groupId: string) => void;
   onOpenRule: (ruleId: string) => void;
   onDelete: (g: RuleGroup) => void;
@@ -770,7 +776,7 @@ function GroupExplorer({ groups, setGroups, rootName, naming, setNaming, expande
     ...(ctx.sel.kind === 'group' ? [['Rename', <Pencil size={14} />, undefined, () => rename(ctx.sel)] as const] : []),
     ...(ctx.sel.kind === 'group' ? [['Delete', <Trash2 size={15} />, deleteReason(ctx.sel.id), () => remove(ctx.sel)] as const] : []),
     ...(ctx.sel.kind === 'rule' ? [['Remove from group', <X size={15} />, undefined, () => remove(ctx.sel)] as const] : []),
-  ] as (readonly [string, React.ReactNode, string | undefined, () => void])[]) : [];
+  ] as (readonly [string, React.ReactNode, React.ReactNode, () => void])[]) : [];
 
   return (
     <div className="space-y-3 outline-none" tabIndex={0} onKeyDown={onKey}>
@@ -805,7 +811,7 @@ function GroupExplorer({ groups, setGroups, rootName, naming, setNaming, expande
                 key={label}
                 type="button"
                 disabled={!!reason}
-                title={reason}
+                title={reason ? textOf(reason) : undefined}
                 onClick={() => { setCtx(null); fn(); }}
                 className={`flex w-full items-center gap-2.5 px-3 py-2 text-left text-[13px] transition-colors hover:bg-[#F5F7FA] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent ${label === 'Delete' ? 'text-[#DC2626]' : 'text-[#364658]'}`}
               >
@@ -1197,8 +1203,9 @@ function BenchmarkForm({ editing, source, names, onCancel, onSave }: {
     { header: 'Severity', cell: (r) => <SeverityPill severity={r.severity} /> },
   ];
 
-  const attachReason = !type ? 'Choose the benchmark’s Type and Version first — only rules for that OS version can be attached'
-    : !version ? 'Choose the benchmark’s Version first — only that version’s rules can be attached' : undefined;
+  /* The words that say WHAT to do are bold — the reader scans for them, not the sentence. */
+  const attachReason = !type ? <>Choose the benchmark’s <b className="font-semibold">Type</b> and <b className="font-semibold">Version</b> first — only rules for that OS version can be attached</>
+    : !version ? <>Choose the benchmark’s <b className="font-semibold">Version</b> first — only that version’s rules can be attached</> : undefined;
   const title = editing ? 'Edit Benchmark' : source ? 'Clone Benchmark' : 'Create Benchmark';
   const openRule = ruleId ? ruleById(ruleId) : undefined;
 
