@@ -10,6 +10,7 @@
  *     panel over the dashboard (rules live inside benchmarks, so there is no all-rules page);
  *   · a Top Failed Rules row → that rule's results; a policy → its detail page in the shared
  *     drawer; an endpoint (id pill or Top Endpoints bar) → its compliance detail page. */
+import { ComplianceVersionMenu } from './ComplianceVersionMenu';
 import { useMemo, useState } from 'react';
 import { X } from 'lucide-react';
 import { Sidebar } from './Sidebar';
@@ -60,9 +61,12 @@ export function ComplianceDashboardPage({ onNavigate }: { onNavigate?: (page: st
         <Header selectedCount={0} />
         <div className="flex flex-shrink-0 items-center justify-between border-b border-[#e5e7eb] bg-white px-6 py-3">
           <h1 className="text-[17px] font-semibold text-[#1E293B]">Compliance Dashboard</h1>
-          <span className="text-[12px] text-[#7B8FA5]">
-            {v.stats.filter((s) => s.score !== null).length} of {v.stats.length} policies scanned · latest results
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-[12px] text-[#7B8FA5]">
+              {v.stats.filter((s) => s.score !== null).length} of {v.stats.length} policies scanned · latest results
+            </span>
+            <ComplianceVersionMenu />
+          </div>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto bg-[#F6F8FB]">
           <ComplianceVizOverview onOpenPolicy={openPolicy} onOpenEndpoint={(id) => openEndpoint(id)} onDrill={onDrill} />

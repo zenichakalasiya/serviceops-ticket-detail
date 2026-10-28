@@ -3,6 +3,7 @@
  * checks, whether the last scan reached it. A row opens the endpoint's compliance detail page
  * (Overview · Rules · Policies · Exceptions · Audit Trail). It was the old Compliance Visualization page's
  * Explorer › Resources tab. */
+import { ComplianceVersionMenu } from './ComplianceVersionMenu';
 import { useMemo, useState } from 'react';
 import { useOpenComplianceEndpoint } from './ComplianceEndpointDrawer';
 import { AssetRegisterPage } from './AssetRegisterPage';
@@ -37,6 +38,7 @@ export function ComplianceEndpointsPage({ onNavigate }: { onNavigate?: (page: st
     <>
       <AssetRegisterPage
         activePage="compliance-endpoints"
+        titleExtra={<ComplianceVersionMenu />}
         stackModule="endpoints"
         initialFilters={drill}
         viewsStore="cviz-resource"

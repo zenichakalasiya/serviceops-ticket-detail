@@ -4,6 +4,7 @@
  * endpoints checked). A row opens the rule in a side panel whose FIRST tab is Endpoints: one row
  * per endpoint (Fail when any policy fails it there), with search and filters, then the rule's
  * metadata tabs. An endpoint row opens the Endpoint page. */
+import { ComplianceVersionMenu } from './ComplianceVersionMenu';
 import { useMemo, useState } from 'react';
 import { Building2, CircleDot, Monitor, Search, ShieldCheck } from 'lucide-react';
 import { AssetRegisterPage } from './AssetRegisterPage';
@@ -129,6 +130,7 @@ export function ComplianceRulesPage({ onNavigate }: { onNavigate?: (page: string
     <>
       <AssetRegisterPage
         activePage="compliance-rules"
+        titleExtra={<ComplianceVersionMenu />}
         stackModule="compliance-rules"
         viewsStore="cviz-rule"
         noun="rule"

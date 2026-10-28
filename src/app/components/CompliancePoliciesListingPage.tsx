@@ -7,6 +7,7 @@
    scan went, when it runs next, and whether it is on. Row actions: Run Now · Schedule · Edit
    · ⋮ (Clone, Delete); the Enable switch is its own column. Create opens the full-screen
    form; a row click opens the policy's detail page in the shared drawer. */
+import { ComplianceVersionMenu } from './ComplianceVersionMenu';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { ShieldCheck } from 'lucide-react';
@@ -159,6 +160,7 @@ export function CompliancePoliciesListingPage({ onNavigate }: { onNavigate?: (pa
     <>
       <AssetRegisterPage
         activePage="compliance-policies"
+        titleExtra={<ComplianceVersionMenu />}
         stackModule="compliance-policies"
         initialFilters={drill}
         viewsStore="compliance"

@@ -66,7 +66,60 @@ export interface ComplianceRule {
   /** The CIS section the check lives under — Default benchmarks group their rules by it. */
   section: [string, string];
   subsection?: [string, string];
+  /** MITRE ATT&CK mapping CIS publishes for the check — null when it has none. */
+  mitre: MitreMapping | null;
 }
+
+/** CIS "MITRE ATT&CK Mappings": the techniques an attacker would use if the rule fails, the
+ *  tactics they serve, and the ATT&CK mitigations the rule is an instance of. IDs only — the
+ *  names come from MITRE_NAMES. */
+export interface MitreMapping { techniques: string[]; tactics: string[]; mitigations: string[] }
+
+export const MITRE_NAMES: Record<string, string> = {
+  T1003: 'OS Credential Dumping', T1005: 'Data from Local System', T1021: 'Remote Services', 'T1021.004': 'SSH',
+  T1040: 'Network Sniffing', T1068: 'Exploitation for Privilege Escalation', T1070: 'Indicator Removal',
+  'T1070.002': 'Clear Linux or Mac System Logs', T1078: 'Valid Accounts', 'T1078.001': 'Default Accounts',
+  T1110: 'Brute Force', 'T1110.001': 'Password Guessing', 'T1110.002': 'Password Cracking',
+  T1190: 'Exploit Public-Facing Application', T1195: 'Supply Chain Compromise', 'T1195.002': 'Compromise Software Supply Chain',
+  T1210: 'Exploitation of Remote Services', T1222: 'File and Directory Permissions Modification',
+  T1499: 'Endpoint Denial of Service', 'T1499.001': 'OS Exhaustion Flood', T1557: 'Adversary-in-the-Middle',
+  T1562: 'Impair Defenses', 'T1562.004': 'Disable or Modify System Firewall', 'T1562.006': 'Indicator Blocking',
+  T1563: 'Remote Service Session Hijacking', T1602: 'Data from Configuration Repository', 'T1602.001': 'SNMP (MIB Dump)',
+  TA0001: 'Initial Access', TA0002: 'Execution', TA0004: 'Privilege Escalation', TA0005: 'Defense Evasion',
+  TA0006: 'Credential Access', TA0008: 'Lateral Movement', TA0009: 'Collection',
+  M1022: 'Restrict File and Directory Permissions', M1026: 'Privileged Account Management', M1027: 'Password Policies',
+  M1029: 'Remote Data Storage', M1032: 'Multi-factor Authentication', M1036: 'Account Use Policies',
+  M1037: 'Filter Network Traffic', M1041: 'Encrypt Sensitive Information', M1042: 'Disable or Remove Feature or Program',
+  M1047: 'Audit', M1050: 'Exploit Protection', M1051: 'Update Software', M1054: 'Software Configuration',
+};
+
+const m = (techniques: string[], tactics: string[], mitigations: string[]): MitreMapping => ({ techniques, tactics, mitigations });
+/** Per check key. A key missing here has no mapping (CIS leaves some checks unmapped). */
+const MITRE_BY_CHECK: Record<string, MitreMapping> = {
+  cramfs: m(['T1005'], ['TA0009'], ['M1050']),
+  tmp: m(['T1499', 'T1499.001'], ['TA0005'], ['M1022']),
+  gpgcheck: m(['T1195', 'T1195.002'], ['TA0001'], ['M1051']),
+  aslr: m(['T1068'], ['TA0002'], ['M1050']),
+  coredump: m(['T1003'], ['TA0006'], ['M1022']),
+  firewalld: m(['T1562', 'T1562.004'], ['TA0005'], ['M1037']),
+  auditd: m(['T1562', 'T1562.006'], ['TA0005'], ['M1047']),
+  sshroot: m(['T1078', 'T1078.001', 'T1021.004'], ['TA0001', 'TA0008'], ['M1042']),
+  sshtries: m(['T1110', 'T1110.001'], ['TA0006'], ['M1036']),
+  passwd: m(['T1222'], ['TA0005'], ['M1022']),
+  pwhistory: m(['T1110', 'T1110.002'], ['TA0006'], ['M1027']),
+  pwlength: m(['T1110', 'T1110.002'], ['TA0006'], ['M1027']),
+  lockout: m(['T1110', 'T1110.001'], ['TA0006'], ['M1036']),
+  spooler: m(['T1068'], ['TA0004'], ['M1042']),
+  smb1: m(['T1210'], ['TA0008'], ['M1042']),
+  aaa: m(['T1078'], ['TA0001'], ['M1032']),
+  telnet: m(['T1040', 'T1557'], ['TA0006'], ['M1041']),
+  snmp: m(['T1602', 'T1602.001'], ['TA0009'], ['M1054']),
+  logbuffer: m(['T1070', 'T1070.002'], ['TA0005'], ['M1029']),
+  ntp: m(['T1070'], ['TA0005'], ['M1047']),
+  fortiadmin: m(['T1078', 'T1078.001'], ['TA0001'], ['M1026']),
+  fortitimeout: m(['T1563'], ['TA0008'], ['M1036']),
+  fortianyany: m(['T1190'], ['TA0001'], ['M1037']),
+};
 
 export type Profile = 'L1' | 'L2';
 export type Assessment = 'Automated' | 'Manual';
@@ -496,6 +549,7 @@ export const RULES: ComplianceRule[] = CHECKS.flatMap((c) =>
     assessment: (MANUAL_CHECKS.has(c.key) ? 'Manual' : 'Automated') as Assessment,
     section: c.section,
     subsection: c.subsection,
+    mitre: MITRE_BY_CHECK[c.key] ?? null,
   })),
 ).sort((a, b) =>
   COMPLIANCE_TYPES.indexOf(a.type) - COMPLIANCE_TYPES.indexOf(b.type)

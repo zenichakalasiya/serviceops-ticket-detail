@@ -3,6 +3,7 @@
  * owns them — Admin › Compliance › Benchmark — so there is no create or edit here), scored from
  * the policies that run it. A row opens the benchmark's detail page (ComplianceBenchmarkDrawer:
  * Overview · Rules · Endpoints · Policies) in the shared drawer. */
+import { ComplianceVersionMenu } from './ComplianceVersionMenu';
 import { useMemo } from 'react';
 import { AssetRegisterPage } from './AssetRegisterPage';
 import { usePolicies } from './compliancePolicyData';
@@ -35,6 +36,7 @@ export function ComplianceBenchmarksPage({ onNavigate }: { onNavigate?: (page: s
   return (
     <AssetRegisterPage
       activePage="compliance-benchmarks"
+        titleExtra={<ComplianceVersionMenu />}
       stackModule="compliance-benchmarks"
       viewsStore="cviz-benchmark"
       noun="benchmark"

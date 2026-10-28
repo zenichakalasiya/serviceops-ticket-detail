@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { Loader2, Play, X } from 'lucide-react';
+import { Edit, Loader2, Play, Plus, Trash2, X } from 'lucide-react';
+import { PatchVulnerabilitiesTab } from './PatchVulnerabilitiesTab';
+import { EndpointPatchesTab, INITIAL_ENDPOINT_PATCHES } from './EndpointPatchesTab';
+import type { EndpointPatch } from './EndpointPatchesTab';
+import { EndpointDeploymentTab } from './EndpointDeploymentTab';
 import { DrawerTabStrip } from './DrawerTabStrip';
 import { MinimizedDrawerRail } from './MinimizedDrawerRail';
 import { HeaderIdPill } from './HeaderIdPill';
@@ -41,8 +45,76 @@ import type { FilterValue } from './ComplianceTabFilter';
  *
  * Read only, and LIVE: it reads the policy store, so Scan Now (or a scan anywhere) shows here. */
 
-type Tab = 'policies' | 'audit';
-const TABS: [Tab, string][] = [['policies', 'Compliance Audit'], ['audit', 'Audit Trail']];
+/* Tabs follow the Patch module's Endpoint page (Vulnerabilities · Patches · Installation · Notes ·
+   Audit Trail), with Compliance Audit after Patches (Zeni, 28 Oct 2026). The patch tabs reuse that
+   page's own components. It opens on Compliance Audit — this is the Compliance module. */
+type Tab = 'vulnerabilities' | 'patches' | 'policies' | 'installation' | 'notes' | 'audit';
+const TABS: [Tab, string][] = [
+  ['vulnerabilities', 'Vulnerabilities'], ['patches', 'Patches'], ['policies', 'Compliance Audit'],
+  ['installation', 'Installation'], ['notes', 'Notes'], ['audit', 'Audit Trail'],
+];
+
+interface EpNote { id: number; name: string; author: string; initials: string; color: string; time: string; text: string }
+const SEED_NOTES: EpNote[] = [
+  { id: 1, name: 'Hardening exception', author: 'A. Kumar', initials: 'AK', color: '#10B981', time: '21 Oct 2026, 11:05 AM', text: 'cramfs module left loadable until the legacy backup agent is retired (CHG-2091).' },
+  { id: 2, name: 'Rescan after patching', author: 'Riya Shah', initials: 'RS', color: '#6366F1', time: '14 Oct 2026, 04:40 PM', text: 'Ran the compliance scan again after the October patch window — SSH findings cleared.' },
+];
+
+/** The endpoint's notes — the same yellow note cards the Patch Endpoint page shows in its rail. */
+function NotesTab() {
+  const [notes, setNotes] = useState<EpNote[]>(SEED_NOTES);
+  const [form, setForm] = useState<{ id: number | null; name: string; text: string } | null>(null);
+  const save = () => {
+    if (!form) return;
+    const name = form.name.trim(); const text = form.text.trim();
+    if (!name || !text) return;
+    setNotes((prev) => (form.id != null
+      ? prev.map((n) => (n.id === form.id ? { ...n, name, text } : n))
+      : [{ id: Date.now(), name, text, author: 'You', initials: 'YO', color: '#3D8BD0', time: 'Just now' }, ...prev]));
+    setForm(null);
+  };
+  const input = 'w-full rounded border border-[#DFE5ED] bg-white px-3 text-[13px] text-[#364658] outline-none placeholder:text-[#9CA3AF] focus:border-[#3D8BD0]';
+  return (
+    <div className="px-6 py-4">
+      <div className="mb-3 flex items-center justify-between">
+        <span className="text-[13px] text-[#7B8FA5]"><span className="font-medium text-[#364658]">{notes.length}</span> {notes.length === 1 ? 'note' : 'notes'}</span>
+        {!form && (
+          <button type="button" onClick={() => setForm({ id: null, name: '', text: '' })} className="inline-flex h-8 items-center gap-1.5 rounded bg-[#3D8BD0] px-3 text-[13px] font-medium text-white transition-colors hover:bg-[#3478B5]">
+            <Plus size={14} />Add Note
+          </button>
+        )}
+      </div>
+      {form && (
+        <div className="mb-3 space-y-2 rounded-lg border border-[#DFE5ED] p-3">
+          <input autoFocus value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Note name" className={`${input} h-8`} />
+          <textarea value={form.text} onChange={(e) => setForm({ ...form, text: e.target.value })} placeholder="Write the note" rows={3} className={`${input} resize-none py-2`} />
+          <div className="flex justify-end gap-2">
+            <button type="button" onClick={() => setForm(null)} className="h-8 rounded border border-[#DFE5ED] px-3 text-[13px] text-[#364658] hover:bg-[#F9FAFB]">Cancel</button>
+            <button type="button" disabled={!form.name.trim() || !form.text.trim()} onClick={save} className="h-8 rounded bg-[#3D8BD0] px-3 text-[13px] font-medium text-white hover:bg-[#3478B5] disabled:opacity-50">{form.id != null ? 'Update' : 'Add'}</button>
+          </div>
+        </div>
+      )}
+      <div className="space-y-3">
+        {notes.map((n) => (
+          <div key={n.id} className="group relative rounded-[10px] bg-[#FFFBEB] p-3">
+            <div className="mb-1.5 flex items-center gap-2">
+              <span className="flex size-6 flex-shrink-0 items-center justify-center rounded-sm text-[10px] font-semibold text-white" style={{ backgroundColor: n.color }}>{n.initials}</span>
+              <span className="text-[12px] font-medium text-[#364658]">{n.author}</span>
+              <span className="ml-auto text-[11px] text-[#9CA3AF] transition-[margin] duration-150 group-hover:mr-14">{n.time}</span>
+            </div>
+            <div className="mb-0.5 pr-12 text-[13px] font-semibold text-[#364658]">{n.name}</div>
+            <p className="whitespace-pre-wrap break-words text-[13px] leading-relaxed text-[#364658]">{n.text}</p>
+            <div className="absolute right-2 top-2 hidden items-center gap-0.5 rounded bg-[#FFFBEB] group-hover:flex">
+              <button type="button" onClick={() => setForm({ id: n.id, name: n.name, text: n.text })} title="Edit" className="flex size-6 items-center justify-center rounded text-[#7B8FA5] transition-colors hover:bg-[#FBEFC8] hover:text-[#3D8BD0]"><Edit size={13} /></button>
+              <button type="button" onClick={() => setNotes((prev) => prev.filter((x) => x.id !== n.id))} title="Delete" className="flex size-6 items-center justify-center rounded text-[#7B8FA5] transition-colors hover:bg-[#FDECEC] hover:text-[#DC2626]"><Trash2 size={13} /></button>
+            </div>
+          </div>
+        ))}
+        {!notes.length && !form && <p className="py-10 text-center text-[13px] text-[#9CA3AF]">No notes yet.</p>}
+      </div>
+    </div>
+  );
+}
 const OUTCOME_TONE: Record<EndpointOutcome, { bg: string; text: string }> = {
   Compliant: { bg: '#ECFDF3', text: '#15803D' },
   'Non-Compliant': { bg: '#FEF3F2', text: '#B42318' },
@@ -101,6 +173,8 @@ export function ComplianceEndpointDrawer({
   const toggleFull = () => { const w = full ? 1080 : 99999; setWidthLocal(w); onStackWidthChange?.(w); };
   /** The rule whose result is open in the side panel, and the policy it is read against. */
   const [openRule, setOpenRule] = useState<{ ruleId: string; policyId: string } | null>(null);
+  /** The Patches tab's buckets — lifted here like the Patch Endpoint page does, so installs stick. */
+  const [epPatches, setEpPatches] = useState<EndpointPatch[]>(INITIAL_ENDPOINT_PATCHES);
   /** The policy whose rule groups (with this endpoint's Pass/Fail) are open in the side drawer. */
   const [policyDrawer, setPolicyDrawer] = useState<string | null>(null);
   /** Search + Filter on the Policies tab (ComplianceTabFilter). */
@@ -264,6 +338,10 @@ export function ComplianceEndpointDrawer({
                 </div>
               )}
 
+              {tab === 'vulnerabilities' && <PatchVulnerabilitiesTab />}
+              {tab === 'patches' && <EndpointPatchesTab patches={epPatches} setPatches={setEpPatches} />}
+              {tab === 'installation' && <EndpointDeploymentTab />}
+              {tab === 'notes' && <NotesTab />}
               {tab === 'audit' && <AuditTrailsTabContent entries={audit} />}
             </div>
           </div>

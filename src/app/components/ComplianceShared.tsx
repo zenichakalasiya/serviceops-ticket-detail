@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { useComplianceRuleUi } from './complianceRuleUi';
 import type { Attr, FilterRule } from './TicketFilterBar';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
-import { SEVERITY_PILL } from './complianceData';
+import { MITRE_NAMES, SEVERITY_PILL } from './complianceData';
 import type { ComplianceRule, Severity } from './complianceData';
 
 /* Pieces the Compliance Rules and Benchmark screens share. None of them is a new design:
@@ -125,13 +125,51 @@ export function DefaultLock({ show, size = 13 }: { show: boolean; size?: number 
 
 /* ── Rule detail — right side panel ──────────────────────────────────────────────────────── */
 
-type RuleTab = 'first' | 'summary' | 'audit' | 'remediation' | 'references' | 'controls';
+type RuleTab = 'first' | 'summary' | 'audit' | 'remediation' | 'references' | 'controls' | 'mitre';
 /** An extra tab placed BEFORE the metadata tabs (the technician Rules page's Endpoints). */
 export interface RuleFirstTab { label: string; node: React.ReactNode }
 const RULE_TABS: [RuleTab, string][] = [
   ['summary', 'Summary'], ['audit', 'Audit'], ['remediation', 'Remediation'],
-  ['references', 'References'], ['controls', 'Controls'],
+  ['references', 'References'], ['controls', 'Controls'], ['mitre', 'MITRE ATT&CK'],
 ];
+
+/** The CIS "MITRE ATT&CK Mappings" table: one row, three columns — each ID with its ATT&CK name
+ *  under it. Shared by the tab and the one-page view. */
+function MitreTable({ rule }: { rule: ComplianceRule }) {
+  if (!rule.mitre) return <p className="text-[13px] text-[#64748B]">CIS publishes no MITRE ATT&amp;CK mapping for this rule.</p>;
+  const cols: [string, string[]][] = [
+    ['Techniques / Sub-techniques', rule.mitre.techniques],
+    ['Tactics', rule.mitre.tactics],
+    ['Mitigations', rule.mitre.mitigations],
+  ];
+  return (
+    <div className="overflow-hidden rounded-lg border border-[#E5E7EB]">
+      <table className="w-full table-fixed">
+        <thead>
+          <tr className="border-b border-[#E5E7EB] bg-[#F6F9FC]">
+            {cols.map(([h]) => <th key={h} className="px-4 py-2.5 text-left text-[12px] font-semibold text-[#364658]">{h}</th>)}
+          </tr>
+        </thead>
+        <tbody>
+          <tr className="divide-x divide-[#E5E7EB]">
+            {cols.map(([h, ids]) => (
+              <td key={h} className="px-4 py-3 align-top">
+                <ul className="space-y-2">
+                  {ids.map((id) => (
+                    <li key={id}>
+                      <div className="text-[13px] font-semibold tabular-nums text-[#364658]">{id}</div>
+                      {MITRE_NAMES[id] && <div className="text-[12px] leading-[1.45] text-[#64748B]">{MITRE_NAMES[id]}</div>}
+                    </li>
+                  ))}
+                </ul>
+              </td>
+            ))}
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
 const fieldLabel = 'text-[12px] text-[#7B8FA5]';
 const fieldValue = 'mt-1 text-[13px] leading-[1.6] text-[#364658]';
@@ -282,6 +320,9 @@ function RulePageBody({ rule }: { rule: ComplianceRule }) {
           ))}
         </div>
       </Block>
+      <Block title="MITRE ATT&CK">
+        <MitreTable rule={rule} />
+      </Block>
     </div>
   );
 }
@@ -402,6 +443,8 @@ export function RuleDetailBody({ rule, usedIn, lead, firstTab }: {
               ))}
             </div>
           )}
+
+          {tab === 'mitre' && <MitreTable rule={rule} />}
 
         </div>
     </>

@@ -3086,3 +3086,18 @@ and ask before building any new one.
     benchmark (root) → top-level; a selected rule adds into its group; toolbar + row hover icons; right-click menu;
     F2 / Delete. A two-pane builder was tried and removed.
   - ⚠️ **Before every new Compliance task, ASK Zeni: save it into Compliance v1, or make a new version?**
+- **Compliance v2 (28 Oct 2026) — the live default; v1 stays frozen.**
+  - **Rule details panel is ALWAYS tabbed** (`onePage = false` in `RuleDetailPanel`; the one-page `RulePageBody`
+    stays built). The logo's V1 | V2 pill now only switches the benchmark rule-group builder.
+  - **MITRE ATT&CK tab** after Controls, both sides (`MitreTable` in ComplianceShared): one row, three columns —
+    Techniques / Sub-techniques · Tactics · Mitigations, each ID with its ATT&CK name under it. Data =
+    `rule.mitre` from `MITRE_BY_CHECK` + `MITRE_NAMES` (complianceData); a check missing there (e.g. banner)
+    says CIS publishes no mapping.
+  - **Endpoint page tabs** = Vulnerabilities · Patches · Compliance Audit · Installation · Notes · Audit Trail
+    (opens on Compliance Audit). The patch tabs reuse the Patch Endpoint page's own components
+    (`PatchVulnerabilitiesTab`, `EndpointPatchesTab`, `EndpointDeploymentTab` — patch mock data, not per
+    machine); Notes = the yellow note cards. Compliance Audit columns stay Policy · Benchmark · Result ·
+    Last Scan (no Posture / Passed / Failed / Critical Fails / New Failures — Zeni).
+  - **Version menu** `ComplianceVersionMenu` ("Version 2 ▾") on the title line of every Compliance page
+    (`AssetRegisterPage titleExtra`, the dashboard header, both admin heads). Older versions open their frozen
+    build in a NEW tab on the same hash. Add a version = a row in its `VERSIONS` + `CURRENT`.

@@ -83,6 +83,7 @@ export function AssetRegisterPage({
   moreActions,
   primaryAction,
   primaryActionInTitle = false,
+  titleExtra,
   layouts,
   defaultCardFields,
   showBarcodeTools = false,
@@ -141,6 +142,8 @@ export function AssetRegisterPage({
   /** true lifts that button onto the TITLE line instead of the tool rail, where it lands at
       the page's top-right corner. */
   primaryActionInTitle?: boolean;
+  /** Anything to sit at the right of the TITLE line (e.g. Compliance's version menu). */
+  titleExtra?: React.ReactNode;
   /** The layouts this module offers, in the picker's order. Defaults to List (+ Dashboard
       where the module builds one) — a register with no work-in-flight axis has no board. */
   layouts?: React.ComponentProps<typeof TicketGridToolbar>['layouts'];
@@ -455,7 +458,10 @@ export function AssetRegisterPage({
                    narrowing what you are looking at, and the one control that MAKES
                    something reads better at the page's own top-right corner. */
                 titleAction={
-                  primaryActionInTitle && primaryAction ? (
+                  titleExtra || (primaryActionInTitle && primaryAction) ? (
+                    <>
+                    {titleExtra}
+                    {primaryActionInTitle && primaryAction && (
                     <button
                       onClick={() => (primaryAction.onClick ? primaryAction.onClick() : toast(`${primaryAction.label} — coming soon`))}
                       className="inline-flex h-8 flex-shrink-0 items-center gap-1.5 whitespace-nowrap rounded bg-[#3D8BD0] px-3 text-[13px] font-medium text-white transition-colors hover:bg-[#2F7AB8]"
@@ -463,6 +469,8 @@ export function AssetRegisterPage({
                       <Plus size={15} />
                       {primaryAction.label}
                     </button>
+                    )}
+                    </>
                   ) : undefined
                 }
               />

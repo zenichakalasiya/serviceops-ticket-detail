@@ -1,3 +1,4 @@
+import { ComplianceVersionMenu } from './ComplianceVersionMenu';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { BadgeCheck, ExternalLink, GitBranch, Monitor, Search, Server, ShieldAlert, X } from 'lucide-react';
@@ -60,7 +61,10 @@ export function AdminComplianceRulesModule({ benchmarks = BENCHMARKS_SEED }: { b
   return (
     <div className="px-4 py-6">
       <div className="mb-4">
-        <h1 className="text-[16px] font-semibold text-[#364658]">Rules</h1>
+        <div className="flex items-center justify-between gap-3">
+          <h1 className="text-[16px] font-semibold text-[#364658]">Rules</h1>
+          <ComplianceVersionMenu />
+        </div>
         <p className="mt-1 text-[13px] leading-[1.6] text-[#7B8FA5]">
           The predefined checks benchmarks are built from — what to read, what it must equal, and how to fix it.{' '}
           <button type="button" onClick={() => toast.success('Opening the docs')} className="inline-flex items-center gap-1 text-[13px] font-medium text-[#3D8BD0] hover:underline">
