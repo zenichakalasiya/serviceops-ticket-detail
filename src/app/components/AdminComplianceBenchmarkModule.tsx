@@ -42,7 +42,7 @@ import type { Benchmark, BenchmarkProfile, ComplianceRule, ComplianceType, Profi
 
 type Screen = { kind: 'list'; open?: string } | { kind: 'form'; id?: string; from?: string; back?: string };
 
-const iconBtn = 'flex size-8 items-center justify-center rounded text-[#64748B] transition-colors hover:bg-[#F3F4F6] hover:text-[#364658] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent';
+const iconBtn = 'flex size-8 items-center justify-center rounded text-[#64748B] transition-colors hover:bg-[#F3F4F6] hover:text-[#364658] disabled:pointer-events-none disabled:opacity-40 disabled:hover:bg-transparent';
 /** The drawer header's boxed icon button (ticket header: Watch, Edit). */
 const boxedBtn = 'inline-flex h-8 w-8 items-center justify-center rounded border border-[#DFE5ED] bg-white text-[#6b7280] transition-colors hover:bg-[#F5F7FA] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white';
 const inputCls = formInputCls.replace('rounded-md', 'rounded');
@@ -98,9 +98,9 @@ function ActionIcon({ label, reason, onClick, danger, children }: {
   children: React.ReactNode;
 }) {
   return (
-    <Tooltip>
+    <Tooltip delayDuration={reason ? 0 : undefined}>
       <TooltipTrigger asChild>
-        <span className="inline-flex">
+        <span className={`inline-flex ${reason ? 'cursor-not-allowed' : ''}`}>
           <button
             type="button"
             disabled={!!reason}
@@ -363,11 +363,11 @@ function EmptyRulesArt() {
 /** A button that explains itself when it cannot be used — a Radix tooltip needs a wrapper to
  *  fire on a disabled button. */
 function ReasonButton({ reason, onClick, className, children }: { reason?: string; onClick?: () => void; className: string; children: React.ReactNode }) {
-  const btn = <button type="button" disabled={!!reason} onClick={(e) => { e.stopPropagation(); onClick?.(); }} className={className}>{children}</button>;
+  const btn = <button type="button" disabled={!!reason} style={reason ? { pointerEvents: 'none' } : undefined} onClick={(e) => { e.stopPropagation(); onClick?.(); }} className={className}>{children}</button>;
   if (!reason) return btn;
   return (
-    <Tooltip>
-      <TooltipTrigger asChild><span className="inline-flex">{btn}</span></TooltipTrigger>
+    <Tooltip delayDuration={0}>
+      <TooltipTrigger asChild><span className="inline-flex cursor-not-allowed">{btn}</span></TooltipTrigger>
       <TooltipContent className="text-wrap max-w-[260px]">{reason}</TooltipContent>
     </Tooltip>
   );
@@ -1197,7 +1197,7 @@ function BenchmarkForm({ editing, source, names, onCancel, onSave }: {
     { header: 'Severity', cell: (r) => <SeverityPill severity={r.severity} /> },
   ];
 
-  const attachReason = !type ? 'Choose the benchmark’s Type and Version first'
+  const attachReason = !type ? 'Choose the benchmark’s Type and Version first — only rules for that OS version can be attached'
     : !version ? 'Choose the benchmark’s Version first — only that version’s rules can be attached' : undefined;
   const title = editing ? 'Edit Benchmark' : source ? 'Clone Benchmark' : 'Create Benchmark';
   const openRule = ruleId ? ruleById(ruleId) : undefined;

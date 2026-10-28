@@ -82,6 +82,10 @@ export function AdminPage({ onNavigate, moduleSlug, onModuleChange, portalSlug, 
   const [builderOpen, setBuilderOpen] = useState(false);
   /* Lifted here, not in the Benchmark module: the Rules panel's Used In reads the same list. */
   const [benchmarks, setBenchmarks] = useState<Benchmark[]>(BENCHMARKS_SEED);
+  /* BENCHMARKS_SEED is the ONE list the technician side reads (Create Policy, policy pages), so
+     every admin save is written back into it — a benchmark an admin creates is offered in the
+     policy form, and it survives leaving Admin (this state re-seeds from it). */
+  useEffect(() => { BENCHMARKS_SEED.splice(0, BENCHMARKS_SEED.length, ...benchmarks); }, [benchmarks]);
 
   const toggle = (key: string) =>
     setOpenKeys((prev) => {

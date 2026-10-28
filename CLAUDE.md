@@ -3101,3 +3101,10 @@ and ask before building any new one.
   - **Version menu** `ComplianceVersionMenu` ("Version 2 ▾") on the title line of every Compliance page
     (`AssetRegisterPage titleExtra`, the dashboard header, both admin heads). Older versions open their frozen
     build in a NEW tab on the same hash. Add a version = a row in its `VERSIONS` + `CURRENT`.
+  - **Technician Benchmark page is HIDDEN** (its flyout row is commented out in `Sidebar.tsx`; the route and
+    page still work). Benchmarks are made by admins and only picked in Create Policy.
+  - **Admin benchmarks reach the technician side**: `AdminPage` writes every save back into `BENCHMARKS_SEED`
+    (an in-place `splice` in an effect), the one list the policy form and `benchmarkOf` read.
+  - **A disabled icon's reason shows on hover** (`ActionIcon` / `ReasonButton` in the benchmark module): the
+    disabled button is `pointer-events: none` so its wrapping span gets the hover — a disabled button
+    swallows pointer events, which is why the tooltip never appeared. Reasons show at once (delay 0).
