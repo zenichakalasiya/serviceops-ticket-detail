@@ -258,19 +258,22 @@ function RulePageBody({ rule }: { rule: ComplianceRule }) {
           ))}
         </ol>
       </Block>
-      {/* One Controls section — each version a row in it, its version tag on the left. */}
+      {/* Same as the technician side's Controls tab: the version is the label, the safeguard
+          sits in a quiet filled box under it. */}
       <Block title="CIS Controls" count={rule.controls.length}>
-        <div className="space-y-3">
+        <div className="space-y-4">
           {rule.controls.map((c) => (
-            <div key={c.version} className="flex items-start gap-3">
-              <span className="mt-0.5 w-[34px] flex-shrink-0 rounded-sm bg-[#F1F5F9] py-0.5 text-center text-[11px] font-semibold text-[#475569]">{c.version}</span>
-              <div className="min-w-0">
+            <div key={c.version}>
+              <div className={fieldLabel}>Controls Version: {c.version}</div>
+              <div className="mt-1.5 rounded-lg bg-[#F6F9FC] px-4 py-3">
                 {c.safeguard ? (
                   <>
-                    <p className="text-[13px] font-medium leading-[1.55] text-[#364658]">{c.safeguard}</p>
-                    {c.text && <p className="mt-0.5 text-[13px] leading-[1.65] text-[#64748B]">{c.text}</p>}
+                    <div className="text-[13px] font-semibold text-[#364658]">{c.safeguard}</div>
+                    {c.text && <p className="mt-1 text-[13px] leading-[1.6] text-[#64748B]">{c.text}</p>}
                   </>
-                ) : <p className="text-[13px] text-[#64748B]">Explicitly Not Mapped</p>}
+                ) : (
+                  <div className="text-[13px] text-[#64748B]">Explicitly Not Mapped</div>
+                )}
               </div>
             </div>
           ))}
