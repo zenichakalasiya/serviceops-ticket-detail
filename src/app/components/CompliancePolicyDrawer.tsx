@@ -323,7 +323,7 @@ export function CompliancePolicyDrawer({
                   />
                   <div className="px-6">
                     <TabListToolbar search={epQ} onSearch={setEpQ} groups={epGroups} value={epF} onChange={setEpF} />
-                    <table className="w-full table-fixed">
+                    <div className="overflow-x-auto"><table className="w-full min-w-[1000px] table-fixed">
                       <colgroup><col className="w-[23%]" /><col className="w-[12%]" /><col className="w-[13%]" /><col className="w-[140px]" /><col className="w-[10%]" /><col /><col className="w-[169px]" /></colgroup>
                       <thead><tr className="border-b border-[#e5e7eb]">{['Endpoint', 'IP Address', 'Remote Office', 'Result', 'Compliance', 'Checks', 'Actions'].map((h) => <th key={h} className="px-4 py-2.5 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>)}</tr></thead>
                       <tbody className="divide-y divide-[#e5e7eb]">
@@ -348,7 +348,7 @@ export function CompliancePolicyDrawer({
                           </tr>
                         ))}
                       </tbody>
-                    </table>
+                    </table></div>
                     {shownResults.length === 0 && results.length > 0 && <NoMatch what="endpoints" onClear={() => { setEpQ(''); setEpF({}); }} />}
                   </div>
                 </div>
@@ -373,7 +373,7 @@ export function CompliancePolicyDrawer({
                     ) : runs.length === 0 ? (
                       <p className="py-10 text-center text-[13px] text-[#9CA3AF]">This policy has not run yet. Press Run Now, or wait for its schedule.</p>
                     ) : (
-                      <table className="w-full table-fixed">
+                      <div className="overflow-x-auto"><table className="w-full min-w-[1060px] table-fixed">
                         <colgroup><col className="w-[130px]" /><col className="w-[190px]" /><col className="w-[120px]" /><col className="w-[90px]" /><col className="w-[110px]" /><col /><col className="w-[110px]" /><col className="w-[110px]" /></colgroup>
                         <thead><tr className="border-b border-[#e5e7eb]">{['Run ID', 'Scan Date', 'Triggered By', 'Duration', 'Endpoints', 'Checks', 'Compliance', 'Status'].map((h) => <th key={h} className="px-4 py-2.5 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>)}</tr></thead>
                         <tbody className="divide-y divide-[#e5e7eb]">
@@ -394,7 +394,7 @@ export function CompliancePolicyDrawer({
                             </tr>
                           ))}
                         </tbody>
-                      </table>
+                      </table></div>
                     )}
                   </div>
                 </div>

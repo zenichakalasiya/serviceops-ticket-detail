@@ -429,7 +429,7 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
                   )}
                 </div>
               ) : (
-                <table className="w-full table-fixed">
+                <div className="overflow-x-auto"><table className="w-full min-w-[760px] table-fixed">
                   <colgroup><col className="w-[22%]" /><col className="w-[14%]" /><col className="w-[20%]" /><col /><col className="w-[124px]" /><col className="w-[48px]" /></colgroup>
                   <thead><tr className="border-b border-[#EEF1F4]">{['Host Name', 'IP Address', 'Operating System', 'Remote Office', 'Added By', ''].map((h, i) => <th key={i} className="whitespace-nowrap px-4 py-2 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>)}</tr></thead>
                   <tbody className="divide-y divide-[#EEF1F4]">
@@ -458,7 +458,7 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </table></div>
               )}
               {resolved.length > 8 && <p className="border-t border-[#EEF1F4] px-4 py-2 text-[12px] text-[#7B8FA5]">and {resolved.length - 8} more</p>}
             </div>

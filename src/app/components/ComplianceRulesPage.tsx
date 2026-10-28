@@ -96,7 +96,7 @@ function RuleEndpointsTab({ results, onOpened }: { results: RuleEndpointResult[]
         <TicketFilterBar rules={rules} setRules={setRules} noun="endpoint" attrs={attrs} quickFilters={quick} showFilterBuilder={false} />
         <span className="ml-auto text-[12px] text-[#7B8FA5]">{shown.length} of {results.length} endpoints</span>
       </div>
-      <table className="w-full table-fixed">
+      <div className="overflow-x-auto"><table className="w-full min-w-[860px] table-fixed">
         <colgroup><col className="w-[30%]" /><col className="w-[11%]" /><col className="w-[14%]" /><col className="w-[18%]" /><col /><col className="w-[110px]" /></colgroup>
         <thead><tr className="border-b border-[#e5e7eb]">{['Endpoint', 'Type', 'IP Address', 'Remote Office', 'Policies', 'Result'].map((h) => <th key={h} className={th}>{h}</th>)}</tr></thead>
         <tbody className="divide-y divide-[#e5e7eb]">
@@ -113,7 +113,7 @@ function RuleEndpointsTab({ results, onOpened }: { results: RuleEndpointResult[]
             </tr>
           ))}
         </tbody>
-      </table>
+      </table></div>
       {!shown.length && <p className="py-10 text-center text-[13px] text-[#9CA3AF]">No endpoint matches these filters.</p>}
     </div>
   );

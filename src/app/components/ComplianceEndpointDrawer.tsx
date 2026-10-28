@@ -320,7 +320,7 @@ export function ComplianceEndpointDrawer({
                     ];
                     return <TabListToolbar search={polQ} onSearch={setPolQ} groups={groups} value={polF} onChange={setPolF} />;
                   })()}
-                  <table className="w-full table-fixed">
+                  <div className="overflow-x-auto"><table className="w-full min-w-[760px] table-fixed">
                     <colgroup><col /><col className="w-[32%]" /><col className="w-[150px]" /><col className="w-[190px]" /></colgroup>
                     <thead><tr className="border-b border-[#e5e7eb]">{['Policy', 'Benchmark', 'Result', 'Last Scan'].map((h) => <th key={h} className={th}>{h}</th>)}</tr></thead>
                     <tbody className="divide-y divide-[#e5e7eb]">
@@ -333,7 +333,7 @@ export function ComplianceEndpointDrawer({
                         </tr>
                       ))}
                     </tbody>
-                  </table>
+                  </table></div>
                   {mine.length === 0 && <p className="py-10 text-center text-[13px] text-[#9CA3AF]">No policy assesses this endpoint.</p>}
                   {mine.length > 0 && shownMine.length === 0 && <NoMatch what="policies" onClear={() => { setPolQ(''); setPolF({}); }} />}
                 </div>

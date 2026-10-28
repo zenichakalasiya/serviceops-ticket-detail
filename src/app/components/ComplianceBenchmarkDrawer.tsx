@@ -241,7 +241,7 @@ export function ComplianceBenchmarkDrawer({
                   ) : (
                     <>
                     <TabListToolbar search={epQ} onSearch={setEpQ} groups={epGroups} value={epF} onChange={setEpF} />
-                    <table className="w-full table-fixed">
+                    <div className="overflow-x-auto"><table className="w-full min-w-[760px] table-fixed">
                       <colgroup><col className="w-[34%]" /><col className="w-[16%]" /><col className="w-[20%]" /><col className="w-[16%]" /><col /></colgroup>
                       <thead><tr className="border-b border-[#e5e7eb]">{['Endpoint', 'IP Address', 'Remote Office', 'Result', 'Policies'].map((h) => <th key={h} className={th}>{h}</th>)}</tr></thead>
                       <tbody className="divide-y divide-[#e5e7eb]">
@@ -257,7 +257,7 @@ export function ComplianceBenchmarkDrawer({
                           );
                         })}
                       </tbody>
-                    </table>
+                    </table></div>
                     {shownEndpoints.length === 0 && <NoMatch what="endpoints" onClear={() => { setEpQ(''); setEpF({}); }} />}
                     </>
                   )}
@@ -282,7 +282,7 @@ export function ComplianceBenchmarkDrawer({
                       />
                       <div className="px-6">
                         <TabListToolbar search={polQ} onSearch={setPolQ} groups={polGroups} value={polF} onChange={setPolF} />
-                        <table className="w-full table-fixed">
+                        <div className="overflow-x-auto"><table className="w-full min-w-[720px] table-fixed">
                           <colgroup><col /><col className="w-[170px]" /><col className="w-[110px]" /><col className="w-[190px]" /></colgroup>
                           <thead><tr className="border-b border-[#e5e7eb]">{['Policy', 'Status', 'Endpoints', 'Last Scan'].map((h) => <th key={h} className={th}>{h}</th>)}</tr></thead>
                           <tbody className="divide-y divide-[#e5e7eb]">
@@ -298,7 +298,7 @@ export function ComplianceBenchmarkDrawer({
                               );
                             })}
                           </tbody>
-                        </table>
+                        </table></div>
                         {shownPolicies.length === 0 && <NoMatch what="policies" onClear={() => { setPolQ(''); setPolF({}); }} />}
                       </div>
                     </>

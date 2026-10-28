@@ -173,7 +173,7 @@ function MitreTable({ rule }: { rule: ComplianceRule }) {
   ];
   return (
     <div className="overflow-hidden rounded-lg border border-[#E5E7EB]">
-      <table className="w-full table-fixed">
+      <div className="overflow-x-auto"><table className="w-full min-w-[560px] table-fixed">
         <thead>
           <tr className="border-b border-[#E5E7EB] bg-[#F6F9FC]">
             {cols.map(([h]) => <th key={h} className="px-4 py-2.5 text-left text-[12px] font-semibold text-[#364658]">{h}</th>)}
@@ -195,7 +195,7 @@ function MitreTable({ rule }: { rule: ComplianceRule }) {
             ))}
           </tr>
         </tbody>
-      </table>
+      </table></div>
     </div>
   );
 }

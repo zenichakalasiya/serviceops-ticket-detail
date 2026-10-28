@@ -658,7 +658,7 @@ function RuleView({ rule, endpoints, findings, scanned, onEndpoint }: {
   const ends = (n: number) => `endpoint${n === 1 ? '' : 's'}`;
 
   const table = (
-    <table className="w-full table-fixed">
+    <div className="overflow-x-auto"><table className="w-full min-w-[640px] table-fixed">
       <colgroup><col /><col className="w-[140px]" /><col className="w-[180px]" /><col className="w-[120px]" /><col className="w-[36px]" /></colgroup>
       <thead><tr className="border-b border-[#e5e7eb]">{['Endpoint', 'IP Address', 'Remote Office', 'Result', ''].map((h, i) => <th key={i} className="px-3 py-2.5 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>)}</tr></thead>
       <tbody className="divide-y divide-[#e5e7eb]">
@@ -681,7 +681,7 @@ function RuleView({ rule, endpoints, findings, scanned, onEndpoint }: {
           );
         })}
       </tbody>
-    </table>
+    </table></div>
   );
 
   return (
