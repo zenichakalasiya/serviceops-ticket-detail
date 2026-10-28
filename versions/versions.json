@@ -88,7 +88,16 @@
     {
       "id": "compliance", "name": "Compliance", "area": "Endpoint Management", "route": "#/compliance-policies",
       "versions": [
-        { "version": "v1", "date": "2026-10-23", "commit": "2b3c39a", "changes": ["Baseline: Compliance Policy listing, form and detail page, Compliance Visualization, and Admin › Compliance Rules and Benchmark."] }
+        { "version": "v1", "date": "2026-10-28", "commit": "4041699", "changes": [
+          "Technician flow: Dashboard · Rules · Benchmark · Compliance Policy · Endpoints, each a listing with a linked detail page (no Overview tabs).",
+          "New Rules page with Rule Score; a rule opens a side panel whose first tab lists every endpoint it was checked on, with search and filters.",
+          "Policy detail: Endpoints (View rule results sidebar), Rules (numbered tree), Run History, Audit Trail; search + filter on each list.",
+          "Rule-results sidebar: search above Compliance Breakdown and PDF / CSV export beside it.",
+          "Endpoint detail: Compliance Audit (its policies) and Audit Trail. Benchmark detail: Rules, Endpoints, Policies.",
+          "Create Policy: OS Type then Benchmark, Remote Offices and Endpoints together, Manual or Scheduled run with a frequency dropdown.",
+          "Admin › Benchmark rule groups in two versions (logo V1 | V2): V1 tree with an add menu and placement preview; V2 VS Code-style explorer (select a group, + adds inside it).",
+          "Admin › Rules: Automated / Manual, detail chips, and a V1 tabbed / V2 one-page rule panel."
+        ] }
       ]
     },
     {
