@@ -14,7 +14,7 @@ import { HeaderCopyButton } from './HeaderCopyButton';
 import { StatsCardsRow } from './AssetStatsRow';
 import { AuditTrailsTabContent } from './AuditTrailsTabContent';
 import type { AuditEntry } from './AuditTrailsTabContent';
-import { SeverityPill } from './ComplianceShared';
+import { ckpi, SeverityPill } from './ComplianceShared';
 import { ComplianceBreakdown, ComplianceEndpointPanel, FailedBySeverity, severityCounts } from './ComplianceEndpointPanel';
 import { ruleById, ruleNumbers, SEVERITIES } from './complianceData';
 import {
@@ -221,10 +221,11 @@ export function ComplianceEndpointDrawer({
   const openPolicy = (id: string) => { const p = getPolicy(id); if (p) openInStack('compliance-policies', p.id, p.name, p); };
 
   const kpis = [
-    kpi('failed', 'Failed Rules', reached ? failedRules : '—', 'Rules failing on the last scan'),
-    kpi('new', 'New Failures', reached ? fresh : '—', 'Passed on the previous scan, fail now'),
-    kpi('policies', 'Policies', mine.length, mine.map((m) => m.policy.name).join(', ') || 'No policy assesses it'),
-    kpi('last', 'Last Scan', fmtStamp(lastScan), 'The newest scan that reached it'),
+    ...(ep.real ? [ckpi('agent', 'Agent', ep.agentOnline ? 'Online' : 'Offline', { dot: ep.agentOnline ? '#22C55E' : '#F59E0B', tip: ep.agentOnline ? 'Agent online' : 'Agent offline — scans cannot reach it' })] : []),
+    ckpi('failed', 'Failed Rules', reached ? failedRules : '—', { color: !reached ? '#94A3B8' : failedRules ? '#DC2626' : '#15803D', tip: 'Rules failing on the last scan' }),
+    ckpi('new', 'New Failures', reached ? fresh : '—', { color: !reached ? '#94A3B8' : fresh ? '#B45309' : '#364658', tip: 'Passed on the previous scan, fail now' }),
+    ckpi('policies', 'Policies', mine.length, { color: '#3D8BD0', tip: mine.map((m) => m.policy.name).join(', ') || 'No policy assesses it' }),
+    ckpi('last', 'Last Scan', fmtStamp(lastScan), { tip: 'The newest scan that reached it' }),
   ];
 
   const fields: [string, React.ReactNode][] = [

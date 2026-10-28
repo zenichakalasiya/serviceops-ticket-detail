@@ -7,7 +7,7 @@ import { HeaderIdPill } from './HeaderIdPill';
 import { HeaderKpiRow } from './HeaderKpiRow';
 import type { HeaderKpiItem } from './HeaderKpiRow';
 import { HeaderCopyButton } from './HeaderCopyButton';
-import { RuleDetailPanel } from './ComplianceShared';
+import { ckpi, RuleDetailPanel } from './ComplianceShared';
 import { StatsCardsRow } from './AssetStatsRow';
 import { scoreColor } from './complianceVizData';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
@@ -131,12 +131,12 @@ export function CompliancePolicyDrawer({
   const run = () => policyStore.run(p.id, (done) => toast.success(`“${done.name}” scanned — ${scoreOf(done.lastScan) ?? 0}% compliant`));
 
   const kpis = [
-    kpi('status', 'Status', status, `Status: ${status}`, statusColor(status)),
-    kpi('benchmark', 'Benchmark', benchmark?.osVersion ?? '—', benchmark?.name ?? ''),
-    kpi('endpoints', 'Endpoints', results.length, `${results.length} endpoints assessed`),
-    kpi('score', 'Compliance', score === null ? '—' : <span style={{ color: scoreColor(score) }}>{score}%</span>, 'Checks passed of checks run, on the last scan'),
-    kpi('last', 'Last Scan', fmtStamp(p.lastScan?.at), 'When the last scan finished'),
-    kpi('next', 'Next Scan', p.enabled ? (next ? fmtStamp(next) : 'Not scheduled') : 'Disabled', p.enabled ? scheduleLabel(p.schedule) : 'A disabled policy never runs on schedule'),
+    ckpi('status', 'Status', status, { dot: statusColor(status), tip: `Status: ${status}` }),
+    ckpi('score', 'Compliance', score === null ? '—' : `${score}%`, { color: score === null ? '#94A3B8' : scoreColor(score), tip: 'Checks passed of checks run, on the last scan' }),
+    ckpi('endpoints', 'Endpoints', results.length, { color: '#3D8BD0', tip: `${results.length} endpoints assessed` }),
+    ckpi('benchmark', 'Benchmark', benchmark?.osVersion ?? '—', { chip: 'neutral', tip: benchmark?.name ?? '' }),
+    ckpi('last', 'Last Scan', fmtStamp(p.lastScan?.at), { tip: 'When the last scan finished' }),
+    ckpi('next', 'Next Scan', p.enabled ? (next ? fmtStamp(next) : 'Not scheduled') : 'Disabled', { color: p.enabled && next ? '#364658' : '#94A3B8', tip: p.enabled ? scheduleLabel(p.schedule) : 'A disabled policy never runs on schedule' }),
   ];
 
   const fields: [string, React.ReactNode][] = [
@@ -144,11 +144,13 @@ export function CompliancePolicyDrawer({
     ['Benchmark', benchmark?.name ?? '—'],
     ...(p.configType ? [['Config File Type', p.configType === 'startup' ? 'Startup' : 'Running'] as [string, React.ReactNode]] : []),
     ...(p.offices.length ? [['Remote Offices', p.offices.join(', ')] as [string, React.ReactNode]] : []),
-    ...(p.endpointIds.length ? [['Endpoints Added', `${p.endpointIds.length} added one by one`] as [string, React.ReactNode]] : []),
-    ['Schedule', scheduleLabel(p.schedule)],
+    ...(p.endpointIds.length ? [['Endpoints Added', p.endpointIds.length] as [string, React.ReactNode]] : []),
+  ];
+  /* Schedule is drawn as its own highlighted card between these two lists (with Reschedule). The
+     enabled flag is not a field — the header's Status already says it. */
+  const fieldsAfter: [string, React.ReactNode][] = [
     ['Notify Team', p.notify.length ? p.notify.join(', ') : '—'],
     ['Description', p.description || '—'],
-    ['Enable', p.enabled ? 'Enabled' : 'Disabled'],
     ['Created', `${fmtStamp(p.createdAt)} by ${p.createdBy}`],
   ];
 
@@ -409,6 +411,23 @@ export function CompliancePolicyDrawer({
                 <div className="border-b border-[#e5e7eb] px-4 py-3 text-[14px] font-semibold text-[#364658]">Policy Fields</div>
                 <dl className="space-y-3.5 px-4 py-4">
                   {fields.map(([label, value]) => (
+                    <div key={label}>
+                      <dt className="text-[12px] text-[#64748B]">{label}</dt>
+                      <dd className="mt-0.5 text-[13px] leading-[1.55] text-[#364658]">{value}</dd>
+                    </div>
+                  ))}
+                  {/* Schedule — highlighted, with the way to change it right on it. */}
+                  <div className="rounded-lg border border-[#CFE3F6] bg-[#F3F8FD] px-3 py-2.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <dt className="flex items-center gap-1.5 text-[12px] font-medium text-[#2F74B5]"><CalendarClock size={14} />Schedule</dt>
+                      <button type="button" onClick={() => setScheduleOpen(true)} className="text-[12px] font-medium text-[#3D8BD0] hover:underline">Reschedule</button>
+                    </div>
+                    <dd className="mt-1 text-[14px] font-semibold text-[#364658]">{scheduleLabel(p.schedule)}</dd>
+                    <div className="mt-0.5 text-[12px] text-[#64748B]">
+                      {!p.enabled ? 'Policy disabled — it does not run on schedule' : next ? <>Next scan <span className="font-medium text-[#364658]">{fmtStamp(next)}</span></> : 'No upcoming scan'}
+                    </div>
+                  </div>
+                  {fieldsAfter.map(([label, value]) => (
                     <div key={label}>
                       <dt className="text-[12px] text-[#64748B]">{label}</dt>
                       <dd className="mt-0.5 text-[13px] leading-[1.55] text-[#364658]">{value}</dd>

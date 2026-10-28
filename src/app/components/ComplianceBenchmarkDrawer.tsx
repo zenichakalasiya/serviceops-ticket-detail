@@ -7,7 +7,7 @@ import { HeaderKpiRow } from './HeaderKpiRow';
 import type { HeaderKpiItem } from './HeaderKpiRow';
 import { HeaderCopyButton } from './HeaderCopyButton';
 import { StatsCardsRow } from './AssetStatsRow';
-import { RuleDetailPanel } from './ComplianceShared';
+import { ckpi, RuleDetailPanel } from './ComplianceShared';
 import { RuleGroupTree, ruleTreeCount } from './ComplianceEndpointPanel';
 import { useOpenComplianceEndpoint } from './ComplianceEndpointDrawer';
 import { benchmarksUsingRule, BENCHMARKS_SEED, fmtDate, profileLabel, ruleById, ruleNumbers } from './complianceData';
@@ -164,9 +164,9 @@ export function ComplianceBenchmarkDrawer({
   const openRule = ruleId ? ruleById(ruleId) : undefined;
 
   const kpis = [
-    kpi('type', 'Type', b.type, `Type: ${b.type}`),
-    kpi('version', 'Version', b.osVersion, `Version: ${b.osVersion}`),
-    kpi('rules', 'Rules', ruleIds.length, `${ruleIds.length} rules`),
+    ckpi('type', 'Type', b.type),
+    ckpi('version', 'Version', b.osVersion, { chip: 'neutral' }),
+    ckpi('rules', 'Rules', ruleIds.length, { color: '#3D8BD0', tip: `${ruleIds.length} rules` }),
   ];
   /* Type, Version, Profile and the rule count are in the header — not repeated here. */
   const fields: [string, React.ReactNode][] = [

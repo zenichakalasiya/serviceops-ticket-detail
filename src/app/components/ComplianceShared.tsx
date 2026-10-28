@@ -4,6 +4,8 @@ import { toast } from 'sonner';
 import { useComplianceRuleUi } from './complianceRuleUi';
 import type { Attr, FilterRule } from './TicketFilterBar';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
+import { HeaderKpiRow } from './HeaderKpiRow';
+import type { HeaderKpiItem } from './HeaderKpiRow';
 import { MITRE_NAMES, SEVERITY_PILL } from './complianceData';
 import type { ComplianceRule, Severity } from './complianceData';
 
@@ -110,6 +112,33 @@ export function MetaChip({ label, value, tone = 'neutral', icon, title }: { labe
   );
 }
 
+/** One fact in a detail header's KPI strip (HeaderKpiRow) — the Detected CVE / Endpoint pages'
+ *  treatment: a muted label, then the value. Colour carries the meaning: `color` tints the value
+ *  (red = bad, green = good, amber = watch), `dot` puts a status dot before it, `chip` sets the
+ *  value in a tinted pill (a category or a link-like id). Plain facts stay dark. */
+export function ckpi(key: string, label: string, value: React.ReactNode, opts: { color?: string; dot?: string; chip?: ChipTone; icon?: React.ReactNode; tip?: string } = {}): HeaderKpiItem {
+  const { color, dot, chip, icon, tip } = opts;
+  const text = typeof value === 'string' || typeof value === 'number' ? String(value) : '';
+  return {
+    key,
+    tip: tip ?? `${label}: ${text}`,
+    node: (
+      <span className="inline-flex items-center gap-1.5" title={tip}>
+        <span className="text-[12px] text-[#7B8FA5]">{label}</span>
+        {dot && <span className="size-2 flex-shrink-0 rounded-full" style={{ backgroundColor: dot }} />}
+        {chip ? (
+          <span className={`inline-flex h-[22px] items-center gap-1 rounded px-1.5 text-[12px] font-medium ${TONES[chip].replace(/border-\S+/, '')}`}>{icon}{value}</span>
+        ) : (
+          <span className="inline-flex items-center gap-1 text-[13px] font-medium" style={{ color: color ?? '#364658' }}>{icon}{value}</span>
+        )}
+      </span>
+    ),
+  };
+}
+
+/** Severity in a KPI strip: a dot in its colour and the word in its tone. */
+export const severityKpi = (s: Severity) => ckpi('severity', 'Severity', s, { dot: SEVERITY_PILL[s].bar, color: SEVERITY_PILL[s].text });
+
 /** A Default benchmark is read-only: a lock before its name. A Custom one has nothing there. */
 export function DefaultLock({ show, size = 13 }: { show: boolean; size?: number }) {
   if (!show) return null;
@@ -212,13 +241,15 @@ export function RuleDetailPanel({ rule, usedIn, onClose, number, admin, firstTab
           <button type="button" onClick={onClose} className="flex size-8 flex-shrink-0 items-center justify-center rounded text-[#7B8FA5] transition-colors hover:bg-[#F3F4F6] hover:text-[#364658]"><X size={18} /></button>
         </div>
         {/* The rule's basic facts, under its title. */}
-        <div className={`flex flex-wrap items-center gap-1.5 px-5 pt-2.5 ${onePage ? 'pb-1' : 'pb-4'}`}>
-          <MetaChip label="Type" value={rule.type} />
-          <MetaChip label="Platform" value={rule.platform} />
-          <MetaChip label="Version" value={rule.version} />
-          <MetaChip label="Profile" value={rule.profile} tone={rule.profile === 'L1' ? 'blue' : 'violet'} title={rule.profile === 'L1' ? 'Level 1 — must have' : 'Level 2 — good to have'} />
-          <MetaChip value={rule.assessment} tone={rule.assessment === 'Automated' ? 'green' : 'amber'} title={rule.assessment === 'Automated' ? 'The agent checks this rule' : 'A person has to review this rule'} />
-          <MetaChip label="Severity" value={rule.severity} />
+        <div className={`px-5 pt-1 ${onePage ? 'pb-1' : 'pb-3'}`}>
+          <HeaderKpiRow items={[
+            severityKpi(rule.severity),
+            ckpi('profile', 'Profile', rule.profile, { chip: rule.profile === 'L1' ? 'blue' : 'violet', tip: rule.profile === 'L1' ? 'Profile: Level 1 — must have' : 'Profile: Level 2 — good to have' }),
+            ckpi('assessment', 'Assessment', rule.assessment, { color: rule.assessment === 'Automated' ? '#15803D' : '#B54708', tip: rule.assessment === 'Automated' ? 'Automated: the agent checks this rule' : 'Manual: a person has to review this rule' }),
+            ckpi('type', 'Type', rule.type),
+            ckpi('platform', 'Platform', rule.platform),
+            ckpi('version', 'Version', rule.version),
+          ]} />
         </div>
         {onePage ? <RulePageBody rule={rule} /> : <RuleDetailBody rule={rule} usedIn={usedIn} firstTab={firstTab} />}
       </div>

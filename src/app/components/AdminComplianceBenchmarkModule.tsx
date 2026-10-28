@@ -16,7 +16,7 @@ import { DrawerTabStrip } from './DrawerTabStrip';
 import { PickerDrawer } from './CreatePatchDeployment';
 import type { PickerColumn } from './CreatePatchDeployment';
 import { ErrorText, FieldLabel, RuleSelect, inputCls as formInputCls } from './FormRuleControls';
-import { matchRules, MetaChip, optionsOf, RuleDetailPanel, selectAttr, SeverityPill } from './ComplianceShared';
+import { ckpi, matchRules, MetaChip, optionsOf, RuleDetailPanel, selectAttr, SeverityPill } from './ComplianceShared';
 import { usePolicies } from './compliancePolicyData';
 import { TicketFilterBar } from './TicketFilterBar';
 import type { FilterRule, QuickFilterDef } from './TicketFilterBar';
@@ -976,13 +976,13 @@ function BenchmarkDrawer({ benchmark, benchmarks, onClose, onEdit, onClone, onDe
               <span className="line-clamp-2 break-words">{benchmark.name}</span>
             </h1>
             {/* Its facts as chips under the title — tinted where the value means something. */}
-            <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-              <MetaChip label="Type" value={benchmark.type} />
-              <MetaChip label="Version" value={benchmark.osVersion || '—'} />
-              <MetaChip value={benchmark.origin} tone={isDefault ? 'neutral' : 'green'} icon={isDefault ? <Lock size={11} /> : undefined} title={isDefault ? 'Ships with the product — read only' : 'Built in this workspace'} />
-              <MetaChip label="Rules" value={total} />
-              <MetaChip label="Updated" value={fmtDate(benchmark.updatedAt)} title={`by ${benchmark.createdBy}`} />
-            </div>
+            <HeaderKpiRow items={[
+              ckpi('origin', 'Origin', benchmark.origin, { chip: isDefault ? 'neutral' : 'green', icon: isDefault ? <Lock size={11} /> : undefined, tip: isDefault ? 'Default: ships with the product — read only' : 'Custom: built in this workspace' }),
+              ckpi('type', 'Type', benchmark.type),
+              ckpi('version', 'Version', benchmark.osVersion || '—'),
+              ckpi('rules', 'Rules', total, { color: '#3D8BD0' }),
+              ckpi('updated', 'Updated', fmtDate(benchmark.updatedAt), { tip: `Updated ${fmtDate(benchmark.updatedAt)} by ${benchmark.createdBy}` }),
+            ]} />
           </div>
           <div className="flex flex-shrink-0 items-center gap-2">
             <HeaderCopyButton variant="link" value="/admin/compliance-benchmarks" label="Copy Benchmark URL" />
