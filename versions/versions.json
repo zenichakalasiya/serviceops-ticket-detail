@@ -2,157 +2,387 @@
   "_readme": "Module versions. Each version freezes ONE commit; CI builds that commit once and serves it at /versions/<module>/<version>/. Add a version only after asking Zeni: new version, or update the current one? See versions/README.md.",
   "modules": [
     {
-      "id": "requests", "name": "Requests", "area": "Service Desk", "route": "#/request",
+      "id": "requests",
+      "name": "Requests",
+      "area": "Service Desk",
+      "route": "#/request",
       "versions": [
-        { "version": "v1", "date": "2026-10-23", "commit": "2b3c39a", "changes": ["Baseline: request listing grid and the full request detail page (V1), plus the V2 design option opened from INC-33."] }
+        {
+          "version": "v1",
+          "date": "2026-10-23",
+          "commit": "2b3c39a",
+          "changes": [
+            "Baseline: request listing grid and the full request detail page (V1), plus the V2 design option opened from INC-33."
+          ]
+        }
       ]
     },
     {
-      "id": "problems", "name": "Problems", "area": "Service Desk", "route": "#/problem",
+      "id": "problems",
+      "name": "Problems",
+      "area": "Service Desk",
+      "route": "#/problem",
       "versions": [
-        { "version": "v1", "date": "2026-10-23", "commit": "2b3c39a", "changes": ["Baseline: problem listing and detail page."] }
+        {
+          "version": "v1",
+          "date": "2026-10-23",
+          "commit": "2b3c39a",
+          "changes": [
+            "Baseline: problem listing and detail page."
+          ]
+        }
       ]
     },
     {
-      "id": "changes", "name": "Changes", "area": "Service Desk", "route": "#/change",
+      "id": "changes",
+      "name": "Changes",
+      "area": "Service Desk",
+      "route": "#/change",
       "versions": [
-        { "version": "v1", "date": "2026-10-23", "commit": "2b3c39a", "changes": ["Baseline: change listing and detail page with lifecycle-stage status."] }
+        {
+          "version": "v1",
+          "date": "2026-10-23",
+          "commit": "2b3c39a",
+          "changes": [
+            "Baseline: change listing and detail page with lifecycle-stage status."
+          ]
+        }
       ]
     },
     {
-      "id": "releases", "name": "Releases", "area": "Service Desk", "route": "#/release",
+      "id": "releases",
+      "name": "Releases",
+      "area": "Service Desk",
+      "route": "#/release",
       "versions": [
-        { "version": "v1", "date": "2026-10-23", "commit": "2b3c39a", "changes": ["Baseline: release listing and detail page."] }
+        {
+          "version": "v1",
+          "date": "2026-10-23",
+          "commit": "2b3c39a",
+          "changes": [
+            "Baseline: release listing and detail page."
+          ]
+        }
       ]
     },
     {
-      "id": "tasks", "name": "Tasks", "area": "Service Desk", "route": "#/tasks",
+      "id": "tasks",
+      "name": "Tasks",
+      "area": "Service Desk",
+      "route": "#/tasks",
       "versions": [
-        { "version": "v1", "date": "2026-10-23", "commit": "2b3c39a", "changes": ["Baseline: task listing (from the upstream merge)."] }
+        {
+          "version": "v1",
+          "date": "2026-10-23",
+          "commit": "2b3c39a",
+          "changes": [
+            "Baseline: task listing (from the upstream merge)."
+          ]
+        }
       ]
     },
     {
-      "id": "my-approvals", "name": "My Approvals", "area": "Service Desk", "route": "#/my-approvals",
+      "id": "my-approvals",
+      "name": "My Approvals",
+      "area": "Service Desk",
+      "route": "#/my-approvals",
       "versions": [
-        { "version": "v1", "date": "2026-10-23", "commit": "2b3c39a", "changes": ["Baseline: approvals listing (from the upstream merge)."] }
+        {
+          "version": "v1",
+          "date": "2026-10-23",
+          "commit": "2b3c39a",
+          "changes": [
+            "Baseline: approvals listing (from the upstream merge)."
+          ]
+        }
       ]
     },
     {
-      "id": "knowledge", "name": "Knowledge", "area": "Service Desk", "route": "#/knowledge",
+      "id": "knowledge",
+      "name": "Knowledge",
+      "area": "Service Desk",
+      "route": "#/knowledge",
       "versions": [
-        { "version": "v1", "date": "2026-10-23", "commit": "2b3c39a", "changes": ["Baseline: knowledge listing (from the upstream merge)."] }
+        {
+          "version": "v1",
+          "date": "2026-10-23",
+          "commit": "2b3c39a",
+          "changes": [
+            "Baseline: knowledge listing (from the upstream merge)."
+          ]
+        }
       ]
     },
     {
-      "id": "projects", "name": "Projects", "area": "Service Desk", "route": "#/projects",
+      "id": "projects",
+      "name": "Projects",
+      "area": "Service Desk",
+      "route": "#/projects",
       "versions": [
-        { "version": "v1", "date": "2026-10-23", "commit": "2b3c39a", "changes": ["Baseline: project listing (from the upstream merge)."] }
+        {
+          "version": "v1",
+          "date": "2026-10-23",
+          "commit": "2b3c39a",
+          "changes": [
+            "Baseline: project listing (from the upstream merge)."
+          ]
+        }
       ]
     },
     {
-      "id": "assets", "name": "Assets", "area": "Asset Management", "route": "#/hardware-assets",
+      "id": "assets",
+      "name": "Assets",
+      "area": "Asset Management",
+      "route": "#/hardware-assets",
       "versions": [
-        { "version": "v1", "date": "2026-10-23", "commit": "2b3c39a", "changes": ["Baseline: Hardware, Software, Non-IT and Consumable asset listings and detail pages, incl. the relationship topology and Software Meter."] }
+        {
+          "version": "v1",
+          "date": "2026-10-23",
+          "commit": "2b3c39a",
+          "changes": [
+            "Baseline: Hardware, Software, Non-IT and Consumable asset listings and detail pages, incl. the relationship topology and Software Meter."
+          ]
+        }
       ]
     },
     {
-      "id": "procurement", "name": "Licenses, Contracts & Purchases", "area": "Asset Management", "route": "#/software-licenses",
+      "id": "procurement",
+      "name": "Licenses, Contracts & Purchases",
+      "area": "Asset Management",
+      "route": "#/software-licenses",
       "versions": [
-        { "version": "v1", "date": "2026-10-23", "commit": "2b3c39a", "changes": ["Baseline: Software License, Contract and Purchase Order listings and detail pages."] }
+        {
+          "version": "v1",
+          "date": "2026-10-23",
+          "commit": "2b3c39a",
+          "changes": [
+            "Baseline: Software License, Contract and Purchase Order listings and detail pages."
+          ]
+        }
       ]
     },
     {
-      "id": "cmdb", "name": "CMDB", "area": "Asset Management", "route": "#/cmdb",
+      "id": "cmdb",
+      "name": "CMDB",
+      "area": "Asset Management",
+      "route": "#/cmdb",
       "versions": [
-        { "version": "v1", "date": "2026-10-23", "commit": "2b3c39a", "changes": ["Baseline: Base CI listing and the map-first CI detail page (Dependency Map / CI Details)."] }
+        {
+          "version": "v1",
+          "date": "2026-10-23",
+          "commit": "2b3c39a",
+          "changes": [
+            "Baseline: Base CI listing and the map-first CI detail page (Dependency Map / CI Details)."
+          ]
+        }
       ]
     },
     {
-      "id": "patch", "name": "Patch Management", "area": "Endpoint Management", "route": "#/patches",
+      "id": "patch",
+      "name": "Patch Management",
+      "area": "Endpoint Management",
+      "route": "#/patches",
       "versions": [
-        { "version": "v1", "date": "2026-10-23", "commit": "2b3c39a", "changes": ["Baseline: Patches, Patch Deployments (incl. create form and topology), Endpoints, Automatic Patch Tests / Deployments, Package and Registry Deployments, and Admin › OS Upgrade."] }
+        {
+          "version": "v1",
+          "date": "2026-10-23",
+          "commit": "2b3c39a",
+          "changes": [
+            "Baseline: Patches, Patch Deployments (incl. create form and topology), Endpoints, Automatic Patch Tests / Deployments, Package and Registry Deployments, and Admin › OS Upgrade."
+          ]
+        }
       ]
     },
     {
-      "id": "vulnerability", "name": "Vulnerability", "area": "Endpoint Management", "route": "#/vulnerabilities",
+      "id": "vulnerability",
+      "name": "Vulnerability",
+      "area": "Endpoint Management",
+      "route": "#/vulnerabilities",
       "versions": [
-        { "version": "v1", "date": "2026-10-23", "commit": "2b3c39a", "changes": ["Baseline: Vulnerabilities and Detected CVEs listings and detail pages."] }
+        {
+          "version": "v1",
+          "date": "2026-10-23",
+          "commit": "2b3c39a",
+          "changes": [
+            "Baseline: Vulnerabilities and Detected CVEs listings and detail pages."
+          ]
+        }
       ]
     },
     {
-      "id": "bom", "name": "BOM", "area": "Endpoint Management", "route": "#/bom",
+      "id": "bom",
+      "name": "BOM",
+      "area": "Endpoint Management",
+      "route": "#/bom",
       "versions": [
-        { "version": "v1", "date": "2026-10-23", "commit": "2b3c39a", "changes": ["Baseline: BOM Inventory, the endpoint BOM tab with versions and compare, and Admin › BOM Management (Licensing, Scheduler, Retention)."] }
+        {
+          "version": "v1",
+          "date": "2026-10-23",
+          "commit": "2b3c39a",
+          "changes": [
+            "Baseline: BOM Inventory, the endpoint BOM tab with versions and compare, and Admin › BOM Management (Licensing, Scheduler, Retention)."
+          ]
+        }
       ]
     },
     {
-      "id": "compliance", "name": "Compliance", "area": "Endpoint Management", "route": "#/compliance-policies",
+      "id": "compliance",
+      "name": "Compliance",
+      "area": "Endpoint Management",
+      "route": "#/compliance-policies",
       "versions": [
-        { "version": "v1", "date": "2026-10-28", "commit": "ed9530d", "changes": [
-          "Technician flow: Dashboard · Rules · Benchmark · Compliance Policy · Endpoints, each a listing with a linked detail page (no Overview tabs).",
-          "New Rules page with Rule Score; a rule opens a side panel whose first tab lists every endpoint it was checked on, with search and filters.",
-          "Policy detail: Endpoints (View rule results sidebar), Rules (numbered tree), Run History, Audit Trail; search + filter on each list.",
-          "Rule-results sidebar: search above Compliance Breakdown and PDF / CSV export beside it.",
-          "Endpoint detail: Compliance Audit (its policies) and Audit Trail. Benchmark detail: Rules, Endpoints, Policies.",
-          "Create Policy: OS Type then Benchmark, Remote Offices and Endpoints together, Manual or Scheduled run with a frequency dropdown.",
-          "Admin › Benchmark rule groups in two versions (logo V1 | V2): V1 tree with an add menu and placement preview; V2 VS Code-style explorer (select a group, + adds inside it).",
-          "Admin › Rules: Automated / Manual, detail chips, and a tabbed rule details panel everywhere (the one-page version is kept but off).",
-          "Rule results sidebar has no Request exception; V2 rule groups show the benchmark name as the heading and each main group as its own tinted card.",
-          "Admin rule panel's CIS Controls use the technician Controls style: version label above a filled box."
-        ] },
-        { "version": "v2", "date": "2026-10-28", "commit": "a51c8f6", "changes": [
-          "Rule details: a MITRE ATT&CK tab after Controls (techniques, tactics, mitigations with their names), on both technician and admin sides.",
-          "Endpoint page tabs: Vulnerabilities · Patches · Compliance Audit · Installation · Notes · Audit Trail.",
-          "A version menu on every Compliance page to open an older version.",
-          "Technician side: Dashboard · Rules · Compliance Policy · Endpoints (Benchmark page hidden); benchmarks admins create are offered in Create Policy.",
-          "Admin benchmark form: a disabled Attach rules shows why on hover (choose Type and Version first).",
-          "Rule-results sidebar: under the endpoint, its result, score, failing rules by severity and scan time.",
-          "Detail headers (policy, endpoint, benchmark, rule panel on both sides) use coloured KPI strips with dividers instead of outlined chips.",
-          "Policy fields: no Enable field, Endpoints Added as a count, a highlighted Schedule card with Reschedule.",
-          "Grids on every detail page keep their column widths and scroll sideways in the half-width view."
-        ] }
+        {
+          "version": "v1",
+          "date": "2026-10-28",
+          "commit": "ed9530d",
+          "changes": [
+            "Technician flow: Dashboard · Rules · Benchmark · Compliance Policy · Endpoints, each a listing with a linked detail page (no Overview tabs).",
+            "New Rules page with Rule Score; a rule opens a side panel whose first tab lists every endpoint it was checked on, with search and filters.",
+            "Policy detail: Endpoints (View rule results sidebar), Rules (numbered tree), Run History, Audit Trail; search + filter on each list.",
+            "Rule-results sidebar: search above Compliance Breakdown and PDF / CSV export beside it.",
+            "Endpoint detail: Compliance Audit (its policies) and Audit Trail. Benchmark detail: Rules, Endpoints, Policies.",
+            "Create Policy: OS Type then Benchmark, Remote Offices and Endpoints together, Manual or Scheduled run with a frequency dropdown.",
+            "Admin › Benchmark rule groups in two versions (logo V1 | V2): V1 tree with an add menu and placement preview; V2 VS Code-style explorer (select a group, + adds inside it).",
+            "Admin › Rules: Automated / Manual, detail chips, and a tabbed rule details panel everywhere (the one-page version is kept but off).",
+            "Rule results sidebar has no Request exception; V2 rule groups show the benchmark name as the heading and each main group as its own tinted card.",
+            "Admin rule panel's CIS Controls use the technician Controls style: version label above a filled box."
+          ]
+        },
+        {
+          "version": "v2",
+          "date": "2026-10-29",
+          "commit": "087b5b2",
+          "changes": [
+            "Rule details: a MITRE ATT&CK tab after Controls (techniques, tactics, mitigations with their names), on both technician and admin sides.",
+            "Endpoint page tabs: Vulnerabilities · Patches · Compliance Audit · Installation · Notes · Audit Trail.",
+            "A version menu on every Compliance page to open an older version.",
+            "Technician side: Dashboard · Rules · Compliance Policy · Endpoints (Benchmark page hidden); benchmarks admins create are offered in Create Policy.",
+            "Admin benchmark form: a disabled Attach rules shows why on hover (choose Type and Version first).",
+            "Rule-results sidebar: under the endpoint, its result, score, failing rules by severity and scan time.",
+            "Detail headers (policy, endpoint, benchmark, rule panel on both sides) use coloured KPI strips with dividers instead of outlined chips.",
+            "Policy fields: no Enable field, Endpoints Added as a count, a highlighted Schedule card with Reschedule.",
+            "Grids on every detail page keep their column widths and scroll sideways in the half-width view.",
+            "Create Policy: Target Endpoints as two boxes (Remote Offices with Preview, Endpoints), column-filter search in the pickers, Schedule as a switch.",
+            "Create Benchmark: no Profile field (taken from the attached rules); Attach Rules filters by Severity and Profile; V2 rule groups only, with Add rule group and drag to reorder.",
+            "Rule details: OS Type / OS Version wording everywhere, Summary = Description, Rationale, Impact, References; rule rows open on click with a dotted underline.",
+            "Policy and Endpoint pages: trimmed filters, Run History date filter, Compliance Audit status cards; headers aligned with a 3px gap.",
+            "View rule results: group pass rates with coloured icons and tooltips, Previous and Last scan tooltips and dates, Average Compliance card, Export button."
+          ]
+        }
       ]
     },
     {
-      "id": "dashboard", "name": "Dashboard", "area": "Insights", "route": "#/dashboard",
+      "id": "dashboard",
+      "name": "Dashboard",
+      "area": "Insights",
+      "route": "#/dashboard",
       "versions": [
-        { "version": "v1", "date": "2026-10-23", "commit": "2b3c39a", "changes": ["Baseline: dashboard boards, widget builder and Manage Dashboards (ported from ServiceOps_Dashboard_v2), with dark mode."] }
+        {
+          "version": "v1",
+          "date": "2026-10-23",
+          "commit": "2b3c39a",
+          "changes": [
+            "Baseline: dashboard boards, widget builder and Manage Dashboards (ported from ServiceOps_Dashboard_v2), with dark mode."
+          ]
+        }
       ]
     },
     {
-      "id": "reports", "name": "Reports", "area": "Insights", "route": "#/reports",
+      "id": "reports",
+      "name": "Reports",
+      "area": "Insights",
+      "route": "#/reports",
       "versions": [
-        { "version": "v1", "date": "2026-10-23", "commit": "2b3c39a", "changes": ["Baseline: reports listing (from the upstream merge)."] }
+        {
+          "version": "v1",
+          "date": "2026-10-23",
+          "commit": "2b3c39a",
+          "changes": [
+            "Baseline: reports listing (from the upstream merge)."
+          ]
+        }
       ]
     },
     {
-      "id": "my-team", "name": "My Team", "area": "Insights", "route": "#/my-team",
+      "id": "my-team",
+      "name": "My Team",
+      "area": "Insights",
+      "route": "#/my-team",
       "versions": [
-        { "version": "v1", "date": "2026-10-23", "commit": "2b3c39a", "changes": ["Baseline: My Team page (from the upstream merge)."] }
+        {
+          "version": "v1",
+          "date": "2026-10-23",
+          "commit": "2b3c39a",
+          "changes": [
+            "Baseline: My Team page (from the upstream merge)."
+          ]
+        }
       ]
     },
     {
-      "id": "support-portal", "name": "Support Portal", "area": "Admin", "route": "#/admin/support-portal",
+      "id": "support-portal",
+      "name": "Support Portal",
+      "area": "Admin",
+      "route": "#/admin/support-portal",
       "versions": [
-        { "version": "v1", "date": "2026-10-26", "commit": "ca0aa2d", "changes": ["Baseline: portal listing cards, create flow, the full portal builder (widgets, banner, theme, branding, tour) and Settings.", "The default portal is fixed; several portals can be published; Publish and Save as draft ask no confirmation.", "The default portal is always live: its card has no status switch, and Save as draft keeps it published."] }
+        {
+          "version": "v1",
+          "date": "2026-10-26",
+          "commit": "ca0aa2d",
+          "changes": [
+            "Baseline: portal listing cards, create flow, the full portal builder (widgets, banner, theme, branding, tour) and Settings.",
+            "The default portal is fixed; several portals can be published; Publish and Save as draft ask no confirmation.",
+            "The default portal is always live: its card has no status switch, and Save as draft keeps it published."
+          ]
+        }
       ]
     },
     {
-      "id": "request-form", "name": "Request Form & Form Rules", "area": "Admin", "route": "#/admin/request-form-rules",
+      "id": "request-form",
+      "name": "Request Form & Form Rules",
+      "area": "Admin",
+      "route": "#/admin/request-form-rules",
       "versions": [
-        { "version": "v1", "date": "2026-10-23", "commit": "2b3c39a", "changes": ["Baseline: Form Builder (hover toolbar, Configure / Rules / Edit panels) and the Form Rule editor (V3 final, Rule check, help guide, illustrations page)."] }
+        {
+          "version": "v1",
+          "date": "2026-10-23",
+          "commit": "2b3c39a",
+          "changes": [
+            "Baseline: Form Builder (hover toolbar, Configure / Rules / Edit panels) and the Form Rule editor (V3 final, Rule check, help guide, illustrations page)."
+          ]
+        }
       ]
     },
     {
-      "id": "workflow", "name": "Workflow", "area": "Admin", "route": "#/admin/workflow",
+      "id": "workflow",
+      "name": "Workflow",
+      "area": "Admin",
+      "route": "#/admin/workflow",
       "versions": [
-        { "version": "v1", "date": "2026-10-23", "commit": "2b3c39a", "changes": ["Baseline: workflow listing and the Linear builder, When step restyled (port in progress; Node view not built yet)."] }
+        {
+          "version": "v1",
+          "date": "2026-10-23",
+          "commit": "2b3c39a",
+          "changes": [
+            "Baseline: workflow listing and the Linear builder, When step restyled (port in progress; Node view not built yet)."
+          ]
+        }
       ]
     },
     {
-      "id": "user-surveys", "name": "User Surveys", "area": "Admin", "route": "#/admin/user-surveys",
+      "id": "user-surveys",
+      "name": "User Surveys",
+      "area": "Admin",
+      "route": "#/admin/user-surveys",
       "versions": [
-        { "version": "v1", "date": "2026-10-23", "commit": "2b3c39a", "changes": ["Baseline: survey listing with saved views, Import Emails panel, and Create User Survey with the single search-or-add Emails field."] }
+        {
+          "version": "v1",
+          "date": "2026-10-23",
+          "commit": "2b3c39a",
+          "changes": [
+            "Baseline: survey listing with saved views, Import Emails panel, and Create User Survey with the single search-or-add Emails field."
+          ]
+        }
       ]
     }
   ]
