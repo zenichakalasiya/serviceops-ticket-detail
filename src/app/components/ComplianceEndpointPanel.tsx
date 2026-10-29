@@ -25,7 +25,7 @@ import { HeaderKpiRow } from './HeaderKpiRow';
 import { benchmarksUsingRule, BENCHMARKS_SEED, numberedGroups, ruleById, ruleNumbers, SEVERITIES, SEVERITY_PILL } from './complianceData';
 import type { Benchmark, ComplianceRule, NumberedRule, Severity } from './complianceData';
 import {
-  benchmarkOf, complianceEndpoint, endpointResults, EXCEPTION_REASONS, exceptionFor, exceptionStore, findingsOf, fmtStamp, getPolicy, resolvedEndpoints, useExceptions, usePolicies,
+  benchmarkOf, complianceEndpoint, endpointResults, EXCEPTION_REASONS, exceptionFor, exceptionStore, findingsOf, fmtStamp, getPolicy, resolvedEndpoints, runHistory, useExceptions, usePolicies,
 } from './compliancePolicyData';
 import type { ComplianceEndpoint, ComplianceException, CompliancePolicy, ExceptionReason, Finding } from './compliancePolicyData';
 import { ErrorText, FieldLabel, RuleSelect, inputCls as formInputCls } from './FormRuleControls';
@@ -49,16 +49,10 @@ function FirstScanIcon() {
 function ScanChangeTip({ prev, last }: { prev: boolean | null; last: boolean | null }) {
   const word = (v: boolean | null) => (v === null ? 'Not checked' : v ? 'Pass' : 'Fail');
   const tone = (v: boolean | null) => (v === null ? 'text-white/70' : v ? 'text-[#86EFAC]' : 'text-[#FCA5A5]');
-  const story = last === null ? 'Not checked on the last scan'
-    : prev === null ? 'First scan of this endpoint — nothing to compare with'
-    : prev && !last ? 'Newly failing — it passed on the previous scan'
-    : !prev && last ? 'Fixed — it failed on the previous scan'
-    : last ? 'Still passing' : 'Still failing';
   return (
     <div className="space-y-1 text-[12px] leading-[1.5]">
-      <div className="flex justify-between gap-6"><span className="text-white/70">Previous scan</span><span className={`font-medium ${tone(prev)}`}>{prev === null && last !== null ? 'None — first scan' : word(prev)}</span></div>
+      <div className="flex justify-between gap-6"><span className="text-white/70">Previous scan</span><span className={`font-medium ${tone(prev)}`}>{prev === null && last !== null ? 'None (first scan)' : word(prev)}</span></div>
       <div className="flex justify-between gap-6"><span className="text-white/70">Last scan</span><span className={`font-medium ${tone(last)}`}>{word(last)}</span></div>
-      <div className="border-t border-white/15 pt-1 text-white/85">{story}</div>
     </div>
   );
 }
@@ -68,14 +62,14 @@ function GroupScoreTip({ ok, total, main }: { ok: number; total: number; main: b
   const what = main ? 'group' : 'sub-group';
   if (!total) return <div className="text-[12px]">No rule in this {what} was checked on the last scan.</div>;
   const pct = Math.round((ok / total) * 100);
-  const status = ok === total ? `Every rule passes — this ${what} is compliant.`
-    : pct >= 50 ? `${total - ok} still failing — this ${what} is partly compliant until they pass.`
-    : `${total - ok} failing — under half pass, so this ${what} is failing.`;
+  const failing = total - ok;
+  const status = ok === total ? `Every rule passes, so this ${what} is compliant.`
+    : pct >= 50 ? `${failing} still ${failing === 1 ? 'fails' : 'fail'}, so this ${what} is partly compliant.`
+    : `Under half pass, so this ${what} is failing.`;
   return (
     <div className="space-y-1 text-[12px] leading-[1.5]">
       <div><span className="font-semibold">{ok} of {total}</span> rules pass ({pct}%)</div>
       <div className="text-white/85">{status}</div>
-      <div className="border-t border-white/15 pt-1 text-white/70">Red under 50% · amber 50–99% · green at 100%</div>
     </div>
   );
 }
@@ -465,6 +459,7 @@ export function ComplianceEndpointPanel({ endpointId, ruleId, policyId, onClose,
                   endpoint={ep}
                   finding={findings.find((f) => f.endpointId === ep.id && f.ruleId === rule.id)}
                   lastScan={policy?.lastScan?.at}
+                  prevScan={policy ? runHistory(policy).filter((r) => r.status === 'Completed')[1]?.at : undefined}
                   exception={policy ? exceptionFor(exceptions, policy.id, ep.id, rule.id) : undefined}
                   onRequestException={policy ? () => push({ kind: 'exception', endpointId: ep.id, ruleId: rule.id }) : undefined}
                   onOpenEndpoint={onOpenEndpoint ? () => { onClose(); onOpenEndpoint(ep.id); } : undefined}
@@ -596,7 +591,7 @@ export function RuleGroupTree({ benchmark, resultOf = () => null, right, onRule,
               {ok}/{total}{depth ? '' : ' rules pass'}
               {total > 0 && <> · <span className="font-semibold" style={{ color: scoreTone(ok, total) }}>{Math.round((ok / total) * 100)}%</span></>}
             </span>
-            <Tooltip>
+            <Tooltip delayDuration={0}>
               <TooltipTrigger asChild><span className="inline-flex"><ScoreIcon ok={ok} total={total} /></span></TooltipTrigger>
               <TooltipContent side="left" className="max-w-[280px] text-wrap">
                 <GroupScoreTip ok={ok} total={total} main={!depth} />
@@ -697,7 +692,7 @@ export function ComplianceBreakdown({ benchmark, findings, onRule, query }: {
         const f = byRule.get(id);
         return (
           <span className="flex flex-shrink-0 items-center gap-3">
-            <Tooltip>
+            <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
                 <span className="flex w-[64px] items-center justify-end gap-1.5">
                   {/* A first scan has nothing before it: the dashed circle says so. */}
@@ -804,11 +799,13 @@ const rank = (f?: Finding) => (f ? (f.passed ? 1 : 0) : 2);
 
 /* ── result view lead: one endpoint × one rule ─────────────────────────────────────────── */
 
-function ResultCard({ rule, endpoint, finding, lastScan, exception, onRequestException, onOpenEndpoint }: {
+function ResultCard({ rule, endpoint, finding, lastScan, prevScan, exception, onRequestException, onOpenEndpoint }: {
   rule: ComplianceRule;
   endpoint: { id: string; hostName: string };
   finding?: Finding;
   lastScan?: string;
+  /** When the policy ran before the last scan (the run the Previous result comes from). */
+  prevScan?: string;
   exception?: ComplianceException;
   /** Offered only on a Fail with no request yet. */
   onRequestException?: () => void;
@@ -828,7 +825,10 @@ function ResultCard({ rule, endpoint, finding, lastScan, exception, onRequestExc
       </header>
       <div className="grid grid-cols-3 gap-x-6 gap-y-3 px-4 py-3">
         <div><div className={label}>Result</div><div className="mt-1"><ResultPill passed={finding ? finding.passed : null} /></div></div>
-        <div><div className={label}>Previous Scan</div><div className="mt-1">{finding?.prevPassed == null ? <span className="text-[13px] text-[#94A3B8]">—</span> : <ResultPill passed={finding.prevPassed} />}</div></div>
+        {/* The previous result, with WHEN that scan ran beside it. */}
+        <div><div className={label}>Previous Scan</div><div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">{finding?.prevPassed == null
+          ? <span className="text-[13px] text-[#94A3B8]">None (first scan)</span>
+          : <><ResultPill passed={finding.prevPassed} /><span className="text-[13px] text-[#364658]">{prevScan ? fmtStamp(prevScan) : '—'}</span></>}</div></div>
         <div><div className={label}>Last Scan</div><div className="mt-1 text-[13px] text-[#364658]">{fmtStamp(lastScan)}</div></div>
         <div className="col-span-3">
           <div className={label}>Required</div>

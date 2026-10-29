@@ -242,7 +242,9 @@ export function ScheduleFields({ value, onChange }: { value: PolicySchedule; onC
   return (
     <div>
       {/* One switch: on = scheduled, off = it runs only by hand (the line below says so). */}
-      <label className="inline-flex cursor-pointer items-center gap-2.5">
+      {/* "Schedule" on the left, its switch at the row's right edge. */}
+      <label className="flex w-full cursor-pointer items-center justify-between gap-3">
+        <span className="text-[13px] font-medium text-[#364658]">Schedule</span>
         <ToggleSwitch
           on={f !== 'none'}
           onChange={(on) => onChange(!on ? { frequency: 'none' } : {
@@ -254,11 +256,11 @@ export function ScheduleFields({ value, onChange }: { value: PolicySchedule; onC
           })}
           title={f !== 'none' ? 'Turn off the schedule' : 'Schedule this policy'}
         />
-        <span className="text-[13px] font-medium text-[#364658]">Schedule</span>
       </label>
       {f === 'none' && (
-        <p className="mt-2 flex items-center gap-1.5 text-[12px] text-[#64748B]">
-          <Info size={13} className="flex-shrink-0 text-[#7B8FA5]" />
+        /* The icon sits on the FIRST line of the sentence, however many lines it wraps to. */
+        <p className="mt-2 flex items-start gap-1.5 text-[12px] leading-[18px] text-[#64748B]">
+          <Info size={13} className="mt-[2.5px] flex-shrink-0 text-[#7B8FA5]" />
           This policy runs only when someone presses Run Now — on the policy page or from its row in the listing.
         </p>
       )}
