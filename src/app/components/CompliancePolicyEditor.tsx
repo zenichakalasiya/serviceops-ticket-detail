@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { ArrowLeft, Building2, CalendarClock, Info, Monitor, Plus, Wifi, X } from 'lucide-react';
-import { ErrorText, FieldLabel, RuleSelect, inputCls as formInputCls } from './FormRuleControls';
+import { ArrowLeft, Building2, CalendarClock, Eye, Info, Monitor, Plus, Search, Wifi, X } from 'lucide-react';
+import { ErrorText, FieldLabel, RuleSelect, ToggleSwitch, inputCls as formInputCls } from './FormRuleControls';
 import { TicketFilterBar } from './TicketFilterBar';
 import type { FilterRule, QuickFilterDef } from './TicketFilterBar';
 import { matchRules, optionsOf, selectAttr } from './ComplianceShared';
 import type { SelectOption } from './FormRuleControls';
 import { PickerDrawer } from './CreatePatchDeployment';
+import { ColumnFilterSearch, useColumnFilter } from './ColumnFilterSearch';
+import type { ColumnField } from './ColumnFilterSearch';
+import { Paginated } from './Paginated';
 import type { PickerColumn } from './CreatePatchDeployment';
 import { TagCell } from './ComplianceShared';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
@@ -31,6 +34,22 @@ import type { ComplianceEndpoint, CompliancePolicy, ConfigFileType, DeviceAxis, 
  * assesses ONE benchmark; the endpoint pool is that benchmark's Type + OS version only. */
 
 const inputCls = formInputCls.replace('rounded-md', 'rounded');
+
+/* The columns each side drawer can be filtered by (ColumnFilterSearch). */
+const agentOf = (e: ComplianceEndpoint) => (e.agentOnline ? 'Online' : 'Offline');
+const EP_FIELDS: ColumnField<ComplianceEndpoint>[] = [
+  { label: 'Endpoint ID', get: (e) => e.id },
+  { label: 'Host Name', get: (e) => e.hostName },
+  { label: 'IP Address', get: (e) => e.ip },
+  { label: 'Operating System', get: (e) => e.osName },
+  { label: 'Remote Office', get: (e) => e.office },
+  { label: 'Agent Status', get: agentOf },
+];
+const PREVIEW_FIELDS = EP_FIELDS.filter((f) => f.label !== 'Remote Office');
+const OFFICE_FIELDS: ColumnField<{ id: string; total: number }>[] = [
+  { label: 'Remote Office', get: (o) => o.id },
+  { label: 'Endpoints', get: (o) => String(o.total) },
+];
 const AXES: { value: DeviceAxis; label: string }[] = [
   { value: 'endpoint', label: 'Endpoint' },
   { value: 'office', label: 'Remote Office' },
@@ -92,6 +111,128 @@ function EmptyEndpointsArt() {
   );
 }
 
+/** "No remote offices yet": two office buildings on the same soft ground as the endpoints art. */
+function EmptyOfficesArt() {
+  return (
+    <svg width="148" height="104" viewBox="0 0 148 104" fill="none" aria-hidden="true" focusable="false">
+      <ellipse cx="74" cy="56" rx="64" ry="42" fill="#F3F7FC" />
+      <rect x="30" y="38" width="34" height="44" rx="3" fill="#F8FAFC" stroke="#E2E8F0" strokeWidth="1.25" />
+      {[46, 56, 66].map((y) => <path key={y} d={`M38 ${y} H44 M50 ${y} H56`} stroke="#E2E8F0" strokeWidth="2" strokeLinecap="round" />)}
+      <rect x="56" y="22" width="44" height="60" rx="4" fill="#FFFFFF" stroke="#CBD5E1" strokeWidth="1.25" />
+      {[32, 43, 54].map((y) => <path key={y} d={`M65 ${y} H72 M84 ${y} H91`} stroke="#CBD5E1" strokeWidth="2.25" strokeLinecap="round" />)}
+      <rect x="72" y="66" width="12" height="16" rx="1.5" fill="#F8FAFC" stroke="#CBD5E1" strokeWidth="1.25" />
+      <path d="M22 82 H126" stroke="#CBD5E1" strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx="108" cy="36" r="11" fill="#FFFFFF" stroke="#3D8BD0" strokeWidth="2.25" />
+      <path d="M108 31 V41 M103 36 H113" stroke="#3D8BD0" strokeWidth="2.25" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/** One way of choosing what to assess: a titled box with its count, an empty state that says what
+ *  the box is for, and — once it holds something — its rows with the Add CTA moved to the header. */
+function TargetBox({ title, count, addLabel, onAdd, addReason, invalid, emptyArt, emptyText, children }: {
+  title: string; count: number; addLabel: string; onAdd: () => void; addReason?: string; invalid?: boolean;
+  emptyArt: React.ReactNode; emptyText: React.ReactNode; children: React.ReactNode;
+}) {
+  return (
+    <div className={`overflow-hidden rounded-lg border ${invalid ? 'border-[#F25C4E]' : 'border-[#E5E7EB]'}`}>
+      <div className="flex min-h-[48px] items-center gap-3 border-b border-[#EEF1F4] bg-[#F6F9FC] px-4 py-2">
+        <span className="text-[13px] font-semibold text-[#364658]">{title} <span className="ml-1 rounded-sm bg-[#EEF2F6] px-1.5 py-0.5 text-[11px] font-medium text-[#64748B]">{count}</span></span>
+        {count > 0 && (
+          <button type="button" onClick={onAdd} className="ml-auto inline-flex h-8 items-center gap-1.5 rounded border border-[#DFE5ED] bg-white px-3 text-[13px] font-medium text-[#364658] transition-colors hover:bg-[#F5F7FA]"><Plus size={14} /> {addLabel}</button>
+        )}
+      </div>
+      {count === 0 ? (
+        <div className="flex flex-col items-center px-4 pb-6 pt-4 text-center">
+          {emptyArt}
+          <p className="mt-2 max-w-[560px] text-[13px] leading-[1.55] text-[#64748B]">{emptyText}</p>
+          <button
+            type="button"
+            disabled={!!addReason}
+            onClick={onAdd}
+            className="mt-4 inline-flex h-8 items-center gap-1.5 rounded bg-[#3D8BD0] px-3.5 text-[13px] font-medium text-white transition-colors hover:bg-[#3478B5] disabled:cursor-not-allowed disabled:opacity-50"
+          ><Plus size={14} /> {addLabel}</button>
+        </div>
+      ) : <div className="overflow-x-auto">{children}</div>}
+    </div>
+  );
+}
+
+/** "12 online · 2 offline" — the agent dots the endpoint rows use. */
+function AgentSplit({ online, offline }: { online: number; offline: number }) {
+  return (
+    <span className="flex items-center gap-3 text-[13px] text-[#64748B]">
+      <span className="inline-flex items-center gap-1.5"><span className="size-2 rounded-full bg-[#22C55E]" />{online} online</span>
+      {offline > 0 && <span className="inline-flex items-center gap-1.5"><span className="size-2 rounded-full bg-[#F59E0B]" />{offline} offline</span>}
+    </span>
+  );
+}
+
+function RemoveBtn({ onClick }: { onClick: () => void }) {
+  return (
+    <button type="button" title="Remove" onClick={onClick} className="inline-flex size-7 items-center justify-center rounded text-[#7B8FA5] opacity-0 transition-opacity hover:bg-[#EEF2F6] hover:text-[#364658] focus:opacity-100 group-hover/row:opacity-100"><X size={15} /></button>
+  );
+}
+
+/** Preview of one remote office: the endpoints it brings into the policy, read-only. */
+function OfficePreviewDrawer({ office, rows, osVersion, onClose }: { office: string; rows: ComplianceEndpoint[]; osVersion?: string; onClose: () => void }) {
+  const f = useColumnFilter(rows, PREVIEW_FIELDS);
+  const shown = f.filtered;
+  useEffect(() => {
+    /* Escape closes the drawer — unless the column menu is open, which takes its own Escape first. */
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.stopImmediatePropagation(); onClose(); } };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+  const online = rows.filter((e) => e.agentOnline).length;
+  return (
+    <div className="fixed inset-0 z-[10000] flex justify-end bg-black/40" onMouseDown={onClose}>
+      <div className="flex h-full w-[760px] max-w-[95vw] flex-col bg-white shadow-xl" onMouseDown={(e) => e.stopPropagation()}>
+        <div className="flex items-start justify-between gap-3 border-b border-[#e5e7eb] px-5 py-4">
+          <div className="min-w-0">
+            <h3 className="flex items-center gap-2 text-[16px] font-semibold text-[#364658]"><Building2 size={17} className="text-[#7B8FA5]" />{office}</h3>
+            <p className="mt-0.5 text-[12px] text-[#7B8FA5]">{rows.length} endpoint{rows.length === 1 ? '' : 's'}{osVersion ? ` running ${osVersion}` : ''} · assessed while this office is in the policy</p>
+          </div>
+          <button type="button" onClick={onClose} className="flex size-8 flex-shrink-0 items-center justify-center rounded text-[#7B8FA5] transition-colors hover:bg-[#F3F4F6] hover:text-[#364658]"><X size={18} /></button>
+        </div>
+        <div className="flex items-center gap-3 border-b border-[#F0F2F5] px-5 py-3">
+          <ColumnFilterSearch className="min-w-0 flex-1" rows={rows} fields={PREVIEW_FIELDS} query={f.query} onQuery={f.setQuery} conditions={f.conditions} onConditions={f.setConditions} />
+          <span className="flex-shrink-0"><AgentSplit online={online} offline={rows.length - online} /></span>
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          {shown.length === 0 ? (
+            <p className="px-5 py-10 text-center text-[13px] text-[#7B8FA5]">No endpoint matches these filters.</p>
+          ) : (
+            <Paginated rows={shown} perPage={20} sticky>
+              {(page) => (
+                <table className="w-full table-fixed">
+                  <colgroup><col className="w-[38%]" /><col className="w-[18%]" /><col /></colgroup>
+                  <thead><tr className="border-b border-[#EEF1F4]">{['Endpoint', 'IP Address', 'Operating System'].map((h) => <th key={h} className="whitespace-nowrap px-5 py-2 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>)}</tr></thead>
+                  <tbody className="divide-y divide-[#EEF1F4]">
+                    {page.map((e) => (
+                      <tr key={e.id} className="hover:bg-[#f9fafb]">
+                        <td className="px-5 py-2.5">
+                          <span className="flex min-w-0 items-center gap-2">
+                            <span className={`size-2 flex-shrink-0 rounded-full ${e.agentOnline ? 'bg-[#22C55E]' : 'bg-[#F59E0B]'}`} title={e.agentOnline ? 'Agent online' : 'Agent offline'} />
+                            <span className="flex-shrink-0 whitespace-nowrap rounded bg-[#e8f4fd] px-1.5 py-0.5 text-[11px] font-medium text-[#3D8BD0]">{e.id}</span>
+                            <span className="truncate text-[13px] text-[#364658]">{e.hostName}</span>
+                          </span>
+                        </td>
+                        <td className="px-5 py-2.5 text-[13px] tabular-nums text-[#64748B]">{e.ip}</td>
+                        <td className="px-5 py-2.5"><span className="block truncate text-[13px] text-[#64748B]">{e.osName}</span></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </Paginated>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── Schedule — shared by the form and the row's Schedule shortcut ───────────────────── */
 
 export function ScheduleFields({ value, onChange }: { value: PolicySchedule; onChange: (s: PolicySchedule) => void }) {
@@ -100,19 +241,21 @@ export function ScheduleFields({ value, onChange }: { value: PolicySchedule; onC
   const next = nextRun(value);
   return (
     <div>
-      <FieldLabel>Run</FieldLabel>
-      {/* Manual or on a schedule first; only a schedule has anything more to set. */}
-      <Pills
-        value={f === 'none' ? 'manual' : 'scheduled'}
-        options={[{ value: 'manual', label: 'Manual' }, { value: 'scheduled', label: 'Scheduled' }]}
-        onChange={(v) => onChange(v === 'manual' ? { frequency: 'none' } : {
-          frequency: 'daily',
-          startDate: value.startDate ?? new Date().toISOString().slice(0, 10),
-          time: value.time ?? '02:00',
-          weekday: value.weekday ?? 0,
-          monthday: value.monthday ?? 1,
-        })}
-      />
+      {/* One switch: on = scheduled, off = it runs only by hand (the line below says so). */}
+      <label className="inline-flex cursor-pointer items-center gap-2.5">
+        <ToggleSwitch
+          on={f !== 'none'}
+          onChange={(on) => onChange(!on ? { frequency: 'none' } : {
+            frequency: 'daily',
+            startDate: value.startDate ?? new Date().toISOString().slice(0, 10),
+            time: value.time ?? '02:00',
+            weekday: value.weekday ?? 0,
+            monthday: value.monthday ?? 1,
+          })}
+          title={f !== 'none' ? 'Turn off the schedule' : 'Schedule this policy'}
+        />
+        <span className="text-[13px] font-medium text-[#364658]">Schedule</span>
+      </label>
       {f === 'none' && (
         <p className="mt-2 flex items-center gap-1.5 text-[12px] text-[#64748B]">
           <Info size={13} className="flex-shrink-0 text-[#7B8FA5]" />
@@ -224,6 +367,8 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
      policy — the chosen benchmark already carries it — so it opens on that benchmark's type. */
   const [osType, setOsType] = useState<ComplianceType | ''>(() => benchmarkOf(source?.benchmarkId ?? blank().benchmarkId)?.type ?? '');
   const [picking, setPicking] = useState(false);
+  const [pickingOffices, setPickingOffices] = useState(false);
+  const [previewOffice, setPreviewOffice] = useState<string | null>(null);
   const [tried, setTried] = useState(false);
 
   const benchmark = benchmarkOf(d.benchmarkId);
@@ -239,20 +384,19 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
     .map((b) => ({ value: b.id, label: b.name })), [osType]);
 
   /* The endpoint picker's filters — the same filter bar the Attach Rules picker uses. */
-  const [pickRules, setPickRules] = useState<FilterRule[]>([]);
-  const pickAttrs = useMemo(() => [
-    selectAttr('office', 'Remote Office', Building2, optionsOf(pool, (e) => e.office).map(({ label }) => ({ label }))),
-    selectAttr('agent', 'Agent Status', Wifi, [{ label: 'Online', color: '#22C55E' }, { label: 'Offline', color: '#F59E0B' }]),
-    selectAttr('os', 'Operating System', Monitor, optionsOf(pool, (e) => e.osName).map(({ label }) => ({ label }))),
-  ], [pool]);
-  const pickQuick = useMemo<QuickFilterDef[]>(() => [
-    { field: 'office', icon: Building2, tip: 'Filter by remote office', title: 'Remote Office is', width: 220, row: 'plain', options: pickAttrs[0].options! },
-    { field: 'agent', icon: Wifi, tip: 'Filter by agent status', title: 'Agent Status is', width: 180, row: 'dot', options: pickAttrs[1].options! },
-    { field: 'os', icon: Monitor, tip: 'Filter by operating system', title: 'Operating System is', width: 240, row: 'plain', options: pickAttrs[2].options! },
-  ], [pickAttrs]);
-  const pickRows = useMemo(() => matchRules(pool, pickRules, (e, k) => (k === 'office' ? e.office : k === 'agent' ? (e.agentOnline ? 'Online' : 'Offline') : k === 'os' ? e.osName : '')), [pool, pickRules]);
+  /* Both pickers search with the column filter: type to search, or click for field → operator → value. */
+  const epFilter = useColumnFilter(pool, EP_FIELDS);
+  const pickRows = epFilter.filtered;
 
-  const officeOptions = officesOf(pool).map((o) => ({ value: o, label: `${o} (${pool.filter((e) => e.office === o).length})` }));
+  /* Every office the benchmark's endpoints sit in, with how many of them — the office picker's rows. */
+  const officeRows = useMemo(() => officesOf(pool).map((o) => {
+    const here = pool.filter((e) => e.office === o);
+    const online = here.filter((e) => e.agentOnline).length;
+    return { id: o, total: here.length, online, offline: here.length - online };
+  }), [pool]);
+  /* The endpoints added one by one — the Endpoints box lists only these. */
+  const picked = useMemo(() => pool.filter((e) => d.endpointIds.includes(e.id)), [pool, d.endpointIds]);
+  const officeFilter = useColumnFilter(officeRows, OFFICE_FIELDS);
 
   const scheduleIncomplete = d.schedule.frequency !== 'none' && (!d.schedule.startDate || !d.schedule.time);
   const reason =
@@ -298,7 +442,7 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); save(); }
-      if (e.key === 'Escape' && !picking && !document.querySelector('[data-rule-menu]')) onClose();
+      if (e.key === 'Escape' && !picking && !pickingOffices && !previewOffice && !document.querySelector('[data-rule-menu]')) onClose();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -374,102 +518,107 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
             )}
           </Section>
 
-          <Section title="Endpoints" sub="Which endpoints the policy assesses — whole remote offices (new machines there join on their own), endpoints added one by one, or both.">
-            <div className="grid grid-cols-2 gap-x-2 gap-y-4">
-              <div>
-                <FieldLabel>Remote Offices</FieldLabel>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div>
-                      <RuleSelect
-                        className="!rounded"
-                        multi
-                        disabled={!!pickReason}
-                        value={d.offices}
-                        options={officeOptions}
-                        onChange={(v) => set({ offices: v })}
-                        placeholder="Select remote offices"
-                        invalid={tried && resolved.length === 0}
-                      />
-                    </div>
-                  </TooltipTrigger>
-                  {pickReason && <TooltipContent className="text-wrap max-w-[260px]">{pickReason}</TooltipContent>}
-                </Tooltip>
-                <ErrorText>{tried && benchmark && resolved.length === 0 ? 'Choose a remote office or add an endpoint' : ''}</ErrorText>
-              </div>
-            </div>
-
-            {/* What will actually be assessed, whichever axis chose it. */}
-            <div className={`mt-4 overflow-hidden rounded-lg border ${tried && resolved.length === 0 ? 'border-[#F25C4E]' : 'border-[#E5E7EB]'}`}>
-              <div className="flex min-h-[48px] items-center gap-3 border-b border-[#EEF1F4] bg-[#F6F9FC] px-4 py-2">
-                <span className="text-[13px] font-semibold text-[#364658]">Endpoints to assess <span className="ml-1 rounded-sm bg-[#EEF2F6] px-1.5 py-0.5 text-[11px] font-medium text-[#64748B]">{resolved.length}</span></span>
-                {resolved.some((e) => !e.agentOnline) && (
-                  <span className="text-[12px] text-[#B45309]">{resolved.filter((e) => !e.agentOnline).length} offline — skipped until their agent reports in</span>
-                )}
-                {/* Once some are added, the CTA moves up here so more can be added. */}
-                {resolved.length > 0 && (
-                  <button type="button" onClick={() => setPicking(true)} className="ml-auto inline-flex h-8 items-center gap-1.5 rounded border border-[#DFE5ED] bg-white px-3 text-[13px] font-medium text-[#364658] transition-colors hover:bg-[#F5F7FA]"><Plus size={14} /> Add Endpoints</button>
-                )}
-              </div>
-              {resolved.length === 0 ? (
-                <div className="flex flex-col items-center px-4 pb-7 pt-5 text-center">
-                  <EmptyEndpointsArt />
-                  <p className="mt-3 max-w-[600px] text-[13px] leading-[1.55] text-[#64748B]">
-                    {pickReason
-                      ? pickReason
-                      : <>No endpoints yet — choose remote offices above, or add the <span className="font-medium text-[#364658]">{benchmark!.osVersion}</span> endpoints this policy should assess one by one.</>}
-                  </p>
-                  {(
-                    <button
-                      type="button"
-                      disabled={!!pickReason}
-                      onClick={() => setPicking(true)}
-                      className="mt-4 inline-flex h-8 items-center gap-1.5 rounded bg-[#3D8BD0] px-3.5 text-[13px] font-medium text-white transition-colors hover:bg-[#3478B5] disabled:cursor-not-allowed disabled:opacity-50"
-                    ><Plus size={14} /> Add Endpoints</button>
-                  )}
-                </div>
-              ) : (
-                <div className="overflow-x-auto"><table className="w-full min-w-[760px] table-fixed">
-                  <colgroup><col className="w-[22%]" /><col className="w-[14%]" /><col className="w-[20%]" /><col /><col className="w-[124px]" /><col className="w-[48px]" /></colgroup>
-                  <thead><tr className="border-b border-[#EEF1F4]">{['Host Name', 'IP Address', 'Operating System', 'Remote Office', 'Added By', ''].map((h, i) => <th key={i} className="whitespace-nowrap px-4 py-2 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>)}</tr></thead>
+          <Section title="Target Endpoints" sub="Add whole remote offices, individual endpoints, or both. An endpoint picked both ways is assessed once.">
+            <div className="space-y-4">
+              <TargetBox
+                title="Remote Offices"
+                count={d.offices.length}
+                addLabel="Add Remote Offices"
+                onAdd={() => setPickingOffices(true)}
+                addReason={pickReason}
+                invalid={tried && resolved.length === 0}
+                emptyArt={<EmptyOfficesArt />}
+                emptyText={pickReason ?? 'No remote offices yet — every endpoint in an office you add is assessed, including machines that join it later.'}
+              >
+                <table className="w-full min-w-[620px] table-fixed">
+                  <colgroup><col /><col className="w-[18%]" /><col className="w-[30%]" /><col className="w-[132px]" /></colgroup>
+                  <thead><tr className="border-b border-[#EEF1F4]">{['Remote Office', 'Endpoints', 'Agent Status', ''].map((h, i) => <th key={i} className="whitespace-nowrap px-4 py-2 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>)}</tr></thead>
                   <tbody className="divide-y divide-[#EEF1F4]">
-                    {resolved.slice(0, 8).map((e) => (
-                      <tr key={e.id} className="group/row">
-                        <td className="px-4 py-2.5"><span className="flex min-w-0 items-center gap-2"><span className={`size-2 flex-shrink-0 rounded-full ${e.agentOnline ? 'bg-[#22C55E]' : 'bg-[#F59E0B]'}`} /><span className="truncate text-[13px] text-[#364658]">{e.hostName}</span></span></td>
-                        <td className="px-4 py-2.5 text-[13px] tabular-nums text-[#64748B]">{e.ip}</td>
-                        <td className="px-4 py-2.5"><span className="block truncate text-[13px] text-[#64748B]">{e.osName}</span></td>
-                        <td className="px-4 py-2.5"><span className="block truncate text-[13px] text-[#64748B]">{e.office}</span></td>
-                        {/* Where it came from: an office it sits in, or added by hand. */}
-                        <td className="px-4 py-2.5">
-                          <span className={`inline-block rounded-sm px-1.5 py-0.5 text-[11px] font-medium ${d.offices.includes(e.office) ? 'bg-[#EEF2F6] text-[#475569]' : 'bg-[#EBF5FF] text-[#3D8BD0]'}`}>{d.offices.includes(e.office) ? 'Remote Office' : 'Endpoint'}</span>
-                        </td>
-                        <td className="px-2 py-1.5 text-right">
-                          {d.offices.includes(e.office) ? (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <span className="inline-flex size-7 cursor-help items-center justify-center rounded text-[#CBD5E1] opacity-0 group-hover/row:opacity-100"><X size={15} /></span>
-                              </TooltipTrigger>
-                              <TooltipContent className="text-wrap max-w-[240px]">Comes from {e.office} — remove the office above to drop it</TooltipContent>
-                            </Tooltip>
-                          ) : (
-                            <button type="button" title="Remove" onClick={() => set({ endpointIds: d.endpointIds.filter((x) => x !== e.id) })} className="inline-flex size-7 items-center justify-center rounded text-[#7B8FA5] opacity-0 transition-opacity hover:bg-[#EEF2F6] hover:text-[#364658] focus:opacity-100 group-hover/row:opacity-100"><X size={15} /></button>
-                          )}
+                    {officeRows.filter((o) => d.offices.includes(o.id)).map((o) => (
+                      <tr key={o.id} className="group/row">
+                        <td className="px-4 py-2.5"><span className="flex min-w-0 items-center gap-2"><Building2 size={15} className="flex-shrink-0 text-[#7B8FA5]" /><span className="truncate text-[13px] text-[#364658]">{o.id}</span></span></td>
+                        <td className="px-4 py-2.5 text-[13px] tabular-nums text-[#64748B]">{o.total}</td>
+                        <td className="px-4 py-2.5"><AgentSplit online={o.online} offline={o.offline} /></td>
+                        <td className="px-2 py-1.5">
+                          <span className="flex items-center justify-end gap-1">
+                            <button type="button" onClick={() => setPreviewOffice(o.id)} className="inline-flex h-7 items-center gap-1.5 rounded border border-[#DFE5ED] bg-white px-2.5 text-[12px] font-medium text-[#364658] transition-colors hover:bg-[#F5F7FA]"><Eye size={13} /> Preview</button>
+                            <RemoveBtn onClick={() => set({ offices: d.offices.filter((x) => x !== o.id) })} />
+                          </span>
                         </td>
                       </tr>
                     ))}
                   </tbody>
-                </table></div>
+                </table>
+              </TargetBox>
+
+              <TargetBox
+                title="Endpoints"
+                count={picked.length}
+                addLabel="Add Endpoints"
+                onAdd={() => setPicking(true)}
+                addReason={pickReason}
+                invalid={tried && resolved.length === 0}
+                emptyArt={<EmptyEndpointsArt />}
+                emptyText={pickReason ?? <>No endpoints added one by one — add the <span className="font-medium text-[#364658]">{benchmark?.osVersion}</span> endpoints this policy should assess, wherever they sit.</>}
+              >
+                <Paginated rows={picked} perPage={10}>
+                  {(rows) => (
+                    <table className="w-full min-w-[760px] table-fixed">
+                      <colgroup><col className="w-[30%]" /><col className="w-[15%]" /><col className="w-[22%]" /><col /><col className="w-[48px]" /></colgroup>
+                      <thead><tr className="border-b border-[#EEF1F4]">{['Endpoint', 'IP Address', 'Operating System', 'Remote Office', ''].map((h, i) => <th key={i} className="whitespace-nowrap px-4 py-2 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>)}</tr></thead>
+                      <tbody className="divide-y divide-[#EEF1F4]">
+                        {rows.map((e) => (
+                          <tr key={e.id} className="group/row">
+                            <td className="px-4 py-2.5">
+                              <span className="flex min-w-0 items-center gap-2">
+                                <span className={`size-2 flex-shrink-0 rounded-full ${e.agentOnline ? 'bg-[#22C55E]' : 'bg-[#F59E0B]'}`} title={e.agentOnline ? 'Agent online' : 'Agent offline'} />
+                                <span className="flex-shrink-0 whitespace-nowrap rounded bg-[#e8f4fd] px-1.5 py-0.5 text-[11px] font-medium text-[#3D8BD0]">{e.id}</span>
+                                <span className="truncate text-[13px] text-[#364658]">{e.hostName}</span>
+                              </span>
+                            </td>
+                            <td className="px-4 py-2.5 text-[13px] tabular-nums text-[#64748B]">{e.ip}</td>
+                            <td className="px-4 py-2.5"><span className="block truncate text-[13px] text-[#64748B]">{e.osName}</span></td>
+                            <td className="px-4 py-2.5">
+                              <span className="flex min-w-0 items-center gap-2">
+                                <span className="truncate text-[13px] text-[#64748B]">{e.office}</span>
+                                {d.offices.includes(e.office) && (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild><span className="flex-shrink-0 cursor-help rounded-sm bg-[#EEF2F6] px-1.5 py-0.5 text-[11px] font-medium text-[#64748B]">Office added</span></TooltipTrigger>
+                                    <TooltipContent className="text-wrap max-w-[240px]">{e.office} is in Remote Offices too, so this endpoint is already assessed through it — it is counted once.</TooltipContent>
+                                  </Tooltip>
+                                )}
+                              </span>
+                            </td>
+                            <td className="px-2 py-1.5 text-right"><RemoveBtn onClick={() => set({ endpointIds: d.endpointIds.filter((x) => x !== e.id) })} /></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </Paginated>
+              </TargetBox>
+
+              {/* The one number that matters: what the policy will actually scan. */}
+              {resolved.length > 0 ? (
+                <p className="flex items-center gap-1.5 text-[12px] text-[#64748B]">
+                  <Info size={13} className="flex-shrink-0 text-[#7B8FA5]" />
+                  <span><span className="font-semibold text-[#364658]">{resolved.length}</span> endpoint{resolved.length === 1 ? '' : 's'} will be assessed
+                    {resolved.some((e) => !e.agentOnline) && <span className="text-[#B45309]"> · {resolved.filter((e) => !e.agentOnline).length} offline, skipped until their agent reports in</span>}
+                  </span>
+                </p>
+              ) : (
+                <ErrorText>{tried && benchmark ? 'Add a remote office or an endpoint' : ''}</ErrorText>
               )}
-              {resolved.length > 8 && <p className="border-t border-[#EEF1F4] px-4 py-2 text-[12px] text-[#7B8FA5]">and {resolved.length - 8} more</p>}
             </div>
           </Section>
 
           <Section title="Schedule & Notifications" sub="When the policy scans on its own, and who hears about the result.">
             <div className="space-y-4">
-              <div>
-                <FieldLabel>Notify Team</FieldLabel>
-                <RuleSelect className="!rounded" multi value={d.notify} options={NOTIFY_OPTIONS} onChange={(v) => set({ notify: v })} placeholder="Technicians or groups" />
-                <p className="mt-1.5 text-[12px] text-[#7B8FA5]">Told when a scan finishes and when an endpoint turns non-compliant.</p>
+              <div className="grid grid-cols-2 gap-x-2">
+                <div>
+                  <FieldLabel>Notify Team</FieldLabel>
+                  <RuleSelect className="!rounded" multi value={d.notify} options={NOTIFY_OPTIONS} onChange={(v) => set({ notify: v })} placeholder="Technicians or groups" />
+                </div>
               </div>
               <ScheduleFields value={d.schedule} onChange={(s) => set({ schedule: s })} />
             </div>
@@ -477,6 +626,25 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
         </div>
       </div>
 
+      {previewOffice && (
+        <OfficePreviewDrawer office={previewOffice} rows={pool.filter((e) => e.office === previewOffice)} osVersion={benchmark?.osVersion} onClose={() => setPreviewOffice(null)} />
+      )}
+      <PickerDrawer<{ id: string; total: number; online: number; offline: number }>
+        isOpen={pickingOffices}
+        title="Select Remote Offices"
+        subtitle={benchmark ? `Offices with endpoints running ${benchmark.osVersion} — machines that join them later are assessed too` : ''}
+        rows={officeFilter.filtered}
+        columns={[
+          { header: 'Remote Office', cell: (o) => <span className="flex items-center gap-2"><Building2 size={15} className="flex-shrink-0 text-[#7B8FA5]" /><span className="whitespace-nowrap text-[13px] font-medium">{o.id}</span></span> },
+          { header: 'Endpoints', cell: (o) => <span className="tabular-nums">{o.total}</span> },
+          { header: 'Agent Status', cell: (o) => <AgentSplit online={o.online} offline={o.offline} /> },
+        ]}
+        selected={d.offices}
+        searchOf={(o) => o.id}
+        searchSlot={<ColumnFilterSearch className="w-full" rows={officeRows} fields={OFFICE_FIELDS} query={officeFilter.query} onQuery={officeFilter.setQuery} conditions={officeFilter.conditions} onConditions={officeFilter.setConditions} />}
+        onClose={() => { setPickingOffices(false); officeFilter.reset(); }}
+        onApply={(ids) => { set({ offices: ids }); setPickingOffices(false); officeFilter.reset(); }}
+      />
       <PickerDrawer<ComplianceEndpoint>
         isOpen={picking}
         title="Select Endpoints"
@@ -484,10 +652,10 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
         rows={pickRows}
         columns={columns}
         selected={d.endpointIds}
-        filterBar={<TicketFilterBar rules={pickRules} setRules={setPickRules} noun="endpoint" attrs={pickAttrs} quickFilters={pickQuick} showFilterBuilder={false} />}
         searchOf={(e) => [e.id, e.hostName, e.ip, e.osName, e.office].join(' ')}
-        onClose={() => { setPicking(false); setPickRules([]); }}
-        onApply={(ids) => { set({ endpointIds: ids }); setPicking(false); setPickRules([]); }}
+        searchSlot={<ColumnFilterSearch className="w-full" rows={pool} fields={EP_FIELDS} query={epFilter.query} onQuery={epFilter.setQuery} conditions={epFilter.conditions} onConditions={epFilter.setConditions} />}
+        onClose={() => { setPicking(false); epFilter.reset(); }}
+        onApply={(ids) => { set({ endpointIds: ids }); setPicking(false); epFilter.reset(); }}
       />
     </div>
   );

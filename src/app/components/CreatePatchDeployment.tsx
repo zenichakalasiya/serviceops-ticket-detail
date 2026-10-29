@@ -59,7 +59,7 @@ export interface PickerColumn<T> {
 }
 
 /** One picker for every "Add …" on this form — patches, OS upgrade patches, offices, endpoints. */
-export function PickerDrawer<T extends { id: string }>({ isOpen, title, subtitle, rows, columns, selected, searchOf, onClose, onApply, single = false, filterBar }: {
+export function PickerDrawer<T extends { id: string }>({ isOpen, title, subtitle, rows, columns, selected, searchOf, onClose, onApply, single = false, filterBar, searchSlot }: {
   isOpen: boolean;
   title: string;
   subtitle: string;
@@ -73,6 +73,8 @@ export function PickerDrawer<T extends { id: string }>({ isOpen, title, subtitle
   single?: boolean;
   /** Optional filters beside the search — the caller filters `rows` itself (e.g. the listing filter bar). */
   filterBar?: React.ReactNode;
+  /** Replaces the built-in search box; the caller filters `rows` itself (the column filter search). */
+  searchSlot?: React.ReactNode;
 }) {
   const [picked, setPicked] = useState<string[]>(selected);
   const [q, setQ] = useState('');
@@ -81,7 +83,7 @@ export function PickerDrawer<T extends { id: string }>({ isOpen, title, subtitle
   if (!isOpen) return null;
 
   const query = q.trim().toLowerCase();
-  const visible = query ? rows.filter((r) => searchOf(r).toLowerCase().includes(query)) : rows;
+  const visible = query && !searchSlot ? rows.filter((r) => searchOf(r).toLowerCase().includes(query)) : rows;
   const toggle = (id: string) => setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
   /* Single mode locks the rest of the list once something is chosen, rather than silently swapping
      the pick. The chosen row stays live so it can be unselected, which re-opens the whole list —
@@ -100,10 +102,12 @@ export function PickerDrawer<T extends { id: string }>({ isOpen, title, subtitle
         </div>
 
         <div className="flex flex-wrap items-center gap-2 border-b border-[#F0F2F5] px-5 py-3">
-          <div className={`relative ${filterBar ? 'w-[280px]' : 'w-full'}`}>
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9ca3af]" size={15} />
-            <input type="text" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search" className={`${inputCls} pl-9`} />
-          </div>
+          {searchSlot ?? (
+            <div className={`relative ${filterBar ? 'w-[280px]' : 'w-full'}`}>
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9ca3af]" size={15} />
+              <input type="text" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search" className={`${inputCls} pl-9`} />
+            </div>
+          )}
           {filterBar}
         </div>
 
@@ -137,7 +141,7 @@ export function PickerDrawer<T extends { id: string }>({ isOpen, title, subtitle
             </thead>
             <tbody className="divide-y divide-[#e5e7eb]">
               {visible.length === 0 ? (
-                <EmptyRow colSpan={columns.length + 1} text={`Nothing matches “${q}”.`} />
+                <EmptyRow colSpan={columns.length + 1} text={searchSlot ? 'Nothing matches these filters.' : `Nothing matches “${q}”.`} />
               ) : visible.map((r) => {
                 const locked = lockedOut(r.id);
                 return (

@@ -1,3 +1,50 @@
+# Handoff — 2026-10-29 12:10 (Compliance: rule details, rule groups, View rule results)
+
+> Sessions share this file. This top part is the newest (Compliance); older Form Rules / Compliance notes follow.
+
+## Read first
+CLAUDE.md → "## Compliance (Oct 2026)", last bullet "Compliance pass, 28–29 Oct 2026". Versioning rule:
+ASK Zeni "save into Compliance v2 or make a new version?" before changing `versions/versions.json`.
+
+## What we worked on this session
+A long run of Zeni's Compliance UI requests on both the admin and technician sides: the policy form, the
+benchmark rule-group builder, rule details, the detail-page headers and the View rule results sidebar.
+
+## Completed
+- Column-filter search in four drawers; Target Endpoints two-box layout + office Preview; Notify Team half width.
+- MITRE tab shows names only from export data; Summary tab = Description · Rationale · Impact · References.
+- Rule rows: no arrow anywhere, dotted underline on hover.
+- Create Benchmark: no Profile field (derived on save); Attach Rules = Severity + Profile filters, no Section.
+- V2 rule-group builder is the only one; no root bar; Add rule group; sibling drag with grips; alignment fixes.
+- Policy page: Endpoints filter Office + Agent; Rules search only; Run History date filter (shared DateRangeFilter).
+- Endpoint page Compliance Audit: 3 status cards, no filter. Rules page: Policies column = count.
+- Schedule switch replaces Manual / Scheduled. OS Type / OS Version wording everywhere.
+- View rule results: tooltips on rule icons and group icons, tinted main groups, header line as label | value,
+  Average Compliance card, primary Export button, first-scan dashed icon.
+- Header alignment + 3px title-to-facts gap on all Compliance detail pages.
+
+## In progress
+Published to `main` on 29 Oct; `versions/versions.json` NOT updated — Compliance v2 still points at `a51c8f6`
+until Zeni says whether this goes into v2 or a new version.
+
+## Next steps
+- Ask Zeni: v2 or new version → update `versions/versions.json` (commit + `changes` line), push, verify the
+  `/versions/compliance/v2/` (or v3) link returns 200.
+- Open questions to Zeni: Impact text (wait for CIS export vs sample); keep "Add group inside" in the
+  right-click menu; Policy › Endpoints keep Office/Agent filters; admin Benchmark detail read-only arrow.
+
+## Decisions made
+- No invented data: MITRE names and Impact come only from the CIS export.
+- Group drag moves among siblings only; 7 levels kept.
+- `HeaderKpiRow` got an optional `gap`; only Compliance passes 3px, so other modules are unchanged.
+
+## Gotchas & notes
+- Git Bash mangles node -e scripts containing backticks / `${}` — use the Edit tool or a script file.
+- Headless Playwright can't finish downward HTML5 drags; verify drops with dispatched DragEvents.
+- `HeaderKpiRow` renders a hidden measuring copy, so its innerText appears twice in probes.
+
+---
+
 # Handoff — 2026-10-27 (Form Rules: product wording, play icon, guide video openings)
 
 > Sessions share this file. This top part is the newest (Form Rules session); the Compliance notes follow.

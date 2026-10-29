@@ -32,16 +32,16 @@ export function AdminComplianceRulesModule({ benchmarks = BENCHMARKS_SEED }: { b
   const attrs = useMemo(() => {
     const plain = (o: { label: string }[]) => o.map(({ label }) => ({ label }));
     return [
-      selectAttr('type', 'Type', Monitor, plain(optionsOf(RULES, (r) => r.type, COMPLIANCE_TYPES))),
+      selectAttr('type', 'OS Type', Monitor, plain(optionsOf(RULES, (r) => r.type, COMPLIANCE_TYPES))),
       selectAttr('platform', 'Platform', Server, plain(optionsOf(RULES, (r) => r.platform))),
-      selectAttr('version', 'Version', GitBranch, plain(optionsOf(RULES, (r) => `${r.platform} ${r.version}`))),
+      selectAttr('version', 'OS Version', GitBranch, plain(optionsOf(RULES, (r) => `${r.platform} ${r.version}`))),
       selectAttr('severity', 'Severity', ShieldAlert, SEVERITIES.map((v) => ({ label: v, color: SEVERITY_PILL[v].bar }))),
       selectAttr('profile', 'Profile', BadgeCheck, [{ label: 'L1' }, { label: 'L2' }]),
     ];
   }, []);
   // The two cuts a rule list is worked by: what it runs on, and how bad a failure is.
   const quick = useMemo<QuickFilterDef[]>(() => [
-    { field: 'type', icon: Monitor, tip: 'Filter by type', title: 'Type is', width: 196, row: 'plain', options: attrs[0].options! },
+    { field: 'type', icon: Monitor, tip: 'Filter by OS type', title: 'OS Type is', width: 196, row: 'plain', options: attrs[0].options! },
     { field: 'severity', icon: ShieldAlert, tip: 'Filter by severity', title: 'Severity is', width: 196, row: 'dot', options: attrs[3].options! },
     { field: 'profile', icon: BadgeCheck, tip: 'Filter by profile', title: 'Profile is', width: 160, row: 'plain', options: attrs[4].options! },
   ], [attrs]);
@@ -97,7 +97,7 @@ export function AdminComplianceRulesModule({ benchmarks = BENCHMARKS_SEED }: { b
           </colgroup>
           <thead className="border-b border-[#e5e7eb]">
             <tr>
-              {['Rule', 'Description', 'Severity', 'Type', 'Platform', 'Version', 'Profile'].map((h) => (
+              {['Rule', 'Description', 'Severity', 'OS Type', 'Platform', 'OS Version', 'Profile'].map((h) => (
                 <th key={h} className="whitespace-nowrap px-4 py-2.5 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>
               ))}
             </tr>

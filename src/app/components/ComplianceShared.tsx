@@ -6,7 +6,7 @@ import type { Attr, FilterRule } from './TicketFilterBar';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { HeaderKpiRow } from './HeaderKpiRow';
 import type { HeaderKpiItem } from './HeaderKpiRow';
-import { MITRE_NAMES, SEVERITY_PILL } from './complianceData';
+import { SEVERITY_PILL } from './complianceData';
 import type { ComplianceRule, Severity } from './complianceData';
 
 /* Pieces the Compliance Rules and Benchmark screens share. None of them is a new design:
@@ -159,7 +159,7 @@ type RuleTab = 'first' | 'summary' | 'audit' | 'remediation' | 'references' | 'c
 export interface RuleFirstTab { label: string; node: React.ReactNode }
 const RULE_TABS: [RuleTab, string][] = [
   ['summary', 'Summary'], ['audit', 'Audit'], ['remediation', 'Remediation'],
-  ['references', 'References'], ['controls', 'Controls'], ['mitre', 'MITRE ATT&CK'],
+  ['controls', 'Controls'], ['mitre', 'MITRE ATT&CK'],
 ];
 
 /** The CIS "MITRE ATT&CK Mappings" table: one row, three columns — each ID with its ATT&CK name
@@ -187,7 +187,7 @@ function MitreTable({ rule }: { rule: ComplianceRule }) {
                   {ids.map((id) => (
                     <li key={id}>
                       <div className="text-[13px] font-semibold tabular-nums text-[#364658]">{id}</div>
-                      {MITRE_NAMES[id] && <div className="text-[12px] leading-[1.45] text-[#64748B]">{MITRE_NAMES[id]}</div>}
+                      {rule.mitre!.names?.[id] && <div className="text-[12px] leading-[1.45] text-[#64748B]">{rule.mitre!.names[id]}</div>}
                     </li>
                   ))}
                 </ul>
@@ -201,9 +201,27 @@ function MitreTable({ rule }: { rule: ComplianceRule }) {
 }
 
 const fieldLabel = 'text-[12px] text-[#7B8FA5]';
+/* Summary tab: a real heading over each field, so it reads as sections rather than form labels. */
+const sumTitle = 'text-[15px] font-semibold text-[#1D2A3E]';
+const sumValue = 'mt-1.5 text-[13px] leading-[1.65] text-[#364658]';
 const fieldValue = 'mt-1 text-[13px] leading-[1.6] text-[#364658]';
 const codeBox = 'mt-2 whitespace-pre-wrap rounded bg-[#F9FAFB] px-3 py-2.5 font-mono text-[12px] leading-[1.6] text-[#364658]';
 const readBox = 'mt-1 flex min-h-8 items-center rounded bg-[#F9FAFB] px-3 py-1.5 text-[13px] text-[#364658]';
+
+/** The facts under a rule's title — one row, used by every rule view (admin and technician). Type
+ *  and Version are the OPERATING SYSTEM the rule is written for, not the rule's own, so they say so. */
+export function RuleFactsRow({ rule }: { rule: ComplianceRule }) {
+  return (
+    <HeaderKpiRow gap="mt-[3px]" items={[
+      severityKpi(rule.severity),
+      ckpi('profile', 'Profile', rule.profile, { chip: rule.profile === 'L1' ? 'blue' : 'violet', tip: rule.profile === 'L1' ? 'Profile: Level 1 — must have' : 'Profile: Level 2 — good to have' }),
+      ckpi('assessment', 'Assessment', rule.assessment, { color: rule.assessment === 'Automated' ? '#15803D' : '#B54708', tip: rule.assessment === 'Automated' ? 'Automated: the agent checks this rule' : 'Manual: a person has to review this rule' }),
+      ckpi('type', 'OS Type', rule.type),
+      ckpi('platform', 'Platform', rule.platform),
+      ckpi('version', 'OS Version', rule.version),
+    ]} />
+  );
+}
 
 export function RuleDetailPanel({ rule, usedIn, onClose, number, admin, firstTab, wide }: {
   rule: ComplianceRule;
@@ -238,18 +256,11 @@ export function RuleDetailPanel({ rule, usedIn, onClose, number, admin, firstTab
             {number && <span className="flex-shrink-0 tabular-nums text-[#7B8FA5]">{number}</span>}
             <span>{rule.name}</span>
           </h3>
-          <button type="button" onClick={onClose} className="flex size-8 flex-shrink-0 items-center justify-center rounded text-[#7B8FA5] transition-colors hover:bg-[#F3F4F6] hover:text-[#364658]"><X size={18} /></button>
+          <button type="button" onClick={onClose} className="-my-1 flex size-8 flex-shrink-0 items-center justify-center rounded text-[#7B8FA5] transition-colors hover:bg-[#F3F4F6] hover:text-[#364658]"><X size={18} /></button>
         </div>
         {/* The rule's basic facts, under its title. */}
-        <div className={`px-5 pt-1 ${onePage ? 'pb-1' : 'pb-3'}`}>
-          <HeaderKpiRow items={[
-            severityKpi(rule.severity),
-            ckpi('profile', 'Profile', rule.profile, { chip: rule.profile === 'L1' ? 'blue' : 'violet', tip: rule.profile === 'L1' ? 'Profile: Level 1 — must have' : 'Profile: Level 2 — good to have' }),
-            ckpi('assessment', 'Assessment', rule.assessment, { color: rule.assessment === 'Automated' ? '#15803D' : '#B54708', tip: rule.assessment === 'Automated' ? 'Automated: the agent checks this rule' : 'Manual: a person has to review this rule' }),
-            ckpi('type', 'Type', rule.type),
-            ckpi('platform', 'Platform', rule.platform),
-            ckpi('version', 'Version', rule.version),
-          ]} />
+        <div className={`px-5 ${onePage ? 'pb-1' : 'pb-3'}`}>
+          <RuleFactsRow rule={rule} />
         </div>
         {onePage ? <RulePageBody rule={rule} /> : <RuleDetailBody rule={rule} usedIn={usedIn} firstTab={firstTab} />}
       </div>
@@ -392,14 +403,26 @@ export function RuleDetailBody({ rule, usedIn, lead, firstTab }: {
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
           {tab === 'first' && firstTab?.node}
           {tab === 'summary' && (
-            <div className="space-y-5">
+            <div className="space-y-7 pt-1">
               <div>
-                <div className={fieldLabel}>Description</div>
-                <p className={fieldValue}>{rule.description}</p>
+                <h3 className={sumTitle}>Description</h3>
+                <p className={sumValue}>{rule.description}</p>
               </div>
               <div>
-                <div className={fieldLabel}>Rationale</div>
-                <p className={fieldValue}>{rule.rationale}</p>
+                <h3 className={sumTitle}>Rationale</h3>
+                <p className={sumValue}>{rule.rationale}</p>
+              </div>
+              <div>
+                <h3 className={sumTitle}>Impact</h3>
+                <p className={sumValue}>{rule.impact || <span className="text-[#9CA3AF]">Not provided</span>}</p>
+              </div>
+              <div>
+                <h3 className={sumTitle}>References</h3>
+                <ul className="mt-2 space-y-2">
+                  {rule.references.map((r) => (
+                    <li key={r} className="rounded bg-[#F9FAFB] px-3 py-2.5 text-[13px] text-[#364658]">{r}</li>
+                  ))}
+                </ul>
               </div>
             </div>
           )}
@@ -444,14 +467,6 @@ export function RuleDetailBody({ rule, usedIn, lead, firstTab }: {
                 <div className={codeBox}>{rule.remediationValue}</div>
               </div>
             </div>
-          )}
-
-          {tab === 'references' && (
-            <ul className="space-y-2">
-              {rule.references.map((r) => (
-                <li key={r} className="rounded bg-[#F9FAFB] px-3 py-2.5 text-[13px] text-[#364658]">{r}</li>
-              ))}
-            </ul>
           )}
 
           {tab === 'controls' && (

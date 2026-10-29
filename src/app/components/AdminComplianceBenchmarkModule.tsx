@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 import {
   ArrowLeft, BadgeCheck, Check, ChevronDown, ChevronRight, Copy, ExternalLink, FolderPlus, Layers, Link2, Lock, Monitor, MoreVertical,
-  Pencil, Plus, PlusCircle, Search, ShieldAlert, Trash2, X, CornerDownRight, ArrowDown, ChevronsDownUp,
+  Pencil, Plus, PlusCircle, Search, ShieldAlert, Trash2, X, CornerDownRight, ArrowDown, ChevronsDownUp, GripVertical,
 } from 'lucide-react';
 import { useComplianceRuleUi } from './complianceRuleUi';
 import { Pagination } from './Pagination';
@@ -210,14 +210,14 @@ function BenchmarkList({ benchmarks, onOpen, onCreate, onEdit, onClone, onDelete
   const attrs = useMemo(() => {
     const plain = (o: { label: string }[]) => o.map(({ label }) => ({ label }));
     return [
-      selectAttr('type', 'Type', Monitor, plain(optionsOf(benchmarks, (b) => b.type, COMPLIANCE_TYPES))),
+      selectAttr('type', 'OS Type', Monitor, plain(optionsOf(benchmarks, (b) => b.type, COMPLIANCE_TYPES))),
       selectAttr('origin', 'Origin', BadgeCheck, plain(optionsOf(benchmarks, (b) => b.origin, ['Default', 'Custom']))),
     ];
   }, [benchmarks]);
   // Type and Origin are every cut this list has, so they are both quick filters and the
   // Filters builder (and its pill) is switched off — it would only offer the same two again.
   const quick = useMemo<QuickFilterDef[]>(() => [
-    { field: 'type', icon: Monitor, tip: 'Filter by type', title: 'Type is', width: 196, row: 'plain', options: attrs[0].options! },
+    { field: 'type', icon: Monitor, tip: 'Filter by OS type', title: 'OS Type is', width: 196, row: 'plain', options: attrs[0].options! },
     { field: 'origin', icon: BadgeCheck, tip: 'Filter by origin', title: 'Origin is', width: 180, row: 'plain', options: attrs[1].options! },
   ], [attrs]);
 
@@ -277,7 +277,7 @@ function BenchmarkList({ benchmarks, onOpen, onCreate, onEdit, onClone, onDelete
           </colgroup>
           <thead className="border-b border-[#e5e7eb]">
             <tr>
-              {['Benchmark', 'Description', 'Type', 'Version', 'Origin', 'Rules', 'Actions'].map((h) => (
+              {['Benchmark', 'Description', 'OS Type', 'OS Version', 'Origin', 'Rules', 'Actions'].map((h) => (
                 <th key={h} className="whitespace-nowrap px-4 py-2.5 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>
               ))}
             </tr>
@@ -481,16 +481,16 @@ function GroupNode({ g, number, depth, ops, siblingNext }: { g: RuleGroup; numbe
       <div key={id} onClick={() => ops.onOpenRule?.(id)} style={{ paddingLeft: pad + 28 }} className={`group/row flex items-center gap-3 border-t border-[#EEF1F4] py-2 pr-3 transition-colors hover:bg-[#F5F7FA] ${ops.onOpenRule ? 'cursor-pointer' : ''}`}>
         <span className="h-4 w-[3px] flex-shrink-0 rounded-full" style={{ backgroundColor: SEVERITY_PILL[r.severity].bar }} title={r.severity} />
         <span className="flex-shrink-0 text-[12px] tabular-nums text-[#7B8FA5]">{n}</span>
-        <span className="line-clamp-2 min-w-0 flex-1 break-words text-[13px] text-[#364658] group-hover/row:text-[#3D8BD0]" title={r.name}>{r.name}</span>
+        <span className="line-clamp-2 min-w-0 flex-1 break-words text-[13px] text-[#364658] decoration-[#94A3B8] decoration-dotted underline-offset-[3px] group-hover/row:underline" title={r.name}>{r.name}</span>
         {/* At rest the two tags sit at the row's right edge; on hover the action takes the edge
             and the tags step left — nothing is reserved for a control that isn't showing. */}
         <ProfileChip profile={r.profile} />
         <SeverityPill severity={r.severity} />
         {ops.editable ? (
-          <span className="-my-[6px] hidden flex-shrink-0 group-hover/row:inline-flex focus-within:inline-flex" onClick={(e) => e.stopPropagation()}>
+          <span className="-my-[6px] inline-flex flex-shrink-0" onClick={(e) => e.stopPropagation()}>
             <ActionIcon label="Remove from group" onClick={() => ops.onRemoveRule?.(g.id, id)}><X size={15} /></ActionIcon>
           </span>
-        ) : ops.onOpenRule && <ChevronRight size={14} className="hidden flex-shrink-0 text-[#3D8BD0] group-hover/row:block" />}
+        ) : null}
       </div>
     );
   };
@@ -605,10 +605,9 @@ function GroupNode({ g, number, depth, ops, siblingNext }: { g: RuleGroup; numbe
 
 /* ── V2 of the rule-group builder — the VS Code explorer's rule ───────────────────────────────
  * Click a row to SELECT it. "+" adds a group INSIDE the selected group — open or closed, it opens.
- * The top row is the benchmark itself (the root): select it and "+" adds a top-level group. A
- * selected RULE sends a new group into that rule's own group, as VS Code sends a new folder next
- * to a selected file. The same "+" and Attach rules sit on the section's title toolbar (acting on
- * the selection) and on a hovered row (acting on that row). Right-click a row for Add group ·
+ * Main groups come from the "Add rule group" button under the last one, as in V1 (there is no
+ * benchmark row at the top). A selected RULE sends a new group into that rule's own group.
+ * "+" and Attach rules sit on a hovered row (acting on that row). Right-click a row for Add group ·
  * Attach rules · Rename · Delete; F2 renames, Delete deletes. A new group arrives with its name
  * field open — Enter saves, Esc on an empty name drops it. Nothing is ever added on its own. */
 
@@ -632,6 +631,19 @@ function GroupExplorer({ groups, setGroups, rootName, naming, setNaming, expande
   const [sel, setSel] = useState<ExplorerSel>({ kind: 'root' });
   const [rootOpen, setRootOpen] = useState(true);
   const [ctx, setCtx] = useState<{ x: number; y: number; sel: ExplorerSel } | null>(null);
+  /* Dragging a group by its grip: it moves among the groups at its OWN level (its siblings). */
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [dropAt, setDropAt] = useState<{ id: string; after: boolean } | null>(null);
+  // The move is applied when the drag ENDS, at the last valid spot — kept in a ref so the end
+  // handler reads the latest one. Leaving the groups clears it, so a drag let go elsewhere is a no-op.
+  const dropRef = useRef<{ id: string; after: boolean } | null>(null);
+  const markDrop = (v: { id: string; after: boolean } | null) => { dropRef.current = v; setDropAt(v); };
+  const endDrag = () => {
+    const id = dragId, at = dropRef.current;
+    if (id && at) setGroups((gs) => moveGroupTo(gs, id, at.id, at.after));
+    setDragId(null); markDrop(null);
+  };
+  const siblings = (a: string, b: string) => (locate(groups, a)?.parent?.id ?? null) === (locate(groups, b)?.parent?.id ?? null);
   const nums = groupNumbers(groups);
   const all = allGroups(groups);
   const find = (id: string) => all.find((g) => g.id === id);
@@ -704,6 +716,18 @@ function GroupExplorer({ groups, setGroups, rootName, naming, setNaming, expande
   const toggle = (id: string) => setExpanded((x) => { const n = new Set(x); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const openCtx = (e: React.MouseEvent, s: ExplorerSel) => { e.preventDefault(); setSel(s); setCtx({ x: e.clientX, y: e.clientY, sel: s }); };
 
+  /* The drag handle. A main group's sits OUTSIDE its card and always shows; a deeper group's sits
+     in the whitespace before its arrow, on hover — and always while that group is selected. */
+  const grip = (g: RuleGroup, cls: string) => (
+    <span
+      draggable
+      onDragStart={(e) => { e.stopPropagation(); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', g.id); setDragId(g.id); }}
+      onDragEnd={endDrag}
+      onClick={(e) => e.stopPropagation()}
+      title="Drag to reorder"
+      className={`flex size-5 flex-shrink-0 cursor-grab items-center justify-center rounded text-[#9CA3AF] hover:bg-[#EEF2F6] hover:text-[#364658] active:cursor-grabbing ${cls}`}
+    ><GripVertical size={14} /></span>
+  );
   const renderGroup = (g: RuleGroup, depth: number): React.ReactNode => {
     const s: ExplorerSel = { kind: 'group', id: g.id };
     const kids = g.children ?? [];
@@ -714,8 +738,26 @@ function GroupExplorer({ groups, setGroups, rootName, naming, setNaming, expande
     const total = groupRuleIds(g).length;
     return (
       <div key={g.id}>
-        <div style={{ paddingLeft: 12 + depth * 22 }} className={rowCls(s, depth ? 'sub' : 'top')} onClick={() => setSel(s)} onContextMenu={(e) => openCtx(e, s)} onDoubleClick={() => toggle(g.id)}>
-          {chevron(open, () => toggle(g.id), g.ruleIds.length > 0 || kids.length > 0)}
+        <div
+          style={{ paddingLeft: depth ? 4 + depth * 22 : 8 }}
+          className={`${rowCls(s, depth ? 'sub' : 'top')} ${dragId === g.id ? 'opacity-50' : ''}`}
+          onClick={() => setSel(s)}
+          onContextMenu={(e) => openCtx(e, s)}
+          onDoubleClick={() => toggle(g.id)}
+          onDragOver={(e) => {
+            if (!dragId || dragId === g.id || !siblings(dragId, g.id)) return;
+            e.preventDefault();
+            e.stopPropagation();
+            const r = e.currentTarget.getBoundingClientRect();
+            const after = e.clientY > r.top + r.height / 2;
+            if (dropAt?.id !== g.id || dropAt.after !== after) markDrop({ id: g.id, after });
+          }}
+          onDrop={(e) => e.preventDefault()}
+        >
+          {dropAt?.id === g.id && <span className={`pointer-events-none absolute inset-x-0 z-10 h-0.5 bg-[#3D8BD0] ${dropAt.after ? 'bottom-0' : 'top-0'}`} />}
+          {depth > 0 && grip(g, `!w-3 ml-[30px] -mr-[22px] ${isSel(s) ? '' : 'invisible group-hover/ex:visible'}`)}
+          {/* A sub-group's arrow sits in the column of its sibling rules' severity bars. */}
+          <span className={depth ? "-mr-[11px] ml-[11px] flex" : "-mr-[11px] flex"}>{chevron(open, () => toggle(g.id), g.ruleIds.length > 0 || kids.length > 0)}</span>
           <Tooltip>
             <TooltipTrigger asChild><span className={`flex-shrink-0 cursor-default text-[13px] tabular-nums text-[#364658] ${depth ? 'font-semibold' : 'font-bold'}`}>{num}</span></TooltipTrigger>
             <TooltipContent>Level {depth + 1} of {MAX_GROUP_DEPTH}</TooltipContent>
@@ -748,14 +790,13 @@ function GroupExplorer({ groups, setGroups, rootName, naming, setNaming, expande
               if (!r) return null;
               const rs: ExplorerSel = { kind: 'rule', groupId: g.id, ruleId: rid };
               return (
-                <div key={rid} style={{ paddingLeft: 12 + (depth + 1) * 22 + 20 }} className={rowCls(rs, 'rule')} onClick={() => setSel(rs)} onDoubleClick={() => onOpenRule(rid)} onContextMenu={(e) => openCtx(e, rs)}>
+                <div key={rid} style={{ paddingLeft: (depth + 1) * 22 + 47 }} className={rowCls(rs, 'rule')} onClick={() => { setSel(rs); onOpenRule(rid); }} onContextMenu={(e) => openCtx(e, rs)}>
                   <span className="h-4 w-[3px] flex-shrink-0 rounded-full" style={{ backgroundColor: SEVERITY_PILL[r.severity].bar }} title={r.severity} />
                   <span className="flex-shrink-0 text-[12px] tabular-nums text-[#7B8FA5]">{num}.{j + 1}</span>
-                  <span className="line-clamp-2 min-w-0 flex-1 break-words text-[13px] text-[#364658]" title={r.name}>{r.name}</span>
+                  <span className="line-clamp-2 min-w-0 flex-1 break-words text-[13px] text-[#364658] decoration-[#94A3B8] decoration-dotted underline-offset-[3px] group-hover/ex:underline" title={r.name}>{r.name}</span>
                   <ProfileChip profile={r.profile} />
                   <SeverityPill severity={r.severity} />
-                  <span className={`flex flex-shrink-0 items-center ${isSel(rs) ? '' : 'invisible group-hover/ex:visible'}`} onClick={(e) => e.stopPropagation()}>
-                    <ActionIcon label="Open rule" onClick={() => onOpenRule(rid)}><ChevronRight size={15} /></ActionIcon>
+                  <span className="flex flex-shrink-0 items-center" onClick={(e) => e.stopPropagation()}>
                     <ActionIcon label="Remove from group (Delete)" onClick={() => remove(rs)}><X size={15} /></ActionIcon>
                   </span>
                 </div>
@@ -779,29 +820,22 @@ function GroupExplorer({ groups, setGroups, rootName, naming, setNaming, expande
   ] as (readonly [string, React.ReactNode, React.ReactNode, () => void])[]) : [];
 
   return (
-    <div className="space-y-3 outline-none" tabIndex={0} onKeyDown={onKey}>
-      {/* The heading bar IS the root — the benchmark itself. Click it to select the top level; its
-          + · Attach rules · Collapse all act on whatever is selected. */}
-      <div
-        onClick={() => setSel({ kind: 'root' })}
-        onContextMenu={(e) => openCtx(e, { kind: 'root' })}
-        className={`group/ex flex h-11 cursor-pointer select-none items-center gap-2 rounded-lg border pl-3 pr-2 transition-colors ${isSel({ kind: 'root' }) ? 'border-[#3D8BD0] bg-[#EBF5FF]' : 'border-[#E5E7EB] bg-white hover:bg-[#F9FAFB]'}`}
-      >
-        <Layers size={16} className="flex-shrink-0 text-[#7B8FA5]" />
-        <span className="min-w-0 flex-1 truncate text-[14px] font-semibold text-[#364658]">{rootName.trim() || 'New benchmark'}</span>
-        <span className="flex flex-shrink-0 items-center" onClick={(e) => e.stopPropagation()}>
-          <ActionIcon label={sel.kind === 'root' ? 'Add a main group' : 'Add group inside the selected group'} reason={addReasonFor(sel)} onClick={() => addInside(sel)}><Plus size={16} /></ActionIcon>
-          <ActionIcon label="Attach rules to the selected group" reason={attachReasonFor(sel)} onClick={() => attach(sel)}><Link2 size={15} /></ActionIcon>
-          <ActionIcon label="Collapse all" onClick={() => setExpanded(new Set())}><ChevronsDownUp size={15} /></ActionIcon>
-        </span>
-      </div>
+    <div className="space-y-3 outline-none" tabIndex={0} onKeyDown={onKey} onDragOver={() => { if (dragId && dropRef.current) markDrop(null); }}>
       {/* One card per main group (1, 2, 3 …), as in V1. */}
       {groups.map((g) => (
-        <div key={g.id} className={`overflow-hidden rounded-lg border ${showErrors && !g.name.trim() ? 'border-[#F25C4E]' : 'border-[#E5E7EB]'}`}>
-          {renderGroup(g, 0)}
+        <div key={g.id} className="relative">
+          <span className="absolute -left-7 top-3">{grip(g, '')}</span>
+          <div className={`overflow-hidden rounded-lg border ${showErrors && !g.name.trim() ? 'border-[#F25C4E]' : 'border-[#E5E7EB]'}`}>
+            {renderGroup(g, 0)}
+          </div>
         </div>
       ))}
-      {!groups.length && <p className="rounded-lg border border-dashed border-[#DFE5ED] px-4 py-6 text-center text-[13px] text-[#9CA3AF]">No groups yet — select the benchmark above and press +.</p>}
+      {/* A main group is added here, after the last one — the same button V1 has. */}
+      <button
+        type="button"
+        onClick={() => addInside({ kind: 'root' })}
+        className="flex h-11 w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-[#CBD5E1] text-[13px] font-medium text-[#3D8BD0] transition-colors hover:border-[#3D8BD0] hover:bg-[#F5FAFF]"
+      ><Plus size={15} /> Add rule group</button>
       {ctx && createPortal(
         <>
           <div className="fixed inset-0 z-[10040]" onClick={() => setCtx(null)} onContextMenu={(e) => { e.preventDefault(); setCtx(null); }} />
@@ -849,6 +883,16 @@ const locate = (gs: RuleGroup[], id: string, depth = 0, parent: RuleGroup | null
   if (i >= 0) return { list: gs, i, depth, parent };
   for (const g of gs) { const hit = locate(g.children ?? [], id, depth + 1, g); if (hit) return hit; }
   return null;
+};
+/** The tree with group `id` moved before / after `target` — only ever among siblings. */
+const moveGroupTo = (gs: RuleGroup[], id: string, target: string, after: boolean): RuleGroup[] => {
+  const from = locate(gs, id), to = locate(gs, target);
+  if (!from || !to || (from.parent?.id ?? null) !== (to.parent?.id ?? null) || id === target) return gs;
+  const moving = from.list[from.i];
+  const rest = from.list.filter((g) => g.id !== id);
+  const at = rest.findIndex((g) => g.id === target) + (after ? 1 : 0);
+  const list = [...rest.slice(0, at), moving, ...rest.slice(at)];
+  return from.parent ? mapGroup(gs, from.parent.id, (p) => ({ ...p, children: list })) : list;
 };
 /** How many levels a group's subtree spans (a group with no sub-groups = 1). */
 const heightOf = (g: RuleGroup): number => 1 + Math.max(0, ...(g.children ?? []).map(heightOf));
@@ -976,15 +1020,15 @@ function BenchmarkDrawer({ benchmark, benchmarks, onClose, onEdit, onClone, onDe
               <span className="line-clamp-2 break-words">{benchmark.name}</span>
             </h1>
             {/* Its facts as chips under the title — tinted where the value means something. */}
-            <HeaderKpiRow items={[
+            <HeaderKpiRow gap="mt-[3px]" items={[
               ckpi('origin', 'Origin', benchmark.origin, { chip: isDefault ? 'neutral' : 'green', icon: isDefault ? <Lock size={11} /> : undefined, tip: isDefault ? 'Default: ships with the product — read only' : 'Custom: built in this workspace' }),
-              ckpi('type', 'Type', benchmark.type),
-              ckpi('version', 'Version', benchmark.osVersion || '—'),
+              ckpi('type', 'OS Type', benchmark.type),
+              ckpi('version', 'OS Version', benchmark.osVersion || '—'),
               ckpi('rules', 'Rules', total, { color: '#3D8BD0' }),
               ckpi('updated', 'Updated', fmtDate(benchmark.updatedAt), { tip: `Updated ${fmtDate(benchmark.updatedAt)} by ${benchmark.createdBy}` }),
             ]} />
           </div>
-          <div className="flex flex-shrink-0 items-center gap-2">
+          <div className="-my-[2.5px] flex flex-shrink-0 items-center gap-2">
             <HeaderCopyButton variant="link" value="/admin/compliance-benchmarks" label="Copy Benchmark URL" />
             <Tooltip>
               <TooltipTrigger asChild>
@@ -1063,9 +1107,6 @@ function BenchmarkForm({ editing, source, names, onCancel, onSave }: {
   const [name, setName] = useState(editing ? editing.name : source ? `Copy of ${source.name}` : '');
   const [type, setType] = useState<ComplianceType | ''>(base?.type ?? '');
   const [version, setVersion] = useState(base?.osVersion ?? '');
-  const [profile, setProfile] = useState<BenchmarkProfile>(base?.profile ?? 'L1');
-  /** Turning a level off while its rules are attached: the confirm holds the level and the count. */
-  const [confirmDrop, setConfirmDrop] = useState<{ level: Profile; count: number } | null>(null);
   const [description, setDescription] = useState(base?.description ?? '');
   const [groups, setGroups] = useState<RuleGroup[]>(() =>
     editing ? editing.groups.map((g) => copyGroup(g))
@@ -1073,7 +1114,9 @@ function BenchmarkForm({ editing, source, names, onCancel, onSave }: {
         : [newGroup('')]);
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set(allGroupIds(groups)));
   /** V1 = the ⊕-menu tree; V2 = the explorer (select a group, + adds inside it). The logo's V1 | V2 pill. */
-  const builderUi = useComplianceRuleUi();
+  // V2 (the explorer) is the only builder now (Zeni, 29 Oct 2026). V1 stays built; bringing it back
+  // is `useComplianceRuleUi()` here plus the pill in Header.tsx.
+  const builderUi: 'v1' | 'v2' = 'v2';
   /** Groups whose name field is open — a new group starts here, ✓ closes it. */
   const [naming, setNaming] = useState<Set<string>>(() => new Set(groups.filter((g) => !g.name.trim()).map((g) => g.id)));
   /** Where a new group would land while an ⊕ menu item is hovered. */
@@ -1112,25 +1155,9 @@ function BenchmarkForm({ editing, source, names, onCancel, onSave }: {
     clearRules(version);
     setVersion(v);
   };
-  /* Profile = which levels the benchmark holds: Level 1, Level 2, or both (at least one).
-     Turning a level ON only widens what can be attached; turning one OFF would drop that
-     level's attached rules, so it asks first. */
-  const levels = profileLevels(profile);
-  const attachedOf = (l: Profile) => attached.filter((id) => ruleById(id)?.profile === l);
-  const toggleLevel = (l: Profile) => {
-    if (!levels.includes(l)) { setProfile(profileOf([...levels, l])); return; }
-    if (levels.length === 1) { toast('A benchmark needs at least one level — turn the other one on first'); return; }
-    const n = attachedOf(l).length;
-    if (n) { setConfirmDrop({ level: l, count: n }); return; }
-    setProfile(profileOf(levels.filter((x) => x !== l)));
-  };
-  const dropLevel = (l: Profile) => {
-    const drop = new Set(attachedOf(l));
-    setGroups((gs) => withoutRules(gs, [...drop]));
-    setProfile(profileOf(levels.filter((x) => x !== l)));
-    toast(`${drop.size} Level ${l === 'L1' ? '1' : '2'} rule${drop.size > 1 ? 's were' : ' was'} removed`);
-    setConfirmDrop(null);
-  };
+  /* Profile is not chosen on the form: it is READ from the rules attached — Level 1, Level 2,
+     or both — and saved with the benchmark. The Attach Rules sidebar filters by profile. */
+  const profile: BenchmarkProfile = profileOf([...new Set(attached.map((id) => ruleById(id)?.profile).filter(Boolean))] as Profile[]);
 
   const save = () => {
     setTried(true);
@@ -1158,26 +1185,23 @@ function BenchmarkForm({ editing, source, names, onCancel, onSave }: {
     const g = allGroups(groups).find((x) => x.id === gid);
     return `${numbersOfGroups.get(gid) ?? ''} ${g?.name || 'Untitled group'}`.trim();
   };
-  /* The version's rules the profile allows: L1 → Level 1 only; L2 → Level 1 and Level 2. */
-  const pool = useMemo(() => RULES.filter((r) => r.type === type && osVersionOf(r) === version && profileAllows(profile, r.profile)), [type, version, profile]);
+  /* Every rule of the version, both levels — the Profile filter in the sidebar narrows them. */
+  const pool = useMemo(() => RULES.filter((r) => r.type === type && osVersionOf(r) === version), [type, version]);
   const [pickRules, setPickRules] = useState<FilterRule[]>([]);
   useEffect(() => { setPickRules([]); }, [attachTo?.g]);
   const pickAttrs = useMemo(() => {
     const plain = (o: { label: string }[]) => o.map(({ label }) => ({ label }));
     return [
       selectAttr('severity', 'Severity', ShieldAlert, SEVERITIES.filter((s) => pool.some((r) => r.severity === s)).map((v) => ({ label: v, color: SEVERITY_PILL[v].bar }))),
-      selectAttr('section', 'Section', Layers, plain(optionsOf(pool, (r) => r.section[1]))),
       selectAttr('profile', 'Profile', BadgeCheck, plain(optionsOf(pool, (r) => r.profile, ['L1', 'L2']))),
     ];
   }, [pool]);
   const pickQuick = useMemo<QuickFilterDef[]>(() => [
     { field: 'severity', icon: ShieldAlert, tip: 'Filter by severity', title: 'Severity is', width: 196, row: 'dot', options: pickAttrs[0].options! },
-    { field: 'section', icon: Layers, tip: 'Filter by section', title: 'Section is', width: 240, row: 'plain', options: pickAttrs[1].options! },
-    // Only an L2 benchmark mixes the two levels, so only then is there anything to filter by.
-    ...(profile === 'L1+L2' ? [{ field: 'profile', icon: BadgeCheck, tip: 'Filter by profile', title: 'Profile is', width: 160, row: 'plain' as const, options: pickAttrs[2].options! }] : []),
-  ], [pickAttrs, profile]);
+    { field: 'profile', icon: BadgeCheck, tip: 'Filter by profile', title: 'Profile is', width: 160, row: 'plain', options: pickAttrs[1].options! },
+  ], [pickAttrs]);
   const pickRows = useMemo(
-    () => matchRules(pool, pickRules, (r, f) => (f === 'section' ? r.section[1] : String((r as any)[f] ?? ''))),
+    () => matchRules(pool, pickRules, (r, f) => String((r as any)[f] ?? '')),
     [pool, pickRules],
   );
   /** Where a rule already sits — a rule lives in ONE place in a benchmark. */
@@ -1198,14 +1222,13 @@ function BenchmarkForm({ editing, source, names, onCancel, onSave }: {
         );
       },
     },
-    { header: 'Section', cell: (r) => <span className="whitespace-nowrap">{r.section[1]}</span> },
     { header: 'Profile', cell: (r) => <ProfileChip profile={r.profile} /> },
     { header: 'Severity', cell: (r) => <SeverityPill severity={r.severity} /> },
   ];
 
   /* The words that say WHAT to do are bold — the reader scans for them, not the sentence. */
-  const attachReason = !type ? <>Choose the benchmark’s <b className="font-semibold">Type</b> and <b className="font-semibold">Version</b> first — only rules for that OS version can be attached</>
-    : !version ? <>Choose the benchmark’s <b className="font-semibold">Version</b> first — only that version’s rules can be attached</> : undefined;
+  const attachReason = !type ? <>Choose the benchmark’s <b className="font-semibold">OS Type</b> and <b className="font-semibold">OS Version</b> first — only rules for that OS version can be attached</>
+    : !version ? <>Choose the benchmark’s <b className="font-semibold">OS Version</b> first — only that version’s rules can be attached</> : undefined;
   const title = editing ? 'Edit Benchmark' : source ? 'Clone Benchmark' : 'Create Benchmark';
   const openRule = ruleId ? ruleById(ruleId) : undefined;
 
@@ -1226,36 +1249,20 @@ function BenchmarkForm({ editing, source, names, onCancel, onSave }: {
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto max-w-[840px] px-4 py-5">
-          {/* Name · Profile, then Type · Version, then Description across the full width of the rule groups. */}
+          {/* Name across the full width, then Type · Version, then Description. Profile is read from the rules attached. */}
           <div className="grid grid-cols-2 gap-x-4 gap-y-4">
-            <div>
+            <div className="col-span-2">
               <FieldLabel required>Benchmark Name</FieldLabel>
               <input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="Benchmark Name" className={`${inputCls} ${tried && (!name.trim() || dupName) ? '!border-[#F25C4E]' : ''}`} />
               <ErrorText>{tried && (!name.trim() ? 'Enter a name' : dupName ? 'This name is taken' : '')}</ErrorText>
             </div>
             <div>
-              <FieldLabel required>Profile</FieldLabel>
-              {/* Two boxes, either or both on — each carries a tick while it is on. */}
-              <div className="chip-tabs">
-                {PROFILES.map((p) => (
-                  <Tooltip key={p.value}>
-                    <TooltipTrigger asChild>
-                      <button type="button" aria-pressed={levels.includes(p.value)} onClick={() => toggleLevel(p.value)} style={{ height: 32, borderRadius: 4 }}>
-                        {p.label}{levels.includes(p.value) && <span className="chip-check"><Check size={9} strokeWidth={3.5} /></span>}
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent className="text-wrap max-w-[240px]">{p.tip} — select one or both</TooltipContent>
-                  </Tooltip>
-                ))}
-              </div>
-            </div>
-            <div>
-              <FieldLabel required>Type</FieldLabel>
+              <FieldLabel required>OS Type</FieldLabel>
               <RuleSelect className="!rounded" value={type ? [type] : []} options={typeOptions} onChange={(v) => v[0] && changeType(v[0] as ComplianceType)} invalid={tried && !type} />
               <ErrorText>{tried && !type ? 'Choose a Type' : ''}</ErrorText>
             </div>
             <div>
-              <FieldLabel required>Version</FieldLabel>
+              <FieldLabel required>OS Version</FieldLabel>
               <RuleSelect
                 className="!rounded"
                 value={version ? [version] : []}
@@ -1374,7 +1381,7 @@ function BenchmarkForm({ editing, source, names, onCancel, onSave }: {
       <PickerDrawer<ComplianceRule>
         isOpen={!!target}
         title="Attach Rules"
-        subtitle={attachTo ? `${profile === 'L1' ? 'Level 1 rules' : profile === 'L2' ? 'Level 2 rules' : 'Level 1 and Level 2 rules'} for “${targetLabel(attachTo.g)}”` : ''}
+        subtitle={attachTo ? `Rules for “${targetLabel(attachTo.g)}”` : ''}
         rows={pickRows}
         columns={columns}
         selected={target ? target.ruleIds : []}
@@ -1383,8 +1390,8 @@ function BenchmarkForm({ editing, source, names, onCancel, onSave }: {
           <>
             {/* The pool is already narrowed to the benchmark's Type and Version — said here as two
                 chips that cannot be removed, so the list never looks like the whole catalogue. */}
-            <LockedChip label="Type" value={type} />
-            <LockedChip label="Version" value={version} />
+            <LockedChip label="OS Type" value={type} />
+            <LockedChip label="OS Version" value={version} />
             <TicketFilterBar rules={pickRules} setRules={setPickRules} noun="rule" attrs={pickAttrs} quickFilters={pickQuick} showFilterBuilder={false} />
           </>
         )}
@@ -1416,20 +1423,6 @@ function BenchmarkForm({ editing, source, names, onCancel, onSave }: {
         </div>
       )}
 
-      {confirmDrop && (
-        <div className="fixed inset-0 z-[10050] flex items-center justify-center bg-black/30" onMouseDown={() => setConfirmDrop(null)}>
-          <div className="w-[440px] rounded-lg bg-white p-5 shadow-xl" onMouseDown={(e) => e.stopPropagation()}>
-            <h3 className="text-[15px] font-semibold text-[#364658]">Turn off Level {confirmDrop.level === 'L1' ? '1' : '2'}?</h3>
-            <p className="mt-1.5 text-[13px] leading-[1.6] text-[#64748B]">
-              The <span className="font-medium text-[#364658]">{confirmDrop.count} Level {confirmDrop.level === 'L1' ? '1' : '2'} rule{confirmDrop.count === 1 ? '' : 's'}</span> attached to its groups will be removed; the other level's rules stay.
-            </p>
-            <div className="mt-5 flex justify-end gap-2">
-              <button type="button" onClick={() => setConfirmDrop(null)} className="h-9 rounded border border-[#DFE5ED] bg-white px-4 text-[13px] font-medium text-[#364658] hover:bg-[#F9FAFB]">Cancel</button>
-              <button type="button" onClick={() => dropLevel(confirmDrop.level)} className="h-9 rounded bg-[#3D8BD0] px-4 text-[13px] font-medium text-white hover:bg-[#3478B5]">Turn off</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

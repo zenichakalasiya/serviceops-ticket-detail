@@ -202,7 +202,8 @@ export function Header({ selectedCount, onOpenAdmin }: HeaderProps) {
             Restoring it is this line plus FINAL_UI in FormRuleEditor. */}
         {false && <FormRuleUiSwitch />}
         <FormRuleReleaseSwitch />
-        <ComplianceRuleUiSwitch />
+        {/* Hidden: V2 is the only rule-group builder (29 Oct 2026). */}
+        {false && <ComplianceRuleUiSwitch />}
       </div>
       
       <div className="flex items-center gap-2">

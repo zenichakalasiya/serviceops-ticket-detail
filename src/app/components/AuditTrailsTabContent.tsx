@@ -135,23 +135,14 @@ export function AuditTrailsTabContent({ ticketId, entries }: AuditTrailsTabConte
   const [diff, setDiff] = useState<{ old: string; new: string } | null>(null);
 
   // Filter (date range) + download popups
-  const [showFilter, setShowFilter] = useState(false);
   const [showDownload, setShowDownload] = useState(false);
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
-  const [draftFrom, setDraftFrom] = useState('');
-  const [draftTo, setDraftTo] = useState('');
   const [dlFormat, setDlFormat] = useState<'PDF' | 'Excel' | 'CSV'>('PDF');
   const [dlPwProtected, setDlPwProtected] = useState(false);
   const [dlPassword, setDlPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
 
-  const openFilter = () => { setShowDownload(false); setDraftFrom(fromDate); setDraftTo(toDate); setShowFilter((v) => !v); };
-  const applyFilter = () => { setFromDate(draftFrom); setToDate(draftTo); setShowFilter(false); };
-  const clearFilter = () => { setFromDate(''); setToDate(''); setDraftFrom(''); setDraftTo(''); setShowFilter(false); };
-  const isFiltered = !!(fromDate || toDate);
-  const fmtDate = (d: string) => new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  const rangeLabel = fromDate && toDate ? `${fmtDate(fromDate)} – ${fmtDate(toDate)}` : fromDate ? `From ${fmtDate(fromDate)}` : toDate ? `Until ${fmtDate(toDate)}` : '';
 
   // Apply the date-range filter, then group entries by day for a scannable timeline.
   const parse = (ts: string) => new Date(ts.replace(' ', 'T'));
@@ -184,48 +175,11 @@ export function AuditTrailsTabContent({ ticketId, entries }: AuditTrailsTabConte
             {filteredTrails.length} {filteredTrails.length === 1 ? 'entry' : 'entries'}
           </div>
           <div className="flex items-center gap-2">
-            {/* Applied date range chip (left of the filter icon) */}
-            {isFiltered && (
-              <span className="inline-flex items-center gap-1.5 h-8 pl-2.5 pr-1.5 rounded-md bg-[#EAF2FB] text-[#3D8BD0] text-[12px] font-medium">
-                <Calendar size={13} className="flex-shrink-0" />
-                <span className="whitespace-nowrap">{rangeLabel}</span>
-                <button onClick={clearFilter} title="Clear filter" className="p-0.5 rounded hover:bg-[#3D8BD0]/10 transition-colors">
-                  <X size={13} />
-                </button>
-              </span>
-            )}
-            {/* Filter */}
-            <div className="relative">
-              <button onClick={openFilter} className={`${iconBtn} ${isFiltered ? 'border-[#3D8BD0] text-[#3D8BD0]' : ''}`} title="Filter by date">
-                <Filter size={16} />
-              </button>
-              {showFilter && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setShowFilter(false)} />
-                  <div className="absolute right-0 top-full mt-2 w-[300px] bg-white border border-[#E5E7EB] rounded-lg shadow-lg p-4 z-50">
-                    <h4 className="text-[15px] font-semibold text-[#3D8BD0] mb-3">Filter</h4>
-                    <div className="space-y-3">
-                      <div>
-                        <label className="text-[12px] text-[#7B8FA5] mb-1 block">From</label>
-                        <DateField value={draftFrom} onChange={setDraftFrom} />
-                      </div>
-                      <div>
-                        <label className="text-[12px] text-[#7B8FA5] mb-1 block">To</label>
-                        <DateField value={draftTo} min={draftFrom || undefined} onChange={setDraftTo} />
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-[#F0F1F3]">
-                      <button onClick={clearFilter} className="px-3 py-1.5 text-[13px] font-medium text-[#364658] border border-[#DFE5ED] rounded hover:bg-[#F5F7FA] transition-colors">Clear</button>
-                      <button onClick={applyFilter} className="px-3 py-1.5 text-[13px] font-medium text-white bg-[#3D8BD0] rounded hover:bg-[#2F7AB8] transition-colors">Apply</button>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
+            <DateRangeFilter from={fromDate} to={toDate} onChange={(f, t) => { setFromDate(f); setToDate(t); }} onOpen={() => setShowDownload(false)} />
 
             {/* Download */}
             <div className="relative">
-              <button onClick={() => { setShowFilter(false); setShowDownload((v) => !v); }} className={iconBtn} title="Download audit trail">
+              <button onClick={() => setShowDownload((v) => !v)} className={iconBtn} title="Download audit trail">
                 <Download size={16} />
               </button>
               {showDownload && (
@@ -408,5 +362,67 @@ export function AuditTrailsTabContent({ ticketId, entries }: AuditTrailsTabConte
         </div>
       )}
     </div>
+  );
+}
+
+/** The Audit Trail's date filter — the applied-range chip, then a filter icon opening From / To
+ *  with Clear and Apply. Exported so every date-filtered list uses this one control. */
+export function DateRangeFilter({ from, to, onChange, onOpen }: {
+  from: string;
+  to: string;
+  onChange: (from: string, to: string) => void;
+  /** Called as the popup opens, so a host can close its other popups. */
+  onOpen?: () => void;
+}) {
+  const [showFilter, setShowFilter] = useState(false);
+  const [draftFrom, setDraftFrom] = useState('');
+  const [draftTo, setDraftTo] = useState('');
+  const openFilter = () => { onOpen?.(); setDraftFrom(from); setDraftTo(to); setShowFilter((v) => !v); };
+  const applyFilter = () => { onChange(draftFrom, draftTo); setShowFilter(false); };
+  const clearFilter = () => { onChange('', ''); setDraftFrom(''); setDraftTo(''); setShowFilter(false); };
+  const isFiltered = !!(from || to);
+  const fmtDate = (d: string) => new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const rangeLabel = from && to ? `${fmtDate(from)} – ${fmtDate(to)}` : from ? `From ${fmtDate(from)}` : to ? `Until ${fmtDate(to)}` : '';
+  const iconBtn = 'size-8 flex items-center justify-center border border-[#DFE5ED] rounded text-[#7B8FA5] hover:bg-[#F5F7FA] hover:text-[#364658] transition-colors';
+  return (
+    <>
+      {/* Applied date range chip (left of the filter icon) */}
+      {isFiltered && (
+        <span className="inline-flex items-center gap-1.5 h-8 pl-2.5 pr-1.5 rounded-md bg-[#EAF2FB] text-[#3D8BD0] text-[12px] font-medium">
+          <Calendar size={13} className="flex-shrink-0" />
+          <span className="whitespace-nowrap">{rangeLabel}</span>
+          <button onClick={clearFilter} title="Clear filter" className="p-0.5 rounded hover:bg-[#3D8BD0]/10 transition-colors">
+            <X size={13} />
+          </button>
+        </span>
+      )}
+      <div className="relative">
+        <button onClick={openFilter} className={`${iconBtn} ${isFiltered ? 'border-[#3D8BD0] text-[#3D8BD0]' : ''}`} title="Filter by date">
+          <Filter size={16} />
+        </button>
+        {showFilter && (
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setShowFilter(false)} />
+            <div className="absolute right-0 top-full mt-2 w-[300px] bg-white border border-[#E5E7EB] rounded-lg shadow-lg p-4 z-50">
+              <h4 className="text-[15px] font-semibold text-[#3D8BD0] mb-3">Filter</h4>
+              <div className="space-y-3">
+                <div>
+                  <label className="text-[12px] text-[#7B8FA5] mb-1 block">From</label>
+                  <DateField value={draftFrom} onChange={setDraftFrom} />
+                </div>
+                <div>
+                  <label className="text-[12px] text-[#7B8FA5] mb-1 block">To</label>
+                  <DateField value={draftTo} min={draftFrom || undefined} onChange={setDraftTo} />
+                </div>
+              </div>
+              <div className="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-[#F0F1F3]">
+                <button onClick={clearFilter} className="px-3 py-1.5 text-[13px] font-medium text-[#364658] border border-[#DFE5ED] rounded hover:bg-[#F5F7FA] transition-colors">Clear</button>
+                <button onClick={applyFilter} className="px-3 py-1.5 text-[13px] font-medium text-white bg-[#3D8BD0] rounded hover:bg-[#2F7AB8] transition-colors">Apply</button>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </>
   );
 }

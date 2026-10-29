@@ -3108,3 +3108,36 @@ and ask before building any new one.
   - **A disabled icon's reason shows on hover** (`ActionIcon` / `ReasonButton` in the benchmark module): the
     disabled button is `pointer-events: none` so its wrapping span gets the hover — a disabled button
     swallows pointer events, which is why the tooltip never appeared. Reasons show at once (delay 0).
+- **Compliance pass, 28–29 Oct 2026 (in v2, uncommitted until published).**
+  - **Column-filter search** — `ColumnFilterSearch.tsx` (`useColumnFilter`, BOM-drawer pattern: type = search
+    every column; click = Field → is / is not / contains / does not contain → value chip). Used by the policy
+    form's endpoint + office pickers (`PickerDrawer searchSlot`), the remote-office Preview drawer and the
+    technician rule panel's Endpoints tab (whose Policies column now shows a COUNT, names on hover).
+  - **Create Policy:** Target Endpoints = two boxes (Remote Offices with Preview · Endpoints); Notify Team half
+    width; **Schedule is a ToggleSwitch** (off = manual + info line) in the form AND the row's Schedule panel.
+  - **Admin Benchmark form:** no Profile field — profile is DERIVED from the attached rules on save; the
+    Attach Rules sidebar lists both levels with Severity + Profile filters (no Section column/filter).
+    **V2 explorer is the only rule-group builder** (`builderUi = 'v2'`; the logo V1|V2 pill is hidden,
+    `{false && <ComplianceRuleUiSwitch />}`). No benchmark root bar — "+ Add rule group" under the cards.
+    Group drag: grip outside a main group's card (always shown); inner grips before the arrow (hover or
+    selected); `moveGroupTo` reorders SIBLINGS only, applied on dragend from `dropRef`. Rule rows' number
+    column lines up with sibling sub-groups; a sub-group's arrow sits ~1px from its number. ✕ on rule rows
+    always visible. ⚠️ Headless Playwright can't finish a downward HTML5 drag — verify with dispatched events.
+  - **Rule rows everywhere:** no arrow; dotted underline on hover (`RuleGroupTree linkRows` defaults true).
+  - **Rule details:** facts row = one `RuleFactsRow` (ComplianceShared) used by every rule view —
+    Severity · Profile · Assessment · **OS Type** · Platform · **OS Version**. Summary tab = Description ·
+    Rationale · **Impact** (`rule.impact`, "Not provided" until the CIS export supplies it) · References, as
+    15px headings; References tab removed. MITRE names show only from `rule.mitre.names` (export data) —
+    our invented `MITRE_NAMES` was deleted; the mapping IDs are still demo data.
+  - **Type / Version → OS Type / OS Version** in every Compliance column, filter, field label and chip
+    (admin + technician; TicketTable compliance column defs + `complianceFilterAttrs.ts`).
+  - **Policy page:** Endpoints filter = Office + Agent only; Rules tab = search only; Run History = search +
+    the Audit Trail's date filter, now the shared **`DateRangeFilter`** exported from `AuditTrailsTabContent`.
+    **Endpoint page › Compliance Audit:** no filter; Compliant / Non-Compliant / Not Scanned cards filter it.
+  - **View rule results sidebar** (`ComplianceBreakdown`, `scoreHeads`): main groups tinted; group head
+    "n/n rules pass · %" + icon red <50 / amber 50–99 / green 100 with an explaining tooltip; rule row =
+    name + severity inline, Previous → Last icons (dashed circle = first scan) with a tooltip, then the
+    Pass/Fail pill; header line = Status | Failing Rules | Last Scan (HeaderKpiRow); Average Compliance card;
+    Export is a primary button.
+  - **Headers:** title-to-facts gap 3px (`HeaderKpiRow gap` prop, default `mt-1` everywhere else); actions
+    and close buttons centred on the title.

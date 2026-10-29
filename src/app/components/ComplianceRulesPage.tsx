@@ -10,7 +10,8 @@ import { Building2, CircleDot, Monitor, Search, ShieldCheck } from 'lucide-react
 import { AssetRegisterPage } from './AssetRegisterPage';
 import { StatsCardsRow } from './AssetStatsRow';
 import type { StatCard } from './AssetStatsRow';
-import { TicketFilterBar } from './TicketFilterBar';
+import { ColumnFilterSearch, useColumnFilter } from './ColumnFilterSearch';
+import type { ColumnField } from './ColumnFilterSearch';
 import type { FilterRule, QuickFilterDef } from './TicketFilterBar';
 import { matchRules, optionsOf, RuleDetailPanel, selectAttr } from './ComplianceShared';
 import { ResultPill } from './ComplianceEndpointPanel';
@@ -41,36 +42,25 @@ const buildCards = (rows: Ticket[]): StatCard[] => {
   ];
 };
 
+const RULE_EP_FIELDS: ColumnField<RuleEndpointResult>[] = [
+  { label: 'Endpoint ID', get: (r) => r.endpoint.id },
+  { label: 'Host Name', get: (r) => r.endpoint.hostName },
+  { label: 'OS Type', get: (r) => r.endpoint.type },
+  { label: 'IP Address', get: (r) => r.endpoint.ip },
+  { label: 'Remote Office', get: (r) => r.endpoint.office },
+  { label: 'Policies', get: (r) => r.policies.map((p) => p.name) },
+  { label: 'Result', get: (r) => r.result },
+];
+
 /** The rule panel's first tab — every endpoint the rule is checked on, one row each. */
 function RuleEndpointsTab({ results, onOpened }: { results: RuleEndpointResult[]; onOpened: () => void }) {
   const open = useOpenComplianceEndpoint();
   /* The endpoint page opens in the shared drawer, which sits under this panel — so the panel steps aside. */
   const openEndpoint = (id: string) => { onOpened(); open(id); };
-  const [q, setQ] = useState('');
-  const [rules, setRules] = useState<FilterRule[]>([]);
   const [card, setCard] = useState<RuleResult | null>(null);
-
-  const valueOf = (r: RuleEndpointResult, k: string): string | string[] =>
-    k === 'office' ? r.endpoint.office : k === 'result' ? r.result : k === 'type' ? r.endpoint.type : k === 'policy' ? r.policies.map((p) => p.name) : '';
-  const attrs = useMemo(() => [
-    selectAttr('office', 'Remote Office', Building2, optionsOf(results, (r) => r.endpoint.office).map(({ label }) => ({ label }))),
-    selectAttr('result', 'Result', CircleDot, RESULT_OPTIONS),
-    selectAttr('policy', 'Policy', ShieldCheck, optionsOf(results, (r) => r.policies.map((p) => p.name)).map(({ label }) => ({ label }))),
-    selectAttr('type', 'Type', Monitor, optionsOf(results, (r) => r.endpoint.type).map(({ label }) => ({ label }))),
-  ], [results]);
-  const quick = useMemo<QuickFilterDef[]>(() => [
-    { field: 'office', icon: Building2, tip: 'Filter by remote office', title: 'Remote Office is', width: 220, row: 'plain', options: attrs[0].options! },
-    { field: 'result', icon: CircleDot, tip: 'Filter by result', title: 'Result is', width: 180, row: 'dot', options: attrs[1].options! },
-    { field: 'policy', icon: ShieldCheck, tip: 'Filter by policy', title: 'Policy is', width: 260, row: 'plain', options: attrs[2].options! },
-    { field: 'type', icon: Monitor, tip: 'Filter by type', title: 'Type is', width: 180, row: 'plain', options: attrs[3].options! },
-  ], [attrs]);
-
-  const shown = useMemo(() => {
-    const s = q.trim().toLowerCase();
-    return matchRules(results, rules, valueOf)
-      .filter((r) => !card || r.result === card)
-      .filter((r) => !s || [r.endpoint.id, r.endpoint.hostName, r.endpoint.ip, r.endpoint.office].some((x) => x.toLowerCase().includes(s)));
-  }, [results, rules, card, q]);
+  /* Type to search every column, or click the box to filter one column: field → operator → value. */
+  const f = useColumnFilter(results, RULE_EP_FIELDS);
+  const shown = useMemo(() => f.filtered.filter((r) => !card || r.result === card), [f.filtered, card]);
 
   if (!results.length) return <p className="py-10 text-center text-[13px] text-[#9CA3AF]">No policy checks this rule on any endpoint yet.</p>;
 
@@ -89,16 +79,12 @@ function RuleEndpointsTab({ results, onOpened }: { results: RuleEndpointResult[]
         <StatsCardsRow rules={[]} onApplyFilter={() => {}} activeLabel={card} onCardClick={(c) => setCard(c.label === card ? null : (c.label as RuleResult))} cards={cards} />
       </div>
       <div className="flex flex-wrap items-center gap-2 px-5 pb-3 pt-1">
-        <label className="flex h-8 w-[280px] items-center gap-2 rounded border border-[#DFE5ED] px-2.5 focus-within:border-[#3D8BD0]">
-          <Search size={14} className="flex-shrink-0 text-[#9CA3AF]" />
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search" className="min-w-0 flex-1 bg-transparent text-[13px] text-[#364658] outline-none placeholder:text-[#9CA3AF]" />
-        </label>
-        <TicketFilterBar rules={rules} setRules={setRules} noun="endpoint" attrs={attrs} quickFilters={quick} showFilterBuilder={false} />
-        <span className="ml-auto text-[12px] text-[#7B8FA5]">{shown.length} of {results.length} endpoints</span>
+        <ColumnFilterSearch className="min-w-0 flex-1" rows={results} fields={RULE_EP_FIELDS} query={f.query} onQuery={f.setQuery} conditions={f.conditions} onConditions={f.setConditions} />
+        <span className="flex-shrink-0 text-[12px] text-[#7B8FA5]">{shown.length} of {results.length} endpoints</span>
       </div>
       <div className="overflow-x-auto"><table className="w-full min-w-[860px] table-fixed">
         <colgroup><col className="w-[30%]" /><col className="w-[11%]" /><col className="w-[14%]" /><col className="w-[18%]" /><col /><col className="w-[110px]" /></colgroup>
-        <thead><tr className="border-b border-[#e5e7eb]">{['Endpoint', 'Type', 'IP Address', 'Remote Office', 'Policies', 'Result'].map((h) => <th key={h} className={th}>{h}</th>)}</tr></thead>
+        <thead><tr className="border-b border-[#e5e7eb]">{['Endpoint', 'OS Type', 'IP Address', 'Remote Office', 'Policies', 'Result'].map((h) => <th key={h} className={th}>{h}</th>)}</tr></thead>
         <tbody className="divide-y divide-[#e5e7eb]">
           {shown.map((r) => (
             <tr key={r.endpoint.id} onClick={() => openEndpoint(r.endpoint.id)} className="group/row cursor-pointer transition-colors hover:bg-[#f9fafb]">
@@ -108,7 +94,7 @@ function RuleEndpointsTab({ results, onOpened }: { results: RuleEndpointResult[]
               <td className="px-4 py-3 text-[13px] text-[#64748B]">{r.endpoint.type}</td>
               <td className="px-4 py-3 text-[13px] tabular-nums text-[#64748B]">{r.endpoint.ip}</td>
               <td className="px-4 py-3"><span className="block truncate text-[13px] text-[#64748B]">{r.endpoint.office}</span></td>
-              <td className="px-4 py-3"><span className="block truncate text-[13px] text-[#64748B]" title={r.policies.map((p) => p.name).join(', ')}>{r.policies.map((p) => p.name).join(', ')}</span></td>
+              <td className="px-4 py-3"><span className="block text-[13px] tabular-nums text-[#64748B]" title={r.policies.map((p) => p.name).join(', ')}>{r.policies.length}</span></td>
               <td className="px-4 py-3"><ResultPill passed={r.result === 'Not Scanned' ? null : r.result === 'Pass'} /></td>
             </tr>
           ))}

@@ -164,8 +164,8 @@ export function ComplianceBenchmarkDrawer({
   const openRule = ruleId ? ruleById(ruleId) : undefined;
 
   const kpis = [
-    ckpi('type', 'Type', b.type),
-    ckpi('version', 'Version', b.osVersion, { chip: 'neutral' }),
+    ckpi('type', 'OS Type', b.type),
+    ckpi('version', 'OS Version', b.osVersion, { chip: 'neutral' }),
     ckpi('rules', 'Rules', ruleIds.length, { color: '#3D8BD0', tip: `${ruleIds.length} rules` }),
   ];
   /* Type, Version, Profile and the rule count are in the header — not repeated here. */
@@ -200,9 +200,9 @@ export function ComplianceBenchmarkDrawer({
               <HeaderIdPill id={b.id} />
               <span className="line-clamp-2 break-words">{b.name}</span>
             </h1>
-            <HeaderKpiRow items={kpis} />
+            <HeaderKpiRow items={kpis} gap="mt-[3px]" />
           </div>
-          <div className="flex flex-shrink-0 items-center gap-2">
+          <div className="-my-[2.5px] flex flex-shrink-0 items-center gap-2">
             <HeaderCopyButton variant="link" value={`/compliance-benchmarks?open=${b.id}`} label="Copy Benchmark URL" />
           </div>
         </div>

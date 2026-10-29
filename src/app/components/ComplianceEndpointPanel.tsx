@@ -17,9 +17,11 @@
  * the policy's tabs and the endpoint page always agree. */
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { ArrowLeft, CheckCircle2, ChevronRight, Download, Eye, EyeOff, Lock, MinusCircle, X, XCircle } from 'lucide-react';
+import { AlertCircle, ArrowLeft, CheckCircle2, ChevronRight, Circle, Download, Eye, EyeOff, Lock, MinusCircle, X, XCircle } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { StatsCardsRow } from './AssetStatsRow';
-import { RuleDetailBody, SeverityPill } from './ComplianceShared';
+import { ckpi, RuleDetailBody, RuleFactsRow, SeverityPill } from './ComplianceShared';
+import { HeaderKpiRow } from './HeaderKpiRow';
 import { benchmarksUsingRule, BENCHMARKS_SEED, numberedGroups, ruleById, ruleNumbers, SEVERITIES, SEVERITY_PILL } from './complianceData';
 import type { Benchmark, ComplianceRule, NumberedRule, Severity } from './complianceData';
 import {
@@ -36,6 +38,54 @@ const DIM = '#94A3B8';
 function ResultIcon({ passed }: { passed: boolean | null }) {
   if (passed === null) return <MinusCircle size={15} className="text-[#B6C0CC]" />;
   return passed ? <CheckCircle2 size={15} className="text-[#22C55E]" /> : <XCircle size={15} className="text-[#DC2626]" />;
+}
+
+/** No previous scan — the policy's first scan of this endpoint. */
+function FirstScanIcon() {
+  return <span className="inline-flex"><Circle size={15} strokeDasharray="3 3" className="text-[#B6C0CC]" /></span>;
+}
+
+/** What the Previous → Last icons say, in words (their tooltip). */
+function ScanChangeTip({ prev, last }: { prev: boolean | null; last: boolean | null }) {
+  const word = (v: boolean | null) => (v === null ? 'Not checked' : v ? 'Pass' : 'Fail');
+  const tone = (v: boolean | null) => (v === null ? 'text-white/70' : v ? 'text-[#86EFAC]' : 'text-[#FCA5A5]');
+  const story = last === null ? 'Not checked on the last scan'
+    : prev === null ? 'First scan of this endpoint — nothing to compare with'
+    : prev && !last ? 'Newly failing — it passed on the previous scan'
+    : !prev && last ? 'Fixed — it failed on the previous scan'
+    : last ? 'Still passing' : 'Still failing';
+  return (
+    <div className="space-y-1 text-[12px] leading-[1.5]">
+      <div className="flex justify-between gap-6"><span className="text-white/70">Previous scan</span><span className={`font-medium ${tone(prev)}`}>{prev === null && last !== null ? 'None — first scan' : word(prev)}</span></div>
+      <div className="flex justify-between gap-6"><span className="text-white/70">Last scan</span><span className={`font-medium ${tone(last)}`}>{word(last)}</span></div>
+      <div className="border-t border-white/15 pt-1 text-white/85">{story}</div>
+    </div>
+  );
+}
+
+/** What a group's pass-rate icon means (its tooltip). */
+function GroupScoreTip({ ok, total, main }: { ok: number; total: number; main: boolean }) {
+  const what = main ? 'group' : 'sub-group';
+  if (!total) return <div className="text-[12px]">No rule in this {what} was checked on the last scan.</div>;
+  const pct = Math.round((ok / total) * 100);
+  const status = ok === total ? `Every rule passes — this ${what} is compliant.`
+    : pct >= 50 ? `${total - ok} still failing — this ${what} is partly compliant until they pass.`
+    : `${total - ok} failing — under half pass, so this ${what} is failing.`;
+  return (
+    <div className="space-y-1 text-[12px] leading-[1.5]">
+      <div><span className="font-semibold">{ok} of {total}</span> rules pass ({pct}%)</div>
+      <div className="text-white/85">{status}</div>
+      <div className="border-t border-white/15 pt-1 text-white/70">Red under 50% · amber 50–99% · green at 100%</div>
+    </div>
+  );
+}
+
+/** A group's pass rate as a coloured icon: red under 50%, amber 50–99%, green at 100%. */
+const scoreTone = (ok: number, total: number) => (!total ? '#94A3B8' : ok === total ? '#15803D' : ok / total >= 0.5 ? '#B45309' : '#DC2626');
+function ScoreIcon({ ok, total }: { ok: number; total: number }) {
+  if (!total) return <MinusCircle size={15} className="text-[#B6C0CC]" />;
+  if (ok === total) return <CheckCircle2 size={15} className="text-[#22C55E]" />;
+  return ok / total >= 0.5 ? <AlertCircle size={15} className="text-[#F59E0B]" /> : <XCircle size={15} className="text-[#DC2626]" />;
 }
 
 /** Pass / Fail as the module's result pill; null = no result on the last scan. */
@@ -165,7 +215,7 @@ export function ExportButton({ title = 'Export', onExport, className = '' }: {
   };
   return (
     <div className={`relative flex-shrink-0 ${className}`}>
-      <button type="button" onClick={() => setOpen((v) => !v)} title={title} aria-label={title} className={`flex size-8 items-center justify-center rounded border border-[#DFE5ED] text-[#7B8FA5] transition-colors hover:bg-[#F5F7FA] hover:text-[#364658] ${open ? 'border-[#3D8BD0] text-[#3D8BD0]' : ''}`}><Download size={16} /></button>
+      <button type="button" onClick={() => setOpen((v) => !v)} title={title} aria-label={title} className="inline-flex h-8 items-center gap-1.5 rounded bg-[#3D8BD0] px-3 text-[13px] font-medium text-white transition-colors hover:bg-[#3478B5]"><Download size={14} /> Export</button>
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
@@ -321,17 +371,16 @@ export function ComplianceEndpointPanel({ endpointId, ruleId, policyId, onClose,
                     const failing = findings.filter((f) => f.endpointId === ep.id && !f.passed);
                     const bySev = SEVERITIES.map((s) => [s, failing.filter((f) => ruleById(f.ruleId)?.severity === s).length] as const).filter(([, n]) => n);
                     const tone = res?.outcome === 'Compliant' ? { bg: '#ECFDF3', text: '#15803D' } : res?.outcome === 'Non-Compliant' ? { bg: '#FEF3F2', text: '#B42318' } : { bg: '#F1F5F9', text: '#64748B' };
+                    // Label · value pairs split by dividers, as every detail header reads. The score
+                    // is a KPI card below, not part of this line.
                     return (
-                      <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-[#7B8FA5]">
-                        {res && <span className="rounded-sm px-1.5 py-0.5 text-[12px] font-medium" style={{ backgroundColor: tone.bg, color: tone.text }}>{res.outcome}</span>}
-                        {res?.score != null && <span className="font-semibold tabular-nums" style={{ color: scoreColor(res.score) }}>{res.score}%</span>}
-                        {res?.outcome !== 'Not Scanned' && (
-                          bySev.length
-                            ? <span>· {bySev.map(([s, n], i) => <span key={s}>{i ? ', ' : ''}<span className="font-medium text-[#364658]">{n} {s}</span></span>)} {failing.length === 1 ? 'rule' : 'rules'} failing</span>
-                            : <span>· No rules failing</span>
-                        )}
-                        <span>· {policy.lastScan ? `Scanned ${fmtStamp(policy.lastScan.at)}` : 'Not scanned yet'}</span>
-                      </p>
+                      <HeaderKpiRow gap="mt-[3px]" items={[
+                        ckpi('status', 'Status', res?.outcome ?? '—', { color: tone.text }),
+                        ...(res?.outcome !== 'Not Scanned'
+                          ? [ckpi('failing', 'Failing Rules', bySev.length ? bySev.map(([s, n]) => `${n} ${s}`).join(', ') : 'None', { color: bySev.length ? '#B42318' : '#15803D' })]
+                          : []),
+                        ckpi('scan', 'Last Scan', policy.lastScan ? fmtStamp(policy.lastScan.at) : 'Not scanned yet'),
+                      ]} />
                     );
                   })()}
                 </>
@@ -343,12 +392,8 @@ export function ComplianceEndpointPanel({ endpointId, ruleId, policyId, onClose,
                     {number && <span className="flex-shrink-0 tabular-nums text-[#7B8FA5]">{number}</span>}
                     <span>{rule.name}</span>
                   </h3>
-                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                    <SeverityPill severity={rule.severity} />
-                    {[rule.profile, rule.checkIn, `${rule.platform} ${rule.version}`].map((t) => (
-                      <span key={t} className="rounded-sm border border-[#E5E7EB] px-1.5 py-0.5 text-[12px] text-[#64748B]">{t}</span>
-                    ))}
-                  </div>
+                  {/* The same facts row as the Rule details panel. */}
+                  <RuleFactsRow rule={rule} />
                 </>
               )}
             </div>
@@ -370,6 +415,8 @@ export function ComplianceEndpointPanel({ endpointId, ruleId, policyId, onClose,
                   rules={[]}
                   onApplyFilter={() => {}}
                   cards={[
+                    // The endpoint's score on this policy: the share of its checked rules that pass.
+                    { label: 'Average Compliance', value: got ? `${Math.round((ok / mine.length) * 100)}%` : '—', sub: got ? `${ok} of ${mine.length} rules pass` : 'not scanned', valueColor: got ? scoreColor(Math.round((ok / mine.length) * 100)) : DIM, static: true },
                     { label: 'Passed', value: got ? ok : '—', sub: 'rules', valueColor: got ? '#15803D' : DIM },
                     { label: 'Failed', value: got ? mine.length - ok : '—', sub: 'rules', valueColor: got && mine.length - ok ? '#DC2626' : DIM },
                     { label: 'New Failures', value: got ? fresh : '—', sub: 'passed last scan, fail now', valueColor: got && fresh ? '#B45309' : DIM },
@@ -477,7 +524,7 @@ export function ruleTreeCount(benchmark: Benchmark, show: ((id: string) => boole
   return n;
 }
 
-export function RuleGroupTree({ benchmark, resultOf = () => null, right, onRule, title = 'Rules', note, show, plain = false, query = '' }: {
+export function RuleGroupTree({ benchmark, resultOf = () => null, right, onRule, title = 'Rules', note, show, plain = false, query = '', linkRows = true, scoreHeads = false }: {
   benchmark: Benchmark;
   /** What this page knows about a rule — null when it was not checked. */
   resultOf?: (ruleId: string) => RuleTally | null;
@@ -487,6 +534,12 @@ export function RuleGroupTree({ benchmark, resultOf = () => null, right, onRule,
       Benchmark Rules tabs). Every group starts open. */
   plain?: boolean;
   onRule: (ruleId: string) => void;
+  /** Rows read like the Rules listing: no arrow, the name takes a dotted underline on hover. */
+  linkRows?: boolean;
+  /** One endpoint's results (View rule results): a group head reads "n/n rules pass · %" with an
+      icon coloured by that % (red under 50, amber 50–99, green at 100), and a rule's severity
+      sits right after its name. */
+  scoreHeads?: boolean;
   title?: string;
   /** A short line at the right of the header (e.g. "Previous → Last scan"). */
   note?: string;
@@ -532,12 +585,26 @@ export function RuleGroupTree({ benchmark, resultOf = () => null, right, onRule,
       <button
         type="button"
         onClick={() => toggle(key)}
-        className={`flex w-full items-center gap-2 py-2.5 pr-4 text-left transition-colors hover:bg-[#F9FAFB] ${depth ? 'pl-9' : 'pl-4'}`}
+        className={`flex w-full items-center gap-2 py-2.5 pr-4 text-left transition-colors ${scoreHeads && !depth ? 'bg-[#F4F7FB] hover:bg-[#EDF2F8]' : 'hover:bg-[#F9FAFB]'} ${depth ? 'pl-9' : 'pl-4'}`}
       >
         <ChevronRight size={15} className={`flex-shrink-0 text-[#7B8FA5] transition-transform ${open.has(key) ? 'rotate-90' : ''}`} />
         <span className="w-[40px] flex-shrink-0 text-[13px] font-semibold tabular-nums text-[#364658]"><Hl text={number} q={query} /></span>
         <span className={`min-w-0 flex-1 truncate text-[13px] text-[#364658] ${depth ? '' : 'font-medium'}`}><Hl text={name} q={query} /></span>
-        {!plain && (
+        {!plain && scoreHeads && (
+          <>
+            <span className="whitespace-nowrap text-[12px] tabular-nums text-[#64748B]" title="Rules passing / rules checked">
+              {ok}/{total}{depth ? '' : ' rules pass'}
+              {total > 0 && <> · <span className="font-semibold" style={{ color: scoreTone(ok, total) }}>{Math.round((ok / total) * 100)}%</span></>}
+            </span>
+            <Tooltip>
+              <TooltipTrigger asChild><span className="inline-flex"><ScoreIcon ok={ok} total={total} /></span></TooltipTrigger>
+              <TooltipContent side="left" className="max-w-[280px] text-wrap">
+                <GroupScoreTip ok={ok} total={total} main={!depth} />
+              </TooltipContent>
+            </Tooltip>
+          </>
+        )}
+        {!plain && !scoreHeads && (
           <>
             <span className="text-[12px] tabular-nums text-[#7B8FA5]" title="Rules passing / rules checked">{ok}/{total}</span>
             <ResultIcon passed={total ? ok === total : null} />
@@ -558,10 +625,18 @@ export function RuleGroupTree({ benchmark, resultOf = () => null, right, onRule,
       >
         {!plain && <span className="h-4 w-[3px] flex-shrink-0 rounded-full" style={{ backgroundColor: SEVERITY_COLOR[r.severity] }} title={r.severity} />}
         <span className="w-[44px] flex-shrink-0 text-[12px] tabular-nums text-[#7B8FA5]"><Hl text={nr.number} q={query} /></span>
-        <span className="line-clamp-2 min-w-0 flex-1 break-words text-[13px] text-[#364658] group-hover/rule:text-[#3D8BD0]"><Hl text={r.name} q={query} /></span>
-        {!plain && <SeverityPill severity={r.severity} />}
+        {scoreHeads ? (
+          /* The severity finishes the sentence: it follows the name, not the row's end. */
+          <span className="min-w-0 flex-1 text-[13px] leading-[1.6] text-[#364658]">
+            <span className="decoration-[#94A3B8] decoration-dotted underline-offset-[3px] group-hover/rule:underline"><Hl text={r.name} q={query} /></span>
+            <span className="ml-2 inline-block align-middle"><SeverityPill severity={r.severity} /></span>
+          </span>
+        ) : (
+          <span className={`line-clamp-2 min-w-0 flex-1 break-words text-[13px] text-[#364658] ${linkRows ? "decoration-[#94A3B8] decoration-dotted underline-offset-[3px] group-hover/rule:underline" : "group-hover/rule:text-[#3D8BD0]"}`}><Hl text={r.name} q={query} /></span>
+        )}
+        {!plain && !scoreHeads && <SeverityPill severity={r.severity} />}
         {!plain && right?.(r.id, resultOf(r.id))}
-        <ChevronRight size={14} className="flex-shrink-0 text-[#B6C0CC] group-hover/rule:text-[#3D8BD0]" />
+        {!linkRows && <ChevronRight size={14} className="flex-shrink-0 text-[#B6C0CC] group-hover/rule:text-[#3D8BD0]" />}
       </button>
     );
   };
@@ -615,14 +690,27 @@ export function ComplianceBreakdown({ benchmark, findings, onRule, query }: {
       note="Previous → Last scan"
       query={query}
       onRule={onRule}
+      linkRows
+      scoreHeads
       resultOf={(id) => { const f = byRule.get(id); return f ? { passed: f.passed ? 1 : 0, failed: f.passed ? 0 : 1 } : null; }}
       right={(id) => {
         const f = byRule.get(id);
         return (
-          <span className="flex w-[64px] items-center justify-end gap-1.5">
-            <ResultIcon passed={f?.prevPassed ?? null} />
-            <span className="text-[11px] text-[#B6C0CC]">→</span>
-            <ResultIcon passed={f ? f.passed : null} />
+          <span className="flex flex-shrink-0 items-center gap-3">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="flex w-[64px] items-center justify-end gap-1.5">
+                  {/* A first scan has nothing before it: the dashed circle says so. */}
+                  {f && f.prevPassed === null ? <FirstScanIcon /> : <ResultIcon passed={f?.prevPassed ?? null} />}
+                  <span className="text-[11px] text-[#B6C0CC]">→</span>
+                  <ResultIcon passed={f ? f.passed : null} />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="left" className="w-[260px] text-wrap">
+                <ScanChangeTip prev={f ? f.prevPassed : null} last={f ? f.passed : null} />
+              </TooltipContent>
+            </Tooltip>
+            <span className="w-[84px] text-right"><ResultPill passed={f ? f.passed : null} /></span>
           </span>
         );
       }}

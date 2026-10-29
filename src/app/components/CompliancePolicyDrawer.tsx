@@ -23,6 +23,7 @@ import { ComplianceEndpointPanel, RuleGroupTree, ruleTreeCount } from './Complia
 import { AuditTrailsTabContent } from './AuditTrailsTabContent';
 import type { AuditEntry } from './AuditTrailsTabContent';
 import { useOpenComplianceEndpoint } from './ComplianceEndpointDrawer';
+import { DateRangeFilter } from './AuditTrailsTabContent';
 import { anyFilter, cardActive, cardToggle, matchesFilter, matchesSearch, NoMatch, optionsFrom, TabListToolbar } from './ComplianceTabFilter';
 import type { FilterValue } from './ComplianceTabFilter';
 import { findingsOf } from './compliancePolicyData';
@@ -107,6 +108,9 @@ export function CompliancePolicyDrawer({
   const [ruleF, setRuleF] = useState<FilterValue>({});
   const [runQ, setRunQ] = useState('');
   const [runF, setRunF] = useState<FilterValue>({});
+  /* Run History is filtered by a date range — the Audit Trail's own control. */
+  const [runFrom, setRunFrom] = useState('');
+  const [runTo, setRunTo] = useState('');
   useEffect(() => { setEpQ(''); setEpF({}); setRuleQ(''); setRuleF({}); setRunQ(''); setRunF({}); }, [activeAssetId]);
   /** The endpoint whose rule results are open in the side panel. */
   const [resultsFor, setResultsFor] = useState<string | null>(null);
@@ -158,10 +162,8 @@ export function CompliancePolicyDrawer({
   const openEndpoint = (id: string) => openComplianceEndpoint(id);
   /* ── Endpoints tab ── */
   const epGroups = [
-    { key: 'result', label: 'Result', options: (['Compliant', 'Non-Compliant', 'Not Scanned'] as EndpointOutcome[]).map((o) => ({ value: o, dot: OUTCOME_TONE[o].text })) },
     { key: 'office', label: 'Office', options: optionsFrom(results.map((r) => r.endpoint.office)) },
     { key: 'agent', label: 'Agent', options: [{ value: 'Online', dot: '#22C55E' }, { value: 'Offline', dot: '#F59E0B' }] },
-    { key: 'os', label: 'OS', options: optionsFrom(results.map((r) => r.endpoint.osName)) },
   ];
   const shownResults = results.filter((r) =>
     matchesSearch(epQ, [r.endpoint.id, r.endpoint.hostName, r.endpoint.ip]) &&
@@ -173,11 +175,6 @@ export function CompliancePolicyDrawer({
     const fs = findings.filter((f) => f.ruleId === id);
     return !fs.length ? 'Not Checked' : fs.some((f) => !f.passed) ? 'Fail' : 'Pass';
   };
-  const ruleGroups = [
-    { key: 'result', label: 'Result', options: [{ value: 'Fail', dot: '#EF4444' }, { value: 'Pass', dot: '#22C55E' }, { value: 'Not Checked', dot: '#94A3B8' }] },
-    { key: 'severity', label: 'Severity', options: SEVERITIES.map((s) => ({ value: s, dot: SEVERITY_COLOR[s] })) },
-    { key: 'assessment', label: 'Assessment', options: [{ value: 'Automated' }, { value: 'Manual' }] },
-  ];
   const ruleShow = anyFilter('', ruleF) ? (id: string) => {
     const r = ruleById(id);
     return !!r &&
@@ -185,11 +182,8 @@ export function CompliancePolicyDrawer({
   } : undefined;
   const ruleHits = anyFilter(ruleQ, ruleF) && benchmark ? ruleTreeCount(benchmark, ruleShow, ruleQ) : -1;
   const allRuns = runHistory(p);
-  const runGroups = [
-    { key: 'trigger', label: 'Triggered By', options: optionsFrom(allRuns.map((r) => r.trigger)) },
-    { key: 'status', label: 'Status', options: optionsFrom(allRuns.map((r) => r.status)) },
-  ];
-  const runs = allRuns.filter((r) => matchesSearch(runQ, [r.id, fmtStamp(r.at)]) && matchesFilter(runF, (k) => (k === 'trigger' ? r.trigger : r.status)));
+  const runs = allRuns.filter((r) => matchesSearch(runQ, [r.id, fmtStamp(r.at)]) && matchesFilter(runF, (k) => (k === 'trigger' ? r.trigger : r.status))
+    && (!runFrom || r.at.slice(0, 10) >= runFrom) && (!runTo || r.at.slice(0, 10) <= runTo));
   const audit: AuditEntry[] = [
     ...exceptions.filter((x) => x.policyId === p.id).map((x, i) => ({
       id: `x${i}`, timestamp: x.requestedAt.replace('T', ' ') + ':00', user: 'You', userInitials: 'YO', userColor: '#3D8BD0',
@@ -235,9 +229,9 @@ export function CompliancePolicyDrawer({
               <HeaderIdPill id={p.id} />
               <span className="truncate">{p.name}</span>
             </h1>
-            <HeaderKpiRow items={kpis} />
+            <HeaderKpiRow items={kpis} gap="mt-[3px]" />
           </div>
-          <div className="flex flex-shrink-0 items-center gap-2">
+          <div className="-my-[2.5px] flex flex-shrink-0 items-center gap-2">
             <HeaderCopyButton variant="link" value={`/compliance-policies?open=${p.id}`} label="Copy Policy URL" />
             <Tooltip>
               <TooltipTrigger asChild>
@@ -357,7 +351,7 @@ export function CompliancePolicyDrawer({
               {/* ── Rules: the benchmark's rules, numbered, nothing else ── */}
               {tab === 'rules' && (
                 <div className="px-6 py-4">
-                  <TabListToolbar search={ruleQ} onSearch={setRuleQ} groups={ruleGroups} value={ruleF} onChange={setRuleF} />
+                  <TabListToolbar search={ruleQ} onSearch={setRuleQ} groups={[]} value={ruleF} onChange={setRuleF} />
                   {benchmark && ruleHits !== 0 && <RuleGroupTree benchmark={benchmark} title={benchmark.name} onRule={setRuleId} plain show={ruleShow} query={ruleQ} />}
                   {ruleHits === 0 && <NoMatch what="rules" onClear={() => { setRuleQ(''); setRuleF({}); }} />}
                 </div>
@@ -367,9 +361,14 @@ export function CompliancePolicyDrawer({
               {tab === 'runs' && (
                 <div className="pb-6 pt-4">
                   <div className="px-6">
-                    {allRuns.length > 0 && <TabListToolbar search={runQ} onSearch={setRunQ} groups={runGroups} value={runF} onChange={setRunF} />}
+                    {allRuns.length > 0 && (
+                      <div className="mb-3 flex items-center gap-2">
+                        <TabListToolbar className="flex-1" search={runQ} onSearch={setRunQ} groups={[]} value={runF} onChange={setRunF} />
+                        <DateRangeFilter from={runFrom} to={runTo} onChange={(a, b) => { setRunFrom(a); setRunTo(b); }} />
+                      </div>
+                    )}
                     {allRuns.length > 0 && runs.length === 0 ? (
-                      <NoMatch what="runs" onClear={() => { setRunQ(''); setRunF({}); }} />
+                      <NoMatch what="runs" onClear={() => { setRunQ(''); setRunF({}); setRunFrom(''); setRunTo(''); }} />
                     ) : runs.length === 0 ? (
                       <p className="py-10 text-center text-[13px] text-[#9CA3AF]">This policy has not run yet. Press Run Now, or wait for its schedule.</p>
                     ) : (

@@ -46,6 +46,8 @@ export interface ComplianceRule {
   name: string;
   description: string;
   rationale: string;
+  /** CIS "Impact": what applying the rule may cost. Absent until the CIS export supplies it. */
+  impact?: string;
   severity: Severity;
   type: ComplianceType;
   platform: string;
@@ -71,27 +73,14 @@ export interface ComplianceRule {
 }
 
 /** CIS "MITRE ATT&CK Mappings": the techniques an attacker would use if the rule fails, the
- *  tactics they serve, and the ATT&CK mitigations the rule is an instance of. IDs only — the
- *  names come from MITRE_NAMES. */
-export interface MitreMapping { techniques: string[]; tactics: string[]; mitigations: string[] }
+ *  tactics they serve, and the ATT&CK mitigations the rule is an instance of. A name shows under an ID ONLY
+ *  when the CIS export supplies one (`names`) — we never write our own. */
+export interface MitreMapping {
+  techniques: string[]; tactics: string[]; mitigations: string[];
+  /** ID → name, exactly as the CIS export gives it. Absent = IDs only. */
+  names?: Record<string, string>;
+}
 
-export const MITRE_NAMES: Record<string, string> = {
-  T1003: 'OS Credential Dumping', T1005: 'Data from Local System', T1021: 'Remote Services', 'T1021.004': 'SSH',
-  T1040: 'Network Sniffing', T1068: 'Exploitation for Privilege Escalation', T1070: 'Indicator Removal',
-  'T1070.002': 'Clear Linux or Mac System Logs', T1078: 'Valid Accounts', 'T1078.001': 'Default Accounts',
-  T1110: 'Brute Force', 'T1110.001': 'Password Guessing', 'T1110.002': 'Password Cracking',
-  T1190: 'Exploit Public-Facing Application', T1195: 'Supply Chain Compromise', 'T1195.002': 'Compromise Software Supply Chain',
-  T1210: 'Exploitation of Remote Services', T1222: 'File and Directory Permissions Modification',
-  T1499: 'Endpoint Denial of Service', 'T1499.001': 'OS Exhaustion Flood', T1557: 'Adversary-in-the-Middle',
-  T1562: 'Impair Defenses', 'T1562.004': 'Disable or Modify System Firewall', 'T1562.006': 'Indicator Blocking',
-  T1563: 'Remote Service Session Hijacking', T1602: 'Data from Configuration Repository', 'T1602.001': 'SNMP (MIB Dump)',
-  TA0001: 'Initial Access', TA0002: 'Execution', TA0004: 'Privilege Escalation', TA0005: 'Defense Evasion',
-  TA0006: 'Credential Access', TA0008: 'Lateral Movement', TA0009: 'Collection',
-  M1022: 'Restrict File and Directory Permissions', M1026: 'Privileged Account Management', M1027: 'Password Policies',
-  M1029: 'Remote Data Storage', M1032: 'Multi-factor Authentication', M1036: 'Account Use Policies',
-  M1037: 'Filter Network Traffic', M1041: 'Encrypt Sensitive Information', M1042: 'Disable or Remove Feature or Program',
-  M1047: 'Audit', M1050: 'Exploit Protection', M1051: 'Update Software', M1054: 'Software Configuration',
-};
 
 const m = (techniques: string[], tactics: string[], mitigations: string[]): MitreMapping => ({ techniques, tactics, mitigations });
 /** Per check key. A key missing here has no mapping (CIS leaves some checks unmapped). */
@@ -161,6 +150,7 @@ interface Check {
   name: string;
   description: string;
   rationale: string;
+  impact?: string;
   severity: Severity;
   checkIn: CheckIn;
   audit: string;
@@ -533,6 +523,7 @@ export const RULES: ComplianceRule[] = CHECKS.flatMap((c) =>
     name: c.name,
     description: c.description,
     rationale: c.rationale,
+    impact: c.impact,
     severity: c.severity,
     type: p.type,
     platform: p.platform,

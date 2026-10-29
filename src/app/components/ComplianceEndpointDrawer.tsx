@@ -24,7 +24,7 @@ import {
 import type { EndpointOutcome, Finding } from './compliancePolicyData';
 import { scoreColor } from './complianceVizData';
 import { useDrawerStack } from './DrawerStack';
-import { matchesFilter, matchesSearch, NoMatch, optionsFrom, TabListToolbar } from './ComplianceTabFilter';
+import { cardActive, cardToggle, matchesFilter, matchesSearch, NoMatch, TabListToolbar } from './ComplianceTabFilter';
 import type { FilterValue } from './ComplianceTabFilter';
 
 /* Compliance › Endpoint — the endpoint's detail page. Opened from wherever an endpoint is
@@ -231,8 +231,8 @@ export function ComplianceEndpointDrawer({
   const fields: [string, React.ReactNode][] = [
     ['IP Address', ep.ip],
     ['Operating System', ep.osName],
-    ['Version', ep.osVersion],
-    ['Type', ep.type],
+    ['OS Version', ep.osVersion],
+    ['OS Type', ep.type],
     ['Remote Office', ep.office],
     ...(ep.real ? [['Agent Status', <span key="a" className="inline-flex items-center gap-1.5"><span className="size-2 rounded-full" style={{ backgroundColor: ep.agentOnline ? '#22C55E' : '#F59E0B' }} />{ep.agentOnline ? 'Online' : 'Offline'}</span>] as [string, React.ReactNode]] : []),
   ];
@@ -279,9 +279,9 @@ export function ComplianceEndpointDrawer({
               <HeaderIdPill id={ep.id} />
               <span className="truncate">{ep.hostName}</span>
             </h1>
-            <HeaderKpiRow items={kpis} />
+            <HeaderKpiRow items={kpis} gap="mt-[3px]" />
           </div>
-          <div className="flex flex-shrink-0 items-center gap-2">
+          <div className="-my-[2.5px] flex flex-shrink-0 items-center gap-2">
             <HeaderCopyButton variant="link" value={`/compliance-endpoints?open=${activeAssetId}`} label="Copy Endpoint URL" />
             <button
               type="button"
@@ -312,14 +312,23 @@ export function ComplianceEndpointDrawer({
             <div className="min-h-0 flex-1 overflow-y-auto">
               {/* ── Policies: every policy that assesses it ── */}
               {tab === 'policies' && (
-                <div className="px-6 py-4">
-                  {mine.length > 0 && (() => {
-                    const groups = [
-                      { key: 'result', label: 'Result', options: (['Compliant', 'Non-Compliant', 'Not Scanned'] as EndpointOutcome[]).map((o) => ({ value: o, dot: OUTCOME_TONE[o].text })) },
-                      { key: 'benchmark', label: 'Benchmark', options: optionsFrom(mine.map((m) => benchmarkOf(m.policy.benchmarkId)?.name)) },
-                    ];
-                    return <TabListToolbar search={polQ} onSearch={setPolQ} groups={groups} value={polF} onChange={setPolF} />;
-                  })()}
+                <div className="pb-6 pt-4">
+                  {/* Three status cards — the same cards the Policy page's Endpoints tab has. A card
+                      shows only that status; clicking it again shows all. */}
+                  {mine.length > 0 && (
+                    <StatsCardsRow
+                      rules={[]}
+                      onApplyFilter={() => {}}
+                      activeLabel={cardActive(polF, 'result')}
+                      onCardClick={(c) => setPolF(cardToggle(polF, 'result', c.label))}
+                      cards={(['Compliant', 'Non-Compliant', 'Not Scanned'] as EndpointOutcome[]).map((o) => {
+                        const n = mine.filter((m) => m.result.outcome === o).length;
+                        return { label: o, value: n, sub: `polic${n === 1 ? 'y' : 'ies'}`, valueColor: n ? OUTCOME_TONE[o].text : '#94A3B8', hint: `Show only ${o} policies` };
+                      })}
+                    />
+                  )}
+                  <div className="px-6">
+                  {mine.length > 0 && <TabListToolbar search={polQ} onSearch={setPolQ} groups={[]} value={polF} onChange={setPolF} />}
                   <div className="overflow-x-auto"><table className="w-full min-w-[760px] table-fixed">
                     <colgroup><col /><col className="w-[32%]" /><col className="w-[150px]" /><col className="w-[190px]" /></colgroup>
                     <thead><tr className="border-b border-[#e5e7eb]">{['Policy', 'Benchmark', 'Result', 'Last Scan'].map((h) => <th key={h} className={th}>{h}</th>)}</tr></thead>
@@ -336,6 +345,7 @@ export function ComplianceEndpointDrawer({
                   </table></div>
                   {mine.length === 0 && <p className="py-10 text-center text-[13px] text-[#9CA3AF]">No policy assesses this endpoint.</p>}
                   {mine.length > 0 && shownMine.length === 0 && <NoMatch what="policies" onClear={() => { setPolQ(''); setPolF({}); }} />}
+                  </div>
                 </div>
               )}
 

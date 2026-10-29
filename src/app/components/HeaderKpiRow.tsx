@@ -15,7 +15,8 @@ export interface HeaderKpiItem {
  * pill that reveals the hidden chips on hover — so the header never wraps to a
  * second line in narrow / small-view layouts.
  */
-export function HeaderKpiRow({ items }: { items: HeaderKpiItem[] }) {
+/** `gap` replaces the 4px space above the row (Compliance headers use 3px). */
+export function HeaderKpiRow({ items, gap = "mt-1" }: { items: HeaderKpiItem[]; gap?: string }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const measRef = useRef<HTMLDivElement>(null);
   const [visibleCount, setVisibleCount] = useState(items.length);
@@ -51,7 +52,7 @@ export function HeaderKpiRow({ items }: { items: HeaderKpiItem[] }) {
   const sep = <span className="h-3 w-px bg-[#E5E7EB] flex-shrink-0" />;
 
   return (
-    <div ref={wrapRef} className="relative mt-1 w-full overflow-hidden">
+    <div ref={wrapRef} className={`relative ${gap} w-full overflow-hidden`}>
       {/* Hidden measurement copy — always the full list, single line. */}
       <div ref={measRef} aria-hidden className="pointer-events-none absolute -top-[9999px] left-0 flex items-center gap-x-2.5 whitespace-nowrap opacity-0">
         {items.map((it, i) => (

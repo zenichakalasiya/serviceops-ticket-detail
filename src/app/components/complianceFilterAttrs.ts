@@ -41,7 +41,7 @@ export const POLICY_FILTER_ATTRS: Attr[] = [
   { key: 'id', label: 'ID', icon: Hash, type: 'text' },
   { key: 'subject', label: 'Policy Name', icon: AlignLeft, type: 'text' },
   { key: 'x_benchmark', label: 'Benchmark', icon: ShieldCheck, type: 'text' },
-  { key: 'x_type', label: 'Type', icon: Layers, type: 'select', options: TYPE_OPTIONS },
+  { key: 'x_type', label: 'OS Type', icon: Layers, type: 'select', options: TYPE_OPTIONS },
   { key: 'status', label: 'Status', icon: CircleDot, type: 'select', options: POLICY_STATUS_OPTIONS },
   { key: 'x_enabled', label: 'Enable', icon: Power, type: 'select', options: ENABLED_OPTIONS },
   { key: 'x_scheduled', label: 'Schedule', icon: CalendarClock, type: 'select', options: SCHEDULED_OPTIONS },
@@ -53,7 +53,7 @@ export const POLICY_FILTER_ATTRS: Attr[] = [
 
 export const POLICY_QUICK_FILTERS: QuickFilterDef[] = [
   { field: 'status', icon: CircleDot, tip: 'Filter by status', title: 'Status is', width: 200, row: 'dot', options: POLICY_STATUS_OPTIONS },
-  { field: 'x_type', icon: Layers, tip: 'Filter by type', title: 'Type is', width: 180, row: 'plain', options: TYPE_OPTIONS },
+  { field: 'x_type', icon: Layers, tip: 'Filter by OS type', title: 'OS Type is', width: 180, row: 'plain', options: TYPE_OPTIONS },
 ];
 
 export const POLICY_VIEWS: TicketView[] = [
@@ -82,15 +82,15 @@ const IN_USE_OPTIONS = [{ label: 'In use', color: '#22C55E' }, { label: 'Unused'
 export const VIZ_BENCHMARK_FILTER_ATTRS: Attr[] = [
   { key: 'id', label: 'ID', icon: Hash, type: 'text' },
   { key: 'subject', label: 'Benchmark', icon: AlignLeft, type: 'text' },
-  { key: 'x_type', label: 'Type', icon: Layers, type: 'select', options: TYPE_OPTIONS },
-  { key: 'x_osVersion', label: 'Version', icon: Layers, type: 'text' },
+  { key: 'x_type', label: 'OS Type', icon: Layers, type: 'select', options: TYPE_OPTIONS },
+  { key: 'x_osVersion', label: 'OS Version', icon: Layers, type: 'text' },
   { key: 'x_profile', label: 'Profile', icon: ShieldCheck, type: 'select', options: PROFILE_OPTIONS },
   { key: 'x_origin', label: 'Origin', icon: Layers, type: 'select', options: ORIGIN_OPTIONS },
   { key: 'x_inUse', label: 'Usage', icon: Power, type: 'select', options: IN_USE_OPTIONS },
   { key: 'x_policyNames', label: 'Policy', icon: ShieldCheck, type: 'text' },
 ];
 export const VIZ_BENCHMARK_QUICK_FILTERS: QuickFilterDef[] = [
-  { field: 'x_type', icon: Layers, tip: 'Filter by type', title: 'Type is', width: 180, row: 'plain', options: TYPE_OPTIONS },
+  { field: 'x_type', icon: Layers, tip: 'Filter by OS type', title: 'OS Type is', width: 180, row: 'plain', options: TYPE_OPTIONS },
 ];
 export const VIZ_BENCHMARK_VIEWS: TicketView[] = [
   { name: 'All Benchmarks', rules: [] },
@@ -101,9 +101,9 @@ export const VIZ_BENCHMARK_VIEWS: TicketView[] = [
 export const VIZ_RULE_FILTER_ATTRS: Attr[] = [
   { key: 'subject', label: 'Rule', icon: AlignLeft, type: 'text' },
   { key: 'x_severity', label: 'Severity', icon: CircleDot, type: 'select', options: SEVERITY_OPTIONS },
-  { key: 'x_type', label: 'Type', icon: Layers, type: 'select', options: TYPE_OPTIONS },
+  { key: 'x_type', label: 'OS Type', icon: Layers, type: 'select', options: TYPE_OPTIONS },
   { key: 'x_platform', label: 'Platform', icon: Layers, type: 'text' },
-  { key: 'x_version', label: 'Version', icon: Layers, type: 'text' },
+  { key: 'x_version', label: 'OS Version', icon: Layers, type: 'text' },
   { key: 'x_profile', label: 'Profile', icon: ShieldCheck, type: 'select', options: PROFILE_OPTIONS },
   { key: 'x_assessment', label: 'Assessment', icon: CircleDot, type: 'select', options: [{ label: 'Automated' }, { label: 'Manual' }] },
   { key: 'x_section', label: 'Section', icon: Hash, type: 'text' },
@@ -113,7 +113,7 @@ export const VIZ_RULE_FILTER_ATTRS: Attr[] = [
 export const VIZ_RULE_QUICK_FILTERS: QuickFilterDef[] = [
   { field: 'x_severity', icon: CircleDot, tip: 'Filter by severity', title: 'Severity is', width: 190, row: 'dot', options: SEVERITY_OPTIONS },
   { field: 'x_result', icon: ShieldCheck, tip: 'Filter by result', title: 'Result is', width: 180, row: 'dot', options: RESULT_OPTIONS },
-  { field: 'x_type', icon: Layers, tip: 'Filter by type', title: 'Type is', width: 180, row: 'plain', options: TYPE_OPTIONS },
+  { field: 'x_type', icon: Layers, tip: 'Filter by OS type', title: 'OS Type is', width: 180, row: 'plain', options: TYPE_OPTIONS },
 ];
 export const VIZ_RULE_VIEWS: TicketView[] = [
   { name: 'All Rules', rules: [] },
@@ -125,8 +125,8 @@ export const VIZ_RESOURCE_FILTER_ATTRS: Attr[] = [
   { key: 'id', label: 'Endpoint ID', icon: Hash, type: 'text' },
   { key: 'subject', label: 'Host Name', icon: AlignLeft, type: 'text' },
   { key: 'x_ip', label: 'IP Address', icon: Hash, type: 'text' },
-  { key: 'x_type', label: 'Type', icon: Layers, type: 'select', options: TYPE_OPTIONS },
-  { key: 'x_osVersion', label: 'Version', icon: Layers, type: 'text' },
+  { key: 'x_type', label: 'OS Type', icon: Layers, type: 'select', options: TYPE_OPTIONS },
+  { key: 'x_osVersion', label: 'OS Version', icon: Layers, type: 'text' },
   { key: 'x_office', label: 'Remote Office', icon: Layers, type: 'text' },
   { key: 'x_posture', label: 'Posture', icon: CircleDot, type: 'select', options: POSTURE_OPTIONS },
   { key: 'x_scanStatus', label: 'Scan Status', icon: CircleDot, type: 'select', options: SCAN_STATUS_OPTIONS },
@@ -135,7 +135,7 @@ export const VIZ_RESOURCE_FILTER_ATTRS: Attr[] = [
 ];
 export const VIZ_RESOURCE_QUICK_FILTERS: QuickFilterDef[] = [
   { field: 'x_scanStatus', icon: CalendarClock, tip: 'Filter by scan status', title: 'Scan Status is', width: 200, row: 'dot', options: SCAN_STATUS_OPTIONS },
-  { field: 'x_type', icon: Layers, tip: 'Filter by type', title: 'Type is', width: 180, row: 'plain', options: TYPE_OPTIONS },
+  { field: 'x_type', icon: Layers, tip: 'Filter by OS type', title: 'OS Type is', width: 180, row: 'plain', options: TYPE_OPTIONS },
 ];
 export const VIZ_RESOURCE_VIEWS: TicketView[] = [
   { name: 'All Endpoints', rules: [] },
