@@ -5,7 +5,7 @@
 import { complianceEndpoint, findingsOf } from './compliancePolicyData';
 import type { CompliancePolicy } from './compliancePolicyData';
 import type { ComplianceRule } from './complianceData';
-import { profileLabel } from './complianceData';
+import { profileLabel, ruleCode } from './complianceData';
 import type { BenchmarkStat, EndpointStat, RuleEndpointResult, RuleStat } from './complianceVizData';
 import { ruleScore } from './complianceVizData';
 import type { Ticket } from './TicketListPage';
@@ -37,6 +37,7 @@ export const benchmarkRow = (s: BenchmarkStat): Ticket => ({
  *  "0 failing" would claim it passed. */
 export const ruleRow = (rule: ComplianceRule, stat?: RuleStat, eps?: RuleEndpointResult[]): Ticket => ({
   ...baseRow(rule.id, rule.name),
+  x_ruleCode: ruleCode(rule.id),
   x_desc: rule.description,
   x_severity: rule.severity,
   x_type: rule.type,

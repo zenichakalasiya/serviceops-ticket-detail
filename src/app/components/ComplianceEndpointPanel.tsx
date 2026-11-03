@@ -160,7 +160,7 @@ const esc = (s: string) => s.replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&
  *  as a PDF. `head` is the label/value summary above the table; Pass / Fail and the outcome words
  *  are coloured in the PDF wherever they appear. */
 export function exportTable({ format, name, title, head, columns, rows }: {
-  format: 'PDF' | 'CSV';
+  format: 'PDF' | 'Excel' | 'CSV';
   name: string;
   title: string;
   head: string[][];
@@ -172,6 +172,15 @@ export function exportTable({ format, name, title, head, columns, rows }: {
     const lines = [...head.map((h) => h.map(q).join(',')), '', columns.map(q).join(','), ...rows.map((r) => r.map(q).join(','))];
     const url = URL.createObjectURL(new Blob(['\ufeff' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' }));
     const a = document.createElement('a'); a.href = url; a.download = `${name}.csv`; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    return;
+  }
+  if (format === 'Excel') {
+    /* An HTML table saved as .xls — Excel opens it as a sheet, with no spreadsheet library. */
+    const cells = (r: string[], tag: string) => `<tr>${r.map((v) => `<${tag}>${esc(v)}</${tag}>`).join('')}</tr>`;
+    const html = `<html><head><meta charset="utf-8"></head><body><table>${head.map((h) => cells(h, 'td')).join('')}<tr></tr>${cells(columns, 'th')}${rows.map((r) => cells(r, 'td')).join('')}</table></body></html>`;
+    const url = URL.createObjectURL(new Blob(['﻿' + html], { type: 'application/vnd.ms-excel' }));
+    const a = document.createElement('a'); a.href = url; a.download = `${name}.xls`; a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
     return;
   }
@@ -192,13 +201,18 @@ ${rows.map((r) => `<tr>${r.map((v) => `<td style="${tone(v)}">${esc(v)}</td>`).j
 
 /** The Export icon + popup — the product's Download popup (Audit Trail): Format PDF | CSV,
  *  Password Protected, Export / Cancel. `onExport` builds the file. */
-export function ExportButton({ title = 'Export', onExport, className = '' }: {
+export function ExportButton({ title = 'Export', onExport, className = '', formats = ['PDF', 'CSV'], iconClass }: {
   title?: string;
-  onExport: (format: 'PDF' | 'CSV', passwordProtected: boolean) => void;
+  onExport: (format: 'PDF' | 'Excel' | 'CSV', passwordProtected: boolean) => void;
   className?: string;
+  /** The formats offered — the Audit Trail popup offers PDF · Excel · CSV. */
+  formats?: ('PDF' | 'Excel' | 'CSV')[];
+  /** Render the trigger as a boxed header icon (with this class) and call it Download. */
+  iconClass?: string;
 }) {
   const [open, setOpen] = useState(false);
-  const [format, setFormat] = useState<'PDF' | 'CSV'>('PDF');
+  const [format, setFormat] = useState<'PDF' | 'Excel' | 'CSV'>('PDF');
+  const word = iconClass ? 'Download' : 'Export';
   const [pw, setPw] = useState(false);
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
@@ -209,16 +223,20 @@ export function ExportButton({ title = 'Export', onExport, className = '' }: {
   };
   return (
     <div className={`relative flex-shrink-0 ${className}`}>
-      <button type="button" onClick={() => setOpen((v) => !v)} title={title} aria-label={title} className="inline-flex h-8 items-center gap-1.5 rounded bg-[#3D8BD0] px-3 text-[13px] font-medium text-white transition-colors hover:bg-[#3478B5]"><Download size={14} /> Export</button>
+      {iconClass ? (
+        <Tooltip><TooltipTrigger asChild>
+          <button type="button" onClick={() => setOpen((v) => !v)} aria-label={title} className={iconClass}><Download size={16} /></button>
+        </TooltipTrigger><TooltipContent>{title}</TooltipContent></Tooltip>
+      ) : <button type="button" onClick={() => setOpen((v) => !v)} title={title} aria-label={title} className="inline-flex h-8 items-center gap-1.5 rounded bg-[#3D8BD0] px-3 text-[13px] font-medium text-white transition-colors hover:bg-[#3478B5]"><Download size={14} /> Export</button>}
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div className="absolute right-0 top-full z-50 mt-2 w-[300px] rounded-lg border border-[#E5E7EB] bg-white p-4 shadow-lg">
-            <h4 className="mb-3 text-[15px] font-semibold text-[#3D8BD0]">Export</h4>
+            <h4 className="mb-3 text-[15px] font-semibold text-[#3D8BD0]">{word}</h4>
             <div className="mb-4">
               <label className="mb-1.5 block text-[13px] text-[#7B8FA5]">Format</label>
               <div className="inline-flex overflow-hidden rounded border border-[#DFE5ED]">
-                {(['PDF', 'CSV'] as const).map((fm) => (
+                {formats.map((fm) => (
                   <button key={fm} type="button" onClick={() => setFormat(fm)} className={`px-4 py-1.5 text-[13px] font-medium transition-colors ${format === fm ? 'bg-[#3D8BD0] text-white' : 'bg-white text-[#364658] hover:bg-[#F5F7FA]'}`}>{fm}</button>
                 ))}
               </div>
@@ -240,7 +258,7 @@ export function ExportButton({ title = 'Export', onExport, className = '' }: {
               </div>
             )}
             <div className="mt-4 flex items-center justify-end gap-2 border-t border-[#F0F1F3] pt-3">
-              <button type="button" onClick={run} className="rounded bg-[#3D8BD0] px-3 py-1.5 text-[13px] font-medium text-white transition-colors hover:bg-[#2F7AB8]">Export</button>
+              <button type="button" onClick={run} className="rounded bg-[#3D8BD0] px-3 py-1.5 text-[13px] font-medium text-white transition-colors hover:bg-[#2F7AB8]">{word}</button>
               <button type="button" onClick={() => setOpen(false)} className="rounded border border-[#DFE5ED] px-3 py-1.5 text-[13px] font-medium text-[#364658] transition-colors hover:bg-[#F5F7FA]">Cancel</button>
             </div>
           </div>

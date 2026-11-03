@@ -64,6 +64,12 @@ export interface CompliancePolicy {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+  /** Who changed it last. Unset = its creator. */
+  updatedBy?: string;
+  /** The policy's own labels (Zeni, 3 Nov 2026) — added and removed from its properties panel. */
+  tags?: string[];
+  /** Archived policies never run and live only in the listing's Archived view. There is no delete. */
+  archived?: boolean;
   lastScan: ScanResult | null;
   scanning?: boolean;
   /** How the last scan was started. Unset = the schedule (or Run Now when it has none). */
@@ -375,6 +381,8 @@ const seedPolicies = (): CompliancePolicy[] => SEED.map(({ created, scanned, ...
     configType: null, notify: [], enabled: true, endpointIds: [], offices: [], deviceTags: [],
     ...s, createdAt: created, updatedAt: scanned ?? created, lastScan: null,
   };
+  /* The seeds' old device tags read as what each policy is about, so they become its own tags. */
+  p.tags = [...(s.deviceTags ?? [])];
   // Tag is no longer a way to choose endpoints (Zeni, 27 Oct 2026): a seed written by tag keeps
   // exactly the machines it matched, picked one by one.
   if (p.axis === 'tag') {
@@ -407,7 +415,7 @@ const stamp = () => { const d = new Date(); const p = (n: number) => String(n).p
 export const policyStore = {
   save(p: Omit<CompliancePolicy, 'id' | 'createdAt' | 'updatedAt' | 'lastScan' | 'createdBy'> & { id?: string }) {
     if (p.id && all().some((x) => x.id === p.id)) {
-      set(all().map((x) => (x.id === p.id ? { ...x, ...p, id: x.id, updatedAt: stamp() } : x)));
+      set(all().map((x) => (x.id === p.id ? { ...x, ...p, id: x.id, updatedAt: stamp(), updatedBy: 'Sarah Johnson' } : x)));
       return p.id;
     }
     const id = `CP-${++S.seq}`;
@@ -415,12 +423,18 @@ export const policyStore = {
     return id;
   },
   remove(id: string) { set(all().filter((p) => p.id !== id)); },
-  toggle(id: string, enabled?: boolean) { set(all().map((p) => (p.id === id ? { ...p, enabled: enabled ?? !p.enabled, updatedAt: stamp() } : p))); },
+  toggle(id: string, enabled?: boolean) { set(all().map((p) => (p.id === id ? { ...p, enabled: enabled ?? !p.enabled, updatedAt: stamp(), updatedBy: 'Sarah Johnson' } : p))); },
+  setTags(id: string, tags: string[]) { set(all().map((p) => (p.id === id ? { ...p, tags, updatedAt: stamp(), updatedBy: 'Sarah Johnson' } : p))); },
+  /** Archive replaces delete: the policy stops running and moves to the Archived view. */
+  archive(id: string, archived = true) { set(all().map((p) => (p.id === id ? { ...p, archived, scanning: false, updatedAt: stamp(), updatedBy: 'Sarah Johnson' } : p))); },
+  /** Stops a scan that is running; the last finished result stays. */
+  cancel(id: string) { set(all().map((p) => (p.id === id ? { ...p, scanning: false } : p))); },
   setSchedule(id: string, schedule: PolicySchedule) { set(all().map((p) => (p.id === id ? { ...p, schedule, updatedAt: stamp() } : p))); },
   /** Runs a scan now: Scanning for a moment, then a fresh result. */
   run(id: string, onDone?: (p: CompliancePolicy) => void) {
     set(all().map((p) => (p.id === id ? { ...p, scanning: true } : p)));
     window.setTimeout(() => {
+      if (!getPolicy(id)?.scanning) return; // cancelled meanwhile
       const at = stamp();
       set(all().map((p) => (p.id === id ? {
         ...p, scanning: false, lastScan: summarise(p, at), updatedAt: at, lastTrigger: 'Run Now',

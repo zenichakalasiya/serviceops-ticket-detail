@@ -548,9 +548,19 @@ export const RULES: ComplianceRule[] = CHECKS.flatMap((c) =>
   || CHECKS.findIndex((c) => a.id.startsWith(`${c.key}-`)) - CHECKS.findIndex((c) => b.id.startsWith(`${c.key}-`)));
 
 export const ruleById = (id: string) => RULES.find((r) => r.id === id);
+/** The rule's ID as people read it — RUL-1, RUL-2… in catalogue order (Zeni, 2 Nov 2026: it is the
+ *  CIS ID column's number, shown as "RUL-1 - <title>"). */
+export const ruleCode = (id: string) => { const i = RULES.findIndex((r) => r.id === id); return i < 0 ? id : `RUL-${i + 1}`; };
 
 /** A rule's OS version as an admin names it — platform + build, e.g. "Debian Linux 11". */
 export const osVersionOf = (r: Pick<ComplianceRule, 'platform' | 'version'>) => `${r.platform} ${r.version}`;
+/** A benchmark's "Debian Linux 11" split into its platform and version — the same pair its rules carry. */
+export const platformOf = (osVersion: string): { platform: string; version: string } => {
+  const p = (Object.values(P) as Platform[]).find((x) => osVersionOf(x) === osVersion);
+  if (p) return { platform: p.platform, version: p.version };
+  const i = osVersion.lastIndexOf(' ');
+  return i < 0 ? { platform: osVersion, version: '' } : { platform: osVersion.slice(0, i), version: osVersion.slice(i + 1) };
+};
 
 /** The OS versions a Type's rules are written for, in catalogue order. A benchmark targets ONE. */
 export const OS_VERSIONS: { type: ComplianceType; label: string }[] = (Object.values(P) as Platform[])
@@ -590,7 +600,13 @@ export interface Benchmark {
   usedBy: number;
   createdBy: string;
   updatedAt: string;
+  /** When it was made. Seeds without one were made when they were last updated. */
+  createdAt?: string;
+  /** Who changed it last. Seeds without one were last changed by their creator. */
+  updatedBy?: string;
 }
+export const benchmarkCreated = (b: Benchmark) => ({ by: b.createdBy, at: b.createdAt ?? b.updatedAt });
+export const benchmarkUpdated = (b: Benchmark) => ({ by: b.updatedBy ?? b.createdBy, at: b.updatedAt });
 
 const CIS_DESC = 'This document provides prescriptive guidance for establishing a secure configuration posture. Please see the CIS website for the latest version.';
 

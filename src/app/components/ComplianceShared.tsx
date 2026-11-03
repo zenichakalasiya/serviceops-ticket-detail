@@ -97,6 +97,7 @@ const TONES = {
   violet: 'border-[#E4D9FB] bg-[#F3EEFF] text-[#6D28D9]',
   green: 'border-[#C9EBD6] bg-[#ECFDF3] text-[#15803D]',
   amber: 'border-[#F6DFB0] bg-[#FFFAEB] text-[#B54708]',
+  red: 'border-[#F5C2C2] bg-[#FEF3F2] text-[#B42318]',
 } as const;
 export type ChipTone = keyof typeof TONES;
 

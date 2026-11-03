@@ -1,7 +1,7 @@
 /* Compliance Policy listing — the filter catalogue, quick filters, saved views and status
    palette. Its own small file with no heavy imports, because TicketTable and TicketViewsPanel
    read it and both sit underneath half the app. */
-import { AlignLeft, CalendarClock, CalendarDays, CircleDot, Hash, Layers, Power, ShieldCheck, User } from 'lucide-react';
+import { AlignLeft, CalendarClock, CalendarDays, CircleDot, Hash, Layers, Power, ShieldCheck, Tag, User } from 'lucide-react';
 import type { Attr, FilterRule, QuickFilterDef } from './TicketFilterBar';
 import type { TicketView } from './TicketViewsPanel';
 
@@ -16,6 +16,8 @@ export function takeComplianceDrill(page: string): DrillRules | undefined {
   delete drillStore[page];
   return r;
 }
+
+export const ARCHIVED_POLICY_VIEW = 'All Archived Policies';
 
 export const POLICY_STATUS_OPTIONS = [
   { label: 'Compliant', color: '#22C55E' },
@@ -47,6 +49,8 @@ export const POLICY_FILTER_ATTRS: Attr[] = [
   { key: 'x_scheduled', label: 'Schedule', icon: CalendarClock, type: 'select', options: SCHEDULED_OPTIONS },
   { key: 'x_schedule', label: 'Schedule Details', icon: CalendarClock, type: 'text' },
   { key: 'x_createdBy', label: 'Created By', icon: User, type: 'text' },
+  /* In the grid's column selection, unchecked (Zeni, 3 Nov 2026) — added from the properties panel. */
+  { key: 'x_tags', label: 'Tags', icon: Tag, type: 'text' },
   { key: 'x_lastExecution', label: 'Last Scan', icon: CalendarDays, type: 'date' },
   { key: 'x_nextExecution', label: 'Next Scan', icon: CalendarDays, type: 'date' },
 ];
@@ -62,6 +66,8 @@ export const POLICY_VIEWS: TicketView[] = [
   { name: 'Never Scanned', rules: [{ field: 'status', condition: 'is', values: ['Not Scanned'] }] },
   { name: 'Scheduled', rules: [{ field: 'x_scheduled', condition: 'is', values: ['Scheduled'] }] },
   { name: 'Disabled', rules: [{ field: 'x_enabled', condition: 'is', values: ['Disabled'] }] },
+  /* Archived policies are in THIS view only — CompliancePoliciesListingPage's viewScope keeps them out of the rest. */
+  { name: ARCHIVED_POLICY_VIEW, rules: [] },
 ];
 
 /* ── The technician's Benchmark and Endpoints pages — read-only registers over the same

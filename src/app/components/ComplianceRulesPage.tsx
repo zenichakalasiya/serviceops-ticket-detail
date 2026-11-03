@@ -129,7 +129,7 @@ export function ComplianceRulesPage({ onNavigate }: { onNavigate?: (page: string
         quickFilters={VIZ_RULE_QUICK_FILTERS}
         layouts={['list-kpi', 'list']}
         buildCards={buildCards}
-        searchFields={['x_desc', 'x_platform']}
+        searchFields={['x_ruleCode', 'x_desc', 'x_platform']}
         hideSelection
         moreActions={[]}
         onOpenRow={(t) => setOpenId(t.id)}

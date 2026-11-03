@@ -1,6 +1,6 @@
 import { Fragment, cloneElement, isValidElement, useEffect, useLayoutEffect, useRef, useState, type ReactElement } from 'react';
 import { createPortal } from 'react-dom';
-import { CalendarClock, Copy, History, Loader2, Play, MoreVertical, SquarePen, GitMerge, TriangleAlert, Armchair, ArrowDown, ArrowLeftRight, ArrowLeftToLine, ArrowRightToLine, ArrowUp, ArrowUpDown, Check, ChevronDown, CircleCheck, CornerUpLeft, AirVent, BatteryFull, Cable, Camera, Database, FileText, Headphones, Keyboard, MemoryStick, Mouse, Plug, Printer, SprayCan, Trash2, Usb, Lightbulb, MonitorCog, Smartphone, Server, AppWindow, Lock, ChevronLeft, ChevronRight, ExternalLink, EyeOff, Filter, Flag, RotateCw, GripVertical, Inbox, Layers, ListChecks, MessageSquare, Package, Pencil, Pin, Plus, Search, SearchX, ThumbsDown, ThumbsUp, UserCheck, X } from 'lucide-react';
+import { Archive, ArchiveRestore, CalendarClock, Copy, History, Loader2, Play, MoreVertical, SquarePen, GitMerge, TriangleAlert, Armchair, ArrowDown, ArrowLeftRight, ArrowLeftToLine, ArrowRightToLine, ArrowUp, ArrowUpDown, Check, ChevronDown, CircleCheck, CornerUpLeft, AirVent, BatteryFull, Cable, Camera, Database, FileText, Headphones, Keyboard, MemoryStick, Mouse, Plug, Printer, SprayCan, Trash2, Usb, Lightbulb, MonitorCog, Smartphone, Server, AppWindow, Lock, ChevronLeft, ChevronRight, ExternalLink, EyeOff, Filter, Flag, RotateCw, GripVertical, Inbox, Layers, ListChecks, MessageSquare, Package, Pencil, Pin, Plus, Search, SearchX, ThumbsDown, ThumbsUp, UserCheck, X } from 'lucide-react';
 import { IconAssetUpdate } from './SidebarIcons';
 import { toast } from 'sonner';
 import { AiSparkle } from './AiSparkle';
@@ -724,7 +724,9 @@ export type RowAction =
   /* The Vulnerability modules' Impacted Endpoints count: list the machines behind it. */
   | 'impacted-endpoints'
   /* Compliance Policy: scan now. */
-  | 'run';
+  | 'run'
+  /* Compliance Policy: archive or unarchive (there is no delete). */
+  | 'archive';
 
 export const MONEY_COLS = new Set(['x_cost', 'x_totalCost', 'x_invoiceAmount', 'x_paymentAmount']);
 /** "500,000.00 INR" → "500,000.00" — the unit lives in the header. */
@@ -2067,13 +2069,13 @@ export function TicketTable({
     /* Compliance › Rules (technician) — the admin Rules columns, plus how the rule fares across
        the estate: how many endpoints check it, and the share of them that pass (Rule Score). */
     'cviz-rule': [
-        { key: 'subject', label: 'Rule', flex: true, w: 300, maxW: 460, wrap: true },
-        { key: 'x_desc', label: 'Description', flex: true, w: 220, maxW: 340 },
-        { key: 'x_severity', label: 'Severity', w: 110 },
-        { key: 'x_type', label: 'OS Type', w: 95 },
-        { key: 'x_platform', label: 'Platform', w: 170 },
-        { key: 'x_version', label: 'OS Version', w: 95 },
+        /* Zeni, 3 Nov 2026: Rule ID · Title · Profile · Assessment · OS Platform · OS Version · Endpoints · Rule Score. */
+        { key: 'x_ruleCode', label: 'Rule ID', w: 96 },
+        { key: 'subject', label: 'Title', flex: true, w: 300, maxW: 460, wrap: true },
         { key: 'x_profile', label: 'Profile', w: 80 },
+        { key: 'x_assessment', label: 'Assessment', w: 120 },
+        { key: 'x_platform', label: 'OS Platform', w: 170 },
+        { key: 'x_version', label: 'OS Version', w: 100 },
         { key: 'x_endpoints', label: 'Endpoints', w: 100 },
         { key: 'x_cpScore', label: 'Rule Score', w: 150 },
     ],
@@ -2676,7 +2678,8 @@ export function TicketTable({
             {/* A compliance policy's row runs it, reschedules it, edits it; Clone and Delete sit behind the ⋮. */}
             {moduleCols === 'compliance-policy' && (() => {
               const busy = (ticket as any).x_scanning === true;
-              const off = (ticket as any).x_enabled !== 'Enabled';
+              const archived = (ticket as any).x_archived === true;
+              const off = (ticket as any).x_enabled !== 'Enabled' || archived;
               return (
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -2690,7 +2693,7 @@ export function TicketTable({
                       </button>
                     </span>
                   </TooltipTrigger>
-                  <TooltipContent>{busy ? 'Scanning…' : off ? 'Enable the policy to run it' : 'Run Now'}</TooltipContent>
+                  <TooltipContent>{busy ? 'Scanning…' : archived ? 'Unarchive the policy to scan it' : off ? 'Enable the policy to scan it' : 'Scan Now'}</TooltipContent>
                 </Tooltip>
               );
             })()}
@@ -4818,13 +4821,22 @@ export function TicketTable({
               </button>
             ))}
             <div className="my-1 border-t border-[#F1F5F9]" />
-            <button
+            {/* A compliance policy is archived, never deleted (Zeni, 3 Nov 2026). */}
+            {(rowMenu.ticket as any).x_cpPolicy ? (
+              <button
+                onClick={() => { onRowAction?.(rowMenu.ticket, 'archive'); setRowMenu(null); }}
+                className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[13px] text-[#364658] transition-colors hover:bg-[#F9FAFB]"
+              >
+                <span className="flex-shrink-0 text-[#64748B]">{(rowMenu.ticket as any).x_archived ? <ArchiveRestore size={15} /> : <Archive size={15} />}</span>
+                <span className="flex-1 truncate">{(rowMenu.ticket as any).x_archived ? 'Unarchive' : 'Archive'}</span>
+              </button>
+            ) : <button
               onClick={(e) => { const t = rowMenu.ticket; setRowMenu(null); askDelete(t, e.currentTarget as HTMLElement); }}
               className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[13px] text-[#B42318] transition-colors hover:bg-[#FEF3F2]"
             >
               <Trash2 size={15} className="flex-shrink-0" />
               <span className="flex-1 truncate">Delete</span>
-            </button>
+            </button>}
           </div>,
           document.body,
         )}

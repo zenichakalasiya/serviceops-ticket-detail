@@ -71,6 +71,7 @@ export function AssetRegisterPage({
   noun,
   moduleCols,
   defaultViewName,
+  viewScope,
   footerNoun,
   rows,
   recordOf,
@@ -124,6 +125,8 @@ export function AssetRegisterPage({
   noun: string;
   moduleCols: React.ComponentProps<typeof TicketTable>['moduleCols'];
   defaultViewName: string;
+  /** Narrows the rows by the active view before any filter — for rows that belong to ONE view only. */
+  viewScope?: (viewName: string, rows: Ticket[]) => Ticket[];
   /** Plural word for the grouping footer ("assets", "licenses", "orders"…). */
   footerNoun: string;
   rows: Ticket[];
@@ -366,10 +369,12 @@ export function AssetRegisterPage({
     });
   };
 
-  let filteredTickets = tickets;
+  /* A view may own rows the filters cannot express (archived policies live ONLY in their own view). */
+  const scoped = viewScope ? viewScope(activeView, tickets) : tickets;
+  let filteredTickets = scoped;
   if (searchQuery.trim()) {
     const q = searchQuery.toLowerCase().trim();
-    filteredTickets = tickets.filter(
+    filteredTickets = scoped.filter(
       (t) =>
         t.id.toLowerCase().includes(q) ||
         t.subject.toLowerCase().includes(q) ||
@@ -438,7 +443,7 @@ export function AssetRegisterPage({
               <DrillCrumb
                 label={drillFrom.label}
                 shown={sortedTickets.length}
-                total={tickets.length}
+                total={scoped.length}
                 footerNoun={footerNoun}
                 onBack={backToDashboard}
               />
@@ -490,7 +495,7 @@ export function AssetRegisterPage({
                 <div className="sticky left-0 bg-white pt-0.5">
                   {view === 'list-kpi' && !drillFrom && buildCards && (
                     <StatsCardsRow
-                      cards={buildCards(tickets)}
+                      cards={buildCards(scoped)}
                       rules={filterRules}
                       onApplyFilter={(r) => {
                         setFilterRules(r);

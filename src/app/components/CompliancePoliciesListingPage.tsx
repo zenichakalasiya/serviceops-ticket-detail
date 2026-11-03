@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 import { ShieldCheck } from 'lucide-react';
 import { AssetRegisterPage } from './AssetRegisterPage';
 import { postureColor, postureOf, scoreColor } from './complianceVizData';
-import { POLICY_FILTER_ATTRS, POLICY_QUICK_FILTERS, takeComplianceDrill } from './complianceFilterAttrs';
+import { POLICY_FILTER_ATTRS, POLICY_QUICK_FILTERS, takeComplianceDrill, ARCHIVED_POLICY_VIEW } from './complianceFilterAttrs';
 import {
   benchmarkOf, getPolicy, nextRun, openPolicyEditor, policyStore, resolvedEndpoints, scheduleLabel, scoreOf, statusOf, usePolicies,
 } from './compliancePolicyData';
@@ -52,6 +52,8 @@ const toRow = (p: CompliancePolicy): Ticket => {
     x_enabled: p.enabled ? 'Enabled' : 'Disabled',
     x_scanning: !!p.scanning,
     x_createdBy: p.createdBy,
+    x_tags: (p.tags ?? []).join(', '),
+    x_archived: !!p.archived,
   } as unknown as Ticket;
 };
 
@@ -167,6 +169,7 @@ export function CompliancePoliciesListingPage({ onNavigate }: { onNavigate?: (pa
         noun="policy"
         moduleCols="compliance-policy"
         defaultViewName="All Compliance Policies"
+        viewScope={(view, all) => all.filter((t) => !!(t as any).x_archived === (view === ARCHIVED_POLICY_VIEW))}
         footerNoun="policies"
         rows={rows}
         recordOf={(id) => getPolicy(id)}
@@ -206,9 +209,10 @@ export function CompliancePoliciesListingPage({ onNavigate }: { onNavigate?: (pa
           else if (action === 'run') {
             toast(`Scanning “${p.name}” — ${resolvedEndpoints(p).length} endpoints`);
             policyStore.run(p.id, (done) => toast.success(`“${done.name}” scanned — ${scoreOf(done.lastScan) ?? 0}% compliant`));
-          } else if (action === 'delete') {
-            policyStore.remove(p.id);
-            toast.success(`“${p.name}” deleted`);
+          } else if (action === 'archive') {
+            /* Archive replaces Delete (Zeni, 3 Nov 2026) — it moves to the All Archived Policies view. */
+            policyStore.archive(p.id, !p.archived);
+            toast.success(`“${p.name}” ${p.archived ? 'unarchived' : 'archived'}`);
           }
         }}
         onNavigate={onNavigate}

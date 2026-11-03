@@ -18,11 +18,12 @@ import type { PickerColumn } from './CreatePatchDeployment';
 import { ErrorText, FieldLabel, RuleSelect, inputCls as formInputCls } from './FormRuleControls';
 import { ckpi, matchRules, MetaChip, optionsOf, RuleDetailPanel, selectAttr, SeverityPill } from './ComplianceShared';
 import { usePolicies } from './compliancePolicyData';
+import { ExportButton, exportTable, fileSafe } from './ComplianceEndpointPanel';
 import { TicketFilterBar } from './TicketFilterBar';
 import type { FilterRule, QuickFilterDef } from './TicketFilterBar';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import {
-  benchmarkGroups, benchmarkRuleIds, benchmarksUsingRule, COMPLIANCE_TYPES, fmtDate, groupRuleIds, osVersionOf, osVersionsFor, RULES, ruleById,
+  benchmarkCreated, benchmarkGroups, ruleCode, ruleNumbers, benchmarkRuleIds, benchmarkUpdated, platformOf, benchmarksUsingRule, COMPLIANCE_TYPES, fmtDate, groupRuleIds, osVersionOf, osVersionsFor, RULES, ruleById,
   PROFILES, profileAllows, profileLabel, profileLevels, profileOf, SEVERITIES, SEVERITY_PILL,
 } from './complianceData';
 import type { Benchmark, BenchmarkProfile, ComplianceRule, ComplianceType, Profile, RuleGroup } from './complianceData';
@@ -211,21 +212,21 @@ function BenchmarkList({ benchmarks, onOpen, onCreate, onEdit, onClone, onDelete
     const plain = (o: { label: string }[]) => o.map(({ label }) => ({ label }));
     return [
       selectAttr('type', 'OS Type', Monitor, plain(optionsOf(benchmarks, (b) => b.type, COMPLIANCE_TYPES))),
-      selectAttr('origin', 'Origin', BadgeCheck, plain(optionsOf(benchmarks, (b) => b.origin, ['Default', 'Custom']))),
+      selectAttr('origin', 'Source', BadgeCheck, plain(optionsOf(benchmarks, (b) => b.origin, ['Default', 'Custom']))),
     ];
   }, [benchmarks]);
   // Type and Origin are every cut this list has, so they are both quick filters and the
   // Filters builder (and its pill) is switched off — it would only offer the same two again.
   const quick = useMemo<QuickFilterDef[]>(() => [
     { field: 'type', icon: Monitor, tip: 'Filter by OS type', title: 'OS Type is', width: 196, row: 'plain', options: attrs[0].options! },
-    { field: 'origin', icon: BadgeCheck, tip: 'Filter by origin', title: 'Origin is', width: 180, row: 'plain', options: attrs[1].options! },
+    { field: 'origin', icon: BadgeCheck, tip: 'Filter by source', title: 'Source is', width: 180, row: 'plain', options: attrs[1].options! },
   ], [attrs]);
 
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
     const byField = (b: Benchmark, f: string): string | string[] => String((b as any)[f] ?? '');
     return matchRules(benchmarks, rules, byField).filter((b) =>
-      !q || [b.name, b.description, b.osVersion].some((x) => x.toLowerCase().includes(q)));
+      !q || [b.id, b.name, b.description, b.osVersion].some((x) => x.toLowerCase().includes(q)));
   }, [benchmarks, search, rules]);
 
   const totalPages = Math.max(1, Math.ceil(rows.length / perPage));
@@ -270,38 +271,39 @@ function BenchmarkList({ benchmarks, onOpen, onCreate, onEdit, onClone, onDelete
       </div>
 
       <div className="-mx-4 overflow-x-auto">
-        <table className="w-full min-w-[1000px] table-fixed leading-5">
+        {/* Zeni, 2 Nov 2026: the columns below, and no row actions — a row opens the benchmark, whose
+            header carries Edit · Clone · Download (Delete under its ⋮). */}
+        <table className="w-full min-w-[1180px] table-fixed leading-5">
           <colgroup>
-            <col className="w-[32%]" /><col className="w-[26%]" /><col className="w-[90px]" /><col className="w-[190px]" /><col className="w-[96px]" />
-            <col className="w-[70px]" /><col className="w-[130px]" />
+            <col className="w-[110px]" /><col /><col className="w-[190px]" /><col className="w-[100px]" /><col className="w-[90px]" />
+            <col className="w-[96px]" /><col className="w-[170px]" /><col className="w-[170px]" />
           </colgroup>
           <thead className="border-b border-[#e5e7eb]">
             <tr>
-              {['Benchmark', 'Description', 'OS Type', 'OS Version', 'Origin', 'Rules', 'Actions'].map((h) => (
+              {['Benchmark ID', 'Name', 'Platform', 'OS Version', 'Total Rules', 'Source', 'Created By / Date', 'Updated By / Date'].map((h) => (
                 <th key={h} className="whitespace-nowrap px-4 py-2.5 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-[#e5e7eb] bg-white">
             {pageRows.length === 0 ? (
-              <tr><td colSpan={7} className="px-4 py-12 text-center text-[13px] text-[#9CA3AF]">No benchmark matches these filters.</td></tr>
+              <tr><td colSpan={8} className="px-4 py-12 text-center text-[13px] text-[#9CA3AF]">No benchmark matches these filters.</td></tr>
             ) : pageRows.map((b) => (
               <tr key={b.id} onClick={() => onOpen(b.id)} className="cursor-pointer transition-colors hover:bg-[#f9fafb]">
+                <td className="whitespace-nowrap px-4 py-3"><span className="rounded bg-[#e8f4fd] px-1.5 py-px text-[12px] font-medium text-[#3D8BD0]">{b.id}</span></td>
                 <td className="px-4 py-3">
                   <span className="line-clamp-2 break-words text-[13px] font-medium text-[#364658] hover:text-[#3D8BD0]" title={b.name}>{b.name}</span>
                 </td>
-                <td className="px-4 py-3"><span className="block truncate text-[13px] text-[#64748B]" title={b.description}>{b.description || <span className="text-[#9CA3AF]">—</span>}</span></td>
-                <td className="whitespace-nowrap px-4 py-3 text-[13px] text-[#364658]">{b.type}</td>
-                <td className="px-4 py-3"><span className="block truncate text-[13px] text-[#364658]" title={b.osVersion}>{b.osVersion || '—'}</span></td>
-                <td className="whitespace-nowrap px-4 py-3"><OriginTag origin={b.origin} /></td>
+                <td className="px-4 py-3"><span className="block truncate text-[13px] text-[#364658]" title={platformOf(b.osVersion).platform}>{platformOf(b.osVersion).platform || '—'}</span></td>
+                <td className="whitespace-nowrap px-4 py-3 text-[13px] text-[#364658]">{platformOf(b.osVersion).version || '—'}</td>
                 <td className="whitespace-nowrap px-4 py-3 text-[13px] text-[#364658]">{benchmarkRuleIds(b).length}</td>
-                <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
-                  <span className="flex items-center gap-0.5">
-                    <ActionIcon label="Edit" reason={b.origin === 'Default' ? DEFAULT_READ_ONLY : undefined} onClick={() => onEdit(b.id)}><Pencil size={15} /></ActionIcon>
-                    <ActionIcon label="Clone" onClick={() => onClone(b.id)}><Copy size={15} /></ActionIcon>
-                    <ActionIcon label="Delete" danger reason={deleteReason(b, usedBy(b.id))} onClick={() => onDelete(b)}><Trash2 size={15} /></ActionIcon>
-                  </span>
-                </td>
+                <td className="whitespace-nowrap px-4 py-3"><OriginTag origin={b.origin} /></td>
+                {[benchmarkCreated(b), benchmarkUpdated(b)].map((x, i) => (
+                  <td key={i} className="px-4 py-3">
+                    <span className="block truncate text-[13px] text-[#364658]" title={x.by}>{x.by}</span>
+                    <span className="block whitespace-nowrap text-[12px] text-[#7B8FA5]">{fmtDate(x.at)}</span>
+                  </td>
+                ))}
               </tr>
             ))}
           </tbody>
@@ -1021,11 +1023,11 @@ function BenchmarkDrawer({ benchmark, benchmarks, onClose, onEdit, onClone, onDe
             </h1>
             {/* Its facts as chips under the title — tinted where the value means something. */}
             <HeaderKpiRow gap="mt-[3px]" items={[
-              ckpi('origin', 'Origin', benchmark.origin, { chip: isDefault ? 'neutral' : 'green', icon: isDefault ? <Lock size={11} /> : undefined, tip: isDefault ? 'Default: ships with the product — read only' : 'Custom: built in this workspace' }),
-              ckpi('type', 'OS Type', benchmark.type),
-              ckpi('version', 'OS Version', benchmark.osVersion || '—'),
+              ckpi('origin', 'Source', benchmark.origin, { chip: isDefault ? 'neutral' : 'green', icon: isDefault ? <Lock size={11} /> : undefined, tip: isDefault ? 'Default: ships with the product — read only' : 'Custom: built in this workspace' }),
+              ckpi('type', 'Platform', platformOf(benchmark.osVersion).platform || '—'),
+              ckpi('version', 'OS Version', platformOf(benchmark.osVersion).version || '—'),
               ckpi('rules', 'Rules', total, { color: '#3D8BD0' }),
-              ckpi('updated', 'Updated', fmtDate(benchmark.updatedAt), { tip: `Updated ${fmtDate(benchmark.updatedAt)} by ${benchmark.createdBy}` }),
+              ckpi('updated', 'Updated', fmtDate(benchmark.updatedAt), { tip: `Updated ${fmtDate(benchmark.updatedAt)} by ${benchmarkUpdated(benchmark).by}` }),
             ]} />
           </div>
           <div className="-my-[2.5px] flex flex-shrink-0 items-center gap-2">
@@ -1038,13 +1040,29 @@ function BenchmarkDrawer({ benchmark, benchmarks, onClose, onEdit, onClone, onDe
               </TooltipTrigger>
               <TooltipContent className="text-wrap max-w-[260px]">{isDefault ? DEFAULT_READ_ONLY : 'Edit'}</TooltipContent>
             </Tooltip>
+            {/* Edit · Clone · Download on the header (Zeni, 2 Nov 2026); Delete stays under the ⋮. */}
+            <Tooltip>
+              <TooltipTrigger asChild><button type="button" onClick={onClone} aria-label="Clone benchmark" className={boxedBtn}><Copy size={16} /></button></TooltipTrigger>
+              <TooltipContent>Clone</TooltipContent>
+            </Tooltip>
+            <ExportButton title="Download" iconClass={boxedBtn} formats={['PDF', 'Excel', 'CSV']} onExport={(format) => {
+              const nums = ruleNumbers(benchmark);
+              const ids = benchmarkRuleIds(benchmark);
+              const cr = benchmarkCreated(benchmark), up = benchmarkUpdated(benchmark);
+              exportTable({
+                format, name: fileSafe(benchmark.name), title: benchmark.name,
+                head: [['Benchmark ID', benchmark.id], ['Platform', platformOf(benchmark.osVersion).platform], ['OS Version', platformOf(benchmark.osVersion).version], ['Source', benchmark.origin], ['Total Rules', String(ids.length)], ['Created', `${cr.by} · ${fmtDate(cr.at)}`], ['Updated', `${up.by} · ${fmtDate(up.at)}`]],
+                columns: ['No.', 'CIS ID', 'Rule Title', 'Profile', 'Severity'],
+                rows: ids.map((id) => { const r = ruleById(id); return [nums.get(id) ?? '', ruleCode(id), r?.name ?? id, r?.profile ?? '', r?.severity ?? '']; }),
+              });
+              toast.success(`${benchmark.id} downloaded as ${format}`);
+            }} />
             <div className="relative">
               <button type="button" onClick={() => setMenu((v) => !v)} aria-label="More actions" className={boxedBtn}><MoreVertical size={16} /></button>
               {menu && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setMenu(false)} />
                   <div className="absolute right-0 top-full z-50 mt-1 w-[200px] rounded-lg border border-[#e5e7eb] bg-white py-1 shadow-lg">
-                    <button type="button" onClick={() => { setMenu(false); onClone(); }} className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[13px] text-[#364658] hover:bg-[#F5F7FA]"><Copy size={15} className="text-[#7B8FA5]" /> Clone</button>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <span className="block">
@@ -1173,6 +1191,8 @@ function BenchmarkForm({ editing, source, names, onCancel, onSave }: {
       groups,
       usedBy: editing?.usedBy ?? 0,
       createdBy: editing?.createdBy ?? 'Zeni Chakalasiya',
+      createdAt: editing ? (editing.createdAt ?? editing.updatedAt) : new Date().toISOString().slice(0, 16),
+      updatedBy: 'Zeni Chakalasiya',
       updatedAt: new Date().toISOString().slice(0, 16),
     });
   };

@@ -6,7 +6,7 @@ import { Pagination } from './Pagination';
 import { matchRules, optionsOf, RuleDetailPanel, selectAttr, SeverityPill } from './ComplianceShared';
 import { TicketFilterBar } from './TicketFilterBar';
 import type { FilterRule, QuickFilterDef } from './TicketFilterBar';
-import { BENCHMARKS_SEED, benchmarksUsingRule, COMPLIANCE_TYPES, RULES, SEVERITIES, SEVERITY_PILL } from './complianceData';
+import { BENCHMARKS_SEED, benchmarksUsingRule, COMPLIANCE_TYPES, RULES, SEVERITIES, SEVERITY_PILL, ruleCode } from './complianceData';
 import type { Benchmark, ComplianceRule } from './complianceData';
 
 /* Admin › Compliance › Rules — the predefined rule catalogue.
@@ -51,7 +51,7 @@ export function AdminComplianceRulesModule({ benchmarks = BENCHMARKS_SEED }: { b
     const byField = (r: ComplianceRule, f: string): string | string[] =>
       f === 'version' ? `${r.platform} ${r.version}` : String((r as any)[f] ?? '');
     return matchRules(RULES, rules, byField).filter((r) =>
-      !q || [r.name, r.description, r.platform, ...r.conditions.map((c) => c.pattern)].some((x) => x.toLowerCase().includes(q)));
+      !q || [ruleCode(r.id), r.name, r.description, r.platform, ...r.conditions.map((c) => c.pattern)].some((x) => x.toLowerCase().includes(q)));
   }, [search, rules]);
 
   const totalPages = Math.max(1, Math.ceil(rows.length / perPage));
@@ -90,32 +90,32 @@ export function AdminComplianceRulesModule({ benchmarks = BENCHMARKS_SEED }: { b
       </div>
 
       <div className="-mx-4 overflow-x-auto">
-        <table className="w-full min-w-[1000px] table-fixed leading-5">
+        <table className="w-full min-w-[860px] table-fixed leading-5">
           <colgroup>
-            <col className="w-[36%]" /><col className="w-[30%]" /><col className="w-[100px]" /><col className="w-[100px]" />
-            <col className="w-[190px]" /><col className="w-[100px]" /><col className="w-[80px]" />
+            {/* Zeni, 2 Nov 2026: CIS ID - Rule Title · Profile · Platform · OS Version. */}
+            <col /><col className="w-[90px]" /><col className="w-[220px]" /><col className="w-[130px]" />
           </colgroup>
           <thead className="border-b border-[#e5e7eb]">
             <tr>
-              {['Rule', 'Description', 'Severity', 'OS Type', 'Platform', 'OS Version', 'Profile'].map((h) => (
+              {['CIS ID - Rule Title', 'Profile', 'Platform', 'OS Version'].map((h) => (
                 <th key={h} className="whitespace-nowrap px-4 py-2.5 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-[#e5e7eb] bg-white">
             {pageRows.length === 0 ? (
-              <tr><td colSpan={7} className="px-4 py-12 text-center text-[13px] text-[#9CA3AF]">No rule matches these filters.</td></tr>
+              <tr><td colSpan={4} className="px-4 py-12 text-center text-[13px] text-[#9CA3AF]">No rule matches these filters.</td></tr>
             ) : pageRows.map((r) => (
               <tr key={r.id} onClick={() => setOpenId(r.id)} className="cursor-pointer transition-colors hover:bg-[#f9fafb]">
                 <td className="px-4 py-3">
-                  <span className="line-clamp-2 break-words text-[13px] font-medium text-[#364658] hover:text-[#3D8BD0]" title={r.name}>{r.name}</span>
+                  <span className="flex min-w-0 items-start gap-2">
+                    <span className="mt-px flex-shrink-0 whitespace-nowrap rounded bg-[#e8f4fd] px-1.5 py-px text-[12px] font-medium text-[#3D8BD0]">{ruleCode(r.id)}</span>
+                    <span className="line-clamp-2 break-words text-[13px] font-medium text-[#364658] hover:text-[#3D8BD0]" title={r.name}>{r.name}</span>
+                  </span>
                 </td>
-                <td className="px-4 py-3"><span className="block truncate text-[13px] text-[#64748B]" title={r.description}>{r.description}</span></td>
-                <td className="whitespace-nowrap px-4 py-3"><SeverityPill severity={r.severity} /></td>
-                <td className="whitespace-nowrap px-4 py-3 text-[13px] text-[#364658]">{r.type}</td>
+                <td className="px-4 py-3"><span className={`inline-block rounded-sm px-1.5 py-0.5 text-[11px] font-semibold ${r.profile === 'L1' ? 'bg-[#EBF5FF] text-[#3D8BD0]' : 'bg-[#F3EEFF] text-[#7C3AED]'}`} title={r.profile === 'L1' ? 'Level 1 — must have' : 'Level 2 — good to have'}>{r.profile}</span></td>
                 <td className="px-4 py-3"><span className="block truncate text-[13px] text-[#364658]" title={r.platform}>{r.platform}</span></td>
                 <td className="whitespace-nowrap px-4 py-3 text-[13px] text-[#364658]">{r.version}</td>
-                <td className="px-4 py-3"><span className={`inline-block rounded-sm px-1.5 py-0.5 text-[11px] font-semibold ${r.profile === 'L1' ? 'bg-[#EBF5FF] text-[#3D8BD0]' : 'bg-[#F3EEFF] text-[#7C3AED]'}`} title={r.profile === 'L1' ? 'Level 1 — must have' : 'Level 2 — good to have'}>{r.profile}</span></td>
               </tr>
             ))}
           </tbody>

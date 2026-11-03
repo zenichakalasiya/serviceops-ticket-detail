@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { CalendarClock, Copy, ListChecks, Loader2, MoreVertical, Pencil, Play, Power, Trash2, X } from 'lucide-react';
+import { Archive, ArchiveRestore, CalendarClock, CircleStop, Copy, ListChecks, Loader2, MoreVertical, Pencil, Play, Plus, Power, Trash2, X } from 'lucide-react';
 import { DrawerTabStrip } from './DrawerTabStrip';
 import { MinimizedDrawerRail } from './MinimizedDrawerRail';
 import { HeaderIdPill } from './HeaderIdPill';
@@ -11,7 +11,7 @@ import { ckpi, RuleDetailPanel } from './ComplianceShared';
 import { StatsCardsRow } from './AssetStatsRow';
 import { scoreColor } from './complianceVizData';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
-import { benchmarkRuleIds, benchmarksUsingRule, BENCHMARKS_SEED, ruleById, ruleNumbers } from './complianceData';
+import { benchmarkRuleIds, benchmarksUsingRule, BENCHMARKS_SEED, platformOf, ruleById, ruleNumbers } from './complianceData';
 import { useDrawerStack } from './DrawerStack';
 import {
   benchmarkOf, endpointResults, fmtStamp, nextRun, openPolicyEditor, policyStore, POLICY_STATUS_OPTIONS, ruleResults,
@@ -134,28 +134,28 @@ export function CompliancePolicyDrawer({
   const results = endpointResults(p);
   const run = () => policyStore.run(p.id, (done) => toast.success(`“${done.name}” scanned — ${scoreOf(done.lastScan) ?? 0}% compliant`));
 
+  /* Sub-title row (Zeni, 3 Nov 2026): status badge · score · platform · created on · created by. */
+  const platform = benchmark ? platformOf(benchmark.osVersion).platform : '—';
   const kpis = [
-    ckpi('status', 'Status', status, { dot: statusColor(status), tip: `Status: ${status}` }),
+    ckpi('status', 'Status', p.archived ? 'Archived' : status, { chip: p.archived ? 'neutral' : status === 'Compliant' ? 'green' : status === 'Non-Compliant' ? 'red' : status === 'Scanning' ? 'blue' : 'neutral', tip: p.archived ? 'Archived — it does not run' : `Status: ${status}` }),
     ckpi('score', 'Compliance', score === null ? '—' : `${score}%`, { color: score === null ? '#94A3B8' : scoreColor(score), tip: 'Checks passed of checks run, on the last scan' }),
-    ckpi('endpoints', 'Endpoints', results.length, { color: '#3D8BD0', tip: `${results.length} endpoints assessed` }),
-    ckpi('benchmark', 'Benchmark', benchmark?.osVersion ?? '—', { chip: 'neutral', tip: benchmark?.name ?? '' }),
-    ckpi('last', 'Last Scan', fmtStamp(p.lastScan?.at), { tip: 'When the last scan finished' }),
-    ckpi('next', 'Next Scan', p.enabled ? (next ? fmtStamp(next) : 'Not scheduled') : 'Disabled', { color: p.enabled && next ? '#364658' : '#94A3B8', tip: p.enabled ? scheduleLabel(p.schedule) : 'A disabled policy never runs on schedule' }),
+    ckpi('platform', 'Platform', platform, { tip: benchmark?.osVersion ?? '' }),
+    ckpi('created', 'Created', fmtStamp(p.createdAt)),
+    ckpi('createdBy', 'Created By', p.createdBy),
   ];
 
+  /* Policy properties (Zeni, 3 Nov 2026) — Tags follow, as their own editable row. */
   const fields: [string, React.ReactNode][] = [
-    /* Version and the endpoint count are in the header — not repeated here. */
     ['Benchmark', benchmark?.name ?? '—'],
-    ...(p.configType ? [['Config File Type', p.configType === 'startup' ? 'Startup' : 'Running'] as [string, React.ReactNode]] : []),
-    ...(p.offices.length ? [['Remote Offices', p.offices.join(', ')] as [string, React.ReactNode]] : []),
-    ...(p.endpointIds.length ? [['Endpoints Added', p.endpointIds.length] as [string, React.ReactNode]] : []),
-  ];
-  /* Schedule is drawn as its own highlighted card between these two lists (with Reschedule). The
-     enabled flag is not a field — the header's Status already says it. */
-  const fieldsAfter: [string, React.ReactNode][] = [
+    ['Platform', platform],
     ['Notify Team', p.notify.length ? p.notify.join(', ') : '—'],
-    ['Description', p.description || '—'],
-    ['Created', `${fmtStamp(p.createdAt)} by ${p.createdBy}`],
+    ['Created By', p.createdBy],
+    ['Created On', fmtStamp(p.createdAt)],
+    ['Updated By', p.updatedBy ?? p.createdBy],
+    ['Updated On', fmtStamp(p.updatedAt)],
+    ['Last Scan', fmtStamp(p.lastScan?.at)],
+    ['Next Scan', p.archived ? 'Archived — does not run' : !p.enabled ? 'Disabled — does not run on schedule'
+      : next ? <>{fmtStamp(next)}<span className="block text-[12px] text-[#7B8FA5]">{scheduleLabel(p.schedule)}</span></> : 'Not scheduled'],
   ];
 
   /* An EP ID opens the endpoint's own detail page. */
@@ -244,13 +244,13 @@ export function CompliancePolicyDrawer({
                 <span className="inline-flex">
                   <button
                     type="button"
-                    disabled={!!p.scanning || !p.enabled}
+                    disabled={!!p.scanning || !p.enabled || !!p.archived}
                     onClick={run}
                     className="inline-flex h-8 items-center gap-1.5 rounded bg-[#3D8BD0] px-3 text-[13px] font-medium text-white transition-colors hover:bg-[#3478B5] disabled:cursor-not-allowed disabled:opacity-60"
-                  >{p.scanning ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} />}{p.scanning ? 'Scanning…' : 'Run Now'}</button>
+                  >{p.scanning ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} />}{p.scanning ? 'Scanning…' : 'Scan Now'}</button>
                 </span>
               </TooltipTrigger>
-              {!p.enabled && <TooltipContent>Enable the policy to run it</TooltipContent>}
+              {(p.archived || !p.enabled) && <TooltipContent>{p.archived ? 'Unarchive the policy to scan it' : 'Enable the policy to scan it'}</TooltipContent>}
             </Tooltip>
             <div className="relative">
               <button type="button" onClick={() => setMenu((v) => !v)} aria-label="More actions" className={boxedBtn}><MoreVertical size={16} /></button>
@@ -258,17 +258,21 @@ export function CompliancePolicyDrawer({
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setMenu(false)} />
                   <div className="absolute right-0 top-full z-50 mt-1 w-[210px] rounded-lg border border-[#e5e7eb] bg-white py-1 shadow-lg">
+                    {/* Zeni, 3 Nov 2026: Enable / Disable · Clone · Cancel scan (while one runs) · Archive.
+                        No Schedule (it is set in Edit) and no Delete — Archive replaces it. */}
                     {([
+                      ...(p.archived ? [] : [[p.enabled ? 'Disable' : 'Enable', <Power size={15} />, () => { policyStore.toggle(p.id); toast.success(`“${p.name}” ${p.enabled ? 'disabled' : 'enabled'}`); }]]),
                       ['Clone', <Copy size={15} />, () => openPolicyEditor({ mode: 'clone', id: p.id })],
-                      ['Schedule', <CalendarClock size={15} />, () => setScheduleOpen(true)],
-                      [p.enabled ? 'Disable' : 'Enable', <Power size={15} />, () => { policyStore.toggle(p.id); toast.success(`“${p.name}” ${p.enabled ? 'disabled' : 'enabled'}`); }],
+                      ...(p.scanning ? [['Cancel scan', <CircleStop size={15} />, () => { policyStore.cancel(p.id); toast.success(`Scan of “${p.name}” cancelled`); }]] : []),
                     ] as [string, React.ReactNode, () => void][]).map(([label, icon, fn]) => (
                       <button key={label} type="button" onClick={() => { setMenu(false); fn(); }} className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[13px] text-[#364658] hover:bg-[#F5F7FA]">
                         <span className="text-[#7B8FA5]">{icon}</span>{label}
                       </button>
                     ))}
                     <div className="my-1 border-t border-[#F1F5F9]" />
-                    <button type="button" onClick={() => { setMenu(false); setConfirmDelete(true); }} className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[13px] text-[#DC2626] hover:bg-[#FEF2F2]"><Trash2 size={15} /> Delete</button>
+                    {p.archived
+                      ? <button type="button" onClick={() => { setMenu(false); policyStore.archive(p.id, false); toast.success(`“${p.name}” unarchived`); }} className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[13px] text-[#364658] hover:bg-[#F5F7FA]"><span className="text-[#7B8FA5]"><ArchiveRestore size={15} /></span>Unarchive</button>
+                      : <button type="button" onClick={() => { setMenu(false); setConfirmDelete(true); }} className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[13px] text-[#364658] hover:bg-[#F5F7FA]"><span className="text-[#7B8FA5]"><Archive size={15} /></span>Archive</button>}
                   </div>
                 </>
               )}
@@ -415,23 +419,10 @@ export function CompliancePolicyDrawer({
                       <dd className="mt-0.5 text-[13px] leading-[1.55] text-[#364658]">{value}</dd>
                     </div>
                   ))}
-                  {/* Schedule — highlighted, with the way to change it right on it. */}
-                  <div className="rounded-lg border border-[#CFE3F6] bg-[#F3F8FD] px-3 py-2.5">
-                    <div className="flex items-center justify-between gap-2">
-                      <dt className="flex items-center gap-1.5 text-[12px] font-medium text-[#2F74B5]"><CalendarClock size={14} />Schedule</dt>
-                      <button type="button" onClick={() => setScheduleOpen(true)} className="text-[12px] font-medium text-[#3D8BD0] hover:underline">Reschedule</button>
-                    </div>
-                    <dd className="mt-1 text-[14px] font-semibold text-[#364658]">{scheduleLabel(p.schedule)}</dd>
-                    <div className="mt-0.5 text-[12px] text-[#64748B]">
-                      {!p.enabled ? 'Policy disabled — it does not run on schedule' : next ? <>Next scan <span className="font-medium text-[#364658]">{fmtStamp(next)}</span></> : 'No upcoming scan'}
-                    </div>
+                  <div>
+                    <dt className="text-[12px] text-[#64748B]">Tags</dt>
+                    <dd className="mt-1"><PolicyTags tags={p.tags ?? []} onChange={(t) => policyStore.setTags(p.id, t)} /></dd>
                   </div>
-                  {fieldsAfter.map(([label, value]) => (
-                    <div key={label}>
-                      <dt className="text-[12px] text-[#64748B]">{label}</dt>
-                      <dd className="mt-0.5 text-[13px] leading-[1.55] text-[#364658]">{value}</dd>
-                    </div>
-                  ))}
                 </dl>
               </div>
             </div>
@@ -453,15 +444,43 @@ export function CompliancePolicyDrawer({
       {confirmDelete && (
         <div className="fixed inset-0 z-[10050] flex items-center justify-center bg-black/30" onMouseDown={() => setConfirmDelete(false)}>
           <div className="w-[420px] rounded-lg bg-white p-5 shadow-xl" onMouseDown={(e) => e.stopPropagation()}>
-            <h3 className="text-[15px] font-semibold text-[#364658]">Delete “{p.name}”?</h3>
-            <p className="mt-1.5 text-[13px] leading-[1.6] text-[#64748B]">The policy and its scan results are removed. The benchmark and the endpoints are not touched.</p>
+            <h3 className="text-[15px] font-semibold text-[#364658]">Archive “{p.name}”?</h3>
+            <p className="mt-1.5 text-[13px] leading-[1.6] text-[#64748B]">It stops running and moves to the All Archived Policies view. Its scan results stay, and you can unarchive it from there.</p>
             <div className="mt-5 flex justify-end gap-2">
               <button type="button" onClick={() => setConfirmDelete(false)} className="h-9 rounded border border-[#DFE5ED] bg-white px-4 text-[13px] font-medium text-[#364658] hover:bg-[#F9FAFB]">Cancel</button>
-              <button type="button" onClick={() => { const n = p.name; setConfirmDelete(false); policyStore.remove(p.id); toast.success(`“${n}” deleted`); }} className="h-9 rounded bg-[#DC2626] px-4 text-[13px] font-medium text-white hover:bg-[#B91C1C]">Delete policy</button>
+              <button type="button" onClick={() => { setConfirmDelete(false); policyStore.archive(p.id); toast.success(`“${p.name}” archived`); }} className="h-9 rounded bg-[#3D8BD0] px-4 text-[13px] font-medium text-white hover:bg-[#3478B5]">Archive policy</button>
             </div>
           </div>
         </div>
       )}
     </>
+  );
+}
+
+/** The policy's tags — the ticket panel's chip row: chips with an X, then "+ Add tag" opening an input. */
+function PolicyTags({ tags, onChange }: { tags: string[]; onChange: (t: string[]) => void }) {
+  const [adding, setAdding] = useState(false);
+  const [v, setV] = useState('');
+  const add = () => { const t = v.trim(); if (t && !tags.includes(t)) onChange([...tags, t]); setV(''); };
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-wrap items-center gap-2">
+        {tags.map((t) => (
+          <span key={t} className="inline-flex items-center gap-1 rounded-md bg-[#F3F4F6] px-2 py-0.5 text-[11px] text-[#364658]">
+            {t}
+            <button type="button" aria-label={'Remove ' + t} className="hover:text-[#2563EB]" onClick={() => onChange(tags.filter((x) => x !== t))}><X size={12} /></button>
+          </span>
+        ))}
+        {!adding && (
+          <button type="button" onClick={() => setAdding(true)} className="inline-flex items-center gap-1 rounded px-2.5 py-1 text-[12px] text-[#3D8BD0] transition-colors hover:bg-[#F3F4F6]"><Plus size={12} />Add tag</button>
+        )}
+      </div>
+      {adding && (
+        <input autoFocus type="text" placeholder="Add tags..." value={v} onChange={(e) => setV(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') add(); if (e.key === 'Escape') { setV(''); setAdding(false); } }}
+          onBlur={() => { add(); setAdding(false); }}
+          className="h-8 w-full rounded border border-[#DFE5ED] px-2.5 text-[12px] text-[#364658] outline-none focus:border-[#3D8BD0] focus:ring-1 focus:ring-[#3D8BD0]" />
+      )}
+    </div>
   );
 }
