@@ -250,8 +250,8 @@
         },
         {
           "version": "v2",
-          "date": "2026-10-29",
-          "commit": "087b5b2",
+          "date": "2026-11-03",
+          "commit": "7178a6c",
           "changes": [
             "Rule details: a MITRE ATT&CK tab after Controls (techniques, tactics, mitigations with their names), on both technician and admin sides.",
             "Endpoint page tabs: Vulnerabilities · Patches · Compliance Audit · Installation · Notes · Audit Trail.",
@@ -266,7 +266,14 @@
             "Create Benchmark: no Profile field (taken from the attached rules); Attach Rules filters by Severity and Profile; V2 rule groups only, with Add rule group and drag to reorder.",
             "Rule details: OS Type / OS Version wording everywhere, Summary = Description, Rationale, Impact, References; rule rows open on click with a dotted underline.",
             "Policy and Endpoint pages: trimmed filters, Run History date filter, Compliance Audit status cards; headers aligned with a 3px gap.",
-            "View rule results: group pass rates with coloured icons and tooltips, Previous and Last scan tooltips and dates, Average Compliance card, Export button."
+            "View rule results: group pass rates with coloured icons and tooltips, Previous and Last scan tooltips and dates, Average Compliance card, Export button.",
+            "Admin › Rules: CIS ID - Rule Title (RUL-1 - title) · Profile · Platform · OS Version.",
+            "Admin › Benchmark listing: Benchmark ID · Name · Platform · OS Version · Total Rules · Source · Created By / Date · Updated By / Date; rows open the benchmark.",
+            "Benchmark detail: Edit · Clone · Download (PDF / Excel / CSV, password) in the header; Delete under the ⋮.",
+            "Technician Rules: Rule ID · Title · Profile · Assessment · OS Platform · OS Version · Endpoints · Rule Score.",
+            "Policy detail: status badge, score, platform, created on and by under the title; Scan Now and Edit upfront; ⋮ = Enable/Disable · Clone · Cancel scan · Archive.",
+            "Policy properties: Benchmark, Platform, Notify Team, Created/Updated by and on, Last and Next Scan, editable Tags (Tags column available, off by default).",
+            "Archive replaces Delete: archived policies stop running and live in the All Archived Policies view; Unarchive brings them back."
           ]
         }
       ]
