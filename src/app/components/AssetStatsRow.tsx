@@ -38,6 +38,10 @@ export type StatCard = {
   valueColor?: string;
   /** A read-only figure — never clickable, even in a strip whose other cards filter. */
   static?: boolean;
+  /** Replaces the value + supporting line with custom content (a breakdown). */
+  body?: React.ReactNode;
+  /** A wider card (flex basis 300px) for a breakdown body. */
+  wide?: boolean;
 };
 
 /* The strip renderer, extracted so every module's listing builds its OWN card set
@@ -49,7 +53,10 @@ export function StatsCardsRow({
   onApplyFilter,
   activeLabel,
   onCardClick,
+  wrap,
 }: {
+  /** Cards that do not fit go to a second row instead of scrolling (a narrow side panel). */
+  wrap?: boolean;
   cards: StatCard[];
   rules: FilterRule[];
   onApplyFilter: (rules: FilterRule[]) => void;
@@ -91,7 +98,7 @@ export function StatsCardsRow({
 
   return (
     <div className="relative">
-      <div ref={scrollRef} onScroll={updateFades} className="no-scrollbar-ever flex gap-3 overflow-x-auto pb-3 pl-6 pr-4">
+      <div ref={scrollRef} onScroll={updateFades} className={'no-scrollbar-ever flex gap-3 pb-3 pl-6 pr-4 ' + (wrap ? 'flex-wrap' : 'overflow-x-auto')}>
         {cards.map((c) => {
           const on = isApplied(c.label);
           return (
@@ -114,18 +121,22 @@ export function StatsCardsRow({
                   activate(c, on);
                 }
               }}
-              className={`flex flex-[1_0_196px] items-center justify-between gap-3 rounded-lg border px-4 py-3 transition-all ${
+              className={`flex ${c.wide ? 'flex-[1.6_0_300px]' : 'flex-[1_0_196px]'} items-center justify-between gap-3 rounded-lg border px-4 py-3 transition-all ${
                 on
                   ? 'border-[#3D8BD0] bg-[#F5FAFF] shadow-[0_1px_3px_rgba(61,139,208,0.15)]'
                   : 'border-[#E5E7EB] bg-white'
               } ${clickable(c) ? 'cursor-pointer hover:border-[#C9D4E0] hover:shadow-sm' : ''}`}
             >
-              <div>
+              <div className={c.body ? 'min-w-0 flex-1' : undefined}>
                 <div className={label}>{c.label}</div>
-                <div className={valueCls} style={c.valueColor ? { color: c.valueColor } : undefined}>
-                  {c.value}
-                </div>
-                <div className={subCls}>{c.sub}</div>
+                {c.body ?? (
+                  <>
+                    <div className={valueCls} style={c.valueColor ? { color: c.valueColor } : undefined}>
+                      {c.value}
+                    </div>
+                    <div className={subCls}>{c.sub}</div>
+                  </>
+                )}
               </div>
             </div>
           );

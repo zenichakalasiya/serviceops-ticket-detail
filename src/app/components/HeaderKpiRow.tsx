@@ -16,7 +16,7 @@ export interface HeaderKpiItem {
  * second line in narrow / small-view layouts.
  */
 /** `gap` replaces the 4px space above the row (Compliance headers use 3px). */
-export function HeaderKpiRow({ items, gap = "mt-1" }: { items: HeaderKpiItem[]; gap?: string }) {
+export function HeaderKpiRow({ items, gap = "mt-1", wrap }: { items: HeaderKpiItem[]; gap?: string; /** Never collapse into "+N" — chips that do not fit go to a second line (the rule drawer's facts, Zeni 12 Nov 2026). */ wrap?: boolean }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const measRef = useRef<HTMLDivElement>(null);
   const [visibleCount, setVisibleCount] = useState(items.length);
@@ -47,8 +47,8 @@ export function HeaderKpiRow({ items, gap = "mt-1" }: { items: HeaderKpiItem[]; 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [depKey]);
 
-  const visible = items.slice(0, visibleCount);
-  const overflow = items.slice(visibleCount);
+  const visible = wrap ? items : items.slice(0, visibleCount);
+  const overflow = wrap ? [] : items.slice(visibleCount);
   const sep = <span className="h-3 w-px bg-[#E5E7EB] flex-shrink-0" />;
 
   return (
@@ -64,7 +64,7 @@ export function HeaderKpiRow({ items, gap = "mt-1" }: { items: HeaderKpiItem[]; 
       </div>
 
       {/* Visible row */}
-      <div className="flex flex-nowrap items-center gap-x-2.5 whitespace-nowrap">
+      <div className={'flex items-center gap-x-2.5 whitespace-nowrap ' + (wrap ? 'flex-wrap gap-y-1' : 'flex-nowrap')}>
         {visible.map((it, i) => (
           <React.Fragment key={it.key}>
             {i > 0 && sep}

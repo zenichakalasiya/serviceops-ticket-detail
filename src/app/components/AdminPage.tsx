@@ -45,8 +45,8 @@ const CARD_MODULES: Record<string, string> = {
      from Organization is gone rather than left as a second door. */
   'Support Channels/Support Portal': 'Support Portal',
   'User Survey/User Surveys': 'User Surveys',
-  'Compliance Settings/Rules': 'Compliance Rules',
-  'Compliance Settings/Benchmark': 'Compliance Benchmark',
+  'Compliance Management/Rules': 'Compliance Rules',
+  'Compliance Management/Benchmark': 'Compliance Benchmark',
   /* Every admin form page opens Form Studio on its own form. */
   'Users/User Form': 'Form Studio',
   'Request Management/Feedback Form': 'Form Studio',

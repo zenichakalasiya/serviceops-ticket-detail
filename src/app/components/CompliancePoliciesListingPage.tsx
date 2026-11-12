@@ -10,7 +10,7 @@
 import { ComplianceVersionMenu } from './ComplianceVersionMenu';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { ShieldCheck } from 'lucide-react';
+import { Archive, CircleStop, Power, PowerOff, ShieldCheck } from 'lucide-react';
 import { AssetRegisterPage } from './AssetRegisterPage';
 import { postureColor, postureOf, scoreColor } from './complianceVizData';
 import { platformOf } from './complianceData';
@@ -197,6 +197,18 @@ export function CompliancePoliciesListingPage({ onNavigate }: { onNavigate?: (pa
         /* Status is the result of the last scan — the system sets it, nobody picks it. */
         lockedCells={['status', 'x_cpResult']}
         moreActions={[]}
+        /* Bulk actions (Zeni, 12 Nov 2026): Enable · Disable · Cancel Policy · Archive. */
+        bulkActions={[
+          { label: 'Enable', icon: <Power size={13} />, onClick: (ids) => { ids.forEach((id) => policyStore.toggle(id, true)); toast.success(`${ids.length} polic${ids.length === 1 ? 'y' : 'ies'} enabled`); } },
+          { label: 'Disable', icon: <PowerOff size={13} />, onClick: (ids) => { ids.forEach((id) => policyStore.toggle(id, false)); toast.success(`${ids.length} polic${ids.length === 1 ? 'y' : 'ies'} disabled`); } },
+          { label: 'Cancel Policy', icon: <CircleStop size={13} />, onClick: (ids) => {
+            const running = ids.filter((id) => getPolicy(id)?.scanning);
+            running.forEach((id) => policyStore.cancel(id));
+            if (running.length) toast.success(`Scan cancelled on ${running.length} polic${running.length === 1 ? 'y' : 'ies'}`);
+            else toast('None of the selected policies is scanning — there is nothing to cancel');
+          } },
+          { label: 'Archive', icon: <Archive size={13} />, danger: true, onClick: (ids) => { ids.forEach((id) => policyStore.archive(id)); toast.success(`${ids.length} polic${ids.length === 1 ? 'y' : 'ies'} archived`); } },
+        ]}
         primaryAction={{ label: 'Create Policy', onClick: () => openPolicyEditor({ mode: 'create' }) }}
         primaryActionInTitle
         onUpdateRow={(id, patch) => {

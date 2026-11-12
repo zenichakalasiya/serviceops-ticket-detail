@@ -1,5 +1,5 @@
 import { ComplianceVersionMenu } from './ComplianceVersionMenu';
-import { isValidElement, useEffect, useMemo, useRef, useState } from 'react';
+import { isValidElement, useEffect, useMemo, useRef, useState, Fragment } from 'react';
 import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 import {
@@ -273,21 +273,22 @@ function BenchmarkList({ benchmarks, onOpen, onCreate, onEdit, onClone, onDelete
       <div className="-mx-4 overflow-x-auto">
         {/* Zeni, 2 Nov 2026: the columns below, and no row actions — a row opens the benchmark, whose
             header carries Edit · Clone · Download (Delete under its ⋮). */}
-        <table className="w-full min-w-[1180px] table-fixed leading-5">
+        <table className="w-full min-w-[1540px] table-fixed leading-5">
           <colgroup>
             <col className="w-[110px]" /><col /><col className="w-[190px]" /><col className="w-[100px]" /><col className="w-[90px]" />
-            <col className="w-[96px]" /><col className="w-[170px]" /><col className="w-[170px]" />
+            {/* Created / Updated split into By and Date (Zeni, 12 Nov 2026). */}
+            <col className="w-[96px]" /><col className="w-[150px]" /><col className="w-[200px]" /><col className="w-[150px]" /><col className="w-[200px]" />
           </colgroup>
           <thead className="border-b border-[#e5e7eb]">
             <tr>
-              {['Benchmark ID', 'Name', 'Platform', 'OS Version', 'Total Rules', 'Source', 'Created By / Date', 'Updated By / Date'].map((h) => (
+              {['Benchmark ID', 'Name', 'Platform', 'OS Version', 'Total Rules', 'Source', 'Created By', 'Created Date', 'Updated By', 'Updated Date'].map((h) => (
                 <th key={h} className="whitespace-nowrap px-4 py-2.5 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-[#e5e7eb] bg-white">
             {pageRows.length === 0 ? (
-              <tr><td colSpan={8} className="px-4 py-12 text-center text-[13px] text-[#9CA3AF]">No benchmark matches these filters.</td></tr>
+              <tr><td colSpan={10} className="px-4 py-12 text-center text-[13px] text-[#9CA3AF]">No benchmark matches these filters.</td></tr>
             ) : pageRows.map((b) => (
               <tr key={b.id} onClick={() => onOpen(b.id)} className="cursor-pointer transition-colors hover:bg-[#f9fafb]">
                 <td className="whitespace-nowrap px-4 py-3"><span className="rounded bg-[#e8f4fd] px-1.5 py-px text-[12px] font-medium text-[#3D8BD0]">{b.id}</span></td>
@@ -299,10 +300,10 @@ function BenchmarkList({ benchmarks, onOpen, onCreate, onEdit, onClone, onDelete
                 <td className="whitespace-nowrap px-4 py-3 text-[13px] text-[#364658]">{benchmarkRuleIds(b).length}</td>
                 <td className="whitespace-nowrap px-4 py-3"><OriginTag origin={b.origin} /></td>
                 {[benchmarkCreated(b), benchmarkUpdated(b)].map((x, i) => (
-                  <td key={i} className="px-4 py-3">
-                    <span className="block truncate text-[13px] text-[#364658]" title={x.by}>{x.by}</span>
-                    <span className="block whitespace-nowrap text-[12px] text-[#7B8FA5]">{fmtDate(x.at)}</span>
-                  </td>
+                  <Fragment key={i}>
+                    <td className="px-4 py-3"><span className="block truncate text-[13px] text-[#364658]" title={x.by}>{x.by}</span></td>
+                    <td className="overflow-hidden truncate whitespace-nowrap px-4 py-3 text-[13px] text-[#364658]" title={fmtDate(x.at)}>{fmtDate(x.at)}</td>
+                  </Fragment>
                 ))}
               </tr>
             ))}
@@ -1027,6 +1028,8 @@ function BenchmarkDrawer({ benchmark, benchmarks, onClose, onEdit, onClone, onDe
               ckpi('type', 'Platform', platformOf(benchmark.osVersion).platform || '—'),
               ckpi('version', 'OS Version', platformOf(benchmark.osVersion).version || '—'),
               ckpi('rules', 'Rules', total, { color: '#3D8BD0' }),
+              /* Created By + Created Date merged into one fact (Zeni, 12 Nov 2026). */
+              ckpi('created', 'Created', `${fmtDate(benchmarkCreated(benchmark).at)} by ${benchmarkCreated(benchmark).by}`, { tip: `Created ${fmtDate(benchmarkCreated(benchmark).at)} by ${benchmarkCreated(benchmark).by}` }),
               ckpi('updated', 'Updated', fmtDate(benchmark.updatedAt), { tip: `Updated ${fmtDate(benchmark.updatedAt)} by ${benchmarkUpdated(benchmark).by}` }),
             ]} />
           </div>

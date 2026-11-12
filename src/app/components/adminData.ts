@@ -32,7 +32,7 @@ export interface AdminCard {
  * scrolls the Overview, exactly as before. Expansion is opt-in per section rather than automatic
  * for all 24, because a section only earns its own nav branch once its modules are real screens.
  */
-export const SIDEBAR_TREE: string[] = ['Automation', 'Request Management', 'BOM Management', 'Patch Management', 'Organization', 'Support Channels', 'User Survey', 'Compliance Settings',
+export const SIDEBAR_TREE: string[] = ['Automation', 'Request Management', 'BOM Management', 'Patch Management', 'Organization', 'Support Channels', 'User Survey', 'Compliance Management',
   /* Opted in for their form submodules (Form Studio, 2 Nov 2026). */
   'Users', 'Problem Management', 'Change Management', 'Release Management', 'Task Management', 'Project Management', 'Asset Management', 'Supplier Management', 'Contract Management', 'Purchase Management'];
 
@@ -54,7 +54,7 @@ export const ADMIN_NAV: { group: string; items: string[] }[] = [
   { group: 'IT Operations', items: ['CMDB', 'Discovery And Agents', 'Patch Management', 'Asset Management', 'Vulnerability Management', 'BOM Management', 'OS Deployment'] },
   { group: 'Vendor & Procurement', items: ['Supplier Management', 'Contract Management', 'Purchase Management'] },
   { group: 'Project Delivery', items: ['Project Management'] },
-  { group: 'Compliance', items: ['Compliance Settings'] },
+  { group: 'Compliance', items: ['Compliance Management'] },
 ];
 
 export const ADMIN_SECTIONS: AdminSection[] = [
@@ -417,7 +417,7 @@ export const ADMIN_SECTIONS: AdminSection[] = [
   },
   {
     key: 'compliance-settings',
-    title: 'Compliance Settings',
+    title: 'Compliance Management',
     desc: 'Browse the predefined compliance rules and build benchmarks from them.',
     icon: 'ShieldCheck',
     cards: [

@@ -91,9 +91,11 @@ function ExecPill({ status }: { status: ExecStatus | null }) {
   );
 }
 
+/** The Endpoints tab says Compliant / Non-Compliant / Not Assessed (Zeni, 12 Nov 2026). */
+const outcomeLabel = (o: EndpointOutcome) => (o === 'Not Scanned' ? 'Not Assessed' : o);
 function OutcomePill({ outcome }: { outcome: EndpointOutcome }) {
   const t = OUTCOME_TONE[outcome];
-  return <span className="inline-block whitespace-nowrap rounded-sm px-2 py-0.5 text-[12px] font-medium" style={{ backgroundColor: t.bg, color: t.text }}>{outcome}</span>;
+  return <span className="inline-block whitespace-nowrap rounded-sm px-2 py-0.5 text-[12px] font-medium" style={{ backgroundColor: t.bg, color: t.text }}>{outcomeLabel(outcome)}</span>;
 }
 
 export function CompliancePolicyDrawer({
@@ -193,7 +195,7 @@ export function CompliancePolicyDrawer({
   const execOf = new Map(results.map((r, i) => [r.endpoint.id, execStatusOf(p, r.endpoint.id, r.endpoint.agentOnline, i)]));
   const shownResults = results.filter((r) =>
     matchesSearch(epQ, [r.endpoint.id, r.endpoint.hostName, r.endpoint.ip]) &&
-    matchesFilter(epF, (k) => (k === 'result' ? r.outcome : k === 'office' ? r.endpoint.office : k === 'agent' ? (r.endpoint.agentOnline ? 'Online' : 'Offline') : k === 'exec' ? (execOf.get(r.endpoint.id) ?? '') : r.endpoint.osName)));
+    matchesFilter(epF, (k) => (k === 'result' ? outcomeLabel(r.outcome) : k === 'office' ? r.endpoint.office : k === 'agent' ? (r.endpoint.agentOnline ? 'Online' : 'Offline') : k === 'exec' ? (execOf.get(r.endpoint.id) ?? '') : r.endpoint.osName)));
   /* ── Rules tab: a rule FAILS here when any endpoint failed it on the last scan ── */
   const findings = findingsOf(p);
   const ruleNums = benchmark ? ruleNumbers(benchmark) : new Map<string, string>();
@@ -335,20 +337,20 @@ export function CompliancePolicyDrawer({
                     onCardClick={(c) => setEpF(cardToggle(epF, 'result', c.label))}
                     cards={[
                       {
-                        label: 'Average Compliance', value: score === null ? '—' : `${score}%`,
+                        label: 'Compliance', value: score === null ? '—' : `${score}%`,
                         sub: p.lastScan ? `${p.lastScan.passed} of ${p.lastScan.passed + p.lastScan.failed} checks pass` : 'not scanned yet',
                         valueColor: score === null ? '#94A3B8' : scoreColor(score), static: true,
                       },
                       ...(['Compliant', 'Non-Compliant', 'Not Scanned'] as EndpointOutcome[]).map((o) => {
                         const n = results.filter((r) => r.outcome === o).length;
-                        return { label: o, value: n, sub: `endpoint${n === 1 ? '' : 's'}`, valueColor: n ? OUTCOME_TONE[o].text : '#94A3B8', hint: `Show only ${o} endpoints` };
+                        return { label: outcomeLabel(o), value: n, sub: `endpoint${n === 1 ? '' : 's'}`, valueColor: n ? OUTCOME_TONE[o].text : '#94A3B8', hint: `Show only ${outcomeLabel(o)} endpoints` };
                       }),
                     ]}
                   />
                   <div className="px-6">
                     <TabListToolbar search={epQ} onSearch={setEpQ} groups={epGroups} value={epF} onChange={setEpF} />
                     <div className="overflow-x-auto"><table className="w-full min-w-[1160px] table-fixed">
-                      <colgroup><col className="w-[21%]" /><col className="w-[11%]" /><col className="w-[12%]" /><col className="w-[140px]" /><col className="w-[170px]" /><col className="w-[9%]" /><col /><col className="w-[169px]" /></colgroup>
+                      <colgroup><col className="w-[210px]" /><col className="w-[120px]" /><col className="w-[12%]" /><col className="w-[140px]" /><col className="w-[170px]" /><col className="w-[9%]" /><col /><col className="w-[169px]" /></colgroup>
                       <thead><tr className="border-b border-[#e5e7eb]">{['Endpoint', 'IP Address', 'Remote Office', 'Result', 'Execution Status', 'Compliance', 'Checks', 'Actions'].map((h) => <th key={h} className="px-4 py-2.5 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>)}</tr></thead>
                       <tbody className="divide-y divide-[#e5e7eb]">
                         {shownResults.map((r) => (
@@ -366,7 +368,7 @@ export function CompliancePolicyDrawer({
                             <td className="px-4 py-3"><OutcomePill outcome={r.outcome} /></td>
                             <td className="px-4 py-3"><ExecPill status={execOf.get(r.endpoint.id) ?? null} /></td>
                             <td className="px-4 py-3 text-[13px] font-medium tabular-nums" style={{ color: r.score === null ? '#94A3B8' : scoreColor(r.score) }}>{r.score === null ? '—' : `${r.score}%`}</td>
-                            <td className="whitespace-nowrap px-4 py-3 text-[12px] text-[#64748B]">{r.outcome === 'Not Scanned' ? (r.endpoint.agentOnline ? 'Not scanned yet' : 'Agent offline') : <><span className="text-[#15803D]">{r.passed} passed</span> · <span className={r.failed ? 'text-[#B42318]' : ''}>{r.failed} failed</span></>}</td>
+                            <td className="whitespace-nowrap px-4 py-3 text-[12px] text-[#64748B]">{r.outcome === 'Not Scanned' ? (r.endpoint.agentOnline ? 'Not assessed yet' : 'Agent offline') : <><span className="text-[#15803D]">{r.passed} passed</span> · <span className={r.failed ? 'text-[#B42318]' : ''}>{r.failed} failed</span></>}</td>
                             <td className="px-4 py-2">
                               <button type="button" onClick={(e) => { e.stopPropagation(); setResultsFor(r.endpoint.id); }} className="inline-flex h-7 items-center gap-1.5 whitespace-nowrap rounded border border-[#DFE5ED] bg-white px-2.5 text-[12px] font-medium text-[#364658] transition-colors hover:border-[#3D8BD0] hover:text-[#3D8BD0]"><ListChecks size={14} /> View rule results</button>
                             </td>

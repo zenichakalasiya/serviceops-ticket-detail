@@ -1,4 +1,46 @@
-# Handoff — 2026-11-12, later (Create Policy V1–V5, V3 guide, Execution Status, views; first publish of the create-form + Form Studio work)
+# Handoff — 2026-11-12, evening (Compliance polish: bulk actions, severity sort, admin columns, Compliance Management)
+
+> Sessions share this file. This top part is the newest; older notes follow.
+
+## Read first
+CLAUDE.md, "Compliance (Oct 2026)", its last bullet.
+
+## Completed (headless browser, no page errors)
+- **Admin › Compliance Management** (renamed from Compliance Settings). The slugs are unchanged.
+- **Admin Rules listing:** Rule ID · Title · Severity (dot) · Profile · Assessment · OS Platform · OS Version, which is the technician columns minus Endpoints and Rule Score.
+- **Admin Benchmark listing:** Created By · Created Date · Updated By · Updated Date as four columns, with the dates at 200px.
+- **Benchmark detail:** the facts line has "Created <date time> by <name>".
+- **Policy listing:** bulk bar with Enable · Disable · Cancel Policy · Archive.
+  - The bar is `AssetRegisterPage bulkActions`, opt-in.
+  - Only Disable was clicked in the browser test; Enable, Cancel Policy and Archive are wired but not tested.
+- **Create Policy:** Deployment Policy (optional) beside Notify Team, using `DEPLOYMENT_POLICIES_185`, stored as `policy.deploymentPolicy`.
+- **Policy Endpoints tab:**
+  - Result = Compliant / Non-Compliant / Not Assessed (`outcomeLabel`).
+  - The Endpoint column is 210px and IP Address 120px.
+  - The KPI card is now "Compliance".
+- **View rule results:**
+  - Cards: Compliance · Passed · Failed · Error. Error is the old "New Failures" count.
+  - "Failing Rules" removed from the subtext.
+  - Under the cards, one line: "Failed Rules by Severity" with Critical/High/Medium/Low toggles 1px apart, and a 240px search on the right.
+  - Clicking a severity sorts that severity first within each group and opens all groups (`sortSeverity` on `RuleGroupTree`).
+  - No severity tag on the rule rows.
+- **A rule's result page:**
+  - Result · Previous Result · Previous Scan Date (no Recent Scan).
+  - The endpoint ID and host name are the link; "Open endpoint" is removed.
+  - The facts row wraps instead of collapsing into "+N" (`HeaderKpiRow wrap`).
+
+## Next steps
+- Ask Zeni whether this publish goes into Compliance v2 (versions.json was not touched this time).
+- Should Deployment Policy be required? Should it show in Policy Properties?
+- The policy header still says "Not Scanned" for a never-run policy (only the Endpoints tab says Not Assessed).
+
+## Gotchas & notes
+- A bare <button> renders at 16px in this app — give text buttons an explicit text-[Npx].
+- Playwright: to open a policy, click the row by position; clicking the name text gets intercepted.
+
+---
+
+## (earlier) Handoff — 2026-11-12, later (Create Policy V1–V5, V3 guide, Execution Status, views; first publish of the create-form + Form Studio work)
 
 > Sessions share this file. This top part is the newest; older notes follow.
 

@@ -90,31 +90,30 @@ export function AdminComplianceRulesModule({ benchmarks = BENCHMARKS_SEED }: { b
       </div>
 
       <div className="-mx-4 overflow-x-auto">
-        <table className="w-full min-w-[980px] table-fixed leading-5">
+        <table className="w-full min-w-[1080px] table-fixed leading-5">
           <colgroup>
-            {/* Zeni, 2 Nov 2026: CIS ID - Rule Title · Profile · Platform · OS Version; Severity back after the title, 12 Nov 2026 (it was in v1). */}
-            <col /><col className="w-[120px]" /><col className="w-[90px]" /><col className="w-[220px]" /><col className="w-[130px]" />
+            {/* Zeni, 12 Nov 2026: the technician Rules columns minus Endpoints and Rule Score —
+                Rule ID · Title · Severity · Profile · Assessment · OS Platform · OS Version. */}
+            <col className="w-[110px]" /><col /><col className="w-[120px]" /><col className="w-[90px]" /><col className="w-[130px]" /><col className="w-[200px]" /><col className="w-[120px]" />
           </colgroup>
           <thead className="border-b border-[#e5e7eb]">
             <tr>
-              {['CIS ID - Rule Title', 'Severity', 'Profile', 'Platform', 'OS Version'].map((h) => (
+              {['Rule ID', 'Title', 'Severity', 'Profile', 'Assessment', 'OS Platform', 'OS Version'].map((h) => (
                 <th key={h} className="whitespace-nowrap px-4 py-2.5 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-[#e5e7eb] bg-white">
             {pageRows.length === 0 ? (
-              <tr><td colSpan={5} className="px-4 py-12 text-center text-[13px] text-[#9CA3AF]">No rule matches these filters.</td></tr>
+              <tr><td colSpan={7} className="px-4 py-12 text-center text-[13px] text-[#9CA3AF]">No rule matches these filters.</td></tr>
             ) : pageRows.map((r) => (
               <tr key={r.id} onClick={() => setOpenId(r.id)} className="cursor-pointer transition-colors hover:bg-[#f9fafb]">
-                <td className="px-4 py-3">
-                  <span className="flex min-w-0 items-start gap-2">
-                    <span className="mt-px flex-shrink-0 whitespace-nowrap rounded bg-[#e8f4fd] px-1.5 py-px text-[12px] font-medium text-[#3D8BD0]">{ruleCode(r.id)}</span>
-                    <span className="line-clamp-2 break-words text-[13px] font-medium text-[#364658] hover:text-[#3D8BD0]" title={r.name}>{r.name}</span>
-                  </span>
-                </td>
-                <td className="whitespace-nowrap px-4 py-3"><SeverityPill severity={r.severity} /></td>
+                <td className="px-4 py-3"><span className="inline-block whitespace-nowrap rounded bg-[#e8f4fd] px-2 py-0.5 text-[12px] font-semibold text-[#3D8BD0]">{ruleCode(r.id)}</span></td>
+                <td className="px-4 py-3"><span className="line-clamp-2 break-words text-[13px] text-[#364658]" title={r.name}>{r.name}</span></td>
+                {/* The technician listing's severity cell: a dot and the word. */}
+                <td className="whitespace-nowrap px-4 py-3"><span className="flex items-center gap-2 text-[12px] text-[#4A5568]"><span className="size-2 flex-shrink-0 rounded-full" style={{ backgroundColor: ({ Critical: '#DC2626', High: '#EF4444', Medium: '#F59E0B', Low: '#22C55E', Info: '#3D8BD0' } as Record<string, string>)[r.severity] ?? '#94A3B8' }} />{r.severity}</span></td>
                 <td className="px-4 py-3"><span className={`inline-block rounded-sm px-1.5 py-0.5 text-[11px] font-semibold ${r.profile === 'L1' ? 'bg-[#EBF5FF] text-[#3D8BD0]' : 'bg-[#F3EEFF] text-[#7C3AED]'}`} title={r.profile === 'L1' ? 'Level 1 — must have' : 'Level 2 — good to have'}>{r.profile}</span></td>
+                <td className="whitespace-nowrap px-4 py-3 text-[13px] text-[#364658]">{r.assessment}</td>
                 <td className="px-4 py-3"><span className="block truncate text-[13px] text-[#364658]" title={r.platform}>{r.platform}</span></td>
                 <td className="whitespace-nowrap px-4 py-3 text-[13px] text-[#364658]">{r.version}</td>
               </tr>

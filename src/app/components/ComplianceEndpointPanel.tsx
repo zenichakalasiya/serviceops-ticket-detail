@@ -326,6 +326,8 @@ export function ComplianceEndpointPanel({ endpointId, ruleId, policyId, onClose,
   const exceptions = useExceptions();
   /** Search over the breakdown's rules (number, name, group name). */
   const [bdQ, setBdQ] = useState('');
+  /** View rule results: the severity whose rules come first (clicked in Failed Rules by Severity). */
+  const [bdSev, setBdSev] = useState<Severity | null>(null);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -388,9 +390,7 @@ export function ComplianceEndpointPanel({ endpointId, ruleId, policyId, onClose,
                     return (
                       <HeaderKpiRow gap="mt-[3px]" items={[
                         ckpi('status', 'Status', res?.outcome ?? '—', { color: tone.text }),
-                        ...(res?.outcome !== 'Not Scanned'
-                          ? [ckpi('failing', 'Failing Rules', bySev.length ? bySev.map(([s, n]) => `${n} ${s}`).join(', ') : 'None', { color: bySev.length ? '#B42318' : '#15803D' })]
-                          : []),
+                        /* No Failing Rules here (Zeni, 12 Nov 2026) — the cards below count them. */
                         ckpi('scan', 'Last Scan', policy.lastScan ? fmtStamp(policy.lastScan.at) : 'Not scanned yet'),
                       ]} />
                     );
@@ -428,23 +428,39 @@ export function ComplianceEndpointPanel({ endpointId, ruleId, policyId, onClose,
                   onApplyFilter={() => {}}
                   cards={[
                     // The endpoint's score on this policy: the share of its checked rules that pass.
-                    { label: 'Average Compliance', value: got ? `${Math.round((ok / mine.length) * 100)}%` : '—', sub: got ? `${ok} of ${mine.length} rules pass` : 'not scanned', valueColor: got ? scoreColor(Math.round((ok / mine.length) * 100)) : DIM, static: true },
+                    { label: 'Compliance', value: got ? `${Math.round((ok / mine.length) * 100)}%` : '—', sub: got ? `${ok} of ${mine.length} rules pass` : 'not scanned', valueColor: got ? scoreColor(Math.round((ok / mine.length) * 100)) : DIM, static: true },
                     { label: 'Passed', value: got ? ok : '—', sub: 'rules', valueColor: got ? '#15803D' : DIM },
                     { label: 'Failed', value: got ? mine.length - ok : '—', sub: 'rules', valueColor: got && mine.length - ok ? '#DC2626' : DIM },
-                    { label: 'New Failures', value: got ? fresh : '—', sub: 'passed last scan, fail now', valueColor: got && fresh ? '#B45309' : DIM },
+                    { label: 'Error', value: got ? fresh : '—', sub: 'passed last scan, fail now', valueColor: got && fresh ? '#B45309' : DIM },
                   ]}
                 />
               </div>
               <div className="space-y-4 px-5">
                 {got ? (
                   <>
+                    {/* Failed Rules by Severity, one quiet line on the left (Zeni, 12 Nov 2026); a smaller search on the right. */}
                     <div className="flex items-center gap-3 pt-2">
-                      <TabListToolbar className="min-w-0 flex-1" search={bdQ} onSearch={setBdQ} groups={[]} value={{}} onChange={() => {}} placeholder="Search rules..." />
+                      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-px gap-y-1">
+                        <span className="mr-2 text-[13px] font-semibold text-[#364658]">Failed Rules by Severity</span>
+                        {(['Critical', 'High', 'Medium', 'Low'] as const).map((sv) => {
+                          const n = mine.filter((f) => !f.passed && ruleById(f.ruleId)?.severity === sv).length;
+                          return (
+                            <button key={sv} type="button" aria-pressed={bdSev === sv} onClick={() => setBdSev((x) => (x === sv ? null : sv))}
+                              title={bdSev === sv ? 'Clear the sort' : `Show ${sv} rules first`}
+                              className={'inline-flex items-center gap-1.5 whitespace-nowrap rounded px-1.5 py-0.5 text-[13px] transition-colors ' + (bdSev === sv ? 'bg-[#EBF5FF] ring-1 ring-[#BFDBFE]' : 'hover:bg-[#F5F7FA]')}>
+                              <span className="size-2 flex-shrink-0 rounded-full" style={{ backgroundColor: SEVERITY_PILL[sv].bar }} />
+                              <span className="text-[#7B8FA5]">{sv}</span>
+                              <span className="font-semibold tabular-nums" style={{ color: n ? SEVERITY_PILL[sv].text : '#94A3B8' }}>{n}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <TabListToolbar className="w-[240px] flex-shrink-0" search={bdQ} onSearch={setBdQ} groups={[]} value={{}} onChange={() => {}} placeholder="Search rules..." />
                       <ExportResultButton ep={ep} policy={policy} benchmark={benchmark} mine={mine} />
                     </div>
                     {ruleTreeCount(benchmark, undefined, bdQ) === 0
                       ? <NoMatch what="rules" onClear={() => setBdQ('')} />
-                      : <ComplianceBreakdown benchmark={benchmark} findings={mine} query={bdQ} onRule={(rid) => push({ kind: 'result', endpointId: ep.id, ruleId: rid })} />}
+                      : <ComplianceBreakdown benchmark={benchmark} findings={mine} query={bdQ} sortSeverity={bdSev} onRule={(rid) => push({ kind: 'result', endpointId: ep.id, ruleId: rid })} />}
                   </>
                 ) : (
                   <div className="rounded-lg border border-dashed border-[#DFE5ED] px-4 py-10 text-center text-[13px] text-[#7B8FA5]">
@@ -537,7 +553,9 @@ export function ruleTreeCount(benchmark: Benchmark, show: ((id: string) => boole
   return n;
 }
 
-export function RuleGroupTree({ benchmark, resultOf = () => null, right, onRule, title = 'Rules', note, show, plain = false, query = '', linkRows = true, scoreHeads = false }: {
+export function RuleGroupTree({ benchmark, resultOf = () => null, right, onRule, title = 'Rules', note, show, plain = false, query = '', linkRows = true, scoreHeads = false, sortSeverity = null }: {
+  /** Rules of this severity come first in each group, the rest follow by severity (View rule results). */
+  sortSeverity?: Severity | null;
   benchmark: Benchmark;
   /** What this page knows about a rule — null when it was not checked. */
   resultOf?: (ruleId: string) => RuleTally | null;
@@ -564,9 +582,12 @@ export function RuleGroupTree({ benchmark, resultOf = () => null, right, onRule,
   query?: string;
 }) {
   const q = query.trim().toLowerCase();
-  const narrowing = !!show || !!q;
-  const visible = (rules: NumberedRule[], groupHit = false) =>
-    rules.filter((r) => (!show || show(r.id)) && (!q || groupHit || hits(q, r.number, ruleById(r.id)?.name ?? '')));
+  const narrowing = !!show || !!q || !!sortSeverity; // a severity sort opens every group, or the reordered rules stay hidden
+  const sevRank = (id: string) => { const sv = ruleById(id)?.severity; return sv === sortSeverity ? -1 : SEVERITIES.indexOf(sv as Severity); };
+  const visible = (rules: NumberedRule[], groupHit = false) => {
+    const out = rules.filter((r) => (!show || show(r.id)) && (!q || groupHit || hits(q, r.number, ruleById(r.id)?.name ?? '')));
+    return sortSeverity ? [...out].sort((a, b) => sevRank(a.id) - sevRank(b.id)) : out;
+  };
   const tree = useMemo(() => numberedGroups(benchmark), [benchmark]);
   const tally = (rules: NumberedRule[]) => {
     let ok = 0, total = 0, failed = false;
@@ -642,7 +663,7 @@ export function RuleGroupTree({ benchmark, resultOf = () => null, right, onRule,
           /* The severity finishes the sentence: it follows the name, not the row's end. */
           <span className="min-w-0 flex-1 text-[13px] leading-[1.6] text-[#364658]">
             <span className="decoration-[#94A3B8] decoration-dotted underline-offset-[3px] group-hover/rule:underline"><Hl text={r.name} q={query} /></span>
-            <span className="ml-2 inline-block align-middle"><SeverityPill severity={r.severity} /></span>
+            {/* No severity tag (Zeni, 12 Nov 2026) — sort by it from Failed Rules by Severity instead. */}
           </span>
         ) : (
           <span className={`line-clamp-2 min-w-0 flex-1 break-words text-[13px] text-[#364658] ${linkRows ? "decoration-[#94A3B8] decoration-dotted underline-offset-[3px] group-hover/rule:underline" : "group-hover/rule:text-[#3D8BD0]"}`}><Hl text={r.name} q={query} /></span>
@@ -687,8 +708,9 @@ export function RuleGroupTree({ benchmark, resultOf = () => null, right, onRule,
 }
 
 /** One endpoint's results as the tree — Previous → Recent scan on each rule. */
-export function ComplianceBreakdown({ benchmark, findings, onRule, query }: {
+export function ComplianceBreakdown({ benchmark, findings, onRule, query, sortSeverity }: {
   benchmark: Benchmark;
+  sortSeverity?: Severity | null;
   /** This endpoint's findings for the policy. */
   findings: Finding[];
   /** Search text — highlighted, matches shown under their groups. */
@@ -705,6 +727,7 @@ export function ComplianceBreakdown({ benchmark, findings, onRule, query }: {
       onRule={onRule}
       linkRows
       scoreHeads
+      sortSeverity={sortSeverity}
       resultOf={(id) => { const f = byRule.get(id); return f ? { passed: f.passed ? 1 : 0, failed: f.passed ? 0 : 1 } : null; }}
       right={(id) => {
         const f = byRule.get(id);
@@ -835,19 +858,24 @@ function ResultCard({ rule, endpoint, finding, lastScan, prevScan, exception, on
       <header className="flex items-center justify-between gap-2 border-b border-[#E5E7EB] bg-[#F9FAFB] px-4 py-2.5">
         <span className="text-[13px] font-semibold text-[#364658]">Result on this endpoint</span>
         <span className="flex items-center gap-2 text-[12px] text-[#64748B]">
-          <span className="rounded bg-[#e8f4fd] px-1.5 py-0.5 text-[11px] font-medium text-[#3D8BD0]">{endpoint.id}</span>{endpoint.hostName}
-          {onOpenEndpoint && (
-            <button type="button" onClick={onOpenEndpoint} className="ml-1 text-[12px] font-medium text-[#3D8BD0] hover:underline">Open endpoint ↗</button>
+          {/* The endpoint itself is the link (Zeni, 12 Nov 2026) — no separate "Open endpoint". */}
+          {onOpenEndpoint ? (
+            <button type="button" onClick={onOpenEndpoint} title="Open endpoint" className="group/ep flex items-center gap-2 text-[12px] text-[#64748B]">
+              <span className="rounded bg-[#e8f4fd] px-1.5 py-0.5 text-[11px] font-medium text-[#3D8BD0] group-hover/ep:underline">{endpoint.id}</span>
+              <span className="decoration-dotted underline-offset-[3px] group-hover/ep:text-[#3D8BD0] group-hover/ep:underline">{endpoint.hostName}</span>
+            </button>
+          ) : (
+            <><span className="rounded bg-[#e8f4fd] px-1.5 py-0.5 text-[11px] font-medium text-[#3D8BD0]">{endpoint.id}</span>{endpoint.hostName}</>
           )}
         </span>
       </header>
       <div className="grid grid-cols-3 gap-x-6 gap-y-3 px-4 py-3">
         <div><div className={label}>Result</div><div className="mt-1"><ResultPill passed={finding ? finding.passed : null} /></div></div>
-        {/* The previous result, with WHEN that scan ran beside it. */}
-        <div><div className={label}>Previous Scan</div><div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">{finding?.prevPassed == null
+        {/* Zeni, 12 Nov 2026: Result · Previous Result · Previous Scan Date — no Recent Scan, and the date carries no pill. */}
+        <div><div className={label}>Previous Result</div><div className="mt-1">{finding?.prevPassed == null
           ? <span className="text-[13px] text-[#94A3B8]">None (first scan)</span>
-          : <><ResultPill passed={finding.prevPassed} /><span className="text-[13px] text-[#364658]">{prevScan ? fmtStamp(prevScan) : '—'}</span></>}</div></div>
-        <div><div className={label}>Recent Scan</div><div className="mt-1 text-[13px] text-[#364658]">{fmtStamp(lastScan)}</div></div>
+          : <ResultPill passed={finding.prevPassed} />}</div></div>
+        <div><div className={label}>Previous Scan Date</div><div className="mt-1 text-[13px] text-[#364658]">{finding?.prevPassed == null || !prevScan ? '—' : fmtStamp(prevScan)}</div></div>
         <div className="col-span-3">
           <div className={label}>Required</div>
           <div className="mt-1 whitespace-pre-wrap rounded bg-[#F9FAFB] px-3 py-2 font-mono text-[12px] leading-[1.6] text-[#364658]">{rule.remediationValue}</div>

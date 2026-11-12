@@ -82,6 +82,7 @@ export function AssetRegisterPage({
   filterAttrs,
   quickFilters,
   moreActions,
+  bulkActions,
   primaryAction,
   primaryActionInTitle = false,
   titleExtra,
@@ -203,6 +204,8 @@ export function AssetRegisterPage({
   /** Hears every inline cell edit (the Enable switch), for a module whose record lives outside
       this page — the edit still lands in the working copy first. */
   onUpdateRow?: (id: string, patch: Partial<Ticket>) => void;
+  /** Actions on the ticked rows, in a bar over the grid while any are ticked (Compliance Policy). */
+  bulkActions?: { label: string; icon?: React.ReactNode; danger?: boolean; onClick: (ids: string[]) => void }[];
   /** Takes over what a row CLICK opens. Registers open their record's detail drawer through
       the shared stack; a module whose rows are not records with a detail page (My Team's
       people) handles the click itself and shows its own panel. */
@@ -612,6 +615,18 @@ export function AssetRegisterPage({
                      around it: what a landing shows is the module's business. */
                   overview
                 ) : (
+                <>
+                {bulkActions && selectedTickets.size > 0 && (
+                  <div className="mx-6 mb-2 flex items-center gap-2 rounded-lg border border-[#D6E6F5] bg-[#F3F8FD] px-3 py-1.5">
+                    <span className="text-[13px] font-medium text-[#364658]">{selectedTickets.size} selected</span>
+                    <span className="mx-1 h-4 w-px bg-[#D6E6F5]" />
+                    {bulkActions.map((a) => (
+                      <button key={a.label} type="button" onClick={() => { a.onClick([...selectedTickets]); setSelectedTickets(new Set()); }}
+                        className={'inline-flex h-7 items-center gap-1.5 rounded border bg-white px-2.5 text-[12px] font-medium transition-colors ' + (a.danger ? 'border-[#F5C2C2] text-[#B42318] hover:bg-[#FEF3F2]' : 'border-[#DFE5ED] text-[#364658] hover:bg-[#F5F7FA]')}>{a.icon}{a.label}</button>
+                    ))}
+                    <button type="button" onClick={() => setSelectedTickets(new Set())} className="ml-auto text-[12px] font-medium text-[#3D8BD0] hover:underline">Clear selection</button>
+                  </div>
+                )}
                 <TicketTable
                   noun={noun}
                   openPage={activePage}
@@ -645,6 +660,7 @@ export function AssetRegisterPage({
                     setCurrentPage(1);
                   }}
                 />
+                </>
                 )}
               </div>
               {!isGrouped && (view === 'list' || view === 'list-kpi' || view === 'tiles') && !showOverview && (

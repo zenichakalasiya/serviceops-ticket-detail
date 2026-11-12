@@ -3178,3 +3178,19 @@ and ask before building any new one.
   - A form outside the spec system (Create Policy) shows the switch via `setExtraCreateOpen`.
   - **V3:** the guide runs the drawer's full height from its top edge, level with the title; the footer spans both columns.
 - **Form Studio** (Admin › each module's form). Files: `formStudioData.ts` (15 forms), `FormStudio.tsx`, `AdminFormModule.tsx`. A **Builder V1 | V2** pill (`formStudioUi.ts`) switches between the "+" builder (V1) and the drag-and-drop builder (V2).
+- **Compliance polish, evening 12 Nov 2026.**
+  - **Admin:**
+    - The section is **Compliance Management**.
+    - The Rules listing shows the technician columns minus Endpoints and Rule Score.
+    - The Benchmark listing has Created/Updated By and Date as separate columns.
+    - The Benchmark detail facts line shows "Created <when> by <who>".
+  - **Policy listing:** bulk actions Enable · Disable · Cancel Policy · Archive (`AssetRegisterPage bulkActions`, opt-in).
+  - **Create Policy:** optional Deployment Policy beside Notify Team.
+  - **Policy Endpoints tab:** Result reads Not Assessed (not Not Scanned).
+  - **View rule results:**
+    - Cards Compliance · Passed · Failed · Error.
+    - A "Failed Rules by Severity" toggle line sorts `RuleGroupTree` (`sortSeverity`).
+    - No severity tags on rule rows.
+    - A rule's result shows Result · Previous Result · Previous Scan Date, and the endpoint is the link.
+  - **`HeaderKpiRow wrap`** wraps instead of "+N", used by `RuleFactsRow`.
+  - **`StatCard.body/wide`** and **`StatsCardsRow wrap`** exist but are currently unused.

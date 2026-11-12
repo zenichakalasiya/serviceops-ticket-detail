@@ -24,6 +24,7 @@ import { setExtraCreateOpen, useCreateFormUi } from './createFormUi';
 import { BENCHMARKS_SEED, COMPLIANCE_TYPES, benchmarkRuleIds, profileLabel } from './complianceData';
 import type { ComplianceType } from './complianceData';
 import { TECH_GROUPS, TECHNICIANS } from './technicianRoster';
+import { DEPLOYMENT_POLICIES_185 } from './data185';
 import {
   benchmarkOf, deviceTagsOf, endpointsForBenchmark, fmtStamp, getPolicy, needsConfigType, nextRun, officesOf, openPolicyEditor,
   policyStore, resolvedEndpoints, scheduleLabel, usePolicyEditor, WEEKDAYS,
@@ -532,6 +533,11 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
         <FieldLabel>Notify Team</FieldLabel>
         <RuleSelect className="!rounded" multi value={d.notify} options={NOTIFY_OPTIONS} onChange={(v) => set({ notify: v })} placeholder="Technicians or groups" />
       </div>
+      {/* Beside Notify Team (Zeni, 12 Nov 2026) — the same list the Automatic Patch Deployment form offers. */}
+      <div>
+        <FieldLabel>Deployment Policy</FieldLabel>
+        <RuleSelect className="!rounded" value={d.deploymentPolicy ? [d.deploymentPolicy] : []} options={DEPLOYMENT_POLICIES_185.map((x) => ({ value: x, label: x }))} onChange={(v) => set({ deploymentPolicy: v[0] })} placeholder="Select" />
+      </div>
     </div>
   );
   const scheduleEl = (
@@ -565,9 +571,9 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
     },
     {
       title: 'Schedule & Notifications', sub: 'When the policy scans on its own, and who hears about the result.',
-      opt: <div className="space-y-4">{notifyEl}{scheduleEl}</div>, optNames: ['Notify Team', 'Schedule'],
+      opt: <div className="space-y-4">{notifyEl}{scheduleEl}</div>, optNames: ['Notify Team', 'Deployment Policy', 'Schedule'],
       all: <div className="space-y-4">{notifyEl}{scheduleEl}</div>,
-      lines: [...(d.notify.length ? [{ label: 'Notify Team', value: d.notify.length > 2 ? `${d.notify.slice(0, 2).join(', ')} +${d.notify.length - 2}` : d.notify.join(', ') }] : []), ...(d.schedule.frequency !== 'none' ? [{ label: 'Schedule', value: scheduleLabel(d.schedule) }] : [])],
+      lines: [...(d.notify.length ? [{ label: 'Notify Team', value: d.notify.length > 2 ? `${d.notify.slice(0, 2).join(', ')} +${d.notify.length - 2}` : d.notify.join(', ') }] : []), ...(d.deploymentPolicy ? [{ label: 'Deployment Policy', value: d.deploymentPolicy }] : []), ...(d.schedule.frequency !== 'none' ? [{ label: 'Schedule', value: scheduleLabel(d.schedule) }] : [])],
       keys: ['schedule'],
     },
   ];

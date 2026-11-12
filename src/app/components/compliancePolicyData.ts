@@ -76,6 +76,8 @@ export interface CompliancePolicy {
   cancelled?: boolean;
   /** Saved with Save as Draft — kept, not published; it does not scan until it is published. */
   draft?: boolean;
+  /** When on each endpoint the scan may run — the Automatic Patch Deployment form's list (Zeni, 12 Nov 2026). */
+  deploymentPolicy?: string;
   /** How the last scan was started. Unset = the schedule (or Run Now when it has none). */
   lastTrigger?: RunTrigger;
   /** Scans run during this session, newest first (each Run Now pushes the previous one here). */
