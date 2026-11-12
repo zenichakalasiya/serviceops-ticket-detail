@@ -217,8 +217,9 @@ export function RuleFactsRow({ rule }: { rule: ComplianceRule }) {
       severityKpi(rule.severity),
       ckpi('profile', 'Profile', rule.profile, { chip: rule.profile === 'L1' ? 'blue' : 'violet', tip: rule.profile === 'L1' ? 'Profile: Level 1 — must have' : 'Profile: Level 2 — good to have' }),
       ckpi('assessment', 'Assessment', rule.assessment, { color: rule.assessment === 'Automated' ? '#15803D' : '#B54708', tip: rule.assessment === 'Automated' ? 'Automated: the agent checks this rule' : 'Manual: a person has to review this rule' }),
-      ckpi('type', 'OS Type', rule.type),
-      ckpi('platform', 'Platform', rule.platform),
+      /* Zeni, 12 Nov 2026: the facts follow the listing columns — no OS Type, and Platform
+         reads "OS Platform" as the technician column does. */
+      ckpi('platform', 'OS Platform', rule.platform),
       ckpi('version', 'OS Version', rule.version),
     ]} />
   );

@@ -20,7 +20,7 @@ import { TEAM_FILTER_ATTRS, TEAM_STATUS_OPTIONS } from './teamFilterAttrs';
 import { PROJECT_FILTER_ATTRS, PROJECT_STATUS_OPTIONS } from './projectFilterAttrs';
 import { DEPLOY_STATUS_OPTIONS, PATCH_DEPLOY_FILTER_ATTRS, PATCH_FILTER_ATTRS } from './patchFilterAttrs';
 import { PACKAGE_DEPLOY_FILTER_ATTRS, REGISTRY_DEPLOY_FILTER_ATTRS } from './packageFilterAttrs';
-import { POLICY_FILTER_ATTRS, POLICY_STATUS_OPTIONS, POSTURE_OPTIONS, SCAN_STATUS_OPTIONS, VIZ_BENCHMARK_FILTER_ATTRS, VIZ_RESOURCE_FILTER_ATTRS, VIZ_RULE_FILTER_ATTRS } from './complianceFilterAttrs';
+import { POLICY_FILTER_ATTRS, POLICY_RESULT_OPTIONS, POLICY_STATUS_OPTIONS, POSTURE_OPTIONS, SCAN_STATUS_OPTIONS, VIZ_BENCHMARK_FILTER_ATTRS, VIZ_RESOURCE_FILTER_ATTRS, VIZ_RULE_FILTER_ATTRS } from './complianceFilterAttrs';
 import { APT_FILTER_ATTRS } from './automaticPatchTests';
 import { fmtGridDate, fmtGridDateTime } from './dateFormat';
 import {
@@ -693,6 +693,8 @@ const DATE_TIME_COLS = new Set([
   /* A patch release and a deployment window both turn on the time of day — a maintenance
      window that opens "Sat 25 Jul" says nothing without the 10:00 PM. */
   'x_released', 'x_installAfter', 'x_expiry', 'x_lastExecution', 'x_nextExecution',
+  /* A compliance policy's created / updated stamps. */
+  'x_createdAt', 'x_updatedAt',
 ]);
 const DATE_ONLY_COLS = new Set([
   'x_startDate', 'x_endDate', 'x_createdDate', 'x_closedDate', 'x_planningStart', 'x_implStart',
@@ -2044,15 +2046,23 @@ export function TicketTable({
        assess, against how many machines, how did the last scan go, and when does it run next. */
     'compliance-policy': [
         { key: 'id', label: 'ID', w: 96 },
+        /* Zeni, 12 Nov 2026. Status = where the scan run stands (Draft / In Progress / Completed /
+           Cancelled); Compliance Result = Compliant / Non-Compliant from the last scan. */
         { key: 'subject', label: 'Policy Name', flex: true, w: 200, maxW: 320 },
+        { key: 'x_platform', label: 'OS Platform', w: 150 },
         { key: 'x_benchmark', label: 'Benchmark', flex: true, w: 200, maxW: 320, wrap: true },
         { key: 'x_endpoints', label: 'Endpoints', w: 100 },
-        /* Status carries the last scan's score beside it ("Non-Compliant · 72%"), so there is no
-           separate Compliance column. Enable lives in the detail page's ⋮; whether the policy is
-           scheduled is read off the Schedule action's icon. */
-        { key: 'status', label: 'Status', w: 190 },
-        { key: 'x_lastExecution', label: 'Last Scan', w: 180 },
-        { key: 'actions', label: 'Actions', w: 140 },
+        { key: 'x_cpScore', label: 'Compliance Score', w: 185 },
+        { key: 'x_cpResult', label: 'Compliance Result', w: 190 },
+        { key: 'status', label: 'Status', w: 140 },
+        { key: 'x_lastExecution', label: 'Last Scan Date', w: 180 },
+        { key: 'x_enabled', label: 'Enable', w: 100 },
+        { key: 'x_tags', label: 'Tags', w: 160 },
+        { key: 'x_createdAt', label: 'Created Date', w: 180 },
+        { key: 'x_createdBy', label: 'Created By', w: 170 },
+        { key: 'x_updatedAt', label: 'Updated Date', w: 180 },
+        { key: 'x_updatedBy', label: 'Updated By', w: 170 },
+        { key: 'actions', label: 'Actions', w: 110 },
     ],
     /* Compliance › Benchmark (technician) — every benchmark in the catalogue, read for how it
        fares across the policies that run it (no edit actions: the admin owns benchmarks). */
@@ -2069,9 +2079,11 @@ export function TicketTable({
     /* Compliance › Rules (technician) — the admin Rules columns, plus how the rule fares across
        the estate: how many endpoints check it, and the share of them that pass (Rule Score). */
     'cviz-rule': [
-        /* Zeni, 3 Nov 2026: Rule ID · Title · Profile · Assessment · OS Platform · OS Version · Endpoints · Rule Score. */
+        /* Zeni, 3 Nov 2026: Rule ID · Title · Profile · Assessment · OS Platform · OS Version · Endpoints · Rule Score.
+           Severity back after the title, 12 Nov 2026 (it was in v1). */
         { key: 'x_ruleCode', label: 'Rule ID', w: 96 },
         { key: 'subject', label: 'Title', flex: true, w: 300, maxW: 460, wrap: true },
+        { key: 'x_severity', label: 'Severity', w: 110 },
         { key: 'x_profile', label: 'Profile', w: 80 },
         { key: 'x_assessment', label: 'Assessment', w: 120 },
         { key: 'x_platform', label: 'OS Platform', w: 170 },
@@ -2697,7 +2709,8 @@ export function TicketTable({
                 </Tooltip>
               );
             })()}
-            {moduleCols === 'compliance-policy' && (() => {
+            {/* Schedule left the row (Zeni, 12 Nov 2026) — it is set in Edit. */}
+            {false && moduleCols === 'compliance-policy' && (() => {
               const on = (ticket as any).x_scheduled === 'Scheduled';
               const off = (ticket as any).x_enabled !== 'Enabled';
               const next = (ticket as any).x_nextExecution as Date | null;
@@ -2898,16 +2911,26 @@ export function TicketTable({
        how far from clean it is; a policy never scanned has no score, not a zero. */
     if (key === 'status' && moduleCols === 'compliance-policy') {
       const dot = POLICY_STATUS_OPTIONS.find((o) => o.label === (ticket.status as string))?.color ?? '#94A3B8';
-      const raw = (ticket as any).x_cpScore;
       const busy = (ticket as any).x_scanning === true;
       return (
         <td className="overflow-hidden px-4 py-3 whitespace-nowrap">
           <span className="flex min-w-0 items-center gap-2">
             {busy ? <Loader2 size={12} className="flex-shrink-0 animate-spin text-[#3D8BD0]" /> : <span className="size-2 flex-shrink-0 rounded-full" style={{ backgroundColor: dot }} />}
             <span className="truncate text-[12px] text-[#4A5568]">{ticket.status}</span>
-            {raw !== null && raw !== undefined && !busy && (
-              <span className="flex-shrink-0 text-[12px] font-medium tabular-nums" style={{ color: Number(raw) >= 90 ? '#15803D' : Number(raw) >= 70 ? '#B45309' : '#DC2626' }}>· {Math.round(Number(raw))}%</span>
-            )}
+          </span>
+        </td>
+      );
+    }
+    /* A policy's Compliance Result — Compliant / Non-Compliant from its last scan; a dash before any scan. */
+    if (key === 'x_cpResult') {
+      const v = (ticket as any).x_cpResult as string | null;
+      if (!v) return <td className="px-4 py-3 whitespace-nowrap"><span className="text-[12px] text-[#B6C0CC]">—</span></td>;
+      const dot = POLICY_RESULT_OPTIONS.find((o) => o.label === v)?.color ?? '#94A3B8';
+      return (
+        <td className="overflow-hidden px-4 py-3 whitespace-nowrap">
+          <span className="flex min-w-0 items-center gap-2">
+            <span className="size-2 flex-shrink-0 rounded-full" style={{ backgroundColor: dot }} />
+            <span className="truncate text-[12px] text-[#4A5568]">{v}</span>
           </span>
         </td>
       );
@@ -3427,6 +3450,20 @@ export function TicketTable({
       return (
         <td className="px-4 py-3 whitespace-nowrap">
           {v ? <span className={COUNT_CHIP}>{v}</span> : <span className="text-[12px] text-[#B6C0CC]">—</span>}
+        </td>
+      );
+    }
+    /* A rule's RUL-n code is its ID, so it wears the same blue pill as every other
+       listing's ID column and opens the rule the same way. */
+    if (key === 'x_ruleCode') {
+      return (
+        <td data-col="id" className="overflow-hidden px-4 py-3">
+          <span
+            className="whitespace-nowrap inline-block rounded bg-[#e8f4fd] px-2 py-0.5 text-[12px] font-semibold text-[#3D8BD0] cursor-pointer hover:bg-[#d0e8f9] transition-colors"
+            onClick={(e) => { e.stopPropagation(); openTicket(ticket); }}
+          >
+            {(ticket as any).x_ruleCode}
+          </span>
         </td>
       );
     }

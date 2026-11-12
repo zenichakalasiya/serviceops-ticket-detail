@@ -13,9 +13,10 @@ import { toast } from 'sonner';
 import { ShieldCheck } from 'lucide-react';
 import { AssetRegisterPage } from './AssetRegisterPage';
 import { postureColor, postureOf, scoreColor } from './complianceVizData';
+import { platformOf } from './complianceData';
 import { POLICY_FILTER_ATTRS, POLICY_QUICK_FILTERS, takeComplianceDrill, ARCHIVED_POLICY_VIEW } from './complianceFilterAttrs';
 import {
-  benchmarkOf, getPolicy, nextRun, openPolicyEditor, policyStore, resolvedEndpoints, scheduleLabel, scoreOf, statusOf, usePolicies,
+  benchmarkOf, getPolicy, nextRun, openPolicyEditor, policyStore, resolvedEndpoints, resultOf, runStatusOf, scheduleLabel, scoreOf, usePolicies,
 } from './compliancePolicyData';
 import type { CompliancePolicy } from './compliancePolicyData';
 import { PolicyScheduleDrawer } from './CompliancePolicyEditor';
@@ -33,10 +34,12 @@ const toRow = (p: CompliancePolicy): Ticket => {
     assignedTo: { name: '', initials: '' },
     dueBy: created,
     createdBy: created,
-    status: statusOf(p) as Ticket['status'],
+    status: runStatusOf(p) as Ticket['status'],
+    x_cpResult: resultOf(p),
     priority: 'Medium' as Ticket['priority'],
     x_cpPolicy: true,
     x_benchmark: b?.name ?? '—',
+    x_platform: b ? platformOf(b.osVersion).platform : '',
     x_type: b?.type ?? '',
     x_osVersion: b?.osVersion ?? '',
     x_profile: b?.profile ?? '',
@@ -52,7 +55,10 @@ const toRow = (p: CompliancePolicy): Ticket => {
     x_enabled: p.enabled ? 'Enabled' : 'Disabled',
     x_scanning: !!p.scanning,
     x_createdBy: p.createdBy,
-    x_tags: (p.tags ?? []).join(', '),
+    x_createdAt: created,
+    x_updatedAt: new Date(p.updatedAt),
+    x_updatedBy: p.updatedBy ?? p.createdBy,
+    x_tags: p.tags ?? [],
     x_archived: !!p.archived,
   } as unknown as Ticket;
 };
@@ -66,9 +72,9 @@ const buildCards = (rows: Ticket[]): StatCard[] => {
   const on = rows.filter((t) => (t as any).x_enabled === 'Enabled');
   const scored = rows.filter((t) => (t as any).x_cpScore !== null && (t as any).x_cpScore !== undefined);
   const avg = scored.length ? Math.round(scored.reduce((a, t) => a + num(t, 'x_cpScore'), 0) / scored.length) : null;
-  const failingPolicies = rows.filter((t) => t.status === ('Non-Compliant' as Ticket['status']));
+  const failingPolicies = rows.filter((t) => (t as any).x_cpResult === 'Non-Compliant');
   const failingEndpoints = rows.reduce((a, t) => a + num(t, 'x_nonCompliant'), 0);
-  const never = rows.filter((t) => t.status === ('Not Scanned' as Ticket['status']));
+  const never = rows.filter((t) => t.status === ('Draft' as Ticket['status']));
   return [
     {
       label: 'Active Policies', value: on.length, sub: `${rows.length - on.length} disabled`,
@@ -82,12 +88,12 @@ const buildCards = (rows: Ticket[]): StatCard[] => {
     {
       label: 'Non-Compliant Endpoints', value: failingEndpoints, sub: `in ${failingPolicies.length} polic${failingPolicies.length === 1 ? 'y' : 'ies'}`,
       valueColor: failingEndpoints ? '#DC2626' : undefined,
-      filter: [{ field: 'status', condition: 'is', values: ['Non-Compliant'] }],
+      filter: [{ field: 'x_cpResult', condition: 'is', values: ['Non-Compliant'] }],
     },
     {
       label: 'Never Scanned', value: never.length, sub: 'policies waiting for a first scan',
       valueColor: never.length ? '#64748B' : undefined,
-      filter: [{ field: 'status', condition: 'is', values: ['Not Scanned'] }],
+      filter: [{ field: 'status', condition: 'is', values: ['Draft'] }],
     },
   ];
 };
@@ -187,9 +193,9 @@ export function CompliancePoliciesListingPage({ onNavigate }: { onNavigate?: (pa
             <div className="px-6 py-16 text-center text-[13px] text-[#9CA3AF]">No policy matches this search and filter.</div>
           )
         )}
-        searchFields={['x_benchmark', 'x_createdBy']}
+        searchFields={['x_benchmark', 'x_platform', 'x_createdBy', 'x_updatedBy']}
         /* Status is the result of the last scan — the system sets it, nobody picks it. */
-        lockedCells={['status']}
+        lockedCells={['status', 'x_cpResult']}
         moreActions={[]}
         primaryAction={{ label: 'Create Policy', onClick: () => openPolicyEditor({ mode: 'create' }) }}
         primaryActionInTitle

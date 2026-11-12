@@ -72,6 +72,8 @@ export interface CompliancePolicy {
   archived?: boolean;
   lastScan: ScanResult | null;
   scanning?: boolean;
+  /** The last scan was stopped before it finished (Cancel scan). Cleared by the next scan. */
+  cancelled?: boolean;
   /** How the last scan was started. Unset = the schedule (or Run Now when it has none). */
   lastTrigger?: RunTrigger;
   /** Scans run during this session, newest first (each Run Now pushes the previous one here). */
@@ -303,6 +305,16 @@ export const scoreOf = (s: ScanResult | null) => (!s || s.passed + s.failed === 
 
 /** What the listing's Status column says. */
 export type PolicyStatus = 'Scanning' | 'Compliant' | 'Non-Compliant' | 'Not Scanned';
+/** The listing's Status — where the policy's scan RUN stands (Zeni, 12 Nov 2026): Draft until it
+ *  has run once, In Progress while scanning, Cancelled when the last scan was stopped, else
+ *  Completed. Whether that scan passed is the separate Compliance Result. */
+export type PolicyRunStatus = 'Draft' | 'In Progress' | 'Completed' | 'Cancelled';
+export const runStatusOf = (p: CompliancePolicy): PolicyRunStatus =>
+  p.scanning ? 'In Progress' : p.cancelled ? 'Cancelled' : p.lastScan ? 'Completed' : 'Draft';
+/** Compliant / Non-Compliant from the last scan; null before any scan. */
+export const resultOf = (p: CompliancePolicy): 'Compliant' | 'Non-Compliant' | null =>
+  !p.lastScan ? null : p.lastScan.nonCompliant > 0 ? 'Non-Compliant' : 'Compliant';
+
 export const statusOf = (p: CompliancePolicy): PolicyStatus =>
   p.scanning ? 'Scanning' : !p.lastScan ? 'Not Scanned' : p.lastScan.nonCompliant > 0 ? 'Non-Compliant' : 'Compliant';
 export { POLICY_STATUS_OPTIONS } from './complianceFilterAttrs';
@@ -428,11 +440,11 @@ export const policyStore = {
   /** Archive replaces delete: the policy stops running and moves to the Archived view. */
   archive(id: string, archived = true) { set(all().map((p) => (p.id === id ? { ...p, archived, scanning: false, updatedAt: stamp(), updatedBy: 'Sarah Johnson' } : p))); },
   /** Stops a scan that is running; the last finished result stays. */
-  cancel(id: string) { set(all().map((p) => (p.id === id ? { ...p, scanning: false } : p))); },
+  cancel(id: string) { set(all().map((p) => (p.id === id ? { ...p, scanning: false, cancelled: true } : p))); },
   setSchedule(id: string, schedule: PolicySchedule) { set(all().map((p) => (p.id === id ? { ...p, schedule, updatedAt: stamp() } : p))); },
   /** Runs a scan now: Scanning for a moment, then a fresh result. */
   run(id: string, onDone?: (p: CompliancePolicy) => void) {
-    set(all().map((p) => (p.id === id ? { ...p, scanning: true } : p)));
+    set(all().map((p) => (p.id === id ? { ...p, scanning: true, cancelled: false } : p)));
     window.setTimeout(() => {
       if (!getPolicy(id)?.scanning) return; // cancelled meanwhile
       const at = stamp();

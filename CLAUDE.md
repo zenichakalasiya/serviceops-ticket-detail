@@ -3141,3 +3141,21 @@ and ask before building any new one.
     Export is a primary button.
   - **Headers:** title-to-facts gap 3px (`HeaderKpiRow gap` prop, default `mt-1` everywhere else); actions
     and close buttons centred on the title.
+
+- **Compliance pass, 3 Nov + 12 Nov 2026 (Compliance v2; the 12 Nov part is live but NOT yet pinned in versions.json — ask Zeni).**
+  - **Admin Rules** columns: CIS ID - Rule Title (RUL pill + title) · Severity · Profile · Platform · OS Version.
+    **Admin Benchmark** listing: Benchmark ID · Name · Platform · OS Version · Total Rule · Source · Created By/Date ·
+    Updated By/Date; detail actions Edit · Clone · Download (Audit Trail popup, PDF/Excel/CSV), Delete in ⋮.
+  - **Technician Rules** (`'cviz-rule'`): Rule ID (blue ID pill, `x_ruleCode`) · Title · Severity · Profile · Assessment ·
+    OS Platform · OS Version · Endpoints · Rule Score.
+  - **Rule facts line** (`RuleFactsRow`, both sides) = Severity · Profile · Assessment · OS Platform · OS Version. Rule:
+    a drawer/detail subtitle never shows data whose column was removed.
+  - **Policy listing** (`'compliance-policy'`): ID · Policy Name · OS Platform · Benchmark · Endpoints · Compliance Score ·
+    Compliance Result · Status · Last Scan Date · Enable · Tags · Created Date · Created By · Updated Date · Updated By ·
+    Actions (Scan Now · Edit · ⋮ Clone/Archive; no Schedule). Row `status` = RUN status `runStatusOf`
+    (Draft / In Progress / Completed / Cancelled, `POLICY_STATUS_OPTIONS`); `x_cpResult` = `resultOf`
+    (Compliant / Non-Compliant, `POLICY_RESULT_OPTIONS`). `policy.cancelled` is set by cancel() and cleared by run().
+  - **Policy detail**: subtitle = name, ID, compliance status badge, score, OS Platform, created, created by; Scan Now +
+    Edit upfront; ⋮ Enable/Disable · Clone · Cancel scan (while scanning) · Archive. Properties: Benchmark, OS Platform,
+    Notify Team, Created/Updated By/On, Last/Next Scan, Tags (ticket-style chips). Archived policies live only in the
+    **All Archived Policies** view (`viewScope`).

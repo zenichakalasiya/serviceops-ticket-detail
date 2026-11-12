@@ -139,7 +139,7 @@ export function CompliancePolicyDrawer({
   const kpis = [
     ckpi('status', 'Status', p.archived ? 'Archived' : status, { chip: p.archived ? 'neutral' : status === 'Compliant' ? 'green' : status === 'Non-Compliant' ? 'red' : status === 'Scanning' ? 'blue' : 'neutral', tip: p.archived ? 'Archived — it does not run' : `Status: ${status}` }),
     ckpi('score', 'Compliance', score === null ? '—' : `${score}%`, { color: score === null ? '#94A3B8' : scoreColor(score), tip: 'Checks passed of checks run, on the last scan' }),
-    ckpi('platform', 'Platform', platform, { tip: benchmark?.osVersion ?? '' }),
+    ckpi('platform', 'OS Platform', platform, { tip: benchmark?.osVersion ?? '' }),
     ckpi('created', 'Created', fmtStamp(p.createdAt)),
     ckpi('createdBy', 'Created By', p.createdBy),
   ];
@@ -147,7 +147,7 @@ export function CompliancePolicyDrawer({
   /* Policy properties (Zeni, 3 Nov 2026) — Tags follow, as their own editable row. */
   const fields: [string, React.ReactNode][] = [
     ['Benchmark', benchmark?.name ?? '—'],
-    ['Platform', platform],
+    ['OS Platform', platform],
     ['Notify Team', p.notify.length ? p.notify.join(', ') : '—'],
     ['Created By', p.createdBy],
     ['Created On', fmtStamp(p.createdAt)],

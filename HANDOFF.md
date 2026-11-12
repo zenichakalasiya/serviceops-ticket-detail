@@ -1,4 +1,42 @@
-# Handoff — 2026-10-29 12:10 (Compliance: rule details, rule groups, View rule results)
+# Handoff — 2026-11-12 (Compliance: listing columns, rule facts, policy Status / Result)
+
+> Sessions share this file. This top part is the newest; older notes follow.
+
+## Read first
+CLAUDE.md → "Compliance (Oct 2026)", especially the "Compliance pass, 3 Nov + 12 Nov 2026" bullet at its end.
+
+## What we worked on this session
+Compliance column changes on both sides, plus the side drawers matching the columns, and the policy listing rebuilt with a run Status and a Compliance Result.
+
+## Completed (verified in a headless browser, no page errors)
+- Technician Rules listing: Rule ID (RUL-n) is the blue ID pill and opens the rule; Severity column after the Title.
+- Admin Rules listing: Severity column (SeverityPill) after CIS ID - Rule Title.
+- Rule side drawer (both sides): facts line = Severity · Profile · Assessment · OS Platform · OS Version (no OS Type / Platform).
+- Policy listing columns: ID · Policy Name · OS Platform · Benchmark · Endpoints · Compliance Score · Compliance Result · Status · Last Scan Date · Enable · Tags · Created Date · Created By · Updated Date · Updated By · Actions.
+  - Status = Draft / In Progress / Completed / Cancelled (`runStatusOf`); Compliance Result = Compliant / Non-Compliant (`resultOf`).
+  - Schedule action removed from the row (`{false && …}` in TicketTable); Enable switch column back.
+- Policy detail page: "Platform" reads "OS Platform" (header + properties).
+
+## In progress
+Nothing mid-flight.
+
+## Next steps
+- ASK Zeni whether this goes into Compliance v2 or a new version. The live site has it, but `versions/versions.json` still pins Compliance v2 at 7178a6c.
+- Test that Cancel scan turns the Status to Cancelled.
+- Seed data: every scanned policy is Non-Compliant; there are no Compliant rows. Ask whether to add one.
+- Still uncommitted (not this session): Form Studio and the create-form V1–V5 work (waiting on a version answer), and CompliancePolicyEditor.tsx (someone else's change).
+
+## Decisions made
+- Policy row `status` is now the RUN status; the compliance outcome moved to `x_cpResult`. The detail page's Status chip still shows the compliance outcome (`statusOf`).
+- `cancelled` flag on CompliancePolicy: set by cancel(), cleared when a scan starts.
+
+## Gotchas & notes
+- `platformOf()` returns `{platform, version}`, not a string.
+- `x_tags` must be an ARRAY for the grid's Tags cell (a joined string crashes `.map`).
+
+---
+
+## (previous) Handoff — 2026-10-29 12:10 (Compliance: rule details, rule groups, View rule results)
 
 > Sessions share this file. This top part is the newest (Compliance); older Form Rules / Compliance notes follow.
 

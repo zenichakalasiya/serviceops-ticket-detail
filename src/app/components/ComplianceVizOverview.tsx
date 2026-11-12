@@ -168,7 +168,7 @@ export function ComplianceVizOverview({ onOpenPolicy, onOpenEndpoint, onDrill }:
         <Widget title="Endpoints Assessed" span={3} onClick={drill({ to: 'endpoints', rules: [{ field: 'x_scanStatus', condition: 'is', values: ['Success'] }] })} hint="Open the endpoints scanned" info="Endpoints at least one policy scanned on its last run.">
           <Kpi value={scanned.length} sub={`of ${v.endpoints.length} in scope`} />
         </Widget>
-        <Widget title="Failed Checks" span={3} onClick={drill({ to: 'policies', rules: [{ field: 'status', condition: 'is', values: ['Non-Compliant'] }] })} hint="Open Non-Compliant policies" info="Rule checks that failed on the last scan, across every policy.">
+        <Widget title="Failed Checks" span={3} onClick={drill({ to: 'policies', rules: [{ field: 'x_cpResult', condition: 'is', values: ['Non-Compliant'] }] })} hint="Open Non-Compliant policies" info="Rule checks that failed on the last scan, across every policy.">
           <Kpi value={v.failed.toLocaleString('en-US')} color={v.failed ? '#DC2626' : undefined} sub={`of ${(v.passed + v.failed).toLocaleString('en-US')} run`} />
         </Widget>
         <Widget title="Endpoints Not Reached" span={3} onClick={drill({ to: 'endpoints', rules: [{ field: 'x_scanStatus', condition: 'is', values: ['Not reached'] }] })} hint="Open the endpoints not reached" info="Endpoints whose agent was offline — counted in scope, never scored.">
