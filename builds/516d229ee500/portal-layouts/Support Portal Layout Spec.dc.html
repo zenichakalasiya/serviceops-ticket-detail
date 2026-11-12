@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; background:#eef1f6; font-family:'Inter',system-ui,sans-serif; -webkit-font-smoothing:antialiased; }
+  a { color:#1f6fd0; text-decoration:none; }
+  a:hover { color:#0b2545; text-decoration:underline; }
+</style>
+</helmet>
+
+<div style="display:flex;justify-content:center;padding:72px 40px 140px;background:#eef1f6">
+<div style="width:1040px;display:flex;flex-direction:column;gap:44px">
+
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <div style="font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#5f6f83">ServiceOps · Support Portal</div>
+    <div style="font-size:42px;font-weight:800;color:#0b2545;letter-spacing:-0.025em;line-height:1.1">Layout system spec</div>
+    <div style="font-size:16px;line-height:1.65;color:#5a6b81;max-width:720px;text-wrap:pretty">The option space behind the template gallery, and the section-level spec for each layout on <a href="Support Portal Layout System.dc.html">the board</a>. Axes A–F are exhaustive; a template is a coordinate in that space, not a bespoke page. Layouts 4–12, the domain matrix and the builder primitives list are added here as they land.</div>
+  </div>
+
+  <div style="height:1px;background:#dbe2ea"></div>
+
+  <div style="display:flex;flex-direction:column;gap:26px">
+    <div style="font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#5f6f83">Part one · Taxonomy</div>
+
+    <sc-for list="{{ axes }}" as="ax" hint-placeholder-count="6">
+      <div style="background:#fff;border:1px solid #dfe5ee;border-radius:14px;overflow:hidden">
+        <div style="padding:20px 24px;border-bottom:1px solid #e4e9f0">
+          <div style="font-size:18px;font-weight:700;color:#0b2545;letter-spacing:-0.01em">{{ ax.t }}</div>
+          <div style="font-size:14px;color:#5a6b81;margin-top:5px;line-height:1.55">{{ ax.d }}</div>
+        </div>
+        <sc-for list="{{ ax.rows }}" as="r" hint-placeholder-count="8">
+          <div style="display:grid;grid-template-columns:280px 1fr;gap:28px;padding:11px 24px;border-top:1px solid #f1f5f9;font-size:13.5px;line-height:1.55">
+            <div style="color:#0b2545;font-weight:600">{{ r.o }}</div>
+            <div style="color:#5a6b81">{{ r.n }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="height:1px;background:#dbe2ea"></div>
+
+  <div style="display:flex;flex-direction:column;gap:26px">
+    <div style="font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#5f6f83">Part two · Layout specs</div>
+
+    <sc-for list="{{ layouts }}" as="L" hint-placeholder-count="3">
+      <div style="background:#fff;border:1px solid #dfe5ee;border-radius:14px;overflow:hidden">
+        <div style="padding:22px 24px;border-bottom:1px solid #e4e9f0;background:#fbfcfe">
+          <div style="display:flex;align-items:baseline;gap:12px">
+            <div style="background:#0b2545;color:#fff;font-size:12px;font-weight:700;padding:4px 10px;border-radius:6px">{{ L.id }}</div>
+            <div style="font-size:22px;font-weight:700;color:#0b2545;letter-spacing:-0.015em">{{ L.name }}</div>
+          </div>
+          <div style="font-size:14.5px;color:#5a6b81;margin-top:10px;line-height:1.6;max-width:760px">{{ L.intent }}</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:150px 1fr;gap:10px 20px;padding:20px 24px;border-bottom:1px solid #eef2f7;font-size:13.5px;line-height:1.6">
+          <div style="color:#5f6f83;font-weight:600">Coordinates</div><div style="color:#0b2545">{{ L.coords }}</div>
+          <div style="color:#5f6f83;font-weight:600">Best fit</div><div style="color:#0b2545">{{ L.domains }}</div>
+          <div style="color:#5f6f83;font-weight:600">User type</div><div style="color:#0b2545">{{ L.user }}</div>
+          <div style="color:#5f6f83;font-weight:600">Fold at 1440×900</div><div style="color:#0b2545">{{ L.fold }}</div>
+        </div>
+
+        <div style="padding:20px 24px;border-bottom:1px solid #eef2f7">
+          <div style="font-size:11.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#5f6f83;margin-bottom:12px">Section order and anatomy</div>
+          <div style="display:grid;grid-template-columns:26px 1fr 60px;gap:12px;padding-bottom:8px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#7b8a9d">
+            <div>#</div><div>Section</div><div>Span</div>
+          </div>
+          <sc-for list="{{ L.spec }}" as="s" hint-placeholder-count="7">
+            <div style="display:grid;grid-template-columns:26px 1fr 60px;gap:12px;padding:10px 0;border-top:1px solid #f1f5f9;font-size:13.5px;line-height:1.5">
+              <div style="color:#7b8a9d;font-weight:700">{{ s.i }}</div>
+              <div><span style="color:#0b2545;font-weight:600">{{ s.s }}</span> <span style="color:#5a6b81">— {{ s.a }}</span></div>
+              <div style="color:#5a6b81;font-weight:600">{{ s.c }}</div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="padding:20px 24px;border-bottom:1px solid #eef2f7">
+          <div style="font-size:11.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#5f6f83;margin-bottom:12px">Widget grouping map</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <sc-for list="{{ L.grouping }}" as="g" hint-placeholder-count="4">
+              <div style="display:grid;grid-template-columns:250px 1fr;gap:20px;font-size:13.5px;line-height:1.55">
+                <div style="color:#0b2545;font-weight:600">{{ g.m }}</div>
+                <div style="color:#5a6b81">{{ g.w }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="padding:20px 24px;border-bottom:1px solid #eef2f7">
+          <div style="font-size:11.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#5f6f83;margin-bottom:12px">Counts — 1, 2, 3, 5, 6, 8</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <sc-for list="{{ L.counts }}" as="c" hint-placeholder-count="5">
+              <div style="display:grid;grid-template-columns:60px 1fr;gap:20px;font-size:13.5px;line-height:1.55">
+                <div style="color:#5f6f83;font-weight:700">{{ c.k }}</div>
+                <div style="color:#5a6b81">{{ c.v }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="padding:20px 24px;border-bottom:1px solid #eef2f7">
+          <div style="font-size:11.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#5f6f83;margin-bottom:12px">States</div>
+          <div style="display:grid;grid-template-columns:110px 1fr;gap:12px 20px;font-size:13.5px;line-height:1.55">
+            <div style="color:#5f6f83;font-weight:600">0 items</div><div style="color:#5a6b81">{{ L.empty }}</div>
+            <div style="color:#5f6f83;font-weight:600">20+ assets</div><div style="color:#5a6b81">{{ L.overflow }}</div>
+            <div style="color:#5f6f83;font-weight:600">Disabled</div><div style="color:#5a6b81">{{ L.disabled }}</div>
+          </div>
+        </div>
+
+        <div style="padding:20px 24px;background:#fdf1d6">
+          <div style="font-size:11.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#8a5a08;margin-bottom:8px">Trade-off</div>
+          <div style="font-size:13.5px;line-height:1.6;color:#6b4708">{{ L.tradeoff }}</div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      axes: [
+        {
+          t: "A · Banner visual treatment",
+          d: "18 options. The constraint that eliminates most of them: text contrast must survive a white-labelled logo, an unknown tenant photo and a dark theme.",
+          rows: [
+            { o: "Solid colour", n: "Safest for white-label. Use when the tenant supplies one brand hex and nothing else." },
+            { o: "Linear gradient", n: "Today's default. Cheap and always legible, but reads as generic enterprise and dates fast." },
+            { o: "Mesh / radial gradient", n: "Same safety as linear with more depth. Best when the tenant has two brand colours." },
+            { o: "Photographic image", n: "Only with a mandatory scrim and a 4.5:1 contrast check at upload. High risk of a bad tenant photo." },
+            { o: "Flat illustration", n: "Warm; suits HR and Higher Education. Needs an illustration library you commit to maintaining." },
+            { o: "Isometric illustration", n: "Reads technical and product-y. Fits IT and Manufacturing, feels cold in Healthcare." },
+            { o: "Line-art / technical drawing", n: "Low contrast, sits behind text safely. Today's network motif is this." },
+            { o: "3D-rendered logo forms", n: "Only viable when the tenant owns a real 3D brand asset. Otherwise a one-off." },
+            { o: "Abstract 3D shapes", n: "Vendor-neutral and modern; risks looking like a stock template if it is the gallery default." },
+            { o: "Geometric shape composition", n: "Built from brand hexes, so it white-labels perfectly. Strongest default for a multi-tenant gallery — used in 2a." },
+            { o: "Photo + overlaid shapes", n: "The shapes create a guaranteed contrast zone for the text. Use when photos are unavoidable." },
+            { o: "Pattern / texture", n: "Good for Government and Higher Education, where crests and seals already exist — used in 2c." },
+            { o: "Glassmorphic / blurred", n: "Requires something behind it worth blurring. Usually decoration for decoration's sake." },
+            { o: "Duotone", n: "Forces any tenant photo into brand colours and fixes contrast at the same time. Underrated." },
+            { o: "Split — image one half, colour the other", n: "Text lives on the solid half, so contrast is never at risk. Best photographic option." },
+            { o: "Animated / looping", n: "Motion above the fold on every load. Needs prefers-reduced-motion and a hard 3s cap." },
+            { o: "Data-motif", n: "Banner made from the tenant's own numbers — used in 2b. Distinctive, but empty tenants get an empty banner." },
+            { o: "No banner", n: "Replace with page-ground white space or a flat tinted block. Right for daily-use and search-first pages." }
+          ]
+        },
+        {
+          t: "B · Banner structure",
+          d: "Four sub-axes combined freely: containment × height × alignment × search placement.",
+          rows: [
+            { o: "Full-bleed", n: "Maximum brand presence. Fights the left rail visually at 1440." },
+            { o: "Inset rounded card", n: "Reads as a component rather than page chrome, which is what it actually is in a builder." },
+            { o: "Contained with margin", n: "Aligns the banner to the same grid as everything below. Calmest option." },
+            { o: "Height · hero, 420px+", n: "Marketing posture. Only for guest-accessible portals." },
+            { o: "Height · mid, 200–300px", n: "Fits banner plus quick actions above 900px. The workhorse." },
+            { o: "Height · compact, 120–160px", n: "Greeting and search only. For returning users." },
+            { o: "Height · bar, 56–72px", n: "A tinted strip with a headline. Effectively 'no banner' with a colour." },
+            { o: "Align · centre", n: "Balanced, but wastes the horizontal room a long tenant name needs." },
+            { o: "Align · left", n: "Survives a 60-character tenant name without re-centring awkwardly. Default." },
+            { o: "Align · split", n: "Text left, art or a stat block right. Gives illustration somewhere legitimate to live — 2a." },
+            { o: "Search · inside banner", n: "Highest prominence; contrast of the field against art must be checked." },
+            { o: "Search · straddling the edge", n: "Ties banner and content together and signals scrollability. Fragile on mobile — it must unstack." },
+            { o: "Search · below banner", n: "Simplest responsive behaviour, weakest hierarchy." },
+            { o: "Search · promoted into the top bar", n: "Persistent and always reachable. Correct for daily users; frees the whole banner slot — 2b." },
+            { o: "Search · omitted", n: "Only defensible when the catalog is small and browsable, under about 30 services." }
+          ]
+        },
+        {
+          t: "C · Quick actions",
+          d: "Arrangement and card anatomy are independent axes. Count runs 1–8 and must degrade without leaving a hole in the grid.",
+          rows: [
+            { o: "Count 1–8", n: "1 and 2 must not stretch full width — cap card width and left-align. 7+ needs two rows." },
+            { o: "Single row", n: "Clean at 3–5. At 6+ cards get too narrow to carry a description." },
+            { o: "2-row grid", n: "For 6–8. Requires equal card weight, so no hero." },
+            { o: "Overlapping the banner edge", n: "Today's pattern. Costs 40px of banner and complicates every breakpoint." },
+            { o: "Embedded inside the banner", n: "Actions inherit the banner's contrast problem. Only over solid colour." },
+            { o: "Vertical rail", n: "Actions pinned in a column, always visible while scrolling. Good for power users." },
+            { o: "Segmented pill bar", n: "Lowest visual weight. Right when data should outrank actions but actions stay one click away — 2b." },
+            { o: "One hero + secondary", n: "When analytics show one action is 60%+ of clicks. Makes the priority explicit." },
+            { o: "Bento of unequal sizes", n: "Expresses priority across 5–6 actions without demoting the rest to text — 2a." },
+            { o: "Anatomy · icon-left", n: "Most scannable with a description. Widest card." },
+            { o: "Anatomy · icon-top", n: "Most compact; works down to 160px wide." },
+            { o: "Anatomy · icon-right", n: "Rare; reads as a nav item rather than an action." },
+            { o: "Anatomy · icon as watermark", n: "Decorative only. Fails if the icon is the only differentiator." },
+            { o: "Anatomy · icon-only", n: "Needs a visible label elsewhere. Fails accessibility on its own." },
+            { o: "Anatomy · no icon", n: "Honest when a tenant has 8 actions and no distinct iconography for them." },
+            { o: "With / without description", n: "Descriptions are what let a first-time requester pick correctly. Drop them only for daily users." },
+            { o: "With / without arrow", n: "Use the arrow on the hero card only; on every card it becomes noise." }
+          ]
+        },
+        {
+          t: "D · Data widgets",
+          d: "Grouping is the highest-leverage axis on the page — it is what turns seven widgets into three cards.",
+          rows: [
+            { o: "One card per widget", n: "Today. Honest, but seven cards means seven empty states for a thin tenant." },
+            { o: "Merged multi-entity card", n: "Assets + CIs, or Announcements + Contact. Merge only things a user would name with one word." },
+            { o: "Tabbed container", n: "Saves enormous space; hides counts unless the counts are in the tab labels. Always put them in the labels." },
+            { o: "Accordion", n: "Good on mobile, poor at 1440 where the vertical space exists anyway." },
+            { o: "Segmented control", n: "Two or three peers of equal weight. Cheaper than tabs." },
+            { o: "Stat tiles + detail", n: "Counters carry the summary, one container carries the detail. The only safe way to justify heavy tabbing — 2b." },
+            { o: "Composition · equal-height grid", n: "Predictable, but forces the shortest widget to pad and the longest to truncate." },
+            { o: "Composition · masonry", n: "No wasted space; unstable ordering when data changes between visits." },
+            { o: "Composition · 2-col asymmetric", n: "Main work left, reference right. The most reusable arrangement — 2a." },
+            { o: "Composition · 3-col with rail", n: "Only at 1440+; collapses badly at 1280." },
+            { o: "Composition · full-width stacked", n: "For tables and timelines that need horizontal room." },
+            { o: "Composition · bento", n: "Expressive, but every widget must look right at three different sizes — 2c." },
+            { o: "Render · card list", n: "Default. Two lines per row." },
+            { o: "Render · compact table", n: "Five or more attributes per row. Desktop-first." },
+            { o: "Render · timeline", n: "When recency is the point — announcements, request history." },
+            { o: "Render · summary counters", n: "When the number is the answer and the list is a drill-in." }
+          ]
+        },
+        {
+          t: "E · Service shortcuts",
+          d: "Favourite and Most Used are the same object with two sort orders. Treat that as a filter, not two sections.",
+          rows: [
+            { o: "Count 1–4", n: "At 1–2 use a list row, not a grid cell — a lone card in a 4-col grid looks like an error." },
+            { o: "Grid", n: "Best for 3–6 with short names. Breaks with long service names." },
+            { o: "Carousel", n: "For 8+ favourites. Needs a visible affordance and keyboard support; costs discoverability." },
+            { o: "List", n: "Handles long names and categories. Most accessible, least visual." },
+            { o: "Chip cloud", n: "Count-agnostic — the only arrangement that never leaves a hole, from 1 to 20 — 2b." },
+            { o: "Merged with a filter", n: "Favourite and Most Used as one list with two sorts. Halves the section count — 2a." },
+            { o: "Kept separate", n: "Only when a tenant curates favourites editorially and needs them visually privileged." },
+            { o: "Omitted entirely", n: "Large catalog plus infrequent users: shortcuts are noise, search covers it — 2c." }
+          ]
+        },
+        {
+          t: "F · Page composition archetype",
+          d: "The archetype decides where the fold falls, and therefore which job the page is for.",
+          rows: [
+            { o: "Classic top-down", n: "Banner, actions, services, data. Familiar, and the safest gallery default." },
+            { o: "Left content + right rail", n: "Approvals and reference stay visible while the main column scrolls — 2a." },
+            { o: "Two-column split", n: "Do and See side by side. Strong for approvers." },
+            { o: "Bento / mosaic", n: "Expressive; hardest to keep stable when admins toggle sections off — 2c." },
+            { o: "Dashboard-first", n: "Data above actions. For users who visit daily and already know what to do — 2b." },
+            { o: "Search-first minimal", n: "For large catalogs and infrequent users. Lives or dies on search quality — 2c." },
+            { o: "Card feed", n: "One chronological column of mixed items. Good on mobile, unusual at 1440." },
+            { o: "Tabbed workspace", n: "The whole page is one container. Maximum density, minimum discovery — 2b." }
+          ]
+        }
+      ],
+
+      layouts: [
+        {
+          id: "2a", name: "Prism",
+          intent: "One weighted entry action carries the page, and everything the requester already owns sits in a persistent right rail that never competes with it.",
+          coords: "A geometric composition · B contained, mid, split, search inside the solid half · C 6 actions, bento, one hero · D 8/4 asymmetric with merged multi-entity cards · E merged with filter chips · F left content + persistent right rail",
+          domains: "IT, Manufacturing, Higher Education",
+          user: "Returning requester who files a few tickets a month, plus approvers",
+          fold: "Banner, search, all six quick actions and the first service row land above 900px.",
+          spec: [
+            { i: "1", s: "Banner", a: "contained, radius 20, 296px; left 55% solid navy holds eyebrow, H1, search and two trust lines; right 45% is a CSS geometric composition using brand hexes only", c: "12" },
+            { i: "2", s: "Search", a: "56px, inside the solid half — never over the artwork, so contrast is structural rather than checked", c: "6" },
+            { i: "3", s: "Quick actions", a: "bento — 1 hero card (dark icon tile, description, button) spanning two rows, plus 5 compact icon-top cards with per-action accent tints", c: "12" },
+            { i: "4", s: "Services", a: "merged section, filter chip row, 5 cards, icon-left plus name plus category", c: "12" },
+            { i: "5", s: "My Open Requests", a: "card list — type icon, subject, ID/date/owner meta line, status pill with an icon so status is not colour-only", c: "8" },
+            { i: "6", s: "My Estate", a: "tabbed card, Assets / CIs / Software, 2-column tile grid inside", c: "8" },
+            { i: "7", s: "Waiting on you", a: "rail card, inline Approve / Reject per row", c: "4" },
+            { i: "8", s: "Support info", a: "tabbed rail card, Announcements / Contact, announcements as a dot timeline", c: "4" },
+            { i: "9", s: "Most Read", a: "rail card, rank numeral plus title plus meta", c: "4" }
+          ],
+          grouping: [
+            { m: "Assets + CIs + Software → My Estate", w: "One mental object — things assigned to me — across three registries. Tab counts stay visible so nothing hides." },
+            { m: "Announcements + Contact Us → Support info", w: "Both are read-only reference, both are frequently empty. Merging means one empty card instead of two." },
+            { m: "Favourite + Most Used → Services", w: "Two sort orders of one list should never be two sections." },
+            { m: "Pending Approvals stays alone", w: "The only widget with a write action inside it. Burying it in a tab costs approvals." }
+          ],
+          counts: [
+            { k: "1", v: "Hero only, full width, description on one line. Services at 1 render as a list row, not a 1/5-width card." },
+            { k: "2", v: "Hero plus one card that spans the remaining three columns." },
+            { k: "3", v: "Hero plus two cards, single row, hero height halves." },
+            { k: "5", v: "Hero plus four, one full row and one short row." },
+            { k: "6", v: "As shown — hero plus five; the last grid cell stretches so there is no hole." },
+            { k: "8", v: "Hero demotes to a normal card and the grid becomes an even 4×2." }
+          ],
+          empty: "Requests card keeps its header and shows an 88px row: 'Nothing open. Raise a request'. Estate with zero assets and zero CIs removes itself and the rail grows to five columns rather than leaving a gap.",
+          overflow: "Estate caps at six tiles, the tab count reads 'Assets 24', and the footer becomes 'View all 24'. No in-card pagination — the card is a preview, the list page is the list.",
+          disabled: "A rail with one card left un-sticks and sits inline. Rail entirely off → the main column spans 12 and the requests list goes two-up. No empty gutter.",
+          tradeoff: "The hero action hard-codes a priority. Tenants whose top task is 'request something' rather than 'report a breakage' must reconfigure it, and a tenant with six genuinely equal actions gets a hierarchy they did not ask for."
+        },
+        {
+          id: "2b", name: "Ledger",
+          intent: "No banner: the colour block at the top of the page is built from the tenant's own numbers, and every widget below it lives in one table.",
+          coords: "A no banner / data-motif colour block · B search promoted into the top bar · C two buttons in the band plus a 6-pill bar below the data · D stat tiles plus one tabbed container, rendered as a compact table · E chip cloud · F dashboard-first",
+          domains: "Manufacturing, IT, Healthcare operations",
+          user: "Daily power user who opens this page several times a day and already knows where everything is",
+          fold: "Outage strip, greeting, both primary buttons, all five stat tiles and the first two table rows. Actions are above the fold even though the pill bar is not.",
+          spec: [
+            { i: "1", s: "Outage strip", a: "pinned first, amber, dismissible per incident, icon plus text plus follow link; renders nothing when there is no active outage", c: "12" },
+            { i: "2", s: "Data band", a: "full-width navy block, 300px, dot texture and a soft radial — the colour comes from data, not decoration", c: "12" },
+            { i: "3", s: "Greeting row", a: "inside the band: date, name, one derived sentence, two 44px buttons right-aligned", c: "12" },
+            { i: "4", s: "Stat tiles", a: "5 translucent tiles on the band — icon, label, value, sub-line, proportion bar. Icon and label carry meaning, not the colour", c: "12" },
+            { i: "5", s: "Workspace", a: "tabbed container over 5 widgets, compact 5-column table with avatars and icon-bearing status pills, filter control in the tab strip", c: "12" },
+            { i: "6", s: "Start something", a: "6 action pills, 48px, icon tile left, wrapping row under a rule", c: "12" },
+            { i: "7", s: "Services", a: "chip cloud, name plus category, no icons, no cards", c: "8" },
+            { i: "8", s: "Contact", a: "small bordered card pinned right of the chips", c: "4" }
+          ],
+          grouping: [
+            { m: "Requests + Approvals + Assets + CIs + Announcements + Knowledge → one workspace", w: "Justified only because the stat tiles above carry the counts. The tab strip is navigation, the tiles are the summary, so nothing you needed to see is hidden." },
+            { m: "Assets + CIs share one tab", w: "A requester does not distinguish an asset from a CI. One tab with a segmented filter inside it." },
+            { m: "Contact Us pulled out of the tabs", w: "It is the fallback for when the page fails you. It must never be behind a tab." },
+            { m: "Outage banner is its own always-first slot", w: "Admins can style it but cannot reorder it below the fold." }
+          ],
+          counts: [
+            { k: "1", v: "One tile, 240px, left-aligned — not stretched across the band. One pill promotes to a solid button, because a lone pill reads as a link." },
+            { k: "2", v: "Two tiles at 240px each, left-aligned; two pills side by side." },
+            { k: "3", v: "Three tiles at equal thirds." },
+            { k: "5", v: "As shown — five equal fifths, three pills per row at 1280." },
+            { k: "6", v: "Six equal sixths; labels truncate. Pills wrap to two rows at 1280, one row at 1440." },
+            { k: "8", v: "Tiles become a horizontal scroll strip rather than a second row. Pills always take two rows, never horizontal scroll on desktop." }
+          ],
+          empty: "A tile at zero still renders — '0 approvals' is information, and a disappearing tile makes the row jump between visits. An empty tab is greyed with a 0 count and is never the default tab; the first non-empty tab opens instead.",
+          overflow: "The table paginates at 10 with a '1–10 of 24' footer. This is the one layout where in-card pagination is correct, because the card is the whole page.",
+          disabled: "Disabling a widget removes its tab and its tile together. Down to one widget the tab strip disappears and the card takes that widget's title. All widgets off → the workspace collapses and the pill bar rises to fill it.",
+          tradeoff: "Brutal for a first-time requester: no invitation, no explanation, and a table of things they do not have yet. It also leaves a tenant almost nowhere to express a brand, which some buyers will read as an unfinished portal."
+        },
+        {
+          id: "2c", name: "Front Door",
+          intent: "Search is the page — quick actions become typed intents on a patterned ground, and everything you own is one bento below the fold.",
+          coords: "A pattern / texture ground where the banner would be · B no banner; search is the hero, 780×66 · C 6 intent chips instead of action cards · D bento of three unequal cards plus a knowledge row · E omitted, one text link to the catalog · F search-first minimal",
+          domains: "Government, Higher Education, Healthcare, and any tenant with a large catalog and infrequent users",
+          user: "First-time or twice-a-year requester who does not know the vocabulary of the catalog",
+          fold: "Tenant lockup, headline, the search field, all six intent chips and both escape links. Nothing below the fold is required to complete a task.",
+          spec: [
+            { i: "1", s: "Hero ground", a: "flat tint plus a dot lattice, two concentric outline rings and one rotated accent square — all CSS, all built from brand hexes, no imagery to fail a contrast check", c: "12" },
+            { i: "2", s: "Tenant lockup", a: "pill with a domain icon; carries a long tenant name without breaking the centred layout", c: "auto" },
+            { i: "3", s: "Search", a: "780×66 centred, submit inside, placeholder written as a question rather than a noun", c: "8" },
+            { i: "4", s: "Intent chips", a: "6 chips, 46px, icon-left, centred and wrapping. These are the quick actions", c: "10" },
+            { i: "5", s: "Escape links", a: "browse-all and report-outage as text links under the chips", c: "12" },
+            { i: "6", s: "Your activity", a: "bento — navy next-step card 1.25fr, tabbed request list 1fr, notices 1fr", c: "12" },
+            { i: "7", s: "People also read", a: "3 cards, rank numeral plus title plus meta", c: "12" }
+          ],
+          grouping: [
+            { m: "Quick Actions → search intents", w: "The action cards become pre-filled queries. 'New Incident' is still one click, but it arrives as language rather than as a category. That is the bet of this layout." },
+            { m: "Favourite + Most Used → one text link", w: "With a 214-service catalog and a twice-a-year user, a grid of five shortcuts is noise. The search field already covers it." },
+            { m: "Assets + CIs → My things", w: "Domain language, not ITSM language, because the audience is not IT." },
+            { m: "Announcements + Most Read → Notices and People also read", w: "Split by purpose rather than by source: what was published at you, versus what other people found useful." },
+            { m: "Contact Us + a derived next step", w: "Share the navy card. The next-step line is computed from the request set and is the one genuinely new piece of information on the page." }
+          ],
+          counts: [
+            { k: "1", v: "One chip, centred and alone under the field." },
+            { k: "2", v: "Centred pair." },
+            { k: "3", v: "One row, centred." },
+            { k: "5", v: "One row at 1440." },
+            { k: "6", v: "As shown — wraps to a shorter centred second row." },
+            { k: "8", v: "Two rows; at 9+ the last chip becomes '+3 more' and opens the catalog. Chips are variable-width, so this is the only quick-action arrangement that never leaves a hole at any count." }
+          ],
+          empty: "A brand-new user has no activity at all. The whole bento is replaced by one line under the hero — 'Nothing open. Anything you raise will appear here.' — and the page is legitimately just a search field. This is the only layout that looks correct when the tenant has no content.",
+          overflow: "'My things' shows five with the count in the tab label and a 'View all 24' footer. The hero never changes height regardless of data volume.",
+          disabled: "Activity bento off entirely → the hero grows to fill the viewport and the page is a search page. Nothing looks broken, because there was never a grid to leave a hole in.",
+          tradeoff: "It stakes the entire portal on search quality. If the knowledge base is thin or the catalog is badly named there is no fallback, and a power user with five open tickets scrolls past a search field they never use on every single visit. Do not sell this template to a tenant without measuring their search success rate first."
+        }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>
