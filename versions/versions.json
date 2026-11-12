@@ -250,8 +250,8 @@
         },
         {
           "version": "v2",
-          "date": "2026-11-03",
-          "commit": "7178a6c",
+          "date": "2026-11-12",
+          "commit": "516d229",
           "changes": [
             "Rule details: a MITRE ATT&CK tab after Controls (techniques, tactics, mitigations with their names), on both technician and admin sides.",
             "Endpoint page tabs: Vulnerabilities · Patches · Compliance Audit · Installation · Notes · Audit Trail.",
@@ -273,7 +273,12 @@
             "Technician Rules: Rule ID · Title · Profile · Assessment · OS Platform · OS Version · Endpoints · Rule Score.",
             "Policy detail: status badge, score, platform, created on and by under the title; Scan Now and Edit upfront; ⋮ = Enable/Disable · Clone · Cancel scan · Archive.",
             "Policy properties: Benchmark, Platform, Notify Team, Created/Updated by and on, Last and Next Scan, editable Tags (Tags column available, off by default).",
-            "Archive replaces Delete: archived policies stop running and live in the All Archived Policies view; Unarchive brings them back."
+            "Archive replaces Delete: archived policies stop running and live in the All Archived Policies view; Unarchive brings them back.",
+            "Technician Rules: Rule ID as the blue ID pill; Severity column on admin and technician Rules.",
+            "Rule drawer: Rule ID + title, then Profile · Assessment · OS Platform · OS Version · Severity.",
+            "Policy listing: OS Platform, Compliance Score/Result, Status (Draft/In Progress/Completed/Cancelled), Enable, Tags, Created/Updated; no Schedule action.",
+            "Create Policy in five layouts (V1–V5) with its guide and one Publish ▾ Save as Draft CTA.",
+            "Policy Endpoints tab: Execution Status; views All · In Progress · Draft · Cancelled · Archived · Non-Compliant; View rule results reads Previous → Recent."
           ]
         }
       ]
