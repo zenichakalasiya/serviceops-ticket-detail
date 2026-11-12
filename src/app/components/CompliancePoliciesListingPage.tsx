@@ -91,7 +91,7 @@ const buildCards = (rows: Ticket[]): StatCard[] => {
       filter: [{ field: 'x_cpResult', condition: 'is', values: ['Non-Compliant'] }],
     },
     {
-      label: 'Never Scanned', value: never.length, sub: 'policies waiting for a first scan',
+      label: 'Draft Policies', value: never.length, sub: 'saved as draft or never scanned',
       valueColor: never.length ? '#64748B' : undefined,
       filter: [{ field: 'status', condition: 'is', values: ['Draft'] }],
     },

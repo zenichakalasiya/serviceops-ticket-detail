@@ -1,3 +1,7 @@
+import { useOpenCreatePage } from './createFormStore';
+import { FORM_STEPS } from './createFormSteps';
+import { setCreateFormUi, useCreateFormUi, useExtraCreateOpen } from './createFormUi';
+import type { CreateFormUi } from './createFormUi';
 import { Plus, Calendar, Bell, Settings, Keyboard, Info } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { CURRENT_USER, CURRENT_USER_INITIALS } from './technicianRoster';
@@ -5,8 +9,11 @@ import svgPaths from "../../imports/svg-vmnsig04gh";
 import { GlobalSearchButton } from './GlobalSearch';
 import { openGlobalShortcuts } from './shortcutContext';
 import { ProfileMenu } from './ProfileMenu';
+import { CreateMenuButton } from './CreateMenuButton';
 import { setRelease, useFormRuleRelease } from './formRuleRelease';
 import { setComplianceRuleUi, useComplianceRuleUi } from './complianceRuleUi';
+import { setFormStudioUi, useFormStudioUi } from './formStudioUi';
+import { formModuleBySlug } from './formStudioData';
 
 /** Exported so the Support Portal preview renders the same mark the product header does. */
 export function MotadataLogo() {
@@ -159,11 +166,36 @@ function FormRuleReleaseSwitch() {
     const t = window.setInterval(on, 500); // replaceState does not fire hashchange
     return () => { window.removeEventListener('hashchange', on); window.clearInterval(t); };
   }, []);
-  if (!hash.startsWith('#/admin/request-form')) return null;
+  /* Rules tab only: the Form Builder tab has its own Builder V1 | V2 (FormStudioUiSwitch), and this
+     release never changed the builder. */
+  if (!hash.startsWith('#/admin/request-form-rules')) return null;
   return (
     <div className="pill-track" title="Request Form version">
       <button type="button" aria-pressed={v === 'v1'} onClick={() => setRelease('v1')}>V1</button>
       <button type="button" aria-pressed={v === 'v2'} onClick={() => setRelease('v2')}>V2</button>
+    </div>
+  );
+}
+
+/** Builder V1 / V2 on every admin form page (Form Studio, 2 Nov 2026) — see formStudioUi.ts. */
+function FormStudioUiSwitch() {
+  const [hash, setHash] = useState(() => location.hash);
+  const v = useFormStudioUi();
+  useEffect(() => {
+    const on = () => setHash(location.hash);
+    window.addEventListener('hashchange', on);
+    const t = window.setInterval(on, 500);
+    return () => { window.removeEventListener('hashchange', on); window.clearInterval(t); };
+  }, []);
+  const slug = hash.slice('#/admin/'.length).split('/')[0];
+  if (!hash.startsWith('#/admin/') || !(slug === 'request-form' || formModuleBySlug(slug))) return null;
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-[12px] text-[#7B8FA5]">Builder</span>
+      <div className="pill-track" title="Form builder version">
+        <button type="button" title="Inline + menu, configuration always open" aria-pressed={v === 'v1'} onClick={() => setFormStudioUi('v1')}>V1</button>
+        <button type="button" title="Drag fields from a Fields | Settings | Guide panel" aria-pressed={v === 'v2'} onClick={() => setFormStudioUi('v2')}>V2</button>
+      </div>
     </div>
   );
 }
@@ -187,6 +219,21 @@ function ComplianceRuleUiSwitch() {
   );
 }
 
+/** V1 / V2 / V3 of every create form (Zeni, 30 Oct 2026) — see createFormUi.ts. Shown only while a
+ *  create page is open. */
+function CreateFormUiSwitch() {
+  const open = useOpenCreatePage();
+  const extra = useExtraCreateOpen();
+  const v = useCreateFormUi();
+  if (!extra && (!open || !FORM_STEPS[open.spec])) return null;
+  const opts: [CreateFormUi, string, string][] = [['v1', 'V1', 'Full page, every section, help guide'], ['v2', 'V2', 'Full page, stepper on the left'], ['v3', 'V3', 'Side drawer, stepper on top'], ['v4', 'V4', 'One screen, essentials first'], ['v5', 'V5', 'One screen with a live summary']];
+  return (
+    <div className="pill-track" title="Create form version">
+      {opts.map(([id, label, tip]) => <button key={id} type="button" title={tip} aria-pressed={v === id} onClick={() => setCreateFormUi(id)}>{label}</button>)}
+    </div>
+  );
+}
+
 interface HeaderProps {
   selectedCount: number;
   /** Opens the Admin hub. Passed only where the gear should navigate. */
@@ -202,14 +249,19 @@ export function Header({ selectedCount, onOpenAdmin }: HeaderProps) {
             Restoring it is this line plus FINAL_UI in FormRuleEditor. */}
         {false && <FormRuleUiSwitch />}
         <FormRuleReleaseSwitch />
+        <CreateFormUiSwitch />
+        <FormStudioUiSwitch />
         {/* Hidden: V2 is the only rule-group builder (29 Oct 2026). */}
         {false && <ComplianceRuleUiSwitch />}
       </div>
       
       <div className="flex items-center gap-2">
-        <button className="flex h-[32px] w-[32px] items-center justify-center rounded bg-[#3D8BD0] text-white hover:bg-[#2d6ca0]">
-          <Plus size={18} strokeWidth={2} />
-        </button>
+        {/* The product's create menu — the only way into Request, Problem, Change, Release, Asset,
+            CI, Purchase Order, Project and Contract create pages (their listings have no button). */}
+        {/* Hidden (Zeni, 30 Oct 2026): its 10 forms (Incident, Problem, Change, Release, Asset, CI, PO, Project,
+            Contract, Request Service) are not ours to redesign — create pages exist only for the left-rail modules
+            whose own listing opens one. The menu and its specs stay built; restoring it is this one line. */}
+        {false && <CreateMenuButton />}
 
         {/* Global Search — before Calendar. Hides itself for a role with nothing to search. */}
         <GlobalSearchButton />

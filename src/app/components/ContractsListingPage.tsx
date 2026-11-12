@@ -11,6 +11,8 @@ import { CONTRACT_QUICK_FILTERS, type FilterRule } from './TicketFilterBar';
 import { CONTRACT_FILTER_ATTRS } from './contractFilterAttrs';
 import { mockContracts, type Contract } from './ContractsListPage';
 import type { Ticket } from './TicketListPage';
+import { useMemo } from 'react';
+import { dateOf, dmyOf, str, useCreatedRecords, type CreatedRecord } from './createFormStore';
 import { AlertTriangle, CalendarClock, CheckCircle2, FileText } from 'lucide-react';
 
 const ruleIs = (field: string, ...values: string[]): Omit<FilterRule, 'id'>[] => [{ field, condition: 'is', values }];
@@ -32,11 +34,9 @@ const parseDMY = (s: string | null): Date | null => {
 const fmtINR = (n: number) =>
   n >= 1e7 ? `₹${(n / 1e7).toFixed(2)} Cr` : n >= 1e5 ? `₹${(n / 1e5).toFixed(1)} L` : `₹${n.toLocaleString('en-IN')}`;
 
-const CT: { rows: Ticket[]; byId: Map<string, Contract> } = (() => {
-  const byId = new Map<string, Contract>();
-  const today = new Date();
-  const rows = mockContracts.map((c) => {
-    byId.set(c.id, c);
+/** One contract as a listing row — the mock contracts and ones created this session alike. */
+const contractRow = (c: Contract): Ticket => {
+    const today = new Date();
     const start = parseDMY(c.startDate)!;
     const end = parseDMY(c.endDate)!;
     const days = Math.ceil((end.getTime() - today.getTime()) / DAY);
@@ -65,9 +65,31 @@ const CT: { rows: Ticket[]; byId: Map<string, Contract> } = (() => {
       endOn: end,
       x_expiryBand: expiryBand,
     } as Ticket;
-  });
-  return { rows, byId };
+};
+
+const CT: { rows: Ticket[]; byId: Map<string, Contract> } = (() => {
+  const byId = new Map<string, Contract>();
+  mockContracts.forEach((c) => byId.set(c.id, c));
+  return { rows: mockContracts.map(contractRow), byId };
 })();
+
+/** A contract saved on the Create Contract page (the 'contract' keys in createFormSpecs). */
+const contractFromForm = (r: CreatedRecord): Contract => {
+  const v = r.values;
+  const start = dateOf(v.startDate), end = dateOf(v.endDate), now = new Date();
+  const amount = str(v.cost);
+  return {
+    id: r.id,
+    name: str(v.name),
+    contractType: str(v.contractType, 'Lease'),
+    contractNumber: str(v.contractNumber) || null,
+    startDate: dmyOf(v.startDate) ?? '',
+    endDate: dmyOf(v.endDate) ?? '',
+    status: end && end < now ? 'Expired' : start && start > now ? 'Not Started' : 'Active',
+    vendor: str(v.vendor),
+    cost: amount ? `${Number(amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })} ${str(v.costCurrency, 'INR')}` : null,
+  };
+};
 
 /* The KPI strip — the Contract detail page's header story (Status · Expires ·
    Vendor · Cost · Type) rolled up across the portfolio. */
@@ -183,6 +205,10 @@ const buildDashboard = (tickets: Ticket[]): DashConfig => {
 };
 
 export function ContractsListingPage({ onNavigate }: { onNavigate?: (page: string) => void }) {
+  /* Contracts created on the Create Contract page come first. */
+  const created = useCreatedRecords('contracts');
+  const extra = useMemo(() => created.map(contractFromForm), [created]);
+  const rows = useMemo(() => [...extra.map(contractRow), ...CT.rows], [extra]);
   return (
     <AssetRegisterPage
       activePage="contracts"
@@ -192,8 +218,8 @@ export function ContractsListingPage({ onNavigate }: { onNavigate?: (page: strin
       moduleCols="contract"
       defaultViewName="All Contracts"
       footerNoun="contracts"
-      rows={CT.rows}
-      recordOf={(id) => CT.byId.get(id)}
+      rows={rows}
+      recordOf={(id) => CT.byId.get(id) ?? extra.find((c) => c.id === id)}
       buildCards={buildCards}
       buildDashboard={buildDashboard}
       mineHint="Contracts carry no personal assignment — switch back to Overall."

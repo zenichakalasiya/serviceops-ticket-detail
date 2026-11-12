@@ -12,6 +12,8 @@ import { SOFTWARE_QUICK_FILTERS, type FilterRule } from './TicketFilterBar';
 import { SOFTWARE_FILTER_ATTRS } from './softwareFilterAttrs';
 import { mockAssets, type SoftwareAsset } from './SoftwareAssetsListPage';
 import type { Ticket } from './TicketListPage';
+import { useMemo } from 'react';
+import { initialsOf, str, useCreatedRecords, type CreatedRecord } from './createFormStore';
 import { AlertTriangle, AppWindow, CalendarClock, Import, ShieldCheck } from 'lucide-react';
 
 const ruleIs = (field: string, ...values: string[]): Omit<FilterRule, 'id'>[] => [{ field, condition: 'is', values }];
@@ -46,10 +48,8 @@ const swTypeOf = (name: string) => {
   return 'Application';
 };
 
-const SW: { rows: Ticket[]; byId: Map<string, SoftwareAsset> } = (() => {
-  const byId = new Map<string, SoftwareAsset>();
-  const rows = mockAssets.map((a) => {
-    byId.set(a.id, a);
+/** One software asset as a listing row — the mock pool and assets added this session alike. */
+const softwareRow = (a: SoftwareAsset): Ticket => {
     const h = hash(a.id);
     const created = new Date(2026, h % 8, 1 + (h % 27), 9 + (h % 8), (h % 4) * 15);
     const initials = (n: string) => n.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase();
@@ -82,9 +82,31 @@ const SW: { rows: Ticket[]; byId: Map<string, SoftwareAsset> } = (() => {
       x_compliance: compliance,
       x_expiryBand: expiryBand,
     } as Ticket;
-  });
-  return { rows, byId };
+};
+
+const SW: { rows: Ticket[]; byId: Map<string, SoftwareAsset> } = (() => {
+  const byId = new Map<string, SoftwareAsset>();
+  mockAssets.forEach((a) => byId.set(a.id, a));
+  return { rows: mockAssets.map(softwareRow), byId };
 })();
+
+/** An asset saved on the Add Software Asset page (the 'asset' keys in createFormSpecs). */
+const softwareFromForm = (r: CreatedRecord): SoftwareAsset => {
+  const v = r.values;
+  const managedBy = str(v.managedBy, 'Unassigned');
+  return {
+    id: r.id,
+    name: str(v.name),
+    assetType: str(v.assetType, 'Application'),
+    status: str(v.status, 'In Use') as SoftwareAsset['status'],
+    version: str(v.version, '---'),
+    softwareType: str(v.softwareType, 'Managed'),
+    managedByGroup: str(v.managedByGroup, 'Unassigned'),
+    managedBy: managedBy === 'Unassigned' ? { name: managedBy } : { name: managedBy, initials: initialsOf(managedBy), color: '#3D8BD0' },
+    impact: str(v.impact, 'Low'),
+    softwareCategory: str(v.softwareCategory, '---'),
+  };
+};
 
 /* The KPI strip — the software detail page's header story (Status · Compliance ·
    Utilization · License Expiry · Impact) rolled up across the catalog. */
@@ -243,6 +265,10 @@ export function SoftwareAssetsListingPage({
   initialOpenId?: string | null;
   onInitialOpenConsumed?: () => void;
 }) {
+  /* Assets added on the Add Software Asset page come first. */
+  const created = useCreatedRecords('software-assets');
+  const extra = useMemo(() => created.map(softwareFromForm), [created]);
+  const rows = useMemo(() => [...extra.map(softwareRow), ...SW.rows], [extra]);
   return (
     <AssetRegisterPage
       activePage="software-assets"
@@ -252,8 +278,8 @@ export function SoftwareAssetsListingPage({
       moduleCols="software"
       defaultViewName="All Software IT Assets"
       footerNoun="assets"
-      rows={SW.rows}
-      recordOf={(id) => SW.byId.get(id)}
+      rows={rows}
+      recordOf={(id) => SW.byId.get(id) ?? extra.find((a) => a.id === id)}
       buildCards={buildCards}
       buildDashboard={buildDashboard}
       searchFields={['x_version', 'x_softwareType', 'x_softwareCategory']}

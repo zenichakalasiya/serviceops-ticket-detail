@@ -7,7 +7,7 @@
    schedule is read for one thing: are approved patches still reaching the fleet, or has the
    rollout quietly stopped? So the strip leads with what is live, what is overdue to fire and
    what has never run at all. */
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { CalendarClock, PlayCircle, Power, PowerOff, Rocket } from 'lucide-react';
 import { toast } from 'sonner';
 import { AssetRegisterPage } from './AssetRegisterPage';
@@ -19,6 +19,8 @@ import {
 import type { DashConfig } from './AssetDashboardView';
 import type { StatCard } from './AssetStatsRow';
 import type { Ticket } from './TicketListPage';
+import { CURRENT_USER } from './technicianRoster';
+import { openCreatePage, str, useCreatedRecords, type CreatedRecord } from './createFormStore';
 
 /* "Fri, Oct 02, 2026 12:00 AM" → a real Date, so the column sorts chronologically and the
    date buckets read the true value. */
@@ -71,6 +73,19 @@ const toRow = (d: AutomaticPatchDeployment): Ticket => ({
   x_deployments: d.totalDeployments,
   ...installOutcomesOf(d),
 } as unknown as Ticket);
+
+/** A schedule saved on the Create Automatic Patch Deployment page (the 'auto-patch-deployment'
+ *  keys in createFormSpecs). It is on from the start and has not created any deployments yet. */
+const apdFromForm = (r: CreatedRecord): AutomaticPatchDeployment => ({
+  id: r.id,
+  name: str(r.values.name),
+  totalDeployments: null,
+  lastExecution: null,
+  nextExecution: null,
+  enabled: true,
+  createdBy: CURRENT_USER,
+  deploymentPolicy: str(r.values.policy, '---'),
+});
 
 const enabledOf = (t: Ticket) => (t as any).x_enabled === 'Enabled';
 const activityOf = (t: Ticket) => String((t as any).x_activity);
@@ -183,8 +198,17 @@ export function AutomaticPatchDeploymentsListingPage({ onNavigate }: { onNavigat
   const [open, setOpen] = useState<AutomaticPatchDeployment | null>(null);
   /* The Enable switch writes back, so the rows are state rather than a constant — toggling a
      schedule off has to move it out of the "Enabled" KPI and any applied filter. */
-  const [rows, setRows] = useState<Ticket[]>(() => mockAutomaticPatchDeployments.map(toRow));
-  const byId = useMemo(() => new Map(mockAutomaticPatchDeployments.map((d) => [d.id, d])), []);
+  /* Schedules created on the Create Automatic Patch Deployment page join the state rows first,
+     so the Enable switch works on them like any other. */
+  const saved = useCreatedRecords('automatic-patch-deployments');
+  const created = useMemo(() => saved.map(apdFromForm), [saved]);
+  const [rows, setRows] = useState<Ticket[]>(() => [...created, ...mockAutomaticPatchDeployments].map(toRow));
+  useEffect(() => setRows((prev) => {
+    const have = new Set(prev.map((r) => r.id));
+    const add = created.filter((d) => !have.has(d.id)).map(toRow);
+    return add.length ? [...add, ...prev] : prev;
+  }), [created]);
+  const byId = useMemo(() => new Map([...created, ...mockAutomaticPatchDeployments].map((d) => [d.id, d])), [created]);
 
   return (
     <>
@@ -216,7 +240,7 @@ export function AutomaticPatchDeploymentsListingPage({ onNavigate }: { onNavigat
            back. (Same trade-off Automatic Patch Tests and My Team make.) */
         hideTools={['export', 'settings']}
         moreActions={[]}
-        primaryAction={{ label: 'Create' }}
+        primaryAction={{ label: 'Create', onClick: () => openCreatePage({ spec: 'auto-patch-deployment', target: 'automatic-patch-deployments' }) }}
         primaryActionInTitle
         /* The Enable switch is the one thing this grid edits in place. */
         onUpdateTicket={(id, patch) => setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)))}

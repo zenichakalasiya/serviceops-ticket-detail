@@ -22,6 +22,7 @@ import { CMDB_QUICK_FILTERS, type FilterRule } from './TicketFilterBar';
 import { CMDB_FILTER_ATTRS } from './cmdbFilterAttrs';
 import { mockCis, type Ci } from './CmdbListPage';
 import type { Ticket } from './TicketListPage';
+import { initialsOf, str, useCreatedRecords, type CreatedRecord } from './createFormStore';
 import { Boxes, FileStack, HeartPulse, Import, Server, ShieldCheck } from 'lucide-react';
 
 const ruleIs = (field: string, ...values: string[]): Omit<FilterRule, 'id'>[] => [{ field, condition: 'is', values }];
@@ -54,10 +55,8 @@ const USERS = [
 const ENVIRONMENTS = ['Production', 'Staging', 'Development', 'DR'];
 const LOCATIONS = ['Ahmedabad HQ', 'Pune Office', 'Chennai DC', 'Bengaluru Office', 'Remote'];
 
-const CM: { rows: Ticket[]; byId: Map<string, Ci> } = (() => {
-  const byId = new Map<string, Ci>();
-  const rows = mockCis.map((c) => {
-    byId.set(c.id, c);
+/** One CI as a listing row — the mock database and CIs added this session alike. */
+const ciRow = (c: Ci): Ticket => {
     const h = hash(c.id);
     const personal = PERSONAL_CLASS.test(c.ciType);
     /* Discovery dates, newest ids first — the list reads as a database that has been
@@ -89,9 +88,31 @@ const CM: { rows: Ticket[]; byId: Map<string, Ci> } = (() => {
       x_environment: ENVIRONMENTS[h % ENVIRONMENTS.length],
       x_location: LOCATIONS[h % LOCATIONS.length],
     } as Ticket;
-  });
-  return { rows, byId };
+};
+
+const CM: { rows: Ticket[]; byId: Map<string, Ci> } = (() => {
+  const byId = new Map<string, Ci>();
+  mockCis.forEach((c) => byId.set(c.id, c));
+  return { rows: mockCis.map(ciRow), byId };
 })();
+
+/** A CI saved on the Add CI page (the 'ci' keys in createFormSpecs). Host name and IP arrive
+ *  with discovery, so a hand-added CI starts without them. */
+const ciFromForm = (r: CreatedRecord): Ci => {
+  const v = r.values;
+  const managedBy = str(v.managedBy);
+  return {
+    id: r.id,
+    name: str(v.name),
+    ciType: str(v.ciType, 'Base CI'),
+    status: str(v.status, 'Operational') as Ci['status'],
+    hostName: '---',
+    ipAddress: '---',
+    usedBy: (Array.isArray(v.usedBy) ? (v.usedBy as string[]).join(', ') : str(v.usedBy)) || null,
+    managedByGroup: str(v.managedByGroup, 'Unassigned'),
+    managedBy: managedBy ? { name: managedBy, initials: initialsOf(managedBy), color: '#3D8BD0' } : null,
+  };
+};
 
 /* The KPI strip — what the database holds, and where it is unreliable. A CMDB is only
    worth what its weakest records are worth, so the cards lead with the gaps: agents that
@@ -235,27 +256,33 @@ export function CmdbListingPage({ onNavigate }: { onNavigate?: (page: string) =>
      off: the database opens showing all of itself, with the class tree beneath it. */
   const [ciClass, setCiClass] = useState<string | null>(CI_ROOT);
 
+  /* CIs added on the Add CI page join the database at the top. */
+  const created = useCreatedRecords('cmdb');
+  const extra = useMemo(() => created.map(ciFromForm), [created]);
+  /* The mock mapper invents extra users for shared CIs; a hand-added CI has only the ones given. */
+  const all = useMemo(() => [...extra.map((c) => ({ ...ciRow(c), usedByMore: 0 } as Ticket)), ...CM.rows], [extra]);
+
   /* Counts are taken from the WHOLE database, not the current slice: a rail whose numbers
      moved every time you clicked it would be unreadable. */
   const counts = useMemo(() => {
     const m: Record<string, number> = {};
-    CM.rows.forEach((r) => {
+    all.forEach((r) => {
       const k = (r as any).x_ciType as string;
       if (k) m[k] = (m[k] ?? 0) + 1;
     });
     return m;
-  }, []);
+  }, [all]);
 
   const rows = useMemo(() => {
     /* The root is the whole database — filtered by its own leaves it would drop any CI
        whose class the tree has not caught up with yet, which is the one thing a CMDB must
        never do quietly. */
-    if (!ciClass || ciClass === CI_ROOT) return CM.rows;
+    if (!ciClass || ciClass === CI_ROOT) return all;
     const types = typesForClass(ciClass);
-    if (!types) return CM.rows;
+    if (!types) return all;
     const set = new Set(types);
-    return CM.rows.filter((r) => set.has((r as any).x_ciType));
-  }, [ciClass]);
+    return all.filter((r) => set.has((r as any).x_ciType));
+  }, [ciClass, all]);
 
   return (
     <AssetRegisterPage
@@ -271,7 +298,7 @@ export function CmdbListingPage({ onNavigate }: { onNavigate?: (page: string) =>
       defaultViewName={ciClass ?? 'All CI'}
       footerNoun="CIs"
       rows={rows}
-      recordOf={(id) => CM.byId.get(id)}
+      recordOf={(id) => CM.byId.get(id) ?? extra.find((c) => c.id === id)}
       buildCards={buildCards}
       buildDashboard={buildDashboard}
       filterAttrs={CMDB_FILTER_ATTRS}

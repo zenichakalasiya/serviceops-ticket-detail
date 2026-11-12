@@ -15,6 +15,7 @@ import { TicketDashboardView } from './TicketDashboardView';
 import { Pagination } from './Pagination';
 import { useDrawerStack } from './DrawerStack';
 import { TicketDrawer } from './TicketDrawer';
+import { initialsOf, str, useCreatedRecords, type CreatedRecord } from './createFormStore';
 
 export interface Ticket {
   id: string;
@@ -241,8 +242,40 @@ function DrillCrumb({
   );
 }
 
+/* The form's Status words → the queue's (Resolved reads as Completed, On Hold as Pending). */
+const REQUEST_STATUS: Record<string, Ticket['status']> = { Open: 'Open', 'In Progress': 'In Progress', Pending: 'Pending', 'On Hold': 'Pending', Resolved: 'Completed', Closed: 'Closed' };
+
+/** A request saved on the Create Incident page (the 'request' keys in createFormSpecs). A
+ *  request has no Priority field — it is worked out from Urgency, as the form says. */
+const requestFromForm = (r: CreatedRecord): Ticket => {
+  const v = r.values;
+  const assignee = str(v.assignee, 'Unassigned');
+  const urgency = str(v.urgency, 'Low');
+  return {
+    id: r.id,
+    subject: str(v.subject),
+    requester: str(v.requester),
+    dueBy: new Date(r.createdAt.getTime() + 2 * 864e5),
+    createdBy: r.createdAt,
+    assignedTo: assignee === 'Unassigned' ? { name: 'Unassigned', initials: '' } : { name: assignee, initials: initialsOf(assignee) },
+    status: REQUEST_STATUS[str(v.status, 'Open')] ?? 'Open',
+    priority: (['Low', 'Medium', 'High', 'Urgent'].includes(urgency) ? urgency : 'Low') as Ticket['priority'],
+    impact: str(v.impact) || undefined,
+  };
+};
+
 export function TicketListPage({ onNavigate }: { onNavigate?: (page: string) => void }) {
   const [tickets, setTickets] = useState<Ticket[]>(generateMockTickets());
+  /* Requests created on the Create Incident page join the top of the queue (edits made in
+     the grid stay — only rows the queue does not have yet are added). */
+  const created = useCreatedRecords('request');
+  useEffect(() => {
+    setTickets((ts) => {
+      const have = new Set(ts.map((t) => t.id));
+      const fresh = created.filter((r) => !have.has(r.id)).map(requestFromForm);
+      return fresh.length ? [...fresh, ...ts] : ts;
+    });
+  }, [created]);
   // Assignee / Status / Priority are editable straight from the grid.
   const updateTicket = (id: string, patch: Partial<Ticket>) =>
     setTickets((ts) => ts.map((t) => (t.id === id ? { ...t, ...patch } : t)));

@@ -17,7 +17,7 @@ export function takeComplianceDrill(page: string): DrillRules | undefined {
   return r;
 }
 
-export const ARCHIVED_POLICY_VIEW = 'All Archived Policies';
+export const ARCHIVED_POLICY_VIEW = 'Archived Policies';
 
 /* Status = where the scan RUN stands; Compliance Result = whether it passed (Zeni, 12 Nov 2026). */
 export const POLICY_STATUS_OPTIONS = [
@@ -70,14 +70,15 @@ export const POLICY_QUICK_FILTERS: QuickFilterDef[] = [
   { field: 'x_type', icon: Layers, tip: 'Filter by OS type', title: 'OS Type is', width: 180, row: 'plain', options: TYPE_OPTIONS },
 ];
 
+/* Zeni, 12 Nov 2026: All · In Progress (pending) · Draft · Cancelled · Archived · Non-Compliant. */
 export const POLICY_VIEWS: TicketView[] = [
   { name: 'All Compliance Policies', rules: [] },
-  { name: 'Non-Compliant', rules: [{ field: 'x_cpResult', condition: 'is', values: ['Non-Compliant'] }] },
-  { name: 'Never Scanned', rules: [{ field: 'status', condition: 'is', values: ['Draft'] }] },
-  { name: 'Scheduled', rules: [{ field: 'x_scheduled', condition: 'is', values: ['Scheduled'] }] },
-  { name: 'Disabled', rules: [{ field: 'x_enabled', condition: 'is', values: ['Disabled'] }] },
+  { name: 'In Progress Policies', rules: [{ field: 'status', condition: 'is', values: ['In Progress'] }] },
+  { name: 'Draft Policies', rules: [{ field: 'status', condition: 'is', values: ['Draft'] }] },
+  { name: 'Cancelled Policies', rules: [{ field: 'status', condition: 'is', values: ['Cancelled'] }] },
   /* Archived policies are in THIS view only — CompliancePoliciesListingPage's viewScope keeps them out of the rest. */
   { name: ARCHIVED_POLICY_VIEW, rules: [] },
+  { name: 'Non-Compliant Policies', rules: [{ field: 'x_cpResult', condition: 'is', values: ['Non-Compliant'] }] },
 ];
 
 /* ── The technician's Benchmark and Endpoints pages — read-only registers over the same

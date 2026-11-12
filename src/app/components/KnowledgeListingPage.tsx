@@ -26,6 +26,8 @@ import {
   type KnowledgeArticle,
 } from './KnowledgeListPage';
 import type { Ticket } from './TicketListPage';
+import { CURRENT_USER } from './technicianRoster';
+import { openCreatePage, stampOf, str, useCreatedRecords, type CreatedRecord } from './createFormStore';
 
 const initialsOf = (n: string) => n.split(' ').filter(Boolean).map((p) => p[0]).join('').slice(0, 2).toUpperCase();
 const folderLabel = (id: string) => KNOWLEDGE_FOLDERS.find((f) => f.id === id)?.label ?? id;
@@ -52,10 +54,8 @@ function FolderPermissions({ read, write }: { read: string; write: string }) {
   );
 }
 
-const KB: { rows: Ticket[]; byId: Map<string, KnowledgeArticle> } = (() => {
-  const byId = new Map<string, KnowledgeArticle>();
-  const rows = mockKnowledgeArticles.map((a) => {
-    byId.set(a.id, a);
+/** One article as a listing row — the mock articles and ones created this session alike. */
+const articleRow = (a: KnowledgeArticle): Ticket => {
     /* "Sun, Jul 19, 2026 10:58 PM" — drop the weekday so Date can read it. */
     const created = new Date(a.created.replace(/^[A-Za-z]{3},\s*/, ''));
     return {
@@ -76,9 +76,32 @@ const KB: { rows: Ticket[]; byId: Map<string, KnowledgeArticle> } = (() => {
       folderId: a.folder,
       trashed: TRASHED_IDS.has(a.id),
     } as Ticket;
-  });
-  return { rows, byId };
+};
+
+const KB: { rows: Ticket[]; byId: Map<string, KnowledgeArticle> } = (() => {
+  const byId = new Map<string, KnowledgeArticle>();
+  mockKnowledgeArticles.forEach((a) => byId.set(a.id, a));
+  return { rows: mockKnowledgeArticles.map(articleRow), byId };
 })();
+
+const p2 = (n: number) => String(n).padStart(2, '0');
+/** A Date as the form's local "YYYY-MM-DDTHH:MM" — what stampOf reads. */
+const localStamp = (d: Date) => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}T${p2(d.getHours())}:${p2(d.getMinutes())}`;
+
+/** An article saved on the Create Article page (the 'knowledge' keys in createFormSpecs): a
+ *  Draft by you, in the folder you chose, not yet sent for approval or read by anyone. */
+const articleFromForm = (r: CreatedRecord): KnowledgeArticle => ({
+  id: r.id,
+  name: str(r.values.title),
+  author: CURRENT_USER,
+  status: 'Draft',
+  approvalStatus: 'Not Requested',
+  likes: 0,
+  dislikes: 0,
+  created: stampOf(localStamp(r.createdAt)) ?? '',
+  totalRead: 0,
+  folder: str(r.values.folder, KNOWLEDGE_FOLDERS[0].id),
+});
 
 export function KnowledgeListingPage({ onNavigate }: { onNavigate?: (page: string) => void }) {
   /* The selected rail row — 'top' (the digest), 'all', a folder id, or 'trash'. Knowledge
@@ -88,6 +111,10 @@ export function KnowledgeListingPage({ onNavigate }: { onNavigate?: (page: strin
   /* Folders deleted from the rail. Kept here rather than in the rail because the grid, the
      counts and the title all have to agree with it. */
   const [deleted, setDeleted] = useState<string[]>([]);
+  /* Articles created on the Create Article page join the base, first. */
+  const created = useCreatedRecords('knowledge');
+  const extra = useMemo(() => created.map(articleFromForm), [created]);
+  const allRows = useMemo(() => [...extra.map(articleRow), ...KB.rows], [extra]);
 
   /* Deleting a folder does exactly what its confirm promises: DRAFTS go for good, and
      everything else moves to Trash. */
@@ -98,30 +125,30 @@ export function KnowledgeListingPage({ onNavigate }: { onNavigate?: (page: strin
   /* Counts come from the whole base, not the current slice, so the rail's numbers do not
      move when you click it. Trashed articles are only ever counted in Trash. */
   const counts = useMemo(() => {
-    const live = KB.rows.filter((r) => !isGone(r) && !isTrashed(r));
+    const live = allRows.filter((r) => !isGone(r) && !isTrashed(r));
     return {
       total: live.length,
-      trash: KB.rows.filter(isTrashed).length,
+      trash: allRows.filter(isTrashed).length,
       folders: KNOWLEDGE_FOLDERS.filter((f) => !deleted.includes(f.id)).map((f) => ({
         id: f.id,
         label: f.label,
         count: live.filter((r) => (r as any).folderId === f.id).length,
       })),
     };
-  }, [deleted]);
+  }, [deleted, allRows]);
 
   const rows = useMemo(() => {
-    if (folder === 'trash') return KB.rows.filter(isTrashed);
-    const live = KB.rows.filter((r) => !isGone(r) && !isTrashed(r));
+    if (folder === 'trash') return allRows.filter(isTrashed);
+    const live = allRows.filter((r) => !isGone(r) && !isTrashed(r));
     /* The digest ranks the whole base, so it gets every live article and picks its own. */
     return folder === 'all' || folder === 'top' ? live : live.filter((r) => (r as any).folderId === folder);
-  }, [folder, deleted]);
+  }, [folder, deleted, allRows]);
 
   /* The rail has already asked for confirmation by the time this runs, so it just reports
      what happened. Selecting the folder that went away would strand the reader, so the grid
      falls back to All Folders. */
   const deleteFolder = (id: string) => {
-    const mine = KB.rows.filter((r) => !(r as any).trashed && (r as any).folderId === id);
+    const mine = allRows.filter((r) => !(r as any).trashed && (r as any).folderId === id);
     const drafts = mine.filter((r) => (r.status as string) === 'Draft').length;
     const moved = mine.length - drafts;
     setDeleted((prev) => [...prev, id]);
@@ -160,7 +187,7 @@ export function KnowledgeListingPage({ onNavigate }: { onNavigate?: (page: strin
       footerNoun="articles"
       rows={rows}
       /* The drawer takes the article adapted onto the Patch shape, as the old page did. */
-      recordOf={(id) => { const a = KB.byId.get(id); return a ? knowledgeToPatchShape(a) : undefined; }}
+      recordOf={(id) => { const a = KB.byId.get(id) ?? extra.find((x) => x.id === id); return a ? knowledgeToPatchShape(a) : undefined; }}
       /* List only — no Dashboard layout here, so the gear menu shows no layout picker. */
       filterAttrs={KNOWLEDGE_FILTER_ATTRS}
       /* Author is who WROTE the article, and Status moves by drafting, reviewing and
@@ -168,7 +195,7 @@ export function KnowledgeListingPage({ onNavigate }: { onNavigate?: (page: strin
       lockedCells={['assignee', 'status']}
       quickFilters={KNOWLEDGE_QUICK_FILTERS}
       searchFields={['x_approvalStatus', 'x_folder']}
-      primaryAction={{ label: 'Create' }}
+      primaryAction={{ label: 'Create Article', onClick: () => openCreatePage({ spec: 'knowledge', target: 'knowledge', idOf: (n) => `KB-${n}`, seqStart: 100, preset: KNOWLEDGE_FOLDERS.some((f) => f.id === folder) ? { folder } : undefined }) }}
       /* On the title line, at the page's top-right — the rail below it narrows what you are
          looking at, which is a different job from writing a new article. */
       primaryActionInTitle

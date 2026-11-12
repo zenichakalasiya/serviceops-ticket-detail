@@ -67,6 +67,30 @@ function kpi(key: string, label: string, value: React.ReactNode, tip: string, do
 
 const initials = (n: string) => n.split(' ').map((s) => s[0]).join('').slice(0, 2).toUpperCase();
 
+/** Where the scan RUN stands on one endpoint (Zeni, 12 Nov 2026) — separate from whether it passed.
+ *  Derived: a running policy queues endpoints and works through them; a cancelled run cancels what was
+ *  left; an offline agent fails; a deterministic few finish only part of their checks. */
+type ExecStatus = 'Queued' | 'In Progress' | 'Completed' | 'Partially Completed' | 'Failed' | 'Cancelled';
+const EXEC_TONE: Record<ExecStatus, string> = {
+  Queued: '#94A3B8', 'In Progress': '#3D8BD0', Completed: '#22C55E', 'Partially Completed': '#F59E0B', Failed: '#DC2626', Cancelled: '#7B8FA5',
+};
+const hashOf = (s: string) => [...s].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
+function execStatusOf(p: CompliancePolicy, epId: string, agentOnline: boolean, i: number): ExecStatus | null {
+  if (p.scanning) return i % 3 === 0 ? 'In Progress' : 'Queued';
+  if (p.cancelled) return 'Cancelled';
+  if (!p.lastScan) return null;
+  if (!agentOnline) return 'Failed';
+  return hashOf(epId + p.id) % 9 === 0 ? 'Partially Completed' : 'Completed';
+}
+function ExecPill({ status }: { status: ExecStatus | null }) {
+  if (!status) return <span className="text-[13px] text-[#B6C0CC]">—</span>;
+  return (
+    <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-[12px] text-[#4A5568]">
+      <span className="size-2 flex-shrink-0 rounded-full" style={{ backgroundColor: EXEC_TONE[status] }} />{status}
+    </span>
+  );
+}
+
 function OutcomePill({ outcome }: { outcome: EndpointOutcome }) {
   const t = OUTCOME_TONE[outcome];
   return <span className="inline-block whitespace-nowrap rounded-sm px-2 py-0.5 text-[12px] font-medium" style={{ backgroundColor: t.bg, color: t.text }}>{outcome}</span>;
@@ -164,10 +188,12 @@ export function CompliancePolicyDrawer({
   const epGroups = [
     { key: 'office', label: 'Office', options: optionsFrom(results.map((r) => r.endpoint.office)) },
     { key: 'agent', label: 'Agent', options: [{ value: 'Online', dot: '#22C55E' }, { value: 'Offline', dot: '#F59E0B' }] },
+    { key: 'exec', label: 'Execution Status', options: (Object.keys(EXEC_TONE) as ExecStatus[]).map((v) => ({ value: v, dot: EXEC_TONE[v] })) },
   ];
+  const execOf = new Map(results.map((r, i) => [r.endpoint.id, execStatusOf(p, r.endpoint.id, r.endpoint.agentOnline, i)]));
   const shownResults = results.filter((r) =>
     matchesSearch(epQ, [r.endpoint.id, r.endpoint.hostName, r.endpoint.ip]) &&
-    matchesFilter(epF, (k) => (k === 'result' ? r.outcome : k === 'office' ? r.endpoint.office : k === 'agent' ? (r.endpoint.agentOnline ? 'Online' : 'Offline') : r.endpoint.osName)));
+    matchesFilter(epF, (k) => (k === 'result' ? r.outcome : k === 'office' ? r.endpoint.office : k === 'agent' ? (r.endpoint.agentOnline ? 'Online' : 'Offline') : k === 'exec' ? (execOf.get(r.endpoint.id) ?? '') : r.endpoint.osName)));
   /* ── Rules tab: a rule FAILS here when any endpoint failed it on the last scan ── */
   const findings = findingsOf(p);
   const ruleNums = benchmark ? ruleNumbers(benchmark) : new Map<string, string>();
@@ -321,9 +347,9 @@ export function CompliancePolicyDrawer({
                   />
                   <div className="px-6">
                     <TabListToolbar search={epQ} onSearch={setEpQ} groups={epGroups} value={epF} onChange={setEpF} />
-                    <div className="overflow-x-auto"><table className="w-full min-w-[1000px] table-fixed">
-                      <colgroup><col className="w-[23%]" /><col className="w-[12%]" /><col className="w-[13%]" /><col className="w-[140px]" /><col className="w-[10%]" /><col /><col className="w-[169px]" /></colgroup>
-                      <thead><tr className="border-b border-[#e5e7eb]">{['Endpoint', 'IP Address', 'Remote Office', 'Result', 'Compliance', 'Checks', 'Actions'].map((h) => <th key={h} className="px-4 py-2.5 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>)}</tr></thead>
+                    <div className="overflow-x-auto"><table className="w-full min-w-[1160px] table-fixed">
+                      <colgroup><col className="w-[21%]" /><col className="w-[11%]" /><col className="w-[12%]" /><col className="w-[140px]" /><col className="w-[170px]" /><col className="w-[9%]" /><col /><col className="w-[169px]" /></colgroup>
+                      <thead><tr className="border-b border-[#e5e7eb]">{['Endpoint', 'IP Address', 'Remote Office', 'Result', 'Execution Status', 'Compliance', 'Checks', 'Actions'].map((h) => <th key={h} className="px-4 py-2.5 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>)}</tr></thead>
                       <tbody className="divide-y divide-[#e5e7eb]">
                         {shownResults.map((r) => (
                           <tr key={r.endpoint.id} onClick={() => setResultsFor(r.endpoint.id)} className="group/row cursor-pointer transition-colors hover:bg-[#f9fafb]">
@@ -338,6 +364,7 @@ export function CompliancePolicyDrawer({
                             <td className="px-4 py-3 text-[13px] tabular-nums text-[#64748B]">{r.endpoint.ip}</td>
                             <td className="px-4 py-3"><span className="block truncate text-[13px] text-[#64748B]">{r.endpoint.office}</span></td>
                             <td className="px-4 py-3"><OutcomePill outcome={r.outcome} /></td>
+                            <td className="px-4 py-3"><ExecPill status={execOf.get(r.endpoint.id) ?? null} /></td>
                             <td className="px-4 py-3 text-[13px] font-medium tabular-nums" style={{ color: r.score === null ? '#94A3B8' : scoreColor(r.score) }}>{r.score === null ? '—' : `${r.score}%`}</td>
                             <td className="whitespace-nowrap px-4 py-3 text-[12px] text-[#64748B]">{r.outcome === 'Not Scanned' ? (r.endpoint.agentOnline ? 'Not scanned yet' : 'Agent offline') : <><span className="text-[#15803D]">{r.passed} passed</span> · <span className={r.failed ? 'text-[#B42318]' : ''}>{r.failed} failed</span></>}</td>
                             <td className="px-4 py-2">
@@ -445,7 +472,7 @@ export function CompliancePolicyDrawer({
         <div className="fixed inset-0 z-[10050] flex items-center justify-center bg-black/30" onMouseDown={() => setConfirmDelete(false)}>
           <div className="w-[420px] rounded-lg bg-white p-5 shadow-xl" onMouseDown={(e) => e.stopPropagation()}>
             <h3 className="text-[15px] font-semibold text-[#364658]">Archive “{p.name}”?</h3>
-            <p className="mt-1.5 text-[13px] leading-[1.6] text-[#64748B]">It stops running and moves to the All Archived Policies view. Its scan results stay, and you can unarchive it from there.</p>
+            <p className="mt-1.5 text-[13px] leading-[1.6] text-[#64748B]">It stops running and moves to the Archived Policies view. Its scan results stay, and you can unarchive it from there.</p>
             <div className="mt-5 flex justify-end gap-2">
               <button type="button" onClick={() => setConfirmDelete(false)} className="h-9 rounded border border-[#DFE5ED] bg-white px-4 text-[13px] font-medium text-[#364658] hover:bg-[#F9FAFB]">Cancel</button>
               <button type="button" onClick={() => { setConfirmDelete(false); policyStore.archive(p.id); toast.success(`“${p.name}” archived`); }} className="h-9 rounded bg-[#3D8BD0] px-4 text-[13px] font-medium text-white hover:bg-[#3478B5]">Archive policy</button>

@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { adminRouteBySlug, adminSlugFor } from '../routes';
 import { Header } from './Header';
+import { AdminFormModule } from './AdminFormModule';
+import { formModuleByCard } from './formStudioData';
 import { AdminSidebar } from './AdminSidebar';
 import { AdminOverview } from './AdminOverview';
 import { ADMIN_SECTIONS, sectionByTitle } from './adminData';
@@ -45,6 +47,21 @@ const CARD_MODULES: Record<string, string> = {
   'User Survey/User Surveys': 'User Surveys',
   'Compliance Settings/Rules': 'Compliance Rules',
   'Compliance Settings/Benchmark': 'Compliance Benchmark',
+  /* Every admin form page opens Form Studio on its own form. */
+  'Users/User Form': 'Form Studio',
+  'Request Management/Feedback Form': 'Form Studio',
+  'Problem Management/Problem Form': 'Form Studio',
+  'Change Management/Change Form': 'Form Studio',
+  'Release Management/Release Form': 'Form Studio',
+  'Task Management/Task Form': 'Form Studio',
+  'Project Management/Project Form': 'Form Studio',
+  'Asset Management/Software License Custom Fields': 'Form Studio',
+  'Asset Management/Asset Movement Custom Fields': 'Form Studio',
+  'Supplier Management/Product Custom Fields': 'Form Studio',
+  'Supplier Management/Vendor Custom Fields': 'Form Studio',
+  'Contract Management/Contract Custom Fields': 'Form Studio',
+  'Purchase Management/Purchase Custom Fields': 'Form Studio',
+  'Purchase Management/Purchase Price Fields': 'Form Studio',
 };
 
 /* Admin hub — the settings surface. Its own shell: the product's left icon rail is replaced by a
@@ -205,6 +222,10 @@ export function AdminPage({ onNavigate, moduleSlug, onModuleChange, portalSlug, 
                 onEditor={setBuilderOpen}
                 openRuleId={ruleId}
               />
+            </div>
+          ) : module === 'Form Studio' && activeCard && formModuleByCard(active, activeCard) ? (
+            <div className="min-h-0 flex-1 overflow-hidden">
+              <AdminFormModule key={activeCard} mod={formModuleByCard(active, activeCard)!} />
             </div>
           ) : module === 'Workflow' ? (
             <div className="min-h-0 flex-1 overflow-y-auto bg-white">

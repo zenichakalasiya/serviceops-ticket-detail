@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { ArrowLeft, Building2, CalendarClock, Eye, Info, Monitor, Plus, Search, Wifi, X } from 'lucide-react';
+import { Building2, CalendarClock, ChevronDown, Eye, Info, Plus, X } from 'lucide-react';
 import { ErrorText, FieldLabel, RuleSelect, ToggleSwitch, inputCls as formInputCls } from './FormRuleControls';
 import { TicketFilterBar } from './TicketFilterBar';
 import type { FilterRule, QuickFilterDef } from './TicketFilterBar';
@@ -13,6 +13,14 @@ import { Paginated } from './Paginated';
 import type { PickerColumn } from './CreatePatchDeployment';
 import { TagCell } from './ComplianceShared';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
+import { AgentSplit, CreatePageShell, EmptyEndpointsArt, EmptyOfficesArt, Pills, RemoveBtn, Section, TargetBox } from './CreateFormKit';
+import { SteppedDrawerShell, SteppedPageShell } from './CreateFormStepped';
+import type { StepItem } from './CreateFormStepped';
+import { SummaryAside } from './CreateFormOneScreen';
+import type { SummaryGroup, SummaryLine } from './CreateFormOneScreen';
+import { CreateFormHelp } from './CreateFormHelp';
+import { FORM_STEPS } from './createFormSteps';
+import { setExtraCreateOpen, useCreateFormUi } from './createFormUi';
 import { BENCHMARKS_SEED, COMPLIANCE_TYPES, benchmarkRuleIds, profileLabel } from './complianceData';
 import type { ComplianceType } from './complianceData';
 import { TECH_GROUPS, TECHNICIANS } from './technicianRoster';
@@ -66,113 +74,6 @@ const NOTIFY_OPTIONS: SelectOption[] = [
   ...TECHNICIANS.map((t) => ({ value: t.name, label: t.name, group: 'Technicians', avatar: { initials: t.initials, color: '#3D8BD0' } })),
 ];
 
-/** The product's segmented control — a pill on a track, the chosen option lifted out in white. */
-function Pills<T extends string>({ value, options, onChange, disabled }: { value: T; options: { value: T; label: string }[]; onChange: (v: T) => void; disabled?: boolean }) {
-  return (
-    <div className={`pill-track !inline-flex w-fit [&>button]:!flex-none [&>button]:!px-4 ${disabled ? 'pointer-events-none opacity-50' : ''}`}>
-      {options.map((o) => (
-        <button key={o.value} type="button" aria-pressed={value === o.value} onClick={() => onChange(o.value)}>{o.label}</button>
-      ))}
-    </div>
-  );
-}
-
-/** A section of the form: its name and one line, then its fields. No icon and no divider —
- *  the gap between sections (space-y-10 on the column) is what separates them. */
-function Section({ title, sub, children }: { title: string; sub: string; children: React.ReactNode }) {
-  return (
-    <section>
-      <div className="mb-4">
-        <h2 className="text-[15px] font-semibold text-[#364658]">{title}</h2>
-        <p className="mt-px text-[12px] text-[#7B8FA5]">{sub}</p>
-      </div>
-      {children}
-    </section>
-  );
-}
-
-/** "No endpoints yet": a monitor with an empty, dashed screen and a magnifier that found
- *  nothing — the policy has nothing to assess until endpoints are added. */
-function EmptyEndpointsArt() {
-  return (
-    <svg width="148" height="104" viewBox="0 0 148 104" fill="none" aria-hidden="true" focusable="false">
-      <ellipse cx="74" cy="56" rx="64" ry="42" fill="#F3F7FC" />
-      <rect x="22" y="22" width="52" height="36" rx="4" fill="#F8FAFC" stroke="#E2E8F0" strokeWidth="1.25" />
-      <path d="M40 64 H56 M48 58 V64" stroke="#E2E8F0" strokeWidth="1.5" strokeLinecap="round" />
-      <rect x="44" y="30" width="62" height="44" rx="5" fill="#FFFFFF" stroke="#CBD5E1" strokeWidth="1.25" />
-      <rect x="50" y="36" width="50" height="30" rx="2.5" fill="#F8FAFC" stroke="#CBD5E1" strokeWidth="1" strokeDasharray="3 2.5" />
-      <path d="M66 81 H84 M75 74 V81" stroke="#CBD5E1" strokeWidth="1.75" strokeLinecap="round" />
-      <rect x="56" y="44" width="20" height="2.4" rx="1.2" fill="#E2E8F0" />
-      <rect x="56" y="50" width="30" height="2.4" rx="1.2" fill="#EEF2F6" />
-      <circle cx="108" cy="62" r="13" fill="#FFFFFF" stroke="#3D8BD0" strokeWidth="2.25" />
-      <path d="M117.5 71.5 L126 80" stroke="#3D8BD0" strokeWidth="3" strokeLinecap="round" />
-      <path d="M103.5 57.5 L112.5 66.5 M112.5 57.5 L103.5 66.5" stroke="#9DC3E8" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-/** "No remote offices yet": two office buildings on the same soft ground as the endpoints art. */
-function EmptyOfficesArt() {
-  return (
-    <svg width="148" height="104" viewBox="0 0 148 104" fill="none" aria-hidden="true" focusable="false">
-      <ellipse cx="74" cy="56" rx="64" ry="42" fill="#F3F7FC" />
-      <rect x="30" y="38" width="34" height="44" rx="3" fill="#F8FAFC" stroke="#E2E8F0" strokeWidth="1.25" />
-      {[46, 56, 66].map((y) => <path key={y} d={`M38 ${y} H44 M50 ${y} H56`} stroke="#E2E8F0" strokeWidth="2" strokeLinecap="round" />)}
-      <rect x="56" y="22" width="44" height="60" rx="4" fill="#FFFFFF" stroke="#CBD5E1" strokeWidth="1.25" />
-      {[32, 43, 54].map((y) => <path key={y} d={`M65 ${y} H72 M84 ${y} H91`} stroke="#CBD5E1" strokeWidth="2.25" strokeLinecap="round" />)}
-      <rect x="72" y="66" width="12" height="16" rx="1.5" fill="#F8FAFC" stroke="#CBD5E1" strokeWidth="1.25" />
-      <path d="M22 82 H126" stroke="#CBD5E1" strokeWidth="1.5" strokeLinecap="round" />
-      <circle cx="108" cy="36" r="11" fill="#FFFFFF" stroke="#3D8BD0" strokeWidth="2.25" />
-      <path d="M108 31 V41 M103 36 H113" stroke="#3D8BD0" strokeWidth="2.25" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-/** One way of choosing what to assess: a titled box with its count, an empty state that says what
- *  the box is for, and — once it holds something — its rows with the Add CTA moved to the header. */
-function TargetBox({ title, count, addLabel, onAdd, addReason, invalid, emptyArt, emptyText, children }: {
-  title: string; count: number; addLabel: string; onAdd: () => void; addReason?: string; invalid?: boolean;
-  emptyArt: React.ReactNode; emptyText: React.ReactNode; children: React.ReactNode;
-}) {
-  return (
-    <div className={`overflow-hidden rounded-lg border ${invalid ? 'border-[#F25C4E]' : 'border-[#E5E7EB]'}`}>
-      <div className="flex min-h-[48px] items-center gap-3 border-b border-[#EEF1F4] bg-[#F6F9FC] px-4 py-2">
-        <span className="text-[13px] font-semibold text-[#364658]">{title} <span className="ml-1 rounded-sm bg-[#EEF2F6] px-1.5 py-0.5 text-[11px] font-medium text-[#64748B]">{count}</span></span>
-        {count > 0 && (
-          <button type="button" onClick={onAdd} className="ml-auto inline-flex h-8 items-center gap-1.5 rounded border border-[#DFE5ED] bg-white px-3 text-[13px] font-medium text-[#364658] transition-colors hover:bg-[#F5F7FA]"><Plus size={14} /> {addLabel}</button>
-        )}
-      </div>
-      {count === 0 ? (
-        <div className="flex flex-col items-center px-4 pb-6 pt-4 text-center">
-          {emptyArt}
-          <p className="mt-2 max-w-[560px] text-[13px] leading-[1.55] text-[#64748B]">{emptyText}</p>
-          <button
-            type="button"
-            disabled={!!addReason}
-            onClick={onAdd}
-            className="mt-4 inline-flex h-8 items-center gap-1.5 rounded bg-[#3D8BD0] px-3.5 text-[13px] font-medium text-white transition-colors hover:bg-[#3478B5] disabled:cursor-not-allowed disabled:opacity-50"
-          ><Plus size={14} /> {addLabel}</button>
-        </div>
-      ) : <div className="overflow-x-auto">{children}</div>}
-    </div>
-  );
-}
-
-/** "12 online · 2 offline" — the agent dots the endpoint rows use. */
-function AgentSplit({ online, offline }: { online: number; offline: number }) {
-  return (
-    <span className="flex items-center gap-3 text-[13px] text-[#64748B]">
-      <span className="inline-flex items-center gap-1.5"><span className="size-2 rounded-full bg-[#22C55E]" />{online} online</span>
-      {offline > 0 && <span className="inline-flex items-center gap-1.5"><span className="size-2 rounded-full bg-[#F59E0B]" />{offline} offline</span>}
-    </span>
-  );
-}
-
-function RemoveBtn({ onClick }: { onClick: () => void }) {
-  return (
-    <button type="button" title="Remove" onClick={onClick} className="inline-flex size-7 items-center justify-center rounded text-[#7B8FA5] opacity-0 transition-opacity hover:bg-[#EEF2F6] hover:text-[#364658] focus:opacity-100 group-hover/row:opacity-100"><X size={15} /></button>
-  );
-}
 
 /** Preview of one remote office: the endpoints it brings into the policy, read-only. */
 function OfficePreviewDrawer({ office, rows, osVersion, onClose }: { office: string; rows: ComplianceEndpoint[]; osVersion?: string; onClose: () => void }) {
@@ -235,7 +136,7 @@ function OfficePreviewDrawer({ office, rows, osVersion, onClose }: { office: str
 
 /* ── Schedule — shared by the form and the row's Schedule shortcut ───────────────────── */
 
-export function ScheduleFields({ value, onChange }: { value: PolicySchedule; onChange: (s: PolicySchedule) => void }) {
+export function ScheduleFields({ value, onChange, half }: { value: PolicySchedule; onChange: (s: PolicySchedule) => void; /** The switch ends where a half-width field beside it ends (the form's Notify Team). */ half?: boolean }) {
   const f = value.frequency;
   const set = (patch: Partial<PolicySchedule>) => onChange({ ...value, ...patch });
   const next = nextRun(value);
@@ -243,7 +144,7 @@ export function ScheduleFields({ value, onChange }: { value: PolicySchedule; onC
     <div>
       {/* One switch: on = scheduled, off = it runs only by hand (the line below says so). */}
       {/* "Schedule" on the left, its switch at the row's right edge. */}
-      <label className="flex w-full cursor-pointer items-center justify-between gap-3">
+      <label className={'flex cursor-pointer items-center justify-between gap-3 ' + (half ? 'w-[calc(50%-4px)]' : 'w-full')}>
         <span className="text-[13px] font-medium text-[#364658]">Schedule</span>
         <ToggleSwitch
           on={f !== 'none'}
@@ -371,7 +272,7 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
   const [picking, setPicking] = useState(false);
   const [pickingOffices, setPickingOffices] = useState(false);
   const [previewOffice, setPreviewOffice] = useState<string | null>(null);
-  const [tried, setTried] = useState(false);
+  const [tried, setTried] = useState<null | 'publish' | 'draft'>(null);
 
   const benchmark = benchmarkOf(d.benchmarkId);
   const showConfig = needsConfigType(benchmark);
@@ -401,15 +302,6 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
   const officeFilter = useColumnFilter(officeRows, OFFICE_FIELDS);
 
   const scheduleIncomplete = d.schedule.frequency !== 'none' && (!d.schedule.startDate || !d.schedule.time);
-  const reason =
-    !d.name.trim() ? 'The policy needs a name'
-      : !osType ? 'Choose an OS Type'
-      : !d.benchmarkId ? 'Choose the benchmark it assesses'
-        : showConfig && !d.configType ? 'Choose a Config File Type'
-          : resolved.length === 0 ? 'Choose at least one endpoint to assess'
-            : scheduleIncomplete ? 'Complete the schedule — a start date and a time'
-              : '';
-
   const changeBenchmark = (id: string) => {
     if (id === d.benchmarkId) return;
     const had = d.endpointIds.length + d.offices.length + d.deviceTags.length;
@@ -430,20 +322,53 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
     set({ benchmarkId: '', endpointIds: [], offices: [], deviceTags: [], configType: null });
   };
 
-  const save = () => {
-    setTried(true);
-    if (reason) return;
-    const id = policyStore.save({ ...d, name: d.name.trim(), description: d.description.trim(), configType: showConfig ? d.configType : null, id: mode === 'edit' ? sourceId : undefined });
-    toast.success(mode === 'edit'
-      ? `“${d.name.trim()}” updated`
-      : `“${d.name.trim()}” created — it assesses ${resolved.length} endpoint${resolved.length === 1 ? '' : 's'} against ${benchmark!.name}`);
+  /* ── Validation, keyed by field so every layout can say which part is missing. ── */
+  const errs: Record<string, string> = {};
+  if (!d.name.trim()) errs.name = 'Enter a name';
+  if (!osType) errs.osType = 'Choose an OS Type';
+  else if (!d.benchmarkId) errs.benchmark = 'Choose a benchmark';
+  if (showConfig && !d.configType) errs.config = 'Choose a Config File Type';
+  if (benchmark && resolved.length === 0) errs.targets = 'Add a remote office or an endpoint';
+  if (scheduleIncomplete) errs.schedule = 'Complete the schedule — a start date and a time';
+  /** Which form section each problem sits in. */
+  const SEC_OF: Record<string, string> = { name: 'Policy Details', osType: 'Benchmark', benchmark: 'Benchmark', config: 'Benchmark', targets: 'Target Endpoints', schedule: 'Schedule & Notifications' };
+
+  /* ── Layout (V1–V5, the header's switch — createFormUi.ts) ── */
+  const ui = useCreateFormUi();
+  useEffect(() => { setExtraCreateOpen('compliance-policy'); return () => setExtraCreateOpen(null); }, []);
+  const stepDefs = FORM_STEPS['compliance-policy'];
+  const [step, setStep] = useState(0);
+  const [checked, setChecked] = useState<number[]>([]);
+  const [moreOpen, setMoreOpen] = useState<string[]>([]);
+  const toggleMore = (t: string) => setMoreOpen((x) => (x.includes(t) ? x.filter((y) => y !== t) : [...x, t]));
+  const stepOfSec = (sec: string) => Math.max(0, stepDefs.findIndex((st) => st.sections.includes(sec)));
+  const stepErrs = stepDefs.map((st) => Object.keys(errs).filter((k) => st.sections.includes(SEC_OF[k])));
+  /** An error is shown once Publish was pressed, or once Next was pressed on its step. */
+  const show = (k: string) => (tried === 'publish' || (tried === 'draft' && k === 'name') || checked.includes(stepOfSec(SEC_OF[k])) ? errs[k] ?? '' : '');
+  const first = Object.keys(errs)[0];
+
+  const save = (via: 'publish' | 'draft') => {
+    setTried(via);
+    const bad = via === 'publish' ? !!first : !!errs.name;
+    if (bad) {
+      const k = via === 'publish' ? first! : 'name';
+      setStep(stepOfSec(SEC_OF[k]));
+      if (!moreOpen.includes(SEC_OF[k])) setMoreOpen((x) => [...x, SEC_OF[k]]);
+      return;
+    }
+    policyStore.save({ ...d, name: d.name.trim(), description: d.description.trim(), configType: showConfig ? d.configType : null, draft: via === 'draft', id: mode === 'edit' ? sourceId : undefined });
+    toast.success(via === 'draft'
+      ? `“${d.name.trim()}” saved as draft`
+      : mode === 'edit'
+        ? `“${d.name.trim()}” published`
+        : `“${d.name.trim()}” published — it assesses ${resolved.length} endpoint${resolved.length === 1 ? '' : 's'} against ${benchmark!.name}`);
     onClose();
-    return id;
   };
+  const headerError = tried === 'publish' && first ? errs[first] : tried === 'draft' && errs.name ? 'Give it a name before saving a draft' : undefined;
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); save(); }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); save('publish'); }
       if (e.key === 'Escape' && !picking && !pickingOffices && !previewOffice && !document.querySelector('[data-rule-menu]')) onClose();
     };
     window.addEventListener('keydown', onKey);
@@ -452,6 +377,8 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
 
   const title = mode === 'edit' ? 'Edit Compliance Policy' : mode === 'clone' ? 'Clone Compliance Policy' : 'Create Compliance Policy';
   const pickReason = !benchmark ? 'Choose a benchmark first — only endpoints it is written for can be assessed' : pool.length === 0 ? `No endpoint runs ${benchmark.osVersion} yet` : undefined;
+  /** Publish ▾ Save as Draft — one primary CTA with a dropdown (Zeni, 12 Nov 2026). */
+  const split = [{ label: 'Publish', onClick: () => save('publish') }, { label: 'Save as Draft', onClick: () => save('draft') }];
 
   const columns: PickerColumn<ComplianceEndpoint>[] = [
     {
@@ -468,166 +395,186 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
     { header: 'Remote Office', cell: (e) => <span className="whitespace-nowrap">{e.office}</span> },
   ];
 
-  return (
-    <div className="fixed inset-x-0 bottom-0 top-[56px] z-[9000] flex flex-col bg-white">
-      <div className="flex flex-shrink-0 items-center gap-2 border-b border-[#DFE5ED] px-4 py-3">
-        <button type="button" onClick={onClose} title="Back" className="-ml-1.5 flex size-[30px] flex-shrink-0 items-center justify-center rounded text-[#7B8FA5] transition-colors hover:bg-[#EEF2F6] hover:text-[#364658]">
-          <ArrowLeft size={16} />
-        </button>
-        <h1 className="truncate text-[16px] font-medium text-[#364658]">{title}</h1>
-        <div className="ml-auto flex flex-shrink-0 items-center gap-2.5">
-          {tried && reason && <span className="text-[12px] text-[#F25C4E]">{reason}</span>}
-          <button type="button" onClick={onClose} className="rounded border border-[#DFE5ED] bg-white px-3 py-1.5 text-[12px] font-medium text-[#7B8FA5] transition-colors hover:bg-[#F9FAFB] hover:text-[#364658]">Cancel</button>
-          <button type="button" onClick={save} className="rounded bg-[#3D8BD0] px-3 py-1.5 text-[12px] font-medium text-white transition-colors hover:bg-[#3478B5]">{mode === 'edit' ? 'Update Policy' : 'Create Policy'}</button>
+  /* ── The form's parts, written once and placed by every layout ── */
+  const nameEl = (
+    <div>
+      <FieldLabel required>Policy Name</FieldLabel>
+      <input autoFocus value={d.name} onChange={(e) => set({ name: e.target.value })} placeholder="Must be unique" className={`${inputCls} ${show('name') ? '!border-[#F25C4E]' : ''}`} />
+      <ErrorText>{show('name')}</ErrorText>
+    </div>
+  );
+  const descEl = (
+    <div>
+      <FieldLabel>Description</FieldLabel>
+      <textarea value={d.description} onChange={(e) => set({ description: e.target.value })} placeholder="Write a description" rows={1} className={`${inputCls} resize-y py-2 leading-[18px]`} />
+    </div>
+  );
+  const benchmarkEl = (
+    <>
+      <div className="grid grid-cols-2 gap-x-2 gap-y-4">
+        <div>
+          <FieldLabel required>OS Type</FieldLabel>
+          <RuleSelect className="!rounded" value={osType ? [osType] : []} options={osTypeOptions} onChange={(v) => v[0] && changeOsType(v[0] as ComplianceType)} invalid={!!show('osType')} placeholder="Select" />
+          <ErrorText>{show('osType')}</ErrorText>
+        </div>
+        <div>
+          <FieldLabel required>Benchmark</FieldLabel>
+          <RuleSelect className="!rounded" searchable value={d.benchmarkId ? [d.benchmarkId] : []} options={benchOptions} onChange={(v) => v[0] && changeBenchmark(v[0])} invalid={!!show('benchmark')} disabled={!osType} placeholder={!osType ? 'Choose an OS Type first' : benchOptions.length ? 'Select' : `No ${osType} benchmark yet`} />
+          <ErrorText>{show('benchmark')}</ErrorText>
         </div>
       </div>
-
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-[840px] space-y-10 px-4 py-6">
-          <Section title="Policy Details" sub="What the policy is called and what it is for.">
-            <div className="grid grid-cols-2 gap-x-2 gap-y-4">
-              <div>
-                <FieldLabel required>Policy Name</FieldLabel>
-                <input autoFocus value={d.name} onChange={(e) => set({ name: e.target.value })} placeholder="Must be unique" className={`${inputCls} ${tried && !d.name.trim() ? '!border-[#F25C4E]' : ''}`} />
-                <ErrorText>{tried && !d.name.trim() ? 'Enter a name' : ''}</ErrorText>
-              </div>
-              <div>
-                <FieldLabel>Description</FieldLabel>
-                <textarea value={d.description} onChange={(e) => set({ description: e.target.value })} placeholder="Write a description" rows={1} className={`${inputCls} resize-y py-2 leading-[18px]`} />
-              </div>
-            </div>
-          </Section>
-
-          <Section title="Benchmark" sub="Choose the OS Type, then the ONE benchmark the policy assesses. Its OS version decides which endpoints can be chosen.">
-            <div className="grid grid-cols-2 gap-x-2 gap-y-4">
-              <div>
-                <FieldLabel required>OS Type</FieldLabel>
-                <RuleSelect className="!rounded" value={osType ? [osType] : []} options={osTypeOptions} onChange={(v) => v[0] && changeOsType(v[0] as ComplianceType)} invalid={tried && !osType} placeholder="Select" />
-                <ErrorText>{tried && !osType ? 'Choose an OS Type' : ''}</ErrorText>
-              </div>
-              <div>
-                <FieldLabel required>Benchmark</FieldLabel>
-                <RuleSelect className="!rounded" searchable value={d.benchmarkId ? [d.benchmarkId] : []} options={benchOptions} onChange={(v) => v[0] && changeBenchmark(v[0])} invalid={tried && !!osType && !d.benchmarkId} disabled={!osType} placeholder={!osType ? 'Choose an OS Type first' : benchOptions.length ? 'Select' : `No ${osType} benchmark yet`} />
-                <ErrorText>{tried && osType && !d.benchmarkId ? 'Choose a benchmark' : ''}</ErrorText>
-              </div>
-            </div>
-            {showConfig && (
-              <div className="mt-4">
-                <FieldLabel required>Config File Type</FieldLabel>
-                <Pills value={(d.configType ?? 'running') as ConfigFileType} options={[{ value: 'startup', label: 'Startup' }, { value: 'running', label: 'Running' }]} onChange={(v) => set({ configType: v })} />
-                <p className="mt-1.5 text-[12px] text-[#7B8FA5]">Startup checks the configuration the device boots with; Running checks what it is running now.</p>
-              </div>
-            )}
-          </Section>
-
-          <Section title="Target Endpoints" sub="Add whole remote offices, individual endpoints, or both. An endpoint picked both ways is assessed once.">
-            <div className="space-y-4">
-              <TargetBox
-                title="Remote Offices"
-                count={d.offices.length}
-                addLabel="Add Remote Offices"
-                onAdd={() => setPickingOffices(true)}
-                addReason={pickReason}
-                invalid={tried && resolved.length === 0}
-                emptyArt={<EmptyOfficesArt />}
-                emptyText={pickReason ?? 'No remote offices yet — every endpoint in an office you add is assessed, including machines that join it later.'}
-              >
-                <table className="w-full min-w-[620px] table-fixed">
-                  <colgroup><col /><col className="w-[18%]" /><col className="w-[30%]" /><col className="w-[132px]" /></colgroup>
-                  <thead><tr className="border-b border-[#EEF1F4]">{['Remote Office', 'Endpoints', 'Agent Status', ''].map((h, i) => <th key={i} className="whitespace-nowrap px-4 py-2 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>)}</tr></thead>
-                  <tbody className="divide-y divide-[#EEF1F4]">
-                    {officeRows.filter((o) => d.offices.includes(o.id)).map((o) => (
-                      <tr key={o.id} className="group/row">
-                        <td className="px-4 py-2.5"><span className="flex min-w-0 items-center gap-2"><Building2 size={15} className="flex-shrink-0 text-[#7B8FA5]" /><span className="truncate text-[13px] text-[#364658]">{o.id}</span></span></td>
-                        <td className="px-4 py-2.5 text-[13px] tabular-nums text-[#64748B]">{o.total}</td>
-                        <td className="px-4 py-2.5"><AgentSplit online={o.online} offline={o.offline} /></td>
-                        <td className="px-2 py-1.5">
-                          <span className="flex items-center justify-end gap-1">
-                            <button type="button" onClick={() => setPreviewOffice(o.id)} className="inline-flex h-7 items-center gap-1.5 rounded border border-[#DFE5ED] bg-white px-2.5 text-[12px] font-medium text-[#364658] transition-colors hover:bg-[#F5F7FA]"><Eye size={13} /> Preview</button>
-                            <RemoveBtn onClick={() => set({ offices: d.offices.filter((x) => x !== o.id) })} />
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </TargetBox>
-
-              <TargetBox
-                title="Endpoints"
-                count={picked.length}
-                addLabel="Add Endpoints"
-                onAdd={() => setPicking(true)}
-                addReason={pickReason}
-                invalid={tried && resolved.length === 0}
-                emptyArt={<EmptyEndpointsArt />}
-                emptyText={pickReason ?? <>No endpoints added one by one — add the <span className="font-medium text-[#364658]">{benchmark?.osVersion}</span> endpoints this policy should assess, wherever they sit.</>}
-              >
-                <Paginated rows={picked} perPage={10}>
-                  {(rows) => (
-                    <table className="w-full min-w-[760px] table-fixed">
-                      <colgroup><col className="w-[30%]" /><col className="w-[15%]" /><col className="w-[22%]" /><col /><col className="w-[48px]" /></colgroup>
-                      <thead><tr className="border-b border-[#EEF1F4]">{['Endpoint', 'IP Address', 'Operating System', 'Remote Office', ''].map((h, i) => <th key={i} className="whitespace-nowrap px-4 py-2 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>)}</tr></thead>
-                      <tbody className="divide-y divide-[#EEF1F4]">
-                        {rows.map((e) => (
-                          <tr key={e.id} className="group/row">
-                            <td className="px-4 py-2.5">
-                              <span className="flex min-w-0 items-center gap-2">
-                                <span className={`size-2 flex-shrink-0 rounded-full ${e.agentOnline ? 'bg-[#22C55E]' : 'bg-[#F59E0B]'}`} title={e.agentOnline ? 'Agent online' : 'Agent offline'} />
-                                <span className="flex-shrink-0 whitespace-nowrap rounded bg-[#e8f4fd] px-1.5 py-0.5 text-[11px] font-medium text-[#3D8BD0]">{e.id}</span>
-                                <span className="truncate text-[13px] text-[#364658]">{e.hostName}</span>
-                              </span>
-                            </td>
-                            <td className="px-4 py-2.5 text-[13px] tabular-nums text-[#64748B]">{e.ip}</td>
-                            <td className="px-4 py-2.5"><span className="block truncate text-[13px] text-[#64748B]">{e.osName}</span></td>
-                            <td className="px-4 py-2.5">
-                              <span className="flex min-w-0 items-center gap-2">
-                                <span className="truncate text-[13px] text-[#64748B]">{e.office}</span>
-                                {d.offices.includes(e.office) && (
-                                  <Tooltip>
-                                    <TooltipTrigger asChild><span className="flex-shrink-0 cursor-help rounded-sm bg-[#EEF2F6] px-1.5 py-0.5 text-[11px] font-medium text-[#64748B]">Office added</span></TooltipTrigger>
-                                    <TooltipContent className="text-wrap max-w-[240px]">{e.office} is in Remote Offices too, so this endpoint is already assessed through it — it is counted once.</TooltipContent>
-                                  </Tooltip>
-                                )}
-                              </span>
-                            </td>
-                            <td className="px-2 py-1.5 text-right"><RemoveBtn onClick={() => set({ endpointIds: d.endpointIds.filter((x) => x !== e.id) })} /></td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  )}
-                </Paginated>
-              </TargetBox>
-
-              {/* The one number that matters: what the policy will actually scan. */}
-              {resolved.length > 0 ? (
-                <p className="flex items-center gap-1.5 text-[12px] text-[#64748B]">
-                  <Info size={13} className="flex-shrink-0 text-[#7B8FA5]" />
-                  <span><span className="font-semibold text-[#364658]">{resolved.length}</span> endpoint{resolved.length === 1 ? '' : 's'} will be assessed
-                    {resolved.some((e) => !e.agentOnline) && <span className="text-[#B45309]"> · {resolved.filter((e) => !e.agentOnline).length} offline, skipped until their agent reports in</span>}
+      {showConfig && (
+        <div className="mt-4">
+          <FieldLabel required>Config File Type</FieldLabel>
+          <Pills value={(d.configType ?? 'running') as ConfigFileType} options={[{ value: 'startup', label: 'Startup' }, { value: 'running', label: 'Running' }]} onChange={(v) => set({ configType: v })} />
+          <p className="mt-1.5 text-[12px] text-[#7B8FA5]">Startup checks the configuration the device boots with; Running checks what it is running now.</p>
+        </div>
+      )}
+    </>
+  );
+  const targetsInvalid = !!show('targets');
+  const targetsEl = (
+    <div className="space-y-4">
+      <TargetBox
+        title="Remote Offices"
+        count={d.offices.length}
+        addLabel="Add Remote Offices"
+        onAdd={() => setPickingOffices(true)}
+        addReason={pickReason}
+        invalid={targetsInvalid}
+        emptyArt={<EmptyOfficesArt />}
+        emptyText={pickReason ?? 'No remote offices yet — every endpoint in an office you add is assessed, including machines that join it later.'}
+      >
+        <table className="w-full min-w-[620px] table-fixed">
+          <colgroup><col /><col className="w-[18%]" /><col className="w-[30%]" /><col className="w-[132px]" /></colgroup>
+          <thead><tr className="border-b border-[#EEF1F4]">{['Remote Office', 'Endpoints', 'Agent Status', ''].map((h, i) => <th key={i} className="whitespace-nowrap px-4 py-2 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>)}</tr></thead>
+          <tbody className="divide-y divide-[#EEF1F4]">
+            {officeRows.filter((o) => d.offices.includes(o.id)).map((o) => (
+              <tr key={o.id} className="group/row">
+                <td className="px-4 py-2.5"><span className="flex min-w-0 items-center gap-2"><Building2 size={15} className="flex-shrink-0 text-[#7B8FA5]" /><span className="truncate text-[13px] text-[#364658]">{o.id}</span></span></td>
+                <td className="px-4 py-2.5 text-[13px] tabular-nums text-[#64748B]">{o.total}</td>
+                <td className="px-4 py-2.5"><AgentSplit online={o.online} offline={o.offline} /></td>
+                <td className="px-2 py-1.5">
+                  <span className="flex items-center justify-end gap-1">
+                    <button type="button" onClick={() => setPreviewOffice(o.id)} className="inline-flex h-7 items-center gap-1.5 rounded border border-[#DFE5ED] bg-white px-2.5 text-[12px] font-medium text-[#364658] transition-colors hover:bg-[#F5F7FA]"><Eye size={13} /> Preview</button>
+                    <RemoveBtn onClick={() => set({ offices: d.offices.filter((x) => x !== o.id) })} />
                   </span>
-                </p>
-              ) : (
-                <ErrorText>{tried && benchmark ? 'Add a remote office or an endpoint' : ''}</ErrorText>
-              )}
-            </div>
-          </Section>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </TargetBox>
 
-          <Section title="Schedule & Notifications" sub="When the policy scans on its own, and who hears about the result.">
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-x-2">
-                <div>
-                  <FieldLabel>Notify Team</FieldLabel>
-                  <RuleSelect className="!rounded" multi value={d.notify} options={NOTIFY_OPTIONS} onChange={(v) => set({ notify: v })} placeholder="Technicians or groups" />
-                </div>
-              </div>
-              <ScheduleFields value={d.schedule} onChange={(s) => set({ schedule: s })} />
-            </div>
-          </Section>
-        </div>
+      <TargetBox
+        title="Endpoints"
+        count={picked.length}
+        addLabel="Add Endpoints"
+        onAdd={() => setPicking(true)}
+        addReason={pickReason}
+        invalid={targetsInvalid}
+        emptyArt={<EmptyEndpointsArt />}
+        emptyText={pickReason ?? <>No endpoints added one by one — add the <span className="font-medium text-[#364658]">{benchmark?.osVersion}</span> endpoints this policy should assess, wherever they sit.</>}
+      >
+        <Paginated rows={picked} perPage={10}>
+          {(rows) => (
+            <table className="w-full min-w-[760px] table-fixed">
+              <colgroup><col className="w-[30%]" /><col className="w-[15%]" /><col className="w-[22%]" /><col /><col className="w-[48px]" /></colgroup>
+              <thead><tr className="border-b border-[#EEF1F4]">{['Endpoint', 'IP Address', 'Operating System', 'Remote Office', ''].map((h, i) => <th key={i} className="whitespace-nowrap px-4 py-2 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>)}</tr></thead>
+              <tbody className="divide-y divide-[#EEF1F4]">
+                {rows.map((e) => (
+                  <tr key={e.id} className="group/row">
+                    <td className="px-4 py-2.5">
+                      <span className="flex min-w-0 items-center gap-2">
+                        <span className={`size-2 flex-shrink-0 rounded-full ${e.agentOnline ? 'bg-[#22C55E]' : 'bg-[#F59E0B]'}`} title={e.agentOnline ? 'Agent online' : 'Agent offline'} />
+                        <span className="flex-shrink-0 whitespace-nowrap rounded bg-[#e8f4fd] px-1.5 py-0.5 text-[11px] font-medium text-[#3D8BD0]">{e.id}</span>
+                        <span className="truncate text-[13px] text-[#364658]">{e.hostName}</span>
+                      </span>
+                    </td>
+                    <td className="px-4 py-2.5 text-[13px] tabular-nums text-[#64748B]">{e.ip}</td>
+                    <td className="px-4 py-2.5"><span className="block truncate text-[13px] text-[#64748B]">{e.osName}</span></td>
+                    <td className="px-4 py-2.5">
+                      <span className="flex min-w-0 items-center gap-2">
+                        <span className="truncate text-[13px] text-[#64748B]">{e.office}</span>
+                        {d.offices.includes(e.office) && (
+                          <Tooltip>
+                            <TooltipTrigger asChild><span className="flex-shrink-0 cursor-help rounded-sm bg-[#EEF2F6] px-1.5 py-0.5 text-[11px] font-medium text-[#64748B]">Office added</span></TooltipTrigger>
+                            <TooltipContent className="text-wrap max-w-[240px]">{e.office} is in Remote Offices too, so this endpoint is already assessed through it — it is counted once.</TooltipContent>
+                          </Tooltip>
+                        )}
+                      </span>
+                    </td>
+                    <td className="px-2 py-1.5 text-right"><RemoveBtn onClick={() => set({ endpointIds: d.endpointIds.filter((x) => x !== e.id) })} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </Paginated>
+      </TargetBox>
+
+      {/* The one number that matters: what the policy will actually scan. */}
+      {resolved.length > 0 ? (
+        <p className="flex items-center gap-1.5 text-[12px] text-[#64748B]">
+          <Info size={13} className="flex-shrink-0 text-[#7B8FA5]" />
+          <span><span className="font-semibold text-[#364658]">{resolved.length}</span> endpoint{resolved.length === 1 ? '' : 's'} will be assessed
+            {resolved.some((e) => !e.agentOnline) && <span className="text-[#B45309]"> · {resolved.filter((e) => !e.agentOnline).length} offline, skipped until their agent reports in</span>}
+          </span>
+        </p>
+      ) : (
+        <ErrorText>{show('targets')}</ErrorText>
+      )}
+    </div>
+  );
+  const notifyEl = (
+    <div className="grid grid-cols-2 gap-x-2">
+      <div>
+        <FieldLabel>Notify Team</FieldLabel>
+        <RuleSelect className="!rounded" multi value={d.notify} options={NOTIFY_OPTIONS} onChange={(v) => set({ notify: v })} placeholder="Technicians or groups" />
       </div>
+    </div>
+  );
+  const scheduleEl = (
+    <>
+      <ScheduleFields value={d.schedule} onChange={(s) => set({ schedule: s })} half />
+      <ErrorText>{show('schedule')}</ErrorText>
+    </>
+  );
 
+  /* Each section: what is REQUIRED, what is optional (V4 hides it behind More options), and its read-back for V5. */
+  interface Part { title: string; sub: string; req?: React.ReactNode; opt?: React.ReactNode; optNames?: string[]; all: React.ReactNode; lines: SummaryLine[]; keys: string[] }
+  const parts: Part[] = [
+    {
+      title: 'Policy Details', sub: 'What the policy is called and what it is for.',
+      req: nameEl, opt: descEl, optNames: ['Description'],
+      all: <div className="grid grid-cols-2 gap-x-2 gap-y-4">{nameEl}{descEl}</div>,
+      lines: [...(d.name.trim() ? [{ label: 'Policy Name', value: d.name.trim() }] : []), ...(d.description.trim() ? [{ label: 'Description', value: d.description.trim() }] : [])],
+      keys: ['name'],
+    },
+    {
+      title: 'Benchmark', sub: 'Choose the OS Type, then the ONE benchmark the policy assesses. Its OS version decides which endpoints can be chosen.',
+      req: benchmarkEl, all: benchmarkEl,
+      lines: [...(osType ? [{ label: 'OS Type', value: osType }] : []), ...(benchmark ? [{ label: 'Benchmark', value: benchmark.name }] : [])],
+      keys: ['osType', 'benchmark', 'config'],
+    },
+    {
+      title: 'Target Endpoints', sub: 'Add whole remote offices, individual endpoints, or both. An endpoint picked both ways is assessed once.',
+      req: targetsEl, all: targetsEl,
+      lines: [...(d.offices.length ? [{ label: 'Remote Offices', value: `${d.offices.length} added` }] : []), ...(picked.length ? [{ label: 'Endpoints', value: `${picked.length} added` }] : []), ...(resolved.length ? [{ label: 'Assessed', value: `${resolved.length} endpoints` }] : [])],
+      keys: ['targets'],
+    },
+    {
+      title: 'Schedule & Notifications', sub: 'When the policy scans on its own, and who hears about the result.',
+      opt: <div className="space-y-4">{notifyEl}{scheduleEl}</div>, optNames: ['Notify Team', 'Schedule'],
+      all: <div className="space-y-4">{notifyEl}{scheduleEl}</div>,
+      lines: [...(d.notify.length ? [{ label: 'Notify Team', value: d.notify.length > 2 ? `${d.notify.slice(0, 2).join(', ')} +${d.notify.length - 2}` : d.notify.join(', ') }] : []), ...(d.schedule.frequency !== 'none' ? [{ label: 'Schedule', value: scheduleLabel(d.schedule) }] : [])],
+      keys: ['schedule'],
+    },
+  ];
+  const partOf = (t: string) => parts.find((p) => p.title === t)!;
+
+  const overlays = (
+    <>
       {previewOffice && (
         <OfficePreviewDrawer office={previewOffice} rows={pool.filter((e) => e.office === previewOffice)} osVersion={benchmark?.osVersion} onClose={() => setPreviewOffice(null)} />
       )}
@@ -659,6 +606,128 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
         onClose={() => { setPicking(false); epFilter.reset(); }}
         onApply={(ids) => { set({ endpointIds: ids }); setPicking(false); epFilter.reset(); }}
       />
-    </div>
+    </>
+  );
+  const guide = (bare?: boolean, onOpen?: (titles: string[]) => void) => (
+    <CreateFormHelp moduleId="compliance-policy" bare={bare} available={parts.map((p) => p.title)} onOpen={onOpen} />
+  );
+
+  /* V2 / V3 — one step at a time. */
+  if (ui === 'v2' || ui === 'v3') {
+    const cur = Math.min(step, stepDefs.length - 1);
+    const st = stepDefs[cur];
+    const items: StepItem[] = stepDefs.map((x, i) => ({
+      title: x.title, sub: x.sub,
+      state: stepErrs[i].length && (tried === 'publish' || checked.includes(i)) ? 'error' : !stepErrs[i].length && (i < cur || checked.includes(i)) ? 'done' : 'todo',
+    }));
+    const Shell = ui === 'v3' ? SteppedDrawerShell : SteppedPageShell;
+    return (
+      <Shell title={title} onBack={onClose} error={headerError} overlays={overlays}
+        final={split[0]} split={split}
+        steps={items} current={cur} onStep={setStep}
+        onNext={() => { setChecked((x) => (x.includes(cur) ? x : [...x, cur])); if (!stepErrs[cur].length) setStep(cur + 1); }}
+        help={guide(ui === 'v3', (titles) => { const i = stepDefs.findIndex((x) => x.sections.some((t) => titles.includes(t))); if (i >= 0) setStep(i); })}>
+        <div className="space-y-8">
+          {st.sections.map((t) => (
+            <Section key={t} title={st.sections.length > 1 ? t : st.title} sub={st.sections.length > 1 ? partOf(t).sub : st.sub} marker={t}>{partOf(t).all}</Section>
+          ))}
+        </div>
+      </Shell>
+    );
+  }
+
+  /* V4 — essentials first: each part shows what is required; the rest waits behind "More options";
+     a part with nothing required is a "+ Add" chip at the foot. A part with an error is opened. */
+  if (ui === 'v4') {
+    const core = parts.filter((p) => p.req);
+    const extra = parts.filter((p) => !p.req);
+    return (
+      <CreatePageShell title={title} onBack={onClose} error={headerError} actions={[]} split={split} overlays={overlays}
+        aside={guide(false, (titles) => titles.forEach((t) => { if (extra.some((p) => p.title === t) && !moreOpen.includes(t)) toggleMore(t); }))}>
+        <p className="!mb-6 flex items-center gap-1.5 text-[12px] text-[#7B8FA5]"><Info size={13} className="flex-shrink-0" />Only what is needed is shown. Everything else is one click away under each part.</p>
+        {core.map((p) => {
+          const open = moreOpen.includes(p.title);
+          return (
+            <Section key={p.title} title={p.title} sub={p.sub}>
+              {p.req}
+              {p.opt && (open ? (
+                <div className="mt-4 rounded-lg bg-[#F7F9FC] p-3">
+                  <div className="mb-3 flex items-center">
+                    <span className="text-[12px] font-semibold uppercase tracking-wider text-[#7B8FA5]">More options</span>
+                    <button type="button" onClick={() => toggleMore(p.title)} className="ml-auto text-[12px] font-medium text-[#3D8BD0] hover:underline">Hide</button>
+                  </div>
+                  {p.opt}
+                </div>
+              ) : (
+                <button type="button" onClick={() => toggleMore(p.title)} className="mt-3 flex max-w-full items-center gap-1.5 rounded px-1 py-0.5 text-left text-[12px] text-[#3D8BD0] hover:bg-[#EBF5FF]">
+                  <ChevronDown size={14} className="flex-shrink-0" />
+                  <span className="flex-shrink-0 font-medium">More options ({p.optNames!.length})</span>
+                  <span className="truncate text-[#7B8FA5]">· {p.optNames!.join(', ')}</span>
+                </button>
+              ))}
+            </Section>
+          );
+        })}
+        {extra.filter((p) => moreOpen.includes(p.title) || p.keys.some((k) => show(k))).map((p) => (
+          <section key={p.title} data-section-title={p.title}>
+            <div className="mb-4 flex items-start gap-2">
+              <div className="min-w-0 flex-1">
+                <h2 className="text-[15px] font-semibold text-[#364658]">{p.title} <span className="text-[12px] font-normal text-[#94A3B8]">· Optional</span></h2>
+                <p className="mt-px text-[12px] text-[#7B8FA5]">{p.sub}</p>
+              </div>
+              <button type="button" title="Hide" onClick={() => toggleMore(p.title)} className="flex size-7 items-center justify-center rounded text-[#7B8FA5] hover:bg-[#F3F4F6]"><X size={14} /></button>
+            </div>
+            {p.opt}
+          </section>
+        ))}
+        {extra.some((p) => !moreOpen.includes(p.title) && !p.keys.some((k) => show(k))) && (
+          <section>
+            <p className="mb-2 text-[12px] font-semibold uppercase tracking-wider text-[#7B8FA5]">Optional — add only if you need it</p>
+            <div className="flex flex-wrap gap-2">
+              {extra.filter((p) => !moreOpen.includes(p.title)).map((p) => (
+                <button key={p.title} type="button" onClick={() => toggleMore(p.title)} title={p.sub}
+                  className="flex h-8 items-center gap-1.5 rounded border border-dashed border-[#CBD5E1] px-3 text-[12px] font-medium text-[#364658] transition-colors hover:border-[#3D8BD0] hover:text-[#3D8BD0]">
+                  <Plus size={13} />{p.title}
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+      </CreatePageShell>
+    );
+  }
+
+  /* V5 — every part open and numbered; the guide on the right holds the CTA. */
+  if (ui === 'v5') {
+    const summary: SummaryGroup[] = parts.map((p) => ({
+      title: p.title, lines: p.lines,
+      missing: p.keys.filter((k) => errs[k]).map((k) => errs[k]),
+      optional: !p.req,
+    }));
+    const jump = (i: number) => document.getElementById(`cp-group-${i}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return (
+      <CreatePageShell title={title} onBack={onClose} error={headerError} actions={[]} overlays={overlays}
+        aside={<SummaryAside groups={summary} onJump={jump} cta="Publish" onCreate={() => save('publish')} split={split} guide={guide(true)} noun="Compliance Policy" />}>
+        {parts.map((p, i) => (
+          <section key={p.title} id={`cp-group-${i}`} data-section-title={p.title} className="scroll-mt-4">
+            <div className="mb-4 flex items-start gap-2.5">
+              <span className="mt-px flex size-6 flex-shrink-0 items-center justify-center rounded-full bg-[#EEF2F6] text-[11.5px] font-semibold tabular-nums text-[#64748B]">{i + 1}</span>
+              <div className="min-w-0">
+                <h2 className="text-[15px] font-semibold text-[#364658]">{p.title}{!p.req && <span className="text-[12px] font-normal text-[#94A3B8]"> · Optional</span>}</h2>
+                <p className="mt-px text-[12px] text-[#7B8FA5]">{p.sub}</p>
+              </div>
+            </div>
+            <div className="pl-[34px]">{p.all}</div>
+          </section>
+        ))}
+      </CreatePageShell>
+    );
+  }
+
+  /* V1 — the full page, every section, the guide pinned right. */
+  return (
+    <CreatePageShell title={title} onBack={onClose} error={headerError} actions={[]} split={split} overlays={overlays} aside={guide()}>
+      {parts.map((p) => <Section key={p.title} title={p.title} sub={p.sub}>{p.all}</Section>)}
+    </CreatePageShell>
   );
 }

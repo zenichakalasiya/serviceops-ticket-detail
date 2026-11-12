@@ -74,6 +74,8 @@ export interface CompliancePolicy {
   scanning?: boolean;
   /** The last scan was stopped before it finished (Cancel scan). Cleared by the next scan. */
   cancelled?: boolean;
+  /** Saved with Save as Draft — kept, not published; it does not scan until it is published. */
+  draft?: boolean;
   /** How the last scan was started. Unset = the schedule (or Run Now when it has none). */
   lastTrigger?: RunTrigger;
   /** Scans run during this session, newest first (each Run Now pushes the previous one here). */
@@ -310,7 +312,7 @@ export type PolicyStatus = 'Scanning' | 'Compliant' | 'Non-Compliant' | 'Not Sca
  *  Completed. Whether that scan passed is the separate Compliance Result. */
 export type PolicyRunStatus = 'Draft' | 'In Progress' | 'Completed' | 'Cancelled';
 export const runStatusOf = (p: CompliancePolicy): PolicyRunStatus =>
-  p.scanning ? 'In Progress' : p.cancelled ? 'Cancelled' : p.lastScan ? 'Completed' : 'Draft';
+  p.scanning ? 'In Progress' : p.draft ? 'Draft' : p.cancelled ? 'Cancelled' : p.lastScan ? 'Completed' : 'Draft';
 /** Compliant / Non-Compliant from the last scan; null before any scan. */
 export const resultOf = (p: CompliancePolicy): 'Compliant' | 'Non-Compliant' | null =>
   !p.lastScan ? null : p.lastScan.nonCompliant > 0 ? 'Non-Compliant' : 'Compliant';

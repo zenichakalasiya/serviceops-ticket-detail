@@ -12,6 +12,8 @@ import { PURCHASE_FILTER_ATTRS } from './purchaseFilterAttrs';
 import { INVOICE_RECEIVED_OPTIONS, PAYMENT_STATUS_OPTIONS } from './upstream/AssetFields';
 import { mockPurchases, type Purchase } from './PurchasesListPage';
 import type { Ticket } from './TicketListPage';
+import { useMemo } from 'react';
+import { dmyOf, str, useCreatedRecords, type CreatedRecord } from './createFormStore';
 import { AlertTriangle, Hourglass, PackageOpen, ShoppingCart } from 'lucide-react';
 
 const ruleIs = (field: string, ...values: string[]): Omit<FilterRule, 'id'>[] => [{ field, condition: 'is', values }];
@@ -46,19 +48,18 @@ const fmtMoney = (n: number) => `${n.toLocaleString('en-US', { minimumFractionDi
 const INVOICED_FRACTION = [0, 0.5, 1];
 const paidFractionOf = (invoiced: number, n: number) => (invoiced === 0 ? 0 : [0, 0.4, 1][n % 3] * invoiced);
 
-const PU: { rows: Ticket[]; byId: Map<string, Purchase> } = (() => {
-  const byId = new Map<string, Purchase>();
-  const today = new Date();
-  const rows = mockPurchases.map((p) => {
-    byId.set(p.id, p);
+/** One order as a listing row. A new order passes its own item total and has been neither
+ *  invoiced nor paid; a mock order's money is derived from its id as before. */
+const purchaseRow = (p: Purchase, newTotal?: number): Ticket => {
+    const today = new Date();
     const req = parseDMY(p.requiredBy)!;
     const days = Math.ceil((req.getTime() - today.getTime()) / DAY);
     const dueBand = p.status === 'Received' ? 'Delivered' : days < 0 ? 'Overdue' : days <= 14 ? 'Due soon' : 'Scheduled';
     const created = new Date(req.getTime() - 45 * DAY);
     const initials = (n: string) => n.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase();
     const h = hash(p.id);
-    const total = orderValueOf(p.id);
-    const invFrac = INVOICED_FRACTION[h % 3];
+    const total = newTotal ?? orderValueOf(p.id);
+    const invFrac = newTotal !== undefined ? 0 : INVOICED_FRACTION[h % 3];
     const invoiced = Math.round(total * invFrac);
     const paid = Math.round(paidFractionOf(invFrac, h >> 2) * total);
     return {
@@ -87,9 +88,33 @@ const PU: { rows: Ticket[]; byId: Map<string, Purchase> } = (() => {
         : PAYMENT_STATUS_OPTIONS[3],
       x_dueBand: dueBand,
     } as Ticket;
-  });
-  return { rows, byId };
+};
+
+const PU: { rows: Ticket[]; byId: Map<string, Purchase> } = (() => {
+  const byId = new Map<string, Purchase>();
+  mockPurchases.forEach((p) => byId.set(p.id, p));
+  return { rows: mockPurchases.map((p) => purchaseRow(p)), byId };
 })();
+
+/** An order saved on the Create Purchase Order page (the 'purchase' keys in createFormSpecs).
+ *  It starts at Generated — approving, ordering and receiving move it on. */
+const purchaseFromForm = (r: CreatedRecord): { p: Purchase; total: number } => {
+  const v = r.values;
+  const items = (Array.isArray(v.items) ? v.items : []) as { qty: string; price: string; tax: string }[];
+  const total = items.reduce((s, it) => s + (Number(it.qty) || 0) * (Number(it.price) || 0) * (1 + (Number(it.tax) || 0) / 100), 0);
+  return {
+    p: {
+      id: r.id,
+      name: str(v.name),
+      orderNumber: str(v.orderNumber) || null,
+      status: 'Generated',
+      owner: str(v.owner) || null,
+      vendor: str(v.vendor),
+      requiredBy: dmyOf(v.requiredBy) ?? '',
+    },
+    total: Math.round(total * 100) / 100,
+  };
+};
 
 /* The KPI strip — the Purchase detail page's header story (Status · Required By ·
    Outstanding · Total Payable · Vendor) rolled up across the pipeline. */
@@ -202,6 +227,10 @@ const buildDashboard = (tickets: Ticket[]): DashConfig => {
 };
 
 export function PurchasesListingPage({ onNavigate }: { onNavigate?: (page: string) => void }) {
+  /* Orders created on the Create Purchase Order page come first. */
+  const created = useCreatedRecords('purchases');
+  const extra = useMemo(() => created.map(purchaseFromForm), [created]);
+  const rows = useMemo(() => [...extra.map((x) => purchaseRow(x.p, x.total)), ...PU.rows], [extra]);
   return (
     <AssetRegisterPage
       activePage="purchases"
@@ -211,8 +240,8 @@ export function PurchasesListingPage({ onNavigate }: { onNavigate?: (page: strin
       moduleCols="purchase"
       defaultViewName="All Purchase Orders"
       footerNoun="orders"
-      rows={PU.rows}
-      recordOf={(id) => PU.byId.get(id)}
+      rows={rows}
+      recordOf={(id) => PU.byId.get(id) ?? extra.find((x) => x.p.id === id)?.p}
       buildCards={buildCards}
       buildDashboard={buildDashboard}
       mineHint="No purchase orders are owned by you yet — switch back to Overall."

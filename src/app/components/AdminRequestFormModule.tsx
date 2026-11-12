@@ -9,6 +9,8 @@ import type { FormField, FormRule, RuleApplies, RuleEvent, RuleExecution } from 
 import { ToggleSwitch } from './FormRuleControls';
 import { FormRuleEditor } from './FormRuleEditor';
 import { AdminFormBuilder } from './AdminFormBuilder';
+import { FormStudio } from './FormStudio';
+import { REQUEST_SECTIONS } from './formStudioData';
 import { conflictCount } from './formRuleEngine';
 import { AdminFormRuleMatrix } from './AdminFormRuleMatrix';
 import { FormRuleIllustrations } from './FormRuleIllustrations';
@@ -103,7 +105,9 @@ export function AdminRequestFormModule({ tab, onTab, onEditor, openRuleId }: {
   /** The editor takes the whole pane, so the admin sidebar stands down while it is open. */
   onEditor?: (open: boolean) => void;
 }) {
-  const [fields, setFields] = useState<FormField[]>(DEFAULT_FORM_FIELDS);
+  /* The request form opens with its sections (Form Studio, 2 Nov 2026). Sections hold no value, so the
+     rule editor and the matrix only ever see fields.filter(holdsValue). */
+  const [fields, setFields] = useState<FormField[]>(() => DEFAULT_FORM_FIELDS.flatMap((f) => [...REQUEST_SECTIONS.filter((x) => x.before === f.id).map((x) => x.field), f]));
   const [rules, setRules] = useState<FormRule[]>(SEED_RULES);
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState<Filters>(NO_FILTERS);
@@ -258,22 +262,20 @@ export function AdminRequestFormModule({ tab, onTab, onEditor, openRuleId }: {
           >
             {label}
             {<span className={`rounded-sm px-1.5 text-[11px] font-semibold ${view === id ? 'bg-[#EBF5FF] text-[#3D8BD0]' : 'bg-[#F1F5F9] text-[#64748B]'}`}>
-              {id === 'builder' ? fields.length : rules.length}
+              {id === 'builder' ? fields.filter(holdsValue).length : rules.length}
             </span>}
           </button>
         ))}
       </div>
 
       {view === 'matrix' ? (
-        <AdminFormRuleMatrix rules={rules} fields={fields} onEditRule={(id) => setEditing(id)} />
+        <AdminFormRuleMatrix rules={rules} fields={fields.filter(holdsValue)} onEditRule={(id) => setEditing(id)} />
       ) : tab === 'builder' ? (
-        <AdminFormBuilder
-          fields={fields}
-          onFields={setFields}
-          rules={rules}
-          onCreateRule={(fieldId) => { setPrefill(fieldId); setStartStep(0); setEditing('new'); }}
-          onReuseRule={(ruleId, fieldId) => { setPrefill(fieldId); setStartStep(1); setEditing(ruleId); }}
-        />
+        /* The new builder (Form Studio). The previous AdminFormBuilder stays built, unused. */
+        <div className="-mx-4 -mb-6 h-[calc(100vh-56px-178px)] min-h-[520px] border-t border-[#EEF2F6]">
+          <FormStudio title="Request Form" noun="request" fields={fields} onFields={setFields}
+            rulesUsing={(id) => rules.filter((r) => r.groups.some((g) => g.conditions.some((c) => c.fieldId === id)) || r.actions.some((a) => a.fieldIds.includes(id))).length} />
+        </div>
       ) : (
         <>
           <div className="mb-3 flex flex-wrap items-center gap-3">

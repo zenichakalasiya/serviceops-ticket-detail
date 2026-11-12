@@ -63,3 +63,4 @@ ds-types/
 
 # Module versions: CI worktree of the versions-builds branch
 .vb/
+dist-compare/

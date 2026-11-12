@@ -22,7 +22,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { StatsCardsRow } from './AssetStatsRow';
 import { ckpi, RuleDetailBody, RuleFactsRow, SeverityPill } from './ComplianceShared';
 import { HeaderKpiRow } from './HeaderKpiRow';
-import { benchmarksUsingRule, BENCHMARKS_SEED, numberedGroups, ruleById, ruleNumbers, SEVERITIES, SEVERITY_PILL } from './complianceData';
+import { benchmarksUsingRule, BENCHMARKS_SEED, numberedGroups, ruleById, ruleNumbers, SEVERITIES, SEVERITY_PILL, ruleCode } from './complianceData';
 import type { Benchmark, ComplianceRule, NumberedRule, Severity } from './complianceData';
 import {
   benchmarkOf, complianceEndpoint, endpointResults, EXCEPTION_REASONS, exceptionFor, exceptionStore, findingsOf, fmtStamp, getPolicy, resolvedEndpoints, runHistory, useExceptions, usePolicies,
@@ -45,14 +45,14 @@ function FirstScanIcon() {
   return <span className="inline-flex"><Circle size={15} strokeDasharray="3 3" className="text-[#B6C0CC]" /></span>;
 }
 
-/** What the Previous → Last icons say, in words (their tooltip). */
+/** What the Previous → Recent icons say, in words (their tooltip). */
 function ScanChangeTip({ prev, last }: { prev: boolean | null; last: boolean | null }) {
   const word = (v: boolean | null) => (v === null ? 'Not checked' : v ? 'Pass' : 'Fail');
   const tone = (v: boolean | null) => (v === null ? 'text-white/70' : v ? 'text-[#86EFAC]' : 'text-[#FCA5A5]');
   return (
     <div className="space-y-1 text-[12px] leading-[1.5]">
       <div className="flex justify-between gap-6"><span className="text-white/70">Previous scan</span><span className={`font-medium ${tone(prev)}`}>{prev === null && last !== null ? 'None (first scan)' : word(prev)}</span></div>
-      <div className="flex justify-between gap-6"><span className="text-white/70">Last scan</span><span className={`font-medium ${tone(last)}`}>{word(last)}</span></div>
+      <div className="flex justify-between gap-6"><span className="text-white/70">Recent scan</span><span className={`font-medium ${tone(last)}`}>{word(last)}</span></div>
     </div>
   );
 }
@@ -283,7 +283,7 @@ function ExportResultButton({ ep, policy, benchmark, mine }: { ep: ComplianceEnd
             ['Benchmark', benchmark.name], ['Last Scan', policy.lastScan ? fmtStamp(policy.lastScan.at) : '—'],
             ['Result', `${pass} passed · ${mine.length - pass} failed`],
           ],
-          columns: ['Number', 'Rule', 'Severity', 'Previous Scan', 'Last Scan'],
+          columns: ['Number', 'Rule', 'Severity', 'Previous Scan', 'Recent Scan'],
           rows: resultRows(benchmark, mine).map((r) => [r.number, r.rule, r.severity, r.previous, r.last]),
         });
         toast.success(`Assessment result exported as ${format}${pw ? ' (password protected)' : ''}`);
@@ -400,8 +400,8 @@ export function ComplianceEndpointPanel({ endpointId, ruleId, policyId, onClose,
               {rule && (
                 <>
                   <h3 className="flex min-w-0 items-start gap-2 text-[16px] font-semibold leading-6 text-[#364658]">
-                    <span className="mt-1 h-4 w-[3px] flex-shrink-0 rounded-full" style={{ backgroundColor: SEVERITY_PILL[rule.severity].bar }} title={rule.severity} />
-                    {number && <span className="flex-shrink-0 tabular-nums text-[#7B8FA5]">{number}</span>}
+                    {/* Zeni, 12 Nov 2026: Rule ID - title; the facts line under it carries Severity. */}
+                    <span className="mt-px flex-shrink-0 whitespace-nowrap rounded bg-[#e8f4fd] px-1.5 py-px text-[13px] font-semibold text-[#3D8BD0]">{ruleCode(rule.id)}</span>
                     <span>{rule.name}</span>
                   </h3>
                   {/* The same facts row as the Rule details panel. */}
@@ -554,7 +554,7 @@ export function RuleGroupTree({ benchmark, resultOf = () => null, right, onRule,
       sits right after its name. */
   scoreHeads?: boolean;
   title?: string;
-  /** A short line at the right of the header (e.g. "Previous → Last scan"). */
+  /** A short line at the right of the header (e.g. "Previous → Recent scan"). */
   note?: string;
   /** Narrows the tree (a count card's filter): rules it rejects are hidden, and so is any
       group or sub-group left with none. */
@@ -686,7 +686,7 @@ export function RuleGroupTree({ benchmark, resultOf = () => null, right, onRule,
   );
 }
 
-/** One endpoint's results as the tree — Previous → Last scan on each rule. */
+/** One endpoint's results as the tree — Previous → Recent scan on each rule. */
 export function ComplianceBreakdown({ benchmark, findings, onRule, query }: {
   benchmark: Benchmark;
   /** This endpoint's findings for the policy. */
@@ -700,7 +700,7 @@ export function ComplianceBreakdown({ benchmark, findings, onRule, query }: {
     <RuleGroupTree
       benchmark={benchmark}
       title="Compliance Breakdown"
-      note="Previous → Last scan"
+      note="Previous → Recent scan"
       query={query}
       onRule={onRule}
       linkRows
@@ -847,7 +847,7 @@ function ResultCard({ rule, endpoint, finding, lastScan, prevScan, exception, on
         <div><div className={label}>Previous Scan</div><div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">{finding?.prevPassed == null
           ? <span className="text-[13px] text-[#94A3B8]">None (first scan)</span>
           : <><ResultPill passed={finding.prevPassed} /><span className="text-[13px] text-[#364658]">{prevScan ? fmtStamp(prevScan) : '—'}</span></>}</div></div>
-        <div><div className={label}>Last Scan</div><div className="mt-1 text-[13px] text-[#364658]">{fmtStamp(lastScan)}</div></div>
+        <div><div className={label}>Recent Scan</div><div className="mt-1 text-[13px] text-[#364658]">{fmtStamp(lastScan)}</div></div>
         <div className="col-span-3">
           <div className={label}>Required</div>
           <div className="mt-1 whitespace-pre-wrap rounded bg-[#F9FAFB] px-3 py-2 font-mono text-[12px] leading-[1.6] text-[#364658]">{rule.remediationValue}</div>

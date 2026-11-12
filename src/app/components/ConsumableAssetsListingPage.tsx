@@ -12,6 +12,8 @@ import { CONSUMABLE_QUICK_FILTERS, type FilterRule } from './TicketFilterBar';
 import { CONSUMABLE_FILTER_ATTRS } from './consumableFilterAttrs';
 import { mockAssets, type ConsumableAsset } from './ConsumableAssetsListPage';
 import type { Ticket } from './TicketListPage';
+import { useMemo } from 'react';
+import { initialsOf, list, str, useCreatedRecords, type CreatedRecord } from './createFormStore';
 import { AlertTriangle, Boxes, Package, TriangleAlert } from 'lucide-react';
 
 const ruleIs = (field: string, ...values: string[]): Omit<FilterRule, 'id'>[] => [{ field, condition: 'is', values }];
@@ -28,10 +30,8 @@ const countBy = (t: (Ticket & Record<string, any>)[], field: string) => {
    documented date-parse recipe for these mock strings. */
 const parseCreated = (s: string) => new Date(s.slice(s.indexOf(',') + 1).trim());
 
-const CO: { rows: Ticket[]; byId: Map<string, ConsumableAsset> } = (() => {
-  const byId = new Map<string, ConsumableAsset>();
-  const rows = mockAssets.map((a) => {
-    byId.set(a.id, a);
+/** One consumable as a listing row — the mock stock and items added this session alike. */
+const consumableRow = (a: ConsumableAsset): Ticket => {
     const created = parseCreated(a.createdDate);
     const initials = (n: string) => n.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase();
     const stockBand = a.availableQuantity === 0 ? 'Out of stock' : a.availableQuantity <= 10 ? 'Low stock' : 'Healthy';
@@ -52,9 +52,34 @@ const CO: { rows: Ticket[]; byId: Map<string, ConsumableAsset> } = (() => {
       x_location: a.location === '---' ? '' : a.location,
       x_stockBand: stockBand,
     } as Ticket;
-  });
-  return { rows, byId };
+};
+
+const CO: { rows: Ticket[]; byId: Map<string, ConsumableAsset> } = (() => {
+  const byId = new Map<string, ConsumableAsset>();
+  mockAssets.forEach((a) => byId.set(a.id, a));
+  return { rows: mockAssets.map(consumableRow), byId };
 })();
+
+/** An item saved on the Add Consumable Asset page (the 'asset' keys in createFormSpecs). */
+const consumableFromForm = (r: CreatedRecord): ConsumableAsset => {
+  const v = r.values;
+  const managedBy = str(v.managedBy, 'Unassigned');
+  const today = r.createdAt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+  return {
+    id: r.id,
+    name: str(v.name),
+    assetType: str(v.assetType, 'Cable'),
+    managedBy: managedBy === 'Unassigned' ? { name: managedBy } : { name: managedBy, initials: initialsOf(managedBy), color: '#3D8BD0' },
+    managedByGroup: str(v.managedByGroup, 'Unassigned'),
+    department: str(v.department, '---'),
+    location: str(v.location, '---'),
+    assetGroup: str(v.group, '---'),
+    tags: list(v.tags),
+    createdDate: today,
+    lastUpdatedDate: today,
+    availableQuantity: Math.max(0, Number(v.quantity) || 0),
+  };
+};
 
 /* The KPI strip — the Consumable detail page's story (Stock · Available ·
    Quantity & Allocation) rolled up across the store. */
@@ -156,6 +181,10 @@ const buildDashboard = (tickets: Ticket[]): DashConfig => {
 };
 
 export function ConsumableAssetsListingPage({ onNavigate }: { onNavigate?: (page: string) => void }) {
+  /* Items added on the Add Consumable Asset page come first. */
+  const created = useCreatedRecords('consumable-assets');
+  const extra = useMemo(() => created.map(consumableFromForm), [created]);
+  const rows = useMemo(() => [...extra.map(consumableRow), ...CO.rows], [extra]);
   return (
     <AssetRegisterPage
       activePage="consumable-assets"
@@ -165,8 +194,8 @@ export function ConsumableAssetsListingPage({ onNavigate }: { onNavigate?: (page
       moduleCols="consumable"
       defaultViewName="All Consumable Assets"
       footerNoun="items"
-      rows={CO.rows}
-      recordOf={(id) => CO.byId.get(id)}
+      rows={rows}
+      recordOf={(id) => CO.byId.get(id) ?? extra.find((a) => a.id === id)}
       buildCards={buildCards}
       buildDashboard={buildDashboard}
       mineHint="Consumables carry no personal assignment — switch back to Overall."

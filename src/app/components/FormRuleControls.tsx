@@ -273,7 +273,7 @@ export function ToggleSwitch({ on, onChange, title, disabled }: { on: boolean; o
 
 /** The Request Fields accordion's tag row: gray chips, a "+ Add tag" button that turns into an
  *  input, Enter or comma to commit. */
-export function TagEditor({ tags, onChange, invalid }: { tags: string[]; onChange: (t: string[]) => void; invalid?: boolean }) {
+export function TagEditor({ tags, onChange, invalid, addLabel = 'Add tag', placeholder = 'Type and press Enter' }: { tags: string[]; onChange: (t: string[]) => void; invalid?: boolean; addLabel?: string; placeholder?: string }) {
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState('');
   const commit = () => {
@@ -299,7 +299,7 @@ export function TagEditor({ tags, onChange, invalid }: { tags: string[]; onChang
             if (e.key === 'Escape') { setDraft(''); setAdding(false); }
           }}
           onBlur={() => { commit(); setAdding(false); }}
-          placeholder="Type and press Enter"
+          placeholder={placeholder}
           className="h-7 w-[180px] rounded border border-[#d1d5db] px-2 text-[12px] text-[#364658] placeholder:text-[#9ca3af] focus:border-[#3D8BD0] focus:outline-none focus:ring-1 focus:ring-[#3D8BD0]"
         />
       ) : (
@@ -308,7 +308,7 @@ export function TagEditor({ tags, onChange, invalid }: { tags: string[]; onChang
           onClick={() => setAdding(true)}
           className={`inline-flex h-6 items-center gap-1 rounded-md bg-[#E9EDF3] pl-1.5 pr-2 text-[12px] font-medium transition-colors hover:bg-[#DFE5ED] ${invalid ? 'text-[#F25C4E] ring-1 ring-[#F25C4E]' : 'text-[#18181B]'}`}
         >
-          <Plus size={14} /> Add tag
+          <Plus size={14} /> {addLabel}
         </button>
       )}
     </div>

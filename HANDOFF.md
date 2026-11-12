@@ -1,4 +1,57 @@
-# Handoff — 2026-11-12 (Compliance: listing columns, rule facts, policy Status / Result)
+# Handoff — 2026-11-12, later (Create Policy V1–V5, V3 guide, Execution Status, views; first publish of the create-form + Form Studio work)
+
+> Sessions share this file. This top part is the newest; older notes follow.
+
+## Read first
+In CLAUDE.md:
+- "Compliance (Oct 2026)", its last bullet.
+- "Create forms V1–V5 + Form Studio (published 12 Nov 2026)".
+
+## What we worked on this session
+- Create Policy now has the five create-page layouts.
+- The V3 guide moved up to the drawer's top edge on every V3 create page.
+- Publish ▾ Save as Draft is now a single split CTA.
+- New Execution Status column on the policy Endpoints tab, and new policy views.
+- The rule drawer header is now Rule ID + title; the "Previous → Recent" wording changed.
+- First publish of the create-form V1–V5 work and Form Studio, which had been uncommitted. Zeni chose "publish everything".
+
+## Completed (headless browser, no page errors)
+- **Create Policy:**
+  - V1–V5 switch beside the logo, set via `setExtraCreateOpen`.
+  - All five layouts render with the Compliance Policy Guide.
+  - The Schedule toggle ends at Notify Team's right edge, measured equal.
+  - Save as Draft lands as Status Draft (checked with CP-116).
+- **V3 shell (`SteppedDrawerShell`, shared):** the guide is full height from the top edge; ✕ in its corner; the footer spans both columns.
+- **`SplitCta` (CreateFormKit):** the face runs the chosen option; the arrow switches the face. It can be used by `CreatePageShell split`, the stepped shells' `split` (last step only) and `SummaryAside split`. Only Create Policy uses it.
+- **Policy Endpoints tab:** Execution Status column plus a filter, made up in `execStatusOf` (CompliancePolicyDrawer).
+- **Views:** All · In Progress · Draft · Cancelled · Archived · Non-Compliant Policies.
+- **Rule drawer header** (both sides):
+  - First row: RUL pill + title.
+  - Facts: Profile · Assessment · OS Platform · OS Version · Severity.
+  - The severity bar and the position number are removed.
+
+## In progress
+Nothing mid-flight.
+
+## Next steps
+- Ask whether Save as Draft should be reachable from every step in V2/V3. Today the split CTA shows only on the last step.
+- Ask whether the rule header should show a literal "-" between the Rule ID and the title.
+- Check the V3 guide move on a module other than Create Policy, e.g. Create Patch. It was only measured on Create Policy.
+
+## Decisions made
+- Policy row `status` = the run status, from `runStatusOf`.
+  - A `draft` flag forces Draft.
+  - `cancelled` is set by cancel() and cleared by run().
+- The create-form + Form Studio work was published together with Compliance, because Header.tsx ties them together.
+- Compliance v2 in versions.json now points at this publish.
+
+## Gotchas & notes
+- `tsc` aborts on CatalogItemDetailsModal.tsx (TS1127, pre-existing), so a typecheck of files that import it proves nothing. Verify in the browser with a `pageerror` listener.
+- Git Bash heredocs choke on some backtick/quote mixes. Write scripts with the Write tool and run them with node.
+
+---
+
+## (earlier today) Handoff — 2026-11-12 (Compliance: listing columns, rule facts, policy Status / Result)
 
 > Sessions share this file. This top part is the newest; older notes follow.
 

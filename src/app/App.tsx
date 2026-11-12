@@ -25,6 +25,7 @@ import { ComplianceRulesPage } from './components/ComplianceRulesPage';
 import { ComplianceEndpointsPage } from './components/ComplianceEndpointsPage';
 import { CompliancePoliciesListingPage } from './components/CompliancePoliciesListingPage';
 import { CompliancePolicyEditorHost } from './components/CompliancePolicyEditor';
+import { ModuleCreatePageHost } from './components/ModuleCreatePage';
 import { KnowledgeListingPage } from './components/KnowledgeListingPage';
 import { TasksListingPage } from './components/TasksListingPage';
 import { ReportsListingPage } from './components/ReportsListingPage';
@@ -155,6 +156,7 @@ export default function App() {
       <GlobalSearch activePage={activePage} onNavigate={navigate} />
       {/* The Compliance Policy form — one full-screen page, opened from the listing or a policy's detail drawer. */}
       <CompliancePolicyEditorHost />
+      <ModuleCreatePageHost />
       {/* ONE Keyboard shortcuts panel for the whole product — header icon, `?`, and the builder's rail. */}
       <GlobalShortcutsPanel page={activePage} />
       <GlobalHelpGuide />

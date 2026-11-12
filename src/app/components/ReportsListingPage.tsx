@@ -17,6 +17,8 @@ import { REPORT_FILTER_ATTRS } from './reportFilterAttrs';
 import { CATEGORIES, REPORTS, reportToKnowledgeShape } from './ReportsListPage';
 import type { ReportRow } from './ReportsTable';
 import type { Ticket } from './TicketListPage';
+import { CURRENT_USER } from './technicianRoster';
+import { openCreatePage, stampOf, str, useCreatedRecords, type CreatedRecord } from './createFormStore';
 
 /* "Fri, Jul 31, 2026 06:15 PM" — drop the weekday so Date can read it. */
 const parseCreated = (s: string) => new Date(s.replace(/^[A-Za-z]{3},\s*/, ''));
@@ -34,18 +36,15 @@ const originOf = (id: string) => {
 /* Every report in the catalog, adapted onto the grid's row shape ONCE. `cat` rides along so
    the rail can slice without rebuilding, and the drawer gets its category label back. */
 type Row = Ticket & { cat: string };
-const CATALOG: { rows: Row[]; byId: Map<string, { row: ReportRow; cat: string }> } = (() => {
-  const byId = new Map<string, { row: ReportRow; cat: string }>();
-  const rows: Row[] = [];
-  Object.entries(REPORTS).forEach(([cat, list]) => {
-    list.forEach((r) => {
+/** One report as a grid row. `origin` is set for a report built here this session; a catalog
+ *  report's is derived from its id. */
+const reportRow = (r: ReportRow, cat: string, origin?: string): Row => {
       /* The drawer's own record carries the UPPERCASED id (reportToKnowledgeShape), and the
          stack matches the open record to its tab by id — so the row has to use the same one
          or the drawer opens empty and renders nothing. */
       const rid = r.id.toUpperCase();
-      byId.set(rid, { row: r, cat });
       const created = parseCreated(r.createdDate);
-      rows.push({
+      return {
         id: rid,
         subject: r.name,
         requester: r.createdBy,
@@ -60,13 +59,40 @@ const CATALOG: { rows: Row[]; byId: Map<string, { row: ReportRow; cat: string }>
         x_type: r.type,
         /* Shipped with the product, or built here. Deterministic per id so the split is
            stable across reloads and spread through every category. */
-        x_origin: originOf(r.id),
+        x_origin: origin ?? originOf(r.id),
         cat,
-      } as Row);
+      } as Row;
+};
+
+const CATALOG: { rows: Row[]; byId: Map<string, { row: ReportRow; cat: string }> } = (() => {
+  const byId = new Map<string, { row: ReportRow; cat: string }>();
+  const rows: Row[] = [];
+  Object.entries(REPORTS).forEach(([cat, list]) => {
+    list.forEach((r) => {
+      byId.set(r.id.toUpperCase(), { row: r, cat });
+      rows.push(reportRow(r, cat));
     });
   });
   return { rows, byId };
 })();
+
+const TYPE_OF: Record<string, ReportRow['type']> = { Tabular: 'Tabular Report', Matrix: 'Matrix Report', Summary: 'Summary Report' };
+const p2 = (n: number) => String(n).padStart(2, '0');
+/** A Date as the form's local "YYYY-MM-DDTHH:MM" — what stampOf reads. */
+const localStamp = (d: Date) => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}T${p2(d.getHours())}:${p2(d.getMinutes())}`;
+
+/** A report saved on the Create Report page (the 'report' keys in createFormSpecs). It lands in
+ *  the category of the module it reports on, built by you. */
+const reportFromForm = (r: CreatedRecord): { row: ReportRow; cat: string } => ({
+  row: {
+    id: r.id,
+    name: str(r.values.name),
+    createdDate: stampOf(localStamp(r.createdAt)) ?? '',
+    createdBy: CURRENT_USER,
+    type: TYPE_OF[str(r.values.type, 'Tabular')] ?? 'Tabular Report',
+  },
+  cat: str(r.values.module, 'request'),
+});
 
 /* ── Report settings ─────────────────────────────────────────────────────────
    One switch today, so it is a small panel hung off the ⋮ rather than a page of its own:
@@ -151,7 +177,14 @@ export function ReportsListingPage({ onNavigate }: { onNavigate?: (page: string)
   const [settingsAt, setSettingsAt] = useState<DOMRect | null>(null);
   const [srNoColumn, setSrNoColumn] = useState(false);
 
-  const rows = useMemo(() => CATALOG.rows.filter((r) => r.cat === cat), [cat]);
+  /* Reports created on the Create Report page come first in their category. */
+  const created = useCreatedRecords('reports');
+  const extra = useMemo(() => created.map(reportFromForm), [created]);
+  const all = useMemo(() => [...extra.map((x) => reportRow(x.row, x.cat, 'Custom Report')), ...CATALOG.rows], [extra]);
+  /* A new report is filed under its module — show that category so it is in view. */
+  const newest = created[0]?.id;
+  useEffect(() => { if (extra[0]) setCat(extra[0].cat); }, [newest]);
+  const rows = useMemo(() => all.filter((r) => r.cat === cat), [cat, all]);
   const title = CATEGORIES.find((c) => c.id === cat)?.label ?? 'Reports';
 
   return (
@@ -168,7 +201,7 @@ export function ReportsListingPage({ onNavigate }: { onNavigate?: (page: string)
       rows={rows}
       /* The drawer takes the report adapted onto the knowledge shape, as the old page did. */
       recordOf={(id) => {
-        const hit = CATALOG.byId.get(id);
+        const hit = CATALOG.byId.get(id) ?? extra.find((x) => x.row.id === id);
         return hit ? reportToKnowledgeShape(hit.row, CATEGORIES.find((c) => c.id === hit.cat)?.label ?? '') : undefined;
       }}
       filterAttrs={REPORT_FILTER_ATTRS}
@@ -177,7 +210,7 @@ export function ReportsListingPage({ onNavigate }: { onNavigate?: (page: string)
       lockedCells={['assignee', 'status']}
       quickFilters={REPORT_QUICK_FILTERS}
       searchFields={['x_createdBy', 'x_type', 'x_origin']}
-      primaryAction={{ label: 'Create' }}
+      primaryAction={{ label: 'Create Report', onClick: () => openCreatePage({ spec: 'report', target: 'reports', idOf: (n) => `RPT-${n}`, seqStart: 500, preset: { module: cat } }) }}
       /* On the title line, at the page's top-right — the rail below it narrows what you are
          looking at, which is a different job from making a new report. */
       primaryActionInTitle

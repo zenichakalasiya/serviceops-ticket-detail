@@ -12,6 +12,8 @@ import { LICENSE_QUICK_FILTERS, type FilterRule } from './TicketFilterBar';
 import { LICENSE_FILTER_ATTRS } from './licenseFilterAttrs';
 import { mockLicenses, type SoftwareLicense } from './SoftwareLicensesListPage';
 import type { Ticket } from './TicketListPage';
+import { useMemo } from 'react';
+import { dmyOf, openCreatePage, str, useCreatedRecords, type CreatedRecord } from './createFormStore';
 import { AlertTriangle, CalendarClock, KeyRound, Users } from 'lucide-react';
 
 const ruleIs = (field: string, ...values: string[]): Omit<FilterRule, 'id'>[] => [{ field, condition: 'is', values }];
@@ -31,11 +33,9 @@ const parseDMY = (s: string | null): Date | null => {
   return new Date(y, m - 1, d);
 };
 
-const LI: { rows: Ticket[]; byId: Map<string, SoftwareLicense> } = (() => {
-  const byId = new Map<string, SoftwareLicense>();
-  const today = new Date();
-  const rows = mockLicenses.map((l) => {
-    byId.set(l.id, l);
+/** One licence as a listing row — the mock licences and ones created this session alike. */
+const licenseRow = (l: SoftwareLicense): Ticket => {
+    const today = new Date();
     const exp = parseDMY(l.expiryDate);
     const days = exp ? Math.ceil((exp.getTime() - today.getTime()) / DAY) : null;
     /* The detail page's compliance rule: util > 100 over, < 60 under, no purchase
@@ -66,9 +66,26 @@ const LI: { rows: Ticket[]; byId: Map<string, SoftwareLicense> } = (() => {
       x_compliance: compliance,
       x_expiryBand: expiryBand,
     } as Ticket;
-  });
-  return { rows, byId };
+};
+
+const LI: { rows: Ticket[]; byId: Map<string, SoftwareLicense> } = (() => {
+  const byId = new Map<string, SoftwareLicense>();
+  mockLicenses.forEach((l) => byId.set(l.id, l));
+  return { rows: mockLicenses.map(licenseRow), byId };
 })();
+
+/** A licence saved on the Add Software License page (the 'license' keys in createFormSpecs).
+ *  Nothing is bought, allocated or installed yet, so the three counts start empty. */
+const licenseFromForm = (r: CreatedRecord): SoftwareLicense => ({
+  id: r.id,
+  name: str(r.values.name),
+  product: str(r.values.product),
+  licenseType: str(r.values.licenseType),
+  purchaseCount: null,
+  allocationCount: null,
+  installationCount: null,
+  expiryDate: dmyOf(r.values.expiryDate),
+});
 
 /* The KPI strip — the License detail page's Overview (Purchase / Allocation /
    Installation / Available / Pending Install) + header compliance, estate-wide. */
@@ -189,6 +206,10 @@ const buildDashboard = (tickets: Ticket[]): DashConfig => {
 };
 
 export function SoftwareLicensesListingPage({ onNavigate }: { onNavigate?: (page: string) => void }) {
+  /* Licences added on the Add Software License page come first. */
+  const created = useCreatedRecords('software-licenses');
+  const extra = useMemo(() => created.map(licenseFromForm), [created]);
+  const rows = useMemo(() => [...extra.map(licenseRow), ...LI.rows], [extra]);
   return (
     <AssetRegisterPage
       activePage="software-licenses"
@@ -198,15 +219,15 @@ export function SoftwareLicensesListingPage({ onNavigate }: { onNavigate?: (page
       moduleCols="license"
       defaultViewName="All Software Licenses"
       footerNoun="licenses"
-      rows={LI.rows}
-      recordOf={(id) => LI.byId.get(id)}
+      rows={rows}
+      recordOf={(id) => LI.byId.get(id) ?? extra.find((l) => l.id === id)}
       buildCards={buildCards}
       buildDashboard={buildDashboard}
       mineHint="Licenses carry no personal assignment — switch back to Overall."
       filterAttrs={LICENSE_FILTER_ATTRS}
       /* One cut: what kind of licence. A licence has no assignee, SLA or priority. */
       quickFilters={LICENSE_QUICK_FILTERS}
-      primaryAction={{ label: 'Add License' }}
+      primaryAction={{ label: 'Add License', onClick: () => openCreatePage({ spec: 'license', target: 'software-licenses', idOf: (n) => `LIC-${n}`, seqStart: 100 }) }}
       /* On the title line, at the page's top-right — the rail below it narrows what you are
          looking at, which is a different job from adding a licence. */
       primaryActionInTitle

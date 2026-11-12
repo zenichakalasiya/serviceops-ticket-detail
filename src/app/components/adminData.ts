@@ -32,7 +32,9 @@ export interface AdminCard {
  * scrolls the Overview, exactly as before. Expansion is opt-in per section rather than automatic
  * for all 24, because a section only earns its own nav branch once its modules are real screens.
  */
-export const SIDEBAR_TREE: string[] = ['Automation', 'Request Management', 'BOM Management', 'Patch Management', 'Organization', 'Support Channels', 'User Survey', 'Compliance Settings'];
+export const SIDEBAR_TREE: string[] = ['Automation', 'Request Management', 'BOM Management', 'Patch Management', 'Organization', 'Support Channels', 'User Survey', 'Compliance Settings',
+  /* Opted in for their form submodules (Form Studio, 2 Nov 2026). */
+  'Users', 'Problem Management', 'Change Management', 'Release Management', 'Task Management', 'Project Management', 'Asset Management', 'Supplier Management', 'Contract Management', 'Purchase Management'];
 
 export const isTreeSection = (title: string) => SIDEBAR_TREE.includes(title);
 

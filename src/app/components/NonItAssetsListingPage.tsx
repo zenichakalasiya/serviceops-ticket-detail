@@ -12,6 +12,8 @@ import { NONIT_FILTER_ATTRS } from './nonItFilterAttrs';
 import { mockAssets, type NonItAsset } from './NonItAssetsListPage';
 import { CURRENT_USER, CURRENT_USER_INITIALS } from './technicianRoster';
 import type { Ticket } from './TicketListPage';
+import { useMemo } from 'react';
+import { initialsOf, str, useCreatedRecords, type CreatedRecord } from './createFormStore';
 import { AlertTriangle, Boxes, CalendarClock, CheckCircle2, FlaskConical, Import } from 'lucide-react';
 
 const ruleIs = (field: string, ...values: string[]): Omit<FilterRule, 'id'>[] => [{ field, condition: 'is', values }];
@@ -30,10 +32,8 @@ const fmtINR = (n: number) =>
 /** Deterministic current book value per asset — the Financials tab's recipe rolled up. */
 export const bookValueOf = (id: string) => 8000 + (hash(id) % 90) * 4200;
 
-const NI: { rows: Ticket[]; byId: Map<string, NonItAsset> } = (() => {
-  const byId = new Map<string, NonItAsset>();
-  const rows = mockAssets.map((a, i) => {
-    byId.set(a.id, a);
+/** One non-IT asset as a listing row — the mock pool and assets added this session alike. */
+const nonItRow = (a: NonItAsset, i: number): Ticket => {
     const h = hash(a.id);
     const created = new Date(2026, h % 8, 1 + (h % 27), 9 + (h % 8), (h % 4) * 15);
     const initials = (n: string) => n.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase();
@@ -62,9 +62,29 @@ const NI: { rows: Ticket[]; byId: Map<string, NonItAsset> } = (() => {
         return d <= 0 ? 'Expired' : d <= 30 ? 'Expiring soon' : 'Covered';
       })(),
     } as Ticket;
-  });
-  return { rows, byId };
+};
+
+const NI: { rows: Ticket[]; byId: Map<string, NonItAsset> } = (() => {
+  const byId = new Map<string, NonItAsset>();
+  mockAssets.forEach((a) => byId.set(a.id, a));
+  return { rows: mockAssets.map(nonItRow), byId };
 })();
+
+/** An asset saved on the Add Non-IT Asset page (the 'asset' keys in createFormSpecs). */
+const nonItFromForm = (r: CreatedRecord): NonItAsset => {
+  const v = r.values;
+  const managedBy = str(v.managedBy, 'Unassigned');
+  return {
+    id: r.id,
+    name: str(v.name),
+    assetType: str(v.assetType, 'Furniture'),
+    status: str(v.status, 'In Use') as NonItAsset['status'],
+    impact: str(v.impact, 'Low'),
+    managedBy: managedBy === 'Unassigned' ? { name: managedBy } : { name: managedBy, initials: initialsOf(managedBy), color: '#3D8BD0' },
+    usedBy: str(v.usedBy) || null,
+    managedByGroup: str(v.managedByGroup, 'Unassigned'),
+  };
+};
 
 /* The KPI strip — the Non-IT detail page's header story (Status · Warranty ·
    Book Value · Impact) rolled up across the register. */
@@ -190,6 +210,10 @@ const buildDashboard = (tickets: Ticket[]): DashConfig => {
 };
 
 export function NonItAssetsListingPage({ onNavigate }: { onNavigate?: (page: string) => void }) {
+  /* Assets added on the Add Non-IT Asset page come first. */
+  const created = useCreatedRecords('non-it-assets');
+  const extra = useMemo(() => created.map(nonItFromForm), [created]);
+  const rows = useMemo(() => [...extra.map((a) => nonItRow(a, 0)), ...NI.rows], [extra]);
   return (
     <AssetRegisterPage
       activePage="non-it-assets"
@@ -199,8 +223,8 @@ export function NonItAssetsListingPage({ onNavigate }: { onNavigate?: (page: str
       moduleCols="nonit"
       defaultViewName="All Non-IT Assets"
       footerNoun="assets"
-      rows={NI.rows}
-      recordOf={(id) => NI.byId.get(id)}
+      rows={rows}
+      recordOf={(id) => NI.byId.get(id) ?? extra.find((a) => a.id === id)}
       buildCards={buildCards}
       buildDashboard={buildDashboard}
       searchFields={['x_assetType', 'x_impact', 'usedByLabel', 'managedByGroup']}

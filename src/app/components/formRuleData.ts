@@ -33,6 +33,13 @@ export interface FormField {
   requesterEdit?: boolean;
   requesterRequired?: boolean;
   aiAccessible?: boolean;
+  /* Section fields only (Form Studio, 2 Nov 2026) — a section carries the layout and logic of the fields under it. */
+  /** How many columns the section lays its fields in. Default 2. */
+  cols?: 1 | 2 | 3;
+  /** The whole section is hidden from requesters. */
+  techOnly?: boolean;
+  /** Show the section only while this field holds this value. */
+  showWhen?: { fieldId: string; value: string };
 }
 
 /** Fields that hold a value — the only ones a rule can test or change. */

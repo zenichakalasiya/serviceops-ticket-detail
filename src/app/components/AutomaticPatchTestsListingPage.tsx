@@ -7,7 +7,7 @@
    is read for one thing: is the pilot ring actually validating patches, or has it quietly
    stopped? So the strip leads with what is enabled, what is still pending and what has never
    run at all. */
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { CheckCircle, ListChecks, Power, PowerOff, Timer } from 'lucide-react';
 import { toast } from 'sonner';
 import { AssetRegisterPage } from './AssetRegisterPage';
@@ -19,6 +19,8 @@ import {
 import type { DashConfig } from './AssetDashboardView';
 import type { StatCard } from './AssetStatsRow';
 import type { Ticket } from './TicketListPage';
+import { CURRENT_USER } from './technicianRoster';
+import { openCreatePage, str, useCreatedRecords, type CreatedRecord } from './createFormStore';
 
 /* "Tue, Sep 29, 2026 02:00 AM" → a real Date, so the column sorts chronologically and the
    date buckets read the true value. */
@@ -69,6 +71,20 @@ const toRow = (t: AutomaticPatchTest): Ticket => ({
   x_progress: aptProgressOf(t),
   ...testOutcomesOf(t),
 } as unknown as Ticket);
+
+/** A schedule saved on the Create Automatic Patch Test page (the 'auto-patch-test' keys in
+ *  createFormSpecs). It is on from the start and has not built or run any tests yet. */
+const aptFromForm = (r: CreatedRecord): AutomaticPatchTest => ({
+  id: r.id,
+  name: str(r.values.name),
+  totalTests: null,
+  pendingTests: null,
+  completedTests: null,
+  lastExecution: null,
+  nextExecution: null,
+  enabled: true,
+  createdBy: CURRENT_USER,
+});
 
 const enabledOf = (t: Ticket) => (t as any).x_enabled === 'Enabled';
 const pendingOf = (t: Ticket) => Number((t as any).x_pendingTests ?? 0);
@@ -174,8 +190,17 @@ export function AutomaticPatchTestsListingPage({ onNavigate }: { onNavigate?: (p
   const [open, setOpen] = useState<AutomaticPatchTest | null>(null);
   /* The Enable switch writes back, so the rows are state rather than a constant — toggling a
      schedule off has to move it out of the "Enabled" KPI and any applied filter. */
-  const [rows, setRows] = useState<Ticket[]>(() => mockAutomaticPatchTests.map(toRow));
-  const byId = useMemo(() => new Map(mockAutomaticPatchTests.map((t) => [t.id, t])), []);
+  /* Schedules created on the Create Automatic Patch Test page join the state rows first, so the
+     Enable switch works on them like any other. */
+  const saved = useCreatedRecords('automatic-patch-tests');
+  const created = useMemo(() => saved.map(aptFromForm), [saved]);
+  const [rows, setRows] = useState<Ticket[]>(() => [...created, ...mockAutomaticPatchTests].map(toRow));
+  useEffect(() => setRows((prev) => {
+    const have = new Set(prev.map((r) => r.id));
+    const add = created.filter((t) => !have.has(t.id)).map(toRow);
+    return add.length ? [...add, ...prev] : prev;
+  }), [created]);
+  const byId = useMemo(() => new Map([...created, ...mockAutomaticPatchTests].map((t) => [t.id, t])), [created]);
 
   return (
     <>
@@ -208,7 +233,7 @@ export function AutomaticPatchTestsListingPage({ onNavigate }: { onNavigate?: (p
          back. (Same trade-off My Team makes.) */
       hideTools={['export', 'settings']}
       moreActions={[]}
-      primaryAction={{ label: 'Create' }}
+      primaryAction={{ label: 'Create', onClick: () => openCreatePage({ spec: 'auto-patch-test', target: 'automatic-patch-tests' }) }}
       primaryActionInTitle
       /* The Enable switch is the one thing this grid edits in place. */
       onUpdateTicket={(id, patch) => setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)))}

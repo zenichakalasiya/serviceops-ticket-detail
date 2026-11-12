@@ -30,6 +30,7 @@ import { TicketDrawer } from './upstream/TicketDrawer';
 // The Ticket shape stays canonical — imported, never re-declared, so the bench and the
 // real listing can never drift apart on what a request IS.
 import type { Ticket } from './TicketListPage';
+import { initialsOf, str, useCreatedRecords, type CreatedRecord } from './createFormStore';
 
 
 /* A drill-down REPLACES the listing's own header rather than stacking on top of it. Arriving
@@ -83,10 +84,9 @@ const PROBLEM_STATUS = (st: string): Ticket['status'] =>
         : /closed/i.test(st)
           ? 'Closed'
           : 'Open';
-const PROBLEMS: { rows: Ticket[]; byId: Map<string, Problem> } = (() => {
-  const byId = new Map<string, Problem>();
-  const rows = mockProblems.map((c, i) => {
-    byId.set(c.id, c);
+/** One problem as a queue row — the mock problems and ones created this session alike.
+ *  `i` is its place in the mock pool; a created problem passes -1 and keeps its own assignee. */
+const problemRow = (c: Problem, i: number): Ticket => {
     return {
       id: c.id,
       subject: c.subject,
@@ -102,12 +102,42 @@ const PROBLEMS: { rows: Ticket[]; byId: Map<string, Problem> } = (() => {
       status: PROBLEM_STATUS(c.status),
       priority: c.priority,
     } as Ticket;
-  });
-  return { rows, byId };
+};
+const PROBLEMS: { rows: Ticket[]; byId: Map<string, Problem> } = (() => {
+  const byId = new Map<string, Problem>();
+  mockProblems.forEach((c) => byId.set(c.id, c));
+  return { rows: mockProblems.map(problemRow), byId };
 })();
+
+/** A problem saved on the Create Problem page (the 'problem' keys in createFormSpecs). */
+const problemFromForm = (r: CreatedRecord): Problem => {
+  const v = r.values;
+  const assignee = str(v.assignee, 'Unassigned');
+  return {
+    id: r.id,
+    subject: str(v.subject),
+    requester: str(v.requester),
+    createdDate: r.createdAt,
+    assignee: { name: assignee, initials: assignee === 'Unassigned' ? '' : initialsOf(assignee), color: '#3D8BD0' },
+    status: str(v.status, 'Open') as Problem['status'],
+    priority: str(v.priority, 'Low') as Problem['priority'],
+    urgency: (['Low', 'Medium', 'High'].includes(str(v.urgency)) ? str(v.urgency) : 'High') as Problem['urgency'],
+  };
+};
 
 export function ProblemListingPage({ onNavigate }: { onNavigate?: (page: string) => void }) {
   const [tickets, setTickets] = useState<Ticket[]>(PROBLEMS.rows);
+  /* Problems created on the Create Problem page join the top of the queue (edits made in
+     the grid stay — only rows the queue does not have yet are added). */
+  const created = useCreatedRecords('problem');
+  const createdById = new Map(created.map((r) => [r.id, problemFromForm(r)]));
+  useEffect(() => {
+    setTickets((ts) => {
+      const have = new Set(ts.map((t) => t.id));
+      const fresh = created.filter((r) => !have.has(r.id)).map((r) => problemRow(problemFromForm(r), -1));
+      return fresh.length ? [...fresh, ...ts] : ts;
+    });
+  }, [created]);
   /* The AI-suggested problem: expanded strip, parked as the toolbar pill after
      "Not now" (still one click away), or 'done' once it has been created or
      ignored in the review panel — resolved suggestions never come back. */
@@ -180,7 +210,7 @@ export function ProblemListingPage({ onNavigate }: { onNavigate?: (page: string)
 
   const handleOpenTicket = (ticket: Ticket) => {
     // Every row is a problem — open the real ProblemDrawer with the original record.
-    openInStack('problem', ticket.id, ticket.subject, PROBLEMS.byId.get(ticket.id) ?? ticket);
+    openInStack('problem', ticket.id, ticket.subject, PROBLEMS.byId.get(ticket.id) ?? createdById.get(ticket.id) ?? ticket);
   };
 
   /* A row opened in a new browser tab lands here with ?open=<id>. */

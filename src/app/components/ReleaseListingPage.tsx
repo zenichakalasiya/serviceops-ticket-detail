@@ -29,6 +29,7 @@ import { TicketDrawer } from './upstream/TicketDrawer';
 // The Ticket shape stays canonical — imported, never re-declared, so the bench and the
 // real listing can never drift apart on what a request IS.
 import type { Ticket } from './TicketListPage';
+import { dateOf, initialsOf, str, useCreatedRecords, type CreatedRecord } from './createFormStore';
 
 
 /* A drill-down REPLACES the listing's own header rather than stacking on top of it. Arriving
@@ -85,13 +86,13 @@ const RELEASE_STATUS = (st: string): Ticket['status'] =>
           : 'Open';
 const RELEASE_PRIORITY = (pr: string): Ticket['priority'] =>
   /p1|urgent/i.test(pr) ? 'Urgent' : /high|p2/i.test(pr) ? 'High' : /low|p4/i.test(pr) ? 'Low' : 'Medium';
-const RELEASES: { rows: Ticket[]; byId: Map<string, Release> } = (() => {
-  const byId = new Map<string, Release>();
-  const rows = mockReleases.map((c, i) => {
-    byId.set(c.id, c);
+/** One release as a queue row — the mock releases and ones created this session alike.
+ *  `i` is its place in the mock pool (-1 for a created release); `window` is the window the
+ *  Create Release page set, which wins over the schedule helper's. */
+const releaseRow = (c: Release, i: number, window?: { start: Date; end: Date }): Ticket => {
     /* The planned go-live window comes from the shared schedule helper — one source
        of truth for the calendar grid, the rail and the tooltip. */
-    const win = releaseScheduleOf(c);
+    const win = window ?? releaseScheduleOf(c);
     return {
       id: c.id,
       subject: c.subject,
@@ -114,12 +115,48 @@ const RELEASES: { rows: Ticket[]; byId: Map<string, Release> } = (() => {
       changeRisk: c.releaseRisk,
       priority: RELEASE_PRIORITY(c.priority),
     } as Ticket;
-  });
-  return { rows, byId };
+};
+const RELEASES: { rows: Ticket[]; byId: Map<string, Release> } = (() => {
+  const byId = new Map<string, Release>();
+  mockReleases.forEach((c) => byId.set(c.id, c));
+  return { rows: mockReleases.map((c, i) => releaseRow(c, i)), byId };
 })();
+
+/** A release saved on the Create Release page (the 'release' keys in createFormSpecs). A new
+ *  release starts at Submitted: Requested — the first stage of its lifecycle. */
+const releaseFromForm = (r: CreatedRecord): { release: Release; window?: { start: Date; end: Date } } => {
+  const v = r.values;
+  const assignee = str(v.assignee, 'Unassigned');
+  const start = dateOf(v.startDate), end = dateOf(v.endDate);
+  return {
+    release: {
+      id: r.id,
+      subject: str(v.subject),
+      requester: str(v.requester),
+      createdDate: r.createdAt,
+      assignee: { name: assignee, initials: assignee === 'Unassigned' ? '' : initialsOf(assignee), color: '#3D8BD0' },
+      status: 'Submitted: Requested',
+      priority: str(v.priority, 'Medium') as Release['priority'],
+      releaseType: (str(v.releaseType) || null) as Release['releaseType'],
+      releaseRisk: (str(v.risk) || null) as Release['releaseRisk'],
+    },
+    window: start && end ? { start, end } : undefined,
+  };
+};
 
 export function ReleaseListingPage({ onNavigate }: { onNavigate?: (page: string) => void }) {
   const [tickets, setTickets] = useState<Ticket[]>(RELEASES.rows);
+  /* Releases created on the Create Release page join the top of the queue (edits made in
+     the grid stay — only rows the queue does not have yet are added). */
+  const created = useCreatedRecords('release');
+  const createdById = new Map(created.map((r) => [r.id, releaseFromForm(r).release]));
+  useEffect(() => {
+    setTickets((ts) => {
+      const have = new Set(ts.map((t) => t.id));
+      const fresh = created.filter((r) => !have.has(r.id)).map((r) => { const x = releaseFromForm(r); return releaseRow(x.release, -1, x.window); });
+      return fresh.length ? [...fresh, ...ts] : ts;
+    });
+  }, [created]);
   // Assignee / Status / Priority are editable straight from the grid.
   const updateTicket = (id: string, patch: Partial<Ticket>) =>
     setTickets((ts) => ts.map((t) => (t.id === id ? { ...t, ...patch } : t)));
@@ -186,7 +223,7 @@ export function ReleaseListingPage({ onNavigate }: { onNavigate?: (page: string)
 
   const handleOpenTicket = (ticket: Ticket) => {
     // Every row is a release — open the real ReleaseDrawer with the original record.
-    openInStack('release', ticket.id, ticket.subject, RELEASES.byId.get(ticket.id) ?? ticket);
+    openInStack('release', ticket.id, ticket.subject, RELEASES.byId.get(ticket.id) ?? createdById.get(ticket.id) ?? ticket);
   };
 
   /* A row opened in a new browser tab lands here with ?open=<id>. */

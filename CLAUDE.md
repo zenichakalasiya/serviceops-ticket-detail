@@ -3159,3 +3159,22 @@ and ask before building any new one.
     Edit upfront; ⋮ Enable/Disable · Clone · Cancel scan (while scanning) · Archive. Properties: Benchmark, OS Platform,
     Notify Team, Created/Updated By/On, Last/Next Scan, Tags (ticket-style chips). Archived policies live only in the
     **All Archived Policies** view (`viewScope`).
+- **Compliance pass, later 12 Nov 2026 (Compliance v2).**
+  - **Rule drawer header** (`RuleDetailPanel` and the rule view in `ComplianceEndpointPanel`): the RUL-n pill + the title, then Profile · Assessment · OS Platform · OS Version · Severity.
+  - **Create Policy** (`CompliancePolicyEditor`) renders in all five create layouts.
+    - The parts are written once and placed by every layout.
+    - The guide is `FORM_HELP['compliance-policy']`; the steps are in `FORM_STEPS['compliance-policy']`.
+    - The single CTA is **Publish ▾ Save as Draft** (`SplitCta`). A draft sets `policy.draft`.
+    - The Schedule toggle is half width (`ScheduleFields half`).
+  - **Policy Endpoints tab:** Execution Status (Queued / In Progress / Completed / Partially Completed / Failed / Cancelled), derived in `execStatusOf`.
+  - **Views:** All · In Progress · Draft · Cancelled · Archived (`ARCHIVED_POLICY_VIEW` = 'Archived Policies') · Non-Compliant Policies.
+  - **View rule results** reads **Previous → Recent**.
+
+## Create forms V1–V5 + Form Studio (published 12 Nov 2026)
+- **Create forms.** Every module's create page is driven by `createFormSpecs.ts` and rendered by `ModuleCreatePage`.
+  - Building blocks: `CreateFormKit`, `CreateFormStepped`, `CreateFormOneScreen`.
+  - Each form has ONE guide in `createFormGuides.ts` and its steps in `createFormSteps.ts`.
+  - The layout switch is `createFormUi.ts`: V1 full page, V2 stepper left, V3 side drawer, V4 essentials first, V5 one screen with a live summary.
+  - A form outside the spec system (Create Policy) shows the switch via `setExtraCreateOpen`.
+  - **V3:** the guide runs the drawer's full height from its top edge, level with the title; the footer spans both columns.
+- **Form Studio** (Admin › each module's form). Files: `formStudioData.ts` (15 forms), `FormStudio.tsx`, `AdminFormModule.tsx`. A **Builder V1 | V2** pill (`formStudioUi.ts`) switches between the "+" builder (V1) and the drag-and-drop builder (V2).

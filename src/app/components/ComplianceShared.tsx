@@ -6,7 +6,7 @@ import type { Attr, FilterRule } from './TicketFilterBar';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { HeaderKpiRow } from './HeaderKpiRow';
 import type { HeaderKpiItem } from './HeaderKpiRow';
-import { SEVERITY_PILL } from './complianceData';
+import { SEVERITY_PILL, ruleCode } from './complianceData';
 import type { ComplianceRule, Severity } from './complianceData';
 
 /* Pieces the Compliance Rules and Benchmark screens share. None of them is a new design:
@@ -214,13 +214,13 @@ const readBox = 'mt-1 flex min-h-8 items-center rounded bg-[#F9FAFB] px-3 py-1.5
 export function RuleFactsRow({ rule }: { rule: ComplianceRule }) {
   return (
     <HeaderKpiRow gap="mt-[3px]" items={[
-      severityKpi(rule.severity),
       ckpi('profile', 'Profile', rule.profile, { chip: rule.profile === 'L1' ? 'blue' : 'violet', tip: rule.profile === 'L1' ? 'Profile: Level 1 — must have' : 'Profile: Level 2 — good to have' }),
       ckpi('assessment', 'Assessment', rule.assessment, { color: rule.assessment === 'Automated' ? '#15803D' : '#B54708', tip: rule.assessment === 'Automated' ? 'Automated: the agent checks this rule' : 'Manual: a person has to review this rule' }),
-      /* Zeni, 12 Nov 2026: the facts follow the listing columns — no OS Type, and Platform
+      /* Zeni, 12 Nov 2026: Profile · Assessment · OS Platform · OS Version · Severity. The facts follow the listing columns — no OS Type, and Platform
          reads "OS Platform" as the technician column does. */
       ckpi('platform', 'OS Platform', rule.platform),
       ckpi('version', 'OS Version', rule.version),
+      severityKpi(rule.severity),
     ]} />
   );
 }
@@ -254,8 +254,8 @@ export function RuleDetailPanel({ rule, usedIn, onClose, number, admin, firstTab
       <div className={`flex h-full ${wide ? 'w-[1040px]' : 'w-[800px]'} max-w-[95vw] flex-col bg-white shadow-xl`} onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start justify-between gap-3 px-5 pt-4">
           <h3 className="flex min-w-0 items-start gap-2 text-[16px] font-semibold leading-6 text-[#364658]">
-            <span className="mt-1 h-4 w-[3px] flex-shrink-0 rounded-full" style={{ backgroundColor: SEVERITY_PILL[rule.severity].bar }} title={rule.severity} />
-            {number && <span className="flex-shrink-0 tabular-nums text-[#7B8FA5]">{number}</span>}
+            {/* Zeni, 12 Nov 2026: Rule ID - title; the facts line under it carries Severity. */}
+            <span className="mt-px flex-shrink-0 whitespace-nowrap rounded bg-[#e8f4fd] px-1.5 py-px text-[13px] font-semibold text-[#3D8BD0]">{ruleCode(rule.id)}</span>
             <span>{rule.name}</span>
           </h3>
           <button type="button" onClick={onClose} className="-my-1 flex size-8 flex-shrink-0 items-center justify-center rounded text-[#7B8FA5] transition-colors hover:bg-[#F3F4F6] hover:text-[#364658]"><X size={18} /></button>

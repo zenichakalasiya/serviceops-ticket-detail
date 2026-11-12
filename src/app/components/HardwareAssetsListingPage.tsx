@@ -7,7 +7,7 @@
    work-in-flight axis, so Kanban/Dashboard/Calendar/Gantt are deliberately not offered.
    Every click opens the real HardwareAssetDrawer.
    File-per-module clone, per the project rule — divergence here can never break Requests. */
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { Toolbar } from './Toolbar';
@@ -28,6 +28,7 @@ import { mockAssets, type HardwareAsset } from './HardwareAssetsListPage';
 import { CURRENT_USER, CURRENT_USER_INITIALS } from './technicianRoster';
 import { Pagination } from './Pagination';
 import { useDrawerStack } from './DrawerStack';
+import { initialsOf, str, useCreatedRecords, type CreatedRecord } from './createFormStore';
 import { TicketDrawer } from './upstream/TicketDrawer';
 
 // The Ticket shape stays canonical — imported, never re-declared, so the bench and the
@@ -79,11 +80,9 @@ function DrillCrumb({
    Asset statuses ride t.status AS-IS ('In Use'/'Available'/'In Store') — the asset
    column set renders them with its own palette, and the views/KPIs filter on the
    raw values, so no lossy translation is needed. */
-const HW: { rows: Ticket[]; byId: Map<string, HardwareAsset> } = (() => {
-  const byId = new Map<string, HardwareAsset>();
-  const hash = (id: string) => id.split('').reduce((n, ch) => (n * 31 + ch.charCodeAt(0)) % 997, 7);
-  const rows = mockAssets.map((a, i) => {
-    byId.set(a.id, a);
+/** One hardware asset as a listing row — the mock fleet and assets added this session alike. */
+const hardwareRow = (a: HardwareAsset, i: number): Ticket => {
+    const hash = (id: string) => id.split('').reduce((n, ch) => (n * 31 + ch.charCodeAt(0)) % 997, 7);
     const h = hash(a.id);
     const created = new Date(2026, h % 8, 1 + (h % 27), 9 + (h % 8), (h % 4) * 15);
     const usedByName = a.usedBy ? a.usedBy.label.split(' (')[0] : 'Unassigned';
@@ -152,9 +151,33 @@ const HW: { rows: Ticket[]; byId: Map<string, HardwareAsset> } = (() => {
         };
       })(),
     } as Ticket;
-  });
-  return { rows, byId };
+};
+
+const HW: { rows: Ticket[]; byId: Map<string, HardwareAsset> } = (() => {
+  const byId = new Map<string, HardwareAsset>();
+  mockAssets.forEach((a) => byId.set(a.id, a));
+  return { rows: mockAssets.map(hardwareRow), byId };
 })();
+
+/** An asset saved on the Add Hardware Asset page (the 'asset' keys in createFormSpecs). */
+const hardwareFromForm = (r: CreatedRecord): HardwareAsset => {
+  const v = r.values;
+  const usedBy = str(v.usedBy);
+  const managedBy = str(v.managedBy, 'Unassigned');
+  const status = str(v.status, 'In Use');
+  return {
+    id: r.id,
+    name: str(v.name),
+    assetType: str(v.assetType, 'Hardware') as HardwareAsset['assetType'],
+    status: (['In Store', 'Available', 'In Use'].includes(status) ? status : 'In Store') as HardwareAsset['status'],
+    hostName: '---',
+    ipAddress: '---',
+    usedBy: usedBy ? { label: usedBy } : null,
+    managedByGroup: str(v.managedByGroup, 'Unassigned'),
+    managedBy: managedBy === 'Unassigned' ? { name: managedBy } : { name: managedBy, initials: initialsOf(managedBy), color: '#3D8BD0' },
+    serialNumber: '---',
+  };
+};
 
 /* The Dashboard layout — the hardware detail page's Overview KPIs (lifecycle,
    warranty, patch, antivirus, ownership) as fleet-wide charts, every segment
@@ -260,6 +283,16 @@ const buildHwDashboard = (tickets: Ticket[]): DashConfig => {
 
 export function HardwareAssetsListingPage({ onNavigate }: { onNavigate?: (page: string) => void }) {
   const [tickets, setTickets] = useState<Ticket[]>(HW.rows);
+  /* Assets added on the Add Hardware Asset page go to the top of the grid. The grid owns its
+     rows (cells are editable), so each new one is prepended once rather than re-derived. */
+  const created = useCreatedRecords('hardware-assets');
+  const extra = useMemo(() => created.map(hardwareFromForm), [created]);
+  useEffect(() => {
+    setTickets((ts) => {
+      const fresh = extra.filter((a) => !ts.some((t) => t.id === a.id));
+      return fresh.length ? [...fresh.map((a) => hardwareRow(a, 0)), ...ts] : ts;
+    });
+  }, [extra]);
   // Assignee / Status / Priority are editable straight from the grid.
   const updateTicket = (id: string, patch: Partial<Ticket>) =>
     setTickets((ts) => ts.map((t) => (t.id === id ? { ...t, ...patch } : t)));
@@ -326,7 +359,7 @@ export function HardwareAssetsListingPage({ onNavigate }: { onNavigate?: (page: 
 
   const handleOpenTicket = (ticket: Ticket) => {
     // Every row is an asset — open the real HardwareAssetDrawer with the original record.
-    openInStack('hardware-assets', ticket.id, ticket.subject, HW.byId.get(ticket.id) ?? ticket);
+    openInStack('hardware-assets', ticket.id, ticket.subject, HW.byId.get(ticket.id) ?? extra.find((a) => a.id === ticket.id) ?? ticket);
   };
 
   /* A row opened in a new browser tab lands here with ?open=<id>. */

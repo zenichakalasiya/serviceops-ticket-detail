@@ -11,10 +11,8 @@
    ⚠️ The dashboard's headline tile is **windows that closed without completing**. A run whose expiry
    has passed while it still reads "Ready to Deploy" or "In Progress" has failed silently —
    nothing errored, it simply never went out — and no single stored field says so. */
-import { useMemo, useState } from 'react';
-import { Sidebar } from './Sidebar';
-import { Header } from './Header';
-import { CreatePatchDeployment } from './CreatePatchDeployment';
+import { useMemo } from 'react';
+import { openCreatePage, stampOf, str, useCreatedRecords, type CreatedRecord } from './createFormStore';
 import { CheckCircle, CircleDot, Layers, PlayCircle, Timer } from 'lucide-react';
 import { AssetRegisterPage } from './AssetRegisterPage';
 import { PATCH_DEPLOY_FILTER_ATTRS, PATCH_DEPLOY_QUICK_FILTERS } from './patchFilterAttrs';
@@ -68,6 +66,18 @@ const toRow = (d: PatchDeployment): Ticket => {
       x_origin: deployOriginOf(d),
     } as unknown as Ticket;
 };
+/** A run saved on the Create Patch Deployment page (the 'patch-deployment' keys in createFormSpecs).
+ *  Publish makes it Ready to Deploy; Save as Draft keeps it a Draft. */
+const deploymentFromForm = (r: CreatedRecord): PatchDeployment => ({
+  id: r.id,
+  name: str(r.values.name),
+  status: r.via === 'primary' ? 'Ready to Deploy' : 'Draft',
+  deploymentType: r.values.category === 'OS Upgrade' ? 'OS Upgrade' : 'Patch',
+  deploymentPolicy: str(r.values.policy, '---'),
+  installAfter: stampOf(r.values.installAfter),
+  expiryDate: stampOf(r.values.expiryDate),
+});
+
 const DEPLOYMENTS: { rows: Ticket[]; byId: Map<string, PatchDeployment> } = {
   rows: mockPatchDeployments.map(toRow),
   byId: new Map(mockPatchDeployments.map((d) => [d.id, d])),
@@ -180,29 +190,14 @@ const buildDashboard = (rows: Ticket[]): DashConfig => {
 };
 
 export function PatchDeploymentsListingPage({ onNavigate }: { onNavigate?: (page: string) => void }) {
-  /* Create opens THIS project's form (CreatePatchDeployment — Patch / OS Upgrade categories) in
-     place of the grid; a run made there is prepended to the list. */
-  const [creating, setCreating] = useState(false);
-  const [created, setCreated] = useState<PatchDeployment[]>([]);
+  /* Create opens the shared create page (spec 'patch-deployment'); a run saved there is prepended. */
+  const saved = useCreatedRecords('patch-deployments');
+  const created = useMemo(() => saved.map(deploymentFromForm), [saved]);
   const rows = useMemo(() => [...created.map(toRow), ...DEPLOYMENTS.rows], [created]);
   const recordOf = (id: string) => {
     const dep = created.find((d) => d.id === id) ?? DEPLOYMENTS.byId.get(id);
     return dep ? deploymentToPatchShape(dep) : undefined;
   };
-  if (creating) {
-    return (
-      <div className="flex h-screen bg-[#f9fafb]">
-        <Sidebar activePage="patch-deployments" onNavigate={onNavigate} />
-        <div className="flex flex-1 flex-col overflow-hidden">
-          <Header selectedCount={0} />
-          <CreatePatchDeployment
-            onCancel={() => setCreating(false)}
-            onCreate={(d) => { setCreated((p) => [d, ...p]); setCreating(false); }}
-          />
-        </div>
-      </div>
-    );
-  }
   return (
     <AssetRegisterPage
       activePage="patch-deployments"
@@ -222,7 +217,7 @@ export function PatchDeploymentsListingPage({ onNavigate }: { onNavigate?: (page
       searchFields={['x_policy', 'x_createdBy', 'x_taskType']}
       /* Same placement as the Patches page: the one control that MAKES something sits on the
          title line, not in the tool rail that narrows the list. */
-      primaryAction={{ label: 'Create', onClick: () => setCreating(true) }}
+      primaryAction={{ label: 'Create', onClick: () => openCreatePage({ spec: 'patch-deployment', target: 'patch-deployments' }) }}
       primaryActionInTitle
       /* A run's status is its own lifecycle — the system moves it from Ready to Deploy to
          In Progress to Completed as the rollout actually happens. Nobody picks it from a

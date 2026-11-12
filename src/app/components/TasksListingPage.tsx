@@ -18,6 +18,7 @@ import { useDrawerStack } from './DrawerStack';
 import { CURRENT_USER } from './technicianRoster';
 import type { StatCard } from './AssetStatsRow';
 import type { Ticket } from './TicketListPage';
+import { dateOf, openCreatePage, str, useCreatedRecords, type CreatedRecord } from './createFormStore';
 
 const initialsOf = (n: string) => n.split(' ').filter(Boolean).map((p) => p[0]).join('').slice(0, 2).toUpperCase();
 
@@ -87,11 +88,8 @@ const slaOf = (t: TaskRow, due: Date) => {
   return { tone: 'ok', label: ['1d 6h', '2d 3h', '1w 2d', '5d 6h'][n % 4], name, target, when };
 };
 
-const TASKS: { rows: Ticket[]; byId: Map<string, TaskRow> } = (() => {
-  const byId = new Map<string, TaskRow>();
-  const rows = mockTasks.map((t, i) => {
-    byId.set(t.id, t);
-    const created = new Date(createdOf(t.id, i));
+/** One task as a listing row — the mock tasks and ones created this session alike. */
+const taskRow = (t: TaskRow, created: Date): Ticket => {
     return {
       id: t.id,
       subject: t.subject,
@@ -110,9 +108,28 @@ const TASKS: { rows: Ticket[]; byId: Map<string, TaskRow> } = (() => {
       x_sla: slaOf(t, created),
       x_overdue: { breached: 'Breached', due: 'Due soon', ok: 'On track', done: 'Met' }[slaOf(t, created).tone],
     } as Ticket;
-  });
-  return { rows, byId };
+};
+
+const TASKS: { rows: Ticket[]; byId: Map<string, TaskRow> } = (() => {
+  const byId = new Map<string, TaskRow>();
+  mockTasks.forEach((t) => byId.set(t.id, t));
+  return { rows: mockTasks.map((t, i) => taskRow(t, new Date(createdOf(t.id, i)))), byId };
 })();
+
+/** A task saved on the Create Task page (the 'task' keys in createFormSpecs). A task raised
+ *  here stands alone, so it carries no reference. */
+const taskFromForm = (r: CreatedRecord): TaskRow => {
+  const v = r.values;
+  return {
+    id: r.id,
+    subject: str(v.subject),
+    reference: null,
+    taskType: str(v.taskType, 'Implementation') as TaskRow['taskType'],
+    status: str(v.status, 'Open') as TaskRow['status'],
+    priority: str(v.priority, 'Low') as TaskRow['priority'],
+    assignee: str(v.assignee, 'Unassigned'),
+  };
+};
 
 /* The KPI strip: what a technician wants to know about the queue before working it — how
    much is live, what has slipped, what is theirs, what is waiting on someone else. Each card
@@ -138,7 +155,11 @@ const buildCards = (rows: Ticket[]): StatCard[] => {
 };
 
 export function TasksListingPage({ onNavigate }: { onNavigate?: (page: string) => void }) {
-  const rows = useMemo(() => TASKS.rows, []);
+  /* Tasks created on the Create Task page come first. */
+  const created = useCreatedRecords('tasks');
+  const extra = useMemo(() => created.map((r) => ({ task: taskFromForm(r), at: dateOf(r.values.endDate) ?? r.createdAt })), [created]);
+  const rows = useMemo(() => [...extra.map((x) => taskRow(x.task, x.at)), ...TASKS.rows], [extra]);
+  const taskOf = (id: string) => TASKS.byId.get(id) ?? extra.find((x) => x.task.id === id)?.task;
   const { openRelation } = useDrawerStack();
 
   return (
@@ -151,7 +172,7 @@ export function TasksListingPage({ onNavigate }: { onNavigate?: (page: string) =
       defaultViewName="All Tasks"
       footerNoun="tasks"
       rows={rows}
-      recordOf={(id) => { const t = TASKS.byId.get(id); return t ? taskToPatchShape(t) : undefined; }}
+      recordOf={(id) => { const t = taskOf(id); return t ? taskToPatchShape(t) : undefined; }}
       filterAttrs={TASK_FILTER_ATTRS}
       quickFilters={TASK_QUICK_FILTERS}
       /* Three layouts, as on the request listing: the KPI strip for the shape of the queue,
@@ -163,7 +184,7 @@ export function TasksListingPage({ onNavigate }: { onNavigate?: (page: string) =
          question a board of tasks raises. */
       defaultCardFields={['id', 'reference', 'sla', 'subject', 'assignedTo', 'status', 'priority']}
       searchFields={['x_reference', 'x_referenceSubject', 'x_taskType', 'x_overdueBy']}
-      primaryAction={{ label: 'Create' }}
+      primaryAction={{ label: 'Create Task', onClick: () => openCreatePage({ spec: 'task', target: 'tasks', seqStart: 7648 }) }}
       primaryActionInTitle
       /* Tasks are raised from the record they belong to, not imported in bulk — so the ⋮ has
          nothing to hold and goes with its items. */

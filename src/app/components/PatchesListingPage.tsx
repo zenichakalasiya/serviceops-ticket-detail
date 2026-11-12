@@ -21,6 +21,7 @@ import {
 import type { DashConfig } from './AssetDashboardView';
 import type { StatCard } from './AssetStatsRow';
 import type { Ticket } from './TicketListPage';
+import { openCreatePage, stampOf, str, useCreatedRecords, type CreatedRecord } from './createFormStore';
 
 /* "Tue, Apr 14, 2026 05:00 PM" → a real Date, so the column sorts chronologically and the
    date buckets read the true value. */
@@ -33,10 +34,8 @@ const SEV_COLOR: Record<string, string> = {
   Critical: '#DC2626', Important: '#F97316', Moderate: '#F59E0B', Low: '#22C55E', Unspecified: '#94A3B8',
 };
 
-const PATCHES: { rows: Ticket[]; byId: Map<string, Patch> } = (() => {
-  const byId = new Map<string, Patch>();
-  const rows = mockPatches.map((p) => {
-    byId.set(p.id, p);
+/** One patch as a listing row — the mock catalogue and patches created this session alike. */
+const patchRow = (p: Patch): Ticket => {
     const released = parseReleased(p.releaseDate) ?? new Date();
     const reboot = p.rebootRequired;
     return {
@@ -84,9 +83,29 @@ const PATCHES: { rows: Ticket[]; byId: Map<string, Patch> } = (() => {
          a patch the scanner never reported on is not a patch somebody is missing. */
       x_hasMissing: (p.missingSystem ?? 0) > 0 ? 'Yes' : 'No',
     } as unknown as Ticket;
-  });
-  return { rows, byId };
+};
+
+const PATCHES: { rows: Ticket[]; byId: Map<string, Patch> } = (() => {
+  const byId = new Map<string, Patch>();
+  mockPatches.forEach((p) => byId.set(p.id, p));
+  return { rows: mockPatches.map(patchRow), byId };
 })();
+
+/** A patch saved on the Create Patch page (the 'patch' keys in createFormSpecs). A new patch has
+ *  not been scanned or approved yet, so its endpoint counts stay empty and it is Not Approved. */
+const patchFromForm = (r: CreatedRecord): Patch => ({
+  id: r.id,
+  name: str(r.values.title),
+  severity: str(r.values.severity, 'Unspecified') as Patch['severity'],
+  releaseDate: stampOf(r.values.releaseDate) ?? '',
+  missingSystem: null,
+  installedSystem: null,
+  rebootRequired: str(r.values.reboot, 'No') as Patch['rebootRequired'],
+  approvalStatus: 'Not Approved',
+  category: str(r.values.patchCategory, 'Updates'),
+  description: str(r.values.description) || undefined,
+  supportUri: str(r.values.url) || undefined,
+});
 
 const sevOf = (t: Ticket) => String((t as any).x_severity ?? '');
 const missingOf = (t: Ticket) => Number((t as any).x_missing ?? 0);
@@ -182,7 +201,10 @@ const buildDashboard = (rows: Ticket[]): DashConfig => {
 };
 
 export function PatchesListingPage({ onNavigate }: { onNavigate?: (page: string) => void }) {
-  const rows = useMemo(() => PATCHES.rows, []);
+  /* Patches created on the Create Patch page come first. */
+  const saved = useCreatedRecords('patches');
+  const created = useMemo(() => saved.map(patchFromForm), [saved]);
+  const rows = useMemo(() => [...created.map(patchRow), ...PATCHES.rows], [created]);
   return (
     <AssetRegisterPage
       activePage="patches"
@@ -193,7 +215,7 @@ export function PatchesListingPage({ onNavigate }: { onNavigate?: (page: string)
       defaultViewName="Missing Patches"
       footerNoun="patches"
       rows={rows}
-      recordOf={(id) => PATCHES.byId.get(id)}
+      recordOf={(id) => PATCHES.byId.get(id) ?? created.find((p) => p.id === id)}
       filterAttrs={PATCH_FILTER_ATTRS}
       quickFilters={PATCH_QUICK_FILTERS}
       layouts={['list-kpi', 'dashboard']}
@@ -204,7 +226,7 @@ export function PatchesListingPage({ onNavigate }: { onNavigate?: (page: string)
       /* On the title line, not the tool rail — the rail below narrows what you are looking
          at, and the one control that MAKES something belongs at the page's own top-right
          corner. Same placement Reports uses. */
-      primaryAction={{ label: 'Create' }}
+      primaryAction={{ label: 'Create', onClick: () => openCreatePage({ spec: 'patch', target: 'patches' }) }}
       primaryActionInTitle
       /* The module's one catalogue-level action: pull the binaries down to the file server so
          the approved patches can actually deploy. Nothing else on this page needs a menu, so

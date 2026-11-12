@@ -22,6 +22,7 @@ import { mockProjects, type Project } from './ProjectsListPage';
 import { PROJECT_GANTT_EVENT, planSummaryOf } from './ProjectPlanningTab';
 import { useDrawerStack } from './DrawerStack';
 import type { Ticket } from './TicketListPage';
+import { dateOf, str, useCreatedRecords, type CreatedRecord } from './createFormStore';
 
 const initialsOf = (n: string) => n.split(' ').filter(Boolean).map((p) => p[0]).join('').slice(0, 2).toUpperCase();
 
@@ -97,10 +98,8 @@ const hashOf = (id: string) => {
 const pick = <T,>(list: T[], h: number, salt: number) => list[(h + salt) % list.length];
 const shiftDays = (d: Date, days: number) => new Date(d.getTime() + days * DAY);
 
-const PROJECTS: { rows: Ticket[]; byId: Map<string, Project> } = (() => {
-  const byId = new Map<string, Project>();
-  const rows = mockProjects.map((p) => {
-    byId.set(p.id, p);
+/** One project as a listing row — the mock projects and ones created this session alike. */
+const projectRow = (p: Project): Ticket => {
     const owner = p.owner ?? 'Unassigned';
     const due = dueOf(p);
     const h = hashOf(p.id);
@@ -176,12 +175,54 @@ const PROJECTS: { rows: Ticket[]; byId: Map<string, Project> } = (() => {
       x_dependent: pick(PROJECT_DEPENDENT_OPTIONS, h, 9).label,
       x_datetime: shiftDays(start, h % 21),
     } as unknown as Ticket;
-  });
-  return { rows, byId };
+};
+
+const PROJECTS: { rows: Ticket[]; byId: Map<string, Project> } = (() => {
+  const byId = new Map<string, Project>();
+  mockProjects.forEach((p) => byId.set(p.id, p));
+  return { rows: mockProjects.map(projectRow), byId };
 })();
 
+/** A project saved on the Create Project page (the 'project' keys in createFormSpecs): nothing
+ *  planned yet, so no tasks, milestones or completion. */
+const projectFromForm = (r: CreatedRecord): Project => ({
+  id: r.id,
+  name: str(r.values.name),
+  status: str(r.values.status, 'Planning') as Project['status'],
+  priority: str(r.values.priority, 'Low') as Project['priority'],
+  owner: str(r.values.owner) || null,
+  start: dateOf(r.values.startDate),
+  end: dateOf(r.values.endDate),
+  completion: 0,
+  tasksDone: 0,
+  tasksTotal: 0,
+  milestonesDone: 0,
+  milestonesTotal: 0,
+});
+
+/** The row of a created project, with the values the form asked for instead of derived ones. */
+const createdProjectRow = (r: CreatedRecord, p: Project): Ticket => {
+  const v = r.values;
+  const tags = Array.isArray(v.tags) ? (v.tags as string[]) : [];
+  return {
+    ...projectRow(p),
+    x_projectType: str(v.projectType),
+    x_risk: str(v.risk, 'Low'),
+    x_location: str(v.location) || undefined,
+    x_vendor: str(v.vendor) || undefined,
+    x_tags: tags.join(', '),
+    x_createdDate: r.createdAt,
+    x_lastUpdatedDate: r.createdAt,
+    x_attachment: Array.isArray(v.attachments) && v.attachments.length ? 'Yes' : 'No',
+  } as unknown as Ticket;
+};
+
 export function ProjectsListingPage({ onNavigate }: { onNavigate?: (page: string) => void }) {
-  const rows = useMemo(() => PROJECTS.rows, []);
+  /* Projects created on the Create Project page come first. */
+  const created = useCreatedRecords('projects');
+  const extra = useMemo(() => created.map((r) => ({ r, p: projectFromForm(r) })), [created]);
+  const rows = useMemo(() => [...extra.map(({ r, p }) => createdProjectRow(r, p)), ...PROJECTS.rows], [extra]);
+  const recordOf = (id: string) => PROJECTS.byId.get(id) ?? extra.find((x) => x.p.id === id)?.p;
   const { open: openInStack } = useDrawerStack();
 
   return (
@@ -194,7 +235,7 @@ export function ProjectsListingPage({ onNavigate }: { onNavigate?: (page: string
       defaultViewName="All Projects"
       footerNoun="projects"
       rows={rows}
-      recordOf={(id) => PROJECTS.byId.get(id)}
+      recordOf={recordOf}
       filterAttrs={PROJECT_FILTER_ATTRS}
       /* List and Gantt, and nothing else — the two ways a portfolio is actually read. */
       layouts={['list']}
@@ -213,7 +254,7 @@ export function ProjectsListingPage({ onNavigate }: { onNavigate?: (page: string
       ganttCardAction={{
         label: 'View project Gantt →',
         onClick: (t) => {
-          const p = PROJECTS.byId.get(t.id);
+          const p = recordOf(t.id);
           if (!p) return;
           openInStack('projects', p.id, p.name, p);
           /* After the drawer has mounted its Planning tab — the listener lives there. */
@@ -223,8 +264,6 @@ export function ProjectsListingPage({ onNavigate }: { onNavigate?: (page: string
       /* Status and Priority, one click each — the two cuts a portfolio is worked by. */
       quickFilters={PROJECT_QUICK_FILTERS}
       searchFields={['x_dueBand', 'x_progressBand']}
-      primaryAction={{ label: 'Create' }}
-      primaryActionInTitle
       moreActions={[]}
       onNavigate={onNavigate}
     />

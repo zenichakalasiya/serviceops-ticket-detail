@@ -28,6 +28,7 @@ import { TicketDrawer } from './upstream/TicketDrawer';
 // The Ticket shape stays canonical — imported, never re-declared, so the bench and the
 // real listing can never drift apart on what a request IS.
 import type { Ticket } from './TicketListPage';
+import { dateOf, initialsOf, str, useCreatedRecords, type CreatedRecord } from './createFormStore';
 
 
 /* A drill-down REPLACES the listing's own header rather than stacking on top of it. Arriving
@@ -76,13 +77,13 @@ const CHANGE_STATUS = (st: string): Ticket['status'] =>
   /pending/i.test(st) ? 'Pending' : /progress|implementation/i.test(st) ? 'In Progress' : /closed|completed/i.test(st) ? 'Completed' : 'Open';
 const CHANGE_PRIORITY = (pr: string): Ticket['priority'] =>
   /p1|urgent/i.test(pr) ? 'Urgent' : /high|p2/i.test(pr) ? 'High' : /low|p4/i.test(pr) ? 'Low' : 'Medium';
-const CHANGES: { rows: Ticket[]; byId: Map<string, Change> } = (() => {
-  const byId = new Map<string, Change>();
-  const rows = mockChanges.map((c, i) => {
-    byId.set(c.id, c);
+/** One change as a queue row — the mock changes and ones created this session alike.
+ *  `i` is its place in the mock pool (-1 for a created change); `window` is the window the
+ *  Create Change page set, which wins over the schedule helper's. */
+const changeRow = (c: Change, i: number, window?: { start: Date; end: Date }): Ticket => {
     /* The planned window comes from the shared schedule helper, so the calendar and
        the Planning tab's Change Schedule can never disagree. */
-    const win = changeScheduleOf(c);
+    const win = window ?? changeScheduleOf(c);
     return {
       id: c.id,
       subject: c.subject,
@@ -103,12 +104,48 @@ const CHANGES: { rows: Ticket[]; byId: Map<string, Change> } = (() => {
       changeRisk: c.changeRisk,
       priority: CHANGE_PRIORITY(c.priority),
     } as Ticket;
-  });
-  return { rows, byId };
+};
+const CHANGES: { rows: Ticket[]; byId: Map<string, Change> } = (() => {
+  const byId = new Map<string, Change>();
+  mockChanges.forEach((c) => byId.set(c.id, c));
+  return { rows: mockChanges.map((c, i) => changeRow(c, i)), byId };
 })();
+
+/** A change saved on the Create Change page (the 'change' keys in createFormSpecs). A new
+ *  change starts at Submitted: Requested — the first stage of its lifecycle. */
+const changeFromForm = (r: CreatedRecord): { change: Change; window?: { start: Date; end: Date } } => {
+  const v = r.values;
+  const assignee = str(v.assignee, 'Unassigned');
+  const start = dateOf(v.startDate), end = dateOf(v.endDate);
+  return {
+    change: {
+      id: r.id,
+      subject: str(v.subject),
+      requester: str(v.requester),
+      createdDate: r.createdAt,
+      assignee: { name: assignee, initials: assignee === 'Unassigned' ? '' : initialsOf(assignee), color: '#3D8BD0' },
+      status: 'Submitted: Requested',
+      priority: str(v.priority, 'Low') as Change['priority'],
+      changeType: (str(v.changeType) || null) as Change['changeType'],
+      changeRisk: (str(v.risk) || null) as Change['changeRisk'],
+    },
+    window: start && end ? { start, end } : undefined,
+  };
+};
 
 export function ChangeListingPage({ onNavigate }: { onNavigate?: (page: string) => void }) {
   const [tickets, setTickets] = useState<Ticket[]>(CHANGES.rows);
+  /* Changes created on the Create Change page join the top of the queue (edits made in
+     the grid stay — only rows the queue does not have yet are added). */
+  const created = useCreatedRecords('change');
+  const createdById = new Map(created.map((r) => [r.id, changeFromForm(r).change]));
+  useEffect(() => {
+    setTickets((ts) => {
+      const have = new Set(ts.map((t) => t.id));
+      const fresh = created.filter((r) => !have.has(r.id)).map((r) => { const x = changeFromForm(r); return changeRow(x.change, -1, x.window); });
+      return fresh.length ? [...fresh, ...ts] : ts;
+    });
+  }, [created]);
   // Assignee / Status / Priority are editable straight from the grid.
   const updateTicket = (id: string, patch: Partial<Ticket>) =>
     setTickets((ts) => ts.map((t) => (t.id === id ? { ...t, ...patch } : t)));
@@ -175,7 +212,7 @@ export function ChangeListingPage({ onNavigate }: { onNavigate?: (page: string) 
 
   const handleOpenTicket = (ticket: Ticket) => {
     // Every row is a change — open the real ChangeDrawer with the original record.
-    openInStack('change', ticket.id, ticket.subject, CHANGES.byId.get(ticket.id) ?? ticket);
+    openInStack('change', ticket.id, ticket.subject, CHANGES.byId.get(ticket.id) ?? createdById.get(ticket.id) ?? ticket);
   };
 
   /* A row opened in a new browser tab lands here with ?open=<id>. */

@@ -18,6 +18,8 @@ import {
 import type { DashConfig } from './AssetDashboardView';
 import type { StatCard } from './AssetStatsRow';
 import type { Ticket } from './TicketListPage';
+import { CURRENT_USER } from './technicianRoster';
+import { openCreatePage, stampOf, str, useCreatedRecords, type CreatedRecord } from './createFormStore';
 
 const STATUS_COLOR: Record<string, string> = {
   Draft: '#94A3B8', 'Ready to Deploy': '#3D8BD0', 'In Progress': '#F59E0B',
@@ -27,10 +29,8 @@ const WINDOW_COLOR: Record<string, string> = {
   'Live now': '#F59E0B', Scheduled: '#3D8BD0', 'Window closed': '#DC2626', 'No window': '#94A3B8',
 };
 
-const DEPLOYMENTS: { rows: Ticket[]; byId: Map<string, RegistryDeployment> } = (() => {
-  const byId = new Map<string, RegistryDeployment>();
-  const rows = mockRegistryDeployments.map((d) => {
-    byId.set(d.id, d);
+/** One run as a listing row — the mock runs and ones created this session alike. */
+const registryRow = (d: RegistryDeployment): Ticket => {
     const created = regCreatedDateOf(d);
     return {
       id: d.id,
@@ -56,9 +56,26 @@ const DEPLOYMENTS: { rows: Ticket[]; byId: Map<string, RegistryDeployment> } = (
       /* The KPI strip's "Expiring in 48h" — see regExpiringOf. */
       x_expiring: regExpiringOf(d),
     } as unknown as Ticket;
-  });
-  return { rows, byId };
+};
+
+const DEPLOYMENTS: { rows: Ticket[]; byId: Map<string, RegistryDeployment> } = (() => {
+  const byId = new Map<string, RegistryDeployment>();
+  mockRegistryDeployments.forEach((d) => byId.set(d.id, d));
+  return { rows: mockRegistryDeployments.map(registryRow), byId };
 })();
+
+/** A run saved on the Create Registry Deployment page (the 'registry-deployment' keys in
+ *  createFormSpecs). Nothing has run yet, so Total Installations stays empty. */
+const registryFromForm = (r: CreatedRecord): RegistryDeployment => ({
+  id: r.id,
+  name: str(r.values.name),
+  status: r.via === 'primary' ? 'Ready to Deploy' : 'Draft',
+  installAfter: stampOf(r.values.installAfter),
+  expiryDate: stampOf(r.values.expiryDate),
+  totalInstallations: null,
+  createdBy: CURRENT_USER,
+  configurationType: 'Install',
+});
 
 const statusOf = (t: Ticket) => String(t.status ?? '');
 const windowOf = (t: Ticket) => String((t as any).x_window ?? '');
@@ -162,7 +179,10 @@ const buildDashboard = (rows: Ticket[]): DashConfig => {
 };
 
 export function RegistryDeploymentsListingPage({ onNavigate }: { onNavigate?: (page: string) => void }) {
-  const rows = useMemo(() => DEPLOYMENTS.rows, []);
+  /* Runs created on the Create Registry Deployment page come first. */
+  const saved = useCreatedRecords('registry-deployments');
+  const created = useMemo(() => saved.map(registryFromForm), [saved]);
+  const rows = useMemo(() => [...created.map(registryRow), ...DEPLOYMENTS.rows], [created]);
   return (
     <AssetRegisterPage
       activePage="registry-deployments"
@@ -173,7 +193,7 @@ export function RegistryDeploymentsListingPage({ onNavigate }: { onNavigate?: (p
       defaultViewName="All Registry Deployments"
       footerNoun="deployments"
       rows={rows}
-      recordOf={(id) => { const dep = DEPLOYMENTS.byId.get(id); return dep ? registryDeploymentToPatchShape(dep) : undefined; }}
+      recordOf={(id) => { const dep = DEPLOYMENTS.byId.get(id) ?? created.find((d) => d.id === id); return dep ? registryDeploymentToPatchShape(dep) : undefined; }}
       filterAttrs={REGISTRY_DEPLOY_FILTER_ATTRS}
       quickFilters={REGISTRY_DEPLOY_QUICK_FILTERS}
       layouts={['list-kpi', 'dashboard']}
@@ -185,7 +205,8 @@ export function RegistryDeploymentsListingPage({ onNavigate }: { onNavigate?: (p
          dropdown, so the cell is read-only here (dot + word, no picker). */
       lockedCells={['status']}
       moreActions={[]}
-      primaryAction={{ label: 'Create' }}
+      /* Registry runs share the CDR- id series with the seeded ones, so the counter starts above them. */
+      primaryAction={{ label: 'Create', onClick: () => openCreatePage({ spec: 'registry-deployment', target: 'registry-deployments', idOf: (n) => `CDR-${n}`, seqStart: 133 }) }}
       primaryActionInTitle
       onNavigate={onNavigate}
     />
