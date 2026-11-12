@@ -1055,8 +1055,8 @@ function BenchmarkDrawer({ benchmark, benchmarks, onClose, onEdit, onClone, onDe
               exportTable({
                 format, name: fileSafe(benchmark.name), title: benchmark.name,
                 head: [['Benchmark ID', benchmark.id], ['Platform', platformOf(benchmark.osVersion).platform], ['OS Version', platformOf(benchmark.osVersion).version], ['Source', benchmark.origin], ['Total Rules', String(ids.length)], ['Created', `${cr.by} · ${fmtDate(cr.at)}`], ['Updated', `${up.by} · ${fmtDate(up.at)}`]],
-                columns: ['No.', 'CIS ID', 'Rule Title', 'Profile', 'Severity'],
-                rows: ids.map((id) => { const r = ruleById(id); return [nums.get(id) ?? '', ruleCode(id), r?.name ?? id, r?.profile ?? '', r?.severity ?? '']; }),
+                columns: ['No.', 'Rule ID', 'Title', 'Severity', 'Profile'],
+                rows: ids.map((id) => { const r = ruleById(id); return [nums.get(id) ?? '', ruleCode(id), r?.name ?? id, r?.severity ?? '', r?.profile ?? '']; }),
               });
               toast.success(`${benchmark.id} downloaded as ${format}`);
             }} />

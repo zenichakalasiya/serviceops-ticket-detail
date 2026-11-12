@@ -549,7 +549,7 @@ export const RULES: ComplianceRule[] = CHECKS.flatMap((c) =>
 
 export const ruleById = (id: string) => RULES.find((r) => r.id === id);
 /** The rule's ID as people read it — RUL-1, RUL-2… in catalogue order (Zeni, 2 Nov 2026: it is the
- *  CIS ID column's number, shown as "RUL-1 - <title>"). */
+ *  Rule ID column, shown as a "RUL-1" pill). */
 export const ruleCode = (id: string) => { const i = RULES.findIndex((r) => r.id === id); return i < 0 ? id : `RUL-${i + 1}`; };
 
 /** A rule's OS version as an admin names it — platform + build, e.g. "Debian Linux 11". */
