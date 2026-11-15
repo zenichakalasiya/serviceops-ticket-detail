@@ -14,7 +14,7 @@ import { DEFAULT_CARD_FIELDS, TicketKanban, type KanbanGroup } from './TicketKan
 import { TicketDashboardView } from './TicketDashboardView';
 import { Pagination } from './Pagination';
 import { useDrawerStack } from './DrawerStack';
-import { TicketDrawer } from './TicketDrawer';
+import { TicketDrawer } from './lazyDrawers';
 import { initialsOf, str, useCreatedRecords, type CreatedRecord } from './createFormStore';
 
 export interface Ticket {

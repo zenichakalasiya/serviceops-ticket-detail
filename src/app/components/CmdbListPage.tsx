@@ -5,7 +5,7 @@ import { AssetsToolbar } from './AssetsToolbar';
 import { CmdbTable } from './CmdbTable';
 import { Pagination } from './Pagination';
 import { useDrawerStack } from './DrawerStack';
-import { CmdbDrawer } from './CmdbDrawer';
+import { CmdbDrawer } from './lazyDrawers';
 
 /** The four states the product records on a CI. */
 export type CiStatus = 'Operational' | 'Non-Operational' | 'In Maintenance' | 'Retired';

@@ -5,7 +5,7 @@ import { AssetsToolbar } from './AssetsToolbar';
 import { ConsumableAssetsTable } from './ConsumableAssetsTable';
 import { Pagination } from './Pagination';
 import { useDrawerStack } from './DrawerStack';
-import { ConsumableAssetDrawer } from './ConsumableAssetDrawer';
+import { ConsumableAssetDrawer } from './lazyDrawers';
 
 export interface ConsumableAsset {
   id: string;

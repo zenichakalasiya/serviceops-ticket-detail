@@ -77,6 +77,16 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   ("Could not resolve …"), and the live site silently stays on the last good build. It happened on
   23 Oct 2026 with `components/workflow/`. Before pushing, check that no tracked file imports an
   untracked one, and after pushing confirm the Actions run succeeded.
+- ⚠️ **Every screen and every detail drawer is LAZY-LOADED (15 Nov 2026)** — the app was ONE 15 MB
+  JS file (3.5 MB gzipped), so a link to any module downloaded the whole product. Now `App.tsx` loads
+  each page with `React.lazy` (a small spinner shows while a page's file arrives), and every drawer
+  comes from `components/lazyDrawers.tsx` (same names and props; each has its own `Suspense
+  fallback={null}`). The global helpers (search, shortcuts, help, create forms) mount only once the
+  page is on screen. Measured: 0.55–0.9 MB gzipped per link, on screen in ~0.6 s locally.
+  ⚠️ **Keep it that way:** a new page goes in App.tsx through `page(() => import(...), 'Name')`, and a
+  new drawer goes in `lazyDrawers.tsx`. Never import a `*Drawer` file STATICALLY from `DrawerStack`
+  or a `*ListPage` — that pulls the drawer (and everything it imports) back into the first download.
+  React has its own `react-vendor` chunk (vite.config.ts) so it stays cached across deploys.
 - ⚠️ **Known pre-existing failure:** `portalWidgetSpec.ts` has a TS1117 duplicate key —
   `fields: [], packs: []` sitting beside the action cards' real field list (line 921 as of 22 Sep
   2026 — it moves with every edit above it, so grep the pair rather than trusting a number). It is on `main`, esbuild

@@ -5,7 +5,7 @@ import { AssetsToolbar } from './AssetsToolbar';
 import { SoftwareLicensesTable } from './SoftwareLicensesTable';
 import { Pagination } from './Pagination';
 import { useDrawerStack } from './DrawerStack';
-import { SoftwareLicenseDrawer } from './SoftwareLicenseDrawer';
+import { SoftwareLicenseDrawer } from './lazyDrawers';
 
 export interface SoftwareLicense {
   id: string;

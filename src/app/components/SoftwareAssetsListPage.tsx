@@ -5,7 +5,7 @@ import { AssetsToolbar } from './AssetsToolbar';
 import { SoftwareAssetsTable } from './SoftwareAssetsTable';
 import { Pagination } from './Pagination';
 import { useDrawerStack } from './DrawerStack';
-import { SoftwareAssetDrawer } from './SoftwareAssetDrawer';
+import { SoftwareAssetDrawer } from './lazyDrawers';
 
 /* The software lifecycle the listing's Status cell offers (see MODULE_STATUS_OPTS.software). */
 export type SoftwareStatus = 'In Stock' | 'In Use' | 'Missing' | 'Retired' | 'In Repair' | 'Disposed' | 'Expired' | 'Decommission' | 'Allocated';

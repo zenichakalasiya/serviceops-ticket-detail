@@ -5,7 +5,7 @@ import { AssetsToolbar } from './AssetsToolbar';
 import { ContractsTable } from './ContractsTable';
 import { Pagination } from './Pagination';
 import { useDrawerStack } from './DrawerStack';
-import { ContractDrawer } from './ContractDrawer';
+import { ContractDrawer } from './lazyDrawers';
 
 export type ContractStatus = 'Active' | 'Not Started' | 'Expired';
 

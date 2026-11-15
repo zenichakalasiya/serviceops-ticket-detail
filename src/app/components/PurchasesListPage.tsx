@@ -5,7 +5,7 @@ import { AssetsToolbar } from './AssetsToolbar';
 import { PurchasesTable } from './PurchasesTable';
 import { Pagination } from './Pagination';
 import { useDrawerStack } from './DrawerStack';
-import { PurchaseDrawer } from './PurchaseDrawer';
+import { PurchaseDrawer } from './lazyDrawers';
 
 export type PurchaseStatus =
   | 'Generated'

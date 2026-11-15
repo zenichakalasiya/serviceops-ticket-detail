@@ -5,7 +5,7 @@ import { AssetsToolbar } from './AssetsToolbar';
 import { NonItAssetsTable } from './NonItAssetsTable';
 import { Pagination } from './Pagination';
 import { useDrawerStack } from './DrawerStack';
-import { NonItAssetDrawer } from './NonItAssetDrawer';
+import { NonItAssetDrawer } from './lazyDrawers';
 
 export type NonItStatus = 'In Use' | 'In Stock' | 'In Store' | 'Not Working';
 

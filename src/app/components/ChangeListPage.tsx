@@ -5,7 +5,7 @@ import { ChangeToolbar } from './ChangeToolbar';
 import { ChangeTable } from './ChangeTable';
 import { Pagination } from './Pagination';
 import { useDrawerStack } from './DrawerStack';
-import { ChangeDrawer } from './ChangeDrawer';
+import { ChangeDrawer } from './lazyDrawers';
 
 export interface Change {
   id: string;

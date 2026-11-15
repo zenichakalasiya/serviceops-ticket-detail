@@ -6,7 +6,7 @@ import { ProblemTable } from './ProblemTable';
 import { TicketGroupSuggestions } from './TicketGroupSuggestions';
 import { Pagination } from './Pagination';
 import { useDrawerStack } from './DrawerStack';
-import { ProblemDrawer } from './ProblemDrawer';
+import { ProblemDrawer } from './lazyDrawers';
 
 export interface Problem {
   id: string;

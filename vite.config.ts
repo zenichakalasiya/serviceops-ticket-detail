@@ -34,6 +34,21 @@ export default defineConfig(({ command }) => ({
     },
   },
 
+  build: {
+    // Every screen is lazy-loaded (App.tsx), so chunks are per module; this only silences the
+    // size warning the biggest modules (the portal builder, the ticket drawer) still trip.
+    chunkSizeWarningLimit: 4000,
+    rollupOptions: {
+      output: {
+        /* React itself changes far less often than our code, so it gets its own file: after a
+           deploy a returning visitor's browser keeps it cached and only fetches what changed. */
+        manualChunks(id: string) {
+          if (/node_modules[\\/](\.pnpm[\\/])?(react|react-dom|scheduler)[@\\/]/.test(id)) return 'react-vendor';
+        },
+      },
+    },
+  },
+
   // File types to support raw imports. Never add .css, .tsx, or .ts files to this.
   assetsInclude: ['**/*.svg', '**/*.csv'],
 

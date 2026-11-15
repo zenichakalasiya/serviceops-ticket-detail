@@ -5,7 +5,7 @@ import { ReleaseToolbar } from './ReleaseToolbar';
 import { ReleaseTable } from './ReleaseTable';
 import { Pagination } from './Pagination';
 import { useDrawerStack } from './DrawerStack';
-import { ReleaseDrawer } from './ReleaseDrawer';
+import { ReleaseDrawer } from './lazyDrawers';
 
 export interface Release {
   id: string;

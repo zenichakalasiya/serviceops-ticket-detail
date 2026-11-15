@@ -5,7 +5,7 @@ import { AssetsToolbar } from './AssetsToolbar';
 import { HardwareAssetsTable } from './HardwareAssetsTable';
 import { Pagination } from './Pagination';
 import { useDrawerStack } from './DrawerStack';
-import { HardwareAssetDrawer } from './HardwareAssetDrawer';
+import { HardwareAssetDrawer } from './lazyDrawers';
 
 export type AssetType = 'Hardware' | 'Mac Laptop' | 'Windows Laptop' | 'HyperV Server' | 'UNIX Server' | 'Windows Desktop';
 export type AssetStatus = 'In Store' | 'Available' | 'In Use';

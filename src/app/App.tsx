@@ -1,53 +1,74 @@
-import { useEffect, useState } from 'react';
-import { TicketListPage } from './components/TicketListPage';
-import { ProblemListingPage } from './components/ProblemListingPage';
-import { ReleaseListingPage } from './components/ReleaseListingPage';
-import { HardwareAssetsListingPage } from './components/HardwareAssetsListingPage';
-import { SoftwareAssetsListingPage } from './components/SoftwareAssetsListingPage';
-import { NonItAssetsListingPage } from './components/NonItAssetsListingPage';
-import { ConsumableAssetsListingPage } from './components/ConsumableAssetsListingPage';
-import { SoftwareLicensesListingPage } from './components/SoftwareLicensesListingPage';
-import { SoftwareMeterListingPage } from './components/SoftwareMeterListingPage';
-import { ContractsListingPage } from './components/ContractsListingPage';
-import { PurchasesListingPage } from './components/PurchasesListingPage';
-import { ProjectsListingPage } from './components/ProjectsListingPage';
-import { MyApprovalsListPage } from './components/MyApprovalsListPage';
-import { CmdbListingPage } from './components/CmdbListingPage';
-import { PatchesListingPage } from './components/PatchesListingPage';
-import { PatchDeploymentsListingPage } from './components/PatchDeploymentsListingPage';
-import { AutomaticPatchTestsListingPage } from './components/AutomaticPatchTestsListingPage';
-import { AutomaticPatchDeploymentsListingPage } from './components/AutomaticPatchDeploymentsListingPage';
-import { PackageDeploymentsListingPage } from './components/PackageDeploymentsListingPage';
-import { RegistryDeploymentsListingPage } from './components/RegistryDeploymentsListingPage';
-import { ComplianceDashboardPage } from './components/ComplianceDashboardPage';
-import { ComplianceBenchmarksPage } from './components/ComplianceBenchmarksPage';
-import { ComplianceRulesPage } from './components/ComplianceRulesPage';
-import { ComplianceEndpointsPage } from './components/ComplianceEndpointsPage';
-import { CompliancePoliciesListingPage } from './components/CompliancePoliciesListingPage';
-import { CompliancePolicyEditorHost } from './components/CompliancePolicyEditor';
-import { ModuleCreatePageHost } from './components/ModuleCreatePage';
-import { KnowledgeListingPage } from './components/KnowledgeListingPage';
-import { TasksListingPage } from './components/TasksListingPage';
-import { ReportsListingPage } from './components/ReportsListingPage';
-import { MyTeamListingPage } from './components/MyTeamListingPage';
-import { IconGalleryPage } from './components/IconGalleryPage';
-import { ViewsLabListPage } from './components/ViewsLabListPage';
-import { ChangeListingPage } from './components/ChangeListingPage';
-import { EndpointsListingPage } from './components/EndpointsListingPage';
-import { VulnerabilitiesListingPage } from './components/VulnerabilitiesListingPage';
-import { DetectedCvesListingPage } from './components/DetectedCvesListingPage';
-import { BomInventoryListPage } from './components/BomInventoryListPage';
-import { AdminPage } from './components/AdminPage';
-import { RequesterPortalPage } from './components/RequesterPortalPage';
-import { DashboardPage } from './components/dashboard/DashboardPage';
-import { ManageDashboardsPage } from './components/dashboard/ManageDashboardsPage';
+import { lazy, Suspense, useEffect, useState, type ComponentType } from 'react';
 import { DrawerStackProvider } from './components/DrawerStack';
-import { GlobalSearch } from './components/GlobalSearch';
 import { Toaster } from 'sonner';
 import { formatHash, parseHash, titleFor } from './routes';
 import type { Page, Route } from './routes';
-import { GlobalShortcutsPanel } from './components/GlobalShortcutsPanel';
-import { GlobalHelpGuide } from './components/GlobalHelpGuide';
+
+/* Every screen is its own file, fetched only when its link is opened — so a shared link to one
+   module downloads that module, not the whole product. Named exports go through this helper. */
+const page = <P,>(load: () => Promise<Record<string, any>>, name: string) =>
+  lazy(() => load().then((m) => ({ default: m[name] as ComponentType<P> }))) as ComponentType<any>;
+const TicketListPage = page(() => import('./components/TicketListPage'), 'TicketListPage');
+const ProblemListingPage = page(() => import('./components/ProblemListingPage'), 'ProblemListingPage');
+const ReleaseListingPage = page(() => import('./components/ReleaseListingPage'), 'ReleaseListingPage');
+const HardwareAssetsListingPage = page(() => import('./components/HardwareAssetsListingPage'), 'HardwareAssetsListingPage');
+const SoftwareAssetsListingPage = page(() => import('./components/SoftwareAssetsListingPage'), 'SoftwareAssetsListingPage');
+const NonItAssetsListingPage = page(() => import('./components/NonItAssetsListingPage'), 'NonItAssetsListingPage');
+const ConsumableAssetsListingPage = page(() => import('./components/ConsumableAssetsListingPage'), 'ConsumableAssetsListingPage');
+const SoftwareLicensesListingPage = page(() => import('./components/SoftwareLicensesListingPage'), 'SoftwareLicensesListingPage');
+const SoftwareMeterListingPage = page(() => import('./components/SoftwareMeterListingPage'), 'SoftwareMeterListingPage');
+const ContractsListingPage = page(() => import('./components/ContractsListingPage'), 'ContractsListingPage');
+const PurchasesListingPage = page(() => import('./components/PurchasesListingPage'), 'PurchasesListingPage');
+const ProjectsListingPage = page(() => import('./components/ProjectsListingPage'), 'ProjectsListingPage');
+const MyApprovalsListPage = page(() => import('./components/MyApprovalsListPage'), 'MyApprovalsListPage');
+const CmdbListingPage = page(() => import('./components/CmdbListingPage'), 'CmdbListingPage');
+const PatchesListingPage = page(() => import('./components/PatchesListingPage'), 'PatchesListingPage');
+const PatchDeploymentsListingPage = page(() => import('./components/PatchDeploymentsListingPage'), 'PatchDeploymentsListingPage');
+const AutomaticPatchTestsListingPage = page(() => import('./components/AutomaticPatchTestsListingPage'), 'AutomaticPatchTestsListingPage');
+const AutomaticPatchDeploymentsListingPage = page(() => import('./components/AutomaticPatchDeploymentsListingPage'), 'AutomaticPatchDeploymentsListingPage');
+const PackageDeploymentsListingPage = page(() => import('./components/PackageDeploymentsListingPage'), 'PackageDeploymentsListingPage');
+const RegistryDeploymentsListingPage = page(() => import('./components/RegistryDeploymentsListingPage'), 'RegistryDeploymentsListingPage');
+const ComplianceDashboardPage = page(() => import('./components/ComplianceDashboardPage'), 'ComplianceDashboardPage');
+const ComplianceBenchmarksPage = page(() => import('./components/ComplianceBenchmarksPage'), 'ComplianceBenchmarksPage');
+const ComplianceRulesPage = page(() => import('./components/ComplianceRulesPage'), 'ComplianceRulesPage');
+const ComplianceEndpointsPage = page(() => import('./components/ComplianceEndpointsPage'), 'ComplianceEndpointsPage');
+const CompliancePoliciesListingPage = page(() => import('./components/CompliancePoliciesListingPage'), 'CompliancePoliciesListingPage');
+const CompliancePolicyEditorHost = page(() => import('./components/CompliancePolicyEditor'), 'CompliancePolicyEditorHost');
+const ModuleCreatePageHost = page(() => import('./components/ModuleCreatePage'), 'ModuleCreatePageHost');
+const KnowledgeListingPage = page(() => import('./components/KnowledgeListingPage'), 'KnowledgeListingPage');
+const TasksListingPage = page(() => import('./components/TasksListingPage'), 'TasksListingPage');
+const ReportsListingPage = page(() => import('./components/ReportsListingPage'), 'ReportsListingPage');
+const MyTeamListingPage = page(() => import('./components/MyTeamListingPage'), 'MyTeamListingPage');
+const IconGalleryPage = page(() => import('./components/IconGalleryPage'), 'IconGalleryPage');
+const ViewsLabListPage = page(() => import('./components/ViewsLabListPage'), 'ViewsLabListPage');
+const ChangeListingPage = page(() => import('./components/ChangeListingPage'), 'ChangeListingPage');
+const EndpointsListingPage = page(() => import('./components/EndpointsListingPage'), 'EndpointsListingPage');
+const VulnerabilitiesListingPage = page(() => import('./components/VulnerabilitiesListingPage'), 'VulnerabilitiesListingPage');
+const DetectedCvesListingPage = page(() => import('./components/DetectedCvesListingPage'), 'DetectedCvesListingPage');
+const BomInventoryListPage = page(() => import('./components/BomInventoryListPage'), 'BomInventoryListPage');
+const AdminPage = page(() => import('./components/AdminPage'), 'AdminPage');
+const RequesterPortalPage = page(() => import('./components/RequesterPortalPage'), 'RequesterPortalPage');
+const DashboardPage = page(() => import('./components/dashboard/DashboardPage'), 'DashboardPage');
+const ManageDashboardsPage = page(() => import('./components/dashboard/ManageDashboardsPage'), 'ManageDashboardsPage');
+const GlobalSearch = page(() => import('./components/GlobalSearch'), 'GlobalSearch');
+const GlobalShortcutsPanel = page(() => import('./components/GlobalShortcutsPanel'), 'GlobalShortcutsPanel');
+const GlobalHelpGuide = page(() => import('./components/GlobalHelpGuide'), 'GlobalHelpGuide');
+
+/* Shown only for the moment a screen's file is arriving. */
+function PageLoading() {
+  return (
+    <div className="fixed inset-0 flex items-center justify-center bg-white">
+      <div className="size-6 animate-spin rounded-full border-2 border-[#DFE5ED] border-t-[#3D8BD0]" aria-label="Loading" />
+    </div>
+  );
+}
+
+/* Rendered inside the page's Suspense, so its effect runs only once the screen is on show — that
+   is when the global helpers (search, shortcuts, help, create forms) start loading, behind it. */
+function Shown({ onShown }: { onShown: () => void }) {
+  useEffect(() => { onShown(); }, [onShown]);
+  return null;
+}
 
 export default function App() {
   /* The URL is the source of truth for which screen is open — see routes.ts for why it lives in
@@ -95,11 +116,16 @@ export default function App() {
 
   // A software asset id requested from elsewhere (e.g. the Software License "Managed Softwares" card),
   // consumed by the Software Assets list page to auto-open that asset's detail drawer.
+  const [shown, setShown] = useState(false);
+  const markShown = useState(() => () => setShown(true))[0];
+
   const [pendingSoftwareAssetId, setPendingSoftwareAssetId] = useState<string | null>(null);
   const openSoftwareAsset = (id: string) => { setPendingSoftwareAssetId(id); go({ page: 'software-assets' }); };
 
   return (
     <DrawerStackProvider activePage={activePage}>
+      <Suspense fallback={<PageLoading />}>
+      <Shown onShown={markShown} />
       {activePage === 'request' && <TicketListPage onNavigate={navigate} />}
       {activePage === 'views-lab' && <ViewsLabListPage onNavigate={navigate} />}
       {activePage === 'problem' && <ProblemListingPage onNavigate={navigate} />}
@@ -151,6 +177,8 @@ export default function App() {
           onPortalChange={(portal) => go({ page: 'admin', admin: 'support-portal', portal })}
         />
       )}
+      </Suspense>
+      {shown && <Suspense fallback={null}>
       {/* Mounted once, inside the drawer host, so search works on every page and can open any
           module's real detail drawer as a tab. */}
       <GlobalSearch activePage={activePage} onNavigate={navigate} />
@@ -160,6 +188,7 @@ export default function App() {
       {/* ONE Keyboard shortcuts panel for the whole product — header icon, `?`, and the builder's rail. */}
       <GlobalShortcutsPanel page={activePage} />
       <GlobalHelpGuide />
+      </Suspense>}
       <Toaster position="top-right" />
     </DrawerStackProvider>
   );
