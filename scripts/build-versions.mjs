@@ -90,7 +90,7 @@ const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&
 for (const m of registry.modules) for (const v of m.versions) {
   const dir = path.join(DIST, m.id, v.version);
   fs.mkdirSync(dir, { recursive: true });
-  const to = `../../builds/${shaOf.get(v.commit)}/${m.route}`;
+  const to = `../../builds/${shaOf.get(v.commit)}/${v.route ?? m.route}`;
   fs.writeFileSync(path.join(dir, 'index.html'),
     `<!doctype html><meta charset="utf-8"><title>${esc(m.name)} ${esc(v.version)}</title>` +
     `<meta http-equiv="refresh" content="0; url=${esc(to)}"><script>location.replace(${JSON.stringify(to)})</script>` +

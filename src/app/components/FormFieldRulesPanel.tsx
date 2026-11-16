@@ -24,7 +24,7 @@ const useOf = (r: FormRule, id: string): Use | null => {
 };
 const BEHAVIOUR: Record<Use, string> = { condition: 'Condition', action: 'Action', both: 'Condition & Action' };
 const FILTERS: { id: Filter; label: string }[] = [
-  { id: 'all', label: 'All' }, { id: 'condition', label: 'Conditions' }, { id: 'action', label: 'Actions' }, { id: 'both', label: 'Both' },
+  { id: 'all', label: 'All' }, { id: 'condition', label: 'Conditions' }, { id: 'action', label: 'Actions' },
 ];
 
 const VERB: Record<ActionType, string> = {

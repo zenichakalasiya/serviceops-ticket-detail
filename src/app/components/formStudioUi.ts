@@ -16,10 +16,13 @@ import { useEffect, useState } from 'react';
  */
 export type FormStudioUi = 'v1' | 'v2' | 'v3' | 'v4';
 const KEY = 'formBuilderUi';
+/** The builders this build offers, first = the one it opens on. Version 1 of the form builder is the old
+ *  builder alone; Version 2 offers V2 | V3 | V4 (Zeni, 16 Nov 2026). One builder = no pill. */
+export const BUILDERS: FormStudioUi[] = ['v1'];
 const EVENT = 'form-studio-ui';
 
 export function readFormStudioUi(): FormStudioUi {
-  try { const v = localStorage.getItem(KEY); return v === 'v1' || v === 'v3' || v === 'v4' ? v : 'v2'; } catch { return 'v2'; }
+  try { const v = localStorage.getItem(KEY) as FormStudioUi | null; return v && BUILDERS.includes(v) ? v : BUILDERS[0]; } catch { return BUILDERS[0]; }
 }
 export function setFormStudioUi(v: FormStudioUi) {
   try { localStorage.setItem(KEY, v); } catch { /* private mode */ }

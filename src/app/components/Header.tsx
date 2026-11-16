@@ -12,7 +12,7 @@ import { ProfileMenu } from './ProfileMenu';
 import { CreateMenuButton } from './CreateMenuButton';
 import { setRelease, useFormRuleRelease } from './formRuleRelease';
 import { setComplianceRuleUi, useComplianceRuleUi } from './complianceRuleUi';
-import { setFormStudioUi, useFormStudioUi } from './formStudioUi';
+import { BUILDERS, setFormStudioUi, useFormStudioUi } from './formStudioUi';
 import { formModuleBySlug } from './formStudioData';
 
 /** Exported so the Support Portal preview renders the same mark the product header does. */
@@ -177,6 +177,13 @@ function FormRuleReleaseSwitch() {
   );
 }
 
+const BUILDER_TIPS = {
+  v1: 'The old builder: custom fields on the left, form on the right',
+  v2: 'New: custom fields on the right; click a field for its settings',
+  v3: 'Inline + menu, configuration always open',
+  v4: 'Drag fields from a Fields | Settings | Guide panel',
+};
+
 /** Builder V1 / V2 on every admin form page (Form Studio, 2 Nov 2026) — see formStudioUi.ts. */
 function FormStudioUiSwitch() {
   const [hash, setHash] = useState(() => location.hash);
@@ -188,15 +195,12 @@ function FormStudioUiSwitch() {
     return () => { window.removeEventListener('hashchange', on); window.clearInterval(t); };
   }, []);
   const slug = hash.slice('#/admin/'.length).split('/')[0];
-  if (!hash.startsWith('#/admin/') || !(slug === 'request-form' || formModuleBySlug(slug))) return null;
+  if (BUILDERS.length < 2 || !hash.startsWith('#/admin/') || !(slug === 'request-form' || formModuleBySlug(slug))) return null;
   return (
     <div className="flex items-center gap-2">
       <span className="text-[12px] text-[#7B8FA5]">Builder</span>
       <div className="pill-track" title="Form builder version">
-        <button type="button" title="The old builder: custom fields on the left, form on the right" aria-pressed={v === 'v1'} onClick={() => setFormStudioUi('v1')}>V1</button>
-        <button type="button" title="New: custom fields on the right; click a field for its settings" aria-pressed={v === 'v2'} onClick={() => setFormStudioUi('v2')}>V2</button>
-        <button type="button" title="Inline + menu, configuration always open" aria-pressed={v === 'v3'} onClick={() => setFormStudioUi('v3')}>V3</button>
-        <button type="button" title="Drag fields from a Fields | Settings | Guide panel" aria-pressed={v === 'v4'} onClick={() => setFormStudioUi('v4')}>V4</button>
+        {BUILDERS.map((b) => <button key={b} type="button" title={BUILDER_TIPS[b]} aria-pressed={v === b} onClick={() => setFormStudioUi(b)}>{b.toUpperCase()}</button>)}
       </div>
     </div>
   );
