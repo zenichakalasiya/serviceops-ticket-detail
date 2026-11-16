@@ -3224,3 +3224,4 @@ The **Builder** pill beside the logo (every admin form page; `formStudioUi.ts`, 
   = the .185 groups, `operatorsFor`; `TYPE_HELP` + `ADDABLE_KINDS` in formStudioData). API / Dynamic have no
   configuration screen yet.
 - Not done: V1 was not re-compared against .185 screen by screen; dragging in V2 is not browser-tested.
+- **Split into two versions (16 Nov 2026, later).** `BUILDERS` in `formStudioUi.ts` lists the builders a build offers (first = default; one builder = no pill). Live `main` = `['v2','v3','v4']`. Versions page, module `request-form`: **v2** (commit 4bc3746) = the old builder alone, **v3** (5f937ed) = V2 | V3 | V4. Both carry their own `route` (`#/admin/request-form`); `build-versions.mjs` reads `v.route ?? m.route`. The old builder's rules panel filter has no "Both".

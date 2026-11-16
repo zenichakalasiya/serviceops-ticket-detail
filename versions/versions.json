@@ -362,6 +362,25 @@
           "changes": [
             "Baseline: Form Builder (hover toolbar, Configure / Rules / Edit panels) and the Form Rule editor (V3 final, Rule check, help guide, illustrations page)."
           ]
+        },
+        {
+          "version": "v2",
+          "date": "2026-11-16",
+          "commit": "4bc3746",
+          "route": "#/admin/request-form",
+          "changes": [
+            "Form Builder: the old product builder as the final design. Custom fields on the left in the product groups (with URL, Currency, API, Dynamic), form on the right, hover toolbar, Edit side panel.",
+            "The rules panel filter is All, Conditions, Actions (Both removed)."
+          ]
+        },
+        {
+          "version": "v3",
+          "date": "2026-11-16",
+          "commit": "5f937ed",
+          "route": "#/admin/request-form",
+          "changes": [
+            "Form Builder: three new builders on the Builder pill beside the logo. V2 = custom fields on the right, click a field for its settings, plain sections, actions beside the page heading. V3 = the \"+\" builder. V4 = the drag-and-drop builder."
+          ]
         }
       ]
     },
