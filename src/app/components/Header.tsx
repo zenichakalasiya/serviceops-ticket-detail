@@ -193,8 +193,10 @@ function FormStudioUiSwitch() {
     <div className="flex items-center gap-2">
       <span className="text-[12px] text-[#7B8FA5]">Builder</span>
       <div className="pill-track" title="Form builder version">
-        <button type="button" title="Inline + menu, configuration always open" aria-pressed={v === 'v1'} onClick={() => setFormStudioUi('v1')}>V1</button>
-        <button type="button" title="Drag fields from a Fields | Settings | Guide panel" aria-pressed={v === 'v2'} onClick={() => setFormStudioUi('v2')}>V2</button>
+        <button type="button" title="The old builder: custom fields on the left, form on the right" aria-pressed={v === 'v1'} onClick={() => setFormStudioUi('v1')}>V1</button>
+        <button type="button" title="New: custom fields on the right; click a field for its settings" aria-pressed={v === 'v2'} onClick={() => setFormStudioUi('v2')}>V2</button>
+        <button type="button" title="Inline + menu, configuration always open" aria-pressed={v === 'v3'} onClick={() => setFormStudioUi('v3')}>V3</button>
+        <button type="button" title="Drag fields from a Fields | Settings | Guide panel" aria-pressed={v === 'v4'} onClick={() => setFormStudioUi('v4')}>V4</button>
       </div>
     </div>
   );

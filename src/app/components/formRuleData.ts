@@ -7,7 +7,9 @@
 export type FieldKind =
   | 'text' | 'textarea' | 'dropdown' | 'multiselect' | 'user' | 'number' | 'date' | 'checkbox' | 'attachment'
   /* Added with the Form Builder redesign (21 Oct 2026). Section and Label hold no value, so rules never offer them. */
-  | 'richtext' | 'radio' | 'section' | 'label' | 'dependent';
+  | 'richtext' | 'radio' | 'section' | 'label' | 'dependent'
+  /* The rest of the product's palette (16 Nov 2026): URL and Currency are special inputs, API and Dynamic fill their list from outside. */
+  | 'url' | 'currency' | 'api' | 'dynamic';
 
 /** One option of a Dependent field — options nest, a child is only offered once its parent is picked. */
 export interface OptionNode { id: string; label: string; children: OptionNode[] }
@@ -58,7 +60,11 @@ export const FIELD_KINDS: { kind: FieldKind; label: string; icon: string }[] = [
   { kind: 'attachment', label: 'Attachment', icon: 'Paperclip' },
   { kind: 'section', label: 'Section', icon: 'SquareDashed' },
   { kind: 'label', label: 'Label', icon: 'Heading' },
+  { kind: 'url', label: 'URL', icon: 'Globe' },
+  { kind: 'currency', label: 'Currency', icon: 'Banknote' },
   { kind: 'dependent', label: 'Dependent', icon: 'Network' },
+  { kind: 'api', label: 'API', icon: 'Plug' },
+  { kind: 'dynamic', label: 'Dynamic', icon: 'SquareTerminal' },
   { kind: 'user', label: 'People', icon: 'User' },
 ];
 
@@ -67,8 +73,8 @@ export const PALETTE_GROUPS: { title: string; kinds: FieldKind[] }[] = [
   { title: 'Text Fields', kinds: ['text', 'textarea', 'richtext'] },
   { title: 'Selection Fields', kinds: ['dropdown', 'multiselect', 'date'] },
   { title: 'Input Fields', kinds: ['number', 'checkbox', 'radio'] },
-  { title: 'Special Fields', kinds: ['attachment', 'section', 'label'] },
-  { title: 'Advance Fields', kinds: ['dependent'] },
+  { title: 'Special Fields', kinds: ['attachment', 'section', 'label', 'url', 'currency'] },
+  { title: 'Advanced Fields', kinds: ['dependent', 'api', 'dynamic'] },
 ];
 
 export const kindLabel = (k: FieldKind) => FIELD_KINDS.find((f) => f.kind === k)?.label ?? k;
@@ -136,9 +142,9 @@ export type Operator =
 
 export const operatorsFor = (k: FieldKind): Operator[] => {
   switch (k) {
-    case 'text': case 'textarea': case 'richtext': return ['contains', 'does not contain', 'is', 'is not', 'starts with', 'is empty', 'is not empty'];
-    case 'dropdown': case 'multiselect': case 'user': case 'radio': case 'dependent': return ['is', 'is not', 'is empty', 'is not empty'];
-    case 'number': return ['is', 'is not', 'greater than', 'less than', 'is empty', 'is not empty'];
+    case 'text': case 'textarea': case 'richtext': case 'url': return ['contains', 'does not contain', 'is', 'is not', 'starts with', 'is empty', 'is not empty'];
+    case 'dropdown': case 'multiselect': case 'user': case 'radio': case 'dependent': case 'api': case 'dynamic': return ['is', 'is not', 'is empty', 'is not empty'];
+    case 'number': case 'currency': return ['is', 'is not', 'greater than', 'less than', 'is empty', 'is not empty'];
     case 'date': return ['is', 'before', 'after', 'is empty', 'is not empty'];
     case 'checkbox': return ['is checked', 'is not checked'];
     case 'attachment': return ['is empty', 'is not empty'];

@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
-import { ArrowDown, ArrowUp, BookOpen, ChevronDown, ChevronUp, GripVertical, Info, Lock, Plus, Search, X } from 'lucide-react';
+import {
+  AlignLeft, ArrowDown, ArrowUp, Banknote, BookOpen, Calendar, CheckSquare, ChevronDown, ChevronUp, CircleDot, GripVertical, Hash, Heading,
+  Globe, Info, ListChecks, Lock, MousePointerClick, Network, Paperclip, PenLine, Pencil, Plug, Plus, Search, SquareDashed, SquareTerminal, Trash2, Type, User, X,
+} from 'lucide-react';
 import { RuleSelect, ToggleSwitch, inputCls } from './FormRuleControls';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
-import { PEOPLE, kindLabel, uid } from './formRuleData';
+import { PALETTE_GROUPS, PEOPLE, kindLabel, uid } from './formRuleData';
 import type { FieldKind, FormField, OptionNode } from './formRuleData';
 import { ADDABLE_KINDS, BUILD_GUIDE, REQ_MODE_HELP, TYPE_HELP, reqModeOf, reqModePatch, typeHelp } from './formStudioData';
 import type { ReqMode } from './formStudioData';
@@ -14,18 +18,38 @@ import { useFormStudioUi } from './formStudioUi';
  * is selected — the form, a section or a field — has its configuration open on the right, with its
  * help on top. No left field drawer. Build ⇄ Preview (as requester or technician) → Publish.
  *
- * V1 adds fields where they will sit, from a "+" between rows or "Add a field" at a section's end.
- * V2 (Jira-style) ends every section with "Type / to add a field" and a drop slot, and its right
+ * Builder numbers were re-dealt on 16 Nov 2026 (see formStudioUi.ts): pill V1 is the old product builder
+ * (AdminFormBuilder, not this file), pill V2 is the NEW design below called "V3" in the code names
+ * (fieldV3 / canvasV3 / paletteV3, flag `neo`), pill V3 is the "+" builder and pill V4 the Jira-style one.
+ *
+ * The "+" builder adds fields where they will sit, from a "+" between rows or "Add a field" at a section's end.
+ * The Jira-style builder ends every section with "Type / to add a field" and a drop slot, and its right
  * panel is Fields | Settings | Guide, so field types can be DRAGGED onto a section.
+ *
+ * V3 (Zeni, 15 Nov 2026) answers the old builder's layout: the form (its predefined fields) fills the
+ * left, and ONE right panel is either Custom fields — search on top, each type an icon and a name,
+ * dragged or clicked in — or Field settings. Clicking a field lights it, dims every other field and
+ * swaps the panel to that field's settings; clicking another field swaps them again; Esc or a click
+ * on empty space goes back to Custom fields. A switch at the panel's top moves between the two by hand.
  *
  * The form is the product's flat field list: a `section` field opens a section and carries its
  * settings. Fields before the first section form an untitled group. */
+
+const KIND_ICON: Record<FieldKind, React.ReactNode> = {
+  text: <Type size={15} />, textarea: <AlignLeft size={15} />, richtext: <PenLine size={15} />,
+  dropdown: <ChevronDown size={15} />, multiselect: <ListChecks size={15} />, date: <Calendar size={15} />,
+  number: <Hash size={15} />, checkbox: <CheckSquare size={15} />, radio: <CircleDot size={15} />,
+  attachment: <Paperclip size={15} />, section: <SquareDashed size={15} />, label: <Heading size={15} />,
+  dependent: <Network size={15} />, user: <User size={15} />,
+  url: <Globe size={15} />, currency: <Banknote size={15} />, api: <Plug size={15} />, dynamic: <SquareTerminal size={15} />,
+};
 
 type Sel = { kind: 'form' } | { kind: 'section'; id: string } | { kind: 'field'; id: string };
 interface Group { sec: FormField | null; items: FormField[]; start: number; end: number }
 
 const CHOICE: FieldKind[] = ['dropdown', 'radio', 'multiselect', 'dependent', 'checkbox'];
-const TEXTUAL: FieldKind[] = ['text', 'textarea', 'richtext', 'number', 'date', 'dropdown', 'multiselect', 'dependent', 'user'];
+const TEXTUAL: FieldKind[] = ['text', 'textarea', 'richtext', 'number', 'date', 'dropdown', 'multiselect', 'dependent', 'user', 'url', 'currency', 'api', 'dynamic'];
+const LISTED: FieldKind[] = ['dropdown', 'multiselect', 'user', 'dependent', 'api', 'dynamic'];
 const WITH_OPTIONS: FieldKind[] = ['dropdown', 'multiselect', 'radio'];
 
 function groupsOf(fields: FormField[]): Group[] {
@@ -68,13 +92,6 @@ function parseTree(text: string): OptionNode[] {
   });
   return root;
 }
-const roleWords = (f: FormField) => {
-  if (f.kind === 'label') return '';
-  const m = reqModeOf(f);
-  const r = m === 'hidden' ? 'Hidden from requesters' : m === 'readonly' ? 'Read-only for requesters' : m === 'required' ? 'Required' : 'Optional';
-  return f.required && m !== 'required' ? `${r} · technician must fill` : r;
-};
-
 /* ── Small shared bits ── */
 const btn2 = 'h-8 rounded border border-[#DFE5ED] bg-white px-3 text-[12px] font-medium text-[#364658] transition-colors hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-50';
 const btn1 = 'h-8 rounded bg-[#3D8BD0] px-3 text-[12px] font-medium text-white transition-colors hover:bg-[#3478B5]';
@@ -90,6 +107,18 @@ function Pills<T extends string>({ value, options, onChange, label }: { value: T
 const Chip = ({ children, tone = 'grey' }: { children: React.ReactNode; tone?: 'grey' | 'amber' | 'blue' }) => (
   <span className={'whitespace-nowrap rounded-full px-2 py-px text-[11px] font-medium ' + (tone === 'amber' ? 'bg-[#FFF7E6] text-[#B45309]' : tone === 'blue' ? 'bg-[#EBF5FF] text-[#2F6FAE]' : 'bg-[#EEF2F6] text-[#475569]')}>{children}</span>
 );
+
+/** One labelled switch — the new builder's settings are a plain list of these. */
+function SwitchRow({ label, hint, on, onChange }: { label: string; hint?: string; on: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="min-w-0 text-[13px] text-[#364658]">{label}{hint && <span className="block text-[11.5px] leading-[1.4] text-[#7B8FA5]">{hint}</span>}</span>
+      <ToggleSwitch on={on} onChange={onChange} />
+    </div>
+  );
+}
+const GroupTitle = ({ children }: { children: React.ReactNode }) => <div className="border-t border-[#EEF2F6] pt-4 text-[12px] font-semibold text-[#1D2A3E]">{children}</div>;
+const iconBtn = 'flex size-7 flex-shrink-0 items-center justify-center rounded text-[#64748B] transition-colors hover:bg-[#F1F5F9] hover:text-[#1D2A3E] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent';
 
 /** Field types matching a search, in menu order. */
 const matchKinds = (query: string) => TYPE_HELP.filter((t) => ADDABLE_KINDS.includes(t.kind) && (kindLabel(t.kind) + ' ' + t.desc).toLowerCase().includes(query.trim().toLowerCase()));
@@ -135,7 +164,7 @@ function FieldFace({ f }: { f: FormField }) {
   if (f.kind === 'radio' || (f.kind === 'dependent' && optionsOf(f).length)) return <span className="flex flex-wrap gap-1">{optionsOf(f).slice(0, 4).map((o) => <Chip key={o}>{o}</Chip>)}{optionsOf(f).length > 4 && <Chip>+{optionsOf(f).length - 4}</Chip>}</span>;
   if (f.kind === 'attachment') return <span className="flex h-8 items-center justify-center rounded border border-dashed border-[#CBD5E1] text-[11.5px] text-[#94A3B8]">Drop files here or browse</span>;
   const tall = f.kind === 'textarea' || f.kind === 'richtext';
-  return <span className={'flex items-start rounded border border-[#E5E9F0] bg-[#F8FAFC] px-2.5 text-[11.5px] text-[#94A3B8] ' + (tall ? 'h-12 pt-1.5' : 'h-8 items-center')}>{f.placeholder || (WITH_OPTIONS.includes(f.kind) || f.kind === 'user' || f.kind === 'dependent' ? 'Select' : '')}</span>;
+  return <span className={'flex rounded border border-[#E5E9F0] bg-[#F8FAFC] px-2.5 text-[11.5px] text-[#94A3B8] ' + (tall ? 'h-12 items-start pt-1.5' : 'h-8 items-center')}>{f.placeholder || (WITH_OPTIONS.includes(f.kind) || LISTED.includes(f.kind) ? 'Select' : '')}</span>;
 }
 
 export interface FormStudioProps {
@@ -145,14 +174,18 @@ export interface FormStudioProps {
   onFields: (next: FormField[]) => void;
   /** How many form rules use a field — shown in its settings. */
   rulesUsing?: (fieldId: string) => number;
+  /** The new builder (pill V2) puts Build / Preview / Save draft / Publish here — the page heading's right side. */
+  toolbarSlot?: HTMLElement | null;
 }
 
-export function FormStudio({ title, noun, fields, onFields, rulesUsing }: FormStudioProps) {
+export function FormStudio({ title, noun, fields, onFields, rulesUsing, toolbarSlot }: FormStudioProps) {
   const ui = useFormStudioUi();
   const [mode, setMode] = useState<'build' | 'preview'>('build');
   const [sel, setSel] = useState<Sel>({ kind: 'form' });
   const [menu, setMenu] = useState<string | null>(null);
   const [q, setQ] = useState('');
+  /** V3: the Custom fields search. */
+  const [pq, setPq] = useState('');
   const [tab, setTab] = useState<'fields' | 'settings' | 'guide'>('fields');
   const [aboutOpen, setAboutOpen] = useState(true);
   const [published, setPublished] = useState(() => ({ version: 1, snap: JSON.stringify(fields) }));
@@ -171,7 +204,12 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing }: FormSt
   /* ── edits ── */
   const patch = (id: string, p: Partial<FormField>) => onFields(fields.map((f) => (f.id === id ? { ...f, ...p } : f)));
   const insertAt = (i: number, f: FormField[]) => { const a = [...fields]; a.splice(i, 0, ...f); onFields(a); };
-  const select = (s: Sel) => { setSel(s); setMenu(null); if (ui === 'v2' && s.kind !== 'form') setTab('settings'); };
+  const select = (s: Sel) => {
+    setSel(s); setMenu(null);
+    if (ui === 'v4' && s.kind !== 'form') setTab('settings');
+    /* V3: the panel follows the selection — a field's settings, or back to Custom fields. */
+    if (ui === 'v2') setTab(s.kind === 'form' ? 'fields' : 'settings');
+  };
   const newField = (kind: FieldKind): FormField => ({
     id: uid('f'), label: kindLabel(kind) === 'Datetime' ? 'Date' : kindLabel(kind), kind, width: kind === 'textarea' || kind === 'richtext' || kind === 'attachment' ? 'full' : 'half',
     ...(WITH_OPTIONS.includes(kind) ? { options: ['Option 1', 'Option 2'] } : {}),
@@ -180,14 +218,16 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing }: FormSt
   });
   /** Add a field at a flat index; on an empty form a section is made for it first. */
   const addAt = (i: number, kind: FieldKind) => {
+    if (kind === 'section') return addSection();
     const f = newField(kind);
     if (!fields.length) { const s: FormField = { id: uid('s'), label: 'Custom fields', kind: 'section', width: 'full', cols: 2 }; onFields([s, f]); }
     else insertAt(i, [f]);
-    setMenu(null); setQ(''); setSel({ kind: 'field', id: f.id }); if (ui === 'v2') setTab('settings');
+    setMenu(null); setQ(''); setSel({ kind: 'field', id: f.id }); if (ui !== 'v3') setTab('settings');
+    if (ui === 'v2') requestAnimationFrame(() => document.querySelector(`[data-field="${f.id}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
   };
   const addSection = () => {
     const s: FormField = { id: uid('s'), label: 'New section', kind: 'section', width: 'full', cols: 2 };
-    onFields([...fields, s]); setSel({ kind: 'section', id: s.id }); if (ui === 'v2') setTab('settings');
+    onFields([...fields, s]); setSel({ kind: 'section', id: s.id }); if (ui !== 'v3') setTab('settings');
     requestAnimationFrame(() => document.querySelector(`[data-sec="${s.id}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }));
   };
   const moveField = (id: string, dir: -1 | 1) => {
@@ -211,9 +251,9 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing }: FormSt
     const g = groupsOf(rest).find((x) => x.sec?.id === secId); if (!g) return;
     const a = [...rest]; a.splice(g.end, 0, f); onFields(a);
   };
-  const removeField = (id: string) => { onFields(fields.filter((f) => f.id !== id)); setSel({ kind: 'form' }); };
+  const removeField = (id: string) => { onFields(fields.filter((f) => f.id !== id)); select({ kind: 'form' }); };
   /** Deleting a section keeps its fields: they join the section above. */
-  const removeSection = (id: string) => { onFields(fields.filter((f) => f.id !== id)); setSel({ kind: 'form' }); toast.success('Section removed — its fields joined the section above'); };
+  const removeSection = (id: string) => { onFields(fields.filter((f) => f.id !== id)); select({ kind: 'form' }); toast.success('Section removed — its fields joined the section above'); };
   /** V2 drag: a new type, or an existing field, dropped at a flat index. */
   const dropTo = (i: number, e: React.DragEvent) => {
     e.preventDefault(); setDropAt(null);
@@ -232,6 +272,17 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing }: FormSt
 
   const selected = sel.kind === 'field' ? fields.find((f) => f.id === sel.id) : sel.kind === 'section' ? fields.find((f) => f.id === sel.id) : undefined;
   useEffect(() => { if ((sel.kind === 'field' || sel.kind === 'section') && !selected) setSel({ kind: 'form' }); }, [sel, selected]);
+  /* V3: Esc lets go of the selected field (not while typing, not while a menu is open). */
+  useEffect(() => {
+    if (ui !== 'v2' || sel.kind === 'form' || mode !== 'build') return;
+    const key = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || menu || publishOpen) return;
+      if ((e.target as HTMLElement | null)?.closest?.('input, textarea, [data-rule-menu]') || document.querySelector('[data-rule-menu]')) return;
+      setSel({ kind: 'form' }); setTab('fields');
+    };
+    document.addEventListener('keydown', key);
+    return () => document.removeEventListener('keydown', key);
+  }, [ui, sel.kind, mode, menu, publishOpen]);
   const groupOfField = (id: string) => groups.find((g) => g.items.some((f) => f.id === id));
   const stats = [
     { v: values.length, label: `fields in ${sections.length} section${sections.length === 1 ? '' : 's'}` },
@@ -349,7 +400,7 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing }: FormSt
         </div>
         {f.kind !== 'label' && (
           <>
-            <div><Lbl>Requester</Lbl><Pills<ReqMode> label="Requester" value={mode} options={[['hidden', 'Hidden'], ['readonly', 'Read-only'], ['optional', 'Optional'], ['required', 'Required']]} onChange={(m) => patch(f.id, reqModePatch(m))} /><Help>{REQ_MODE_HELP[mode]}{g?.sec?.techOnly ? ' The whole section is technicians only, so requesters do not see it either way.' : ''}</Help></div>
+            <div><Lbl>Requester</Lbl>{<Pills<ReqMode> label="Requester" value={mode} options={[['hidden', 'Hidden'], ['readonly', 'Read-only'], ['optional', 'Optional'], ['required', 'Required']]} onChange={(m) => patch(f.id, reqModePatch(m))} />}<Help>{REQ_MODE_HELP[mode]}{g?.sec?.techOnly ? ' The whole section is technicians only, so requesters do not see it either way.' : ''}</Help></div>
             <div><Lbl>Technician</Lbl><Pills label="Technician" value={f.required ? 'req' : 'opt'} options={[['opt', 'Optional'], ['req', 'Required to save']]} onChange={(v) => patch(f.id, { required: v === 'req' })} /></div>
           </>
         )}
@@ -378,7 +429,77 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing }: FormSt
       </div>
     );
   };
-  const settings = selected?.kind === 'section' ? sectionSettings(selected) : selected ? fieldSettings(selected) : formSettings;
+  const settingsHead = (f: FormField, caption: string, remove: () => void) => (
+    <div className="flex items-center gap-2.5">
+      <span className="grid size-8 flex-shrink-0 place-items-center rounded-md bg-[#F1F5F9] text-[#475569]">{KIND_ICON[f.kind]}</span>
+      <div className="min-w-0 flex-1"><div className="truncate text-[14px] font-semibold text-[#1D2A3E]">{f.label || 'Untitled'}</div><div className="text-[12px] text-[#7B8FA5]">{caption}</div></div>
+      {f.system ? (
+        <Tooltip><TooltipTrigger asChild><span><button type="button" disabled aria-label="Remove field" className={iconBtn}><Trash2 size={15} /></button></span></TooltipTrigger><TooltipContent side="left">A product field can be hidden, not removed.</TooltipContent></Tooltip>
+      ) : <button type="button" title="Remove" aria-label="Remove" className={iconBtn + ' hover:!bg-[#FEF2F2] hover:!text-[#DC2626]'} onClick={remove}><Trash2 size={15} /></button>}
+    </div>
+  );
+  const fieldSettingsNeo = (f: FormField) => {
+    const used = rulesUsing?.(f.id) ?? 0;
+    const view = f.requesterView !== false;
+    const edit = view && f.requesterEdit !== false;
+    const isLabel = f.kind === 'label';
+    return (
+      <div className="flex flex-col gap-4">
+        {settingsHead(f, kindLabel(f.kind), () => removeField(f.id))}
+        <div><Lbl htmlFor="nf-l">{isLabel ? 'Heading' : 'Name'}</Lbl><input id="nf-l" className={inputCls + ' !rounded'} value={f.label} onChange={(e) => patch(f.id, { label: e.target.value })} /></div>
+        {isLabel && <div><Lbl htmlFor="nf-tx">Text shown on the form</Lbl><textarea id="nf-tx" rows={3} className={inputCls + ' !h-auto !rounded py-2'} value={f.helpText ?? ''} onChange={(e) => patch(f.id, { helpText: e.target.value })} /></div>}
+        {TEXTUAL.includes(f.kind) && f.kind !== 'user' && <div><Lbl htmlFor="nf-h">Hint text</Lbl><input id="nf-h" className={inputCls + ' !rounded'} value={f.placeholder ?? ''} placeholder="Shown inside the empty field" onChange={(e) => patch(f.id, { placeholder: e.target.value })} /></div>}
+        {!isLabel && <div><Lbl htmlFor="nf-ds">Description</Lbl><input id="nf-ds" className={inputCls + ' !rounded'} value={f.helpText ?? ''} placeholder="Shown under the field" onChange={(e) => patch(f.id, { helpText: e.target.value })} /></div>}
+        {WITH_OPTIONS.includes(f.kind) && (
+          <div><Lbl htmlFor="nf-o">Options, one per line</Lbl>
+            <textarea id="nf-o" rows={5} spellCheck={false} className="w-full rounded border border-[#DFE5ED] px-3 py-2 text-[13px] leading-[1.55] text-[#364658] focus:border-[#3D8BD0] focus:outline-none" value={(f.options ?? []).join('\n')} onChange={(e) => patch(f.id, { options: e.target.value.split('\n') })} onBlur={() => patch(f.id, { options: (f.options ?? []).map((o) => o.trim()).filter(Boolean) })} /></div>
+        )}
+        {f.kind === 'dependent' && (
+          <div><Lbl htmlFor="nf-d">Levels, press Tab for a child line</Lbl>
+            <textarea id="nf-d" rows={6} spellCheck={false} className="w-full rounded border border-[#DFE5ED] px-3 py-2 text-[13px] leading-[1.55] text-[#364658] [tab-size:3] focus:border-[#3D8BD0] focus:outline-none" defaultValue={treeText(f.optionTree ?? [])} key={f.id}
+              onKeyDown={(e) => { if (e.key !== 'Tab') return; e.preventDefault(); const el = e.currentTarget; const c = el.selectionStart; const ls = el.value.lastIndexOf('\n', c - 1) + 1; el.value = e.shiftKey ? (el.value[ls] === '\t' ? el.value.slice(0, ls) + el.value.slice(ls + 1) : el.value) : el.value.slice(0, ls) + '\t' + el.value.slice(ls); el.selectionStart = el.selectionEnd = c + (e.shiftKey ? -1 : 1); }}
+              onBlur={(e) => { const t = parseTree(e.target.value); patch(f.id, { optionTree: t, options: t.map((x) => x.label) }); }} /></div>
+        )}
+        {(f.kind === 'api' || f.kind === 'dynamic') && <p className="text-[12px] leading-[1.5] text-[#7B8FA5]">{f.kind === 'api' ? 'The list is filled from an API. The API is set up in the product.' : 'The list is filled by a script. The script is set up in the product.'}</p>}
+        {!isLabel && <>
+          <GroupTitle>Requester</GroupTitle>
+          <SwitchRow label="Can view" on={view} onChange={(v) => patch(f.id, reqModePatch(v ? 'optional' : 'hidden'))} />
+          {view && <SwitchRow label="Can edit" on={edit} onChange={(v) => patch(f.id, reqModePatch(v ? 'optional' : 'readonly'))} />}
+          {edit && <SwitchRow label="Required" on={!!f.requesterRequired} onChange={(v) => patch(f.id, reqModePatch(v ? 'required' : 'optional'))} />}
+          <GroupTitle>Technician</GroupTitle>
+          <SwitchRow label="Required" on={!!f.required} onChange={(v) => patch(f.id, { required: v })} />
+        </>}
+        <GroupTitle>Layout</GroupTitle>
+        <SwitchRow label="Use the full row" on={f.width === 'full'} onChange={(v) => patch(f.id, { width: v ? 'full' : 'half' })} />
+        {!isLabel && <SwitchRow label="AI can read this field" on={f.aiAccessible !== false} onChange={(v) => patch(f.id, { aiAccessible: v })} />}
+        {used > 0 && <p className="text-[12px] text-[#7B8FA5]">Used in {used} form rule{used === 1 ? '' : 's'}.</p>}
+      </div>
+    );
+  };
+  const sectionSettingsNeo = (s: FormField) => {
+    const gi = groups.findIndex((g) => g.sec?.id === s.id);
+    const choices = values.filter((f) => CHOICE.includes(f.kind) && !groups[gi]?.items.some((x) => x.id === f.id));
+    const src = s.showWhen && fields.find((f) => f.id === s.showWhen!.fieldId);
+    return (
+      <div className="flex flex-col gap-4">
+        {settingsHead(s, 'Section', () => removeSection(s.id))}
+        <div><Lbl htmlFor="ns-t">Title</Lbl><input id="ns-t" className={inputCls + ' !rounded'} value={s.label} onChange={(e) => patch(s.id, { label: e.target.value })} /></div>
+        <div><Lbl htmlFor="ns-d">Description</Lbl><input id="ns-d" className={inputCls + ' !rounded'} value={s.helpText ?? ''} placeholder="Shown under the title" onChange={(e) => patch(s.id, { helpText: e.target.value })} /></div>
+        <div><Lbl>Columns</Lbl><RuleSelect className="!rounded" value={[String(s.cols ?? 2)]} options={[{ value: '1', label: '1 column' }, { value: '2', label: '2 columns' }, { value: '3', label: '3 columns' }]} onChange={(v) => v[0] && patch(s.id, { cols: Number(v[0]) as 1 | 2 | 3 })} /></div>
+        <GroupTitle>Visibility</GroupTitle>
+        <SwitchRow label="Technicians only" hint="Requesters do not see this section." on={!!s.techOnly} onChange={(v) => patch(s.id, { techOnly: v })} />
+        <SwitchRow label="Show only on a condition" hint={choices.length ? undefined : 'Needs a dropdown, radio or checkbox in another section.'} on={!!s.showWhen} onChange={(v) => { if (!v) patch(s.id, { showWhen: undefined }); else if (choices.length) patch(s.id, { showWhen: { fieldId: choices[0].id, value: '' } }); }} />
+        {s.showWhen && (
+          <div className="flex flex-col gap-2">
+            <div><Lbl>When this field</Lbl><RuleSelect className="!rounded" value={[s.showWhen.fieldId]} options={choices.map((f) => ({ value: f.id, label: f.label }))} onChange={(v) => v[0] && patch(s.id, { showWhen: { fieldId: v[0], value: '' } })} /></div>
+            <div><Lbl>Is</Lbl><RuleSelect className="!rounded" value={s.showWhen.value ? [s.showWhen.value] : []} placeholder="Choose a value" options={(src ? (src.kind === 'checkbox' ? ['Checked'] : optionsOf(src)) : []).map((o) => ({ value: o, label: o }))} onChange={(v) => patch(s.id, { showWhen: { ...s.showWhen!, value: v[0] ?? '' } })} /></div>
+          </div>
+        )}
+      </div>
+    );
+  };
+  const neoUi = ui === 'v2';
+  const settings = selected?.kind === 'section' ? (neoUi ? sectionSettingsNeo(selected) : sectionSettings(selected)) : selected ? (neoUi ? fieldSettingsNeo(selected) : fieldSettings(selected)) : formSettings;
 
   /* ── canvas ── */
   const sectionHead = (g: Group, v2: boolean) => g.sec ? (
@@ -414,11 +535,9 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing }: FormSt
             {v2 && <GripVertical size={14} className="-ml-1 flex-shrink-0 cursor-grab text-[#CBD5E1] group-hover:text-[#94A3B8]" />}
             <span className="min-w-0 truncate text-[13px] font-medium text-[#1D2A3E]">{f.label}</span>
             {f.kind !== 'label' && reqModeOf(f) === 'required' && <span className="text-[#F25C4E]">*</span>}
-            {f.system && <Lock size={11} className="flex-shrink-0 text-[#94A3B8]" aria-label="System field" />}
-            <span className="ml-auto flex-shrink-0 text-[11.5px] text-[#94A3B8]">{v2 ? kindLabel(f.kind) : roleWords(f)}</span>
+            {v2 && <span className="ml-auto flex-shrink-0 text-[11.5px] text-[#94A3B8]">{kindLabel(f.kind)}</span>}
           </span>
           <FieldFace f={f} />
-          {!v2 && <span className="text-[11px] text-[#94A3B8]">{kindLabel(f.kind)}</span>}
         </button>
       </div>
     );
@@ -485,6 +604,115 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing }: FormSt
     );
   };
 
+  /* V3 — the form reads as the real form: label over its control, no card per field. The selected
+     field is lit and every other field dims, so the eye stays on what the panel is editing. */
+  const focusing = sel.kind === 'field';
+  const fieldV3 = (f: FormField, cols: number) => {
+    const i = fields.findIndex((x) => x.id === f.id);
+    const on = sel.kind === 'field' && sel.id === f.id;
+    return (
+      <div key={f.id} style={{ gridColumn: `span ${f.width === 'full' ? cols : 1}` }} className="relative min-w-0"
+        onDragOver={(e) => { const r = e.currentTarget.getBoundingClientRect(); dragOver(e.clientY < r.top + r.height / 2 ? i : i + 1)(e); }}
+        onDrop={(e) => dropTo(dropAt ?? i, e)}>
+        {dropAt === i && <span className="absolute -top-[3px] left-2 right-2 z-10 h-[3px] rounded-full bg-[#3D8BD0]" />}
+        {dropAt === i + 1 && <span className="absolute -bottom-[3px] left-2 right-2 z-10 h-[3px] rounded-full bg-[#3D8BD0]" />}
+        <button type="button" data-pick data-field={f.id} aria-pressed={on} onClick={() => select(on ? { kind: 'form' } : { kind: 'field', id: f.id })} draggable
+          onDragStart={(e) => { e.dataTransfer.setData('text/form-field', f.id); e.dataTransfer.effectAllowed = 'move'; }} onDragEnd={() => setDropAt(null)}
+          className={'group/f flex w-full flex-col gap-1.5 rounded-lg border px-3 py-2.5 text-left transition-all duration-150 '
+            + (on ? 'border-[#3D8BD0] bg-white shadow-[0_0_0_3px_#EBF5FF]' : 'border-transparent hover:border-[#DFE5ED] hover:bg-[#FAFBFC]')
+            + (focusing && !on ? ' opacity-40 hover:opacity-100' : '')}>
+          <span className="flex h-[18px] items-center gap-1.5">
+            <span className={'min-w-0 truncate text-[12px] ' + (on ? 'font-medium text-[#1D2A3E]' : 'text-[#64748B]')}>{f.label}</span>
+            {f.kind !== 'label' && (f.required || reqModeOf(f) === 'required') && <span className="text-[12px] text-[#F25C4E]">*</span>}
+            <GripVertical size={14} className={'ml-auto flex-shrink-0 cursor-grab text-[#94A3B8] transition-opacity ' + (on ? 'opacity-100' : 'opacity-0 group-hover/f:opacity-100')} />
+          </span>
+          <FieldFace f={f} />
+        </button>
+      </div>
+    );
+  };
+  const canvasV3 = (g: Group) => {
+    const cols = colsOf(g);
+    const on = sel.kind === 'section' && g.sec && sel.id === g.sec.id;
+    return (
+      <section key={g.sec?.id ?? 'lead'} data-sec={g.sec?.id} className="flex flex-col gap-1">
+        {g.sec && (() => {
+          const gi = groups.findIndex((x) => x.sec?.id === g.sec!.id);
+          return (
+            <div data-pick className={'group/sec flex items-center gap-1 rounded-lg border pr-1.5 transition-all duration-150 '
+              + (on ? 'border-[#3D8BD0] bg-white shadow-[0_0_0_3px_#EBF5FF]' : 'border-transparent hover:border-[#DFE5ED] hover:bg-[#FAFBFC]') + (focusing ? ' opacity-40 hover:opacity-100' : '')}>
+              <button type="button" aria-pressed={!!on} onClick={() => select(on ? { kind: 'form' } : { kind: 'section', id: g.sec!.id })} className="flex min-w-0 flex-1 items-center gap-2 py-1.5 pl-3 text-left">
+                <span className="truncate text-[14px] font-semibold text-[#1D2A3E]">{g.sec.label}</span>
+                {g.sec.techOnly && <Chip tone="amber">Technicians only</Chip>}
+                {g.sec.showWhen && <Chip tone="blue">Shown when {fields.find((x) => x.id === g.sec!.showWhen!.fieldId)?.label ?? '…'} is {g.sec.showWhen.value || '…'}</Chip>}
+                <span className="h-px min-w-4 flex-1 bg-[#EEF2F6]" />
+              </button>
+              <span className={'flex items-center transition-opacity ' + (on ? 'opacity-100' : 'opacity-0 group-hover/sec:opacity-100 group-focus-within/sec:opacity-100')}>
+                <button type="button" title="Move section up" aria-label="Move section up" className={iconBtn} disabled={gi <= 0 || !groups[gi - 1]?.sec} onClick={() => moveSection(g.sec!.id, -1)}><ArrowUp size={14} /></button>
+                <button type="button" title="Move section down" aria-label="Move section down" className={iconBtn} disabled={gi >= groups.length - 1} onClick={() => moveSection(g.sec!.id, 1)}><ArrowDown size={14} /></button>
+                <button type="button" title="Section settings" aria-label="Section settings" className={iconBtn} onClick={() => select({ kind: 'section', id: g.sec!.id })}><Pencil size={14} /></button>
+                <button type="button" title="Remove section, keep its fields" aria-label="Remove section" className={iconBtn + ' hover:!bg-[#FEF2F2] hover:!text-[#DC2626]'} onClick={() => removeSection(g.sec!.id)}><Trash2 size={14} /></button>
+              </span>
+            </div>
+          );
+        })()}
+        {g.sec?.helpText && <p className={'px-3 text-[12px] text-[#7B8FA5] ' + (focusing ? 'opacity-40' : '')}>{g.sec.helpText}</p>}
+        {g.items.length > 0
+          ? <div className="grid gap-x-2 gap-y-1" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>{g.items.map((f) => fieldV3(f, cols))}</div>
+          : (
+            <div onDragOver={dragOver(g.end)} onDragLeave={() => setDropAt(null)} onDrop={(e) => dropTo(g.end, e)}
+              className={'mx-3 mt-1 flex h-14 items-center justify-center rounded-lg border border-dashed text-[12.5px] transition-colors ' + (dropAt === g.end ? 'border-[#3D8BD0] bg-[#EBF5FF] text-[#2F6FAE]' : 'border-[#CBD5E1] text-[#94A3B8]')}>
+              Drag a field here, or pick one from Custom fields
+            </div>
+          )}
+      </section>
+    );
+  };
+  /** Where a clicked palette field lands: after the selected field, else the end of the selected (or last) section. */
+  const addFromPalette = (k: FieldKind) => {
+    if (sel.kind === 'field') { const i = fields.findIndex((f) => f.id === sel.id); if (i >= 0) return addAt(i + 1, k); }
+    const g = (sel.kind === 'section' && groups.find((x) => x.sec?.id === sel.id)) || groups[groups.length - 1];
+    addAt(g ? g.end : 0, k);
+  };
+  const paletteV3 = () => {
+    const needle = pq.trim().toLowerCase();
+    const shown = PALETTE_GROUPS.map((grp) => ({ ...grp, kinds: grp.kinds.filter((k) => !needle || (kindLabel(k) + ' ' + typeHelp(k).desc).toLowerCase().includes(needle)) })).filter((grp) => grp.kinds.length);
+    return (
+      <div className="flex min-h-0 flex-1 flex-col">
+        <div className="relative flex-shrink-0 px-3 pt-3">
+          <Search size={14} className="pointer-events-none absolute left-[22px] top-[calc(50%+6px)] -translate-y-1/2 text-[#94A3B8]" />
+          <input value={pq} onChange={(e) => setPq(e.target.value)} placeholder="Search fields" aria-label="Search custom fields" className={inputCls + ' !rounded pl-8'} />
+          {pq && <button type="button" aria-label="Clear search" onClick={() => setPq('')} className="absolute right-[18px] top-[calc(50%+6px)] grid size-6 -translate-y-1/2 place-items-center rounded text-[#94A3B8] hover:bg-[#F1F5F9]"><X size={13} /></button>}
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
+          {shown.map((grp) => (
+            <div key={grp.title}>
+              <div className="px-1 pb-1.5 pt-4 text-[11px] font-semibold uppercase tracking-wider text-[#7B8FA5]">{grp.title}</div>
+              <div className="flex flex-col gap-0.5">
+                {grp.kinds.map((k) => (
+                  <Tooltip key={k}>
+                    <TooltipTrigger asChild>
+                      <button type="button" draggable onDragStart={(e) => { e.dataTransfer.setData('text/form-kind', k); e.dataTransfer.effectAllowed = 'copy'; }} onDragEnd={() => setDropAt(null)}
+                        onClick={() => addFromPalette(k)}
+                        className="group/p flex h-10 w-full cursor-grab items-center gap-2.5 rounded-lg border border-transparent px-2 text-left transition-colors hover:border-[#DFE5ED] hover:bg-[#F8FAFC] active:cursor-grabbing">
+                        <span className="grid size-7 flex-shrink-0 place-items-center rounded-md bg-[#F1F5F9] text-[#475569] transition-colors group-hover/p:bg-[#EBF5FF] group-hover/p:text-[#3D8BD0]">{KIND_ICON[k]}</span>
+                        <span className="min-w-0 flex-1 truncate text-[13px] text-[#1D2A3E]">{kindLabel(k)}</span>
+                        <span className="grid size-6 flex-shrink-0 place-items-center rounded bg-[#F1F5F9] text-[#3D8BD0] opacity-0 transition-opacity group-hover/p:opacity-100"><Plus size={14} /></span>
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="left" className="text-wrap">{typeHelp(k).desc}</TooltipContent>
+                  </Tooltip>
+                ))}
+              </div>
+            </div>
+          ))}
+          {!shown.length && <p className="px-1 py-6 text-center text-[12.5px] text-[#7B8FA5]">No field matches “{pq}”.</p>}
+        </div>
+        <p className="flex-shrink-0 border-t border-[#EEF2F6] px-4 py-2.5 text-[11.5px] leading-[1.45] text-[#94A3B8]">Drag a field onto the form, or click it to add it {sel.kind === 'field' ? 'after the selected field' : 'to the last section'}.</p>
+      </div>
+    );
+  };
+
   const empty = (
     <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-[#CBD5E1] bg-white px-6 py-12 text-center">
       <div className="text-[14px] font-semibold text-[#1D2A3E]">This form has no fields yet</div>
@@ -511,7 +739,7 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing }: FormSt
     switch (f.kind) {
       case 'label': return null;
       case 'textarea': case 'richtext': return <textarea disabled={ro} rows={3} placeholder={f.placeholder} className={inputCls + ' !h-auto !rounded py-2'} />;
-      case 'dropdown': case 'multiselect': case 'user': case 'dependent': {
+      case 'dropdown': case 'multiselect': case 'user': case 'dependent': case 'api': case 'dynamic': {
         const o = f.kind === 'user' ? PEOPLE.map((p) => p.name) : optionsOf(f);
         return <RuleSelect className="!rounded" disabled={ro} multi={f.kind === 'multiselect'} value={val ? [val] : []} options={o.map((x) => ({ value: x, label: x }))} onChange={(v) => set(v[0] ?? '')} />;
       }
@@ -519,7 +747,7 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing }: FormSt
       case 'checkbox': return <label className="flex items-center gap-2 text-[12.5px] text-[#364658]"><input type="checkbox" disabled={ro} checked={val === 'Checked'} onChange={(e) => set(e.target.checked ? 'Checked' : '')} />{f.placeholder || 'Yes'}</label>;
       case 'attachment': return <div className="flex h-9 items-center justify-center rounded border border-dashed border-[#CBD5E1] text-[12px] text-[#94A3B8]">Drop files here or browse</div>;
       case 'date': return <input type="datetime-local" disabled={ro} className={inputCls + ' !rounded'} />;
-      case 'number': return <input type="number" disabled={ro} placeholder={f.placeholder} className={inputCls + ' !rounded'} />;
+      case 'number': case 'currency': return <input type="number" disabled={ro} placeholder={f.placeholder} className={inputCls + ' !rounded'} />;
       default: return <input disabled={ro} placeholder={f.placeholder} className={inputCls + ' !rounded'} />;
     }
   };
@@ -567,28 +795,70 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing }: FormSt
   );
 
   /* ── page ── */
-  const v2 = ui === 'v2';
+  const v2 = ui === 'v4';
+  const v3 = ui === 'v2';
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex flex-shrink-0 items-center gap-3 border-b border-[#EEF2F6] px-4 py-2.5">
-        {dirty ? <Chip tone="amber">Draft · changes not published</Chip> : <Chip>Published · v{published.version}</Chip>}
-        <div className="ml-auto flex items-center gap-2">
-          {mode === 'preview' && (
-            <div className="pill-track" role="group" aria-label="See it as">
-              <button type="button" aria-pressed={isReq} onClick={() => { setRole('req'); setAnswers({}); }}>Requester</button>
-              <button type="button" aria-pressed={!isReq} onClick={() => { setRole('tech'); setAnswers({}); }}>Technician</button>
+      {(() => {
+        const controls = (
+          <>
+            {dirty ? <Chip tone="amber">Draft · changes not published</Chip> : <Chip>Published · v{published.version}</Chip>}
+            <div className="ml-auto flex items-center gap-2">
+              {mode === 'preview' && (
+                <div className="pill-track" role="group" aria-label="See it as">
+                  <button type="button" aria-pressed={isReq} onClick={() => { setRole('req'); setAnswers({}); }}>Requester</button>
+                  <button type="button" aria-pressed={!isReq} onClick={() => { setRole('tech'); setAnswers({}); }}>Technician</button>
+                </div>
+              )}
+              <div className="pill-track" role="group" aria-label="Mode">
+                <button type="button" aria-pressed={mode === 'build'} onClick={() => setMode('build')}>{v2 ? 'Edit' : 'Build'}</button>
+                <button type="button" aria-pressed={mode === 'preview'} onClick={() => { setMode('preview'); setAnswers({}); setMenu(null); }}>Preview</button>
+              </div>
+              <button type="button" className={btn2} onClick={() => toast.success('Draft saved')}>Save draft</button>
+              <button type="button" className={btn1} onClick={() => setPublishOpen(true)}>Publish</button>
             </div>
-          )}
-          <div className="pill-track" role="group" aria-label="Mode">
-            <button type="button" aria-pressed={mode === 'build'} onClick={() => setMode('build')}>{v2 ? 'Edit' : 'Build'}</button>
-            <button type="button" aria-pressed={mode === 'preview'} onClick={() => { setMode('preview'); setAnswers({}); setMenu(null); }}>Preview</button>
-          </div>
-          <button type="button" className={btn2} onClick={() => toast.success('Draft saved')}>Save draft</button>
-          <button type="button" className={btn1} onClick={() => setPublishOpen(true)}>Publish</button>
-        </div>
-      </div>
+          </>
+        );
+        /* The new builder hands its controls to the page heading; the others keep their own bar. */
+        if (v3 && toolbarSlot) return createPortal(<div className="flex items-center gap-3">{controls}</div>, toolbarSlot);
+        return <div className="flex flex-shrink-0 items-center gap-3 border-b border-[#EEF2F6] px-4 py-2.5">{controls}</div>;
+      })()}
 
-      {mode === 'preview' ? preview : (
+      {mode === 'preview' ? preview : v3 ? (
+        <div className="flex min-h-0 flex-1">
+          <div className="min-h-0 min-w-0 flex-1 overflow-y-auto bg-white" onClick={(e) => { if (!(e.target as HTMLElement).closest('[data-pick]')) select({ kind: 'form' }); }}>
+            {/* 4px + a field's own 12px = the page heading's 16px edge. */}
+            <div className="max-w-[1040px] py-3 pl-1 pr-4">
+              {groups.length ? (
+                <div className="flex flex-col gap-4">
+                  {groups.map((g) => canvasV3(g))}
+                  <button type="button" data-pick onClick={addSection} className={'mx-3 rounded-lg border border-dashed border-[#CBD5E1] py-2 text-[12.5px] font-medium text-[#3D8BD0] transition-all hover:border-[#3D8BD0] hover:bg-[#F8FBFF] ' + (focusing ? 'opacity-40 hover:opacity-100' : '')}>+ Add a section</button>
+                </div>
+              ) : empty}
+            </div>
+          </div>
+          <aside className="flex w-[320px] flex-shrink-0 flex-col border-l border-[#DFE5ED] bg-white">
+            <div className="flex-shrink-0 border-b border-[#EEF2F6] p-3">
+              <div className="pill-track w-full" role="group" aria-label="Panel">
+                <button type="button" aria-pressed={tab === 'fields'} onClick={() => setTab('fields')}>Custom fields</button>
+                <button type="button" aria-pressed={tab !== 'fields'} onClick={() => setTab('settings')}>Field settings</button>
+              </div>
+            </div>
+            {tab === 'fields' ? paletteV3() : (
+              <div className="min-h-0 flex-1 overflow-y-auto p-4">
+                {sel.kind === 'form' ? (
+                  <div className="flex flex-col items-center gap-2 px-2 py-12 text-center">
+                    <span className="grid size-10 place-items-center rounded-full bg-[#F1F5F9] text-[#64748B]"><MousePointerClick size={18} /></span>
+                    <p className="text-[13px] font-medium text-[#1D2A3E]">No field selected</p>
+                    <p className="text-[12px] leading-[1.5] text-[#7B8FA5]">Click a field on the form to see and change its settings here.</p>
+                    <button type="button" onClick={() => setTab('fields')} className="mt-1 text-[12px] font-medium text-[#3D8BD0] hover:underline">Browse custom fields</button>
+                  </div>
+                ) : settings}
+              </div>
+            )}
+          </aside>
+        </div>
+      ) : (
         <div className="flex min-h-0 flex-1">
           <div className="min-h-0 min-w-0 flex-1 overflow-y-auto bg-[#F7F9FC]" onClick={(e) => { if (e.target === e.currentTarget) select({ kind: 'form' }); }}>
             <div className="mx-auto flex max-w-[860px] flex-col gap-4 p-6" onClick={(e) => { if (e.target === e.currentTarget) select({ kind: 'form' }); }}>

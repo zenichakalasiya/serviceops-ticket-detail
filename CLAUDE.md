@@ -3204,3 +3204,23 @@ and ask before building any new one.
     - A rule's result shows Result · Previous Result · Previous Scan Date, and the endpoint is the link.
   - **`HeaderKpiRow wrap`** wraps instead of "+N", used by `RuleFactsRow`.
   - **`StatCard.body/wide`** and **`StatsCardsRow wrap`** exist but are currently unused.
+
+## Form builder versions (16 Nov 2026, Zeni)
+The **Builder** pill beside the logo (every admin form page; `formStudioUi.ts`, localStorage `formBuilderUi`, opens on V2):
+- **V1** = the OLD product builder (as on the .185 server): palette on the left, form on the right, hover toolbar,
+  Edit side panel. It is `AdminFormBuilder` (now takes `title`; `rules` and the rule callbacks are optional),
+  rendered by `AdminRequestFormModule` and `AdminFormModule` when the pill is V1.
+- **V2** = the NEW design, in `FormStudio.tsx` (code names `fieldV3` / `canvasV3` / `paletteV3`, flags `v3` / `neoUi`):
+  plain sections with no boxes on a white page, left-aligned with the page heading; a field shows its name and a
+  red star when required (technician or requester) and nothing else; section actions (up, down, settings, remove)
+  show on hover of the section heading. Right panel 320px with the **Custom fields | Field settings** switch;
+  settings are a plain list (`fieldSettingsNeo` / `sectionSettingsNeo`: inputs + `SwitchRow` switches, no tags,
+  no help card, no pill tabs inside). Requester = Can view / Can edit / Required switches (written through
+  `reqModePatch`). Build / Preview / Save draft / Publish are PORTALLED into the page heading's right side
+  (`toolbarSlot` prop; both modules render the slot div).
+- **V3** = the "+" builder (was V1), **V4** = the Jira-style drag builder (was V2). Their field cards no longer
+  show Optional / Required words, the lock or the type line.
+- New field kinds `url`, `currency`, `api`, `dynamic` (formRuleData: `FieldKind`, `FIELD_KINDS`, `PALETTE_GROUPS`
+  = the .185 groups, `operatorsFor`; `TYPE_HELP` + `ADDABLE_KINDS` in formStudioData). API / Dynamic have no
+  configuration screen yet.
+- Not done: V1 was not re-compared against .185 screen by screen; dragging in V2 is not browser-tested.

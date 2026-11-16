@@ -15,6 +15,7 @@ import { conflictCount } from './formRuleEngine';
 import { AdminFormRuleMatrix } from './AdminFormRuleMatrix';
 import { FormRuleIllustrations } from './FormRuleIllustrations';
 import { useFormRuleRelease } from './formRuleRelease';
+import { useFormStudioUi } from './formStudioUi';
 
 /** The illustrations page lives at #/admin/request-form-rules/illustrations (Zeni, 19 Oct 2026). */
 const ILLUS_HASH = '#/admin/request-form-rules/illustrations';
@@ -109,6 +110,9 @@ export function AdminRequestFormModule({ tab, onTab, onEditor, openRuleId }: {
      rule editor and the matrix only ever see fields.filter(holdsValue). */
   const [fields, setFields] = useState<FormField[]>(() => DEFAULT_FORM_FIELDS.flatMap((f) => [...REQUEST_SECTIONS.filter((x) => x.before === f.id).map((x) => x.field), f]));
   const [rules, setRules] = useState<FormRule[]>(SEED_RULES);
+  const builderUi = useFormStudioUi();
+  /** Builder V2 puts its Build / Preview / Save draft / Publish here, beside the page heading. */
+  const [toolbarSlot, setToolbarSlot] = useState<HTMLDivElement | null>(null);
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState<Filters>(NO_FILTERS);
   const [filterOpen, setFilterOpen] = useState(false);
@@ -241,7 +245,8 @@ export function AdminRequestFormModule({ tab, onTab, onEditor, openRuleId }: {
 
   return (
     <div className="px-4 py-6">
-      <div className="mb-4">
+      <div className="mb-4 flex items-start gap-4">
+        <div className="min-w-0 flex-1">
         <h1 className="text-[16px] font-semibold text-[#364658]">Request Form Management</h1>
         <p className="mt-1 text-[13px] leading-[1.6] text-[#7B8FA5]">
           Build the request form and the rule-based flows that route and act on requests.{' '}
@@ -249,6 +254,8 @@ export function AdminRequestFormModule({ tab, onTab, onEditor, openRuleId }: {
             View setup guide <ExternalLink size={12} />
           </button>
         </p>
+        </div>
+        <div ref={setToolbarSlot} className="flex-shrink-0" />
       </div>
 
       {/* The product's inline tab strip — the one every detail page uses. */}
@@ -271,9 +278,14 @@ export function AdminRequestFormModule({ tab, onTab, onEditor, openRuleId }: {
       {view === 'matrix' ? (
         <AdminFormRuleMatrix rules={rules} fields={fields.filter(holdsValue)} onEditRule={(id) => setEditing(id)} />
       ) : tab === 'builder' ? (
-        /* The new builder (Form Studio). The previous AdminFormBuilder stays built, unused. */
-        <div className="-mx-4 -mb-6 h-[calc(100vh-56px-178px)] min-h-[520px] border-t border-[#EEF2F6]">
-          <FormStudio title="Request Form" noun="request" fields={fields} onFields={setFields}
+        /* Builder V1 = the old product builder (AdminFormBuilder); V2–V4 are Form Studio. */
+        builderUi === 'v1' ? (
+          <AdminFormBuilder fields={fields} onFields={setFields} rules={rules}
+            onCreateRule={(id) => { setPrefill(id); setEditing('new'); }}
+            onReuseRule={(ruleId, id) => { setPrefill(id); setStartStep(1); setEditing(ruleId); }} />
+        ) :
+        <div className={'-mx-4 -mb-6 min-h-[520px] ' + (builderUi === 'v2' ? '-mt-4 h-[calc(100vh-56px-136px)]' : 'h-[calc(100vh-56px-178px)] border-t border-[#EEF2F6]')}>
+          <FormStudio title="Request Form" noun="request" fields={fields} onFields={setFields} toolbarSlot={toolbarSlot}
             rulesUsing={(id) => rules.filter((r) => r.groups.some((g) => g.conditions.some((c) => c.fieldId === id)) || r.actions.some((a) => a.fieldIds.includes(id))).length} />
         </div>
       ) : (

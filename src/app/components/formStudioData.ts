@@ -214,13 +214,17 @@ export const TYPE_HELP: TypeHelp[] = [
   { kind: 'radio', desc: 'Pick one, every option visible', what: 'The person picks one value, with every option shown at once.', how: 'Use it for two to five short options people should compare; more than that, use a Dropdown.', example: 'Working from · Office / Home' },
   { kind: 'attachment', desc: 'Files the person uploads', what: 'One or more files attached to the record.', how: 'Say in the hint what to attach (a screenshot, the error). Keep it optional unless a document is the request itself.', example: 'Screenshot · optional' },
   { kind: 'dependent', desc: 'Pick through levels — Hardware › Laptop', what: 'A list with levels: the second choice depends on the first, like Hardware › Laptop › Battery.', how: 'Type the levels with Tab for a child line. Requesters usually have to pick the most specific level so routing works.', example: 'Category · Hardware ⇥ Laptop · Software ⇥ License' },
+  { kind: 'url', desc: 'A web link', what: 'A web address people can click.', how: 'Say in the name what the link points to, and show an example in the hint text.', example: 'Vendor page · hint "https://…"' },
+  { kind: 'currency', desc: 'An amount of money', what: 'A number shown as money.', how: 'Name it for what is being paid for. Say the currency in the name if more than one is used.', example: 'Estimated cost (INR)' },
+  { kind: 'api', desc: 'A list filled from an API', what: 'A dropdown whose options come from an outside system through an API.', how: 'Use it when the list lives in another system and changes often, such as cost centres.', example: 'Cost centre · from the finance system' },
+  { kind: 'dynamic', desc: 'A list filled by a script', what: 'A dropdown whose options are worked out by a script when the form opens.', how: 'Use it when the list depends on who is filling the form or on other answers.', example: 'My devices · the requester’s own assets' },
   { kind: 'label', desc: 'Text on the form, no answer', what: 'A line of text shown on the form — an instruction or a note. It holds no answer.', how: 'Use it sparingly, for a rule people must know before they fill the fields under it.', example: '"Laptops are replaced every 3 years."' },
   { kind: 'user', desc: 'A person from the directory', what: 'A person picked from the user directory.', how: 'The product provides these fields (Requester, Assignee). Choose who may see and change them.', example: 'Assignee' },
   { kind: 'section', desc: 'A heading that groups fields', what: 'A heading that groups the fields under it.', how: 'Group fields that belong to one answer so one condition can show or hide them together.', example: 'Hardware details · shown when Category is Hardware' },
 ];
 export const typeHelp = (k: FieldKind) => TYPE_HELP.find((t) => t.kind === k) ?? TYPE_HELP[0];
 /** What the add menu offers: every type an admin can place. People fields are the product's own. */
-export const ADDABLE_KINDS: FieldKind[] = ['text', 'textarea', 'richtext', 'dropdown', 'multiselect', 'radio', 'checkbox', 'date', 'number', 'attachment', 'dependent', 'label'];
+export const ADDABLE_KINDS: FieldKind[] = ['text', 'textarea', 'richtext', 'dropdown', 'multiselect', 'radio', 'checkbox', 'date', 'number', 'attachment', 'url', 'currency', 'dependent', 'api', 'dynamic', 'label'];
 
 /** The guide — how to build a custom form. Shown when nothing is selected (V1) and in the Guide tab (V2). */
 export const BUILD_GUIDE: { title: string; text: string }[] = [

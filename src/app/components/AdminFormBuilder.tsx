@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import {
-  AlignLeft, Calendar, CheckSquare, ChevronDown, CircleDot, Copy, Grip, Hash, Heading, ListChecks, Menu, Move,
-  Network, Paperclip, PenLine, Pencil, Settings, SquareDashed, Type, User, X,
+  AlignLeft, Banknote, Calendar, CheckSquare, ChevronDown, CircleDot, Copy, Globe, Grip, Hash, Heading, ListChecks, Menu, Move,
+  Network, Paperclip, PenLine, Pencil, Plug, Settings, SquareDashed, SquareTerminal, Type, User, X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
@@ -29,6 +29,7 @@ const KIND_ICON: Record<FieldKind, React.ReactNode> = {
   number: <Hash size={14} />, checkbox: <CheckSquare size={14} />, radio: <CircleDot size={14} />,
   attachment: <Paperclip size={14} />, section: <SquareDashed size={14} />, label: <Heading size={14} />,
   dependent: <Network size={14} />, user: <User size={14} />,
+  url: <Globe size={14} />, currency: <Banknote size={14} />, api: <Plug size={14} />, dynamic: <SquareTerminal size={14} />,
 };
 
 const newField = (kind: FieldKind, taken: FormField[]): FormField => {
@@ -62,13 +63,14 @@ function FieldPreview({ f }: { f: FormField }) {
       </div>
     );
     case 'attachment': return <div className="flex h-9 items-center justify-center gap-2 rounded border border-dashed border-[#CBD5E1] bg-white text-[12px] text-[#7B8FA5]"><Paperclip size={13} /> Drop files or browse</div>;
-    case 'dropdown': case 'multiselect': case 'user': case 'dependent':
+    case 'dropdown': case 'multiselect': case 'user': case 'dependent': case 'api': case 'dynamic':
       return <div className={`${box} justify-between`}><span className="truncate">{hint}</span><ChevronDown size={14} className="flex-shrink-0 text-[#B0BAC7]" /></div>;
     case 'date': return <div className={`${box} justify-between`}><span>{hint}</span><Calendar size={14} className="text-[#B0BAC7]" /></div>;
     default: return <div className={box}>{hint}</div>;
   }
 }
 
+const NO_RULES: FormRule[] = [];
 const tb = 'flex size-8 items-center justify-center rounded text-[#1D2A3E] transition-colors hover:bg-white hover:text-[#1D2A3E] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent';
 /** The field's toolbar is two light-blue TABS attached to the top of its outline (the product's look). */
 const TAB = 'flex h-10 items-center rounded-t-lg bg-[#EAF2FB] px-1.5';
@@ -86,14 +88,16 @@ function TipBtn({ tip, children, ...p }: React.ButtonHTMLAttributes<HTMLButtonEl
   );
 }
 
-export function AdminFormBuilder({ fields, onFields, rules, onCreateRule, onReuseRule }: {
+export function AdminFormBuilder({ fields, onFields, rules = NO_RULES, onCreateRule, onReuseRule, title = 'Request Form' }: {
   fields: FormField[];
   onFields: (f: FormField[]) => void;
-  rules: FormRule[];
+  rules?: FormRule[];
+  /** The form's name over the canvas. */
+  title?: string;
   /** Open the rule editor on a new rule with this field as a condition. */
-  onCreateRule: (fieldId: string) => void;
+  onCreateRule?: (fieldId: string) => void;
   /** Open an existing rule with this field added as a condition. */
-  onReuseRule: (ruleId: string, fieldId: string) => void;
+  onReuseRule?: (ruleId: string, fieldId: string) => void;
 }) {
   const [dragId, setDragId] = useState<string | null>(null);
   /** Only the Move handle starts a drag — a field you are simply clicking must not lift off. */
@@ -200,7 +204,7 @@ export function AdminFormBuilder({ fields, onFields, rules, onCreateRule, onReus
         onDrop={(e) => onDrop(e, null)}
       >
         <div className="mb-3 flex items-baseline gap-2">
-          <h2 className="text-[15px] font-semibold text-[#1D2A3E]">Request Form</h2>
+          <h2 className="text-[15px] font-semibold text-[#1D2A3E]">{title}</h2>
           <span className="text-[12px] text-[#98A2B3]">{fields.length} fields</span>
         </div>
 
@@ -290,7 +294,7 @@ export function AdminFormBuilder({ fields, onFields, rules, onCreateRule, onReus
 
       {panelField && panel!.kind === 'configure' && (
         <FieldConfigurePanel field={panelField} rules={rules} onClose={() => setPanel(null)}
-          onCreate={() => onCreateRule(panelField.id)} onReuse={(id) => onReuseRule(id, panelField.id)} />
+          onCreate={() => onCreateRule?.(panelField.id)} onReuse={(id) => onReuseRule?.(id, panelField.id)} />
       )}
       {panelField && panel!.kind === 'rules' && (
         <FieldRulesPanel field={panelField} fields={fields} rules={rules} onClose={() => setPanel(null)} />
