@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 import {
-  AlignLeft, ArrowDown, ArrowUp, Banknote, BookOpen, Calendar, CheckSquare, ChevronDown, ChevronUp, CircleDot, GripVertical, Hash, Heading,
+  AlignLeft, ArrowDown, ArrowUp, Banknote, BookOpen, Calendar, Check, ChevronRight, CircleHelp, Columns2, Copy, Download, RectangleHorizontal, Upload, CheckSquare, ChevronDown, ChevronUp, CircleDot, GripVertical, Hash, Heading,
+  Bold, Braces, CloudUpload, Italic, Link as LinkGlyph, List as ListGlyph, RefreshCw, Underline, type LucideIcon,
   Globe, Info, ListChecks, Lock, MousePointerClick, Network, Paperclip, PenLine, Pencil, Plug, Plus, Search, SquareDashed, SquareTerminal, Trash2, Type, User, X,
 } from 'lucide-react';
 import { RuleSelect, ToggleSwitch, inputCls } from './FormRuleControls';
@@ -44,13 +45,45 @@ const KIND_ICON: Record<FieldKind, React.ReactNode> = {
   url: <Globe size={15} />, currency: <Banknote size={15} />, api: <Plug size={15} />, dynamic: <SquareTerminal size={15} />,
 };
 
+/* ── V4's field tiles: one small drawing per field type — the control it adds, as a wireframe. 72 × 44. ── */
+const A = { line: '#A3AFBF', soft: '#D5DCE6', fill: '#F1F5F9', blue: '#3D8BD0', tint: '#DCEBFA' };
+const box = (x: number, y: number, w: number, h: number, extra: React.SVGProps<SVGRectElement> = {}) => <rect x={x} y={y} width={w} height={h} rx={3} fill="#fff" stroke={A.line} strokeWidth={0.9} {...extra} />;
+const bar = (x: number, y: number, w: number, c = A.soft, h = 1.6) => <rect x={x} y={y} width={w} height={h} rx={h / 2} fill={c} />;
+const caret = (x: number, y: number) => <rect x={x} y={y} width={1} height={10} rx={0.5} fill={A.blue} />;
+/** A real lucide glyph nested in the drawing, `s` units square, its stroke held at 1 unit whatever its size. */
+const ic = (C: LucideIcon, x: number, y: number, s: number, color: string = A.line) => <C x={x} y={y} size={s} strokeWidth={1} absoluteStrokeWidth color={color} />;
+/** lucide ChevronDown, centred where the old hand-drawn chevron was (x + 3, y + 1.5). */
+const chev = (x: number, y: number, color: string = A.line) => ic(ChevronDown, x - 2, y - 3.5, 10, color);
+const tick = (x: number, y: number) => <path d={`M${x} ${y}l2 2 3.6-4`} fill="none" stroke={A.blue} strokeWidth={0.9} strokeLinecap="round" strokeLinejoin="round" />;
+const KIND_ART: Record<FieldKind, React.ReactNode> = {
+  text: <>{box(8, 13, 56, 18)}{bar(14, 20.7, 22, A.line)}{caret(39, 17)}</>,
+  textarea: <>{box(8, 6, 56, 32)}{bar(14, 13, 40)}{bar(14, 19, 44)}{bar(14, 25, 28)}<path d="M57 34l4-4M60 34.5l1.5-1.5" stroke={A.line} strokeWidth={0.8} strokeLinecap="round" /></>,
+richtext: <>{box(12, 6, 48, 32)}<path d="M12 16h48" stroke={A.soft} strokeWidth={1} />{ic(Bold, 16, 8, 6, A.blue)}{ic(Italic, 23, 8, 6)}{ic(Underline, 30, 8, 6)}<path d="M38.5 9v4" stroke={A.soft} strokeWidth={1} strokeLinecap="round" />{ic(ListGlyph, 41.5, 8, 6)}{bar(16, 21.2, 36)}{bar(16, 26.2, 40)}{bar(16, 31.2, 24)}</>,
+  dropdown: <>{box(12, 5, 48, 12)}{bar(16, 10.2, 18, A.line)}{chev(50, 9.5)}{box(12, 20, 48, 19, { stroke: A.soft })}<rect x={14} y={22} width={44} height={7} rx={2} fill={A.tint} />{bar(17, 24.7, 18, A.blue)}{ic(Check, 48, 22, 7, A.blue)}{bar(17, 32.2, 24)}</>,
+  multiselect: <>{box(12, 5, 48, 12)}<rect x={15} y={7.5} width={14} height={7} rx={3.5} fill={A.tint} />{bar(17.5, 10.2, 5, A.blue)}{ic(X, 23, 8.5, 5, A.blue)}<rect x={31} y={7.5} width={14} height={7} rx={3.5} fill={A.tint} />{bar(33.5, 10.2, 5, A.blue)}{ic(X, 39, 8.5, 5, A.blue)}{chev(50, 9.5)}{box(12, 20, 48, 19, { stroke: A.soft })}<rect x={16} y={22} width={6} height={6} rx={1.5} fill="#fff" stroke={A.blue} strokeWidth={1} />{ic(Check, 16.75, 22.8, 4.5, A.blue)}{bar(26, 24.2, 20, A.line)}<rect x={16} y={31} width={6} height={6} rx={1.5} fill="#fff" stroke={A.line} strokeWidth={1} />{bar(26, 33.2, 14)}</>,
+  date: <>{box(14, 7, 44, 32)}<path d="M14 15.5h44" stroke={A.line} strokeWidth={0.8} /><path d="M24 4.5v5M48 4.5v5" stroke={A.line} strokeWidth={1} strokeLinecap="round" />{[0, 1, 2, 3].map((c) => [0, 1, 2].map((r) => <rect key={`${c}${r}`} x={19.5 + c * 9.2} y={19.5 + r * 6} width={5} height={3.6} rx={1} fill={c === 2 && r === 1 ? A.blue : A.soft} />))}</>,
+  number: <>{box(8, 13, 56, 18)}<text x={14} y={25.6} fontSize={9} fontWeight={500} fill={A.line}>123</text><path d="M52 13v18M52 22h12" stroke={A.line} strokeWidth={0.8} /><path d="M55.5 19.5l2.5-2.5 2.5 2.5M55.5 24.5l2.5 2.5 2.5-2.5" fill="none" stroke={A.blue} strokeWidth={0.8} strokeLinecap="round" strokeLinejoin="round" /></>,
+  checkbox: <><rect x={21.5} y={10.5} width={9} height={9} rx={2} fill="#fff" stroke={A.blue} strokeWidth={1} />{ic(Check, 22.75, 11.9, 6.5, A.blue)}{bar(35, 14.2, 16, A.line)}<rect x={21.5} y={24.5} width={9} height={9} rx={2} fill="#fff" stroke={A.line} strokeWidth={1} />{bar(35, 28.2, 11)}</>,
+  radio: <><circle cx={26} cy={15} r={4} fill="#fff" stroke={A.blue} strokeWidth={1} /><circle cx={26} cy={15} r={1.8} fill={A.blue} />{bar(35, 14.2, 16, A.line)}<circle cx={26} cy={29} r={4} fill="#fff" stroke={A.line} strokeWidth={1} />{bar(35, 28.2, 11)}</>,
+  attachment: <>{box(12, 5, 48, 34, { strokeDasharray: '3 2.5', fill: '#F8FAFC' })}{ic(CloudUpload, 30, 9, 12, A.blue)}{bar(25, 26.5, 22, A.line)}{bar(29, 31.5, 14)}</>,
+  section: <>{box(10, 4, 52, 36, { stroke: A.soft })}{bar(14, 8.1, 14, A.blue, 1.8)}<path d="M10 13h52" stroke={A.soft} strokeWidth={1} />{box(14, 17, 20, 8, { rx: 2 })}{box(38, 17, 20, 8, { rx: 2 })}{box(14, 29, 44, 7, { rx: 2 })}</>,
+  label: <><text x={10} y={20} fontSize={15} fontWeight={500} fill={A.blue}>Aa</text>{bar(10, 27, 50)}{bar(10, 33, 34)}</>,
+  url: <>{box(12, 15, 48, 14)}{ic(LinkGlyph, 15.5, 18.5, 7, A.blue)}<path d="M26 18.5v7" stroke={A.soft} strokeWidth={1} strokeLinecap="round" />{bar(29.5, 21.2, 16, A.line)}{bar(47.5, 21.2, 8)}</>,
+  currency: <>{box(8, 13, 56, 18)}<rect x={8.7} y={13.7} width={15} height={16.6} rx={2.4} fill={A.tint} /><text x={12.7} y={26} fontSize={10} fontWeight={500} fill={A.blue}>$</text><text x={29} y={25.6} fontSize={9} fontWeight={500} fill={A.line}>0.00</text></>,
+dependent: <>{box(10, 5, 30, 12)}{bar(13.5, 10.2, 12, A.line)}{chev(31, 9.5)}<path d="M17 17v10.5a2 2 0 0 0 2 2h13" fill="none" stroke={A.blue} strokeWidth={1} strokeLinecap="round" strokeLinejoin="round" />{box(32, 23.5, 30, 12, { stroke: A.blue })}{bar(35.5, 28.7, 12, A.blue)}{chev(53, 28, A.blue)}</>,
+  api: <>{box(8, 15, 30, 14)}{bar(11.5, 21.2, 13, A.line)}{chev(29, 20.5)}<path d="M40 22h5" stroke={A.line} strokeWidth={1} strokeLinecap="round" strokeDasharray="1.5 2" /><rect x={47} y={13} width={18} height={18} rx={4} fill={A.tint} />{ic(Braces, 50, 16, 12, A.blue)}</>,
+dynamic: <>{box(12, 5, 48, 12)}{bar(16, 10.2, 18, A.line)}{ic(RefreshCw, 49.5, 7.5, 7, A.blue)}{box(12, 20, 48, 19, { stroke: A.soft })}{bar(16, 24.7, 26, A.line)}{bar(16, 32.2, 18)}</>,
+  user: <>{box(8, 13, 56, 18)}<circle cx={18} cy={22} r={5} fill={A.tint} /><circle cx={18} cy={20.6} r={1.8} fill={A.blue} /><path d="M14.8 25.4a3.4 3.4 0 0 1 6.4 0" fill={A.blue} />{bar(27, 20.7, 22, A.line)}{chev(52, 20.5)}</>,
+};
+const KindArt = ({ kind }: { kind: FieldKind }) => <svg viewBox="0 0 72 44" width={96} height={59} aria-hidden fontFamily="Inter, system-ui, sans-serif">{KIND_ART[kind]}</svg>;
+
 type Sel = { kind: 'form' } | { kind: 'section'; id: string } | { kind: 'field'; id: string };
 interface Group { sec: FormField | null; items: FormField[]; start: number; end: number }
 
 const CHOICE: FieldKind[] = ['dropdown', 'radio', 'multiselect', 'dependent', 'checkbox'];
 const TEXTUAL: FieldKind[] = ['text', 'textarea', 'richtext', 'number', 'date', 'dropdown', 'multiselect', 'dependent', 'user', 'url', 'currency', 'api', 'dynamic'];
 const LISTED: FieldKind[] = ['dropdown', 'multiselect', 'user', 'dependent', 'api', 'dynamic'];
-const WITH_OPTIONS: FieldKind[] = ['dropdown', 'multiselect', 'radio'];
+const WITH_OPTIONS: FieldKind[] = ['dropdown', 'multiselect', 'radio', 'checkbox'];
 
 function groupsOf(fields: FormField[]): Group[] {
   const out: Group[] = [];
@@ -108,24 +141,160 @@ const Chip = ({ children, tone = 'grey' }: { children: React.ReactNode; tone?: '
   <span className={'whitespace-nowrap rounded-full px-2 py-px text-[11px] font-medium ' + (tone === 'amber' ? 'bg-[#FFF7E6] text-[#B45309]' : tone === 'blue' ? 'bg-[#EBF5FF] text-[#2F6FAE]' : 'bg-[#EEF2F6] text-[#475569]')}>{children}</span>
 );
 
-/** One labelled switch — the new builder's settings are a plain list of these. */
+/** One labelled CHECKBOX (Zeni, 16 Nov 2026 — they were switches): the box on the left, its name and one line beside it. */
 function SwitchRow({ label, hint, on, onChange }: { label: string; hint?: string; on: boolean; onChange: (v: boolean) => void }) {
   return (
-    <div className="flex items-center justify-between gap-3">
+    <button type="button" role="checkbox" aria-checked={on} onClick={() => onChange(!on)} className="group/cb flex w-full items-start gap-2.5 text-left">
+      <span className={'mt-[2px] flex size-4 flex-shrink-0 items-center justify-center rounded-[4px] border transition-colors ' + (on ? 'border-[#3D8BD0] bg-[#3D8BD0] text-white' : 'border-[#B8C4D2] bg-white group-hover/cb:border-[#3D8BD0]')}>{on && <Check size={12} strokeWidth={3} />}</span>
       <span className="min-w-0 text-[13px] text-[#364658]">{label}{hint && <span className="block text-[11.5px] leading-[1.4] text-[#7B8FA5]">{hint}</span>}</span>
-      <ToggleSwitch on={on} onChange={onChange} />
-    </div>
+    </button>
   );
 }
 const GroupTitle = ({ children }: { children: React.ReactNode }) => <div className="border-t border-[#EEF2F6] pt-4 text-[12px] font-semibold text-[#1D2A3E]">{children}</div>;
 const iconBtn = 'flex size-7 flex-shrink-0 items-center justify-center rounded text-[#64748B] transition-colors hover:bg-[#F1F5F9] hover:text-[#1D2A3E] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent';
 
+/* ── Options (as on the product's Edit panel): one row per option — drag to reorder, type to rename, x to
+   delete — Add under the list, Import / Export a file. A Dependent field's options NEST: + on a row adds a child. ── */
+const mapTree = (t: OptionNode[], id: string, fn: (n: OptionNode) => OptionNode | null): OptionNode[] =>
+  t.flatMap((x) => { if (x.id === id) { const r = fn(x); return r ? [r] : []; } return [{ ...x, children: mapTree(x.children, id, fn) }]; });
+/** Move `id` in front of `before` when both sit under the same parent. */
+const moveSibling = (t: OptionNode[], id: string, before: string): OptionNode[] => {
+  const from = t.findIndex((x) => x.id === id); const to = t.findIndex((x) => x.id === before);
+  if (from >= 0 && to >= 0) { const a = [...t]; const [m] = a.splice(from, 1); a.splice(a.findIndex((x) => x.id === before), 0, m); return a; }
+  return t.map((x) => ({ ...x, children: moveSibling(x.children, id, before) }));
+};
+const treePaths = (t: OptionNode[], pre: string[] = []): string[] => t.flatMap((x) => (x.children.length ? treePaths(x.children, [...pre, x.label]) : [[...pre, x.label].join(' > ')]));
+function pathsToTree(lines: string[], nested: boolean): OptionNode[] {
+  const root: OptionNode[] = [];
+  lines.forEach((raw) => {
+    const line = raw.trim().replace(/^"(.*)"$/, '$1'); if (!line) return;
+    const parts = nested ? line.split('>').map((x) => x.trim()).filter(Boolean) : [line];
+    let level = root;
+    parts.forEach((label) => { let node = level.find((x) => x.label === label); if (!node) { node = { id: uid('o'), label, children: [] }; level.push(node); } level = node.children; });
+  });
+  return root;
+}
+function OptionsEditor({ tree, nested, onChange, fileName }: { tree: OptionNode[]; nested: boolean; onChange: (t: OptionNode[]) => void; fileName: string }) {
+  const [shut, setShut] = useState<string[]>([]);
+  const [drag, setDrag] = useState<string | null>(null);
+  const [over, setOver] = useState<string | null>(null);
+  const [fresh, setFresh] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const add = (parent?: string) => {
+    const node: OptionNode = { id: uid('o'), label: '', children: [] };
+    onChange(parent ? mapTree(tree, parent, (x) => ({ ...x, children: [...x.children, node] })) : [...tree, node]);
+    if (parent) setShut((x) => x.filter((i) => i !== parent));
+    /* A flat list is rebuilt from plain labels, so its rows are numbered: the new one is the last. */
+    setFresh(nested ? node.id : 'o' + tree.length);
+  };
+  const importFile = (file: File) => file.text().then((text) => {
+    const t = pathsToTree(text.split(/\r?\n/), nested);
+    if (!t.length) { toast.error('No options found in that file'); return; }
+    onChange(t); toast.success(`${treePaths(t).length} options imported`);
+  });
+  const exportFile = () => {
+    const url = URL.createObjectURL(new Blob([treePaths(tree).join('\n')], { type: 'text/csv' }));
+    const a = document.createElement('a'); a.href = url; a.download = fileName + '-options.csv'; a.click(); URL.revokeObjectURL(url);
+  };
+  const row = (x: OptionNode, depth: number): React.ReactNode => {
+    const open = !shut.includes(x.id);
+    return (
+      <div key={x.id}>
+        <div draggable={drag === x.id} onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/option', x.id); }}
+          onDragOver={(e) => { if (drag && drag !== x.id) { e.preventDefault(); setOver(x.id); } }} onDragLeave={() => setOver((o) => (o === x.id ? null : o))}
+          onDrop={(e) => { e.preventDefault(); if (drag) onChange(moveSibling(tree, drag, x.id)); setDrag(null); setOver(null); }} onDragEnd={() => { setDrag(null); setOver(null); }}
+          style={{ marginLeft: depth * 14 }}
+          className={'group/o flex h-8 items-center gap-0.5 rounded bg-[#F4F6FA] pr-0.5 ' + (over === x.id ? 'shadow-[inset_0_2px_0_#3D8BD0] ' : '') + (drag === x.id ? 'opacity-40' : '')}>
+          <span title="Drag to change the order" onMouseDown={() => setDrag(x.id)} onMouseUp={() => setDrag(null)} className="flex h-8 w-5 flex-shrink-0 cursor-grab items-center justify-center text-[#B0BAC7] hover:text-[#64748B] active:cursor-grabbing"><GripVertical size={13} /></span>
+          {nested && (x.children.length > 0
+            ? <button type="button" aria-label={open ? 'Fold' : 'Unfold'} aria-expanded={open} onClick={() => setShut((v) => (open ? [...v, x.id] : v.filter((i) => i !== x.id)))} className="flex size-5 flex-shrink-0 items-center justify-center rounded text-[#64748B] hover:bg-white">{open ? <ChevronDown size={13} /> : <ChevronRight size={13} />}</button>
+            : <span className="w-5 flex-shrink-0" />)}
+          <input value={x.label} autoFocus={fresh === x.id} placeholder="Option" aria-label="Option name" onChange={(e) => onChange(mapTree(tree, x.id, (v) => ({ ...v, label: e.target.value })))}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); add(); } }}
+            className="h-7 min-w-0 flex-1 rounded border border-transparent bg-transparent px-1.5 text-[13px] text-[#364658] placeholder:text-[#B0BAC7] hover:border-[#DFE5ED] focus:border-[#3D8BD0] focus:bg-white focus:outline-none" />
+          {nested && <button type="button" title="Add an option under this one" aria-label="Add an option under this one" onClick={() => add(x.id)} className="flex size-6 flex-shrink-0 items-center justify-center rounded text-[#64748B] opacity-0 transition-opacity hover:bg-white hover:text-[#3D8BD0] group-hover/o:opacity-100 focus:opacity-100"><Plus size={14} /></button>}
+          <button type="button" title="Delete" aria-label="Delete option" onClick={() => onChange(mapTree(tree, x.id, () => null))} className="flex size-6 flex-shrink-0 items-center justify-center rounded text-[#64748B] opacity-0 transition-opacity hover:bg-white hover:text-[#DC2626] group-hover/o:opacity-100 focus:opacity-100"><X size={14} /></button>
+        </div>
+        {nested && open && x.children.length > 0 && <div className="mt-1 flex flex-col gap-1">{x.children.map((c) => row(c, depth + 1))}</div>}
+      </div>
+    );
+  };
+  const link = 'inline-flex items-center gap-1 text-[12px] font-medium text-[#3D8BD0] hover:underline disabled:cursor-not-allowed disabled:text-[#B0BAC7] disabled:no-underline';
+  return (
+    <div>
+      <div className="mb-1.5 flex items-center gap-3">
+        <span className="flex-1 text-[12px] text-[#7B8FA5]">Options</span>
+        <button type="button" className={link} onClick={() => fileRef.current?.click()}><Upload size={13} />Import</button>
+        <button type="button" className={link} disabled={!tree.length} onClick={exportFile}><Download size={13} />Export</button>
+        <input ref={fileRef} type="file" accept=".csv,.txt" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) importFile(file); e.target.value = ''; }} />
+      </div>
+      <div className="flex flex-col gap-1">{tree.map((x) => row(x, 0))}</div>
+      {!tree.length && <p className="rounded border border-dashed border-[#DFE5ED] px-3 py-2.5 text-[12px] text-[#94A3B8]">No options yet. Add one, or import a file.</p>}
+      <button type="button" className={link + ' mt-2'} onClick={() => add()}><Plus size={13} />Add</button>
+      <Help>{nested ? 'Drag to reorder. Use + on an option to add the options under it. A file has one path per line, for example Hardware > Laptop.' : 'Drag to reorder. A file has one option per line.'}</Help>
+    </div>
+  );
+}
+
+/** An empty section, drawn SMALL and grey (the blue, centred picture is "Add a section" — the two must not look alike):
+ *  one field being dropped into an open slot. `big` is the whole-form empty state. */
+function EmptySectionArt({ lit, big }: { lit?: boolean; big?: boolean }) {
+  const c = lit ? '#3D8BD0' : '#B8C4D2';
+  return (
+    <svg width={big ? 96 : 56} height={big ? 62 : 36} viewBox="0 0 56 36" fill="none" aria-hidden="true" className="flex-shrink-0">
+      {/* the slot waiting for it */}
+      <rect x="1" y="19" width="54" height="16" rx="4" fill={lit ? '#EBF5FF' : '#F4F6FA'} stroke={c} strokeDasharray="3 3" />
+      {/* the field on its way down */}
+      <rect x="9" y="1" width="38" height="13" rx="3.5" fill="#fff" stroke={c} />
+      <rect x="14" y="5" width="12" height="2.5" rx="1.25" fill={c} />
+      <rect x="14" y="9" width="22" height="2" rx="1" fill="#E2E8F0" />
+      <path d="M28 17v9M24.5 23l3.5 3.5 3.5-3.5" stroke={c} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+/** "Add a section", drawn: the form's existing section, faint, and a NEW section opening under it —
+ *  its own heading and rule, room for fields, and the plus that makes it. */
+function SectionGlyph() {
+  return (
+    <svg width="120" height="64" viewBox="0 0 120 64" fill="none" aria-hidden="true">
+      {/* the section already on the form */}
+      <rect x="10" y="2" width="26" height="5" rx="2.5" fill="#CBD5E1" />
+      <path d="M42 4.5h68" stroke="#E2E8F0" strokeWidth="1.5" strokeLinecap="round" />
+      <rect x="10" y="12" width="47" height="9" rx="3" fill="#fff" stroke="#E2E8F0" />
+      <rect x="63" y="12" width="47" height="9" rx="3" fill="#fff" stroke="#E2E8F0" />
+      {/* the new section */}
+      <rect x="1" y="28" width="118" height="35" rx="7" fill="#F5FAFF" stroke="#3D8BD0" strokeDasharray="4 3" />
+      <rect x="10" y="35" width="30" height="5" rx="2.5" fill="#3D8BD0" />
+      <path d="M46 37.5h46" stroke="#BFDBF3" strokeWidth="1.5" strokeLinecap="round" />
+      <rect x="10" y="46" width="38" height="9" rx="3" fill="#fff" stroke="#BFDBF3" />
+      <rect x="54" y="46" width="38" height="9" rx="3" fill="#fff" stroke="#BFDBF3" />
+      <circle cx="106" cy="45.5" r="8" fill="#3D8BD0" />
+      <path d="M106 41.5v8M102 45.5h8" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+/** The attachment field — the upload box the BOM ingest form uses. */
+function AttachBox({ f, small }: { f: FormField; small?: boolean }) {
+  return (
+    <span className={'flex flex-col items-center justify-center rounded-lg border border-dashed border-[#CBD5E1] bg-white px-4 text-center ' + (small ? 'py-4' : 'py-6')}>
+      <Upload size={20} className="mb-1.5 text-[#7B8FA5]" />
+      <span className="text-[13px] font-medium text-[#364658]">Drop files here, or click to choose</span>
+      <span className="mt-0.5 text-[12px] text-[#7B8FA5]">{f.buttonText || 'Attach Files'} · you can add more than one</span>
+    </span>
+  );
+}
+
 /** Field types matching a search, in menu order. */
 const matchKinds = (query: string) => TYPE_HELP.filter((t) => ADDABLE_KINDS.includes(t.kind) && (kindLabel(t.kind) + ' ' + t.desc).toLowerCase().includes(query.trim().toLowerCase()));
 
 /** The add menu: search plus every type, each with what it is for. */
-function AddMenu({ onPick, onClose, query, onQuery, below, typed }: {
-  onPick: (k: FieldKind) => void; onClose: () => void; query: string; onQuery: (q: string) => void; below?: boolean;
+/** The grouped field list the V3 and V4 add popups show — filtered by the search, empty groups dropped. */
+const groupedKinds = (query: string) => {
+  const needle = query.trim().toLowerCase();
+  return PALETTE_GROUPS.map((grp) => ({ ...grp, kinds: grp.kinds.filter((k) => !needle || (kindLabel(k) + ' ' + typeHelp(k).desc).toLowerCase().includes(needle)) })).filter((grp) => grp.kinds.length);
+};
+function AddMenu({ onPick, onClose, query, onQuery, below, typed, grouped }: {
+  onPick: (k: FieldKind) => void; onClose: () => void; query: string; onQuery: (q: string) => void; below?: boolean; grouped?: boolean;
   /** V2's "Type / to add a field": the box above IS the search, so the menu has none of its own. */
   typed?: HTMLElement | null;
 }) {
@@ -137,6 +306,36 @@ function AddMenu({ onPick, onClose, query, onQuery, below, typed }: {
     return () => { document.removeEventListener('mousedown', down); document.removeEventListener('keydown', key); };
   }, [onClose, typed]);
   const list = matchKinds(query);
+  /* V3's popup: the right sidebar's own groups, an icon before each field, no one-liners. */
+  if (grouped) {
+    const shown = groupedKinds(query);
+    const first = shown[0]?.kinds[0];
+    return (
+      <div ref={ref} data-rule-menu className={'absolute z-30 w-[430px] rounded-lg border border-[#DFE5ED] bg-white shadow-lg ' + (below ? 'left-0 top-[calc(100%+6px)]' : 'left-1/2 top-5 -translate-x-1/2')}>
+        {typed ? <p className="px-3.5 pb-1 pt-2.5 text-[11.5px] text-[#94A3B8]">Keep typing to filter · Enter adds the first</p> : <div className="relative p-2 pb-1">
+          <Search size={14} className="pointer-events-none absolute left-[18px] top-[calc(50%+2px)] -translate-y-1/2 text-[#94A3B8]" />
+          <input autoFocus value={query} onChange={(e) => onQuery(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && first) onPick(first); }}
+            placeholder="Search fields" aria-label="Search fields" className={inputCls + ' !rounded pl-8'} />
+        </div>}
+        <div className="max-h-[300px] overflow-y-auto px-2 pb-2">
+          {shown.map((grp) => (
+            <div key={grp.title} className="mt-4 first:mt-0">
+              <div className="px-1.5 pb-1.5 pt-2.5 text-[11px] font-semibold uppercase tracking-wider text-[#7B8FA5]">{grp.title}</div>
+              <div className="grid grid-cols-2 gap-x-1 gap-y-0.5">
+                {grp.kinds.map((k) => (
+                  <button key={k} type="button" onClick={() => onPick(k)} className="group/a flex h-8 min-w-0 items-center gap-2 rounded px-1.5 text-left transition-colors hover:bg-[#F1F5F9]">
+                    <span className="grid size-6 flex-shrink-0 place-items-center rounded bg-[#F1F5F9] text-[#475569] transition-colors group-hover/a:bg-[#EBF5FF] group-hover/a:text-[#3D8BD0]">{KIND_ICON[k]}</span>
+                    <span className="min-w-0 flex-1 truncate text-[13px] text-[#1D2A3E]">{kindLabel(k)}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+          {!shown.length && <p className="px-2 py-4 text-center text-[12px] text-[#7B8FA5]">No field matches “{query}”.</p>}
+        </div>
+      </div>
+    );
+  }
   return (
     <div ref={ref} data-rule-menu className={'absolute z-30 w-[340px] rounded-lg border border-[#DFE5ED] bg-white p-2 shadow-lg ' + (below ? 'left-0 top-[calc(100%+6px)]' : 'left-1/2 top-5 -translate-x-1/2')}>
       {typed ? <p className="px-2 pb-1 text-[11.5px] text-[#94A3B8]">Keep typing to filter · Enter adds the first</p> : <div className="relative mb-1">
@@ -160,9 +359,9 @@ function AddMenu({ onPick, onClose, query, onQuery, below, typed }: {
 /** A field as it will look, small: the control's empty shape. */
 function FieldFace({ f }: { f: FormField }) {
   if (f.kind === 'label') return <span className="text-[12.5px] text-[#475569]">{f.helpText || f.label}</span>;
-  if (f.kind === 'checkbox') return <span className="flex items-center gap-2 text-[12px] text-[#7B8FA5]"><span className="size-3.5 rounded-[3px] border border-[#CBD5E1]" />{f.placeholder || 'Yes / No'}</span>;
+  if (f.kind === 'checkbox') return <span className="flex flex-wrap gap-x-4 gap-y-1">{(optionsOf(f).filter((o) => o.trim()).length ? optionsOf(f).filter((o) => o.trim()) : [f.placeholder || 'Yes / No']).slice(0, 5).map((o) => <span key={o} className="flex items-center gap-2 text-[12px] text-[#7B8FA5]"><span className="size-3.5 rounded-[3px] border border-[#CBD5E1]" />{o}</span>)}</span>;
   if (f.kind === 'radio' || (f.kind === 'dependent' && optionsOf(f).length)) return <span className="flex flex-wrap gap-1">{optionsOf(f).slice(0, 4).map((o) => <Chip key={o}>{o}</Chip>)}{optionsOf(f).length > 4 && <Chip>+{optionsOf(f).length - 4}</Chip>}</span>;
-  if (f.kind === 'attachment') return <span className="flex h-8 items-center justify-center rounded border border-dashed border-[#CBD5E1] text-[11.5px] text-[#94A3B8]">Drop files here or browse</span>;
+  if (f.kind === 'attachment') return <AttachBox f={f} small />;
   const tall = f.kind === 'textarea' || f.kind === 'richtext';
   return <span className={'flex rounded border border-[#E5E9F0] bg-[#F8FAFC] px-2.5 text-[11.5px] text-[#94A3B8] ' + (tall ? 'h-12 items-start pt-1.5' : 'h-8 items-center')}>{f.placeholder || (WITH_OPTIONS.includes(f.kind) || LISTED.includes(f.kind) ? 'Select' : '')}</span>;
 }
@@ -187,11 +386,17 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing, toolbarS
   /** V3: the Custom fields search. */
   const [pq, setPq] = useState('');
   const [tab, setTab] = useState<'fields' | 'settings' | 'guide'>('fields');
-  const [aboutOpen, setAboutOpen] = useState(true);
+  /** The Help guide takes the right panel only when asked for — remembered, closed by default. */
+  /* Each builder remembers its own choice: V3 shows the guide (in its empty panel) until it is hidden, V2 / V4 only when asked. */
+  const readGuide = () => { try { const v = localStorage.getItem('formStudioGuide:' + ui); return v === 'open'; } catch { return false; } };
+  const [guide, setGuideRaw] = useState(readGuide);
+  useEffect(() => { setGuideRaw(readGuide()); }, [ui]); // eslint-disable-line react-hooks/exhaustive-deps
+  const setGuide = (v: boolean) => { setGuideRaw(v); try { localStorage.setItem('formStudioGuide:' + ui, v ? 'open' : 'closed'); } catch { /* private mode */ } };
   const [published, setPublished] = useState(() => ({ version: 1, snap: JSON.stringify(fields) }));
   const [publishOpen, setPublishOpen] = useState(false);
   const [note, setNote] = useState('');
-  const [role, setRole] = useState<'req' | 'tech'>('req');
+  /* Preview shows the WHOLE form — its Requester | Technician switch was removed (Zeni, 16 Nov 2026). */
+  const [role] = useState<'req' | 'tech'>('tech');
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [dropAt, setDropAt] = useState<number | null>(null);
   /** V2's "Type / to add a field" boxes, by section — the menu treats a click in its box as inside. */
@@ -251,6 +456,24 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing, toolbarS
     const g = groupsOf(rest).find((x) => x.sec?.id === secId); if (!g) return;
     const a = [...rest]; a.splice(g.end, 0, f); onFields(a);
   };
+  const duplicateField = (f: FormField) => {
+    let label = f.label + ' copy';
+    for (let k = 2; fields.some((x) => x.label === label); k++) label = f.label + ' copy ' + k;
+    /* A copy is never a product field: the product ships one Priority, not two. */
+    const copy: FormField = { ...structuredClone(f), id: uid('f'), label, system: false };
+    insertAt(fields.findIndex((x) => x.id === f.id) + 1, [copy]);
+    select({ kind: 'field', id: copy.id });
+  };
+  /** Drag · half / full width · copy · remove — shown at a field's top right on hover or when it is selected. */
+  const fieldActions = (f: FormField, on: boolean) => (
+    <span data-pick className={'absolute right-1.5 top-1.5 z-10 flex items-center rounded-md bg-white/95 transition-opacity ' + (on ? 'opacity-100' : 'opacity-0 group-hover/fw:opacity-100 group-focus-within/fw:opacity-100')}>
+      <span draggable title="Drag to move" aria-label="Drag to move" onDragStart={(e) => { e.dataTransfer.setData('text/form-field', f.id); e.dataTransfer.effectAllowed = 'move'; }} onDragEnd={() => setDropAt(null)}
+        className={iconBtn + ' !size-6 cursor-grab active:cursor-grabbing'}><GripVertical size={14} /></span>
+      <button type="button" title={f.width === 'full' ? 'Make it half width' : 'Make it full width'} aria-label={f.width === 'full' ? 'Make it half width' : 'Make it full width'} className={iconBtn + ' !size-6'} onClick={() => patch(f.id, { width: f.width === 'full' ? 'half' : 'full' })}>{f.width === 'full' ? <Columns2 size={14} /> : <RectangleHorizontal size={14} />}</button>
+      <button type="button" title="Copy" aria-label="Copy" className={iconBtn + ' !size-6'} onClick={() => duplicateField(f)}><Copy size={13} /></button>
+      <span title={f.system ? 'A product field can be hidden, not removed' : 'Remove'}><button type="button" aria-label="Remove" disabled={f.system} className={iconBtn + ' !size-6 hover:!bg-[#FEF2F2] hover:!text-[#DC2626]'} onClick={() => removeField(f.id)}><X size={14} /></button></span>
+    </span>
+  );
   const removeField = (id: string) => { onFields(fields.filter((f) => f.id !== id)); select({ kind: 'form' }); };
   /** Deleting a section keeps its fields: they join the section above. */
   const removeSection = (id: string) => { onFields(fields.filter((f) => f.id !== id)); select({ kind: 'form' }); toast.success('Section removed — its fields joined the section above'); };
@@ -292,16 +515,6 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing, toolbarS
   ];
 
   /* ── configuration (shared by V1's panel and V2's Settings tab) ── */
-  const formSettings = (
-    <div className="flex flex-col gap-4">
-      <div>
-        <div className="text-[11px] font-semibold uppercase tracking-wider text-[#7B8FA5]">Form</div>
-        <div className="text-[15px] font-semibold text-[#1D2A3E]">{title}</div>
-        <p className="mt-1 text-[12px] text-[#7B8FA5]">{stats.map((s) => `${s.v} ${s.label}`).join(' · ')}</p>
-      </div>
-      {guideBody()}
-    </div>
-  );
   function guideBody() {
     return (
       <div className="flex flex-col gap-4">
@@ -331,104 +544,6 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing, toolbarS
     );
   }
 
-  const sectionSettings = (s: FormField) => {
-    const gi = groups.findIndex((g) => g.sec?.id === s.id);
-    const choices = values.filter((f) => CHOICE.includes(f.kind) && !groups[gi]?.items.some((x) => x.id === f.id));
-    const src = s.showWhen && fields.find((f) => f.id === s.showWhen!.fieldId);
-    return (
-      <div className="flex flex-col gap-4">
-        <div className="flex items-start gap-2">
-          <div className="min-w-0 flex-1"><div className="text-[11px] font-semibold uppercase tracking-wider text-[#7B8FA5]">Section</div><div className="truncate text-[15px] font-semibold text-[#1D2A3E]">{s.label}</div></div>
-          <button type="button" className={btn2 + ' !px-2'} aria-label="Move section up" disabled={gi <= 0 || !groups[gi - 1]?.sec} onClick={() => moveSection(s.id, -1)}><ArrowUp size={14} /></button>
-          <button type="button" className={btn2 + ' !px-2'} aria-label="Move section down" disabled={gi >= groups.length - 1} onClick={() => moveSection(s.id, 1)}><ArrowDown size={14} /></button>
-        </div>
-        <div><Lbl htmlFor="ss-t">Title</Lbl><input id="ss-t" className={inputCls + ' !rounded'} value={s.label} onChange={(e) => patch(s.id, { label: e.target.value })} /></div>
-        <div><Lbl htmlFor="ss-d">Description under the title</Lbl><input id="ss-d" className={inputCls + ' !rounded'} value={s.helpText ?? ''} placeholder="Optional" onChange={(e) => patch(s.id, { helpText: e.target.value })} /></div>
-        <div><Lbl>Columns</Lbl><Pills label="Columns" value={String(s.cols ?? 2) as '1' | '2' | '3'} options={[['1', '1'], ['2', '2'], ['3', '3']]} onChange={(v) => patch(s.id, { cols: Number(v) as 1 | 2 | 3 })} /><Help>Fields fill the columns in order. Any field can take the full row.</Help></div>
-        <div><Lbl>Who sees this section</Lbl><Pills label="Who sees this section" value={s.techOnly ? 'tech' : 'all'} options={[['all', 'Requesters and technicians'], ['tech', 'Technicians only']]} onChange={(v) => patch(s.id, { techOnly: v === 'tech' })} /><Help>{s.techOnly ? 'Requesters never see this section or the fields in it.' : 'Every field in it follows its own requester setting.'}</Help></div>
-        <div>
-          <Lbl>Show only when</Lbl>
-          {s.showWhen ? (
-            <div className="flex flex-col gap-2">
-              <RuleSelect className="!rounded" value={[s.showWhen.fieldId]} options={choices.map((f) => ({ value: f.id, label: f.label }))} onChange={(v) => v[0] && patch(s.id, { showWhen: { fieldId: v[0], value: '' } })} />
-              <div className="flex items-center gap-2"><span className="text-[12px] text-[#7B8FA5]">is</span>
-                <div className="min-w-0 flex-1"><RuleSelect className="!rounded" value={s.showWhen.value ? [s.showWhen.value] : []} placeholder="Choose a value" options={(src ? (src.kind === 'checkbox' ? ['Checked'] : optionsOf(src)) : []).map((o) => ({ value: o, label: o }))} onChange={(v) => patch(s.id, { showWhen: { ...s.showWhen!, value: v[0] ?? '' } })} /></div>
-              </div>
-              <button type="button" className="self-start text-[12px] font-medium text-[#3D8BD0] hover:underline" onClick={() => patch(s.id, { showWhen: undefined })}>Always show instead</button>
-            </div>
-          ) : choices.length ? (
-            <><Help>Always shown.</Help><button type="button" className="mt-1 text-[12px] font-medium text-[#3D8BD0] hover:underline" onClick={() => patch(s.id, { showWhen: { fieldId: choices[0].id, value: '' } })}>+ Show only when an answer is given…</button></>
-          ) : <Help>Always shown. A condition needs a choice field (dropdown, radio, checkbox) in another section.</Help>}
-        </div>
-        <div className="rounded-lg bg-[#F4F6FA] p-3"><div className="text-[12.5px] font-semibold text-[#1D2A3E]">About sections</div><p className="mt-1 text-[12px] leading-[1.5] text-[#64748B]">A section groups fields under a heading and carries the rules for all of them: how many columns, who sees it, and when it appears. Put fields that belong to one answer in one section so one condition covers them all.</p></div>
-        <button type="button" className={btn2 + ' self-start !text-[#D92D20]'} onClick={() => removeSection(s.id)}>Delete section, keep its fields</button>
-      </div>
-    );
-  };
-
-  const fieldSettings = (f: FormField) => {
-    const h = typeHelp(f.kind);
-    const g = groupOfField(f.id);
-    const used = rulesUsing?.(f.id) ?? 0;
-    const mode = reqModeOf(f);
-    const i = fields.findIndex((x) => x.id === f.id);
-    return (
-      <div className="flex flex-col gap-4">
-        <div className="flex items-start gap-2">
-          <div className="min-w-0 flex-1"><div className="text-[11px] font-semibold uppercase tracking-wider text-[#7B8FA5]">Field · {kindLabel(f.kind)}{f.system && ' · System'}</div><div className="truncate text-[15px] font-semibold text-[#1D2A3E]">{f.label}</div></div>
-          <button type="button" className={btn2 + ' !px-2'} aria-label="Move up" disabled={i <= 1 && fields[0]?.kind === 'section' || i <= 0} onClick={() => moveField(f.id, -1)}><ArrowUp size={14} /></button>
-          <button type="button" className={btn2 + ' !px-2'} aria-label="Move down" disabled={i >= fields.length - 1} onClick={() => moveField(f.id, 1)}><ArrowDown size={14} /></button>
-        </div>
-        <div className="rounded-lg bg-[#F4F6FA] px-3 py-2.5">
-          <button type="button" onClick={() => setAboutOpen(!aboutOpen)} aria-expanded={aboutOpen} className="flex w-full items-center gap-2 text-left text-[12.5px] font-semibold text-[#1D2A3E]">
-            <Info size={14} className="text-[#3D8BD0]" /><span className="flex-1">What this field is</span>{aboutOpen ? <ChevronUp size={14} className="text-[#94A3B8]" /> : <ChevronDown size={14} className="text-[#94A3B8]" />}
-          </button>
-          {aboutOpen && (
-            <div className="mt-1.5 flex flex-col gap-1.5 pl-[22px] text-[12px] leading-[1.5] text-[#64748B]">
-              <p>{h.what}</p>
-              <p><span className="font-medium text-[#1D2A3E]">How to configure it. </span>{h.how}</p>
-              <p className="italic">Example: {h.example}</p>
-            </div>
-          )}
-        </div>
-        <div><Lbl htmlFor="ff-l">{f.kind === 'label' ? 'Heading' : 'Name people see'}</Lbl><input id="ff-l" className={inputCls + ' !rounded'} value={f.label} onChange={(e) => patch(f.id, { label: e.target.value })} /></div>
-        {f.kind === 'label' && <div><Lbl htmlFor="ff-tx">Text shown on the form</Lbl><textarea id="ff-tx" rows={3} className={inputCls + ' !h-auto !rounded py-2'} value={f.helpText ?? ''} onChange={(e) => patch(f.id, { helpText: e.target.value })} /></div>}
-        <div>
-          <Lbl>Type</Lbl>
-          {f.system ? <p className="flex h-8 items-center gap-1.5 rounded border border-[#EEF2F6] bg-[#F8FAFC] px-3 text-[12px] text-[#64748B]"><Lock size={12} />{kindLabel(f.kind)} — a system field keeps its type</p>
-            : <RuleSelect className="!rounded" value={[f.kind]} options={ADDABLE_KINDS.map((k) => ({ value: k, label: kindLabel(k) }))} onChange={(v) => { const k = v[0] as FieldKind; if (!k) return; patch(f.id, { kind: k, ...(WITH_OPTIONS.includes(k) && !f.options?.length ? { options: ['Option 1', 'Option 2'] } : {}), ...(k === 'dependent' && !f.optionTree ? { optionTree: parseTree('Level 1\n\tLevel 2') } : {}) }); }} />}
-        </div>
-        {f.kind !== 'label' && (
-          <>
-            <div><Lbl>Requester</Lbl>{<Pills<ReqMode> label="Requester" value={mode} options={[['hidden', 'Hidden'], ['readonly', 'Read-only'], ['optional', 'Optional'], ['required', 'Required']]} onChange={(m) => patch(f.id, reqModePatch(m))} />}<Help>{REQ_MODE_HELP[mode]}{g?.sec?.techOnly ? ' The whole section is technicians only, so requesters do not see it either way.' : ''}</Help></div>
-            <div><Lbl>Technician</Lbl><Pills label="Technician" value={f.required ? 'req' : 'opt'} options={[['opt', 'Optional'], ['req', 'Required to save']]} onChange={(v) => patch(f.id, { required: v === 'req' })} /></div>
-          </>
-        )}
-        <div><Lbl>Width</Lbl><Pills label="Width" value={f.width} options={[['half', 'One column'], ['full', 'Full row']]} onChange={(v) => patch(f.id, { width: v })} /><Help>The section has {colsOf(g ?? groups[0])} column{colsOf(g ?? groups[0]) === 1 ? '' : 's'}.</Help></div>
-        {WITH_OPTIONS.includes(f.kind) && (
-          <div><Lbl htmlFor="ff-o">Options — one per line</Lbl>
-            <textarea id="ff-o" rows={5} spellCheck={false} className="w-full rounded border border-[#DFE5ED] px-3 py-2 font-mono text-[12px] leading-[1.55] text-[#364658] focus:border-[#3D8BD0] focus:outline-none" value={(f.options ?? []).join('\n')} onChange={(e) => patch(f.id, { options: e.target.value.split('\n') })} onBlur={() => patch(f.id, { options: (f.options ?? []).map((o) => o.trim()).filter(Boolean) })} />
-            <Help>{(f.options ?? []).filter((o) => o.trim()).length} options · paste a column from Excel.</Help></div>
-        )}
-        {f.kind === 'dependent' && (
-          <div><Lbl htmlFor="ff-d">Levels — Tab for a child line</Lbl>
-            <textarea id="ff-d" rows={6} spellCheck={false} className="w-full rounded border border-[#DFE5ED] px-3 py-2 font-mono text-[12px] leading-[1.55] text-[#364658] [tab-size:3] focus:border-[#3D8BD0] focus:outline-none" defaultValue={treeText(f.optionTree ?? [])} key={f.id}
-              onKeyDown={(e) => { if (e.key !== 'Tab') return; e.preventDefault(); const el = e.currentTarget; const s = el.selectionStart; const ls = el.value.lastIndexOf('\n', s - 1) + 1; el.value = e.shiftKey ? (el.value[ls] === '\t' ? el.value.slice(0, ls) + el.value.slice(ls + 1) : el.value) : el.value.slice(0, ls) + '\t' + el.value.slice(ls); el.selectionStart = el.selectionEnd = s + (e.shiftKey ? -1 : 1); }}
-              onBlur={(e) => { const t = parseTree(e.target.value); patch(f.id, { optionTree: t, options: t.map((x) => x.label) }); }} />
-            <div className="mt-2 flex items-center justify-between gap-3"><span className="text-[12px] text-[#364658]">Must pick the most specific level</span><ToggleSwitch on={!!f.leafOnly} onChange={(v) => patch(f.id, { leafOnly: v })} /></div>
-          </div>
-        )}
-        {TEXTUAL.includes(f.kind) && f.kind !== 'user' && <div><Lbl htmlFor="ff-h">Hint text</Lbl><input id="ff-h" className={inputCls + ' !rounded'} value={f.placeholder ?? ''} placeholder="Grey text inside the empty box — show an example" onChange={(e) => patch(f.id, { placeholder: e.target.value })} /></div>}
-        {f.kind !== 'label' && <div><Lbl htmlFor="ff-ds">Help under the field</Lbl><input id="ff-ds" className={inputCls + ' !rounded'} value={f.helpText ?? ''} placeholder="Optional — one line that answers the usual question" onChange={(e) => patch(f.id, { helpText: e.target.value })} /></div>}
-        {f.kind !== 'label' && <div className="flex items-center justify-between gap-3"><span className="text-[12px] text-[#364658]">AI can read this field<span className="block text-[11.5px] text-[#7B8FA5]">Used for summaries and suggestions.</span></span><ToggleSwitch on={f.aiAccessible !== false} onChange={(v) => patch(f.id, { aiAccessible: v })} /></div>}
-        {sections.length > 0 && <div><Lbl>Move to section</Lbl><RuleSelect className="!rounded" value={g?.sec ? [g.sec.id] : []} options={sections.map((s) => ({ value: s.id, label: s.label }))} onChange={(v) => v[0] && moveTo(f.id, v[0])} /></div>}
-        {used > 0 && <p className="flex items-center gap-1.5 rounded-lg bg-[#EBF5FF] px-3 py-2 text-[12px] text-[#2F6FAE]"><Info size={13} />Used in {used} form rule{used === 1 ? '' : 's'}.</p>}
-        {f.system ? (
-          <Tooltip><TooltipTrigger asChild><span className="self-start"><button type="button" disabled className={btn2}>Delete field</button></span></TooltipTrigger><TooltipContent side="top">System fields can be hidden from requesters but not deleted.</TooltipContent></Tooltip>
-        ) : <button type="button" className={btn2 + ' self-start !text-[#D92D20]'} onClick={() => removeField(f.id)}>Delete field</button>}
-      </div>
-    );
-  };
   const settingsHead = (f: FormField, caption: string, remove: () => void) => (
     <div className="flex items-center gap-2.5">
       <span className="grid size-8 flex-shrink-0 place-items-center rounded-md bg-[#F1F5F9] text-[#475569]">{KIND_ICON[f.kind]}</span>
@@ -443,35 +558,57 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing, toolbarS
     const view = f.requesterView !== false;
     const edit = view && f.requesterEdit !== false;
     const isLabel = f.kind === 'label';
+    const custom = !f.system;
+    const txt = (key: 'placeholder' | 'helpText' | 'defaultValue' | 'buttonText' | 'min' | 'max' | 'validation', label: string, ph = '') => (
+      <div><Lbl htmlFor={'nf-' + key}>{label}</Lbl><input id={'nf-' + key} className={inputCls + ' !rounded'} value={(f[key] as string | undefined) ?? ''} placeholder={ph} onChange={(e) => patch(f.id, { [key]: e.target.value })} /></div>
+    );
+    const isText = f.kind === 'text' || f.kind === 'textarea' || f.kind === 'url';
+    const isNum = f.kind === 'number' || f.kind === 'currency';
     return (
       <div className="flex flex-col gap-4">
         {settingsHead(f, kindLabel(f.kind), () => removeField(f.id))}
         <div><Lbl htmlFor="nf-l">{isLabel ? 'Heading' : 'Name'}</Lbl><input id="nf-l" className={inputCls + ' !rounded'} value={f.label} onChange={(e) => patch(f.id, { label: e.target.value })} /></div>
         {isLabel && <div><Lbl htmlFor="nf-tx">Text shown on the form</Lbl><textarea id="nf-tx" rows={3} className={inputCls + ' !h-auto !rounded py-2'} value={f.helpText ?? ''} onChange={(e) => patch(f.id, { helpText: e.target.value })} /></div>}
-        {TEXTUAL.includes(f.kind) && f.kind !== 'user' && <div><Lbl htmlFor="nf-h">Hint text</Lbl><input id="nf-h" className={inputCls + ' !rounded'} value={f.placeholder ?? ''} placeholder="Shown inside the empty field" onChange={(e) => patch(f.id, { placeholder: e.target.value })} /></div>}
-        {!isLabel && <div><Lbl htmlFor="nf-ds">Description</Lbl><input id="nf-ds" className={inputCls + ' !rounded'} value={f.helpText ?? ''} placeholder="Shown under the field" onChange={(e) => patch(f.id, { helpText: e.target.value })} /></div>}
+        {f.kind === 'attachment' ? txt('buttonText', 'Button Text', 'Attach Files') : TEXTUAL.includes(f.kind) && f.kind !== 'user' && txt('placeholder', 'Hint Text', 'Shown inside the empty field')}
+        {!isLabel && f.kind !== 'attachment' && txt('helpText', 'Description', 'Shown under the field')}
+        {custom && !isLabel && !['attachment', 'dependent', 'richtext', 'api', 'dynamic'].includes(f.kind) && (WITH_OPTIONS.includes(f.kind)
+          ? <div><Lbl>Default Value</Lbl><RuleSelect className="!rounded" value={f.defaultValue ? [f.defaultValue] : []} placeholder="None" options={(f.options ?? []).filter((o) => o.trim()).map((o) => ({ value: o, label: o }))} onChange={(v) => patch(f.id, { defaultValue: v[0] ?? '' })} /></div>
+          : txt('defaultValue', 'Default Value', 'Filled in when the form opens'))}
         {WITH_OPTIONS.includes(f.kind) && (
-          <div><Lbl htmlFor="nf-o">Options, one per line</Lbl>
-            <textarea id="nf-o" rows={5} spellCheck={false} className="w-full rounded border border-[#DFE5ED] px-3 py-2 text-[13px] leading-[1.55] text-[#364658] focus:border-[#3D8BD0] focus:outline-none" value={(f.options ?? []).join('\n')} onChange={(e) => patch(f.id, { options: e.target.value.split('\n') })} onBlur={() => patch(f.id, { options: (f.options ?? []).map((o) => o.trim()).filter(Boolean) })} /></div>
+          <OptionsEditor key={f.id} nested={false} fileName={f.label} tree={(f.options ?? []).map((label, i) => ({ id: 'o' + i, label, children: [] }))}
+            onChange={(t) => patch(f.id, { options: t.map((x) => x.label) })} />
         )}
         {f.kind === 'dependent' && (
-          <div><Lbl htmlFor="nf-d">Levels, press Tab for a child line</Lbl>
-            <textarea id="nf-d" rows={6} spellCheck={false} className="w-full rounded border border-[#DFE5ED] px-3 py-2 text-[13px] leading-[1.55] text-[#364658] [tab-size:3] focus:border-[#3D8BD0] focus:outline-none" defaultValue={treeText(f.optionTree ?? [])} key={f.id}
-              onKeyDown={(e) => { if (e.key !== 'Tab') return; e.preventDefault(); const el = e.currentTarget; const c = el.selectionStart; const ls = el.value.lastIndexOf('\n', c - 1) + 1; el.value = e.shiftKey ? (el.value[ls] === '\t' ? el.value.slice(0, ls) + el.value.slice(ls + 1) : el.value) : el.value.slice(0, ls) + '\t' + el.value.slice(ls); el.selectionStart = el.selectionEnd = c + (e.shiftKey ? -1 : 1); }}
-              onBlur={(e) => { const t = parseTree(e.target.value); patch(f.id, { optionTree: t, options: t.map((x) => x.label) }); }} /></div>
+          <>
+            <OptionsEditor key={f.id} nested fileName={f.label} tree={f.optionTree ?? []} onChange={(t) => patch(f.id, { optionTree: t, options: t.map((x) => x.label) })} />
+            <SwitchRow label="Allow user to select leaf node only" hint="People must pick the last level, not a parent." on={!!f.leafOnly} onChange={(v) => patch(f.id, { leafOnly: v })} />
+            <SwitchRow label="Display Entire Hierarchy in Report" hint="Reports show the full path, for example Hardware › Laptop." on={!!f.fullHierarchy} onChange={(v) => patch(f.id, { fullHierarchy: v })} />
+          </>
         )}
         {(f.kind === 'api' || f.kind === 'dynamic') && <p className="text-[12px] leading-[1.5] text-[#7B8FA5]">{f.kind === 'api' ? 'The list is filled from an API. The API is set up in the product.' : 'The list is filled by a script. The script is set up in the product.'}</p>}
+        {custom && isText && <div className="grid grid-cols-2 gap-3">{txt('min', 'Minimum Characters', '0')}{txt('max', 'Maximum Characters', 'No limit')}</div>}
+        {custom && isNum && <>
+          <div className="grid grid-cols-2 gap-3">{txt('min', 'Minimum Value', 'No limit')}{txt('max', 'Maximum Value', 'No limit')}</div>
+          <SwitchRow label="Allow Decimal in number" on={!!f.allowDecimal} onChange={(v) => patch(f.id, { allowDecimal: v })} />
+        </>}
+        {custom && f.kind === 'date' && <SwitchRow label="Allow to select time" hint="Off: people pick a date only." on={f.allowTime !== false} onChange={(v) => patch(f.id, { allowTime: v })} />}
         {!isLabel && <>
           <GroupTitle>Requester</GroupTitle>
-          <SwitchRow label="Can view" on={view} onChange={(v) => patch(f.id, reqModePatch(v ? 'optional' : 'hidden'))} />
-          {view && <SwitchRow label="Can edit" on={edit} onChange={(v) => patch(f.id, reqModePatch(v ? 'optional' : 'readonly'))} />}
-          {edit && <SwitchRow label="Required" on={!!f.requesterRequired} onChange={(v) => patch(f.id, reqModePatch(v ? 'required' : 'optional'))} />}
+          <SwitchRow label="View" hint="Requesters see this field on the portal." on={view} onChange={(v) => patch(f.id, reqModePatch(v ? 'optional' : 'hidden'))} />
+          {view && <SwitchRow label="Edit" hint="Off: requesters see the value but cannot change it." on={edit} onChange={(v) => patch(f.id, reqModePatch(v ? 'optional' : 'readonly'))} />}
+          {edit && <SwitchRow label="Required" hint="Requesters must fill it to submit." on={!!f.requesterRequired} onChange={(v) => patch(f.id, reqModePatch(v ? 'required' : 'optional'))} />}
           <GroupTitle>Technician</GroupTitle>
-          <SwitchRow label="Required" on={!!f.required} onChange={(v) => patch(f.id, { required: v })} />
+          <SwitchRow label="Required" hint="Technicians must fill it to save the record." on={!!f.required} onChange={(v) => patch(f.id, { required: v })} />
+          <GroupTitle>More</GroupTitle>
+          {custom && f.kind !== 'attachment' && <SwitchRow label="System Managed Field" hint="Only the system fills this field, through automation or an integration. People cannot edit it." on={!!f.systemManaged} onChange={(v) => patch(f.id, { systemManaged: v })} />}
+          {custom && <SwitchRow label="PII" hint="Personal data, such as a phone number or an ID. The value is hidden from people without permission." on={!!f.pii} onChange={(v) => patch(f.id, { pii: v })} />}
+          {f.kind !== 'attachment' && <SwitchRow label="AI Accessible" hint="AI can read this field for summaries and suggestions." on={f.aiAccessible !== false} onChange={(v) => patch(f.id, { aiAccessible: v })} />}
+          {custom && f.kind === 'text' && <>
+            <SwitchRow label="Validation" hint="Accept only answers that match a pattern (regex)." on={f.validation !== undefined} onChange={(v) => patch(f.id, { validation: v ? '' : undefined })} />
+            {f.validation !== undefined && txt('validation', 'Pattern', 'For example ^[A-Z]{3}-[0-9]{4}$')}
+          </>}
         </>}
-        <GroupTitle>Layout</GroupTitle>
-        <SwitchRow label="Use the full row" on={f.width === 'full'} onChange={(v) => patch(f.id, { width: v ? 'full' : 'half' })} />
-        {!isLabel && <SwitchRow label="AI can read this field" on={f.aiAccessible !== false} onChange={(v) => patch(f.id, { aiAccessible: v })} />}
+        <SwitchRow label="Use the full row" hint="Off: the field takes one column of its section." on={f.width === 'full'} onChange={(v) => patch(f.id, { width: v ? 'full' : 'half' })} />
         {used > 0 && <p className="text-[12px] text-[#7B8FA5]">Used in {used} form rule{used === 1 ? '' : 's'}.</p>}
       </div>
     );
@@ -498,50 +635,128 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing, toolbarS
       </div>
     );
   };
-  const neoUi = ui === 'v2';
-  const settings = selected?.kind === 'section' ? (neoUi ? sectionSettingsNeo(selected) : sectionSettings(selected)) : selected ? (neoUi ? fieldSettingsNeo(selected) : fieldSettings(selected)) : formSettings;
+  const nothingSelected = (
+    <div className="flex flex-col items-center gap-2 px-2 py-12 text-center">
+      <span className="grid size-10 place-items-center rounded-full bg-[#F1F5F9] text-[#64748B]"><MousePointerClick size={18} /></span>
+      <p className="text-[13px] font-medium text-[#1D2A3E]">Nothing selected</p>
+      <p className="text-[12px] leading-[1.5] text-[#7B8FA5]">Click a field or a section on the form to change its settings here.</p>
+    </div>
+  );
+  const settings = selected?.kind === 'section' ? sectionSettingsNeo(selected) : selected ? fieldSettingsNeo(selected) : nothingSelected;
+  /* Help (Zeni, 16 Nov 2026): a small button at the form's bottom right opens a compact card of SHORT POINTS —
+     about the selected field first, then how to build a form. The right panel stays for fields and settings. */
+  const points = (items: string[]) => (
+    <ul className="mt-1.5 flex flex-col gap-1">{items.map((t) => <li key={t} className="flex gap-2 text-[12px] leading-[1.5] text-[#475569]"><span className="mt-[7px] size-1 flex-shrink-0 rounded-full bg-[#3D8BD0]" />{t}</li>)}</ul>
+  );
+  const sentences = (t: string) => t.split(/(?<=\.)\s+/).map((x) => x.trim()).filter(Boolean);
+  const helpFloat = (
+    <div className="pointer-events-none absolute bottom-4 right-[396px] z-30 flex flex-col items-end gap-2">
+      {guide && (
+        <div role="dialog" aria-label="Help" className="pointer-events-auto flex max-h-[min(460px,calc(100vh-260px))] w-[300px] flex-col rounded-xl border border-[#DFE5ED] bg-white shadow-[0_8px_28px_rgba(15,23,42,0.14)]">
+          <div className="flex flex-shrink-0 items-center gap-2 border-b border-[#EEF2F6] py-1.5 pl-3.5 pr-1.5">
+            <CircleHelp size={15} className="text-[#3D8BD0]" /><span className="flex-1 text-[13px] font-semibold text-[#1D2A3E]">Help</span>
+            <button type="button" aria-label="Close help" onClick={() => setGuide(false)} className="flex size-8 items-center justify-center rounded transition-colors hover:bg-[#F3F4F6]"><X size={15} /></button>
+          </div>
+          <div className="flex min-h-0 flex-col gap-3.5 overflow-y-auto p-3.5">
+            {selected && (() => { const h = typeHelp(selected.kind); return (
+              <div>
+                <div className="flex items-center gap-2 text-[12.5px] font-semibold text-[#1D2A3E]"><span className="grid size-6 place-items-center rounded bg-[#F1F5F9] text-[#475569]">{KIND_ICON[selected.kind]}</span>{kindLabel(selected.kind)}</div>
+                {points([...sentences(h.what), ...sentences(h.how), 'Example: ' + h.example])}
+              </div>
+            ); })()}
+            <div className={selected ? 'border-t border-[#EEF2F6] pt-3' : ''}>
+              <div className="text-[12.5px] font-semibold text-[#1D2A3E]">Build a form</div>
+              {points([
+                'Group fields under sections.',
+                'Add a field: drag it from the list, or click it.',
+                'Click a field to change its settings.',
+                'Hover a field to move, resize, copy or remove it.',
+                'Requester and Technician switches decide who sees and fills it.',
+                'Preview, then Publish. Nothing changes until you publish.',
+              ])}
+            </div>
+          </div>
+        </div>
+      )}
+      <button type="button" aria-expanded={guide} onClick={() => setGuide(!guide)}
+        className={'pointer-events-auto inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[12px] font-medium shadow-[0_2px_8px_rgba(15,23,42,0.10)] transition-colors ' + (guide ? 'border-[#3D8BD0] bg-[#EBF5FF] text-[#2F6FAE]' : 'border-[#DFE5ED] bg-white text-[#364658] hover:bg-[#F9FAFB]')}>
+        <CircleHelp size={14} className="text-[#3D8BD0]" />Help
+      </button>
+    </div>
+  );
 
   /* ── canvas ── */
-  const sectionHead = (g: Group, v2: boolean) => g.sec ? (
-    <div className="flex flex-wrap items-center gap-2">
-      <button type="button" onClick={() => select({ kind: 'section', id: g.sec!.id })} className="flex min-w-0 flex-1 flex-wrap items-center gap-2 text-left">
-        <span className="text-[15px] font-semibold text-[#1D2A3E]">{g.sec.label}</span>
-        {!v2 && <Chip>{colsOf(g)} column{colsOf(g) === 1 ? '' : 's'}</Chip>}
-        {g.sec.techOnly && <Chip tone="amber">Technicians only</Chip>}
-        {g.sec.showWhen && <Chip tone="blue">Shown when {fields.find((x) => x.id === g.sec!.showWhen!.fieldId)?.label ?? '…'} is {g.sec.showWhen.value || '…'}</Chip>}
-      </button>
-      {v2 ? (
-        <button type="button" className={btn2 + ' !h-7'} onClick={() => { select({ kind: 'section', id: g.sec!.id }); const c = values.find((f) => CHOICE.includes(f.kind) && !g.items.includes(f)); if (!g.sec!.showWhen && c) patch(g.sec!.id, { showWhen: { fieldId: c.id, value: '' } }); }}>
-          {g.sec.showWhen ? 'Edit condition' : '+ Add condition'}
+  const sectionHead = (g: Group, v2: boolean, on = false) => {
+    if (!g.sec) return null;
+    const gi = groups.findIndex((x) => x.sec?.id === g.sec!.id);
+    return (
+      <div className="group/sec flex items-center gap-2">
+        <button type="button" aria-pressed={on} onClick={() => select({ kind: 'section', id: g.sec!.id })} className="flex min-w-0 items-center gap-2 text-left">
+          <span className={'truncate text-[14px] font-semibold ' + (on ? 'text-[#2F6FAE]' : 'text-[#1D2A3E]')}>{g.sec.label}</span>
+          {g.sec.techOnly && <Chip tone="amber">Technicians only</Chip>}
+          {g.sec.showWhen && <Chip tone="blue">Shown when {fields.find((x) => x.id === g.sec!.showWhen!.fieldId)?.label ?? '…'} is {g.sec.showWhen.value || '…'}</Chip>}
         </button>
-      ) : <span className="text-[12px] text-[#94A3B8]">Section settings →</span>}
-    </div>
-  ) : null;
+        <span className="h-px min-w-4 flex-1 bg-[#EEF2F6]" />
+        <span className={'flex items-center transition-opacity ' + (on ? 'opacity-100' : 'opacity-0 group-hover/sec:opacity-100 group-focus-within/sec:opacity-100')}>
+          <button type="button" title="Move section up" aria-label="Move section up" className={iconBtn} disabled={gi <= 0 || !groups[gi - 1]?.sec} onClick={() => moveSection(g.sec!.id, -1)}><ArrowUp size={14} /></button>
+          <button type="button" title="Move section down" aria-label="Move section down" className={iconBtn} disabled={gi >= groups.length - 1} onClick={() => moveSection(g.sec!.id, 1)}><ArrowDown size={14} /></button>
+          <button type="button" title="Section settings" aria-label="Section settings" className={iconBtn} onClick={() => select({ kind: 'section', id: g.sec!.id })}><Pencil size={14} /></button>
+          <button type="button" title="Remove section, keep its fields" aria-label="Remove section" className={iconBtn + ' hover:!bg-[#FEF2F2] hover:!text-[#DC2626]'} onClick={() => removeSection(g.sec!.id)}><Trash2 size={14} /></button>
+        </span>
+      </div>
+    );
+  };
 
   const fieldCard = (f: FormField, cols: number, v2: boolean) => {
     const i = fields.findIndex((x) => x.id === f.id);
     const on = sel.kind === 'field' && sel.id === f.id;
     return (
-      <div key={f.id} style={{ gridColumn: `span ${f.width === 'full' ? cols : 1}` }} className="relative min-w-0"
-        onDragOver={v2 ? (e) => { const r = e.currentTarget.getBoundingClientRect(); dragOver(e.clientY < r.top + r.height / 2 ? i : i + 1)(e); } : undefined}
-        onDrop={v2 ? (e) => dropTo(dropAt ?? i, e) : undefined}>
-        {v2 && dropAt === i && <span className="absolute -top-[5px] left-0 right-0 h-[3px] rounded-full bg-[#3D8BD0]" />}
-        {v2 && dropAt === i + 1 && <span className="absolute -bottom-[5px] left-0 right-0 h-[3px] rounded-full bg-[#3D8BD0]" />}
-        <button type="button" onClick={() => select({ kind: 'field', id: f.id })} draggable={v2}
-          onDragStart={v2 ? (e) => { e.dataTransfer.setData('text/form-field', f.id); e.dataTransfer.effectAllowed = 'move'; } : undefined}
+      <div key={f.id} style={{ gridColumn: `span ${f.width === 'full' ? cols : 1}` }} className="group/fw relative min-w-0"
+        onDragOver={(e) => { const r = e.currentTarget.getBoundingClientRect(); dragOver(e.clientY < r.top + r.height / 2 ? i : i + 1)(e); }}
+        onDrop={(e) => dropTo(dropAt ?? i, e)}>
+        {dropAt === i && <span className="absolute -top-[5px] left-0 right-0 h-[3px] rounded-full bg-[#3D8BD0]" />}
+        {dropAt === i + 1 && <span className="absolute -bottom-[5px] left-0 right-0 h-[3px] rounded-full bg-[#3D8BD0]" />}
+        {fieldActions(f, on)}
+        <button type="button" onClick={() => select({ kind: 'field', id: f.id })} draggable
+          onDragStart={(e) => { e.dataTransfer.setData('text/form-field', f.id); e.dataTransfer.effectAllowed = 'move'; }}
           onDragEnd={() => setDropAt(null)}
           className={'group flex w-full flex-col gap-1.5 rounded-lg border px-3 py-2.5 text-left transition-colors ' + (on ? 'border-[#3D8BD0] ring-2 ring-[#EBF5FF]' : 'border-[#DFE5ED] hover:border-[#94A3B8]') + (reqModeOf(f) === 'hidden' ? ' bg-[#FAFBFC]' : ' bg-white')}>
           <span className="flex items-center gap-1.5">
-            {v2 && <GripVertical size={14} className="-ml-1 flex-shrink-0 cursor-grab text-[#CBD5E1] group-hover:text-[#94A3B8]" />}
             <span className="min-w-0 truncate text-[13px] font-medium text-[#1D2A3E]">{f.label}</span>
-            {f.kind !== 'label' && reqModeOf(f) === 'required' && <span className="text-[#F25C4E]">*</span>}
-            {v2 && <span className="ml-auto flex-shrink-0 text-[11.5px] text-[#94A3B8]">{kindLabel(f.kind)}</span>}
+            {f.kind !== 'label' && (f.required || reqModeOf(f) === 'required') && <span className="text-[#F25C4E]">*</span>}
           </span>
           <FieldFace f={f} />
         </button>
       </div>
     );
   };
+
+  /** A section with nothing in it: the picture says what goes here, and the whole block takes a dropped field. */
+  const emptySection = (g: Group, extra?: React.ReactNode) => (
+    <div data-pick onDragOver={dragOver(g.end)} onDragLeave={() => setDropAt(null)} onDrop={(e) => dropTo(g.end, e)}
+      className={'flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors ' + (dropAt === g.end ? 'bg-[#EBF5FF]' : 'bg-[#F7F9FC]')}>
+      <EmptySectionArt lit={dropAt === g.end} />
+      <div className="min-w-0 flex-1">
+        <div className="text-[12.5px] font-medium text-[#364658]">{dropAt === g.end ? 'Drop it here' : 'No fields in this section yet'}</div>
+        <p className="text-[12px] leading-[1.5] text-[#7B8FA5]">Drag a field in from the list, or click a field in the list to add it here.</p>
+        {extra && <div className="mt-2">{extra}</div>}
+      </div>
+    </div>
+  );
+  /** "Drop a field here": the outline of a field that is not there yet. */
+  const dropSlot = (at: number) => (
+    <div onDragOver={dragOver(at)} onDragLeave={() => setDropAt(null)} onDrop={(e) => dropTo(at, e)}
+      className={'flex flex-col gap-1.5 rounded-lg border border-dashed px-3 py-2.5 transition-colors ' + (dropAt === at ? 'border-[#3D8BD0] bg-[#F5FAFF]' : 'border-[#DFE5ED]')}>
+      <span className={'h-2 w-20 rounded-full ' + (dropAt === at ? 'bg-[#BFDBF3]' : 'bg-[#E8EDF3]')} />
+      <span className={'flex h-8 items-center rounded border border-dashed px-2.5 text-[12px] ' + (dropAt === at ? 'border-[#93C5EE] text-[#2F6FAE]' : 'border-[#DFE5ED] text-[#94A3B8]')}>{dropAt === at ? 'Drop it here' : 'Drop a field here'}</span>
+    </div>
+  );
+  const addSectionCard = (cls = '') => (
+    <button type="button" data-pick onClick={addSection} className={'flex flex-col items-center gap-2 rounded-lg border border-dashed border-[#CBD5E1] px-4 py-4 text-center transition-colors hover:border-[#3D8BD0] hover:bg-[#F8FBFF] ' + cls}>
+      <SectionGlyph />
+      <span><span className="block text-[13px] font-medium text-[#3D8BD0]">Add a section</span><span className="mt-0.5 block text-[12px] text-[#7B8FA5]">A heading with its own fields, columns and visibility.</span></span>
+    </button>
+  );
 
   /* V1 — "+" between rows and "Add a field" at the end */
   const canvasV1 = (g: Group, gi: number) => {
@@ -550,9 +765,9 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing, toolbarS
     let idx = g.start;
     const on = sel.kind === 'section' && g.sec && sel.id === g.sec.id;
     return (
-      <section key={g.sec?.id ?? 'lead'} data-sec={g.sec?.id} className={'flex flex-col gap-2 rounded-xl border bg-white p-4 ' + (on ? 'border-[#3D8BD0]' : 'border-[#DFE5ED]')}>
-        {sectionHead(g, false)}
-        {g.sec?.helpText && <p className="-mt-1 text-[12px] text-[#7B8FA5]">{g.sec.helpText}</p>}
+      <section key={g.sec?.id ?? 'lead'} data-sec={g.sec?.id} className="flex flex-col gap-2">
+        {sectionHead(g, false, !!on)}
+        {g.sec?.helpText && <p className="-mt-1.5 text-[12px] text-[#7B8FA5]">{g.sec.helpText}</p>}
         <div className="flex flex-col">
           {rows.map((r) => {
             idx += r.items.length; const after = idx; const key = `${gi}:${after}`;
@@ -563,16 +778,17 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing, toolbarS
                   <span className={'absolute inset-x-0 top-1/2 h-px bg-[#CBD5E1] transition-opacity ' + (menu === key ? 'opacity-100' : 'opacity-0 group-hover/plus:opacity-100')} />
                   <button type="button" aria-label="Add a field here" onClick={() => { setMenu(key); setQ(''); }}
                     className={'relative z-[1] grid size-[22px] place-items-center rounded-full border border-[#CBD5E1] bg-white text-[#3D8BD0] transition-opacity ' + (menu === key ? 'opacity-100' : 'opacity-0 group-hover/plus:opacity-100 focus:opacity-100')}><Plus size={13} /></button>
-                  {menu === key && <AddMenu query={q} onQuery={setQ} onClose={() => setMenu(null)} onPick={(k) => addAt(after, k)} />}
+                  {menu === key && <AddMenu grouped={ui === 'v3'} query={q} onQuery={setQ} onClose={() => setMenu(null)} onPick={(k) => addAt(after, k)} />}
                 </div>
               </div>
             );
           })}
           <div className="relative">
+            {g.items.length === 0 ? emptySection(g, <button type="button" onClick={() => { setMenu(`${gi}:end`); setQ(''); }} className={btn2}>+ Add a field</button>) :
             <button type="button" onClick={() => { setMenu(`${gi}:end`); setQ(''); }} className="w-full rounded-lg border border-dashed border-[#CBD5E1] py-2 text-[12.5px] font-medium text-[#3D8BD0] transition-colors hover:border-[#3D8BD0] hover:bg-[#F8FBFF]">
               + Add a field{g.sec ? ` to ${g.sec.label}` : ''}
-            </button>
-            {menu === `${gi}:end` && <AddMenu below query={q} onQuery={setQ} onClose={() => setMenu(null)} onPick={(k) => addAt(g.end, k)} />}
+            </button>}
+            {menu === `${gi}:end` && <AddMenu below grouped={ui === 'v3'} query={q} onQuery={setQ} onClose={() => setMenu(null)} onPick={(k) => addAt(g.end, k)} />}
           </div>
         </div>
       </section>
@@ -585,21 +801,18 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing, toolbarS
     const on = sel.kind === 'section' && g.sec && sel.id === g.sec.id;
     const key = `${gi}:type`;
     return (
-      <section key={g.sec?.id ?? 'lead'} data-sec={g.sec?.id} className={'flex flex-col gap-3 rounded-xl border bg-white p-4 ' + (on ? 'border-[#3D8BD0]' : 'border-[#DFE5ED]')}>
-        {sectionHead(g, true)}
-        {g.sec?.helpText && <p className="-mt-2 text-[12px] text-[#7B8FA5]">{g.sec.helpText}</p>}
+      <section key={g.sec?.id ?? 'lead'} data-sec={g.sec?.id} className="flex flex-col gap-3">
+        {sectionHead(g, true, !!on)}
+        {g.sec?.helpText && <p className="-mt-2.5 text-[12px] text-[#7B8FA5]">{g.sec.helpText}</p>}
         {g.items.length > 0 && <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>{g.items.map((f) => fieldCard(f, cols, true))}</div>}
         <div className="relative">
           <input ref={(el) => { typeBoxes.current[key] = el; }} value={menu === key ? q : ''} placeholder="Type / to add a field" aria-label={`Add a field to ${g.sec?.label ?? 'the form'}`}
             onFocus={() => { setMenu(key); }} onChange={(e) => { setMenu(key); setQ(e.target.value.replace(/^\//, '')); }}
-            onKeyDown={(e) => { if (e.key === 'Enter') { const m = matchKinds(q)[0]; if (m) addAt(g.end, m.kind); } if (e.key === 'Escape') { setMenu(null); setQ(''); e.currentTarget.blur(); } }}
+            onKeyDown={(e) => { if (e.key === 'Enter') { const m = groupedKinds(q)[0]?.kinds[0]; if (m) addAt(g.end, m); } if (e.key === 'Escape') { setMenu(null); setQ(''); e.currentTarget.blur(); } }}
             className="h-9 w-full rounded-lg border border-dashed border-[#CBD5E1] bg-white px-3 text-[13px] text-[#364658] placeholder:text-[#94A3B8] focus:border-[#3D8BD0] focus:outline-none" />
-          {menu === key && <AddMenu below typed={typeBoxes.current[key]} query={q} onQuery={setQ} onClose={() => setMenu(null)} onPick={(k) => addAt(g.end, k)} />}
+          {menu === key && <AddMenu below grouped typed={typeBoxes.current[key]} query={q} onQuery={setQ} onClose={() => setMenu(null)} onPick={(k) => addAt(g.end, k)} />}
         </div>
-        <div onDragOver={dragOver(g.end)} onDragLeave={() => setDropAt(null)} onDrop={(e) => dropTo(g.end, e)}
-          className={'flex h-10 items-center rounded-lg border border-dashed px-3 text-[13px] transition-colors ' + (dropAt === g.end ? 'border-[#3D8BD0] bg-[#EBF5FF] text-[#2F6FAE]' : 'border-[#CBD5E1] text-[#94A3B8]')}>
-          Drop a field here
-        </div>
+        {g.items.length === 0 ? emptySection(g) : dropSlot(g.end)}
       </section>
     );
   };
@@ -611,11 +824,12 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing, toolbarS
     const i = fields.findIndex((x) => x.id === f.id);
     const on = sel.kind === 'field' && sel.id === f.id;
     return (
-      <div key={f.id} style={{ gridColumn: `span ${f.width === 'full' ? cols : 1}` }} className="relative min-w-0"
+      <div key={f.id} style={{ gridColumn: `span ${f.width === 'full' ? cols : 1}` }} className="group/fw relative min-w-0"
         onDragOver={(e) => { const r = e.currentTarget.getBoundingClientRect(); dragOver(e.clientY < r.top + r.height / 2 ? i : i + 1)(e); }}
         onDrop={(e) => dropTo(dropAt ?? i, e)}>
         {dropAt === i && <span className="absolute -top-[3px] left-2 right-2 z-10 h-[3px] rounded-full bg-[#3D8BD0]" />}
         {dropAt === i + 1 && <span className="absolute -bottom-[3px] left-2 right-2 z-10 h-[3px] rounded-full bg-[#3D8BD0]" />}
+        {(!focusing || on) && fieldActions(f, on)}
         <button type="button" data-pick data-field={f.id} aria-pressed={on} onClick={() => select(on ? { kind: 'form' } : { kind: 'field', id: f.id })} draggable
           onDragStart={(e) => { e.dataTransfer.setData('text/form-field', f.id); e.dataTransfer.effectAllowed = 'move'; }} onDragEnd={() => setDropAt(null)}
           className={'group/f flex w-full flex-col gap-1.5 rounded-lg border px-3 py-2.5 text-left transition-all duration-150 '
@@ -624,7 +838,6 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing, toolbarS
           <span className="flex h-[18px] items-center gap-1.5">
             <span className={'min-w-0 truncate text-[12px] ' + (on ? 'font-medium text-[#1D2A3E]' : 'text-[#64748B]')}>{f.label}</span>
             {f.kind !== 'label' && (f.required || reqModeOf(f) === 'required') && <span className="text-[12px] text-[#F25C4E]">*</span>}
-            <GripVertical size={14} className={'ml-auto flex-shrink-0 cursor-grab text-[#94A3B8] transition-opacity ' + (on ? 'opacity-100' : 'opacity-0 group-hover/f:opacity-100')} />
           </span>
           <FieldFace f={f} />
         </button>
@@ -656,15 +869,10 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing, toolbarS
             </div>
           );
         })()}
-        {g.sec?.helpText && <p className={'px-3 text-[12px] text-[#7B8FA5] ' + (focusing ? 'opacity-40' : '')}>{g.sec.helpText}</p>}
+        {g.sec?.helpText && <p className={'-mt-2 mb-1 px-3 text-[12px] text-[#7B8FA5] ' + (focusing ? 'opacity-40' : '')}>{g.sec.helpText}</p>}
         {g.items.length > 0
           ? <div className="grid gap-x-2 gap-y-1" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>{g.items.map((f) => fieldV3(f, cols))}</div>
-          : (
-            <div onDragOver={dragOver(g.end)} onDragLeave={() => setDropAt(null)} onDrop={(e) => dropTo(g.end, e)}
-              className={'mx-3 mt-1 flex h-14 items-center justify-center rounded-lg border border-dashed text-[12.5px] transition-colors ' + (dropAt === g.end ? 'border-[#3D8BD0] bg-[#EBF5FF] text-[#2F6FAE]' : 'border-[#CBD5E1] text-[#94A3B8]')}>
-              Drag a field here, or pick one from Custom fields
-            </div>
-          )}
+          : <div className="mx-3 mt-1">{emptySection(g)}</div>}
       </section>
     );
   };
@@ -715,11 +923,12 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing, toolbarS
 
   const empty = (
     <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-[#CBD5E1] bg-white px-6 py-12 text-center">
+      <EmptySectionArt big />
       <div className="text-[14px] font-semibold text-[#1D2A3E]">This form has no fields yet</div>
       <p className="max-w-[420px] text-[12.5px] text-[#64748B]">Custom fields appear on every {noun} beside the product’s own fields. Start with a section, then add the fields that belong in it.</p>
       <div className="flex gap-2"><button type="button" className={btn1} onClick={addSection}>+ Add a section</button>
         <div className="relative"><button type="button" className={btn2} onClick={() => { setMenu('empty'); setQ(''); }}>+ Add a field</button>
-          {menu === 'empty' && <AddMenu below query={q} onQuery={setQ} onClose={() => setMenu(null)} onPick={(k) => addAt(0, k)} />}</div>
+          {menu === 'empty' && <AddMenu below grouped={ui === 'v3'} query={q} onQuery={setQ} onClose={() => setMenu(null)} onPick={(k) => addAt(0, k)} />}</div>
       </div>
     </div>
   );
@@ -744,8 +953,9 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing, toolbarS
         return <RuleSelect className="!rounded" disabled={ro} multi={f.kind === 'multiselect'} value={val ? [val] : []} options={o.map((x) => ({ value: x, label: x }))} onChange={(v) => set(v[0] ?? '')} />;
       }
       case 'radio': return <div className="flex flex-wrap gap-3">{optionsOf(f).map((o) => <label key={o} className="flex items-center gap-1.5 text-[12.5px] text-[#364658]"><input type="radio" disabled={ro} name={f.id} checked={val === o} onChange={() => set(o)} />{o}</label>)}</div>;
-      case 'checkbox': return <label className="flex items-center gap-2 text-[12.5px] text-[#364658]"><input type="checkbox" disabled={ro} checked={val === 'Checked'} onChange={(e) => set(e.target.checked ? 'Checked' : '')} />{f.placeholder || 'Yes'}</label>;
-      case 'attachment': return <div className="flex h-9 items-center justify-center rounded border border-dashed border-[#CBD5E1] text-[12px] text-[#94A3B8]">Drop files here or browse</div>;
+      case 'checkbox': if (optionsOf(f).filter((o) => o.trim()).length) return <div className="flex flex-wrap gap-x-4 gap-y-1.5">{optionsOf(f).filter((o) => o.trim()).map((o) => <label key={o} className="flex items-center gap-1.5 text-[12.5px] text-[#364658]"><input type="checkbox" disabled={ro} />{o}</label>)}</div>;
+        return <label className="flex items-center gap-2 text-[12.5px] text-[#364658]"><input type="checkbox" disabled={ro} checked={val === 'Checked'} onChange={(e) => set(e.target.checked ? 'Checked' : '')} />{f.placeholder || 'Yes'}</label>;
+      case 'attachment': return <AttachBox f={f} />;
       case 'date': return <input type="datetime-local" disabled={ro} className={inputCls + ' !rounded'} />;
       case 'number': case 'currency': return <input type="number" disabled={ro} placeholder={f.placeholder} className={inputCls + ' !rounded'} />;
       default: return <input disabled={ro} placeholder={f.placeholder} className={inputCls + ' !rounded'} />;
@@ -784,8 +994,8 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing, toolbarS
       </div>
       <aside className="flex w-[360px] flex-shrink-0 flex-col gap-3 overflow-y-auto border-l border-[#DFE5ED] bg-white p-4">
         <div className="text-[11px] font-semibold uppercase tracking-wider text-[#7B8FA5]">Preview checks</div>
-        {[[isReq ? 'Requester on the portal' : 'Technician on the record', isReq ? 'Technician-only sections and hidden fields are left out. * must be filled to submit. Read-only fields are greyed.' : 'Every section and field. * must be filled before the record can be saved.'],
-          ['Not shown to this role', hiddenNow.length ? hiddenNow.join(' · ') : 'Nothing — this role sees every field.'],
+        {[[isReq ? 'Requester on the portal' : 'The whole form', isReq ? 'Technician-only sections and hidden fields are left out. * must be filled to submit. Read-only fields are greyed.' : 'Every section and field is shown. * must be filled before the record can be saved.'],
+          ...(isReq ? [['Not shown to this role', hiddenNow.length ? hiddenNow.join(' · ') : 'Nothing — this role sees every field.']] : []),
           ['Appears on an answer', condNow.length ? condNow.join(' · ') : 'No conditional sections.']].map(([t, d]) => (
           <div key={t} className="rounded-lg bg-[#F4F6FA] p-3"><div className="text-[12.5px] font-semibold text-[#1D2A3E]">{t}</div><p className="mt-1 text-[12px] leading-[1.5] text-[#64748B]">{d}</p></div>
         ))}
@@ -797,19 +1007,17 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing, toolbarS
   /* ── page ── */
   const v2 = ui === 'v4';
   const v3 = ui === 'v2';
+  /** The "+" builder keeps the guide in its EMPTY panel only; a selected field always shows its settings. */
+  const plusUi = ui === 'v3';
+  /** Nothing selected in the "+" builder: the open guide is all the panel has to show. */
+  const guideFills = guide && plusUi && sel.kind === 'form';
   return (
     <div className="flex h-full min-h-0 flex-col">
       {(() => {
         const controls = (
           <>
-            {dirty ? <Chip tone="amber">Draft · changes not published</Chip> : <Chip>Published · v{published.version}</Chip>}
+            {dirty ? <span title="You have changes that are not published yet"><Chip tone="amber">Draft</Chip></span> : <Chip>Published · v{published.version}</Chip>}
             <div className="ml-auto flex items-center gap-2">
-              {mode === 'preview' && (
-                <div className="pill-track" role="group" aria-label="See it as">
-                  <button type="button" aria-pressed={isReq} onClick={() => { setRole('req'); setAnswers({}); }}>Requester</button>
-                  <button type="button" aria-pressed={!isReq} onClick={() => { setRole('tech'); setAnswers({}); }}>Technician</button>
-                </div>
-              )}
               <div className="pill-track" role="group" aria-label="Mode">
                 <button type="button" aria-pressed={mode === 'build'} onClick={() => setMode('build')}>{v2 ? 'Edit' : 'Build'}</button>
                 <button type="button" aria-pressed={mode === 'preview'} onClick={() => { setMode('preview'); setAnswers({}); setMenu(null); }}>Preview</button>
@@ -820,24 +1028,26 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing, toolbarS
           </>
         );
         /* The new builder hands its controls to the page heading; the others keep their own bar. */
-        if (v3 && toolbarSlot) return createPortal(<div className="flex items-center gap-3">{controls}</div>, toolbarSlot);
+        if (toolbarSlot) return createPortal(<div className="flex items-center gap-3">{controls}</div>, toolbarSlot);
         return <div className="flex flex-shrink-0 items-center gap-3 border-b border-[#EEF2F6] px-4 py-2.5">{controls}</div>;
       })()}
 
       {mode === 'preview' ? preview : v3 ? (
-        <div className="flex min-h-0 flex-1">
+        <div className="relative flex min-h-0 flex-1">
+          {helpFloat}
           <div className="min-h-0 min-w-0 flex-1 overflow-y-auto bg-white" onClick={(e) => { if (!(e.target as HTMLElement).closest('[data-pick]')) select({ kind: 'form' }); }}>
             {/* 4px + a field's own 12px = the page heading's 16px edge. */}
-            <div className="max-w-[1040px] py-3 pl-1 pr-4">
+            <div className="max-w-[1040px] pb-16 pl-1 pr-4 pt-3">
               {groups.length ? (
                 <div className="flex flex-col gap-4">
                   {groups.map((g) => canvasV3(g))}
-                  <button type="button" data-pick onClick={addSection} className={'mx-3 rounded-lg border border-dashed border-[#CBD5E1] py-2 text-[12.5px] font-medium text-[#3D8BD0] transition-all hover:border-[#3D8BD0] hover:bg-[#F8FBFF] ' + (focusing ? 'opacity-40 hover:opacity-100' : '')}>+ Add a section</button>
+                  {addSectionCard('mx-3 ' + (focusing ? 'opacity-40 hover:opacity-100' : ''))}
                 </div>
               ) : empty}
             </div>
           </div>
-          <aside className="flex w-[320px] flex-shrink-0 flex-col border-l border-[#DFE5ED] bg-white">
+          <aside className="flex w-[380px] flex-shrink-0 flex-col border-l border-[#DFE5ED] bg-white">
+            <>
             <div className="flex-shrink-0 border-b border-[#EEF2F6] p-3">
               <div className="pill-track w-full" role="group" aria-label="Panel">
                 <button type="button" aria-pressed={tab === 'fields'} onClick={() => setTab('fields')}>Custom fields</button>
@@ -856,44 +1066,51 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing, toolbarS
                 ) : settings}
               </div>
             )}
+            </>
           </aside>
         </div>
       ) : (
-        <div className="flex min-h-0 flex-1">
-          <div className="min-h-0 min-w-0 flex-1 overflow-y-auto bg-[#F7F9FC]" onClick={(e) => { if (e.target === e.currentTarget) select({ kind: 'form' }); }}>
-            <div className="mx-auto flex max-w-[860px] flex-col gap-4 p-6" onClick={(e) => { if (e.target === e.currentTarget) select({ kind: 'form' }); }}>
+        <div className="relative flex min-h-0 flex-1">
+          {helpFloat}
+          <div className="min-h-0 min-w-0 flex-1 overflow-y-auto bg-white" onClick={(e) => { if (e.target === e.currentTarget) select({ kind: 'form' }); }}>
+            <div className="flex max-w-[1040px] flex-col gap-6 px-4 pb-16 pt-4" onClick={(e) => { if (e.target === e.currentTarget) select({ kind: 'form' }); }}>
               {groups.length ? groups.map((g, gi) => (v2 ? canvasV2(g, gi) : canvasV1(g, gi))) : empty}
-              {groups.length > 0 && <button type="button" onClick={addSection} className="rounded-xl border border-dashed border-[#CBD5E1] py-2.5 text-[12.5px] font-medium text-[#3D8BD0] transition-colors hover:border-[#3D8BD0] hover:bg-[#F8FBFF]">+ Add a section</button>}
+              {groups.length > 0 && addSectionCard()}
             </div>
           </div>
           <aside className="flex w-[380px] flex-shrink-0 flex-col border-l border-[#DFE5ED] bg-white">
+            <>
             {v2 && (
-              <div className="flex flex-shrink-0 gap-2.5 border-b border-[#EEF2F6] px-4" role="tablist">
-                {(['fields', 'settings', 'guide'] as const).map((t) => (
-                  <button key={t} type="button" role="tab" aria-selected={tab === t} onClick={() => setTab(t)}
-                    className={'border-b-2 px-2 py-3 text-[13px] capitalize transition-colors ' + (tab === t ? 'border-[#3D8BD0] font-medium text-[#3D8BD0]' : 'border-transparent text-[#6b7280] hover:border-[#CBD5E1] hover:bg-[#F5F7FA]')}>{t}</button>
-                ))}
+              <div className="flex-shrink-0 border-b border-[#EEF2F6] p-3">
+                <div className="pill-track w-full" role="group" aria-label="Panel">
+                  <button type="button" aria-pressed={tab === 'fields'} onClick={() => setTab('fields')}>Fields</button>
+                  <button type="button" aria-pressed={tab !== 'fields'} onClick={() => setTab('settings')}>Settings</button>
+                </div>
               </div>
             )}
             <div className="min-h-0 flex-1 overflow-y-auto p-4">
               {v2 && tab === 'fields' ? (
-                <div className="flex flex-col gap-2">
-                  <div className="text-[11px] font-semibold uppercase tracking-wider text-[#7B8FA5]">Drag onto a section</div>
-                  <p className="-mt-1 text-[12px] text-[#7B8FA5]">Or click one to add it to {selected?.kind === 'section' ? selected.label : 'the selected section'}.</p>
-                  {ADDABLE_KINDS.map((k) => (
-                    <button key={k} type="button" draggable onDragStart={(e) => { e.dataTransfer.setData('text/form-kind', k); e.dataTransfer.effectAllowed = 'copy'; }} onDragEnd={() => setDropAt(null)}
-                      onClick={() => { const g = (sel.kind === 'section' && groups.find((x) => x.sec?.id === sel.id)) || (sel.kind === 'field' && groupOfField(sel.id)) || groups[groups.length - 1]; addAt(g ? g.end : 0, k); }}
-                      className="flex cursor-grab items-center gap-2 rounded-lg border border-[#DFE5ED] bg-white px-3 py-2 text-left transition-colors hover:border-[#94A3B8] active:cursor-grabbing">
-                      <GripVertical size={14} className="text-[#CBD5E1]" />
-                      <span className="min-w-0"><span className="block text-[13px] font-medium text-[#1D2A3E]">{kindLabel(k)}</span><span className="block truncate text-[11.5px] text-[#7B8FA5]">{typeHelp(k).desc}</span></span>
-                    </button>
+                <div className="flex flex-col">
+                  <p className="text-[12px] text-[#7B8FA5]">Drag a field onto the form, or click it to add it to {selected?.kind === 'section' ? selected.label : 'the selected section'}.</p>
+                  {PALETTE_GROUPS.map((grp) => (
+                    <div key={grp.title} className="mt-5">
+                      <div className="mb-2 text-[13px] font-semibold text-[#1D2A3E]">{grp.title}</div>
+                      <div className="grid grid-cols-2 gap-2.5">
+                        {grp.kinds.map((k) => (
+                          <button key={k} type="button" draggable onDragStart={(e) => { e.dataTransfer.setData('text/form-kind', k); e.dataTransfer.effectAllowed = 'copy'; }} onDragEnd={() => setDropAt(null)}
+                            onClick={() => { if (k === 'section') return addSection(); const g = (sel.kind === 'section' && groups.find((x) => x.sec?.id === sel.id)) || (sel.kind === 'field' && groupOfField(sel.id)) || groups[groups.length - 1]; addAt(g ? g.end : 0, k); }}
+                            className="group/t flex cursor-grab flex-col items-center gap-1.5 text-center active:cursor-grabbing">
+                            <span className="grid h-[78px] w-full place-items-center rounded-lg border border-[#DFE5ED] bg-[#F8FAFC] transition-colors group-hover/t:border-[#3D8BD0] group-hover/t:bg-[#F3F8FD]"><KindArt kind={k} /></span>
+                            <span className="w-full truncate text-[12.5px] text-[#364658]">{kindLabel(k)}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   ))}
-                  <button type="button" onClick={addSection} className={btn2 + ' mt-1'}>+ Add a section</button>
                 </div>
-              ) : v2 && tab === 'guide' ? guideBody() : (
-                v2 && sel.kind === 'form' ? <div className="flex flex-col items-center gap-2 py-10 text-center"><p className="text-[13px] font-medium text-[#1D2A3E]">Nothing selected</p><p className="text-[12px] text-[#7B8FA5]">Click a section or a field on the form to change its settings.</p></div> : settings
-              )}
+              ) : settings}
             </div>
+            </>
           </aside>
         </div>
       )}

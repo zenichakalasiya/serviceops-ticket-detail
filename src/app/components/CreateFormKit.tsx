@@ -102,7 +102,7 @@ export function CreatePageShell({ title, onBack, error, actions, split, children
           <div data-create-scroll className="min-h-0 min-w-0 flex-1 overflow-y-auto">
             <div className="max-w-[840px] space-y-10 px-4 py-6">{children}</div>
           </div>
-          <div className="w-[360px] flex-shrink-0 xl:w-[420px]">{aside}</div>
+          <div className="w-[360px] flex-shrink-0 has-[>aside[data-guide-rail]]:!w-0 xl:w-[420px]">{aside}</div>
         </div>
       ) : (
         <div data-create-scroll className="min-h-0 flex-1 overflow-y-auto">

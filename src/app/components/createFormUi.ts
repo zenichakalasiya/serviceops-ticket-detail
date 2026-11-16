@@ -13,14 +13,16 @@ import { useEffect, useState } from 'react';
  * Every version shows the SAME single guide per form (CreateFormHelp) — never one per step.
  * V4 and V5 need NO click to move between parts — the stepped versions cost 2–4 per create (Zeni).
  * V2 and V3 show the MERGED steps in createFormSteps.ts (a section holding a lone field joins its
- * neighbour); V1 keeps every section as it is. Remembered per browser; opens on V1.
+ * neighbour); V1 keeps every section as it is. Remembered per browser; opens on V3 (Zeni, 16 Nov 2026).
+ * The guide can be HIDDEN in every version (useCreateGuideHidden): it folds to a slim rail in the same place,
+ * and the rail's button brings it back. Remembered per browser.
  */
 export type CreateFormUi = 'v1' | 'v2' | 'v3' | 'v4' | 'v5';
-const KEY = 'createFormUi';
+const KEY = 'createFormUi2';
 const EVENT = 'create-form-ui';
 
 export function readCreateFormUi(): CreateFormUi {
-  try { const v = localStorage.getItem(KEY); return v === 'v2' || v === 'v3' || v === 'v4' || v === 'v5' ? v : 'v1'; } catch { return 'v1'; }
+  try { const v = localStorage.getItem(KEY); return v === 'v1' || v === 'v2' || v === 'v4' || v === 'v5' ? v : 'v3'; } catch { return 'v3'; }
 }
 export function setCreateFormUi(v: CreateFormUi) {
   try { localStorage.setItem(KEY, v); } catch { /* private mode */ }
@@ -32,6 +34,24 @@ export function useCreateFormUi(): CreateFormUi {
     const on = () => setV(readCreateFormUi());
     window.addEventListener(EVENT, on);
     return () => window.removeEventListener(EVENT, on);
+  }, []);
+  return v;
+}
+
+/* The help guide, shown or hidden — one choice for every create form. */
+const GUIDE_KEY = 'createFormGuide';
+const GUIDE_EVENT = 'create-form-guide';
+const readGuideHidden = () => { try { return localStorage.getItem(GUIDE_KEY) === 'hidden'; } catch { return false; } };
+export function setCreateGuideHidden(hidden: boolean) {
+  try { localStorage.setItem(GUIDE_KEY, hidden ? 'hidden' : 'shown'); } catch { /* private mode */ }
+  window.dispatchEvent(new Event(GUIDE_EVENT));
+}
+export function useCreateGuideHidden(): boolean {
+  const [v, setV] = useState(readGuideHidden);
+  useEffect(() => {
+    const on = () => setV(readGuideHidden());
+    window.addEventListener(GUIDE_EVENT, on);
+    return () => window.removeEventListener(GUIDE_EVENT, on);
   }, []);
   return v;
 }

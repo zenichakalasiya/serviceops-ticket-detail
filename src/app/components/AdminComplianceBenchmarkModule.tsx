@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 import {
   ArrowLeft, BadgeCheck, Check, ChevronDown, ChevronRight, Copy, ExternalLink, FolderPlus, Layers, Link2, Lock, Monitor, MoreVertical,
-  Pencil, Plus, PlusCircle, Search, ShieldAlert, Trash2, X, CornerDownRight, ArrowDown, ChevronsDownUp, GripVertical,
+  Pencil, Plus, PlusCircle, Search, ShieldAlert, Trash2, X, CornerDownRight, ArrowDown, ChevronsDownUp, GripVertical, History,
 } from 'lucide-react';
 import { useComplianceRuleUi } from './complianceRuleUi';
 import { Pagination } from './Pagination';
@@ -202,6 +202,7 @@ function BenchmarkList({ benchmarks, onOpen, onCreate, onEdit, onClone, onDelete
   onDelete: (b: Benchmark) => void;
 }) {
   const [search, setSearch] = useState('');
+  const [historyFor, setHistoryFor] = useState<Benchmark | null>(null);
   const usedBy = usePolicyCounts();
   const [rules, setRulesRaw] = useState<FilterRule[]>([]);
   const [page, setPage] = useState(1);
@@ -271,24 +272,23 @@ function BenchmarkList({ benchmarks, onOpen, onCreate, onEdit, onClone, onDelete
       </div>
 
       <div className="-mx-4 overflow-x-auto">
-        {/* Zeni, 2 Nov 2026: the columns below, and no row actions — a row opens the benchmark, whose
-            header carries Edit · Clone · Download (Delete under its ⋮). */}
-        <table className="w-full min-w-[1540px] table-fixed leading-5">
+        {/* Zeni, 16 Nov 2026: an Action column (Duplicate · History · Edit · Delete). Created / Updated
+            By and Date left the listing — they are read in the History panel. */}
+        <table className="w-full min-w-[1000px] table-fixed leading-5">
           <colgroup>
-            <col className="w-[110px]" /><col /><col className="w-[190px]" /><col className="w-[100px]" /><col className="w-[90px]" />
-            {/* Created / Updated split into By and Date (Zeni, 12 Nov 2026). */}
-            <col className="w-[96px]" /><col className="w-[150px]" /><col className="w-[200px]" /><col className="w-[150px]" /><col className="w-[200px]" />
+            <col className="w-[110px]" /><col /><col className="w-[190px]" /><col className="w-[100px]" /><col className="w-[100px]" />
+            <col className="w-[96px]" /><col className="w-[164px]" />
           </colgroup>
           <thead className="border-b border-[#e5e7eb]">
             <tr>
-              {['Benchmark ID', 'Name', 'Platform', 'OS Version', 'Total Rules', 'Source', 'Created By', 'Created Date', 'Updated By', 'Updated Date'].map((h) => (
+              {['Benchmark ID', 'Name', 'Platform', 'OS Version', 'Total Rules', 'Source', 'Action'].map((h) => (
                 <th key={h} className="whitespace-nowrap px-4 py-2.5 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-[#e5e7eb] bg-white">
             {pageRows.length === 0 ? (
-              <tr><td colSpan={10} className="px-4 py-12 text-center text-[13px] text-[#9CA3AF]">No benchmark matches these filters.</td></tr>
+              <tr><td colSpan={7} className="px-4 py-12 text-center text-[13px] text-[#9CA3AF]">No benchmark matches these filters.</td></tr>
             ) : pageRows.map((b) => (
               <tr key={b.id} onClick={() => onOpen(b.id)} className="cursor-pointer transition-colors hover:bg-[#f9fafb]">
                 <td className="whitespace-nowrap px-4 py-3"><span className="rounded bg-[#e8f4fd] px-1.5 py-px text-[12px] font-medium text-[#3D8BD0]">{b.id}</span></td>
@@ -299,12 +299,14 @@ function BenchmarkList({ benchmarks, onOpen, onCreate, onEdit, onClone, onDelete
                 <td className="whitespace-nowrap px-4 py-3 text-[13px] text-[#364658]">{platformOf(b.osVersion).version || '—'}</td>
                 <td className="whitespace-nowrap px-4 py-3 text-[13px] text-[#364658]">{benchmarkRuleIds(b).length}</td>
                 <td className="whitespace-nowrap px-4 py-3"><OriginTag origin={b.origin} /></td>
-                {[benchmarkCreated(b), benchmarkUpdated(b)].map((x, i) => (
-                  <Fragment key={i}>
-                    <td className="px-4 py-3"><span className="block truncate text-[13px] text-[#364658]" title={x.by}>{x.by}</span></td>
-                    <td className="overflow-hidden truncate whitespace-nowrap px-4 py-3 text-[13px] text-[#364658]" title={fmtDate(x.at)}>{fmtDate(x.at)}</td>
-                  </Fragment>
-                ))}
+                <td className="whitespace-nowrap px-4 py-2" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center gap-0.5">
+                    <ActionIcon label="Duplicate" onClick={() => onClone(b.id)}><Copy size={15} /></ActionIcon>
+                    <ActionIcon label="History" onClick={() => setHistoryFor(b)}><History size={15} /></ActionIcon>
+                    <ActionIcon label="Edit" reason={b.origin === 'Default' ? DEFAULT_READ_ONLY : undefined} onClick={() => onEdit(b.id)}><Pencil size={15} /></ActionIcon>
+                    <ActionIcon label="Delete" danger reason={deleteReason(b, usedBy(b.id))} onClick={() => onDelete(b)}><Trash2 size={15} /></ActionIcon>
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -319,7 +321,114 @@ function BenchmarkList({ benchmarks, onOpen, onCreate, onEdit, onClone, onDelete
         onPageChange={setPage}
         onItemsPerPageChange={(v) => { setPerPage(v); setPage(1); }}
       />
+      {historyFor && <BenchmarkHistoryPanel benchmark={historyFor} onClose={() => setHistoryFor(null)} />}
     </div>
+  );
+}
+
+/* ── History panel — the record's events, between two dates (the product's "History: <name>") ── */
+
+type HistoryEvent = { event: string; at: string; by: string; summary: string };
+
+/** Built from what the benchmark itself records — when it was made and by whom, and its last
+ *  change. Nothing is invented: an update says only that the benchmark was changed. */
+function historyOf(b: Benchmark): HistoryEvent[] {
+  const cr = benchmarkCreated(b), up = benchmarkUpdated(b);
+  const { platform, version } = platformOf(b.osVersion);
+  const n = benchmarkRuleIds(b).length;
+  const out: HistoryEvent[] = [{
+    event: 'Create Benchmark',
+    at: cr.at,
+    by: cr.by,
+    summary: `A new benchmark ${b.name} is created for ${[platform, version].filter(Boolean).join(' ') || b.osVersion} with ${n} rule${n === 1 ? '' : 's'}, OS Type as ${b.type}, Source as ${b.origin}.`,
+  }];
+  if (up.at && up.at !== cr.at) out.push({ event: 'Update Benchmark', at: up.at, by: up.by, summary: `Benchmark ${b.name} is updated.` });
+  return out.sort((a, c) => c.at.localeCompare(a.at));
+}
+
+const dayStart = (iso: string) => `${iso.slice(0, 10)}T00:00`;
+const todayEnd = () => { const d = new Date(); const p = (x: number) => String(x).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T23:59`; };
+
+function BenchmarkHistoryPanel({ benchmark, onClose }: { benchmark: Benchmark; onClose: () => void }) {
+  const all = useMemo(() => historyOf(benchmark), [benchmark]);
+  const earliest = all.reduce((m, e) => (e.at < m ? e.at : m), all[0]?.at ?? todayEnd());
+  const [from, setFrom] = useState(dayStart(earliest));
+  const [to, setTo] = useState(todayEnd());
+  const [range, setRange] = useState({ from: dayStart(earliest), to: todayEnd() });
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(25);
+  useEffect(() => {
+    const k = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', k);
+    return () => window.removeEventListener('keydown', k);
+  }, [onClose]);
+
+  const invalid = !from || !to || from > to;
+  const rows = all.filter((e) => e.at.slice(0, 16) >= range.from && e.at.slice(0, 16) <= range.to);
+  const pageRows = rows.slice((page - 1) * perPage, page * perPage);
+  const dateCls = 'h-9 w-[230px] rounded border border-[#d1d5db] bg-white px-3 text-[13px] text-[#364658] focus:border-[#3D8BD0] focus:outline-none focus:ring-1 focus:ring-[#3D8BD0]';
+
+  return createPortal(
+    <div className="fixed inset-0 z-[10050] flex justify-end bg-black/30" onMouseDown={onClose}>
+      <div className="flex h-full w-[940px] max-w-[95vw] flex-col bg-white shadow-xl" onMouseDown={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between border-b border-[#e5e7eb] px-5 py-3.5">
+          <h2 className="min-w-0 truncate text-[16px] font-semibold text-[#364658]">History: {benchmark.name}</h2>
+          <button type="button" onClick={onClose} aria-label="Close" className="flex size-8 items-center justify-center rounded transition-colors hover:bg-[#F3F4F6]"><X size={18} className="text-[#64748B]" /></button>
+        </div>
+        <div className="flex flex-wrap items-end gap-3 px-5 pt-4">
+          <label className="block">
+            <span className="mb-1 block text-[12px] text-[#64748B]">From <span className="text-[#DC2626]">*</span></span>
+            <input type="datetime-local" value={from} onChange={(e) => setFrom(e.target.value)} className={dateCls} />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-[12px] text-[#64748B]">To <span className="text-[#DC2626]">*</span></span>
+            <input type="datetime-local" value={to} onChange={(e) => setTo(e.target.value)} className={dateCls} />
+          </label>
+          <button
+            type="button"
+            disabled={invalid}
+            onClick={() => { setRange({ from, to }); setPage(1); }}
+            className="h-9 rounded bg-[#3D8BD0] px-4 text-[13px] font-medium text-white transition-colors hover:bg-[#3478B5] disabled:cursor-not-allowed disabled:opacity-50"
+          >Search</button>
+          {from && to && from > to && <span className="pb-2 text-[12px] text-[#DC2626]">From must be before To.</span>}
+        </div>
+        <div className="mt-4 min-h-0 flex-1 overflow-auto">
+          <table className="w-full table-fixed leading-5">
+            <colgroup><col className="w-[170px]" /><col className="w-[210px]" /><col className="w-[150px]" /><col /></colgroup>
+            <thead className="border-b border-[#e5e7eb]">
+              <tr>
+                {['Event', 'Event Time', 'User', 'Change Summary'].map((h) => (
+                  <th key={h} className="whitespace-nowrap px-5 py-2.5 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#e5e7eb] bg-white">
+              {pageRows.length === 0 ? (
+                <tr><td colSpan={4} className="px-5 py-12 text-center text-[13px] text-[#9CA3AF]">No history between these dates.</td></tr>
+              ) : pageRows.map((e, i) => (
+                <tr key={i} className="align-top">
+                  <td className="px-5 py-3 text-[13px] text-[#364658]">{e.event}</td>
+                  <td className="whitespace-nowrap px-5 py-3 text-[13px] text-[#364658]">{fmtDate(e.at)}</td>
+                  <td className="px-5 py-3"><span className="block truncate text-[13px] text-[#364658]" title={e.by}>{e.by}</span></td>
+                  <td className="px-5 py-3 text-[13px] leading-[1.6] text-[#364658]">{e.summary}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="border-t border-[#e5e7eb] px-5">
+          <Pagination
+            currentPage={page}
+            totalPages={Math.max(1, Math.ceil(rows.length / perPage))}
+            itemsPerPage={perPage}
+            totalItems={rows.length}
+            onPageChange={setPage}
+            onItemsPerPageChange={(v) => { setPerPage(v); setPage(1); }}
+          />
+        </div>
+      </div>
+    </div>,
+    document.body,
   );
 }
 

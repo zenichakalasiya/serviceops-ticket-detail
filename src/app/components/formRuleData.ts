@@ -35,6 +35,22 @@ export interface FormField {
   requesterEdit?: boolean;
   requesterRequired?: boolean;
   aiAccessible?: boolean;
+  /* The rest of the product's field settings (read from the product's builder, 16 Nov 2026). */
+  defaultValue?: string;
+  /** Text: characters. Number / Currency: value. */
+  min?: string;
+  max?: string;
+  allowDecimal?: boolean;
+  /** Datetime: also ask for a time. */
+  allowTime?: boolean;
+  /** Attachment: the words on the upload button. */
+  buttonText?: string;
+  /** Only the system fills it (automation, integration); people cannot edit it. */
+  systemManaged?: boolean;
+  /** Holds personal data. */
+  pii?: boolean;
+  /** Text: a pattern the answer must match. */
+  validation?: string;
   /* Section fields only (Form Studio, 2 Nov 2026) — a section carries the layout and logic of the fields under it. */
   /** How many columns the section lays its fields in. Default 2. */
   cols?: 1 | 2 | 3;

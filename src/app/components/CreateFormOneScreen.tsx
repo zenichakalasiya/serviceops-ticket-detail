@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { setCreateGuideHidden, useCreateGuideHidden } from './createFormUi';
 import { SplitCta } from './CreateFormKit';
 import type { ShellAction } from './CreateFormKit';
 import { Check, ChevronRight } from 'lucide-react';
@@ -32,7 +33,9 @@ export function SummaryAside({ groups, onJump, cta, onCreate, secondary, onSecon
   noun: string;
 }) {
   /* No Summary tab (Zeni, 30 Oct 2026): the panel is the guide; the summary list shows only for a form with no guide. */
-  const tab: 'summary' | 'guide' = guide ? 'guide' : 'summary';
+  /* The guide hidden: the summary takes its place, with the way back to the guide in its title row. */
+  const guideHidden = useCreateGuideHidden();
+  const tab: 'summary' | 'guide' = guide && !guideHidden ? 'guide' : 'summary';
   const [more, setMore] = useState<number[]>([]);
   const required = groups.filter((g) => !g.optional);
   const ready = required.filter((g) => !g.missing.length).length;
@@ -43,6 +46,7 @@ export function SummaryAside({ groups, onJump, cta, onCreate, secondary, onSecon
       {tab === 'summary' && <div className="flex flex-shrink-0 items-center gap-2 px-4 pb-3 pt-3.5">
         <span className="h-[18px] w-[3px] flex-shrink-0 rounded-full bg-[#1D2A3E]" />
         <h2 className="min-w-0 flex-1 truncate text-[16px] font-medium text-[#1D2A3E]">{noun} summary</h2>
+        {guide && <button type="button" onClick={() => setCreateGuideHidden(false)} className="inline-flex h-7 flex-shrink-0 items-center gap-1 rounded border border-[#DFE5ED] bg-white px-2 text-[12px] font-medium text-[#364658] transition-colors hover:bg-[#F9FAFB]">Show guide</button>}
       </div>}
 
       {tab === 'guide' && guide ? (

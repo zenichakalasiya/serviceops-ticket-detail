@@ -92,7 +92,7 @@ export function SteppedPageShell({ title, onBack, error, secondary, final, split
             <div className="ml-auto"><StepNav current={current} steps={steps} onStep={onStep} onNext={onNext} final={final} split={split} /></div>
           </div>
         </div>
-        <div className="w-[360px] flex-shrink-0 xl:w-[400px]">{help}</div>
+        <div className="w-[360px] flex-shrink-0 has-[>aside[data-guide-rail]]:!w-0 xl:w-[400px]">{help}</div>
       </div>
       {overlays}
     </div>
@@ -111,10 +111,10 @@ export function SteppedDrawerShell({ title, onBack, error, secondary, final, spl
   return (
     <div className="fixed inset-x-0 bottom-0 top-[56px] z-[9000]">
       <div className="absolute inset-0 bg-[#0F172A]/30" onClick={onBack} />
-      <div className="absolute inset-y-0 right-0 flex w-[min(1180px,calc(100vw-72px))] flex-col bg-white shadow-2xl">
+      <div className="absolute inset-y-0 right-0 flex w-[min(1180px,calc(100vw-72px))] flex-col bg-white shadow-2xl transition-[width] duration-200 has-[aside[data-guide-rail]]:w-[min(820px,calc(100vw-72px))]">
         <div className="flex min-h-0 flex-1">
           <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-            <div className="flex flex-shrink-0 items-center gap-2 px-5 pb-2 pt-4">
+            <div className="flex flex-shrink-0 items-center gap-2 px-5 pb-2 pt-4 [div:has(aside[data-guide-rail])_&]:pr-[88px]">
               <h1 className="min-w-0 flex-1 truncate text-[16px] font-medium text-[#1D2A3E]">{title}</h1>
               {error && <span className="text-[12px] text-[#F25C4E]">{error}</span>}
             </div>
@@ -139,7 +139,7 @@ export function SteppedDrawerShell({ title, onBack, error, secondary, final, spl
             </div>
           </div>
           {/* The guide, from the drawer's top edge down; the close X sits in its corner, so its title row keeps room for it. */}
-          <div className="relative w-[360px] flex-shrink-0 border-l border-[#EEF2F6] [&>aside>div:first-child]:pr-12 [&>aside>div:first-child]:pt-[18px]">
+          <div className="relative w-[360px] flex-shrink-0 border-l border-[#EEF2F6] has-[>aside[data-guide-rail]]:!w-0 has-[>aside[data-guide-rail]]:border-l-0 [&>aside>div:first-child]:pr-12 [&>aside>div:first-child]:pt-[18px] [&>aside[data-guide-rail]>button]:!top-[20px] [&>aside[data-guide-rail]>button]:!-left-[68px]">
             {help}
             <button type="button" onClick={onBack} title="Close" className="absolute right-3 top-3.5 flex size-8 items-center justify-center rounded text-[#7B8FA5] transition-colors hover:bg-[#F3F4F6]"><X size={16} /></button>
           </div>

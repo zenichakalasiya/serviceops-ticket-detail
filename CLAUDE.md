@@ -3247,3 +3247,46 @@ The **Builder** pill beside the logo (every admin form page; `formStudioUi.ts`, 
     - the rule panel's "N of N endpoints";
     - the Create Policy schedule lines.
   - ⚠️ **A listing's saved column set is keyed `<moduleCols>ListColumns<ver>`.** Bump its entry in `COL_KEY_VERSION` (TicketTable) when its default columns change.
+- **Form builder, later 16 Nov 2026 (supersedes the Help-guide button and panel takeover above).** The pill opens on **V3**
+  (`DEFAULT_BUILDER`; storage key `formBuilderUi2`). The Help guide is ONE row at the top of the right panel in V2 / V3 / V4
+  (`guideBar`): "Help guide · Hide/Show" folds and unfolds IN PLACE and never replaces the settings under it (Zeni: a close
+  button that swapped the whole panel read as closing the drawer). Open, it shows "About <type>" for the selected field then
+  the build guide, capped at 38vh; in V3 with nothing selected it fills the panel. Remembered per builder
+  (`formStudioGuide:<ui>`); open by default in V3 only. There is no Help guide button in the heading toolbar.
+- **Correction, 16 Nov 2026 (latest): "V3 as default" and "hide the help guide" were about the TECHNICIAN CREATE PAGES, not the form
+  builder.** The form builder pill opens on **V2** again (storage key `formBuilderUi3`) and its guide row starts folded in every
+  builder; the fold-in-place row itself stays. **Create pages:** `createFormUi` opens on **V3** (side drawer; key `createFormUi2`).
+  The guide has a **Hide guide** button in its title row (`CreateFormHelpPanel`); hidden, it becomes a 44px rail in the same place
+  (`aside[data-guide-rail]`, "Show guide") and the form takes the freed width. The hosts shrink their column with
+  `has-[>aside[data-guide-rail]]:!w-11` (CreatePageShell, SteppedPageShell, SteppedDrawerShell — where the drawer's close X stays
+  on top of the rail). V5 (`SummaryAside`) shows the live summary in place of a hidden guide, with **Show guide** in its title
+  row. One choice for every create form, remembered (`useCreateGuideHidden`, localStorage `createFormGuide`).
+- **Create-page guide: the control is an ARROW HANDLE on the divider (16 Nov 2026, Zeni's pick; supersedes the Hide guide button and
+  the 44px rail above).** `CreateFormHelpPanel` draws a round arrow on its own left edge (`handle`, -left-3); hidden, the guide is a
+  0-width `aside[data-guide-rail]` and the arrow stays just inside the right edge (-left-9), flipped. Hosts close the column with
+  `has-[>aside[data-guide-rail]]:!w-0`; the V3 drawer also NARROWS (1180 → 820px, `has-[aside[data-guide-rail]]:w-[min(820px,…)]`,
+  200ms) and widens again when the guide returns. V5 is the exception: hiding shows the summary, and its title row has "Show guide".
+- **Form builder, 16 Nov 2026 (night; supersedes the fold-in-place Help guide row).** In V2 / V3 / V4:
+  **Help** = a pill button at the form's bottom right (`helpFloat`, absolute, 336px from the right so it clears the 320px panel) that
+  opens a 300px floating card of SHORT POINTS: the selected field's type first (`typeHelp` what / how split into sentences + example),
+  then six "Build a form" points. Remembered per builder (`formStudioGuide:<ui>`), closed by default. `guideBody` / `BUILD_GUIDE` are
+  no longer shown. **Field actions** (`fieldActions`): on hover or when selected, four small icons at a field's top right — drag,
+  half / full width, copy (`duplicateField`, the copy is never a product field), remove (disabled on product fields with the reason).
+  Fields drag and drop in all three builders now. **Attachment field** = `AttachBox`, the BOM ingest upload box (dashed, Upload icon,
+  "Drop files here, or click to choose"). **Empty states are drawn:** `emptySection` (`EmptySectionArt` + two lines; the whole block
+  is the drop zone), `dropSlot` (V4's "Drop a field here" as a ghost field), `addSectionCard` (`SectionGlyph` + two lines).
+  **Stepper form (a form filled step by step, like the V3 create layout): NOT built.** Zeni wants competitor research first, then design.
+- **Form builder Options (16 Nov 2026, late).** `OptionsEditor` (module-level in FormStudio.tsx) replaces the two text boxes, after
+  the .185 Edit panel's Options block: one grey row per option (drag by the grip to reorder among siblings, type to rename, x on hover),
+  **Add** under the list (Enter in a row adds the next), **Import** / **Export** (a .csv / .txt, one option per line). Dropdown,
+  Multi-Select, Radio and now **Checkbox** use it flat (`options`; flat rows are id'd `o<index>`); **Dependent** uses it nested on
+  `optionTree` — + on a row adds a child, chevrons fold, and a file line is a path ("Hardware > Laptop > Battery"). A checkbox with
+  options draws as a group of boxes (builder and preview). Not built from .185: the separate "Re-order" mode and the per-row pencil
+  (rows are edited in place).
+- **V4 Fields panel = drawn tiles, and V4's add popup = V3's (16 Nov 2026, Zeni).** V4's Fields tab shows each field type as a
+  tile: a thin-line wireframe of the control (`KIND_ART`, 72×44 viewBox, `KindArt`) over its name, two per row, in the
+  `PALETTE_GROUPS` headings; click or drag adds it. Small glyphs inside a drawing are REAL lucide icons via `ic(Icon, x, y, size,
+  color)` — a lucide component nested in the SVG with `absoluteStrokeWidth`, so every stroke is 1 unit whatever the size;
+  `chev()` is lucide ChevronDown. Zeni wants clean thin vector lines, nothing bold or filled. V4's "Type / to add a field" box
+  opens `AddMenu grouped typed` — the same two-column, icon-per-field popup as V3, with a hint line instead of its own search
+  (the typed box filters). `groupedKinds(query)` is the ONE list both popups and V4's Enter key read, so Enter adds what is shown first.

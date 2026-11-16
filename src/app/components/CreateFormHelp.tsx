@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { AlertTriangle, BookOpen, CheckCircle2, ChevronDown, ClipboardList, Lightbulb, ListChecks, TextCursorInput } from 'lucide-react';
+import { AlertTriangle, BookOpen, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, ClipboardList, Lightbulb, ListChecks, TextCursorInput } from 'lucide-react';
+import { setCreateGuideHidden, useCreateGuideHidden } from './createFormUi';
 import { FORM_HELP, type FormHelp } from './createFormGuides';
 
 /**
@@ -130,8 +131,21 @@ export function CreateFormHelpPanel({ help, onOpen, available, bare }: {
   const [shut, setShut] = useState<string[]>(['fields', 'example', 'mistakes']);
   const toggle = (id: string) => setShut((x) => (x.includes(id) ? x.filter((i) => i !== id) : [...x, id]));
 
+  /* Hide / show (Zeni, 16 Nov 2026): a round arrow on the line between the form and the guide. Hidden, the
+     guide's column closes (the host spots [data-guide-rail] and, in the drawer, narrows the drawer too) and the
+     arrow stays on that edge, flipped, so the same spot brings the guide back. */
+  const hidden = useCreateGuideHidden();
+  const handle = (
+    <button type="button" onClick={() => setCreateGuideHidden(!hidden)} title={hidden ? 'Show guide' : 'Hide guide'} aria-label={hidden ? 'Show guide' : 'Hide guide'} aria-expanded={!hidden}
+      className={'absolute top-[16px] z-20 flex size-5 items-center justify-center rounded-full border border-[#CBD5E1] bg-white text-[#475569] shadow-[0_1px_3px_rgba(15,23,42,0.12)] transition-colors hover:border-[#3D8BD0] hover:bg-[#EBF5FF] hover:text-[#3D8BD0] ' + (hidden ? '-left-8' : '-left-2.5')}>
+      {hidden ? <ChevronLeft size={12} /> : <ChevronRight size={12} />}
+    </button>
+  );
+  if (hidden) return <aside data-guide-rail className="relative h-full w-0" aria-label={`${help.noun} guide, hidden`}>{handle}</aside>;
+
   return (
-    <aside ref={asideRef} className={'flex h-full min-h-0 flex-col bg-white ' + (bare ? '' : 'border-l border-[#DFE5ED]')} aria-label={`${help.noun} guide`}>
+    <aside ref={asideRef} className={'relative flex h-full min-h-0 flex-col bg-white ' + (bare ? '' : 'border-l border-[#DFE5ED]')} aria-label={`${help.noun} guide`}>
+      {handle}
       <div className="flex flex-shrink-0 items-center gap-2 px-4 pb-3 pt-3.5">
         <span className="h-[18px] w-[3px] flex-shrink-0 rounded-full bg-[#1D2A3E]" />
         <h2 className="min-w-0 flex-1 text-[16px] font-medium text-[#1D2A3E]">{help.noun} Guide</h2>

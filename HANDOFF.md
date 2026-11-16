@@ -1,4 +1,33 @@
-# Handoff — 2026-11-16 (Compliance: module renamed Compliance Audit, label + subtext trims)
+# Handoff — 2026-11-16 17:37 (Form builder V4: clean field-tile drawings + V3 add popup)
+
+> Sessions share this file. This top part is the newest; older notes follow.
+
+## Read first
+CLAUDE.md → "Form builder versions (16 Nov 2026, Zeni)", its last bullet (V4 Fields tiles + V4 add popup).
+
+## What we worked on this session
+Picked up a tab that ran out of usage mid-request: Zeni found several V4 › Fields tile drawings not clean. Then gave V4's "Type / to add a field" box the same popup V3 uses.
+
+## Completed (headless browser, no page errors, build green)
+- **V4 field tiles redrawn** (`KIND_ART` in FormStudio.tsx): Rich Text Area, Dropdown, Multi-Select, Checkbox, Radio, Attachment, Section, URL, Dependent, API, Dynamic. Small glyphs are now real lucide icons through `ic()`, stroke held at 1 unit (`absoluteStrokeWidth`); `chev()` is lucide ChevronDown too.
+- **V4 add popup = V3's**: `AddMenu grouped typed` — two columns, icon per field, group headings. In V4 the typed box is the search, so the popup shows a hint line instead of its own search box. Enter adds the first match in the SAME grouped order (`groupedKinds()`, shared by both). Tested: "curr" → Currency, Enter took the form 18 → 19 fields.
+
+## In progress
+Nothing mid-flight.
+
+## Next steps
+- Zeni to review the tiles and the V4 popup; dragging a tile onto the form is still not browser-tested.
+
+## Decisions made
+- No second search box in V4's popup — the "Type / to add a field" box already filters.
+
+## Gotchas & notes
+- Lucide icons can be nested inside an SVG drawing (`x`/`y`/`size` props); `absoluteStrokeWidth` keeps their stroke in the outer drawing's units.
+- This publish also carries other tabs' uncommitted work in the shared tree (create forms, form builder settings, compliance edits).
+
+---
+
+## (earlier) Handoff — 2026-11-16 (Compliance: module renamed Compliance Audit, label + subtext trims)
 
 > Sessions share this file. This top part is the newest; older notes follow.
 

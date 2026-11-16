@@ -284,7 +284,7 @@ export function AdminRequestFormModule({ tab, onTab, onEditor, openRuleId }: {
             onCreateRule={(id) => { setPrefill(id); setEditing('new'); }}
             onReuseRule={(ruleId, id) => { setPrefill(id); setStartStep(1); setEditing(ruleId); }} />
         ) :
-        <div className={'-mx-4 -mb-6 min-h-[520px] ' + (builderUi === 'v2' ? '-mt-4 h-[calc(100vh-56px-136px)]' : 'h-[calc(100vh-56px-178px)] border-t border-[#EEF2F6]')}>
+        <div className="-mx-4 -mb-6 -mt-4 h-[calc(100vh-56px-136px)] min-h-[520px]">
           <FormStudio title="Request Form" noun="request" fields={fields} onFields={setFields} toolbarSlot={toolbarSlot}
             rulesUsing={(id) => rules.filter((r) => r.groups.some((g) => g.conditions.some((c) => c.fieldId === id)) || r.actions.some((a) => a.fieldIds.includes(id))).length} />
         </div>
