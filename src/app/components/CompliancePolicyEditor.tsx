@@ -159,13 +159,7 @@ export function ScheduleFields({ value, onChange, half }: { value: PolicySchedul
           title={f !== 'none' ? 'Turn off the schedule' : 'Schedule this policy'}
         />
       </label>
-      {f === 'none' && (
-        /* The icon sits on the FIRST line of the sentence, however many lines it wraps to. */
-        <p className="mt-2 flex items-start gap-1.5 text-[12px] leading-[18px] text-[#64748B]">
-          <Info size={13} className="mt-[2.5px] flex-shrink-0 text-[#7B8FA5]" />
-          This policy runs only when someone presses Run Now — on the policy page or from its row in the listing.
-        </p>
-      )}
+      {/* No line under the switch when it is off (Zeni, 15 Nov 2026). */}
       {f !== 'none' && (
         <div className="mt-4 grid grid-cols-2 gap-x-2 gap-y-4">
           {/* Row 1: how often (a dropdown) and, for weekly / monthly, which day.
@@ -570,7 +564,7 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
       keys: ['targets'],
     },
     {
-      title: 'Schedule & Notifications', sub: 'When the policy scans on its own, and who hears about the result.',
+      title: 'Schedule & Notifications', sub: '', // no one-liner (Zeni, 15 Nov 2026)
       opt: <div className="space-y-4">{notifyEl}{scheduleEl}</div>, optNames: ['Notify Team', 'Deployment Policy', 'Schedule'],
       all: <div className="space-y-4">{notifyEl}{scheduleEl}</div>,
       lines: [...(d.notify.length ? [{ label: 'Notify Team', value: d.notify.length > 2 ? `${d.notify.slice(0, 2).join(', ')} +${d.notify.length - 2}` : d.notify.join(', ') }] : []), ...(d.deploymentPolicy ? [{ label: 'Deployment Policy', value: d.deploymentPolicy }] : []), ...(d.schedule.frequency !== 'none' ? [{ label: 'Schedule', value: scheduleLabel(d.schedule) }] : [])],

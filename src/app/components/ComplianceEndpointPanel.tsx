@@ -431,7 +431,7 @@ export function ComplianceEndpointPanel({ endpointId, ruleId, policyId, onClose,
                     { label: 'Compliance', value: got ? `${Math.round((ok / mine.length) * 100)}%` : '—', sub: got ? `${ok} of ${mine.length} rules pass` : 'not scanned', valueColor: got ? scoreColor(Math.round((ok / mine.length) * 100)) : DIM, static: true },
                     { label: 'Passed', value: got ? ok : '—', sub: 'rules', valueColor: got ? '#15803D' : DIM },
                     { label: 'Failed', value: got ? mine.length - ok : '—', sub: 'rules', valueColor: got && mine.length - ok ? '#DC2626' : DIM },
-                    { label: 'Error', value: got ? fresh : '—', sub: 'passed last scan, fail now', valueColor: got && fresh ? '#B45309' : DIM },
+                    { label: 'Error', value: got ? fresh : '—', sub: '', valueColor: got && fresh ? '#B45309' : DIM },
                   ]}
                 />
               </div>

@@ -174,7 +174,7 @@ export function CompliancePoliciesListingPage({ onNavigate }: { onNavigate?: (pa
         viewsStore="compliance"
         noun="policy"
         moduleCols="compliance-policy"
-        defaultViewName="All Compliance Policies"
+        defaultViewName="All Compliance Audits"
         viewScope={(view, all) => all.filter((t) => !!(t as any).x_archived === (view === ARCHIVED_POLICY_VIEW))}
         footerNoun="policies"
         rows={rows}

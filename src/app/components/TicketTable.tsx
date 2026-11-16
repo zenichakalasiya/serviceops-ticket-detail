@@ -2331,7 +2331,10 @@ export function TicketTable({
       .map((o) => ({ label: o.label, ...requesterAvatar(o.label), statusColor: '#10B981' })) ?? null;
   const CATALOG: ColDef[] = [...COL_DEFS, ...(MODULE_ATTRS ? assetExtraCols(COL_DEFS, MODULE_ATTRS) : EXTRA_COLS)];
   // The stored value is the ordered VISIBLE set — removing a column persists too.
-  const COL_ORDER_KEY = moduleCols ? `${moduleCols}ListColumnsV2` : 'ticketListColumnsV2';
+  /* A listing whose DEFAULT columns changed bumps its key here, or a browser holding the old saved
+     set never shows the new columns (Compliance Policy, 15 Nov 2026: Enable + Compliance Result). */
+  const COL_KEY_VERSION: Record<string, string> = { 'compliance-policy': 'V3' };
+  const COL_ORDER_KEY = moduleCols ? `${moduleCols}ListColumns${COL_KEY_VERSION[moduleCols] ?? 'V2'}` : 'ticketListColumnsV2';
   const [colOrder, setColOrder] = useState<string[]>(() => {
     try {
       const saved = JSON.parse(localStorage.getItem(COL_ORDER_KEY) || 'null');

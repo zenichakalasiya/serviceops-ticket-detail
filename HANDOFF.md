@@ -1,4 +1,31 @@
-# Handoff — 2026-11-12, evening (Compliance polish: bulk actions, severity sort, admin columns, Compliance Management)
+# Handoff — 2026-11-16 (Compliance: module renamed Compliance Audit, label + subtext trims)
+
+> Sessions share this file. This top part is the newest; older notes follow.
+
+## Read first
+CLAUDE.md → "Compliance (Oct 2026)", the last bullet.
+
+## Completed (headless browser, no page errors)
+- Policy listing: the column set is saved under a new key (`COL_KEY_VERSION` in TicketTable), so the Enable and Compliance Result columns show even in a browser that had saved the old columns.
+- Create Policy: the "runs only when someone presses Run Now" line is removed, and so is the Schedule & Notifications one-liner (V2/V3 step sub too).
+- Policy detail: the score is labelled **Compliance Score** in the header, the Endpoints-tab card and the table column.
+- View rule results: the Error card has no subtext.
+- Endpoint page: the tab "Compliance Audit" is renamed **Compliance** (other tabs stay — Zeni's choice).
+- Rule drawer, Endpoints tab: no subtext on the Rule Score card, and no "N of N endpoints" beside the search.
+- The module is renamed **Compliance Audit**: sidebar flyout, page title, "All Compliance Audits" view, and the dashboard hint. The route is still `#/compliance-policies`.
+
+## Next steps
+- Ask Zeni: should RECORD wording (Create Policy, Policy Name, Policy Properties, the "… Policies" views, the guide) also say "audit"?
+- Ask Zeni whether Compliance v2 in versions.json should move to this publish.
+- Still open from before: Deployment Policy required?; Save as Draft on every V2/V3 step?
+
+## Gotchas & notes
+- A listing whose DEFAULT columns change needs its key bumped in `COL_KEY_VERSION`, or saved browsers never see the new columns.
+- FormStudio.tsx / formRuleData.ts / AdminRequestFormModule.tsx hold uncommitted changes from another session — not committed here.
+
+---
+
+## (earlier) Handoff — 2026-11-12, evening (Compliance polish: bulk actions, severity sort, admin columns, Compliance Management)
 
 > Sessions share this file. This top part is the newest; older notes follow.
 

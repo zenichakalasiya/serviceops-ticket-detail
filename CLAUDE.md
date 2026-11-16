@@ -3225,3 +3225,25 @@ The **Builder** pill beside the logo (every admin form page; `formStudioUi.ts`, 
   configuration screen yet.
 - Not done: V1 was not re-compared against .185 screen by screen; dragging in V2 is not browser-tested.
 - **Split into two versions (16 Nov 2026, later).** `BUILDERS` in `formStudioUi.ts` lists the builders a build offers (first = default; one builder = no pill). Live `main` = `['v2','v3','v4']`. Versions page, module `request-form`: **v2** (commit 4bc3746) = the old builder alone, **v3** (5f937ed) = V2 | V3 | V4. Both carry their own `route` (`#/admin/request-form`); `build-versions.mjs` reads `v.route ?? m.route`. The old builder's rules panel filter has no "Both".
+- **Form builders V2 / V3 / V4, settings pass (16 Nov 2026, evening; uncommitted when written).** ONE settings list for all three
+  (`fieldSettingsNeo` / `sectionSettingsNeo`; the old `fieldSettings` / `sectionSettings` / `formSettings` were deleted). Its items and
+  words are the product's own, read from the .185 builder's Edit panel: Name · Hint Text · Description · Default Value · Options ·
+  Minimum / Maximum Characters (text) · Minimum / Maximum Value + Allow Decimal (number, currency) · Allow to select time (datetime) ·
+  Button Text (attachment) · leaf node only + Display Entire Hierarchy (dependent) · Requester View / Edit / Required · Technician
+  Required · System Managed Field · PII · AI Accessible · Validation (text). Every switch has a one-line explanation (`SwitchRow hint`).
+  Product (system) fields get no Default Value, limits, System Managed or PII, as on .185. NOT built: Requester Group Access Level,
+  the Custom / System Field type choice, options Import / Export.
+  **Help guide** = a button in the heading toolbar; it takes over the right panel (`guidePanel`: "About <type>" for the selected field,
+  then the build guide) and closes from its X. Closed by default, remembered in localStorage `formStudioGuide`. V4 lost its Guide tab
+  (panel switch is Fields | Settings); V3 shows "Nothing selected" instead of the always-open guide.
+  V3 / V4 canvas: white page, left-aligned with the heading (`px-4`), sections are a heading + hairline with hover actions (no card),
+  no words on the right of a field. The toolbar is in the heading for all three. The status chip reads "Draft" / "Published · vN".
+- **Compliance, 16 Nov 2026.**
+  - **The technician module is named Compliance Audit.** That covers the sidebar, the page title and the "All Compliance Audits" view. The route stays `#/compliance-policies`, and the records are still "policies".
+  - **Policy detail:** "Compliance Score" is the label.
+  - **Endpoint page:** the tab "Compliance" (was "Compliance Audit").
+  - **Text removed:**
+    - the Error and Rule Score subtexts;
+    - the rule panel's "N of N endpoints";
+    - the Create Policy schedule lines.
+  - ⚠️ **A listing's saved column set is keyed `<moduleCols>ListColumns<ver>`.** Bump its entry in `COL_KEY_VERSION` (TicketTable) when its default columns change.

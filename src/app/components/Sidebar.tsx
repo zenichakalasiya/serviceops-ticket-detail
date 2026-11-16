@@ -211,7 +211,7 @@ const COMPLIANCE_ITEMS: { icon: React.ReactNode; label: string; page: string }[]
   /* Benchmark is HIDDEN on the technician side for now (Zeni, 28 Oct 2026): benchmarks are made by
      admins and only picked in the Create Policy form. The page still works at #/compliance-benchmarks. */
   // { icon: <ListChecks size={16} />, label: 'Benchmark', page: 'compliance-benchmarks' },
-  { icon: <ShieldCheck size={16} />, label: 'Compliance Policy', page: 'compliance-policies' },
+  { icon: <ShieldCheck size={16} />, label: 'Compliance Audit', page: 'compliance-policies' },
   { icon: <Monitor size={16} />, label: 'Endpoints', page: 'compliance-endpoints' },
 ];
 

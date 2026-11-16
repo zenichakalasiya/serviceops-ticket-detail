@@ -67,7 +67,7 @@ function RuleEndpointsTab({ results, onOpened }: { results: RuleEndpointResult[]
   const n = (r: RuleResult) => results.filter((x) => x.result === r).length;
   const score = ruleScore(results);
   const cards: StatCard[] = [
-    { label: 'Rule Score', value: score === null ? '—' : `${score}%`, sub: 'of checked endpoints pass', static: true, valueColor: score === null ? DIM : score >= 85 ? '#15803D' : score >= 60 ? '#B45309' : '#B42318' },
+    { label: 'Rule Score', value: score === null ? '—' : `${score}%`, sub: '', static: true, valueColor: score === null ? DIM : score >= 85 ? '#15803D' : score >= 60 ? '#B45309' : '#B42318' },
     { label: 'Pass', value: n('Pass'), sub: 'endpoints', valueColor: n('Pass') ? '#15803D' : DIM, hint: 'Show only endpoints that pass' },
     { label: 'Fail', value: n('Fail'), sub: 'endpoints', valueColor: n('Fail') ? '#B42318' : DIM, hint: 'Show only endpoints that fail' },
     { label: 'Not Scanned', value: n('Not Scanned'), sub: 'endpoints', valueColor: DIM, hint: 'Show only endpoints not scanned yet' },
@@ -80,7 +80,6 @@ function RuleEndpointsTab({ results, onOpened }: { results: RuleEndpointResult[]
       </div>
       <div className="flex flex-wrap items-center gap-2 px-5 pb-3 pt-1">
         <ColumnFilterSearch className="min-w-0 flex-1" rows={results} fields={RULE_EP_FIELDS} query={f.query} onQuery={f.setQuery} conditions={f.conditions} onConditions={f.setConditions} />
-        <span className="flex-shrink-0 text-[12px] text-[#7B8FA5]">{shown.length} of {results.length} endpoints</span>
       </div>
       <div className="overflow-x-auto"><table className="w-full min-w-[860px] table-fixed">
         <colgroup><col className="w-[30%]" /><col className="w-[11%]" /><col className="w-[14%]" /><col className="w-[18%]" /><col /><col className="w-[110px]" /></colgroup>

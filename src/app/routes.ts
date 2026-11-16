@@ -186,7 +186,7 @@ const PAGE_TITLES: Record<Page, string> = {
   'compliance-dashboard': 'Compliance Dashboard',
   'compliance-rules': 'Compliance Rules',
   'compliance-benchmarks': 'Compliance Benchmarks',
-  'compliance-policies': 'Compliance Policies',
+  'compliance-policies': 'Compliance Audit',
   'compliance-endpoints': 'Compliance Endpoints',
   'knowledge': 'Knowledge',
   'tasks': 'Tasks',

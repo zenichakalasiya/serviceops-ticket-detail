@@ -72,7 +72,7 @@ export const POLICY_QUICK_FILTERS: QuickFilterDef[] = [
 
 /* Zeni, 12 Nov 2026: All · In Progress (pending) · Draft · Cancelled · Archived · Non-Compliant. */
 export const POLICY_VIEWS: TicketView[] = [
-  { name: 'All Compliance Policies', rules: [] },
+  { name: 'All Compliance Audits', rules: [] },
   { name: 'In Progress Policies', rules: [{ field: 'status', condition: 'is', values: ['In Progress'] }] },
   { name: 'Draft Policies', rules: [{ field: 'status', condition: 'is', values: ['Draft'] }] },
   { name: 'Cancelled Policies', rules: [{ field: 'status', condition: 'is', values: ['Cancelled'] }] },

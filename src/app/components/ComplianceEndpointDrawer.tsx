@@ -50,7 +50,7 @@ import type { FilterValue } from './ComplianceTabFilter';
    page's own components. It opens on Compliance Audit — this is the Compliance module. */
 type Tab = 'vulnerabilities' | 'patches' | 'policies' | 'installation' | 'notes' | 'audit';
 const TABS: [Tab, string][] = [
-  ['vulnerabilities', 'Vulnerabilities'], ['patches', 'Patches'], ['policies', 'Compliance Audit'],
+  ['vulnerabilities', 'Vulnerabilities'], ['patches', 'Patches'], ['policies', 'Compliance'],
   ['installation', 'Installation'], ['notes', 'Notes'], ['audit', 'Audit Trail'],
 ];
 

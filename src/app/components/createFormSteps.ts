@@ -68,6 +68,6 @@ export const FORM_STEPS: Record<string, FormStep[]> = {
   'compliance-policy': [
     { title: 'Policy & benchmark', sub: 'Name the policy and choose the one benchmark it assesses.', sections: ['Policy Details', 'Benchmark'] },
     { title: 'Target endpoints', sub: 'Whole remote offices, single endpoints, or both.', sections: ['Target Endpoints'] },
-    { title: 'Schedule & notify', sub: 'When it scans on its own, and who hears about the result.', sections: ['Schedule & Notifications'] },
+    { title: 'Schedule & notify', sub: '', sections: ['Schedule & Notifications'] },
   ],
 };

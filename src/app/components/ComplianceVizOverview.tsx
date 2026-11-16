@@ -162,7 +162,7 @@ export function ComplianceVizOverview({ onOpenPolicy, onOpenEndpoint, onDrill }:
     <div className="dash-root" data-theme="light" style={{ background: 'transparent' }}>
       <div className="grid grid-cols-12 gap-3 px-6 pb-8 pt-4">
         {/* ── KPIs ─────────────────────────────────────────────────────────── */}
-        <Widget title="Compliance Score" span={3} onClick={drill({ to: 'policies' })} hint="Open Compliance Policy" info="Checks passed of checks run, across every endpoint every policy assessed on its last scan.">
+        <Widget title="Compliance Score" span={3} onClick={drill({ to: 'policies' })} hint="Open Compliance Audit" info="Checks passed of checks run, across every endpoint every policy assessed on its last scan.">
           <Kpi value={v.score ?? '—'} unit={v.score === null ? undefined : '%'} color={scoreColor(v.score)} sub={`Target ${TARGET_SCORE}%`} />
         </Widget>
         <Widget title="Endpoints Assessed" span={3} onClick={drill({ to: 'endpoints', rules: [{ field: 'x_scanStatus', condition: 'is', values: ['Success'] }] })} hint="Open the endpoints scanned" info="Endpoints at least one policy scanned on its last run.">

@@ -164,7 +164,7 @@ export function CompliancePolicyDrawer({
   const platform = benchmark ? platformOf(benchmark.osVersion).platform : '—';
   const kpis = [
     ckpi('status', 'Status', p.archived ? 'Archived' : status, { chip: p.archived ? 'neutral' : status === 'Compliant' ? 'green' : status === 'Non-Compliant' ? 'red' : status === 'Scanning' ? 'blue' : 'neutral', tip: p.archived ? 'Archived — it does not run' : `Status: ${status}` }),
-    ckpi('score', 'Compliance', score === null ? '—' : `${score}%`, { color: score === null ? '#94A3B8' : scoreColor(score), tip: 'Checks passed of checks run, on the last scan' }),
+    ckpi('score', 'Compliance Score', score === null ? '—' : `${score}%`, { color: score === null ? '#94A3B8' : scoreColor(score), tip: 'Checks passed of checks run, on the last scan' }),
     ckpi('platform', 'OS Platform', platform, { tip: benchmark?.osVersion ?? '' }),
     ckpi('created', 'Created', fmtStamp(p.createdAt)),
     ckpi('createdBy', 'Created By', p.createdBy),
@@ -337,7 +337,7 @@ export function CompliancePolicyDrawer({
                     onCardClick={(c) => setEpF(cardToggle(epF, 'result', c.label))}
                     cards={[
                       {
-                        label: 'Compliance', value: score === null ? '—' : `${score}%`,
+                        label: 'Compliance Score', value: score === null ? '—' : `${score}%`,
                         sub: p.lastScan ? `${p.lastScan.passed} of ${p.lastScan.passed + p.lastScan.failed} checks pass` : 'not scanned yet',
                         valueColor: score === null ? '#94A3B8' : scoreColor(score), static: true,
                       },
@@ -351,7 +351,7 @@ export function CompliancePolicyDrawer({
                     <TabListToolbar search={epQ} onSearch={setEpQ} groups={epGroups} value={epF} onChange={setEpF} />
                     <div className="overflow-x-auto"><table className="w-full min-w-[1160px] table-fixed">
                       <colgroup><col className="w-[210px]" /><col className="w-[120px]" /><col className="w-[12%]" /><col className="w-[140px]" /><col className="w-[170px]" /><col className="w-[9%]" /><col /><col className="w-[169px]" /></colgroup>
-                      <thead><tr className="border-b border-[#e5e7eb]">{['Endpoint', 'IP Address', 'Remote Office', 'Result', 'Execution Status', 'Compliance', 'Checks', 'Actions'].map((h) => <th key={h} className="px-4 py-2.5 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>)}</tr></thead>
+                      <thead><tr className="border-b border-[#e5e7eb]">{['Endpoint', 'IP Address', 'Remote Office', 'Result', 'Execution Status', 'Compliance Score', 'Checks', 'Actions'].map((h) => <th key={h} className="px-4 py-2.5 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>)}</tr></thead>
                       <tbody className="divide-y divide-[#e5e7eb]">
                         {shownResults.map((r) => (
                           <tr key={r.endpoint.id} onClick={() => setResultsFor(r.endpoint.id)} className="group/row cursor-pointer transition-colors hover:bg-[#f9fafb]">
