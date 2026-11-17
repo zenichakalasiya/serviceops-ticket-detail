@@ -1,4 +1,40 @@
-# Handoff — 2026-11-17, evening (Compliance: filters = columns, Create Audit pass, rule-results polish)
+# Handoff — 2026-11-17 17:48 (Form builder: section drag, status chip, admin menu closed; create pages V1 | V2 + Help guide button)
+
+> Sessions share this file. This top part is the newest; older notes follow.
+
+## Read first
+CLAUDE.md → "Form builder versions (16 Nov 2026, Zeni)", its last bullet (17 Nov 2026).
+
+## What we worked on this session
+Zeni's form-builder and create-page requests: the V3 add-field popup, V4 field tiles, the technician create-page pills and Help guide button, and the admin form builder's closed settings menu, section drag and status chip.
+
+## Completed (headless browser, no page errors)
+- **V3 add-field popup:** same groups as the V2 right panel, a search box, an icon before each field, no one-liners, wider gap between groups.
+- **Technician create pages:** only two layouts are offered, labelled **V1** (full page, stepper left) and **V2** (side drawer). The old V1, V4 and V5 are hidden. A hidden guide shows a blue outlined **Help guide** button.
+- **Admin form builder (every module):** the left settings menu starts closed. Hover the left edge to peek, or use the bottom pill to keep it open. The page is left-aligned with no left line, and the heading-to-tabs gap is smaller.
+- **Sections** move by a drag grip (V2 / V3 / V4); the up / down arrows are gone.
+- **Draft / Published chip** sits beside the page heading.
+- **Section settings:** "Visibility" is replaced by **Requester › View** (switch) and the note "This applies to all fields of this section", as on the .185 Edit Section panel.
+
+## In progress
+Nothing mid-flight.
+
+## Next steps (open questions for Zeni)
+- On .185, fields can sit between sections; ours can only sit above the first section. Build that?
+- Remove the leftover "show on a condition" (`showWhen`) data and chip from sections?
+- Add Requester Group Access Level to section settings (.185 has it)?
+- Stepper form in the builder: research first, not started.
+- Rename "Edit / Clone Compliance Policy" to "Edit Audit" / "Clone Audit"?
+
+## Gotchas & notes
+- Section drag was tested with dispatched DragEvents, not a real mouse drag.
+- `FormStudio.tsx` has MIXED line endings; patch scripts must keep each line's own ending.
+- Unused after this session: `moveSection`, the `ArrowUp` / `ArrowDown` imports, and three locals in `sectionSettingsNeo`.
+- The .185 server is read-only for us: open panels and Cancel, never save.
+
+---
+
+## (earlier) Handoff — 2026-11-17, evening (Compliance: filters = columns, Create Audit pass, rule-results polish)
 
 > Sessions share this file. This top part is the newest; older notes follow.
 

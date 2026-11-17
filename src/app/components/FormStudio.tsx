@@ -375,9 +375,11 @@ export interface FormStudioProps {
   rulesUsing?: (fieldId: string) => number;
   /** The new builder (pill V2) puts Build / Preview / Save draft / Publish here — the page heading's right side. */
   toolbarSlot?: HTMLElement | null;
+  /** Where the Draft / Published chip goes — beside the page heading. Without it the chip stays with the controls. */
+  statusSlot?: HTMLElement | null;
 }
 
-export function FormStudio({ title, noun, fields, onFields, rulesUsing, toolbarSlot }: FormStudioProps) {
+export function FormStudio({ title, noun, fields, onFields, rulesUsing, toolbarSlot, statusSlot }: FormStudioProps) {
   const ui = useFormStudioUi();
   const [mode, setMode] = useState<'build' | 'preview'>('build');
   const [sel, setSel] = useState<Sel>({ kind: 'form' });
@@ -399,6 +401,8 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing, toolbarS
   const [role] = useState<'req' | 'tech'>('tech');
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [dropAt, setDropAt] = useState<number | null>(null);
+  /** A section being dragged: the group it would land beside, and on which side. */
+  const [secDrop, setSecDrop] = useState<{ gi: number; after: boolean } | null>(null);
   /** V2's "Type / to add a field" boxes, by section — the menu treats a click in its box as inside. */
   const typeBoxes = useRef<Record<string, HTMLInputElement | null>>({});
   const dirty = JSON.stringify(fields) !== published.snap;
@@ -450,6 +454,26 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing, toolbarS
     const order = groups.map((g) => (g.sec ? block(g) : g.items));
     [order[gi], order[gj]] = [order[gj], order[gi]];
     onFields(order.flat());
+  };
+  /** Drag a whole section (its heading and its fields) to sit before or after another one. Fields with no
+   *  section always lead the form, so nothing lands above them. */
+  const moveSectionTo = (id: string, target: number, after: boolean) => {
+    const gi = groups.findIndex((g) => g.sec?.id === id); if (gi < 0 || gi === target || !groups[target]) return;
+    const blocks = groups.map((g) => (g.sec ? fields.slice(g.start - 1, g.end) : g.items));
+    const [b] = blocks.splice(gi, 1);
+    blocks.splice((target > gi ? target - 1 : target) + (after || !groups[target].sec ? 1 : 0), 0, b);
+    onFields(blocks.flat());
+  };
+  const secDnd = (g: Group) => {
+    const gi = groups.findIndex((x) => (g.sec ? x.sec?.id === g.sec.id : !x.sec));
+    const isSec = (e: React.DragEvent) => [...e.dataTransfer.types].includes('text/form-section');
+    return {
+      props: {
+        onDragOver: (e: React.DragEvent) => { if (!isSec(e)) return; e.preventDefault(); const r = e.currentTarget.getBoundingClientRect(); const after = !g.sec || e.clientY > r.top + r.height / 2; if (secDrop?.gi !== gi || secDrop.after !== after) setSecDrop({ gi, after }); },
+        onDrop: (e: React.DragEvent) => { const id = e.dataTransfer.getData('text/form-section'); if (!id) return; e.preventDefault(); e.stopPropagation(); moveSectionTo(id, gi, secDrop?.gi === gi ? secDrop.after : true); setSecDrop(null); },
+      },
+      line: secDrop?.gi === gi ? <span className={'pointer-events-none absolute inset-x-0 z-10 h-[3px] rounded-full bg-[#3D8BD0] ' + (secDrop.after ? '-bottom-3' : '-top-3')} /> : null,
+    };
   };
   const moveTo = (id: string, secId: string) => {
     const f = fields.find((x) => x.id === id)!; const rest = fields.filter((x) => x.id !== id);
@@ -623,15 +647,10 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing, toolbarS
         <div><Lbl htmlFor="ns-t">Title</Lbl><input id="ns-t" className={inputCls + ' !rounded'} value={s.label} onChange={(e) => patch(s.id, { label: e.target.value })} /></div>
         <div><Lbl htmlFor="ns-d">Description</Lbl><input id="ns-d" className={inputCls + ' !rounded'} value={s.helpText ?? ''} placeholder="Shown under the title" onChange={(e) => patch(s.id, { helpText: e.target.value })} /></div>
         <div><Lbl>Columns</Lbl><RuleSelect className="!rounded" value={[String(s.cols ?? 2)]} options={[{ value: '1', label: '1 column' }, { value: '2', label: '2 columns' }, { value: '3', label: '3 columns' }]} onChange={(v) => v[0] && patch(s.id, { cols: Number(v[0]) as 1 | 2 | 3 })} /></div>
-        <GroupTitle>Visibility</GroupTitle>
-        <SwitchRow label="Technicians only" hint="Requesters do not see this section." on={!!s.techOnly} onChange={(v) => patch(s.id, { techOnly: v })} />
-        <SwitchRow label="Show only on a condition" hint={choices.length ? undefined : 'Needs a dropdown, radio or checkbox in another section.'} on={!!s.showWhen} onChange={(v) => { if (!v) patch(s.id, { showWhen: undefined }); else if (choices.length) patch(s.id, { showWhen: { fieldId: choices[0].id, value: '' } }); }} />
-        {s.showWhen && (
-          <div className="flex flex-col gap-2">
-            <div><Lbl>When this field</Lbl><RuleSelect className="!rounded" value={[s.showWhen.fieldId]} options={choices.map((f) => ({ value: f.id, label: f.label }))} onChange={(v) => v[0] && patch(s.id, { showWhen: { fieldId: v[0], value: '' } })} /></div>
-            <div><Lbl>Is</Lbl><RuleSelect className="!rounded" value={s.showWhen.value ? [s.showWhen.value] : []} placeholder="Choose a value" options={(src ? (src.kind === 'checkbox' ? ['Checked'] : optionsOf(src)) : []).map((o) => ({ value: o, label: o }))} onChange={(v) => patch(s.id, { showWhen: { ...s.showWhen!, value: v[0] ?? '' } })} /></div>
-          </div>
-        )}
+        {/* As on the product's Edit Section panel (.185, 17 Nov 2026): Requester › View, applying to every field in the section. */}
+        <GroupTitle>Requester</GroupTitle>
+        <SwitchRow label="View" hint="Off: requesters do not see this section." on={!s.techOnly} onChange={(v) => patch(s.id, { techOnly: !v })} />
+        <p className="text-[12px] text-[#7B8FA5]">This applies to all fields of this section.</p>
       </div>
     );
   };
@@ -698,8 +717,7 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing, toolbarS
         </button>
         <span className="h-px min-w-4 flex-1 bg-[#EEF2F6]" />
         <span className={'flex items-center transition-opacity ' + (on ? 'opacity-100' : 'opacity-0 group-hover/sec:opacity-100 group-focus-within/sec:opacity-100')}>
-          <button type="button" title="Move section up" aria-label="Move section up" className={iconBtn} disabled={gi <= 0 || !groups[gi - 1]?.sec} onClick={() => moveSection(g.sec!.id, -1)}><ArrowUp size={14} /></button>
-          <button type="button" title="Move section down" aria-label="Move section down" className={iconBtn} disabled={gi >= groups.length - 1} onClick={() => moveSection(g.sec!.id, 1)}><ArrowDown size={14} /></button>
+          <span draggable title="Drag to move this section" aria-label="Drag to move this section" className={iconBtn + ' cursor-grab active:cursor-grabbing'} onDragStart={(e) => { e.dataTransfer.setData('text/form-section', g.sec!.id); e.dataTransfer.effectAllowed = 'move'; const box = e.currentTarget.closest('[data-sec]'); if (box) e.dataTransfer.setDragImage(box, 24, 16); }} onDragEnd={() => setSecDrop(null)}><GripVertical size={14} /></span>
           <button type="button" title="Section settings" aria-label="Section settings" className={iconBtn} onClick={() => select({ kind: 'section', id: g.sec!.id })}><Pencil size={14} /></button>
           <button type="button" title="Remove section, keep its fields" aria-label="Remove section" className={iconBtn + ' hover:!bg-[#FEF2F2] hover:!text-[#DC2626]'} onClick={() => removeSection(g.sec!.id)}><Trash2 size={14} /></button>
         </span>
@@ -765,7 +783,7 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing, toolbarS
     let idx = g.start;
     const on = sel.kind === 'section' && g.sec && sel.id === g.sec.id;
     return (
-      <section key={g.sec?.id ?? 'lead'} data-sec={g.sec?.id} className="flex flex-col gap-2">
+      <section key={g.sec?.id ?? 'lead'} data-sec={g.sec?.id} className="relative flex flex-col gap-2" {...secDnd(g).props}>{secDnd(g).line}
         {sectionHead(g, false, !!on)}
         {g.sec?.helpText && <p className="-mt-1.5 text-[12px] text-[#7B8FA5]">{g.sec.helpText}</p>}
         <div className="flex flex-col">
@@ -801,7 +819,7 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing, toolbarS
     const on = sel.kind === 'section' && g.sec && sel.id === g.sec.id;
     const key = `${gi}:type`;
     return (
-      <section key={g.sec?.id ?? 'lead'} data-sec={g.sec?.id} className="flex flex-col gap-3">
+      <section key={g.sec?.id ?? 'lead'} data-sec={g.sec?.id} className="relative flex flex-col gap-3" {...secDnd(g).props}>{secDnd(g).line}
         {sectionHead(g, true, !!on)}
         {g.sec?.helpText && <p className="-mt-2.5 text-[12px] text-[#7B8FA5]">{g.sec.helpText}</p>}
         {g.items.length > 0 && <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>{g.items.map((f) => fieldCard(f, cols, true))}</div>}
@@ -848,7 +866,7 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing, toolbarS
     const cols = colsOf(g);
     const on = sel.kind === 'section' && g.sec && sel.id === g.sec.id;
     return (
-      <section key={g.sec?.id ?? 'lead'} data-sec={g.sec?.id} className="flex flex-col gap-1">
+      <section key={g.sec?.id ?? 'lead'} data-sec={g.sec?.id} className="relative flex flex-col gap-1" {...secDnd(g).props}>{secDnd(g).line}
         {g.sec && (() => {
           const gi = groups.findIndex((x) => x.sec?.id === g.sec!.id);
           return (
@@ -861,8 +879,7 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing, toolbarS
                 <span className="h-px min-w-4 flex-1 bg-[#EEF2F6]" />
               </button>
               <span className={'flex items-center transition-opacity ' + (on ? 'opacity-100' : 'opacity-0 group-hover/sec:opacity-100 group-focus-within/sec:opacity-100')}>
-                <button type="button" title="Move section up" aria-label="Move section up" className={iconBtn} disabled={gi <= 0 || !groups[gi - 1]?.sec} onClick={() => moveSection(g.sec!.id, -1)}><ArrowUp size={14} /></button>
-                <button type="button" title="Move section down" aria-label="Move section down" className={iconBtn} disabled={gi >= groups.length - 1} onClick={() => moveSection(g.sec!.id, 1)}><ArrowDown size={14} /></button>
+                <span draggable title="Drag to move this section" aria-label="Drag to move this section" className={iconBtn + ' cursor-grab active:cursor-grabbing'} onDragStart={(e) => { e.dataTransfer.setData('text/form-section', g.sec!.id); e.dataTransfer.effectAllowed = 'move'; const box = e.currentTarget.closest('[data-sec]'); if (box) e.dataTransfer.setDragImage(box, 24, 16); }} onDragEnd={() => setSecDrop(null)}><GripVertical size={14} /></span>
                 <button type="button" title="Section settings" aria-label="Section settings" className={iconBtn} onClick={() => select({ kind: 'section', id: g.sec!.id })}><Pencil size={14} /></button>
                 <button type="button" title="Remove section, keep its fields" aria-label="Remove section" className={iconBtn + ' hover:!bg-[#FEF2F2] hover:!text-[#DC2626]'} onClick={() => removeSection(g.sec!.id)}><Trash2 size={14} /></button>
               </span>
@@ -1016,7 +1033,7 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing, toolbarS
       {(() => {
         const controls = (
           <>
-            {dirty ? <span title="You have changes that are not published yet"><Chip tone="amber">Draft</Chip></span> : <Chip>Published · v{published.version}</Chip>}
+            {statusSlot ? createPortal(<>{dirty ? <span title="You have changes that are not published yet"><Chip tone="amber">Draft</Chip></span> : <Chip>Published · v{published.version}</Chip>}</>, statusSlot) : (dirty ? <span title="You have changes that are not published yet"><Chip tone="amber">Draft</Chip></span> : <Chip>Published · v{published.version}</Chip>)}
             <div className="ml-auto flex items-center gap-2">
               <div className="pill-track" role="group" aria-label="Mode">
                 <button type="button" aria-pressed={mode === 'build'} onClick={() => setMode('build')}>{v2 ? 'Edit' : 'Build'}</button>

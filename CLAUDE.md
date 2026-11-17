@@ -3306,3 +3306,12 @@ The **Builder** pill beside the logo (every admin form page; `formStudioUi.ts`, 
   - **Create Audit:** OS Platform + OS Version narrow the Benchmark list (not stored — read off the benchmark); a new audit starts without a benchmark; Notify Team = `NotifyPicker.tsx`; Edit/Clone = full screen (`fullScreen` on the create shells) with **Update ▾ Save as Draft**.
   - **Rule results:** `ResultCard` is one strip (endpoint link · Result · Previous + date, no Required); `RuleGroupTree` has Expand all / Collapse all; `ScanChangeTip` shows scan dates.
   - **Technician Rules, unrun rule:** V1 | V2 pill on `#/compliance-rules` (`complianceUncheckedRuleUi.ts`): V1 hides the Endpoints tab, V2 shows `RuleNotRunEmpty`.
+
+- **Form builder + create pages, 17 Nov 2026 (Zeni).**
+  - **Technician create pages offer TWO layouts.** The pills read **V1** (internal `v2`: full page, stepper left) and **V2** (internal `v3`: side drawer, the default). The old V1, V4 and V5 are hidden: `readCreateFormUi` returns only `v2` or `v3`, and `CreateFormUiSwitch` in `Header.tsx` lists only those two.
+  - **Hidden guide = a "Help guide" button** (`CreateFormHelp.tsx`): a blue outlined pill with a BookOpen icon, floating top right, in place of the old arrow. The V3 drawer moves it with `[&>aside[data-guide-rail]>button]` overrides in `CreateFormStepped.tsx`.
+  - **Admin settings menu starts CLOSED on any Form Builder** (`AdminPage`: `navPinnedFor`, `navPeek`, `formKey`). Closed = a zero-line hover zone on the left (`data-admin-nav="closed"`) that peeks the menu, plus a bottom pill to keep it open. Open = a "Close the settings menu" pill.
+  - **Sections drag by a grip** in V2 / V3 / V4 (`moveSectionTo`, `secDnd`, `secDrop` in `FormStudio.tsx`; drag type `text/form-section`). The up / down arrows are gone. Fields with no section always lead the form.
+  - **The Draft / Published chip sits beside the page heading**: FormStudio portals it into `statusSlot`, a span inside the `h1` of `AdminRequestFormModule` and `AdminFormModule`.
+  - **Section settings** = Name, then **Requester › View** (off = `techOnly`) with "This applies to all fields of this section", as on .185. The `showWhen` data and chip still exist but have no control.
+  - **V3 add popup** (`AddMenu grouped`): 430px, search, `PALETTE_GROUPS` headings, two columns, an icon per field, no one-liners.

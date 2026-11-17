@@ -19,11 +19,13 @@ export function AdminFormModule({ mod }: { mod: FormModule }) {
   const ui = useFormStudioUi();
   /** Builder V2 puts its Build / Preview / Save draft / Publish here, beside the heading. */
   const [slot, setSlot] = useState<HTMLDivElement | null>(null);
+  /** …and its Draft / Published chip here, right after the title. */
+  const [statusSlot, setStatusSlot] = useState<HTMLSpanElement | null>(null);
   return (
     <div className="flex h-full min-h-0 flex-col bg-white">
       <div className="flex flex-shrink-0 items-start gap-4 px-4 pb-3 pt-4">
         <div className="min-w-0 flex-1">
-        <h1 className="text-[16px] font-semibold text-[#1D2A3E]">{mod.title}</h1>
+        <h1 className="flex items-center gap-2 text-[16px] font-semibold text-[#1D2A3E]">{mod.title}<span ref={setStatusSlot} className="inline-flex font-normal" /></h1>
         <p className="mt-0.5 text-[12px] text-[#7B8FA5]">
           {mod.sub}{' '}
           <button type="button" onClick={() => toast('Docs open in the product')} className="inline-flex items-center gap-1 text-[12px] font-medium text-[#3D8BD0] hover:underline">View Docs <ExternalLink size={11} /></button>
@@ -35,7 +37,7 @@ export function AdminFormModule({ mod }: { mod: FormModule }) {
         {/* Builder V1 = the old product builder; V2–V4 are Form Studio. */}
         {ui === 'v1'
           ? <div className="h-full overflow-y-auto px-4 py-4"><AdminFormBuilder title={mod.title} fields={fields} onFields={onFields} /></div>
-          : <FormStudio title={mod.title} noun={mod.noun} fields={fields} onFields={onFields} toolbarSlot={slot} />}
+          : <FormStudio title={mod.title} noun={mod.noun} fields={fields} onFields={onFields} toolbarSlot={slot} statusSlot={statusSlot} />}
       </div>
     </div>
   );

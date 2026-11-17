@@ -113,6 +113,7 @@ export function AdminRequestFormModule({ tab, onTab, onEditor, openRuleId }: {
   const builderUi = useFormStudioUi();
   /** Builder V2 puts its Build / Preview / Save draft / Publish here, beside the page heading. */
   const [toolbarSlot, setToolbarSlot] = useState<HTMLDivElement | null>(null);
+  const [statusSlot, setStatusSlot] = useState<HTMLSpanElement | null>(null);
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState<Filters>(NO_FILTERS);
   const [filterOpen, setFilterOpen] = useState(false);
@@ -245,9 +246,9 @@ export function AdminRequestFormModule({ tab, onTab, onEditor, openRuleId }: {
 
   return (
     <div className="px-4 py-6">
-      <div className="mb-4 flex items-start gap-4">
+      <div className="mb-1 flex items-start gap-4">
         <div className="min-w-0 flex-1">
-        <h1 className="text-[16px] font-semibold text-[#364658]">Request Form Management</h1>
+        <h1 className="flex items-center gap-2 text-[16px] font-semibold text-[#364658]">Request Form Management<span ref={setStatusSlot} className="inline-flex font-normal" /></h1>
         <p className="mt-1 text-[13px] leading-[1.6] text-[#7B8FA5]">
           Build the request form and the rule-based flows that route and act on requests.{' '}
           <button type="button" onClick={() => toast.success('Opening the setup guide')} className="inline-flex items-center gap-1 text-[13px] font-medium text-[#3D8BD0] hover:underline">
@@ -284,8 +285,8 @@ export function AdminRequestFormModule({ tab, onTab, onEditor, openRuleId }: {
             onCreateRule={(id) => { setPrefill(id); setEditing('new'); }}
             onReuseRule={(ruleId, id) => { setPrefill(id); setStartStep(1); setEditing(ruleId); }} />
         ) :
-        <div className="-mx-4 -mb-6 -mt-4 h-[calc(100vh-56px-136px)] min-h-[520px]">
-          <FormStudio title="Request Form" noun="request" fields={fields} onFields={setFields} toolbarSlot={toolbarSlot}
+        <div className="-mx-4 -mb-6 -mt-4 h-[calc(100vh-56px-124px)] min-h-[520px]">
+          <FormStudio title="Request Form" noun="request" fields={fields} onFields={setFields} toolbarSlot={toolbarSlot} statusSlot={statusSlot}
             rulesUsing={(id) => rules.filter((r) => r.groups.some((g) => g.conditions.some((c) => c.fieldId === id)) || r.actions.some((a) => a.fieldIds.includes(id))).length} />
         </div>
       ) : (

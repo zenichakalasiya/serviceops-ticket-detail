@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { adminRouteBySlug, adminSlugFor } from '../routes';
 import { Header } from './Header';
 import { AdminFormModule } from './AdminFormModule';
@@ -97,6 +98,9 @@ export function AdminPage({ onNavigate, moduleSlug, onModuleChange, portalSlug, 
   const [bomScreen, setBomScreen] = useState<BomAdminScreen>('landing');
   /** The portal builder is a canvas — it takes the whole screen, so the admin shell stands down. */
   const [builderOpen, setBuilderOpen] = useState(false);
+  const [navPinnedFor, setNavPinnedFor] = useState<string | null>(null);
+  const [navPeek, setNavPeek] = useState(false);
+  const peekTimer = useRef<number | undefined>(undefined);
   /* Lifted here, not in the Benchmark module: the Rules panel's Used In reads the same list. */
   const [benchmarks, setBenchmarks] = useState<Benchmark[]>(BENCHMARKS_SEED);
   /* BENCHMARKS_SEED is the ONE list the technician side reads (Create Policy, policy pages), so
@@ -179,6 +183,19 @@ export function AdminPage({ onNavigate, moduleSlug, onModuleChange, portalSlug, 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [moduleSlug]);
 
+  /* A form builder needs the width (Zeni, 17 Nov 2026): on any module's Form Builder the settings nav arrives
+     CLOSED — a slim strip with a pill at its foot. Hovering the strip slides the nav out OVER the page (it
+     closes when the pointer leaves); the pill pins it open, and the pinned nav carries a pill to close it
+     again. The pin is remembered per form (`navPinnedFor` holds that form's key), so opening another form's
+     builder starts closed. */
+  const formKey = module === 'Request Form' && activeCard === 'Request Form' ? 'Request Form'
+    : module === 'Form Studio' && activeCard ? activeCard : null;
+  const navClosed = !!formKey && navPinnedFor !== formKey;
+  const peekOpen = () => { window.clearTimeout(peekTimer.current); setNavPeek(true); };
+  const peekClose = () => { window.clearTimeout(peekTimer.current); peekTimer.current = window.setTimeout(() => setNavPeek(false), 180); };
+  const navPill = 'absolute bottom-5 z-50 flex h-9 w-7 items-center justify-center border border-[#DFE5ED] bg-white text-[#64748B] shadow-[0_1px_4px_rgba(15,23,42,0.12)] transition-colors hover:border-[#3D8BD0] hover:text-[#3D8BD0]';
+  const sidebarEl = <AdminSidebar active={active} activeCard={activeCard} onSelect={select} onBackToApp={() => onNavigate('request')} />;
+
   return (
     <div className="flex h-screen flex-col bg-[#F7F9FC]">
       {/* The product header STAYS while the builder is open — the logo, global search and the
@@ -186,10 +203,20 @@ export function AdminPage({ onNavigate, moduleSlug, onModuleChange, portalSlug, 
           like a different product. Only the admin sidebar gives way: a canvas competing with a
           second navigation has nowhere to be. */}
       <Header selectedCount={0} />
-      <div className="flex min-h-0 flex-1 overflow-hidden">
-        {!builderOpen && (
-          <AdminSidebar active={active} activeCard={activeCard} onSelect={select} onBackToApp={() => onNavigate('request')} />
-        )}
+      <div className="relative flex min-h-0 flex-1 overflow-hidden">
+        {!builderOpen && (navClosed ? (
+          <div data-admin-nav="closed" className={'absolute inset-y-0 left-0 z-40 ' + (navPeek ? 'w-[268px]' : 'w-2')} onMouseEnter={peekOpen} onMouseLeave={peekClose}>
+            {navPeek && <div className="absolute inset-y-0 left-0 z-40 shadow-[4px_0_24px_rgba(15,23,42,0.14)]">{sidebarEl}</div>}
+            <button type="button" aria-label="Keep the settings menu open" title="Keep the settings menu open" onClick={() => { setNavPinnedFor(formKey); setNavPeek(false); }}
+              className={navPill + ' rounded-r-lg border-l-0 ' + (navPeek ? 'left-[268px]' : 'left-0 !w-[15px]')}><ChevronsRight size={navPeek ? 16 : 13} /></button>
+          </div>
+        ) : formKey ? (
+          <div data-admin-nav="open" className="relative flex-shrink-0">
+            {sidebarEl}
+            <button type="button" aria-label="Close the settings menu" title="Close the settings menu" onClick={() => { setNavPinnedFor(null); setNavPeek(false); }}
+              className={navPill + ' right-0 rounded-l-lg border-r-0'}><ChevronsLeft size={16} /></button>
+          </div>
+        ) : sidebarEl)}
         <div data-admin-scroll className="flex min-h-0 flex-1 flex-col overflow-hidden">
           {module === 'BOM Management' ? (
             <div className="min-h-0 flex-1 overflow-y-auto bg-[#F7F9FC]">
