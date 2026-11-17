@@ -250,8 +250,8 @@
         },
         {
           "version": "v2",
-          "date": "2026-11-12",
-          "commit": "516d229",
+          "date": "2026-11-17",
+          "commit": "e3fab42",
           "changes": [
             "Rule details: a MITRE ATT&CK tab after Controls (techniques, tactics, mitigations with their names), on both technician and admin sides.",
             "Endpoint page tabs: Vulnerabilities · Patches · Compliance Audit · Installation · Notes · Audit Trail.",
@@ -278,7 +278,16 @@
             "Rule drawer: Rule ID + title, then Profile · Assessment · OS Platform · OS Version · Severity.",
             "Policy listing: OS Platform, Compliance Score/Result, Status (Draft/In Progress/Completed/Cancelled), Enable, Tags, Created/Updated; no Schedule action.",
             "Create Policy in five layouts (V1–V5) with its guide and one Publish ▾ Save as Draft CTA.",
-            "Policy Endpoints tab: Execution Status; views All · In Progress · Draft · Cancelled · Archived · Non-Compliant; View rule results reads Previous → Recent."
+            "Policy Endpoints tab: Execution Status; views All · In Progress · Draft · Cancelled · Archived · Non-Compliant; View rule results reads Previous → Recent.",
+            "Every Compliance listing offers filters only for the columns it shows; OS Platform replaces OS Type.",
+            "50 Linux / Windows benchmarks across 24 OS versions; every rule has an Impact line.",
+            "Compliance flyout: Rules · Compliance Audit · Endpoints · Dashboard (disabled, last).",
+            "Compliance Audit listing: the Benchmark name shows in full over up to three lines, rows evenly aligned.",
+            "Create Audit: Description under a full-width Name; OS Platform + OS Version then a searchable Benchmark; Notify Team picker; searchable Deployment Policy; actions pinned in the Endpoints step.",
+            "Edit Audit opens full screen with Update ▾ Save as Draft.",
+            "Audit detail: Rule Checks column; Scan Details box above Policy Fields.",
+            "View rule results: clickable severity filters, scan dates in row tooltips, Expand all / Collapse all, a slim result strip with the endpoint as a link.",
+            "Technician Rules: a rule no audit has run — V1 hides the Endpoints tab, V2 shows an empty state."
           ]
         }
       ]
