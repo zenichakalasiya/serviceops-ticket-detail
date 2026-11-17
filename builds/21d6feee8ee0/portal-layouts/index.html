@@ -1,0 +1,49 @@
+<!doctype html>
+<!--
+  A redirect, and deliberately nothing more.
+
+  ⚠️ There used to be a hand-written directory here listing the layouts as cards, plus a
+  `layout.html?id=` wrapper that deep-linked into each one. Both are gone. The canvas now carries
+  its OWN tab strip — "one tab each, full screen width" — so a second navigation beside it would be
+  a list to keep in step with a list that already exists, and the first time an option was renamed
+  or added the two would disagree. The document is the index.
+
+  ⚠️ This exists only so the shareable link is a FOLDER rather than a 425KB document with %20 in
+  its name. Nothing here should grow into a page.
+
+  ⚠️ The .dc.html filename and extension are load-bearing: dc-runtime resolves a sibling component
+  as COMPONENT_DIR + "/" + encodeURIComponent(name) + ".dc.html", which is how the Spec doc is
+  reached from the canvas. Renaming either file for a tidier URL breaks that.
+
+  Alongside this file, all four byte-identical to "ServiceOps portal layout system/":
+    Support Portal Layout System.dc.html   the canvas
+    Support Portal Layout Spec.dc.html     reached from the canvas's "Spec doc" link
+    support.js                             dc-runtime
+    image-slot.js + .image-slots.state.json  the artwork, stored as base64 data URIs
+
+  ⚠️ That state file is a DOTFILE and the artwork does not render without it. It survives because
+  the deploy is `actions/upload-pages-artifact` + `deploy-pages` (build_type `workflow`), which does
+  not run Jekyll — Jekyll would skip any file starting with a dot. `public/.nojekyll` is committed
+  as belt-and-braces in case the Pages source is ever switched back to the legacy branch build.
+  uploads/ is NOT published: 14MB of source artwork that nothing references, since the images are
+  inlined in the state file.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Support Portal layout templates</title>
+<link rel="canonical" href="Support%20Portal%20Layout%20System.dc.html" />
+<meta http-equiv="refresh" content="0; url=Support%20Portal%20Layout%20System.dc.html" />
+<script>location.replace('Support%20Portal%20Layout%20System.dc.html');</script>
+<style>
+  body { margin: 0; display: grid; place-items: center; min-height: 100vh;
+         background: #e6eaf1; color: #364658;
+         font: 14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  a { color: #2A6FAF; }
+</style>
+</head>
+<body>
+  <!-- Seen only if both the script and the meta refresh are blocked. -->
+  <p>Opening the layout canvas… <a href="Support%20Portal%20Layout%20System.dc.html">continue</a></p>
+</body>
+</html>
