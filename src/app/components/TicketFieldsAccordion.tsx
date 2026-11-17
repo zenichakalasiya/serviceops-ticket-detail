@@ -24,6 +24,7 @@ interface TicketFieldsAccordionProps {
   patchDeployMode?: boolean;
   /** Deployment Type value shown in the patch-deployment fields card. */
   deploymentType?: string;
+  deploymentStatus?: string;
   endpointMode?: boolean;
   cveMode?: boolean;
   ticketFieldsExpanded: boolean;
@@ -222,6 +223,7 @@ export function TicketFieldsAccordion(props: TicketFieldsAccordionProps) {
     patchMode = false,
     patchDeployMode = false,
     deploymentType,
+    deploymentStatus,
     endpointMode = false,
     cveMode = false,
     ticketFieldsExpanded,
@@ -498,6 +500,7 @@ export function TicketFieldsAccordion(props: TicketFieldsAccordionProps) {
           patchMode={patchMode}
           patchDeployMode={patchDeployMode}
           deploymentType={deploymentType}
+          deploymentStatus={deploymentStatus}
           endpointMode={endpointMode}
           cveMode={cveMode}
           footer={systemFieldsSection}

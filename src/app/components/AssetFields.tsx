@@ -369,6 +369,7 @@ interface AssetFieldsProps {
   patchDeployMode?: boolean;
   /** Patch DEPLOYMENT page: 'Patch' | 'OS Upgrade' for the Deployment Type field. */
   deploymentType?: string;
+  deploymentStatus?: string;
   // ENDPOINT page: endpoint-inventory fields (host/OS/agent/scan info) instead of the patch catalog's.
   endpointMode?: boolean;
   // DETECTED CVE page: CVE-metadata fields.
@@ -380,7 +381,7 @@ interface AssetFieldsProps {
   footer?: React.ReactNode;
 }
 
-export function AssetFields({ state, pinnedFields, togglePinField, propertiesSearchQuery, softwareMode = false, nonItMode = false, licenseMode = false, contractMode = false, purchaseMode = false, patchMode = false, patchDeployMode = false, deploymentType, endpointMode = false, cveMode = false, cmdbMode = false, footer }: AssetFieldsProps) {
+export function AssetFields({ state, pinnedFields, togglePinField, propertiesSearchQuery, softwareMode = false, nonItMode = false, licenseMode = false, contractMode = false, purchaseMode = false, patchMode = false, patchDeployMode = false, deploymentType, deploymentStatus, endpointMode = false, cveMode = false, cmdbMode = false, footer }: AssetFieldsProps) {
   const { assetType, setAssetType, status, setStatus, impact, setImpact, managedByGroup, setManagedByGroup, managedBy, setManagedBy, ci } = state;
   const softwareType = state.softwareType ?? '';
   const setSoftwareType = state.setSoftwareType ?? (() => {});
@@ -612,7 +613,8 @@ export function AssetFields({ state, pinnedFields, togglePinField, propertiesSea
       /* Leads the card: it decides what the run delivers, and therefore what every field under
          it means. Passed in rather than hard-coded — a Patch run must not claim OS Upgrade. */
       { label: 'Deployment Category', value: deploymentType ?? 'Patch' },
-      { label: 'Status', value: 'Ready to Deploy', dot: '#3D8BD0' },
+      /* The run's REAL status (Paused while paused), coloured like the header and the listing. */
+      { label: 'Status', value: deploymentStatus ?? 'Ready to Deploy', dot: ({ 'Ready to Deploy': '#3D8BD0', 'In Progress': '#F59E0B', Paused: '#EAB308', Completed: '#22C55E', Expired: '#DC2626', Draft: '#94A3B8', Cancelled: '#64748B' } as Record<string, string>)[deploymentStatus ?? 'Ready to Deploy'] ?? '#94A3B8' },
       { label: 'Task Type', value: 'Auto Patch Deploy Task' },
       { label: 'Deployment Policy', value: 'Production Servers — Staged Rollout' },
       { label: 'Install After', value: 'Sun, Jun 07, 2026 03:30 PM' },

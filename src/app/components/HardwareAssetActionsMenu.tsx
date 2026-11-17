@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import {
   MoreVertical, UserCheck, RefreshCw, ScanLine, Lock, RotateCcw, Power, Moon,
   Sunrise, Ban, Monitor, History, Repeat, Archive, Printer, Barcode, XCircle, PackageCheck, MinusSquare,
-  Package, Download, X,
+  Package, Download, X, Pause, Play,
 } from 'lucide-react';
 
 interface HardwareAssetActionsMenuProps {
@@ -22,9 +22,13 @@ interface HardwareAssetActionsMenuProps {
   patch?: boolean;
   // Patch DEPLOYMENT menu: ONLY Update Configuration + Cancel Deployment
   patchDeploy?: boolean;
+  /** Patch deployment: pause / resume the run. `deployPaused` swaps the item to Resume; a reason disables Pause. */
+  deployPaused?: boolean;
+  onTogglePause?: () => void;
+  pauseDisabledReason?: string | null;
 }
 
-export function HardwareAssetActionsMenu({ onOpenApprovalPopup, onOpenAddBarcode, minimal = false, nonIt = false, contract = false, purchase = false, cmdb = false, patch = false, patchDeploy = false }: HardwareAssetActionsMenuProps) {
+export function HardwareAssetActionsMenu({ onOpenApprovalPopup, onOpenAddBarcode, minimal = false, nonIt = false, contract = false, purchase = false, cmdb = false, patch = false, patchDeploy = false, deployPaused = false, onTogglePause, pauseDisabledReason }: HardwareAssetActionsMenuProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -108,6 +112,23 @@ export function HardwareAssetActionsMenu({ onOpenApprovalPopup, onOpenAddBarcode
       {open && patchDeploy && (
         <div className="absolute right-0 top-full mt-1 w-[230px] bg-white rounded-lg shadow-lg border border-[#DFE5ED] py-1 z-[9999]">
           <Item label="Update Configuration" icon={<UserCheck size={15} />} />
+          {deployPaused ? (
+            <Item onClick={onTogglePause} label="Resume Deployment" icon={<Play size={15} />} />
+          ) : (
+            /* A disabled button swallows the pointer, so its reason hangs on a wrapper. */
+            <span className="block" title={pauseDisabledReason ?? undefined}>
+            <button
+              type="button"
+              disabled={!!pauseDisabledReason}
+              onClick={() => { onTogglePause?.(); close(); }}
+              className="w-full px-4 py-2 text-[13px] text-left text-[#364658] transition-colors flex items-center gap-2.5 enabled:hover:bg-[#F9FAFB] disabled:pointer-events-none disabled:opacity-50"
+            >
+              <span className="text-[#6B7280] flex-shrink-0"><Pause size={15} /></span>
+              <span className="flex-1">Pause Deployment</span>
+              <span className="rounded bg-[#FEF3C7] px-1.5 py-px text-[10px] font-semibold text-[#B45309]">NEW</span>
+            </button>
+            </span>
+          )}
           <Item label="Cancel Deployment" icon={<X size={15} />} />
         </div>
       )}

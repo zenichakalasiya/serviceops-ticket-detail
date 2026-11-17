@@ -132,6 +132,8 @@ export const DEPLOY_STATUS_OPTIONS = [
   { label: 'Draft', color: '#94A3B8' },
   { label: 'Ready to Deploy', color: '#3D8BD0' },
   { label: 'In Progress', color: '#F59E0B' },
+  /* A run someone paused from its detail page (deploymentPauseStore). */
+  { label: 'Paused', color: '#EAB308' },
   { label: 'Completed', color: '#22C55E' },
   { label: 'Cancelled', color: '#64748B' },
   { label: 'Expired', color: '#DC2626' },

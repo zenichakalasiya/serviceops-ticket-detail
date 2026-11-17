@@ -25,9 +25,10 @@ import {
 import type { DashConfig } from './AssetDashboardView';
 import type { StatCard } from './AssetStatsRow';
 import type { Ticket } from './TicketListPage';
+import { usePauseState } from './deploymentPauseStore';
 
 const STATUS_COLOR: Record<string, string> = {
-  Draft: '#94A3B8', 'Ready to Deploy': '#3D8BD0', 'In Progress': '#F59E0B',
+  Draft: '#94A3B8', 'Ready to Deploy': '#3D8BD0', 'In Progress': '#F59E0B', Paused: '#EAB308',
   Completed: '#22C55E', Cancelled: '#64748B', Expired: '#DC2626',
 };
 const WINDOW_COLOR: Record<string, string> = {
@@ -136,7 +137,7 @@ const buildCards = (rows: Ticket[]): StatCard[] => {
 const buildDashboard = (rows: Ticket[]): DashConfig => {
   const by = (pred: (t: Ticket) => boolean) => rows.filter(pred).length;
 
-  const statusSegs = ['Completed', 'In Progress', 'Ready to Deploy', 'Draft', 'Cancelled', 'Expired']
+  const statusSegs = ['Completed', 'In Progress', 'Paused', 'Ready to Deploy', 'Draft', 'Cancelled', 'Expired']
     .map((label) => ({
       label, value: by((t) => statusOf(t) === label), color: STATUS_COLOR[label],
       filter: [{ field: 'status', condition: 'is' as const, values: [label] }],
@@ -193,7 +194,12 @@ export function PatchDeploymentsListingPage({ onNavigate }: { onNavigate?: (page
   /* Create opens the shared create page (spec 'patch-deployment'); a run saved there is prepended. */
   const saved = useCreatedRecords('patch-deployments');
   const created = useMemo(() => saved.map(deploymentFromForm), [saved]);
-  const rows = useMemo(() => [...created.map(toRow), ...DEPLOYMENTS.rows], [created]);
+  /* A paused run reads Paused (with the NEW tag) — the same store the detail page writes. */
+  const paused = usePauseState().paused;
+  const rows = useMemo(
+    () => [...created.map(toRow), ...DEPLOYMENTS.rows].map((r) => (paused[r.id] ? ({ ...r, status: 'Paused', x_statusTag: 'NEW' } as unknown as Ticket) : r)),
+    [created, paused],
+  );
   const recordOf = (id: string) => {
     const dep = created.find((d) => d.id === id) ?? DEPLOYMENTS.byId.get(id);
     return dep ? deploymentToPatchShape(dep) : undefined;

@@ -39,6 +39,8 @@ import { HeaderIdPill } from './HeaderIdPill';
 import { SystemFieldsRenderer } from './SystemFieldsRenderer';
 import { TicketPropertiesPanel } from './TicketPropertiesPanel';
 import { HeaderKpiRow, type HeaderKpiItem } from './HeaderKpiRow';
+import { pauseBlockedReason, pauseDeployment, resumeDeployment, usePause, usePauseState } from './deploymentPauseStore';
+import { PausedBanner, PausedFloatingBar, PausedPanelBand, PauseUiSwitch, usePauseUi } from './DeploymentPausedBanner';
 import { DiagnosisCard } from './DiagnosisCard';
 import { SolutionCard } from './SolutionCard';
 import { AISummary } from './AISummary';
@@ -476,6 +478,18 @@ onStackMinimizedChange,
   const activeAsset = assetList.find(a => a.id === activeAssetId);
   // The RAW patch record (the adapted HardwareAsset shape has no description).
   const activePatchRecord = openAssets.find(p => p.id === activeAssetId) ?? openAssets[0];
+  /* Pause / resume — one store (deploymentPauseStore) feeds the status, the banner, the menu
+     and the Audit Trail, and the listing reads the same one. */
+  const pauseInfo = usePause(activePatchRecord?.id);
+  const pauseEvents = usePauseState().events[activePatchRecord?.id ?? ''] ?? [];
+  const [pauseUi] = usePauseUi();
+  const baseDeployStatus = activePatchRecord?.deployment?.status ?? 'Ready to Deploy';
+  const togglePause = () => {
+    const id = activePatchRecord?.id;
+    if (!id) return;
+    if (pauseInfo) { resumeDeployment(id); toast.success(`Deployment resumed — back to ${pauseInfo.prev}`); }
+    else { pauseDeployment(id, baseDeployStatus); toast.success('Deployment paused'); }
+  };
   /** OS Upgrade runs get the count+preview Overview; patch runs keep the donut Overview. */
   const isOsUpgradeRun = activePatchRecord?.deployment?.deploymentType === 'OS Upgrade';
   // Overview description is optional and collapsed by default; reset when switching patch tabs.
@@ -2322,6 +2336,8 @@ onStackMinimizedChange,
           onClose={onCloseTab}
           maxVisible={drawerWidth > 1080 ? 8 : 3}
         />
+        {/* Comparison switch for the paused-banner placements — goes once one is picked. */}
+        <PauseUiSwitch />
         <button onClick={() => setMinimized(true)} title="Minimize panel" className="flex-shrink-0 p-2 hover:bg-[#e5e7eb] border-l border-[#e5e7eb]"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 12h14" stroke="#6b7280" strokeWidth="2" strokeLinecap="round"/></svg></button>
         <button
           onClick={toggleDrawerView}
@@ -2366,9 +2382,18 @@ onStackMinimizedChange,
               const dep = activePatchRecord?.deployment;
 
               // Lifecycle status — same dot colors as the Patch Deployments list.
-              const status = dep?.status ?? 'Ready to Deploy';
+              const status = pauseInfo ? 'Paused' : (dep?.status ?? 'Ready to Deploy');
               const statusColor = ({ 'Ready to Deploy': '#3D8BD0', 'In Progress': '#F59E0B', 'Completed': '#22A06B', 'Expired': '#EF4444', 'Draft': '#94A3B8', 'Cancelled': '#6B7280' } as Record<string, string>)[status] ?? '#6B7280';
-              items.push({ key: 'status', tip: `Status: ${status}`, node: (
+              items.push({ key: 'status', tip: pauseInfo ? `Status: Paused by ${pauseInfo.by} on ${pauseInfo.at}` : `Status: ${status}`, node: pauseInfo ? (
+                /* Paused reads differently from every other state on purpose — a pause icon in an
+                   amber pill rather than a dot, so it is seen, not just read. */
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="text-[11px] text-[#7B8FA5]">Status</span>
+                  <span className="inline-flex items-center gap-1 rounded border border-[#FCD34D] bg-[#FFFBEB] px-1.5 py-px text-[12px] font-medium text-[#B45309]">
+                    <Pause size={11} fill="currentColor" strokeWidth={0} /> Paused
+                  </span>
+                </span>
+              ) : (
                 <span className="inline-flex items-center gap-1.5">
                   <span className="text-[11px] text-[#7B8FA5]">Status</span>
                   <span className="size-2 rounded-full flex-shrink-0" style={{ backgroundColor: statusColor }} />
@@ -2438,6 +2463,9 @@ onStackMinimizedChange,
             </button>
             <HardwareAssetActionsMenu
               patchDeploy
+              deployPaused={!!pauseInfo}
+              onTogglePause={togglePause}
+              pauseDisabledReason={pauseBlockedReason(baseDeployStatus)}
               onOpenApprovalPopup={() => {
                 setShowCreateApprovalPopup(true);
                 setActiveMainTab('approvals');
@@ -2447,10 +2475,25 @@ onStackMinimizedChange,
           </div>
         </div>
 
+        {/* V1 — paused strip under the header, across both columns. */}
+        {pauseInfo && pauseUi === 'v1' && (
+          <div className="flex-shrink-0 border-b border-[#e5e7eb] bg-white px-6 py-3">
+            <PausedBanner info={pauseInfo} onResume={togglePause} />
+          </div>
+        )}
+
         {/* Main Content Area - Two Column Layout */}
         <div className="flex flex-1 overflow-hidden" data-onboarding-container>
           {/* Left Content */}
           <div className="flex-1 flex flex-col relative min-w-0" data-onboarding="main-workspace">
+            {/* V2 — the strip in the left column only, above the tabs. V3 — a floating bar
+                over the bottom of the content. Both sit outside the scrolling tab content. */}
+            {pauseInfo && pauseUi === 'v2' && (
+              <div className="flex-shrink-0 bg-white px-6 pt-3 pb-1">
+                <PausedBanner info={pauseInfo} onResume={togglePause} />
+              </div>
+            )}
+            {pauseInfo && pauseUi === 'v3' && <PausedFloatingBar info={pauseInfo} onResume={togglePause} />}
             {/* Scrollable Content Area — the Superseded tab is a full-height React Flow map
                 (like the CMDB Dependency Map), so it must NOT scroll: become a flex column with
                 overflow-hidden there so the map fills EXACTLY (its controls never clip) and no
@@ -6738,6 +6781,15 @@ onStackMinimizedChange,
               const activeCat = categories.find((c) => c.id === historyCategory) || categories[0];
 
               const auditEntries: { user: string; initials: string; color: string; action: string; details: string; field?: string; from?: string; to?: string; time: string }[] = [
+                /* Pauses and resumes, newest first, from the same store the header reads. */
+                ...pauseEvents.map((e) => ({
+                  user: e.by,
+                  initials: e.by.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase(),
+                  color: '#F59E0B',
+                  action: e.action,
+                  details: e.action === 'Deployment Paused' ? 'Paused the deployment — no endpoint receives patches until it is resumed' : 'Resumed the deployment',
+                  field: 'Status', from: e.from, to: e.to, time: e.at,
+                })),
                 { user: 'Jainam Shah', initials: 'JS', color: '#F59E0B', action: 'Status Changed', details: 'Moved the deployment to Ready to Deploy', field: 'Status', from: 'Draft', to: 'Ready to Deploy', time: 'Sat, Jun 20, 2026 04:39 PM' },
                 { user: 'Jainam Shah', initials: 'JS', color: '#F59E0B', action: 'Install Window Scheduled', details: 'Scheduled the installation window', field: 'Install After', from: '---', to: 'Sun, Jun 07, 2026 03:30 PM', time: 'Sat, Jun 20, 2026 02:12 PM' },
                 { user: 'Rakesh Rathod', initials: 'RR', color: '#3D8BD0', action: 'Deployment Policy Changed', details: 'Switched the deployment to the staged production policy', field: 'Policy', from: 'Pilot Ring - Early Validation', to: 'Production Servers - Staged Rollout', time: 'Sat, Jun 20, 2026 11:05 AM' },
@@ -7935,6 +7987,8 @@ onStackMinimizedChange,
 
           {/* Right Sidebar - Properties */}
           <TicketPropertiesPanel
+            /* V4 — the paused band sits on top of the panel, level with the tabs beside it. */
+            topSlot={pauseInfo && pauseUi === 'v4' ? <PausedPanelBand info={pauseInfo} onResume={togglePause} /> : undefined}
             ticketId={activeTicket?.id}
             showSla={false}
             fieldsTitle="Patch Deployment Fields"
@@ -7944,6 +7998,7 @@ onStackMinimizedChange,
             patchMode={true}
             patchDeployMode={true}
             deploymentType={activePatchRecord?.deployment?.deploymentType ?? 'Patch'}
+            deploymentStatus={pauseInfo ? 'Paused' : baseDeployStatus}
             assetState={assetState}
             activeGroup={activeGroup}
             setActiveGroup={setActiveGroup}

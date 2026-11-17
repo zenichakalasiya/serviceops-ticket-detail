@@ -47,6 +47,9 @@ interface TicketPropertiesPanelProps {
   patchDeployMode?: boolean;
   /** Deployment Type value shown in the patch-deployment fields card. */
   deploymentType?: string;
+  deploymentStatus?: string;
+  /** Pinned above the panel content, in line with the drawer tabs (e.g. the paused-deployment band). */
+  topSlot?: React.ReactNode;
   // ENDPOINT page: endpoint-inventory fields in the (renamed) Endpoint Fields accordion
   endpointMode?: boolean;
   // DETECTED CVE page: CVE-metadata fields in the CVE Fields accordion
@@ -361,6 +364,8 @@ export function TicketPropertiesPanel(props: TicketPropertiesPanelProps) {
     patchMode = false,
     patchDeployMode = false,
     deploymentType,
+    deploymentStatus,
+    topSlot,
     endpointMode = false,
     cveMode = false,
     compactTicketFields = false,
@@ -1353,7 +1358,7 @@ export function TicketPropertiesPanel(props: TicketPropertiesPanelProps) {
       <div className={`flex-shrink-0 flex flex-col transition-all duration-300 h-full ${
         isAccordionCollapsed ? 'hidden' : ''
       }`} style={{ width: isAccordionCollapsed ? '0px' : `${accordionWidth}px` }} data-onboarding={activeGroup === 'chatbot' ? 'serviceops-ai' : undefined}>
-        
+        {topSlot}
         {/* Scrollable Content Area */}
         <div className={`${activeGroup === 'chatbot' ? '' : 'flex-1 overflow-y-auto p-4 pt-0 pb-8'}`}>
         {/* Group Header with Search/Filter */}
@@ -1844,6 +1849,7 @@ export function TicketPropertiesPanel(props: TicketPropertiesPanelProps) {
           patchMode={patchMode}
           patchDeployMode={patchDeployMode}
           deploymentType={deploymentType}
+          deploymentStatus={deploymentStatus}
           endpointMode={endpointMode}
           cveMode={cveMode}
           assetState={assetState}
