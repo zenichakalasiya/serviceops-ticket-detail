@@ -148,7 +148,16 @@ function RuleEndpointsTab({ results, onOpened }: { results: RuleEndpointResult[]
 export function ComplianceRulesPage({ onNavigate }: { onNavigate?: (page: string) => void }) {
   const policies = usePolicies();
   const v = useMemo(() => vizSnapshot(policies), [policies]);
-  const rows = useMemo(() => RULES.map((r) => ruleRow(r, v.rules.find((s) => s.rule.id === r.id), ruleEndpointResults(r.id, policies))), [v, policies]);
+  /* Default order mixes the two kinds (Zeni, 17 Nov 2026): three rules an audit has run (endpoints and a
+     Rule Score), then one no audit has run yet (its empty state), and so on — the catalogue's own order put
+     the unrun AlmaLinux / Amazon Linux rules first, so page one had no results at all. */
+  const rows = useMemo(() => {
+    const all = RULES.map((r) => { const eps = ruleEndpointResults(r.id, policies); return { row: ruleRow(r, v.rules.find((s) => s.rule.id === r.id), eps), ran: eps.length > 0 }; });
+    const ran = all.filter((x) => x.ran), idle = all.filter((x) => !x.ran);
+    const out: typeof all = [];
+    while (ran.length || idle.length) { out.push(...ran.splice(0, 3)); if (idle.length) out.push(idle.shift()!); }
+    return out.map((x) => x.row);
+  }, [v, policies]);
   const [openId, setOpenId] = useState<string | null>(null);
   const rule: ComplianceRule | undefined = openId ? ruleById(openId) : undefined;
   /* A rule no audit has run: V1 drops the Endpoints tab, V2 keeps it with an empty state (Zeni, 17 Nov 2026). */

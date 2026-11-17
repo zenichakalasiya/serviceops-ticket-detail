@@ -2049,12 +2049,12 @@ export function TicketTable({
         { key: 'id', label: 'ID', w: 96 },
         /* Zeni, 12 Nov 2026. Status = where the scan run stands (Draft / In Progress / Completed /
            Cancelled); Compliance Result = Compliant / Non-Compliant from the last scan. */
-        /* Zeni, 17 Nov 2026: ID · Policy Name · Status · Last Scan Date · Compliance Score · Enable · Actions.
+        /* Zeni, 17 Nov 2026: ID · Policy Name · Status · Compliance Score · Last Scan Date · Enable · Actions.
            Everything else is in column selection (MODULE_EXTRA_COLS). */
         { key: 'subject', label: 'Policy Name', flex: true, w: 220, maxW: 360 },
         { key: 'status', label: 'Status', w: 140 },
-        { key: 'x_lastExecution', label: 'Last Scan Date', w: 180 },
         { key: 'x_cpScore', label: 'Compliance Score', w: 185 },
+        { key: 'x_lastExecution', label: 'Last Scan Date', w: 180 },
         { key: 'x_enabled', label: 'Enable', w: 100 },
         { key: 'actions', label: 'Actions', w: 110 },
     ],
@@ -2365,7 +2365,7 @@ export function TicketTable({
   // The stored value is the ordered VISIBLE set — removing a column persists too.
   /* A listing whose DEFAULT columns changed bumps its key here, or a browser holding the old saved
      set never shows the new columns (Compliance Policy, 15 Nov 2026: Enable + Compliance Result). */
-  const COL_KEY_VERSION: Record<string, string> = { 'compliance-policy': 'V4', 'cviz-rule': 'V3', 'cviz-resource': 'V3' };
+  const COL_KEY_VERSION: Record<string, string> = { 'compliance-policy': 'V5', 'cviz-rule': 'V3', 'cviz-resource': 'V3' };
   const COL_ORDER_KEY = moduleCols ? `${moduleCols}ListColumns${COL_KEY_VERSION[moduleCols] ?? 'V2'}` : 'ticketListColumnsV2';
   const [colOrder, setColOrder] = useState<string[]>(() => {
     try {

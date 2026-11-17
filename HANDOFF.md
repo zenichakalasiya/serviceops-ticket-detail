@@ -16,6 +16,10 @@
 - **Listing columns (technician):** Audit ID · Policy Name · Status · Last Scan Date · Compliance Score · Enable · Actions; Rules ID · Name · OS Platform · OS Version · Severity · Endpoints · Rule Score; Endpoints ID · Hostname · IP Address · OS Name · OS Version · Policies · Compliance Result · Remote Office. Everything else is in column selection via `MODULE_EXTRA_COLS` (TicketTable). Endpoint inventory columns (Architecture … Last Logged In User) are DERIVED per endpoint id (`inventoryOf` in complianceRows.tsx — sample values). Saved-column keys bumped (V4 / V3 / V3).
 - **Admin › Benchmark:** Source "Default" shows as **Predefined** (`originLabel`, display only); OS Platform (not OS Type) in the listing filter, Create/Edit form (platform → version) and the Attach Rules chip; row icons Add subgroup (`ListPlus`) · Attach rules (`FilePlus2`) · Rename · Delete with INSTANT tooltips, no "(F2)" brackets; the benchmark detail is a **1080px right side drawer** with a backdrop (was full-screen with a tab bar).
 
+## Later the same night
+- Compliance Audit listing: Compliance Score now BEFORE Last Scan Date (… Status · Compliance Score · Last Scan Date · Enable · Actions); saved-columns key V5.
+- Technician Rules listing default order mixes 3 rules with results, then 1 no audit has run (`ComplianceRulesPage` rows), so page one shows both Rule Scores and the unrun empty state.
+
 ## Next steps / open
 - Attach rules icon (`FilePlus2`) was our pick — confirm with Zeni.
 - .185 Month list has "Select All"; ours does not. .185's Retry Failed Configuration / Expires After / Deploy After Approval not added (only Schedule was asked).
