@@ -22,7 +22,7 @@ const KEY = 'createFormUi2';
 const EVENT = 'create-form-ui';
 
 export function readCreateFormUi(): CreateFormUi {
-  try { const v = localStorage.getItem(KEY); return v === 'v1' || v === 'v2' || v === 'v4' || v === 'v5' ? v : 'v3'; } catch { return 'v3'; }
+  try { const v = localStorage.getItem(KEY); return v === 'v2' ? v : 'v3'; /* only ids v2 (pill "V1") and v3 (pill "V2") are offered (17 Nov 2026): any other stored one opens v3 */ } catch { return 'v3'; }
 }
 export function setCreateFormUi(v: CreateFormUi) {
   try { localStorage.setItem(KEY, v); } catch { /* private mode */ }

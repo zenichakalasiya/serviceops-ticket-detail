@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 import {
   ArrowLeft, BadgeCheck, Check, ChevronDown, ChevronRight, Copy, ExternalLink, FolderPlus, Layers, Link2, Lock, Monitor, MoreVertical,
-  Pencil, Plus, PlusCircle, Search, ShieldAlert, Trash2, X, CornerDownRight, ArrowDown, ChevronsDownUp, GripVertical, History,
+  Pencil, Plus, PlusCircle, Search, ShieldAlert, Trash2, X, CornerDownRight, ArrowDown, ChevronsDownUp, GripVertical, History, GitBranch,
 } from 'lucide-react';
 import { useComplianceRuleUi } from './complianceRuleUi';
 import { Pagination } from './Pagination';
@@ -23,7 +23,7 @@ import { TicketFilterBar } from './TicketFilterBar';
 import type { FilterRule, QuickFilterDef } from './TicketFilterBar';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import {
-  benchmarkCreated, benchmarkGroups, ruleCode, ruleNumbers, benchmarkRuleIds, benchmarkUpdated, platformOf, benchmarksUsingRule, COMPLIANCE_TYPES, FILTER_OS_TYPES, fmtDate, groupRuleIds, osVersionOf, osVersionsFor, RULES, ruleById,
+  benchmarkCreated, benchmarkGroups, ruleCode, ruleNumbers, benchmarkRuleIds, benchmarkUpdated, platformOf, benchmarksUsingRule, COMPLIANCE_TYPES, fmtDate, groupRuleIds, osVersionOf, osVersionsFor, RULES, ruleById,
   PROFILES, profileAllows, profileLabel, profileLevels, profileOf, SEVERITIES, SEVERITY_PILL,
 } from './complianceData';
 import type { Benchmark, BenchmarkProfile, ComplianceRule, ComplianceType, Profile, RuleGroup } from './complianceData';
@@ -212,20 +212,24 @@ function BenchmarkList({ benchmarks, onOpen, onCreate, onEdit, onClone, onDelete
   const attrs = useMemo(() => {
     const plain = (o: { label: string }[]) => o.map(({ label }) => ({ label }));
     return [
-      selectAttr('type', 'OS Type', Monitor, plain(optionsOf(benchmarks, (b) => b.type, FILTER_OS_TYPES))),
+      /* Zeni, 17 Nov 2026: one filter per column shown — no OS Type (no column; OS Platform replaces it). */
+      selectAttr('platform', 'Platform', Monitor, plain(optionsOf(benchmarks, (b) => platformOf(b.osVersion).platform))),
+      selectAttr('version', 'OS Version', GitBranch, plain(optionsOf(benchmarks, (b) => platformOf(b.osVersion).version))),
       selectAttr('origin', 'Source', BadgeCheck, plain(optionsOf(benchmarks, (b) => b.origin, ['Default', 'Custom']))),
     ];
   }, [benchmarks]);
   // Type and Origin are every cut this list has, so they are both quick filters and the
   // Filters builder (and its pill) is switched off — it would only offer the same two again.
   const quick = useMemo<QuickFilterDef[]>(() => [
-    { field: 'type', icon: Monitor, tip: 'Filter by OS type', title: 'OS Type is', width: 196, row: 'plain', options: attrs[0].options! },
-    { field: 'origin', icon: BadgeCheck, tip: 'Filter by source', title: 'Source is', width: 180, row: 'plain', options: attrs[1].options! },
+    { field: 'platform', icon: Monitor, tip: 'Filter by platform', title: 'Platform is', width: 240, row: 'plain', options: attrs[0].options! },
+    { field: 'version', icon: GitBranch, tip: 'Filter by OS version', title: 'OS Version is', width: 180, row: 'plain', options: attrs[1].options! },
+    { field: 'origin', icon: BadgeCheck, tip: 'Filter by source', title: 'Source is', width: 180, row: 'plain', options: attrs[2].options! },
   ], [attrs]);
 
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
-    const byField = (b: Benchmark, f: string): string | string[] => String((b as any)[f] ?? '');
+    const byField = (b: Benchmark, f: string): string | string[] =>
+      f === 'platform' ? platformOf(b.osVersion).platform : f === 'version' ? platformOf(b.osVersion).version : String((b as any)[f] ?? '');
     return matchRules(benchmarks, rules, byField).filter((b) =>
       !q || [b.id, b.name, b.description, b.osVersion].some((x) => x.toLowerCase().includes(q)));
   }, [benchmarks, search, rules]);

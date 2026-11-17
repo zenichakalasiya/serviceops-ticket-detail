@@ -137,6 +137,20 @@ const P = {
   ubuntu: { type: 'Linux', platform: 'Ubuntu Linux', version: '22.04 LTS', key: 'ubuntu' },
   win2019: { type: 'Windows', platform: 'Windows Server', version: '2019', key: 'win2019' },
   win2022: { type: 'Windows', platform: 'Windows Server', version: '2022', key: 'win2022' },
+  /* More OS versions (Zeni, 17 Nov 2026: about 50 benchmarks to pick from in Create Audit). */
+  debian12: { type: 'Linux', platform: 'Debian Linux', version: '12', key: 'debian12' },
+  rhel8: { type: 'Linux', platform: 'Red Hat Enterprise Linux', version: '8', key: 'rhel8' },
+  ubuntu2004: { type: 'Linux', platform: 'Ubuntu Linux', version: '20.04 LTS', key: 'ubuntu2004' },
+  ubuntu2404: { type: 'Linux', platform: 'Ubuntu Linux', version: '24.04 LTS', key: 'ubuntu2404' },
+  sles15: { type: 'Linux', platform: 'SUSE Linux Enterprise', version: '15', key: 'sles15' },
+  ol9: { type: 'Linux', platform: 'Oracle Linux', version: '9', key: 'ol9' },
+  alma9: { type: 'Linux', platform: 'AlmaLinux OS', version: '9', key: 'alma9' },
+  rocky9: { type: 'Linux', platform: 'Rocky Linux', version: '9', key: 'rocky9' },
+  amzn2023: { type: 'Linux', platform: 'Amazon Linux', version: '2023', key: 'amzn2023' },
+  win2016: { type: 'Windows', platform: 'Windows Server', version: '2016', key: 'win2016' },
+  win2025: { type: 'Windows', platform: 'Windows Server', version: '2025', key: 'win2025' },
+  win10: { type: 'Windows', platform: 'Windows', version: '10 Enterprise', key: 'win10' },
+  win11: { type: 'Windows', platform: 'Windows', version: '11 Enterprise', key: 'win11' },
   iosRouter: { type: 'Router', platform: 'Cisco IOS XE', version: '17.x', key: 'ios-r' },
   junos: { type: 'Router', platform: 'Junos OS', version: '21.x', key: 'junos' },
   iosSwitch: { type: 'Switch', platform: 'Cisco IOS XE', version: '17.x', key: 'ios-s' },
@@ -167,8 +181,8 @@ interface Check {
   platforms: Platform[];
 }
 
-const LINUX = [P.debian, P.rhel, P.ubuntu];
-const WIN = [P.win2019, P.win2022];
+const LINUX = [P.debian, P.rhel, P.ubuntu, P.debian12, P.rhel8, P.ubuntu2004, P.ubuntu2404, P.sles15, P.ol9, P.alma9, P.rocky9, P.amzn2023];
+const WIN = [P.win2019, P.win2022, P.win2016, P.win2025, P.win10, P.win11];
 
 const CHECKS: Check[] = [
   {
@@ -512,6 +526,35 @@ const CHECKS: Check[] = [
   },
 ];
 
+/* CIS "Impact" — what applying the rule may cost (Zeni, 17 Nov 2026: every rule shows one).
+   Our own wording in the CIS style; replace with the CIS export's text when it arrives. */
+const IMPACT_BY_CHECK: Record<string, string> = {
+  cramfs: 'Systems that need to mount cramfs images, such as some embedded firmware tools, will no longer be able to.',
+  tmp: 'Moving /tmp to its own partition needs a reboot and disk planning; applications that run files from /tmp may break once noexec is set.',
+  gpgcheck: 'Packages from repositories without a valid signing key will fail to install until the key is imported.',
+  aslr: 'Very old software that relies on fixed memory addresses may fail to start.',
+  coredump: 'Developers lose core dumps for crash analysis unless they are turned back on for a specific host.',
+  firewalld: 'Services not explicitly allowed by a firewall zone become unreachable from the network.',
+  auditd: 'Audit logging uses extra disk space and a small amount of CPU on busy systems.',
+  sshroot: 'Administrators must log in with their own account and use sudo; scripts that connect as root over SSH will fail.',
+  sshtries: 'Users who mistype their password several times are disconnected and must reconnect.',
+  passwd: 'None expected. The file stays readable by everyone and writable only by root.',
+  pwhistory: 'Users cannot reuse any of their last 24 passwords, which may increase password reset requests.',
+  pwlength: 'Users must choose longer passwords; existing shorter passwords keep working until they are next changed.',
+  lockout: 'Accounts lock after repeated failed logons, which an attacker could use to lock out legitimate users.',
+  spooler: 'Printing from this server stops; clients can no longer print through it.',
+  smb1: 'Legacy clients and devices that only support SMBv1, such as old scanners, can no longer connect.',
+  aaa: 'All logins move to the AAA model; a misconfigured AAA server can lock administrators out of the device.',
+  telnet: 'Telnet access to the device stops; administrators must use an SSH client.',
+  banner: 'None expected. Users see a warning message before they log in.',
+  snmp: 'Monitoring tools that use the "private" community string lose write access and must be reconfigured.',
+  logbuffer: 'A small amount of device memory is reserved for the log buffer.',
+  ntp: 'Devices stop syncing time until every NTP server is configured with the authentication key.',
+  fortiadmin: 'Scripts and integrations that log in as "admin" must be updated to use the new account.',
+  fortitimeout: 'Idle administrator sessions are logged out and must sign in again.',
+  fortianyany: 'Traffic that only the any-any policy allowed is blocked until a specific policy is added for it.',
+};
+
 /* The checks CIS puts at Level 2 — defence in depth that can cost some function. */
 const L2_CHECKS = new Set(['auditd', 'spooler', 'snmp', 'logbuffer', 'fortitimeout']);
 /** Checks a person has to review — CIS marks these "Manual"; everything else the agent assesses. */
@@ -525,7 +568,7 @@ export const RULES: ComplianceRule[] = CHECKS.flatMap((c) =>
     name: c.name,
     description: c.description,
     rationale: c.rationale,
-    impact: c.impact,
+    impact: c.impact ?? IMPACT_BY_CHECK[c.key],
     severity: c.severity,
     type: p.type,
     platform: p.platform,
@@ -658,8 +701,70 @@ const SEED: Omit<Benchmark, 'osVersion' | 'profile'>[] = [
   },
 ];
 
+/* About 50 benchmarks in all (Zeni, 17 Nov 2026): a CIS Level 1 benchmark for every new OS
+   version, a Level 2 one for every Linux / Windows version, and a few custom ones. */
+type Named = [key: string, type: ComplianceType, name: string];
+const L1_NAMES: Named[] = [
+  ['debian12', 'Linux', 'CIS Debian Linux 12 Benchmark v1.1.0 - Level 1 Server'],
+  ['rhel8', 'Linux', 'CIS Red Hat Enterprise Linux 8 Benchmark v3.0.0 - Level 1 Server'],
+  ['ubuntu2004', 'Linux', 'CIS Ubuntu Linux 20.04 LTS Benchmark v2.0.1 - Level 1 Server'],
+  ['ubuntu2404', 'Linux', 'CIS Ubuntu Linux 24.04 LTS Benchmark v1.0.0 - Level 1 Server'],
+  ['sles15', 'Linux', 'CIS SUSE Linux Enterprise 15 Benchmark v2.0.0 - Level 1 Server'],
+  ['ol9', 'Linux', 'CIS Oracle Linux 9 Benchmark v2.0.0 - Level 1 Server'],
+  ['alma9', 'Linux', 'CIS AlmaLinux OS 9 Benchmark v2.0.0 - Level 1 Server'],
+  ['rocky9', 'Linux', 'CIS Rocky Linux 9 Benchmark v2.0.0 - Level 1 Server'],
+  ['amzn2023', 'Linux', 'CIS Amazon Linux 2023 Benchmark v1.0.0 - Level 1'],
+  ['win2016', 'Windows', 'CIS Microsoft Windows Server 2016 Benchmark v3.0.0 - Level 1 Member Server'],
+  ['win2025', 'Windows', 'CIS Microsoft Windows Server 2025 Benchmark v1.0.0 - Level 1 Member Server'],
+  ['win10', 'Windows', 'CIS Microsoft Windows 10 Enterprise Benchmark v3.0.0 - Level 1'],
+  ['win11', 'Windows', 'CIS Microsoft Windows 11 Enterprise Benchmark v3.0.0 - Level 1'],
+];
+const L2_NAMES: Named[] = [
+  ['debian', 'Linux', 'CIS Debian Linux 11 Benchmark v2.0.0 - Level 2 Server'],
+  ['rhel', 'Linux', 'CIS Red Hat Enterprise Linux 9 Benchmark v2.0.0 - Level 2 Server'],
+  ['ubuntu', 'Linux', 'CIS Ubuntu Linux 22.04 LTS Benchmark v2.0.0 - Level 2 Server'],
+  ['win2019', 'Windows', 'CIS Microsoft Windows Server 2019 Benchmark v3.0.0 - Level 2 Member Server'],
+  ['win2022', 'Windows', 'CIS Microsoft Windows Server 2022 Benchmark v3.0.0 - Level 2 Member Server'],
+  ...L1_NAMES.map(([k, t, n]): Named => [k, t, n.replace('Level 1', 'Level 2')]),
+];
+const allRulesFor = (key: string) => RULES.filter((r) => r.id.endsWith(`-${key}`)).map((r) => r.id);
+let nextBm = 14;
+const cis = (ids: string[]) => ([key, type, name]: Named): Omit<Benchmark, 'osVersion' | 'profile'> => ({
+  id: `BM-${nextBm++}`, name, description: CIS_DESC, type, origin: 'Default', groups: [{ id: 'g', name: '', ruleIds: ids.length ? ids : [] }], usedBy: 0, createdBy: 'System', updatedAt: '2026-08-12T10:20',
+});
+const MORE: Omit<Benchmark, 'osVersion' | 'profile'>[] = [
+  ...L1_NAMES.map((n) => cis(rulesFor(n[0]))(n)),
+  ...L2_NAMES.map((n) => cis(allRulesFor(n[0]))(n)),
+  { id: `BM-${nextBm++}`, name: 'Ubuntu Web Server Baseline', description: 'Hardening for public-facing Ubuntu web servers.', type: 'Linux', origin: 'Custom',
+    groups: [{ id: 'g1', name: 'SSH', ruleIds: pick('ubuntu', ['sshroot', 'sshtries']) }, { id: 'g2', name: 'Host Firewall', ruleIds: pick('ubuntu', ['firewalld']) }], usedBy: 0, createdBy: 'Kavit Gohel', updatedAt: '2026-10-14T12:10' },
+  { id: `BM-${nextBm++}`, name: 'RHEL Database Server Hardening', description: 'Controls for RHEL 9 database hosts in the data centre.', type: 'Linux', origin: 'Custom',
+    groups: [{ id: 'g1', name: 'Kernel', ruleIds: pick('rhel', ['aslr', 'coredump']) }, { id: 'g2', name: 'Packages', ruleIds: pick('rhel', ['gpgcheck']) }, { id: 'g3', name: 'Auditing', ruleIds: pick('rhel', ['auditd']) }], usedBy: 0, createdBy: 'Dharti Patel', updatedAt: '2026-10-11T16:45' },
+  { id: `BM-${nextBm++}`, name: 'Windows 11 Laptop Baseline', description: 'Account and service settings for company laptops.', type: 'Windows', origin: 'Custom',
+    groups: [{ id: 'g1', name: 'Accounts', ruleIds: pick('win11', ['pwlength', 'lockout']) }, { id: 'g2', name: 'Services', ruleIds: pick('win11', ['smb1']) }], usedBy: 0, createdBy: 'Neha Shah', updatedAt: '2026-10-06T10:00' },
+  { id: `BM-${nextBm++}`, name: 'Domain Controller Security', description: 'Password and service rules for Windows Server 2019 domain controllers.', type: 'Windows', origin: 'Custom',
+    groups: [{ id: 'g1', name: 'Password Policy', ruleIds: pick('win2019', ['pwhistory', 'pwlength', 'lockout']) }, { id: 'g2', name: 'Services', ruleIds: pick('win2019', ['spooler']) }], usedBy: 0, createdBy: 'Vasu Hirpara', updatedAt: '2026-09-30T14:20' },
+  { id: `BM-${nextBm++}`, name: 'Debian 12 Container Host', description: 'Minimum controls for Debian 12 hosts that run containers.', type: 'Linux', origin: 'Custom',
+    groups: [{ id: 'g1', name: 'Filesystems', ruleIds: pick('debian12', ['cramfs', 'tmp']) }, { id: 'g2', name: 'Access', ruleIds: pick('debian12', ['sshroot', 'passwd']) }], usedBy: 0, createdBy: 'Kavit Gohel', updatedAt: '2026-09-22T09:15' },
+  { id: `BM-${nextBm++}`, name: 'Branch Switch Baseline', description: 'Access and monitoring rules for branch access switches.', type: 'Switch', origin: 'Custom',
+    groups: [{ id: 'g1', name: 'Access', ruleIds: pick('ios-s', ['aaa', 'telnet']) }, { id: 'g2', name: 'Monitoring', ruleIds: pick('ios-s', ['snmp', 'ntp']) }], usedBy: 0, createdBy: 'Dharti Patel', updatedAt: '2026-09-12T11:40' },
+  { id: `BM-${nextBm++}`, name: 'SOC 2 Linux Controls', description: 'Access and logging controls checked for the SOC 2 audit.', type: 'Linux', origin: 'Custom',
+    groups: [{ id: 'g1', name: 'Access', ruleIds: pick('rhel8', ['sshroot', 'sshtries', 'passwd']) }, { id: 'g2', name: 'Logging', ruleIds: pick('rhel8', ['auditd']) }], usedBy: 0, createdBy: 'Neha Shah', updatedAt: '2026-10-16T13:30' },
+  { id: `BM-${nextBm++}`, name: 'ISO 27001 Windows Baseline', description: 'Account policy controls mapped to ISO 27001 Annex A.9.', type: 'Windows', origin: 'Custom',
+    groups: [{ id: 'g1', name: 'Account Policy', ruleIds: pick('win2022', ['pwhistory', 'pwlength', 'lockout']) }, { id: 'g2', name: 'Network Services', ruleIds: pick('win2022', ['smb1']) }], usedBy: 0, createdBy: 'Vasu Hirpara', updatedAt: '2026-10-15T11:20' },
+  { id: `BM-${nextBm++}`, name: 'Ubuntu 24.04 Developer Workstations', description: 'Lightweight hardening for developer machines on Ubuntu 24.04.', type: 'Linux', origin: 'Custom',
+    groups: [{ id: 'g1', name: 'Kernel', ruleIds: pick('ubuntu2404', ['aslr', 'coredump']) }, { id: 'g2', name: 'Packages', ruleIds: pick('ubuntu2404', ['gpgcheck']) }], usedBy: 0, createdBy: 'Kavit Gohel', updatedAt: '2026-10-13T15:05' },
+  { id: `BM-${nextBm++}`, name: 'Windows 10 Kiosk Lockdown', description: 'Settings for shared kiosk machines in branch offices.', type: 'Windows', origin: 'Custom',
+    groups: [{ id: 'g1', name: 'Accounts', ruleIds: pick('win10', ['lockout', 'pwlength']) }, { id: 'g2', name: 'Services', ruleIds: pick('win10', ['spooler', 'smb1']) }], usedBy: 0, createdBy: 'Dharti Patel', updatedAt: '2026-10-09T10:40' },
+  { id: `BM-${nextBm++}`, name: 'Rocky Linux App Servers', description: 'Application server hardening for the Rocky Linux 9 estate.', type: 'Linux', origin: 'Custom',
+    groups: [{ id: 'g1', name: 'Access', ruleIds: pick('rocky9', ['sshroot', 'sshtries']) }, { id: 'g2', name: 'Network', ruleIds: pick('rocky9', ['firewalld']) }], usedBy: 0, createdBy: 'Neha Shah', updatedAt: '2026-10-04T09:50' },
+  { id: `BM-${nextBm++}`, name: 'Windows Server 2016 Legacy Hosts', description: 'The minimum we hold legacy 2016 servers to until they are retired.', type: 'Windows', origin: 'Custom',
+    groups: [{ id: 'g1', name: 'Password Policy', ruleIds: pick('win2016', ['pwhistory', 'pwlength']) }, { id: 'g2', name: 'Services', ruleIds: pick('win2016', ['smb1']) }], usedBy: 0, createdBy: 'Vasu Hirpara', updatedAt: '2026-09-26T16:00' },
+  { id: `BM-${nextBm++}`, name: 'Amazon Linux Cloud Hosts', description: 'Baseline for EC2 instances running Amazon Linux 2023.', type: 'Linux', origin: 'Custom',
+    groups: [{ id: 'g1', name: 'Filesystems', ruleIds: pick('amzn2023', ['cramfs', 'tmp']) }, { id: 'g2', name: 'Access', ruleIds: pick('amzn2023', ['sshroot']) }, { id: 'g3', name: 'Logging', ruleIds: pick('amzn2023', ['auditd']) }], usedBy: 0, createdBy: 'Kavit Gohel', updatedAt: '2026-09-20T12:25' },
+];
+
 /** Every seed's OS version is read off its own rules, so the two can never disagree. */
-export const BENCHMARKS_SEED: Benchmark[] = SEED.map((b) => {
+export const BENCHMARKS_SEED: Benchmark[] = [...SEED, ...MORE].map((b) => {
   const ids = b.groups.flatMap(groupRuleIds);
   const first = ruleById(ids[0] ?? '');
   // The profile is read off its rules, like its OS version: the levels it actually holds.

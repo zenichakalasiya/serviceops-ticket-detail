@@ -141,7 +141,15 @@ export function CreateFormHelpPanel({ help, onOpen, available, bare }: {
       {hidden ? <ChevronLeft size={12} /> : <ChevronRight size={12} />}
     </button>
   );
-  if (hidden) return <aside data-guide-rail className="relative h-full w-0" aria-label={`${help.noun} guide, hidden`}>{handle}</aside>;
+  /* Hidden (Zeni, 17 Nov 2026): the arrow becomes a floating "Help guide" button in the same corner. */
+  if (hidden) return (
+    <aside data-guide-rail className="relative h-full w-0" aria-label={`${help.noun} guide, hidden`}>
+      <button type="button" onClick={() => setCreateGuideHidden(false)} aria-expanded={false}
+        className="absolute right-3 top-[12px] z-20 inline-flex h-7 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#3D8BD0] bg-white pl-2.5 pr-3 text-[12px] font-medium text-[#3D8BD0] shadow-[0_1px_3px_rgba(15,23,42,0.12)] transition-colors hover:bg-[#EBF5FF]">
+        <BookOpen size={13} />Help guide
+      </button>
+    </aside>
+  );
 
   return (
     <aside ref={asideRef} className={'relative flex h-full min-h-0 flex-col bg-white ' + (bare ? '' : 'border-l border-[#DFE5ED]')} aria-label={`${help.noun} guide`}>

@@ -1,12 +1,12 @@
 import { ComplianceVersionMenu } from './ComplianceVersionMenu';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { BadgeCheck, ExternalLink, GitBranch, Monitor, Search, Server, ShieldAlert, X } from 'lucide-react';
+import { BadgeCheck, ExternalLink, GitBranch, ListChecks, Monitor, Search, ShieldAlert, X } from 'lucide-react';
 import { Pagination } from './Pagination';
 import { matchRules, optionsOf, RuleDetailPanel, selectAttr, SeverityPill } from './ComplianceShared';
 import { TicketFilterBar } from './TicketFilterBar';
 import type { FilterRule, QuickFilterDef } from './TicketFilterBar';
-import { BENCHMARKS_SEED, benchmarksUsingRule, COMPLIANCE_TYPES, FILTER_OS_TYPES, RULES, SEVERITIES, SEVERITY_PILL, ruleCode } from './complianceData';
+import { BENCHMARKS_SEED, benchmarksUsingRule, COMPLIANCE_TYPES, RULES, SEVERITIES, SEVERITY_PILL, ruleCode } from './complianceData';
 import type { Benchmark, ComplianceRule } from './complianceData';
 
 /* Admin › Compliance › Rules — the predefined rule catalogue.
@@ -32,24 +32,25 @@ export function AdminComplianceRulesModule({ benchmarks = BENCHMARKS_SEED }: { b
   const attrs = useMemo(() => {
     const plain = (o: { label: string }[]) => o.map(({ label }) => ({ label }));
     return [
-      selectAttr('type', 'OS Type', Monitor, plain(optionsOf(RULES, (r) => r.type, FILTER_OS_TYPES))),
-      selectAttr('platform', 'Platform', Server, plain(optionsOf(RULES, (r) => r.platform))),
-      selectAttr('version', 'OS Version', GitBranch, plain(optionsOf(RULES, (r) => `${r.platform} ${r.version}`))),
+      /* Zeni, 17 Nov 2026: one filter per column shown — no OS Type (no column; OS Platform replaces it). */
       selectAttr('severity', 'Severity', ShieldAlert, SEVERITIES.map((v) => ({ label: v, color: SEVERITY_PILL[v].bar }))),
       selectAttr('profile', 'Profile', BadgeCheck, [{ label: 'L1' }, { label: 'L2' }]),
+      selectAttr('assessment', 'Assessment', ListChecks, plain(optionsOf(RULES, (r) => r.assessment, ['Automated', 'Manual']))),
+      selectAttr('platform', 'OS Platform', Monitor, plain(optionsOf(RULES, (r) => r.platform))),
+      selectAttr('version', 'OS Version', GitBranch, plain(optionsOf(RULES, (r) => r.version))),
     ];
   }, []);
   // The two cuts a rule list is worked by: what it runs on, and how bad a failure is.
   const quick = useMemo<QuickFilterDef[]>(() => [
-    { field: 'type', icon: Monitor, tip: 'Filter by OS type', title: 'OS Type is', width: 196, row: 'plain', options: attrs[0].options! },
-    { field: 'severity', icon: ShieldAlert, tip: 'Filter by severity', title: 'Severity is', width: 196, row: 'dot', options: attrs[3].options! },
-    { field: 'profile', icon: BadgeCheck, tip: 'Filter by profile', title: 'Profile is', width: 160, row: 'plain', options: attrs[4].options! },
+    { field: 'severity', icon: ShieldAlert, tip: 'Filter by severity', title: 'Severity is', width: 196, row: 'dot', options: attrs[0].options! },
+    { field: 'profile', icon: BadgeCheck, tip: 'Filter by profile', title: 'Profile is', width: 160, row: 'plain', options: attrs[1].options! },
+    { field: 'platform', icon: Monitor, tip: 'Filter by OS platform', title: 'OS Platform is', width: 240, row: 'plain', options: attrs[3].options! },
   ], [attrs]);
 
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
     const byField = (r: ComplianceRule, f: string): string | string[] =>
-      f === 'version' ? `${r.platform} ${r.version}` : String((r as any)[f] ?? '');
+      String((r as any)[f] ?? '');
     return matchRules(RULES, rules, byField).filter((r) =>
       !q || [ruleCode(r.id), r.name, r.description, r.platform, ...r.conditions.map((c) => c.pattern)].some((x) => x.toLowerCase().includes(q)));
   }, [search, rules]);

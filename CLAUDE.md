@@ -3298,3 +3298,11 @@ The **Builder** pill beside the logo (every admin form page; `formStudioUi.ts`, 
     - Its table is Event · Event Time · User · Change Summary.
     - Entries come from `historyOf(b)`, which reads only the benchmark's own created/updated fields. Nothing is invented.
 - **Compliance, 17 Nov 2026 (later): the OS Type FILTER on the Rules and Benchmark listings (admin + technician) offers only Linux and Windows.** Admin reads `FILTER_OS_TYPES` (complianceData.ts); technician reads `OS_FILTER_OPTIONS` (complianceFilterAttrs.ts). Router/Switch/Firewall records still exist. The policy and endpoint listings keep all five types.
+- **Compliance, 17 Nov 2026 (evening).**
+  - **A listing offers a filter ONLY for a column it shows** (admin + technician). OS Platform replaces OS Type; an attr kept for a card / dashboard drill is `hidden: true` (in TicketFilterBar: known to chips, not offered in the picker).
+  - **Catalogue:** 24 OS versions (`P` in complianceData.ts), 57 benchmarks (50 Linux/Windows; `L1_NAMES` / `L2_NAMES` / customs in `MORE`), every rule carries `impact` (`IMPACT_BY_CHECK`, our wording until the CIS export).
+  - **Compliance flyout:** Rules · Compliance Audit · Endpoints · Dashboard (disabled).
+  - **`ColDef.wrap`** (TicketTable) is `true | number` (lines); every row reserves that height (theme.css `td.cell-wrap`). Compliance Audit's Benchmark = 3.
+  - **Create Audit:** OS Platform + OS Version narrow the Benchmark list (not stored — read off the benchmark); a new audit starts without a benchmark; Notify Team = `NotifyPicker.tsx`; Edit/Clone = full screen (`fullScreen` on the create shells) with **Update ▾ Save as Draft**.
+  - **Rule results:** `ResultCard` is one strip (endpoint link · Result · Previous + date, no Required); `RuleGroupTree` has Expand all / Collapse all; `ScanChangeTip` shows scan dates.
+  - **Technician Rules, unrun rule:** V1 | V2 pill on `#/compliance-rules` (`complianceUncheckedRuleUi.ts`): V1 hides the Endpoints tab, V2 shows `RuleNotRunEmpty`.

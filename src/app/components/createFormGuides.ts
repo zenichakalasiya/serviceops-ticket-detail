@@ -234,7 +234,7 @@ export const FORM_HELP: Record<string, FormHelp> = {
     before: ['Know which operating system the machines run — a benchmark is written for one OS version.', 'Know which remote offices or machines should be checked.'],
     steps: [
       { section: ['Policy Details'], title: 'Name the policy', text: 'Give it a name people will recognise in the listing, such as "Production Debian Web Tier". The Description says why the policy exists.' },
-      { section: ['Benchmark'], title: 'Choose the benchmark', text: 'Pick the OS Type first, then the benchmark. Its OS version decides which endpoints can be added. Network benchmarks also ask which configuration file to check.', tips: ['Changing the OS Type or the benchmark clears the endpoints already added.'] },
+      { section: ['Benchmark'], title: 'Choose the benchmark', text: 'Pick the benchmark — narrow the list with OS Platform and OS Version first if you like. Its OS version decides which endpoints can be added.', tips: ['Changing the OS Platform, OS Version or the benchmark clears the endpoints already added.'] },
       { section: ['Target Endpoints'], title: 'Pick the endpoints', text: 'Add whole remote offices, single endpoints, or both. An endpoint picked both ways is assessed once.', tips: ['Use Preview on an office to see the machines it brings in.', 'Offline endpoints are skipped until their agent reports in.'] },
       { section: ['Schedule & Notifications'], title: 'Schedule it and tell people', text: 'Turn on Schedule to scan on its own — once, daily, weekly or monthly. Leave it off to scan only with Scan Now. Notify Team receives the result.' },
     ],
@@ -242,7 +242,7 @@ export const FORM_HELP: Record<string, FormHelp> = {
       ['Config File Type', 'Network devices only. Startup checks the configuration the device boots with; Running checks what it runs now.'],
       ['Notify Team', 'Technicians or groups who hear the result of each scan.'],
     ],
-    example: { title: 'Web servers, weekly', rows: [['Policy Name', 'Production Debian Web Tier'], ['OS Type', 'Linux'], ['Benchmark', 'CIS Debian Linux 11 Benchmark'], ['Remote Offices', 'Ahmedabad HQ'], ['Schedule', 'Weekly, Sunday 02:00'], ['Notify Team', 'Linux Admins']], note: 'Save as Draft keeps it without scanning — only the Policy Name is needed. Publish needs every required field.' },
+    example: { title: 'Web servers, weekly', rows: [['Policy Name', 'Production Debian Web Tier'], ['OS Platform', 'Debian Linux'], ['OS Version', '11'], ['Benchmark', 'CIS Debian Linux 11 Benchmark'], ['Remote Offices', 'Ahmedabad HQ'], ['Schedule', 'Weekly, Sunday 02:00'], ['Notify Team', 'Linux Admins']], note: 'Save as Draft keeps it without scanning — only the Policy Name is needed. Publish needs every required field.' },
     mistakes: ['Choosing a benchmark for a different OS version than the machines run — they will not show up to add.', 'Leaving Schedule off and expecting it to scan on its own.'],
   },
 };

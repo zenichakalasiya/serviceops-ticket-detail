@@ -17,7 +17,7 @@
  * the policy's tabs and the endpoint page always agree. */
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { AlertCircle, ArrowLeft, CheckCircle2, ChevronRight, Circle, Download, Eye, EyeOff, Lock, MinusCircle, X, XCircle } from 'lucide-react';
+import { AlertCircle, ArrowLeft, CheckCircle2, ChevronRight, ChevronsDownUp, ChevronsUpDown, Circle, Download, ExternalLink, Eye, EyeOff, Lock, MinusCircle, Monitor, X, XCircle } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { StatsCardsRow } from './AssetStatsRow';
 import { ckpi, RuleDetailBody, RuleFactsRow, SeverityPill } from './ComplianceShared';
@@ -46,13 +46,21 @@ function FirstScanIcon() {
 }
 
 /** What the Previous → Recent icons say, in words (their tooltip). */
-function ScanChangeTip({ prev, last }: { prev: boolean | null; last: boolean | null }) {
+function ScanChangeTip({ prev, last, prevAt, lastAt }: { prev: boolean | null; last: boolean | null; prevAt?: string; lastAt?: string }) {
   const word = (v: boolean | null) => (v === null ? 'Not checked' : v ? 'Pass' : 'Fail');
   const tone = (v: boolean | null) => (v === null ? 'text-white/70' : v ? 'text-[#86EFAC]' : 'text-[#FCA5A5]');
+  const first = prev === null && last !== null;
+  /* Each scan names its date (Zeni, 17 Nov 2026). */
+  const row = (label: string, v: boolean | null, at: string | undefined, text: string) => (
+    <div className="flex items-start justify-between gap-6">
+      <span className="text-white/70">{label}{at && <span className="block text-[11px] text-white/55">{fmtStamp(at)}</span>}</span>
+      <span className={`font-medium ${tone(v)}`}>{text}</span>
+    </div>
+  );
   return (
-    <div className="space-y-1 text-[12px] leading-[1.5]">
-      <div className="flex justify-between gap-6"><span className="text-white/70">Previous scan</span><span className={`font-medium ${tone(prev)}`}>{prev === null && last !== null ? 'None (first scan)' : word(prev)}</span></div>
-      <div className="flex justify-between gap-6"><span className="text-white/70">Recent scan</span><span className={`font-medium ${tone(last)}`}>{word(last)}</span></div>
+    <div className="space-y-1.5 text-[12px] leading-[1.5]">
+      {row('Previous scan', prev, first ? undefined : prevAt, first ? 'None (first scan)' : word(prev))}
+      {row('Recent scan', last, lastAt, word(last))}
     </div>
   );
 }
@@ -447,7 +455,7 @@ export function ComplianceEndpointPanel({ endpointId, ruleId, policyId, onClose,
                           return (
                             <button key={sv} type="button" aria-pressed={bdSev === sv} disabled={!n && bdSev !== sv} onClick={() => setBdSev((x) => (x === sv ? null : sv))}
                               title={bdSev === sv ? 'Show all rules' : n ? `Show only the ${sv} rules that failed` : `No ${sv} rules failed`}
-                              className={'inline-flex items-center gap-1.5 whitespace-nowrap rounded px-1.5 py-0.5 text-[13px] transition-colors disabled:cursor-default ' + (bdSev === sv ? 'bg-[#EBF5FF] ring-1 ring-[#BFDBFE]' : n ? 'hover:bg-[#F5F7FA]' : '')}>
+                              className={'mr-1.5 inline-flex h-7 items-center gap-1.5 whitespace-nowrap rounded border px-2 text-[13px] transition-colors disabled:cursor-default ' + (bdSev === sv ? 'border-[#3D8BD0] bg-[#EBF5FF]' : n ? 'border-[#DFE5ED] bg-white hover:border-[#3D8BD0] hover:bg-[#F5F9FE]' : 'border-transparent opacity-60')}>
                               <span className="size-2 flex-shrink-0 rounded-full" style={{ backgroundColor: SEVERITY_PILL[sv].bar }} />
                               <span className="text-[#7B8FA5]">{sv}</span>
                               <span className="font-semibold tabular-nums" style={{ color: n ? SEVERITY_PILL[sv].text : '#94A3B8' }}>{n}</span>
@@ -460,7 +468,7 @@ export function ComplianceEndpointPanel({ endpointId, ruleId, policyId, onClose,
                     </div>
                     {ruleTreeCount(benchmark, bdSev ? (id) => mine.some((f) => f.ruleId === id && !f.passed && ruleById(id)?.severity === bdSev) : undefined, bdQ) === 0
                       ? <NoMatch what="rules" onClear={() => { setBdQ(''); setBdSev(null); }} />
-                      : <ComplianceBreakdown benchmark={benchmark} findings={mine} query={bdQ} severity={bdSev} onRule={(rid) => push({ kind: 'result', endpointId: ep.id, ruleId: rid })} />}
+                      : <ComplianceBreakdown benchmark={benchmark} findings={mine} query={bdQ} severity={bdSev} lastScan={policy.lastScan?.at} prevScan={runHistory(policy).filter((r) => r.status === 'Completed')[1]?.at} onRule={(rid) => push({ kind: 'result', endpointId: ep.id, ruleId: rid })} />}
                   </>
                 ) : (
                   <div className="rounded-lg border border-dashed border-[#DFE5ED] px-4 py-10 text-center text-[13px] text-[#7B8FA5]">
@@ -612,6 +620,9 @@ export function RuleGroupTree({ benchmark, resultOf = () => null, right, onRule,
     setOpen(new Set(keys));
   }, [tree, sig, plain]);
   const toggle = (k: string) => setOpen((o) => { const n = new Set(o); if (n.has(k)) n.delete(k); else n.add(k); return n; });
+  /* Expand or collapse every group at once (Zeni, 17 Nov 2026). */
+  const allKeys = tree.flatMap((g) => [g.key, ...g.children.map((s) => s.key)]);
+  const allOpen = allKeys.length > 0 && allKeys.every((k) => open.has(k));
 
   const head = (key: string, number: string, name: string, rules: NumberedRule[], depth: 0 | 1) => {
     const { ok, total } = tally(rules);
@@ -684,9 +695,18 @@ export function RuleGroupTree({ benchmark, resultOf = () => null, right, onRule,
 
   return (
     <section className="overflow-hidden rounded-lg border border-[#E5E7EB]">
-      <header className="flex items-center justify-between border-b border-[#E5E7EB] bg-[#F9FAFB] px-4 py-2.5">
+      <header className="flex items-center justify-between gap-3 border-b border-[#E5E7EB] bg-[#F9FAFB] py-1.5 pl-4 pr-2">
         <span className="text-[13px] font-semibold text-[#364658]">{title}</span>
-        {note && <span className="text-[11px] text-[#7B8FA5]">{note}</span>}
+        <span className="flex items-center gap-3">
+          {note && <span className="text-[11px] text-[#7B8FA5]">{note}</span>}
+          {!narrowing && allKeys.length > 0 && (
+            <button type="button" onClick={() => setOpen(allOpen ? new Set() : new Set(allKeys))}
+              className="inline-flex h-7 items-center gap-1.5 rounded px-2 text-[12px] font-medium text-[#3D8BD0] transition-colors hover:bg-[#EBF5FF]">
+              {allOpen ? <ChevronsDownUp size={14} /> : <ChevronsUpDown size={14} />}
+              {allOpen ? 'Collapse all' : 'Expand all'}
+            </button>
+          )}
+        </span>
       </header>
       {tree.map((g) => {
         const gHit = !!q && hits(q, g.number, g.name);
@@ -715,8 +735,11 @@ export function RuleGroupTree({ benchmark, resultOf = () => null, right, onRule,
 }
 
 /** One endpoint's results as the tree — Previous → Recent scan on each rule. */
-export function ComplianceBreakdown({ benchmark, findings, onRule, query, severity }: {
+export function ComplianceBreakdown({ benchmark, findings, onRule, query, severity, lastScan, prevScan }: {
   benchmark: Benchmark;
+  /** When the recent and previous scans ran — named in each row's tooltip. */
+  lastScan?: string;
+  prevScan?: string;
   /** Failed Rules by Severity: only this severity's FAILED rules show (Zeni, 17 Nov 2026); the rest are hidden. */
   severity?: Severity | null;
   /** This endpoint's findings for the policy. */
@@ -751,7 +774,7 @@ export function ComplianceBreakdown({ benchmark, findings, onRule, query, severi
                 </span>
               </TooltipTrigger>
               <TooltipContent side="left" className="w-[260px] text-wrap">
-                <ScanChangeTip prev={f ? f.prevPassed : null} last={f ? f.passed : null} />
+                <ScanChangeTip prev={f ? f.prevPassed : null} last={f ? f.passed : null} prevAt={prevScan} lastAt={lastScan} />
               </TooltipContent>
             </Tooltip>
             <span className="w-[56px] text-right"><ResultPill passed={f ? f.passed : null} /></span>
@@ -860,36 +883,35 @@ function ResultCard({ rule, endpoint, finding, lastScan, prevScan, exception, on
   onRequestException?: () => void;
   onOpenEndpoint?: () => void;
 }) {
+  /* Zeni, 17 Nov 2026: one compact strip, not a boxed card — the ENDPOINT leads and is the link
+     (this is a result ON that endpoint), then Result and Previous with its date. No Required block. */
   const label = 'text-[12px] text-[#7B8FA5]';
+  const epInner = (
+    <>
+      <span className="flex size-6 flex-shrink-0 items-center justify-center rounded bg-[#e8f4fd] text-[#3D8BD0]"><Monitor size={13} /></span>
+      <span className="flex-shrink-0 rounded bg-[#e8f4fd] px-1.5 py-0.5 text-[11px] font-medium text-[#3D8BD0]">{endpoint.id}</span>
+      <span className="truncate text-[13px] font-semibold text-[#3D8BD0] decoration-[#3D8BD0]/50 underline-offset-[3px] group-hover/ep:underline">{endpoint.hostName}</span>
+      {onOpenEndpoint && <ExternalLink size={12} className="flex-shrink-0 text-[#3D8BD0] opacity-60 group-hover/ep:opacity-100" />}
+    </>
+  );
   return (
-    <section className="overflow-hidden rounded-lg border border-[#E5E7EB]">
-      <header className="flex items-center justify-between gap-2 border-b border-[#E5E7EB] bg-[#F9FAFB] px-4 py-2.5">
-        <span className="text-[13px] font-semibold text-[#364658]">Result on this endpoint</span>
-        <span className="flex items-center gap-2 text-[12px] text-[#64748B]">
-          {/* The endpoint itself is the link (Zeni, 12 Nov 2026) — no separate "Open endpoint". */}
-          {onOpenEndpoint ? (
-            <button type="button" onClick={onOpenEndpoint} title="Open endpoint" className="group/ep flex items-center gap-2 text-[12px] text-[#64748B]">
-              <span className="rounded bg-[#e8f4fd] px-1.5 py-0.5 text-[11px] font-medium text-[#3D8BD0] group-hover/ep:underline">{endpoint.id}</span>
-              <span className="decoration-dotted underline-offset-[3px] group-hover/ep:text-[#3D8BD0] group-hover/ep:underline">{endpoint.hostName}</span>
-            </button>
-          ) : (
-            <><span className="rounded bg-[#e8f4fd] px-1.5 py-0.5 text-[11px] font-medium text-[#3D8BD0]">{endpoint.id}</span>{endpoint.hostName}</>
-          )}
+    <section className="rounded-lg border border-[#E5E7EB] px-3 py-2">
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+        {onOpenEndpoint
+          ? <button type="button" onClick={onOpenEndpoint} title="Open this endpoint" className="group/ep flex min-w-0 items-center gap-2">{epInner}</button>
+          : <span className="flex min-w-0 items-center gap-2">{epInner}</span>}
+        <span className="h-4 w-px flex-shrink-0 bg-[#E5E7EB]" />
+        <span className="flex items-center gap-2"><span className={label}>Result</span><ResultPill passed={finding ? finding.passed : null} /></span>
+        <span className="flex items-center gap-2">
+          <span className={label}>Previous</span>
+          {finding?.prevPassed == null
+            ? <span className="text-[12px] text-[#94A3B8]">None (first scan)</span>
+            : <><ResultPill passed={finding.prevPassed} />{prevScan && <span className="text-[12px] text-[#7B8FA5]">{fmtStamp(prevScan)}</span>}</>}
         </span>
-      </header>
-      <div className="grid grid-cols-3 gap-x-6 gap-y-3 px-4 py-3">
-        <div><div className={label}>Result</div><div className="mt-1"><ResultPill passed={finding ? finding.passed : null} /></div></div>
-        {/* Zeni, 12 Nov 2026: Result · Previous Result · Previous Scan Date — no Recent Scan, and the date carries no pill. */}
-        <div><div className={label}>Previous Result</div><div className="mt-1">{finding?.prevPassed == null
-          ? <span className="text-[13px] text-[#94A3B8]">None (first scan)</span>
-          : <ResultPill passed={finding.prevPassed} />}</div></div>
-        <div><div className={label}>Previous Scan Date</div><div className="mt-1 text-[13px] text-[#364658]">{finding?.prevPassed == null || !prevScan ? '—' : fmtStamp(prevScan)}</div></div>
-        <div className="col-span-3">
-          <div className={label}>Required</div>
-          <div className="mt-1 whitespace-pre-wrap rounded bg-[#F9FAFB] px-3 py-2 font-mono text-[12px] leading-[1.6] text-[#364658]">{rule.remediationValue}</div>
-        </div>
+      </div>
+      <div>
         {exception && (
-          <div className="col-span-3">
+          <div className="mt-2 border-t border-[#EEF1F4] pt-2">
             <div className={label}>Exception</div>
             <div className="mt-1 flex flex-wrap items-center gap-2 text-[13px] text-[#364658]">
               <span className="inline-block rounded-sm bg-[#FFFAEB] px-1.5 py-0.5 text-[12px] font-medium text-[#B54708]">{exception.status}</span>

@@ -205,14 +205,15 @@ function PackageNavItem({ activePage, onNavigate }: { activePage?: string; onNav
 // Compliance sub-modules surfaced in the hover flyout, in the order the flow reads: see the
 // estate (Dashboard), the checklists (Benchmark), the policies that run them, the machines.
 // The three read-only pages were the old Compliance Visualization page's tabs (23 Oct 2026).
-const COMPLIANCE_ITEMS: { icon: React.ReactNode; label: string; page: string }[] = [
-  { icon: <LayoutDashboard size={16} />, label: 'Dashboard', page: 'compliance-dashboard' },
+const COMPLIANCE_ITEMS: { icon: React.ReactNode; label: string; page: string; disabled?: boolean }[] = [
   { icon: <ScrollText size={16} />, label: 'Rules', page: 'compliance-rules' },
   /* Benchmark is HIDDEN on the technician side for now (Zeni, 28 Oct 2026): benchmarks are made by
      admins and only picked in the Create Policy form. The page still works at #/compliance-benchmarks. */
   // { icon: <ListChecks size={16} />, label: 'Benchmark', page: 'compliance-benchmarks' },
   { icon: <ShieldCheck size={16} />, label: 'Compliance Audit', page: 'compliance-policies' },
   { icon: <Monitor size={16} />, label: 'Endpoints', page: 'compliance-endpoints' },
+  /* Zeni, 17 Nov 2026: Dashboard is switched off for now and sits last. The page still works at #/compliance-dashboard. */
+  { icon: <LayoutDashboard size={16} />, label: 'Dashboard', page: 'compliance-dashboard', disabled: true },
 ];
 
 /** Compliance nav item with a hover flyout listing its sub-modules (mirrors PackageNavItem). */
@@ -228,9 +229,11 @@ function ComplianceNavItem({ activePage, onNavigate }: { activePage?: string; on
             return (
               <button
                 key={item.label}
-                onClick={() => onNavigate?.(item.page)}
+                disabled={item.disabled}
+                title={item.disabled ? 'Not available yet' : undefined}
+                onClick={() => !item.disabled && onNavigate?.(item.page)}
                 className={`w-full px-3 py-2 text-[13px] text-left transition-colors flex items-center gap-2.5 whitespace-nowrap ${
-                  isActive ? 'bg-[#3D8BD0] text-white' : 'hover:bg-[#F5F7FA] text-[#364658]'
+                  item.disabled ? 'cursor-not-allowed text-[#A0AEC0] opacity-60' : isActive ? 'bg-[#3D8BD0] text-white' : 'hover:bg-[#F5F7FA] text-[#364658]'
                 }`}
               >
                 <span className={`flex-shrink-0 ${isActive ? 'text-white' : 'text-[#6B7280]'}`}>{item.icon}</span>

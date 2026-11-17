@@ -41,15 +41,18 @@ function StepNav({ current, steps, onStep, onNext, final, split }: { current: nu
 }
 
 /* ── V2: full page, stepper on the left ── */
-export function SteppedPageShell({ title, onBack, error, secondary, final, split, steps, current, onStep, onNext, help, children, overlays }: {
+export function SteppedPageShell({ title, onBack, error, secondary, final, split, steps, current, onStep, onNext, help, children, overlays, fullScreen }: {
   title: string; onBack: () => void; error?: string; secondary?: ShellAction; final: ShellAction;
+  /** Cover the WHOLE screen, product header included — an edit opened from a full-screen detail
+   *  page would otherwise leave that page's tab bar showing above it. */
+  fullScreen?: boolean;
   /** One primary CTA with a dropdown (Publish ▾ Save as Draft) in place of the final button + secondary. */
   split?: ShellAction[];
   steps: StepItem[]; current: number; onStep: (i: number) => void; onNext: () => void;
   help: React.ReactNode; children: React.ReactNode; overlays?: React.ReactNode;
 }) {
   return (
-    <div className="fixed inset-x-0 bottom-0 top-[56px] z-[9000] flex flex-col bg-white">
+    <div className={`fixed inset-x-0 bottom-0 z-[9000] flex flex-col bg-white ${fullScreen ? 'top-0' : 'top-[56px]'}`}>
       <div className="flex flex-shrink-0 items-center gap-2 border-b border-[#DFE5ED] px-4 py-3">
         <button type="button" onClick={onBack} title="Back" className="-ml-1.5 flex size-[30px] flex-shrink-0 items-center justify-center rounded text-[#7B8FA5] transition-colors hover:bg-[#EEF2F6] hover:text-[#364658]"><ArrowLeft size={16} /></button>
         <h1 className="truncate text-[16px] font-medium text-[#364658]">{title}</h1>
@@ -114,7 +117,7 @@ export function SteppedDrawerShell({ title, onBack, error, secondary, final, spl
       <div className="absolute inset-y-0 right-0 flex w-[min(1180px,calc(100vw-72px))] flex-col bg-white shadow-2xl transition-[width] duration-200 has-[aside[data-guide-rail]]:w-[min(820px,calc(100vw-72px))]">
         <div className="flex min-h-0 flex-1">
           <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-            <div className="flex flex-shrink-0 items-center gap-2 px-5 pb-2 pt-4 [div:has(aside[data-guide-rail])_&]:pr-[88px]">
+            <div className="flex flex-shrink-0 items-center gap-2 px-5 pb-2 pt-4 [div:has(aside[data-guide-rail])_&]:pr-[164px]">
               <h1 className="min-w-0 flex-1 truncate text-[16px] font-medium text-[#1D2A3E]">{title}</h1>
               {error && <span className="text-[12px] text-[#F25C4E]">{error}</span>}
             </div>
@@ -139,7 +142,7 @@ export function SteppedDrawerShell({ title, onBack, error, secondary, final, spl
             </div>
           </div>
           {/* The guide, from the drawer's top edge down; the close X sits in its corner, so its title row keeps room for it. */}
-          <div className="relative w-[360px] flex-shrink-0 border-l border-[#EEF2F6] has-[>aside[data-guide-rail]]:!w-0 has-[>aside[data-guide-rail]]:border-l-0 [&>aside>div:first-child]:pr-12 [&>aside>div:first-child]:pt-[18px] [&>aside[data-guide-rail]>button]:!top-[20px] [&>aside[data-guide-rail]>button]:!-left-[68px]">
+          <div className="relative w-[360px] flex-shrink-0 border-l border-[#EEF2F6] has-[>aside[data-guide-rail]]:!w-0 has-[>aside[data-guide-rail]]:border-l-0 [&>aside>div:first-child]:pr-12 [&>aside>div:first-child]:pt-[18px] [&>aside[data-guide-rail]>button]:!top-[16px] [&>aside[data-guide-rail]>button]:!right-12">
             {help}
             <button type="button" onClick={onBack} title="Close" className="absolute right-3 top-3.5 flex size-8 items-center justify-center rounded text-[#7B8FA5] transition-colors hover:bg-[#F3F4F6]"><X size={16} /></button>
           </div>

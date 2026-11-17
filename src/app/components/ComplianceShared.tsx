@@ -414,10 +414,13 @@ export function RuleDetailBody({ rule, usedIn, lead, firstTab }: {
                 <h3 className={sumTitle}>Rationale</h3>
                 <p className={sumValue}>{rule.rationale}</p>
               </div>
+              {/* Shown only when the rule has impact text — never a "Not provided" line. */}
+              {rule.impact && (
               <div>
                 <h3 className={sumTitle}>Impact</h3>
-                <p className={sumValue}>{rule.impact || <span className="text-[#9CA3AF]">Not provided</span>}</p>
+                <p className={sumValue}>{rule.impact}</p>
               </div>
+              )}
               <div>
                 <h3 className={sumTitle}>References</h3>
                 <ul className="mt-2 space-y-2">

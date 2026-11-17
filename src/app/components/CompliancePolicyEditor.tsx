@@ -21,9 +21,9 @@ import type { SummaryGroup, SummaryLine } from './CreateFormOneScreen';
 import { CreateFormHelp } from './CreateFormHelp';
 import { FORM_STEPS } from './createFormSteps';
 import { setExtraCreateOpen, useCreateFormUi } from './createFormUi';
-import { BENCHMARKS_SEED, COMPLIANCE_TYPES, benchmarkRuleIds, profileLabel } from './complianceData';
-import type { ComplianceType } from './complianceData';
+import { BENCHMARKS_SEED, benchmarkRuleIds, platformOf, profileLabel } from './complianceData';
 import { TECH_GROUPS, TECHNICIANS } from './technicianRoster';
+import { NotifyPicker } from './NotifyPicker';
 import { DEPLOYMENT_POLICIES_185 } from './data185';
 import {
   benchmarkOf, deviceTagsOf, endpointsForBenchmark, fmtStamp, getPolicy, needsConfigType, nextRun, officesOf, openPolicyEditor,
@@ -43,6 +43,8 @@ import type { ComplianceEndpoint, CompliancePolicy, ConfigFileType, DeviceAxis, 
  * assesses ONE benchmark; the endpoint pool is that benchmark's Type + OS version only. */
 
 const inputCls = formInputCls.replace('rounded-md', 'rounded');
+/** The Actions column stays pinned at the right while the other columns scroll (Zeni, 17 Nov 2026). */
+const STICKY_END = 'sticky right-0 z-[1] bg-white shadow-[-8px_0_8px_-8px_rgba(15,23,42,0.12)]';
 
 /* The columns each side drawer can be filtered by (ColumnFilterSearch). */
 const agentOf = (e: ComplianceEndpoint) => (e.agentOnline ? 'Online' : 'Offline');
@@ -242,7 +244,8 @@ export function PolicyScheduleDrawer({ policyId, onClose }: { policyId: string; 
 type Draft = Omit<CompliancePolicy, 'id' | 'createdAt' | 'updatedAt' | 'lastScan' | 'createdBy' | 'scanning'>;
 /** A new policy starts on the first benchmark, so endpoints can be added straight away. */
 const blank = (): Draft => ({
-  name: '', description: '', benchmarkId: BENCHMARKS_SEED[0]?.id ?? '', configType: null, axis: 'endpoint',
+  /* A new audit starts with no benchmark, so the Benchmark menu opens on all of them (Zeni, 17 Nov 2026). */
+  name: '', description: '', benchmarkId: '', configType: null, axis: 'endpoint',
   endpointIds: [], offices: [], deviceTags: [], schedule: { frequency: 'none' }, notify: [], enabled: true,
 });
 
@@ -261,9 +264,12 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
     return { ...rest, name: mode === 'clone' ? `Copy of ${source.name}` : source.name };
   });
   const set = (patch: Partial<Draft>) => setD((x) => ({ ...x, ...patch }));
-  /* OS Type comes first and decides which benchmarks are offered. It is not stored on the
-     policy — the chosen benchmark already carries it — so it opens on that benchmark's type. */
-  const [osType, setOsType] = useState<ComplianceType | ''>(() => benchmarkOf(source?.benchmarkId ?? blank().benchmarkId)?.type ?? '');
+  /* OS Platform and OS Version narrow the benchmarks offered (Zeni, 17 Nov 2026 — they replace
+     OS Type). Neither is stored on the policy: the chosen benchmark already carries both, so they
+     open on that benchmark's, and picking a benchmark fills them in. */
+  const initial = platformOf(benchmarkOf(source?.benchmarkId ?? blank().benchmarkId)?.osVersion ?? '');
+  const [platform, setPlatform] = useState(initial.platform);
+  const [osVer, setOsVer] = useState(initial.version);
   const [picking, setPicking] = useState(false);
   const [pickingOffices, setPickingOffices] = useState(false);
   const [previewOffice, setPreviewOffice] = useState<string | null>(null);
@@ -274,12 +280,18 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
   const pool = useMemo(() => endpointsForBenchmark(benchmark), [benchmark]);
   const resolved = useMemo(() => resolvedEndpoints(d), [d]);
 
-  const osTypeOptions = COMPLIANCE_TYPES.map((t) => ({ value: t, label: t }));
-  /* Many benchmarks per type, so the menu searches and groups them under their OS version. */
-  const benchOptions = useMemo(() => BENCHMARKS_SEED
-    .filter((b) => b.type === osType)
-    .sort((a, b) => a.osVersion.localeCompare(b.osVersion) || a.name.localeCompare(b.name))
-    .map((b) => ({ value: b.id, label: b.name })), [osType]);
+  /* Network devices (Router / Switch / Firewall) are not offered (Zeni, 16 Nov 2026). An
+     existing audit already on one keeps its benchmark so the field does not read empty. */
+  const offered = useMemo(() => BENCHMARKS_SEED.filter((b) => b.type === 'Linux' || b.type === 'Windows' || b.id === source?.benchmarkId), [source?.benchmarkId]);
+  const platformOptions = useMemo(() => [...new Set(offered.map((b) => platformOf(b.osVersion).platform))].sort((a, b) => a.localeCompare(b)).map((p) => ({ value: p, label: p })), [offered]);
+  const versionOptions = useMemo(() => [...new Set(offered.filter((b) => platformOf(b.osVersion).platform === platform).map((b) => platformOf(b.osVersion).version))]
+    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).map((v) => ({ value: v, label: v })), [offered, platform]);
+  /* Every benchmark is offered (about 50) until a platform or version narrows them; the menu
+     searches and groups them under their OS version. */
+  const benchOptions = useMemo(() => offered
+    .filter((b) => { const p = platformOf(b.osVersion); return (!platform || p.platform === platform) && (!osVer || p.version === osVer); })
+    .sort((a, b) => a.osVersion.localeCompare(b.osVersion, undefined, { numeric: true }) || a.name.localeCompare(b.name))
+    .map((b) => ({ value: b.id, label: b.name, group: b.osVersion })), [offered, platform, osVer]);
 
   /* The endpoint picker's filters — the same filter bar the Attach Rules picker uses. */
   /* Both pickers search with the column filter: type to search, or click for field → operator → value. */
@@ -302,31 +314,41 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
     const had = d.endpointIds.length + d.offices.length + d.deviceTags.length;
     if (had) toast('The endpoint selection was cleared — the new benchmark is written for a different set of endpoints');
     const b = benchmarkOf(id);
+    if (b) { const p = platformOf(b.osVersion); setPlatform(p.platform); setOsVer(p.version); }
     set({ benchmarkId: id, endpointIds: [], offices: [], deviceTags: [], configType: needsConfigType(b) ? (d.configType ?? 'running') : null });
   };
 
-  /* A different OS Type means none of the old type's benchmarks apply, so the benchmark and the
+  /* A different OS Platform or OS Version means the chosen benchmark no longer fits, so it and the
      endpoints chosen for it are cleared — the same rule changing the benchmark itself follows. */
-  const changeOsType = (t: ComplianceType) => {
-    if (t === osType) return;
-    setOsType(t);
-    const b = benchmarkOf(d.benchmarkId);
-    if (b && b.type === t) return;
+  const clearIfOff = (p: string, v: string) => {
+    const cur = platformOf(benchmarkOf(d.benchmarkId)?.osVersion ?? '');
+    if (!d.benchmarkId || (cur.platform === p && (!v || cur.version === v))) return;
     const had = d.endpointIds.length + d.offices.length + d.deviceTags.length;
-    if (had) toast('The benchmark and endpoint selection were cleared — they were for a different OS Type');
+    if (had) toast('The benchmark and endpoint selection were cleared — they were for a different OS');
     set({ benchmarkId: '', endpointIds: [], offices: [], deviceTags: [], configType: null });
+  };
+  const changePlatform = (p: string) => {
+    if (p === platform) return;
+    setPlatform(p); setOsVer('');
+    clearIfOff(p, '');
+  };
+  const changeVersion = (v: string) => {
+    if (v === osVer) return;
+    setOsVer(v);
+    clearIfOff(platform, v);
   };
 
   /* ── Validation, keyed by field so every layout can say which part is missing. ── */
   const errs: Record<string, string> = {};
   if (!d.name.trim()) errs.name = 'Enter a name';
-  if (!osType) errs.osType = 'Choose an OS Type';
-  else if (!d.benchmarkId) errs.benchmark = 'Choose a benchmark';
+  if (!d.benchmarkId) errs.benchmark = 'Choose a benchmark';
+  if (!platform) errs.platform = 'Choose an OS Platform';
+  if (!osVer) errs.osVersion = 'Choose an OS Version';
   if (showConfig && !d.configType) errs.config = 'Choose a Config File Type';
   if (benchmark && resolved.length === 0) errs.targets = 'Add a remote office or an endpoint';
   if (scheduleIncomplete) errs.schedule = 'Complete the schedule — a start date and a time';
   /** Which form section each problem sits in. */
-  const SEC_OF: Record<string, string> = { name: 'Policy Details', osType: 'Benchmark', benchmark: 'Benchmark', config: 'Benchmark', targets: 'Target Endpoints', schedule: 'Schedule & Notifications' };
+  const SEC_OF: Record<string, string> = { name: 'Policy Details', platform: 'Benchmark', osVersion: 'Benchmark', benchmark: 'Benchmark', config: 'Benchmark', targets: 'Target Endpoints', schedule: 'Schedule & Notifications' };
 
   /* ── Layout (V1–V5, the header's switch — createFormUi.ts) ── */
   const ui = useCreateFormUi();
@@ -355,7 +377,7 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
     toast.success(via === 'draft'
       ? `“${d.name.trim()}” saved as draft`
       : mode === 'edit'
-        ? `“${d.name.trim()}” published`
+        ? `“${d.name.trim()}” updated`
         : `“${d.name.trim()}” published — it assesses ${resolved.length} endpoint${resolved.length === 1 ? '' : 's'} against ${benchmark!.name}`);
     onClose();
   };
@@ -370,10 +392,11 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
     return () => window.removeEventListener('keydown', onKey);
   });
 
-  const title = mode === 'edit' ? 'Edit Compliance Policy' : mode === 'clone' ? 'Clone Compliance Policy' : 'Create Compliance Policy';
+  const title = mode === 'edit' ? 'Edit Compliance Policy' : mode === 'clone' ? 'Clone Compliance Policy' : 'Create Audit';
   const pickReason = !benchmark ? 'Choose a benchmark first — only endpoints it is written for can be assessed' : pool.length === 0 ? `No endpoint runs ${benchmark.osVersion} yet` : undefined;
-  /** Publish ▾ Save as Draft — one primary CTA with a dropdown (Zeni, 12 Nov 2026). */
-  const split = [{ label: 'Publish', onClick: () => save('publish') }, { label: 'Save as Draft', onClick: () => save('draft') }];
+  /** Publish ▾ Save as Draft — one primary CTA with a dropdown (Zeni, 12 Nov 2026). Editing an
+   *  audit reads Update ▾ Save as Draft (Zeni, 17 Nov 2026). */
+  const split = [{ label: mode === 'edit' ? 'Update' : 'Publish', onClick: () => save('publish') }, { label: 'Save as Draft', onClick: () => save('draft') }];
 
   const columns: PickerColumn<ComplianceEndpoint>[] = [
     {
@@ -401,20 +424,25 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
   const descEl = (
     <div>
       <FieldLabel>Description</FieldLabel>
-      <textarea value={d.description} onChange={(e) => set({ description: e.target.value })} placeholder="Write a description" rows={1} className={`${inputCls} resize-y py-2 leading-[18px]`} />
+      <textarea value={d.description} onChange={(e) => set({ description: e.target.value })} placeholder="Write a description" rows={3} className={`${inputCls} !h-auto resize-y py-2 leading-[18px]`} />
     </div>
   );
   const benchmarkEl = (
     <>
       <div className="grid grid-cols-2 gap-x-2 gap-y-4">
         <div>
-          <FieldLabel required>OS Type</FieldLabel>
-          <RuleSelect className="!rounded" value={osType ? [osType] : []} options={osTypeOptions} onChange={(v) => v[0] && changeOsType(v[0] as ComplianceType)} invalid={!!show('osType')} placeholder="Select" />
-          <ErrorText>{show('osType')}</ErrorText>
+          <FieldLabel required>OS Platform</FieldLabel>
+          <RuleSelect className="!rounded" searchable value={platform ? [platform] : []} options={platformOptions} onChange={(v) => v[0] && changePlatform(v[0])} invalid={!!show('platform')} placeholder="Select" />
+          <ErrorText>{show('platform')}</ErrorText>
         </div>
         <div>
+          <FieldLabel required>OS Version</FieldLabel>
+          <RuleSelect className="!rounded" value={osVer ? [osVer] : []} options={versionOptions} onChange={(v) => v[0] && changeVersion(v[0])} invalid={!!show('osVersion')} disabled={!platform} placeholder={!platform ? 'Choose an OS Platform first' : 'Select'} />
+          <ErrorText>{show('osVersion')}</ErrorText>
+        </div>
+        <div className="col-span-2">
           <FieldLabel required>Benchmark</FieldLabel>
-          <RuleSelect className="!rounded" searchable value={d.benchmarkId ? [d.benchmarkId] : []} options={benchOptions} onChange={(v) => v[0] && changeBenchmark(v[0])} invalid={!!show('benchmark')} disabled={!osType} placeholder={!osType ? 'Choose an OS Type first' : benchOptions.length ? 'Select' : `No ${osType} benchmark yet`} />
+          <RuleSelect className="!rounded" searchable value={d.benchmarkId ? [d.benchmarkId] : []} options={benchOptions} onChange={(v) => v[0] && changeBenchmark(v[0])} invalid={!!show('benchmark')} placeholder={benchOptions.length ? 'Search or select a benchmark' : 'No benchmark for this OS yet'} />
           <ErrorText>{show('benchmark')}</ErrorText>
         </div>
       </div>
@@ -442,14 +470,14 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
       >
         <table className="w-full min-w-[620px] table-fixed">
           <colgroup><col /><col className="w-[18%]" /><col className="w-[30%]" /><col className="w-[132px]" /></colgroup>
-          <thead><tr className="border-b border-[#EEF1F4]">{['Remote Office', 'Endpoints', 'Agent Status', ''].map((h, i) => <th key={i} className="whitespace-nowrap px-4 py-2 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>)}</tr></thead>
+          <thead><tr className="border-b border-[#EEF1F4]">{['Remote Office', 'Endpoints', 'Agent Status', ''].map((h, i) => <th key={i} className={`whitespace-nowrap px-4 py-2 text-left text-[12px] font-semibold tracking-wider text-[#364658] ${i === 3 ? STICKY_END : ''}`}>{h}</th>)}</tr></thead>
           <tbody className="divide-y divide-[#EEF1F4]">
             {officeRows.filter((o) => d.offices.includes(o.id)).map((o) => (
               <tr key={o.id} className="group/row">
                 <td className="px-4 py-2.5"><span className="flex min-w-0 items-center gap-2"><Building2 size={15} className="flex-shrink-0 text-[#7B8FA5]" /><span className="truncate text-[13px] text-[#364658]">{o.id}</span></span></td>
                 <td className="px-4 py-2.5 text-[13px] tabular-nums text-[#64748B]">{o.total}</td>
                 <td className="px-4 py-2.5"><AgentSplit online={o.online} offline={o.offline} /></td>
-                <td className="px-2 py-1.5">
+                <td className={`px-2 py-1.5 ${STICKY_END}`}>
                   <span className="flex items-center justify-end gap-1">
                     <button type="button" onClick={() => setPreviewOffice(o.id)} className="inline-flex h-7 items-center gap-1.5 rounded border border-[#DFE5ED] bg-white px-2.5 text-[12px] font-medium text-[#364658] transition-colors hover:bg-[#F5F7FA]"><Eye size={13} /> Preview</button>
                     <RemoveBtn onClick={() => set({ offices: d.offices.filter((x) => x !== o.id) })} />
@@ -475,7 +503,7 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
           {(rows) => (
             <table className="w-full min-w-[760px] table-fixed">
               <colgroup><col className="w-[30%]" /><col className="w-[15%]" /><col className="w-[22%]" /><col /><col className="w-[48px]" /></colgroup>
-              <thead><tr className="border-b border-[#EEF1F4]">{['Endpoint', 'IP Address', 'Operating System', 'Remote Office', ''].map((h, i) => <th key={i} className="whitespace-nowrap px-4 py-2 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>)}</tr></thead>
+              <thead><tr className="border-b border-[#EEF1F4]">{['Endpoint', 'IP Address', 'Operating System', 'Remote Office', ''].map((h, i) => <th key={i} className={`whitespace-nowrap px-4 py-2 text-left text-[12px] font-semibold tracking-wider text-[#364658] ${i === 4 ? STICKY_END : ''}`}>{h}</th>)}</tr></thead>
               <tbody className="divide-y divide-[#EEF1F4]">
                 {rows.map((e) => (
                   <tr key={e.id} className="group/row">
@@ -499,7 +527,7 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
                         )}
                       </span>
                     </td>
-                    <td className="px-2 py-1.5 text-right"><RemoveBtn onClick={() => set({ endpointIds: d.endpointIds.filter((x) => x !== e.id) })} /></td>
+                    <td className={`px-2 py-1.5 text-right ${STICKY_END}`}><RemoveBtn onClick={() => set({ endpointIds: d.endpointIds.filter((x) => x !== e.id) })} /></td>
                   </tr>
                 ))}
               </tbody>
@@ -525,12 +553,13 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
     <div className="grid grid-cols-2 gap-x-2">
       <div>
         <FieldLabel>Notify Team</FieldLabel>
-        <RuleSelect className="!rounded" multi value={d.notify} options={NOTIFY_OPTIONS} onChange={(v) => set({ notify: v })} placeholder="Technicians or groups" />
+        {/* The admin workflow's recipient popup, in product styles (NotifyPicker) — Zeni, 17 Nov 2026. */}
+        <NotifyPicker value={d.notify} onChange={(v) => set({ notify: v })} />
       </div>
       {/* Beside Notify Team (Zeni, 12 Nov 2026) — the same list the Automatic Patch Deployment form offers. */}
       <div>
         <FieldLabel>Deployment Policy</FieldLabel>
-        <RuleSelect className="!rounded" value={d.deploymentPolicy ? [d.deploymentPolicy] : []} options={DEPLOYMENT_POLICIES_185.map((x) => ({ value: x, label: x }))} onChange={(v) => set({ deploymentPolicy: v[0] })} placeholder="Select" />
+        <RuleSelect className="!rounded" searchable value={d.deploymentPolicy ? [d.deploymentPolicy] : []} options={DEPLOYMENT_POLICIES_185.map((x) => ({ value: x, label: x }))} onChange={(v) => set({ deploymentPolicy: v[0] })} placeholder="Select" />
       </div>
     </div>
   );
@@ -547,15 +576,16 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
     {
       title: 'Policy Details', sub: 'What the policy is called and what it is for.',
       req: nameEl, opt: descEl, optNames: ['Description'],
-      all: <div className="grid grid-cols-2 gap-x-2 gap-y-4">{nameEl}{descEl}</div>,
+      /* Name across the whole form, the description as a text area under it (Zeni, 17 Nov 2026). */
+      all: <div className="space-y-4">{nameEl}{descEl}</div>,
       lines: [...(d.name.trim() ? [{ label: 'Policy Name', value: d.name.trim() }] : []), ...(d.description.trim() ? [{ label: 'Description', value: d.description.trim() }] : [])],
       keys: ['name'],
     },
     {
-      title: 'Benchmark', sub: 'Choose the OS Type, then the ONE benchmark the policy assesses. Its OS version decides which endpoints can be chosen.',
+      title: 'Benchmark', sub: 'Choose the ONE benchmark the policy assesses — narrow the list by OS Platform and OS Version. Its OS version decides which endpoints can be chosen.',
       req: benchmarkEl, all: benchmarkEl,
-      lines: [...(osType ? [{ label: 'OS Type', value: osType }] : []), ...(benchmark ? [{ label: 'Benchmark', value: benchmark.name }] : [])],
-      keys: ['osType', 'benchmark', 'config'],
+      lines: [...(platform ? [{ label: 'OS Platform', value: platform }] : []), ...(osVer ? [{ label: 'OS Version', value: osVer }] : []), ...(benchmark ? [{ label: 'Benchmark', value: benchmark.name }] : [])],
+      keys: ['platform', 'osVersion', 'benchmark', 'config'],
     },
     {
       title: 'Target Endpoints', sub: 'Add whole remote offices, individual endpoints, or both. An endpoint picked both ways is assessed once.',
@@ -620,9 +650,12 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
       title: x.title, sub: x.sub,
       state: stepErrs[i].length && (tried === 'publish' || checked.includes(i)) ? 'error' : !stepErrs[i].length && (i < cur || checked.includes(i)) ? 'done' : 'todo',
     }));
-    const Shell = ui === 'v3' ? SteppedDrawerShell : SteppedPageShell;
+    /* Edit and Clone open as a proper full page in both layouts (Zeni, 17 Nov 2026) — the side
+       drawer over a detail page left that page showing around it. */
+    const full = mode !== 'create';
+    const Shell = ui === 'v3' && !full ? SteppedDrawerShell : SteppedPageShell;
     return (
-      <Shell title={title} onBack={onClose} error={headerError} overlays={overlays}
+      <Shell title={title} onBack={onClose} error={headerError} overlays={overlays} {...(full ? { fullScreen: true } : {})}
         final={split[0]} split={split}
         steps={items} current={cur} onStep={setStep}
         onNext={() => { setChecked((x) => (x.includes(cur) ? x : [...x, cur])); if (!stepErrs[cur].length) setStep(cur + 1); }}
@@ -642,7 +675,7 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
     const core = parts.filter((p) => p.req);
     const extra = parts.filter((p) => !p.req);
     return (
-      <CreatePageShell title={title} onBack={onClose} error={headerError} actions={[]} split={split} overlays={overlays}
+      <CreatePageShell title={title} onBack={onClose} error={headerError} actions={[]} split={split} overlays={overlays} fullScreen={mode !== 'create'}
         aside={guide(false, (titles) => titles.forEach((t) => { if (extra.some((p) => p.title === t) && !moreOpen.includes(t)) toggleMore(t); }))}>
         <p className="!mb-6 flex items-center gap-1.5 text-[12px] text-[#7B8FA5]"><Info size={13} className="flex-shrink-0" />Only what is needed is shown. Everything else is one click away under each part.</p>
         {core.map((p) => {
@@ -706,7 +739,7 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
     }));
     const jump = (i: number) => document.getElementById(`cp-group-${i}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     return (
-      <CreatePageShell title={title} onBack={onClose} error={headerError} actions={[]} overlays={overlays}
+      <CreatePageShell title={title} onBack={onClose} error={headerError} actions={[]} overlays={overlays} fullScreen={mode !== 'create'}
         aside={<SummaryAside groups={summary} onJump={jump} cta="Publish" onCreate={() => save('publish')} split={split} guide={guide(true)} noun="Compliance Policy" />}>
         {parts.map((p, i) => (
           <section key={p.title} id={`cp-group-${i}`} data-section-title={p.title} className="scroll-mt-4">
@@ -726,7 +759,7 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
 
   /* V1 — the full page, every section, the guide pinned right. */
   return (
-    <CreatePageShell title={title} onBack={onClose} error={headerError} actions={[]} split={split} overlays={overlays} aside={guide()}>
+    <CreatePageShell title={title} onBack={onClose} error={headerError} actions={[]} split={split} overlays={overlays} aside={guide()} fullScreen={mode !== 'create'}>
       {parts.map((p) => <Section key={p.title} title={p.title} sub={p.sub}>{p.all}</Section>)}
     </CreatePageShell>
   );

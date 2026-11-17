@@ -179,6 +179,9 @@ export function CompliancePolicyDrawer({
     ['Created On', fmtStamp(p.createdAt)],
     ['Updated By', p.updatedBy ?? p.createdBy],
     ['Updated On', fmtStamp(p.updatedAt)],
+  ];
+  /* The two scan fields sit in their own container ABOVE the properties (Zeni, 17 Nov 2026). */
+  const scanFields: [string, React.ReactNode][] = [
     ['Last Scan', fmtStamp(p.lastScan?.at)],
     ['Next Scan', p.archived ? 'Archived — does not run' : !p.enabled ? 'Disabled — does not run on schedule'
       : next ? <>{fmtStamp(next)}<span className="block text-[12px] text-[#7B8FA5]">{scheduleLabel(p.schedule)}</span></> : 'Not scheduled'],
@@ -351,7 +354,7 @@ export function CompliancePolicyDrawer({
                     <TabListToolbar search={epQ} onSearch={setEpQ} groups={epGroups} value={epF} onChange={setEpF} />
                     <div className="overflow-x-auto"><table className="w-full min-w-[1160px] table-fixed">
                       <colgroup><col className="w-[210px]" /><col className="w-[120px]" /><col className="w-[12%]" /><col className="w-[140px]" /><col className="w-[170px]" /><col className="w-[9%]" /><col /><col className="w-[169px]" /></colgroup>
-                      <thead><tr className="border-b border-[#e5e7eb]">{['Endpoint', 'IP Address', 'Remote Office', 'Result', 'Execution Status', 'Compliance Score', 'Checks', 'Actions'].map((h) => <th key={h} className="px-4 py-2.5 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>)}</tr></thead>
+                      <thead><tr className="border-b border-[#e5e7eb]">{['Endpoint', 'IP Address', 'Remote Office', 'Result', 'Execution Status', 'Compliance Score', 'Rule Checks', 'Actions'].map((h) => <th key={h} className="px-4 py-2.5 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>)}</tr></thead>
                       <tbody className="divide-y divide-[#e5e7eb]">
                         {shownResults.map((r) => (
                           <tr key={r.endpoint.id} onClick={() => setResultsFor(r.endpoint.id)} className="group/row cursor-pointer transition-colors hover:bg-[#f9fafb]">
@@ -407,7 +410,7 @@ export function CompliancePolicyDrawer({
                     ) : (
                       <div className="overflow-x-auto"><table className="w-full min-w-[1060px] table-fixed">
                         <colgroup><col className="w-[130px]" /><col className="w-[190px]" /><col className="w-[120px]" /><col className="w-[90px]" /><col className="w-[110px]" /><col /><col className="w-[110px]" /><col className="w-[110px]" /></colgroup>
-                        <thead><tr className="border-b border-[#e5e7eb]">{['Run ID', 'Scan Date', 'Triggered By', 'Duration', 'Endpoints', 'Checks', 'Compliance', 'Status'].map((h) => <th key={h} className="px-4 py-2.5 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>)}</tr></thead>
+                        <thead><tr className="border-b border-[#e5e7eb]">{['Run ID', 'Scan Date', 'Triggered By', 'Duration', 'Endpoints', 'Rule Checks', 'Compliance', 'Status'].map((h) => <th key={h} className="px-4 py-2.5 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>)}</tr></thead>
                         <tbody className="divide-y divide-[#e5e7eb]">
                           {runs.map((r) => (
                             <tr key={r.id} className="transition-colors hover:bg-[#f9fafb]">
@@ -438,7 +441,18 @@ export function CompliancePolicyDrawer({
 
           <aside className="flex w-[380px] flex-shrink-0 flex-col border-l border-[#e5e7eb] bg-white">
             <div className="flex-shrink-0 border-b border-[#e5e7eb] px-4 py-3 text-[16px] font-semibold text-[#364658]">Policy Properties</div>
-            <div className="min-h-0 flex-1 overflow-y-auto p-4">
+            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
+              <div className="overflow-hidden rounded-lg border border-[#e5e7eb]">
+                <div className="border-b border-[#e5e7eb] px-4 py-3 text-[14px] font-semibold text-[#364658]">Scan Details</div>
+                <dl className="grid grid-cols-2 gap-x-4 px-4 py-4">
+                  {scanFields.map(([label, value]) => (
+                    <div key={label} className="min-w-0">
+                      <dt className="text-[12px] text-[#64748B]">{label}</dt>
+                      <dd className="mt-0.5 text-[13px] leading-[1.55] text-[#364658]">{value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
               <div className="overflow-hidden rounded-lg border border-[#e5e7eb]">
                 <div className="border-b border-[#e5e7eb] px-4 py-3 text-[14px] font-semibold text-[#364658]">Policy Fields</div>
                 <dl className="space-y-3.5 px-4 py-4">

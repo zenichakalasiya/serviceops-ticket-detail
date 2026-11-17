@@ -12,6 +12,7 @@ import { ProfileMenu } from './ProfileMenu';
 import { CreateMenuButton } from './CreateMenuButton';
 import { setRelease, useFormRuleRelease } from './formRuleRelease';
 import { setComplianceRuleUi, useComplianceRuleUi } from './complianceRuleUi';
+import { setUncheckedRuleUi, useUncheckedRuleUi } from './complianceUncheckedRuleUi';
 import { BUILDERS, setFormStudioUi, useFormStudioUi } from './formStudioUi';
 import { formModuleBySlug } from './formStudioData';
 
@@ -225,6 +226,24 @@ function ComplianceRuleUiSwitch() {
   );
 }
 
+/** V1 / V2 of a not-yet-run rule's drawer on Compliance › Rules (Zeni, 17 Nov 2026) — see complianceUncheckedRuleUi.ts. */
+function ComplianceUncheckedRuleSwitch() {
+  const [hash, setHash] = useState(() => location.hash);
+  const v = useUncheckedRuleUi();
+  useEffect(() => {
+    const on = () => setHash(location.hash);
+    window.addEventListener('hashchange', on);
+    return () => window.removeEventListener('hashchange', on);
+  }, []);
+  if (!hash.startsWith('#/compliance-rules')) return null;
+  return (
+    <div className="pill-track" title="A rule no audit has run yet">
+      <button type="button" title="No Endpoints tab" aria-pressed={v === 'v1'} onClick={() => setUncheckedRuleUi('v1')}>V1</button>
+      <button type="button" title="Endpoints tab with an empty state" aria-pressed={v === 'v2'} onClick={() => setUncheckedRuleUi('v2')}>V2</button>
+    </div>
+  );
+}
+
 /** V1 / V2 / V3 of every create form (Zeni, 30 Oct 2026) — see createFormUi.ts. Shown only while a
  *  create page is open. */
 function CreateFormUiSwitch() {
@@ -232,7 +251,9 @@ function CreateFormUiSwitch() {
   const extra = useExtraCreateOpen();
   const v = useCreateFormUi();
   if (!extra && (!open || !FORM_STEPS[open.spec])) return null;
-  const opts: [CreateFormUi, string, string][] = [['v1', 'V1', 'Full page, every section, help guide'], ['v2', 'V2', 'Full page, stepper on the left'], ['v3', 'V3', 'Side drawer, stepper on top'], ['v4', 'V4', 'One screen, essentials first'], ['v5', 'V5', 'One screen with a live summary']];
+  const opts: [CreateFormUi, string, string][] = [['v2', 'V1', 'Full page, stepper on the left'], ['v3', 'V2', 'Side drawer, stepper on top']];
+  /* The full-page layout (id 'v1') is HIDDEN too, and the pills are RELABELLED: pill V1 = id 'v2', pill V2 = id 'v3' (Zeni, 17 Nov 2026). */
+  /* V4 (essentials first) and V5 (live summary) are HIDDEN (Zeni, 17 Nov 2026) — both stay built; add their rows back here and in readCreateFormUi. */
   return (
     <div className="pill-track" title="Create form version">
       {opts.map(([id, label, tip]) => <button key={id} type="button" title={tip} aria-pressed={v === id} onClick={() => setCreateFormUi(id)}>{label}</button>)}
@@ -259,6 +280,7 @@ export function Header({ selectedCount, onOpenAdmin }: HeaderProps) {
         <FormStudioUiSwitch />
         {/* Hidden: V2 is the only rule-group builder (29 Oct 2026). */}
         {false && <ComplianceRuleUiSwitch />}
+        <ComplianceUncheckedRuleSwitch />
       </div>
       
       <div className="flex items-center gap-2">

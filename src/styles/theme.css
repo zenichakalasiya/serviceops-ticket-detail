@@ -916,5 +916,9 @@ td.cell-wrap { white-space: normal !important; }
 td.cell-wrap.truncate { text-overflow: clip; }
 td.cell-wrap .truncate, td.cell-wrap.truncate > span, td.cell-wrap .cell-clamp {
   white-space: normal; overflow: hidden; text-overflow: clip; overflow-wrap: anywhere;
-  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: var(--clamp, 2);
+  /* Every row keeps the column's full line count (Zeni, 17 Nov 2026), so the grid lines up. */
+  line-height: 20px;
 }
+/* ...reserved on the CELL (a table cell's height is its minimum), so a short name stays centred like the rest of the row. */
+td.cell-wrap { height: calc(var(--clamp, 2) * 20px + 24px); }

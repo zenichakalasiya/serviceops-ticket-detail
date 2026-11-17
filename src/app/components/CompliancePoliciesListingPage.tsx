@@ -209,7 +209,7 @@ export function CompliancePoliciesListingPage({ onNavigate }: { onNavigate?: (pa
           } },
           { label: 'Archive', icon: <Archive size={13} />, danger: true, onClick: (ids) => { ids.forEach((id) => policyStore.archive(id)); toast.success(`${ids.length} polic${ids.length === 1 ? 'y' : 'ies'} archived`); } },
         ]}
-        primaryAction={{ label: 'Create Policy', onClick: () => openPolicyEditor({ mode: 'create' }) }}
+        primaryAction={{ label: 'Create Audit', onClick: () => openPolicyEditor({ mode: 'create' }) }}
         primaryActionInTitle
         onUpdateRow={(id, patch) => {
           const en = (patch as any).x_enabled;

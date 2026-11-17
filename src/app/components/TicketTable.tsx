@@ -817,8 +817,9 @@ interface ColDef { key: string; label: string; flex?: boolean; w?: number; align
   /** Ceiling for a FLEX column that would otherwise soak all the slack on a sparse grid —
    *  past it the surplus is shared out across every column instead. */
   maxW?: number;
-  /** A long NAME column (a rule, a benchmark): wraps to two lines instead of being cut off. */
-  wrap?: boolean }
+  /** A long NAME column (a rule, a benchmark): wraps instead of being cut off — true = 2 lines, or a
+   *  number of lines. Every row reserves that many lines so the grid stays evenly aligned. */
+  wrap?: boolean | number }
 
 /* ── Similarity grouping ──────────────────────────────────────────────────────
    A grouping axis that is NOT a column: the clusters the AI suggestions panel found.
@@ -2050,7 +2051,8 @@ export function TicketTable({
            Cancelled); Compliance Result = Compliant / Non-Compliant from the last scan. */
         { key: 'subject', label: 'Policy Name', flex: true, w: 200, maxW: 320 },
         { key: 'x_platform', label: 'OS Platform', w: 150 },
-        { key: 'x_benchmark', label: 'Benchmark', flex: true, w: 200, maxW: 320, wrap: true },
+        /* Zeni, 17 Nov 2026: the benchmark reads in full over up to three lines; every row keeps three lines' room. */
+        { key: 'x_benchmark', label: 'Benchmark', flex: true, w: 200, maxW: 320, wrap: 3 },
         { key: 'x_endpoints', label: 'Endpoints', w: 100 },
         { key: 'x_cpScore', label: 'Compliance Score', w: 185 },
         { key: 'x_cpResult', label: 'Compliance Result', w: 190 },
@@ -2082,7 +2084,7 @@ export function TicketTable({
         /* Zeni, 3 Nov 2026: Rule ID · Title · Profile · Assessment · OS Platform · OS Version · Endpoints · Rule Score.
            Severity back after the title, 12 Nov 2026 (it was in v1). */
         { key: 'x_ruleCode', label: 'Rule ID', w: 96 },
-        { key: 'subject', label: 'Title', flex: true, w: 300, maxW: 460, wrap: true },
+        { key: 'subject', label: 'Title', flex: true, w: 300, maxW: 460 },
         { key: 'x_severity', label: 'Severity', w: 110 },
         { key: 'x_profile', label: 'Profile', w: 80 },
         { key: 'x_assessment', label: 'Assessment', w: 120 },
@@ -4320,6 +4322,7 @@ export function TicketTable({
                 const el = (c as ColDef).wrap && isValidElement(raw)
                   ? cloneElement(raw as React.ReactElement<{ className?: string; children?: React.ReactNode }>, {
                       className: `${(raw.props as { className?: string }).className ?? ''} cell-wrap`,
+                      style: { ...((raw.props as { style?: React.CSSProperties }).style ?? {}), ['--clamp' as string]: (c as ColDef).wrap === true ? 2 : (c as ColDef).wrap },
                       ...(typeof (raw.props as { children?: unknown }).children === 'string'
                         ? { children: <span className="cell-clamp">{(raw.props as { children: string }).children}</span> } : {}),
                     })

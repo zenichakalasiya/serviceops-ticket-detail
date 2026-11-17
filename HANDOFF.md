@@ -1,4 +1,29 @@
-# Handoff — 2026-11-17, later (Compliance: OS Type filter = Linux / Windows only)
+# Handoff — 2026-11-17, evening (Compliance: filters = columns, Create Audit pass, rule-results polish)
+
+> Sessions share this file. This top part is the newest; older notes follow.
+
+## Completed (headless browser, no page errors; touched files typecheck clean)
+- **Filters = columns.** Every Compliance listing (admin Rules / Benchmark, technician Rules / Benchmark / Compliance Audit / Endpoints) offers a filter only for a column it shows. OS Type became **OS Platform** (no OS Type column). Filters still used by count cards or dashboard links stay as `hidden: true` attrs. Saved views on removed fields were deleted.
+- **Data:** 13 more OS versions (Debian 12, RHEL 8, Ubuntu 20.04/24.04, SUSE 15, Oracle 9, Alma 9, Rocky 9, Amazon 2023, Windows Server 2016/2025, Windows 10/11) → their rules generate automatically; **57 benchmarks, 50 of them Linux/Windows** (CIS L1 + L2 + customs). Every rule has an **Impact** line (`IMPACT_BY_CHECK`, our wording).
+- **Sidebar:** Compliance flyout = Rules · Compliance Audit · Endpoints · Dashboard (disabled, last).
+- **Listing:** Compliance Audit's Benchmark column wraps to 3 lines and every row reserves that height (`ColDef.wrap` now true | number → `--clamp`; height on `td.cell-wrap`). Rule Title no longer wraps.
+- **Create Audit (both pills):** Name full width + Description textarea under it; OS Platform + OS Version (+ full-width Benchmark, all 50 searchable when nothing is chosen; picking one fills platform/version); a new audit starts with NO benchmark; action column pinned right in the Endpoints step; **Notify Team = `NotifyPicker`** (new, modelled on the workflow's recipient popup); Deployment Policy searchable; Edit = **Update ▾ Save as Draft**; Edit/Clone open as a **full-screen** page (`fullScreen` prop on SteppedPageShell / CreatePageShell).
+- **Policy detail:** Checks → **Rule Checks**; **Scan Details** box (Last / Next Scan) above Policy Fields.
+- **View rule results:** severity filters are bordered buttons; row tooltip shows each scan's date; **Expand all / Collapse all** in every RuleGroupTree header; the rule result is one slim strip (endpoint first as a blue link, Result, Previous + date); "Required" removed.
+- **Technician Rules — a rule no audit has run:** V1 | V2 pill beside the logo on `#/compliance-rules` (`complianceUncheckedRuleUi.ts`, opens on V2). V1 = no Endpoints tab; V2 = Endpoints tab with an illustrated empty state (`RuleNotRunArt`).
+
+## Next steps
+- Ask Zeni which unchecked-rule version (V1 / V2) is final.
+- Still open: record wording "audit"; Deployment Policy required?; Save as Draft on every V2/V3 step?
+- The "Edit Compliance Policy" title still says Policy — rename to "Edit Audit"?
+
+## Gotchas
+- Not committed here (form-builder session): AdminPage, AdminFormModule, AdminRequestFormModule, FormStudio, public/tasks/tasks.json.
+- New sample benchmarks/OS versions have NO endpoints, so an audit built on them can add none.
+
+---
+
+## (earlier) Handoff — 2026-11-17, later (Compliance: OS Type filter = Linux / Windows only)
 
 > Sessions share this file. This top part is the newest; older notes follow.
 

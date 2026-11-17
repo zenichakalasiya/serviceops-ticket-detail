@@ -56,8 +56,10 @@ export function SplitCta({ options, up, full }: { options: ShellAction[]; /** Op
 
 /** The full create page. It sits under the product header, over the module, like the Form Rule
  *  and Compliance Policy editors. */
-export function CreatePageShell({ title, onBack, error, actions, split, children, overlays, embedded, aside }: {
+export function CreatePageShell({ title, onBack, error, actions, split, children, overlays, embedded, aside, fullScreen }: {
   title: string;
+  /** Cover the whole screen, product header included (an edit opened from a detail page). */
+  fullScreen?: boolean;
   /** One primary CTA with a dropdown, drawn after `actions`. */
   split?: ShellAction[];
   /** The form's help guide, pinned to the right. Its presence left-aligns the form. */
@@ -73,7 +75,7 @@ export function CreatePageShell({ title, onBack, error, actions, split, children
   embedded?: boolean;
 }) {
   return (
-    <div className={embedded ? 'relative flex h-full flex-col bg-white' : 'fixed inset-x-0 bottom-0 top-[56px] z-[9000] flex flex-col bg-white'}>
+    <div className={embedded ? 'relative flex h-full flex-col bg-white' : `fixed inset-x-0 bottom-0 z-[9000] flex flex-col bg-white ${fullScreen ? 'top-0' : 'top-[56px]'}`}>
       <div className="flex flex-shrink-0 items-center gap-2 border-b border-[#DFE5ED] px-4 py-3">
         <button type="button" onClick={onBack} title="Back" className="-ml-1.5 flex size-[30px] flex-shrink-0 items-center justify-center rounded text-[#7B8FA5] transition-colors hover:bg-[#EEF2F6] hover:text-[#364658]">
           <ArrowLeft size={16} />
