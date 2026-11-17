@@ -251,7 +251,7 @@
         {
           "version": "v2",
           "date": "2026-11-17",
-          "commit": "7d94e58",
+          "commit": "21d6fee",
           "changes": [
             "Rule details: a MITRE ATT&CK tab after Controls (techniques, tactics, mitigations with their names), on both technician and admin sides.",
             "Endpoint page tabs: Vulnerabilities · Patches · Compliance Audit · Installation · Notes · Audit Trail.",
@@ -293,7 +293,8 @@
             "Technician listings: Audit, Rules and Endpoints default columns reordered; the rest (incl. endpoint inventory columns) in column selection.",
             "Audit detail: Audit Properties, stacked Scan Details, no Rule Checks column; rule results: icon-only expand, Last assessed and Expected value.",
             "Endpoint detail Compliance tab: Compliance Score column. Every OS version now has endpoints to pick.",
-            "Admin Benchmark: Predefined (was Default), OS Platform in the form and filters, new row icons with instant tooltips, detail as a side drawer."
+            "Admin Benchmark: Predefined (was Default), OS Platform in the form and filters, new row icons with instant tooltips, detail as a side drawer.",
+            "Audit listing: Compliance Score before Last Scan Date. Technician Rules list mixes rules with results and rules no audit has run."
           ]
         }
       ]
