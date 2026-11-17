@@ -255,7 +255,8 @@ function OptionTipCard({ o, y, menuLeft, menuWidth }: { o: SelectOption; y: numb
 }
 
 /** The switch from the Support Portal cards. */
-export function ToggleSwitch({ on, onChange, title, disabled }: { on: boolean; onChange: (v: boolean) => void; title?: string; disabled?: boolean }) {
+export function ToggleSwitch({ on, onChange, title, disabled, size }: { on: boolean; onChange: (v: boolean) => void; title?: string; disabled?: boolean; /** 'lg' = a larger switch for a setting that has to stand out. */ size?: 'lg' }) {
+  const lg = size === 'lg';
   return (
     <button
       type="button"
@@ -264,9 +265,9 @@ export function ToggleSwitch({ on, onChange, title, disabled }: { on: boolean; o
       title={title}
       disabled={disabled}
       onClick={() => onChange(!on)}
-      className={`relative inline-flex h-[18px] w-[34px] flex-shrink-0 items-center rounded-full transition-colors disabled:opacity-50 ${on ? 'bg-[#3D8BD0]' : 'bg-[#CBD5E1]'}`}
+      className={`relative inline-flex flex-shrink-0 items-center rounded-full transition-colors disabled:opacity-50 ${lg ? 'h-6 w-11' : 'h-[18px] w-[34px]'} ${on ? 'bg-[#3D8BD0]' : 'bg-[#CBD5E1]'}`}
     >
-      <span className={`inline-block size-[14px] rounded-full bg-white shadow transition-transform ${on ? 'translate-x-[18px]' : 'translate-x-[2px]'}`} />
+      <span className={`inline-block rounded-full bg-white shadow transition-transform ${lg ? 'size-5' : 'size-[14px]'} ${on ? (lg ? 'translate-x-[22px]' : 'translate-x-[18px]') : 'translate-x-[2px]'}`} />
     </button>
   );
 }

@@ -27,9 +27,9 @@ import { NotifyPicker } from './NotifyPicker';
 import { DEPLOYMENT_POLICIES_185 } from './data185';
 import {
   benchmarkOf, deviceTagsOf, endpointsForBenchmark, fmtStamp, getPolicy, needsConfigType, nextRun, officesOf, openPolicyEditor,
-  policyStore, resolvedEndpoints, scheduleLabel, usePolicyEditor, WEEKDAYS,
+  OCCURRENCES, policyStore, resolvedEndpoints, scheduleLabel, usePolicyEditor, weekDays, WEEKDAYS,
 } from './compliancePolicyData';
-import type { ComplianceEndpoint, CompliancePolicy, ConfigFileType, DeviceAxis, Frequency, PolicySchedule } from './compliancePolicyData';
+import type { ComplianceEndpoint, CompliancePolicy, ConfigFileType, DeviceAxis, Frequency, MonthMode, Occurrence, PolicySchedule } from './compliancePolicyData';
 
 /* Compliance Policy — the full-screen Create / Edit / Clone form.
  *
@@ -65,12 +65,20 @@ const AXES: { value: DeviceAxis; label: string }[] = [
   { value: 'endpoint', label: 'Endpoint' },
   { value: 'office', label: 'Remote Office' },
 ];
+/* Monday first, as the product lists them; the value is the JS weekday (0 = Sunday). */
+const DAYS_MON_FIRST = [1, 2, 3, 4, 5, 6, 0].map((i) => ({ value: String(i), label: WEEKDAYS[i] }));
+const HOURS = Array.from({ length: 24 }, (_, i) => { const v = String(i).padStart(2, '0'); return { value: v, label: v }; });
+const MINUTES = Array.from({ length: 60 }, (_, i) => { const v = String(i).padStart(2, '0'); return { value: v, label: v }; });
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const MONTH_OPTIONS = MONTH_NAMES.map((m, i) => ({ value: String(i), label: m }));
+const ALL_MONTHS = MONTH_NAMES.map((_, i) => i);
 const FREQS: { value: Frequency; label: string }[] = [
   { value: 'none', label: 'None' },
   { value: 'once', label: 'Once' },
   { value: 'daily', label: 'Daily' },
   { value: 'weekly', label: 'Weekly' },
   { value: 'monthly', label: 'Monthly' },
+  { value: 'interval', label: 'Interval' },
 ];
 const NOTIFY_OPTIONS: SelectOption[] = [
   ...TECH_GROUPS.map((g) => ({ value: g, label: g, group: 'Technician groups' })),
@@ -144,59 +152,105 @@ export function ScheduleFields({ value, onChange, half }: { value: PolicySchedul
   const set = (patch: Partial<PolicySchedule>) => onChange({ ...value, ...patch });
   const next = nextRun(value);
   return (
-    <div>
-      {/* One switch: on = scheduled, off = it runs only by hand (the line below says so). */}
-      {/* "Schedule" on the left, its switch at the row's right edge. */}
-      <label className={'flex cursor-pointer items-center justify-between gap-3 ' + (half ? 'w-[calc(50%-4px)]' : 'w-full')}>
-        <span className="text-[13px] font-medium text-[#364658]">Schedule</span>
+    /* Its own panel, set apart from Notify Team, with a bigger switch so it is seen (Zeni, 17 Nov 2026).
+       The schedule's fields open inside the same panel. */
+    <div className="rounded-lg border border-[#E5E7EB] bg-white px-4 py-3.5">
+      <label className="flex w-full cursor-pointer items-center justify-between gap-3">
+        <span className="flex items-center gap-2.5">
+          <span className="flex size-8 items-center justify-center rounded-lg bg-[#EEF2F6] text-[#64748B]"><CalendarClock size={17} /></span>
+          <span className="text-[14px] font-semibold text-[#364658]">Schedule</span>
+        </span>
         <ToggleSwitch
+          size="lg"
           on={f !== 'none'}
           onChange={(on) => onChange(!on ? { frequency: 'none' } : {
             frequency: 'daily',
             startDate: value.startDate ?? new Date().toISOString().slice(0, 10),
             time: value.time ?? '02:00',
-            weekday: value.weekday ?? 0,
+            weekday: value.weekday ?? 1, // Monday — the first day the product lists
             monthday: value.monthday ?? 1,
           })}
           title={f !== 'none' ? 'Turn off the schedule' : 'Schedule this policy'}
         />
       </label>
-      {/* No line under the switch when it is off (Zeni, 15 Nov 2026). */}
+      {/* No line under the switch when it is off (Zeni, 15 Nov 2026). The fields and their options are the
+          product's Automatic Patch Deployment Schedule, read on .185 (Zeni, 17 Nov 2026). */}
       {f !== 'none' && (
         <div className="mt-4 grid grid-cols-2 gap-x-2 gap-y-4">
-          {/* Row 1: how often (a dropdown) and, for weekly / monthly, which day.
-              Row 2: from when, at what time. */}
           <div>
-            <FieldLabel required>Frequency</FieldLabel>
+            <FieldLabel required>Schedule Type</FieldLabel>
             <RuleSelect className="!rounded" value={[f]} options={FREQS.filter((o) => o.value !== 'none')} onChange={(v) => v[0] && onChange({ ...value, frequency: v[0] as Frequency })} />
           </div>
+          <div />
+          {f === 'monthly' && (
+            <div className="col-span-2">
+              <FieldLabel required>When should this scheduler run?</FieldLabel>
+              <Pills value={value.monthMode ?? 'date'} options={[{ value: 'date' as MonthMode, label: 'On Specific Date' }, { value: 'day' as MonthMode, label: 'On Specific Day' }]} onChange={(v) => set({ monthMode: v })} />
+            </div>
+          )}
+          <div>
+            <FieldLabel required>Start At</FieldLabel>
+            {f === 'once' || f === 'interval'
+              ? <input type="datetime-local" value={value.startDate ? `${value.startDate}T${value.time ?? '00:00'}` : ''} onChange={(e) => set({ startDate: e.target.value.slice(0, 10), time: e.target.value.slice(11, 16) })} className={inputCls} />
+              : <input type="date" value={value.startDate ?? ''} onChange={(e) => set({ startDate: e.target.value })} className={inputCls} />}
+          </div>
+          {f === 'interval' && (
+            <div>
+              <FieldLabel required>Interval</FieldLabel>
+              <div className="flex">
+                <input type="number" min={1} value={value.interval ?? 1} onChange={(e) => set({ interval: Math.max(1, Number(e.target.value) || 1) })} className={`${inputCls} !rounded-r-none`} />
+                <RuleSelect className="!w-[110px] flex-shrink-0 !rounded-l-none !border-l-0 !rounded-r" value={[value.intervalUnit ?? 'Hours']} options={[{ value: 'Hours', label: 'Hours' }, { value: 'Days', label: 'Days' }]} onChange={(v) => v[0] && set({ intervalUnit: v[0] as 'Hours' | 'Days' })} />
+              </div>
+            </div>
+          )}
           {f === 'weekly' && (
             <div>
-              <FieldLabel required>Day of Week</FieldLabel>
-              <RuleSelect className="!rounded" value={[String(value.weekday ?? 0)]} options={WEEKDAYS.map((d, i) => ({ value: String(i), label: d }))} onChange={(v) => set({ weekday: Number(v[0]) })} />
+              <FieldLabel required>Day</FieldLabel>
+              {/* Several days can be picked (Zeni, 17 Nov 2026); at least one stays chosen. */}
+              <RuleSelect className="!rounded" multi value={weekDays(value).map(String)} options={DAYS_MON_FIRST} onChange={(v) => v.length && set({ weekdays: v.map(Number) })} placeholder="Select" />
             </div>
+          )}
+          {(f === 'daily' || f === 'weekly' || f === 'monthly') && (
+            <div className={f === 'weekly' ? 'col-start-1' : ''}>
+              <FieldLabel>Time</FieldLabel>
+              <div className="flex items-center gap-2">
+                <RuleSelect className="!rounded flex-1" value={[(value.time ?? '00:00').slice(0, 2)]} options={HOURS} onChange={(v) => set({ time: `${v[0]}:${(value.time ?? '00:00').slice(3, 5)}` })} />
+                <span className="text-[13px] text-[#64748B]">:</span>
+                <RuleSelect className="!rounded flex-1" value={[(value.time ?? '00:00').slice(3, 5)]} options={MINUTES} onChange={(v) => set({ time: `${(value.time ?? '00:00').slice(0, 2)}:${v[0]}` })} />
+              </div>
+            </div>
+          )}
+          {f === 'once' && <div />}
+          {f === 'monthly' && (value.monthMode ?? 'date') === 'date' && (
+            <div className="col-start-1">
+              <FieldLabel required>Date</FieldLabel>
+              <RuleSelect className="!rounded" value={[String(value.monthday ?? 1)]} options={Array.from({ length: 31 }, (_, i) => ({ value: String(i + 1), label: String(i + 1) }))} onChange={(v) => set({ monthday: Number(v[0]) })} />
+            </div>
+          )}
+          {f === 'monthly' && value.monthMode === 'day' && (
+            <>
+              <div className="col-start-1">
+                <FieldLabel required>Occurrence</FieldLabel>
+                <RuleSelect className="!rounded" value={[value.occurrence ?? 'First']} options={OCCURRENCES.map((o) => ({ value: o, label: o }))} onChange={(v) => v[0] && set({ occurrence: v[0] as Occurrence })} />
+              </div>
+              <div>
+                <FieldLabel required>Weekday</FieldLabel>
+                <RuleSelect className="!rounded" value={[String(value.weekday ?? 1)]} options={DAYS_MON_FIRST} onChange={(v) => set({ weekday: Number(v[0]) })} />
+              </div>
+            </>
           )}
           {f === 'monthly' && (
-            <div>
-              <FieldLabel required>Day of Month</FieldLabel>
-              <RuleSelect className="!rounded" value={[String(value.monthday ?? 1)]} options={Array.from({ length: 28 }, (_, i) => ({ value: String(i + 1), label: String(i + 1) }))} onChange={(v) => set({ monthday: Number(v[0]) })} />
+            <div className="col-start-1">
+              <FieldLabel required>Month</FieldLabel>
+              <RuleSelect className="!rounded" multi value={(value.months ?? ALL_MONTHS).map(String)} options={MONTH_OPTIONS} onChange={(v) => set({ months: v.map(Number).sort((x, y) => x - y) })} placeholder="Select" />
             </div>
           )}
-          {(f === 'once' || f === 'daily') && <div />}
-          <div>
-            <FieldLabel required>{f === 'once' ? 'Run On' : 'Start Date'}</FieldLabel>
-            <input type="date" value={value.startDate ?? ''} onChange={(e) => set({ startDate: e.target.value })} className={inputCls} />
-          </div>
-          <div>
-            <FieldLabel required>Time</FieldLabel>
-            <input type="time" value={value.time ?? ''} onChange={(e) => set({ time: e.target.value })} className={inputCls} />
-          </div>
         </div>
       )}
       {f !== 'none' && (
-        <p className="mt-3 flex items-center gap-1.5 text-[12px] text-[#64748B]">
-          <CalendarClock size={13} className="text-[#7B8FA5]" />
-          {scheduleLabel(value)} · next scan <span className="font-medium text-[#364658]">{next ? fmtStamp(next) : '—'}</span>
+        <p className="mt-3 flex items-start gap-1.5 text-[12px] leading-[18px] text-[#64748B]">
+          <CalendarClock size={13} className="mt-[2.5px] flex-shrink-0 text-[#7B8FA5]" />
+          <span className="min-w-0">{scheduleLabel(value)} · next scan <span className="whitespace-nowrap font-medium text-[#364658]">{next ? fmtStamp(next) : '—'}</span></span>
         </p>
       )}
     </div>
@@ -595,8 +649,8 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
     },
     {
       title: 'Schedule & Notifications', sub: '', // no one-liner (Zeni, 15 Nov 2026)
-      opt: <div className="space-y-4">{notifyEl}{scheduleEl}</div>, optNames: ['Notify Team', 'Deployment Policy', 'Schedule'],
-      all: <div className="space-y-4">{notifyEl}{scheduleEl}</div>,
+      opt: <div className="space-y-6">{notifyEl}{scheduleEl}</div>, optNames: ['Notify Team', 'Deployment Policy', 'Schedule'],
+      all: <div className="space-y-6">{notifyEl}{scheduleEl}</div>,
       lines: [...(d.notify.length ? [{ label: 'Notify Team', value: d.notify.length > 2 ? `${d.notify.slice(0, 2).join(', ')} +${d.notify.length - 2}` : d.notify.join(', ') }] : []), ...(d.deploymentPolicy ? [{ label: 'Deployment Policy', value: d.deploymentPolicy }] : []), ...(d.schedule.frequency !== 'none' ? [{ label: 'Schedule', value: scheduleLabel(d.schedule) }] : [])],
       keys: ['schedule'],
     },
@@ -655,14 +709,16 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
     const full = mode !== 'create';
     const Shell = ui === 'v3' && !full ? SteppedDrawerShell : SteppedPageShell;
     return (
+      /* Two CTAs, not a split button (Zeni, 17 Nov 2026): Publish / Update primary, Save as Draft outlined beside it. */
       <Shell title={title} onBack={onClose} error={headerError} overlays={overlays} {...(full ? { fullScreen: true } : {})}
-        final={split[0]} split={split}
+        final={split[0]} secondary={split[1]} secondaryBeside
         steps={items} current={cur} onStep={setStep}
         onNext={() => { setChecked((x) => (x.includes(cur) ? x : [...x, cur])); if (!stepErrs[cur].length) setStep(cur + 1); }}
         help={guide(ui === 'v3', (titles) => { const i = stepDefs.findIndex((x) => x.sections.some((t) => titles.includes(t))); if (i >= 0) setStep(i); })}>
         <div className="space-y-8">
           {st.sections.map((t) => (
-            <Section key={t} title={st.sections.length > 1 ? t : st.title} sub={st.sections.length > 1 ? partOf(t).sub : st.sub} marker={t}>{partOf(t).all}</Section>
+            /* Section header = its name only, no one-liner (Zeni, 17 Nov 2026). */
+            <Section key={t} title={st.sections.length > 1 ? t : st.title} marker={t}>{partOf(t).all}</Section>
           ))}
         </div>
       </Shell>

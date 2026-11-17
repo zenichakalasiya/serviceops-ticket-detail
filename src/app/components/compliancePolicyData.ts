@@ -20,7 +20,12 @@ import type { Benchmark, ComplianceType } from './complianceData';
 
 export type DeviceAxis = 'endpoint' | 'office' | 'tag';
 export type ConfigFileType = 'startup' | 'running';
-export type Frequency = 'none' | 'once' | 'daily' | 'weekly' | 'monthly';
+/* Schedule Type, as the product's Automatic Patch Deployment form offers it (read on .185, 17 Nov 2026):
+   Once · Daily · Weekly · Monthly · Interval. 'none' = no schedule (the form's switch is off). */
+export type Frequency = 'none' | 'once' | 'daily' | 'weekly' | 'monthly' | 'interval';
+export type MonthMode = 'date' | 'day';
+export const OCCURRENCES = ['First', 'Second', 'Third', 'Fourth', 'Last'] as const;
+export type Occurrence = (typeof OCCURRENCES)[number];
 
 export interface PolicySchedule {
   frequency: Frequency;
@@ -28,10 +33,21 @@ export interface PolicySchedule {
   startDate?: string;
   /** HH:mm, 24h */
   time?: string;
-  /** 0 = Sunday … 6 = Saturday (weekly) */
+  /** 0 = Sunday … 6 = Saturday (monthly "On Specific Day"; weekly before it took several days) */
   weekday?: number;
-  /** 1–28 (monthly) */
+  /** Weekly: the days it runs on — several can be picked (Zeni, 17 Nov 2026). 0 = Sunday … 6 = Saturday. */
+  weekdays?: number[];
+  /** 1–31 (monthly "On Specific Date") */
   monthday?: number;
+  /** Monthly: "When should this scheduler run?" — On Specific Date or On Specific Day. */
+  monthMode?: MonthMode;
+  /** Monthly, On Specific Day: First … Last. */
+  occurrence?: Occurrence;
+  /** Monthly: the months it runs in, 0 = January … 11 = December. */
+  months?: number[];
+  /** Interval: every N hours or days. */
+  interval?: number;
+  intervalUnit?: 'Hours' | 'Days';
 }
 
 export interface ScanResult {
@@ -185,6 +201,22 @@ const FAMILIES: [prefix: string, from: number, count: number, net: string, osNam
   ['BLR-RDS', 2, 14, '10.50.54', 'Microsoft Windows Server 2022 Standard', 'Windows Server 2022', 'Windows', 'Bengaluru Campus', ['server']],
   ['BR-RTR', 0, 4, '10.90.1', 'Cisco IOS XE 17.9.4a', 'Cisco IOS XE 17.x', 'Router', '', ['network', 'branch']],
   ['FW', 0, 3, '10.90.0', 'FortiOS 7.4.3', 'FortiOS 7.4', 'Firewall', '', ['network', 'perimeter']],
+  /* Machines for the OS versions added on 17 Nov 2026, so every benchmark has endpoints to pick
+     (Zeni: Add Endpoints / Add Remote Offices were disabled on Amazon Linux 2023). Appended LAST so
+     every existing endpoint keeps its EP number. */
+  ['AHM-CTR', 1, 8, '10.20.55', 'Debian GNU/Linux 12 (bookworm)', 'Debian Linux 12', 'Linux', 'Ahmedabad HQ', ['server', 'containers']],
+  ['MUM-ERP', 1, 6, '10.30.55', 'Red Hat Enterprise Linux 8.9', 'Red Hat Enterprise Linux 8', 'Linux', 'Mumbai Office', ['server', 'erp']],
+  ['PUN-CI', 1, 6, '10.40.55', 'Ubuntu 20.04.6 LTS', 'Ubuntu Linux 20.04 LTS', 'Linux', 'Pune Development Center', ['server', 'build']],
+  ['BLR-DEV', 1, 10, '10.50.55', 'Ubuntu 24.04.1 LTS', 'Ubuntu Linux 24.04 LTS', 'Linux', 'Bengaluru Campus', ['workstation', 'developer']],
+  ['HYD-SAP', 1, 4, '10.60.55', 'SUSE Linux Enterprise Server 15 SP5', 'SUSE Linux Enterprise 15', 'Linux', 'Hyderabad Office', ['server', 'sap']],
+  ['AHM-ORA', 1, 4, '10.20.56', 'Oracle Linux Server 9.3', 'Oracle Linux 9', 'Linux', 'Ahmedabad HQ', ['server', 'database']],
+  ['CHN-WEB', 1, 6, '10.75.55', 'AlmaLinux 9.4 (Seafoam Ocelot)', 'AlmaLinux OS 9', 'Linux', 'Chennai Office', ['server', 'web']],
+  ['BLR-APP', 1, 8, '10.50.56', 'Rocky Linux 9.4 (Blue Onyx)', 'Rocky Linux 9', 'Linux', 'Bengaluru Campus', ['server', 'production']],
+  ['AWS-EC2', 1, 10, '10.100.10', 'Amazon Linux 2023.5', 'Amazon Linux 2023', 'Linux', 'Mumbai Office', ['server', 'cloud']],
+  ['DEL-LEG', 1, 4, '10.70.56', 'Microsoft Windows Server 2016 Standard', 'Windows Server 2016', 'Windows', 'Delhi NCR Office', ['server', 'legacy']],
+  ['AHM-HV', 1, 4, '10.20.57', 'Microsoft Windows Server 2025 Datacenter', 'Windows Server 2025', 'Windows', 'Ahmedabad HQ', ['server', 'hyper-v']],
+  ['MUM-KSK', 1, 6, '10.30.57', 'Microsoft Windows 10 Enterprise 22H2', 'Windows 10 Enterprise', 'Windows', 'Mumbai Office', ['workstation', 'kiosk']],
+  ['AHM-LT', 1, 12, '10.20.58', 'Microsoft Windows 11 Enterprise 23H2', 'Windows 11 Enterprise', 'Windows', 'Ahmedabad HQ', ['workstation', 'laptop']],
 ];
 /* Network devices go to offices that had none yet. */
 const NET_OFFICES = { 'BR-RTR': ['Pune Development Center', 'Hyderabad Office', 'Delhi NCR Office', 'Chennai Office'], FW: ['Bengaluru Campus', 'Hyderabad Office', 'Pune Development Center'] } as Record<string, string[]>;
@@ -326,6 +358,11 @@ export { POLICY_STATUS_OPTIONS } from './complianceFilterAttrs';
 /* ── Schedule wording ─────────────────────────────────────────────────────────────────── */
 
 export const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+/** A weekly schedule's days, Monday first — read from `weekdays`, or the single `weekday` older ones carry. */
+export const weekDays = (s: PolicySchedule): number[] => {
+  const days = s.weekdays && s.weekdays.length ? s.weekdays : [s.weekday ?? 1];
+  return [...days].sort((a, b) => ((a + 6) % 7) - ((b + 6) % 7));
+};
 const ordinal = (n: number) => `${n}${['th', 'st', 'nd', 'rd'][(n % 100 - 20) % 10] || ['th', 'st', 'nd', 'rd'][n % 100] || 'th'}`;
 const t12 = (t = '00:00') => { const [h, m] = t.split(':').map(Number); return `${((h + 11) % 12) + 1}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`; };
 
@@ -333,8 +370,14 @@ export function scheduleLabel(s: PolicySchedule): string {
   switch (s.frequency) {
     case 'once': return `Once on ${fmtDay(s.startDate)} at ${t12(s.time)}`;
     case 'daily': return `Daily at ${t12(s.time)}`;
-    case 'weekly': return `Every ${WEEKDAYS[s.weekday ?? 0]} at ${t12(s.time)}`;
-    case 'monthly': return `Monthly on the ${ordinal(s.monthday ?? 1)} at ${t12(s.time)}`;
+    case 'weekly': return `Every ${weekDays(s).map((d) => WEEKDAYS[d]).join(', ')} at ${t12(s.time)}`;
+    case 'monthly': {
+      const months = s.months && s.months.length && s.months.length < 12 ? ` in ${s.months.map((m) => MONTHS[m]).join(', ')}` : '';
+      return s.monthMode === 'day'
+        ? `${s.occurrence ?? 'First'} ${WEEKDAYS[s.weekday ?? 1]} of the month${months} at ${t12(s.time)}`
+        : `Monthly on the ${ordinal(s.monthday ?? 1)}${months} at ${t12(s.time)}`;
+    }
+    case 'interval': { const n = s.interval ?? 1; const u = (s.intervalUnit ?? 'Hours').toLowerCase(); return `Every ${n} ${n === 1 ? u.slice(0, -1) : u}`; }
     default: return 'Not scheduled';
   }
 }
@@ -347,12 +390,26 @@ export function nextRun(s: PolicySchedule, from = NOW): Date | null {
   const d = new Date(Math.max(from.getTime(), start.getTime()));
   d.setHours(h, m, 0, 0);
   if (s.frequency === 'once') { const once = new Date(`${s.startDate}T${s.time ?? '00:00'}`); return once > from ? once : null; }
-  for (let i = 0; i < 40; i++) {
+  if (s.frequency === 'interval') {
+    const step = Math.max(1, s.interval ?? 1) * (s.intervalUnit === 'Days' ? 864e5 : 36e5);
+    const first = new Date(`${s.startDate ?? from.toISOString().slice(0, 10)}T${s.time ?? '00:00'}`);
+    if (first > from) return first;
+    return new Date(first.getTime() + Math.ceil((from.getTime() - first.getTime() + 1) / step) * step);
+  }
+  const monthOk = (c: Date) => !s.months || !s.months.length || s.months.includes(c.getMonth());
+  /* "First Monday", "Last Friday" … of the candidate's month. */
+  const nthOk = (c: Date) => {
+    if (c.getDay() !== (s.weekday ?? 1)) return false;
+    const occ = s.occurrence ?? 'First';
+    if (occ === 'Last') return new Date(c.getTime() + 7 * 864e5).getMonth() !== c.getMonth();
+    return Math.ceil(c.getDate() / 7) === OCCURRENCES.indexOf(occ) + 1;
+  };
+  for (let i = 0; i < 400; i++) {
     const c = new Date(d.getTime() + i * 864e5);
     if (c <= from) continue;
     if (s.frequency === 'daily') return c;
-    if (s.frequency === 'weekly' && c.getDay() === (s.weekday ?? 0)) return c;
-    if (s.frequency === 'monthly' && c.getDate() === (s.monthday ?? 1)) return c;
+    if (s.frequency === 'weekly' && weekDays(s).includes(c.getDay())) return c;
+    if (s.frequency === 'monthly' && monthOk(c) && (s.monthMode === 'day' ? nthOk(c) : c.getDate() === (s.monthday ?? 1))) return c;
   }
   return null;
 }

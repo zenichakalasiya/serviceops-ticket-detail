@@ -114,8 +114,8 @@ export const VIZ_BENCHMARK_VIEWS: TicketView[] = [
 ];
 
 export const VIZ_RULE_FILTER_ATTRS: Attr[] = [
-  { key: 'x_ruleCode', label: 'Rule ID', icon: Hash, type: 'text' },
-  { key: 'subject', label: 'Title', icon: AlignLeft, type: 'text' },
+  { key: 'x_ruleCode', label: 'ID', icon: Hash, type: 'text' },
+  { key: 'subject', label: 'Name', icon: AlignLeft, type: 'text' },
   { key: 'x_severity', label: 'Severity', icon: CircleDot, type: 'select', options: SEVERITY_OPTIONS },
   { key: 'x_profile', label: 'Profile', icon: ShieldCheck, type: 'select', options: RULE_PROFILE_OPTIONS },
   { key: 'x_assessment', label: 'Assessment', icon: CircleDot, type: 'select', options: [{ label: 'Automated' }, { label: 'Manual' }] },
@@ -134,9 +134,12 @@ export const VIZ_RULE_VIEWS: TicketView[] = [
 ];
 
 export const VIZ_RESOURCE_FILTER_ATTRS: Attr[] = [
-  { key: 'id', label: 'Endpoint ID', icon: Hash, type: 'text' },
-  { key: 'subject', label: 'Host Name', icon: AlignLeft, type: 'text' },
+  { key: 'id', label: 'ID', icon: Hash, type: 'text' },
+  { key: 'subject', label: 'Hostname', icon: AlignLeft, type: 'text' },
+  { key: 'x_ip', label: 'IP Address', icon: Hash, type: 'text' },
+  { key: 'x_osName', label: 'OS Name', icon: Layers, type: 'text' },
   { key: 'x_osVersion', label: 'OS Version', icon: Layers, type: 'text' },
+  { key: 'x_cpResult', label: 'Compliance Result', icon: ShieldCheck, type: 'select', options: POLICY_RESULT_OPTIONS },
   { key: 'x_office', label: 'Remote Office', icon: Layers, type: 'text' },
   /* No column — kept hidden only so a dashboard posture link draws a readable chip. */
   { key: 'x_posture', label: 'Posture', icon: CircleDot, type: 'select', options: POSTURE_OPTIONS, hidden: true },

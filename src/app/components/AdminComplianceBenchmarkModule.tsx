@@ -3,7 +3,7 @@ import { isValidElement, useEffect, useMemo, useRef, useState, Fragment } from '
 import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 import {
-  ArrowLeft, BadgeCheck, Check, ChevronDown, ChevronRight, Copy, ExternalLink, FolderPlus, Layers, Link2, Lock, Monitor, MoreVertical,
+  ArrowLeft, BadgeCheck, Check, FilePlus2, ListPlus, ChevronDown, ChevronRight, Copy, ExternalLink, FolderPlus, Layers, Link2, Lock, Monitor, MoreVertical,
   Pencil, Plus, PlusCircle, Search, ShieldAlert, Trash2, X, CornerDownRight, ArrowDown, ChevronsDownUp, GripVertical, History, GitBranch,
 } from 'lucide-react';
 import { useComplianceRuleUi } from './complianceRuleUi';
@@ -23,7 +23,7 @@ import { TicketFilterBar } from './TicketFilterBar';
 import type { FilterRule, QuickFilterDef } from './TicketFilterBar';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import {
-  benchmarkCreated, benchmarkGroups, ruleCode, ruleNumbers, benchmarkRuleIds, benchmarkUpdated, platformOf, benchmarksUsingRule, COMPLIANCE_TYPES, fmtDate, groupRuleIds, osVersionOf, osVersionsFor, RULES, ruleById,
+  benchmarkCreated, benchmarkGroups, ruleCode, ruleNumbers, benchmarkRuleIds, benchmarkUpdated, platformOf, benchmarksUsingRule, COMPLIANCE_TYPES, OS_VERSIONS, fmtDate, groupRuleIds, osVersionOf, osVersionsFor, RULES, ruleById,
   PROFILES, profileAllows, profileLabel, profileLevels, profileOf, SEVERITIES, SEVERITY_PILL,
 } from './complianceData';
 import type { Benchmark, BenchmarkProfile, ComplianceRule, ComplianceType, Profile, RuleGroup } from './complianceData';
@@ -52,9 +52,11 @@ const typeOptions = COMPLIANCE_TYPES.map((t) => ({ value: t, label: t }));
 /* The product's secondary outlined CTA (the listings' Filters button, OS Upgrade's outlined CTAs): white, #DFE5ED border, 13px. */
 const SECONDARY_CTA = 'inline-flex h-8 items-center gap-1.5 rounded border border-[#DFE5ED] bg-white px-3 text-[13px] font-medium text-[#364658] transition-colors hover:bg-[#F5F7FA]';
 
-const DEFAULT_READ_ONLY = 'A Default benchmark is read only — clone it to make an editable copy';
+const DEFAULT_READ_ONLY = 'A Predefined benchmark is read only — clone it to make an editable copy';
+/** How a benchmark's origin reads on screen: the stored 'Default' shows as "Predefined" (Zeni, 17 Nov 2026). */
+const originLabel = (o: Benchmark['origin']) => (o === 'Default' ? 'Predefined' : 'Custom');
 const deleteReason = (b: Benchmark, used: number) =>
-  b.origin === 'Default' ? 'A Default benchmark cannot be deleted'
+  b.origin === 'Default' ? 'A Predefined benchmark cannot be deleted'
     : used ? `Used by ${used} compliance polic${used > 1 ? 'ies' : 'y'} — remove it from them first` : undefined;
 
 /** How many compliance policies run each benchmark — read live from the policy store, so the
@@ -86,7 +88,7 @@ function ProfileChip({ profile }: { profile: Profile | BenchmarkProfile }) {
 /** Default (ships with the product, read only) or Custom (built here), as a tag. */
 function OriginTag({ origin }: { origin: Benchmark['origin'] }) {
   return origin === 'Default'
-    ? <span className="inline-flex items-center gap-1 rounded-sm bg-[#F1F5F9] px-1.5 py-0.5 text-[11px] font-semibold text-[#475569]" title="Ships with the product — read only"><Lock size={10} />Default</span>
+    ? <span className="inline-flex items-center gap-1 rounded-sm bg-[#F1F5F9] px-1.5 py-0.5 text-[11px] font-semibold text-[#475569]" title="Ships with the product — read only"><Lock size={10} />Predefined</span>
     : <span className="inline-block rounded-sm bg-[#ECFDF3] px-1.5 py-0.5 text-[11px] font-semibold text-[#15803D]" title="Built in this workspace">Custom</span>;
 }
 
@@ -99,7 +101,7 @@ function ActionIcon({ label, reason, onClick, danger, children }: {
   children: React.ReactNode;
 }) {
   return (
-    <Tooltip delayDuration={reason ? 0 : undefined}>
+    <Tooltip delayDuration={0}>
       <TooltipTrigger asChild>
         <span className={`inline-flex ${reason ? 'cursor-not-allowed' : ''}`}>
           <button
@@ -213,15 +215,15 @@ function BenchmarkList({ benchmarks, onOpen, onCreate, onEdit, onClone, onDelete
     const plain = (o: { label: string }[]) => o.map(({ label }) => ({ label }));
     return [
       /* Zeni, 17 Nov 2026: one filter per column shown — no OS Type (no column; OS Platform replaces it). */
-      selectAttr('platform', 'Platform', Monitor, plain(optionsOf(benchmarks, (b) => platformOf(b.osVersion).platform))),
+      selectAttr('platform', 'OS Platform', Monitor, plain(optionsOf(benchmarks, (b) => platformOf(b.osVersion).platform))),
       selectAttr('version', 'OS Version', GitBranch, plain(optionsOf(benchmarks, (b) => platformOf(b.osVersion).version))),
-      selectAttr('origin', 'Source', BadgeCheck, plain(optionsOf(benchmarks, (b) => b.origin, ['Default', 'Custom']))),
+      selectAttr('origin', 'Source', BadgeCheck, plain(optionsOf(benchmarks, (b) => originLabel(b.origin), ['Predefined', 'Custom']))),
     ];
   }, [benchmarks]);
   // Type and Origin are every cut this list has, so they are both quick filters and the
   // Filters builder (and its pill) is switched off — it would only offer the same two again.
   const quick = useMemo<QuickFilterDef[]>(() => [
-    { field: 'platform', icon: Monitor, tip: 'Filter by platform', title: 'Platform is', width: 240, row: 'plain', options: attrs[0].options! },
+    { field: 'platform', icon: Monitor, tip: 'Filter by OS platform', title: 'OS Platform is', width: 240, row: 'plain', options: attrs[0].options! },
     { field: 'version', icon: GitBranch, tip: 'Filter by OS version', title: 'OS Version is', width: 180, row: 'plain', options: attrs[1].options! },
     { field: 'origin', icon: BadgeCheck, tip: 'Filter by source', title: 'Source is', width: 180, row: 'plain', options: attrs[2].options! },
   ], [attrs]);
@@ -229,7 +231,7 @@ function BenchmarkList({ benchmarks, onOpen, onCreate, onEdit, onClone, onDelete
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
     const byField = (b: Benchmark, f: string): string | string[] =>
-      f === 'platform' ? platformOf(b.osVersion).platform : f === 'version' ? platformOf(b.osVersion).version : String((b as any)[f] ?? '');
+      f === 'platform' ? platformOf(b.osVersion).platform : f === 'version' ? platformOf(b.osVersion).version : f === 'origin' ? originLabel(b.origin) : String((b as any)[f] ?? '');
     return matchRules(benchmarks, rules, byField).filter((b) =>
       !q || [b.id, b.name, b.description, b.osVersion].some((x) => x.toLowerCase().includes(q)));
   }, [benchmarks, search, rules]);
@@ -344,7 +346,7 @@ function historyOf(b: Benchmark): HistoryEvent[] {
     event: 'Create Benchmark',
     at: cr.at,
     by: cr.by,
-    summary: `A new benchmark ${b.name} is created for ${[platform, version].filter(Boolean).join(' ') || b.osVersion} with ${n} rule${n === 1 ? '' : 's'}, OS Type as ${b.type}, Source as ${b.origin}.`,
+    summary: `A new benchmark ${b.name} is created for ${[platform, version].filter(Boolean).join(' ') || b.osVersion} with ${n} rule${n === 1 ? '' : 's'}, Source as ${originLabel(b.origin)}.`,
   }];
   if (up.at && up.at !== cr.at) out.push({ event: 'Update Benchmark', at: up.at, by: up.by, summary: `Benchmark ${b.name} is updated.` });
   return out.sort((a, c) => c.at.localeCompare(a.at));
@@ -819,8 +821,8 @@ function GroupExplorer({ groups, setGroups, rootName, naming, setNaming, expande
   const rowCls = (s: ExplorerSel, tone: keyof typeof TONE = 'rule') => `group/ex relative flex cursor-pointer select-none items-center gap-1.5 pr-2 transition-colors ${TONE[tone]} ${isSel(s) ? '!bg-[#EBF5FF] before:absolute before:inset-y-0 before:left-0 before:w-[2px] before:bg-[#3D8BD0]' : 'hover:!bg-[#F5F7FA]'}`;
   const hoverIcons = (s: ExplorerSel, extra?: React.ReactNode) => (
     <span className={`ml-auto flex flex-shrink-0 items-center ${isSel(s) ? '' : 'invisible group-hover/ex:visible'}`} onClick={(e) => e.stopPropagation()}>
-      <ActionIcon label="Add group inside" reason={addReasonFor(s)} onClick={() => addInside(s)}><Plus size={15} /></ActionIcon>
-      <ActionIcon label="Attach rules" reason={attachReasonFor(s)} onClick={() => attach(s)}><Link2 size={14} /></ActionIcon>
+      <ActionIcon label="Add subgroup" reason={addReasonFor(s)} onClick={() => addInside(s)}><ListPlus size={15} /></ActionIcon>
+      <ActionIcon label="Attach rules" reason={attachReasonFor(s)} onClick={() => attach(s)}><FilePlus2 size={15} /></ActionIcon>
       {extra}
     </span>
   );
@@ -895,8 +897,8 @@ function GroupExplorer({ groups, setGroups, rootName, naming, setNaming, expande
           {isNaming
             ? <span className="ml-auto flex-shrink-0" onClick={(e) => e.stopPropagation()}><ActionIcon label="Save name" onClick={() => saveName(g.id)}><Check size={15} className="text-[#16A34A]" /></ActionIcon></span>
             : hoverIcons(s, <>
-              <ActionIcon label="Rename (F2)" onClick={() => rename(s)}><Pencil size={14} /></ActionIcon>
-              <ActionIcon label={kids.length ? 'Delete group and its sub-groups (Delete)' : 'Delete group (Delete)'} danger reason={deleteReason(g.id)} onClick={() => remove(s)}><Trash2 size={15} className={deleteReason(g.id) ? '' : 'text-[#DC2626]'} /></ActionIcon>
+              <ActionIcon label="Rename" onClick={() => rename(s)}><Pencil size={14} /></ActionIcon>
+              <ActionIcon label={kids.length ? 'Delete group and its subgroups' : 'Delete group'} danger reason={deleteReason(g.id)} onClick={() => remove(s)}><Trash2 size={15} className={deleteReason(g.id) ? '' : 'text-[#DC2626]'} /></ActionIcon>
             </>)}
         </div>
         {open && (
@@ -913,7 +915,7 @@ function GroupExplorer({ groups, setGroups, rootName, naming, setNaming, expande
                   <ProfileChip profile={r.profile} />
                   <SeverityPill severity={r.severity} />
                   <span className="flex flex-shrink-0 items-center" onClick={(e) => e.stopPropagation()}>
-                    <ActionIcon label="Remove from group (Delete)" onClick={() => remove(rs)}><X size={15} /></ActionIcon>
+                    <ActionIcon label="Remove from group" onClick={() => remove(rs)}><X size={15} /></ActionIcon>
                   </span>
                 </div>
               );
@@ -928,8 +930,8 @@ function GroupExplorer({ groups, setGroups, rootName, naming, setNaming, expande
   const groupCount = all.length;
   const ruleCount = groups.flatMap(groupRuleIds).length;
   const ctxItems = ctx ? ([
-    ['Add group inside', <Plus size={15} />, addReasonFor(ctx.sel), () => addInside(ctx.sel)],
-    ['Attach rules', <Link2 size={15} />, attachReasonFor(ctx.sel), () => attach(ctx.sel)],
+    ['Add subgroup', <ListPlus size={15} />, addReasonFor(ctx.sel), () => addInside(ctx.sel)],
+    ['Attach rules', <FilePlus2 size={15} />, attachReasonFor(ctx.sel), () => attach(ctx.sel)],
     ...(ctx.sel.kind === 'group' ? [['Rename', <Pencil size={14} />, undefined, () => rename(ctx.sel)] as const] : []),
     ...(ctx.sel.kind === 'group' ? [['Delete', <Trash2 size={15} />, deleteReason(ctx.sel.id), () => remove(ctx.sel)] as const] : []),
     ...(ctx.sel.kind === 'rule' ? [['Remove from group', <X size={15} />, undefined, () => remove(ctx.sel)] as const] : []),
@@ -1098,7 +1100,6 @@ function BenchmarkDrawer({ benchmark, benchmarks, onClose, onEdit, onClone, onDe
   const [open, setOpen] = useState<Set<string>>(firstOpen);
   useEffect(() => { setOpen(firstOpen()); }, [benchmark.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const [ruleId, setRuleId] = useState<string | null>(null);
-  const [full, setFull] = useState(true);
   const [menu, setMenu] = useState(false);
   const total = benchmarkRuleIds(benchmark).length;
   const isDefault = benchmark.origin === 'Default';
@@ -1114,19 +1115,10 @@ function BenchmarkDrawer({ benchmark, benchmarks, onClose, onEdit, onClone, onDe
 
   return (
     <>
-      <div className={`fixed right-0 top-0 z-[60] flex h-screen flex-col bg-white shadow-2xl ${full ? '' : 'border-l border-[#e5e7eb]'}`} style={{ width: full ? '100vw' : 1080 }} data-drawer>
-        {/* Open-item tab bar + window controls — the ticket drawer's. */}
-        <div className="flex items-center border-b border-[#e5e7eb] bg-[#f9fafb]">
-          <DrawerTabStrip items={[{ id: benchmark.id, subject: benchmark.name }]} activeId={benchmark.id} onSelect={() => {}} onClose={onClose} />
-          <button onClick={() => setFull((v) => !v)} className="border-l border-[#e5e7eb] p-2 hover:bg-[#e5e7eb]" title={full ? 'Switch to small view' : 'Switch to full view'}>
-            {full ? (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="4" y="8" width="12" height="12" rx="1.5" stroke="#364658" strokeWidth="2" /><path d="M8 8V6.5A1.5 1.5 0 0 1 9.5 5H18A1.5 1.5 0 0 1 19.5 6.5V15A1.5 1.5 0 0 1 18 16.5H16" stroke="#364658" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-            ) : (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="5" y="5" width="14" height="14" rx="1.5" stroke="#364658" strokeWidth="2" /></svg>
-            )}
-          </button>
-          <button onClick={onClose} className="p-2 hover:bg-[#e5e7eb]" title="Close"><X size={18} className="text-[#364658]" /></button>
-        </div>
+      {/* A right side drawer over the listing (Zeni, 17 Nov 2026) — it was a full-screen page with a tab bar.
+          Same header, actions and rule groups; the backdrop or × closes it. */}
+      <div className="fixed inset-0 z-[60] flex justify-end bg-black/30" onMouseDown={onClose}>
+      <div className="flex h-full w-[1080px] max-w-[95vw] flex-col bg-white shadow-2xl" onMouseDown={(e) => e.stopPropagation()} data-drawer>
 
         {/* Header — ID pill + name, the KPI strip, actions right. */}
         <div className="flex flex-shrink-0 items-start justify-between border-b border-[#e5e7eb] bg-white px-6 py-4">
@@ -1136,9 +1128,9 @@ function BenchmarkDrawer({ benchmark, benchmarks, onClose, onEdit, onClone, onDe
               <span className="line-clamp-2 break-words">{benchmark.name}</span>
             </h1>
             {/* Its facts as chips under the title — tinted where the value means something. */}
-            <HeaderKpiRow gap="mt-[3px]" items={[
+            <HeaderKpiRow gap="mt-[3px]" wrap items={[
               ckpi('origin', 'Source', benchmark.origin, { chip: isDefault ? 'neutral' : 'green', icon: isDefault ? <Lock size={11} /> : undefined, tip: isDefault ? 'Default: ships with the product — read only' : 'Custom: built in this workspace' }),
-              ckpi('type', 'Platform', platformOf(benchmark.osVersion).platform || '—'),
+              ckpi('type', 'OS Platform', platformOf(benchmark.osVersion).platform || '—'),
               ckpi('version', 'OS Version', platformOf(benchmark.osVersion).version || '—'),
               ckpi('rules', 'Rules', total, { color: '#3D8BD0' }),
               /* Created By + Created Date merged into one fact (Zeni, 12 Nov 2026). */
@@ -1191,6 +1183,7 @@ function BenchmarkDrawer({ benchmark, benchmarks, onClose, onEdit, onClone, onDe
                 </>
               )}
             </div>
+            <button type="button" onClick={onClose} aria-label="Close" className="ml-1 flex size-8 items-center justify-center rounded text-[#64748B] transition-colors hover:bg-[#F3F4F6]"><X size={18} /></button>
           </div>
         </div>
 
@@ -1214,6 +1207,7 @@ function BenchmarkDrawer({ benchmark, benchmarks, onClose, onEdit, onClone, onDe
             </div>
           )}
         </div>
+      </div>
       </div>
 
       {openRule && (
@@ -1241,6 +1235,13 @@ function BenchmarkForm({ editing, source, names, onCancel, onSave }: {
   const [name, setName] = useState(editing ? editing.name : source ? `Copy of ${source.name}` : '');
   const [type, setType] = useState<ComplianceType | ''>(base?.type ?? '');
   const [version, setVersion] = useState(base?.osVersion ?? '');
+  /* OS Platform replaces OS Type on the form (Zeni, 17 Nov 2026); the Type is read off the platform. */
+  const [platform, setPlatform] = useState(base?.osVersion ? platformOf(base.osVersion).platform : '');
+  const platformChoices = useMemo(() => [...new Set(OS_VERSIONS.filter((v) => v.type === 'Linux' || v.type === 'Windows' || v.label === base?.osVersion).map((v) => platformOf(v.label).platform))]
+    .sort((a, b) => a.localeCompare(b)).map((p) => ({ value: p, label: p })), [base?.osVersion]);
+  const versionChoices = OS_VERSIONS.filter((v) => platformOf(v.label).platform === platform && (v.type === 'Linux' || v.type === 'Windows' || v.label === base?.osVersion))
+    .map((v) => ({ value: v.label, label: platformOf(v.label).version }))
+    .sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true }));
   const [description, setDescription] = useState(base?.description ?? '');
   const [groups, setGroups] = useState<RuleGroup[]>(() =>
     editing ? editing.groups.map((g) => copyGroup(g))
@@ -1267,7 +1268,7 @@ function BenchmarkForm({ editing, source, names, onCancel, onSave }: {
   const reason =
     !name.trim() ? 'The benchmark needs a name'
       : dupName ? 'A benchmark with this name already exists'
-        : !type ? 'Choose a Type'
+        : !type ? 'Choose an OS Platform'
           : !version ? 'Choose a Version'
             : allGroups(groups).some((g) => !g.name.trim()) ? 'Every rule group needs a name'
               : !attached.length ? 'A benchmark with no rules assesses nothing — attach at least one'
@@ -1282,6 +1283,13 @@ function BenchmarkForm({ editing, source, names, onCancel, onSave }: {
     if (t === type) return;
     clearRules(version || type);
     setType(t);
+    setVersion('');
+  };
+  const changePlatform = (p: string) => {
+    if (p === platform) return;
+    clearRules(version || type);
+    setPlatform(p);
+    setType(OS_VERSIONS.find((v) => platformOf(v.label).platform === p)?.type ?? '');
     setVersion('');
   };
   const changeVersion = (v: string) => {
@@ -1363,7 +1371,7 @@ function BenchmarkForm({ editing, source, names, onCancel, onSave }: {
   ];
 
   /* The words that say WHAT to do are bold — the reader scans for them, not the sentence. */
-  const attachReason = !type ? <>Choose the benchmark’s <b className="font-semibold">OS Type</b> and <b className="font-semibold">OS Version</b> first — only rules for that OS version can be attached</>
+  const attachReason = !type ? <>Choose the benchmark’s <b className="font-semibold">OS Platform</b> and <b className="font-semibold">OS Version</b> first — only rules for that OS version can be attached</>
     : !version ? <>Choose the benchmark’s <b className="font-semibold">OS Version</b> first — only that version’s rules can be attached</> : undefined;
   const title = editing ? 'Edit Benchmark' : source ? 'Clone Benchmark' : 'Create Benchmark';
   const openRule = ruleId ? ruleById(ruleId) : undefined;
@@ -1393,20 +1401,20 @@ function BenchmarkForm({ editing, source, names, onCancel, onSave }: {
               <ErrorText>{tried && (!name.trim() ? 'Enter a name' : dupName ? 'This name is taken' : '')}</ErrorText>
             </div>
             <div>
-              <FieldLabel required>OS Type</FieldLabel>
-              <RuleSelect className="!rounded" value={type ? [type] : []} options={typeOptions} onChange={(v) => v[0] && changeType(v[0] as ComplianceType)} invalid={tried && !type} />
-              <ErrorText>{tried && !type ? 'Choose a Type' : ''}</ErrorText>
+              <FieldLabel required>OS Platform</FieldLabel>
+              <RuleSelect className="!rounded" searchable value={platform ? [platform] : []} options={platformChoices} onChange={(v) => v[0] && changePlatform(v[0])} invalid={tried && !platform} />
+              <ErrorText>{tried && !platform ? 'Choose an OS Platform' : ''}</ErrorText>
             </div>
             <div>
               <FieldLabel required>OS Version</FieldLabel>
               <RuleSelect
                 className="!rounded"
                 value={version ? [version] : []}
-                options={osVersionsFor(type).map((v) => ({ value: v, label: v }))}
+                options={versionChoices}
                 onChange={(v) => v[0] && changeVersion(v[0])}
-                placeholder={type ? 'Select' : 'Choose a Type first'}
-                disabled={!type}
-                invalid={tried && !!type && !version}
+                placeholder={platform ? 'Select' : 'Choose an OS Platform first'}
+                disabled={!platform}
+                invalid={tried && !!platform && !version}
               />
               <ErrorText>{tried && type && !version ? 'Choose a Version' : ''}</ErrorText>
             </div>
@@ -1526,7 +1534,7 @@ function BenchmarkForm({ editing, source, names, onCancel, onSave }: {
           <>
             {/* The pool is already narrowed to the benchmark's Type and Version — said here as two
                 chips that cannot be removed, so the list never looks like the whole catalogue. */}
-            <LockedChip label="OS Type" value={type} />
+            <LockedChip label="OS Platform" value={platform} />
             <LockedChip label="OS Version" value={version} />
             <TicketFilterBar rules={pickRules} setRules={setPickRules} noun="rule" attrs={pickAttrs} quickFilters={pickQuick} showFilterBuilder={false} />
           </>

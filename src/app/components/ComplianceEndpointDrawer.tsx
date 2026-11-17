@@ -330,13 +330,15 @@ export function ComplianceEndpointDrawer({
                   <div className="px-6">
                   {mine.length > 0 && <TabListToolbar search={polQ} onSearch={setPolQ} groups={[]} value={polF} onChange={setPolF} />}
                   <div className="overflow-x-auto"><table className="w-full min-w-[760px] table-fixed">
-                    <colgroup><col /><col className="w-[32%]" /><col className="w-[150px]" /><col className="w-[190px]" /></colgroup>
-                    <thead><tr className="border-b border-[#e5e7eb]">{['Policy', 'Benchmark', 'Result', 'Last Scan'].map((h) => <th key={h} className={th}>{h}</th>)}</tr></thead>
+                    <colgroup><col /><col className="w-[30%]" /><col className="w-[150px]" /><col className="w-[150px]" /><col className="w-[190px]" /></colgroup>
+                    <thead><tr className="border-b border-[#e5e7eb]">{['Policy', 'Benchmark', 'Compliance Score', 'Result', 'Last Scan'].map((h) => <th key={h} className={th}>{h}</th>)}</tr></thead>
                     <tbody className="divide-y divide-[#e5e7eb]">
                       {shownMine.map(({ policy, result }) => (
                         <tr key={policy.id} onClick={() => setPolicyDrawer(policy.id)} className="group/row cursor-pointer transition-colors hover:bg-[#f9fafb]">
                           <td className="px-4 py-3"><span className="flex min-w-0 items-center gap-2"><IdPill id={policy.id} /><span className="truncate text-[13px] text-[#364658] group-hover/row:text-[#3D8BD0]">{policy.name}</span></span></td>
                           <td className="px-4 py-3"><span className="block truncate text-[13px] text-[#64748B]" title={benchmarkOf(policy.benchmarkId)?.name}>{benchmarkOf(policy.benchmarkId)?.name ?? '—'}</span></td>
+                          {/* This endpoint's score for the audit, 3rd column (Zeni, 17 Nov 2026). */}
+                          <td className="px-4 py-3 text-[13px] font-medium tabular-nums" style={{ color: result.score === null ? '#94A3B8' : scoreColor(result.score) }}>{result.score === null ? '—' : `${result.score}%`}</td>
                           <td className="px-4 py-3"><OutcomePill outcome={result.outcome} /></td>
                           <td className="whitespace-nowrap px-4 py-3 text-[13px] text-[#64748B]">{fmtStamp(policy.lastScan?.at)}</td>
                         </tr>

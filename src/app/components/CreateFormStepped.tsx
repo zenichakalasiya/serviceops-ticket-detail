@@ -26,11 +26,12 @@ function Badge({ n, state, current }: { n: number; state: StepState; current: bo
 }
 
 /** Back · Next: <step> (or the main action on the last step). */
-function StepNav({ current, steps, onStep, onNext, final, split }: { current: number; steps: StepItem[]; onStep: (i: number) => void; onNext: () => void; final: ShellAction; split?: ShellAction[] }) {
+function StepNav({ current, steps, onStep, onNext, final, split, beside }: { current: number; steps: StepItem[]; onStep: (i: number) => void; onNext: () => void; final: ShellAction; split?: ShellAction[]; /** An outlined CTA right before the primary (Save as Draft). */ beside?: ShellAction }) {
   const last = current === steps.length - 1;
   return (
     <div className="flex items-center gap-2">
       {current > 0 && <button type="button" className={btn2} onClick={() => onStep(current - 1)}>Back</button>}
+      {beside && <button type="button" className={btn2} onClick={beside.onClick}>{beside.label}</button>}
       {last && split ? <SplitCta options={split} up /> : (
         <button type="button" className={btn1} onClick={last ? final.onClick : onNext}>
           {last ? final.label : `Next: ${steps[current + 1].title}`}
@@ -41,8 +42,10 @@ function StepNav({ current, steps, onStep, onNext, final, split }: { current: nu
 }
 
 /* ── V2: full page, stepper on the left ── */
-export function SteppedPageShell({ title, onBack, error, secondary, final, split, steps, current, onStep, onNext, help, children, overlays, fullScreen }: {
+export function SteppedPageShell({ title, onBack, error, secondary, final, split, steps, current, onStep, onNext, help, children, overlays, fullScreen, secondaryBeside }: {
   title: string; onBack: () => void; error?: string; secondary?: ShellAction; final: ShellAction;
+  /** The secondary CTA (Save as Draft) as an outlined button right beside the primary in the footer. */
+  secondaryBeside?: boolean;
   /** Cover the WHOLE screen, product header included — an edit opened from a full-screen detail
    *  page would otherwise leave that page's tab bar showing above it. */
   fullScreen?: boolean;
@@ -59,7 +62,7 @@ export function SteppedPageShell({ title, onBack, error, secondary, final, split
         <div className="ml-auto flex flex-shrink-0 items-center gap-2.5">
           {error && <span className="text-[12px] text-[#F25C4E]">{error}</span>}
           <button type="button" onClick={onBack} className="rounded border border-[#DFE5ED] bg-white px-3 py-1.5 text-[12px] font-medium text-[#7B8FA5] transition-colors hover:bg-[#F9FAFB] hover:text-[#364658]">Cancel</button>
-          {secondary && !split && <button type="button" onClick={secondary.onClick} className="rounded border border-[#DFE5ED] bg-white px-3 py-1.5 text-[12px] font-medium text-[#364658] transition-colors hover:bg-[#F9FAFB]">{secondary.label}</button>}
+          {secondary && !split && !secondaryBeside && <button type="button" onClick={secondary.onClick} className="rounded border border-[#DFE5ED] bg-white px-3 py-1.5 text-[12px] font-medium text-[#364658] transition-colors hover:bg-[#F9FAFB]">{secondary.label}</button>}
         </div>
       </div>
       <div className="flex min-h-0 flex-1">
@@ -77,7 +80,7 @@ export function SteppedPageShell({ title, onBack, error, secondary, final, split
                     <Badge n={i + 1} state={s.state} current={on} />
                     <span className="min-w-0 flex-1">
                       <span className={'block text-[13px] ' + (on ? 'font-semibold text-[#1D2A3E]' : 'font-medium text-[#364658]')}>{s.title}</span>
-                      <span className="mt-0.5 block text-[11.5px] leading-[1.45] text-[#7B8FA5]">{s.sub}</span>
+                      {s.sub && <span className="mt-0.5 block text-[11.5px] leading-[1.45] text-[#7B8FA5]">{s.sub}</span>}
                     </span>
                   </button>
                   {i < steps.length - 1 && <span className="block h-4" />}
@@ -92,7 +95,7 @@ export function SteppedPageShell({ title, onBack, error, secondary, final, split
           </div>
           <div className="flex flex-shrink-0 items-center border-t border-[#EEF2F6] px-6 py-3">
             <span className="text-[12px] tabular-nums text-[#7B8FA5]">Step {current + 1} of {steps.length}</span>
-            <div className="ml-auto"><StepNav current={current} steps={steps} onStep={onStep} onNext={onNext} final={final} split={split} /></div>
+            <div className="ml-auto"><StepNav current={current} steps={steps} onStep={onStep} onNext={onNext} final={final} split={split} beside={secondaryBeside ? secondary : undefined} /></div>
           </div>
         </div>
         <div className="w-[360px] flex-shrink-0 has-[>aside[data-guide-rail]]:!w-0 xl:w-[400px]">{help}</div>
@@ -104,8 +107,10 @@ export function SteppedPageShell({ title, onBack, error, secondary, final, split
 
 /* ── V3: side drawer. The guide runs the FULL height of the drawer from its top edge, level with the
    title (Zeni, 12 Nov 2026); the title, the stepper and the fields sit to its left, the footer spans both. ── */
-export function SteppedDrawerShell({ title, onBack, error, secondary, final, split, steps, current, onStep, onNext, help, children, overlays }: {
+export function SteppedDrawerShell({ title, onBack, error, secondary, final, split, steps, current, onStep, onNext, help, children, overlays, secondaryBeside }: {
   title: string; onBack: () => void; error?: string; secondary?: ShellAction; final: ShellAction;
+  /** The secondary CTA (Save as Draft) as an outlined button right beside the primary in the footer. */
+  secondaryBeside?: boolean;
   /** One primary CTA with a dropdown (Publish ▾ Save as Draft) in place of the final button + secondary. */
   split?: ShellAction[];
   steps: StepItem[]; current: number; onStep: (i: number) => void; onNext: () => void;
@@ -149,9 +154,9 @@ export function SteppedDrawerShell({ title, onBack, error, secondary, final, spl
         </div>
         <div className="flex flex-shrink-0 items-center gap-2 border-t border-[#EEF2F6] px-5 py-3">
           <button type="button" onClick={onBack} className={btn2 + ' text-[#7B8FA5]'}>Cancel</button>
-          {secondary && !split && <button type="button" onClick={secondary.onClick} className={btn2}>{secondary.label}</button>}
+          {secondary && !split && !secondaryBeside && <button type="button" onClick={secondary.onClick} className={btn2}>{secondary.label}</button>}
           <span className="ml-auto text-[12px] tabular-nums text-[#7B8FA5]">Step {current + 1} of {steps.length}</span>
-          <StepNav current={current} steps={steps} onStep={onStep} onNext={onNext} final={final} split={split} />
+          <StepNav current={current} steps={steps} onStep={onStep} onNext={onNext} final={final} split={split} beside={secondaryBeside ? secondary : undefined} />
         </div>
       </div>
       {overlays}

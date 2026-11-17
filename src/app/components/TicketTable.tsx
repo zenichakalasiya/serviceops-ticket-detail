@@ -2049,21 +2049,13 @@ export function TicketTable({
         { key: 'id', label: 'ID', w: 96 },
         /* Zeni, 12 Nov 2026. Status = where the scan run stands (Draft / In Progress / Completed /
            Cancelled); Compliance Result = Compliant / Non-Compliant from the last scan. */
-        { key: 'subject', label: 'Policy Name', flex: true, w: 200, maxW: 320 },
-        { key: 'x_platform', label: 'OS Platform', w: 150 },
-        /* Zeni, 17 Nov 2026: the benchmark reads in full over up to three lines; every row keeps three lines' room. */
-        { key: 'x_benchmark', label: 'Benchmark', flex: true, w: 200, maxW: 320, wrap: 3 },
-        { key: 'x_endpoints', label: 'Endpoints', w: 100 },
-        { key: 'x_cpScore', label: 'Compliance Score', w: 185 },
-        { key: 'x_cpResult', label: 'Compliance Result', w: 190 },
+        /* Zeni, 17 Nov 2026: ID · Policy Name · Status · Last Scan Date · Compliance Score · Enable · Actions.
+           Everything else is in column selection (MODULE_EXTRA_COLS). */
+        { key: 'subject', label: 'Policy Name', flex: true, w: 220, maxW: 360 },
         { key: 'status', label: 'Status', w: 140 },
         { key: 'x_lastExecution', label: 'Last Scan Date', w: 180 },
+        { key: 'x_cpScore', label: 'Compliance Score', w: 185 },
         { key: 'x_enabled', label: 'Enable', w: 100 },
-        { key: 'x_tags', label: 'Tags', w: 160 },
-        { key: 'x_createdAt', label: 'Created Date', w: 180 },
-        { key: 'x_createdBy', label: 'Created By', w: 170 },
-        { key: 'x_updatedAt', label: 'Updated Date', w: 180 },
-        { key: 'x_updatedBy', label: 'Updated By', w: 170 },
         { key: 'actions', label: 'Actions', w: 110 },
     ],
     /* Compliance › Benchmark (technician) — every benchmark in the catalogue, read for how it
@@ -2083,26 +2075,28 @@ export function TicketTable({
     'cviz-rule': [
         /* Zeni, 3 Nov 2026: Rule ID · Title · Profile · Assessment · OS Platform · OS Version · Endpoints · Rule Score.
            Severity back after the title, 12 Nov 2026 (it was in v1). */
-        { key: 'x_ruleCode', label: 'Rule ID', w: 96 },
-        { key: 'subject', label: 'Title', flex: true, w: 300, maxW: 460 },
-        { key: 'x_severity', label: 'Severity', w: 110 },
-        { key: 'x_profile', label: 'Profile', w: 80 },
-        { key: 'x_assessment', label: 'Assessment', w: 120 },
+        /* Zeni, 17 Nov 2026: ID · Name · OS Platform · OS Version · Severity · Endpoints · Rule Score.
+           Profile and Assessment are in column selection. */
+        { key: 'x_ruleCode', label: 'ID', w: 96 },
+        { key: 'subject', label: 'Name', flex: true, w: 300, maxW: 460 },
         { key: 'x_platform', label: 'OS Platform', w: 170 },
-        { key: 'x_version', label: 'OS Version', w: 100 },
+        { key: 'x_version', label: 'OS Version', w: 110 },
+        { key: 'x_severity', label: 'Severity', w: 110 },
         { key: 'x_endpoints', label: 'Endpoints', w: 100 },
         { key: 'x_cpScore', label: 'Rule Score', w: 150 },
     ],
     /* Explorer · Resources — every endpoint a policy assesses, across all its policies. */
     'cviz-resource': [
-        { key: 'id', label: 'Endpoint ID', w: 110 },
-        { key: 'subject', label: 'Host Name', flex: true, w: 170, maxW: 300 },
+        /* Zeni, 17 Nov 2026: ID · Hostname · IP Address · OS Name · OS Version · Policies · Compliance
+           Result · Remote Office. The rest (and the inventory columns) are in column selection. */
+        { key: 'id', label: 'ID', w: 110 },
+        { key: 'subject', label: 'Hostname', flex: true, w: 170, maxW: 300 },
+        { key: 'x_ip', label: 'IP Address', w: 130 },
+        { key: 'x_osName', label: 'OS Name', w: 220 },
         { key: 'x_osVersion', label: 'OS Version', w: 170 },
-        { key: 'x_office', label: 'Remote Office', w: 150 },
         { key: 'x_policies', label: 'Policies', w: 85 },
-        { key: 'x_cpScore', label: 'Compliance', w: 140 },
-        { key: 'x_scanStatus', label: 'Scan Status', w: 120 },
-        { key: 'x_lastExecution', label: 'Last Scan', w: 170 },
+        { key: 'x_cpResult', label: 'Compliance Result', w: 170 },
+        { key: 'x_office', label: 'Remote Office', w: 160 },
     ],
     /* Automatic Patch Tests — the module's own columns. The three counts can be unknown on a
        schedule nobody has built out, so they go through NULLABLE_COUNT_COLS and print a dash
@@ -2331,11 +2325,47 @@ export function TicketTable({
     MODULE_ATTRS?.find((a) => a.key === 'assignedTo')?.options
       ?.filter((o) => o.label !== 'Unassigned')
       .map((o) => ({ label: o.label, ...requesterAvatar(o.label), statusColor: '#10B981' })) ?? null;
-  const CATALOG: ColDef[] = [...COL_DEFS, ...(MODULE_ATTRS ? assetExtraCols(COL_DEFS, MODULE_ATTRS) : EXTRA_COLS)];
+  /* Columns a listing offers ONLY in column selection — off by default (Compliance, Zeni 17 Nov 2026). */
+  const MODULE_EXTRA_COLS: Partial<Record<string, ColDef[]>> = {
+    'compliance-policy': [
+      { key: 'x_platform', label: 'OS Platform', w: 150 },
+      { key: 'x_benchmark', label: 'Benchmark', flex: true, w: 200, maxW: 320, wrap: 3 },
+      { key: 'x_endpoints', label: 'Endpoints', w: 100 },
+      { key: 'x_cpResult', label: 'Compliance Result', w: 190 },
+      { key: 'x_tags', label: 'Tags', w: 160 },
+      { key: 'x_createdAt', label: 'Created Date', w: 180 },
+      { key: 'x_createdBy', label: 'Created By', w: 170 },
+      { key: 'x_updatedAt', label: 'Updated Date', w: 180 },
+      { key: 'x_updatedBy', label: 'Updated By', w: 170 },
+    ],
+    'cviz-rule': [
+      { key: 'x_profile', label: 'Profile', w: 80 },
+      { key: 'x_assessment', label: 'Assessment', w: 120 },
+    ],
+    'cviz-resource': [
+      { key: 'x_cpScore', label: 'Compliance Score', w: 150 },
+      { key: 'x_scanStatus', label: 'Scan Status', w: 120 },
+      { key: 'x_lastExecution', label: 'Last Scan', w: 170 },
+      { key: 'x_arch', label: 'Architecture', w: 120 },
+      { key: 'x_servicePack', label: 'Service Pack', w: 120 },
+      { key: 'x_assetId', label: 'Asset ID', w: 110 },
+      { key: 'x_ciId', label: 'CI ID', w: 100 },
+      { key: 'x_poller', label: 'Poller', w: 150 },
+      { key: 'x_agentVersion', label: 'Agent Version', w: 120 },
+      { key: 'x_credProfile', label: 'Agent Credential Profile', w: 200 },
+      { key: 'x_health', label: 'System Health', w: 130 },
+      { key: 'x_language', label: 'Language', w: 120 },
+      { key: 'x_lastReboot', label: 'Last Reboot Time', w: 180 },
+      { key: 'x_reboot', label: 'Reboot Required', w: 130 },
+      { key: 'x_lastUser', label: 'Last Logged In User', w: 200 },
+    ],
+  };
+  const moduleExtra = (moduleCols && MODULE_EXTRA_COLS[moduleCols]) || [];
+  const CATALOG: ColDef[] = [...COL_DEFS, ...moduleExtra, ...(MODULE_ATTRS ? assetExtraCols([...COL_DEFS, ...moduleExtra], MODULE_ATTRS) : EXTRA_COLS)];
   // The stored value is the ordered VISIBLE set — removing a column persists too.
   /* A listing whose DEFAULT columns changed bumps its key here, or a browser holding the old saved
      set never shows the new columns (Compliance Policy, 15 Nov 2026: Enable + Compliance Result). */
-  const COL_KEY_VERSION: Record<string, string> = { 'compliance-policy': 'V3' };
+  const COL_KEY_VERSION: Record<string, string> = { 'compliance-policy': 'V4', 'cviz-rule': 'V3', 'cviz-resource': 'V3' };
   const COL_ORDER_KEY = moduleCols ? `${moduleCols}ListColumns${COL_KEY_VERSION[moduleCols] ?? 'V2'}` : 'ticketListColumnsV2';
   const [colOrder, setColOrder] = useState<string[]>(() => {
     try {
@@ -3685,6 +3715,10 @@ export function TicketTable({
                 <span className="flex min-w-0 items-center gap-2">
                   <span className="size-2 flex-shrink-0 rounded-full" style={{ backgroundColor: sDot }} />
                   <span className="truncate text-[12px] text-[#4A5568]">{ticket.status}</span>
+                  {/* Opt-in tag after the status word (e.g. the NEW mark on a paused deployment). */}
+                  {(ticket as any).x_statusTag && (
+                    <span className="flex-shrink-0 rounded bg-[#FEF3C7] px-1.5 py-px text-[10px] font-semibold text-[#B45309]">{(ticket as any).x_statusTag}</span>
+                  )}
                 </span>
               </td>
           );

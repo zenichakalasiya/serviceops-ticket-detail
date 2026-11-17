@@ -695,18 +695,23 @@ export function RuleGroupTree({ benchmark, resultOf = () => null, right, onRule,
 
   return (
     <section className="overflow-hidden rounded-lg border border-[#E5E7EB]">
-      <header className="flex items-center justify-between gap-3 border-b border-[#E5E7EB] bg-[#F9FAFB] py-1.5 pl-4 pr-2">
+      <header className="relative flex min-h-[41px] items-center justify-between gap-3 border-b border-[#E5E7EB] bg-[#F9FAFB] py-1.5 pl-4 pr-2">
         <span className="text-[13px] font-semibold text-[#364658]">{title}</span>
-        <span className="flex items-center gap-3">
-          {note && <span className="text-[11px] text-[#7B8FA5]">{note}</span>}
-          {!narrowing && allKeys.length > 0 && (
-            <button type="button" onClick={() => setOpen(allOpen ? new Set() : new Set(allKeys))}
-              className="inline-flex h-7 items-center gap-1.5 rounded px-2 text-[12px] font-medium text-[#3D8BD0] transition-colors hover:bg-[#EBF5FF]">
-              {allOpen ? <ChevronsDownUp size={14} /> : <ChevronsUpDown size={14} />}
-              {allOpen ? 'Collapse all' : 'Expand all'}
-            </button>
-          )}
-        </span>
+        {/* Centred over the rows' Previous → Recent icons (Zeni, 17 Nov 2026): that column's middle sits
+            116px from the edge (16 row padding + 56 result pill + 12 gap + half of the 64px icon box). */}
+        {note && <span className="pointer-events-none absolute right-[30px] w-[160px] text-center text-[11px] text-[#7B8FA5]">{note}</span>}
+        {/* Expand / collapse every group — an icon only (Zeni, 17 Nov 2026). */}
+        {!narrowing && allKeys.length > 0 && (
+          <Tooltip delayDuration={0}>
+            <TooltipTrigger asChild>
+              <button type="button" aria-label={allOpen ? 'Collapse all' : 'Expand all'} onClick={() => setOpen(allOpen ? new Set() : new Set(allKeys))}
+                className="flex size-7 items-center justify-center rounded text-[#64748B] transition-colors hover:bg-[#EEF2F6] hover:text-[#3D8BD0]">
+                {allOpen ? <ChevronsDownUp size={15} /> : <ChevronsUpDown size={15} />}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>{allOpen ? 'Collapse all' : 'Expand all'}</TooltipContent>
+          </Tooltip>
+        )}
       </header>
       {tree.map((g) => {
         const gHit = !!q && hits(q, g.number, g.name);
@@ -895,21 +900,28 @@ function ResultCard({ rule, endpoint, finding, lastScan, prevScan, exception, on
     </>
   );
   return (
-    <section className="rounded-lg border border-[#E5E7EB] px-3 py-2">
-      <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+    /* Two columns, so the Expected value's text starts where "Result" does — just after the divider
+       that follows the endpoint (Zeni, 17 Nov 2026). Column 1 is the endpoint / the label, column 2 the rest. */
+    <section className="grid grid-cols-[auto_minmax(0,1fr)] rounded-lg border border-[#E5E7EB] px-3 py-2">
+      <div className="flex min-w-0 items-center pr-5">
         {onOpenEndpoint
           ? <button type="button" onClick={onOpenEndpoint} title="Open this endpoint" className="group/ep flex min-w-0 items-center gap-2">{epInner}</button>
           : <span className="flex min-w-0 items-center gap-2">{epInner}</span>}
-        <span className="h-4 w-px flex-shrink-0 bg-[#E5E7EB]" />
+        <span className="ml-5 h-4 w-px flex-shrink-0 bg-[#E5E7EB]" />
+      </div>
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
         <span className="flex items-center gap-2"><span className={label}>Result</span><ResultPill passed={finding ? finding.passed : null} /></span>
         <span className="flex items-center gap-2">
-          <span className={label}>Previous</span>
+          <span className={label}>Last assessed</span>
           {finding?.prevPassed == null
             ? <span className="text-[12px] text-[#94A3B8]">None (first scan)</span>
             : <><ResultPill passed={finding.prevPassed} />{prevScan && <span className="text-[12px] text-[#7B8FA5]">{fmtStamp(prevScan)}</span>}</>}
         </span>
       </div>
-      <div>
+      {/* What the rule expects on this endpoint, under the result. */}
+      <span className={label + ' col-start-1 mt-2 border-t border-[#EEF1F4] pt-2'}>Expected value</span>
+      <span className="mt-2 min-w-0 whitespace-pre-wrap break-words border-t border-[#EEF1F4] pt-2 font-mono text-[12px] leading-[1.6] text-[#364658]">{rule.remediationValue}</span>
+      <div className="col-span-2">
         {exception && (
           <div className="mt-2 border-t border-[#EEF1F4] pt-2">
             <div className={label}>Exception</div>

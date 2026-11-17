@@ -3315,3 +3315,7 @@ The **Builder** pill beside the logo (every admin form page; `formStudioUi.ts`, 
   - **The Draft / Published chip sits beside the page heading**: FormStudio portals it into `statusSlot`, a span inside the `h1` of `AdminRequestFormModule` and `AdminFormModule`.
   - **Section settings** = Name, then **Requester › View** (off = `techOnly`) with "This applies to all fields of this section", as on .185. The `showWhen` data and chip still exist but have no control.
   - **V3 add popup** (`AddMenu grouped`): 430px, search, `PALETTE_GROUPS` headings, two columns, an icon per field, no one-liners.
+- **Compliance, 17 Nov 2026 (night).**
+  - **Create Audit Schedule mirrors .185's Automatic Patch Deployment** (`PolicySchedule`: frequency incl. 'interval', `weekdays[]`, `monthMode`, `occurrence`, `months[]`, `interval` + `intervalUnit`); white Schedule panel with a large switch; Publish + Save as Draft as two buttons (`secondaryBeside`); Notify Team = `NotifyPicker` (workflow value-popup copy, no tabs).
+  - **`MODULE_EXTRA_COLS`** (TicketTable) = columns a listing offers only in column selection; the three technician Compliance listings' defaults follow Zeni's order (see HANDOFF).
+  - **Admin Benchmark:** origin 'Default' reads "Predefined" (`originLabel`); OS Platform replaces OS Type in its form and filter; the detail is a right side drawer.

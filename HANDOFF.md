@@ -1,3 +1,33 @@
+# Handoff — 2026-11-17, night (Compliance: Create Audit schedule from .185, columns, benchmark drawer)
+
+> Sessions share this file. This top part is the newest; older notes follow.
+
+## Completed (headless browser, no page errors; touched files typecheck clean)
+- **Endpoints for every OS version:** 13 machine families added to `FAMILIES` (compliancePolicyData.ts, appended LAST so no EP number moves) — Add Remote Offices / Add Endpoints now work for Amazon Linux 2023, Windows 11, SUSE 15, …
+- **Create Audit:**
+  - No section one-liners in the middle screen; the LEFT stepper keeps its step one-liners.
+  - **Schedule = .185's Automatic Patch Deployment** (read live on 172.16.15.185 in Zeni's Chrome; nothing saved): Schedule Type Once · Daily · Weekly · Monthly · Interval; Start At; Time (HH : MM dropdowns); Weekly Day (MULTI-select → `weekdays`); Monthly "When should this scheduler run?" On Specific Date (Date 1–31) / On Specific Day (Occurrence First…Last + Weekday); Month (multi); Interval number + Hours/Days. `scheduleLabel` / `nextRun` understand all of it. Our on/off switch stays (.185 has none).
+  - Schedule is its own WHITE bordered panel with a big switch (`ToggleSwitch size="lg"`).
+  - **Publish (primary) + Save as Draft (outlined)** as two buttons, Back · Save as Draft · Publish (`secondaryBeside` on the stepped shells → `StepNav beside`). Edit = Update + Save as Draft.
+  - **Notify Team = `NotifyPicker` rebuilt** after the workflow's value popup (no tabs): Selected Items chips + "+N more" side panel, search, group tree with checkboxes, Apply (N), draft until Apply.
+- **Audit detail:** "Audit Properties"; Scan Details = Last Scan / Next Scan stacked; Rule Checks column removed (Endpoints AND Run History tabs).
+- **View rule results:** Expand/Collapse = icon only; "Previous → Recent scan" centred over the icon column (measured). Rule result strip: "Last assessed", and an **Expected value** row (= `rule.remediationValue`) whose text starts under "Result" (two-column grid).
+- **Endpoint detail › Compliance tab:** Compliance Score as the 3rd column.
+- **Listing columns (technician):** Audit ID · Policy Name · Status · Last Scan Date · Compliance Score · Enable · Actions; Rules ID · Name · OS Platform · OS Version · Severity · Endpoints · Rule Score; Endpoints ID · Hostname · IP Address · OS Name · OS Version · Policies · Compliance Result · Remote Office. Everything else is in column selection via `MODULE_EXTRA_COLS` (TicketTable). Endpoint inventory columns (Architecture … Last Logged In User) are DERIVED per endpoint id (`inventoryOf` in complianceRows.tsx — sample values). Saved-column keys bumped (V4 / V3 / V3).
+- **Admin › Benchmark:** Source "Default" shows as **Predefined** (`originLabel`, display only); OS Platform (not OS Type) in the listing filter, Create/Edit form (platform → version) and the Attach Rules chip; row icons Add subgroup (`ListPlus`) · Attach rules (`FilePlus2`) · Rename · Delete with INSTANT tooltips, no "(F2)" brackets; the benchmark detail is a **1080px right side drawer** with a backdrop (was full-screen with a tab bar).
+
+## Next steps / open
+- Attach rules icon (`FilePlus2`) was our pick — confirm with Zeni.
+- .185 Month list has "Select All"; ours does not. .185's Retry Failed Configuration / Expires After / Deploy After Approval not added (only Schedule was asked).
+- Run History lost its Rule Checks column too — confirm that was wanted.
+- Unchecked-rule V1/V2: which is final?
+
+## Gotchas
+- NOT committed here (another session's Patch Deployment pause work): HardwareAssetActionsMenu.tsx, PatchDeploymentDrawer.tsx, DeploymentPausedBanner.tsx, deploymentPauseStore.ts.
+- A filter attr that is NOT `hidden` also becomes a column-selection entry (assetExtraCols) — that is why MODULE_EXTRA_COLS is deduped against it.
+
+---
+
 # Handoff — 2026-11-17 17:48 (Form builder: section drag, status chip, admin menu closed; create pages V1 | V2 + Help guide button)
 
 > Sessions share this file. This top part is the newest; older notes follow.

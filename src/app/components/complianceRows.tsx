@@ -9,6 +9,39 @@ import { profileLabel, ruleCode } from './complianceData';
 import type { BenchmarkStat, EndpointStat, RuleEndpointResult, RuleStat } from './complianceVizData';
 import { ruleScore } from './complianceVizData';
 import type { Ticket } from './TicketListPage';
+import { mockEndpoints } from './EndpointsListPage';
+import type { ComplianceEndpoint } from './compliancePolicyData';
+
+/* The inventory columns the Endpoints listing offers in column selection (Zeni, 17 Nov 2026).
+   A machine from the Endpoints module keeps what that module knows of it (architecture, service
+   pack, health, reboot); everything else is DERIVED from the endpoint's id, so a row reads the same
+   on every load. Sample data — no real inventory feed behind it. */
+const h32 = (s: string) => { let h = 2166136261; for (const c of s) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return h >>> 0; };
+const OFFICE_CODE: Record<string, string> = { 'Ahmedabad HQ': 'AHM', 'Mumbai Office': 'MUM', 'Bengaluru Campus': 'BLR', 'Hyderabad Office': 'HYD', 'Pune Development Center': 'PUN', 'Delhi NCR Office': 'DEL', 'Chennai Office': 'CHN', 'Dubai Office': 'DXB', 'Muscat Office': 'MCT' };
+const LINUX_USERS = ['root', 'svc-deploy', 'ansible', 'ubuntu', 'ec2-user'];
+const WIN_USERS = ['MOTADATA\\administrator', 'MOTADATA\\kavit.gohel', 'MOTADATA\\neha.shah', 'MOTADATA\\svc-backup', 'MOTADATA\\dharti.patel'];
+const MONTHS3 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+function inventoryOf(e: ComplianceEndpoint) {
+  const real = mockEndpoints.find((m) => m.id === e.id);
+  const h = h32(e.id);
+  const num = Number(e.id.replace(/\D/g, '')) || h % 900;
+  const win = e.type === 'Windows';
+  const day = 1 + (h % 27), hr = h % 24, mi = (h >>> 5) % 60;
+  return {
+    x_arch: real?.architecture ?? '64 BIT',
+    x_servicePack: real?.servicePack ?? 'None',
+    x_assetId: `AST-${4000 + num}`,
+    x_ciId: `CI-${num}`,
+    x_poller: `${OFFICE_CODE[e.office] ?? 'AHM'}-POLLER-0${1 + (h % 2)}`,
+    x_agentVersion: `9.${2 + (h % 2)}.${(h >>> 3) % 6}`,
+    x_credProfile: win ? 'Windows Domain Admin' : e.type === 'Linux' ? 'Linux SSH Key' : 'Network SSH Read-only',
+    x_health: real?.systemHealth ?? (!e.agentOnline ? 'Not reported' : h % 7 === 0 ? 'Warning' : 'Healthy'),
+    x_language: h % 9 === 0 ? 'English (UK)' : 'English (US)',
+    x_lastReboot: `${String(day).padStart(2, '0')} ${MONTHS3[(h >>> 7) % 2 ? 9 : 10]} 2026, ${String(((hr + 11) % 12) + 1).padStart(2, '0')}:${String(mi).padStart(2, '0')} ${hr < 12 ? 'AM' : 'PM'}`,
+    x_reboot: real?.rebootRequired ?? (h % 5 === 0 ? 'Yes' : 'No'),
+    x_lastUser: (win ? WIN_USERS : LINUX_USERS)[(h >>> 4) % 5],
+  };
+}
 
 /** A register row is the grid's Ticket shape; only the fields the grid reads are real. */
 export const baseRow = (id: string, subject: string): Ticket => ({
@@ -65,7 +98,11 @@ export const endpointRow = (e: EndpointStat): Ticket => ({
   x_idDotTip: e.endpoint.agentOnline ? 'Agent online' : 'Agent offline',
   x_ip: e.endpoint.ip,
   x_type: e.endpoint.type,
+  x_osName: e.endpoint.osName,
   x_osVersion: e.endpoint.osVersion,
+  /* Across its audits: Non-Compliant when any check failed on the last scan; a dash before any scan. */
+  x_cpResult: e.score === null ? null : e.failed > 0 ? 'Non-Compliant' : 'Compliant',
+  ...inventoryOf(e.endpoint),
   x_office: e.endpoint.office,
   x_posture: e.posture ?? 'Not assessed',
   x_policies: e.policies.length,

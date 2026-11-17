@@ -353,8 +353,8 @@ export function CompliancePolicyDrawer({
                   <div className="px-6">
                     <TabListToolbar search={epQ} onSearch={setEpQ} groups={epGroups} value={epF} onChange={setEpF} />
                     <div className="overflow-x-auto"><table className="w-full min-w-[1160px] table-fixed">
-                      <colgroup><col className="w-[210px]" /><col className="w-[120px]" /><col className="w-[12%]" /><col className="w-[140px]" /><col className="w-[170px]" /><col className="w-[9%]" /><col /><col className="w-[169px]" /></colgroup>
-                      <thead><tr className="border-b border-[#e5e7eb]">{['Endpoint', 'IP Address', 'Remote Office', 'Result', 'Execution Status', 'Compliance Score', 'Rule Checks', 'Actions'].map((h) => <th key={h} className="px-4 py-2.5 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>)}</tr></thead>
+                      <colgroup><col className="w-[210px]" /><col className="w-[120px]" /><col /><col className="w-[140px]" /><col className="w-[170px]" /><col className="w-[140px]" /><col className="w-[169px]" /></colgroup>
+                      <thead><tr className="border-b border-[#e5e7eb]">{['Endpoint', 'IP Address', 'Remote Office', 'Result', 'Execution Status', 'Compliance Score', 'Actions'].map((h) => <th key={h} className="px-4 py-2.5 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>)}</tr></thead>
                       <tbody className="divide-y divide-[#e5e7eb]">
                         {shownResults.map((r) => (
                           <tr key={r.endpoint.id} onClick={() => setResultsFor(r.endpoint.id)} className="group/row cursor-pointer transition-colors hover:bg-[#f9fafb]">
@@ -371,7 +371,6 @@ export function CompliancePolicyDrawer({
                             <td className="px-4 py-3"><OutcomePill outcome={r.outcome} /></td>
                             <td className="px-4 py-3"><ExecPill status={execOf.get(r.endpoint.id) ?? null} /></td>
                             <td className="px-4 py-3 text-[13px] font-medium tabular-nums" style={{ color: r.score === null ? '#94A3B8' : scoreColor(r.score) }}>{r.score === null ? '—' : `${r.score}%`}</td>
-                            <td className="whitespace-nowrap px-4 py-3 text-[12px] text-[#64748B]">{r.outcome === 'Not Scanned' ? (r.endpoint.agentOnline ? 'Not assessed yet' : 'Agent offline') : <><span className="text-[#15803D]">{r.passed} passed</span> · <span className={r.failed ? 'text-[#B42318]' : ''}>{r.failed} failed</span></>}</td>
                             <td className="px-4 py-2">
                               <button type="button" onClick={(e) => { e.stopPropagation(); setResultsFor(r.endpoint.id); }} className="inline-flex h-7 items-center gap-1.5 whitespace-nowrap rounded border border-[#DFE5ED] bg-white px-2.5 text-[12px] font-medium text-[#364658] transition-colors hover:border-[#3D8BD0] hover:text-[#3D8BD0]"><ListChecks size={14} /> View rule results</button>
                             </td>
@@ -409,8 +408,8 @@ export function CompliancePolicyDrawer({
                       <p className="py-10 text-center text-[13px] text-[#9CA3AF]">This policy has not run yet. Press Run Now, or wait for its schedule.</p>
                     ) : (
                       <div className="overflow-x-auto"><table className="w-full min-w-[1060px] table-fixed">
-                        <colgroup><col className="w-[130px]" /><col className="w-[190px]" /><col className="w-[120px]" /><col className="w-[90px]" /><col className="w-[110px]" /><col /><col className="w-[110px]" /><col className="w-[110px]" /></colgroup>
-                        <thead><tr className="border-b border-[#e5e7eb]">{['Run ID', 'Scan Date', 'Triggered By', 'Duration', 'Endpoints', 'Rule Checks', 'Compliance', 'Status'].map((h) => <th key={h} className="px-4 py-2.5 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>)}</tr></thead>
+                        <colgroup><col className="w-[130px]" /><col className="w-[190px]" /><col /><col className="w-[110px]" /><col className="w-[130px]" /><col className="w-[130px]" /><col className="w-[130px]" /></colgroup>
+                        <thead><tr className="border-b border-[#e5e7eb]">{['Run ID', 'Scan Date', 'Triggered By', 'Duration', 'Endpoints', 'Compliance', 'Status'].map((h) => <th key={h} className="px-4 py-2.5 text-left text-[12px] font-semibold tracking-wider text-[#364658]">{h}</th>)}</tr></thead>
                         <tbody className="divide-y divide-[#e5e7eb]">
                           {runs.map((r) => (
                             <tr key={r.id} className="transition-colors hover:bg-[#f9fafb]">
@@ -419,7 +418,6 @@ export function CompliancePolicyDrawer({
                               <td className="px-4 py-3 text-[13px] text-[#64748B]">{r.trigger}</td>
                               <td className="px-4 py-3 text-[13px] tabular-nums text-[#64748B]">{fmtDuration(r.duration)}</td>
                               <td className="whitespace-nowrap px-4 py-3 text-[13px] tabular-nums text-[#364658]" title={r.notScanned ? `${r.notScanned} not scanned — agent offline on this run` : undefined}>{r.notScanned > 0 ? <span className="text-[#B45309]">{r.endpoints - r.notScanned} of {r.endpoints}</span> : r.endpoints}</td>
-                              <td className="whitespace-nowrap px-4 py-3 text-[12px] text-[#64748B]">{r.status === 'Running' ? '—' : <><span className="text-[#15803D]">{r.passed} passed</span> · <span className={r.failed ? 'text-[#B42318]' : ''}>{r.failed} failed</span></>}</td>
                               <td className="px-4 py-3 text-[13px] font-medium tabular-nums" style={{ color: r.score === null ? '#94A3B8' : scoreColor(r.score) }}>{r.score === null ? '—' : `${r.score}%`}</td>
                               <td className="px-4 py-3">
                                 <span className={`inline-flex items-center gap-1.5 rounded-sm px-2 py-0.5 text-[12px] font-medium ${r.status === 'Running' ? 'bg-[#EBF5FF] text-[#3D8BD0]' : 'bg-[#ECFDF3] text-[#15803D]'}`}>
@@ -440,11 +438,11 @@ export function CompliancePolicyDrawer({
           </div>
 
           <aside className="flex w-[380px] flex-shrink-0 flex-col border-l border-[#e5e7eb] bg-white">
-            <div className="flex-shrink-0 border-b border-[#e5e7eb] px-4 py-3 text-[16px] font-semibold text-[#364658]">Policy Properties</div>
+            <div className="flex-shrink-0 border-b border-[#e5e7eb] px-4 py-3 text-[16px] font-semibold text-[#364658]">Audit Properties</div>
             <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
               <div className="overflow-hidden rounded-lg border border-[#e5e7eb]">
                 <div className="border-b border-[#e5e7eb] px-4 py-3 text-[14px] font-semibold text-[#364658]">Scan Details</div>
-                <dl className="grid grid-cols-2 gap-x-4 px-4 py-4">
+                <dl className="space-y-3.5 px-4 py-4">
                   {scanFields.map(([label, value]) => (
                     <div key={label} className="min-w-0">
                       <dt className="text-[12px] text-[#64748B]">{label}</dt>
