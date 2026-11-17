@@ -251,7 +251,7 @@
         {
           "version": "v2",
           "date": "2026-11-17",
-          "commit": "e3fab42",
+          "commit": "7d94e58",
           "changes": [
             "Rule details: a MITRE ATT&CK tab after Controls (techniques, tactics, mitigations with their names), on both technician and admin sides.",
             "Endpoint page tabs: Vulnerabilities · Patches · Compliance Audit · Installation · Notes · Audit Trail.",
@@ -287,7 +287,13 @@
             "Edit Audit opens full screen with Update ▾ Save as Draft.",
             "Audit detail: Rule Checks column; Scan Details box above Policy Fields.",
             "View rule results: clickable severity filters, scan dates in row tooltips, Expand all / Collapse all, a slim result strip with the endpoint as a link.",
-            "Technician Rules: a rule no audit has run — V1 hides the Endpoints tab, V2 shows an empty state."
+            "Technician Rules: a rule no audit has run — V1 hides the Endpoints tab, V2 shows an empty state.",
+            "Create Audit Schedule mirrors the product's Automatic Patch Deployment: Once · Daily · Weekly (several days) · Monthly (on a date or a weekday occurrence, chosen months) · Interval (hours or days).",
+            "Create Audit: Publish and Save as Draft as two buttons (Update when editing); Notify Team picker with selected chips, group tree and Apply; Schedule in its own panel with a large switch.",
+            "Technician listings: Audit, Rules and Endpoints default columns reordered; the rest (incl. endpoint inventory columns) in column selection.",
+            "Audit detail: Audit Properties, stacked Scan Details, no Rule Checks column; rule results: icon-only expand, Last assessed and Expected value.",
+            "Endpoint detail Compliance tab: Compliance Score column. Every OS version now has endpoints to pick.",
+            "Admin Benchmark: Predefined (was Default), OS Platform in the form and filters, new row icons with instant tooltips, detail as a side drawer."
           ]
         }
       ]
