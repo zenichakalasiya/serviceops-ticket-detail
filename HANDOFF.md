@@ -1,3 +1,24 @@
+# Handoff — 2026-11-17 (Compliance: admin Benchmark listing gets an Action column + History panel)
+
+> Sessions share this file. This top part is the newest; older notes follow.
+
+## Read first
+CLAUDE.md → "Compliance (Oct 2026)", the last bullet.
+
+## Completed (headless browser, no page errors)
+- Admin › Benchmark listing: the Created By / Created Date / Updated By / Updated Date columns are removed. A new **Action** column has Duplicate · History · Edit · Delete. Edit and Delete are disabled with the reason, using the same rules as the detail page.
+- **History** opens a right side panel titled "History: <name>". It has From / To date fields with a Search button, and a table of Event · Event Time · User · Change Summary, with pagination. Entries are built only from what a benchmark stores: one Create entry, plus one Update entry if the benchmark was changed later.
+
+## Next steps
+- Ask Zeni: should this go into Compliance v2 in versions.json, or into a new v3? Still unanswered; versions.json has not been touched.
+- Still open from before: should record wording say "audit"; Deployment Policy required?; Save as Draft on every V2/V3 step?
+
+## Gotchas & notes
+- The History panel's Search button is the product blue, not the black in Zeni's screenshot.
+- FormStudio.tsx, formRuleData.ts, AdminRequestFormModule.tsx and the CreateForm* files hold uncommitted changes from another session. They are not committed here.
+
+---
+
 # Handoff — 2026-11-16 17:37 (Form builder V4: clean field-tile drawings + V3 add popup)
 
 > Sessions share this file. This top part is the newest; older notes follow.

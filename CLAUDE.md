@@ -3290,3 +3290,10 @@ The **Builder** pill beside the logo (every admin form page; `formStudioUi.ts`, 
   `chev()` is lucide ChevronDown. Zeni wants clean thin vector lines, nothing bold or filled. V4's "Type / to add a field" box
   opens `AddMenu grouped typed` — the same two-column, icon-per-field popup as V3, with a hint line instead of its own search
   (the typed box filters). `groupedKinds(query)` is the ONE list both popups and V4's Enter key read, so Enter adds what is shown first.
+- **Compliance, 17 Nov 2026: the admin Benchmark listing.**
+  - **Columns:** Benchmark ID · Name · Platform · OS Version · Total Rules · Source · **Action**.
+  - **The Action column has four icons:** Duplicate · History · Edit · Delete. Each is an `ActionIcon`, and a disabled one shows its reason.
+  - **Created and Updated By/Date are not on the listing.** They are read in **History** (`BenchmarkHistoryPanel`), a right side panel titled "History: <name>".
+    - It has From / To fields and a Search button.
+    - Its table is Event · Event Time · User · Change Summary.
+    - Entries come from `historyOf(b)`, which reads only the benchmark's own created/updated fields. Nothing is invented.
