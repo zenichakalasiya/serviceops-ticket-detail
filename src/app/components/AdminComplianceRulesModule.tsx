@@ -6,7 +6,7 @@ import { Pagination } from './Pagination';
 import { matchRules, optionsOf, RuleDetailPanel, selectAttr, SeverityPill } from './ComplianceShared';
 import { TicketFilterBar } from './TicketFilterBar';
 import type { FilterRule, QuickFilterDef } from './TicketFilterBar';
-import { BENCHMARKS_SEED, benchmarksUsingRule, COMPLIANCE_TYPES, RULES, SEVERITIES, SEVERITY_PILL, ruleCode } from './complianceData';
+import { BENCHMARKS_SEED, benchmarksUsingRule, COMPLIANCE_TYPES, FILTER_OS_TYPES, RULES, SEVERITIES, SEVERITY_PILL, ruleCode } from './complianceData';
 import type { Benchmark, ComplianceRule } from './complianceData';
 
 /* Admin › Compliance › Rules — the predefined rule catalogue.
@@ -32,7 +32,7 @@ export function AdminComplianceRulesModule({ benchmarks = BENCHMARKS_SEED }: { b
   const attrs = useMemo(() => {
     const plain = (o: { label: string }[]) => o.map(({ label }) => ({ label }));
     return [
-      selectAttr('type', 'OS Type', Monitor, plain(optionsOf(RULES, (r) => r.type, COMPLIANCE_TYPES))),
+      selectAttr('type', 'OS Type', Monitor, plain(optionsOf(RULES, (r) => r.type, FILTER_OS_TYPES))),
       selectAttr('platform', 'Platform', Server, plain(optionsOf(RULES, (r) => r.platform))),
       selectAttr('version', 'OS Version', GitBranch, plain(optionsOf(RULES, (r) => `${r.platform} ${r.version}`))),
       selectAttr('severity', 'Severity', ShieldAlert, SEVERITIES.map((v) => ({ label: v, color: SEVERITY_PILL[v].bar }))),

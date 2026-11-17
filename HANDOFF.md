@@ -1,4 +1,29 @@
-# Handoff — 2026-11-17 (Compliance: admin Benchmark listing gets an Action column + History panel)
+# Handoff — 2026-11-17, later (Compliance: OS Type filter = Linux / Windows only)
+
+> Sessions share this file. This top part is the newest; older notes follow.
+
+## Completed (checked in a headless browser, no page errors)
+- The OS Type filter on the Rules and Benchmark listings, admin AND technician, offers only **Linux · Windows**.
+  - Admin: `FILTER_OS_TYPES` (complianceData.ts) feeds `optionsOf` in both admin modules.
+  - Technician: `OS_FILTER_OPTIONS` in complianceFilterAttrs.ts (rule + benchmark attrs and quick filters).
+  - The technician Benchmark saved view "Network Devices" was removed.
+- Earlier today: the View rule results changes (10200f8) and the admin Benchmark Action column + History panel (8f1ceed).
+
+## Left as is
+- Router / Switch / Firewall records still exist; only the filter hides them.
+- Compliance Audit (policy) and Endpoints listings keep all five OS types.
+- The hidden technician Benchmark page still has its "Network Devices" summary card.
+
+## Next steps
+- Ask Zeni: point Compliance v2 in versions.json at the latest commit, or make a v3? Still unanswered.
+- Still open: record wording "audit"; Deployment Policy required?; Save as Draft on every V2/V3 step?
+
+## Gotchas
+- Other sessions' uncommitted work (FormStudio, createForm*, Header, CompliancePolicyEditor, …) is NOT committed here.
+
+---
+
+## (earlier) Handoff — 2026-11-17 (Compliance: admin Benchmark listing gets an Action column + History panel)
 
 > Sessions share this file. This top part is the newest; older notes follow.
 

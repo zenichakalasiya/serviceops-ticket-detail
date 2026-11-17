@@ -23,7 +23,7 @@ import { TicketFilterBar } from './TicketFilterBar';
 import type { FilterRule, QuickFilterDef } from './TicketFilterBar';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import {
-  benchmarkCreated, benchmarkGroups, ruleCode, ruleNumbers, benchmarkRuleIds, benchmarkUpdated, platformOf, benchmarksUsingRule, COMPLIANCE_TYPES, fmtDate, groupRuleIds, osVersionOf, osVersionsFor, RULES, ruleById,
+  benchmarkCreated, benchmarkGroups, ruleCode, ruleNumbers, benchmarkRuleIds, benchmarkUpdated, platformOf, benchmarksUsingRule, COMPLIANCE_TYPES, FILTER_OS_TYPES, fmtDate, groupRuleIds, osVersionOf, osVersionsFor, RULES, ruleById,
   PROFILES, profileAllows, profileLabel, profileLevels, profileOf, SEVERITIES, SEVERITY_PILL,
 } from './complianceData';
 import type { Benchmark, BenchmarkProfile, ComplianceRule, ComplianceType, Profile, RuleGroup } from './complianceData';
@@ -212,7 +212,7 @@ function BenchmarkList({ benchmarks, onOpen, onCreate, onEdit, onClone, onDelete
   const attrs = useMemo(() => {
     const plain = (o: { label: string }[]) => o.map(({ label }) => ({ label }));
     return [
-      selectAttr('type', 'OS Type', Monitor, plain(optionsOf(benchmarks, (b) => b.type, COMPLIANCE_TYPES))),
+      selectAttr('type', 'OS Type', Monitor, plain(optionsOf(benchmarks, (b) => b.type, FILTER_OS_TYPES))),
       selectAttr('origin', 'Source', BadgeCheck, plain(optionsOf(benchmarks, (b) => b.origin, ['Default', 'Custom']))),
     ];
   }, [benchmarks]);

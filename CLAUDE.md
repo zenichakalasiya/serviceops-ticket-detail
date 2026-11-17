@@ -3297,3 +3297,4 @@ The **Builder** pill beside the logo (every admin form page; `formStudioUi.ts`, 
     - It has From / To fields and a Search button.
     - Its table is Event · Event Time · User · Change Summary.
     - Entries come from `historyOf(b)`, which reads only the benchmark's own created/updated fields. Nothing is invented.
+- **Compliance, 17 Nov 2026 (later): the OS Type FILTER on the Rules and Benchmark listings (admin + technician) offers only Linux and Windows.** Admin reads `FILTER_OS_TYPES` (complianceData.ts); technician reads `OS_FILTER_OPTIONS` (complianceFilterAttrs.ts). Router/Switch/Firewall records still exist. The policy and endpoint listings keep all five types.

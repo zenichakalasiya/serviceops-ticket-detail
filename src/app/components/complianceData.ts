@@ -17,6 +17,8 @@ export type Severity = 'Critical' | 'High' | 'Medium' | 'Low' | 'Info';
 export type CheckIn = 'CLI' | 'Config File';
 
 export const COMPLIANCE_TYPES: ComplianceType[] = ['Linux', 'Windows', 'Router', 'Switch', 'Firewall'];
+/* The OS Type FILTER on the Rules and Benchmark listings (admin + technician) offers only these (Zeni, 17 Nov 2026). */
+export const FILTER_OS_TYPES: ComplianceType[] = ['Linux', 'Windows'];
 export const SEVERITIES: Severity[] = ['Critical', 'High', 'Medium', 'Low', 'Info'];
 
 /** Tinted pill — the same tones the Detected CVEs listing uses, plus Info. */
