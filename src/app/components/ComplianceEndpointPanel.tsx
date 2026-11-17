@@ -431,7 +431,7 @@ export function ComplianceEndpointPanel({ endpointId, ruleId, policyId, onClose,
                     { label: 'Compliance', value: got ? `${Math.round((ok / mine.length) * 100)}%` : '—', sub: got ? `${ok} of ${mine.length} rules pass` : 'not scanned', valueColor: got ? scoreColor(Math.round((ok / mine.length) * 100)) : DIM, static: true },
                     { label: 'Passed', value: got ? ok : '—', sub: 'rules', valueColor: got ? '#15803D' : DIM },
                     { label: 'Failed', value: got ? mine.length - ok : '—', sub: 'rules', valueColor: got && mine.length - ok ? '#DC2626' : DIM },
-                    { label: 'Error', value: got ? fresh : '—', sub: '', valueColor: got && fresh ? '#B45309' : DIM },
+                    { label: 'Error', value: got ? fresh : '—', sub: 'rules', valueColor: got && fresh ? '#B45309' : DIM },
                   ]}
                 />
               </div>
@@ -445,9 +445,9 @@ export function ComplianceEndpointPanel({ endpointId, ruleId, policyId, onClose,
                         {(['Critical', 'High', 'Medium', 'Low'] as const).map((sv) => {
                           const n = mine.filter((f) => !f.passed && ruleById(f.ruleId)?.severity === sv).length;
                           return (
-                            <button key={sv} type="button" aria-pressed={bdSev === sv} onClick={() => setBdSev((x) => (x === sv ? null : sv))}
-                              title={bdSev === sv ? 'Clear the sort' : `Show ${sv} rules first`}
-                              className={'inline-flex items-center gap-1.5 whitespace-nowrap rounded px-1.5 py-0.5 text-[13px] transition-colors ' + (bdSev === sv ? 'bg-[#EBF5FF] ring-1 ring-[#BFDBFE]' : 'hover:bg-[#F5F7FA]')}>
+                            <button key={sv} type="button" aria-pressed={bdSev === sv} disabled={!n && bdSev !== sv} onClick={() => setBdSev((x) => (x === sv ? null : sv))}
+                              title={bdSev === sv ? 'Show all rules' : n ? `Show only the ${sv} rules that failed` : `No ${sv} rules failed`}
+                              className={'inline-flex items-center gap-1.5 whitespace-nowrap rounded px-1.5 py-0.5 text-[13px] transition-colors disabled:cursor-default ' + (bdSev === sv ? 'bg-[#EBF5FF] ring-1 ring-[#BFDBFE]' : n ? 'hover:bg-[#F5F7FA]' : '')}>
                               <span className="size-2 flex-shrink-0 rounded-full" style={{ backgroundColor: SEVERITY_PILL[sv].bar }} />
                               <span className="text-[#7B8FA5]">{sv}</span>
                               <span className="font-semibold tabular-nums" style={{ color: n ? SEVERITY_PILL[sv].text : '#94A3B8' }}>{n}</span>
@@ -458,9 +458,9 @@ export function ComplianceEndpointPanel({ endpointId, ruleId, policyId, onClose,
                       <TabListToolbar className="w-[240px] flex-shrink-0" search={bdQ} onSearch={setBdQ} groups={[]} value={{}} onChange={() => {}} placeholder="Search rules..." />
                       <ExportResultButton ep={ep} policy={policy} benchmark={benchmark} mine={mine} />
                     </div>
-                    {ruleTreeCount(benchmark, undefined, bdQ) === 0
-                      ? <NoMatch what="rules" onClear={() => setBdQ('')} />
-                      : <ComplianceBreakdown benchmark={benchmark} findings={mine} query={bdQ} sortSeverity={bdSev} onRule={(rid) => push({ kind: 'result', endpointId: ep.id, ruleId: rid })} />}
+                    {ruleTreeCount(benchmark, bdSev ? (id) => mine.some((f) => f.ruleId === id && !f.passed && ruleById(id)?.severity === bdSev) : undefined, bdQ) === 0
+                      ? <NoMatch what="rules" onClear={() => { setBdQ(''); setBdSev(null); }} />
+                      : <ComplianceBreakdown benchmark={benchmark} findings={mine} query={bdQ} severity={bdSev} onRule={(rid) => push({ kind: 'result', endpointId: ep.id, ruleId: rid })} />}
                   </>
                 ) : (
                   <div className="rounded-lg border border-dashed border-[#DFE5ED] px-4 py-10 text-center text-[13px] text-[#7B8FA5]">
@@ -624,19 +624,26 @@ export function RuleGroupTree({ benchmark, resultOf = () => null, right, onRule,
         <ChevronRight size={15} className={`flex-shrink-0 text-[#7B8FA5] transition-transform ${open.has(key) ? 'rotate-90' : ''}`} />
         <span className="w-[40px] flex-shrink-0 text-[13px] font-semibold tabular-nums text-[#364658]"><Hl text={number} q={query} /></span>
         <span className={`min-w-0 flex-1 truncate text-[13px] text-[#364658] ${depth ? '' : 'font-medium'}`}><Hl text={name} q={query} /></span>
-        {!plain && scoreHeads && (
-          <>
-            <span className="whitespace-nowrap text-[12px] tabular-nums text-[#64748B]" title="Rules passing / rules checked">
-              {ok}/{total}{depth ? '' : ' rules pass'}
-              {total > 0 && <> · <span className="font-semibold" style={{ color: scoreTone(ok, total) }}>{Math.round((ok / total) * 100)}%</span></>}
-            </span>
-            <Tooltip delayDuration={0}>
-              <TooltipTrigger asChild><span className="inline-flex"><ScoreIcon ok={ok} total={total} /></span></TooltipTrigger>
-              <TooltipContent side="left" className="max-w-[280px] text-wrap">
-                <GroupScoreTip ok={ok} total={total} main={!depth} />
-              </TooltipContent>
-            </Tooltip>
-          </>
+        {/* Three levels, three looks (Zeni, 17 Nov 2026): a GROUP carries a score bar, a SUB-GROUP
+            only its count, a RULE only its result — so a row's job is readable from its right edge. */}
+        {!plain && scoreHeads && total > 0 && (
+          <Tooltip delayDuration={0}>
+            <TooltipTrigger asChild>
+              {depth ? (
+                <span className="whitespace-nowrap text-[12px] tabular-nums text-[#7B8FA5]">{ok} of {total} pass</span>
+              ) : (
+                <span className="flex items-center gap-2.5">
+                  <span className="h-1.5 w-[72px] overflow-hidden rounded-full bg-[#E5E7EB]">
+                    <span className="block h-full rounded-full" style={{ width: `${(ok / total) * 100}%`, backgroundColor: scoreTone(ok, total) }} />
+                  </span>
+                  <span className="w-[38px] text-right text-[12px] font-semibold tabular-nums" style={{ color: scoreTone(ok, total) }}>{Math.round((ok / total) * 100)}%</span>
+                </span>
+              )}
+            </TooltipTrigger>
+            <TooltipContent side="left" className="max-w-[280px] text-wrap">
+              <GroupScoreTip ok={ok} total={total} main={!depth} />
+            </TooltipContent>
+          </Tooltip>
         )}
         {!plain && !scoreHeads && (
           <>
@@ -663,7 +670,7 @@ export function RuleGroupTree({ benchmark, resultOf = () => null, right, onRule,
           /* The severity finishes the sentence: it follows the name, not the row's end. */
           <span className="min-w-0 flex-1 text-[13px] leading-[1.6] text-[#364658]">
             <span className="decoration-[#94A3B8] decoration-dotted underline-offset-[3px] group-hover/rule:underline"><Hl text={r.name} q={query} /></span>
-            {/* No severity tag (Zeni, 12 Nov 2026) — sort by it from Failed Rules by Severity instead. */}
+            {/* No severity tag (Zeni, 12 Nov 2026) — filter by it from Failed Rules by Severity instead. */}
           </span>
         ) : (
           <span className={`line-clamp-2 min-w-0 flex-1 break-words text-[13px] text-[#364658] ${linkRows ? "decoration-[#94A3B8] decoration-dotted underline-offset-[3px] group-hover/rule:underline" : "group-hover/rule:text-[#3D8BD0]"}`}><Hl text={r.name} q={query} /></span>
@@ -708,9 +715,10 @@ export function RuleGroupTree({ benchmark, resultOf = () => null, right, onRule,
 }
 
 /** One endpoint's results as the tree — Previous → Recent scan on each rule. */
-export function ComplianceBreakdown({ benchmark, findings, onRule, query, sortSeverity }: {
+export function ComplianceBreakdown({ benchmark, findings, onRule, query, severity }: {
   benchmark: Benchmark;
-  sortSeverity?: Severity | null;
+  /** Failed Rules by Severity: only this severity's FAILED rules show (Zeni, 17 Nov 2026); the rest are hidden. */
+  severity?: Severity | null;
   /** This endpoint's findings for the policy. */
   findings: Finding[];
   /** Search text — highlighted, matches shown under their groups. */
@@ -727,7 +735,7 @@ export function ComplianceBreakdown({ benchmark, findings, onRule, query, sortSe
       onRule={onRule}
       linkRows
       scoreHeads
-      sortSeverity={sortSeverity}
+      show={severity ? (id) => { const f = byRule.get(id); return !!f && !f.passed && ruleById(id)?.severity === severity; } : undefined}
       resultOf={(id) => { const f = byRule.get(id); return f ? { passed: f.passed ? 1 : 0, failed: f.passed ? 0 : 1 } : null; }}
       right={(id) => {
         const f = byRule.get(id);
@@ -746,7 +754,7 @@ export function ComplianceBreakdown({ benchmark, findings, onRule, query, sortSe
                 <ScanChangeTip prev={f ? f.prevPassed : null} last={f ? f.passed : null} />
               </TooltipContent>
             </Tooltip>
-            <span className="w-[84px] text-right"><ResultPill passed={f ? f.passed : null} /></span>
+            <span className="w-[56px] text-right"><ResultPill passed={f ? f.passed : null} /></span>
           </span>
         );
       }}
