@@ -18,6 +18,10 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      # The app has outgrown Node's default ~2 GB heap: on 17 Nov 2026 the build died with
+      # "JavaScript heap out of memory". The runner has far more than this, so give Node 6 GB.
+      NODE_OPTIONS: --max-old-space-size=6144
     steps:
       - name: Checkout
         uses: actions/checkout@v4
