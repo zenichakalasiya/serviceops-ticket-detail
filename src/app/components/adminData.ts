@@ -270,8 +270,8 @@ export const ADMIN_SECTIONS: AdminSection[] = [
     { title: 'Product Custom Fields', desc: 'Add custom fields to capture product details.', icon: 'Package', href: '/admin/form/product' },
     { title: 'Vendor Catalog', desc: 'Maintain profiles of external vendors and suppliers.', icon: 'Truck', href: '/admin/asset-management/vendor-catalog' },
     { title: 'Vendor Custom Fields', desc: 'Add custom fields to capture vendor details.', icon: 'Truck', href: '/admin/form/vendor' },
-    { title: 'Warranty Sync', desc: 'Auto-fetch warranty details from vendor portals and databases.', icon: 'BadgeCheck', href: '/admin/asset-management/warranty-sync' },
-    { title: 'EOSL Sync Setting', desc: 'Sync end-of-service-life data for assets.', icon: 'BadgeCheck', href: '/admin/asset-management/eosl-sync-setting?tab=update_eosl_db' },
+    /* Warranty Sync + EOSL Sync Setting became ONE module with two tabs (Zeni, 19 Nov 2026). */
+    { title: 'Lifecycle Sync', desc: 'Auto-fetch warranty and end-of-service-life dates from manufacturers.', icon: 'BadgeCheck', href: '/admin/lifecycle-sync' },
     ],
   },
   {

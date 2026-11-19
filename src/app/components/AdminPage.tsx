@@ -14,6 +14,7 @@ import { AdminDeploymentPoliciesModule } from './AdminDeploymentPoliciesModule';
 import { AdminSupportPortalModule } from './AdminSupportPortalModule';
 import { AdminRequestFormModule } from './AdminRequestFormModule';
 import { AdminUserSurveyModule } from './AdminUserSurveyModule';
+import { AdminLifecycleSyncModule } from './AdminLifecycleSyncModule';
 import { AdminWorkflowModule } from './workflow/AdminWorkflowModule';
 import { AdminComplianceRulesModule } from './AdminComplianceRulesModule';
 import { AdminComplianceBenchmarkModule } from './AdminComplianceBenchmarkModule';
@@ -63,6 +64,7 @@ const CARD_MODULES: Record<string, string> = {
   'Asset Management/Asset Movement Custom Fields': 'Form Studio',
   'Supplier Management/Product Custom Fields': 'Form Studio',
   'Supplier Management/Vendor Custom Fields': 'Form Studio',
+  'Supplier Management/Lifecycle Sync': 'Lifecycle Sync',
   'Contract Management/Contract Custom Fields': 'Form Studio',
   'Purchase Management/Purchase Custom Fields': 'Form Studio',
   'Purchase Management/Purchase Price Fields': 'Form Studio',
@@ -264,6 +266,10 @@ export function AdminPage({ onNavigate, moduleSlug, onModuleChange, portalSlug, 
           ) : module === 'Workflow' ? (
             <div className="min-h-0 flex-1 overflow-y-auto bg-white">
               <AdminWorkflowModule openId={workflowId} onOpenChange={onWorkflowChange} onEditor={setBuilderOpen} />
+            </div>
+          ) : module === 'Lifecycle Sync' ? (
+            <div className="min-h-0 flex-1 overflow-y-auto bg-white">
+              <AdminLifecycleSyncModule />
             </div>
           ) : module === 'User Surveys' ? (
             <div className="min-h-0 flex-1 overflow-y-auto bg-white">

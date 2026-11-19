@@ -77,6 +77,7 @@ export const ADMIN_ROUTES: readonly AdminRoute[] = [
   { slug: 'asset-movement-fields', section: 'Asset Management', card: 'Asset Movement Custom Fields' },
   { slug: 'product-fields', section: 'Supplier Management', card: 'Product Custom Fields' },
   { slug: 'vendor-fields', section: 'Supplier Management', card: 'Vendor Custom Fields' },
+  { slug: 'lifecycle-sync', section: 'Supplier Management', card: 'Lifecycle Sync' },
   { slug: 'contract-fields', section: 'Contract Management', card: 'Contract Custom Fields' },
   { slug: 'purchase-fields', section: 'Purchase Management', card: 'Purchase Custom Fields' },
   { slug: 'purchase-price-fields', section: 'Purchase Management', card: 'Purchase Price Fields' },

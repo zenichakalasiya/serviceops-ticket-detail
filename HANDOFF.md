@@ -1,3 +1,42 @@
+# Handoff — 2026-11-19 17:42 (Lifecycle Sync: Warranty + EOSL Sync Schedule)
+
+> Sessions share this file. This top part is the newest; older notes follow.
+
+## Read first
+CLAUDE.md → "Lifecycle Sync (Admin › Supplier Management)" under Key context.
+
+## What we worked on this session
+Built a new admin module, Lifecycle Sync, under Supplier Management, with two tabs: Warranty and EOSL Sync
+Schedule. Redesigned from Zeni's reference (lifecycle-sync-v21.html), replacing its empty-state banner.
+
+## Completed (verified in a headless browser, no page errors)
+- `AdminLifecycleSyncModule.tsx` — route `#/admin/lifecycle-sync`, card + nav row "Lifecycle Sync"
+  (replaces the old Warranty Sync and EOSL Sync Setting cards in `adminData.ts`), `CARD_MODULES` entry in AdminPage.
+- Warranty tab: summary card (fetched automatically · Sync now · devices / warranty found / expiring 30d /
+  last synced) → Supported vendors (Dell, HP, Lenovo, ASUS) as cards with status pill, on/off switch,
+  coverage bar. Dell needs credentials: amber card + Add credentials → right side panel (Client ID, Client
+  Secret, Where to find these, Save & connect) → Connected + Edit credentials.
+- EOSL tab: Automatic EOSL sync switch, Frequency / Day or Date / Time, a "Runs … Next run …" sentence,
+  Sync now + Save (disabled until changed), Recent runs table.
+
+## In progress
+Nothing mid-flight for this module. NOTE: the working tree also holds another session's uncommitted
+Form Studio changes (FormStudio.tsx, formStudioData.ts, formStudioUi.ts, AdminFormModule.tsx) — not
+part of this work.
+
+## Next steps
+- Zeni to review: vendor marks are text badges (not real logos); run times (warranty daily 06:00,
+  EOSL weekly Mon 02:00) and all numbers are mock.
+
+## Decisions made
+- Vendors limited to the four in the reference — no unconfirmed vendors added.
+- Both tabs stay mounted (hidden) so saved Dell credentials / an unsaved schedule survive a tab switch.
+
+## Gotchas & notes
+None.
+
+---
+
 # Handoff — 2026-11-19 (late afternoon): Create Audit guide redesign; "will be assessed" line removed
 
 > Sessions share this file. This top part is the newest; older notes follow.
