@@ -119,6 +119,19 @@ export function PausedBanner({ info, onResume }: { info: PauseInfo; onResume: ()
 }
 
 /** V4 / V6 — the narrow card for the right panel: the name and the time on two lines. */
+/** The narrow card's short time ("Nov 17, 01:04 PM"); hovering it shows the full date at once. */
+function TimeTip({ short, full }: { short: string; full: string }) {
+  return (
+    <Tooltip delayDuration={0}>
+      <TooltipTrigger asChild>
+        <span className="cursor-help border-b border-dotted border-[#A5B4C4]">{short}</span>
+      </TooltipTrigger>
+      {/* Below: above it would cover the card's own count line. */}
+      <TooltipContent side="bottom">Paused on {full}</TooltipContent>
+    </Tooltip>
+  );
+}
+
 export function PausedPanelCard({ info, onResume }: { info: PauseInfo; onResume: () => void }) {
   const [c] = useCountUi();
   /* "Tue, Nov 17, 2026 01:04 PM" → "Nov 17, 01:04 PM": the weekday and year cost a third of a narrow line. */
@@ -129,8 +142,8 @@ export function PausedPanelCard({ info, onResume }: { info: PauseInfo; onResume:
       {c === 'line' ? (
         <div className="min-w-0 flex-1 leading-tight">
           <div className="text-[12px] font-semibold text-[#364658]">{countText}</div>
-          <div className="mt-1 truncate text-[11px] text-[#7B8FA5]" title={`Paused by ${info.by} · ${info.at}`}>
-            <span className="font-medium text-[#3D8BD0]">{info.by}</span> · {short}
+          <div className="mt-1 truncate text-[11px] text-[#7B8FA5]">
+            <span className="font-medium text-[#3D8BD0]">{info.by}</span> · <TimeTip short={short} full={info.at} />
           </div>
         </div>
       ) : (
@@ -144,8 +157,8 @@ export function PausedPanelCard({ info, onResume }: { info: PauseInfo; onResume:
               <TooltipContent>{countText}</TooltipContent>
             </Tooltip>
           </div>
-          <div className="mt-1 truncate text-[11px] text-[#7B8FA5]" title={`Paused by ${info.by} · ${info.at}`}>
-            by <span className="font-medium text-[#3D8BD0]">{info.by}</span> · {short}
+          <div className="mt-1 truncate text-[11px] text-[#7B8FA5]">
+            by <span className="font-medium text-[#3D8BD0]">{info.by}</span> · <TimeTip short={short} full={info.at} />
           </div>
         </div>
       )}

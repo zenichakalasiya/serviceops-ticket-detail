@@ -14,6 +14,7 @@ detail page, and two ways to fit it in the narrow V4/V6 card.
 - V4 / V6 (narrow card): a **Line | Pill** switch beside the banner switch, shown only on V4/V6. Line = the count
   is line 1, "name · Nov 17, 01:04 PM" under it. Pill = "Paused [10/12]", the sentence in a dark tooltip on hover.
 - Verified in the browser on PDR-1431, all six combinations; no page errors.
+- Hovering the short time in the narrow card shows the full date at once (Radix, delay 0, below the time).
 
 ## In progress
 Nothing mid-flight.
