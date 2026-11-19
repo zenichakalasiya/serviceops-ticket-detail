@@ -1,3 +1,41 @@
+# Handoff — 2026-11-19 11:10 (Form builder: form centred; V4 Fields panel as a joined tile grid)
+
+> Sessions share this file. This top part is the newest; older notes follow.
+
+## Read first
+CLAUDE.md → "Form builder versions", its last bullet (19 Nov 2026).
+
+## What we worked on
+The admin form builder (`FormStudio.tsx`): where the form sits, and V4's Fields panel.
+
+## Completed (headless browser, no page errors)
+- **Form centred** in the space left of the right panel, in V2 / V3 / V4 (`mx-auto` on both 1040px canvas wrappers). Measured 250px each side at 1920px.
+- **V4 Fields panel** rebuilt after Zeni's reference (a grid of joined cells): 300px wide (V2 / V3 stay 380px), no divider under the Fields | Settings tabs, a search box, a grey band per group, cells 149 × 92px with hairlines between them, the picture above the name.
+- **V4 panel behaves like V2's:** search by name or description, a click adds after the selected field (else to the last section) through `addFromPalette`, tooltip with the description.
+- **Tile pictures redrawn** (`KIND_ART`): drawn 1:1 at 72 × 44, one line weight, ONE control per tile. Dropdown, Multi-Select, Datetime and Dynamic are a single select box; Checkbox and Radio show one row.
+
+## In progress
+Nothing mid-flight.
+
+## Next steps (open questions for Zeni)
+- Did "fields logic same as V2" mean the panel behaviour (done), or the fields on the FORM (V2's plain fields with no card border)? V4's form side is untouched.
+- The page heading is still left-aligned while the form is centred. Centre the heading too?
+- Clicking "Section" in V4's panel now follows V2: with a field selected the new section starts right after that field. Keep, or always add at the end?
+- An odd group leaves a blank white cell (as in the reference). Keep, or let the last tile span both columns?
+- Panel width 300px: right, narrower, or three tiles per row?
+- Earlier, still open: section-less fields between sections as on .185; remove leftover `showWhen` data; Requester Group Access Level; Stepper form (research first).
+
+## Decisions made
+- Mobbin had no form builder with this tile grid, so the layout follows Zeni's reference image. Freepik / Magnific were not used; the pictures are drawn in code with lucide icons.
+
+## Gotchas
+- `FormStudio.tsx` has mixed line endings: patch it with a node script that splits on char 10 and keeps each line's CR, or with single-line edits.
+- The scratchpad already had an old `v4-tiles.mjs`; a Write to that name was refused and the old script ran. Use new file names.
+- `ListGlyph` is now an unused import in FormStudio.tsx (harmless).
+- Other sessions' uncommitted files were kept out of this commit. `versions/versions.json` was NOT touched.
+
+---
+
 # Handoff — 2026-11-19 11:07 (Compliance: stepper one-liners, Scan Now off on Compliance tab, quick filters)
 
 > Sessions share this file. This top part is the newest; older notes follow.

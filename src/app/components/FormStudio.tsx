@@ -45,37 +45,37 @@ const KIND_ICON: Record<FieldKind, React.ReactNode> = {
   url: <Globe size={15} />, currency: <Banknote size={15} />, api: <Plug size={15} />, dynamic: <SquareTerminal size={15} />,
 };
 
-/* ── V4's field tiles: one small drawing per field type — the control it adds, as a wireframe. 72 × 44. ── */
+/* ── V4's field tiles: one small drawing per field type — the control it adds, as a wireframe. 72 × 44, drawn 1:1:
+ * every outline is a 1-unit stroke on a half-unit edge (so it lands on whole pixels), every drawing is centred on (36, 22). ── */
 const A = { line: '#A3AFBF', soft: '#D5DCE6', fill: '#F1F5F9', blue: '#3D8BD0', tint: '#DCEBFA' };
-const box = (x: number, y: number, w: number, h: number, extra: React.SVGProps<SVGRectElement> = {}) => <rect x={x} y={y} width={w} height={h} rx={3} fill="#fff" stroke={A.line} strokeWidth={0.9} {...extra} />;
-const bar = (x: number, y: number, w: number, c = A.soft, h = 1.6) => <rect x={x} y={y} width={w} height={h} rx={h / 2} fill={c} />;
-const caret = (x: number, y: number) => <rect x={x} y={y} width={1} height={10} rx={0.5} fill={A.blue} />;
+const box = (x: number, y: number, w: number, h: number, extra: React.SVGProps<SVGRectElement> = {}) => <rect x={x} y={y} width={w} height={h} rx={3} fill="#fff" stroke={A.line} strokeWidth={1} {...extra} />;
+const bar = (x: number, y: number, w: number, c = A.soft, h = 2) => <rect x={x} y={y} width={w} height={h} rx={h / 2} fill={c} />;
+const ln = (d: string, c: string = A.line, extra: React.SVGProps<SVGPathElement> = {}) => <path d={d} fill="none" stroke={c} strokeWidth={1} strokeLinecap="round" strokeLinejoin="round" {...extra} />;
 /** A real lucide glyph nested in the drawing, `s` units square, its stroke held at 1 unit whatever its size. */
 const ic = (C: LucideIcon, x: number, y: number, s: number, color: string = A.line) => <C x={x} y={y} size={s} strokeWidth={1} absoluteStrokeWidth color={color} />;
-/** lucide ChevronDown, centred where the old hand-drawn chevron was (x + 3, y + 1.5). */
+/** lucide ChevronDown, centred on (x + 3, y + 1.5). */
 const chev = (x: number, y: number, color: string = A.line) => ic(ChevronDown, x - 2, y - 3.5, 10, color);
-const tick = (x: number, y: number) => <path d={`M${x} ${y}l2 2 3.6-4`} fill="none" stroke={A.blue} strokeWidth={0.9} strokeLinecap="round" strokeLinejoin="round" />;
 const KIND_ART: Record<FieldKind, React.ReactNode> = {
-  text: <>{box(8, 13, 56, 18)}{bar(14, 20.7, 22, A.line)}{caret(39, 17)}</>,
-  textarea: <>{box(8, 6, 56, 32)}{bar(14, 13, 40)}{bar(14, 19, 44)}{bar(14, 25, 28)}<path d="M57 34l4-4M60 34.5l1.5-1.5" stroke={A.line} strokeWidth={0.8} strokeLinecap="round" /></>,
-richtext: <>{box(12, 6, 48, 32)}<path d="M12 16h48" stroke={A.soft} strokeWidth={1} />{ic(Bold, 16, 8, 6, A.blue)}{ic(Italic, 23, 8, 6)}{ic(Underline, 30, 8, 6)}<path d="M38.5 9v4" stroke={A.soft} strokeWidth={1} strokeLinecap="round" />{ic(ListGlyph, 41.5, 8, 6)}{bar(16, 21.2, 36)}{bar(16, 26.2, 40)}{bar(16, 31.2, 24)}</>,
-  dropdown: <>{box(12, 5, 48, 12)}{bar(16, 10.2, 18, A.line)}{chev(50, 9.5)}{box(12, 20, 48, 19, { stroke: A.soft })}<rect x={14} y={22} width={44} height={7} rx={2} fill={A.tint} />{bar(17, 24.7, 18, A.blue)}{ic(Check, 48, 22, 7, A.blue)}{bar(17, 32.2, 24)}</>,
-  multiselect: <>{box(12, 5, 48, 12)}<rect x={15} y={7.5} width={14} height={7} rx={3.5} fill={A.tint} />{bar(17.5, 10.2, 5, A.blue)}{ic(X, 23, 8.5, 5, A.blue)}<rect x={31} y={7.5} width={14} height={7} rx={3.5} fill={A.tint} />{bar(33.5, 10.2, 5, A.blue)}{ic(X, 39, 8.5, 5, A.blue)}{chev(50, 9.5)}{box(12, 20, 48, 19, { stroke: A.soft })}<rect x={16} y={22} width={6} height={6} rx={1.5} fill="#fff" stroke={A.blue} strokeWidth={1} />{ic(Check, 16.75, 22.8, 4.5, A.blue)}{bar(26, 24.2, 20, A.line)}<rect x={16} y={31} width={6} height={6} rx={1.5} fill="#fff" stroke={A.line} strokeWidth={1} />{bar(26, 33.2, 14)}</>,
-  date: <>{box(14, 7, 44, 32)}<path d="M14 15.5h44" stroke={A.line} strokeWidth={0.8} /><path d="M24 4.5v5M48 4.5v5" stroke={A.line} strokeWidth={1} strokeLinecap="round" />{[0, 1, 2, 3].map((c) => [0, 1, 2].map((r) => <rect key={`${c}${r}`} x={19.5 + c * 9.2} y={19.5 + r * 6} width={5} height={3.6} rx={1} fill={c === 2 && r === 1 ? A.blue : A.soft} />))}</>,
-  number: <>{box(8, 13, 56, 18)}<text x={14} y={25.6} fontSize={9} fontWeight={500} fill={A.line}>123</text><path d="M52 13v18M52 22h12" stroke={A.line} strokeWidth={0.8} /><path d="M55.5 19.5l2.5-2.5 2.5 2.5M55.5 24.5l2.5 2.5 2.5-2.5" fill="none" stroke={A.blue} strokeWidth={0.8} strokeLinecap="round" strokeLinejoin="round" /></>,
-  checkbox: <><rect x={21.5} y={10.5} width={9} height={9} rx={2} fill="#fff" stroke={A.blue} strokeWidth={1} />{ic(Check, 22.75, 11.9, 6.5, A.blue)}{bar(35, 14.2, 16, A.line)}<rect x={21.5} y={24.5} width={9} height={9} rx={2} fill="#fff" stroke={A.line} strokeWidth={1} />{bar(35, 28.2, 11)}</>,
-  radio: <><circle cx={26} cy={15} r={4} fill="#fff" stroke={A.blue} strokeWidth={1} /><circle cx={26} cy={15} r={1.8} fill={A.blue} />{bar(35, 14.2, 16, A.line)}<circle cx={26} cy={29} r={4} fill="#fff" stroke={A.line} strokeWidth={1} />{bar(35, 28.2, 11)}</>,
-  attachment: <>{box(12, 5, 48, 34, { strokeDasharray: '3 2.5', fill: '#F8FAFC' })}{ic(CloudUpload, 30, 9, 12, A.blue)}{bar(25, 26.5, 22, A.line)}{bar(29, 31.5, 14)}</>,
-  section: <>{box(10, 4, 52, 36, { stroke: A.soft })}{bar(14, 8.1, 14, A.blue, 1.8)}<path d="M10 13h52" stroke={A.soft} strokeWidth={1} />{box(14, 17, 20, 8, { rx: 2 })}{box(38, 17, 20, 8, { rx: 2 })}{box(14, 29, 44, 7, { rx: 2 })}</>,
-  label: <><text x={10} y={20} fontSize={15} fontWeight={500} fill={A.blue}>Aa</text>{bar(10, 27, 50)}{bar(10, 33, 34)}</>,
-  url: <>{box(12, 15, 48, 14)}{ic(LinkGlyph, 15.5, 18.5, 7, A.blue)}<path d="M26 18.5v7" stroke={A.soft} strokeWidth={1} strokeLinecap="round" />{bar(29.5, 21.2, 16, A.line)}{bar(47.5, 21.2, 8)}</>,
-  currency: <>{box(8, 13, 56, 18)}<rect x={8.7} y={13.7} width={15} height={16.6} rx={2.4} fill={A.tint} /><text x={12.7} y={26} fontSize={10} fontWeight={500} fill={A.blue}>$</text><text x={29} y={25.6} fontSize={9} fontWeight={500} fill={A.line}>0.00</text></>,
-dependent: <>{box(10, 5, 30, 12)}{bar(13.5, 10.2, 12, A.line)}{chev(31, 9.5)}<path d="M17 17v10.5a2 2 0 0 0 2 2h13" fill="none" stroke={A.blue} strokeWidth={1} strokeLinecap="round" strokeLinejoin="round" />{box(32, 23.5, 30, 12, { stroke: A.blue })}{bar(35.5, 28.7, 12, A.blue)}{chev(53, 28, A.blue)}</>,
-  api: <>{box(8, 15, 30, 14)}{bar(11.5, 21.2, 13, A.line)}{chev(29, 20.5)}<path d="M40 22h5" stroke={A.line} strokeWidth={1} strokeLinecap="round" strokeDasharray="1.5 2" /><rect x={47} y={13} width={18} height={18} rx={4} fill={A.tint} />{ic(Braces, 50, 16, 12, A.blue)}</>,
-dynamic: <>{box(12, 5, 48, 12)}{bar(16, 10.2, 18, A.line)}{ic(RefreshCw, 49.5, 7.5, 7, A.blue)}{box(12, 20, 48, 19, { stroke: A.soft })}{bar(16, 24.7, 26, A.line)}{bar(16, 32.2, 18)}</>,
-  user: <>{box(8, 13, 56, 18)}<circle cx={18} cy={22} r={5} fill={A.tint} /><circle cx={18} cy={20.6} r={1.8} fill={A.blue} /><path d="M14.8 25.4a3.4 3.4 0 0 1 6.4 0" fill={A.blue} />{bar(27, 20.7, 22, A.line)}{chev(52, 20.5)}</>,
+  text: <>{box(10.5, 13.5, 51, 17)}{bar(16, 21, 20, A.line)}<rect x={39} y={17} width={1} height={10} rx={0.5} fill={A.blue} /></>,
+  textarea: <>{box(10.5, 6.5, 51, 31)}{bar(16, 14, 34)}{bar(16, 21, 24)}{ln('M53.5 33.5l4-4M57 33.5l.5-.5')}</>,
+  richtext: <>{box(10.5, 5.5, 51, 33)}{ln('M11 16.5h50', A.soft)}{ic(Bold, 15, 7.5, 7, A.blue)}{ic(Italic, 24, 7.5, 7)}{ic(Underline, 33, 7.5, 7)}{bar(16, 23, 34)}{bar(16, 30, 22)}</>,
+  dropdown: <>{box(10.5, 13.5, 51, 17)}{bar(16, 21, 20, A.line)}{ln('M49.5 14v16', A.soft)}{chev(52.5, 20.5, A.blue)}</>,
+  multiselect: <>{box(10.5, 13.5, 51, 17)}<rect x={14.5} y={17.5} width={15} height={9} rx={4.5} fill={A.tint} />{bar(18, 21, 8, A.blue)}<rect x={31.5} y={17.5} width={15} height={9} rx={4.5} fill={A.tint} />{bar(35, 21, 8, A.blue)}{chev(52.5, 20.5)}</>,
+  date: <>{box(10.5, 13.5, 51, 17)}{bar(16, 21, 20, A.line)}{ln('M49.5 14v16', A.soft)}{ic(Calendar, 52, 18.5, 7, A.blue)}</>,
+  number: <>{box(10.5, 13.5, 51, 17)}<text x={16} y={25.2} fontSize={9} fontWeight={500} fill={A.line}>123</text>{ln('M50.5 14v16')}{ln('M53.5 20l2.5-2.5 2.5 2.5M53.5 24l2.5 2.5 2.5-2.5', A.blue)}</>,
+  checkbox: <><rect x={18.5} y={16.5} width={11} height={11} rx={2.5} fill="#fff" stroke={A.blue} strokeWidth={1} />{ic(Check, 20, 18, 8, A.blue)}{bar(34, 21, 20, A.line)}</>,
+  radio: <><circle cx={24} cy={22} r={5.5} fill="#fff" stroke={A.blue} strokeWidth={1} /><circle cx={24} cy={22} r={2.5} fill={A.blue} />{bar(34, 21, 20, A.line)}</>,
+  attachment: <>{box(12.5, 7.5, 47, 29, { strokeDasharray: '3 2.5', fill: '#F8FAFC' })}{ic(CloudUpload, 30, 11, 12, A.blue)}{bar(26, 28, 20, A.line)}</>,
+  section: <>{bar(11, 8, 16, A.blue)}{ln('M31 9h30', A.soft)}{box(11.5, 15.5, 23, 9, { rx: 2 })}{box(38.5, 15.5, 23, 9, { rx: 2 })}{box(11.5, 28.5, 50, 9, { rx: 2 })}</>,
+  label: <><text x={12} y={20} fontSize={15} fontWeight={500} fill={A.blue}>Aa</text>{bar(12, 26, 48)}{bar(12, 32, 32)}</>,
+  url: <>{box(12.5, 14.5, 47, 15)}{ic(LinkGlyph, 16, 18.5, 7, A.blue)}{ln('M27.5 18.5v7', A.soft)}{bar(31, 21, 16, A.line)}{bar(49, 21, 7)}</>,
+  currency: <>{box(10.5, 13.5, 51, 17)}<rect x={11.5} y={14.5} width={14} height={15} rx={2} fill={A.tint} /><text x={15.6} y={25.6} fontSize={10} fontWeight={500} fill={A.blue}>$</text><text x={31} y={25.2} fontSize={9} fontWeight={500} fill={A.line}>0.00</text></>,
+  dependent: <>{box(10.5, 5.5, 30, 13)}{bar(14, 11, 12, A.line)}{chev(32, 10.5)}{ln('M18.5 18.5v11a2 2 0 0 0 2 2h11', A.blue)}{box(31.5, 25.5, 30, 13, { stroke: A.blue })}{bar(35, 31, 12, A.blue)}{chev(53, 30.5, A.blue)}</>,
+  api: <>{box(8.5, 14.5, 30, 15)}{bar(12, 21, 13, A.line)}{chev(28, 20.5)}{ln('M40.5 22h5', A.line, { strokeDasharray: '1.5 2' })}<rect x={47} y={13} width={18} height={18} rx={4} fill={A.tint} />{ic(Braces, 50, 16, 12, A.blue)}</>,
+  dynamic: <>{box(10.5, 13.5, 51, 17)}{bar(16, 21, 20, A.line)}{ln('M49.5 14v16', A.soft)}{ic(RefreshCw, 52, 18.5, 7, A.blue)}</>,
+  user: <>{box(10.5, 13.5, 51, 17)}<circle cx={20} cy={22} r={5} fill={A.tint} />{ic(User, 16.5, 18.5, 7, A.blue)}{bar(29, 21, 20, A.line)}{chev(52, 20.5)}</>,
 };
-const KindArt = ({ kind }: { kind: FieldKind }) => <svg viewBox="0 0 72 44" width={96} height={59} aria-hidden fontFamily="Inter, system-ui, sans-serif">{KIND_ART[kind]}</svg>;
+const KindArt = ({ kind }: { kind: FieldKind }) => <svg viewBox="0 0 72 44" width={72} height={44} aria-hidden fontFamily="Inter, system-ui, sans-serif">{KIND_ART[kind]}</svg>;
 
 type Sel = { kind: 'form' } | { kind: 'section'; id: string } | { kind: 'field'; id: string };
 interface Group { sec: FormField | null; items: FormField[]; start: number; end: number }
@@ -1054,7 +1054,7 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing, toolbarS
           {helpFloat}
           <div className="min-h-0 min-w-0 flex-1 overflow-y-auto bg-white" onClick={(e) => { if (!(e.target as HTMLElement).closest('[data-pick]')) select({ kind: 'form' }); }}>
             {/* 4px + a field's own 12px = the page heading's 16px edge. */}
-            <div className="max-w-[1040px] pb-16 pl-1 pr-4 pt-3">
+            <div className="mx-auto max-w-[1040px] pb-16 pl-1 pr-4 pt-3">
               {groups.length ? (
                 <div className="flex flex-col gap-4">
                   {groups.map((g) => canvasV3(g))}
@@ -1090,42 +1090,63 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing, toolbarS
         <div className="relative flex min-h-0 flex-1">
           {helpFloat}
           <div className="min-h-0 min-w-0 flex-1 overflow-y-auto bg-white" onClick={(e) => { if (e.target === e.currentTarget) select({ kind: 'form' }); }}>
-            <div className="flex max-w-[1040px] flex-col gap-6 px-4 pb-16 pt-4" onClick={(e) => { if (e.target === e.currentTarget) select({ kind: 'form' }); }}>
+            <div className="mx-auto flex max-w-[1040px] flex-col gap-6 px-4 pb-16 pt-4" onClick={(e) => { if (e.target === e.currentTarget) select({ kind: 'form' }); }}>
               {groups.length ? groups.map((g, gi) => (v2 ? canvasV2(g, gi) : canvasV1(g, gi))) : empty}
               {groups.length > 0 && addSectionCard()}
             </div>
           </div>
-          <aside className="flex w-[380px] flex-shrink-0 flex-col border-l border-[#DFE5ED] bg-white">
+          <aside className={'flex flex-shrink-0 flex-col border-l border-[#DFE5ED] bg-white ' + (v2 ? 'w-[300px]' : 'w-[380px]')}>
             <>
             {v2 && (
-              <div className="flex-shrink-0 border-b border-[#EEF2F6] p-3">
+              <div className="flex-shrink-0 px-3 pt-3">
                 <div className="pill-track w-full" role="group" aria-label="Panel">
                   <button type="button" aria-pressed={tab === 'fields'} onClick={() => setTab('fields')}>Fields</button>
                   <button type="button" aria-pressed={tab !== 'fields'} onClick={() => setTab('settings')}>Settings</button>
                 </div>
               </div>
             )}
-            <div className="min-h-0 flex-1 overflow-y-auto p-4">
-              {v2 && tab === 'fields' ? (
+            <div className={'min-h-0 flex-1 overflow-y-auto ' + (v2 && tab === 'fields' ? '' : 'p-4')}>
+              {v2 && tab === 'fields' ? (() => {
+                /* Same logic as V2's panel: search by name or description; a click adds after the selected field, else to the selected (or last) section. */
+                const needle = pq.trim().toLowerCase();
+                const shown = PALETTE_GROUPS.map((grp) => ({ ...grp, kinds: grp.kinds.filter((k) => !needle || (kindLabel(k) + ' ' + typeHelp(k).desc).toLowerCase().includes(needle)) })).filter((grp) => grp.kinds.length);
+                return (
                 <div className="flex flex-col">
-                  <p className="text-[12px] text-[#7B8FA5]">Drag a field onto the form, or click it to add it to {selected?.kind === 'section' ? selected.label : 'the selected section'}.</p>
-                  {PALETTE_GROUPS.map((grp) => (
-                    <div key={grp.title} className="mt-5">
-                      <div className="mb-2 text-[13px] font-semibold text-[#1D2A3E]">{grp.title}</div>
-                      <div className="grid grid-cols-2 gap-2.5">
+                  <div className="px-3 pb-3 pt-3">
+                    <div className="relative">
+                      <Search size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[#94A3B8]" />
+                      <input value={pq} onChange={(e) => setPq(e.target.value)} placeholder="Search fields" aria-label="Search fields" className={inputCls + ' !rounded pl-8'} />
+                      {pq && <button type="button" aria-label="Clear search" onClick={() => setPq('')} className="absolute right-1.5 top-1/2 grid size-6 -translate-y-1/2 place-items-center rounded text-[#94A3B8] hover:bg-[#F1F5F9]"><X size={13} /></button>}
+                    </div>
+                    <p className="mt-2 px-0.5 text-[11.5px] leading-[1.45] text-[#94A3B8]">Drag a field onto the form, or click it to add it {sel.kind === 'field' ? 'after the selected field' : 'to the last section'}.</p>
+                  </div>
+                  {shown.map((grp) => (
+                    <div key={grp.title}>
+                      <div className="border-y border-[#E8ECF1] bg-[#F6F8FA] px-3.5 py-1.5 text-[12px] font-semibold text-[#364658]">{grp.title}</div>
+                      {/* 1px gaps over a grey ground draw the hairlines; an odd count gets a blank cell so the last row stays white. */}
+                      <div className="grid grid-cols-2 gap-px bg-[#E8ECF1]">
                         {grp.kinds.map((k) => (
-                          <button key={k} type="button" draggable onDragStart={(e) => { e.dataTransfer.setData('text/form-kind', k); e.dataTransfer.effectAllowed = 'copy'; }} onDragEnd={() => setDropAt(null)}
-                            onClick={() => { if (k === 'section') return addSection(); const g = (sel.kind === 'section' && groups.find((x) => x.sec?.id === sel.id)) || (sel.kind === 'field' && groupOfField(sel.id)) || groups[groups.length - 1]; addAt(g ? g.end : 0, k); }}
-                            className="group/t flex cursor-grab flex-col items-center gap-1.5 text-center active:cursor-grabbing">
-                            <span className="grid h-[78px] w-full place-items-center rounded-lg border border-[#DFE5ED] bg-[#F8FAFC] transition-colors group-hover/t:border-[#3D8BD0] group-hover/t:bg-[#F3F8FD]"><KindArt kind={k} /></span>
-                            <span className="w-full truncate text-[12.5px] text-[#364658]">{kindLabel(k)}</span>
-                          </button>
+                          <Tooltip key={k}>
+                            <TooltipTrigger asChild>
+                              <button type="button" draggable onDragStart={(e) => { e.dataTransfer.setData('text/form-kind', k); e.dataTransfer.effectAllowed = 'copy'; }} onDragEnd={() => setDropAt(null)}
+                                onClick={() => addFromPalette(k)}
+                                className="group/t flex h-[92px] cursor-grab flex-col items-center justify-start gap-1 bg-white px-2 pt-3 text-center transition-colors hover:bg-[#F3F8FD] active:cursor-grabbing">
+                                <KindArt kind={k} />
+                                <span className="line-clamp-2 w-full text-[12px] leading-[1.3] text-[#1D2A3E] transition-colors group-hover/t:text-[#3D8BD0]">{kindLabel(k)}</span>
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="left" className="text-wrap">{typeHelp(k).desc}</TooltipContent>
+                          </Tooltip>
                         ))}
+                        {grp.kinds.length % 2 === 1 && <span aria-hidden className="bg-white" />}
                       </div>
                     </div>
                   ))}
+                  {shown.length > 0 && <div className="border-t border-[#E8ECF1]" />}
+                  {!shown.length && <p className="px-1 py-6 text-center text-[12.5px] text-[#7B8FA5]">No field matches “{pq}”.</p>}
                 </div>
-              ) : settings}
+                );
+              })() : settings}
             </div>
             </>
           </aside>

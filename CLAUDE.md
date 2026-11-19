@@ -3344,6 +3344,11 @@ The **Builder** pill beside the logo (every admin form page; `formStudioUi.ts`, 
   - **The Draft / Published chip sits beside the page heading**: FormStudio portals it into `statusSlot`, a span inside the `h1` of `AdminRequestFormModule` and `AdminFormModule`.
   - **Section settings** = Name, then **Requester › View** (off = `techOnly`) with "This applies to all fields of this section", as on .185. The `showWhen` data and chip still exist but have no control.
   - **V3 add popup** (`AddMenu grouped`): 430px, search, `PALETTE_GROUPS` headings, two columns, an icon per field, no one-liners.
+- **Form builder, 19 Nov 2026 (Zeni; supersedes the V4 "drawn tiles" layout of 16 Nov).**
+  - **The form is CENTRED** in the space left of the right panel in V2 / V3 / V4 (`mx-auto` on both `max-w-[1040px]` canvas wrappers in `FormStudio.tsx`). The page heading is still left-aligned.
+  - **V4 Fields panel = a grid of JOINED cells** (Zeni's reference): the aside is 300px in V4 only (380px in V2 / V3); no divider under the Fields | Settings tabs; search box + hint; each group is a grey band (`bg-[#F6F8FA]`) over a `grid-cols-2 gap-px bg-[#E8ECF1]` grid of white 92px cells (the 1px gaps draw the hairlines; an odd count gets a blank white cell). Picture on top, name under it (12px, wraps to two lines).
+  - **V4 panel logic = V2's:** same search filter, click = `addFromPalette(k)` (after the selected field, else the selected or last section), description tooltip.
+  - **`KIND_ART` rules:** drawn 1:1 at 72 × 44 (`KindArt` renders at that size), every outline a 1-unit stroke on a half-unit edge, centred on (36, 22), ONE control per tile — no open menus, no tiny ticks or ✕ (Zeni: they read as clutter). Helpers: `box`, `bar`, `ln`, `ic`, `chev`.
 - **Compliance, 17 Nov 2026 (night).**
   - **Create Audit Schedule mirrors .185's Automatic Patch Deployment** (`PolicySchedule`: frequency incl. 'interval', `weekdays[]`, `monthMode`, `occurrence`, `months[]`, `interval` + `intervalUnit`); white Schedule panel with a large switch; Publish + Save as Draft as two buttons (`secondaryBeside`); Notify Team = `NotifyPicker` (workflow value-popup copy, no tabs).
   - **`MODULE_EXTRA_COLS`** (TicketTable) = columns a listing offers only in column selection; the three technician Compliance listings' defaults follow Zeni's order (see HANDOFF).
