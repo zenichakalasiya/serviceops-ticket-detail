@@ -15,6 +15,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Check, ChevronDown, ChevronRight, ChevronsRight, Search, Users, X } from 'lucide-react';
 import { TECH_GROUPS, TECHNICIANS } from './technicianRoster';
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 
 const GROUP_SET = new Set(TECH_GROUPS);
 const MEMBERS = new Map(TECH_GROUPS.map((g) => [g, TECHNICIANS.filter((t) => t.group === g).map((t) => t.name)]));
@@ -100,27 +101,42 @@ export function NotifyPicker({ value, onChange, placeholder = 'Search technician
   });
   useEffect(() => { if (open && pos) { const id = requestAnimationFrame(() => inRef.current?.focus({ preventScroll: true })); return () => cancelAnimationFrame(id); } }, [open, !!pos]);
 
-  const chip = (v: string, onRemove: () => void) => (
-    <span key={v} className="inline-flex max-w-[180px] items-center gap-1 rounded-md bg-[#EEF2F6] py-0.5 pl-2 pr-1 text-[12px] text-[#364658]">
+  const chip = (v: string, onRemove: () => void, wide = false) => (
+    <span key={v} className={(wide ? "min-w-0 max-w-[260px] " : "max-w-[180px] ") + "inline-flex items-center gap-1 rounded-md bg-[#EEF2F6] py-0.5 pl-2 pr-1 text-[12px] text-[#364658]"}>
       {GROUP_SET.has(v) && <Users size={12} className="flex-shrink-0 text-[#64748B]" />}
       <span className="truncate">{v}</span>
       <button type="button" aria-label={`Remove ${v}`} onMouseDown={(e) => e.preventDefault()} onClick={(e) => { e.stopPropagation(); onRemove(); }}
         className="flex size-4 flex-shrink-0 items-center justify-center rounded text-[#7B8FA5] hover:bg-[#DFE5ED] hover:text-[#364658]"><X size={11} /></button>
     </span>
   );
-  const shownField = value.slice(0, CHIPS);
+  /* The field shows ONE chip, the most recently added pick, and the rest as +N (Zeni, 19 Nov 2026), so it
+     stays one line and level with Deployment Policy beside it. Picks are appended, so the newest is last. */
+  const newest = value[value.length - 1];
+  const others = value.slice(0, -1).reverse();
   const sideRows = draft.filter((v) => !sideQ.trim() || v.toLowerCase().includes(sideQ.trim().toLowerCase()));
 
   return (
     <>
       <div ref={boxRef} role="button" tabIndex={0} onClick={() => (open ? close() : begin())} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); begin(); } }}
-        className={`flex min-h-9 w-full cursor-pointer items-center gap-1.5 rounded border bg-white py-1 pl-3 pr-2 transition-colors ${open ? 'border-[#3D8BD0] ring-1 ring-[#3D8BD0]' : 'border-[#DFE5ED] hover:border-[#C5CFDB]'}`}>
+        className={`flex h-8 w-full cursor-pointer items-center gap-1.5 rounded border bg-white py-1 pl-3 pr-2 transition-colors ${open ? 'border-[#3D8BD0] ring-1 ring-[#3D8BD0]' : 'border-[#DFE5ED] hover:border-[#C5CFDB]'}`}>
         {value.length === 0 ? (
           <span className="flex-1 truncate text-[13px] text-[#9CA3AF]">{placeholder}</span>
         ) : (
-          <span className="flex min-w-0 flex-1 flex-wrap items-center gap-1">
-            {shownField.map((v) => chip(v, () => onChange(value.filter((x) => x !== v))))}
-            {value.length > shownField.length && <span className="rounded bg-[#EBF5FF] px-1.5 py-0.5 text-[12px] font-medium text-[#3D8BD0]" title={value.slice(shownField.length).join(', ')}>+{value.length - shownField.length}</span>}
+          <span className="flex min-w-0 flex-1 flex-nowrap items-center gap-1 overflow-hidden">
+            {chip(newest, () => onChange(value.filter((x) => x !== newest)), true)}
+            {others.length > 0 && (
+              <Tooltip delayDuration={0}>
+                <TooltipTrigger asChild>
+                  <span className="flex-shrink-0 rounded bg-[#EBF5FF] px-1.5 py-0.5 text-[12px] font-medium text-[#3D8BD0]">+{others.length}</span>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-[260px] text-wrap">
+                  <div className="text-[12px] leading-[1.6]">
+                    {others.slice(0, 12).map((v) => <div key={v}>{v}</div>)}
+                    {others.length > 12 && <div className="text-white/70">+{others.length - 12} more</div>}
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            )}
           </span>
         )}
         <ChevronDown size={15} className="flex-shrink-0 text-[#9CA3AF]" />

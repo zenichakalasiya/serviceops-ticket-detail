@@ -1,6 +1,19 @@
-# Handoff — 2026-11-19 (later): Create Audit 'Notify To' + Zeni's help guide
+# Handoff — 2026-11-19 (evening): Create Audit is V1-only; Notify To one chip; guide spacing
 
 > Sessions share this file. This top part is the newest; older notes follow.
+
+## Completed (headless browser, no page errors) — published
+- **Create Audit is V1 only** (full page, stepper left; internal id `'v2'`): `CompliancePolicyEditor` hard-codes `ui` and no longer calls `setExtraCreateOpen`, so the header V1 | V2 pill does not show on it. Other modules' create pages keep the switch. Restoring = `useCreateFormUi()` + the effect (comment in the file).
+- **Notify To field** (`NotifyPicker`): ONE chip = the most recently added pick (picks are appended → last), then `+N` with an instant tooltip listing the rest (newest first, 12 then "+N more"). Fixed `h-8`, no wrap, so it sits level with Deployment Policy (both 32px). The popup's Selected Items still shows 3 chips.
+- **Create Audit guide:** 20px above each field group (16px under the one-liner); `FormHelp.highlight: false` turns off the lit step for this guide only — all three cards the same grey.
+
+## Open
+- Office / Execution Status / Compliance Result quick filters: which page?
+- Compliance v2 or a new version — `versions.json` not re-pinned.
+
+---
+
+# Handoff — 2026-11-19 (later): Create Audit 'Notify To' + Zeni's help guide
 
 ## Completed (headless browser, no page errors)
 - **Notify Team → Notify To** in the Create Audit schedule step, the live summary (CompliancePolicyEditor.tsx) and the audit detail properties (CompliancePolicyDrawer.tsx).

@@ -20,7 +20,7 @@ import { SummaryAside } from './CreateFormOneScreen';
 import type { SummaryGroup, SummaryLine } from './CreateFormOneScreen';
 import { CreateFormHelp } from './CreateFormHelp';
 import { FORM_STEPS } from './createFormSteps';
-import { setExtraCreateOpen, useCreateFormUi } from './createFormUi';
+import type { CreateFormUi } from './createFormUi';
 import { BENCHMARKS_SEED, benchmarkRuleIds, platformOf, profileLabel } from './complianceData';
 import { TECH_GROUPS, TECHNICIANS } from './technicianRoster';
 import { NotifyPicker } from './NotifyPicker';
@@ -405,8 +405,10 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
   const SEC_OF: Record<string, string> = { name: 'Policy Details', platform: 'Benchmark', osVersion: 'Benchmark', benchmark: 'Benchmark', config: 'Benchmark', targets: 'Target Endpoints', schedule: 'Schedule & Notifications' };
 
   /* ── Layout (V1–V5, the header's switch — createFormUi.ts) ── */
-  const ui = useCreateFormUi();
-  useEffect(() => { setExtraCreateOpen('compliance-policy'); return () => setExtraCreateOpen(null); }, []);
+  /* V1 is FINAL for Create Audit (Zeni, 19 Nov 2026): always the full page with the stepper on the left
+     (pill "V1" = id 'v2'), and the header's V1 | V2 switch is not shown here (no setExtraCreateOpen).
+     Restoring the switch = `useCreateFormUi()` + the setExtraCreateOpen effect. */
+  const ui = 'v2' as CreateFormUi;
   const stepDefs = FORM_STEPS['compliance-policy'];
   const [step, setStep] = useState(0);
   const [checked, setChecked] = useState<number[]>([]);

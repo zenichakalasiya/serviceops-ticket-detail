@@ -183,7 +183,7 @@ export function CreateFormHelpPanel({ help, onOpen, available, bare }: {
           <div className="mt-3 flex flex-col gap-1.5">
             {help.steps.map((s, i) => {
               const id = 'step-' + i;
-              const lit = !!active && active.split('|').some((t) => s.section.includes(t));
+              const lit = help.highlight !== false && !!active && active.split('|').some((t) => s.section.includes(t));
               const shown = s.section.some((t) => (available ?? present).includes(t));
               return (
                 <Accordion key={id} title={s.title} open={!shut.includes(id)} onToggle={() => toggle(id)} lit={lit}
@@ -198,7 +198,7 @@ export function CreateFormHelpPanel({ help, onOpen, available, bare }: {
                   <p>{s.text}</p>
                   {s.tips && <Points items={s.tips} />}
                   {s.blocks?.map((b) => (
-                    <div key={b.title} className="mt-3">
+                    <div key={b.title} className="mt-5 first-of-type:mt-4">
                       <div className="text-[12.5px] font-semibold text-[#1D2A3E]">{b.title}</div>
                       {b.text && <p className="mt-0.5">{b.text}</p>}
                       {b.items && (
@@ -208,7 +208,7 @@ export function CreateFormHelpPanel({ help, onOpen, available, bare }: {
                           ))}
                         </ul>
                       )}
-                      {b.note && <p className="mt-1.5"><span className="font-medium text-[#1D2A3E]">Note:</span> {b.note}</p>}
+                      {b.note && <p className="mt-2"><span className="font-medium text-[#1D2A3E]">Note:</span> {b.note}</p>}
                     </div>
                   ))}
                 </Accordion>

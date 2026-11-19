@@ -27,6 +27,8 @@ export interface FormHelp {
   introMore?: string;
   /** The line under "How to create it"; null hides it. */
   howHint?: string | null;
+  /** false = the step you are on is not tinted; every step keeps the same grey card. */
+  highlight?: boolean;
   /** What has to exist before this form can be finished. */
   before: string[];
   steps: HelpStep[];
@@ -241,6 +243,7 @@ export const FORM_HELP: Record<string, FormHelp> = {
     intro: 'Create and configure a compliance audit to assess the security posture of selected endpoints against a security benchmark.',
     introMore: 'To create an audit, define the policy details, select the OS platform and benchmark, choose the target endpoints, and configure the notification and execution schedule.',
     howHint: null,
+    highlight: false,
     before: [],
     steps: [
       {
