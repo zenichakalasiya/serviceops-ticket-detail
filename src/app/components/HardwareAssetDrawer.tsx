@@ -10,6 +10,7 @@
  * but it does not affect functionality. Utilities have been extracted to TicketDrawerUtils.tsx
  * to help reduce the file size where possible.
  */
+import { HardwareLifecycleCard, hardwareLifecycleOf } from './HardwareLifecycleCard';
 import { ChevronsUpDown, ChevronsDownUp, X, ChevronLeft, ChevronRight, Star, Share2, Eye, EyeOff, MoreHorizontal, MoreVertical, Paperclip, Clock, Search, Filter, ArrowUpDown, Reply, Forward, Sparkles, MessageSquare, StickyNote, ChevronDown, ChevronUp, CheckCircle, Mail, XCircle, Maximize, Maximize2, RefreshCw, TextCursorInput, Minimize2, Wand2, Briefcase, Heart, Zap, SmilePlus, Image, Link2, Smile, Type, Bold, Italic, Underline, List, ListOrdered, Heading1, Heading2, Heading3, AlignLeft, AlignCenter, AlignRight, AlignJustify, Code, Video, User, FileText, Download, Trash2, Tag, Folder, Activity, Lightbulb, Pin as PinIcon, PinOff, Plus, Minus, Check, Play, Pause, Square, Link, Ticket as TicketIcon, Lock, Stethoscope, Edit, CheckSquare, Info, HardDrive, Monitor, Cpu, MemoryStick, Network, CircuitBoard, Keyboard, Mouse, Usb, Disc, Columns3, Package, MapPin, Settings2, Barcode, QrCode, Printer, Copy, LayoutGrid, List as ListIcon, AppWindow, Shield, ShieldCheck, ShieldAlert, BadgeCheck, ArrowRightLeft, Users, Workflow, Orbit, ArrowUp, ArrowDown, ArrowLeft, ArrowRight } from 'lucide-react';
 import { AiSparkle } from './AiSparkle';
 import { EditorToolbarActions, EditorSendActions, RichComposerArea } from './EditorToolbar';
@@ -2932,7 +2933,11 @@ onStackMinimizedChange,
               {/* Group: Health & Compliance */}
               <div>
                 <div>
-                  {healthComplianceGrid}
+                  {/* The first five assets show the EOSL Support Lifecycle card IN PLACE of the KPI cards
+                      (Zeni, 19 Nov 2026); every other asset keeps its KPI cards. */}
+                  {hardwareLifecycleOf(activeAssetId)
+                    ? <HardwareLifecycleCard assetId={activeAssetId} wide={drawerWidth > 1080} />
+                    : healthComplianceGrid}
                 </div>
               </div>
 

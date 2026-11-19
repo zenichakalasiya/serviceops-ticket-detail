@@ -207,6 +207,15 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   560px right side panel (Client ID, Client Secret, Where to find these, Save & connect) → Connected + Edit
   credentials. EOSL tab = switch, Frequency / Day or Date / Time (`RuleSelect`), a plain "Runs … Next run …"
   line, Sync now + Save, Recent runs table. Vendor marks are text badges, all data mock.
+- **EOSL Support Lifecycle card (Hardware Overview, 19 Nov 2026, Zeni) — `HardwareLifecycleCard.tsx`.** The
+  hardware twin of the Endpoint page's `OsLifecycleCard` (same layout: header, verdict line in the phase colour,
+  proportional timeline with Today, milestone dates with distance from now) over FOUR milestones: General
+  availability · End of sale · End of service life (EOSL) · Last day of support. ⚠️ Shown ONLY on the first five
+  hardware assets (AST-001…005, `HW_LIFECYCLE` keyed by asset id), and those five show it IN PLACE of the KPI
+  grid (`hardwareLifecycleOf(activeAssetId) ? card : healthComplianceGrid` in HardwareAssetDrawer); every other
+  asset keeps its KPIs. The five cover every phase (on sale, sale ended, extended only, not published). Dates are
+  ILLUSTRATIVE mock values per model, not vendor-verified. **The Endpoint page's OS Lifecycle card was restored**
+  (below the gauges, above System Overview) — the October upstream merge kept our EndpointDrawer, which dropped it.
 - **Patch Deployment — Pause / Resume (17 Nov 2026, Zeni).** The detail page's ⋮ menu has **Pause
   Deployment** (with a NEW tag) between Update Configuration and Cancel Deployment; on a paused run it
   reads **Resume Deployment**. Only Ready to Deploy / In Progress runs can pause (otherwise the item is

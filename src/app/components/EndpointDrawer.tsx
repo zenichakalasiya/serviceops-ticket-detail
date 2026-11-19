@@ -123,6 +123,7 @@ import {
 const DEFAULT_REL = makeCrossModuleRelations([{type:'Request',prefix:'REQ'},{type:'Change',prefix:'CHG'},{type:'Contract',prefix:'CNT'},{type:'Purchase',prefix:'PO'}]);
 import { ASSET_FIELD_LABELS, AGENT_FIELD_LABELS } from './AssetFields';
 import { HardwareAssetActionsMenu } from './HardwareAssetActionsMenu';
+import { OsLifecycleCard } from './OsLifecycleCard';
 import profileImage from 'figma:asset/346a47ed4118f690df082984fcd9c5da55898d34.png';
 import svgPaths from '../../imports/svg-vmnsig04gh';
 
@@ -3023,6 +3024,15 @@ onStackMinimizedChange,
                   </div>
                 );
               })()}
+
+              {/* OS Lifecycle — restored 19 Nov 2026 (lost when the October upstream merge kept our
+                  EndpointDrawer). Reads the endpoint's own OS name + build; renders nothing when the
+                  OS has no published calendar or the agent has not reported a build. */}
+              <OsLifecycleCard
+                osName={activePatchRecord?.endpoint?.osName}
+                osVersion={activePatchRecord?.endpoint?.osVersion}
+                wide={drawerWidth > 1080}
+              />
 
               {/* System Overview — the endpoint's hardware / OS identity (Software-Details card
                   pattern from the software asset drawer). */}

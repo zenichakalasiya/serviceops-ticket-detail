@@ -1,3 +1,18 @@
+# Handoff — 2026-11-19 (night): EOSL Support Lifecycle card on Hardware + OS Lifecycle restored on Endpoint
+
+> Sessions share this file. This top part is the newest; older notes follow.
+
+## Completed (verified on localhost: AST-004, AST-005, AST-006, EP-408; no page errors; build green)
+- `HardwareLifecycleCard.tsx`: EOSL Support Lifecycle card (GA · End of sale · EOSL · Last day of support), the
+  OS Lifecycle card's layout. Hardware AST-001…005 show it IN PLACE of the KPI cards; AST-006+ unchanged.
+- `EndpointDrawer.tsx`: OS Lifecycle card back on the Overview tab (lost in the October upstream merge).
+
+## Open
+- Dates on the five hardware models are illustrative mock values — Zeni to confirm or supply real ones.
+- AST-001…003 not opened in the browser (same code path as 004/005).
+
+---
+
 # Handoff — 2026-11-19 18:59 (Form builder: V3 hidden, V4 = V2's form, five fields before any section, Settings tab disabled with nothing picked)
 
 > Sessions share this file. This top part is the newest; older notes follow.
