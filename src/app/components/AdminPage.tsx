@@ -10,6 +10,7 @@ import { ADMIN_SECTIONS, sectionByTitle } from './adminData';
 import { AdminBomModule } from './AdminBomModule';
 import type { BomAdminScreen } from './AdminBomModule';
 import { AdminOsUpgradeModule } from './AdminOsUpgradeModule';
+import { AdminDeploymentPoliciesModule } from './AdminDeploymentPoliciesModule';
 import { AdminSupportPortalModule } from './AdminSupportPortalModule';
 import { AdminRequestFormModule } from './AdminRequestFormModule';
 import { AdminUserSurveyModule } from './AdminUserSurveyModule';
@@ -37,6 +38,8 @@ const BOM_SCREEN_FOR: Record<string, BomAdminScreen> = {
 const CARD_MODULES: Record<string, string> = {
   'Automation/Workflow': 'Workflow',
   'Patch Management/OS Upgrade': 'OS Upgrade',
+  /* A level-3 row under Deployment Management (Zeni, 18 Nov 2026). */
+  'Patch Management/Deployment Policies': 'Deployment Policies',
   /* Both rows land on ONE page with two tabs — the form and the rules that act on it are one
      subject. Which tab opens is read from the card (activeCard). */
   'Request Management/Request Form': 'Request Form',
@@ -240,6 +243,10 @@ export function AdminPage({ onNavigate, moduleSlug, onModuleChange, portalSlug, 
                portal list page — head, search, then a full-bleed table with no card around it. */
             <div className="min-h-0 flex-1 overflow-y-auto bg-white">
               <AdminOsUpgradeModule />
+            </div>
+          ) : module === 'Deployment Policies' ? (
+            <div className="min-h-0 flex-1 overflow-y-auto bg-white">
+              <AdminDeploymentPoliciesModule onEditor={setBuilderOpen} />
             </div>
           ) : module === 'Request Form' ? (
             <div className="min-h-0 flex-1 overflow-y-auto bg-white">

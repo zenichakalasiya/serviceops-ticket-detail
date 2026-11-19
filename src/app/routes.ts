@@ -81,6 +81,7 @@ export const ADMIN_ROUTES: readonly AdminRoute[] = [
   { slug: 'purchase-fields', section: 'Purchase Management', card: 'Purchase Custom Fields' },
   { slug: 'purchase-price-fields', section: 'Purchase Management', card: 'Purchase Price Fields' },
   { slug: 'os-upgrade', section: 'Patch Management', card: 'OS Upgrade' },
+  { slug: 'deployment-policies', section: 'Patch Management', card: 'Deployment Policies' },
   { slug: 'support-portal', section: 'Support Channels', card: 'Support Portal' },
   { slug: 'user-surveys', section: 'User Survey', card: 'User Surveys' },
   { slug: 'compliance-rules', section: 'Compliance Management', card: 'Rules' },

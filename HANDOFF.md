@@ -36,9 +36,52 @@ Nothing mid-flight.
 
 ---
 
-# Handoff — 2026-11-19 11:07 (Compliance: stepper one-liners, Scan Now off on Compliance tab, quick filters)
+# Handoff — 2026-11-19 11:10 (Patch: Deployment Policies V1–V3 + paused-banner V2/V4/V5/V6)
 
 > Sessions share this file. This top part is the newest; older notes follow.
+
+## Read first
+CLAUDE.md → the "Deployment Policies (Admin › Patch Management…)" bullet and the "Patch Deployment — Pause /
+Resume" bullet just above it, both under Key context.
+
+## What we worked on this session
+(1) The paused-deployment banner on the Patch Deployment detail page: removed V1 and V3, kept V2 and V4, added V5
+(first thing in the Overview tab) and V6 (under the search in Patch Deployment Properties). (2) A new admin module,
+Deployment Policies, rebuilt from PMG's `deployment-policies.html` with three simplified create layouts (V1 | V2 | V3).
+
+## Completed
+- Banner switch reads V2 · V4 · V5 · V6 (`DeploymentPausedBanner.tsx`; `belowSearchSlot` prop added to
+  `TicketPropertiesPanel`). Verified in the browser on PDR-1431.
+- `#/admin/deployment-policies`: a level-3 nav row under Deployment Management, a listing of PMG's 9 policies,
+  full-page Create/Edit in three layouts on a V1 | V2 | V3 pill beside the logo. Create, edit, duplicate and
+  delete (with undo) work. Verified headless: all three layouts walk through, a created policy lands in the
+  listing, and there are no page errors.
+
+## In progress
+Nothing mid-flight. Zeni is comparing both sets of versions.
+
+## Next steps
+- Zeni picks a paused-banner placement (V2/V4/V5/V6); then remove the switch and the others.
+- Zeni and PMG pick a Deployment Policy layout (V1/V2/V3); then remove the pill.
+- Open question: in V2 one postpone limit and one set of intervals are shared by all three prompts. Should they
+  differ per prompt? V1 and V3 already keep them separate.
+- Remote Offices and Endpoint Groups are nav rows with no screens yet.
+
+## Decisions made
+- Only ONE schedule per policy (Zeni: see PMG's file).
+- The Patch Tuesday calendar grid stays visible in V1; in V2/V3 it is behind "View on calendar" (Zeni).
+- The page lives in Admin, opening a full page from the listing (Zeni).
+- Presets (V3) are drawn from PMG's own sample policies.
+
+## Gotchas & notes
+- `tsc` over AdminPage/Header bails on the pre-existing syntax errors in `CatalogItemDetailsModal.tsx`; typecheck
+  the new files on their own (`DeploymentPolicyEditor.tsx`, `AdminDeploymentPoliciesModule.tsx`). The only
+  remaining error is the known one in `ui/tooltip.tsx`.
+- Another session's uncommitted work (`FormStudio.tsx`) is in the tree; do not commit it with this work.
+
+---
+
+# Handoff — 2026-11-19 11:07 (Compliance: stepper one-liners, Scan Now off on Compliance tab, quick filters)
 
 ## Read first
 CLAUDE.md → "Compliance (Oct 2026)", its last bullet (19 Nov 2026).

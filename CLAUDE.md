@@ -203,11 +203,13 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   used to say "Ready to Deploy" for every run), the Audit Trail (Deployment Paused / Resumed entries),
   and the listing (Status "Paused" + NEW tag via TicketTable's opt-in `x_statusTag`; Paused is in
   `DEPLOY_STATUS_OPTIONS` and the dashboard). The paused banner (`DeploymentPausedBanner.tsx`: icon ·
-  Paused by <name> · time · blue Resume) has FOUR placements on a **V1–V4 switch** in the drawer's top
-  bar (localStorage `deployPauseUi`), awaiting Zeni's pick: V1 strip under the header across both
-  columns · V2 strip in the left column above the tabs · V3 floating pill at the bottom (pill Resume) ·
-  V4 a padded card at the top of the right panel (`topSlot` prop on TicketPropertiesPanel). No
-  confirmation on pause/resume — a toast.
+  Paused by <name> · time · blue Resume) has FOUR placements on a **V2 · V4 · V5 · V6 switch** in the
+  drawer's top bar (localStorage `deployPauseUi`; V1 and V3 were removed 18 Nov 2026, the names were
+  kept so they still match what was reviewed; a stored v1/v3 falls back to V2), awaiting Zeni's pick:
+  V2 strip in the left column above the tabs (every tab) · V4 a padded card at the top of the right
+  panel (`topSlot` on TicketPropertiesPanel) · V5 a strip as the FIRST thing in the Overview tab (Overview
+  only) · V6 a card under "Search fields…" inside Patch Deployment Properties (`belowSearchSlot`, pinned in
+  the panel's sticky header). No confirmation on pause/resume — a toast.
 - **Deployment Policies (Admin › Patch Management › Deployment Management, 18 Nov 2026, Zeni).** Route
   `#/admin/deployment-policies`; a level-3 row (the Deployment Management card now has `children`: Deployment
   Policies · Remote Offices · Endpoint Groups — only the first has a screen). Content = PMG's

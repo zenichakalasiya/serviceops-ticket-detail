@@ -40,7 +40,7 @@ import { SystemFieldsRenderer } from './SystemFieldsRenderer';
 import { TicketPropertiesPanel } from './TicketPropertiesPanel';
 import { HeaderKpiRow, type HeaderKpiItem } from './HeaderKpiRow';
 import { pauseBlockedReason, pauseDeployment, resumeDeployment, usePause, usePauseState } from './deploymentPauseStore';
-import { PausedBanner, PausedFloatingBar, PausedPanelBand, PauseUiSwitch, usePauseUi } from './DeploymentPausedBanner';
+import { PausedBanner, PausedPanelCard, PauseUiSwitch, usePauseUi } from './DeploymentPausedBanner';
 import { DiagnosisCard } from './DiagnosisCard';
 import { SolutionCard } from './SolutionCard';
 import { AISummary } from './AISummary';
@@ -2475,25 +2475,16 @@ onStackMinimizedChange,
           </div>
         </div>
 
-        {/* V1 — paused strip under the header, across both columns. */}
-        {pauseInfo && pauseUi === 'v1' && (
-          <div className="flex-shrink-0 border-b border-[#e5e7eb] bg-white px-6 py-3">
-            <PausedBanner info={pauseInfo} onResume={togglePause} />
-          </div>
-        )}
-
         {/* Main Content Area - Two Column Layout */}
         <div className="flex flex-1 overflow-hidden" data-onboarding-container>
           {/* Left Content */}
           <div className="flex-1 flex flex-col relative min-w-0" data-onboarding="main-workspace">
-            {/* V2 — the strip in the left column only, above the tabs. V3 — a floating bar
-                over the bottom of the content. Both sit outside the scrolling tab content. */}
+            {/* V2 — the strip in the left column only, above the tabs, outside the scrolling content. */}
             {pauseInfo && pauseUi === 'v2' && (
               <div className="flex-shrink-0 bg-white px-6 pt-3 pb-1">
                 <PausedBanner info={pauseInfo} onResume={togglePause} />
               </div>
             )}
-            {pauseInfo && pauseUi === 'v3' && <PausedFloatingBar info={pauseInfo} onResume={togglePause} />}
             {/* Scrollable Content Area — the Superseded tab is a full-height React Flow map
                 (like the CMDB Dependency Map), so it must NOT scroll: become a flex column with
                 overflow-hidden there so the map fills EXACTLY (its controls never clip) and no
@@ -3123,6 +3114,10 @@ onStackMinimizedChange,
 
             {activeMainTab === 'properties' && (
             <div className="px-6 py-6">
+              {/* V5 — the paused strip as the FIRST thing in the Overview tab (Overview only). */}
+              {pauseInfo && pauseUi === 'v5' && (
+                <div className="mb-6"><PausedBanner info={pauseInfo} onResume={togglePause} /></div>
+              )}
               {/* Description — OPTIONAL. Only some patches carry release notes, so this renders
                   nothing at all when absent (no empty band). Clamped to 2 lines with View more. */}
               {activePatchRecord?.description && (() => {
@@ -7988,7 +7983,9 @@ onStackMinimizedChange,
           {/* Right Sidebar - Properties */}
           <TicketPropertiesPanel
             /* V4 — the paused band sits on top of the panel, level with the tabs beside it. */
-            topSlot={pauseInfo && pauseUi === 'v4' ? <PausedPanelBand info={pauseInfo} onResume={togglePause} /> : undefined}
+            topSlot={pauseInfo && pauseUi === 'v4' ? <div className="flex-shrink-0 px-4 pt-3"><PausedPanelCard info={pauseInfo} onResume={togglePause} /></div> : undefined}
+            /* V6 — under "Search fields…", inside the pinned header, so it stays while the fields scroll. */
+            belowSearchSlot={pauseInfo && pauseUi === 'v6' ? <div className="mt-3"><PausedPanelCard info={pauseInfo} onResume={togglePause} /></div> : undefined}
             ticketId={activeTicket?.id}
             showSla={false}
             fieldsTitle="Patch Deployment Fields"

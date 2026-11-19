@@ -50,6 +50,8 @@ interface TicketPropertiesPanelProps {
   deploymentStatus?: string;
   /** Pinned above the panel content, in line with the drawer tabs (e.g. the paused-deployment band). */
   topSlot?: React.ReactNode;
+  /** Shown under the Properties search, inside the pinned header (e.g. the paused-deployment banner). */
+  belowSearchSlot?: React.ReactNode;
   // ENDPOINT page: endpoint-inventory fields in the (renamed) Endpoint Fields accordion
   endpointMode?: boolean;
   // DETECTED CVE page: CVE-metadata fields in the CVE Fields accordion
@@ -366,6 +368,7 @@ export function TicketPropertiesPanel(props: TicketPropertiesPanelProps) {
     deploymentType,
     deploymentStatus,
     topSlot,
+    belowSearchSlot,
     endpointMode = false,
     cveMode = false,
     compactTicketFields = false,
@@ -1526,6 +1529,7 @@ export function TicketPropertiesPanel(props: TicketPropertiesPanelProps) {
               )}
             </div>
           )}
+          {activeGroup === 'properties' && belowSearchSlot}
         </div>
 
         {/* Request Properties Group Content */}

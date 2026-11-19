@@ -15,6 +15,7 @@ import { setComplianceRuleUi, useComplianceRuleUi } from './complianceRuleUi';
 import { setUncheckedRuleUi, useUncheckedRuleUi } from './complianceUncheckedRuleUi';
 import { BUILDERS, setFormStudioUi, useFormStudioUi } from './formStudioUi';
 import { formModuleBySlug } from './formStudioData';
+import { DEPLOY_POLICY_UI_TIPS, setDeployPolicyUi, useDeployPolicyUi } from './deploymentPolicyUi';
 
 /** Exported so the Support Portal preview renders the same mark the product header does. */
 export function MotadataLogo() {
@@ -244,6 +245,25 @@ function ComplianceUncheckedRuleSwitch() {
   );
 }
 
+/** V1 / V2 / V3 of the Create Deployment Policy page (Zeni, 18 Nov 2026) — see deploymentPolicyUi.ts. */
+function DeployPolicyUiSwitch() {
+  const [hash, setHash] = useState(() => location.hash);
+  const v = useDeployPolicyUi();
+  useEffect(() => {
+    const on = () => setHash(location.hash);
+    window.addEventListener('hashchange', on);
+    return () => window.removeEventListener('hashchange', on);
+  }, []);
+  if (!hash.startsWith('#/admin/deployment-policies')) return null;
+  return (
+    <div className="pill-track" title="Create Deployment Policy version">
+      {(['v1', 'v2', 'v3'] as const).map((k) => (
+        <button key={k} type="button" title={DEPLOY_POLICY_UI_TIPS[k]} aria-pressed={v === k} onClick={() => setDeployPolicyUi(k)}>{k.toUpperCase()}</button>
+      ))}
+    </div>
+  );
+}
+
 /** V1 / V2 / V3 of every create form (Zeni, 30 Oct 2026) — see createFormUi.ts. Shown only while a
  *  create page is open. */
 function CreateFormUiSwitch() {
@@ -281,6 +301,7 @@ export function Header({ selectedCount, onOpenAdmin }: HeaderProps) {
         {/* Hidden: V2 is the only rule-group builder (29 Oct 2026). */}
         {false && <ComplianceRuleUiSwitch />}
         <ComplianceUncheckedRuleSwitch />
+        <DeployPolicyUiSwitch />
       </div>
       
       <div className="flex items-center gap-2">

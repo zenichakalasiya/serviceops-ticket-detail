@@ -354,7 +354,12 @@ export const ADMIN_SECTIONS: AdminSection[] = [
     icon: 'ShieldCheck',
     cards: [
     { title: 'Patch Administration', desc: 'Configure patch sources, approvals, and distribution settings.', icon: 'ShieldCheck', href: '/admin/patch-management/patch-settings?tab=patch_repository' },
-    { title: 'Deployment Management', desc: 'Control how and where patches are deployed to endpoints.', icon: 'MonitorDown', href: '/admin/patch-management/deployment-management?tab=deployment_policy' },
+    { title: 'Deployment Management', desc: 'Control how and where patches are deployed to endpoints.', icon: 'MonitorDown', href: '/admin/patch-management/deployment-management?tab=deployment_policy',
+      children: [
+        { title: 'Deployment Policies', href: '/admin/patch-management/deployment-management?tab=deployment_policy' },
+        { title: 'Remote Offices', href: '/admin/patch-management/deployment-management?tab=remote_office' },
+        { title: 'Endpoint Groups', href: '/admin/patch-management/deployment-management?tab=endpoint_group' },
+      ] },
     { title: 'System Health Settings', desc: 'Define criteria to assess and tag endpoint health.', icon: 'Settings2', href: '/admin/patch-management/system-health-settings' },
     { title: 'Packages', desc: 'Build and deploy custom software packages to managed endpoints.', icon: 'Package', href: '/admin/packages' },
     { title: 'OS Upgrade', desc: 'Configure and schedule operating system upgrade deployments.', icon: 'MonitorUp', href: '/admin/patch-management/os-upgrade' },
