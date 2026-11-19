@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { CalendarClock, Check, CheckCircle2, Clock, ExternalLink, Eye, EyeOff, KeyRound, Loader2, RefreshCw, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { ErrorText, FieldLabel, RuleSelect, ToggleSwitch, inputCls } from './FormRuleControls';
+import { useLifecycleSyncUi } from './lifecycleSyncUi';
 
 /* Admin › Supplier Management › Lifecycle Sync (19 Nov 2026, Zeni).
  *
@@ -84,6 +85,9 @@ export function AdminLifecycleSyncModule() {
 function WarrantyTab() {
   const [dellCreds, setDellCreds] = useState<{ id: string } | null>(null);
   const [credsOpen, setCredsOpen] = useState(false);
+  /* V1 = cards with the coverage bar + setup line; V2 = one row per vendor (pill beside the logo). */
+  const ui = useLifecycleSyncUi();
+  const Card = ui === 'v1' ? VendorCardV1 : VendorCard;
 
   /* Dell's devices are only looked up once it has credentials. */
   const vendors = VENDORS.map((v) => (v.id === 'dell' && dellCreds ? { ...v, found: 389 } : v));
@@ -98,7 +102,7 @@ function WarrantyTab() {
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {vendors.map((v) => (
-          <VendorCard key={v.id} v={v} connected={!v.needsCredentials || !!dellCreds} onCredentials={() => setCredsOpen(true)} />
+          <Card key={v.id} v={v} connected={!v.needsCredentials || !!dellCreds} onCredentials={() => setCredsOpen(true)} />
         ))}
       </div>
 
@@ -110,7 +114,8 @@ function WarrantyTab() {
   );
 }
 
-function VendorCard({ v, connected, onCredentials }: { v: Vendor; connected: boolean; onCredentials: () => void }) {
+/** V1 (Zeni, 19 Nov 2026): the card with the "Warranty found" bar and the setup line at its foot. */
+function VendorCardV1({ v, connected, onCredentials }: { v: Vendor; connected: boolean; onCredentials: () => void }) {
   const waiting = !connected;
   const share = pct(v.found, v.devices);
   return (
@@ -125,7 +130,6 @@ function VendorCard({ v, connected, onCredentials }: { v: Vendor; connected: boo
           <div className="truncate text-[12px] text-[#7B8FA5]">{v.source}</div>
         </div>
       </div>
-
       <div className="mt-3 flex-1">
         {waiting ? (
           <p className="text-[12px] leading-[1.5] text-[#92400E]"><span className="font-semibold">{v.devices} devices</span> waiting for API credentials.</p>
@@ -141,7 +145,6 @@ function VendorCard({ v, connected, onCredentials }: { v: Vendor; connected: boo
           </>
         )}
       </div>
-
       <div className="mt-3 flex h-8 items-center">
         {v.needsCredentials ? (
           waiting ? (
@@ -158,9 +161,36 @@ function VendorCard({ v, connected, onCredentials }: { v: Vendor; connected: boo
   );
 }
 
+/** V2 (the default): one short row per vendor. */
+function VendorCard({ v, connected, onCredentials }: { v: Vendor; connected: boolean; onCredentials: () => void }) {
+  const waiting = !connected;
+  /* One row per vendor (Zeni, 19 Nov 2026): no coverage bar, no "No setup needed". Dell's credential
+     action sits at the row's right, so all four cards stay the same height. */
+  return (
+    <div className={'flex items-center gap-2.5 rounded-lg border bg-white p-3.5 transition-colors ' + (waiting ? 'border-[#F5D08A]' : 'border-[#E5E7EB] hover:border-[#CBD5E1]')}>
+      <VendorMark id={v.id} size={32} />
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <span className="text-[14px] font-semibold text-[#364658]">{v.name}</span>
+          {waiting ? <Pill tone="amber">Needs credentials</Pill> : <Pill tone="green">Connected</Pill>}
+        </div>
+        {waiting ? (
+          <button type="button" onClick={onCredentials} className="mt-0.5 inline-flex items-center gap-1 text-[12px] font-medium text-[#3D8BD0] hover:underline"><KeyRound size={12} /> Add credentials</button>
+        ) : (
+          <div className="truncate text-[12px] text-[#7B8FA5]">{v.source}</div>
+        )}
+      </div>
+      {v.needsCredentials && !waiting && (
+        <button type="button" onClick={onCredentials} title="Edit credentials" aria-label="Edit credentials"
+          className="flex size-8 flex-shrink-0 items-center justify-center rounded border border-[#DFE5ED] text-[#64748B] transition-colors hover:border-[#3D8BD0] hover:text-[#3D8BD0]"><KeyRound size={15} /></button>
+      )}
+    </div>
+  );
+}
+
 function Pill({ tone, children }: { tone: 'green' | 'amber' | 'grey'; children: ReactNode }) {
   const c = tone === 'green' ? 'bg-[#DCFCE7] text-[#15803D]' : tone === 'amber' ? 'bg-[#FEF3C7] text-[#B45309]' : 'bg-[#F1F5F9] text-[#64748B]';
-  return <span className={'rounded-sm px-1.5 py-0.5 text-[11px] font-medium ' + c}>{children}</span>;
+  return <span className={'whitespace-nowrap rounded-sm px-1.5 py-0.5 text-[11px] font-medium ' + c}>{children}</span>;
 }
 
 function CredentialsPanel({ vendor, initialId, onClose, onSave }: { vendor: Vendor; initialId?: string; onClose: () => void; onSave: (id: string) => void }) {

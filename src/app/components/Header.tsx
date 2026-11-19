@@ -12,6 +12,7 @@ import { ProfileMenu } from './ProfileMenu';
 import { CreateMenuButton } from './CreateMenuButton';
 import { setRelease, useFormRuleRelease } from './formRuleRelease';
 import { setComplianceRuleUi, useComplianceRuleUi } from './complianceRuleUi';
+import { setLifecycleSyncUi, useLifecycleSyncUi } from './lifecycleSyncUi';
 import { setUncheckedRuleUi, useUncheckedRuleUi } from './complianceUncheckedRuleUi';
 import { BUILDERS, setFormStudioUi, useFormStudioUi } from './formStudioUi';
 import { formModuleBySlug } from './formStudioData';
@@ -208,6 +209,25 @@ function FormStudioUiSwitch() {
   );
 }
 
+/** V1 / V2 of the Lifecycle Sync vendor cards (Zeni, 19 Nov 2026) — see lifecycleSyncUi.ts. */
+function LifecycleSyncUiSwitch() {
+  const [hash, setHash] = useState(() => location.hash);
+  const v = useLifecycleSyncUi();
+  useEffect(() => {
+    const on = () => setHash(location.hash);
+    window.addEventListener('hashchange', on);
+    const t = window.setInterval(on, 500);
+    return () => { window.removeEventListener('hashchange', on); window.clearInterval(t); };
+  }, []);
+  if (!hash.startsWith('#/admin/lifecycle-sync')) return null;
+  return (
+    <div className="pill-track" title="Vendor card version">
+      <button type="button" aria-pressed={v === 'v1'} onClick={() => setLifecycleSyncUi('v1')}>V1</button>
+      <button type="button" aria-pressed={v === 'v2'} onClick={() => setLifecycleSyncUi('v2')}>V2</button>
+    </div>
+  );
+}
+
 /** V1 / V2 of the admin rule detail (Zeni, 27 Oct 2026) — see complianceRuleUi.ts. */
 function ComplianceRuleUiSwitch() {
   const [hash, setHash] = useState(() => location.hash);
@@ -302,6 +322,7 @@ export function Header({ selectedCount, onOpenAdmin }: HeaderProps) {
         {false && <ComplianceRuleUiSwitch />}
         <ComplianceUncheckedRuleSwitch />
         <DeployPolicyUiSwitch />
+        <LifecycleSyncUiSwitch />
       </div>
       
       <div className="flex items-center gap-2">

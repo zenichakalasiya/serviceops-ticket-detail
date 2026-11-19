@@ -1,3 +1,18 @@
+# Handoff — 2026-11-19 (evening, later): Lifecycle Sync vendor cards — V1 | V2
+
+> Sessions share this file. This top part is the newest; older notes follow.
+
+## Completed (verified on localhost, no page errors, build green)
+- V2 (default): vendor cards are one short row — no "Warranty found" bar, no "No setup needed". Dell's
+  Add credentials is a link on its second line; once connected, a key icon edits the credentials.
+- V1 kept on request: the card with the "Warranty found" bar and the setup line.
+- Switch: V1 | V2 pill beside the logo on #/admin/lifecycle-sync (`lifecycleSyncUi.ts`, Header `LifecycleSyncUiSwitch`).
+
+## Open
+- Zeni to pick V1 or V2; vendor marks are text badges; numbers mock.
+
+---
+
 # Handoff — 2026-11-19 (evening): Lifecycle Sync Warranty tab slimmed
 
 > Sessions share this file. This top part is the newest; older notes follow.
