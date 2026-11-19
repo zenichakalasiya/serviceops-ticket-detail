@@ -2054,6 +2054,8 @@ export function TicketTable({
         { key: 'subject', label: 'Policy Name', flex: true, w: 220, maxW: 360 },
         { key: 'status', label: 'Status', w: 140 },
         { key: 'x_cpScore', label: 'Compliance Score', w: 185 },
+        /* Beside the score (Zeni, 19 Nov 2026). */
+        { key: 'x_cpResult', label: 'Compliance Result', w: 170 },
         { key: 'x_lastExecution', label: 'Last Scan Date', w: 180 },
         { key: 'x_enabled', label: 'Enable', w: 100 },
         { key: 'actions', label: 'Actions', w: 110 },
@@ -2331,7 +2333,6 @@ export function TicketTable({
       { key: 'x_platform', label: 'OS Platform', w: 150 },
       { key: 'x_benchmark', label: 'Benchmark', flex: true, w: 200, maxW: 320, wrap: 3 },
       { key: 'x_endpoints', label: 'Endpoints', w: 100 },
-      { key: 'x_cpResult', label: 'Compliance Result', w: 190 },
       { key: 'x_tags', label: 'Tags', w: 160 },
       { key: 'x_createdAt', label: 'Created Date', w: 180 },
       { key: 'x_createdBy', label: 'Created By', w: 170 },
@@ -2365,7 +2366,7 @@ export function TicketTable({
   // The stored value is the ordered VISIBLE set — removing a column persists too.
   /* A listing whose DEFAULT columns changed bumps its key here, or a browser holding the old saved
      set never shows the new columns (Compliance Policy, 15 Nov 2026: Enable + Compliance Result). */
-  const COL_KEY_VERSION: Record<string, string> = { 'compliance-policy': 'V5', 'cviz-rule': 'V3', 'cviz-resource': 'V3' };
+  const COL_KEY_VERSION: Record<string, string> = { 'compliance-policy': 'V6', 'cviz-rule': 'V3', 'cviz-resource': 'V3' };
   const COL_ORDER_KEY = moduleCols ? `${moduleCols}ListColumns${COL_KEY_VERSION[moduleCols] ?? 'V2'}` : 'ticketListColumnsV2';
   const [colOrder, setColOrder] = useState<string[]>(() => {
     try {

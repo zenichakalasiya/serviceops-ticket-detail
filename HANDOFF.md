@@ -1,3 +1,12 @@
+# Handoff — 2026-11-19 (evening): Compliance Audit listing shows Compliance Result
+
+> Sessions share this file. This top part is the newest; older notes follow.
+
+- **Compliance Audit listing** default columns: ID · Policy Name · Status · Compliance Score · **Compliance Result** · Last Scan Date · Enable · Actions (TicketTable `compliance-policy`; removed from `MODULE_EXTRA_COLS`; saved-columns key → V6). Published.
+- Open: quick-filter page for Office / Execution Status / Compliance Result; score presets; Compliance v2 re-pin or new version.
+
+---
+
 # Handoff — 2026-11-19 17:42 (Lifecycle Sync: Warranty + EOSL Sync Schedule)
 
 > Sessions share this file. This top part is the newest; older notes follow.
