@@ -161,6 +161,7 @@ export function CreateFormHelpPanel({ help, onOpen, available, bare }: {
 
       <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-6">
         <p className="text-[12.5px] leading-[1.6] text-[#64748B]">{help.intro}</p>
+        {help.introMore && <p className="mt-2 text-[12.5px] leading-[1.6] text-[#64748B]">{help.introMore}</p>}
 
         {help.before.length > 0 && (
           <div className="mt-3 rounded-lg border border-[#D6E6F5] bg-[#F3F8FD] px-3 py-2.5">
@@ -178,7 +179,7 @@ export function CreateFormHelpPanel({ help, onOpen, available, bare }: {
             <span className={tile}><ListChecks size={13} /></span>
             <h3 className="min-w-0 flex-1 text-[15px] font-semibold text-[#1D2A3E]">How to create it</h3>
           </div>
-          <p className="text-[12.5px] leading-[1.55] text-[#64748B]">Fill the form top to bottom. The step you are on is highlighted.</p>
+          {help.howHint !== null && <p className="text-[12.5px] leading-[1.55] text-[#64748B]">{help.howHint ?? 'Fill the form top to bottom. The step you are on is highlighted.'}</p>}
           <div className="mt-3 flex flex-col gap-1.5">
             {help.steps.map((s, i) => {
               const id = 'step-' + i;
@@ -193,9 +194,23 @@ export function CreateFormHelpPanel({ help, onOpen, available, bare }: {
                       {i + 1}
                     </button>
                   )}>
-                  <div className="mb-1 text-[10.5px] font-semibold uppercase tracking-wider text-[#94A3B8]">{s.section.join(' / ')}</div>
+                  {!s.blocks && <div className="mb-1 text-[10.5px] font-semibold uppercase tracking-wider text-[#94A3B8]">{s.section.join(' / ')}</div>}
                   <p>{s.text}</p>
                   {s.tips && <Points items={s.tips} />}
+                  {s.blocks?.map((b) => (
+                    <div key={b.title} className="mt-3">
+                      <div className="text-[12.5px] font-semibold text-[#1D2A3E]">{b.title}</div>
+                      {b.text && <p className="mt-0.5">{b.text}</p>}
+                      {b.items && (
+                        <ul className="mt-1 flex flex-col gap-1">
+                          {b.items.map(([k, v]) => (
+                            <li key={k} className="flex gap-2"><span className="mt-[8px] size-1 flex-shrink-0 rounded-full bg-[#94A3B8]" /><span className="min-w-0 flex-1"><span className="font-medium text-[#1D2A3E]">{k}:</span> {v}</span></li>
+                          ))}
+                        </ul>
+                      )}
+                      {b.note && <p className="mt-1.5"><span className="font-medium text-[#1D2A3E]">Note:</span> {b.note}</p>}
+                    </div>
+                  ))}
                 </Accordion>
               );
             })}
@@ -218,6 +233,8 @@ export const hasFormHelp = (moduleId: string) => !!FORM_HELP[moduleId];
 /* Every version (V1–V5) shows this ONE guide for a form — the same full guide on every step
    (Zeni, 30 Oct 2026); only the lit step changes. There is no per-step guide. */
 function GoodToKnow({ help, shut, toggle }: { help: FormHelp; shut: string[]; toggle: (id: string) => void }) {
+  /* A guide written as steps only (Compliance Audit) has nothing to put here. */
+  if (!help.fields.length && !help.example && !help.mistakes.length) return null;
   return (
     <section className="mt-5 border-t border-[#E5E9F0] pt-3">
       <div className="sticky top-0 z-10 -mx-4 flex items-center gap-2 bg-white px-4 py-2">
@@ -225,20 +242,20 @@ function GoodToKnow({ help, shut, toggle }: { help: FormHelp; shut: string[]; to
         <h3 className="min-w-0 flex-1 text-[15px] font-semibold text-[#1D2A3E]">Good to know</h3>
       </div>
       <div className="mt-2 flex flex-col gap-1.5">
-        <Accordion icon={<TextCursorInput size={14} />} title="Fields explained" open={!shut.includes('fields')} onToggle={() => toggle('fields')}>
+        {help.fields.length > 0 && <Accordion icon={<TextCursorInput size={14} />} title="Fields explained" open={!shut.includes('fields')} onToggle={() => toggle('fields')}>
           <dl className="flex flex-col gap-2">{help.fields.map(([k, t]) => <div key={k}><dt className="font-semibold text-[#1D2A3E]">{k}</dt><dd>{t}</dd></div>)}</dl>
-        </Accordion>
-        <Accordion icon={<Lightbulb size={14} />} title="Example" open={!shut.includes('example')} onToggle={() => toggle('example')}>
+        </Accordion>}
+        {help.example && <Accordion icon={<Lightbulb size={14} />} title="Example" open={!shut.includes('example')} onToggle={() => toggle('example')}>
           <div className="rounded-md bg-white px-3 py-2">
-            <div className="text-[12.5px] font-semibold text-[#1D2A3E]">{help.example.title}</div>
+            <div className="text-[12.5px] font-semibold text-[#1D2A3E]">{help.example!.title}</div>
             <dl className="mt-1.5 grid grid-cols-[minmax(0,40%)_1fr] gap-x-3 gap-y-1">
-              {help.example.rows.map(([k, t]) => [<dt key={k + 'k'} className="text-[#94A3B8]">{k}</dt>, <dd key={k + 'v'} className="text-[#1D2A3E]">{t}</dd>])}
+              {help.example!.rows.map(([k, t]) => [<dt key={k + 'k'} className="text-[#94A3B8]">{k}</dt>, <dd key={k + 'v'} className="text-[#1D2A3E]">{t}</dd>])}
             </dl>
           </div>
-        </Accordion>
-        <Accordion icon={<AlertTriangle size={14} />} title="Common mistakes" open={!shut.includes('mistakes')} onToggle={() => toggle('mistakes')}>
+        </Accordion>}
+        {help.mistakes.length > 0 && <Accordion icon={<AlertTriangle size={14} />} title="Common mistakes" open={!shut.includes('mistakes')} onToggle={() => toggle('mistakes')}>
           <Points items={help.mistakes} />
-        </Accordion>
+        </Accordion>}
       </div>
     </section>
   );

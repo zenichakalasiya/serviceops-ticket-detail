@@ -606,11 +606,11 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
   const notifyEl = (
     <div className="grid grid-cols-2 gap-x-2">
       <div>
-        <FieldLabel>Notify Team</FieldLabel>
+        <FieldLabel>Notify To</FieldLabel>
         {/* The admin workflow's recipient popup, in product styles (NotifyPicker) — Zeni, 17 Nov 2026. */}
         <NotifyPicker value={d.notify} onChange={(v) => set({ notify: v })} />
       </div>
-      {/* Beside Notify Team (Zeni, 12 Nov 2026) — the same list the Automatic Patch Deployment form offers. */}
+      {/* Beside Notify To (Zeni, 12 Nov 2026) — the same list the Automatic Patch Deployment form offers. */}
       <div>
         <FieldLabel>Deployment Policy</FieldLabel>
         <RuleSelect className="!rounded" searchable value={d.deploymentPolicy ? [d.deploymentPolicy] : []} options={DEPLOYMENT_POLICIES_185.map((x) => ({ value: x, label: x }))} onChange={(v) => set({ deploymentPolicy: v[0] })} placeholder="Select" />
@@ -649,9 +649,9 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
     },
     {
       title: 'Schedule & Notifications', sub: '', // no one-liner (Zeni, 15 Nov 2026)
-      opt: <div className="space-y-6">{notifyEl}{scheduleEl}</div>, optNames: ['Notify Team', 'Deployment Policy', 'Schedule'],
+      opt: <div className="space-y-6">{notifyEl}{scheduleEl}</div>, optNames: ['Notify To', 'Deployment Policy', 'Schedule'],
       all: <div className="space-y-6">{notifyEl}{scheduleEl}</div>,
-      lines: [...(d.notify.length ? [{ label: 'Notify Team', value: d.notify.length > 2 ? `${d.notify.slice(0, 2).join(', ')} +${d.notify.length - 2}` : d.notify.join(', ') }] : []), ...(d.deploymentPolicy ? [{ label: 'Deployment Policy', value: d.deploymentPolicy }] : []), ...(d.schedule.frequency !== 'none' ? [{ label: 'Schedule', value: scheduleLabel(d.schedule) }] : [])],
+      lines: [...(d.notify.length ? [{ label: 'Notify To', value: d.notify.length > 2 ? `${d.notify.slice(0, 2).join(', ')} +${d.notify.length - 2}` : d.notify.join(', ') }] : []), ...(d.deploymentPolicy ? [{ label: 'Deployment Policy', value: d.deploymentPolicy }] : []), ...(d.schedule.frequency !== 'none' ? [{ label: 'Schedule', value: scheduleLabel(d.schedule) }] : [])],
       keys: ['schedule'],
     },
   ];

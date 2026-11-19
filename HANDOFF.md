@@ -1,3 +1,18 @@
+# Handoff — 2026-11-19 (later): Create Audit 'Notify To' + Zeni's help guide
+
+> Sessions share this file. This top part is the newest; older notes follow.
+
+## Completed (headless browser, no page errors)
+- **Notify Team → Notify To** in the Create Audit schedule step, the live summary (CompliancePolicyEditor.tsx) and the audit detail properties (CompliancePolicyDrawer.tsx).
+- **Create Audit help guide = Zeni's own copy, word for word** (`FORM_HELP['compliance-policy']` in createFormGuides.ts): title 'Compliance Audit Guide', two intro paragraphs, three steps with field groups. Do not rewrite it.
+- Guide model gained optional `introMore`, `howHint` (null hides the 'Fill the form…' line), step `blocks` (title / text / items / note) and an optional `example`; CreateFormHelp.tsx renders them and hides empty Fields / Example / Mistakes (and the whole 'Good to know' when all are empty). scripts/build-form-guides.mjs guards a missing example.
+
+## Open
+- Office / Execution Status / Compliance Result quick filters: which page? (see below)
+- Compliance v2 or a new version — main pushed, versions.json not re-pinned.
+
+---
+
 # Handoff — 2026-11-19 11:10 (Form builder: form centred; V4 Fields panel as a joined tile grid)
 
 > Sessions share this file. This top part is the newest; older notes follow.

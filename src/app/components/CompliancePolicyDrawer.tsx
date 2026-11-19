@@ -174,7 +174,7 @@ export function CompliancePolicyDrawer({
   const fields: [string, React.ReactNode][] = [
     ['Benchmark', benchmark?.name ?? '—'],
     ['OS Platform', platform],
-    ['Notify Team', p.notify.length ? p.notify.join(', ') : '—'],
+    ['Notify To', p.notify.length ? p.notify.join(', ') : '—'],
     ['Created By', p.createdBy],
     ['Created On', fmtStamp(p.createdAt)],
     ['Updated By', p.updatedBy ?? p.createdBy],

@@ -15,17 +15,24 @@ export interface HelpStep {
   title: string;
   text: string;
   tips?: string[];
+  /** Named groups of fields under the step (Zeni's own guide copy, e.g. Compliance Audit). */
+  blocks?: HelpBlock[];
 }
+export interface HelpBlock { title: string; text?: string; items?: [string, string][]; note?: string }
 export interface FormHelp {
   /** "Patch Deployment" — used in "How to create a …". */
   noun: string;
   intro: string;
+  /** A second intro paragraph. */
+  introMore?: string;
+  /** The line under "How to create it"; null hides it. */
+  howHint?: string | null;
   /** What has to exist before this form can be finished. */
   before: string[];
   steps: HelpStep[];
   /** Fields whose meaning is not obvious from the label. */
   fields: [string, string][];
-  example: { title: string; rows: [string, string][]; note?: string };
+  example?: { title: string; rows: [string, string][]; note?: string };
   mistakes: string[];
 }
 
@@ -228,21 +235,48 @@ export const FORM_HELP: Record<string, FormHelp> = {
     example: { title: 'Open high-priority incidents', rows: [['Name', 'Open high-priority incidents by group'], ['Module', 'Request'], ['Type', 'Summary'], ['Access', 'Public'], ['Conditions', 'Status is not Closed · Priority is High'], ['Chart', 'Bar'], ['Columns', 'ID, Subject, Technician Group, Assignee, Due By']] },
     mistakes: ['Too many columns — a report is easier to read with 5–7.', 'Restricted access with nobody added — only you can see it.'],
   },
+  /* Compliance Audit — Zeni's own copy, word for word (19 Nov 2026). Do not rewrite. */
   'compliance-policy': {
-    noun: 'Compliance Policy',
-    intro: 'A compliance policy checks a set of endpoints against ONE benchmark and scores how many of its rules they pass. Create one for each group of machines you want held to a standard.',
-    before: ['Know which operating system the machines run — a benchmark is written for one OS version.', 'Know which remote offices or machines should be checked.'],
+    noun: 'Compliance Audit',
+    intro: 'Create and configure a compliance audit to assess the security posture of selected endpoints against a security benchmark.',
+    introMore: 'To create an audit, define the policy details, select the OS platform and benchmark, choose the target endpoints, and configure the notification and execution schedule.',
+    howHint: null,
+    before: [],
     steps: [
-      { section: ['Policy Details'], title: 'Name the policy', text: 'Give it a name people will recognise in the listing, such as "Production Debian Web Tier". The Description says why the policy exists.' },
-      { section: ['Benchmark'], title: 'Choose the benchmark', text: 'Pick the benchmark — narrow the list with OS Platform and OS Version first if you like. Its OS version decides which endpoints can be added.', tips: ['Changing the OS Platform, OS Version or the benchmark clears the endpoints already added.'] },
-      { section: ['Target Endpoints'], title: 'Pick the endpoints', text: 'Add whole remote offices, single endpoints, or both. An endpoint picked both ways is assessed once.', tips: ['Use Preview on an office to see the machines it brings in.', 'Offline endpoints are skipped until their agent reports in.'] },
-      { section: ['Schedule & Notifications'], title: 'Schedule it and tell people', text: 'Turn on Schedule to scan on its own — once, daily, weekly or monthly. Leave it off to scan only with Scan Now. Notify Team receives the result.' },
+      {
+        section: ['Policy Details', 'Benchmark'], title: 'Policy & Benchmark',
+        text: 'Define the audit policy and select the security benchmark against which endpoint compliance will be assessed.',
+        blocks: [
+          { title: 'Policy Details', items: [['Policy Name', 'Enter a unique name to identify the audit policy.'], ['Description', "Provide a brief description of the audit's purpose or scope."]] },
+          {
+            title: 'Benchmark',
+            items: [['OS Platform', 'Select the operating system platform you want to assess.'], ['OS Version', 'Select the applicable operating system version. This field becomes available after selecting the OS platform.'], ['Benchmark', 'Search for and select the security benchmark applicable to the selected OS platform and version.']],
+            note: 'The selected benchmark determines the compliance rules used during the assessment.',
+          },
+        ],
+      },
+      {
+        section: ['Target Endpoints'], title: 'Target Endpoints',
+        text: 'Select the remote offices and individual endpoints that you want to include in the compliance audit.',
+        blocks: [
+          { title: 'Remote Offices', text: 'Click Add Remote Offices to select the remote offices whose endpoints should be assessed.' },
+          { title: 'Endpoints', text: 'Click Add Endpoints to select individual endpoints for the audit.' },
+        ],
+      },
+      {
+        section: ['Schedule & Notifications'], title: 'Schedule & Notify',
+        text: 'Configure the notification recipients, deployment policy, and execution schedule for the compliance audit.',
+        blocks: [
+          { title: 'Notify To', text: 'Select the technicians who should receive notifications related to the audit.' },
+          { title: 'Deployment Policy', text: 'Select the deployment policy that determines how the audit is deployed to the selected endpoints.' },
+          {
+            title: 'Schedule', text: 'Enable the Schedule toggle to configure the audit to run at a specified date and time. Provide the scheduling details displayed.',
+            items: [['Schedule Enabled', 'The compliance scan runs according to the configured schedule.'], ['Schedule Disabled', 'The compliance scan starts immediately after the audit is published.']],
+          },
+        ],
+      },
     ],
-    fields: [
-      ['Config File Type', 'Network devices only. Startup checks the configuration the device boots with; Running checks what it runs now.'],
-      ['Notify Team', 'Technicians or groups who hear the result of each scan.'],
-    ],
-    example: { title: 'Web servers, weekly', rows: [['Policy Name', 'Production Debian Web Tier'], ['OS Platform', 'Debian Linux'], ['OS Version', '11'], ['Benchmark', 'CIS Debian Linux 11 Benchmark'], ['Remote Offices', 'Ahmedabad HQ'], ['Schedule', 'Weekly, Sunday 02:00'], ['Notify Team', 'Linux Admins']], note: 'Save as Draft keeps it without scanning — only the Policy Name is needed. Publish needs every required field.' },
-    mistakes: ['Choosing a benchmark for a different OS version than the machines run — they will not show up to add.', 'Leaving Schedule off and expecting it to scan on its own.'],
+    fields: [],
+    mistakes: [],
   },
 };

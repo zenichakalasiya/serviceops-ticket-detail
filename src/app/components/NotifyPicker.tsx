@@ -1,4 +1,4 @@
-/* NotifyPicker — pick technicians and technician groups (Create Audit › Notify Team).
+/* NotifyPicker — pick technicians and technician groups (Create Audit › Notify To).
  *
  * Copies the admin workflow builder's value popup (Admin › Automation › Workflow — the "Specific
  * value" picker), in product styles, WITHOUT its Specific | Dynamic tabs (Zeni, 17 Nov 2026):

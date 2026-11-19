@@ -47,8 +47,8 @@ const guide = ([id, from]) => {
     <aside class="g-side">
       <div class="card"><h3>Fields explained</h3>
         <dl class="fields">${h.fields.map(([k, t]) => `<dt>${esc(k)}</dt><dd>${esc(t)}</dd>`).join('')}</dl></div>
-      <div class="card"><h3>Example</h3><p class="ex-title">${esc(h.example.title)}</p>
-        <table class="ex"><tbody>${h.example.rows.map(([k, t]) => `<tr><th scope="row">${esc(k)}</th><td>${esc(t)}</td></tr>`).join('')}</tbody></table></div>
+      ${h.example ? `<div class="card"><h3>Example</h3><p class="ex-title">${esc(h.example.title)}</p>
+        <table class="ex"><tbody>${h.example.rows.map(([k, t]) => `<tr><th scope="row">${esc(k)}</th><td>${esc(t)}</td></tr>`).join('')}</tbody></table></div>` : ''}
       <div class="card warn"><h3>Common mistakes</h3>${li(h.mistakes)}</div>
     </aside>
   </div>
