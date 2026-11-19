@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { AlertTriangle, BookOpen, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, ClipboardList, Lightbulb, ListChecks, TextCursorInput } from 'lucide-react';
+import { AlertTriangle, Bell, BookOpen, Building2, CalendarClock, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, ClipboardList, FileText, Info, Lightbulb, ListChecks, Monitor, Rocket, ShieldCheck, TextCursorInput } from 'lucide-react';
 import { setCreateGuideHidden, useCreateGuideHidden } from './createFormUi';
 import { FORM_HELP, type FormHelp } from './createFormGuides';
 
@@ -13,16 +13,21 @@ import { FORM_HELP, type FormHelp } from './createFormGuides';
  * `[data-section-title]`, which CreatePageShell and Section put on the page.
  */
 
+/* The glyph on each field-group card in a step (Zeni, 19 Nov 2026). */
+const BLOCK_ICONS = { policy: FileText, benchmark: ShieldCheck, offices: Building2, endpoints: Monitor, notify: Bell, deploy: Rocket, schedule: CalendarClock } as const;
+
 const tile = 'flex size-6 flex-shrink-0 items-center justify-center rounded bg-[#1D2A3E] text-white';
 
-function Accordion({ icon, title, open, onToggle, lit, lead, children }: {
+function Accordion({ icon, title, open, onToggle, lit, lead, flush, children }: {
   icon?: React.ReactNode; title: string; open: boolean; onToggle: () => void; lit?: boolean;
+  /** Body starts EXACTLY at the title's left edge (40px), so a field group's icon lines up under the step name (Zeni, 19 Nov 2026). */
+  flush?: boolean;
   /** A numbered badge in place of the icon (steps). */
   lead?: React.ReactNode; children: React.ReactNode;
 }) {
   return (
     <div data-step-lit={lit || undefined} className={'scroll-mt-12 rounded-lg transition-colors ' + (lit ? 'bg-[#EBF5FF]' : open ? 'bg-[#F4F6FA]' : 'bg-[#F7F9FC] hover:bg-[#F1F4F9]')}>
-      <div className="flex items-center gap-2 px-3 py-2.5">
+      <div className={"flex items-center gap-2 px-3 " + (flush && open ? "pb-1 pt-2.5" : "py-2.5")}>
         {lead ?? <span className="flex size-4 flex-shrink-0 items-center justify-center text-[#64748B]">{icon}</span>}
         <button type="button" onClick={onToggle} aria-expanded={open} className="group flex min-w-0 flex-1 items-center gap-2 text-left">
           <span className={'min-w-0 flex-1 text-[13px] text-[#1D2A3E] ' + (open ? 'font-semibold' : 'font-medium')}>{title}</span>
@@ -31,7 +36,7 @@ function Accordion({ icon, title, open, onToggle, lit, lead, children }: {
       </div>
       <div className="grid transition-[grid-template-rows] duration-200 ease-out" style={{ gridTemplateRows: open ? '1fr' : '0fr' }}>
         <div className="min-h-0 overflow-hidden">
-          <div className="pb-3.5 pl-[36px] pr-3 text-[12.5px] leading-[1.6] text-[#475569]">{children}</div>
+          <div className={'pb-3.5 pr-3 text-[12.5px] leading-[1.6] text-[#475569] ' + (flush ? 'pl-10' : 'pl-[36px]')}>{children}</div>
         </div>
       </div>
     </div>
@@ -186,7 +191,7 @@ export function CreateFormHelpPanel({ help, onOpen, available, bare }: {
               const lit = help.highlight !== false && !!active && active.split('|').some((t) => s.section.includes(t));
               const shown = s.section.some((t) => (available ?? present).includes(t));
               return (
-                <Accordion key={id} title={s.title} open={!shut.includes(id)} onToggle={() => toggle(id)} lit={lit}
+                <Accordion key={id} title={s.title} open={!shut.includes(id)} onToggle={() => toggle(id)} lit={lit} flush={!!s.blocks}
                   lead={(
                     <button type="button" onClick={() => goTo(s.section, onOpen)} disabled={!shown}
                       title={shown ? `Go to ${s.section[0]} in the form` : `${s.section[0]} appears once the fields above it are filled`}
@@ -197,20 +202,50 @@ export function CreateFormHelpPanel({ help, onOpen, available, bare }: {
                   {!s.blocks && <div className="mb-1 text-[10.5px] font-semibold uppercase tracking-wider text-[#94A3B8]">{s.section.join(' / ')}</div>}
                   <p>{s.text}</p>
                   {s.tips && <Points items={s.tips} />}
-                  {s.blocks?.map((b) => (
-                    <div key={b.title} className="mt-5 first-of-type:mt-4">
-                      <div className="text-[12.5px] font-semibold text-[#1D2A3E]">{b.title}</div>
-                      {b.text && <p className="mt-0.5">{b.text}</p>}
-                      {b.items && (
-                        <ul className="mt-1 flex flex-col gap-1">
-                          {b.items.map(([k, v]) => (
-                            <li key={k} className="flex gap-2"><span className="mt-[8px] size-1 flex-shrink-0 rounded-full bg-[#94A3B8]" /><span className="min-w-0 flex-1"><span className="font-medium text-[#1D2A3E]">{k}:</span> {v}</span></li>
-                          ))}
-                        </ul>
-                      )}
-                      {b.note && <p className="mt-2"><span className="font-medium text-[#1D2A3E]">Note:</span> {b.note}</p>}
+                  {/* Field groups, MINIMAL (Zeni, 19 Nov 2026). The step body starts at the step NAME's edge, so a
+                      group's icon lines up under the step name; the group's name sits 20px in (14px icon + 6px
+                      gap) and everything in the group starts there (pl-5), and fields read as bullet points: name, then what to do under it. */}
+                  {s.blocks && (
+                    <div className="mt-5 flex flex-col gap-4">
+                      {s.blocks.map((b) => {
+                        const Glyph = b.icon ? BLOCK_ICONS[b.icon] : ListChecks;
+                        return (
+                          <div key={b.title}>
+                            <div className="flex items-center gap-1.5 text-[12.5px] font-semibold text-[#1D2A3E]">
+                              <Glyph size={14} className="flex-shrink-0 text-[#1D2A3E]" />
+                              {b.title}
+                            </div>
+                            <div className="pl-5">
+                              {b.text && <p className="mt-1 text-[12px] leading-[1.55] text-[#64748B]">{b.text}</p>}
+                              {b.items && (
+                                <ul className="-ml-5 mt-1.5 flex flex-col gap-2">
+                                  {/* -ml-5 undoes the group indent: the dot sits in a 14px column centred under the group icon,
+                                      and the field name starts at the group name (6px gap, as the head). */}
+                                  {b.items.map(([k, v]) => (
+                                    <li key={k} className="flex gap-1.5">
+                                      <span className="flex h-[18px] w-[14px] flex-shrink-0 items-center justify-center"><span className="size-1 rounded-full bg-[#94A3B8]" /></span>
+                                      <div className="min-w-0 flex-1">
+                                        <div className="text-[12px] font-medium text-[#364658]">{k}</div>
+                                        <div className="text-[12px] leading-[1.5] text-[#64748B]">{v}</div>
+                                      </div>
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
+                            {/* The note: a WHITE strip across the step card's full width (-ml-7 undoes the body's
+                                indent back to the card padding), even 12px padding inside it, the icon at its left edge (Zeni, 19 Nov 2026). */}
+                            {b.note && (
+                              <p className="-ml-7 mt-3 flex gap-1.5 rounded-md bg-white px-3 py-2 text-[12px] leading-[1.5] text-[#64748B]">
+                                <Info size={13} className="mt-[2px] flex-shrink-0 text-[#64748B]" />
+                                <span><span className="font-medium text-[#1D2A3E]">Note:</span> {b.note}</span>
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
-                  ))}
+                  )}
                 </Accordion>
               );
             })}

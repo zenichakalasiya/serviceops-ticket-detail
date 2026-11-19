@@ -18,7 +18,11 @@ export interface HelpStep {
   /** Named groups of fields under the step (Zeni's own guide copy, e.g. Compliance Audit). */
   blocks?: HelpBlock[];
 }
-export interface HelpBlock { title: string; text?: string; items?: [string, string][]; note?: string }
+export interface HelpBlock {
+  title: string; text?: string; items?: [string, string][]; note?: string;
+  /** A glyph for the block's card (name from BLOCK_ICONS in CreateFormHelp.tsx — this file stays import-free). */
+  icon?: 'policy' | 'benchmark' | 'offices' | 'endpoints' | 'notify' | 'deploy' | 'schedule';
+}
 export interface FormHelp {
   /** "Patch Deployment" — used in "How to create a …". */
   noun: string;
@@ -250,9 +254,9 @@ export const FORM_HELP: Record<string, FormHelp> = {
         section: ['Policy Details', 'Benchmark'], title: 'Policy & Benchmark',
         text: 'Define the audit policy and select the security benchmark against which endpoint compliance will be assessed.',
         blocks: [
-          { title: 'Policy Details', items: [['Policy Name', 'Enter a unique name to identify the audit policy.'], ['Description', "Provide a brief description of the audit's purpose or scope."]] },
+          { title: 'Policy Details', icon: 'policy', items: [['Policy Name', 'Enter a unique name to identify the audit policy.'], ['Description', "Provide a brief description of the audit's purpose or scope."]] },
           {
-            title: 'Benchmark',
+            title: 'Benchmark', icon: 'benchmark',
             items: [['OS Platform', 'Select the operating system platform you want to assess.'], ['OS Version', 'Select the applicable operating system version. This field becomes available after selecting the OS platform.'], ['Benchmark', 'Search for and select the security benchmark applicable to the selected OS platform and version.']],
             note: 'The selected benchmark determines the compliance rules used during the assessment.',
           },
@@ -262,18 +266,18 @@ export const FORM_HELP: Record<string, FormHelp> = {
         section: ['Target Endpoints'], title: 'Target Endpoints',
         text: 'Select the remote offices and individual endpoints that you want to include in the compliance audit.',
         blocks: [
-          { title: 'Remote Offices', text: 'Click Add Remote Offices to select the remote offices whose endpoints should be assessed.' },
-          { title: 'Endpoints', text: 'Click Add Endpoints to select individual endpoints for the audit.' },
+          { title: 'Remote Offices', icon: 'offices', text: 'Click Add Remote Offices to select the remote offices whose endpoints should be assessed.' },
+          { title: 'Endpoints', icon: 'endpoints', text: 'Click Add Endpoints to select individual endpoints for the audit.' },
         ],
       },
       {
         section: ['Schedule & Notifications'], title: 'Schedule & Notify',
         text: 'Configure the notification recipients, deployment policy, and execution schedule for the compliance audit.',
         blocks: [
-          { title: 'Notify To', text: 'Select the technicians who should receive notifications related to the audit.' },
-          { title: 'Deployment Policy', text: 'Select the deployment policy that determines how the audit is deployed to the selected endpoints.' },
+          { title: 'Notify To', icon: 'notify', text: 'Select the technicians who should receive notifications related to the audit.' },
+          { title: 'Deployment Policy', icon: 'deploy', text: 'Select the deployment policy that determines how the audit is deployed to the selected endpoints.' },
           {
-            title: 'Schedule', text: 'Enable the Schedule toggle to configure the audit to run at a specified date and time. Provide the scheduling details displayed.',
+            title: 'Schedule', icon: 'schedule', text: 'Enable the Schedule toggle to configure the audit to run at a specified date and time. Provide the scheduling details displayed.',
             items: [['Schedule Enabled', 'The compliance scan runs according to the configured schedule.'], ['Schedule Disabled', 'The compliance scan starts immediately after the audit is published.']],
           },
         ],

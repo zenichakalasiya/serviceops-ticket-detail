@@ -592,17 +592,8 @@ function CompliancePolicyForm({ mode, sourceId, onClose }: { mode: 'create' | 'e
         </Paginated>
       </TargetBox>
 
-      {/* The one number that matters: what the policy will actually scan. */}
-      {resolved.length > 0 ? (
-        <p className="flex items-center gap-1.5 text-[12px] text-[#64748B]">
-          <Info size={13} className="flex-shrink-0 text-[#7B8FA5]" />
-          <span><span className="font-semibold text-[#364658]">{resolved.length}</span> endpoint{resolved.length === 1 ? '' : 's'} will be assessed
-            {resolved.some((e) => !e.agentOnline) && <span className="text-[#B45309]"> · {resolved.filter((e) => !e.agentOnline).length} offline, skipped until their agent reports in</span>}
-          </span>
-        </p>
-      ) : (
-        <ErrorText>{show('targets')}</ErrorText>
-      )}
+      {/* The "N endpoints will be assessed · N offline" line was REMOVED (Zeni, 19 Nov 2026). Only the error stays. */}
+      {resolved.length === 0 && <ErrorText>{show('targets')}</ErrorText>}
     </div>
   );
   const notifyEl = (

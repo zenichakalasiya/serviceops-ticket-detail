@@ -1,3 +1,22 @@
+# Handoff — 2026-11-19 (late afternoon): Create Audit guide redesign; "will be assessed" line removed
+
+> Sessions share this file. This top part is the newest; older notes follow.
+
+## Completed (headless browser, no page errors, alignment MEASURED) — published
+- **Create Audit help guide, field groups (Zeni, many rounds — final):** steps with `blocks` render minimal (`CreateFormHelp.tsx`, Accordion `flush`):
+  - step body starts at the STEP TITLE's edge (`pl-10`); one-liner sits ~4px under the title (header `pb-1` only while a flush step is open — a negative margin got clipped by the fold animation);
+  - 20px to the first group, 16px between groups, NO dividers, NO cards;
+  - group head = 14px icon in the title colour `#1D2A3E` (`BLOCK_ICONS`, `HelpBlock.icon`) + name; group text at the name's edge;
+  - fields = bullets: dot centred under the group icon, field name at the group name's edge, description under it;
+  - Note = a white strip across the step card's full width (`-ml-7`), even 12px padding, "Note:" kept.
+- **Create Audit step 2:** the "N endpoints will be assessed · N offline…" line is removed (the no-targets error stays).
+
+## Open
+- Office / Execution Status / Compliance Result quick filters: which page?
+- Score presets 50/70/80/90 to confirm; Compliance v2 re-pin or new version.
+
+---
+
 # Handoff — 2026-11-19 13:25 (Patch: V5 is the final paused banner; count links to the Deployment tab)
 
 > Sessions share this file. This top part is the newest; older notes follow.
