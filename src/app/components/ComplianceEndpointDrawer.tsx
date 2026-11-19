@@ -283,13 +283,15 @@ export function ComplianceEndpointDrawer({
           </div>
           <div className="-my-[2.5px] flex flex-shrink-0 items-center gap-2">
             <HeaderCopyButton variant="link" value={`/compliance-endpoints?open=${activeAssetId}`} label="Copy Endpoint URL" />
+            {/* Disabled on the Compliance tab (Zeni, 18 Nov 2026). The reason sits on a wrapping span — a disabled button gets no hover. */}
+            <span className="inline-flex" title={tab === 'policies' ? 'Scan Now is not available on the Compliance tab' : !runnable.length ? 'No enabled policy assesses this endpoint' : 'Run every enabled policy that assesses it'}>
             <button
               type="button"
-              disabled={scanning || !runnable.length}
+              disabled={scanning || !runnable.length || tab === 'policies'}
               onClick={scanNow}
-              title={!runnable.length ? 'No enabled policy assesses this endpoint' : 'Run every enabled policy that assesses it'}
-              className="inline-flex h-8 items-center gap-1.5 rounded bg-[#3D8BD0] px-3 text-[13px] font-medium text-white transition-colors hover:bg-[#3478B5] disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-8 items-center gap-1.5 rounded bg-[#3D8BD0] px-3 text-[13px] font-medium text-white transition-colors hover:bg-[#3478B5] disabled:pointer-events-none disabled:opacity-60"
             >{scanning ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} />}{scanning ? 'Scanning…' : 'Scan Now'}</button>
+            </span>
           </div>
         </div>
 

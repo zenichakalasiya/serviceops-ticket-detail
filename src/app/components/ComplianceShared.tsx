@@ -159,7 +159,8 @@ type RuleTab = 'first' | 'summary' | 'audit' | 'remediation' | 'references' | 'c
 /** An extra tab placed BEFORE the metadata tabs (the technician Rules page's Endpoints). */
 export interface RuleFirstTab { label: string; node: React.ReactNode }
 const RULE_TABS: [RuleTab, string][] = [
-  ['summary', 'Summary'], ['audit', 'Audit'], ['remediation', 'Remediation'],
+  /* "Details" (was Summary), admin and technician alike (Zeni, 18 Nov 2026). */
+  ['summary', 'Details'], ['audit', 'Audit'], ['remediation', 'Remediation'],
   ['controls', 'Controls'], ['mitre', 'MITRE ATT&CK'],
 ];
 

@@ -66,8 +66,8 @@ export const FORM_STEPS: Record<string, FormStep[]> = {
   ],
   /* Compliance Policy (Zeni, 12 Nov 2026) — section titles as CompliancePolicyEditor renders them. */
   'compliance-policy': [
-    { title: 'Policy & benchmark', sub: 'Name the policy and choose the one benchmark it assesses.', sections: ['Policy Details', 'Benchmark'] },
-    { title: 'Target endpoints', sub: 'Whole remote offices, single endpoints, or both.', sections: ['Target Endpoints'] },
-    { title: 'Schedule & notify', sub: '', sections: ['Schedule & Notifications'] },
+    { title: 'Policy & benchmark', sub: 'Name the policy and pick the benchmark it checks against.', sections: ['Policy Details', 'Benchmark'] },
+    { title: 'Target endpoints', sub: 'Pick remote offices, single endpoints, or both.', sections: ['Target Endpoints'] },
+    { title: 'Schedule & notify', sub: 'Set when the audit runs and who gets the results.', sections: ['Schedule & Notifications'] },
   ],
 };

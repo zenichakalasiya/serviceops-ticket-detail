@@ -705,7 +705,7 @@ export function RuleGroupTree({ benchmark, resultOf = () => null, right, onRule,
           <Tooltip delayDuration={0}>
             <TooltipTrigger asChild>
               <button type="button" aria-label={allOpen ? 'Collapse all' : 'Expand all'} onClick={() => setOpen(allOpen ? new Set() : new Set(allKeys))}
-                className="flex size-7 items-center justify-center rounded text-[#64748B] transition-colors hover:bg-[#EEF2F6] hover:text-[#3D8BD0]">
+                className="flex size-7 items-center justify-center rounded bg-[#EEF2F6] text-[#3D8BD0] transition-colors hover:bg-[#E0EAF5]">
                 {allOpen ? <ChevronsDownUp size={15} /> : <ChevronsUpDown size={15} />}
               </button>
             </TooltipTrigger>

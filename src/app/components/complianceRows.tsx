@@ -2,12 +2,13 @@
  * the rule-results table their side panels show. One file so the two pages (and a benchmark's
  * rule drill-in) read a rule or an endpoint the same way. Nothing here is stored: every row is
  * rebuilt from vizSnapshot(), so a Run Now moves them all at once. */
-import { complianceEndpoint, findingsOf } from './compliancePolicyData';
+import { complianceEndpoint, endpointResults, findingsOf } from './compliancePolicyData';
 import type { CompliancePolicy } from './compliancePolicyData';
 import type { ComplianceRule } from './complianceData';
 import { profileLabel, ruleCode } from './complianceData';
 import type { BenchmarkStat, EndpointStat, RuleEndpointResult, RuleStat } from './complianceVizData';
 import { ruleScore } from './complianceVizData';
+import { scoreBand } from './complianceFilterAttrs';
 import type { Ticket } from './TicketListPage';
 import { mockEndpoints } from './EndpointsListPage';
 import type { ComplianceEndpoint } from './compliancePolicyData';
@@ -21,6 +22,14 @@ const OFFICE_CODE: Record<string, string> = { 'Ahmedabad HQ': 'AHM', 'Mumbai Off
 const LINUX_USERS = ['root', 'svc-deploy', 'ansible', 'ubuntu', 'ec2-user'];
 const WIN_USERS = ['MOTADATA\\administrator', 'MOTADATA\\kavit.gohel', 'MOTADATA\\neha.shah', 'MOTADATA\\svc-backup', 'MOTADATA\\dharti.patel'];
 const MONTHS3 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+function auditTally(e: EndpointStat) {
+  let ok = 0, bad = 0, none = 0;
+  for (const p of e.policies) {
+    const r = endpointResults(p).find((x) => x.endpoint.id === e.endpoint.id);
+    if (!r || r.outcome === 'Not Scanned') none++; else if (r.outcome === 'Compliant') ok++; else bad++;
+  }
+  return { x_cpAuditOk: ok, x_cpAuditBad: bad, x_cpAuditNone: none };
+}
 function inventoryOf(e: ComplianceEndpoint) {
   const real = mockEndpoints.find((m) => m.id === e.id);
   const h = h32(e.id);
@@ -89,6 +98,7 @@ export const ruleRow = (rule: ComplianceRule, stat?: RuleStat, eps?: RuleEndpoin
   x_checked: stat?.checked ?? null,
   x_failing: stat ? stat.failing : null,
   x_cpScore: eps ? ruleScore(eps) : (stat?.score ?? null),
+  x_scoreBand: scoreBand(eps ? ruleScore(eps) : (stat?.score ?? null), 'Not checked'),
   x_result: !stat ? 'Not checked' : stat.failing ? 'Failing' : 'All passing',
 } as unknown as Ticket);
 
@@ -102,6 +112,8 @@ export const endpointRow = (e: EndpointStat): Ticket => ({
   x_osVersion: e.endpoint.osVersion,
   /* Across its audits: Non-Compliant when any check failed on the last scan; a dash before any scan. */
   x_cpResult: e.score === null ? null : e.failed > 0 ? 'Non-Compliant' : 'Compliant',
+  /* How its audits came out on this endpoint — the Compliance Result tooltip (Zeni, 18 Nov 2026). */
+  ...auditTally(e),
   ...inventoryOf(e.endpoint),
   x_office: e.endpoint.office,
   x_posture: e.posture ?? 'Not assessed',
@@ -109,6 +121,7 @@ export const endpointRow = (e: EndpointStat): Ticket => ({
   x_policyNames: e.policies.map((p) => p.name).join(', '),
   x_failedChecks: e.score === null ? null : e.failed,
   x_cpScore: e.score,
+  x_scoreBand: scoreBand(e.score),
   x_scanStatus: e.notReached ? 'Not reached' : e.lastScan ? 'Success' : 'Not scanned',
   x_lastExecution: e.lastScan ? new Date(e.lastScan) : null,
 } as unknown as Ticket);

@@ -1,3 +1,27 @@
+# Handoff — 2026-11-19 11:07 (Compliance: stepper one-liners, Scan Now off on Compliance tab, quick filters)
+
+> Sessions share this file. This top part is the newest; older notes follow.
+
+## Read first
+CLAUDE.md → "Compliance (Oct 2026)", its last bullet (19 Nov 2026).
+
+## Completed (headless browser, no page errors)
+- **Create Audit stepper one-liners** (`createFormSteps.ts`, `compliance-policy`): "Name the policy and pick the benchmark it checks against." · "Pick remote offices, single endpoints, or both." · "Set when the audit runs and who gets the results."
+- **Scan Now disabled on the endpoint page's Compliance tab** (`ComplianceEndpointDrawer.tsx`, tab id `'policies'`); the reason is a tooltip on a wrapping span (a disabled button gets no hover). Verified disabled on that tab; re-enabling on other tabs NOT verified (test clicked a hidden sidebar "Patches" button).
+- **Quick filters** (`complianceFilterAttrs.ts`): Rules = Severity · OS Platform; Compliance Audit = Status · Compliance Result · OS Platform. The score-band quick filters were removed from both; scores still filter under Filters (hidden attrs).
+
+## In progress
+Nothing mid-flight.
+
+## Next steps (open questions for Zeni)
+- "endpoint's listing → compliance tab" quick filters (Office · Execution Status · Compliance Result): which page? Recommendation = Compliance Audit detail › Endpoints tab (`CompliancePolicyDrawer`, it already has those columns and a `TabListToolbar` filter incl. `exec`). Quick-filter icons, or tabs in its Filter popup?
+- Compliance v2 or a new version? This publish pushes `main` only; `versions/versions.json` was NOT re-pinned.
+
+## Gotchas
+- Other sessions' uncommitted files (Patch Deployment pause, FormStudio, deployment policies, etc.) were kept out of this commit.
+
+---
+
 # Handoff — 2026-11-17, night (Compliance: Create Audit schedule from .185, columns, benchmark drawer)
 
 > Sessions share this file. This top part is the newest; older notes follow.

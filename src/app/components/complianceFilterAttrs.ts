@@ -1,7 +1,7 @@
 /* Compliance Policy listing — the filter catalogue, quick filters, saved views and status
    palette. Its own small file with no heavy imports, because TicketTable and TicketViewsPanel
    read it and both sit underneath half the app. */
-import { AlignLeft, CalendarClock, CalendarDays, CircleDot, Hash, Layers, Power, ShieldCheck, Tag, User } from 'lucide-react';
+import { AlignLeft, CalendarDays, CircleDot, Gauge, Hash, Layers, Power, ShieldCheck, Tag, User } from 'lucide-react';
 import type { Attr, FilterRule, QuickFilterDef } from './TicketFilterBar';
 import type { TicketView } from './TicketViewsPanel';
 import { BENCHMARKS_SEED, platformOf, RULES } from './complianceData';
@@ -51,6 +51,26 @@ const RULE_VERSION_OPTIONS = uniq(RULES.map((r) => r.version));
 const BENCHMARK_PLATFORM_OPTIONS = uniq(BENCHMARKS_SEED.map((b) => platformOf(b.osVersion).platform));
 const OS_FILTER_OPTIONS = ['Linux', 'Windows'].map((label) => ({ label }));
 
+/* Score bands (Zeni, 18 Nov 2026): a score is filtered by the THRESHOLD it clears, not a typed
+   number — 90 · 80 · 70 · 50 · 25 are the lines an auditor reports against. The bands are
+   multi-select, so "below 50" is two ticks (25–49 + Below 25) and "80 and above" is two more.
+   Every row carries its band as x_scoreBand (complianceRows / CompliancePoliciesListingPage). */
+export const SCORE_BANDS = [
+  { min: 90, label: '90 – 100%', color: '#22C55E' },
+  { min: 80, label: '80 – 89%', color: '#84CC16' },
+  { min: 70, label: '70 – 79%', color: '#F59E0B' },
+  { min: 50, label: '50 – 69%', color: '#F97316' },
+  { min: 25, label: '25 – 49%', color: '#EF4444' },
+  { min: 0, label: 'Below 25%', color: '#B91C1C' },
+];
+export function scoreBand(score: number | null | undefined, none = 'Not scanned'): string {
+  if (score === null || score === undefined || Number.isNaN(Number(score))) return none;
+  return (SCORE_BANDS.find((b) => Number(score) >= b.min) ?? SCORE_BANDS[SCORE_BANDS.length - 1]).label;
+}
+const bandOptions = (none: string) => [...SCORE_BANDS.map(({ label, color }) => ({ label, color })), { label: none, color: '#94A3B8' }];
+const AUDIT_SCORE_OPTIONS = bandOptions('Not scanned');
+const RULE_SCORE_OPTIONS = bandOptions('Not checked');
+
 export const POLICY_FILTER_ATTRS: Attr[] = [
   { key: 'id', label: 'ID', icon: Hash, type: 'text' },
   { key: 'subject', label: 'Policy Name', icon: AlignLeft, type: 'text' },
@@ -65,6 +85,8 @@ export const POLICY_FILTER_ATTRS: Attr[] = [
   { key: 'x_updatedAt', label: 'Updated Date', icon: CalendarDays, type: 'date' },
   { key: 'x_tags', label: 'Tags', icon: Tag, type: 'text' },
   { key: 'x_lastExecution', label: 'Last Scan Date', icon: CalendarDays, type: 'date' },
+  /* hidden: the Compliance Score column already exists — this only lets the band chip read well (and keeps it out of column selection). */
+  { key: 'x_scoreBand', label: 'Compliance Score', icon: Gauge, type: 'select', options: AUDIT_SCORE_OPTIONS, hidden: true },
 ];
 
 export const POLICY_QUICK_FILTERS: QuickFilterDef[] = [
@@ -123,10 +145,10 @@ export const VIZ_RULE_FILTER_ATTRS: Attr[] = [
   { key: 'x_version', label: 'OS Version', icon: Layers, type: 'select', options: RULE_VERSION_OPTIONS },
   /* No column — kept hidden only so the Failing / Not Checked cards and dashboard links draw a readable chip. */
   { key: 'x_result', label: 'Result', icon: CircleDot, type: 'select', options: RESULT_OPTIONS, hidden: true },
+  { key: 'x_scoreBand', label: 'Rule Score', icon: Gauge, type: 'select', options: RULE_SCORE_OPTIONS, hidden: true },
 ];
 export const VIZ_RULE_QUICK_FILTERS: QuickFilterDef[] = [
   { field: 'x_severity', icon: CircleDot, tip: 'Filter by severity', title: 'Severity is', width: 190, row: 'dot', options: SEVERITY_OPTIONS },
-  { field: 'x_profile', icon: ShieldCheck, tip: 'Filter by profile', title: 'Profile is', width: 160, row: 'plain', options: RULE_PROFILE_OPTIONS },
   { field: 'x_platform', icon: Layers, tip: 'Filter by OS platform', title: 'OS Platform is', width: 240, row: 'plain', options: RULE_PLATFORM_OPTIONS },
 ];
 export const VIZ_RULE_VIEWS: TicketView[] = [
@@ -145,9 +167,12 @@ export const VIZ_RESOURCE_FILTER_ATTRS: Attr[] = [
   { key: 'x_posture', label: 'Posture', icon: CircleDot, type: 'select', options: POSTURE_OPTIONS, hidden: true },
   { key: 'x_scanStatus', label: 'Scan Status', icon: CircleDot, type: 'select', options: SCAN_STATUS_OPTIONS },
   { key: 'x_lastExecution', label: 'Last Scan', icon: CalendarDays, type: 'date' },
+  { key: 'x_scoreBand', label: 'Compliance Score', icon: Gauge, type: 'select', options: AUDIT_SCORE_OPTIONS, hidden: true },
 ];
+/* Endpoints: Compliance Result and Compliance Score bands (Zeni, 18 Nov 2026). Scan Status stays under Filters. */
 export const VIZ_RESOURCE_QUICK_FILTERS: QuickFilterDef[] = [
-  { field: 'x_scanStatus', icon: CalendarClock, tip: 'Filter by scan status', title: 'Scan Status is', width: 200, row: 'dot', options: SCAN_STATUS_OPTIONS },
+  { field: 'x_cpResult', icon: ShieldCheck, tip: 'Filter by compliance result', title: 'Compliance Result is', width: 220, row: 'dot', options: POLICY_RESULT_OPTIONS },
+  { field: 'x_scoreBand', icon: Gauge, tip: 'Filter by compliance score', title: 'Compliance Score is', width: 210, row: 'dot', options: AUDIT_SCORE_OPTIONS },
 ];
 export const VIZ_RESOURCE_VIEWS: TicketView[] = [
   { name: 'All Endpoints', rules: [] },

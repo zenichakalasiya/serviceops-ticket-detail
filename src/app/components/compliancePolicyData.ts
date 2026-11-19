@@ -449,7 +449,39 @@ const SEED: Seed[] = [
   { id: 'CP-115', name: 'Firewall Policy Review (quarterly)', description: 'The custom firewall review for the external audit.', benchmarkId: 'BM-13', configType: 'startup', axis: 'endpoint', endpointIds: ['EP-581'], schedule: { frequency: 'once', startDate: '2026-10-31', time: '10:00' }, notify: ['Sneha Kulkarni'], enabled: true, createdBy: 'Sarah Johnson', created: '2026-10-16T10:00' },
 ];
 
-const seedPolicies = (): CompliancePolicy[] => SEED.map(({ created, scanned, ...s }) => {
+/* About 20 audits on every Linux / Windows endpoint (Zeni, 18 Nov 2026: "so I can have a big count").
+   For each OS version that has endpoints, 18 more audits cover all of its offices, each on one of that
+   version's benchmarks. Built lazily (the fleet is read lazily). Sample data. */
+const MORE_THEMES = ['Weekly Hardening', 'Production Baseline', 'PCI Scope', 'SOC 2 Evidence', 'ISO 27001 Controls', 'Pre-Prod Gate',
+  'Quarterly Audit', 'Patch Window Check', 'Remote Access Review', 'Logging & Auditing', 'Access Control Review', 'Golden Image Check',
+  'DR Site Check', 'Branch Servers', 'Internet-Facing Hosts', 'Change Freeze Verification', 'New Builds Onboarding', 'Monthly Executive Report'];
+const MORE_OWNERS = ['Kavit Gohel', 'Neha Shah', 'Dharti Patel', 'Vasu Hirpara', 'Sarah Johnson'];
+const moreSeeds = (): Seed[] => {
+  const versions = [...new Set(complianceEndpoints().filter((e) => e.type === 'Linux' || e.type === 'Windows').map((e) => e.osVersion))].sort();
+  const out: Seed[] = [];
+  let n = 116;
+  versions.forEach((ver, vi) => {
+    const benches = BENCHMARKS_SEED.filter((b) => b.osVersion === ver);
+    if (!benches.length) return;
+    const offices = [...new Set(complianceEndpoints().filter((e) => e.osVersion === ver).map((e) => e.office))];
+    MORE_THEMES.forEach((theme, ti) => {
+      const k = vi * 31 + ti;
+      const day = String(1 + (k % 18)).padStart(2, '0');
+      const created = `2026-09-${day}T${String(9 + (k % 8)).padStart(2, '0')}:${String((k * 7) % 60).padStart(2, '0')}`;
+      const scanned = k % 7 === 6 ? undefined : `2026-10-${String(10 + (k % 9)).padStart(2, '0')}T${String(1 + (k % 5)).padStart(2, '0')}:${String((k * 13) % 60).padStart(2, '0')}`;
+      const freq = (['daily', 'weekly', 'monthly', 'none'] as const)[k % 4];
+      out.push({
+        id: `CP-${n++}`, name: `${ver} — ${theme}`, description: '', benchmarkId: benches[ti % benches.length].id,
+        axis: 'office', offices,
+        schedule: freq === 'none' ? { frequency: 'none' } : { frequency: freq, startDate: '2026-09-01', time: '02:00', weekday: 1, monthday: 1 },
+        notify: [], createdBy: MORE_OWNERS[k % MORE_OWNERS.length], created, scanned,
+      });
+    });
+  });
+  return out;
+};
+
+const seedPolicies = (): CompliancePolicy[] => [...SEED, ...moreSeeds()].map(({ created, scanned, ...s }) => {
   const p: CompliancePolicy = {
     configType: null, notify: [], enabled: true, endpointIds: [], offices: [], deviceTags: [],
     ...s, createdAt: created, updatedAt: scanned ?? created, lastScan: null,
@@ -474,7 +506,10 @@ const seedPolicies = (): CompliancePolicy[] => SEED.map(({ created, scanned, ...
    stores — the listing would open an editor the host never hears about. */
 interface StoreState { policies: CompliancePolicy[] | null; subs: Set<() => void>; editor: EditorState; editorSubs: Set<() => void>; seq: number }
 const S: StoreState = ((globalThis as any).__compliancePolicyStore ??= { policies: null, subs: new Set(), editor: null, editorSubs: new Set(), seq: 115 });
-const all = () => (S.policies ??= seedPolicies());
+const all = () => {
+  if (!S.policies) { S.policies = seedPolicies(); S.seq = Math.max(S.seq, ...S.policies.map((p) => Number(p.id.replace(/\D/g, '')) || 0)); }
+  return S.policies;
+};
 const emit = () => S.subs.forEach((f) => f());
 const set = (next: CompliancePolicy[]) => { S.policies = next; emit(); };
 const subscribe = (f: () => void) => { S.subs.add(f); return () => S.subs.delete(f); };

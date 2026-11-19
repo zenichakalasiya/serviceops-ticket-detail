@@ -14,7 +14,7 @@ import { Archive, CircleStop, Power, PowerOff, ShieldCheck } from 'lucide-react'
 import { AssetRegisterPage } from './AssetRegisterPage';
 import { postureColor, postureOf, scoreColor } from './complianceVizData';
 import { platformOf } from './complianceData';
-import { POLICY_FILTER_ATTRS, POLICY_QUICK_FILTERS, takeComplianceDrill, ARCHIVED_POLICY_VIEW } from './complianceFilterAttrs';
+import { scoreBand, POLICY_FILTER_ATTRS, POLICY_QUICK_FILTERS, takeComplianceDrill, ARCHIVED_POLICY_VIEW } from './complianceFilterAttrs';
 import {
   benchmarkOf, getPolicy, nextRun, openPolicyEditor, policyStore, resolvedEndpoints, resultOf, runStatusOf, scheduleLabel, scoreOf, usePolicies,
 } from './compliancePolicyData';
@@ -45,6 +45,7 @@ const toRow = (p: CompliancePolicy): Ticket => {
     x_profile: b?.profile ?? '',
     x_endpoints: resolvedEndpoints(p).length,
     x_cpScore: score,
+    x_scoreBand: scoreBand(score),
     x_posture: postureOf(score) ?? 'Not assessed',
     x_nonCompliant: p.lastScan?.nonCompliant ?? 0,
     x_failedChecks: p.lastScan?.failed ?? 0,

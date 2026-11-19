@@ -2961,12 +2961,53 @@ export function TicketTable({
       const v = (ticket as any).x_cpResult as string | null;
       if (!v) return <td className="px-4 py-3 whitespace-nowrap"><span className="text-[12px] text-[#B6C0CC]">—</span></td>;
       const dot = POLICY_RESULT_OPTIONS.find((o) => o.label === v)?.color ?? '#94A3B8';
+      const cell = (
+        <span className="flex min-w-0 items-center gap-2">
+          <span className="size-2 flex-shrink-0 rounded-full" style={{ backgroundColor: dot }} />
+          <span className="truncate text-[12px] text-[#4A5568]">{v}</span>
+        </span>
+      );
+      /* On an endpoint: how its audits came out — Compliant / Non-Compliant counts (Zeni, 18 Nov 2026). */
+      const t = ticket as any;
+      if (moduleCols === 'cviz-resource' && t.x_cpAuditOk !== undefined) {
+        const total = t.x_cpAuditOk + t.x_cpAuditBad + t.x_cpAuditNone;
+        return (
+          <td className="overflow-hidden px-4 py-3 whitespace-nowrap">
+            <Tooltip delayDuration={0}>
+              <TooltipTrigger asChild><span className="inline-flex max-w-full cursor-default">{cell}</span></TooltipTrigger>
+              <TooltipContent className="text-wrap">
+                <div className="space-y-1 text-[12px] leading-[1.5]">
+                  <div className="font-medium">{total} audit{total === 1 ? '' : 's'} ran on this endpoint</div>
+                  <div className="flex items-center gap-2"><span className="size-2 rounded-full bg-[#22C55E]" />{t.x_cpAuditOk} Compliant</div>
+                  <div className="flex items-center gap-2"><span className="size-2 rounded-full bg-[#DC2626]" />{t.x_cpAuditBad} Non-Compliant</div>
+                  {t.x_cpAuditNone > 0 && <div className="flex items-center gap-2"><span className="size-2 rounded-full bg-[#94A3B8]" />{t.x_cpAuditNone} not scanned yet</div>}
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </td>
+        );
+      }
+      return <td className="overflow-hidden px-4 py-3 whitespace-nowrap">{cell}</td>;
+    }
+    /* Compliance counts that open the record (Zeni, 18 Nov 2026): a link look on hover and an INSTANT
+       tooltip; a click opens the record (the same handler as its ID), on the tab that lists
+       them (audit → Endpoints, rule → Endpoints, endpoint → Compliance). */
+    if ((key === 'x_endpoints' && (moduleCols === 'compliance-policy' || moduleCols === 'cviz-rule')) || (key === 'x_policies' && moduleCols === 'cviz-resource')) {
+      const n = Number((ticket as any)[key] ?? 0);
+      const names = String((ticket as any).x_policyNames ?? '').split(', ').filter(Boolean);
+      const tip = key === 'x_policies'
+        ? <>{n} audit{n === 1 ? '' : 's'} on this endpoint{names.length > 0 && <span className="mt-1 block text-white/80">{names.slice(0, 6).join(', ')}{names.length > 6 ? ` +${names.length - 6} more` : ''}</span>}<span className="mt-1 block text-white/70">Click to open its Compliance tab</span></>
+        : moduleCols === 'cviz-rule'
+          ? <>{n} endpoint{n === 1 ? '' : 's'} checked for this rule<span className="mt-1 block text-white/70">{n ? 'Click to see each result' : 'No audit runs this rule yet'}</span></>
+          : <>{n} endpoint{n === 1 ? '' : 's'} in this audit<span className="mt-1 block text-white/70">Click to open its Endpoints tab</span></>;
       return (
-        <td className="overflow-hidden px-4 py-3 whitespace-nowrap">
-          <span className="flex min-w-0 items-center gap-2">
-            <span className="size-2 flex-shrink-0 rounded-full" style={{ backgroundColor: dot }} />
-            <span className="truncate text-[12px] text-[#4A5568]">{v}</span>
-          </span>
+        <td className="px-4 py-3 whitespace-nowrap">
+          <Tooltip delayDuration={0}>
+            <TooltipTrigger asChild>
+              <span role={n ? 'button' : undefined} onClick={(e) => { if (!n) return; e.stopPropagation(); openTicket(ticket); }} className={'inline-flex min-w-[28px] items-center rounded px-1.5 py-0.5 text-[13px] font-medium tabular-nums transition-colors ' + (n ? 'cursor-pointer text-[#3D8BD0] hover:bg-[#EBF5FF] hover:underline' : 'text-[#94A3B8]')}>{n}</span>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-[280px] text-wrap">{tip}</TooltipContent>
+          </Tooltip>
         </td>
       );
     }

@@ -3,7 +3,7 @@ import { isValidElement, useEffect, useMemo, useRef, useState, Fragment } from '
 import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 import {
-  ArrowLeft, BadgeCheck, Check, FilePlus2, ListPlus, ChevronDown, ChevronRight, Copy, ExternalLink, FolderPlus, Layers, Link2, Lock, Monitor, MoreVertical,
+  ArrowLeft, BadgeCheck, Check, FilePlus2, ChevronDown, ChevronRight, Copy, ExternalLink, FolderPlus, Layers, Link2, Lock, Monitor, MoreVertical,
   Pencil, Plus, PlusCircle, Search, ShieldAlert, Trash2, X, CornerDownRight, ArrowDown, ChevronsDownUp, GripVertical, History, GitBranch,
 } from 'lucide-react';
 import { useComplianceRuleUi } from './complianceRuleUi';
@@ -114,6 +114,16 @@ function ActionIcon({ label, reason, onClick, danger, children }: {
       </TooltipTrigger>
       <TooltipContent className="text-wrap max-w-[260px]">{reason ?? label}</TooltipContent>
     </Tooltip>
+  );
+}
+
+
+/* Add subgroup — Zeni's own glyph (18 Nov 2026): a group row, a branch dropping to a child row, and a plus. Drawn on lucide's 24 grid so it sits level with the other row icons. */
+function AddSubgroupIcon({ size = 15 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" fill="none" role="img" aria-label="Add subgroup">
+      <circle cx="5" cy="5" r="1.5" /><path d="M9 5h11" /><path d="M5 6.5V16a2 2 0 0 0 2 2h1.5" /><path d="M5 11.5h3.5M11 11.5h9" /><path d="M14 15.5v5M11.5 18h5" />
+    </svg>
   );
 }
 
@@ -821,7 +831,7 @@ function GroupExplorer({ groups, setGroups, rootName, naming, setNaming, expande
   const rowCls = (s: ExplorerSel, tone: keyof typeof TONE = 'rule') => `group/ex relative flex cursor-pointer select-none items-center gap-1.5 pr-2 transition-colors ${TONE[tone]} ${isSel(s) ? '!bg-[#EBF5FF] before:absolute before:inset-y-0 before:left-0 before:w-[2px] before:bg-[#3D8BD0]' : 'hover:!bg-[#F5F7FA]'}`;
   const hoverIcons = (s: ExplorerSel, extra?: React.ReactNode) => (
     <span className={`ml-auto flex flex-shrink-0 items-center ${isSel(s) ? '' : 'invisible group-hover/ex:visible'}`} onClick={(e) => e.stopPropagation()}>
-      <ActionIcon label="Add subgroup" reason={addReasonFor(s)} onClick={() => addInside(s)}><ListPlus size={15} /></ActionIcon>
+      <ActionIcon label="Add subgroup" reason={addReasonFor(s)} onClick={() => addInside(s)}><AddSubgroupIcon size={15} /></ActionIcon>
       <ActionIcon label="Attach rules" reason={attachReasonFor(s)} onClick={() => attach(s)}><FilePlus2 size={15} /></ActionIcon>
       {extra}
     </span>
@@ -930,7 +940,7 @@ function GroupExplorer({ groups, setGroups, rootName, naming, setNaming, expande
   const groupCount = all.length;
   const ruleCount = groups.flatMap(groupRuleIds).length;
   const ctxItems = ctx ? ([
-    ['Add subgroup', <ListPlus size={15} />, addReasonFor(ctx.sel), () => addInside(ctx.sel)],
+    ['Add subgroup', <AddSubgroupIcon size={15} />, addReasonFor(ctx.sel), () => addInside(ctx.sel)],
     ['Attach rules', <FilePlus2 size={15} />, attachReasonFor(ctx.sel), () => attach(ctx.sel)],
     ...(ctx.sel.kind === 'group' ? [['Rename', <Pencil size={14} />, undefined, () => rename(ctx.sel)] as const] : []),
     ...(ctx.sel.kind === 'group' ? [['Delete', <Trash2 size={15} />, deleteReason(ctx.sel.id), () => remove(ctx.sel)] as const] : []),
