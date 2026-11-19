@@ -1,6 +1,38 @@
-# Handoff — 2026-11-19 (evening): Create Audit is V1-only; Notify To one chip; guide spacing
+# Handoff — 2026-11-19 12:39 (Patch: "10 of 12 installations paused" on every paused banner)
 
 > Sessions share this file. This top part is the newest; older notes follow.
+
+## Read first
+CLAUDE.md → the "Patch Deployment — Pause / Resume" bullet under Key context (its last sentences).
+
+## What we worked on this session
+Added the paused count "10 of 12 installations paused" to every paused-banner version on the Patch Deployment
+detail page, and two ways to fit it in the narrow V4/V6 card.
+
+## Completed
+- V2 / V5 (wide strip): the count comes first, then "by <name> · <time>", then Resume.
+- V4 / V6 (narrow card): a **Line | Pill** switch beside the banner switch, shown only on V4/V6. Line = the count
+  is line 1, "name · Nov 17, 01:04 PM" under it. Pill = "Paused [10/12]", the sentence in a dark tooltip on hover.
+- Verified in the browser on PDR-1431, all six combinations; no page errors.
+
+## In progress
+Nothing mid-flight.
+
+## Next steps
+- Zeni picks a banner placement (V2/V4/V5/V6) and, for V4/V6, Line or Pill; then remove the switches.
+- Replace the fixed count with real data (installations still pending ÷ all installations of the run).
+
+## Decisions made
+- The count is FIXED demo copy for now (`PAUSED_COUNT` in DeploymentPausedBanner.tsx) — Zeni's choice.
+- The narrow card shortens the date to "Nov 17, 01:04 PM" (full date on hover) so it keeps its height.
+
+## Gotchas & notes
+- Other sessions' uncommitted Compliance work (`TicketFilterBar.tsx`, `complianceFilterAttrs.ts`) is in the
+  tree; it was left out of this commit.
+
+---
+
+# Handoff — 2026-11-19 (evening): Create Audit is V1-only; Notify To one chip; guide spacing
 
 ## Completed (headless browser, no page errors) — published
 - **Create Audit is V1 only** (full page, stepper left; internal id `'v2'`): `CompliancePolicyEditor` hard-codes `ui` and no longer calls `setExtraCreateOpen`, so the header V1 | V2 pill does not show on it. Other modules' create pages keep the switch. Restoring = `useCreateFormUi()` + the effect (comment in the file).

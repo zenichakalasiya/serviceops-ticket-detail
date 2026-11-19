@@ -209,7 +209,11 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   V2 strip in the left column above the tabs (every tab) · V4 a padded card at the top of the right
   panel (`topSlot` on TicketPropertiesPanel) · V5 a strip as the FIRST thing in the Overview tab (Overview
   only) · V6 a card under "Search fields…" inside Patch Deployment Properties (`belowSearchSlot`, pinned in
-  the panel's sticky header). No confirmation on pause/resume — a toast.
+  the panel's sticky header). No confirmation on pause/resume — a toast. Every version shows **"10 of 12
+  installations paused"** (FIXED demo copy, `PAUSED_COUNT` in DeploymentPausedBanner — not yet read off the
+  run). V2/V5 put it first in the strip; the narrow V4/V6 card has its own **Line | Pill** switch (shown only
+  on V4/V6, localStorage `deployPauseCountUi`): Line = the count leads, "name · Nov 17, 01:04 PM" under it;
+  Pill = "Paused [10/12]" with the sentence in a dark tooltip.
 - **Deployment Policies (Admin › Patch Management › Deployment Management, 18 Nov 2026, Zeni).** Route
   `#/admin/deployment-policies`; a level-3 row (the Deployment Management card now has `children`: Deployment
   Policies · Remote Offices · Endpoint Groups — only the first has a screen). Content = PMG's

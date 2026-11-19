@@ -12,6 +12,7 @@
 import { useEffect, useState } from 'react';
 import { Pause, Play } from 'lucide-react';
 import type { PauseInfo } from './deploymentPauseStore';
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 
 export type PauseUi = 'v2' | 'v4' | 'v5' | 'v6';
 const ALL: PauseUi[] = ['v2', 'v4', 'v5', 'v6'];
@@ -42,9 +43,27 @@ const LABELS: Record<PauseUi, string> = {
   v5: 'First thing in the Overview tab',
   v6: 'Under the search in Patch Deployment Properties',
 };
+/* How many installations the pause stopped. FIXED demo copy for now (Zeni, 19 Nov 2026) — not yet read
+   off the run's installations. */
+export const PAUSED_COUNT = { paused: 10, total: 12 };
+const countText = `${PAUSED_COUNT.paused} of ${PAUSED_COUNT.total} installations paused`;
+
+/* The narrow card (V4 / V6) shows the count two ways, compared on their own Line | Pill switch:
+   Line = the count leads the card; Pill = "Paused 10/12" with the sentence on hover. */
+export type CountUi = 'line' | 'pill';
+const CKEY = 'deployPauseCountUi';
+const CEVT = 'deploy-pause-count-ui';
+const readCount = (): CountUi => { try { return localStorage.getItem(CKEY) === 'pill' ? 'pill' : 'line'; } catch { return 'line'; } };
+export function useCountUi(): [CountUi, (v: CountUi) => void] {
+  const [v, setV] = useState<CountUi>(readCount);
+  useEffect(() => { const on = () => setV(readCount()); window.addEventListener(CEVT, on); return () => window.removeEventListener(CEVT, on); }, []);
+  return [v, (next) => { try { localStorage.setItem(CKEY, next); } catch { /* ignore */ } window.dispatchEvent(new Event(CEVT)); }];
+}
+
 /** The comparison switch — Zeni picks one, then it goes. */
 export function PauseUiSwitch() {
   const [v, set] = usePauseUi();
+  const [c, setC] = useCountUi();
   return (
     <div className="flex flex-shrink-0 items-center gap-1.5 px-2">
       <span className="text-[11px] text-[#7B8FA5]">Paused banner</span>
@@ -53,6 +72,12 @@ export function PauseUiSwitch() {
           <button key={k} type="button" aria-pressed={v === k} title={LABELS[k]} onClick={() => set(k)}>{k.toUpperCase()}</button>
         ))}
       </div>
+      {(v === 'v4' || v === 'v6') && (
+        <div className="pill-track" title="How the card shows the paused count">
+          <button type="button" aria-pressed={c === 'line'} title="The count leads the card" onClick={() => setC('line')}>Line</button>
+          <button type="button" aria-pressed={c === 'pill'} title="Paused 10/12, the sentence on hover" onClick={() => setC('pill')}>Pill</button>
+        </div>
+      )}
     </div>
   );
 }
@@ -84,7 +109,8 @@ export function PausedBanner({ info, onResume }: { info: PauseInfo; onResume: ()
     <div role="status" className="flex items-center gap-3 rounded-lg border border-[#FCD34D] bg-[#FFFBEB] px-4 py-2.5">
       <PauseMark />
       <span className="min-w-0 flex-1 truncate text-[13px] text-[#364658]">
-        <span className="font-semibold">Paused</span> by <span className="font-medium text-[#3D8BD0]">{info.by}</span>
+        <span className="font-semibold">{countText}</span>
+        <span className="text-[#7B8FA5]"> · by </span><span className="font-medium text-[#3D8BD0]">{info.by}</span>
         <span className="text-[#7B8FA5]"> · {info.at}</span>
       </span>
       <ResumeButton onResume={onResume} />
@@ -94,15 +120,35 @@ export function PausedBanner({ info, onResume }: { info: PauseInfo; onResume: ()
 
 /** V4 / V6 — the narrow card for the right panel: the name and the time on two lines. */
 export function PausedPanelCard({ info, onResume }: { info: PauseInfo; onResume: () => void }) {
+  const [c] = useCountUi();
+  /* "Tue, Nov 17, 2026 01:04 PM" → "Nov 17, 01:04 PM": the weekday and year cost a third of a narrow line. */
+  const short = info.at.replace(/^\w{3}, /, '').replace(/, \d{4}/, ',');
   return (
     <div role="status" className="flex items-center gap-3 rounded-lg border border-[#FCD34D] bg-[#FFFBEB] px-3 py-3">
       <PauseMark size={28} />
-      <div className="min-w-0 flex-1 leading-tight">
-        <div className="truncate text-[12px] text-[#364658]">
-          <span className="font-semibold">Paused</span> by <span className="font-medium text-[#3D8BD0]">{info.by}</span>
+      {c === 'line' ? (
+        <div className="min-w-0 flex-1 leading-tight">
+          <div className="text-[12px] font-semibold text-[#364658]">{countText}</div>
+          <div className="mt-1 truncate text-[11px] text-[#7B8FA5]" title={`Paused by ${info.by} · ${info.at}`}>
+            <span className="font-medium text-[#3D8BD0]">{info.by}</span> · {short}
+          </div>
         </div>
-        <div className="mt-0.5 truncate text-[11px] text-[#7B8FA5]">{info.at}</div>
-      </div>
+      ) : (
+        <div className="min-w-0 flex-1 leading-tight">
+          <div className="flex items-center gap-1.5 text-[12px] text-[#364658]">
+            <span className="font-semibold">Paused</span>
+            <Tooltip delayDuration={0}>
+              <TooltipTrigger asChild>
+                <span className="cursor-help rounded-full bg-[#FDE68A] px-1.5 py-px text-[11px] font-semibold tabular-nums text-[#92400E]">{PAUSED_COUNT.paused}/{PAUSED_COUNT.total}</span>
+              </TooltipTrigger>
+              <TooltipContent>{countText}</TooltipContent>
+            </Tooltip>
+          </div>
+          <div className="mt-1 truncate text-[11px] text-[#7B8FA5]" title={`Paused by ${info.by} · ${info.at}`}>
+            by <span className="font-medium text-[#3D8BD0]">{info.by}</span> · {short}
+          </div>
+        </div>
+      )}
       <ResumeButton onResume={onResume} />
     </div>
   );
