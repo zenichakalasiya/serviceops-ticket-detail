@@ -2482,7 +2482,7 @@ onStackMinimizedChange,
             {/* V2 — the strip in the left column only, above the tabs, outside the scrolling content. */}
             {pauseInfo && pauseUi === 'v2' && (
               <div className="flex-shrink-0 bg-white px-6 pt-3 pb-1">
-                <PausedBanner info={pauseInfo} onResume={togglePause} />
+                <PausedBanner info={pauseInfo} onResume={togglePause} onCount={() => setActiveMainTab('installation')} />
               </div>
             )}
             {/* Scrollable Content Area — the Superseded tab is a full-height React Flow map
@@ -3113,10 +3113,11 @@ onStackMinimizedChange,
             )}
 
             {activeMainTab === 'properties' && (
-            <div className="px-6 py-6">
-              {/* V5 — the paused strip as the FIRST thing in the Overview tab (Overview only). */}
+            <div className={'px-6 pb-6 ' + (pauseInfo && pauseUi === 'v5' ? 'pt-4' : 'pt-6')}>
+              {/* V5 — the paused strip as the FIRST thing in the Overview tab (Overview only). 16px above and
+                  below it, not 24: it is a notice attached to the tabs, not a section of its own. */}
               {pauseInfo && pauseUi === 'v5' && (
-                <div className="mb-6"><PausedBanner info={pauseInfo} onResume={togglePause} /></div>
+                <div className="mb-4"><PausedBanner info={pauseInfo} onResume={togglePause} onCount={() => setActiveMainTab('installation')} /></div>
               )}
               {/* Description — OPTIONAL. Only some patches carry release notes, so this renders
                   nothing at all when absent (no empty band). Clamped to 2 lines with View more. */}

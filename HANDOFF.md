@@ -1,6 +1,40 @@
-# Handoff — 2026-11-19 (afternoon): Compliance score quick filter, rule facts order, Rule Score subtext
+# Handoff — 2026-11-19 13:25 (Patch: V5 is the final paused banner; count links to the Deployment tab)
 
 > Sessions share this file. This top part is the newest; older notes follow.
+
+## Read first
+CLAUDE.md → "Patch Deployment — Pause / Resume" under Key context (its last sentences).
+
+## What we worked on this session
+Made V5 the final paused-deployment banner and turned its count sentence into a link to the Deployment tab;
+then slimmed the strip.
+
+## Completed
+- `FINAL = 'v5'` in DeploymentPausedBanner.tsx: the V2/V4/V5/V6 switch is hidden and any stored pick is ignored.
+  V2, V4 and V6 (and the Line | Pill card) stay built; `null` brings them back.
+- "10 of 12 installations paused" is a link (`onCount` → `setActiveMainTab('installation')`): 14px, no
+  underline at rest, blue + underline on hover, instant tooltip "View installations in the Deployment tab".
+- Strip is 42px (was ~54): 24px pause mark, compact 28px Resume, tighter padding; 16px above and below it.
+- Verified in the browser on PDR-1431: no switch, link opens the Deployment tab, sizes measured; no page errors.
+
+## In progress
+Nothing mid-flight.
+
+## Next steps
+- Open questions to Zeni: use the run's REAL counts (the Deployment tab lists 4 installations, the banner says
+  10 of 12 — fixed demo copy)? Should the link open the Deployment tab filtered to the paused installations?
+
+## Decisions made
+- V5 final (Zeni). No underline until hover (Zeni). Count 14px = 2px smaller than what showed (Zeni).
+
+## Gotchas & notes
+- A bare `<button>` does not inherit its line's font-size here (it rendered 16px in a 13px line) — always give
+  text buttons an explicit size.
+- Other sessions' uncommitted Compliance / create-form work is in the tree; left out of this commit.
+
+---
+
+# Handoff — 2026-11-19 (afternoon): Compliance score quick filter, rule facts order, Rule Score subtext
 
 ## Completed (headless browser, no page errors) — published
 - **Score quick filter** on Compliance Audit (Compliance Score) and technician Rules (Rule Score): a gauge icon opens `ThresholdPopup` (TicketFilterBar.tsx) — **Less than | Greater than** (Zeni: "Below / At least" confuses technicians; Greater than is STRICT), presets 50 · 70 · 80 · 90%, a typed score + Apply, and a plain sentence "Shows audits with a score greater than 85%". No empty / not-empty choice. Applies to the numeric `x_cpScore` via a hidden `type: 'number'` attr (`unit: '%'`); the chip edits the number. `QuickFilterDef.threshold = { presets, unit, noun }`. New conditions `is less than` / `is greater than` in applyFilters.

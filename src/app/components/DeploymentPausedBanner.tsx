@@ -23,8 +23,13 @@ const read = (): PauseUi => {
   try { const v = localStorage.getItem(KEY) as PauseUi; if (ALL.includes(v)) return v; } catch { /* private window */ }
   return 'v2';
 };
+/* V5 is FINAL (Zeni, 19 Nov 2026): the switch is hidden and every browser gets V5 whatever it stored.
+   V2, V4 and V6 stay built — set this to null to bring the switch and the other three back. */
+const FINAL: PauseUi | null = 'v5';
+
 export function usePauseUi(): [PauseUi, (v: PauseUi) => void] {
-  const [v, setV] = useState<PauseUi>(read);
+  const [stored, setV] = useState<PauseUi>(read);
+  const v = FINAL ?? stored;
   useEffect(() => {
     const on = () => setV(read());
     window.addEventListener(EVT, on);
@@ -64,6 +69,7 @@ export function useCountUi(): [CountUi, (v: CountUi) => void] {
 export function PauseUiSwitch() {
   const [v, set] = usePauseUi();
   const [c, setC] = useCountUi();
+  if (FINAL) return null;
   return (
     <div className="flex flex-shrink-0 items-center gap-1.5 px-2">
       <span className="text-[11px] text-[#7B8FA5]">Paused banner</span>
@@ -91,29 +97,41 @@ export function PauseMark({ size = 32 }: { size?: number }) {
   );
 }
 
-export function ResumeButton({ onResume }: { onResume: () => void }) {
+export function ResumeButton({ onResume, compact }: { onResume: () => void; /** 28px, for the slim strip. */ compact?: boolean }) {
   return (
     <button
       type="button"
       onClick={onResume}
-      className="inline-flex h-8 flex-shrink-0 items-center gap-1.5 rounded bg-[#3D8BD0] px-3 text-[13px] font-medium text-white transition-colors hover:bg-[#2F7BC0]"
+      className={(compact ? 'h-7 px-2.5 text-[12px] ' : 'h-8 px-3 text-[13px] ') + 'inline-flex flex-shrink-0 items-center gap-1.5 rounded bg-[#3D8BD0] font-medium text-white transition-colors hover:bg-[#2F7BC0]'}
     >
-      <Play size={13} fill="currentColor" strokeWidth={0} /> Resume
+      <Play size={compact ? 11 : 13} fill="currentColor" strokeWidth={0} /> Resume
     </button>
   );
 }
 
 /** V2 / V5 — the wide strip: one line of words. */
-export function PausedBanner({ info, onResume }: { info: PauseInfo; onResume: () => void }) {
+export function PausedBanner({ info, onResume, onCount }: { info: PauseInfo; onResume: () => void; /** Opens the run's Deployment tab, where the paused installations are listed. */ onCount?: () => void }) {
   return (
-    <div role="status" className="flex items-center gap-3 rounded-lg border border-[#FCD34D] bg-[#FFFBEB] px-4 py-2.5">
-      <PauseMark />
+    <div role="status" className="flex items-center gap-2.5 rounded-lg border border-[#FCD34D] bg-[#FFFBEB] py-1.5 pl-3 pr-1.5">
+      <PauseMark size={24} />
       <span className="min-w-0 flex-1 truncate text-[13px] text-[#364658]">
-        <span className="font-semibold">{countText}</span>
+        {onCount ? (
+          /* A link: no underline at rest (Zeni, 19 Nov 2026); hover turns it blue and underlines it.
+             A bare button does NOT inherit the line's size in this app (it was 16px), so it carries 14px. */
+          <Tooltip delayDuration={0}>
+            <TooltipTrigger asChild>
+              <button type="button" onClick={onCount}
+                className="text-[14px] font-semibold text-[#364658] underline-offset-[3px] transition-colors hover:text-[#3D8BD0] hover:underline">
+                {countText}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>View installations in the Deployment tab</TooltipContent>
+          </Tooltip>
+        ) : <span className="font-semibold">{countText}</span>}
         <span className="text-[#7B8FA5]"> · by </span><span className="font-medium text-[#3D8BD0]">{info.by}</span>
         <span className="text-[#7B8FA5]"> · {info.at}</span>
       </span>
-      <ResumeButton onResume={onResume} />
+      <ResumeButton onResume={onResume} compact />
     </div>
   );
 }
