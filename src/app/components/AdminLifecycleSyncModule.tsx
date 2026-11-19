@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { CalendarClock, Check, CheckCircle2, Clock, ExternalLink, Eye, EyeOff, KeyRound, Loader2, RefreshCw, ShieldCheck, X } from 'lucide-react';
+import { CalendarClock, Check, CheckCircle2, Clock, ExternalLink, Eye, EyeOff, KeyRound, Loader2, RefreshCw, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { ErrorText, FieldLabel, RuleSelect, ToggleSwitch, inputCls } from './FormRuleControls';
 
@@ -82,65 +82,23 @@ export function AdminLifecycleSyncModule() {
 /* ── Warranty ─────────────────────────────────────────────────────────────── */
 
 function WarrantyTab() {
-  const [enabled, setEnabled] = useState<Record<VendorId, boolean>>({ dell: true, hp: true, lenovo: true, asus: true });
   const [dellCreds, setDellCreds] = useState<{ id: string } | null>(null);
   const [credsOpen, setCredsOpen] = useState(false);
-  const [syncing, setSyncing] = useState(false);
-  const [lastSync, setLastSync] = useState('Today, 06:00 AM');
 
   /* Dell's devices are only looked up once it has credentials. */
   const vendors = VENDORS.map((v) => (v.id === 'dell' && dellCreds ? { ...v, found: 389 } : v));
-  const live = vendors.filter((v) => enabled[v.id] && (!v.needsCredentials || dellCreds));
-  const devices = vendors.reduce((n, v) => n + v.devices, 0);
-  const found = live.reduce((n, v) => n + v.found, 0);
-  const waiting = vendors.filter((v) => v.needsCredentials && !dellCreds);
-
-  const syncNow = () => {
-    setSyncing(true);
-    window.setTimeout(() => { setSyncing(false); setLastSync('Just now'); toast.success(`Warranty synced for ${live.length} vendors`); }, 1200);
-  };
 
   return (
     <>
-      {/* What the sync has done — the page's opening line is its result, not an explanation. */}
-      <section className="rounded-lg border border-[#E5E7EB] bg-white">
-        <div className="flex items-start gap-3 border-b border-[#EEF2F6] px-5 py-4">
-          <span className="flex size-9 flex-shrink-0 items-center justify-center rounded-lg bg-[#EBF5FF] text-[#3D8BD0]"><ShieldCheck size={18} /></span>
-          <div className="min-w-0 flex-1">
-            <h2 className="text-[14px] font-semibold text-[#364658]">Warranty is fetched automatically</h2>
-            <p className="mt-0.5 text-[12px] leading-[1.5] text-[#7B8FA5]">Every device with a serial number is checked with its manufacturer once a day. Warranty dates land on the asset's Warranty card.</p>
-          </div>
-          <button type="button" onClick={syncNow} disabled={syncing}
-            className="inline-flex h-8 flex-shrink-0 items-center gap-1.5 rounded border border-[#DFE5ED] bg-white px-3 text-[13px] font-medium text-[#364658] transition-colors hover:bg-[#F9FAFB] disabled:opacity-60">
-            {syncing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />} {syncing ? 'Syncing…' : 'Sync now'}
-          </button>
-        </div>
-        <div className="grid grid-cols-2 divide-[#EEF2F6] md:grid-cols-4 md:divide-x">
-          <Stat label="Devices with a serial number" value={devices.toLocaleString()} />
-          <Stat label="Warranty found" value={found.toLocaleString()} sub={`${pct(found, devices)}% of devices`} tone="#16A34A" />
-          <Stat label="Expiring in 30 days" value="37" sub="Across all vendors" tone="#D97706" />
-          <Stat label="Last synced" value={lastSync} sub="Next: Tomorrow, 06:00 AM" small />
-        </div>
-      </section>
-
-      <div className="mb-3 mt-7 flex items-end justify-between gap-4">
-        <div>
-          <h2 className="text-[14px] font-semibold text-[#364658]">Supported vendors <span className="font-normal text-[#7B8FA5]">· {VENDORS.length}</span></h2>
-          <p className="mt-0.5 text-[12px] text-[#7B8FA5]">Turn a vendor off to stop its warranty lookups. Existing warranty dates are kept.</p>
-        </div>
-        {waiting.length > 0 && (
-          <span className="inline-flex flex-shrink-0 items-center gap-1.5 rounded-sm bg-[#FEF3C7] px-2 py-1 text-[12px] font-medium text-[#B45309]">
-            <KeyRound size={13} /> {waiting.length} vendor needs credentials
-          </span>
-        )}
+      {/* No summary card, no Sync now, no per-vendor switch (Zeni, 19 Nov 2026): the vendors ARE the page. */}
+      <div className="mb-3">
+        <h2 className="text-[14px] font-semibold text-[#364658]">Supported vendors <span className="font-normal text-[#7B8FA5]">· {VENDORS.length}</span></h2>
+        <p className="mt-0.5 text-[12px] text-[#7B8FA5]">Every device with a serial number is checked with its manufacturer once a day.</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {vendors.map((v) => (
-          <VendorCard key={v.id} v={v} on={enabled[v.id]} onToggle={(on) => {
-            setEnabled((e) => ({ ...e, [v.id]: on }));
-            toast.success(`${v.name} warranty sync ${on ? 'turned on' : 'turned off'}`);
-          }} connected={!v.needsCredentials || !!dellCreds} onCredentials={() => setCredsOpen(true)} />
+          <VendorCard key={v.id} v={v} connected={!v.needsCredentials || !!dellCreds} onCredentials={() => setCredsOpen(true)} />
         ))}
       </div>
 
@@ -152,65 +110,46 @@ function WarrantyTab() {
   );
 }
 
-function Stat({ label, value, sub, tone, small }: { label: string; value: string; sub?: string; tone?: string; small?: boolean }) {
-  return (
-    <div className="px-5 py-4">
-      <div className="text-[12px] text-[#7B8FA5]">{label}</div>
-      <div className={'mt-1 font-semibold ' + (small ? 'text-[15px] leading-[28px]' : 'text-[20px] leading-[28px]')} style={{ color: tone ?? '#364658' }}>{value}</div>
-      {sub && <div className="mt-0.5 text-[12px] text-[#7B8FA5]">{sub}</div>}
-    </div>
-  );
-}
-
-function VendorCard({ v, on, onToggle, connected, onCredentials }: { v: Vendor; on: boolean; onToggle: (on: boolean) => void; connected: boolean; onCredentials: () => void }) {
+function VendorCard({ v, connected, onCredentials }: { v: Vendor; connected: boolean; onCredentials: () => void }) {
   const waiting = !connected;
   const share = pct(v.found, v.devices);
   return (
-    <div className={'flex flex-col rounded-lg border bg-white transition-colors ' + (waiting && on ? 'border-[#F5D08A]' : 'border-[#E5E7EB] hover:border-[#CBD5E1]')}>
-      <div className="flex items-center gap-3 px-4 pt-4">
-        <VendorMark id={v.id} />
+    <div className={'flex flex-col rounded-lg border bg-white p-3.5 transition-colors ' + (waiting ? 'border-[#F5D08A]' : 'border-[#E5E7EB] hover:border-[#CBD5E1]')}>
+      <div className="flex items-center gap-2.5">
+        <VendorMark id={v.id} size={32} />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <span className="text-[14px] font-semibold text-[#364658]">{v.name}</span>
-            {!on ? <Pill tone="grey">Off</Pill> : waiting ? <Pill tone="amber">Needs credentials</Pill> : <Pill tone="green">Connected</Pill>}
+            {waiting ? <Pill tone="amber">Needs credentials</Pill> : <Pill tone="green">Connected</Pill>}
           </div>
-          <div className="mt-0.5 truncate text-[12px] text-[#7B8FA5]">{v.source}</div>
+          <div className="truncate text-[12px] text-[#7B8FA5]">{v.source}</div>
         </div>
-        <ToggleSwitch on={on} onChange={onToggle} title={on ? `Turn off ${v.name} warranty sync` : `Turn on ${v.name} warranty sync`} />
       </div>
 
-      <div className={'flex-1 px-4 pb-4 pt-4 ' + (on ? '' : 'opacity-50')}>
+      <div className="mt-3 flex-1">
         {waiting ? (
-          <div className="rounded-md bg-[#FFFBEB] px-3 py-2.5 text-[12px] leading-[1.5] text-[#92400E]">
-            <span className="font-semibold">{v.devices} {v.name} devices</span> are waiting. Dell shares warranty only through its TechDirect API, so it needs your API credentials.
-          </div>
+          <p className="text-[12px] leading-[1.5] text-[#92400E]"><span className="font-semibold">{v.devices} devices</span> waiting for API credentials.</p>
         ) : (
           <>
             <div className="flex items-baseline justify-between text-[12px]">
               <span className="text-[#7B8FA5]">Warranty found</span>
-              <span className="text-[#364658]"><span className="font-semibold">{v.found}</span> of {v.devices} devices · {share}%</span>
+              <span className="text-[#364658]"><span className="font-semibold">{v.found}</span> / {v.devices} · {share}%</span>
             </div>
             <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-[#EEF2F6]">
               <div className="h-full rounded-full bg-[#16A34A]" style={{ width: `${share}%` }} />
-            </div>
-            <div className="mt-1.5 text-[12px] text-[#7B8FA5]">
-              {v.devices - v.found > 0 ? `${v.devices - v.found} not found — usually an unregistered or mistyped serial number.` : 'Every device has a warranty on record.'}
             </div>
           </>
         )}
       </div>
 
-      <div className="flex min-h-[44px] items-center justify-between gap-3 border-t border-[#EEF2F6] px-4 py-2">
+      <div className="mt-3 flex h-8 items-center">
         {v.needsCredentials ? (
-          <>
-            <span className="inline-flex items-center gap-1.5 text-[12px] text-[#7B8FA5]"><KeyRound size={13} /> {connected ? 'Credentials saved' : 'Client ID and Client Secret required'}</span>
-            {waiting ? (
-              <button type="button" onClick={onCredentials} disabled={!on}
-                className="inline-flex h-8 items-center gap-1.5 rounded bg-[#3D8BD0] px-3 text-[13px] font-medium text-white transition-colors hover:bg-[#2d6ca0] disabled:opacity-50">Add credentials</button>
-            ) : (
-              <button type="button" onClick={onCredentials} className="text-[13px] font-medium text-[#3D8BD0] hover:underline">Edit credentials</button>
-            )}
-          </>
+          waiting ? (
+            <button type="button" onClick={onCredentials}
+              className="inline-flex h-8 items-center gap-1.5 rounded bg-[#3D8BD0] px-3 text-[13px] font-medium text-white transition-colors hover:bg-[#2d6ca0]"><KeyRound size={14} /> Add credentials</button>
+          ) : (
+            <button type="button" onClick={onCredentials} className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#3D8BD0] hover:underline"><KeyRound size={14} /> Edit credentials</button>
+          )
         ) : (
           <span className="inline-flex items-center gap-1.5 text-[12px] text-[#7B8FA5]"><CheckCircle2 size={13} className="text-[#16A34A]" /> No setup needed</span>
         )}

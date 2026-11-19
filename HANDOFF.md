@@ -1,3 +1,18 @@
+# Handoff — 2026-11-19 (evening): Lifecycle Sync Warranty tab slimmed
+
+> Sessions share this file. This top part is the newest; older notes follow.
+
+## Completed (verified on localhost, no page errors, build green)
+- Warranty tab (`AdminLifecycleSyncModule.tsx`): removed the summary card (Sync now + four KPIs) and the
+  per-vendor on/off switches. The once-a-day line moved under "Supported vendors".
+- Vendor cards are compact and sit 4 in one row (2 on narrow screens): mark, name, status pill, source,
+  "Warranty found" bar; Dell shows "412 devices waiting for API credentials" + Add credentials.
+
+## Open
+- Zeni to review vendor marks (text badges) and mock numbers / EOSL run times.
+
+---
+
 # Handoff — 2026-11-19 (evening): Compliance Audit listing shows Compliance Result
 
 > Sessions share this file. This top part is the newest; older notes follow.

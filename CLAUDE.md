@@ -197,9 +197,10 @@ A high-fidelity UI prototype of the Motadata ServiceOps ITSM product — list pa
   Route `#/admin/lifecycle-sync`; ONE card "Lifecycle Sync" replaced the old Warranty Sync + EOSL Sync Setting
   cards (`adminData.ts`), wired via `CARD_MODULES` in AdminPage. Standard admin head + the product's inline
   tabs **Warranty · EOSL Sync Schedule** (both tabs stay mounted, hidden, so state survives a switch).
-  Warranty = a summary card (Sync now + four numbers) instead of the reference's empty-state banner, then one
-  card per supported vendor (Dell, HP, Lenovo, ASUS — only the four from the reference): status pill, on/off
-  `ToggleSwitch`, coverage bar. Only **Dell** needs credentials (TechDirect API): amber card → Add credentials →
+  Warranty = the "Supported vendors" heading + one line, then four SMALL vendor cards in ONE row (Dell, HP,
+  Lenovo, ASUS — only the four from the reference): mark, name, status pill, source, coverage bar. NO summary
+  card / Sync now / KPIs and NO per-vendor switch (Zeni removed them, 19 Nov 2026). Only **Dell** needs
+  credentials (TechDirect API): amber card → Add credentials →
   560px right side panel (Client ID, Client Secret, Where to find these, Save & connect) → Connected + Edit
   credentials. EOSL tab = switch, Frequency / Day or Date / Time (`RuleSelect`), a plain "Runs … Next run …"
   line, Sync now + Save, Recent runs table. Vendor marks are text badges, all data mock.
