@@ -194,8 +194,8 @@ export const formModuleByCard = (section: string, card: string) => FORM_MODULES.
 /** The Request form's sections — Request keeps its own field list (shared with Form Rules), so only
  *  its section headers come from here, placed before the field ids they open. */
 export const REQUEST_SECTIONS: { before: string; field: FormField }[] = [
-  { before: 'requester', field: S('Request details', 'What the request is about and who raised it.') },
-  { before: 'status', field: S('Classification', 'How urgent it is and what kind of request it is.') },
+  /* The first five fields lead the form OUTSIDE any section (Zeni, 19 Nov 2026), so there is no section before Requester. */
+  { before: 'urgency', field: S('Classification', 'How urgent it is and what kind of request it is.') },
   { before: 'technician-group', field: S('Assignment', 'Who works on it, and where it belongs.') },
   { before: 'cc-emails', field: S('More details', '') },
 ];

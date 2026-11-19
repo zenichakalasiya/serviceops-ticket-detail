@@ -1,3 +1,32 @@
+# Handoff — 2026-11-19 18:59 (Form builder: V3 hidden, V4 = V2's form, five fields before any section, Settings tab disabled with nothing picked)
+
+> Sessions share this file. This top part is the newest; older notes follow.
+
+## Read first
+CLAUDE.md → "Form builder versions", its last bullet (19 Nov 2026, evening).
+
+## Completed (headless browser, no page errors)
+- **V3 hidden:** `BUILDERS = ['v2', 'v4']` in `formStudioUi.ts`; the pill reads V2 | V4. V3's code stays.
+- **V4 has no per-section add rows:** the "Type / to add a field" box and the "Drop a field here" slot are gone; fields come from the panel (click or drag). An empty section keeps its empty card.
+- **V4 draws its form exactly as V2:** `canvasV3` (plain fields, no outlines, select-to-dim) and V2's wrapper spacing. `canvasV2` is no longer rendered.
+- **Five fields before any section, on every admin form:** Request form = `REQUEST_SECTIONS` lost "Request details" and Classification starts at Urgency; every other form goes through `leadWithFive()` in `AdminFormModule.tsx`. Checked: Request, User, Problem and Change forms all open with no heading.
+- **Settings tab disabled with nothing selected** (V2 "Field settings", V4 "Settings"): `aria-disabled`, greyed, click does nothing, instant tooltip "Select a field on the form to edit its settings."; selecting a field or section enables it; deselecting returns the panel to Fields.
+
+## In progress
+Nothing mid-flight.
+
+## Next steps (open questions for Zeni)
+- `leadWithFive` drops a section left with no fields. Fine, or keep it as an empty section?
+- From the morning: centre the page heading too? blank cell in odd tile groups? V4 panel 300px right?
+- Earlier, still open: section-less fields between sections as on .185; leftover `showWhen` data; Requester Group Access Level; Stepper form (research first).
+
+## Gotchas
+- A disabled-looking tab must stay a real `<button>` (`aria-disabled`, not `disabled`) or its tooltip never shows; Playwright then needs `click({ force: true })` to test it does nothing.
+- The form's sections are seeded ONCE per page load (module store), so an open tab keeps the old layout until reloaded.
+- Other sessions' uncommitted files were kept out of this commit. `versions/versions.json` was NOT touched.
+
+---
+
 # Handoff — 2026-11-19 (evening, later): Lifecycle Sync vendor cards — V1 | V2
 
 > Sessions share this file. This top part is the newest; older notes follow.

@@ -18,7 +18,7 @@ export type FormStudioUi = 'v1' | 'v2' | 'v3' | 'v4';
 const KEY = 'formBuilderUi3';
 /** The builders this build offers, first = the one it opens on. Version 1 of the form builder is the old
  *  builder alone; Version 2 offers V2 | V3 | V4 (Zeni, 16 Nov 2026). One builder = no pill. */
-export const BUILDERS: FormStudioUi[] = ['v2', 'v3', 'v4'];
+export const BUILDERS: FormStudioUi[] = ['v2', 'v4']; // V3 hidden 19 Nov 2026 (Zeni); its code stays
 /** The builder a fresh browser opens on. */
 const DEFAULT_BUILDER: FormStudioUi = BUILDERS[0];
 const EVENT = 'form-studio-ui';

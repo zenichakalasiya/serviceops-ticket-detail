@@ -11,10 +11,20 @@ import type { FormField } from './formRuleData';
  * page opens straight into its builder — no listing of one row (Zeni, 2 Nov 2026). Edits live for the
  * session in a module-level store, so leaving the page and coming back keeps them. */
 
+/** Every form leads with its first five fields OUTSIDE any section, then the sections (Zeni, 19 Nov 2026).
+ *  Lifts the first five fields to the top in order; a section left with nothing under it is dropped. */
+export function leadWithFive(list: FormField[], n = 5): FormField[] {
+  const lead = list.filter((f) => f.kind !== 'section').slice(0, n);
+  if (!lead.length || list[0]?.kind !== 'section') return list;
+  const rest = list.filter((f) => !lead.includes(f));
+  const kept = rest.filter((f, i) => f.kind !== 'section' || (rest[i + 1] && rest[i + 1].kind !== 'section'));
+  return [...lead, ...kept];
+}
+
 const store: Record<string, FormField[]> = ((globalThis as unknown as { __formStudioStore?: Record<string, FormField[]> }).__formStudioStore ??= {});
 
 export function AdminFormModule({ mod }: { mod: FormModule }) {
-  const [fields, setFields] = useState<FormField[]>(() => (store[mod.slug] ??= mod.seed()));
+  const [fields, setFields] = useState<FormField[]>(() => (store[mod.slug] ??= leadWithFive(mod.seed())));
   const onFields = (next: FormField[]) => { store[mod.slug] = next; setFields(next); };
   const ui = useFormStudioUi();
   /** Builder V2 puts its Build / Preview / Save draft / Publish here, beside the heading. */

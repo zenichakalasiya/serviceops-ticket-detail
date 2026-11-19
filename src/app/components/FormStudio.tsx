@@ -388,6 +388,9 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing, toolbarS
   /** V3: the Custom fields search. */
   const [pq, setPq] = useState('');
   const [tab, setTab] = useState<'fields' | 'settings' | 'guide'>('fields');
+  /** Settings is only reachable while a field or section is selected (Zeni, 19 Nov 2026); with nothing picked the tab is disabled and says why. */
+  const noPick = sel.kind === 'form';
+  useEffect(() => { if (noPick && tab === 'settings') setTab('fields'); }, [noPick, tab]);
   /** The Help guide takes the right panel only when asked for — remembered, closed by default. */
   /* Each builder remembers its own choice: V3 shows the guide (in its empty panel) until it is hidden, V2 / V4 only when asked. */
   const readGuide = () => { try { const v = localStorage.getItem('formStudioGuide:' + ui); return v === 'open'; } catch { return false; } };
@@ -817,20 +820,13 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing, toolbarS
   const canvasV2 = (g: Group, gi: number) => {
     const cols = colsOf(g);
     const on = sel.kind === 'section' && g.sec && sel.id === g.sec.id;
-    const key = `${gi}:type`;
     return (
       <section key={g.sec?.id ?? 'lead'} data-sec={g.sec?.id} className="relative flex flex-col gap-3" {...secDnd(g).props}>{secDnd(g).line}
         {sectionHead(g, true, !!on)}
         {g.sec?.helpText && <p className="-mt-2.5 text-[12px] text-[#7B8FA5]">{g.sec.helpText}</p>}
         {g.items.length > 0 && <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>{g.items.map((f) => fieldCard(f, cols, true))}</div>}
-        <div className="relative">
-          <input ref={(el) => { typeBoxes.current[key] = el; }} value={menu === key ? q : ''} placeholder="Type / to add a field" aria-label={`Add a field to ${g.sec?.label ?? 'the form'}`}
-            onFocus={() => { setMenu(key); }} onChange={(e) => { setMenu(key); setQ(e.target.value.replace(/^\//, '')); }}
-            onKeyDown={(e) => { if (e.key === 'Enter') { const m = groupedKinds(q)[0]?.kinds[0]; if (m) addAt(g.end, m); } if (e.key === 'Escape') { setMenu(null); setQ(''); e.currentTarget.blur(); } }}
-            className="h-9 w-full rounded-lg border border-dashed border-[#CBD5E1] bg-white px-3 text-[13px] text-[#364658] placeholder:text-[#94A3B8] focus:border-[#3D8BD0] focus:outline-none" />
-          {menu === key && <AddMenu below grouped typed={typeBoxes.current[key]} query={q} onQuery={setQ} onClose={() => setMenu(null)} onPick={(k) => addAt(g.end, k)} />}
-        </div>
-        {g.items.length === 0 ? emptySection(g) : dropSlot(g.end)}
+        {/* No "Type / to add a field" box and no drop slot (Zeni, 19 Nov 2026): fields come from the panel, by click or drag. */}
+        {g.items.length === 0 && emptySection(g)}
       </section>
     );
   };
@@ -1068,7 +1064,7 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing, toolbarS
             <div className="flex-shrink-0 border-b border-[#EEF2F6] p-3">
               <div className="pill-track w-full" role="group" aria-label="Panel">
                 <button type="button" aria-pressed={tab === 'fields'} onClick={() => setTab('fields')}>Custom fields</button>
-                <button type="button" aria-pressed={tab !== 'fields'} onClick={() => setTab('settings')}>Field settings</button>
+                <Tooltip delayDuration={0}><TooltipTrigger asChild><button type="button" aria-pressed={tab !== 'fields' && !noPick} aria-disabled={noPick} onClick={() => { if (!noPick) setTab('settings'); }} className={noPick ? '!cursor-not-allowed opacity-50' : ''}>Field settings</button></TooltipTrigger>{noPick && <TooltipContent side="bottom" className="text-wrap">Select a field on the form to edit its settings.</TooltipContent>}</Tooltip>
               </div>
             </div>
             {tab === 'fields' ? paletteV3() : (
@@ -1090,8 +1086,8 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing, toolbarS
         <div className="relative flex min-h-0 flex-1">
           {helpFloat}
           <div className="min-h-0 min-w-0 flex-1 overflow-y-auto bg-white" onClick={(e) => { if (e.target === e.currentTarget) select({ kind: 'form' }); }}>
-            <div className="mx-auto flex max-w-[1040px] flex-col gap-6 px-4 pb-16 pt-4" onClick={(e) => { if (e.target === e.currentTarget) select({ kind: 'form' }); }}>
-              {groups.length ? groups.map((g, gi) => (v2 ? canvasV2(g, gi) : canvasV1(g, gi))) : empty}
+            <div className={'mx-auto flex max-w-[1040px] flex-col ' + (v2 ? 'gap-4 pb-16 pl-1 pr-4 pt-3' : 'gap-6 px-4 pb-16 pt-4')} onClick={(e) => { if (e.target === e.currentTarget) select({ kind: 'form' }); }}>
+              {groups.length ? groups.map((g, gi) => (v2 ? canvasV3(g) /* V4 draws its form exactly as V2 does — plain fields, no outlines (Zeni, 19 Nov 2026) */ : canvasV1(g, gi))) : empty}
               {groups.length > 0 && addSectionCard()}
             </div>
           </div>
@@ -1101,7 +1097,7 @@ export function FormStudio({ title, noun, fields, onFields, rulesUsing, toolbarS
               <div className="flex-shrink-0 px-3 pt-3">
                 <div className="pill-track w-full" role="group" aria-label="Panel">
                   <button type="button" aria-pressed={tab === 'fields'} onClick={() => setTab('fields')}>Fields</button>
-                  <button type="button" aria-pressed={tab !== 'fields'} onClick={() => setTab('settings')}>Settings</button>
+                  <Tooltip delayDuration={0}><TooltipTrigger asChild><button type="button" aria-pressed={tab !== 'fields' && !noPick} aria-disabled={noPick} onClick={() => { if (!noPick) setTab('settings'); }} className={noPick ? '!cursor-not-allowed opacity-50' : ''}>Settings</button></TooltipTrigger>{noPick && <TooltipContent side="bottom" className="text-wrap">Select a field on the form to edit its settings.</TooltipContent>}</Tooltip>
                 </div>
               </div>
             )}
