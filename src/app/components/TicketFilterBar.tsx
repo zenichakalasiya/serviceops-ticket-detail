@@ -56,13 +56,15 @@ export interface FilterRule {
   values: string[];
 }
 
-type Condition = 'is' | 'is not' | 'contains' | 'is before' | 'is after' | 'empty' | 'not empty';
+type Condition = 'is' | 'is not' | 'contains' | 'is before' | 'is after' | 'is less than' | 'is greater than' | 'empty' | 'not empty';
 
 export interface Attr {
   key: string;
   label: string;
   icon: typeof Hash;
-  type: 'text' | 'select' | 'date';
+  type: 'text' | 'select' | 'date' | 'number';
+  /** Shown after a number value ("70%"). */
+  unit?: string;
   options?: { label: string; color?: string }[];
   /** Person-valued: options show an avatar in the listing's role colour. */
   people?: 'requester' | 'technician';
@@ -206,6 +208,7 @@ const CONDITIONS: Record<Attr['type'], Condition[]> = {
   text: ['is', 'is not', 'contains', 'empty', 'not empty'],
   select: ['is', 'is not', 'empty', 'not empty'],
   date: ['is', 'is before', 'is after', 'empty', 'not empty'],
+  number: ['is less than', 'is greater than'],
 };
 const NEEDS_VALUE = (c: Condition) => c !== 'empty' && c !== 'not empty';
 
@@ -297,6 +300,13 @@ export function applyFilters(tickets: Ticket[], rules: FilterRule[]): Ticket[] {
       }
       let val = valueFor(t, r.field);
       if (!val && !(r.field in t)) val = standInValue(t, attr);
+      /* A score threshold (Zeni, 19 Nov 2026): "is less than 70" / "is greater than 90" — the words a
+         technician already uses for numbers. A row with no score (never scanned) matches neither. */
+      if (r.condition === 'is less than' || r.condition === 'is greater than') {
+        const n = parseFloat(val), lim = parseFloat(r.values[0]);
+        if (Number.isNaN(n) || Number.isNaN(lim)) return false;
+        return r.condition === 'is less than' ? n < lim : n > lim;
+      }
       switch (r.condition) {
         case 'empty':
           return !val;
@@ -474,14 +484,26 @@ function Chip({
               <span className="text-[#9CA3AF]">Select option...</span>
             ) : (
               <>
-                <span className="rounded-sm bg-[#F1F5F9] px-1.5 py-0.5 text-[11px] font-medium text-[#364658]">{rule.values[0]}</span>
+                <span className="rounded-sm bg-[#F1F5F9] px-1.5 py-0.5 text-[11px] font-medium text-[#364658]">{rule.values[0]}{attr.unit ?? ''}</span>
                 {rule.values.length > 1 && <span className="text-[11px] text-[#64748B]">+{rule.values.length - 1}</span>}
               </>
             )}
           </button>
           {valOpen && (
             <div className={`${POPUP} left-0 top-full mt-1 w-[260px]`}>
-              {attr.type === 'text' ? (
+              {attr.type === 'number' ? (
+                <div className="flex items-center gap-2 p-2">
+                  <input
+                    autoFocus type="number" min={0} max={100}
+                    value={rule.values[0] ?? ''}
+                    onChange={(e) => onChange({ ...rule, values: e.target.value ? [e.target.value] : [] })}
+                    onKeyDown={(e) => e.key === 'Enter' && setValOpen(false)}
+                    placeholder="0 – 100"
+                    className="h-8 w-full rounded border border-[#E5E7EB] bg-[#F9FAFB] px-2.5 text-[13px] text-[#364658] placeholder:text-[#9CA3AF] focus:border-[#3D8BD0] focus:bg-white focus:outline-none"
+                  />
+                  {attr.unit && <span className="text-[13px] text-[#64748B]">{attr.unit}</span>}
+                </div>
+              ) : attr.type === 'text' ? (
                 <div className="p-2">
                   <input
                     autoFocus
@@ -600,6 +622,9 @@ export interface QuickFilterDef {
       selected. For a filter whose values are two halves of one set, "unticking the one you
       picked" is not an obvious way back to everything — this is. */
   allLabel?: string;
+  /** A THRESHOLD filter instead of a value list (Zeni, 19 Nov 2026 — scores): Less than / Greater
+      than, preset lines and a custom number. `noun` names the records in the hint. `options` is unused. */
+  threshold?: { presets: number[]; unit: string; noun: string };
 }
 
 const DEFAULT_QUICK: QuickFilterDef[] = [
@@ -764,7 +789,7 @@ function QuickFilters({ rules, setRules, filters = DEFAULT_QUICK }: { rules: Fil
   const initials = (n: string) => n.split(' ').filter(Boolean).map((p) => p[0]).join('').slice(0, 2).toUpperCase();
   /* Icon-only, one shape across every module — the tooltip carries the name. */
   const iconBtn = (field: string, Icon: typeof Flag, label: string) => {
-    const active = valuesOf(field).length > 0;
+    const active = valuesOf(field).length > 0 || rules.some((r) => r.field === field && !NEEDS_VALUE(r.condition));
     if (active) return null;
     const tone = open === field
       ? 'border-[#3D8BD0] bg-[#EBF5FF] text-[#3D8BD0]'
@@ -791,7 +816,14 @@ function QuickFilters({ rules, setRules, filters = DEFAULT_QUICK }: { rules: Fil
       ))}
 
       {filters.map((f) =>
-        open !== f.field ? null : (
+        open !== f.field ? null : f.threshold ? (
+          <ThresholdPopup key={f.field} def={f} rule={rules.find((r) => r.field === f.field)}
+            onApply={(condition, values) => {
+              setOpen(null);
+              const rest = rules.filter((r) => r.field !== f.field);
+              setRules([...rest, { id: `${f.field}-qf-${Date.now()}`, field: f.field, condition, values }]);
+            }} />
+        ) : (
           <div
             key={f.field}
             className="app-menu absolute left-0 top-full z-50 mt-1 rounded-lg border border-[#DFE5ED] bg-white py-1.5 shadow-xl"
@@ -876,6 +908,57 @@ function QuickFilters({ rules, setRules, filters = DEFAULT_QUICK }: { rules: Fil
         ),
       )}
 
+    </div>
+  );
+}
+
+/* The score quick filter (Zeni, 19 Nov 2026). A score is cut by a LINE, not picked from a list:
+   choose Less than or Greater than (technician words, not Below / At least), then a preset line (the ones auditors report against) or type your own.
+   One click on a preset applies — the chip takes over from there, and its value can be retyped. */
+function ThresholdPopup({ def, rule, onApply }: {
+  def: QuickFilterDef; rule?: FilterRule;
+  onApply: (condition: Condition, values: string[]) => void;
+}) {
+  const t = def.threshold!;
+  const [op, setOp] = useState<'is less than' | 'is greater than'>(rule?.condition === 'is greater than' ? 'is greater than' : 'is less than');
+  const [custom, setCustom] = useState(rule ? rule.values[0] ?? '' : '');
+  const cur = rule && rule.condition === op ? rule.values[0] : undefined;
+  const n = parseFloat(custom);
+  const ok = !Number.isNaN(n) && n >= 0 && n <= 100;
+  const word = op === 'is less than' ? 'less than' : 'greater than';
+  return (
+    <div className="app-menu absolute left-0 top-full z-50 mt-1 rounded-lg border border-[#DFE5ED] bg-white p-3 shadow-xl" style={{ width: def.width }}>
+      <div className="pb-2 text-[11px] font-semibold uppercase tracking-wide text-[#7B8FA5]">{def.title}</div>
+      <div className="pill-track w-full">
+        <button type="button" aria-pressed={op === 'is less than'} onClick={() => setOp('is less than')}>Less than</button>
+        <button type="button" aria-pressed={op === 'is greater than'} onClick={() => setOp('is greater than')}>Greater than</button>
+      </div>
+      <div className="mt-2.5 grid grid-cols-4 gap-1.5">
+        {t.presets.map((p) => {
+          const on = cur === String(p);
+          return (
+            <button key={p} type="button" onClick={() => onApply(op, [String(p)])}
+              className={'h-8 rounded border text-[13px] tabular-nums transition-colors ' + (on ? 'border-[#3D8BD0] bg-[#EBF5FF] font-medium text-[#3D8BD0]' : 'border-[#DFE5ED] text-[#364658] hover:border-[#3D8BD0] hover:bg-[#F5F9FE]')}>
+              {p}{t.unit}
+            </button>
+          );
+        })}
+      </div>
+      <div className="mt-2.5 flex items-center gap-1.5">
+        <div className="relative min-w-0 flex-1">
+          <input type="number" min={0} max={100} value={custom} onChange={(e) => setCustom(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter' && ok) onApply(op, [String(n)]); }}
+            placeholder="Enter a score"
+            className="h-8 w-full rounded border border-[#DFE5ED] bg-white pl-2.5 pr-7 text-[13px] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none text-[#364658] outline-none placeholder:text-[#9CA3AF] focus:border-[#3D8BD0]" />
+          <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[12px] text-[#94A3B8]">{t.unit}</span>
+        </div>
+        <button type="button" disabled={!ok} onClick={() => onApply(op, [String(n)])}
+          className="h-8 rounded bg-[#3D8BD0] px-3 text-[12px] font-medium text-white transition-colors hover:bg-[#3478B5] disabled:opacity-50">Apply</button>
+      </div>
+      {/* Says the result in plain words, with the number in it once there is one. */}
+      <p className="mt-2 text-[11.5px] leading-[1.45] text-[#64748B]">
+        Shows {t.noun} with a score {word} {ok ? <span className="font-medium text-[#364658]">{n}{t.unit}</span> : 'the value you pick'}.
+      </p>
     </div>
   );
 }

@@ -215,9 +215,9 @@ const readBox = 'mt-1 flex min-h-8 items-center rounded bg-[#F9FAFB] px-3 py-1.5
 export function RuleFactsRow({ rule }: { rule: ComplianceRule }) {
   return (
     <HeaderKpiRow gap="mt-[3px]" wrap items={[
-      ckpi('profile', 'Profile', rule.profile, { chip: rule.profile === 'L1' ? 'blue' : 'violet', tip: rule.profile === 'L1' ? 'Profile: Level 1 — must have' : 'Profile: Level 2 — good to have' }),
       ckpi('assessment', 'Assessment', rule.assessment, { color: rule.assessment === 'Automated' ? '#15803D' : '#B54708', tip: rule.assessment === 'Automated' ? 'Automated: the agent checks this rule' : 'Manual: a person has to review this rule' }),
-      /* Zeni, 12 Nov 2026: Profile · Assessment · OS Platform · OS Version · Severity. The facts follow the listing columns — no OS Type, and Platform
+      ckpi('profile', 'Profile', rule.profile, { chip: rule.profile === 'L1' ? 'blue' : 'violet', tip: rule.profile === 'L1' ? 'Profile: Level 1 — must have' : 'Profile: Level 2 — good to have' }),
+      /* Zeni, 12 Nov 2026 (order changed 19 Nov 2026 — Assessment leads, so the Profile chip does not sit right under the blue RUL id pill): Assessment · Profile · OS Platform · OS Version · Severity. The facts follow the listing columns — no OS Type, and Platform
          reads "OS Platform" as the technician column does. */
       ckpi('platform', 'OS Platform', rule.platform),
       ckpi('version', 'OS Version', rule.version),

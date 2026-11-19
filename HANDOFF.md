@@ -1,3 +1,19 @@
+# Handoff — 2026-11-19 (afternoon): Compliance score quick filter, rule facts order, Rule Score subtext
+
+> Sessions share this file. This top part is the newest; older notes follow.
+
+## Completed (headless browser, no page errors) — published
+- **Score quick filter** on Compliance Audit (Compliance Score) and technician Rules (Rule Score): a gauge icon opens `ThresholdPopup` (TicketFilterBar.tsx) — **Less than | Greater than** (Zeni: "Below / At least" confuses technicians; Greater than is STRICT), presets 50 · 70 · 80 · 90%, a typed score + Apply, and a plain sentence "Shows audits with a score greater than 85%". No empty / not-empty choice. Applies to the numeric `x_cpScore` via a hidden `type: 'number'` attr (`unit: '%'`); the chip edits the number. `QuickFilterDef.threshold = { presets, unit, noun }`. New conditions `is less than` / `is greater than` in applyFilters.
+- **Rule facts line order** (`RuleFactsRow`, ComplianceShared.tsx — the ONE source for every rule header): Assessment · Profile · OS Platform · OS Version · Severity, so the L1/L2 chip no longer sits under the blue RUL pill.
+- **Rule details › Endpoints tab:** Rule Score card subtext "N of M scanned pass" ("no endpoint scanned yet"), so all four KPI values line up (ComplianceRulesPage.tsx).
+
+## Open
+- Presets 50/70/80/90 — Zeni to confirm (Rules data mostly < 70%); Between not built.
+- Office / Execution Status / Compliance Result quick filters: which page?
+- Compliance v2 re-pin or a new version — `versions.json` untouched.
+
+---
+
 # Handoff — 2026-11-19 12:39 (Patch: "10 of 12 installations paused" on every paused banner)
 
 > Sessions share this file. This top part is the newest; older notes follow.

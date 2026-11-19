@@ -108,7 +108,8 @@ function RuleEndpointsTab({ results, onOpened }: { results: RuleEndpointResult[]
   const n = (r: RuleResult) => results.filter((x) => x.result === r).length;
   const score = ruleScore(results);
   const cards: StatCard[] = [
-    { label: 'Rule Score', value: score === null ? '—' : `${score}%`, sub: '', static: true, valueColor: score === null ? DIM : score >= 85 ? '#15803D' : score >= 60 ? '#B45309' : '#B42318' },
+    /* The score's subtext says what it is made of — passed out of scanned (Zeni, 19 Nov 2026) — so its value sits level with the other three cards'. */
+    { label: 'Rule Score', value: score === null ? '—' : `${score}%`, sub: score === null ? 'no endpoint scanned yet' : `${n('Pass')} of ${n('Pass') + n('Fail')} scanned pass`, static: true, valueColor: score === null ? DIM : score >= 85 ? '#15803D' : score >= 60 ? '#B45309' : '#B42318' },
     { label: 'Pass', value: n('Pass'), sub: 'endpoints', valueColor: n('Pass') ? '#15803D' : DIM, hint: 'Show only endpoints that pass' },
     { label: 'Fail', value: n('Fail'), sub: 'endpoints', valueColor: n('Fail') ? '#B42318' : DIM, hint: 'Show only endpoints that fail' },
     { label: 'Not Scanned', value: n('Not Scanned'), sub: 'endpoints', valueColor: DIM, hint: 'Show only endpoints not scanned yet' },
