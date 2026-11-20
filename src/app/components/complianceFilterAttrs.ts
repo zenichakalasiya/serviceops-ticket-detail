@@ -87,18 +87,15 @@ export const POLICY_FILTER_ATTRS: Attr[] = [
   { key: 'x_lastExecution', label: 'Last Scan Date', icon: CalendarDays, type: 'date' },
   /* hidden: the Compliance Score column already exists — this only lets the band chip read well (and keeps it out of column selection). */
   { key: 'x_scoreBand', label: 'Compliance Score', icon: Gauge, type: 'select', options: AUDIT_SCORE_OPTIONS, hidden: true },
-  /* The score as a NUMBER, cut by a threshold from the quick filter (Zeni, 19 Nov 2026). Hidden: the column already exists. */
-  { key: 'x_cpScore', label: 'Compliance Score', icon: Gauge, type: 'number', unit: '%', hidden: true },
+  /* The score as a NUMBER — in the normal Filters picker, NOT a quick filter (Zeni, 20 Nov 2026): is less than / is greater than a typed score. */
+  { key: 'x_cpScore', label: 'Compliance Score', icon: Gauge, type: 'number', unit: '%' },
 ];
 
-/* The lines an auditor reports against (Zeni, 19 Nov 2026). */
-const SCORE_PRESETS = [50, 70, 80, 90];
 
 export const POLICY_QUICK_FILTERS: QuickFilterDef[] = [
   { field: 'status', icon: CircleDot, tip: 'Filter by status', title: 'Status is', width: 200, row: 'dot', options: POLICY_STATUS_OPTIONS },
   { field: 'x_cpResult', icon: ShieldCheck, tip: 'Filter by compliance result', title: 'Compliance Result is', width: 220, row: 'dot', options: POLICY_RESULT_OPTIONS },
   { field: 'x_platform', icon: Layers, tip: 'Filter by OS platform', title: 'OS Platform is', width: 220, row: 'plain', options: BENCHMARK_PLATFORM_OPTIONS },
-  { field: 'x_cpScore', icon: Gauge, tip: 'Filter by compliance score', title: 'Compliance Score', width: 264, options: [], threshold: { presets: SCORE_PRESETS, unit: '%', noun: 'audits' } },
 ];
 
 /* Zeni, 12 Nov 2026: All · In Progress (pending) · Draft · Cancelled · Archived · Non-Compliant. */
@@ -152,12 +149,11 @@ export const VIZ_RULE_FILTER_ATTRS: Attr[] = [
   /* No column — kept hidden only so the Failing / Not Checked cards and dashboard links draw a readable chip. */
   { key: 'x_result', label: 'Result', icon: CircleDot, type: 'select', options: RESULT_OPTIONS, hidden: true },
   { key: 'x_scoreBand', label: 'Rule Score', icon: Gauge, type: 'select', options: RULE_SCORE_OPTIONS, hidden: true },
-  { key: 'x_cpScore', label: 'Rule Score', icon: Gauge, type: 'number', unit: '%', hidden: true },
+  { key: 'x_cpScore', label: 'Rule Score', icon: Gauge, type: 'number', unit: '%' },
 ];
 export const VIZ_RULE_QUICK_FILTERS: QuickFilterDef[] = [
   { field: 'x_severity', icon: CircleDot, tip: 'Filter by severity', title: 'Severity is', width: 190, row: 'dot', options: SEVERITY_OPTIONS },
   { field: 'x_platform', icon: Layers, tip: 'Filter by OS platform', title: 'OS Platform is', width: 240, row: 'plain', options: RULE_PLATFORM_OPTIONS },
-  { field: 'x_cpScore', icon: Gauge, tip: 'Filter by rule score', title: 'Rule Score', width: 264, options: [], threshold: { presets: SCORE_PRESETS, unit: '%', noun: 'rules' } },
 ];
 export const VIZ_RULE_VIEWS: TicketView[] = [
   { name: 'All Rules', rules: [] },

@@ -1,3 +1,12 @@
+# Handoff — 2026-11-20: Compliance score filters moved from quick filters to Filters
+
+> Sessions share this file. This top part is the newest; older notes follow.
+
+- **Compliance Score / Rule Score are NOT quick filters any more** (Zeni). They are ordinary attributes in the Filters picker (`x_cpScore`, `type: 'number'`, `unit: '%'`, no longer `hidden`): "is less than" / "is greater than" + a typed score. Quick filters: Audit = Status · Compliance Result · OS Platform; Rules = Severity · OS Platform. Verified: Compliance Score is less than 70 → 339 → 24 rows. Published.
+- `ThresholdPopup` + `QuickFilterDef.threshold` in TicketFilterBar stay built, unused.
+
+---
+
 # Handoff — 2026-11-20: Hardware Overview — Warranty + End of Service Lifecycle cards
 
 > Sessions share this file. This top part is the newest; older notes follow.
