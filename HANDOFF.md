@@ -1,3 +1,19 @@
+# Handoff — 2026-11-20: Hardware Overview — Warranty + End of Service Lifecycle cards
+
+> Sessions share this file. This top part is the newest; older notes follow.
+
+## Completed (all five assets opened on localhost, no page errors, build green)
+- `HardwareLifecycleCard.tsx` rewritten from Zeni's reference image: a **Warranty** card and an **End of Service
+  Lifecycle** card (renamed from EOSL Support Lifecycle), dd/mm/yyyy, subtitle = the asset's name.
+- AST-001…005 show both cards (Warranty first) in place of the KPI cards. AST-004 = the image's exact dates;
+  001 warranty expired + past end of life, 002 warranty expiring + still on sale, 003 all active, 005 no EOSL dates.
+
+## Open
+- All dates are mock; headline distances are counted from today, so AST-004 reads "2 years 8 months" / "3 months"
+  where the image (taken earlier) said "2 years 6 months" / "5 months".
+
+---
+
 # Handoff — 2026-11-19 (night): EOSL Support Lifecycle card on Hardware + OS Lifecycle restored on Endpoint
 
 > Sessions share this file. This top part is the newest; older notes follow.
