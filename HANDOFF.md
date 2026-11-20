@@ -4,6 +4,7 @@
 
 - **Compliance Score / Rule Score are NOT quick filters any more** (Zeni). They are ordinary attributes in the Filters picker (`x_cpScore`, `type: 'number'`, `unit: '%'`, no longer `hidden`): "is less than" / "is greater than" + a typed score. Quick filters: Audit = Status · Compliance Result · OS Platform; Rules = Severity · OS Platform. Verified: Compliance Score is less than 70 → 339 → 24 rows. Published.
 - `ThresholdPopup` + `QuickFilterDef.threshold` in TicketFilterBar stay built, unused.
+- **Admin › Benchmark listing:** quick filters = OS Platform · Source; **OS Version moved to the Filters pill** (the Filters builder is now ON on this listing — it was `showFilterBuilder={false}`). Verified: OS Version 11 → 25 → 3 rows. Published.
 
 ---
 

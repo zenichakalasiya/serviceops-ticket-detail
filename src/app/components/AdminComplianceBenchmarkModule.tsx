@@ -230,11 +230,10 @@ function BenchmarkList({ benchmarks, onOpen, onCreate, onEdit, onClone, onDelete
       selectAttr('origin', 'Source', BadgeCheck, plain(optionsOf(benchmarks, (b) => originLabel(b.origin), ['Predefined', 'Custom']))),
     ];
   }, [benchmarks]);
-  // Type and Origin are every cut this list has, so they are both quick filters and the
-  // Filters builder (and its pill) is switched off — it would only offer the same two again.
+  // Quick filters = OS Platform · Source. OS Version is in the Filters pill only (Zeni, 20 Nov 2026),
+  // so the Filters builder is ON here.
   const quick = useMemo<QuickFilterDef[]>(() => [
     { field: 'platform', icon: Monitor, tip: 'Filter by OS platform', title: 'OS Platform is', width: 240, row: 'plain', options: attrs[0].options! },
-    { field: 'version', icon: GitBranch, tip: 'Filter by OS version', title: 'OS Version is', width: 180, row: 'plain', options: attrs[1].options! },
     { field: 'origin', icon: BadgeCheck, tip: 'Filter by source', title: 'Source is', width: 180, row: 'plain', options: attrs[2].options! },
   ], [attrs]);
 
@@ -277,7 +276,7 @@ function BenchmarkList({ benchmarks, onOpen, onCreate, onEdit, onClone, onDelete
             <button type="button" onClick={() => { setSearch(''); setPage(1); }} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9ca3af] hover:text-[#364658]"><X size={15} /></button>
           )}
         </div>
-        <TicketFilterBar rules={rules} setRules={setRules} noun="benchmark" attrs={attrs} quickFilters={quick} showFilterBuilder={false} />
+        <TicketFilterBar rules={rules} setRules={setRules} noun="benchmark" attrs={attrs} quickFilters={quick} />
         <div className="ml-auto">
           <button
             type="button"
